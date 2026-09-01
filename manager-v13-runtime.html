@@ -22,6 +22,10 @@
       s.src='/manager-ui-shell-v2.js?v=20260901-v2';
       s.async=false;
       (d.body||d.documentElement).appendChild(s);
+      const css=d.createElement('link');
+      css.rel='stylesheet';
+      css.href='/manager-drawer-fix.css?v=20260901-v1';
+      d.head.appendChild(css);
       let checks=0;
       const injectSecurity=()=>{
         const doc=frame.contentDocument;
