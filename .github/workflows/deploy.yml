@@ -43,14 +43,12 @@ jobs:
 
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           root = Path('site')
-          favicon_data = "data:image/png;base64,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"
-          favicon_links = (
-              f'<link rel="icon" type="image/png" sizes="64x64" href="{favicon_data}">\n'
-              f'<link rel="shortcut icon" type="image/png" href="{favicon_data}">\n'
-              f'<link rel="apple-touch-icon" href="{favicon_data}">'
-          )
+          favicon_png_b64 = "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"
+          favicon_svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><image href="data:image/png;base64,{favicon_png_b64}" width="64" height="64" preserveAspectRatio="xMidYMid slice"/></svg>'''
+          (root / 'favicon.svg').write_text(favicon_svg, encoding='utf-8')
 
           for p in root.rglob('*'):
               if not p.is_file() or p.suffix.lower() not in {'.html', '.js', '.css', '.json'}:
@@ -63,19 +61,7 @@ jobs:
               if s2 != s:
                   p.write_text(s2, encoding='utf-8')
 
-          for p in root.rglob('*.html'):
-              try:
-                  s = p.read_text(encoding='utf-8')
-              except UnicodeDecodeError:
-                  continue
-              if favicon_data in s:
-                  continue
-              if '<head>' in s:
-                  s = s.replace('<head>', f'<head>\n{favicon_links}', 1)
-              elif '<HEAD>' in s:
-                  s = s.replace('<HEAD>', f'<HEAD>\n{favicon_links}', 1)
-              p.write_text(s, encoding='utf-8')
-
+          # Root login routes directly to clean role URLs.
           p = root / 'auth-runtime-v4.js'
           s = p.read_text(encoding='utf-8')
           old = "const route=role=>location.replace(['STAFF','EMPLOYEE'].includes(String(role||'STAFF').toUpperCase())?'./secure-app-runtime.html?target=employee':'./secure-app-runtime.html?target=manager');"
@@ -84,6 +70,7 @@ jobs:
               raise SystemExit('Expected auth route contract not found in auth-runtime-v4.js')
           p.write_text(s.replace(old, new), encoding='utf-8')
 
+          # Disable the legacy Manager auth surface.
           p = root / 'manager-shell.html'
           s = p.read_text(encoding='utf-8')
           if 'id="authShell"' in s:
@@ -98,7 +85,7 @@ jobs:
           </head><body><iframe id="app" title="MAGASIN Employee V40" hidden></iframe>
           <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
           <script>
-          (async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(!['STAFF','EMPLOYEE'].includes(role)){location.replace('/manager/');return}const f=document.getElementById('app');f.src='/employee-v40-runtime.html?v=20260901-root-role-guard-v3';f.hidden=false}catch(e){location.replace('/')}})();
+          (async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(!['STAFF','EMPLOYEE'].includes(role)){location.replace('/manager/');return}const f=document.getElementById('app');f.src='/employee-v40-runtime.html?v=20260901-root-role-guard-v4';f.hidden=false}catch(e){location.replace('/')}})();
           </script></body></html>
           '''
           (root / 'employee').mkdir(exist_ok=True)
@@ -112,13 +99,26 @@ jobs:
           </head><body><iframe id="app" title="MAGASIN Manager / OWNER" hidden></iframe>
           <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
           <script>
-          (async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/employee/');return}const f=document.getElementById('app');f.src='/secure-app-runtime.html?target=manager&v=20260901-root-role-guard-v3';f.hidden=false}catch(e){location.replace('/')}})();
+          (async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/employee/');return}const f=document.getElementById('app');f.src='/secure-app-runtime.html?target=manager&v=20260901-root-role-guard-v4';f.hidden=false}catch(e){location.replace('/')}})();
           </script></body></html>
           '''
           (root / 'manager').mkdir(exist_ok=True)
           (root / 'manager' / 'index.html').write_text(manager, encoding='utf-8')
 
-          (root / 'robots.txt').write_text('User-agent: *\nDisallow: /\n', encoding='utf-8')
+          # Canonical favicon: remove stale raster/data-URI declarations and inject one stable path.
+          favicon_link = '<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260901-v8">'
+          icon_re = re.compile(r'<link[^>]+rel=[\"\'](?:icon|shortcut icon)[\"\'][^>]*>\s*', re.I)
+          for p in root.rglob('*.html'):
+              try:
+                  s = p.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              s = icon_re.sub('', s)
+              if '<head>' in s:
+                  s = s.replace('<head>', f'<head>\n{favicon_link}', 1)
+              elif '<HEAD>' in s:
+                  s = s.replace('<HEAD>', f'<HEAD>\n{favicon_link}', 1)
+              p.write_text(s, encoding='utf-8')
           PY
 
           if grep -RIn --exclude-dir=.git --exclude='*.md' '/noibo/web/' site; then
@@ -132,11 +132,12 @@ jobs:
           grep -q "'/employee/'" site/auth-runtime-v4.js
           grep -q "'/manager/'" site/auth-runtime-v4.js
           ! grep -q 'id="authShell"' site/manager-shell.html
-          grep -RIl 'rel="icon"' site --include='*.html' >/dev/null
-          node --check site/auth-runtime-v4.js
+          test -s site/favicon.svg
           test -s site/index.html
           test -s site/employee/index.html
           test -s site/manager/index.html
+          grep -RIl 'rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260901-v8"' site --include='*.html' >/dev/null
+          node --check site/auth-runtime-v4.js
 
       - name: Publish production files to repository root
         shell: bash
