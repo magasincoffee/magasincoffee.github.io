@@ -1,1 +1,0 @@
-Backend connection test gate: the employee V40 attendance iframe must load Supabase JS before attendance-auto-ui.js. This temporary validation note is not part of the final architecture.
