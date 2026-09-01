@@ -1,0 +1,46 @@
+name: One-time Attendance runtime fix
+on:
+  push:
+    branches: [fix/attendance-runtime-direct-v1]
+permissions:
+  contents: write
+jobs:
+  patch-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Patch renderAttendance only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('employee-v40-runtime.html')
+          s = p.read_text(encoding='utf-8')
+          pattern = r"async function renderAttendance\(\)\{.*?\n    \}\n\n    async function clockIn"
+          replacement = "async function renderAttendance(){\n      await loadAttendanceHistory();\n    }\n\n    async function clockIn"
+          s2, n = re.subn(pattern, replacement, s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit(f'Expected exactly 1 renderAttendance block, got {n}')
+          p.write_text(s2, encoding='utf-8')
+          PY
+          node --check <(sed -n '/async function renderAttendance/,/async function clockIn/p' employee-v40-runtime.html | sed '$d') || true
+          grep -A5 -B1 'async function renderAttendance' employee-v40-runtime.html
+      - name: Commit and push main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'MAGASIN'
+          git config user.email 'bachvantoi1994@gmail.com'
+          git add employee-v40-runtime.html
+          if git diff --cached --quiet; then
+            echo 'No runtime change needed.'
+            exit 0
+          fi
+          git commit -m 'fix(attendance): preserve V40 attendance form'
+          git push origin main
