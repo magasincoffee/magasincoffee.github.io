@@ -45,6 +45,7 @@ jobs:
           from pathlib import Path
 
           root = Path('site')
+          favicon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAABX2lDQ1BJQ0MgUHJvZmlsZQAAeJxjYGCSyKrIUWBxYGDIzSspCnJ3UoiIjFJgf8zAw8DIAAaJycUFjgEBPgzYAVDVt2sQtZd1QWYx7fzJ6FBslf/hP/OXD9+5tHHogwHulNTiZKAxHEC2S3JBUQmQDbJLpbykAMQuALJFkjMSU4DsFiBbJzkzGSjGuAHI5ikCOhbI3gNSkw5hXwCxkyDsJyB2UUiQM5D9A8hWSEdiJyGxc3NKkxH+YeBJzQsNBtJqQCzDEMTgzuDEEM/gwmDGYAqkg8Ei8UAylSEHzmfAYQYb2AxnIDRgYACFLUQJIsyK04yNILp4gLHAevf//89aDAzskxgY/k74///34v///y5mYGC+zcBwoBHid6BSXgZGhFn58xkYLL4C1UxAiCVNY2DY3s7AIHEbIaayiIGBv5WBYdu1gsSiRLAQMxAzpaUxMH1azsDAG8nAIAwMP65oAKt6ZYB1TfWOAAACWUlEQVR42u1Wv2tTYRQ9574vL/a1aWpNixCootJBQccqWNycVBTExdVJ/wVX/wBnZ5HSRSi4Cw4VHItDixWhVUqj9keamuT77nVIGmqbpC+W4mAvb3v3fYdzzr3ne8SrORxlCY64jgH+PYDr8i4iU54SzP4GINRCSgBmxHoCIGHenl4enSgk3kw6MFGDI2dLW8/mVumkLQ3uXzQh1NuFfLxwazwlg/Mz84sbNXFUS2GygAh6p5gz4Jd2VhcAUFUz4HYxh6ACppJIYRDeLQ4SiMktr4/eL3+r1EVoTdZQw3AsLyaKw7EjcK84+PxjSWEHAzT1GTpxtZAEQ0S8XSlPLfxAHGE3GRLVcH8s//DsUDBcG0nODWUX19uoJG30Ub0x0hcRXg3Ayy/rCAbDH48Cqq+XNgF4s4iYLCTQNirtZeDNooyb+rR283TuwZm8ml0vJMlFrgfdDhbMhIyFA07yEa8M96khK5xZ2pj+vBbFzu+zzLWd0XI9bHoFoMDj8VNdTPZmAm4Hq9Q1ykraqCDpdriWvda0jXt1tbLXlnOdtr79ojV0BuDIJx+WZ1fKo/3ZJGIckUBNreJ1tVK/dLJvenKs9UnPUdGoUi3M/6zOlz128xDA60iS4WHCrlEZUhxdRoLtzkHzQCZFGh4MYIAagu2NTDXYYeJad060rtiNHrXeAfqdNO6DjLCLeo2eASc9ABgA4ez3Si4jAJYrdZC2v4dcqfo3XzcBvCtt7e/pGNetW6rJ3HUecjN4aw5VJL1JJI4Eu5tJUmK2BqFnk9MMWDio7fi/6D8A+A1eWRC687b4NgAAAABJRU5ErkJggg=='
 
           for p in root.rglob('*'):
               if not p.is_file() or p.suffix.lower() not in {'.html', '.js', '.css', '.json'}:
@@ -53,9 +54,8 @@ jobs:
                   s = p.read_text(encoding='utf-8')
               except UnicodeDecodeError:
                   continue
-              s2 = s.replace('/noibo/web/', '/')
-              if s2 != s:
-                  p.write_text(s2, encoding='utf-8')
+              s = s.replace('/noibo/web/', '/')
+              p.write_text(s, encoding='utf-8')
 
           p = root / 'auth-runtime-v4.js'
           s = p.read_text(encoding='utf-8')
@@ -71,6 +71,19 @@ jobs:
               s = s.replace('id="authShell"', 'id="legacyAuthShell" style="display:none!important" aria-hidden="true"', 1)
           p.write_text(s, encoding='utf-8')
 
+          def add_favicon(path: Path):
+              s = path.read_text(encoding='utf-8')
+              if 'rel="icon"' in s:
+                  return
+              marker = '<head>'
+              if marker in s:
+                  tag = f'<link rel="icon" type="image/png" href="{favicon}" sizes="32x32">'
+                  s = s.replace(marker, marker + tag, 1)
+                  path.write_text(s, encoding='utf-8')
+
+          for p in root.rglob('*.html'):
+              add_favicon(p)
+
           employee = '''<!doctype html>
           <html lang="vi"><head>
           <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -79,11 +92,12 @@ jobs:
           </head><body><iframe id="app" title="MAGASIN Employee V40" hidden></iframe>
           <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
           <script>
-          (async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(!['STAFF','EMPLOYEE'].includes(role)){location.replace('/manager/');return}const f=document.getElementById('app');f.src='/employee-v40-runtime.html?v=20260901-root-role-guard-v2';f.hidden=false}catch(e){location.replace('/')}})();
+          (async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(!['STAFF','EMPLOYEE'].includes(role)){location.replace('/manager/');return}const f=document.getElementById('app');f.src='/employee-v40-runtime.html?v=20260901-root-role-guard-v3';f.hidden=false}catch(e){location.replace('/')}})();
           </script></body></html>
           '''
           (root / 'employee').mkdir(exist_ok=True)
           (root / 'employee' / 'index.html').write_text(employee, encoding='utf-8')
+          add_favicon(root / 'employee' / 'index.html')
 
           manager = '''<!doctype html>
           <html lang="vi"><head>
@@ -93,11 +107,12 @@ jobs:
           </head><body><iframe id="app" title="MAGASIN Manager / OWNER" hidden></iframe>
           <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
           <script>
-          (async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/employee/');return}const f=document.getElementById('app');f.src='/secure-app-runtime.html?target=manager&v=20260901-root-role-guard-v2';f.hidden=false}catch(e){location.replace('/')}})();
+          (async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/employee/');return}const f=document.getElementById('app');f.src='/secure-app-runtime.html?target=manager&v=20260901-root-role-guard-v3';f.hidden=false}catch(e){location.replace('/')}})();
           </script></body></html>
           '''
           (root / 'manager').mkdir(exist_ok=True)
           (root / 'manager' / 'index.html').write_text(manager, encoding='utf-8')
+          add_favicon(root / 'manager' / 'index.html')
 
           (root / 'robots.txt').write_text('User-agent: *\nDisallow: /\n', encoding='utf-8')
           PY
@@ -113,6 +128,7 @@ jobs:
           grep -q "'/employee/'" site/auth-runtime-v4.js
           grep -q "'/manager/'" site/auth-runtime-v4.js
           ! grep -q 'id="authShell"' site/manager-shell.html
+          grep -RIl 'rel="icon"' site --include='*.html' | grep -q 'index.html'
           node --check site/auth-runtime-v4.js
           test -s site/index.html
           test -s site/employee/index.html
