@@ -130,29 +130,6 @@
     }
 
     async function renderAttendance(){
-      const doc=frame.contentDocument;
-      const box=doc.querySelector('#view-attendance .attendance-entry-grid .panel');
-      if(!box)return;
-      try{
-        const {data,error}=await sb.rpc('get_my_today_schedules');
-        if(error)throw error;
-        const rows=Array.isArray(data)?data:[];
-        box.innerHTML='<div class="section-title">Chấm công hôm nay</div><div id="v40AttendanceList" class="timeline"></div>';
-        const list=doc.getElementById('v40AttendanceList');
-        if(!rows.length){list.innerHTML='<div class="empty">Hôm nay không có ca được phát hành.</div>';return;}
-        rows.forEach(r=>{
-          const state=attendanceStatus(r);const item=doc.createElement('div');item.className='timeline-item';
-          const meta=`${esc(time5(r.start_time))}–${esc(time5(r.end_time))} · ${esc(r.store_code||r.store_name||'Cửa hàng')}`;
-          let action='';
-          if(state.action==='in')action='<button class="btn primary" data-att-action="in">Bắt đầu ca</button>';
-          else if(state.action==='out')action='<button class="btn primary" data-att-action="out">Kết thúc ca</button>';
-          else action='<span class="badge green">Đã hoàn tất</span>';
-          item.innerHTML=`<div><b>${meta}</b><div class="muted" style="margin-top:5px">${esc(state.label)}${r.late_minutes?` · Trễ ${r.late_minutes} phút`:''}${r.early_minutes?` · Sớm ${r.early_minutes} phút`:''}</div></div><div style="margin-top:10px">${action}</div>`;
-          item.querySelector('[data-att-action="in"]')?.addEventListener('click',()=>clockIn(r.schedule_id));
-          item.querySelector('[data-att-action="out"]')?.addEventListener('click',()=>clockOut(r.attendance_id));
-          list.appendChild(item);
-        });
-      }catch(e){box.innerHTML=`<div class="att-error">Không tải được ca chấm công: ${esc(e.message||e)}</div>`;}
       await loadAttendanceHistory();
     }
 
