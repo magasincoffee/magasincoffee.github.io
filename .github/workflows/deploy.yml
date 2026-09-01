@@ -1,0 +1,136 @@
+name: Deploy MAGASIN workforce to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, '[skip pages]')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout deployment repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Checkout source repository
+        uses: actions/checkout@v6
+        with:
+          repository: magasincoffee/noibo
+          ref: main
+          path: source
+          fetch-depth: 1
+
+      - name: Build production site
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf site
+          mkdir -p site
+          cp -a source/web/. site/
+          touch site/.nojekyll
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path('site')
+
+          for p in root.rglob('*'):
+              if not p.is_file() or p.suffix.lower() not in {'.html', '.js', '.css', '.json'}:
+                  continue
+              try:
+                  s = p.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              s2 = s.replace('/noibo/web/', '/')
+              if s2 != s:
+                  p.write_text(s2, encoding='utf-8')
+
+          p = root / 'auth-runtime-v4.js'
+          s = p.read_text(encoding='utf-8')
+          old = "const route=role=>location.replace(['STAFF','EMPLOYEE'].includes(String(role||'STAFF').toUpperCase())?'./secure-app-runtime.html?target=employee':'./secure-app-runtime.html?target=manager');"
+          new = "const route=role=>location.replace(['STAFF','EMPLOYEE'].includes(String(role||'STAFF').toUpperCase())?'/employee/':'/manager/');"
+          if old not in s:
+              raise SystemExit('Expected auth route contract not found in auth-runtime-v4.js')
+          p.write_text(s.replace(old, new), encoding='utf-8')
+
+          p = root / 'manager-shell.html'
+          s = p.read_text(encoding='utf-8')
+          if 'id="authShell"' in s:
+              s = s.replace('id="authShell"', 'id="legacyAuthShell" style="display:none!important" aria-hidden="true"', 1)
+          p.write_text(s, encoding='utf-8')
+
+          employee = '''<!doctype html>
+          <html lang="vi"><head>
+          <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+          <meta name="robots" content="noindex,nofollow"><title>MAGASIN · Nhân viên</title>
+          <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{display:block;width:100%;height:100%;border:0}</style>
+          </head><body><iframe id="app" title="MAGASIN Employee V40" hidden></iframe>
+          <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+          <script>
+          (async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(!['STAFF','EMPLOYEE'].includes(role)){location.replace('/manager/');return}const f=document.getElementById('app');f.src='/employee-v40-runtime.html?v=20260901-root-role-guard-v2';f.hidden=false}catch(e){location.replace('/')}})();
+          </script></body></html>
+          '''
+          (root / 'employee').mkdir(exist_ok=True)
+          (root / 'employee' / 'index.html').write_text(employee, encoding='utf-8')
+
+          manager = '''<!doctype html>
+          <html lang="vi"><head>
+          <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+          <meta name="robots" content="noindex,nofollow"><title>MAGASIN · Quản trị nội bộ</title>
+          <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{display:block;width:100%;height:100%;border:0}</style>
+          </head><body><iframe id="app" title="MAGASIN Manager / OWNER" hidden></iframe>
+          <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+          <script>
+          (async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/employee/');return}const f=document.getElementById('app');f.src='/secure-app-runtime.html?target=manager&v=20260901-root-role-guard-v2';f.hidden=false}catch(e){location.replace('/')}})();
+          </script></body></html>
+          '''
+          (root / 'manager').mkdir(exist_ok=True)
+          (root / 'manager' / 'index.html').write_text(manager, encoding='utf-8')
+
+          (root / 'robots.txt').write_text('User-agent: *\nDisallow: /\n', encoding='utf-8')
+          PY
+
+          if grep -RIn --exclude-dir=.git --exclude='*.md' '/noibo/web/' site; then
+            echo 'Stale /noibo/web/ path found in deployed site.'
+            exit 1
+          fi
+          if grep -nE 'secure-app-runtime.html\?target=(employee|manager)' site/auth-runtime-v4.js; then
+            echo 'Old role route found in deployed V4 auth runtime.'
+            exit 1
+          fi
+          grep -q "'/employee/'" site/auth-runtime-v4.js
+          grep -q "'/manager/'" site/auth-runtime-v4.js
+          ! grep -q 'id="authShell"' site/manager-shell.html
+          node --check site/auth-runtime-v4.js
+          test -s site/index.html
+          test -s site/employee/index.html
+          test -s site/manager/index.html
+
+      - name: Publish production files to repository root
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -mindepth 1 -maxdepth 1 ! -name .git ! -name .github ! -name source ! -name site -exec rm -rf {} +
+          cp -a site/. .
+          rm -rf source site
+          git config user.name "MAGASIN"
+          git config user.email "bachvantoi1994@gmail.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No production changes to publish.'
+            exit 0
+          fi
+          git commit -m "chore(deploy): sync production site [skip pages]"
+          git push origin main
