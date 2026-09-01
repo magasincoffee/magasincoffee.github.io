@@ -1,4 +1,4 @@
-name: Restore Employee V40 attendance UI
+name: Sync Employee V40 attendance UI
 
 on:
   workflow_run:
@@ -9,140 +9,85 @@ permissions:
   contents: write
 
 jobs:
-  restore-attendance-ui:
+  sync-attendance-ui:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout production repository
+      - name: Checkout production
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 1
 
-      - name: Restore the V40 attendance entry form and auto attendance UI
+      - name: Fetch canonical clean attendance bridge
         shell: bash
         run: |
           set -euo pipefail
-          test -s employee-v40.html
-          test -s employee/index.html
-
-          cat > employee/attendance-v40-guard.js <<'EOF'
-          (function(window, document){
-            'use strict';
-            const TEMPLATE_URL='/employee-v40.html?attendance-ui-template=v1';
-            const outerFrameId='app';
-            const innerFrameId='employeeApp';
-            const entrySelector='#view-attendance .attendance-entry-grid .panel:first-child';
-            let originalHtml='';
-            let armed=false;
-
-            async function loadTemplate(){
-              try{
-                const res=await fetch(TEMPLATE_URL,{cache:'no-store',credentials:'same-origin'});
-                if(!res.ok)return false;
-                const parsed=new DOMParser().parseFromString(await res.text(),'text/html');
-                const source=parsed.querySelector(entrySelector);
-                if(!source)return false;
-                originalHtml=source.innerHTML;
-                return true;
-              }catch(_){return false;}
-            }
-
-            function getV40Document(){
-              const runtime=document.getElementById(outerFrameId)?.contentDocument;
-              const inner=runtime?.getElementById(innerFrameId);
-              return inner?.contentDocument||null;
-            }
-
-            function protect(entry){
-              if(!entry||entry.dataset.attendanceUiProtected==='1')return;
-              const nativeSetter=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML')?.set;
-              if(!nativeSetter)return;
-              Object.defineProperty(entry,'innerHTML',{
-                configurable:true,
-                get(){return Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML').get.call(this);},
-                set(value){
-                  if(armed&&originalHtml&&value!==originalHtml){nativeSetter.call(this,originalHtml);return;}
-                  nativeSetter.call(this,value);
-                }
-              });
-              entry.dataset.attendanceUiProtected='1';
-              new MutationObserver(()=>{
-                if(armed&&originalHtml&&entry.innerHTML!==originalHtml)nativeSetter.call(entry,originalHtml);
-              }).observe(entry,{childList:true,subtree:true,characterData:true});
-            }
-
-            function arm(){
-              if(!originalHtml)return;
-              const doc=getV40Document();
-              const entry=doc?.querySelector(entrySelector);
-              if(!entry)return;
-              armed=true;
-              protect(entry);
-              if(entry.innerHTML!==originalHtml)entry.innerHTML=originalHtml;
-            }
-
-            function bind(){
-              const outer=document.getElementById(outerFrameId);
-              if(!outer)return;
-              const runtime=outer.contentDocument;
-              const inner=runtime?.getElementById(innerFrameId);
-              if(inner&&!inner.dataset.attendanceGuardBound){
-                inner.addEventListener('load',arm,{once:false});
-                inner.dataset.attendanceGuardBound='1';
-              }
-              arm();
-            }
-
-            async function start(){
-              if(!(await loadTemplate()))return;
-              bind();
-              setInterval(bind,1000);
-            }
-
-            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
-            else start();
-          })(window,document);
-          EOF
-
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('employee/index.html')
-          s=p.read_text(encoding='utf-8')
-          tag='<script src="/employee/attendance-v40-guard.js?v=20260901-v1"></script>'
-          if tag not in s:
-              s=s.replace('</body>', tag+'\n</body>')
-              p.write_text(s,encoding='utf-8')
-          PY
-
-          echo 'Fetching canonical auto-attendance UI from noibo/main'
           curl -fsSL --retry 3 https://raw.githubusercontent.com/magasincoffee/noibo/main/web/attendance-auto-ui.js -o attendance-auto-ui.js
           test -s attendance-auto-ui.js
 
+      - name: Install minimal runtime fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > employee/attendance-runtime-fix.js <<'EOF'
+          /* Minimal V40 runtime fix. No observer. No polling. */
+          (function(){
+            'use strict';
+            const frame=document.getElementById('app');
+            if(!frame)return;
+            frame.addEventListener('load',function(){
+              const child=frame.contentWindow;
+              const native=child && child.__MAGASIN_NATIVE_SHOWVIEW;
+              if(typeof native==='function'){
+                try{child.showView=native;}catch(_){/* ignore */}
+              }
+            });
+          })();
+          EOF
+
+      - name: Remove legacy guards and wire clean bridge
+        shell: bash
+        run: |
+          set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('employee-v40.html')
-          s=p.read_text(encoding='utf-8')
-          tag='<script src="/attendance-auto-ui.js?v=20260901-v1"></script>'
+          import re
+
+          idx=Path('employee/index.html')
+          s=idx.read_text(encoding='utf-8')
+          s=re.sub(r'\n?<script src="/employee/attendance-v40-guard\.js[^"]*"></script>', '', s)
+          tag='<script src="/employee/attendance-runtime-fix.js?v=20260901-clean-v2"></script>'
           if tag not in s:
-              marker='</body>'
-              if marker not in s:
-                  raise SystemExit('employee-v40.html missing </body>')
-              s=s.replace(marker, tag+'\n'+marker, 1)
-              p.write_text(s,encoding='utf-8')
+              s=s.replace('</body>', tag+'\n</body>')
+          idx.write_text(s,encoding='utf-8')
+
+          v40=Path('employee-v40.html')
+          s=v40.read_text(encoding='utf-8')
+          s=re.sub(r'\n?<script src="/attendance-auto-ui\.js[^"]*"></script>', '', s)
+          tag='<script src="/attendance-auto-ui.js?v=20260901-clean-v4"></script>'
+          if tag not in s:
+              if '</body>' not in s: raise SystemExit('employee-v40.html missing </body>')
+              s=s.replace('</body>', tag+'\n</body>', 1)
+          v40.write_text(s,encoding='utf-8')
           PY
 
-          node --check employee/attendance-v40-guard.js
+          rm -f employee/attendance-v40-guard.js
+          node --check employee/attendance-runtime-fix.js
           node --check attendance-auto-ui.js
-          grep -q 'attendance-v40-guard.js' employee/index.html
+          grep -q 'attendance-runtime-fix.js' employee/index.html
           grep -q 'attendance-auto-ui.js' employee-v40.html
 
+      - name: Commit clean Attendance runtime
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name "MAGASIN"
           git config user.email "bachvantoi1994@gmail.com"
-          git add employee/index.html employee/attendance-v40-guard.js employee-v40.html attendance-auto-ui.js
+          git add employee/index.html employee/attendance-runtime-fix.js employee-v40.html attendance-auto-ui.js .github/workflows/attendance-ui-post-deploy.yml employee/attendance-v40-guard.js
           if git diff --cached --quiet; then
-            echo 'Attendance UI already restored.'
+            echo 'Clean Attendance runtime already synced.'
             exit 0
           fi
-          git commit -m 'feat(attendance): add automatic schedule-based attendance UI [skip pages]'
+          git commit -m 'refactor(attendance): remove legacy guards and sync clean V40 bridge [skip pages]'
           git push origin main
