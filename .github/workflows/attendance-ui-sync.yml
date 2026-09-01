@@ -1,15 +1,20 @@
 name: Sync Employee attendance UI
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["Deploy MAGASIN workforce to GitHub Pages"]
+    types: [completed]
 
 permissions:
   contents: write
 
+concurrency:
+  group: attendance-ui-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
-    if: ${{ !contains(github.event.head_commit.message, '[skip attendance-ui]') }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout production
@@ -34,7 +39,7 @@ jobs:
           from pathlib import Path
           p = Path('employee-v40.html')
           s = p.read_text(encoding='utf-8')
-          tag = '<script src="/attendance-auto-ui.js?v=20260901-v2"></script>'
+          tag = '<script src="/attendance-auto-ui.js?v=20260901-v3"></script>'
           if tag not in s:
               marker = '</body>'
               if marker not in s:
