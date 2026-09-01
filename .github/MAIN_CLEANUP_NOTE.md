@@ -1,0 +1,1 @@
+Cleanup note: production main was audited for temporary probe files and duplicate Attendance workflows. This branch removes only the redundant attendance-ui-sync workflow. No application UI or backend changes are included.
