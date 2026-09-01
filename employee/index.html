@@ -7,7 +7,5 @@
 </head><body><iframe id="app" title="MAGASIN Employee V40" hidden></iframe>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-(async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(!['STAFF','EMPLOYEE'].includes(role)){location.replace('/manager/');return}const f=document.getElementById('app');f.src='/employee-v40-runtime.html?v=20260901-root-role-guard-v5';f.hidden=false}catch(e){location.replace('/')}})();
-</script>
-<script src="/employee/attendance-runtime-fix.js?v=20260901-clean-v1"></script>
-</body></html>
+(async()=>{const sb=supabase.createClient('https://menvbzlsncmpuvnaifxa.supabase.co','sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});try{const {data,error}=await sb.auth.getSession();if(error||!data.session){location.replace('/');return}const {data:p,error:pe}=await sb.from('profiles').select('role,status').eq('id',data.session.user.id).single();if(pe||String(p.status||'').toUpperCase()!=='ACTIVE'){location.replace('/');return}const role=String(p.role||'').toUpperCase();if(!['STAFF','EMPLOYEE'].includes(role)){location.replace('/manager/');return}const f=document.getElementById('app');f.src='/employee-v40-runtime.html?v=20260901-root-role-guard-v4';f.hidden=false}catch(e){location.replace('/')}})();
+</script></body></html>
