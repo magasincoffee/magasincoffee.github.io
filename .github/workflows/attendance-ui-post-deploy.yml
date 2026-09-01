@@ -19,7 +19,7 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Restore the V40 attendance entry form
+      - name: Restore the V40 attendance entry form and auto attendance UI
         shell: bash
         run: |
           set -euo pipefail
@@ -115,15 +115,34 @@ jobs:
               p.write_text(s,encoding='utf-8')
           PY
 
+          echo 'Fetching canonical auto-attendance UI from noibo/main'
+          curl -fsSL --retry 3 https://raw.githubusercontent.com/magasincoffee/noibo/main/web/attendance-auto-ui.js -o attendance-auto-ui.js
+          test -s attendance-auto-ui.js
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('employee-v40.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="/attendance-auto-ui.js?v=20260901-v1"></script>'
+          if tag not in s:
+              marker='</body>'
+              if marker not in s:
+                  raise SystemExit('employee-v40.html missing </body>')
+              s=s.replace(marker, tag+'\n'+marker, 1)
+              p.write_text(s,encoding='utf-8')
+          PY
+
           node --check employee/attendance-v40-guard.js
+          node --check attendance-auto-ui.js
           grep -q 'attendance-v40-guard.js' employee/index.html
+          grep -q 'attendance-auto-ui.js' employee-v40.html
 
           git config user.name "MAGASIN"
           git config user.email "bachvantoi1994@gmail.com"
-          git add employee/index.html employee/attendance-v40-guard.js
+          git add employee/index.html employee/attendance-v40-guard.js employee-v40.html attendance-auto-ui.js
           if git diff --cached --quiet; then
             echo 'Attendance UI already restored.'
             exit 0
           fi
-          git commit -m 'fix(ui): restore V40 attendance form after deploy [skip pages]'
+          git commit -m 'feat(attendance): add automatic schedule-based attendance UI [skip pages]'
           git push origin main
