@@ -1,0 +1,10 @@
+name: DISABLED duplicate Attendance sync
+
+on:
+  workflow_dispatch:
+
+jobs:
+  disabled:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Disabled; use attendance-ui-post-deploy.yml only.'
