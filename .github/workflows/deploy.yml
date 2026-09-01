@@ -45,6 +45,19 @@ jobs:
 
           root = Path('site')
 
+          # The deployment repository is a root-level User Site. Normalize all
+          # source project-site references from /noibo/web/ to / before tests.
+          for p in root.rglob('*'):
+              if not p.is_file() or p.suffix.lower() not in {'.html', '.js', '.css', '.json'}:
+                  continue
+              try:
+                  s = p.read_text(encoding='utf-8')
+              except UnicodeDecodeError:
+                  continue
+              s2 = s.replace('/noibo/web/', '/')
+              if s2 != s:
+                  p.write_text(s2, encoding='utf-8')
+
           # Root login: route directly to clean role URLs.
           p = root / 'auth-runtime-v4.js'
           s = p.read_text(encoding='utf-8')
@@ -54,13 +67,7 @@ jobs:
               raise SystemExit('Expected auth route contract not found in auth-runtime-v4.js')
           p.write_text(s.replace(old, new), encoding='utf-8')
 
-          # Runtime wrapper: injected modules are deployed at the public site root.
-          p = root / 'secure-app-runtime.html'
-          s = p.read_text(encoding='utf-8')
-          s = s.replace("const base=location.origin+'/noibo/web/';", "const base=location.origin+'/';")
-          p.write_text(s, encoding='utf-8')
-
-          # The shared root index owns Login. Disable/remove the legacy Manager auth surface
+          # The shared root index owns Login. Disable the legacy Manager auth surface
           # in the deployment copy so Manager can never reveal the old form.
           p = root / 'manager-shell.html'
           s = p.read_text(encoding='utf-8')
@@ -72,8 +79,7 @@ jobs:
               )
           p.write_text(s, encoding='utf-8')
 
-          # Clean public entry routes. The embedded runtime files remain at site root,
-          # so their own relative asset paths continue to resolve from the root.
+          # Clean public entry routes.
           employee = '''<!doctype html>
           <html lang="vi">
           <head>
@@ -84,7 +90,7 @@ jobs:
             <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{display:block;width:100%;height:100%;border:0}</style>
           </head>
           <body>
-            <iframe id="app" title="MAGASIN Employee V40" src="/employee-v40-runtime.html?v=20260901-root-site-v2"></iframe>
+            <iframe id="app" title="MAGASIN Employee V40" src="/employee-v40-runtime.html?v=20260901-root-site-v3"></iframe>
           </body>
           </html>
           '''
@@ -101,7 +107,7 @@ jobs:
             <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{display:block;width:100%;height:100%;border:0}</style>
           </head>
           <body>
-            <iframe id="app" title="MAGASIN Manager / OWNER" src="/secure-app-runtime.html?target=manager&v=20260901-root-site-v2"></iframe>
+            <iframe id="app" title="MAGASIN Manager / OWNER" src="/secure-app-runtime.html?target=manager&v=20260901-root-site-v3"></iframe>
           </body>
           </html>
           '''
