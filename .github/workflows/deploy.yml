@@ -1,0 +1,142 @@
+name: Deploy MAGASIN workforce to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout deployment repository
+        uses: actions/checkout@v6
+
+      - name: Checkout source repository
+        uses: actions/checkout@v6
+        with:
+          repository: magasincoffee/noibo
+          ref: main
+          path: source
+          fetch-depth: 1
+
+      - name: Build production site
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf site
+          mkdir -p site
+          cp -a source/web/. site/
+          rm -rf site/.git site/.github
+          touch site/.nojekyll
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path('site')
+
+          # Root login: route by role to clean public URLs.
+          p = root / 'auth-runtime-v4.js'
+          s = p.read_text(encoding='utf-8')
+          s = s.replace(
+              "? './secure-app-runtime.html?target=employee':'./secure-app-runtime.html?target=manager'",
+              "? '/employee/':'/manager/'"
+          )
+          p.write_text(s, encoding='utf-8')
+
+          # Runtime wrapper: all dynamically injected modules live at site root.
+          p = root / 'secure-app-runtime.html'
+          s = p.read_text(encoding='utf-8')
+          s = s.replace("location.origin+'/noibo/web/'", "location.origin+'/ '")
+          s = s.replace("location.origin+'/ '", "location.origin+'/'")
+          p.write_text(s, encoding='utf-8')
+
+          # Remove the legacy Manager auth surface from the deployed copy even
+          # before source PR #47 lands in main. The shared root index owns Login.
+          p = root / 'manager-shell.html'
+          s = p.read_text(encoding='utf-8')
+          s = s.replace(
+              'id="authShell"',
+              'id="legacyAuthShell" style="display:none!important" aria-hidden="true"',
+              1
+          )
+          p.write_text(s, encoding='utf-8')
+
+          # Clean routes that keep the visible browser URL at /employee and /manager.
+          wrapper = '''<!doctype html>
+          <html lang="vi">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+            <meta name="robots" content="noindex,nofollow">
+            <title>MAGASIN · Nhân viên</title>
+            <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{display:block;width:100%;height:100%;border:0}</style>
+          </head>
+          <body>
+            <iframe id="app" title="MAGASIN Employee V40" src="/employee-v40-runtime.html?v=20260901-root-site-v1"></iframe>
+          </body>
+          </html>
+          '''
+          (root / 'employee').mkdir(exist_ok=True)
+          (root / 'employee' / 'index.html').write_text(wrapper, encoding='utf-8')
+
+          wrapper = wrapper.replace('Nhân viên', 'Quản trị nội bộ').replace(
+              'Employee V40', 'Manager / OWNER'
+          ).replace(
+              'employee-v40-runtime.html', 'secure-app-runtime.html?target=manager'
+          )
+          (root / 'manager').mkdir(exist_ok=True)
+          (root / 'manager' / 'index.html').write_text(wrapper, encoding='utf-8')
+
+          (root / 'robots.txt').write_text('User-agent: *\nDisallow: /\n', encoding='utf-8')
+          PY
+
+          # Fail the build if stale project-site paths remain in executable web files.
+          if grep -RIn --exclude-dir=.git --exclude='*.md' '/noibo/web/' site; then
+            echo 'Stale /noibo/web/ path found in deployed site.'
+            exit 1
+          fi
+
+          test -s site/index.html
+          test -s site/auth-runtime-v4.js
+          test -s site/employee/index.html
+          test -s site/manager/index.html
+          test -s site/employee-v40-runtime.html
+          test -s site/manager-shell.html
+          test -s site/secure-app-runtime.html
+          grep -q "'/employee/'" site/auth-runtime-v4.js
+          grep -q "'/manager/'" site/auth-runtime-v4.js
+          if grep -q 'id="authShell"' site/manager-shell.html; then
+            echo 'Legacy authShell still present in deployed manager shell.'
+            exit 1
+          fi
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
