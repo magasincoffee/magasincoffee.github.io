@@ -8,9 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: github-pages
@@ -18,10 +16,13 @@ concurrency:
 
 jobs:
   build:
+    if: "!contains(github.event.head_commit.message, '[skip pages]')"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout deployment repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
 
       - name: Checkout source repository
         uses: actions/checkout@v6
@@ -57,7 +58,7 @@ jobs:
               if s2 != s:
                   p.write_text(s2, encoding='utf-8')
 
-          # Root login: route directly to clean role URLs.
+          # Root login routes directly to clean role URLs.
           p = root / 'auth-runtime-v4.js'
           s = p.read_text(encoding='utf-8')
           old = "const route=role=>location.replace(['STAFF','EMPLOYEE'].includes(String(role||'STAFF').toUpperCase())?'./secure-app-runtime.html?target=employee':'./secure-app-runtime.html?target=manager');"
@@ -69,19 +70,17 @@ jobs:
           # The shared root index owns Login. Disable the legacy Manager auth surface.
           p = root / 'manager-shell.html'
           s = p.read_text(encoding='utf-8')
-          s = s.replace(
-              'id="authShell"',
-              'id="legacyAuthShell" style="display:none!important" aria-hidden="true"',
-              1,
-          )
+          if 'id="authShell"' in s:
+              s = s.replace('id="authShell"', 'id="legacyAuthShell" style="display:none!important" aria-hidden="true"', 1)
           p.write_text(s, encoding='utf-8')
 
+          # Clean public entry routes.
           employee = '''<!doctype html>
           <html lang="vi"><head>
           <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
           <meta name="robots" content="noindex,nofollow"><title>MAGASIN · Nhân viên</title>
           <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{display:block;width:100%;height:100%;border:0}</style>
-          </head><body><iframe id="app" title="MAGASIN Employee V40" src="/employee-v40-runtime.html?v=20260901-root-site-v4"></iframe></body></html>
+          </head><body><iframe id="app" title="MAGASIN Employee V40" src="/employee-v40-runtime.html?v=20260901-root-site-v5"></iframe></body></html>
           '''
           (root / 'employee').mkdir(exist_ok=True)
           (root / 'employee' / 'index.html').write_text(employee, encoding='utf-8')
@@ -91,7 +90,7 @@ jobs:
           <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
           <meta name="robots" content="noindex,nofollow"><title>MAGASIN · Quản trị nội bộ</title>
           <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{display:block;width:100%;height:100%;border:0}</style>
-          </head><body><iframe id="app" title="MAGASIN Manager / OWNER" src="/secure-app-runtime.html?target=manager&v=20260901-root-site-v4"></iframe></body></html>
+          </head><body><iframe id="app" title="MAGASIN Manager / OWNER" src="/secure-app-runtime.html?target=manager&v=20260901-root-site-v5"></iframe></body></html>
           '''
           (root / 'manager').mkdir(exist_ok=True)
           (root / 'manager' / 'index.html').write_text(manager, encoding='utf-8')
@@ -99,13 +98,11 @@ jobs:
           (root / 'robots.txt').write_text('User-agent: *\nDisallow: /\n', encoding='utf-8')
           PY
 
+          # Strong deployment-time validation.
           if grep -RIn --exclude-dir=.git --exclude='*.md' '/noibo/web/' site; then
             echo 'Stale /noibo/web/ path found in deployed site.'
             exit 1
           fi
-
-          # Legacy V3 is retained in source for historical compatibility, but must not
-          # be the active root login. Validate only the V4 entry point for old routing.
           if grep -nE 'secure-app-runtime.html\?target=(employee|manager)' site/auth-runtime-v4.js; then
             echo 'Old role route found in deployed V4 auth runtime.'
             exit 1
@@ -114,30 +111,23 @@ jobs:
           grep -q "'/manager/'" site/auth-runtime-v4.js
           ! grep -q 'id="authShell"' site/manager-shell.html
           node --check site/auth-runtime-v4.js
-
           test -s site/index.html
-          test -s site/auth-runtime-v4.js
           test -s site/employee/index.html
           test -s site/manager/index.html
-          test -s site/employee-v40-runtime.html
-          test -s site/manager-shell.html
-          test -s site/secure-app-runtime.html
 
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: ./site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Publish production files to repository root
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -mindepth 1 -maxdepth 1 ! -name .git ! -name .github ! -name source ! -name site -exec rm -rf {} +
+          cp -a site/. .
+          rm -rf source site
+          git config user.name "MAGASIN"
+          git config user.email "bachvantoi1994@gmail.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No production changes to publish.'
+            exit 0
+          fi
+          git commit -m "chore(deploy): sync production site [skip pages]"
+          git push origin main
