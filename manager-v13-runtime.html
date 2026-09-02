@@ -21,12 +21,12 @@
       const load=(src)=>{const s=d.createElement('script');s.src=src;s.async=false;(d.body||d.documentElement).appendChild(s);return s};
       load('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
       load('/manager-ui-shell-v2.js?v=20260901-v2');
-      const css=d.createElement('link');css.rel='stylesheet';css.href='/manager-drawer-fix.css?v=20260901-v1';d.head.appendChild(css);
+      load('/manager-drawer-fix.css?v=20260901-v1');
       const waitForSupabase=()=>{
         if(window.supabase?.createClient || d.defaultView?.supabase?.createClient){
           load('/app-time-picker-24h.js?v=20260902-v1');
           load('/manager-workforce-live.js?v=20260902-v1');
-          load('/manager-workforce-demand-v3.js?v=20260902-v3');
+          load('/manager-workforce-demand-v4.js?v=20260902-v4');
           load('/manager-workforce-auto.js?v=20260902-v1');
           load('/manager-workforce-tabs-v1.js?v=20260902-v1');
         }else setTimeout(waitForSupabase,100);
