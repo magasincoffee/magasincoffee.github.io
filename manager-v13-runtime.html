@@ -21,7 +21,7 @@
       const load=(src)=>{const s=d.createElement('script');s.src=src;s.async=false;(d.body||d.documentElement).appendChild(s);return s};
       load('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
       load('/manager-ui-shell-v2.js?v=20260901-v2');
-      load('/manager-drawer-fix.css?v=20260901-v1');
+      const css=d.createElement('link');css.rel='stylesheet';css.href='/manager-drawer-fix.css?v=20260901-v1';d.head.appendChild(css);
       const waitForSupabase=()=>{
         if(window.supabase?.createClient || d.defaultView?.supabase?.createClient){
           load('/app-time-picker-24h.js?v=20260902-v1');
