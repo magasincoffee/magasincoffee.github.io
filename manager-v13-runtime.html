@@ -18,14 +18,19 @@
     try{
       const d=frame.contentDocument;
       if(!d)return;
-      const s=d.createElement('script');
-      s.src='/manager-ui-shell-v2.js?v=20260901-v2';
-      s.async=false;
-      (d.body||d.documentElement).appendChild(s);
+      const load=(src)=>{const s=d.createElement('script');s.src=src;s.async=false;(d.body||d.documentElement).appendChild(s);return s};
+      load('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+      load('/manager-ui-shell-v2.js?v=20260901-v2');
       const css=d.createElement('link');
       css.rel='stylesheet';
       css.href='/manager-drawer-fix.css?v=20260901-v1';
       d.head.appendChild(css);
+      const waitForSupabase=()=>{
+        if(window.supabase?.createClient || d.defaultView?.supabase?.createClient){
+          load('/manager-workforce-live.js?v=20260902-v1');
+        }else setTimeout(waitForSupabase,100);
+      };
+      waitForSupabase();
       let checks=0;
       const injectSecurity=()=>{
         const doc=frame.contentDocument;
