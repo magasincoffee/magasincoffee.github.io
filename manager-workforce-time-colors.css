@@ -1,7 +1,0 @@
-.wfd-time-shift-legend{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:#f8fafd;font-size:11px;color:var(--muted)}
-.wfd-time-shift-legend b{color:var(--text);font-size:12px}
-.wfd-shift-item{display:inline-flex;align-items:center}
-.wfd-shift-dot{width:9px;height:9px;border-radius:999px;display:inline-block;border:1px solid transparent;margin-right:5px}
-.wfd-shift-dot.morning{background:#fff3b0;border-color:#e8d77a}
-.wfd-shift-dot.afternoon{background:#f8d6d6;border-color:#e9aaaa}
-.wfd-shift-dot.evening{background:#d8f5f5;border-color:#9bdcdc}
