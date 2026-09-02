@@ -21,35 +21,25 @@
       const load=(src)=>{const s=d.createElement('script');s.src=src;s.async=false;(d.body||d.documentElement).appendChild(s);return s};
       load('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
       load('/manager-ui-shell-v2.js?v=20260901-v2');
-      const css=d.createElement('link');
-      css.rel='stylesheet';
-      css.href='/manager-drawer-fix.css?v=20260901-v1';
-      d.head.appendChild(css);
+      const css=d.createElement('link');css.rel='stylesheet';css.href='/manager-drawer-fix.css?v=20260901-v1';d.head.appendChild(css);
       const waitForSupabase=()=>{
         if(window.supabase?.createClient || d.defaultView?.supabase?.createClient){
           load('/app-time-picker-24h.js?v=20260902-v1');
           load('/manager-workforce-live.js?v=20260902-v1');
-          load('/manager-workforce-demand-v2.js?v=20260902-v2');
+          load('/manager-workforce-demand-v3.js?v=20260902-v3');
           load('/manager-workforce-auto.js?v=20260902-v1');
-          load('/manager-workforce-time-colors-loader-v4.js?v=20260902-shift-color');
         }else setTimeout(waitForSupabase,100);
       };
       waitForSupabase();
       let checks=0;
       const injectSecurity=()=>{
-        const doc=frame.contentDocument;
-        if(!doc)return;
+        const doc=frame.contentDocument;if(!doc)return;
         const hasSecurity=[...doc.scripts].some(x=>(x.src||'').includes('security-runtime.js'));
-        if(!hasSecurity){
-          const sec=doc.createElement('script');
-          sec.src='/security-runtime.js?v=20260831-security-v2';
-          sec.async=false;
-          (doc.body||doc.documentElement).appendChild(sec);
-        }
+        if(!hasSecurity){const sec=doc.createElement('script');sec.src='/security-runtime.js?v=20260831-security-v2';sec.async=false;(doc.body||doc.documentElement).appendChild(sec)}
         if(++checks<10)setTimeout(injectSecurity,300);
       };
       setTimeout(injectSecurity,400);
-    }catch(e){console.error('Manager V13 runtime load failed',e)}
+    }catch(e){console.error('Manager runtime load failed',e)}
   },{once:true});
 })();
 </script>
