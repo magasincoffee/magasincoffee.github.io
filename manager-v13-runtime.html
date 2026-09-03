@@ -24,6 +24,9 @@
       load('/manager-ui-shell-v2.js?v=20260903-v4');
       load('/manager-ui-header-fix-v1.js?v=20260903-v4');
       const css=d.createElement('link');css.rel='stylesheet';css.href='/manager-drawer-fix.css?v=20260903-v3';d.head.appendChild(css);
+      // Register the Workforce day-header normalization independently from Supabase readiness.
+      // It only touches the rendered UI and must still run when the data bootstrap is late.
+      load('/manager-workforce-day-header-fix-v2.js?v=20260903-v3');
       const waitForSupabase=()=>{
         if(window.supabase?.createClient || d.defaultView?.supabase?.createClient){
           load('/app-time-picker-24h.js?v=20260902-v1');
@@ -31,7 +34,6 @@
           load('/manager-workforce-demand-v4.js?v=20260902-v6');
           load('/manager-workforce-auto.js?v=20260902-v1');
           load('/manager-workforce-tabs-v1.js?v=20260902-v1');
-          load('/manager-workforce-day-header-fix-v2.js?v=20260903-v2');
         }else setTimeout(waitForSupabase,100);
       };
       waitForSupabase();
