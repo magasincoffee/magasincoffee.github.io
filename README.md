@@ -1,5 +1,3 @@
-# MAGASIN Coffee
+# MAGASIN
 
-Repository for the MAGASIN Business Operating System and its digital applications.
-
-Read `01_DOCS/` before making structural or business changes.
+Read `01_DOCS/` before making business, architecture or software changes.
