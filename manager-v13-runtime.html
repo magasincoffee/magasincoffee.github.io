@@ -20,7 +20,6 @@
       if(!d)return;
       const load=(src)=>{const s=d.createElement('script');s.src=src;s.async=false;(d.body||d.documentElement).appendChild(s);return s};
       load('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
-      // Suppress legacy header controls before the shared shell adds its canonical controls.
       load('/manager-ui-source-header-suppress-v1.js?v=20260903-v1');
       load('/manager-ui-shell-v2.js?v=20260903-v4');
       load('/manager-ui-header-fix-v1.js?v=20260903-v4');
@@ -32,6 +31,7 @@
           load('/manager-workforce-demand-v4.js?v=20260902-v6');
           load('/manager-workforce-auto.js?v=20260902-v1');
           load('/manager-workforce-tabs-v1.js?v=20260902-v1');
+          load('/manager-workforce-day-header-fix-v2.js?v=20260903-v2');
         }else setTimeout(waitForSupabase,100);
       };
       waitForSupabase();
