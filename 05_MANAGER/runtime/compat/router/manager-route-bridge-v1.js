@@ -4,6 +4,7 @@
   if(window.MAGASIN_MANAGER_ROUTE_BRIDGE_V1) return;
   window.MAGASIN_MANAGER_ROUTE_BRIDGE_V1 = true;
 
+  const PREFIX='/05_MANAGER';
   const MAP={
     dashboard:'',staff:'Nhan-su',workforce:'Workforce',schedule:'Lich-lam',tasks:'Cong-viec',
     kpi:'KPI',swap:'Doi-ca',attendance:'Cham-cong',academy:'Academy',settings:'Cai-dat'
@@ -15,11 +16,11 @@
     try{return window.top || window.parent || window;}catch(_){return window.parent||window;}
   }
   function routeView(){
-    const p=String(top().location.pathname||'/manager/').replace(/^\/+|\/+$/g,'').split('/');
-    if(p[0]?.toLowerCase()!=='manager'||!p[1]) return 'dashboard';
+    const p=String(top().location.pathname||`${PREFIX}/`).replace(/^\/+|\/+$/g,'').split('/');
+    if(p[0]?.toLowerCase()!==PREFIX.slice(1).toLowerCase()||!p[1]) return 'dashboard';
     return REVERSE[String(p[1]).toLowerCase()]||'dashboard';
   }
-  function routeFor(view){return MAP[view]?`/manager/${MAP[view]}/`:'/manager/';}
+  function routeFor(view){return MAP[view]?`${PREFIX}/${MAP[view]}/`:`${PREFIX}/`;}
   function setRoute(view,replace){
     const w=top(), next=routeFor(view);
     try{
