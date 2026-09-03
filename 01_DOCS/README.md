@@ -1,8 +1,8 @@
 # MAGASIN DOCUMENTATION
 
-Đây là khu vực tài liệu chính thức của MAGASIN.
+Tài liệu chính thức của MAGASIN.
 
-## Thứ tự đọc bắt buộc cho một phiên làm việc mới
+## Đọc trước khi làm việc
 
 1. `enterprise/MAGASIN_MASTER_OBJECTIVE.md`
 2. `enterprise/MAGASIN_AI_CONTEXT.md`
@@ -11,8 +11,6 @@
 5. `enterprise/MAGASIN_WORK_CONTROL.md`
 6. `enterprise/MAGASIN_DISCOVERY_PLAN.md`
 7. `architecture/PROJECT_STRUCTURE.md`
-8. tài liệu domain/module liên quan
+8. tài liệu domain/module liên quan.
 
-## Nguyên tắc
-
-Tài liệu là nguồn sự thật được xác nhận; code không tự định nghĩa business rule.
+Business Rule đã được Owner xác nhận là nguồn sự thật cho thiết kế và implementation.
