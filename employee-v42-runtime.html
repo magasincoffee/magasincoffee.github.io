@@ -7,7 +7,7 @@
 </head>
 <body>
 <iframe id="employeeApp" title="MAGASIN Employee V42"></iframe><div id="runtimeError" role="alert"></div>
-<script src="/shared-core-v1.js?v=20260903-core-110"></script>
+<script src="/shared-core-v1.js?v=20260903-core-120"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (()=>{'use strict';const C=window.MAGASIN_CORE,f=document.getElementById('employeeApp'),err=document.getElementById('runtimeError');if(!C){err.textContent='Shared Core chưa sẵn sàng.';err.style.display='block';return}const E=window.MAGASIN_EMPLOYEE=window.MAGASIN_EMPLOYEE||{};E.events=E.events||{emit:(n,d)=>document.dispatchEvent(new CustomEvent('magasin:'+n,{detail:d}))};(async()=>{try{const p=await C.supabase.requireActive();if(!C.roles.hasRole(p,['STAFF','EMPLOYEE']))throw Error('Tài khoản không có quyền truy cập khu vực nhân viên.');E.profile=p;f.src='/employee-v40.html?ui=v42-template&runtime=engine';f.addEventListener('load',()=>{E.schedule?.refresh?.();E.attendance?.refresh?.();E.availability?.refresh?.();E.swap?.refresh?.();E.dashboard?.refresh?.()},{once:false})}catch(e){console.error(e);err.textContent=e.message||'Không thể tải hệ thống nhân viên.';err.style.display='block'}})()})();
