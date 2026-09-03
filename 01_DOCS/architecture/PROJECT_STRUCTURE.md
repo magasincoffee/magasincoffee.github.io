@@ -5,11 +5,7 @@
 
 ## Root policy
 
-GitHub Pages infrastructure files are the only files permitted at repository root:
-
-- `index.html` — unavoidable GitHub Pages entry redirect.
-- `.nojekyll` — GitHub Pages configuration.
-- `.github/` — CI/deployment configuration.
+Only GitHub Pages infrastructure remains at repository root: `index.html`, `.nojekyll`, and `.github/`.
 
 All business, application, documentation and database assets belong inside numbered directories.
 
@@ -27,30 +23,21 @@ All business, application, documentation and database assets belong inside numbe
 99_LEGACY/      Historical/quarantined implementations
 ```
 
-## Read order for new work
-
-1. Master objective and AI context in `01_DOCS/enterprise/`.
-2. Working method and work-control rules.
-3. Relevant domain rules under `01_DOCS/`.
-4. Current architecture.
-5. Canonical production module.
-6. Legacy only for historical reference.
-
 ## Source of truth
 
-`01_DOCS` defines approved business/system intent. `02_CORE` defines shared technical primitives. `04_OWNER`, `05_MANAGER`, `06_EMPLOYEE` own application capabilities. `07_DATABASE` owns database changes. `99_LEGACY` is not a production source.
+`01_DOCS` defines approved business/system intent. `02_CORE` defines shared technical primitives. `04_OWNER`, `05_MANAGER`, `06_EMPLOYEE` own application capabilities. `07_DATABASE` owns database changes. `99_LEGACY` is not production source.
 
 ## No patch sprawl
 
-Do not create new root-level feature files or patch chains such as `v2`, `v3`, `fix`, `cleanup`, `time-color` or `transfer-fix`. Update the canonical owning module or create a properly scoped module.
+Do not create root-level feature files or patch chains such as `v2`, `v3`, `fix`, `cleanup`, `time-color` or `transfer-fix`. Update the canonical owning module or create a properly scoped module.
 
 ## Authentication
 
-`03_PLATFORM/01_AUTH/` is the canonical authentication entry point. The repository root `index.html` only redirects there.
+`03_PLATFORM/01_AUTH/` is the canonical authentication entry point. The root `index.html` is only the GitHub Pages redirect.
 
 ## Manager
 
-`05_MANAGER/runtime/` contains the current Manager runtime wrapper and shell. Existing old implementation pieces remain under `runtime/compat/` until the Manager refactor is completed.
+`05_MANAGER/runtime/` contains the runtime wrapper and shell. Existing old implementation pieces remain under `runtime/compat/` until the Manager refactor is completed.
 
 ## URL policy
 
