@@ -1,0 +1,1 @@
+This file is replaced by the canonical structure documentation.
