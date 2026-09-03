@@ -1,1 +1,0 @@
-Structure cleanup archive. Do not use as a production dependency.
