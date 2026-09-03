@@ -1,3 +1,5 @@
 # MAGASIN
 
-Read `01_DOCS/` before making business, architecture or software changes.
+Hệ thống Business Operating System và ứng dụng số của MAGASIN.
+
+Xem `01_DOCS/` trước khi thực hiện thay đổi.
