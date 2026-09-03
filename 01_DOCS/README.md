@@ -15,14 +15,4 @@
 
 ## Nguyên tắc
 
-Tài liệu được ưu tiên theo trạng thái đã xác nhận. Code không tự định nghĩa business rule.
-
-## Trạng thái tài liệu
-
-`DRAFT` → `PROPOSED` → `CONFIRMED` → `ACTIVE` → `SUPERSEDED`
-
-## Cấu trúc
-
-- `enterprise/` — mục tiêu, operating model, cách làm việc, AI context và kế hoạch phát triển.
-- `architecture/` — cấu trúc kỹ thuật.
-- `modules/` — quy tắc từng module.
+Tài liệu là nguồn sự thật được xác nhận; code không tự định nghĩa business rule.
