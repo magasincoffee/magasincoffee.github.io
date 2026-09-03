@@ -1,58 +1,27 @@
 # MAGASIN Project Structure
 
-## Active architecture
+## Canonical production tree
 
-The repository is organized around one Shared Core and independent engines per business module.
+- `core/` — shared cross-portal primitives.
+- `owner/` — Owner portal and business modules.
+- `employee/` — Employee portal and business modules.
+- `manager/` — Manager portal. Its remaining legacy implementation is isolated under `manager/runtime/compat/` until the Manager engine refactor is completed.
+- `supabase/migrations/` — database migrations and RPC definitions.
+- `legacy/` — archived versions and obsolete implementations; canonical entry points must not load files from here.
 
-```text
-MAGASIN
-├── core/
-│   └── shared/
-│       └── shared-core-v1.js
-├── owner/
-│   └── Workforce/
-│       ├── index.html
-│       ├── runtime/
-│       │   └── owner-workforce-runtime.html
-│       ├── 01-demand/
-│       │   └── engine-v1.js
-│       ├── 02-review/
-│       │   └── engine-v1.js
-│       └── 03-publish/
-│           └── engine-v1.js
-├── employee/
-│   ├── index.html
-│   ├── runtime/
-│   │   └── employee-runtime-v1.html
-│   ├── app/
-│   │   └── employee-v40.html
-│   ├── dashboard/
-│   │   └── engine-v1.js
-│   ├── schedule/
-│   │   └── engine-v1.js
-│   ├── availability/
-│   │   └── engine-v1.js
-│   ├── attendance/
-│   │   └── engine-v1.js
-│   └── swap/
-│       └── engine-v1.js
-├── manager/
-├── supabase/
-│   └── migrations/
-├── docs/
-└── legacy/
-```
+## Owner Workforce
 
-## Ownership rule
+`owner/Workforce/` is the canonical Workforce area:
 
-A module owns its own state, rendering, events, validation and RPC calls. Shared Core provides only cross-portal primitives such as authentication, roles, Supabase access, date/week utilities, time utilities, security helpers and generic UI helpers.
+- `01-demand/engine-v1.js` — staffing demand.
+- `02-review/engine-v1.js` — employee availability review and branch transfer workflow.
+- `03-publish/engine-v1.js` — schedule generation, review and publication.
+- `runtime/owner-workforce-runtime.html` — runtime composition only.
 
-## Workforce modules
+## Employee
 
-`owner/Workforce/01-demand/` owns staffing demand.
+Each major employee capability has one engine under its own module directory. Legacy root-level implementations are archived under `legacy/employee/`.
 
-`owner/Workforce/02-review/` owns employee availability review and branch-transfer workflow.
+## Rules
 
-`owner/Workforce/03-publish/` owns schedule generation, review and publication.
-
-Legacy Workforce patch files must never be loaded by the active Owner Workforce runtime.
+Do not create new root-level `v2`, `v3`, `fix`, `cleanup`, `time-color`, or duplicate engine files. One business capability owns one canonical engine. Shared behavior belongs in `core/`; module behavior belongs in its module folder.
