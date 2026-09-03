@@ -1,0 +1,9 @@
+(()=>{'use strict';
+const VIEW='#view-workforce';
+const storageKey='magasin-owner-workforce-tab';
+const selectView=key=>{const view=document.querySelector(VIEW);if(!view)return false;const buttons=[...view.querySelectorAll('.tabs button[data-tab]')];const panels={demand:view.querySelector('#panel-demand'),review:view.querySelector('#panel-review'),publish:view.querySelector('#panel-publish')};if(!buttons.length)return false;const target=buttons.find(b=>b.dataset.tab===key)||buttons[0];const activeKey=target.dataset.tab;buttons.forEach(b=>{const active=b===target;b.classList.toggle('active',active);b.setAttribute('aria-selected',active?'true':'false');b.setAttribute('tabindex',active?'0':'-1')});Object.entries(panels).forEach(([k,p])=>{if(p)p.classList.toggle('active',k===activeKey)});try{sessionStorage.setItem(storageKey,activeKey)}catch{};return true};
+const boot=()=>{const view=document.querySelector(VIEW);if(!view)return false;const tabs=view.querySelector('.tabs');if(!tabs)return false;tabs.classList.add('workforce-tabs-v2');if(!tabs.dataset.v2Bound){tabs.dataset.v2Bound='true';tabs.addEventListener('click',e=>{const btn=e.target.closest?.('button[data-tab]');if(!btn||!tabs.contains(btn))return;e.preventDefault();e.stopImmediatePropagation();selectView(btn.dataset.tab);},{capture:true});}
+ let saved='demand';try{saved=sessionStorage.getItem(storageKey)||'demand'}catch{};selectView(saved);return true};
+const start=()=>{if(boot()){const view=document.querySelector(VIEW);const observer=new MutationObserver(()=>{if(!view.querySelector('.tabs[data-v2-bound="true"]'))boot()});observer.observe(view,{subtree:true,childList:true});}};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{start();setTimeout(start,500)}, {once:true});else{start();setTimeout(start,500)}
+})();
