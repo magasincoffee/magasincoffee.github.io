@@ -4,9 +4,10 @@
 <script>(function(){'use strict';
 const frame=document.getElementById('app');
 const load=(d,src)=>new Promise((resolve,reject)=>{if([...d.scripts].some(s=>(s.src||'').split('?')[0]===src))return resolve();const s=d.createElement('script');s.src=src;s.async=true;s.onload=resolve;s.onerror=reject;(d.body||d.documentElement).appendChild(s)});
-const loadMany=async(d,list)=>{await Promise.all(list.map(src=>load(d,src)))};
+const loadMany=async(d,list)=>{for(const src of list)await load(d,src)};
 const boot=async()=>{try{const d=frame.contentDocument;if(!d)return;
  await loadMany(d,[
+  '/shared-core-v1.js?v=20260903-core-v1',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
   '/manager-ui-source-header-suppress-v1.js?v=20260903-owner-v15',
   '/manager-ui-shell-v3.js?v=20260903-owner-v15',
@@ -20,8 +21,7 @@ const boot=async()=>{try{const d=frame.contentDocument;if(!d)return;
  const wireLazy=()=>{const view=d.querySelector('#view-workforce');if(!view||view.dataset.ownerV15Lazy==='1')return false;view.dataset.ownerV15Lazy='1';let reviewLoaded=false,publishLoaded=false;
  const loadReview=async()=>{if(reviewLoaded)return;reviewLoaded=true;await loadMany(d,[
   '/manager-workforce-review-v2.js?v=20260903-owner-v15',
-  '/manager-workforce-review-store-filter-v1.js?v=20260903-owner-v15'
- ]);await loadMany(d,[
+  '/manager-workforce-review-store-filter-v1.js?v=20260903-owner-v15',
   '/manager-workforce-review-transfer-fix-v1.js?v=20260903-owner-v15',
   '/manager-workforce-review-edit-cleanup-v1.js?v=20260903-owner-v15',
   '/manager-workforce-review-time-color-v3.js?v=20260903-owner-v15'
