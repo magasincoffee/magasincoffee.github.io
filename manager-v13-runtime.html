@@ -13,16 +13,18 @@
 (function(){
   'use strict';
   const frame=document.getElementById('app');
-  frame.src='/manager-v11.html?v=20260903-v11-2';
+  frame.src='/manager-v11.html?v=20260903-v11-3';
   frame.addEventListener('load',function(){
     try{
       const d=frame.contentDocument;
       if(!d)return;
       const load=(src)=>{const s=d.createElement('script');s.src=src;s.async=false;(d.body||d.documentElement).appendChild(s);return s};
       load('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
-      load('/manager-ui-shell-v2.js?v=20260903-v3');
-      load('/manager-ui-header-fix-v1.js?v=20260903-v3');
-      const css=d.createElement('link');css.rel='stylesheet';css.href='/manager-drawer-fix.css?v=20260903-v2';d.head.appendChild(css);
+      // Suppress legacy header controls before the shared shell adds its canonical controls.
+      load('/manager-ui-source-header-suppress-v1.js?v=20260903-v1');
+      load('/manager-ui-shell-v2.js?v=20260903-v4');
+      load('/manager-ui-header-fix-v1.js?v=20260903-v4');
+      const css=d.createElement('link');css.rel='stylesheet';css.href='/manager-drawer-fix.css?v=20260903-v3';d.head.appendChild(css);
       const waitForSupabase=()=>{
         if(window.supabase?.createClient || d.defaultView?.supabase?.createClient){
           load('/app-time-picker-24h.js?v=20260902-v1');
