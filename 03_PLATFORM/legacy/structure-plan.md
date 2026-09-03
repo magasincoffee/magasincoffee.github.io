@@ -1,0 +1,1 @@
+Canonical production structure is documented in docs/architecture/PROJECT_STRUCTURE.md. Do not add new versioned patch files at repository root.
