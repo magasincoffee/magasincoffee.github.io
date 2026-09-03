@@ -5,9 +5,9 @@
 
 ## Root policy
 
-Only GitHub Pages infrastructure remains at repository root: `index.html`, `.nojekyll`, and `.github/`.
+The repository root contains only unavoidable GitHub Pages infrastructure: `index.html`, `.nojekyll`, and `.github/`.
 
-All business, application, documentation and database assets belong inside numbered directories.
+All documentation, business rules, application code, UI, database migrations and integrations live inside numbered directories.
 
 ## Numbered top-level architecture
 
@@ -19,26 +19,26 @@ All business, application, documentation and database assets belong inside numbe
 05_MANAGER/       Manager portal and compatibility runtime
 06_EMPLOYEE/      Employee portal and employee capabilities
 07_DATABASE/      Supabase migrations and database contracts
-08_INTEGRATIONS/  Reserved for external system connectors
-99_LEGACY/        Historical/quarantined implementations
+08_INTEGRATIONS/  External system connectors when introduced
+99_LEGACY/        Archived/quarantined historical implementations
 ```
 
-## Source of truth
+## Canonical sources
 
-`01_DOCS` defines approved business/system intent. `02_CORE` defines shared technical primitives. `04_OWNER`, `05_MANAGER`, and `06_EMPLOYEE` own application capabilities. `07_DATABASE` owns database changes. `99_LEGACY` is not production source.
+`01_DOCS` defines approved business/system intent. `02_CORE` defines genuinely shared technical primitives. Each business module owns its own engine. `07_DATABASE` owns schema/migration changes. `99_LEGACY` is reference only and must never be loaded by production runtime.
 
 ## No patch sprawl
 
-Do not create root-level feature files or patch chains such as `v2`, `v3`, `fix`, `cleanup`, `time-color`, or `transfer-fix`. Update the canonical owning module or create a properly scoped module.
+Do not create root-level feature files or chains such as `v2`, `v3`, `fix`, `cleanup`, `time-color`, or `transfer-fix`. Modify the canonical owner or create a properly scoped module.
 
-## Authentication
+## Current migration state
 
-`03_PLATFORM/01_AUTH/` is the canonical authentication entry point. The root `index.html` is only the GitHub Pages redirect.
+Owner Workforce is divided into Demand, Review and Publish engines. Employee capabilities are divided into module engines. Manager remains in compatibility form under `05_MANAGER/runtime/compat/` until its separate refactor.
 
-## Current development state
+## New-session read order
 
-Owner Workforce is already partitioned into Demand, Review, and Publish engines. Employee capabilities have separate owning engines. Manager remains a compatibility implementation under `05_MANAGER/runtime/compat/` and will be refactored separately.
+Read `01_DOCS/enterprise/MAGASIN_MASTER_OBJECTIVE.md`, `MAGASIN_AI_CONTEXT.md`, `MAGASIN_BOS_FRAMEWORK.md`, `MAGASIN_WORKING_METHOD.md`, `MAGASIN_WORK_CONTROL.md`, then the relevant domain document and current module implementation.
 
-## URL policy
+## URL rule
 
-The numbered repository structure is authoritative. Entry pages and runtimes must reference canonical numbered paths and must never load from `99_LEGACY`.
+Production runtimes must use numbered canonical paths. Nothing under `99_LEGACY` is a production dependency.
