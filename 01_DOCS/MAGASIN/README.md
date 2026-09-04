@@ -27,7 +27,9 @@ Không lấy UI, database hoặc code hiện tại làm nguồn sự thật cho 
 
 ## Tài liệu chuẩn
 
+- `00_CURRENT_STATE.md` — trạng thái hiện tại và nhiệm vụ kế tiếp.
 - `00_MASTER_PLAN.md` — bảng kế hoạch tổng thể và trạng thái thực hiện.
+- `00_CHATGPT_CONTEXT.md` — context/handover chuẩn để nối tiếp công việc trong chat mới.
 - `01_DISCOVERY/` — sự thật vận hành được khám phá và xác nhận.
 - `02_BUSINESS_RULES/` — Business Rules đã chốt.
 - `03_SOP/` — SOP đã chốt.
@@ -39,5 +41,9 @@ Không lấy UI, database hoặc code hiện tại làm nguồn sự thật cho 
 ## Trạng thái tổng quát
 
 **Current phase: PHASE 0 — Enterprise Baseline / chuẩn bị Discovery**
+
+**Current task: Enterprise Discovery #001 — MAGASIN Enterprise Baseline**
+
+Khi mở chat mới, phải ưu tiên đọc `00_CURRENT_STATE.md`, `00_MASTER_PLAN.md`, `06_DECISION_LOG.md`, `07_CHANGE_LOG.md`, `00_CHATGPT_CONTEXT.md` rồi mới tiếp tục tài liệu/domain hiện tại.
 
 Chưa chuyển sang thiết kế nghiệp vụ chi tiết cho đến khi Discovery có đủ bằng chứng và được xác nhận.
