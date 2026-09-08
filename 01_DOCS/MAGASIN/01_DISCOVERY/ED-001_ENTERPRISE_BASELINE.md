@@ -86,7 +86,7 @@ Tiếp tục xác minh các baseline record `OPEN`, ưu tiên theo thứ tự:
 
 Sau khi baseline đủ bằng chứng mới chuyển sang Discovery domain D02–D12.
 
-## 7. Session evidence log — Câu 81–111
+## 7. Session evidence log — Câu 81–113
 
 Các dòng dưới đây là **evidence do Owner xác nhận trực tiếp trong Discovery session**. Chúng chưa tự động trở thành Business Rules.
 
@@ -121,5 +121,25 @@ Các dòng dưới đây là **evidence do Owner xác nhận trực tiếp trong
 | 107 | Database Architecture | Google Sheets “database tạm” đang kết hợp file theo nghiệp vụ + chi nhánh; kết nối bằng IMPORTRANGE, QUERY, FILTER, VLOOKUP/XLOOKUP, ARRAYFORMULA và kết hợp cách khác. Chưa có ID duy nhất. Master data hiện gồm nhân viên, sản phẩm, công thức, ca làm; Owner tạo/xóa master data. Khi đối tượng ngừng dùng thì hiện xóa khỏi Sheet. Sheets chủ yếu chỉ lưu trạng thái cuối; tồn kho 20→18 chỉ còn 18; nhân viên bậc 1→2 chỉ lưu bậc 2. Không khóa dữ liệu sau chốt; sai lịch sử thường sửa trực tiếp. Chưa có data dictionary. Khi chuyển Supabase, Owner muốn thiết kế lại từ nghiệp vụ thực tế. Supabase tương lai là backend + Single Source of Truth + tích hợp hệ thống. | FACT / GAP / DECISION |
 | 108 | Data Object Inventory | Owner xác nhận phạm vi đối tượng dữ liệu rộng gồm: con người (nhân viên, GM, Chủ, khách hàng, NCC và đối tượng khác); tổ chức/địa điểm (chi nhánh, kho và khác); sản phẩm (sản phẩm bán, nguyên vật liệu, topping, bao bì, dụng cụ/tài sản và khác); vận hành (ca, lịch, chấm công, điều chuyển nhân viên, bàn giao ca, sự cố, kiểm tra chất lượng và khác); kho (nhập, xuất, điều chuyển kho→chi nhánh, chi nhánh↔chi nhánh, tồn, kiểm kê, hao hụt, điều chỉnh và khác); bán hàng (đơn, chi tiết đơn, thanh toán, hủy, hoàn tiền, giảm giá/khuyến mãi, giao hàng và khác); tài chính (doanh thu, chi phí, AP, lương, thưởng, phạt/khấu trừ, tiền mặt, ngân hàng, MoMo); customer/marketing (hồ sơ, lịch sử mua, điểm, thẻ, voucher, promo, campaign, campaign result); data governance (người tạo, người sửa, lịch sử thay đổi, nhật ký thao tác, chốt kỳ, điều chỉnh sau chốt). | FACT / SCOPE |
 | 109 | Data Ownership | Data owner nghiệp vụ chính: Employee = Chủ + GM; Branch = GM; Warehouse/Stock = GM; Product/Recipe = Chủ; Schedule/Attendance = GM; Order/Revenue = Chủ + GM; Cost/AP/Money = Chủ + GM; Customer/Membership = Chủ + GM; Promotion/Voucher = Chủ; Marketing/Campaign = Chủ; Data Governance/History/Close = Chủ. Khi dữ liệu quan trọng sai và có tranh chấp/không xác định, Chủ có quyền chốt cuối. | FACT / DECISION |
-| 110 | Data Audit | Khi dữ liệu quan trọng bị sửa, MAGASIN yêu cầu lưu: người sửa + thời gian sửa + dữ liệu trước/sau + lý do sửa; áp dụng cho Employee, Attendance, Payroll, Inventory, Revenue, Costs, AP, Promotion/Voucher, Customer và các dữ liệu khác. | FACT / TARGET |
-| 111 | Data Close/Lock | Doanh thu chốt theo ngày và tháng; tiền mặt chốt theo ngày; tồn kho chốt mỗi ngày và cuối tháng; chấm công chốt theo kỳ lương; lương chốt cả hai kỳ 1–15 và 16–cuối tháng; chi phí chốt theo tháng; công nợ NCC chốt theo tuần. Sau khi chốt, chỉ Owner được sửa. Quyền chốt thuộc cả GM và Owner. Đây là target-state/guidance đã được Owner xác nhận trong Discovery, chưa phải Business Rule thực thi. | DECISION / TARGET |
+| 110 | Data Audit | Khi dữ liệu quan trọng bị sửa, MAGASIN yêu cầu lưu: người sửa + thời gian sửa + dữ liệu trước/sau + lý do sửa. Áp dụng cho nhân viên, chấm công, lương, tồn kho, doanh thu, chi phí, công nợ, khuyến mãi/voucher, khách hàng và các dữ liệu khác. | TARGET / DECISION |
+| 111 | Data Close / Lock | Mục tiêu close: doanh thu chốt ngày + tháng; tiền mặt chốt ngày; tồn kho chốt ngày + cuối tháng; chấm công chốt theo kỳ lương; lương chốt cả hai kỳ 1–15 và 16–cuối tháng; chi phí chốt tháng; công nợ NCC chốt tuần. Sau khi chốt, chỉ Owner được sửa. Quyền chốt thuộc GM + Owner. Đây là target-state; hiện trạng trước đó chưa khóa dữ liệu sau chốt. | TARGET / DECISION |
+| 112 | Post-close Correction | Khi dữ liệu đã chốt nhưng phát hiện sai, Owner sửa trực tiếp dữ liệu cũ; hệ thống phải lưu Audit. Khi điều chỉnh, Owner đã xác nhận “Giá trị sau” là thông tin bắt buộc. Không tạo phiếu điều chỉnh trước. Yêu cầu này phải được đọc cùng C110: audit của dữ liệu quan trọng vẫn lưu người sửa, thời gian, trước/sau và lý do; lựa chọn “Giá trị sau” tại C112 phản ánh thông tin bắt buộc của thao tác điều chỉnh, không hủy yêu cầu audit đầy đủ ở C110. | TARGET / DECISION |
+| 113 | Data Close / Lock | Khi một kỳ dữ liệu được chốt, chỉ Owner được sửa. Điều này nhất quán với quyền sửa sau chốt tại C111/C112; đây là target governance, không phải hiện trạng Google Sheets. | TARGET / DECISION |
+
+## 8. Open / conflict items surfaced through C113
+
+- C72.7 vs C101.3 vs C104: offboarding access control chỉ chuẩn hóa cho một số tool, một số tool vẫn manual.
+- C32/C33/C95 resolved by C95: 0 business bank accounts; 1 personal Owner bank account used for MAGASIN; 1 dedicated MoMo for MAGASIN.
+- C100: Owner nói có thể xác định promo tốt nhất, nhưng hiện chưa có structured campaign data → cần xác minh basis.
+- C105: database scope ban đầu còn incomplete.
+- C105/C106/C107: Google Sheets là official current data source; Supabase là future redesign / Backend + SSOT + Integration.
+- C110/C112: cần phân biệt “audit requirement” (trước/sau + người + thời gian + lý do) với “input bắt buộc khi correction” (giá trị sau). Không được coi C112 là giảm yêu cầu audit của C110.
+- C111/C113: quyền chốt = GM + Owner; quyền sửa sau chốt = Owner. Workflow thực thi và phạm vi khóa cụ thể cần xác định ở Business Rules/System phase.
+
+## 9. Current discovery position
+
+Evidence hiện đã được thu thập đến **C113**. `P0 — Enterprise Baseline` vẫn **OPEN**.
+
+Chưa chuyển sang Business Rules / SOP / Data Model / System / Webapp.
+
+Immediate next work: tiếp tục xác minh baseline và các open/conflict item; sau khi baseline đủ mới tiến hành P0 Gate Review và mở các domain D02–D12.
