@@ -6,8 +6,10 @@ Xây dựng một bộ **Enterprise Operating Source of Truth** của MAGASIN t�
 
 Mục tiêu cuối cùng là xây dựng **MAGASIN Digital Operating System**: chuẩn hóa vận hành, dữ liệu đúng, trách nhiệm rõ, KPI cho từng bộ phận/vị trí, kiểm soát doanh thu–chi phí–lợi nhuận, hỗ trợ quyết định nhanh, cải tiến liên tục và tạo nền tảng tăng trưởng bền vững.
 
+**Critical business priority:** MAGASIN hiện cần đặc biệt ưu tiên **Profitability & Cash**. Hệ thống tương lai phải giúp phân biệt rõ lợi nhuận và dòng tiền, hiểu unit economics theo sản phẩm/kênh/chi nhánh, xác định break-even, kiểm soát chi phí và cash leakage, đồng thời hỗ trợ quyết định giá dựa trên contribution chứ không chỉ dựa trên giá nguyên liệu. Chi tiết được quản lý tại `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/README.md`.
+
 Chuỗi mục tiêu:
-`VẬN HÀNH CHUẨN → DỮ LIỆU ĐÚNG → KPI RÕ → KIỂM SOÁT TỐT → QUYẾT ĐỊNH NHANH → HIỆU QUẢ TĂNG → LỢI NHUẬN TĂNG → TĂNG TRƯỞNG BỀN VỮNG`
+`VẬN HÀNH CHUẨN → DỮ LIỆU ĐÚNG → KPI RÕ → KIỂM SOÁT TỐT → QUYẾT ĐỊNH NHANH → HIỆU QUẢ TĂNG → LỢI NHUẬN TĂNG → DÒNG TIỀN KHỎE → TĂNG TRƯỞNG BỀN VỮNG`
 
 Tài liệu này là **bảng kế hoạch điều hành** để theo dõi tiến độ. Kết quả đã chốt được lưu trong chính thư mục `01_DOCS/MAGASIN/`.
 
@@ -30,6 +32,8 @@ FIELD VALIDATION
         ↓
 GOVERNANCE / CONTINUOUS IMPROVEMENT
 ```
+
+Profitability & Cash là **critical cross-domain track** chạy song song với P1, không phải một phase thay thế Enterprise Discovery.
 
 ## 3. Bảng kế hoạch tổng thể
 
@@ -57,12 +61,69 @@ GOVERNANCE / CONTINUOUS IMPROVEMENT
 | D06 | Attendance | Nhân viên vào ca, chấm công, xác nhận và xử lý sai lệch như thế nào? | ⚪ Pending |
 | D07 | Inventory | Hàng hóa đi từ mua/nhập đến kho, cửa hàng, tiêu hao và kiểm kê như thế nào? | ⚪ Pending |
 | D08 | Sales | Đơn hàng, thanh toán, giao hàng và doanh thu phát sinh như thế nào? | ⚪ Pending |
-| D09 | Finance | Doanh thu, giá vốn, lương, chi phí, lợi nhuận và dòng tiền được quản lý như thế nào? | ⚪ Pending |
+| D09 | Finance | Doanh thu, giá vốn, lương, chi phí, lợi nhuận và dòng tiền được quản lý như thế nào? | 🟡 Critical alongside P1 |
 | D10 | Customer & Marketing | Khách hàng, thành viên, voucher, promotion và retention vận hành ra sao? | ⚪ Pending |
 | D11 | Management | KPI, báo cáo, kiểm soát và quyết định quản trị được thực hiện như thế nào? | ⚪ Pending |
 | D12 | Technology | MAGASIN đang sử dụng những hệ thống nào, dữ liệu nằm ở đâu và luồng tích hợp thế nào? | ⚪ Pending |
 
-## 5. Phương pháp Discovery chuẩn
+## 5. Critical Business Track — Profitability & Cash
+
+Track này chạy song song với P1 vì tình trạng lợi nhuận và tiền mặt có ảnh hưởng trực tiếp đến khả năng sống còn và mọi quyết định vận hành.
+
+### 5.1 Không đồng nhất Profit với Cash
+
+Phải quản lý riêng:
+
+```text
+PROFITABILITY
+Revenue − COGS − Operating/Selling/Admin/other costs
+                    ↓
+                  PROFIT
+
+CASH
+Opening Cash + Inflows − Cash Outflows
+                    ↓
+                ENDING CASH
+```
+
+Có thể có profit nhưng thiếu cash; cũng có thể có cash nhưng đang lỗ.
+
+### 5.2 Pricing / Unit Economics
+
+Mỗi sản phẩm quan trọng cần phân tích:
+
+`Giá bán → Variable Cost → Contribution Margin → Fixed/Operating Cost → Profit`
+
+Variable cost phải xem xét nguyên liệu, topping, bao bì, channel fee, delivery/ship liên quan và promotion/discount khi phù hợp.
+
+Không được mặc định `Giá bán − nguyên liệu = lợi nhuận`.
+
+### 5.3 Branch / Channel Economics
+
+Phân tích profitability theo sản phẩm, channel và chi nhánh ở mức dữ liệu cho phép.
+
+### 5.4 Break-even
+
+Xác định fixed cost, contribution margin ratio, break-even sales và break-even units; sau đó áp dụng theo chi nhánh khi dữ liệu đủ tin cậy.
+
+### 5.5 Cash Control
+
+Kiểm soát cash, bank, MoMo, delivery cash, AP, debt, Owner contributions/withdrawals và các khoản chi chưa ghi nhận.
+
+### 5.6 Diagnostic priority
+
+Không mặc định giải pháp là tăng giá. Phải phân biệt ít nhất:
+
+1. Giá bán thấp.
+2. Giá vốn cao.
+3. Chi phí vận hành cao.
+4. Hao hụt/thất thoát/sai lệch.
+5. Cash leakage / working-capital pressure.
+6. Sản lượng/cơ cấu sản phẩm/cơ cấu chi nhánh chưa đủ contribution để hấp thụ fixed cost.
+
+Chi tiết track: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/README.md`.
+
+## 6. Phương pháp Discovery chuẩn
 
 Mỗi vấn đề phải được khảo sát theo chuỗi:
 
@@ -78,7 +139,7 @@ FACT / ASSUMPTION / RULE / DECISION
 
 Không nâng một ASSUMPTION thành RULE nếu chưa được MAGASIN xác nhận.
 
-## 6. Tiêu chuẩn chuyển Phase
+## 7. Tiêu chuẩn chuyển Phase
 
 ### P0 → P1
 Enterprise Baseline đủ để biết phạm vi Discovery và các đối tượng cần xác minh.
@@ -106,7 +167,7 @@ Webapp chạy được trong môi trường kiểm thử/thực tế.
 ### P7 → P8
 Các phát hiện thực địa đã được xử lý hoặc chuyển thành change request có kiểm soát.
 
-## 7. Quy tắc thay đổi
+## 8. Quy tắc thay đổi
 
 Khi phát hiện webapp không phù hợp thực tế, không mặc định sửa UI trước. Truy ngược:
 
@@ -126,7 +187,7 @@ DISCOVERY
 
 Xác định tầng sai trước khi chỉnh sửa.
 
-## 8. Định nghĩa trạng thái kế hoạch
+## 9. Định nghĩa trạng thái kế hoạch
 
 - 🔵 **Đang chuẩn bị / đang thực hiện**
 - 🟡 **Chờ xác nhận**
@@ -134,14 +195,15 @@ Xác định tầng sai trước khi chỉnh sửa.
 - 🔴 **Có vấn đề / cần xử lý**
 - ⚪ **Chưa bắt đầu**
 
-## 9. Nhật ký tiến độ
+## 10. Nhật ký tiến độ
 
 | Ngày | Công việc | Kết quả | Người xác nhận | Ghi chú |
 |---|---|---|---|---|
 | 2026-09-04 | Khởi tạo Enterprise Discovery framework | Tạo thư mục `MAGASIN/` và Master Plan | Owner / MAGASIN | Bắt đầu từ P0 |
 | 2026-09-08 | P0 Gate Review | Review evidence C01–C114; tạo `ED-001_P0_GATE_REVIEW.md`; P0 ready for P1 | Owner / MAGASIN discovery evidence | Không mở lại broad baseline; chuyển sang domain discovery |
+| 2026-09-09 | Profitability & Cash priority | Xác lập critical cross-domain track về pricing, unit economics, break-even, branch economics, profitability và cash control | Owner / MAGASIN | Chạy song song P1; chưa tạo Business Rules tài chính |
 
-## 10. Quy tắc cuối cùng
+## 11. Quy tắc cuối cùng
 
 **MAGASIN thực tế là nguồn gốc.**
 
@@ -150,3 +212,5 @@ Code hiện tại chỉ là implementation hiện hữu và có thể sai. Datab
 Mọi hệ thống tương lai phải trace ngược được về Discovery → Business Rule → SOP → Data Model.
 
 KPI là một mục tiêu quản trị cấp Enterprise và chỉ được thiết kế thành Business Rule sau khi D11 được Discovery đủ sâu và P2 được chốt.
+
+Profitability & Cash là một ưu tiên quản trị cấp Enterprise. Các quyết định về giá, cost target, profit target, cash control và KPI tài chính chỉ được trở thành Business Rule sau khi có dữ liệu/Discovery đủ tin cậy và Owner approval.
