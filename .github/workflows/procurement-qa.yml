@@ -1,0 +1,113 @@
+name: Procurement QA Robot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '04_OWNER/Procurement/**'
+      - '07_DATABASE/migrations/*procurement*'
+      - '09_QA/procurement/**'
+      - '.github/workflows/procurement-qa.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 18 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: procurement-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  procurement-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      QA_OUT: qa-artifacts
+      QA_BASE_URL: https://magasincoffee.github.io
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Static audit
+        run: node 09_QA/procurement/static-audit.mjs 04_OWNER/Procurement/index.html
+
+      - name: Production HTTP smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$QA_OUT"
+          url="$QA_BASE_URL/04_OWNER/Procurement/"
+          ok=0
+          for i in 1 2 3 4 5; do
+            code="$(curl -L -sS -o "$QA_OUT/production.html" -w '%{http_code}' "$url" || true)"
+            if [ "$code" = "200" ] && grep -q 'MAGASIN · Mua hàng & Công nợ' "$QA_OUT/production.html"; then
+              ok=1
+              break
+            fi
+            echo "Attempt $i: HTTP $code - waiting for GitHub Pages propagation"
+            sleep 12
+          done
+          if [ "$ok" != "1" ]; then
+            echo 'Production Procurement page is not healthy.'
+            exit 1
+          fi
+          echo '{"status":"PASS","url":"'"$url"'"}' > "$QA_OUT/production-http.json"
+
+      - name: Detect E2E credentials
+        id: creds
+        shell: bash
+        env:
+          QA_USER: ${{ secrets.PROCUREMENT_QA_USERNAME }}
+          QA_PASS: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
+        run: |
+          if [ -n "$QA_USER" ] && [ -n "$QA_PASS" ]; then
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            mkdir -p "$QA_OUT"
+            cat > "$QA_OUT/procurement-e2e-report.json" <<'JSON'
+          {"status":"SKIPPED","reason":"Missing PROCUREMENT_QA_USERNAME / PROCUREMENT_QA_PASSWORD repository secrets"}
+          JSON
+          fi
+
+      - name: Install Playwright
+        if: steps.creds.outputs.enabled == 'true'
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Browser + database smoke test
+        if: steps.creds.outputs.enabled == 'true'
+        env:
+          PROCUREMENT_QA_USERNAME: ${{ secrets.PROCUREMENT_QA_USERNAME }}
+          PROCUREMENT_QA_PASSWORD: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
+        run: node 09_QA/procurement/e2e-smoke.mjs
+
+      - name: Summarize reports
+        if: always()
+        shell: bash
+        run: |
+          echo '## Procurement QA' >> "$GITHUB_STEP_SUMMARY"
+          for f in qa-artifacts/*.json; do
+            [ -f "$f" ] || continue
+            echo "### $f" >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat "$f" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Upload QA logs and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: procurement-qa-${{ github.run_id }}
+          path: qa-artifacts/
+          if-no-files-found: warn
+          retention-days: 30
