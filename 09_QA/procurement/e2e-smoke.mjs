@@ -42,7 +42,9 @@ page.on('console', msg => {
 page.on('pageerror', err => report.page_errors.push(String(err?.stack || err?.message || err)));
 page.on('requestfailed', req => {
   const u = req.url();
-  if (!/google-analytics|googletagmanager|favicon/i.test(u)) report.request_failures.push({url:u,error:req.failure()?.errorText||'unknown'});
+  if (!/google-analytics|googletagmanager|favicon/i.test(u)) {
+    report.request_failures.push({ url:u, method:req.method(), resource_type:req.resourceType(), error:req.failure()?.errorText||'unknown' });
+  }
 });
 page.on('response', res => {
   const u = res.url();
@@ -183,7 +185,10 @@ try {
 
 if (report.console_errors.length) fail('console_errors', report.console_errors.join(' | ')); else ok('console_errors');
 if (report.page_errors.length) fail('page_errors', report.page_errors.join(' | ')); else ok('page_errors');
-if (report.request_failures.length) fail('request_failures', JSON.stringify(report.request_failures)); else ok('request_failures');
+const actionableRequestFailures = report.request_failures.filter(x => !(x.method === 'HEAD' && x.error === 'net::ERR_ABORTED'));
+const benignHeadAborts = report.request_failures.filter(x => x.method === 'HEAD' && x.error === 'net::ERR_ABORTED');
+if (actionableRequestFailures.length) fail('request_failures', JSON.stringify(actionableRequestFailures));
+else ok('request_failures', benignHeadAborts.length ? `Đã bỏ qua ${benignHeadAborts.length} HEAD request kết thúc không có body.` : '');
 if (report.http_errors.length) fail('http_5xx', JSON.stringify(report.http_errors)); else ok('http_5xx');
 
 const failed = report.checks.filter(x=>x.status==='FAIL');
