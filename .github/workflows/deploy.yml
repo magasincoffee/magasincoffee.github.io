@@ -27,9 +27,11 @@ jobs:
         run: |
           set -euo pipefail
 
+          # .nojekyll is intentionally a zero-byte marker, so only require existence.
+          test -e .nojekyll || { echo 'Missing .nojekyll'; exit 1; }
+
           required=(
             index.html
-            .nojekyll
             02_CORE/shared/shared-core-v1.js
             03_PLATFORM/01_AUTH/index.html
             04_OWNER/index.html
@@ -39,6 +41,7 @@ jobs:
             06_EMPLOYEE/index.html
             07_DATABASE/migrations/20260915183000_procurement_accounting_v1.sql
             07_DATABASE/migrations/20260915190000_procurement_base_unit_lock_v1.sql
+            07_DATABASE/migrations/20260915210000_procurement_integrity_hardening_v2.sql
           )
 
           for f in "${required[@]}"; do
