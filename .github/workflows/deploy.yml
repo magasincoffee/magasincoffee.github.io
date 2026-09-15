@@ -9,42 +9,56 @@ permissions:
   contents: read
 
 concurrency:
-  group: github-pages-validation
+  group: github-pages-validation-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout github.io source
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Validate production structure
+      - name: Validate canonical production structure
         shell: bash
         run: |
           set -euo pipefail
-          test -s index.html
-          test -s app.js
-          test -s employee/index.html
-          test -s employee-v40.html
-          test -s employee-v40-runtime.html
-          test -s attendance-auto-ui.js
-          test -s manager/index.html
-          test -s manager-shell.html
-          test -s auth-runtime-v4.js
 
-          if grep -RIn --exclude-dir=.git 'magasincoffee/noibo' .github employee employee-v40-runtime.html employee-v40.html attendance-auto-ui.js; then
-            echo 'Production runtime still references noibo.'
+          required=(
+            index.html
+            .nojekyll
+            02_CORE/shared/shared-core-v1.js
+            03_PLATFORM/01_AUTH/index.html
+            04_OWNER/index.html
+            04_OWNER/Workforce/index.html
+            04_OWNER/Procurement/index.html
+            05_MANAGER/index.html
+            06_EMPLOYEE/index.html
+            07_DATABASE/migrations/20260915183000_procurement_accounting_v1.sql
+            07_DATABASE/migrations/20260915190000_procurement_base_unit_lock_v1.sql
+          )
+
+          for f in "${required[@]}"; do
+            if [ ! -s "$f" ]; then
+              echo "Missing required production file: $f"
+              exit 1
+            fi
+          done
+
+          # Prevent production code from pointing back at the deprecated noibo repo.
+          if grep -RIn --exclude-dir=.git --exclude-dir=99_LEGACY \
+             --exclude='*.md' 'magasincoffee/noibo' \
+             02_CORE 03_PLATFORM 04_OWNER 05_MANAGER 06_EMPLOYEE; then
+            echo 'Production runtime still references deprecated magasincoffee/noibo.'
             exit 1
           fi
 
-          if grep -RIn --exclude-dir=.git 'attendance-ui-finalize\|patch-attendance-runtime' .github; then
-            echo 'Legacy attendance patch workflow reference found.'
-            exit 1
-          fi
+          node --check 02_CORE/shared/shared-core-v1.js
 
-          node --check app.js
-          node --check auth-runtime-v4.js
-          node --check attendance-auto-ui.js
+          # Reuse Procurement static QA whenever its robot exists.
+          if [ -f 09_QA/procurement/static-audit.mjs ]; then
+            node 09_QA/procurement/static-audit.mjs 04_OWNER/Procurement/index.html
+          fi
