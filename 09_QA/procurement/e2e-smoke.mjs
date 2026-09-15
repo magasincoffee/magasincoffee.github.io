@@ -62,11 +62,15 @@ try {
   await page.goto(`${BASE}/03_PLATFORM/01_AUTH/`, { waitUntil:'domcontentloaded', timeout:30000 });
   await page.fill('#username', USER);
   await page.fill('#password', PASS);
-  await Promise.all([
-    page.locator('#loginForm button').click(),
-    page.waitForTimeout(1200)
+  await page.locator('#loginForm button').click();
+  const loginOutcome = await Promise.race([
+    page.waitForURL('**/04_OWNER/Procurement/**', { waitUntil:'domcontentloaded', timeout:45000 }).then(() => 'success'),
+    page.locator('#msg.error:not([hidden])').waitFor({ state:'visible', timeout:45000 }).then(() => 'error')
   ]);
-  await page.goto(`${BASE}/04_OWNER/Procurement/`, { waitUntil:'networkidle', timeout:45000 });
+  if (loginOutcome === 'error') {
+    throw new Error(`Đăng nhập QA thất bại: ${await page.locator('#msg').innerText()}`);
+  }
+  await page.waitForLoadState('networkidle', { timeout:45000 });
 
   if (await page.locator('#denied:not(.hidden)').count()) {
     fail('access', await page.locator('#deniedText').innerText().catch(()=> 'Không có quyền'));
