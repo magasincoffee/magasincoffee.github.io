@@ -11,16 +11,21 @@
 <p>Đang mở hệ thống nhập hàng…</p>
 <script>
 (async () => {
+  const friendlyPath = '/nhap-hang/';
+  const sourcePath = '/04_OWNER/Procurement/';
   try {
-    const res = await fetch('/04_OWNER/Procurement/index.html', { cache: 'no-store' });
+    history.replaceState(history.state, '', sourcePath + location.search + location.hash);
+    const res = await fetch(sourcePath + 'index.html', { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     let html = await res.text();
     html = html.replace('<head>', '<head><base href="/04_OWNER/Procurement/">');
+    html = html.replace('</body>', `<script>addEventListener('load',()=>history.replaceState(history.state,'','${friendlyPath}'+location.search+location.hash),{once:true});<\/script></body>`);
     document.open();
     document.write(html);
     document.close();
   } catch (err) {
     console.error('[NHAP_HANG_ROUTE]', err);
+    history.replaceState(history.state, '', friendlyPath);
     document.body.innerHTML = '<main style="padding:24px"><h2>Không mở được hệ thống nhập hàng</h2><p>Vui lòng tải lại trang hoặc liên hệ quản trị hệ thống.</p></main>';
   }
 })();
