@@ -2,7 +2,7 @@ name: Procurement QA Robot
 
 on:
   push:
-    branches: [main, feat/procurement-accounting-ux-v2]
+    branches: [main, feat/procurement-accounting-ux-v2, feat/procurement-ui-polish-v3]
     paths:
       - '04_OWNER/Procurement/**'
       - '07_DATABASE/migrations/*procurement*'
@@ -50,6 +50,7 @@ jobs:
         if: github.ref != 'refs/heads/main'
         shell: bash
         run: |
+          mkdir -p "$QA_OUT"
           nohup python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/procurement-http.log 2>&1 &
           echo $! > /tmp/procurement-http.pid
           for i in 1 2 3 4 5; do
@@ -123,6 +124,13 @@ jobs:
           PROCUREMENT_QA_USERNAME: ${{ secrets.PROCUREMENT_QA_USERNAME }}
           PROCUREMENT_QA_PASSWORD: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
         run: node 09_QA/procurement/e2e-smoke.mjs
+
+      - name: UI polish + layout stability test
+        if: steps.creds.outputs.enabled == 'true'
+        env:
+          PROCUREMENT_QA_USERNAME: ${{ secrets.PROCUREMENT_QA_USERNAME }}
+          PROCUREMENT_QA_PASSWORD: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
+        run: node 09_QA/procurement/ui-polish-smoke.mjs
 
       - name: Summarize reports
         if: always()
