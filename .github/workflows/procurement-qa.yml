@@ -2,7 +2,7 @@ name: Procurement QA Robot
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/procurement-accounting-ux-v2]
     paths:
       - '04_OWNER/Procurement/**'
       - '07_DATABASE/migrations/*procurement*'
@@ -25,7 +25,6 @@ jobs:
     timeout-minutes: 20
     env:
       QA_OUT: qa-artifacts
-      QA_BASE_URL: https://magasincoffee.github.io
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -38,21 +37,56 @@ jobs:
       - name: Static audit
         run: node 09_QA/procurement/static-audit.mjs 04_OWNER/Procurement/index.html
 
+      - name: Configure QA target
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            echo 'QA_BASE_URL=https://magasincoffee.github.io' >> "$GITHUB_ENV"
+          else
+            echo 'QA_BASE_URL=http://127.0.0.1:8765' >> "$GITHUB_ENV"
+          fi
+
+      - name: Start local branch server
+        if: github.ref != 'refs/heads/main'
+        shell: bash
+        run: |
+          nohup python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/procurement-http.log 2>&1 &
+          echo $! > /tmp/procurement-http.pid
+          for i in 1 2 3 4 5; do
+            if curl -fsS http://127.0.0.1:8765/04_OWNER/Procurement/ > "$QA_OUT/local.html"; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/procurement-http.log || true
+          exit 1
+
+      - name: Local branch HTTP smoke
+        if: github.ref != 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'MAGASIN · Nhập hàng kế toán' "$QA_OUT/local.html"
+          grep -q 'procurement-v2-core.js' "$QA_OUT/local.html"
+          grep -q 'procurement-v2-orders.js' "$QA_OUT/local.html"
+          echo '{"status":"PASS","url":"http://127.0.0.1:8765/04_OWNER/Procurement/"}' > "$QA_OUT/local-http.json"
+
       - name: Production HTTP smoke
+        if: github.ref == 'refs/heads/main'
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$QA_OUT"
           url="$QA_BASE_URL/04_OWNER/Procurement/"
           ok=0
-          for i in 1 2 3 4 5; do
+          for i in 1 2 3 4 5 6 7 8; do
             code="$(curl -L -sS -o "$QA_OUT/production.html" -w '%{http_code}' "$url" || true)"
-            if [ "$code" = "200" ] && grep -q 'MAGASIN · Mua hàng & Công nợ' "$QA_OUT/production.html"; then
+            if [ "$code" = "200" ] && grep -q 'MAGASIN · Nhập hàng kế toán' "$QA_OUT/production.html"; then
               ok=1
               break
             fi
             echo "Attempt $i: HTTP $code - waiting for GitHub Pages propagation"
-            sleep 12
+            sleep 15
           done
           if [ "$ok" != "1" ]; then
             echo 'Production Procurement page is not healthy.'
