@@ -5,15 +5,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>MAGASIN · Nhập hàng kế toán</title>
-<meta http-equiv="refresh" content="0;url=/04_OWNER/Procurement/">
-<script>
-(() => {
-  const target = '/04_OWNER/Procurement/' + location.search + location.hash;
-  location.replace(target);
-})();
-</script>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f6f8fb;color:#344054;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}p{font-weight:700}</style>
 </head>
 <body>
 <p>Đang mở hệ thống nhập hàng…</p>
+<script>
+(async () => {
+  try {
+    const res = await fetch('/04_OWNER/Procurement/index.html', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    let html = await res.text();
+    html = html.replace('<head>', '<head><base href="/04_OWNER/Procurement/">');
+    document.open();
+    document.write(html);
+    document.close();
+  } catch (err) {
+    console.error('[NHAP_HANG_ROUTE]', err);
+    document.body.innerHTML = '<main style="padding:24px"><h2>Không mở được hệ thống nhập hàng</h2><p>Vui lòng tải lại trang hoặc liên hệ quản trị hệ thống.</p></main>';
+  }
+})();
+</script>
 </body>
 </html>
