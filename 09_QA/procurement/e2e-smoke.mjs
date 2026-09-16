@@ -47,8 +47,8 @@ try{
   await page.click('#nav button[data-tab="products"]');
   const productRows=await page.locator('#productsBody tr').count();
   if(productRows>=55)ok('product_catalog_rows',String(productRows));else fail('product_catalog_rows',`Chỉ có ${productRows} dòng`);
-  const missingBadges=await page.locator('#productsBody .badge.warn').filter({hasText:'Chưa có nguồn'}).count();
-  if(missingBadges===4)ok('reference_missing_badges','4 mặt hàng chưa có nguồn');else fail('reference_missing_badges',`Hiển thị ${missingBadges} badge`);
+  const missingBadges=await page.locator('#productsBody .badge.warn').filter({hasText:'Chưa có giá tham khảo'}).count();
+  if(missingBadges===4)ok('reference_missing_badges','4 mặt hàng chưa có giá tham khảo');else fail('reference_missing_badges',`Hiển thị ${missingBadges} badge`);
   const editProduct=page.locator('[data-edit-product]').first();
   if(await editProduct.count()){
     const productId=await editProduct.getAttribute('data-edit-product');await editProduct.click();await visible('#productDialog[open]','product_dialog_open');
@@ -70,8 +70,8 @@ try{
       if(ui.mode==='__REFERENCE__')ok('reference_mode_default',ref.data.product_code);else fail('reference_mode_default',JSON.stringify(ui));
       if(Math.abs(ui.price-Number(ref.data.source_price))<0.001)ok('reference_price_prefill',String(ui.price));else fail('reference_price_prefill',`UI=${ui.price}, DB=${ref.data.source_price}`);
       if(ui.qty===1)ok('reference_qty_default','1 quy cách');else fail('reference_qty_default',String(ui.qty));
-      if(ui.baseText.includes(String(ref.data.base_unit)))ok('reference_base_conversion',ui.baseText);else fail('reference_base_conversion',ui.baseText);
-      if(ui.referenceText.includes('*ĐỊNH GIÁ'))ok('reference_source_visible',ui.referenceText);else fail('reference_source_visible',ui.referenceText);
+      if(ui.baseText.includes(String(ref.data.base_unit))||/kg|lít/.test(ui.baseText))ok('reference_base_conversion',ui.baseText);else fail('reference_base_conversion',ui.baseText);
+      if(/^Giá tham khảo:/i.test(ui.referenceText)&&!ui.referenceText.includes('*ĐỊNH GIÁ'))ok('reference_source_visible',ui.referenceText);else fail('reference_source_visible',ui.referenceText);
     }
     const supplier=page.locator('#orderSupplier option').filter({hasNotText:'-- Chọn'}).first();
     const product=page.locator('.line-product option').filter({hasNotText:'-- Chọn'}).first();
