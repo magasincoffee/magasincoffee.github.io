@@ -2,9 +2,12 @@ name: Procurement QA Robot
 
 on:
   push:
-    branches: [main, feat/procurement-accounting-ux-v2, feat/procurement-ui-polish-v3]
+    branches: [main, 'feat/procurement-*', 'fix/procurement-*']
     paths:
       - '04_OWNER/Procurement/**'
+      - '04_OWNER/index.html'
+      - '03_PLATFORM/01_AUTH/auth-runtime-v1.js'
+      - 'nhap-hang/**'
       - '07_DATABASE/migrations/*procurement*'
       - '09_QA/procurement/**'
       - '.github/workflows/procurement-qa.yml'
@@ -54,7 +57,7 @@ jobs:
           nohup python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/procurement-http.log 2>&1 &
           echo $! > /tmp/procurement-http.pid
           for i in 1 2 3 4 5; do
-            if curl -fsS http://127.0.0.1:8765/04_OWNER/Procurement/ > "$QA_OUT/local.html"; then
+            if curl -fsS http://127.0.0.1:8765/04_OWNER/Procurement/ > "$QA_OUT/local.html" && curl -fsS http://127.0.0.1:8765/nhap-hang/ > "$QA_OUT/local-friendly.html"; then
               exit 0
             fi
             sleep 1
@@ -70,7 +73,9 @@ jobs:
           grep -q 'MAGASIN · Nhập hàng kế toán' "$QA_OUT/local.html"
           grep -q 'procurement-v2-core.js' "$QA_OUT/local.html"
           grep -q 'procurement-v2-orders.js' "$QA_OUT/local.html"
-          echo '{"status":"PASS","url":"http://127.0.0.1:8765/04_OWNER/Procurement/"}' > "$QA_OUT/local-http.json"
+          grep -q 'MAGASIN · Nhập hàng kế toán' "$QA_OUT/local-friendly.html"
+          grep -q 'NHAP_HANG_ROUTE' "$QA_OUT/local-friendly.html"
+          echo '{"status":"PASS","source_url":"http://127.0.0.1:8765/04_OWNER/Procurement/","friendly_url":"http://127.0.0.1:8765/nhap-hang/"}' > "$QA_OUT/local-http.json"
 
       - name: Production HTTP smoke
         if: github.ref == 'refs/heads/main'
@@ -78,22 +83,24 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$QA_OUT"
-          url="$QA_BASE_URL/04_OWNER/Procurement/"
+          source_url="$QA_BASE_URL/04_OWNER/Procurement/"
+          friendly_url="$QA_BASE_URL/nhap-hang/"
           ok=0
           for i in 1 2 3 4 5 6 7 8; do
-            code="$(curl -L -sS -o "$QA_OUT/production.html" -w '%{http_code}' "$url" || true)"
-            if [ "$code" = "200" ] && grep -q 'MAGASIN · Nhập hàng kế toán' "$QA_OUT/production.html"; then
+            source_code="$(curl -L -sS -o "$QA_OUT/production.html" -w '%{http_code}' "$source_url" || true)"
+            friendly_code="$(curl -L -sS -o "$QA_OUT/production-friendly.html" -w '%{http_code}' "$friendly_url" || true)"
+            if [ "$source_code" = "200" ] && [ "$friendly_code" = "200" ] && grep -q 'MAGASIN · Nhập hàng kế toán' "$QA_OUT/production.html" && grep -q 'NHAP_HANG_ROUTE' "$QA_OUT/production-friendly.html"; then
               ok=1
               break
             fi
-            echo "Attempt $i: HTTP $code - waiting for GitHub Pages propagation"
+            echo "Attempt $i: source=$source_code friendly=$friendly_code - waiting for GitHub Pages propagation"
             sleep 15
           done
           if [ "$ok" != "1" ]; then
-            echo 'Production Procurement page is not healthy.'
+            echo 'Production Procurement page or friendly route is not healthy.'
             exit 1
           fi
-          echo '{"status":"PASS","url":"'"$url"'"}' > "$QA_OUT/production-http.json"
+          echo '{"status":"PASS","source_url":"'"$source_url"'","friendly_url":"'"$friendly_url"'"}' > "$QA_OUT/production-http.json"
 
       - name: Detect E2E credentials
         id: creds
