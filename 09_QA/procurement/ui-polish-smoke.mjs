@@ -39,7 +39,14 @@ try{
   if(scrollTop===0)ok('dialog_opens_at_top','scrollTop=0');else fail('dialog_opens_at_top',`scrollTop=${scrollTop}`);
 
   const modalBox=await box('#orderDialog');
-  if(modalBox&&modalBox.width>=1450&&modalBox.height>=850)ok('desktop_workspace_size',JSON.stringify(modalBox));else warn('desktop_workspace_size',JSON.stringify(modalBox));
+  if(modalBox&&modalBox.width>=1450&&modalBox.height>=740&&modalBox.height<=820)ok('desktop_workspace_size',JSON.stringify(modalBox));else fail('desktop_workspace_size',JSON.stringify(modalBox));
+
+  const headings=await page.locator('#orderDialog .line-head').innerText();
+  const expected=['Hàng hóa','Quy cách mua','Số lượng','Giá hóa đơn','Quy đổi kho','Tạm tính'];
+  const missingHeadings=expected.filter(x=>!headings.includes(x));
+  if(!missingHeadings.length)ok('accounting_column_labels',expected.join(' | '));else fail('accounting_column_labels',`Thiếu: ${missingHeadings.join(', ')}`);
+  const searchLabel=await page.locator('#orderDialog .line-tools label').innerText();
+  if(searchLabel==='Tìm nhanh hàng hóa')ok('quick_search_label');else fail('quick_search_label',searchLabel);
 
   const ref=await page.evaluate(async()=>{const sb=globalThis.MAGASIN_CORE?.supabase.get();const q=await sb.from('v_procurement_product_price_context').select('product_id,product_code,base_unit').not('reference_id','is',null).order('product_code').limit(1).single();return q.data});
   if(!ref)throw new Error('Không tìm thấy hàng hóa có giá tham khảo.');
@@ -58,9 +65,11 @@ try{
 
   const rowHeight=await page.locator('.line-row').first().evaluate(el=>el.getBoundingClientRect().height);
   if(rowHeight>=108&&rowHeight<=120)ok('line_height_stable',String(rowHeight));else fail('line_height_stable',String(rowHeight));
+  const priceStatus=await page.locator('.line-price-status').first().innerText();
+  if(priceStatus==='Chênh lệch rất lớn')ok('extreme_price_message',priceStatus);else fail('extreme_price_message',priceStatus);
 
   const summaryText=await page.locator('#orderDialog .order-summary').innerText();
-  if(summaryText.includes('Dòng có giá tham khảo')&&!summaryText.includes('*ĐỊNH GIÁ'))ok('summary_vietnamese_copy');else fail('summary_vietnamese_copy',summaryText);
+  if(summaryText.includes('Dòng có giá tham khảo')&&summaryText.includes('Chênh lệch giá')&&summaryText.includes('Tổng tiền nhập')&&!summaryText.includes('*ĐỊNH GIÁ'))ok('summary_vietnamese_copy');else fail('summary_vietnamese_copy',summaryText);
 
   await page.screenshot({path:path.join(outDir,'ui-polish-order-desktop.png'),fullPage:true});
   await page.click('[data-close="orderDialog"]');
