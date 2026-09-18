@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-033 — Give Shift production primitive — READY**
+**TASK-034 — Notification event-outbox production — READY**
 
 Canonical task/state files:
 
@@ -30,6 +30,7 @@ Canonical task/state files:
 - `05_SYSTEM/EMPLOYEE_AVAILABILITY_CANONICAL_SLICE_V1.md`
 - `05_SYSTEM/MANAGER_SCHEDULE_CANONICAL_SLICE_V1.md`
 - `05_SYSTEM/PUBLISHED_SCHEDULE_FEEDBACK_LOOP_V1.md`
+- `05_SYSTEM/GIVE_SHIFT_PRODUCTION_V1.md`
 
 ## Current target
 
@@ -96,17 +97,20 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-033 under Five-Step.
+**AUTO_CONTINUE:** execute TASK-034 under Five-Step.
 
-SFB-001 and SFB-002 are both APPROVED.
+TASK-033 Give Shift V1 is production-applied and verified:
 
-Critical-path implementation queue:
+- recipient consent required;
+- Manager approval required;
+- server revalidation before transfer;
+- RLS + RPC permission boundaries verified;
+- Employee/Manager browser E2E PASS;
+- production synthetic test data was not inserted.
 
-1. TASK-033 — implement one-way Give Shift primitive with lifecycle `RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES`;
-2. TASK-034 — apply production notification event-outbox with RLS and schedule/Swap/attendance event generation;
-3. TASK-035 — connect email adapter using MAGASIN email source and secret store; external calendar remains disabled.
+TASK-034 scope is only durable notification event-outbox for schedule/attendance/Swap/Give events. Reuse canonical mutations and do not activate an email provider yet.
 
-Do not invent an email provider or commit credentials. If TASK-035 reaches a provider/account-specific configuration requirement that cannot be resolved from repository/runtime configuration, stop at that exact boundary.
+Do not invent an email provider or commit credentials. TASK-035 owns provider-specific email adapter/config and must stop at an exact provider/account boundary if unresolved.
 
 TASK-026 remains deferred independently.
 
