@@ -28,3 +28,28 @@ test("BLOCKED remains a hard stop while WAIT_USER has a reconciliation path", as
   assert.match(source, /projectState\.blocked \|\| projectState\.status === "BLOCKED"/);
   assert.match(source, /Project is BLOCKED; no automatic Owner reconciliation is allowed/);
 });
+
+
+test("manual Owner resolved acknowledgement can re-arm one reconciliation for the matching boundary", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/supervisor-loop-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /owner-resolved\.json/);
+  assert.match(source, /ownerAckMatchesProject/);
+  assert.match(source, /OWNER_RESOLVED_ACK_OBSERVED/);
+  assert.match(source, /ownerReconcileState\.manualAck = true/);
+  assert.match(source, /if \(ownerReconcileState\.manualAck\)/);
+  assert.match(source, /clearOwnerResolvedAck\(ownerResolvedAckPath\)/);
+});
+
+test("manual acknowledgement cannot match a different current task", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/supervisor-loop-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /task !== String\(projectState\.current_task/);
+  assert.match(source, /OWNER_RESOLVED_ACK_IGNORED/);
+});
