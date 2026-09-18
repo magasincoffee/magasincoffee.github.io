@@ -12,4 +12,7 @@ test("Employee attendance executes published schedules through verified RPCs",as
   assert.match(source,/get_my_attendance_v2/);
   assert.doesNotMatch(source,/\.from\(['"]attendance['"]\)/);
   assert.doesNotMatch(source,/\.from\(['"]work_schedules['"]\)/);
+  assert.match(source,/manual_attendance_from_schedule/);
+  assert.doesNotMatch(source,/auto_attendance_from_approved_schedules/);
+  assert.doesNotMatch(source,/employeeAutoAttendance/);
 });
