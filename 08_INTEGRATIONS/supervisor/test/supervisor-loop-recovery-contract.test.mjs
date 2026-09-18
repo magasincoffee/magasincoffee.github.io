@@ -25,5 +25,47 @@ test("fresh-chat rollover atomically persists the new target instead of revisiti
   assert.match(source, /await writeTarget\(targetPath, newTarget\)/);
   assert.match(source, /page\.waitForURL/);
   assert.match(source, /ROLLOVER_CONVERSATION_FULL/);
-  assert.match(source, /ROLLOVER_TARGET_MISSING/);
+  assert.match(source, /ROLLOVER_CONVERSATION_MISSING/);
+});
+
+test("stale target adopts a healthy existing conversation and never creates a new chat from target mismatch", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/supervisor-loop-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /isHealthyConversationProbe\(mismatchProbe\)/);
+  assert.match(source, /CURRENT_HEALTHY_CONVERSATION/);
+  assert.match(source, /Automatic creation of another chat is disabled to prevent a chat storm/);
+
+  const start = source.indexOf(
+    "if (targetRecovery === RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING)"
+  );
+  const end = source.indexOf(
+    "const probe = await session.probe()",
+    start
+  );
+  assert.ok(start >= 0 && end > start);
+  const targetMismatchBlock = source.slice(start, end);
+  assert.doesNotMatch(targetMismatchBlock, /createFreshConversation\(/);
+  assert.match(targetMismatchBlock, /recovery\.block\(\)/);
+});
+
+test("ambiguous unavailable UI fails closed after reload instead of creating another chat", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/supervisor-loop-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  const start = source.indexOf(
+    "if (recoveryAction === RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE)"
+  );
+  const end = source.indexOf(
+    "if (\n      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL",
+    start
+  );
+  assert.ok(start >= 0 && end > start);
+  const unavailableBlock = source.slice(start, end);
+  assert.doesNotMatch(unavailableBlock, /createFreshConversation\(/);
+  assert.match(unavailableBlock, /recovery\.block\(\)/);
 });
