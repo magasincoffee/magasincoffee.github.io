@@ -4,6 +4,7 @@ import {
   normalizeControlTowerSnapshot
 } from "./snapshot-v1.mjs";
 import { requireOwnerAccess } from "./access-v1.mjs";
+import { loadRevenueStatus } from "./revenue-adapter-v1.mjs";
 import { loadProcurementPayables } from "./payables-adapter-v1.mjs";
 import { loadWorkforceAttention } from "./workforce-adapter-v1.mjs";
 
@@ -109,9 +110,18 @@ async function boot() {
     denied.classList.add("hidden");
     app.classList.remove("hidden");
 
+    const revenue = await loadRevenueStatus(core, {
+      reportingDate: rawState.context.reportingDate
+    });
+    rawState.revenue = revenue;
+    rawState.context.refreshedAt =
+      revenue.asOf || rawState.context.refreshedAt || new Date().toISOString();
+    render(normalizeControlTowerSnapshot(rawState));
+
     const payables = await loadProcurementPayables(core.supabase.get());
     rawState.payables = payables;
-    rawState.context.refreshedAt = payables.asOf || new Date().toISOString();
+    rawState.context.refreshedAt =
+      payables.asOf || rawState.context.refreshedAt || new Date().toISOString();
     render(normalizeControlTowerSnapshot(rawState));
 
     const workforce = await loadWorkforceAttention(core);
