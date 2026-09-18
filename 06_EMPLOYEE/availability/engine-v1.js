@@ -86,7 +86,7 @@ function renderSummary(){
  const storeName=id=>{if(!id)return'Không theo chi nhánh';const s=state.stores.find(s=>String(s.id)===String(id));return s?.code||s?.name||'Chi nhánh'};
  box.innerHTML=days.map((k,i)=>{
   const rows=state.rows.filter(r=>String(r.work_date).slice(0,10)===k).sort((a,b)=>C.time.minutes(a.start_time)-C.time.minutes(b.start_time));
-  return `<div class="mini"><h4>${DAY_NAMES[i]}</h4><div class="date">${C.date.formatDate(k)}</div>${rows.length?rows.map(r=>{const id=r.id||r.availability_id||'';return `<div class="miniShift" data-av-row="${esc(id)}"><b>${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</b><br>${esc(typeLabel(r.availability_type))}<br>${esc(storeName(r.preferred_store_id))}${id?`<br><button type="button" class="btn secondary" data-av-delete="${esc(id)}" style="margin-top:6px;padding:4px 7px;min-height:0;font-size:10px">Xóa</button>`:''}</div>`}).join(''):'<div class="muted" style="margin-top:17px">Chưa đăng ký</div>'}</div>`
+  return `<div class="mini"><h4>${DAY_NAMES[i]}</h4><div class="date">${C.date.formatDate(k)}</div>${rows.length?rows.map(r=>{const id=r.id||r.availability_id||'';return `<div class="miniShift" data-av-row="${esc(id)}"><b>${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</b><br>${esc(typeLabel(r.availability_type))}<br>${esc(storeName(r.preferred_store_id))}<br><span class="muted">Đã đăng ký</span>${id?`<br><button type="button" class="btn secondary" data-av-delete="${esc(id)}" style="margin-top:6px;padding:4px 7px;min-height:0;font-size:10px">Xóa</button>`:''}</div>`}).join(''):'<div class="muted" style="margin-top:17px">Chưa đăng ký</div>'}</div>`
  }).join('');
  box.querySelectorAll('[data-av-delete]').forEach(b=>b.addEventListener('click',()=>removeAvailability(b.dataset.avDelete)))
 }
