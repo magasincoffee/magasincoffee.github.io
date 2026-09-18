@@ -31,6 +31,15 @@ test("TASK-035 config fails closed until provider and sender are explicit",()=>{
   });
 });
 
+test("TASK-035 claim limit supports one-event activation and caps normal batches",()=>{
+  assert.equal(normalizeBatchLimit(undefined),25);
+  assert.equal(normalizeBatchLimit(1),1);
+  assert.equal(normalizeBatchLimit("1"),1);
+  assert.equal(normalizeBatchLimit(100),25);
+  assert.equal(normalizeBatchLimit(0),1);
+  assert.equal(normalizeBatchLimit("invalid"),25);
+});
+
 test("TASK-035 store-manager recipient scope mirrors canonical access-scope semantics",()=>{
   assert.equal(accessScopeIncludesStore("ALL","CN2"),true);
   assert.equal(accessScopeIncludesStore("*","CN2"),true);
@@ -114,7 +123,7 @@ test("TASK-035 worker never claims queue before provider adapter initializes",as
   const source=await read("supabase/functions/notification-email-worker/index.ts");
   const configPos=source.indexOf("readEmailConfig(Deno.env)");
   const providerPos=source.indexOf("loadProviderAdapter(config.provider)");
-  const claimPos=source.indexOf("const rows=await claim(25)");
+  const claimPos=source.indexOf("const rows=await claim(claimLimit)");
   assert.ok(configPos>=0&&providerPos>configPos&&claimPos>providerPos);
   assert.match(source,/CONFIG_REQUIRED/);
   assert.match(source,/PROVIDER_NOT_REGISTERED/);
