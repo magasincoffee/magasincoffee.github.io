@@ -67,6 +67,12 @@ export async function collectSafeUiSnapshot(page) {
       const hasTransientError =
         /something went wrong|đã xảy ra lỗi|try again|thử lại|retry/.test(haystack);
 
+      const conversationFull =
+        /maximum length|conversation.{0,50}(too long|full|limit|maximum)|chat.{0,40}(too long|full|limit)|reached.{0,40}(conversation|chat).{0,40}limit|cuộc trò chuyện.{0,50}(quá dài|đầy|giới hạn)|đoạn chat.{0,40}(quá dài|đầy|giới hạn)|đạt.{0,30}giới hạn/.test(haystack);
+
+      const conversationMissing =
+        /conversation not found|unable to load conversation|couldn.t load conversation|chat not found|không tìm thấy cuộc trò chuyện|không thể tải cuộc trò chuyện|không tìm thấy đoạn chat|không thể tải đoạn chat/.test(haystack);
+
       return {
         schemaVersion: "1.0",
         urlOrigin: location.origin,
@@ -87,7 +93,9 @@ export async function collectSafeUiSnapshot(page) {
         hasContinueControl:
           /continue generating|tiếp tục tạo|continue response/.test(haystack),
         hasRetryControl:
-          /try again|thử lại|retry/.test(haystack)
+          /try again|thử lại|retry/.test(haystack),
+        conversationFull,
+        conversationMissing
       };
     },
     { normalizeSource: NORMALIZE }
