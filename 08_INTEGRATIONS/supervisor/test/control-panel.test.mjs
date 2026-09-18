@@ -97,3 +97,32 @@ test("project card reads project_status instead of runtime recovery status", asy
   assert.match(source, /\$runtimeStatus\.project_status/);
   assert.match(source, /\$script:lastRemoteState\.status/);
 });
+
+
+test("control panel integrates the local GitHub Actions runner lifecycle", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /C:\\actions-runner/);
+  assert.match(source, /Runner\.Listener\.exe/);
+  assert.match(source, /MAGASIN-PC RUNNER - KEEP OPEN/);
+  assert.match(source, /START RUNNER/);
+  assert.match(source, /RUNNER ONLINE/);
+  assert.match(source, /Ensure-GitHubRunner -Interactive/);
+  assert.match(source, /START ROBOT sẽ khởi động Runner trước/);
+});
+
+test("START ROBOT fail-closes if the local runner cannot be started", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  const ensureIndex = source.indexOf("if (-not (Ensure-GitHubRunner -Interactive))");
+  const startIndex = source.indexOf("Start-Process powershell.exe -WindowStyle Hidden", ensureIndex);
+  assert.ok(ensureIndex >= 0);
+  assert.ok(startIndex > ensureIndex);
+  assert.match(source.slice(ensureIndex, startIndex), /return/);
+});
