@@ -204,3 +204,39 @@ test("control panel reads live runtime flattened boundary metadata", async () =>
   assert.match(source, /activation_boundary_pending/);
   assert.match(source, /owner_boundary_pending/);
 });
+
+
+test("control panel represents PAUSED autonomy as a first-class non-error state", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /'PAUSED' = @\(/);
+  assert.match(source, /\$projectAutonomy -eq 'PAUSED'/);
+  assert.match(source, /PAUSED • CHỜ/);
+  assert.match(source, /không mở\/điều khiển ChatGPT/);
+  assert.match(source, /Không có lỗi\. Robot đang tạm dừng có chủ đích/);
+});
+
+test("START ROBOT does not launch runner or ChatGPT while repository autonomy is PAUSED", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  const handler = source.indexOf("$startButton.Add_Click({");
+  const pauseGuard = source.indexOf("$remoteBeforeStart.autonomy -eq 'PAUSED'", handler);
+  const ensureRunner = source.indexOf("Ensure-GitHubRunner -Interactive", handler);
+  const launchSupervisor = source.indexOf("Start-Process powershell.exe -WindowStyle Hidden", handler);
+
+  assert.ok(handler >= 0);
+  assert.ok(pauseGuard > handler);
+  assert.ok(ensureRunner > pauseGuard);
+  assert.ok(launchSupervisor > ensureRunner);
+  assert.match(
+    source.slice(pauseGuard, ensureRunner),
+    /START sẽ không mở ChatGPT hoặc gửi lệnh/
+  );
+  assert.match(source.slice(pauseGuard, ensureRunner), /return/);
+});

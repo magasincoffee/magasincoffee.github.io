@@ -157,6 +157,15 @@ try {
             continue
         }
 
+        if (-not (Test-Path $stop) -and $nodeExitCode -eq 76) {
+            # Exit code 76 is an intentional autonomy pause. Do not keep an
+            # automation browser open when source-of-truth says there is no
+            # authorized work to execute.
+            Write-Host 'Supervisor entered PAUSED autonomy; closing dedicated Chrome and stopping wrapper.'
+            Stop-DedicatedChrome
+            break
+        }
+
         if (-not (Test-Path $stop)) {
             Start-Sleep -Seconds 3
         }

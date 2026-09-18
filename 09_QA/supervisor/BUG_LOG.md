@@ -293,3 +293,22 @@
   4. Control Panel uses flattened live boundary metadata to show `CẦN QUYẾT ĐỊNH` vs `CẦN CẤU HÌNH`.
 - Runtime: `2026-09-18.15`.
 - Status: FIXED IN CODE — pending CI + field deployment.
+
+
+## BUG-SUP-020 — PAUSED temporal gate looks like a broken START
+
+- Date: 2026-09-19
+- Component: START lifecycle / Control Panel / night-run temporal gate
+- Field symptom: Owner presses START ROBOT during TASK-048. Dedicated ChatGPT opens, but Supervisor never continues. Control Panel misleadingly shows `READY • AUTO CONTINUE` while the detail row says `autonomy mode is PAUSED`.
+- Root cause:
+  1. source-of-truth intentionally set `status=READY`, `autonomy=PAUSED` until the approved 09:15 +07 hard-stop boundary;
+  2. Control Panel derived the project card from `status` only, ignoring `autonomy=PAUSED`;
+  3. START lifecycle launched the dedicated Chrome before the runtime learned that automation was paused.
+- Fix:
+  1. make `PAUSED` a first-class non-error runtime/UI state;
+  2. Control Panel shows the approved pause boundary instead of `READY • AUTO CONTINUE`;
+  3. START is disabled/fail-closed while remote autonomy is `PAUSED`;
+  4. `start-supervisor.ps1` performs a remote PAUSED preflight before launching the wrapper;
+  5. if autonomy changes to PAUSED while already running, Node writes `PAUSED`, exits with clean code 76, and the wrapper closes only the dedicated Supervisor Chrome.
+- Runtime: `2026-09-19.16`.
+- Status: FIXED IN CODE — pending CI + field deployment.

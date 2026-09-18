@@ -149,6 +149,7 @@ function Set-StatusCard($Panel, $Label, [string]$State, [string]$Text) {
         'RECOVERING' = @([Drawing.Color]::FromArgb(224,242,254), [Drawing.Color]::FromArgb(3,105,161))
         'ROLLOVER' = @([Drawing.Color]::FromArgb(237,233,254), [Drawing.Color]::FromArgb(91,33,182))
         'WAIT_USER' = @([Drawing.Color]::FromArgb(254,249,195), [Drawing.Color]::FromArgb(133,77,14))
+        'PAUSED' = @([Drawing.Color]::FromArgb(241,245,249), [Drawing.Color]::FromArgb(71,85,105))
         'ERROR' = @([Drawing.Color]::FromArgb(254,226,226), [Drawing.Color]::FromArgb(153,27,27))
         'DONE' = @([Drawing.Color]::FromArgb(220,252,231), [Drawing.Color]::FromArgb(22,101,52))
         'STOPPED' = @([Drawing.Color]::FromArgb(241,245,249), [Drawing.Color]::FromArgb(71,85,105))
@@ -381,6 +382,34 @@ function Refresh-ControlPanel {
         $runtimeStatus
     }
 
+    $projectAutonomy = if ($script:lastRemoteState -and $script:lastRemoteState.autonomy) {
+        [string]$script:lastRemoteState.autonomy
+    } elseif ($projectState -and $projectState.autonomy) {
+        [string]$projectState.autonomy
+    } else {
+        ''
+    }
+    $pauseResumeAt = if (
+        $script:lastRemoteState -and
+        $script:lastRemoteState.night_run -and
+        $script:lastRemoteState.night_run.temporal_gate -and
+        $script:lastRemoteState.night_run.temporal_gate.resume_at
+    ) {
+        [string]$script:lastRemoteState.night_run.temporal_gate.resume_at
+    } else {
+        ''
+    }
+    $pauseLabel = if ($pauseResumeAt) {
+        try {
+            $pauseAt = [DateTimeOffset]::Parse($pauseResumeAt)
+            "PAUSED • CHỜ $($pauseAt.ToLocalTime().ToString('HH:mm'))"
+        } catch {
+            'PAUSED • CHỜ MỐC ĐÃ DUYỆT'
+        }
+    } else {
+        'PAUSED • CHỜ MỐC ĐÃ DUYỆT'
+    }
+
     if ($process) {
         $state = if ($runtimeStatus.status) { [string]$runtimeStatus.status } else { 'STARTING' }
         $activationPending = @()
@@ -397,6 +426,7 @@ function Refresh-ControlPanel {
         }
 
         $robotText = switch ($state) {
+            'PAUSED' { $pauseLabel }
             'READY' { 'ONLINE • CHỜ CHATGPT' }
             'RUNNING' { 'RUNNING • ĐANG LÀM VIỆC' }
             'RETRYING' { 'RETRYING • ĐANG THỬ LẠI' }
@@ -415,8 +445,13 @@ function Refresh-ControlPanel {
         $startButton.Enabled = $false
         $stopButton.Enabled = $true
     } else {
-        Set-StatusCard $robotCard $robotValue 'OFFLINE' 'OFFLINE'
-        $startButton.Enabled = $true
+        if ($projectAutonomy -eq 'PAUSED') {
+            Set-StatusCard $robotCard $robotValue 'PAUSED' $pauseLabel
+            $startButton.Enabled = $false
+        } else {
+            Set-StatusCard $robotCard $robotValue 'OFFLINE' 'OFFLINE'
+            $startButton.Enabled = $true
+        }
         $stopButton.Enabled = $false
     }
 
@@ -429,8 +464,22 @@ function Refresh-ControlPanel {
     } else {
         'UNKNOWN'
     }
-    $projectText = if ($projectStatus -eq 'READY') { 'READY • AUTO CONTINUE' } else { $projectStatus }
-    $projectCardState = if ($projectStatus -eq 'WAIT_USER') { 'WAIT_USER' } elseif ($projectStatus -eq 'BLOCKED') { 'ERROR' } else { 'READY' }
+    $projectText = if ($projectAutonomy -eq 'PAUSED') {
+        $pauseLabel
+    } elseif ($projectStatus -eq 'READY') {
+        'READY • AUTO CONTINUE'
+    } else {
+        $projectStatus
+    }
+    $projectCardState = if ($projectAutonomy -eq 'PAUSED') {
+        'PAUSED'
+    } elseif ($projectStatus -eq 'WAIT_USER') {
+        'WAIT_USER'
+    } elseif ($projectStatus -eq 'BLOCKED') {
+        'ERROR'
+    } else {
+        'READY'
+    }
     Set-StatusCard $projectCard $projectValue $projectCardState $projectText
 
     $ownerBoundaryActive = (
@@ -479,9 +528,17 @@ function Refresh-ControlPanel {
     } else {
         'Chưa có runtime status.'
     }
-    $autonomyValue.Text = if ($projectState.autonomy) { "$($projectState.autonomy)  •  phase=$($projectState.current_phase)" } else { '—' }
+    $autonomyValue.Text = if ($projectAutonomy) { "$projectAutonomy  •  phase=$($projectState.current_phase)" } else { '—' }
 
-    if (-not $runnerProcess -and $process) {
+    if ($projectAutonomy -eq 'PAUSED') {
+        $currentActionValue.Text = 'PAUSED  •  không mở/điều khiển ChatGPT'
+        $nextActionValue.Text = if ($pauseResumeAt) {
+            "Không có công việc được phép trước mốc $pauseLabel."
+        } else {
+            'Không có công việc được phép cho đến khi source-of-truth bỏ PAUSED.'
+        }
+        $errorValue.Text = 'Không có lỗi. Robot đang tạm dừng có chủ đích theo source-of-truth.'
+    } elseif (-not $runnerProcess -and $process) {
         $errorValue.Text = 'GitHub Runner đang OFFLINE. Local-machine GitHub jobs sẽ không chạy; bấm START RUNNER.'
     } elseif (-not $process) {
         $errorValue.Text = if ($runnerProcess) {
@@ -529,6 +586,33 @@ function Refresh-ControlPanel {
 }
 
 $startButton.Add_Click({
+    $remoteBeforeStart = Read-ProjectState
+    if ($remoteBeforeStart -and [string]$remoteBeforeStart.autonomy -eq 'PAUSED') {
+        $resumeText = if (
+            $remoteBeforeStart.night_run -and
+            $remoteBeforeStart.night_run.temporal_gate -and
+            $remoteBeforeStart.night_run.temporal_gate.resume_at
+        ) {
+            try {
+                $resumeAt = [DateTimeOffset]::Parse([string]$remoteBeforeStart.night_run.temporal_gate.resume_at)
+                $resumeAt.ToLocalTime().ToString('yyyy-MM-dd HH:mm')
+            } catch {
+                [string]$remoteBeforeStart.night_run.temporal_gate.resume_at
+            }
+        } else {
+            'mốc do source-of-truth quy định'
+        }
+
+        [Windows.Forms.MessageBox]::Show(
+            "Robot đang PAUSED có chủ đích đến $resumeText. START sẽ không mở ChatGPT hoặc gửi lệnh.",
+            'MAGASIN Business OS',
+            'OK',
+            'Information'
+        ) | Out-Null
+        Refresh-ControlPanel
+        return
+    }
+
     if (-not (Test-Path $startScript)) {
         [Windows.Forms.MessageBox]::Show("Supervisor chưa được cài: $startScript", 'MAGASIN Business OS', 'OK', 'Error') | Out-Null
         return
