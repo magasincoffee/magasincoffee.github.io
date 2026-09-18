@@ -2,7 +2,7 @@
 
 **Night run:** `NIGHT_RUN_2026-09-18`  
 **Checkpoint:** TASK-048 — Night final checkpoint  
-**Current status:** FINAL_CHECKPOINT_IN_PROGRESS / AUTO_CONTINUE  
+**Current status:** FINAL_CHECKPOINT_IN_PROGRESS / PAUSED  
 **Approved hard stop:** 2026-09-19 09:15 +07  
 **Canonical evidence:** `01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE_V1.md`
 
@@ -69,4 +69,4 @@ At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` is the canonical G
 5. set cursor checkpoint to `NIGHT_WINDOW_COMPLETE`;
 6. require `OWNER_REVIEW_NIGHT_RUN_REPORT`.
 
-Until that boundary, no new feature work, merge, live provider action, or production activation is authorized by TASK-048.
+Until that boundary, no new feature work, merge, live provider action, or production activation is authorized by TASK-048. Supervisor continuation is paused because no actionable work remains before the time boundary.
