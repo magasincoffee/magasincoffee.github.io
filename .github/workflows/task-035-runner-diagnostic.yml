@@ -10,6 +10,7 @@ on:
       - 08_INTEGRATIONS/supervisor/src/ui/task-035-google-cloud-state.mjs
       - 08_INTEGRATIONS/supervisor/src/ui/task-035-google-project-picker.mjs
       - 08_INTEGRATIONS/supervisor/src/ui/task-035-google-ui-state.mjs
+      - 08_INTEGRATIONS/supervisor/src/ui/task-035-gmail-api-setup.mjs
   workflow_dispatch:
 
 concurrency:
@@ -189,3 +190,9 @@ jobs:
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
           node src/ui/task-035-google-ui-state.mjs
+
+      - name: Enable or verify Gmail API
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          node src/ui/task-035-gmail-api-setup.mjs
