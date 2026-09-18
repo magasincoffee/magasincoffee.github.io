@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-035 — MAGASIN email adapter/config — READY**
+**TASK-035 — MAGASIN email adapter/config — WAIT_USER**
 
 Canonical task/state files:
 
@@ -32,6 +32,7 @@ Canonical task/state files:
 - `05_SYSTEM/PUBLISHED_SCHEDULE_FEEDBACK_LOOP_V1.md`
 - `05_SYSTEM/GIVE_SHIFT_PRODUCTION_V1.md`
 - `05_SYSTEM/NOTIFICATION_OUTBOX_PRODUCTION_V1.md`
+- `05_SYSTEM/MAGASIN_EMAIL_ADAPTER_CONFIG_V1.md`
 
 ## Current target
 
@@ -99,21 +100,38 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-035 under Five-Step until the exact provider/account activation boundary.
+**WAIT_USER:** TASK-035 provider-neutral core is complete and fail-closed.
 
-TASK-034 notification outbox V1 is production-applied and verified:
+Verified discovery:
 
-- durable RLS-protected `notification_outbox`;
-- canonical triggers for schedule / attendance / Swap / Give;
-- Employee in-app `view-notice` reads `list_my_notifications_v1`;
-- clock-out reminder is scheduled at shift end and cancelled after actual clock-out;
-- provider-neutral email queue state machine verified;
-- trigger SECURITY DEFINER RPC exposure hardened;
-- no historical backfill and no persisted QA fixture rows.
+- repository contains no concrete Resend / SendGrid / Mailgun / SMTP / Gmail mailer configuration;
+- Supabase project currently has 0 deployed Edge Functions;
+- database has no mail-provider primitive beyond the TASK-034 outbox queue;
+- recipient emails are available server-side from `public.profiles.email`;
+- available connector cannot enumerate production secret values, so no claim is made about whether unrelated secrets exist.
 
-TASK-035 may build provider-neutral adapter/config and inspect existing runtime configuration. Do not invent an email provider, sender account or credential. External calendar remains disabled by Owner.
+Safe implementation completed:
 
-If no concrete MAGASIN email provider/account configuration exists, stop at that exact Owner boundary after completing all provider-independent work.
+- provider-neutral worker contract;
+- USER / OWNER / STORE_MANAGERS recipient resolution;
+- Supabase server-secret authorization model;
+- config validation before queue claim;
+- no provider selected or invented;
+- Edge Function not deployed;
+- no provider secrets set;
+- no email sent;
+- outbox rows remain untouched by TASK-035.
+
+Owner must provide exactly:
+
+1. concrete system email provider;
+2. exact MAGASIN sender email address.
+
+Optional: reply-to address if different.
+
+After Owner supplies these, implement only the selected adapter, store credentials in Supabase Edge Function Secrets outside Git, deploy, send one bounded test email, verify `PENDING → PROCESSING → SENT`, then close TASK-035.
+
+External calendar remains disabled.
 
 TASK-026 remains deferred independently.
 
