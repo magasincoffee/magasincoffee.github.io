@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-022 — DONE — People/Shift browser E2E + Day-10 usability gate**
+**TASK-023 — SOP/Task current-system gap review + acceptance contract**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**Day-10 People/Shift gate is PASS.** TASK-022 reproduced and fixed `BUG-PS-001`: Employee approved schedules were locked to the current week, so a next-week schedule published from the existing next-week availability flow could not be inspected before week rollover. The existing Employee Schedule engine now supports previous/current/next week navigation, and same-week browser E2E is green. No unresolved reproducible defect remains. The Day 8–10 queue is exhausted; do not invent a new implementation task. Continue only after `00_TASK_QUEUE.md` is explicitly expanded from repository evidence / the next approved V1 slice.
+Run **TASK-023 — SOP/Task current-system gap review + acceptance contract** from the canonical Day 11–13 Blueprint slice. Inventory existing SOP/checklist/task surfaces and data contracts, preserve working workflows, define only verified gaps for `SOP template → execution → responsible person → exception → corrective task → verify → close`, then open the smallest implementation queue. Discovery/read-only work is GREEN; do not apply production migrations or invent ambiguous business rules.
 
 ## Session handoff
 
