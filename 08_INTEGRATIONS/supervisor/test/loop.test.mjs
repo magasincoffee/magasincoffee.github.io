@@ -127,3 +127,39 @@ test("dry-run controller never mutates page", async () => {
   assert.equal(p.fills, 0);
   assert.equal(p.clicks, 0);
 });
+
+
+test("external rollover continuation is guarded against duplicate sends until progress", async () => {
+  let now = 50_000;
+  const controller = new SupervisorLoopController({
+    execute: true,
+    minActionIntervalMs: 1000,
+    now: () => now
+  });
+  const p = page();
+
+  controller.markExternalContinuation(0, "ROLLOVER_COMPOSER_SEND");
+
+  now += 2000;
+  const beforeProgress = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: probe("RESPONSE_COMPLETE", 0)
+  });
+  assert.equal(beforeProgress.execution.executed, false);
+  assert.match(beforeProgress.execution.reason, /awaiting observable assistant progress/);
+
+  await controller.step({
+    page: p,
+    projectState: state(),
+    probe: probe("ASSISTANT_RUNNING", 0)
+  });
+
+  now += 2000;
+  const afterProgress = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: probe("RESPONSE_COMPLETE", 1)
+  });
+  assert.equal(afterProgress.execution.executed, true);
+});
