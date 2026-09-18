@@ -42,6 +42,6 @@ test("auto-upgrade exposes explicit Owner Brain rebind when live v23 still has t
   assert.match(source, /supervisor_runtime_version/);
   assert.match(source, /target mismatch/);
   assert.match(source, /BRAIN_REBIND_REQUIRED=True/);
-  assert.match(source, /DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO/);
+  assert.match(source, /BRAIN_REBIND\.request\.json/);
   assert.match(source, /BRAIN_TARGET_REBOUND_OWNER/);
 });

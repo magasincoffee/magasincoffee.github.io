@@ -174,7 +174,7 @@ jobs:
             $brainRuntime = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
             if (
               -not (Test-Path $controlPanel) -or
-              -not (Select-String -Path $controlPanel -SimpleMatch "DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO" -Quiet) -or
+              -not (Select-String -Path $controlPanel -SimpleMatch "BRAIN_REBIND.request.json" -Quiet) -or
               -not (Test-Path $brainRuntime) -or
               -not (Select-String -Path $brainRuntime -SimpleMatch "BRAIN_TARGET_REBOUND_OWNER" -Quiet)
             ) {
