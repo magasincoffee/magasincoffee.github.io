@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-016 — Revenue read-adapter + reconciliation quality gate**
+**TASK-017 — Partial-source/error-state integration**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Implement **TASK-016 — Revenue read-adapter + reconciliation quality gate**, showing ACTUAL only for reconciled trusted revenue and failing closed otherwise.
+Implement **TASK-017 — Partial-source/error-state integration**, ensuring one failed adapter never blanks healthy Control Tower sections.
 
 ## Session handoff
 
