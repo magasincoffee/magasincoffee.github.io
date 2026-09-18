@@ -97,5 +97,6 @@ TASK-037–047 are complete with current repository/CI evidence. TASK-048 is not
 | Approved-boundary time guard | commits `148fb5b7ab0c2f33536248573c0ae2116c740cfa` + `525554e31ce0cb91e8c8bfb29ab25fa16ec48091`; run `35373330382`; probe PR #121 | 162/162 PASS; manual dispatch before 09:15 +07 is fail-closed |
 | Completion idempotence | commits `f63b71118f116151c37759046f08aa066793d9e9` + `998bc201966aa31bdda4049a21b9812b287794f2`; run `35373887433`; probe PR #122 | 162/162 PASS; first completion timestamps are preserved |
 | One-shot post-review protection | commits `80c9cdbcddec8af62b795caea4ed62e7f2d294b8` + `0e902d725dbfbb468ce56c1d59009718b0f69d33`; run `35374298573`; probe PR #123 | 162/162 PASS; once `NIGHT_WINDOW_COMPLETE` exists, reruns exit before mutation so later Owner-reviewed state is protected |
+| Canonical evidence final-state reconciliation | commits `6dfd738e0b75fbb2fb70d55ba27ee46c5ec46ae0` + `a91b95fb6e993d5fd17dc165a126b7f342f8bf53`; run `35375054600`; probe PR #124 | 162/162 PASS; evidence status/conclusion transition with PROJECT_STATE/cursor/docs at hard stop |
 
 All TASK-048 probe PRs were closed without merge after the exact verified contents were applied to `main`. No live SaydiVoice Generate/Download, Gmail production activation, auto-merge, third-project execution or destructive production action was introduced.
