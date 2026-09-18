@@ -145,8 +145,8 @@ jobs:
 
           $runtimeBrain = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
           if (-not (Test-Path $runtimeBrain)) { throw "Installed Brain/Worker runtime is missing" }
-          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.20" -Quiet)) {
-            throw "Installed Brain/Worker runtime is not v2026-09-19.20"
+          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.21" -Quiet)) {
+            throw "Installed Brain/Worker runtime is not v2026-09-19.21"
           }
 
           $runtimeStatusFile = Join-Path $root "runtime-status.json"
@@ -156,7 +156,7 @@ jobs:
               try {
                 $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
                 if (
-                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.20" -and
+                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.21" -and
                   -not (
                     $runtimeStatus.status -eq "WAIT_USER" -and
                     [string]$runtimeStatus.decision_reason -match "target mismatch"
@@ -170,7 +170,7 @@ jobs:
             Start-Sleep -Seconds 1
           }
           if (-not $targetHealthy) {
-            throw "Brain target recovery is still blocked by target mismatch after v2026-09-19.20 install"
+            throw "Brain target recovery is still blocked by target mismatch after v2026-09-19.21 install"
           }
 
           Write-Host "AUTOSTART_REGISTERED=True"
