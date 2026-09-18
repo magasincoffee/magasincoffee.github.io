@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><title>Employee availability canonical QA</title></head>
+<body>
+<iframe id="employeeApp" title="Employee Availability QA"></iframe>
+<script>
+(() => {
+  const calls=[];
+  const toDate=s=>new Date(s+"T00:00:00Z");
+  const addDays=(s,n)=>{const d=toDate(s);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+  const weekDays=s=>Array.from({length:7},(_,i)=>addDays(s,i));
+  const rows=[];
+  let seq=0;
+  const stores=[{id:"store-a",code:"CN1",name:"Chi nhánh QA"}];
+  window.__EMPLOYEE_AVAILABILITY_QA={calls,rows,stores};
+  window.MAGASIN_CORE={
+    security:{escapeHtml:v=>String(v??"")},
+    time:{
+      time5:v=>String(v??"").slice(0,5),
+      minutes:v=>{const s=String(v||"00:00").slice(0,5);return Number(s.slice(0,2))*60+Number(s.slice(3,5))}
+    },
+    date:{
+      monday:()=> "2026-09-14",
+      addDays,
+      weekDays,
+      formatDate:v=>String(v).slice(0,10).split("-").reverse().join("/")
+    },
+    stores:{active:async()=>stores.map(x=>({...x}))},
+    ui:{toast:(message,type)=>calls.push({kind:"toast",message,type})},
+    supabase:{
+      async rpc(name,args={}){
+        calls.push({kind:"rpc",name,args:structuredClone(args)});
+        if(name==="get_my_availability"){
+          const end=addDays(args.p_week_start,6);
+          return {data:rows.filter(r=>r.work_date>=args.p_week_start&&r.work_date<=end).map(r=>({...r})),error:null};
+        }
+        if(name==="save_my_availability"){
+          const id="av-"+(++seq);
+          rows.push({
+            id,
+            work_date:args.p_work_date,
+            start_time:args.p_start_time,
+            end_time:args.p_end_time,
+            preferred_store_id:args.p_preferred_store_id,
+            availability_type:args.p_availability_type,
+            note:args.p_note,
+            updated_at:"2026-09-18T00:00:00Z"
+          });
+          return {data:id,error:null};
+        }
+        if(name==="delete_my_availability"){
+          const i=rows.findIndex(r=>r.id===args.p_availability_id);
+          if(i<0)return {data:false,error:null};
+          rows.splice(i,1);
+          return {data:true,error:null};
+        }
+        return {data:null,error:{message:"unexpected rpc "+name}};
+      },
+      from(name){
+        calls.push({kind:"from",name});
+        throw new Error("Direct table access forbidden: "+name);
+      }
+    }
+  };
+
+  const frame=document.getElementById("employeeApp");
+  frame.srcdoc=`<!doctype html><html lang="vi"><body>
+    <button id="openReg" onclick="openWeeklyRegistration()">Đăng ký lịch làm</button>
+    <div id="weeklyRegistrationPanel">
+      <button id="closeReg" onclick="closeWeeklyRegistration()">Đóng</button>
+      <select id="quickRegDay"></select>
+      <select id="quickRegStart"></select>
+      <select id="quickRegEnd"></select>
+      <select id="quickRegStore"></select>
+      <button id="saveReg" onclick="quickRegister()">Đăng ký</button>
+      <div id="quickRegMsg"></div>
+      <div class="week-summary"></div>
+      <button id="finishReg" onclick="finishQuickRegistration()">Hoàn thành đăng ký lịch làm</button>
+    </div>
+  </body></html>`;
+})();
+</script>
+<script src="/06_EMPLOYEE/availability/engine-v1.js"></script>
+</body>
+</html>
