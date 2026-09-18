@@ -127,3 +127,7 @@ try {
 } finally {
   await session.disconnect();
 }
+
+// connectOverCDP keeps a websocket handle alive even after logical detach.
+// Short-lived CI CLIs must terminate explicitly without closing real Chrome.
+process.exit(process.exitCode ?? 0);
