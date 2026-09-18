@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-038 — Night-run persistence — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-039 — Business OS Robot V2 project registry — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,28 +101,25 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-038:** TASK-037 Windows reboot/logon recovery is verified complete.
+**AUTO_CONTINUE — TASK-039:** TASK-038 night-run persistence is verified complete.
 
-Verified local recovery evidence:
+Verified persistence evidence:
 
-- HKCU logon autostart registered;
-- canonical GitHub Runner online;
-- Supervisor wrapper online;
-- dedicated Business OS Chrome online;
-- Chrome CDP endpoint healthy;
-- Owner STOP latch remains explicit and disables reboot resume;
-- Windows login/PIN is never bypassed.
+- approved 10-hour window validates against the two-project registry;
+- one canonical execution cursor exists;
+- cursor lease blocks duplicate workers;
+- stale lease remains fail-closed until repository HEAD + CI are reconciled;
+- checkpoint updates require lease ownership;
+- 09:15 +07 hard stop is enforced by a GitHub-hosted `ubuntu-latest` workflow independent of the PC.
 
-TASK-038 now makes the approved 10-hour run resumable and deadline-safe:
+TASK-039 now builds the smallest multi-project registry/adapter layer for exactly two Owner-approved repositories:
 
-1. validate the approved night-run schedule/allowed-project contract;
-2. persist one execution cursor with checkpoint + last verified commit;
-3. add bounded lease semantics to prevent duplicate concurrent work;
-4. reconcile stale lease/cursor after crash or reboot;
-5. enforce the 09:15 +07 hard stop independently through GitHub-hosted automation;
-6. regression-test resume/hard-stop behavior before advancing to TASK-039.
+1. `magasincoffee/magasincoffee.github.io` using canonical `PROJECT_STATE_JSON`;
+2. `magasincoffee/magasin-media-robot` using the existing `CURRENT_STATUS + NEXT_STEP + DEVELOPMENT_RULES` doc pair.
 
-No Gmail activation, third-project execution, live SaydiVoice Generate/Download, destructive production DB work, MFA/CAPTCHA bypass or large architecture auto-merge is allowed.
+No third repository discovery or execution is allowed. The registry must stay deny-by-default and project adapters must normalize state without inventing missing business decisions.
+
+Large Robot V2 implementation remains on a review branch; source-of-truth and safety gates stay on `main`.
 
 ## Session handoff
 
