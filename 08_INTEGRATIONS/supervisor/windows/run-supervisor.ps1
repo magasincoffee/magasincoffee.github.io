@@ -10,6 +10,7 @@ $profile = Join-Path $root 'browser_profile'
 $target = Join-Path $root 'target.json'
 $stop = Join-Path $root 'STOP'
 $pidFile = Join-Path $root 'supervisor.pid'
+$projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
 $mutexName = 'Local\MAGASIN_BUSINESS_OS_SUPERVISOR'
 $mutex = New-Object System.Threading.Mutex($false, $mutexName)
 $ownsMutex = $false
@@ -85,10 +86,6 @@ function Test-DedicatedCdpEndpoint([int]$Port) {
     }
 }
 
-if (-not (Test-Path $target)) {
-    throw "Supervisor target is missing: $target"
-}
-
 Remove-Item $stop -Force -ErrorAction SilentlyContinue
 Set-Content -Path $pidFile -Value $PID -Encoding ascii
 
@@ -137,9 +134,34 @@ try {
             continue
         }
 
+        $brainWorkerMode = $false
+        try {
+            $projectState = Invoke-RestMethod -Uri $projectStateUrl -TimeoutSec 4 -Headers @{ 'Cache-Control'='no-cache' }
+            $brainWorkerMode = [bool](
+                $projectState -and
+                $projectState.supervisor_orchestration -and
+                [string]$projectState.supervisor_orchestration.mode -eq 'BRAIN_WORKER_V1'
+            )
+        } catch {
+            # Preserve the last safe legacy behavior only when its target exists.
+            $brainWorkerMode = $false
+        }
+
+        $entryPoint = if ($brainWorkerMode) {
+            'src/runtime/brain-worker-cli.mjs'
+        } else {
+            'src/runtime/supervisor-loop-cli.mjs'
+        }
+
+        if (-not $brainWorkerMode -and -not (Test-Path $target)) {
+            throw "Legacy Supervisor target is missing: $target"
+        }
+
+        Write-Host "Supervisor entry point: $entryPoint"
+
         Push-Location $runtime
         try {
-            $nodeArgs = @('src/runtime/supervisor-loop-cli.mjs', '--cdp-url', $cdpBaseUrl, '--poll-ms', '5000')
+            $nodeArgs = @($entryPoint, '--cdp-url', $cdpBaseUrl, '--poll-ms', '5000')
             if (-not $DryRun) { $nodeArgs += '--execute' }
             & node @nodeArgs
             $nodeExitCode = $LASTEXITCODE
