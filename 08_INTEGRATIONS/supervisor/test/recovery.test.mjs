@@ -146,3 +146,50 @@ test("successful rollover advances conversation generation and clears recovery c
   assert.equal(status.target_misses, 0);
   assert.equal(status.rollover_failures, 0);
 });
+
+
+test("assistant text progress resets the stall clock instead of reloading active work", () => {
+  let now = 0;
+  const recovery = new SupervisorRecoveryController({
+    stallMs: 1000,
+    reloadCooldownMs: 100,
+    now: () => now
+  });
+
+  const running = (chars) => ({
+    snapshot: {
+      conversationPath: true,
+      composerReady: false,
+      responseRunning: true,
+      assistantMessageCount: 4,
+      lastAssistantCharCount: chars
+    },
+    classification: { observation: "ASSISTANT_RUNNING" }
+  });
+
+  assert.equal(recovery.observeProbe(running(100)), RECOVERY_ACTIONS.NONE);
+
+  now = 900;
+  assert.equal(recovery.observeProbe(running(180)), RECOVERY_ACTIONS.NONE);
+
+  now = 1700;
+  assert.equal(recovery.observeProbe(running(260)), RECOVERY_ACTIONS.NONE);
+
+  now = 2701;
+  assert.equal(recovery.observeProbe(running(260)), RECOVERY_ACTIONS.RELOAD_STALLED);
+});
+
+test("adopting a ChatGPT-created conversation resets stale target recovery state", () => {
+  const recovery = new SupervisorRecoveryController({ targetMissThreshold: 1 });
+  assert.equal(
+    recovery.observeTarget({ matched: false }),
+    RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING
+  );
+
+  recovery.noteConversationAdopted();
+  const status = recovery.status();
+  assert.equal(status.conversation_generation, 1);
+  assert.equal(status.target_misses, 0);
+  assert.equal(status.rollover_failures, 0);
+  assert.equal(status.blocked, false);
+});
