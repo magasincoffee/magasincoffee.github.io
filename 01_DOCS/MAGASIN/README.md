@@ -30,6 +30,10 @@ Không lấy UI, database hoặc code hiện tại làm nguồn sự thật cho 
 - `00_CURRENT_STATE.md` — trạng thái hiện tại và nhiệm vụ kế tiếp.
 - `00_MASTER_PLAN.md` — bảng kế hoạch tổng thể và trạng thái thực hiện.
 - `00_CHATGPT_CONTEXT.md` — context/handover chuẩn để nối tiếp công việc trong chat mới.
+- `00_BUSINESS_OS_BLUEPRINT.md` — kiến trúc V1, Five-Step Algorithm, scope và kế hoạch 21 ngày.
+- `00_PROJECT_STATE.json` — state máy đọc được để agent/Supervisor tiếp tục đúng task.
+- `00_TASK_QUEUE.md` — micro-task queue hiện hành.
+- `00_SUPERVISOR_ROBOT.md` — contract cho robot tự tiếp tục và safety-stop.
 - `01_DISCOVERY/` — sự thật vận hành được khám phá và xác nhận.
 - `02_BUSINESS_RULES/` — Business Rules đã chốt.
 - `03_SOP/` — SOP đã chốt.
@@ -40,10 +44,12 @@ Không lấy UI, database hoặc code hiện tại làm nguồn sự thật cho 
 
 ## Trạng thái tổng quát
 
-**Current phase: PHASE 0 — Enterprise Baseline / chuẩn bị Discovery**
+**Current program: MAGASIN Business OS V1 — 21-day accelerated execution**
 
-**Current task: Enterprise Discovery #001 — MAGASIN Enterprise Baseline**
+**Current phase: P1 — Accelerated Enterprise Discovery + Foundation**
 
-Khi mở chat mới, phải ưu tiên đọc `00_CURRENT_STATE.md`, `00_MASTER_PLAN.md`, `06_DECISION_LOG.md`, `07_CHANGE_LOG.md`, `00_CHATGPT_CONTEXT.md` rồi mới tiếp tục tài liệu/domain hiện tại.
+**Current task: TASK-001 — Autonomy Supervisor discovery and project bootstrap**
 
-Chưa chuyển sang thiết kế nghiệp vụ chi tiết cho đến khi Discovery có đủ bằng chứng và được xác nhận.
+Khi mở chat mới, ưu tiên đọc `00_CURRENT_STATE.md`, `00_PROJECT_STATE.json`, `00_TASK_QUEUE.md`, `00_MASTER_PLAN.md`, `00_BUSINESS_OS_BLUEPRINT.md`, `06_DECISION_LOG.md`, `07_CHANGE_LOG.md`, `00_CHATGPT_CONTEXT.md`, sau đó kiểm tra task/domain và PR/CI thực tế.
+
+Không bỏ qua Discovery. Với kế hoạch 21 ngày, Discovery được thực hiện theo từng vertical slice và chỉ implement khi phần nghiệp vụ cần thiết cho slice đó đủ bằng chứng/xác nhận.
