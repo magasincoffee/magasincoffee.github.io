@@ -21,4 +21,4 @@
 - Impact: false-negative CI blocks the payables adapter task.
 - Root cause: test asserted an implementation string instead of the actual invariant.
 - Fix: locate the first `render(` call inside `boot()` and assert it occurs after `await requireOwnerAccess`.
-- Status: FIXING
+- Status: VERIFIED — run `35310936375` PASS
