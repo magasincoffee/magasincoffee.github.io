@@ -202,7 +202,8 @@ export class SupervisorLoopController {
     maxRetries = 2,
     handoff = false,
     ownerReconcile = false,
-    ownerRecheck = false
+    ownerRecheck = false,
+    ownerReconcileAwaitingResponse = false
   }) {
     const state = validateProjectState(projectState);
     const resolved = this.resolveWorkUiObservation(probe, {
@@ -223,6 +224,27 @@ export class SupervisorLoopController {
     };
 
     this.observeProgress(effectiveProbe);
+
+    if (
+      ownerReconcileAwaitingResponse &&
+      this.armed &&
+      observation === OBSERVATIONS.RESPONSE_COMPLETE
+    ) {
+      return {
+        decision: {
+          action: ACTIONS.WAIT,
+          reason: "owner reconciliation response completed; await repository refresh"
+        },
+        execution: {
+          executed: false,
+          dryRun: !this.execute,
+          action: ACTIONS.WAIT,
+          reason: "decision requires no UI action"
+        },
+        effectiveObservation: observation,
+        workUiSettled: resolved.workUiSettled
+      };
+    }
 
     const decision = decideContinuation({
       projectState: state,
