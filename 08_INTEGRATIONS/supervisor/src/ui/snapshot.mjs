@@ -58,8 +58,22 @@ export async function collectSafeUiSnapshot(page) {
         ) ||
         /verify you are human|xác minh bạn là người|captcha/.test(haystack);
 
+      const assistantMessages = Array.from(
+        document.querySelectorAll("[data-message-author-role='assistant']")
+      );
+      const lastAssistant = assistantMessages.at(-1) || null;
+      const assistantBusy = Boolean(
+        lastAssistant && (
+          lastAssistant.getAttribute("aria-busy") === "true" ||
+          Array.from(lastAssistant.querySelectorAll(
+            "[aria-busy='true'],[data-testid*='loading'],[data-testid*='spinner']"
+          )).some(visible)
+        )
+      );
+
       const responseRunning =
-        /stop generating|dừng tạo|stop response/.test(haystack);
+        /stop generating|dừng tạo|stop response/.test(haystack) ||
+        assistantBusy;
 
       const hasNetworkError =
         /network error|lỗi mạng|connection lost|mất kết nối/.test(haystack);
@@ -79,15 +93,14 @@ export async function collectSafeUiSnapshot(page) {
         pathKind: conversationPath ? "conversation" : (path === "/" ? "home" : "other"),
         conversationPath,
         composerReady: Boolean(composer),
-        assistantMessageCount: document.querySelectorAll(
-          "[data-message-author-role='assistant']"
-        ).length,
+        assistantMessageCount: assistantMessages.length,
         userMessageCount: document.querySelectorAll(
           "[data-message-author-role='user']"
         ).length,
         loginRequired,
         hasCaptcha,
         responseRunning,
+        assistantBusy,
         hasNetworkError,
         hasTransientError,
         hasContinueControl:
