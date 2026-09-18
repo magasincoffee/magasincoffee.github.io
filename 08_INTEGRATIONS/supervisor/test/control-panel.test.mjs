@@ -151,3 +151,17 @@ test("shared ChatGPT launcher uses the Supervisor browser profile and bounded CD
   assert.match(source, /target\.json/);
   assert.match(source, /--user-data-dir=/);
 });
+
+
+test("control panel exposes a fail-closed Owner resolved recheck control", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /ĐÃ XỬ LÝ — KIỂM TRA LẠI/);
+  assert.match(source, /OWNER_RESOLVED\.request\.json/);
+  assert.match(source, /OWNER_RESOLVED_RECHECK/);
+  assert.match(source, /-not \$remote\.blocked/);
+  assert.match(source, /không dùng để vượt BLOCKED\/security boundary/);
+});
