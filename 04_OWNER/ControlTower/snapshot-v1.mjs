@@ -103,6 +103,28 @@ export function normalizeControlTowerSnapshot(raw = {}) {
   return snapshot;
 }
 
+export function formatDataQualitySummary(items = []) {
+  const counts = {
+    ACTUAL: 0,
+    ESTIMATE: 0,
+    GAP: 0,
+    NOT_CONNECTED: 0
+  };
+
+  for (const item of Array.isArray(items) ? items : []) {
+    const quality = normalizeQuality(item?.quality);
+    counts[quality] += 1;
+  }
+
+  const total = Object.values(counts).reduce((sum, value) => sum + value, 0);
+  return [
+    `${counts.ACTUAL}/${total} ACTUAL`,
+    `${counts.ESTIMATE} ESTIMATE`,
+    `${counts.GAP} GAP`,
+    `${counts.NOT_CONNECTED} NOT CONNECTED`
+  ].join(" · ");
+}
+
 export function formatMoney(value, locale = "vi-VN", currency = "VND") {
   if (!Number.isFinite(value)) return "—";
   return new Intl.NumberFormat(locale, {
