@@ -1,0 +1,83 @@
+name: Supervisor Autostart Install
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 08_INTEGRATIONS/supervisor/windows/autostart-bootstrap.ps1
+      - 08_INTEGRATIONS/supervisor/windows/install-autostart.ps1
+      - 08_INTEGRATIONS/supervisor/windows/start-supervisor.ps1
+      - 08_INTEGRATIONS/supervisor/windows/stop-supervisor.ps1
+      - 08_INTEGRATIONS/supervisor/test/autostart-recovery.test.mjs
+      - .github/workflows/supervisor-autostart-install.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supervisor-autostart-install
+  cancel-in-progress: true
+
+jobs:
+  install:
+    runs-on: self-hosted
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Supervisor tests
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm test
+
+      - name: Install latest Supervisor runtime
+        shell: powershell
+        run: |
+          powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "08_INTEGRATIONS/supervisor/windows/install-supervisor.ps1"
+
+      - name: Register reboot/logon recovery and start now
+        shell: powershell
+        run: |
+          powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "08_INTEGRATIONS/supervisor/windows/install-autostart.ps1" -StartNow
+
+      - name: Verify local recovery installation
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+          $value = (Get-ItemProperty -Path $runKey -Name "MAGASINBusinessOSAutostart" -ErrorAction Stop).MAGASINBusinessOSAutostart
+          if ($value -notmatch "autostart-bootstrap\.ps1") { throw "HKCU autostart value is invalid" }
+          if (Test-Path (Join-Path $root "AUTOSTART_DISABLED")) { throw "Owner STOP latch should be clear after install" }
+
+          $runnerRoot = "C:\actions-runner-business\actions-runner"
+          $runner = Get-CimInstance Win32_Process -Filter "Name='Runner.Listener.exe'" -ErrorAction SilentlyContinue |
+            Where-Object {
+              ($_.ExecutablePath -and $_.ExecutablePath -like "$runnerRoot*") -or
+              ($_.CommandLine -and $_.CommandLine -like "*$runnerRoot*")
+            } |
+            Select-Object -First 1
+          if (-not $runner) { throw "Canonical GitHub Runner is not online" }
+
+          $supervisor = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.CommandLine -and
+              $_.CommandLine -like "*run-supervisor.ps1*" -and
+              $_.CommandLine -like "*MAGASIN\BusinessOS\supervisor*"
+            } |
+            Select-Object -First 1
+          if (-not $supervisor) { throw "Supervisor wrapper is not online" }
+
+          $statusFile = Join-Path $root "autostart-install-status.json"
+          if (-not (Test-Path $statusFile)) { throw "Autostart install status is missing" }
+
+          Write-Host "AUTOSTART_REGISTERED=True"
+          Write-Host "RUNNER_ONLINE=True"
+          Write-Host "SUPERVISOR_ONLINE=True"
+          Write-Host "OWNER_STOP_LATCH=False"
+          Write-Host "WINDOWS_LOGIN_BYPASS=False"
