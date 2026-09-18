@@ -162,6 +162,33 @@ export class ChatGptUiAdapter {
       .filter((page) => !page.isClosed() && isChatGptUrl(page.url()));
   }
 
+  async listRecentConversationUrls(page, { limit = 20 } = {}) {
+    if (!page || page.isClosed()) return [];
+    const urls = await page.evaluate((maxItems) => {
+      const seen = new Set();
+      const out = [];
+      for (const anchor of document.querySelectorAll("a[href]")) {
+        const raw = String(anchor.getAttribute("href") || "").trim();
+        if (!raw) continue;
+        let url = null;
+        try {
+          url = new URL(raw, location.origin);
+        } catch {
+          continue;
+        }
+        if (url.origin !== "https://chatgpt.com") continue;
+        if (!/^\/(c|g|project)\//.test(url.pathname)) continue;
+        const normalized = url.origin + url.pathname;
+        if (seen.has(normalized)) continue;
+        seen.add(normalized);
+        out.push(normalized);
+        if (out.length >= maxItems) break;
+      }
+      return out;
+    }, Math.max(1, Math.min(50, Number(limit) || 20)));
+    return Array.isArray(urls) ? urls : [];
+  }
+
   findPageForTarget(target) {
     if (!target?.origin || !target?.pathname) return null;
     return this.getChatGptPages().find((page) => {
