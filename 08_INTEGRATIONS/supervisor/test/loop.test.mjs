@@ -628,3 +628,82 @@ test("normal continuation cannot use Owner recheck to bypass the progress latch"
   assert.equal(result.execution.executed, false);
   assert.match(result.execution.reason, /awaiting observable assistant progress/);
 });
+
+
+test("conversation-turn progress rearms even when virtualized assistant counts shrink", async () => {
+  let now = 900_000;
+  const controller = new SupervisorLoopController({
+    execute: true,
+    minActionIntervalMs: 1000,
+    now: () => now
+  });
+  const p = page();
+
+  const sent = await controller.step({
+    page: p,
+    projectState: state({
+      status: "WAIT_USER",
+      autonomy: "MANUAL",
+      blocked: false,
+      requires_user: true
+    }),
+    probe: {
+      classification: { observation: "RESPONSE_COMPLETE" },
+      snapshot: {
+        assistantMessageCount: 5,
+        userMessageCount: 5,
+        lastMessageRole: "assistant",
+        maxConversationTurnOrdinal: 20
+      }
+    },
+    ownerReconcile: true,
+    ownerRecheck: true
+  });
+  assert.equal(sent.execution.executed, true);
+  assert.equal(controller.armed, false);
+  assert.equal(controller.turnOrdinalAtAction, 20);
+
+  now += 5000;
+  const settled = await controller.step({
+    page: p,
+    projectState: state({
+      status: "WAIT_USER",
+      autonomy: "MANUAL",
+      blocked: false,
+      requires_user: true
+    }),
+    probe: {
+      classification: { observation: "RESPONSE_COMPLETE" },
+      snapshot: {
+        // Work UI virtualization can shrink visible message counts.
+        assistantMessageCount: 3,
+        userMessageCount: 2,
+        lastMessageRole: "assistant",
+        maxConversationTurnOrdinal: 28
+      }
+    },
+    ownerReconcile: true
+  });
+
+  assert.equal(controller.armed, true);
+  assert.equal(controller.turnOrdinalAtAction, null);
+  assert.equal(settled.decision.action, "CONTINUE");
+});
+
+test("turn advancement without an assistant-last turn does not rearm", async () => {
+  const controller = new SupervisorLoopController({ execute: false });
+  controller.armed = false;
+  controller.assistantCountAtAction = 5;
+  controller.turnOrdinalAtAction = 20;
+
+  controller.observeProgress({
+    classification: { observation: "RESPONSE_COMPLETE" },
+    snapshot: {
+      assistantMessageCount: 3,
+      lastMessageRole: "user",
+      maxConversationTurnOrdinal: 21
+    }
+  });
+
+  assert.equal(controller.armed, false);
+});
