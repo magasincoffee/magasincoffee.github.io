@@ -33,4 +33,4 @@
 - Impact: a caller could display unreconciled/gross revenue while merely relabeling it ESTIMATE, bypassing TASK-016's fail-closed revenue rule.
 - Root cause: Revenue shared the same numeric-trust rule as Payables/Workforce even though Revenue requires reconciliation before any official amount is exposed.
 - Fix: Revenue now has a stricter normalization path: only `ACTUAL` may retain `amount`; all non-ACTUAL revenue states redact it to `null`.
-- Status: PENDING CI VERIFICATION
+- Status: VERIFIED — run `35315205100` PASS
