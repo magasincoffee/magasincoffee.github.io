@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-019 — People/Shift current-system gap review + acceptance contract**
+**TASK-020 — Staffing-gap read adapter + unit/regression contract**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Run **TASK-019 — People/Shift current-system gap review + acceptance contract**. Inventory the existing Workforce/employee/availability/schedule/staffing-gap implementation and evidence, identify only the verified Day 8–10 gaps, define acceptance, then open the smallest implementation queue required.
+Run **TASK-020 — Staffing-gap read adapter + unit/regression contract**. Reuse the existing read RPC surface and current schedule-generation shortage semantics; add a pure read-side adapter that fails closed when generation/source data is unavailable and prove it never invokes schedule-generation/review/publish writes.
 
 ## Session handoff
 
