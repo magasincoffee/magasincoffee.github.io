@@ -140,3 +140,25 @@ At initial robot takeover only, a pre-existing `USER_PENDING` surface may settle
 After any Supervisor send, stable `USER_PENDING` alone is **not** enough. The Supervisor must first observe Work/running/structural progress before it can rearm. This prevents duplicate prompts when a newly sent request has not actually been handled.
 
 No message body is persisted for this decision. Only roles, busy flags and structural counts are used.
+
+
+## 9. Owner-boundary reconciliation
+
+`WAIT_USER` is a business-decision boundary, not a permanent runtime dead-end.
+
+Canonical behavior:
+
+```text
+repository enters WAIT_USER
+  → Supervisor keeps the boundary fail-closed
+  → observe shared ChatGPT conversation
+  → never act while ChatGPT Work is running
+  → after the Owner explicitly decides, reconcile that decision into repository
+  → only repository transition back to READY/AUTO_CONTINUE unlocks normal automation
+```
+
+The reconciliation prompt is deliberately constrained: it may update source-of-truth **only when the current conversation contains an explicit Owner decision matching the pending boundary**. Otherwise it must leave `WAIT_USER` unchanged.
+
+`BLOCKED`, authentication, MFA, CAPTCHA, destructive-action, admin-escalation and ambiguous-decision states remain hard stops and are never bypassed by this mechanism.
+
+For ChatGPT Work, the semantic `data-testid="stop-button"` is treated as a running signal. Completion stability uses conversation-turn metadata instead of whole-DOM size because the Work UI virtualizes content and can change DOM size while semantically idle.

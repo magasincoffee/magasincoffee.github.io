@@ -37,6 +37,16 @@ export function matchesTransientErrorAlert(value) {
   return TRANSIENT_ERROR_ALERT_RE.test(String(value || ""));
 }
 
+export function matchesStopControlMetadata(control = {}) {
+  const testId = String(control.testId || "").trim().toLowerCase();
+  const text = String(control.text || "").trim().toLowerCase();
+  const ariaLabel = String(control.ariaLabel || "").trim().toLowerCase();
+
+  return testId === "stop-button" ||
+    /^(?:stop generating|stop response|dừng tạo|dừng phản hồi)$/.test(text) ||
+    /^(?:stop generating|stop response|dừng tạo|dừng phản hồi)$/.test(ariaLabel);
+}
+
 export async function collectSafeUiSnapshot(page) {
   return page.evaluate(
     ({
@@ -152,8 +162,30 @@ export async function collectSafeUiSnapshot(page) {
       const modelSwitching =
         new RegExp(modelSwitchingPattern, "i").test(recoveryHaystack);
 
+      const hasStopControl = controls.some((control) => {
+        const testId = String(control.testId || "").trim().toLowerCase();
+        const text = String(control.text || "").trim().toLowerCase();
+        const ariaLabel = String(control.ariaLabel || "").trim().toLowerCase();
+        return testId === "stop-button" ||
+          /^(?:stop generating|stop response|dừng tạo|dừng phản hồi)$/.test(text) ||
+          /^(?:stop generating|stop response|dừng tạo|dừng phản hồi)$/.test(ariaLabel);
+      });
+
+      const turnOrdinals = Array.from(
+        document.querySelectorAll("[data-testid^='conversation-turn-']")
+      )
+        .map((el) => {
+          const value = String(el.getAttribute("data-testid") || "");
+          const match = /^conversation-turn-(\d+)$/.exec(value);
+          return match ? Number(match[1]) : null;
+        })
+        .filter((value) => Number.isFinite(value));
+
+      const maxConversationTurnOrdinal =
+        turnOrdinals.length ? Math.max(...turnOrdinals) : 0;
+
       const responseRunning =
-        /stop generating|dừng tạo|stop response/.test(haystack) ||
+        hasStopControl ||
         mainBusy ||
         assistantBusy ||
         modelSwitching;
@@ -207,6 +239,8 @@ export async function collectSafeUiSnapshot(page) {
         loginRequired,
         hasCaptcha,
         responseRunning,
+        hasStopControl,
+        maxConversationTurnOrdinal,
         assistantBusy,
         modelSwitching,
         hasNetworkError,

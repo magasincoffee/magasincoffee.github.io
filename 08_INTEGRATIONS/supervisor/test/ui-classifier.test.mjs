@@ -8,7 +8,8 @@ import {
   matchesConversationMissingText,
   matchesModelSwitchingText,
   matchesExplicitRetryControl,
-  matchesTransientErrorAlert
+  matchesTransientErrorAlert,
+  matchesStopControlMetadata
 } from "../src/ui/snapshot.mjs";
 
 const base = {
@@ -167,4 +168,20 @@ test("completed assistant message remains ready for handoff", () => {
 
   assert.equal(result.uiState, UI_STATES.READY_IDLE);
   assert.equal(result.observation, OBSERVATIONS.RESPONSE_COMPLETE);
+});
+
+
+test("recognizes ChatGPT Work stop-button as an active response control", () => {
+  assert.equal(
+    matchesStopControlMetadata({ testId: "stop-button", text: "", ariaLabel: "" }),
+    true
+  );
+  assert.equal(
+    matchesStopControlMetadata({ testId: "send-button", text: "", ariaLabel: "Send prompt" }),
+    false
+  );
+  assert.equal(
+    matchesStopControlMetadata({ text: "Dừng phản hồi" }),
+    true
+  );
 });

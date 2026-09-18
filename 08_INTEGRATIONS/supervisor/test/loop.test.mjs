@@ -485,3 +485,78 @@ test("post-action USER_PENDING without observable Work progress does not auto-co
   assert.equal(result.decision.action, "WAIT");
   assert.equal(result.execution.executed, false);
 });
+
+
+test("WAIT_USER owner reconciliation can execute once after idle confirmation", async () => {
+  let now = 500_000;
+  const controller = new SupervisorLoopController({
+    execute: true,
+    minActionIntervalMs: 1000,
+    handoffIdleConfirmMs: 5000,
+    now: () => now
+  });
+  const p = page();
+  const waitState = state({
+    status: "WAIT_USER",
+    autonomy: "MANUAL",
+    requires_user: true,
+    current_task: "TASK-032",
+    current_task_title: "Owner business-rule boundary"
+  });
+  const pending = {
+    classification: { observation: "USER_PENDING" },
+    snapshot: {
+      assistantMessageCount: 0,
+      userMessageCount: 4,
+      lastMessageRole: "user",
+      lastMessageCharCount: 120,
+      maxConversationTurnOrdinal: 14,
+      responseRunning: false,
+      hasStopControl: false,
+      mainBusy: false
+    }
+  };
+
+  const first = await controller.step({
+    page: p,
+    projectState: waitState,
+    probe: pending,
+    ownerReconcile: true
+  });
+  assert.equal(first.decision.action, "WAIT");
+
+  now += 5500;
+  const reconcile = await controller.step({
+    page: p,
+    projectState: waitState,
+    probe: pending,
+    ownerReconcile: true
+  });
+
+  assert.equal(reconcile.effectiveObservation, "RESPONSE_COMPLETE");
+  assert.equal(reconcile.decision.action, "CONTINUE");
+  assert.equal(reconcile.execution.executed, true);
+  assert.match(reconcile.decision.instruction, /RECONCILE QUYẾT ĐỊNH OWNER/);
+});
+
+test("semantic Work turn signature ignores unrelated DOM-size churn", () => {
+  const controller = new SupervisorLoopController();
+  const first = controller.safeActivitySignature({
+    maxConversationTurnOrdinal: 14,
+    lastMessageRole: "user",
+    lastMessageCharCount: 559,
+    assistantMessageCount: 0,
+    mainTextCharCount: 6491,
+    mainElementCount: 1688
+  });
+  const second = controller.safeActivitySignature({
+    maxConversationTurnOrdinal: 14,
+    lastMessageRole: "user",
+    lastMessageCharCount: 559,
+    assistantMessageCount: 0,
+    mainTextCharCount: 3924,
+    mainElementCount: 686
+  });
+
+  assert.equal(first, second);
+});

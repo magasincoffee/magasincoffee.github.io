@@ -25,7 +25,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.9";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.10";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -154,6 +154,32 @@ function recoveryPayload(recovery, action, reason = recoveryReason(action)) {
   };
 }
 
+function isOwnerWaitState(projectState = {}) {
+  return Boolean(
+    !projectState.blocked &&
+    projectState.status !== "BLOCKED" &&
+    (projectState.requires_user || projectState.status === "WAIT_USER")
+  );
+}
+
+function ownerBoundaryKey(projectState = {}) {
+  return [
+    String(projectState.current_phase || ""),
+    String(projectState.current_task || ""),
+    String(projectState.current_task_title || ""),
+    String(projectState.status || ""),
+    String(Boolean(projectState.requires_user))
+  ].join("|");
+}
+
+function safeTurnMarker(probe) {
+  return Number(
+    probe?.snapshot?.maxConversationTurnOrdinal ||
+    probe?.snapshot?.userMessageCount ||
+    0
+  );
+}
+
 function isHardStopObservation(observation) {
   return new Set([
     OBSERVATIONS.AUTH_REQUIRED,
@@ -263,6 +289,7 @@ let retryCount = 0;
 let lastProjectState = {};
 let consecutiveConnectFailures = 0;
 let handoffPending = true;
+let ownerReconcileState = null;
 
 await safeAppendLog(logPath, {
   type: "RUNTIME_BOOT",
@@ -313,13 +340,14 @@ while (true) {
       continue;
     }
 
-    if (
-      projectState.requires_user ||
-      projectState.blocked ||
-      projectState.status === "WAIT_USER" ||
-      projectState.status === "BLOCKED"
-    ) {
-      await safeAppendLog(logPath, { type: "WAIT_USER" });
+    const ownerWait = isOwnerWaitState(projectState);
+
+    if (projectState.blocked || projectState.status === "BLOCKED") {
+      ownerReconcileState = null;
+      await safeAppendLog(logPath, {
+        type: "WAIT_USER",
+        reason: "Project is BLOCKED; no automatic Owner reconciliation is allowed."
+      });
       await writeRuntimeStatus(
         buildRuntimeStatus({
           projectState,
@@ -331,6 +359,24 @@ while (true) {
       ).catch(() => {});
       await delay(args.pollMs);
       continue;
+    }
+
+    if (ownerWait) {
+      const key = ownerBoundaryKey(projectState);
+      if (!ownerReconcileState || ownerReconcileState.key !== key) {
+        ownerReconcileState = {
+          key,
+          attempted: false,
+          awaitingResponse: false,
+          settledTurn: null
+        };
+        await safeAppendLog(logPath, {
+          type: "OWNER_BOUNDARY_OBSERVED",
+          reason: "WAIT_USER remains fail-closed, but the live chat will be observed for an explicit Owner decision."
+        });
+      }
+    } else {
+      ownerReconcileState = null;
     }
 
     if (recovery.blocked) {
@@ -633,17 +679,67 @@ while (true) {
       continue;
     }
 
+    const currentTurn = safeTurnMarker(probe);
+    let ownerReconcileRequested = false;
+
+    if (ownerWait && ownerReconcileState) {
+      if (!ownerReconcileState.awaitingResponse) {
+        if (!ownerReconcileState.attempted) {
+          ownerReconcileRequested = true;
+        } else if (
+          currentTurn > Number(ownerReconcileState.settledTurn || 0)
+        ) {
+          ownerReconcileRequested = true;
+        }
+      }
+    }
+
     const result = await controller.step({
       page,
       projectState,
       probe,
       retryCount,
       maxRetries: 2,
-      handoff: handoffPending
+      handoff: handoffPending && !ownerWait,
+      ownerReconcile: ownerReconcileRequested
     });
 
     if (
+      ownerWait &&
+      ownerReconcileState &&
+      ownerReconcileRequested &&
+      result.decision.action === "CONTINUE" &&
+      result.execution.executed
+    ) {
+      ownerReconcileState.attempted = true;
+      ownerReconcileState.awaitingResponse = true;
+      handoffPending = false;
+      await safeAppendLog(logPath, {
+        type: "OWNER_RECONCILE_SENT",
+        action: "CONTINUE",
+        target: result.execution.target || undefined,
+        executed: true,
+        reason: "Sent one fail-closed reconciliation request for the current Owner boundary."
+      });
+    }
+
+    if (
+      ownerWait &&
+      ownerReconcileState?.awaitingResponse &&
+      controller.armed &&
+      result.effectiveObservation === OBSERVATIONS.RESPONSE_COMPLETE
+    ) {
+      ownerReconcileState.awaitingResponse = false;
+      ownerReconcileState.settledTurn = currentTurn;
+      await safeAppendLog(logPath, {
+        type: "OWNER_RECONCILE_SETTLED",
+        reason: "Owner reconciliation response settled; wait for repository state or a newer Owner turn."
+      });
+    }
+
+    if (
       handoffPending &&
+      !ownerWait &&
       result.decision.action === "CONTINUE" &&
       result.execution.executed
     ) {
@@ -700,7 +796,9 @@ while (true) {
     await writeRuntimeStatus(
       buildRuntimeStatus({
         projectState,
-        status: statusForStep(result, probe),
+        status: ownerWait
+          ? (result.execution?.executed ? "RUNNING" : "WAIT_USER")
+          : statusForStep(result, probe),
         uiState: probe.classification.uiState,
         observation:
           result.effectiveObservation || probe.classification.observation,
