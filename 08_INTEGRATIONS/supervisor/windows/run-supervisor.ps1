@@ -11,6 +11,16 @@ $target = Join-Path $root 'target.json'
 $stop = Join-Path $root 'STOP'
 $pidFile = Join-Path $root 'supervisor.pid'
 
+function Stop-DedicatedChrome {
+    # Only terminate Chrome processes that explicitly use the dedicated
+    # Supervisor profile. Never touch the Owner's normal Chrome profile.
+    Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" } |
+        ForEach-Object {
+            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+        }
+}
+
 if (-not (Test-Path $target)) {
     throw "Supervisor target is missing: $target"
 }
@@ -35,13 +45,7 @@ try {
         } catch {}
 
         if (-not $ready) {
-            # Only terminate Chrome processes that explicitly use the dedicated
-            # Supervisor profile. Never touch the Owner's normal Chrome profile.
-            Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
-                Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" } |
-                ForEach-Object {
-                    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-                }
+            Stop-DedicatedChrome
             Start-Sleep -Milliseconds 750
 
             Start-Process -FilePath $chrome -ArgumentList @(
@@ -75,14 +79,22 @@ try {
             $nodeArgs = @('src/runtime/supervisor-loop-cli.mjs', '--cdp-url', 'http://127.0.0.1:9222', '--poll-ms', '5000')
             if (-not $DryRun) { $nodeArgs += '--execute' }
             & node @nodeArgs
+            $nodeExitCode = $LASTEXITCODE
         } finally {
             Pop-Location
         }
 
+        if (-not (Test-Path $stop) -and $nodeExitCode -eq 75) {
+            # Exit code 75 is the Supervisor's explicit request for a clean CDP
+            # recovery. Kill only the dedicated Supervisor Chrome profile even
+            # when /json/version still answers, then let the outer gate relaunch it.
+            Write-Host 'Supervisor requested dedicated Chrome restart after repeated CDP failures.'
+            Stop-DedicatedChrome
+            Start-Sleep -Milliseconds 750
+            continue
+        }
+
         if (-not (Test-Path $stop)) {
-            # If the Node loop exited because CDP was repeatedly unavailable,
-            # return to the outer readiness gate so dedicated Chrome can be
-            # relaunched cleanly.
             Start-Sleep -Seconds 3
         }
     }
