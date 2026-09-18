@@ -247,3 +247,18 @@
 - Production provider secrets changed: none.
 - Email sent: none.
 - Gate: implementation **PASS**; TASK-035 remains **WAIT_USER** only for Gmail OAuth credential activation.
+
+
+## 2026-09-18 — TASK-035 activation auth hardening + OAuth runbook
+
+- Branch: `docs/task-035-oauth-activation-runbook`
+- PR: `#110`
+- Business OS Contract Tests run `35345220003`: **PASS**.
+- Supabase service-to-service deployment contract `verify_jwt=false`: PASS.
+- Handler-level `apikey` secret-key authorization remains mandatory: PASS.
+- Gmail provider / sender / OAuth secret boundary unchanged: PASS.
+- One-time Google OAuth Playground + Supabase secret-store activation runbook added: PASS.
+- Production Edge Function deployment: none.
+- Production provider secrets changed: none.
+- Email sent: none.
+- Gate: TASK-035 remains **WAIT_USER** only for Gmail OAuth credential activation.

@@ -33,6 +33,11 @@
       "SUPABASE_SECRET_KEYS",
       "SUPABASE_SERVICE_ROLE_KEY"
     ],
+    "service_to_service_auth": {
+      "request_header": "apikey",
+      "verify_jwt": false,
+      "handler_authorization_required": true
+    },
     "claim_after_provider_initialization": true,
     "credentials_in_git": false
   },

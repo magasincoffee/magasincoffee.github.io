@@ -1,0 +1,6 @@
+# Supabase deployment configuration for MAGASIN critical-path functions.
+# notification-email-worker is service-to-service and authorizes Supabase secret keys
+# inside the handler via the apikey header. Modern sb_secret_* keys are not user JWTs.
+
+[functions.notification-email-worker]
+verify_jwt = false
