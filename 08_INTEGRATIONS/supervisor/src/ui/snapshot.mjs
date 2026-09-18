@@ -70,7 +70,7 @@ export async function collectSafeUiSnapshot(page) {
       return {
         schemaVersion: "1.0",
         urlOrigin: location.origin,
-        path,
+        pathKind: conversationPath ? "conversation" : (path === "/" ? "home" : "other"),
         conversationPath,
         composerReady: Boolean(composer),
         assistantMessageCount: document.querySelectorAll(
