@@ -292,3 +292,26 @@ The offline decision/data/migration package is complete when:
 - project state enters `WAIT_USER` until Owner answers DST-001..DST-006.
 
 No write-capable SOP/Task implementation task is opened before the six decisions are approved.
+
+## 8. Owner response format
+
+Owner may answer in one compact block; no repeated context is required:
+
+```text
+DST-001=<option>; skip/NA=<rule>
+DST-002=<option>
+DST-003=<option>
+DST-004=<option>; complete/verify/close=<separate|collapsed rule>
+DST-005=<option>; due_source=<rule>; grace=<duration or none>
+DST-006=<option>; media_retention_access=<rule or N/A>
+```
+
+Use `OTHER:<rule>` when none of the listed options matches the intended business rule.
+
+## 9. Verification
+
+- Business OS Contract Tests run `35324873334`: **PASS**.
+- All six decision IDs remain `OWNER_INPUT_REQUIRED` with `selected_option = null`.
+- Production DDL/backfill performed: none.
+- Task write/automation enabled: none.
+- Gate result: **WAIT_USER** for DST-001..DST-006.
