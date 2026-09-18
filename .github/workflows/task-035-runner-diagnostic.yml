@@ -34,8 +34,8 @@ jobs:
         run: |
           npm install --ignore-scripts --no-audit --no-fund
 
-      - name: Inspect Gmail API controls
+      - name: Enable or verify Gmail API
         shell: powershell
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
-          node src/ui/task-035-gmail-control-probe.mjs
+          node src/ui/task-035-gmail-api-setup.mjs
