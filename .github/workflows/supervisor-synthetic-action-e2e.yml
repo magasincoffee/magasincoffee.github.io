@@ -1,0 +1,85 @@
+name: Supervisor Synthetic Action E2E
+
+on:
+  push:
+    branches:
+      - feat/supervisor-actions
+    paths:
+      - '.github/workflows/supervisor-synthetic-action-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supervisor-synthetic-action-e2e-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  synthetic-e2e:
+    if: github.actor == 'magasincoffee'
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: 08_INTEGRATIONS/supervisor
+        shell: powershell
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pinned dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Ensure real Chrome CDP
+        run: |
+          $candidates = @(
+            "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+            "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+            "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
+          )
+          $chrome = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+          if (-not $chrome) { throw 'Chrome not found.' }
+
+          $profile = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor\browser_profile'
+          $ready = $false
+          try {
+            $null = Invoke-RestMethod -Uri 'http://127.0.0.1:9222/json/version' -TimeoutSec 2
+            $ready = $true
+          } catch {}
+
+          if (-not $ready) {
+            Start-Process -FilePath $chrome -ArgumentList @(
+              '--remote-debugging-address=127.0.0.1',
+              '--remote-debugging-port=9222',
+              "--user-data-dir=$profile",
+              '--no-first-run',
+              '--no-default-browser-check',
+              'about:blank'
+            )
+            for ($i = 0; $i -lt 30; $i++) {
+              try {
+                $null = Invoke-RestMethod -Uri 'http://127.0.0.1:9222/json/version' -TimeoutSec 2
+                $ready = $true
+                break
+              } catch {
+                Start-Sleep -Seconds 1
+              }
+            }
+          }
+          if (-not $ready) { throw 'Chrome CDP unavailable.' }
+
+      - name: Execute CONTINUE and RETRY against synthetic local DOM only
+        run: |
+          node src/runtime/synthetic-action-e2e-cli.mjs --cdp-url http://127.0.0.1:9222
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Assert boundary
+        run: |
+          Write-Host 'PASS: real Chrome action semantics verified without sending any ChatGPT message or touching external state.'
