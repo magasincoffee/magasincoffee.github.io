@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
   "target_days": 21,
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-046",
-  "current_task_title": "Night full QA",
+  "current_task": "TASK-047",
+  "current_task_title": "Night docs / evidence / PR prep",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-047",
+  "next_task": "TASK-048",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -19,9 +19,9 @@
   },
   "last_updated": "2026-09-18",
   "owner_boundary": {
-    "task": "TASK-046",
+    "task": "TASK-047",
     "resolved": [
-      "TASK_045_RESTART_RESUME_VERIFIED"
+      "TASK_046_TWO_PROJECT_FULL_QA_VERIFIED"
     ],
     "pending": []
   },
@@ -48,7 +48,7 @@
       "magasin-business-os",
       "magasin-media-robot"
     ],
-    "current_order": 11,
+    "current_order": 12,
     "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
     "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json",
     "recovery_install": {
@@ -87,7 +87,10 @@
       "task_044_test_commit": "0aa727303482ee6552f143e0abec722d65e6103c",
       "task_044_regression_fix_commit": "b0758f72b9592e229e0c4c5969fa683048cdfd91",
       "task_045_test_run_id": 35371642271,
-      "task_045_test_commit": "311bf4413a3dd5cdc5d7d01f8d6642d13e061629"
+      "task_045_test_commit": "311bf4413a3dd5cdc5d7d01f8d6642d13e061629",
+      "task_046_business_head": "311bf4413a3dd5cdc5d7d01f8d6642d13e061629",
+      "task_046_business_test_run_id": 35371642271,
+      "task_046_business_tests_passed": 203
     },
     "media_robot": {
       "branch": "feat/saydivoice-production-adapter-offline",
@@ -97,7 +100,12 @@
       "pytest_passed": 83,
       "live_generate": false,
       "live_download": false,
-      "auto_merge": false
+      "auto_merge": false,
+      "task_046_media_head": "3522886bb54ac5b69d245eb3ccd1285ada8571e0",
+      "task_046_media_test_run_id": 35371002442,
+      "task_046_media_tests_passed": 83,
+      "task_046_no_live_generate": true,
+      "task_046_no_live_download": true
     }
   }
 }
