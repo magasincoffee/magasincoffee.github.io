@@ -157,33 +157,15 @@
 
 - Branch: `feat/task-021-control-tower-staffing-gap`
 - Workflow: `Owner Control Tower Tests`
-- Adapter/integration/browser run: `35318311909`
+- Implementation/regression/browser runs: `35318311909`, `35318333955`
 - Result: **PASS**
-- Workforce attention consumes the verified staffing-gap read adapter: PASS.
+- Workforce attention consumes the verified TASK-020 staffing-gap read adapter: PASS.
 - Existing generation rows are reused; `list_schedule_generations` is not duplicated per store: PASS.
-- Full scoped source returns ACTUAL staffing-gap count: PASS.
-- Partial/missing store generation redacts staffing gap instead of synthesizing zero: PASS.
-- Existing unresolved attention (PENDING transfer + DRAFT/REVIEWED generation) remains intact: PASS.
-- Browser E2E renders a verified staffing gap fixture: PASS.
-- Browser path remains read-only; added RPCs are read-only requirements/assignment reads only.
-- One unrelated source failure still leaves Workforce usable: PASS.
-- Production writes/migrations: none.
-- Gate: TASK-021 **DONE**; TASK-022 may proceed.
-
-## 2026-09-18 — TASK-021 Control Tower staffing-gap integration
-
-- Branch: `feat/task-021-control-tower-staffing-gap`
-- Workflow: `Owner Control Tower Tests`
-- Implementation regression/browser run: `35318333955`
-- Result: **PASS**
-- Workforce attention reuses the verified TASK-020 staffing-gap reader: PASS.
-- Existing generation rows are passed into the gap reader; no duplicate `list_schedule_generations` call per store: PASS.
-- Staffing gaps aggregate only when every accessible store has verified `ACTUAL` gap data: PASS.
-- Any missing generation/requirements/assignments source redacts the aggregate staffing-gap number instead of fabricating zero: PASS.
-- Pending transfer + DRAFT/REVIEWED unresolved attention remains available as a verified lower bound under partial-source failure: PASS.
+- Full scoped source aggregates an ACTUAL staffing-gap count; missing generation/requirements/assignments redacts the gap instead of synthesizing zero: PASS.
+- Pending transfer + DRAFT/REVIEWED unresolved attention remains a verified lower bound under partial-source failure: PASS.
 - Deterministic browser fixture renders Workforce `ACTUAL`, staffing gap `1`, unresolved `2`: PASS.
-- Payables-source degradation still leaves Workforce healthy and dashboard usable: PASS.
-- Browser/adapter RPC surface remains read-only; schedule generation/review/publish/transfer-review writes are not invoked.
+- One unrelated Payables source failure leaves Workforce healthy and the dashboard usable: PASS.
+- Adapter/browser RPC surface remains read-only; schedule generation/review/publish/transfer-review writes are not invoked.
 - Production writes/migrations: none.
 - Gate: TASK-021 **DONE**; TASK-022 may proceed.
 
