@@ -61,4 +61,7 @@ test("repair script treats PAUSED autonomy as install-only success", async () =>
   assert.match(source, /PAUSED install verification failed/);
   assert.match(source, /Runtime status: PAUSED \(not launched by design\)/);
   assert.match(source, /boot was intentionally skipped because autonomy is PAUSED/);
+  assert.match(source, /\$brainWorkerMode/);
+  assert.match(source, /supervisor_orchestration/);
+  assert.match(source, /Legacy ChatGPT target is missing/);
 });
