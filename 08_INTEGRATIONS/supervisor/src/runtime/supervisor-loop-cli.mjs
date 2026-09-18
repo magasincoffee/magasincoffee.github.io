@@ -26,7 +26,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.15";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.16";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -344,6 +344,32 @@ while (true) {
       ).catch(() => {});
       await delay(args.pollMs);
       continue;
+    }
+
+    if (projectState.autonomy === "PAUSED") {
+      const pauseReason =
+        projectState?.night_run?.temporal_gate?.reason ||
+        "repository autonomy is PAUSED";
+      await safeAppendLog(logPath, {
+        type: "AUTONOMY_PAUSED",
+        action: ACTIONS.WAIT,
+        reason: pauseReason
+      });
+      await writeRuntimeStatus(
+        buildRuntimeStatus({
+          projectState,
+          status: "PAUSED",
+          decision: {
+            action: ACTIONS.WAIT,
+            reason: pauseReason
+          },
+          retryCount,
+          recovery: recoveryPayload(recovery, RECOVERY_ACTIONS.NONE)
+        }),
+        runtimeStatusPath
+      ).catch(() => {});
+      process.exitCode = 76;
+      break;
     }
 
     const ownerWait = isOwnerWaitState(projectState);
