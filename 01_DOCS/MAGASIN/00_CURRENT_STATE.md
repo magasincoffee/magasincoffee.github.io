@@ -111,12 +111,13 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 - notification/email/calendar gap đã được inventory;
 - production mutation: none.
 
-Owner cần chốt:
+`SFB-001 — Give lifecycle` đã được Owner chốt: `RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES`.
 
-1. `SFB-001 — Give lifecycle` trong `05_SYSTEM/PUBLISHED_SCHEDULE_FEEDBACK_LOOP_V1.md`;
-2. `SFB-002 — Notification production activation`: cho phép event-outbox production apply và xác định/ủy quyền email/calendar provider + secret-store credentials.
+Owner còn cần chốt duy nhất:
 
-Không draft/apply write-capable Give hoặc notification provider production trước hai boundary trên.
+`SFB-002 — Notification production activation`: cho phép event-outbox production apply và xác định/ủy quyền email/calendar provider + secret-store credentials.
+
+Không apply production notification provider trước SFB-002. Give lifecycle đã có rule, nhưng production Give primitive/schema vẫn không được apply ngoài approval boundary tương ứng.
 
 TASK-026 vẫn được defer độc lập; không triển khai SOP/Task write automation cho tới khi DST-001..DST-006 được phê duyệt.
 
