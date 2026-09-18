@@ -28,7 +28,7 @@ test("Five-Step architecture reset is canonical and schedule-first", async () =>
   assert.equal(state.status, "READY");
   assert.equal(state.autonomy, "AUTO_CONTINUE");
   assert.equal(state.requires_user, false);
-  assert.equal(state.next_task, null);
+  assert.equal(state.next_task, "TASK-037");
 
   assert.match(current, /Schedule-first Core Flow/);
   assert.match(current, /TASK-036/);
