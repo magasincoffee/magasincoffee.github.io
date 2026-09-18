@@ -27,12 +27,14 @@
         <section>
           <button class='btn primary' onclick='openWeeklyRegistration()'>Đăng ký lịch làm</button>
           <div id='weeklyRegistrationPanel' class='weekly-reg-form'>
-            <button class='btn' onclick='closeWeeklyRegistration()'>Đóng</button>
-            <div class='field'><label>Ngày</label><select id='quickRegDay'></select></div>
-            <div class='field'><label>Bắt đầu</label><select id='quickRegStart'></select></div>
-            <div class='field'><label>Kết thúc</label><select id='quickRegEnd'></select></div>
-            <div class='field'><label>Chi nhánh</label><select id='quickRegStore'></select></div>
-            <button class='btn primary' onclick='quickRegister()'>Đăng ký</button>
+            <div class='weekly-reg-head'><div><h3>Đăng ký lịch làm</h3></div><button class='btn' onclick='closeWeeklyRegistration()'>Đóng</button></div>
+            <div class='form'>
+              <div class='field'><label>Ngày</label><select id='quickRegDay'></select></div>
+              <div class='field'><label>Bắt đầu</label><select id='quickRegStart'></select></div>
+              <div class='field'><label>Kết thúc</label><select id='quickRegEnd'></select></div>
+              <div class='field'><label>Chi nhánh</label><select id='quickRegStore'></select></div>
+              <button class='btn primary' onclick='quickRegister()'>Đăng ký</button>
+            </div>
             <div id='quickRegMsg'></div>
             <div class='week-summary'></div>
             <button class='btn' onclick='finishQuickRegistration()'>Hoàn thành</button>
@@ -127,6 +129,12 @@
             availability_type: args.p_availability_type
           });
           return { data: { saved: true }, error: null };
+        }
+
+        if (name === 'delete_my_availability') {
+          const before = state.availability.length;
+          state.availability = state.availability.filter(row => row.id !== args.p_availability_id);
+          return { data: state.availability.length < before, error: null };
         }
 
         if (name === 'list_schedule_generations') {
