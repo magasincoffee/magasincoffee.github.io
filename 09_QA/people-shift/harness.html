@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>MAGASIN People/Shift QA Harness</title>
+  <style>
+    :root{--border:#dbe4ee;--muted:#64748b;--text:#0f172a}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f4f7fb;color:#0f172a}
+    body{padding:16px}
+    #qaHeader{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+    #qaHeader h1{margin:0;font-size:20px}
+    #qaHeader span{font-size:12px;color:#475569}
+    #employeeApp{display:block;width:100%;min-height:560px;border:1px solid #dbe4ee;border-radius:14px;background:#fff}
+    #panel-publish{margin-top:16px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px}
+    .btn{border:1px solid #cbd5e1;background:#fff;color:#0f172a;border-radius:9px;min-height:36px;padding:0 12px;font-weight:700;cursor:pointer}
+    .btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .badge{display:inline-flex;padding:3px 7px;border-radius:999px}
+    .badge.yellow{background:#fef3c7;color:#92400e}
+    @media(max-width:600px){body{padding:8px}#qaHeader{align-items:flex-start;flex-direction:column}#employeeApp{min-height:620px}}
+  </style>
+</head>
+<body>
+  <div id="qaHeader">
+    <h1>People / Shift Day-10 QA</h1>
+    <span>Sanitized deterministic fixture · no production connection</span>
+  </div>
+  <iframe id="employeeApp" title="Employee QA Fixture"></iframe>
+  <div id="panel-publish"></div>
+
+  <template id="employeeFixture">
+    <!doctype html>
+    <html lang="vi">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <style>
+        :root{--muted:#64748b}
+        *{box-sizing:border-box}
+        html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#0f172a;background:#fff}
+        body{padding:14px}
+        button,select{font:inherit}
+        .toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center}
+        .header-user-text{display:grid}.header-user-text span{font-size:12px;color:#64748b}
+        .header-avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#e2e8f0;font-weight:900}
+        .user{display:flex;align-items:center;gap:8px}
+        .panel{display:none;margin-top:12px;padding:12px;border:1px solid #dbe4ee;border-radius:12px;background:#f8fafc}
+        .panel.open{display:block}
+        .form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+        label{display:grid;gap:4px;font-size:12px;font-weight:700}
+        select{min-height:38px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:0 8px}
+        button{min-height:38px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;padding:0 11px;font-weight:800;cursor:pointer}
+        .week-summary{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:10px}
+        .mini{border:1px solid #e2e8f0;border-radius:9px;padding:8px;min-height:104px}
+        .mini h4{margin:0;font-size:11px}.date{font-size:10px;color:#64748b}.miniShift{font-size:10px;margin-top:8px}
+        #quickRegMsg{min-height:20px;margin-top:8px;font-size:12px;font-weight:700}
+        #view-schedule{margin-top:16px}
+        .schedule-main-panel{padding:12px;border:1px solid #dbe4ee;border-radius:12px}
+        .pill{font-size:12px;font-weight:800;margin-bottom:8px}
+        .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+        .day{border:1px solid #e2e8f0;border-radius:9px;padding:8px;min-height:120px;overflow:hidden}
+        .shift{margin-top:8px;padding:7px;border-radius:8px;font-size:11px}
+        .store{margin-top:3px}
+        .muted{color:#64748b}
+        @media(max-width:700px){
+          body{padding:8px}
+          .form-grid{grid-template-columns:1fr 1fr}
+          .week-summary{grid-template-columns:repeat(7,minmax(110px,1fr));overflow:auto}
+          .days{grid-template-columns:repeat(7,minmax(110px,1fr));overflow:auto}
+        }
+      </style>
+    </head>
+    <body>
+      <div class="toolbar">
+        <button id="openWeeklyRegistration" onclick="openWeeklyRegistration()">Đăng ký lịch tuần</button>
+        <div class="user">
+          <div class="header-avatar">Q</div>
+          <div class="header-user-text"><strong>QA Staff</strong><span>STAFF</span></div>
+        </div>
+      </div>
+      <section id="weeklyRegistrationPanel" class="panel">
+        <div class="form-grid">
+          <label>Ngày<select id="quickRegDay"></select></label>
+          <label>Từ<select id="quickRegStart"></select></label>
+          <label>Đến<select id="quickRegEnd"></select></label>
+          <label>Cửa hàng<select id="quickRegStore"></select></label>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px">
+          <button id="quickRegisterButton" onclick="quickRegister()">Lưu đăng ký</button>
+          <button id="finishRegistrationButton" onclick="finishQuickRegistration()">Hoàn tất</button>
+          <button id="closeRegistrationButton" onclick="closeWeeklyRegistration()">Đóng</button>
+        </div>
+        <div id="quickRegMsg"></div>
+        <div class="week-summary"></div>
+      </section>
+      <section id="view-schedule">
+        <div class="schedule-main-panel employee-schedule-engine">
+          <div class="pill"></div>
+          <div class="days"></div>
+        </div>
+      </section>
+    </body>
+    </html>
+  </template>
+
+  <script>
+  (() => {
+    "use strict";
+    const calls = [];
+    const state = {
+      currentMonday: "2026-09-21",
+      availability: [],
+      generation: null,
+      assignments: [],
+      official: []
+    };
+    const store = { id: "store-1", code: "CN1", name: "QA Store" };
+    const days = ["Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy","Chủ Nhật"];
+
+    globalThis.__PEOPLE_SHIFT_QA_CALLS = calls;
+    globalThis.__PEOPLE_SHIFT_QA_STATE = state;
+    globalThis.__PEOPLE_SHIFT_QA_TOASTS = [];
+
+    function dateValue(value) {
+      return new Date(String(value).slice(0,10) + "T00:00:00Z");
+    }
+    function dateKey(value) {
+      return value.toISOString().slice(0,10);
+    }
+    function addDays(value, amount) {
+      const d = dateValue(value);
+      d.setUTCDate(d.getUTCDate() + Number(amount || 0));
+      return dateKey(d);
+    }
+    function formatDate(value) {
+      const parts = String(value).slice(0,10).split("-");
+      return parts.length === 3 ? parts[2] + "/" + parts[1] + "/" + parts[0] : String(value || "");
+    }
+    function time5(value) {
+      const text = String(value == null ? "" : value);
+      return text.length >= 5 ? text.slice(0,5) : text;
+    }
+    function minutes(value) {
+      const p = time5(value).split(":").map(Number);
+      return Number.isFinite(p[0]) && Number.isFinite(p[1]) ? p[0] * 60 + p[1] : 0;
+    }
+    function shiftKind(value) {
+      const m = minutes(value);
+      return m < 11 * 60 ? "morning" : m < 17 * 60 ? "afternoon" : "evening";
+    }
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+    function record(name, args) {
+      calls.push({ kind: "rpc", name, args: args || null });
+    }
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    globalThis.MAGASIN_CORE = {
+      DAYS: days,
+      date: {
+        monday() { return state.currentMonday; },
+        addDays,
+        weekDays(value) { return Array.from({length:7}, (_,i) => addDays(value,i)); },
+        formatDate,
+        dateKey() { return state.currentMonday; }
+      },
+      time: { time5, minutes, shiftKind },
+      security: { escapeHtml },
+      stores: {
+        async active() {
+          calls.push({ kind: "stores", name: "active" });
+          return [clone(store)];
+        },
+        async accessible() {
+          calls.push({ kind: "stores", name: "accessible" });
+          return [clone(store)];
+        }
+      },
+      ui: {
+        toast(message, type) {
+          globalThis.__PEOPLE_SHIFT_QA_TOASTS.push({ message: String(message), type: String(type || "") });
+        },
+        setLoading() {}
+      },
+      supabase: {
+        async rpc(name, args) {
+          record(name, args);
+          if (name === "get_my_availability") {
+            return { data: clone(state.availability), error: null };
+          }
+          if (name === "save_my_availability") {
+            const row = {
+              id: "availability-1",
+              availability_id: "availability-1",
+              work_date: args.p_work_date,
+              start_time: args.p_start_time,
+              end_time: args.p_end_time,
+              availability_type: args.p_availability_type,
+              preferred_store_id: args.p_preferred_store_id,
+              preferred_store_code: store.code,
+              employee_name: "QA Staff",
+              username: "qa-staff"
+            };
+            state.availability = [row];
+            return { data: clone(row), error: null };
+          }
+          if (name === "list_schedule_generations") {
+            const rows = state.generation ? [clone(state.generation)] : [];
+            return { data: rows, error: null };
+          }
+          if (name === "get_schedule_generation_assignments") {
+            if (!state.generation || args.p_generation_id !== state.generation.id) {
+              return { data: null, error: new Error("Unknown generation") };
+            }
+            return { data: clone(state.assignments), error: null };
+          }
+          if (name === "get_manager_weekly_schedule") {
+            return { data: clone(state.official), error: null };
+          }
+          if (name === "auto_generate_schedule_generation") {
+            if (!state.availability.length) {
+              return { data: null, error: new Error("No availability fixture") };
+            }
+            const a = state.availability[0];
+            state.generation = {
+              id: "generation-qa",
+              status: "DRAFT",
+              algorithm_version: args.p_algorithm_version || "GREEDY_V1",
+              store_id: args.p_store_id,
+              week_start: args.p_week_start
+            };
+            state.assignments = [{
+              work_date: a.work_date,
+              start_time: a.start_time,
+              end_time: a.end_time,
+              employee_name: "QA Staff",
+              employee_id: "employee-qa",
+              store_code: store.code,
+              store_id: store.id,
+              score: 100,
+              warning: ""
+            }];
+            return {
+              data: {
+                generation_id: state.generation.id,
+                status: state.generation.status,
+                algorithm_version: state.generation.algorithm_version
+              },
+              error: null
+            };
+          }
+          if (name === "review_schedule_generation") {
+            if (!state.generation || args.p_generation_id !== state.generation.id || state.generation.status !== "DRAFT") {
+              return { data: null, error: new Error("Generation is not reviewable") };
+            }
+            state.generation.status = "REVIEWED";
+            return { data: { status: "REVIEWED" }, error: null };
+          }
+          if (name === "publish_schedule_generation") {
+            if (!state.generation || args.p_generation_id !== state.generation.id || state.generation.status !== "REVIEWED") {
+              return { data: { published: false, error_code: "NOT_REVIEWED" }, error: null };
+            }
+            state.generation.status = "PUBLISHED";
+            state.official = state.assignments.map((row) => Object.assign({}, row, { status: "APPROVED" }));
+            return {
+              data: { published: true, inserted_schedule_count: state.official.length },
+              error: null
+            };
+          }
+          if (name === "list_my_approved_schedules_v2") {
+            return { data: clone(state.official), error: null };
+          }
+          return { data: null, error: new Error("Unexpected QA RPC: " + name) };
+        }
+      }
+    };
+
+    globalThis.MAGASIN_EMPLOYEE = {
+      profile: { id: "employee-qa", username: "qa-staff", full_name: "QA Staff", role: "STAFF", status: "ACTIVE" },
+      events: { emit(name, detail) { calls.push({ kind: "event", name, detail: detail || null }); } }
+    };
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = src;
+        script.onload = () => resolve(src);
+        script.onerror = () => reject(new Error("Cannot load " + src));
+        document.body.appendChild(script);
+      });
+    }
+
+    const frame = document.getElementById("employeeApp");
+    frame.addEventListener("load", async () => {
+      try {
+        await loadScript("/06_EMPLOYEE/availability/engine-v1.js");
+        globalThis.__QA_AVAILABILITY_READY = true;
+      } catch (error) {
+        console.error("availability harness boot", error);
+      }
+    }, { once: true });
+    frame.srcdoc = document.getElementById("employeeFixture").innerHTML;
+
+    globalThis.__QA_LOAD_SCHEDULING_ENGINES = async () => {
+      if (globalThis.__QA_SCHEDULING_READY) return;
+      state.currentMonday = "2026-09-28";
+      await loadScript("/04_OWNER/Workforce/03-publish/engine-v1.js");
+      await loadScript("/06_EMPLOYEE/schedule/engine-v1.js");
+      globalThis.__QA_SCHEDULING_READY = true;
+    };
+  })();
+  </script>
+</body>
+</html>
