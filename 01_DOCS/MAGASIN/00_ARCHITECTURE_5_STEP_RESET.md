@@ -156,8 +156,9 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-040 — Business OS Robot V2 portfolio scheduler:** project isolation + WAIT_USER skip policy verified. DONE.
 - **TASK-041 — Business OS Robot V2 recovery engine:** lease/checkpoint/stale-cursor recovery + project boundary regression verified. DONE.
 - **TASK-042 — SaydiVoiceProvider production adapter offline:** Media Robot offline gate verified with 23 tests; no live provider action or merge. DONE.
-- **TASK-043 — Cross-project handoff integration:** prove Business OS → Media Robot → Business OS state/checkpoint/constraint isolation. IN_PROGRESS.
-- **TASK-044–048 — Portfolio diagnostics, restart simulation, full QA, docs/evidence and final checkpoint:** execute only after each preceding gate passes.
+- **TASK-043 — Cross-project handoff integration:** Business OS → Media Robot → Business OS state/checkpoint/constraint isolation verified. DONE.
+- **TASK-044 — Portfolio-aware diagnostics:** add project/task/checkpoint/error context with privacy-safe persistence. IN_PROGRESS.
+- **TASK-045–048 — Restart simulation, full QA, docs/evidence and final checkpoint:** execute only after each preceding gate passes.
 
 ## 8. Definition of success
 
