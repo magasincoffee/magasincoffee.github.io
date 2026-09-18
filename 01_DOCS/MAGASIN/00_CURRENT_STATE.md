@@ -6,17 +6,17 @@ Last updated: 2026-09-18
 
 **MAGASIN Business OS V1 — 21-day accelerated execution**
 
-The existing Enterprise Source-of-Truth discipline remains mandatory. Acceleration is achieved by smaller vertical-slice Discovery and micro-task execution, not by guessing business rules.
+Enterprise Source-of-Truth discipline remains mandatory. Acceleration is achieved by smaller vertical-slice Discovery and micro-task execution, not by guessing business rules.
 
 ## Current phase
 
 **P1 — Accelerated Enterprise Discovery + Foundation**
 
-P0 baseline gate has already passed according to the Master Plan. Domain Discovery continues only to the depth required to safely implement each V1 vertical slice.
+P0 baseline gate has passed. Owner decision `DEC-003` reprioritizes the current implementation slice to **People / Shift / Schedule / Attendance**.
 
 ## Current task
 
-**TASK-026 — SOP/Task rule decision pack + data/migration plan — WAIT_USER**
+**TASK-028 — Manager registration review hardening — READY**
 
 Canonical task/state files:
 
@@ -24,35 +24,40 @@ Canonical task/state files:
 - `00_PROJECT_STATE.json`
 - `00_TASK_QUEUE.md`
 - `00_SUPERVISOR_ROBOT.md`
+- `05_SYSTEM/SCHEDULE_V1_COMPLETION_PLAN.md`
 
-## Current target
+## Owner priority — DEC-003
 
-- Day 3: foundation data visible.
-- Day 7: Owner Control Tower usable.
-- Day 14: alerts + Daily Brief usable.
-- Day 21: V1 production acceptance.
+Owner decided on 2026-09-18:
 
-## V1 locked scope
+- temporarily defer write-capable SOP / Công việc / Task implementation;
+- do not guess DST-001..DST-006;
+- complete the weekly scheduling operating loop first, using `Lịch Đk Tuần`, `Lịch làm hàng tuần`, repository Workforce engines and verified live RPC contracts;
+- Manager must be able to review/edit registrations, allocate people, use robot draft scheduling and publish;
+- Employee must be able to register availability, see saved registration and official schedule, clock in/out, give/swap shifts;
+- schedule changes must propagate to the affected people and support notification/calendar/email integration.
 
-Sales, Inventory, People/Shift, SOP/Checklist/Task, Owner Dashboard, Alerts, Daily Brief, Business Robot, Approval Queue, Google Sheets sync, Media Robot connector, audit/recovery basics, Supervisor Robot.
+`TASK-026` is **DEFERRED_BY_OWNER**, not approved and not deleted. Its six SOP/Task decisions remain unresolved.
 
-Non-essential scope is deferred.
-
-## Working method
-
-Every requirement:
-
-```text
-QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE
-```
-
-Every implementation micro-task:
+## Schedule target workflow
 
 ```text
-Estimate → Implement → Unit → Fix → Regression → Integration → E2E → Docs/State → Commit → Next
+Availability
+→ Manager review
+→ Staffing demand
+→ Robot draft
+→ Manager assignment edit
+→ Validate
+→ Review
+→ Publish
+→ Employee official schedule
+→ Attendance
+→ Give / Swap
+→ Schedule refresh
+→ Notifications
 ```
 
-Normal implementation task target: <= ~20 minutes active work. Split larger tasks.
+Robot does not auto-publish.
 
 ## Safety
 
@@ -60,29 +65,17 @@ This repository is PUBLIC.
 
 Never commit secrets, credentials, cookies, tokens, browser profiles, private employee/customer/financial records, production exports or private generated media.
 
-Production/private data remains outside Git with appropriate access controls.
+The two scheduling workbooks are evidence sources. Private employee rows remain outside Git.
+
+Production schema/backfill/permission changes and activation of external email/calendar credentials remain Owner-gated YELLOW actions.
 
 ## Supervisor status
 
-Supervisor Robot V1 is implemented and verified:
-
-- real installed Chrome with local authenticated profile;
-- privacy-safe UI observation;
-- bounded Continue / safe Retry executor;
-- reconnect/retry policy;
-- anti-duplicate continuation loop;
-- unified `MAGASIN BUSINESS OS CONTROL` desktop panel with START ROBOT / STOP;
-- privacy-safe runtime status for current task, next task, ChatGPT UI state/action, update time and errors;
-- background START mode so normal use does not require a separate PowerShell window;
-- persistent local runtime;
-- local-only target/profile/logs;
-- stop gates for WAIT_USER/BLOCKED/auth/MFA/CAPTCHA/destructive/admin/ambiguous states.
-
-Owner does not need to sit at the computer and repeatedly ask ChatGPT to continue. Normal operation is: open `MAGASIN BUSINESS OS CONTROL` → START ROBOT → return only when the panel/state reaches `WAIT_USER` or another real Owner boundary. The Supervisor may continue only while `AUTO_CONTINUE` is allowed.
+Supervisor Robot V1 remains active. Project state is returned to `AUTO_CONTINUE` because the prior Owner boundary has been explicitly superseded by DEC-003 through deferral of the SOP/Task slice.
 
 ## Next action
 
-**WAIT_USER:** Owner must answer DST-001..DST-006 in `05_SYSTEM/SOP_TASK_RULE_DECISION_PACK_V1.md`. The decision pack, machine-readable contract and migration boundary are complete and tested. Do not open a write-capable SOP/Task implementation task, apply production schema, or enable automation until these six business-rule decisions are approved.
+**AUTO_CONTINUE:** execute TASK-028. Harden Manager weekly registration review: week/store navigation, all scoped registrations, and route edits through `manager_update_employee_availability` instead of browser direct table update. Test regression, update state, then continue to TASK-029 if no Owner boundary is reached.
 
 ## Session handoff
 
@@ -95,7 +88,8 @@ New chat must read:
 5. `00_BUSINESS_OS_BLUEPRINT.md`
 6. `06_DECISION_LOG.md`
 7. `07_CHANGE_LOG.md`
-8. current domain/task docs
-9. repository/PR/CI state
+8. `05_SYSTEM/SCHEDULE_V1_COMPLETION_PLAN.md`
+9. current domain/task docs
+10. repository/PR/CI state
 
 Repository evidence overrides stale chat memory.
