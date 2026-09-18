@@ -207,3 +207,22 @@
 - Persisted production QA rows: none.
 - Email provider invoked: none.
 - Gate: TASK-034 **DONE**; TASK-035 **READY**.
+
+## 2026-09-18 — TASK-035 MAGASIN email adapter/config boundary
+
+- Branch: `feat/task-035-email-adapter-boundary`
+- Task doc: `01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_EMAIL_ADAPTER_CONFIG_V1.md`
+- Contract: `02_CORE/contracts/notification-email-adapter.v1.json`
+- Business OS Contract Tests run `35342754258`: **PASS**.
+- Repository provider config discovery: none found.
+- Supabase Edge Functions inventory: 0.
+- Database provider primitive inventory: none beyond TASK-034 outbox.
+- Recipient source `public.profiles.email`: verified structurally.
+- USER / OWNER / STORE_MANAGERS resolver contract: PASS.
+- Config validation before queue claim: PASS.
+- Provider-not-registered fail-closed guard: PASS.
+- Hardcoded provider credential names/values: absent.
+- Edge Function deployment: none.
+- Production provider secrets changed: none.
+- Email sent: none.
+- Gate: TASK-035 **WAIT_USER** pending concrete provider + exact MAGASIN sender email.
