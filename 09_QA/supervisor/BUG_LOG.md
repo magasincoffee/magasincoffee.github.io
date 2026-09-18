@@ -15,7 +15,7 @@
   3. avoid probing third-party authentication pages;
   4. resume detection only when a ChatGPT page is available;
   5. regression-test navigation race behavior.
-- Status: FIXING
+- Status: VERIFIED — fixed by real Chrome + CDP attach; local setup run 35298993647 PASS
 
 
 ## BUG-SUP-002 — Google rejects Playwright-launched Chrome during OAuth
@@ -40,4 +40,4 @@
 - Impact: successful authentication is not recognized promptly.
 - Root cause: one-time target capture used a UI visibility condition that is unnecessary for identifying a valid authenticated conversation.
 - Fix: capture the local conversation target when a ChatGPT conversation path is detected; runtime send eligibility remains separately gated by composer/state checks.
-- Status: FIXED — pending local verification
+- Status: VERIFIED — local setup run 35298993647 reached READY_IDLE and stored target locally
