@@ -24,5 +24,5 @@ test("Windows STOP also clears orphaned wrappers and loop nodes", async () => {
   assert.match(source, /Stopping orphaned Supervisor wrapper PID/);
   assert.match(source, /Stopping orphaned Supervisor Node PID/);
   assert.match(source, /run-supervisor\.ps1/);
-  assert.match(source, /supervisor-loop-cli\.mjs/);
+  assert.match(source, /supervisor-loop-cli\|brain-worker-cli/);
 });
