@@ -9,4 +9,4 @@
 - Impact: a failed/untrusted source could still expose a number while labeled GAP, violating the Control Tower no-synthetic/no-untrusted-number invariant.
 - Root cause: metric normalization validated quality and numeric values independently.
 - Fix: numeric metrics are retained only for `ACTUAL` or `ESTIMATE`; `GAP` and `NOT_CONNECTED` always redact metrics to `null`. Missing quality defaults to `NOT_CONNECTED`; invalid explicit values fail to `GAP`.
-- Status: FIXING
+- Status: VERIFIED — regression suite `35310598259` PASS
