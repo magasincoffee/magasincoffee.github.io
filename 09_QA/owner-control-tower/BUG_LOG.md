@@ -34,3 +34,15 @@
 - Root cause: Revenue shared the same numeric-trust rule as Payables/Workforce even though Revenue requires reconciliation before any official amount is exposed.
 - Fix: Revenue now has a stricter normalization path: only `ACTUAL` may retain `amount`; all non-ACTUAL revenue states redact it to `null`.
 - Status: VERIFIED — run `35315205100` PASS
+
+## BUG-CT-004 — Source exception can be misclassified as Owner auth failure
+
+- Date: 2026-09-18
+- Component: `04_OWNER/ControlTower/control-tower-v1.js`
+- Reproduction: after successful Owner authorization, make a source dependency such as `core.supabase.get()` or a read adapter throw unexpectedly.
+- Observed: the outer `try/catch` catches the source exception, hides the Control Tower app and opens the permission-denied screen.
+- Impact: one source outage can blank otherwise healthy cards and falsely tell an authenticated Owner that access is denied.
+- Root cause: authentication and all post-auth source loading shared one exception boundary.
+- Fix: authentication now returns through its own denial boundary; every post-auth source loader is wrapped by `loadSectionSafely`, which converts unexpected failures to section-local `GAP` without leaking backend error details.
+- Regression evidence: pre-fix run `35315562834` failed; fixed HEAD run `35315590063` passed.
+- Status: VERIFIED
