@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-029",
+  "phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
+  "decision": "DEC-003",
+  "status": "VERIFIED_CONTRACT",
+  "five_step": {
+    "question": "Prove one weekly schedule from employee availability through Manager publication to employee execution.",
+    "delete": [
+      "OWNER_WORKFORCE_AS_CANONICAL_DAILY_OWNER",
+      "DUPLICATE_MANAGER_CAPABILITY_RENDERERS",
+      "DIRECT_BROWSER_BUSINESS_TABLE_WRITE_WHEN_RPC_EXISTS",
+      "PARALLEL_ROLE_BUSINESS_TRUTH",
+      "LEGACY_AS_ACTIVE_ARCHITECTURE",
+      "NON_CRITICAL_MODULE_EXPANSION"
+    ],
+    "simplify": "ONE_SERVER_OWNED_SCHEDULE_CHAIN_WITH_ROLE_PROJECTIONS",
+    "accelerate": [
+      "TASK-030",
+      "TASK-031",
+      "TASK-032"
+    ],
+    "automate": "ROBOT_DRAFT_ONLY_BEFORE_EXPLICIT_MANAGER_REVIEW_PUBLISH"
+  },
+  "roles": {
+    "employee": [
+      "REGISTER_AVAILABILITY",
+      "VIEW_PUBLISHED_SCHEDULE",
+      "ATTENDANCE",
+      "SHIFT_CHANGE"
+    ],
+    "manager": [
+      "REVIEW_AVAILABILITY",
+      "EDIT_AVAILABILITY_WITH_RPC",
+      "STAFFING_DEMAND",
+      "ADJUST_DRAFT",
+      "REVIEW",
+      "PUBLISH"
+    ],
+    "owner": [
+      "POLICY",
+      "EXCEPTION",
+      "ATTENTION"
+    ],
+    "robot": [
+      "PROPOSE_DRAFT",
+      "REPORT_SHORTAGE_WARNING"
+    ]
+  },
+  "canonical_data_chain": [
+    "employee_availability",
+    "staffing_requirements",
+    "schedule_generation_runs",
+    "schedule_generation_assignments",
+    "work_schedules",
+    "shift_swaps",
+    "attendance"
+  ],
+  "rpc_boundaries": {
+    "employee_availability": [
+      "get_my_availability",
+      "save_my_availability",
+      "delete_my_availability"
+    ],
+    "manager_availability": [
+      "get_manager_weekly_availability",
+      "manager_update_employee_availability"
+    ],
+    "staffing_demand": [
+      "get_workforce_staffing_requirements",
+      "upsert_workforce_staffing_requirement",
+      "delete_workforce_staffing_requirement"
+    ],
+    "generation": [
+      "auto_generate_schedule_generation",
+      "list_schedule_generations",
+      "get_schedule_generation_assignments",
+      "replace_schedule_generation_assignments",
+      "validate_schedule_generation_v1"
+    ],
+    "publish": [
+      "review_schedule_generation",
+      "publish_schedule_generation",
+      "get_manager_weekly_schedule",
+      "list_my_approved_schedules_v2"
+    ],
+    "post_publish": [
+      "submit_shift_swap_request",
+      "list_my_shift_swaps_v2",
+      "approve_shift_swap",
+      "reject_shift_swap",
+      "clock_in_for_schedule",
+      "clock_out_attendance"
+    ]
+  },
+  "module_ownership": {
+    "employee_availability": "06_EMPLOYEE/availability/engine-v1.js",
+    "employee_schedule": "06_EMPLOYEE/schedule/engine-v1.js",
+    "manager_daily_schedule_target": "05_MANAGER/Workforce/",
+    "owner_workforce_target": "POLICY_EXCEPTION_ATTENTION_ONLY",
+    "server_truth": "SUPABASE_TABLES_AND_PERMISSIONED_RPCS"
+  },
+  "transitional_debt": [
+    {
+      "id": "SCH-DEBT-001",
+      "item": "OWNER_WORKFORCE_CANONICAL_HOME_DOC",
+      "task": "TASK-029"
+    },
+    {
+      "id": "SCH-DEBT-002",
+      "item": "DUPLICATE_MANAGER_REVIEW_RENDERERS",
+      "task": "TASK-031"
+    },
+    {
+      "id": "SCH-DEBT-003",
+      "item": "MANAGER_DIRECT_EMPLOYEE_AVAILABILITY_UPDATE",
+      "task": "TASK-031"
+    },
+    {
+      "id": "SCH-DEBT-004",
+      "item": "MULTIPLE_MANAGER_DEMAND_COMPAT_FILES",
+      "task": "TASK-031"
+    },
+    {
+      "id": "SCH-DEBT-005",
+      "item": "OWNER_DAILY_SCHEDULER_SURFACES",
+      "task": "TASK-031"
+    }
+  ],
+  "guardrails": {
+    "robot_auto_review": false,
+    "robot_auto_publish": false,
+    "production_write_in_task_029": false,
+    "production_schema_change_in_task_029": false,
+    "public_repo_private_data": false,
+    "direct_browser_business_table_write_when_rpc_exists": false
+  },
+  "next_task": "TASK-030"
+}
