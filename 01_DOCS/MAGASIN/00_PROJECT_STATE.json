@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
   "target_days": 21,
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-044",
-  "current_task_title": "Portfolio-aware diagnostics",
+  "current_task": "TASK-045",
+  "current_task_title": "Restart/resume simulation",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-045",
+  "next_task": "TASK-046",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -19,10 +19,10 @@
   },
   "last_updated": "2026-09-18",
   "owner_boundary": {
-    "task": "TASK-044",
+    "task": "TASK-045",
     "resolved": [
       "TWO_PROJECT_SCOPE_APPROVED",
-      "TASK_043_HANDOFF_VERIFIED"
+      "TASK_044_DIAGNOSTICS_VERIFIED"
     ],
     "pending": []
   },
@@ -49,7 +49,7 @@
       "magasin-business-os",
       "magasin-media-robot"
     ],
-    "current_order": 9,
+    "current_order": 10,
     "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
     "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json",
     "recovery_install": {
@@ -82,7 +82,11 @@
       "task_042_media_test_commit": "8c679734c17ddc004e71c188384508e747959c5c",
       "task_042_media_docs_commit": "306eff03e89a5bb6b072fad54675b6ca42e94f8e",
       "task_043_test_run_id": 35370949854,
-      "task_043_test_commit": "d39cc211f19ce7223478d48ccfd19a7440c17d77"
+      "task_043_test_commit": "d39cc211f19ce7223478d48ccfd19a7440c17d77",
+      "task_044_test_run_id": 35371446531,
+      "task_044_diagnostics_commit": "a4a1dc1293b29c793f0cb88bb44fc67aa0b53cb8",
+      "task_044_test_commit": "0aa727303482ee6552f143e0abec722d65e6103c",
+      "task_044_regression_fix_commit": "b0758f72b9592e229e0c4c5969fa683048cdfd91"
     },
     "media_robot": {
       "branch": "feat/saydivoice-production-adapter-offline",
