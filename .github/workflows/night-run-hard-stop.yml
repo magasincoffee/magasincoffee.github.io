@@ -64,10 +64,10 @@ jobs:
           if night.get("id") != "NIGHT_RUN_2026-09-18":
               raise SystemExit("Approved night-run id is not active; no mutation.")
 
-          completed_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+          completed_at = night.get("completed_at") or datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
           night["status"] = "NIGHT_WINDOW_COMPLETE"
           night["completed_at"] = completed_at
-          night["hard_stop_enforced_by"] = "GITHUB_HOSTED_WORKFLOW"
+          night["hard_stop_enforced_by"] = night.get("hard_stop_enforced_by") or "GITHUB_HOSTED_WORKFLOW"
           night["hard_stop_pending"] = False
           state["night_run"] = night
           state["current_task"] = "TASK-048"
@@ -87,6 +87,14 @@ jobs:
 
           if cursor_path.exists():
               cursor = json.loads(cursor_path.read_text(encoding="utf-8"))
+              cursor_already_complete = (
+                  cursor.get("status") == "WAIT_USER"
+                  and cursor.get("checkpoint") == "NIGHT_WINDOW_COMPLETE"
+              )
+              cursor_updated_at = cursor.get("updated_at") if cursor_already_complete else completed_at
+              completed_operations = cursor.setdefault("completed_operations", [])
+              if "NIGHT_WINDOW_COMPLETE" not in completed_operations:
+                  completed_operations.append("NIGHT_WINDOW_COMPLETE")
               cursor.update({
                   "project_id": "magasin-business-os",
                   "task": "TASK-048",
@@ -94,7 +102,7 @@ jobs:
                   "status": "WAIT_USER",
                   "checkpoint": "NIGHT_WINDOW_COMPLETE",
                   "lease": None,
-                  "updated_at": completed_at
+                  "updated_at": cursor_updated_at
               })
               cursor_path.write_text(json.dumps(cursor, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
