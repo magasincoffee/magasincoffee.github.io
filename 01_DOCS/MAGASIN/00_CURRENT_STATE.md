@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-048 — Night final checkpoint — IN_PROGRESS / PAUSED**
+**TASK-049 — Supervisor Brain/Worker multi-conversation orchestration — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,7 +101,9 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**PAUSED — TASK-048:** no actionable work remains before the approved 09:15 +07 hard stop; Supervisor continuation is intentionally suppressed until the boundary.
+**ACTIVE — TASK-049:** Owner explicitly reprioritized Supervisor architecture to one Brain conversation plus a bounded multi-Worker pool. Worker instructions must come dynamically from Brain; full Worker results are relayed once; new-chat rollover requires positive `conversationFull` evidence.
+
+Background night-run gate: **TASK-048 — TIME_GATED** until the approved 09:15 +07 hard stop. It may close the old night window but must preserve TASK-049 and its autonomy.
 
 Final-checkpoint evidence:
 
@@ -119,13 +121,13 @@ Final-checkpoint evidence:
 - Media Robot QA: **83/83 PASS** runs `35370775036` and `35371002442`;
 - no bounded hard-stop regression remains after reconciliation, boundary-time guard, idempotence, post-review one-shot and canonical-evidence surface fixes; pre-boundary Supervisor busy-loop prevention now uses the existing `PAUSED` autonomy mode.
 
-TASK-048 is now a temporal safety gate, not a feature task:
+TASK-048 remains a background temporal safety gate while TASK-049 is active:
 
 1. preserve the verified reports/state;
 2. do not merge either PR;
 3. do not execute live Saydi Generate/Download;
 4. do not reactivate TASK-035 Gmail production email;
-5. at **2026-09-19 09:15 +07**, the GitHub-hosted hard-stop workflow sets `NIGHT_WINDOW_COMPLETE / WAIT_USER / MANUAL` and requires Owner review.
+5. at **2026-09-19 09:15 +07**, the GitHub-hosted hard-stop may close `NIGHT_WINDOW_COMPLETE`, but because Owner has activated TASK-049 it must not overwrite TASK-049/status/autonomy.
 
 ## Session handoff
 
@@ -161,4 +163,19 @@ Windows reboot/logon recovery is installed and verified on the self-hosted machi
 - Owner STOP latch is clear;
 - Windows login/PIN is never bypassed.
 
-The GitHub-hosted hard-stop guard will set the project to `WAIT_USER / NIGHT_WINDOW_COMPLETE` at 09:15 +07 even if the PC is offline.
+The GitHub-hosted hard-stop guard will close the old night window at 09:15 +07 even if the PC is offline; an Owner-reprioritized task remains authoritative.
+
+
+## Brain/Worker V17 active architecture
+
+Canonical contract: `00_SUPERVISOR_BRAIN_WORKER_ARCHITECTURE.md`.
+
+- exactly one Brain conversation coordinates work;
+- up to 3 concurrent Workers initially;
+- Worker prompts are dynamic Brain `DISPATCH` instructions, never a repeated canned Continue prompt;
+- each completed Worker assistant turn is captured in full once and relayed to Brain;
+- message bodies are transient and are not persisted in Git/log/status/registry;
+- target missing, conversation missing, stalled and unavailable states fail closed after bounded recovery;
+- only explicit ChatGPT `conversationFull` evidence authorizes rollover of an existing logical conversation;
+- a new Worker slot requires a validated Brain directive plus free capacity;
+- runtime auto-upgrade from `main` is part of TASK-049 acceptance.
