@@ -46,6 +46,17 @@ function sourceLine(section) {
   return parts.join(" · ") || "Chưa có metadata nguồn.";
 }
 
+function globalConfidenceLabel(dataQuality = []) {
+  const rows = Array.isArray(dataQuality) ? dataQuality : [];
+  const actual = rows.filter((item) => item?.quality === "ACTUAL").length;
+  const estimate = rows.filter((item) => item?.quality === "ESTIMATE").length;
+  const insufficient = rows.length - actual - estimate;
+  const parts = [`${actual}/${rows.length} ACTUAL`];
+  if (estimate > 0) parts.push(`${estimate} ESTIMATE`);
+  parts.push(`${insufficient} chưa đủ`);
+  return parts.join(" · ");
+}
+
 function globalConfidenceLine(items = []) {
   const counts = {
     ACTUAL: 0,
