@@ -1,17 +1,29 @@
+import fs from "node:fs";
 import process from "node:process";
 
 import { ACTIONS, CANONICAL_CONTINUE_INSTRUCTION } from "../decision.mjs";
 import { executeDecision } from "../ui/actions.mjs";
 
-const cdpUrl = process.argv.includes("--cdp-url")
-  ? process.argv[process.argv.indexOf("--cdp-url") + 1]
-  : "http://127.0.0.1:9222";
+function parseArgs(argv) {
+  const result = {};
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--chrome") result.chrome = argv[++i];
+    else throw new Error(`unknown argument: ${argv[i]}`);
+  }
+  return result;
+}
+
+const args = parseArgs(process.argv.slice(2));
+if (!args.chrome || !fs.existsSync(args.chrome)) {
+  throw new Error("installed Chrome path is required");
+}
 
 const { chromium } = await import("playwright-core");
-const browser = await chromium.connectOverCDP(cdpUrl);
-const context = browser.contexts()[0];
-if (!context) throw new Error("CDP browser context unavailable");
-
+const browser = await chromium.launch({
+  executablePath: args.chrome,
+  headless: true
+});
+const context = await browser.newContext();
 const page = await context.newPage();
 
 try {
@@ -89,7 +101,5 @@ try {
     externalSideEffect: false
   }, null, 2));
 } finally {
-  await page.close().catch(() => {});
+  await browser.close();
 }
-
-process.exit(0);
