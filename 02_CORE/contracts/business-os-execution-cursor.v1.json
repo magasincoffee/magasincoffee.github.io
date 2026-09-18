@@ -2,13 +2,13 @@
   "schema_version": "business-os-execution-cursor.v1",
   "night_run_id": "NIGHT_RUN_2026-09-18",
   "project_id": "magasin-business-os",
-  "task": "TASK-044",
-  "micro_task": "portfolio_aware_privacy_safe_diagnostics",
+  "task": "TASK-045",
+  "micro_task": "restart_resume_simulation",
   "status": "IN_PROGRESS",
-  "checkpoint": "TASK_043_HANDOFF_VERIFIED",
+  "checkpoint": "TASK_044_DIAGNOSTICS_VERIFIED",
   "resume_policy": "SAFE_RECONCILE_HEAD_STATE_CI",
   "lease": null,
-  "last_commit": "d39cc211f19ce7223478d48ccfd19a7440c17d77",
-  "updated_at": "2026-09-18T23:56:00+07:00",
+  "last_commit": "b0758f72b9592e229e0c4c5969fa683048cdfd91",
+  "updated_at": "2026-09-18T23:58:00+07:00",
   "completed_operations": []
 }
