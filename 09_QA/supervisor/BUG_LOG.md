@@ -16,3 +16,16 @@
   4. resume detection only when a ChatGPT page is available;
   5. regression-test navigation race behavior.
 - Status: FIXING
+
+
+## BUG-SUP-002 — Google rejects Playwright-launched Chrome during OAuth
+
+- Date: 2026-09-18
+- Component: Supervisor profile setup
+- Reproduction: open ChatGPT from a Playwright `launchPersistentContext`, choose Google/email sign-in.
+- Observed: Google displays "Không thể đăng nhập cho bạn" and indicates the browser/app may not be secure. Chrome also shows that it is controlled by automated test software.
+- Impact: Owner cannot complete one-time ChatGPT authentication in the automation-launched browser.
+- Root cause: authentication is being attempted inside a browser instance launched under browser-automation control.
+- Corrective direction: use a real installed Chrome process launched normally with a dedicated local profile and remote-debugging endpoint; Supervisor attaches to that browser over CDP instead of launching the login browser itself.
+- Safety boundary: the Owner enters credentials directly into the real browser. Supervisor does not request, capture, log, or store credentials, cookies, tokens, MFA, or message bodies.
+- Status: FIXING
