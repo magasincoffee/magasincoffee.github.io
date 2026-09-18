@@ -33,8 +33,8 @@
 | TASK-026 | SOP/Task rule decision pack + data/migration plan | 20m | Owner decisions DST-001..DST-006 | DEFERRED_BY_OWNER |
 | TASK-027 | Schedule priority + completion contract | 20m | evidence/contract + Owner decision trace | DONE |
 | TASK-028 | Manager registration review hardening | 20m | unit/static + browser regression | DONE |
-| TASK-029 | Robot draft + Manager assignment editor | 20m | RPC contract + browser regression | READY |
-| TASK-030 | Employee weekly registration V2 | 20m | multi-window + immediate visibility E2E | QUEUED |
+| TASK-029 | Robot draft + Manager assignment editor | 20m | RPC contract + browser regression | DONE |
+| TASK-030 | Employee weekly registration V2 | 20m | multi-window + immediate visibility E2E | READY |
 | TASK-031 | Manager official schedule workspace | 20m | read/publish integration + browser E2E | QUEUED |
 | TASK-032 | Give/Swap V2 | 20m | atomic update + impacted-user regression | QUEUED |
 | TASK-033 | Attendance + shift reminders | 20m | lifecycle + reminder contract | QUEUED |
