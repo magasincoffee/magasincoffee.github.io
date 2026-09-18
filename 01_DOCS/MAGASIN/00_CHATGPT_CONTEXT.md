@@ -62,13 +62,23 @@ Cấu trúc:
 
 Đọc `00_MASTER_PLAN.md` để biết phase, domain, điều kiện hoàn thành và tiến độ.
 
+Current program:
+
+`MAGASIN Business OS V1 — 21-day accelerated execution`
+
 Current phase:
 
-`P0 — Enterprise Baseline / chuẩn bị Discovery`
+`P1 — Accelerated Enterprise Discovery + Foundation`
 
 Current task:
 
-`Enterprise Discovery #001 — MAGASIN Enterprise Baseline`
+`TASK-001 — Autonomy Supervisor discovery and project bootstrap`
+
+Machine-readable execution state: `00_PROJECT_STATE.json`.
+
+Task queue: `00_TASK_QUEUE.md`.
+
+Canonical V1 architecture: `00_BUSINESS_OS_BLUEPRINT.md`.
 
 ## 7. Current repository architecture
 
@@ -162,15 +172,29 @@ Mỗi record cần tối thiểu:
 
 ## 14. Working method for ChatGPT
 
+Mọi requirement phải đi qua:
+
+`QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE`.
+
+Mỗi implementation micro-task theo:
+
+`Estimate → Implement → Unit → Fix → Regression → Integration → E2E → Docs/State → Commit → Next`.
+
+Normal implementation task target: khoảng <=20 phút active work; lớn hơn phải chia nhỏ.
+
 Khi bắt đầu một session mới:
 
 1. Đọc `00_CURRENT_STATE.md`.
-2. Đọc `00_MASTER_PLAN.md`.
-3. Đọc `06_DECISION_LOG.md`.
-4. Đọc `07_CHANGE_LOG.md`.
-5. Đọc `00_CHATGPT_CONTEXT.md`.
-6. Đọc tài liệu của phase/domain hiện tại.
-7. Tiếp tục đúng task đầu tiên chưa hoàn thành; không khởi động lại dự án nếu không được yêu cầu.
+2. Đọc `00_PROJECT_STATE.json`.
+3. Đọc `00_TASK_QUEUE.md`.
+4. Đọc `00_MASTER_PLAN.md`.
+5. Đọc `00_BUSINESS_OS_BLUEPRINT.md`.
+6. Đọc `06_DECISION_LOG.md`.
+7. Đọc `07_CHANGE_LOG.md`.
+8. Đọc `00_CHATGPT_CONTEXT.md`.
+9. Đọc tài liệu của phase/domain/task hiện tại.
+10. Kiểm tra repository/PR/CI thực tế.
+11. Tiếp tục đúng task hiện tại; không khởi động lại dự án.
 
 Trước khi thay đổi code/database/UI, phải kiểm tra tài liệu nghiệp vụ hiện hành và repository thực tế.
 
@@ -186,6 +210,10 @@ Trước khi thay đổi code/database/UI, phải kiểm tra tài liệu nghiệ
 
 ## 16. First task now
 
-**P0 — Enterprise Baseline**
+**TASK-001 — Autonomy Supervisor discovery and project bootstrap**
 
-Không bắt đầu code mới cho Enterprise Discovery #001. Trước hết thu thập và xác minh sự thật nền của MAGASIN.
+Mục tiêu đầu tiên là tạo cơ chế dự án có thể tiếp tục theo state/task queue mà không cần Owner ngồi chờ từng lượt ChatGPT.
+
+Không được dùng Supervisor để vượt credential/MFA/CAPTCHA, quyết định nghiệp vụ, hành động destructive hoặc approval boundary.
+
+Khi cần thao tác local, ưu tiên tạo bounded GitHub Actions/self-hosted-runner task và chỉ yêu cầu Owner thực hiện bước vật lý/cài đặt/approval thật sự cần thiết.
