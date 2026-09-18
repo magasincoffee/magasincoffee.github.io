@@ -4,19 +4,19 @@ Last updated: 2026-09-18
 
 ## Current program
 
-**MAGASIN Business OS V1 — 21-day accelerated execution**
+**MAGASIN Business OS V1 — Five-Step / Schedule-first execution**
 
-The existing Enterprise Source-of-Truth discipline remains mandatory. Acceleration is achieved by smaller vertical-slice Discovery and micro-task execution, not by guessing business rules.
+The Enterprise Source-of-Truth discipline remains mandatory. The delivery order is no longer module-first/top-down. Work now follows the highest-value operating loop and must pass the Five-Step gate before implementation.
 
 ## Current phase
 
-**P1 — Accelerated Enterprise Discovery + Foundation**
+**P1 — Schedule-first Core Flow**
 
-P0 baseline gate has already passed according to the Master Plan. Domain Discovery continues only to the depth required to safely implement each V1 vertical slice.
+The active critical path is weekly workforce scheduling: employee availability → manager review/allocation → robot proposal → publish → employee execution/attendance/swap/notification. Discovery is limited to evidence needed to complete that loop safely.
 
 ## Current task
 
-**TASK-026 — SOP/Task rule decision pack + data/migration plan — WAIT_USER**
+**TASK-029 — Schedule-first canonical flow contract — READY**
 
 Canonical task/state files:
 
@@ -24,19 +24,26 @@ Canonical task/state files:
 - `00_PROJECT_STATE.json`
 - `00_TASK_QUEUE.md`
 - `00_SUPERVISOR_ROBOT.md`
+- `00_ARCHITECTURE_5_STEP_RESET.md`
 
 ## Current target
 
-- Day 3: foundation data visible.
-- Day 7: Owner Control Tower usable.
-- Day 14: alerts + Daily Brief usable.
-- Day 21: V1 production acceptance.
+Prove one operational weekly schedule end to end before expanding non-critical modules:
 
-## V1 locked scope
+1. employee availability;
+2. manager review/edit/allocation;
+3. robot schedule proposal within approved rules;
+4. manager publish;
+5. employee sees and executes the published schedule;
+6. attendance / give-shift / swap / affected-person notification close the loop.
 
-Sales, Inventory, People/Shift, SOP/Checklist/Task, Owner Dashboard, Alerts, Daily Brief, Business Robot, Approval Queue, Google Sheets sync, Media Robot connector, audit/recovery basics, Supervisor Robot.
+## Active scope
 
-Non-essential scope is deferred.
+**Primary:** People / Shift weekly scheduling critical path.
+
+**Supporting only when required by that path:** shared data/contracts, auth, notifications, audit/recovery, Supervisor Robot.
+
+**Deferred:** SOP/Task write automation (TASK-026 decision pack preserved), broad dashboard expansion, payroll/KPI/recruitment expansion, speculative production schema cleanup, cosmetic architecture refactors.
 
 ## Working method
 
@@ -82,7 +89,11 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**WAIT_USER:** Owner must answer DST-001..DST-006 in `05_SYSTEM/SOP_TASK_RULE_DECISION_PACK_V1.md`. The decision pack, machine-readable contract and migration boundary are complete and tested. Do not open a write-capable SOP/Task implementation task, apply production schema, or enable automation until these six business-rule decisions are approved.
+**AUTO_CONTINUE:** execute TASK-029 from `00_ARCHITECTURE_5_STEP_RESET.md`.
+
+TASK-029 must identify the canonical modules/data/RPC boundaries for availability → review/allocation → robot proposal → publish and delete/defer duplicate ownership before any new implementation.
+
+TASK-026 remains preserved as a deferred Owner boundary. Do not implement write-capable SOP/Task automation until its six business-rule decisions are approved.
 
 ## Session handoff
 
