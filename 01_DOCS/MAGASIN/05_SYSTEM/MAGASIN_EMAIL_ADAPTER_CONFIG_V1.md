@@ -3,128 +3,145 @@
 **Phase:** P1_SCHEDULE_FIRST_CORE_FLOW  
 **Task:** TASK-035 — MAGASIN email adapter/config  
 **Date:** 2026-09-18  
-**Status:** OWNER_BOUNDARY_AFTER_PROVIDER_NEUTRAL_CORE
+**Status:** GMAIL_ADAPTER_IMPLEMENTED_AWAITING_OAUTH_CREDENTIALS
 
 ## Five-Step
 
 ### QUESTION
 
-Outbox đã có và Owner đã chốt địa chỉ sender chính xác. Câu hỏi còn lại là: **MAGASIN sẽ gửi email bằng provider nào?**
+Owner đã chốt đầy đủ business boundary:
 
-Owner đã duyệt:
+- provider: **Gmail / Google Workspace**;
+- sender: `bachvanti1994@gmail.com`;
+- credential phải nằm ngoài public Git;
+- external calendar vẫn disabled.
 
-- dùng email MAGASIN;
-- credential được lưu trong secret store ngoài public Git;
-- external calendar chưa cần;
-- sender email chính xác: `bachvanti1994@gmail.com`.
-
-Owner **chưa chọn** provider cụ thể.
+Không còn provider decision nào cần suy đoán.
 
 ### DELETE
 
 Không:
 
-- tự chọn Gmail / SMTP / Resend / SendGrid / Mailgun;
-- dùng Gmail connector của ChatGPT như production mailer;
-- nhúng email/password/API key vào repo;
-- claim outbox khi mailer chưa cấu hình;
-- deploy worker giả có thể báo SENT khi chưa gửi;
-- bật external calendar.
+- tạo thêm Resend / SendGrid / Mailgun / SMTP adapter;
+- dùng ChatGPT Gmail connector làm production mailer;
+- dùng password Gmail thường;
+- commit OAuth client secret / refresh token;
+- claim notification queue khi Gmail OAuth chưa initialize thành công;
+- deploy worker chỉ để có một endpoint chưa thể gửi.
 
 ### SIMPLIFY
 
-Provider-neutral worker contract:
+Canonical provider code:
 
 ```text
-request authorized by Supabase server secret
-→ validate MAGASIN_EMAIL_PROVIDER + MAGASIN_EMAIL_FROM
-→ initialize selected provider adapter
-→ only then claim notification email batch
-→ resolve recipient email server-side
-→ send
-→ complete_notification_email_v1(success/failure)
+GMAIL_GOOGLE_WORKSPACE
 ```
 
-Files:
+Transport:
+
+```text
+Supabase Edge Function
+→ Gmail OAuth refresh token
+→ Google access token
+→ Gmail API users.messages.send
+```
+
+Required runtime config:
+
+- `MAGASIN_EMAIL_PROVIDER=GMAIL_GOOGLE_WORKSPACE`
+- `MAGASIN_EMAIL_FROM=bachvanti1994@gmail.com`
+
+Required runtime secrets:
+
+- `GMAIL_OAUTH_CLIENT_ID`
+- `GMAIL_OAUTH_CLIENT_SECRET`
+- `GMAIL_OAUTH_REFRESH_TOKEN`
+
+Optional:
+
+- `MAGASIN_EMAIL_REPLY_TO`
+
+Implementation files:
 
 - `supabase/functions/notification-email-worker/index.ts`
 - `supabase/functions/notification-email-worker/email-worker-core.mjs`
+- `supabase/functions/notification-email-worker/gmail-provider.mjs`
 - `02_CORE/contracts/notification-email-adapter.v1.json`
-
-The worker is intentionally **not deployed** until a provider adapter exists.
 
 ### ACCELERATE
 
-Recipient source is already canonical:
+Gmail adapter performs provider initialization **before** queue claim:
 
-- USER → `profiles.id = recipient_user_id`;
-- OWNER → active `profiles.role = OWNER`;
-- STORE_MANAGERS → active Store Managers whose `access_scope` contains the outbox store code.
+```text
+validate provider + sender
+→ validate OAuth secret presence
+→ exchange refresh token for access token
+→ only then claim_notification_email_batch_v1
+→ resolve recipients
+→ build RFC 2822 message + base64url
+→ POST Gmail API users/me/messages/send
+→ complete_notification_email_v1(success/failure)
+```
 
-Email comes from `public.profiles.email`; email addresses do not need to be copied into outbox payload.
+Google documents `users.messages.send` as the Gmail API send endpoint and supports the `gmail.send` OAuth scope. Offline/server-side use requires a stored refresh token.
 
-Current Supabase docs confirm production Edge Function secrets belong in the function secret store, and server/secret keys must remain outside browser/public source.
+Supabase Edge Function secrets remain outside Git and are read through environment variables.
 
 ### AUTOMATE
 
-Automation remains fail-closed.
+Fail-closed boundaries:
 
 Missing provider/sender:
 
 ```text
 CONFIG_REQUIRED
 → claim count = 0
-→ outbox rows remain PENDING
 ```
 
-Unknown/unimplemented provider:
+Missing Gmail OAuth secrets:
+
+```text
+PROVIDER_CONFIG_REQUIRED
+→ claim count = 0
+```
+
+Invalid/expired/revoked OAuth initialization:
+
+```text
+PROVIDER_INITIALIZATION_FAILED
+→ claim count = 0
+```
+
+Unknown provider:
 
 ```text
 PROVIDER_NOT_REGISTERED
 → claim count = 0
-→ outbox rows remain PENDING
 ```
 
-Only after adapter initialization succeeds may the worker claim rows.
-
-## Discovery evidence
-
-Repository search found no:
-
-- Resend config;
-- SendGrid config;
-- Mailgun config;
-- SMTP config;
-- Gmail mailer config;
-- existing email worker/provider implementation.
-
-Supabase Edge Functions inventory: **0 functions**.
-
-Database metadata found no mail/provider primitive beyond TASK-034 notification outbox functions.
-
-The available connector does not expose production secret values, so this review does **not** claim that no secret exists. It only establishes that no concrete provider/account configuration is evidenced by repository, Edge Functions, or database primitives.
+Only after Gmail OAuth initialization succeeds can rows move from `PENDING` to `PROCESSING`.
 
 ## Current boundary
 
-Owner input required:
+Owner business decisions are resolved.
 
-1. **Concrete email provider** to use for system mail.
+Remaining activation input is operational credential setup for the selected Gmail account:
 
-Resolved Owner input:
+1. `GMAIL_OAUTH_CLIENT_ID`;
+2. `GMAIL_OAUTH_CLIENT_SECRET`;
+3. `GMAIL_OAUTH_REFRESH_TOKEN` authorized for Gmail send.
 
-- exact MAGASIN sender email: `bachvanti1994@gmail.com`.
+These values must be stored in Supabase Edge Function Secrets, never in Git or chat documentation.
 
-Optional:
+After credentials are available:
 
-- reply-to address, if different from sender.
+1. set runtime config/secrets;
+2. deploy `notification-email-worker`;
+3. invoke one bounded test;
+4. verify outbox `PENDING → PROCESSING → SENT`;
+5. run regression;
+6. close TASK-035 and continue the schedule-first critical path.
 
-After the provider is supplied:
-
-1. implement exactly that provider adapter;
-2. store required credentials in Supabase Edge Function Secrets, never Git;
-3. deploy worker with appropriate server-only authorization;
-4. send a bounded test email;
-5. verify outbox `PENDING → PROCESSING → SENT`;
-6. regression and close TASK-035.
+Supabase production Edge Functions inventory was still **0** immediately before this implementation branch; no email was sent during provider selection/reconciliation.
 
 External calendar remains disabled.
