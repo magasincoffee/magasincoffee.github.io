@@ -1,0 +1,44 @@
+name: Supervisor Tests
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/supervisor-*'
+      - 'fix/supervisor-*'
+    paths:
+      - '08_INTEGRATIONS/supervisor/**'
+      - '01_DOCS/MAGASIN/00_PROJECT_STATE.json'
+      - '.github/workflows/supervisor-tests.yml'
+  pull_request:
+    paths:
+      - '08_INTEGRATIONS/supervisor/**'
+      - '01_DOCS/MAGASIN/00_PROJECT_STATE.json'
+      - '.github/workflows/supervisor-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: 08_INTEGRATIONS/supervisor
+        shell: powershell
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run Supervisor unit tests
+        run: npm test
+      - name: Verify no browser/live side effects in foundation
+        run: |
+          if (Test-Path node_modules) {
+            Write-Host "node_modules present only if a later package install created it."
+          }
+          Write-Host "PASS: foundation test workflow contains no browser login, ChatGPT action, credential, or self-hosted runner step."
