@@ -60,3 +60,17 @@ test("Owner reconciliation remains active while its ChatGPT response is running"
   );
   assert.match(source, /ownerReconcile: ownerReconcileActive/);
 });
+
+
+test("runtime persists privacy-safe diagnostics for future no-explanation triage", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/supervisor-loop-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /SupervisorDiagnostics/);
+  assert.match(source, /diagnostics\.recordStep/);
+  assert.match(source, /diagnostics\.recordError/);
+  assert.match(source, /ownerRecheck: manualOwnerRecheck/);
+  assert.match(source, /DIAGNOSTIC_INCIDENT/);
+});
