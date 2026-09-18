@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-009 — Store/product canonical model review**
+**TASK-010 — Database baseline/migration plan**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Continue **TASK-009 — Store/product canonical model review**, then TASK-010 database baseline/migration plan.
+Continue **TASK-010 — Database baseline/migration plan**, then TASK-011 Owner Control Tower vertical-slice plan.
 
 ## Session handoff
 
