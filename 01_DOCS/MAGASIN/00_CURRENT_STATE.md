@@ -1,6 +1,6 @@
 # MAGASIN — Current State
 
-Last updated: 2026-09-18
+Last updated: 2026-09-19
 
 ## Current program
 
@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-047 — Night docs / evidence / PR prep — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-048 — Night final checkpoint — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,23 +101,25 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-047:** TASK-046 two-project full QA is verified.
+**AUTO_CONTINUE — TASK-048:** TASK-047 documentation/evidence is complete.
 
-QA evidence:
+Final-checkpoint evidence:
 
-- Business OS draft PR #119 remains open/unmerged; latest Supervisor run `35371642271`: **203/203 PASS** plus no-browser/live-side-effect guard PASS;
-- Media Robot draft PR #21 remains open/unmerged; push run `35370775036` and PR run `35371002442`: **83/83 PASS**;
-- Media branch source-of-truth explicitly records no live Generate and no live Download in the approved night window;
-- neither PR's task-specific probe file exists on `main`, confirming no automatic merge occurred;
-- no current regression requires another code fix.
+- canonical evidence report: `05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE.md`;
+- final review report: `08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md`;
+- Business OS PR #119 remains draft/open/unmerged with full Robot V2 review scope;
+- Media Robot PR #21 remains offline-only/unmerged;
+- Business OS QA: **203/203 PASS** run `35371642271`;
+- Media Robot QA: **83/83 PASS** runs `35370775036` and `35371002442`;
+- no bounded regression remains.
 
-TASK-047 is documentation/evidence only:
+TASK-048 is now a temporal safety gate, not a feature task:
 
-1. reconcile changelog with TASK-037–046 night-run work;
-2. create one canonical night-run evidence report with commits, CI run IDs, safety boundaries and remaining manual gates;
-3. update PR #119 description so it represents Robot V2 as a reviewable whole rather than only TASK-039;
-4. keep Media PR #21 reviewable and explicitly offline-only;
-5. do not merge either PR and do not add features.
+1. preserve the verified reports/state;
+2. do not merge either PR;
+3. do not execute live Saydi Generate/Download;
+4. do not reactivate TASK-035 Gmail production email;
+5. at **2026-09-19 09:15 +07**, the GitHub-hosted hard-stop workflow sets `NIGHT_WINDOW_COMPLETE / WAIT_USER / MANUAL` and requires Owner review.
 
 ## Session handoff
 
