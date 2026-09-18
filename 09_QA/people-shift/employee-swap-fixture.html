@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>MAGASIN QA · Employee Swap Regression</title>
+</head>
+<body>
+  <iframe id="employeeApp" title="Employee Swap QA"></iframe>
+  <script>
+  (() => {
+    const calls = [];
+    window.__EMPLOYEE_SWAP_QA = { calls };
+    window.MAGASIN_CORE = {
+      security: { escapeHtml: (value) => String(value ?? "") },
+      time: { time5: (value) => String(value ?? "").slice(0, 5) },
+      date: {
+        monday: () => "2026-09-14",
+        formatDate: (value) => String(value ?? "").slice(0, 10)
+      },
+      ui: { toast() {} },
+      supabase: {
+        async rpc(name, args) {
+          calls.push({ name, args });
+          if (name === "list_my_approved_schedules_v2") return { data: [], error: null };
+          if (name === "list_shift_swap_candidates_v1") return { data: [], error: null };
+          if (name === "list_my_shift_swaps_v2") return { data: [], error: null };
+          if (name === "submit_shift_swap_request") return { data: { saved: true }, error: null };
+          return { data: [], error: null };
+        }
+      }
+    };
+
+    const frame = document.getElementById("employeeApp");
+    frame.srcdoc = `<!doctype html><html lang="vi"><body>
+      <section id="view-swap">
+        <div id="swapChoices">
+          <button onclick="openSwapForm('swap')">Đổi ca</button>
+          <button onclick="openSwapForm('give')">Cho ca</button>
+        </div>
+        <div id="swapForm">
+          <div class="swap-card"><h3>Ca của tôi</h3></div>
+          <div class="swap-card">
+            <h3>Ca đối ứng</h3>
+            <div class="field"><label>Trường hiện hữu</label><select></select></div>
+            <div id="giveOnlyHint"></div>
+            <div id="swapExtra"></div>
+          </div>
+          <div class="swap-actions">
+            <button onclick="backToSwapChoices()">Hủy</button>
+            <button class="btn primary" onclick="sendSwapRequest()">Gửi yêu cầu</button>
+          </div>
+          <div id="swapResult"></div>
+        </div>
+        <div id="historyList"></div>
+      </section>
+    </body></html>`;
+  })();
+  </script>
+  <script src="/06_EMPLOYEE/swap/engine-v1.js"></script>
+</body>
+</html>
