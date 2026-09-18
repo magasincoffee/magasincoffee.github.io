@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><title>Manager schedule draft QA</title>
+<style>
+:root{--border:#dce5f0;--muted:#617793;--text:#102a43}
+body{font:14px system-ui;margin:20px}.card{border:1px solid var(--border);border-radius:12px;padding:12px}.btn{padding:7px;border:1px solid var(--border);background:#fff;border-radius:8px}.btn.primary{background:#16b7c5;color:#fff}.badge{padding:5px}.blue{background:#e9f1ff}.muted{color:var(--muted)}.panel{display:none}.panel.active{display:block}.tabs{display:flex;gap:6px}
+</style></head>
+<body>
+<section id="view-workforce">
+  <div class="tabs">
+    <button data-tab="review" class="active">Review</button>
+    <button data-tab="publish">Publish</button>
+  </div>
+  <div id="panel-review" class="panel active"></div>
+  <div id="panel-publish" class="panel"></div>
+</section>
+<script>
+(() => {
+  const calls=[];
+  const weekRows=[
+    {availability_id:"av-1",user_id:"u-1",employee_name:"Nhân viên QA A",username:"qa-a",work_date:null,start_time:"06:00",end_time:"12:00",preferred_store_id:"store-a",preferred_store_code:"CN-QA-A",availability_type:"AVAILABLE",note:null},
+    {availability_id:"av-2",user_id:"u-2",employee_name:"Nhân viên QA B",username:"qa-b",work_date:null,start_time:"12:00",end_time:"17:00",preferred_store_id:"store-b",preferred_store_code:"CN-QA-B",availability_type:"PREFERRED",note:null}
+  ];
+  const state={generation:null,assignments:[]};
+  function add(date,n){const d=new Date(date+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
+  function decorateRows(week){
+    weekRows[0].work_date=week;
+    weekRows[1].work_date=add(week,1);
+  }
+  const api={
+    async rpc(name,args={}){
+      calls.push({kind:"rpc",name,args:structuredClone(args||{})});
+      if(name==="current_user_role") return {data:"STORE_MANAGER",error:null};
+      if(name==="get_manager_accessible_stores") return {data:[
+        {id:"store-a",code:"CN-QA-A",name:"Cửa hàng QA A"},
+        {id:"store-b",code:"CN-QA-B",name:"Cửa hàng QA B"}
+      ],error:null};
+      if(name==="get_manager_weekly_availability"){
+        decorateRows(args.p_week_start);
+        const rows=weekRows.filter(r=>!args.p_store_id||r.preferred_store_id===args.p_store_id);
+        return {data:rows.map(r=>({...r})),error:null};
+      }
+      if(name==="manager_update_employee_availability") return {data:true,error:null};
+      if(name==="auto_generate_schedule_generation"){
+        decorateRows(args.p_week_start);
+        state.generation={id:"gen-qa",store_id:args.p_store_id,week_start:args.p_week_start,status:"DRAFT"};
+        state.assignments=[{
+          id:"asg-1",generation_id:"gen-qa",user_id:"u-1",full_name:"Nhân viên QA A",
+          store_id:args.p_store_id,store_code:"CN-QA-A",work_date:args.p_week_start,
+          start_time:"06:00",end_time:"12:00",skill_code:null,skill_level:0,score:50,warning:null,status:"DRAFT",note:null
+        }];
+        return {data:{generation_id:"gen-qa",status:"DRAFT",assignment_count:1,minimum_shortages:[],warning_count:0,algorithm_version:args.p_algorithm_version},error:null};
+      }
+      if(name==="get_schedule_generation_assignments"){
+        return {data:state.assignments.map(x=>({...x})),error:null};
+      }
+      if(name==="replace_schedule_generation_assignments"){
+        state.assignments=(args.p_assignments||[]).map((x,i)=>({
+          ...x,id:"asg-"+(i+1),generation_id:args.p_generation_id,
+          full_name:x.user_id==="u-2"?"Nhân viên QA B":"Nhân viên QA A",
+          store_code:"CN-QA-A"
+        }));
+        return {data:state.assignments.length,error:null};
+      }
+      if(name==="validate_schedule_generation_v1"){
+        return {data:{valid:state.assignments.length>0,generation_id:args.p_generation_id,violations:[],warnings:[],violation_count:0,warning_count:0,assignment_count:state.assignments.length},error:null};
+      }
+      return {data:null,error:{message:"unexpected rpc "+name}};
+    },
+    from(name){
+      calls.push({kind:"from",name});
+      throw new Error("Direct table access forbidden in schedule draft QA: "+name);
+    }
+  };
+  window.__MANAGER_DRAFT_QA={calls,state,weekRows};
+  window.supabase={createClient(){return api}};
+})();
+</script>
+<script src="/05_MANAGER/runtime/compat/workforce/manager-workforce-review-v2.js"></script>
+<script src="/05_MANAGER/runtime/compat/workforce/manager-schedule-draft-editor-v1.js"></script>
+</body></html>
