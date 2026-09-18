@@ -145,8 +145,14 @@
         }
 
         if (name === 'auto_generate_schedule_generation') {
-          if (!state.availability.length) {
-            return { data: null, error: new Error('QA_REQUIRES_AVAILABILITY_FIRST') };
+          const generationEnd = addDays(args.p_week_start, 6);
+          const eligibleAvailability = state.availability.find(row =>
+            row.preferred_store_id === args.p_store_id &&
+            row.work_date >= args.p_week_start &&
+            row.work_date <= generationEnd
+          );
+          if (!eligibleAvailability) {
+            return { data: null, error: new Error('QA_REQUIRES_MATCHING_WEEK_AVAILABILITY') };
           }
           state.generation = {
             id: 'generation-qa',
@@ -158,9 +164,9 @@
           state.assignments = [{
             employee_id: employee.id,
             employee_name: employee.full_name,
-            work_date: '2026-09-18',
-            start_time: '06:00',
-            end_time: '12:00',
+            work_date: eligibleAvailability.work_date,
+            start_time: eligibleAvailability.start_time,
+            end_time: eligibleAvailability.end_time,
             store_id: store.id,
             store_code: store.code,
             score: 100,
