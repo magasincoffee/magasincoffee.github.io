@@ -28,7 +28,7 @@
 - Root cause: authentication is being attempted inside a browser instance launched under browser-automation control.
 - Corrective direction: use a real installed Chrome process launched normally with a dedicated local profile and remote-debugging endpoint; Supervisor attaches to that browser over CDP instead of launching the login browser itself.
 - Safety boundary: the Owner enters credentials directly into the real browser. Supervisor does not request, capture, log, or store credentials, cookies, tokens, MFA, or message bodies.
-- Status: FIXING
+- Status: VERIFIED — real Chrome authenticated setup run 35298993647 PASS
 
 
 ## BUG-SUP-003 — Authenticated conversation not captured when composer is not visible
@@ -41,3 +41,16 @@
 - Root cause: one-time target capture used a UI visibility condition that is unnecessary for identifying a valid authenticated conversation.
 - Fix: capture the local conversation target when a ChatGPT conversation path is detected; runtime send eligibility remains separately gated by composer/state checks.
 - Status: VERIFIED — local setup run 35298993647 reached READY_IDLE and stored target locally
+
+
+## BUG-SUP-004 — Short-lived CDP CLI does not exit after successful result
+
+- Date: 2026-09-18
+- Component: Supervisor dry-run / one-shot CLI
+- Reproduction: connect to real Chrome through Playwright `connectOverCDP`, perform a successful read-only step, logically detach without closing the real browser.
+- Observed: CLI prints a valid PASS result but Node remains alive because the CDP websocket handle stays on the event loop; GitHub job remains in-progress until cancellation/timeout.
+- Evidence: dry-run run `35300174869` printed PASS at 02:48:34Z but stayed active until concurrency cancellation.
+- Impact: self-hosted runner remains occupied and later Supervisor jobs queue unnecessarily.
+- Root cause: logical session detach did not close the Playwright CDP socket handle, and calling Browser.close() would undesirably close the owner's real Chrome.
+- Fix: short-lived CI CLIs explicitly terminate the Node process after their finally/disconnect path. The continuous Supervisor loop does not use this forced-exit path.
+- Status: FIXED — pending verification
