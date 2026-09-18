@@ -161,7 +161,8 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-045 — Restart/resume simulation:** kill/restart/reconcile/resume regression over existing Robot V2 primitives verified. DONE.
 - **TASK-046 — Night full QA:** both-project regression evidence verified; no bounded fix remains. DONE.
 - **TASK-047 — Night docs / evidence / PR prep:** changelog, canonical evidence report and reviewable PR descriptions reconciled. DONE.
-- **TASK-048 — Night final checkpoint:** final report prepared; no actionable work remains before the approved 09:15 +07 GitHub-hosted hard stop. Use existing `PAUSED` autonomy to suppress Supervisor busy-loop; hard stop still sets NIGHT_WINDOW_COMPLETE / WAIT_USER. IN_PROGRESS.
+- **TASK-048 — Night final checkpoint:** final report prepared; retained only as a background 09:15 +07 hard-stop gate. It must preserve any later Owner-reprioritized active task. TIME_GATED.
+- **TASK-049 — Supervisor Brain/Worker multi-conversation orchestration:** one Brain coordinates a bounded Worker pool; dynamic directives, full-result relay, strict `conversationFull` rollover, local-only registry and automatic runtime upgrade. IN_PROGRESS.
 
 ## 8. Definition of success
 
