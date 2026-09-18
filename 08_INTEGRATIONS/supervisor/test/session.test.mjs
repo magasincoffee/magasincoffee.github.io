@@ -78,3 +78,25 @@ test("disconnect is idempotent", async () => {
 
   assert.equal(adapter.closes, 1);
 });
+
+
+test("exhausted CDP retries emit a bounded safe root-cause tag", async () => {
+  const adapter = fakeAdapter({ openFailures: 3 });
+  const events = [];
+  const session = new SupervisorSession({
+    adapterFactory: () => adapter,
+    maxConnectRetries: 2,
+    retryDelaysMs: [0, 0],
+    onEvent: (event) => events.push(event)
+  });
+
+  await assert.rejects(
+    () => session.connect(),
+    (error) => error?.name === "RetryBudgetExhaustedError"
+  );
+
+  const failed = events.find((event) => event.type === "CONNECT_FAILED");
+  assert.equal(failed?.errorName, "RetryBudgetExhaustedError");
+  assert.equal(failed?.errorCause, "ECONNREFUSED");
+  assert.equal("errorMessage" in failed, false);
+});
