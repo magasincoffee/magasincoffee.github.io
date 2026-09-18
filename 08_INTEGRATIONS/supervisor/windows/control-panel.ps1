@@ -552,7 +552,9 @@ function Refresh-ControlPanel {
     }
     $autonomyValue.Text = if ($projectAutonomy) { "$projectAutonomy  •  phase=$($projectState.current_phase)" } else { '—' }
 
-    if ($projectAutonomy -eq 'PAUSED') {
+    if ($targetMismatchActive) {
+        $errorValue.Text = 'Robot mất liên kết với cuộc trò chuyện Bộ não. Mở đúng cuộc trò chuyện Bộ não trong Chrome Robot rồi bấm DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO.'
+    } elseif ($projectAutonomy -eq 'PAUSED') {
         $currentActionValue.Text = 'PAUSED  •  không mở/điều khiển ChatGPT'
         $nextActionValue.Text = if ($pauseResumeAt) {
             "Không có công việc được phép trước mốc $pauseLabel."
