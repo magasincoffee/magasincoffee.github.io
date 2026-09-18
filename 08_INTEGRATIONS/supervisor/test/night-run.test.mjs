@@ -202,6 +202,10 @@ test("hard-stop workflow is GitHub-hosted and reconciles every canonical final-s
   assert.match(workflow, /task_queue_path\s*=\s*Path\("01_DOCS\/MAGASIN\/00_TASK_QUEUE\.md"\)/);
   assert.match(workflow, /architecture_path\s*=\s*Path\("01_DOCS\/MAGASIN\/00_ARCHITECTURE_5_STEP_RESET\.md"\)/);
   assert.match(workflow, /report_path\s*=\s*Path\("01_DOCS\/MAGASIN\/08_AUTONOMY\/NIGHT_RUN_REPORT_2026-09-19\.md"\)/);
+  assert.match(workflow, /evidence_path\s*=\s*Path\("01_DOCS\/MAGASIN\/05_SYSTEM\/NIGHT_RUN_2026-09-18_EVIDENCE_V1\.md"\)/);
+  assert.match(workflow, /TASK-048 NIGHT_WINDOW_COMPLETE \/ OWNER REVIEW REQUIRED/);
+  assert.match(workflow, /approved 2026-09-19 09:15 \+07 boundary has transitioned the project to/);
+  assert.match(workflow, /01_DOCS\/MAGASIN\/05_SYSTEM\/NIGHT_RUN_2026-09-18_EVIDENCE_V1\.md/);
   assert.match(workflow, /NIGHT_WINDOW_COMPLETE \/ WAIT_USER/);
   assert.match(workflow, /Owner review is now required/);
   assert.doesNotMatch(workflow, /if not report_path\.exists\(\):/);
