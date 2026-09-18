@@ -96,3 +96,22 @@
 - Genuine numeric zero remains valid ACTUAL revenue: PASS.
 - BUG-CT-004: VERIFIED.
 - Project task state unchanged; TASK-017 remains current.
+
+
+## 2026-09-18 — TASK-017 Partial-source/error-state integration
+
+- Branch: `fix/control-tower-source-error-boundary`
+- Workflow: `Owner Control Tower Tests`
+- Regression/integration run: `35315896133`
+- Result: **PASS**
+- Unexpected source exception becomes section-local `GAP`: PASS.
+- Healthy sections continue loading after another source throws: PASS.
+- Partial Workforce `ESTIMATE` remains explicit while healthy Payables stays `ACTUAL`: PASS.
+- Revenue failure remains fail-closed with no numeric amount: PASS.
+- Owner auth denial boundary completes before Revenue/Payables/Workforce source loading begins: PASS.
+- Source exception details are not leaked into UI fallback messages: PASS.
+- Existing Revenue blank-amount regression (BUG-CT-004) remains covered: PASS.
+- Existing Revenue/Payables/Workforce/Auth regression suite: PASS.
+- Production writes: none.
+- BUG-CT-005: VERIFIED.
+- Gate: TASK-017 **DONE**; TASK-018 may proceed.
