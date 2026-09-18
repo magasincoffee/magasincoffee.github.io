@@ -61,7 +61,6 @@ test("TASK-035 envelope contains operational message but no provider credential"
   assert.equal("token" in envelope,false);
 });
 
-
 test("TASK-035 Gmail OAuth config fails closed before provider initialization",()=>{
   const empty={get:()=>undefined};
   assert.deepEqual(readGmailOAuthConfig(empty),{
@@ -130,12 +129,25 @@ test("TASK-035 worker never claims queue before provider adapter initializes",as
   assert.doesNotMatch(source,/RESEND_API_KEY|SENDGRID_API_KEY|MAILGUN_API_KEY|SMTP_PASSWORD/);
 });
 
+test("TASK-035 service-to-service worker disables platform JWT gate and keeps handler auth",async()=>{
+  const config=await read("supabase/config.toml");
+  const source=await read("supabase/functions/notification-email-worker/index.ts");
+  assert.match(config,/\[functions\.notification-email-worker\][\s\S]*verify_jwt\s*=\s*false/);
+  assert.match(source,/req\.headers\.get\("apikey"\)/);
+  assert.match(source,/if\(!authorized\(req\)\)return json\(\{ok:false,code:"UNAUTHORIZED"\},401\)/);
+});
+
 test("TASK-035 machine contract preserves exact Owner activation boundary",async()=>{
   const spec=JSON.parse(await read("02_CORE/contracts/notification-email-adapter.v1.json"));
   assert.equal(spec.task,"TASK-035");
   assert.equal(spec.status,"PROVIDER_SELECTED_CREDENTIALS_REQUIRED");
   assert.equal(spec.provider_independent.claim_after_provider_initialization,true);
   assert.equal(spec.provider_independent.credentials_in_git,false);
+  assert.deepEqual(spec.provider_independent.service_to_service_auth,{
+    request_header:"apikey",
+    verify_jwt:false,
+    handler_authorization_required:true
+  });
   assert.equal(spec.owner_approved.sender_email,"bachvanti1994@gmail.com");
   assert.equal(spec.owner_approved.provider,"GMAIL_GOOGLE_WORKSPACE");
   assert.deepEqual(spec.activation_boundary.resolved_owner_inputs,{
