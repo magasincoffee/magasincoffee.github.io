@@ -15,9 +15,17 @@
 | TASK-008 | Supervisor autonomy E2E loop | 20m | live bounded E2E | DONE |
 | TASK-009 | Store/product canonical model review | 20m | discovery trace | DONE |
 | TASK-010 | Database baseline/migration plan | 20m | schema review | DONE |
-| TASK-011 | Owner Control Tower vertical-slice plan | 20m | acceptance defined | READY |
+| TASK-011 | Owner Control Tower vertical-slice plan | 20m | acceptance defined | DONE |
 
-Sau TASK-011, queue được mở rộng theo kết quả thực tế. Không tạo trước hàng trăm task nếu chưa biết dependency thật.
+| TASK-012 | Control Tower shell + normalized fixture contract | 20m | unit/fixture tests | READY |
+| TASK-013 | Owner home navigation + route/auth integration | 15m | integration test | QUEUED |
+| TASK-014 | Procurement/payables read adapter | 20m | adapter tests | QUEUED |
+| TASK-015 | Workforce attention read adapter | 20m | adapter tests | QUEUED |
+| TASK-016 | Revenue read-adapter + reconciliation quality gate | 20m | contract tests | QUEUED |
+| TASK-017 | Partial-source/error-state integration | 20m | regression tests | QUEUED |
+| TASK-018 | Control Tower browser E2E + Day-7 usability gate | 20m | browser E2E | QUEUED |
+
+Sau TASK-018, queue được mở rộng theo kết quả field/E2E thực tế. Không tạo trước hàng trăm task nếu chưa biết dependency thật.
 
 ## Execution rule
 
