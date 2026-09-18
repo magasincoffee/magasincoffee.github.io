@@ -96,3 +96,28 @@
   5. keep nested `fetch failed / ECONNREFUSED` errors inside the bounded retry/restart policy.
 - Regression coverage: Windows port-ownership contract, websocket normalization, nested fetch retry.
 - Status: FIXED IN CODE — pending field verification on MAGASIN-BUSINESS-PC.
+
+
+## BUG-SUP-008 — PID file is not a process lock; orphaned Supervisor loops can survive reinstall
+
+- Date: 2026-09-18
+- Component: Windows Supervisor START/STOP/install/runtime wrapper
+- Field symptom: dedicated ChatGPT Chrome repeatedly leaves a newly created conversation and returns to target recovery/rollover even after a clean runtime reinstall.
+- Code defect: `supervisor.pid` records only the most recently started wrapper. A second or orphaned `run-supervisor.ps1` can survive with its own Node loop, and another START can overwrite the PID file. Multiple loops can then drive the same dedicated Chrome target independently.
+- Fix:
+  1. add a named Windows singleton mutex to `run-supervisor.ps1`;
+  2. START scans for an existing installed wrapper before spawning another;
+  3. STOP/install/repair clean every matching orphaned wrapper and `supervisor-loop-cli.mjs` process, not only the PID-file process.
+- Safety: process matching is restricted to the MAGASIN Supervisor wrapper/runtime or its unique loop script. Normal Chrome remains outside this cleanup.
+- Regression coverage: singleton mutex, orphan cleanup on STOP/install/repair, Windows PowerShell syntax gate.
+- Status: FIXED IN CODE — pending field verification.
+
+## BUG-SUP-009 — Healthy active conversation loses to stale target navigation
+
+- Date: 2026-09-18
+- Component: continuous Supervisor target recovery
+- Field symptom: after a successful rollover creates a new ChatGPT conversation, the panel returns to `WAIT_TARGET` / `ROLLOVER_TARGET_MISSING` and the browser can land back on the ChatGPT home composer.
+- Code defect: when the dedicated browser is already on a valid usable conversation path that differs from local `target.json`, the loop navigates to the old target before considering the active conversation.
+- Fix: before stale-target navigation, probe and atomically adopt the active usable ChatGPT conversation; reset target-recovery counters after adoption.
+- Regression coverage: source-order gate requires active target adoption before `page.goto(wanted)`.
+- Status: FIXED IN CODE — pending field verification.

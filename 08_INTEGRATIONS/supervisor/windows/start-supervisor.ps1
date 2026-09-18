@@ -15,6 +15,20 @@ if (-not (Test-Path $runScript)) {
     throw "Supervisor runtime is not installed: $runScript"
 }
 
+$existingWrapper = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+    Where-Object {
+        $_.CommandLine -and
+        $_.CommandLine -like '*run-supervisor.ps1*' -and
+        $_.CommandLine -like "*$root*"
+    } |
+    Select-Object -First 1
+
+if ($existingWrapper) {
+    Set-Content -Path $pidFile -Value $existingWrapper.ProcessId -Encoding ascii
+    Write-Host "Supervisor wrapper already running (PID $($existingWrapper.ProcessId))."
+    exit 0
+}
+
 if (Test-Path $pidFile) {
     $existing = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($existing -and (Get-Process -Id $existing -ErrorAction SilentlyContinue)) {

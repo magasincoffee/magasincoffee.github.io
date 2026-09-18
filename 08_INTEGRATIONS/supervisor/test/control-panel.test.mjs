@@ -73,3 +73,16 @@ test("control panel surfaces the bounded CDP cause tag in the safe log", async (
 
   assert.match(source, /cause=\$\(\$e\.errorCause\)/);
 });
+
+
+test("control panel shows only current runtime boot log events", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /\$bootIndex = -1/);
+  assert.match(source, /"type":"RUNTIME_BOOT"/);
+  assert.match(source, /Select-Object -Skip \$bootIndex/);
+  assert.match(source, /Select-Object -Last 28/);
+});

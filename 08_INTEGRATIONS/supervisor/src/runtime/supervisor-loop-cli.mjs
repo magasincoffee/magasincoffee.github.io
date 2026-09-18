@@ -25,7 +25,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.2";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.3";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -359,6 +359,41 @@ while (true) {
     const wanted = `${target.origin}${target.pathname}`;
     let matched = pageMatchesTarget(page.url(), target);
     let navigationErrorName = null;
+
+    if (!matched) {
+      let activeTarget = null;
+      try {
+        activeTarget = targetFromUrl(page.url());
+      } catch {}
+
+      if (activeTarget) {
+        const activeProbe = await session.probe().catch(() => null);
+        const activeObservation = activeProbe?.classification?.observation;
+        const activeSnapshot = activeProbe?.snapshot || {};
+        const activeConversationIsUsable = Boolean(
+          activeProbe &&
+          !isHardStopObservation(activeObservation) &&
+          !activeSnapshot.conversationMissing &&
+          !activeSnapshot.conversationFull &&
+          !activeSnapshot.loginRequired &&
+          !activeSnapshot.hasCaptcha
+        );
+
+        if (activeConversationIsUsable) {
+          target = activeTarget;
+          await writeTarget(targetPath, target);
+          recovery.noteConversationAdopted();
+          matched = true;
+          await safeAppendLog(logPath, {
+            type: "TARGET_ADOPTED",
+            action: "RECOVERY",
+            target: "ACTIVE_CONVERSATION_PATH",
+            executed: true,
+            reason: "Dedicated Supervisor Chrome is already on a usable ChatGPT conversation; adopt it instead of navigating back to a stale target."
+          });
+        }
+      }
+    }
 
     if (!matched) {
       try {
