@@ -35,3 +35,30 @@ test("Worker response bodies are not part of persistent registry/log payloads", 
   assert.match(source, /intentionally not written to logs\/status\/registry/);
   assert.doesNotMatch(source, /response_body|response_text|worker_response_body/);
 });
+
+
+test("Brain and Worker chat creation use persistent one-shot latches", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /bootstrap_consumed/);
+  assert.match(source, /creation_latch/);
+  assert.match(source, /dispatch_latch/);
+  assert.match(source, /automatic second Brain creation is denied/);
+  assert.match(source, /automatic retry is denied/);
+});
+
+test("Worker result relay is at-most-once under uncertain send outcome", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  const latchIndex = source.indexOf("ready.worker.relay_inflight_id = envelope.relay_id");
+  const sendIndex = source.indexOf("sendComposerInstruction(page, envelope.text", latchIndex);
+  assert.ok(latchIndex >= 0);
+  assert.ok(sendIndex > latchIndex);
+  assert.match(source, /exact-once policy denies resend/);
+});
