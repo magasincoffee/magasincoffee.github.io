@@ -72,6 +72,19 @@ test("GAP and NOT_CONNECTED sections redact supplied numeric values", () => {
   assert.equal(s.payables.totalDue, null);
 });
 
+test("revenue ESTIMATE label cannot expose an unreconciled numeric value", () => {
+  const s = normalizeControlTowerSnapshot({
+    revenue: {
+      quality: "ESTIMATE",
+      source: "SANITIZED_UNRECONCILED_SOURCE",
+      amount: 888888
+    }
+  });
+
+  assert.equal(s.revenue.quality, "ESTIMATE");
+  assert.equal(s.revenue.amount, null);
+});
+
 test("missing quality defaults to NOT_CONNECTED", () => {
   const s = normalizeControlTowerSnapshot({
     workforce: { staffingGapCount: 9 }

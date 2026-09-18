@@ -22,3 +22,15 @@
 - Root cause: test asserted an implementation string instead of the actual invariant.
 - Fix: locate the first `render(` call inside `boot()` and assert it occurs after `await requireOwnerAccess`.
 - Status: VERIFIED — run `35310936375` PASS
+
+
+## BUG-CT-003 — Revenue ESTIMATE can retain an unreconciled numeric value
+
+- Date: 2026-09-18
+- Component: `04_OWNER/ControlTower/snapshot-v1.mjs`
+- Reproduction: normalize Revenue with `quality: ESTIMATE` and a numeric amount.
+- Observed: the generic metric normalizer keeps the amount because ESTIMATE is trusted for other attention metrics.
+- Impact: a caller could display unreconciled/gross revenue while merely relabeling it ESTIMATE, bypassing TASK-016's fail-closed revenue rule.
+- Root cause: Revenue shared the same numeric-trust rule as Payables/Workforce even though Revenue requires reconciliation before any official amount is exposed.
+- Fix: Revenue now has a stricter normalization path: only `ACTUAL` may retain `amount`; all non-ACTUAL revenue states redact it to `null`.
+- Status: VERIFIED — run `35315205100` PASS

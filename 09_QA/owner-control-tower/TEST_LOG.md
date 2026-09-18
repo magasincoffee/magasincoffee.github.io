@@ -66,3 +66,21 @@
 - No schedule-generation/review/publish write RPC is invoked.
 - UI integration after Owner auth: PASS.
 - Gate: TASK-015 **DONE**; TASK-016 may proceed.
+
+## 2026-09-18 — TASK-016 Revenue read-adapter + reconciliation quality gate
+
+- Branch: `feat/control-tower-revenue-gate`
+- Workflow: `Owner Control Tower Tests`
+- Contract/regression run: `35315205100`
+- Result: **PASS**
+- Trusted + `RECONCILED` + reporting-date match returns `ACTUAL`: PASS.
+- Reconciled zero revenue remains a valid ACTUAL zero: PASS.
+- Unreconciled/gross candidate fails closed to `GAP` and exposes no amount: PASS.
+- Reconciled but untrusted source fails closed: PASS.
+- Wrong reporting date fails closed: PASS.
+- Missing verified production reader returns `NOT_CONNECTED`; no marketplace/Sapo gross value is substituted.
+- Reader failure remains section-local `GAP`: PASS.
+- BUG-CT-003 regression: Revenue `ESTIMATE` cannot retain a numeric amount.
+- Current repository has no source-controlled verified revenue read model, so production integration intentionally stays fail-closed until a reconciled source is connected.
+- Production writes: none.
+- Gate: TASK-016 **DONE**; TASK-017 may proceed.
