@@ -86,3 +86,17 @@ test("registered Brain or Worker target must be restored exactly before automati
   assert.match(source, /pageMatchesTarget/);
   assert.match(source, /registered ChatGPT target could not be restored; target mismatch; new conversation denied/);
 });
+
+
+test("stale Brain target recovery uses prior processed digest and refuses ambiguous matches", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /findBrainByContinuity/);
+  assert.match(source, /last_processed_digest/);
+  assert.match(source, /captureAssistantTurnDigests/);
+  assert.match(source, /multiple ChatGPT conversations match Brain continuity; automatic target rebind denied/);
+  assert.match(source, /BRAIN_TARGET_REBOUND_CONTINUITY/);
+});
