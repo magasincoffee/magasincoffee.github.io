@@ -58,8 +58,22 @@ export async function collectSafeUiSnapshot(page) {
         ) ||
         /verify you are human|xác minh bạn là người|captcha/.test(haystack);
 
+      const assistantMessages = Array.from(
+        document.querySelectorAll("[data-message-author-role='assistant']")
+      );
+      const lastAssistant = assistantMessages.at(-1) || null;
+      const assistantBusy = Boolean(
+        lastAssistant && (
+          lastAssistant.getAttribute("aria-busy") === "true" ||
+          Array.from(lastAssistant.querySelectorAll(
+            "[aria-busy='true'],[data-testid*='loading'],[data-testid*='spinner']"
+          )).some(visible)
+        )
+      );
+
       const responseRunning =
-        /stop generating|dừng tạo|stop response/.test(haystack);
+        /stop generating|dừng tạo|stop response/.test(haystack) ||
+        assistantBusy;
 
       const hasNetworkError =
         /network error|lỗi mạng|connection lost|mất kết nối/.test(haystack);
@@ -67,27 +81,34 @@ export async function collectSafeUiSnapshot(page) {
       const hasTransientError =
         /something went wrong|đã xảy ra lỗi|try again|thử lại|retry/.test(haystack);
 
+      const conversationFull =
+        /maximum length|conversation.{0,50}(too long|full|limit|maximum)|chat.{0,40}(too long|full|limit)|reached.{0,40}(conversation|chat).{0,40}limit|cuộc trò chuyện.{0,50}(quá dài|đầy|giới hạn)|đoạn chat.{0,40}(quá dài|đầy|giới hạn)|đạt.{0,30}giới hạn/.test(haystack);
+
+      const conversationMissing =
+        /conversation not found|unable to load conversation|couldn.t load conversation|chat not found|không tìm thấy cuộc trò chuyện|không thể tải cuộc trò chuyện|không tìm thấy đoạn chat|không thể tải đoạn chat/.test(haystack);
+
       return {
         schemaVersion: "1.0",
         urlOrigin: location.origin,
         pathKind: conversationPath ? "conversation" : (path === "/" ? "home" : "other"),
         conversationPath,
         composerReady: Boolean(composer),
-        assistantMessageCount: document.querySelectorAll(
-          "[data-message-author-role='assistant']"
-        ).length,
+        assistantMessageCount: assistantMessages.length,
         userMessageCount: document.querySelectorAll(
           "[data-message-author-role='user']"
         ).length,
         loginRequired,
         hasCaptcha,
         responseRunning,
+        assistantBusy,
         hasNetworkError,
         hasTransientError,
         hasContinueControl:
           /continue generating|tiếp tục tạo|continue response/.test(haystack),
         hasRetryControl:
-          /try again|thử lại|retry/.test(haystack)
+          /try again|thử lại|retry/.test(haystack),
+        conversationFull,
+        conversationMissing
       };
     },
     { normalizeSource: NORMALIZE }
