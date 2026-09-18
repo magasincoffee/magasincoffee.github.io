@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # current-phase: gmail-api-enable
+  # current-phase: oauth-client-probe
   operate:
     runs-on: self-hosted
     timeout-minutes: 10
@@ -35,8 +35,8 @@ jobs:
         run: |
           npm install --ignore-scripts --no-audit --no-fund
 
-      - name: Enable or verify Gmail API
+      - name: Inspect OAuth clients
         shell: powershell
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
-          node src/ui/task-035-gmail-api-setup.mjs
+          node src/ui/task-035-auth-client-probe.mjs
