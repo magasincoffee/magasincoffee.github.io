@@ -26,7 +26,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.16";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.17";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -131,14 +131,6 @@ function recoveryReason(action) {
       return "Conversation UI stayed unavailable after grace period; reload once before rollover.";
     case RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL:
       return "ChatGPT reports the current conversation is full; create a fresh conversation and continue from repository state.";
-    case RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_MISSING:
-      return "Target conversation cannot be loaded; create a fresh conversation and continue from repository state.";
-    case RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING:
-      return "Target conversation path could not be reached after bounded attempts; create a fresh conversation.";
-    case RECOVERY_ACTIONS.ROLLOVER_STALLED:
-      return "The same response remained stuck after bounded reloads; create a fresh conversation.";
-    case RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE:
-      return "Conversation stayed unavailable after reload; create a fresh conversation.";
     case RECOVERY_ACTIONS.WAIT_TARGET:
       return "Retrying target conversation navigation within a bounded budget.";
     case RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED:
@@ -200,6 +192,9 @@ async function createFreshConversation({
   projectState,
   recoveryAction
 }) {
+  if (recoveryAction !== RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL) {
+    throw new Error("conversation rollover denied without conversationFull evidence");
+  }
   await page.goto("https://chatgpt.com/", {
     waitUntil: "domcontentloaded",
     timeout: 60_000
@@ -543,54 +538,25 @@ while (true) {
           continue;
         }
 
-        if (targetRecovery === RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING) {
-          try {
-            const rollover = await createFreshConversation({
-              page,
-              targetPath,
-              controller,
-              execute: args.execute,
+        if (targetRecovery === RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED) {
+          await safeAppendLog(logPath, {
+            type: "RECOVERY_BLOCKED",
+            action: targetRecovery,
+            reason: "Target recovery exhausted; new conversation is denied without conversationFull evidence."
+          });
+          await writeRuntimeStatus(
+            buildRuntimeStatus({
               projectState,
-              recoveryAction: targetRecovery
-            });
-            if (rollover.target) target = rollover.target;
-            recovery.record(targetRecovery, { success: true });
-            await safeAppendLog(logPath, {
-              type: "CONVERSATION_ROLLOVER",
-              action: targetRecovery,
-              executed: Boolean(rollover.execution?.executed),
-              target: rollover.execution?.target || undefined,
-              reason: recoveryReason(targetRecovery)
-            });
-            await writeRuntimeStatus(
-              buildRuntimeStatus({
-                projectState,
-                status: args.execute ? "ROLLOVER" : "DRY_RUN",
-                retryCount,
-                execution: rollover.execution,
-                recovery: recoveryPayload(recovery, targetRecovery)
-              }),
-              runtimeStatusPath
-            ).catch(() => {});
-          } catch (error) {
-            recovery.record(targetRecovery, { success: false });
-            await safeAppendLog(logPath, {
-              type: "ROLLOVER_FAILED",
-              action: targetRecovery,
-              reason: recoveryReason(targetRecovery),
-              errorName: error?.name || "Error"
-            });
-            await writeRuntimeStatus(
-              buildRuntimeStatus({
-                projectState,
-                status: recovery.blocked ? "WAIT_USER" : "RECOVERING",
-                retryCount,
-                recovery: recoveryPayload(recovery, targetRecovery),
-                errorName: error?.name || "Error"
-              }),
-              runtimeStatusPath
-            ).catch(() => {});
-          }
+              status: "WAIT_USER",
+              retryCount,
+              recovery: recoveryPayload(
+                recovery,
+                targetRecovery,
+                "Target recovery exhausted; new conversation is denied without conversationFull evidence."
+              )
+            }),
+            runtimeStatusPath
+          ).catch(() => {});
           await delay(args.pollMs);
           continue;
         }
@@ -635,12 +601,7 @@ while (true) {
       continue;
     }
 
-    if (
-      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL ||
-      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_MISSING ||
-      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_STALLED ||
-      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE
-    ) {
+    if (recoveryAction === RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL) {
       try {
         const rollover = await createFreshConversation({
           page,
