@@ -1,4 +1,4 @@
-import {accessScopeIncludesStore,buildEnvelope,readEmailConfig,uniqueRecipients} from "./email-worker-core.mjs";
+import {accessScopeIncludesStore,buildEnvelope,normalizeBatchLimit,readEmailConfig,uniqueRecipients} from "./email-worker-core.mjs";
 import {createGmailProvider} from "./gmail-provider.mjs";
 
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json; charset=utf-8"}});
@@ -66,6 +66,9 @@ Deno.serve(async(req)=>{
   if(req.method!=="POST")return json({ok:false,code:"METHOD_NOT_ALLOWED"},405);
   if(!authorized(req))return json({ok:false,code:"UNAUTHORIZED"},401);
 
+  const requestBody=await req.json().catch(()=>({}));
+  const claimLimit=normalizeBatchLimit(requestBody?.limit);
+
   const config=readEmailConfig(Deno.env);
   if(!config.ready)return json({ok:false,code:"CONFIG_REQUIRED",missing:config.missing},503);
 
@@ -83,7 +86,7 @@ Deno.serve(async(req)=>{
   }
 
   // No queue row is claimed before provider configuration and adapter initialization succeed.
-  const rows=await claim(25);
+  const rows=await claim(claimLimit);
   const results=[];
   for(const row of rows||[]){
     try{
@@ -99,5 +102,5 @@ Deno.serve(async(req)=>{
       results.push({id:row.id,status:"FAILED",error:message});
     }
   }
-  return json({ok:true,processed:results.length,results});
+  return json({ok:true,claimLimit,processed:results.length,results});
 });

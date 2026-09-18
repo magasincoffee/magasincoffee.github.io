@@ -77,7 +77,7 @@ Gmail adapter performs provider initialization **before** queue claim:
 validate provider + sender
 → validate OAuth secret presence
 → exchange refresh token for access token
-→ only then claim_notification_email_batch_v1
+→ only then claim_notification_email_batch_v1 with normalized limit 1..25
 → resolve recipients
 → build RFC 2822 message + base64url
 → POST Gmail API users/me/messages/send
@@ -131,6 +131,19 @@ PROVIDER_NOT_REGISTERED
 
 Only after Gmail OAuth initialization succeeds can rows move from `PENDING` to `PROCESSING`.
 
+Queue claim is bounded by an authenticated request field:
+
+```json
+{"limit": 1}
+```
+
+- default normal-worker limit: `25`;
+- hard maximum: `25`;
+- activation verification limit: `1`;
+- invalid/missing limit falls back to the normal default; values are clamped to `1..25`.
+
+This prevents the first production activation from unintentionally claiming the normal 25-row batch.
+
 ## Current boundary
 
 Owner business decisions are resolved.
@@ -147,7 +160,7 @@ After credentials are available:
 
 1. set runtime config/secrets;
 2. deploy `notification-email-worker`;
-3. invoke one bounded test;
+3. invoke one bounded test with request body `{"limit":1}`;
 4. verify outbox `PENDING → PROCESSING → SENT`;
 5. run regression;
 6. close TASK-035 and continue the schedule-first critical path.

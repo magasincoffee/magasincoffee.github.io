@@ -39,7 +39,13 @@
       "handler_authorization_required": true
     },
     "claim_after_provider_initialization": true,
-    "credentials_in_git": false
+    "credentials_in_git": false,
+    "batch_claim": {
+      "default_limit": 25,
+      "max_limit": 25,
+      "activation_limit": 1,
+      "request_field": "limit"
+    }
   },
   "activation_boundary": {
     "required_owner_inputs": [],
