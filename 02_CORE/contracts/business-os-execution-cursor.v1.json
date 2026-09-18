@@ -1,13 +1,14 @@
 {
   "schema_version": "business-os-execution-cursor.v1",
   "night_run_id": "NIGHT_RUN_2026-09-18",
-  "project_id": "magasin-business-os",
-  "task": "TASK-041",
-  "micro_task": "portfolio_recovery_engine",
+  "project_id": "magasin-media-robot",
+  "task": "TASK-042",
+  "micro_task": "saydivoice_provider_adapter_offline",
   "status": "IN_PROGRESS",
-  "checkpoint": "TASK_040_SCHEDULER_VERIFIED",
+  "checkpoint": "TASK_041_RECOVERY_VERIFIED",
   "resume_policy": "SAFE_RECONCILE_HEAD_STATE_CI",
   "lease": null,
-  "last_commit": "29ba41068a79334ae80c972026f8ce0ceed2ad0b",
-  "updated_at": "2026-09-18T23:43:00+07:00"
+  "last_commit": "84a30c55bd49db683c19316c826549ab2e7443c9",
+  "updated_at": "2026-09-18T23:46:00+07:00",
+  "completed_operations": []
 }
