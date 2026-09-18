@@ -29,7 +29,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.21";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.22";
 
 function parseArgs(argv) {
   const result = {
@@ -249,6 +249,83 @@ async function findBrainByDirectiveSignature(adapter, config) {
   return null;
 }
 
+async function findBrainFromRecentSidebar(adapter, config) {
+  const pages = adapter.getChatGptPages();
+  if (!pages.length) return null;
+
+  const discoveryPage = pages.find((page) => {
+    try {
+      return new URL(page.url()).pathname === "/";
+    } catch {
+      return false;
+    }
+  }) || pages[0];
+
+  const recentUrls = await adapter.listRecentConversationUrls(discoveryPage, { limit: 20 });
+  if (!recentUrls.length) return null;
+
+  const scout = discoveryPage;
+  const candidateTargets = [];
+
+  for (const url of recentUrls) {
+    let target = null;
+    try {
+      target = targetFromUrl(url);
+    } catch {
+      continue;
+    }
+
+    const existing = adapter.findPageForTarget(target);
+    const page = existing || scout;
+
+    if (!existing) {
+      try {
+        await page.goto(url, {
+          waitUntil: "domcontentloaded",
+          timeout: 15_000
+        });
+        await page.waitForTimeout(1200);
+      } catch {
+        continue;
+      }
+    }
+
+    const probe = await adapter.probePage(page).catch(() => null);
+    if (!probe || probe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
+      continue;
+    }
+
+    const captured = await captureCompletedAssistantTurn(page).catch(() => null);
+    if (!captured?.text) continue;
+
+    try {
+      parseBrainDirective(captured.text, {
+        maxWorkers: workerCapacity(config)
+      });
+      candidateTargets.push(target);
+      if (candidateTargets.length > 1) {
+        throw new Error("multiple recent ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied");
+      }
+    } catch (error) {
+      if (/multiple recent ChatGPT conversations/.test(String(error?.message || error))) {
+        throw error;
+      }
+    }
+  }
+
+  if (candidateTargets.length !== 1) return null;
+  const target = candidateTargets[0];
+  const existing = adapter.findPageForTarget(target);
+  if (existing) return { page: existing, target, method: "SIDEBAR_SIGNATURE" };
+
+  await scout.goto(targetUrl(target), {
+    waitUntil: "domcontentloaded",
+    timeout: 15_000
+  });
+  await scout.waitForTimeout(1200);
+  return { page: scout, target, method: "SIDEBAR_SIGNATURE" };
+}
+
 async function ensureBrain({ adapter, registry, projectState, config, execute, registryPath, logPath }) {
   if (registry.brain.target) {
     try {
@@ -259,7 +336,8 @@ async function ensureBrain({ adapter, registry, projectState, config, execute, r
 
       const recovered =
         await findBrainByContinuity(adapter, registry) ||
-        await findBrainByDirectiveSignature(adapter, config);
+        await findBrainByDirectiveSignature(adapter, config) ||
+        await findBrainFromRecentSidebar(adapter, config);
       if (!recovered) throw error;
       if (!execute) return recovered.page;
 
@@ -268,7 +346,9 @@ async function ensureBrain({ adapter, registry, projectState, config, execute, r
       await safeLog(logPath, {
         type: recovered.method === "CONTINUITY"
           ? "BRAIN_TARGET_REBOUND_CONTINUITY"
-          : "BRAIN_TARGET_REBOUND_SIGNATURE",
+          : recovered.method === "SIDEBAR_SIGNATURE"
+            ? "BRAIN_TARGET_REBOUND_SIDEBAR"
+            : "BRAIN_TARGET_REBOUND_SIGNATURE",
         role: "brain",
         generation: registry.brain.generation
       });
