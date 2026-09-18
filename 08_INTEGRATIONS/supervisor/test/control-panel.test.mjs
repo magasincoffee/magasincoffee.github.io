@@ -39,3 +39,16 @@ test("start script supports hidden background mode for the unified control panel
   assert.match(source, /\[switch\]\$Hidden/);
   assert.match(source, /WindowStyle Hidden/);
 });
+
+
+test("installer normalizes the panel for Windows PowerShell 5.1 and parses it before creating the shortcut", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/install-supervisor.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /UTF8Encoding\(\$true\)/);
+  assert.match(source, /Language\.Parser\]::ParseFile/);
+  assert.match(source, /Control panel PowerShell syntax check failed/);
+  assert.match(source, /imageres\.dll,72/);
+});

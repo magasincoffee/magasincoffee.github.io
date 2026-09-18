@@ -60,6 +60,27 @@ if (-not (Test-Path $panelTarget)) {
     throw "Control panel is missing from installed runtime: $panelTarget"
 }
 
+# Windows PowerShell 5.1 treats UTF-8 files without BOM as the active ANSI
+# code page. The panel contains Vietnamese UI text, so normalize it to UTF-8
+# with BOM before PowerShell executes it.
+$panelText = Get-Content $panelTarget -Raw -Encoding UTF8
+$utf8Bom = New-Object System.Text.UTF8Encoding($true)
+[System.IO.File]::WriteAllText($panelTarget, $panelText, $utf8Bom)
+
+# Fail installation instead of leaving a desktop shortcut to a broken script.
+$parseErrors = $null
+[System.Management.Automation.Language.Parser]::ParseFile(
+    $panelTarget,
+    [ref]$null,
+    [ref]$parseErrors
+) | Out-Null
+if ($parseErrors.Count -gt 0) {
+    $summary = ($parseErrors | ForEach-Object {
+        "$($_.Message) at line $($_.Extent.StartLineNumber)"
+    }) -join '; '
+    throw "Control panel PowerShell syntax check failed: $summary"
+}
+
 # The unified control panel replaces old separate START/STOP launchers and the
 # unrelated SAYDI panel that may have been installed by another repository.
 @(
@@ -82,6 +103,7 @@ $shortcut.TargetPath = 'powershell.exe'
 $shortcut.Arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $panelTarget + '"'
 $shortcut.WorkingDirectory = $runtime
 $shortcut.Description = 'MAGASIN Business OS Supervisor Robot control panel'
+$shortcut.IconLocation = "$env:SystemRoot\System32\imageres.dll,72"
 $shortcut.Save()
 
 Write-Host "Installed runtime: $runtime"
