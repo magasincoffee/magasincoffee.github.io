@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-032 — Published schedule → attendance/swap/notification integration gate — READY**
+**TASK-032 — Published schedule → attendance/swap/notification integration gate — WAIT_USER**
 
 Canonical task/state files:
 
@@ -29,6 +29,7 @@ Canonical task/state files:
 - `05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`
 - `05_SYSTEM/EMPLOYEE_AVAILABILITY_CANONICAL_SLICE_V1.md`
 - `05_SYSTEM/MANAGER_SCHEDULE_CANONICAL_SLICE_V1.md`
+- `05_SYSTEM/PUBLISHED_SCHEDULE_FEEDBACK_LOOP_V1.md`
 
 ## Current target
 
@@ -95,11 +96,29 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-032 from `00_ARCHITECTURE_5_STEP_RESET.md` and the verified schedule slice docs.
+**WAIT_USER:** safe core của TASK-032 đã verified.
 
-Close the published-schedule feedback loop only: Employee official schedule visibility → attendance → give/swap → affected-person notification contract. Reuse existing canonical Employee schedule/attendance/swap engines; do not invent Give semantics or notification business rules. If Give requires a new production primitive or notification provider activation requires credentials/permission changes, stop at that real Owner boundary after completing all safe read/test/contract work.
+Đã hoàn tất và regression xanh:
 
-TASK-026 remains preserved as a deferred Owner boundary. Do not implement write-capable SOP/Task automation until its six business-rule decisions are approved.
+- Employee xem lịch APPROVED;
+- attendance gắn schedule bằng clock-in/clock-out RPC;
+- unsafe auto-attendance bị loại khỏi active UI;
+- Swap reason/backend contract đồng bộ;
+- Employee Swap submit;
+- Manager approve/reject Swap;
+- official schedule refresh sau Swap;
+- fake Give-as-Swap bị loại và fail-closed;
+- notification/email/calendar gap đã được inventory;
+- production mutation: none.
+
+Owner cần chốt:
+
+1. `SFB-001 — Give lifecycle` trong `05_SYSTEM/PUBLISHED_SCHEDULE_FEEDBACK_LOOP_V1.md`;
+2. `SFB-002 — Notification production activation`: cho phép event-outbox production apply và xác định/ủy quyền email/calendar provider + secret-store credentials.
+
+Không draft/apply write-capable Give hoặc notification provider production trước hai boundary trên.
+
+TASK-026 vẫn được defer độc lập; không triển khai SOP/Task write automation cho tới khi DST-001..DST-006 được phê duyệt.
 
 ## Session handoff
 
