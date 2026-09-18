@@ -80,6 +80,7 @@ export class SupervisorRecoveryController {
     this.rolloverFailures = 0;
     this.conversationGeneration = 0;
     this.lastRolloverAt = 0;
+    this.rolloverBurstCount = 0;
     this.blocked = false;
   }
 
@@ -110,18 +111,21 @@ export class SupervisorRecoveryController {
       this.lastRolloverAt > 0 &&
       now - this.lastRolloverAt < this.rolloverCooldownMs;
 
-    if (snapshot.conversationFull) {
-      return rolloverCoolingDown
-        ? RECOVERY_ACTIONS.NONE
-        : RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL;
-    }
-
-    if (snapshot.conversationMissing) {
-      return rolloverCoolingDown
-        ? RECOVERY_ACTIONS.NONE
+    if (snapshot.conversationFull || snapshot.conversationMissing) {
+      if (this.rolloverBurstCount >= 2 && !rolloverCoolingDown) {
+        this.blocked = true;
+        return RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED;
+      }
+      if (rolloverCoolingDown) return RECOVERY_ACTIONS.NONE;
+      return snapshot.conversationFull
+        ? RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL
         : RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_MISSING;
     }
     const observation = classification.observation;
+
+    if (observation === "RESPONSE_COMPLETE") {
+      this.rolloverBurstCount = 0;
+    }
 
     if (observation === "ASSISTANT_RUNNING") {
       const progressMarker = `${Number(snapshot.assistantMessageCount || 0)}:${Number(snapshot.lastAssistantCharCount || 0)}`;
@@ -196,6 +200,7 @@ export class SupervisorRecoveryController {
       if (success) {
         this.conversationGeneration += 1;
         this.lastRolloverAt = now;
+        this.rolloverBurstCount += 1;
         this.rolloverFailures = 0;
         this.targetMisses = 0;
         this.runningSince = null;
@@ -217,6 +222,7 @@ export class SupervisorRecoveryController {
   noteConversationAdopted() {
     this.conversationGeneration += 1;
     this.lastRolloverAt = this.now();
+    this.rolloverBurstCount += 1;
     this.targetMisses = 0;
     this.runningSince = null;
     this.lastProgressMarker = null;
@@ -239,6 +245,7 @@ export class SupervisorRecoveryController {
       rollover_cooldown_active:
         this.lastRolloverAt > 0 &&
         this.now() - this.lastRolloverAt < this.rolloverCooldownMs,
+      rollover_burst_count: this.rolloverBurstCount,
       blocked: this.blocked
     };
   }

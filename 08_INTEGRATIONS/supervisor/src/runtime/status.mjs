@@ -49,6 +49,7 @@ export function buildRuntimeStatus({
     recovery_target_misses: Number.isInteger(recovery?.target_misses) ? recovery.target_misses : 0,
     recovery_rollover_failures: Number.isInteger(recovery?.rollover_failures) ? recovery.rollover_failures : 0,
     conversation_generation: Number.isInteger(recovery?.conversation_generation) ? recovery.conversation_generation : 0,
+    rollover_burst_count: Number.isInteger(recovery?.rollover_burst_count) ? recovery.rollover_burst_count : 0,
     recovery_blocked: Boolean(recovery?.blocked),
     error_name: errorName,
     updated_at: new Date().toISOString()

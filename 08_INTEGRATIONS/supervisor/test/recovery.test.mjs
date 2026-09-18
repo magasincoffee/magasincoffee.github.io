@@ -266,3 +266,55 @@ test("successful rollover suppresses an immediate duplicate full-chat rollover",
     RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL
   );
 });
+
+
+test("repeated rollovers without a healthy completed response fail closed instead of creating chats forever", () => {
+  let now = 1_000;
+  const recovery = new SupervisorRecoveryController({
+    rolloverCooldownMs: 100,
+    now: () => now
+  });
+
+  recovery.record(RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL, { success: true });
+  now += 101;
+  assert.equal(
+    recovery.observeProbe({
+      snapshot: { conversationFull: true },
+      classification: { observation: "RESPONSE_COMPLETE" }
+    }),
+    RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL
+  );
+  recovery.record(RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL, { success: true });
+
+  now += 101;
+  assert.equal(
+    recovery.observeProbe({
+      snapshot: { conversationFull: true },
+      classification: { observation: "UNKNOWN" }
+    }),
+    RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED
+  );
+  assert.equal(recovery.status().blocked, true);
+});
+
+test("a healthy completed response clears the rollover burst guard", () => {
+  let now = 5_000;
+  const recovery = new SupervisorRecoveryController({
+    rolloverCooldownMs: 100,
+    now: () => now
+  });
+
+  recovery.record(RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL, { success: true });
+  assert.equal(recovery.status().rollover_burst_count, 1);
+
+  recovery.observeProbe({
+    snapshot: {
+      conversationPath: true,
+      composerReady: true,
+      responseRunning: false
+    },
+    classification: { observation: "RESPONSE_COMPLETE" }
+  });
+
+  assert.equal(recovery.status().rollover_burst_count, 0);
+});

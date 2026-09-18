@@ -37,7 +37,7 @@ function parseArgs(argv) {
     stateUrl: DEFAULT_STATE_URL,
     execute: false,
     pollMs: 5000,
-    stallMs: 8 * 60_000,
+    stallMs: 4 * 60_000,
     unavailableGraceMs: 90_000
   };
   for (let i = 0; i < argv.length; i += 1) {
