@@ -1,4 +1,5 @@
 name: Supervisor One-Shot Continue E2E
+# rerun after short-lived CDP exit fix
 
 on:
   push:
