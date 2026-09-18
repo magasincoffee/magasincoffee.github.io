@@ -107,7 +107,16 @@
       "task_048_evidence_surface_failures": 0,
       "task_048_canonical_evidence_reconciled_at_hard_stop": true,
       "task_048_evidence_surface_probe_pr": 124,
-      "task_048_evidence_surface_probe_merged": false
+      "task_048_evidence_surface_probe_merged": false,
+      "task_048_temporal_pause_fix_commit": "11bd8de2837cacc93cf90495ae6359d26996533e",
+      "task_048_temporal_pause_test_commit": "5f261bd557cd744c9d14c6e05a8b87f69c8e0182",
+      "task_048_temporal_pause_probe_head": "6ac648056528f5ea1c53d62b29c14ccd49259e60",
+      "task_048_temporal_pause_test_run_id": 35375852646,
+      "task_048_temporal_pause_tests_passed": 163,
+      "task_048_temporal_pause_failures": 0,
+      "task_048_supervisor_busy_loop_suppressed": true,
+      "task_048_temporal_pause_probe_pr": 125,
+      "task_048_temporal_pause_probe_merged": false
     },
     "robot_v2": {
       "branch": "feat/business-os-robot-v2-core",
