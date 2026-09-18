@@ -5,7 +5,10 @@ import { setTimeout as delay } from "node:timers/promises";
 
 import { ChatGptUiAdapter } from "../ui/playwright-adapter.mjs";
 import { sendComposerInstruction } from "../ui/actions.mjs";
-import { captureCompletedAssistantTurn } from "../ui/message-capture.mjs";
+import {
+  captureAssistantTurnDigests,
+  captureCompletedAssistantTurn
+} from "../ui/message-capture.mjs";
 import { OBSERVATIONS } from "../decision.mjs";
 import { pageMatchesTarget, targetFromUrl } from "./recovery.mjs";
 import {
@@ -26,7 +29,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.19";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.20";
 
 function parseArgs(argv) {
   const result = {
@@ -181,9 +184,53 @@ async function createConversationWithMessage(adapter, message, { execute }) {
   return { page, target, execution };
 }
 
+async function findBrainByContinuity(adapter, registry) {
+  const expectedDigest = registry?.brain?.last_processed_digest || null;
+  if (!expectedDigest) return null;
+
+  const candidates = [];
+  for (const page of adapter.getChatGptPages()) {
+    let target = null;
+    try {
+      target = targetFromUrl(page.url());
+    } catch {
+      continue;
+    }
+
+    const digests = await captureAssistantTurnDigests(page).catch(() => []);
+    if (digests.includes(expectedDigest)) {
+      candidates.push({ page, target });
+    }
+  }
+
+  if (candidates.length === 1) return candidates[0];
+  if (candidates.length > 1) {
+    throw new Error("multiple ChatGPT conversations match Brain continuity; automatic target rebind denied");
+  }
+  return null;
+}
+
 async function ensureBrain({ adapter, registry, projectState, config, execute, registryPath, logPath }) {
   if (registry.brain.target) {
-    return openTargetPage(adapter, registry.brain.target);
+    try {
+      return await openTargetPage(adapter, registry.brain.target);
+    } catch (error) {
+      const message = String(error?.message || error);
+      if (!/target mismatch/.test(message)) throw error;
+
+      const recovered = await findBrainByContinuity(adapter, registry);
+      if (!recovered) throw error;
+      if (!execute) return recovered.page;
+
+      registry.brain.target = recovered.target;
+      await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
+      await safeLog(logPath, {
+        type: "BRAIN_TARGET_REBOUND_CONTINUITY",
+        role: "brain",
+        generation: registry.brain.generation
+      });
+      return recovered.page;
+    }
   }
   if (!execute) return null;
   if (!config?.brain?.bootstrap_authorized) {
