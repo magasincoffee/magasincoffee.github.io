@@ -1,0 +1,85 @@
+name: Supervisor Live Retry Smoke
+
+on:
+  push:
+    branches:
+      - feat/supervisor-actions
+    paths:
+      - '.github/workflows/supervisor-live-retry-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supervisor-live-retry-smoke-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  retry-smoke:
+    if: github.actor == 'magasincoffee'
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: 08_INTEGRATIONS/supervisor
+        shell: powershell
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pinned dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Ensure real Chrome CDP
+        run: |
+          $candidates = @(
+            "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+            "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+            "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
+          )
+          $chrome = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+          if (-not $chrome) { throw 'Chrome not found.' }
+
+          $profile = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor\browser_profile'
+          $ready = $false
+          try {
+            $null = Invoke-RestMethod -Uri 'http://127.0.0.1:9222/json/version' -TimeoutSec 2
+            $ready = $true
+          } catch {}
+
+          if (-not $ready) {
+            Start-Process -FilePath $chrome -ArgumentList @(
+              '--remote-debugging-address=127.0.0.1',
+              '--remote-debugging-port=9222',
+              "--user-data-dir=$profile",
+              '--no-first-run',
+              '--no-default-browser-check',
+              'https://chatgpt.com/'
+            )
+            for ($i = 0; $i -lt 30; $i++) {
+              try {
+                $null = Invoke-RestMethod -Uri 'http://127.0.0.1:9222/json/version' -TimeoutSec 2
+                $ready = $true
+                break
+              } catch {
+                Start-Sleep -Seconds 1
+              }
+            }
+          }
+          if (-not $ready) { throw 'Chrome CDP unavailable.' }
+
+      - name: Retry current ChatGPT timeout only if safe retry is detected
+        run: |
+          node src/runtime/retry-only-cli.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Boundary
+        run: |
+          Write-Host 'PASS: this smoke can only click a recognized safe Retry control; it cannot send Continue or arbitrary text.'
