@@ -24,7 +24,11 @@ test("TASK-032 contract keeps verified feedback core and fail-closed boundaries"
   assert.equal(give.status,"APPROVED");
   assert.equal(give.selected_option,"RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES");
   const notification=spec.owner_decisions.find(x=>x.id==="SFB-002");
-  assert.equal(notification.status,"APPROVED");\n  assert.equal(notification.selected.allow_event_outbox_production_apply,true);\n  assert.equal(notification.selected.email_source,"MAGASIN_EMAIL");\n  assert.equal(notification.selected.external_calendar,false);\n  assert.equal(notification.selected.allow_secret_store_credentials,true);
+  assert.equal(notification.status,"APPROVED");
+  assert.equal(notification.selected.allow_event_outbox_production_apply,true);
+  assert.equal(notification.selected.email_source,"MAGASIN_EMAIL");
+  assert.equal(notification.selected.external_calendar,false);
+  assert.equal(notification.selected.allow_secret_store_credentials,true);
 });
 
 test("active Employee feedback engines fail closed on fake Give and unsafe auto-attendance",async()=>{
