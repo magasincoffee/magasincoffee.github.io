@@ -1,4 +1,4 @@
-name: TASK-035 Runner Capability Diagnostic
+name: TASK-035 Runner Operator
 
 on:
   push:
@@ -6,197 +6,33 @@ on:
       - ops/task-035-runner-diagnostic
     paths:
       - .github/workflows/task-035-runner-diagnostic.yml
-      - 08_INTEGRATIONS/supervisor/src/ui/task-035-auth-surface-probe.mjs
-      - 08_INTEGRATIONS/supervisor/src/ui/task-035-google-cloud-state.mjs
-      - 08_INTEGRATIONS/supervisor/src/ui/task-035-google-project-picker.mjs
-      - 08_INTEGRATIONS/supervisor/src/ui/task-035-google-ui-state.mjs
-      - 08_INTEGRATIONS/supervisor/src/ui/task-035-gmail-api-setup.mjs
-      - 08_INTEGRATIONS/supervisor/src/ui/task-035-gmail-control-probe.mjs
+      - 08_INTEGRATIONS/supervisor/src/ui/task-035-*.mjs
   workflow_dispatch:
 
 concurrency:
-  group: task-035-runner-diagnostic
+  group: task-035-runner-operator
   cancel-in-progress: true
 
 jobs:
-  diagnose:
+  operate:
     runs-on: self-hosted
     timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Privacy-safe local capability check
-        shell: powershell
-        env:
-          GH_SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          GH_GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
-          GH_GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
-          GH_GMAIL_OAUTH_REFRESH_TOKEN: ${{ secrets.GMAIL_OAUTH_REFRESH_TOKEN }}
-          GH_MAGASIN_EMAIL_PROVIDER_SECRET: ${{ secrets.MAGASIN_EMAIL_PROVIDER }}
-          GH_MAGASIN_EMAIL_FROM_SECRET: ${{ secrets.MAGASIN_EMAIL_FROM }}
-          GH_MAGASIN_EMAIL_PROVIDER_VAR: ${{ vars.MAGASIN_EMAIL_PROVIDER }}
-          GH_MAGASIN_EMAIL_FROM_VAR: ${{ vars.MAGASIN_EMAIL_FROM }}
-        run: |
-          $ErrorActionPreference = "SilentlyContinue"
-
-          function Has-Command([string]$Name) {
-            return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
-          }
-
-          function Env-Present([string]$Name) {
-            $value = [Environment]::GetEnvironmentVariable($Name)
-            return -not [string]::IsNullOrWhiteSpace($value)
-          }
-
-          Write-Host "TASK035_DIAGNOSTIC_BEGIN"
-          Write-Host ("RUNNER_OS_WINDOWS=" + ($env:RUNNER_OS -eq "Windows"))
-          Write-Host ("HAS_GIT=" + (Has-Command "git"))
-          Write-Host ("HAS_NODE=" + (Has-Command "node"))
-          Write-Host ("HAS_PYTHON=" + ((Has-Command "python") -or (Has-Command "py")))
-          Write-Host ("HAS_SUPABASE_CLI=" + (Has-Command "supabase"))
-          Write-Host ("HAS_GCLOUD_CLI=" + (Has-Command "gcloud"))
-
-          $chromeCandidates = @(
-            "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
-            "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
-            "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
-          )
-          $hasChrome = $false
-          foreach ($candidate in $chromeCandidates) {
-            if ($candidate -and (Test-Path $candidate)) { $hasChrome = $true; break }
-          }
-          Write-Host ("HAS_CHROME=" + $hasChrome)
-
-          $chromeProfile = Join-Path $env:LOCALAPPDATA "Google\Chrome\User Data"
-          Write-Host ("HAS_CHROME_USER_DATA=" + (Test-Path $chromeProfile))
-
-          Write-Host ("ENV_SUPABASE_ACCESS_TOKEN=" + (Env-Present "SUPABASE_ACCESS_TOKEN"))
-          Write-Host ("ENV_GMAIL_OAUTH_CLIENT_ID=" + (Env-Present "GMAIL_OAUTH_CLIENT_ID"))
-          Write-Host ("ENV_GMAIL_OAUTH_CLIENT_SECRET=" + (Env-Present "GMAIL_OAUTH_CLIENT_SECRET"))
-          Write-Host ("ENV_GMAIL_OAUTH_REFRESH_TOKEN=" + (Env-Present "GMAIL_OAUTH_REFRESH_TOKEN"))
-          Write-Host ("ENV_MAGASIN_EMAIL_PROVIDER=" + (Env-Present "MAGASIN_EMAIL_PROVIDER"))
-          Write-Host ("ENV_MAGASIN_EMAIL_FROM=" + (Env-Present "MAGASIN_EMAIL_FROM"))
-          Write-Host ("GH_SECRET_SUPABASE_ACCESS_TOKEN=" + (Env-Present "GH_SUPABASE_ACCESS_TOKEN"))
-          Write-Host ("GH_SECRET_GMAIL_OAUTH_CLIENT_ID=" + (Env-Present "GH_GMAIL_OAUTH_CLIENT_ID"))
-          Write-Host ("GH_SECRET_GMAIL_OAUTH_CLIENT_SECRET=" + (Env-Present "GH_GMAIL_OAUTH_CLIENT_SECRET"))
-          Write-Host ("GH_SECRET_GMAIL_OAUTH_REFRESH_TOKEN=" + (Env-Present "GH_GMAIL_OAUTH_REFRESH_TOKEN"))
-          Write-Host ("GH_SECRET_MAGASIN_EMAIL_PROVIDER=" + (Env-Present "GH_MAGASIN_EMAIL_PROVIDER_SECRET"))
-          Write-Host ("GH_SECRET_MAGASIN_EMAIL_FROM=" + (Env-Present "GH_MAGASIN_EMAIL_FROM_SECRET"))
-          Write-Host ("GH_VAR_MAGASIN_EMAIL_PROVIDER=" + (Env-Present "GH_MAGASIN_EMAIL_PROVIDER_VAR"))
-          Write-Host ("GH_VAR_MAGASIN_EMAIL_FROM=" + (Env-Present "GH_MAGASIN_EMAIL_FROM_VAR"))
-
-          $supabaseCmd = $null
-          if (Has-Command "supabase") {
-            $supabaseCmd = "supabase"
-          } elseif (Has-Command "npx") {
-            $null = npx --yes supabase@latest --version 2>$null
-            if ($LASTEXITCODE -eq 0) { $supabaseCmd = "npx --yes supabase@latest" }
-          }
-
-          if ($supabaseCmd) {
-            $originalToken = $env:SUPABASE_ACCESS_TOKEN
-            if (-not [string]::IsNullOrWhiteSpace($env:GH_SUPABASE_ACCESS_TOKEN)) {
-              $env:SUPABASE_ACCESS_TOKEN = $env:GH_SUPABASE_ACCESS_TOKEN
-            }
-
-            if ($supabaseCmd -eq "supabase") {
-              $projects = supabase projects list -o json 2>$null
-            } else {
-              $projects = npx --yes supabase@latest projects list -o json 2>$null
-            }
-
-            $supabaseAuthenticated = ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace(($projects | Out-String)))
-            Write-Host ("SUPABASE_CLI_AUTHENTICATED=" + $supabaseAuthenticated)
-            $projectVisible = $false
-            if ($supabaseAuthenticated) {
-              $projectVisible = (($projects | Out-String) -match "menvbzlsncmpuvnaifxa")
-            }
-            Write-Host ("SUPABASE_PROJECT_VISIBLE=" + $projectVisible)
-
-            if ($projectVisible) {
-              if ($supabaseCmd -eq "supabase") {
-                $secretList = supabase secrets list --project-ref menvbzlsncmpuvnaifxa -o json 2>$null
-              } else {
-                $secretList = npx --yes supabase@latest secrets list --project-ref menvbzlsncmpuvnaifxa -o json 2>$null
-              }
-              if ($LASTEXITCODE -eq 0 -and $secretList) {
-                $secretText = ($secretList | Out-String)
-                Write-Host ("SUPABASE_SECRET_GMAIL_OAUTH_CLIENT_ID=" + ($secretText -match '"GMAIL_OAUTH_CLIENT_ID"'))
-                Write-Host ("SUPABASE_SECRET_GMAIL_OAUTH_CLIENT_SECRET=" + ($secretText -match '"GMAIL_OAUTH_CLIENT_SECRET"'))
-                Write-Host ("SUPABASE_SECRET_GMAIL_OAUTH_REFRESH_TOKEN=" + ($secretText -match '"GMAIL_OAUTH_REFRESH_TOKEN"'))
-                Write-Host ("SUPABASE_SECRET_MAGASIN_EMAIL_PROVIDER=" + ($secretText -match '"MAGASIN_EMAIL_PROVIDER"'))
-                Write-Host ("SUPABASE_SECRET_MAGASIN_EMAIL_FROM=" + ($secretText -match '"MAGASIN_EMAIL_FROM"'))
-              } else {
-                Write-Host "SUPABASE_SECRET_LIST_AVAILABLE=False"
-              }
-            }
-
-            $env:SUPABASE_ACCESS_TOKEN = $originalToken
-          } else {
-            Write-Host "SUPABASE_CLI_AUTHENTICATED=False"
-            Write-Host "SUPABASE_PROJECT_VISIBLE=False"
-          }
-
-          if (Has-Command "gcloud") {
-            $active = gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>$null
-            $gcloudAuthenticated = ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace(($active | Out-String)))
-            Write-Host ("GCLOUD_AUTHENTICATED=" + $gcloudAuthenticated)
-          } else {
-            Write-Host "GCLOUD_AUTHENTICATED=False"
-          }
-
-          Write-Host "TASK035_DIAGNOSTIC_END"
-          exit 0
-
       - name: Ensure shared Supervisor Chrome is available
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           & "08_INTEGRATIONS/supervisor/windows/open-supervisor-chat.ps1"
-          Start-Sleep -Seconds 4
+          Start-Sleep -Seconds 3
 
-      - name: Install Supervisor browser dependency
+      - name: Install browser dependency
         shell: powershell
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
           npm install --ignore-scripts --no-audit --no-fund
-
-      - name: Probe Google Cloud and Supabase web auth surfaces
-        shell: powershell
-        working-directory: 08_INTEGRATIONS/supervisor
-        run: |
-          node src/ui/task-035-auth-surface-probe.mjs
-
-      - name: Probe Google Cloud configuration state
-        shell: powershell
-        working-directory: 08_INTEGRATIONS/supervisor
-        run: |
-          node src/ui/task-035-google-cloud-state.mjs
-
-      - name: Select unique MAGASIN Google project
-        shell: powershell
-        working-directory: 08_INTEGRATIONS/supervisor
-        run: |
-          node src/ui/task-035-google-project-picker.mjs
-
-      - name: Verify Google Cloud state after project selection
-        shell: powershell
-        working-directory: 08_INTEGRATIONS/supervisor
-        run: |
-          node src/ui/task-035-google-cloud-state.mjs
-
-      - name: Classify Google Cloud first-time configuration state
-        shell: powershell
-        working-directory: 08_INTEGRATIONS/supervisor
-        run: |
-          node src/ui/task-035-google-ui-state.mjs
-
-      - name: Enable or verify Gmail API
-        shell: powershell
-        working-directory: 08_INTEGRATIONS/supervisor
-        run: |
-          node src/ui/task-035-gmail-api-setup.mjs
 
       - name: Inspect Gmail API controls
         shell: powershell
