@@ -383,13 +383,26 @@ function Refresh-ControlPanel {
 
     if ($process) {
         $state = if ($runtimeStatus.status) { [string]$runtimeStatus.status } else { 'STARTING' }
+        $activationPending = @()
+        if ($projectState -and $projectState.activation_boundary -and $projectState.activation_boundary.pending) {
+            $activationPending = @($projectState.activation_boundary.pending)
+        }
+        $ownerPending = @()
+        if ($projectState -and $projectState.owner_boundary -and $projectState.owner_boundary.pending) {
+            $ownerPending = @($projectState.owner_boundary.pending)
+        }
+
         $robotText = switch ($state) {
             'READY' { 'ONLINE • CHỜ CHATGPT' }
             'RUNNING' { 'RUNNING • ĐANG LÀM VIỆC' }
             'RETRYING' { 'RETRYING • ĐANG THỬ LẠI' }
             'RECOVERING' { 'RECOVERING • TỰ KHÔI PHỤC' }
             'ROLLOVER' { 'ROLLOVER • CHUYỂN CHAT MỚI' }
-            'WAIT_USER' { 'WAIT_USER • CẦN OWNER' }
+            'WAIT_USER' {
+                if ($ownerPending.Count -gt 0) { 'WAIT_USER • CẦN QUYẾT ĐỊNH' }
+                elseif ($activationPending.Count -gt 0) { 'WAIT_USER • CẦN CẤU HÌNH' }
+                else { 'WAIT_USER • CẦN OWNER' }
+            }
             'ERROR' { 'ERROR' }
             'DONE' { 'DONE' }
             default { "ONLINE • $state" }
@@ -473,7 +486,24 @@ function Refresh-ControlPanel {
             'Robot và GitHub Runner đang OFFLINE. START ROBOT sẽ khởi động Runner trước.'
         }
     } elseif ($projectState.requires_user -or $projectState.blocked -or $projectStatus -in @('WAIT_USER','BLOCKED')) {
-        $errorValue.Text = 'Project state yêu cầu Owner xử lý. Robot sẽ không tự vượt approval/security boundary.'
+        $activationPending = @()
+        if ($projectState -and $projectState.activation_boundary -and $projectState.activation_boundary.pending) {
+            $activationPending = @($projectState.activation_boundary.pending)
+        }
+        $ownerPending = @()
+        if ($projectState -and $projectState.owner_boundary -and $projectState.owner_boundary.pending) {
+            $ownerPending = @($projectState.owner_boundary.pending)
+        }
+
+        if ($projectState.blocked -or $projectStatus -eq 'BLOCKED') {
+            $errorValue.Text = 'Project đang BLOCKED. Robot không tự vượt security/approval boundary.'
+        } elseif ($ownerPending.Count -gt 0) {
+            $errorValue.Text = 'Cần Owner chốt quyết định: ' + ($ownerPending -join ', ')
+        } elseif ($activationPending.Count -gt 0) {
+            $errorValue.Text = 'Cần cấu hình kỹ thuật trước khi tiếp tục: ' + ($activationPending -join ', ')
+        } else {
+            $errorValue.Text = 'Project state yêu cầu Owner xử lý. Robot sẽ không tự vượt approval/security boundary.'
+        }
     } elseif ($runtimeStatus.recovery_blocked) {
         $errorValue.Text = 'Tự khôi phục đã dùng hết giới hạn an toàn. Cần Owner kiểm tra ChatGPT rồi START lại.'
     } elseif ($runtimeStatus.status -eq 'ERROR') {

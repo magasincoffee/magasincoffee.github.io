@@ -75,3 +75,15 @@ test("runtime persists privacy-safe diagnostics for future no-explanation triage
   assert.match(source, /ownerRecheck: manualOwnerRecheck/);
   assert.match(source, /DIAGNOSTIC_INCIDENT/);
 });
+
+
+test("settled reconciliation only re-arms from a newer Owner turn", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/supervisor-loop-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /const currentLastRole = String\(probe\?\.snapshot\?\.lastMessageRole \|\| ""\)/);
+  assert.match(source, /currentLastRole === "user"/);
+  assert.match(source, /currentTurn > Number\(ownerReconcileState\.settledTurn \|\| 0\)/);
+});

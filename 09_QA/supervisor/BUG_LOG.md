@@ -261,3 +261,18 @@
   4. log `turn_ordinal_at_action` in privacy-safe diagnostics.
 - Runtime: `2026-09-18.13`.
 - Status: FIXED IN CODE — pending CI + field deployment.
+
+
+## BUG-SUP-018 — Assistant response turn can retrigger Owner reconciliation
+
+- Date: 2026-09-18
+- Component: Owner reconciliation lifecycle
+- Field evidence from v13 verification: one reconciliation response settled successfully, but the subsequent assistant turn advanced the conversation ordinal and was interpreted as a new trigger, causing another `OWNER_RECONCILE_SENT`.
+- Root cause: the post-settlement re-arm condition compared only conversation-turn ordinal. Assistant responses also advance that ordinal.
+- Fix:
+  1. after a reconciliation settles, only a newer turn whose latest role is `user` may automatically re-arm Owner reconciliation;
+  2. explicit `ĐÃ XỬ LÝ — KIỂM TRA LẠI` remains a manual override for one bounded recheck;
+  3. assistant turns never trigger another Owner reconcile by themselves;
+  4. Control Panel distinguishes `CẦN QUYẾT ĐỊNH` from `CẦN CẤU HÌNH` using canonical boundary metadata.
+- Runtime: `2026-09-18.14`.
+- Status: FIXED IN CODE — pending CI + field deployment.
