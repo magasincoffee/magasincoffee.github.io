@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # current-phase: oauth-audience-probe
+  # current-phase: oauth-publish-probe
   operate:
     runs-on: self-hosted
     timeout-minutes: 10
@@ -35,8 +35,8 @@ jobs:
         run: |
           npm install --ignore-scripts --no-audit --no-fund
 
-      - name: Inspect OAuth audience publishing status
+      - name: Inspect OAuth publish confirmation
         shell: powershell
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
-          node src/ui/task-035-oauth-audience-probe.mjs
+          node src/ui/task-035-oauth-publish-probe.mjs
