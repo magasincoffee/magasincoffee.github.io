@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "status": "FOUNDATION_DRAFT",
+  "task": "TASK-009",
+  "evidence": [
+    "P0_GATE_REVIEW",
+    "C86",
+    "C93",
+    "C106",
+    "C107",
+    "C108",
+    "C109"
+  ],
+  "location": {
+    "kinds": [
+      "STORE",
+      "WAREHOUSE"
+    ],
+    "required": [
+      "id",
+      "code",
+      "name",
+      "location_type",
+      "status"
+    ],
+    "statuses": [
+      "ACTIVE",
+      "INACTIVE"
+    ]
+  },
+  "item": {
+    "types": [
+      "SELLABLE",
+      "MATERIAL",
+      "TOPPING",
+      "PACKAGING",
+      "ASSET",
+      "OTHER"
+    ],
+    "required": [
+      "id",
+      "code",
+      "name",
+      "item_type",
+      "base_unit",
+      "status"
+    ],
+    "statuses": [
+      "ACTIVE",
+      "INACTIVE"
+    ]
+  },
+  "unit_conversion": {
+    "required": [
+      "item_id",
+      "purchase_unit",
+      "base_qty_per_unit"
+    ],
+    "constraints": [
+      "base_qty_per_unit > 0"
+    ]
+  },
+  "recipe_component": {
+    "required": [
+      "sellable_item_id",
+      "component_item_id",
+      "quantity_base_unit"
+    ],
+    "deferred": [
+      "versioning",
+      "effective_dates",
+      "optional_components",
+      "yield",
+      "waste_factor",
+      "channel_variants",
+      "costing_policy"
+    ]
+  },
+  "explicitly_deferred": [
+    "price_history",
+    "channel_specific_prices",
+    "store_specific_menu_overrides",
+    "stock_balances",
+    "supplier_terms",
+    "purchase_order_logic",
+    "sales_order_logic",
+    "asset_depreciation",
+    "formal_kpi_definitions"
+  ]
+}
