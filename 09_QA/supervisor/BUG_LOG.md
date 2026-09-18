@@ -222,3 +222,20 @@
   6. the button never writes `READY` itself and never bypasses security/secret/approval boundaries.
 - Runtime: `2026-09-18.11`.
 - Status: FIXED IN CODE — pending CI + field deployment.
+
+
+## BUG-SUP-016 — Explicit Owner recheck can remain blocked by a stale assistant-progress latch
+
+- Date: 2026-09-18
+- Component: Owner recheck / continuation latch / diagnostics
+- Field symptom: after Owner presses `ĐÃ XỬ LÝ — KIỂM TRA LẠI`, Control Panel shows `CONTINUE`, `UI=READY_IDLE`, `OBS=RESPONSE_COMPLETE`, but every step remains `executed=false | reason=awaiting observable assistant progress`. The local marker remains at `ĐÃ NHẬN — ĐANG KIỂM TRA`.
+- Root cause: the explicit Owner recheck armed reconciliation but did not release the controller's previous continuation-progress latch. If the prior ChatGPT response completed without a detectable assistant-count/running transition, the controller stayed `armed=false` forever and could not send the newly authorized recheck.
+- Fix:
+  1. explicit Owner recheck may release only the stale progress latch for one Owner-reconciliation send;
+  2. normal AUTO_CONTINUE cannot use this path;
+  3. repository/business/security gates remain unchanged and fail-closed;
+  4. add persistent privacy-safe diagnostics under the local `diagnostics` folder;
+  5. capture repeated latch stalls as incident JSON after a bounded threshold;
+  6. add Control Panel `MỞ LOG LỖI` and a diagnostic collector script.
+- Runtime: `2026-09-18.12`.
+- Status: FIXED IN CODE — pending CI + field deployment.

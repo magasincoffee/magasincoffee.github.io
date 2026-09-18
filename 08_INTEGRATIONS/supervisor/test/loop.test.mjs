@@ -560,3 +560,71 @@ test("semantic Work turn signature ignores unrelated DOM-size churn", () => {
 
   assert.equal(first, second);
 });
+
+
+test("explicit Owner recheck releases only the stale continuation latch for one reconciliation send", async () => {
+  let now = 700_000;
+  const controller = new SupervisorLoopController({
+    execute: true,
+    minActionIntervalMs: 1000,
+    now: () => now
+  });
+  const p = page();
+  controller.armed = false;
+  controller.lastActionAt = now - 5000;
+  controller.assistantCountAtAction = 4;
+
+  const result = await controller.step({
+    page: p,
+    projectState: state({
+      status: "WAIT_USER",
+      autonomy: "MANUAL",
+      blocked: false,
+      requires_user: true
+    }),
+    probe: {
+      classification: { observation: "RESPONSE_COMPLETE" },
+      snapshot: {
+        assistantMessageCount: 4,
+        userMessageCount: 5,
+        lastMessageRole: "assistant",
+        maxConversationTurnOrdinal: 12,
+        responseRunning: false,
+        mainBusy: false
+      }
+    },
+    ownerReconcile: true,
+    ownerRecheck: true
+  });
+
+  assert.equal(result.decision.action, "CONTINUE");
+  assert.equal(result.execution.executed, true);
+  assert.equal(controller.armed, false);
+});
+
+test("normal continuation cannot use Owner recheck to bypass the progress latch", async () => {
+  let now = 800_000;
+  const controller = new SupervisorLoopController({
+    execute: true,
+    minActionIntervalMs: 1000,
+    now: () => now
+  });
+  controller.armed = false;
+  controller.lastActionAt = now - 5000;
+
+  const result = await controller.step({
+    page: page(),
+    projectState: state({
+      status: "READY",
+      autonomy: "AUTO_CONTINUE",
+      requires_user: false
+    }),
+    probe: probe("RESPONSE_COMPLETE", 2),
+    ownerReconcile: false,
+    ownerRecheck: true
+  });
+
+  assert.equal(result.decision.action, "CONTINUE");
+  assert.equal(result.execution.executed, false);
+  assert.match(result.execution.reason, /awaiting observable assistant progress/);
+});

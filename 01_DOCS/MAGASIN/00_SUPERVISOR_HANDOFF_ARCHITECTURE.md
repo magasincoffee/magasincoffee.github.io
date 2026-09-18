@@ -185,3 +185,24 @@ When the project is in `WAIT_USER` and not `BLOCKED`:
 7. `BLOCKED`, auth/MFA/CAPTCHA, destructive/admin, missing-secret and other unresolved security boundaries are never force-cleared by the button.
 
 This control exists to repair stale synchronization between Owner ↔ ChatGPT ↔ repository. It is not an approval bypass.
+
+
+## 11. Persistent diagnostic evidence
+
+Supervisor runtime keeps a **local privacy-safe diagnostic folder**:
+
+```text
+%LOCALAPPDATA%\MAGASIN\BusinessOS\supervisor\diagnostics
+```
+
+Contents:
+
+- `latest.json` — latest safe runtime snapshot;
+- `incidents.ndjson` — compact incident index;
+- `incidents\*.json` — individual repeated-stall/error records.
+
+The diagnostic snapshot contains runtime/project/UI state, safe counters, controller latch state, Owner-reconcile state, decision/execution result and recovery state. It must **not** persist conversation bodies, credentials, cookies, OAuth secrets or tokens.
+
+Repeated non-executed continuation stalls are promoted to incidents after a bounded threshold. Control Panel exposes **MỞ LOG LỖI** so the Owner can inspect the folder, while the local GitHub Runner can collect the same evidence for remote troubleshooting. The intended operator flow is that the Owner can report simply “robot lỗi”; diagnostics should provide the technical evidence without requiring the Owner to reconstruct the failure manually.
+
+An explicit **ĐÃ XỬ LÝ — KIỂM TRA LẠI** click may release only the stale UI progress latch for one Owner-reconciliation attempt. It never changes repository status directly and never bypasses business/security/secret gates.

@@ -9,6 +9,7 @@ $pidFile = Join-Path $root 'supervisor.pid'
 $statusFile = Join-Path $root 'runtime-status.json'
 $logFile = Join-Path $root 'supervisor.log'
 $ownerResolvedFile = Join-Path $root 'OWNER_RESOLVED.request.json'
+$diagnosticsRoot = Join-Path $root 'diagnostics'
 $startScript = Join-Path $runtime 'windows\start-supervisor.ps1'
 $stopScript = Join-Path $runtime 'windows\stop-supervisor.ps1'
 $openChatScript = Join-Path $runtime 'windows\open-supervisor-chat.ps1'
@@ -314,19 +315,26 @@ $errorPanel.Controls.Add($errorCaption)
 $errorValue = New-Object Windows.Forms.Label
 $errorValue.Text = 'Không có lỗi.'
 $errorValue.Location = New-Object Drawing.Point(16, 33)
-$errorValue.Size = New-Object Drawing.Size(640, 28)
+$errorValue.Size = New-Object Drawing.Size(500, 28)
 $errorValue.ForeColor = [Drawing.Color]::FromArgb(124,45,18)
 $errorPanel.Controls.Add($errorValue)
 
 $ownerResolvedButton = New-Object Windows.Forms.Button
 $ownerResolvedButton.Text = '✓  ĐÃ XỬ LÝ — KIỂM TRA LẠI'
-$ownerResolvedButton.Location = New-Object Drawing.Point(690, 18)
-$ownerResolvedButton.Size = New-Object Drawing.Size(250, 38)
+$ownerResolvedButton.Location = New-Object Drawing.Point(515, 18)
+$ownerResolvedButton.Size = New-Object Drawing.Size(255, 38)
 $ownerResolvedButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
 $ownerResolvedButton.BackColor = [Drawing.Color]::FromArgb(254,249,195)
 $ownerResolvedButton.ForeColor = [Drawing.Color]::FromArgb(133,77,14)
 $ownerResolvedButton.Enabled = $false
 $errorPanel.Controls.Add($ownerResolvedButton)
+
+$diagnosticsButton = New-Object Windows.Forms.Button
+$diagnosticsButton.Text = 'MỞ LOG LỖI'
+$diagnosticsButton.Location = New-Object Drawing.Point(780, 18)
+$diagnosticsButton.Size = New-Object Drawing.Size(160, 38)
+$diagnosticsButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
+$errorPanel.Controls.Add($diagnosticsButton)
 
 $logBox = New-Object Windows.Forms.TextBox
 $logBox.Location = New-Object Drawing.Point(28, 680)
@@ -554,6 +562,20 @@ $ownerResolvedButton.Add_Click({
         [Windows.Forms.MessageBox]::Show(
             $_.Exception.Message,
             'Không thể yêu cầu kiểm tra lại',
+            'OK',
+            'Error'
+        ) | Out-Null
+    }
+})
+
+$diagnosticsButton.Add_Click({
+    try {
+        New-Item -ItemType Directory -Force -Path $diagnosticsRoot | Out-Null
+        Start-Process explorer.exe -ArgumentList ('"' + $diagnosticsRoot + '"')
+    } catch {
+        [Windows.Forms.MessageBox]::Show(
+            $_.Exception.Message,
+            'Không thể mở log lỗi',
             'OK',
             'Error'
         ) | Out-Null
