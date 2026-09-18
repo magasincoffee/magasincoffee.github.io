@@ -69,6 +69,7 @@ export class SupervisorRecoveryController {
     this.now = now;
 
     this.runningSince = null;
+    this.lastProgressMarker = null;
     this.unavailableSince = null;
     this.lastReloadAt = 0;
     this.stallReloads = 0;
@@ -113,7 +114,12 @@ export class SupervisorRecoveryController {
     const observation = classification.observation;
 
     if (observation === "ASSISTANT_RUNNING") {
-      if (this.runningSince == null) this.runningSince = now;
+      const progressMarker = `${Number(snapshot.assistantMessageCount || 0)}:${Number(snapshot.lastAssistantCharCount || 0)}`;
+      if (this.runningSince == null || progressMarker !== this.lastProgressMarker) {
+        this.runningSince = now;
+        this.lastProgressMarker = progressMarker;
+        this.stallReloads = 0;
+      }
       this.unavailableSince = null;
       this.unavailableReloads = 0;
 
@@ -133,6 +139,7 @@ export class SupervisorRecoveryController {
     }
 
     this.runningSince = null;
+    this.lastProgressMarker = null;
     this.stallReloads = 0;
 
     if (isUnavailableSnapshot(snapshot)) {
@@ -178,6 +185,7 @@ export class SupervisorRecoveryController {
         this.rolloverFailures = 0;
         this.targetMisses = 0;
         this.runningSince = null;
+        this.lastProgressMarker = null;
         this.unavailableSince = null;
         this.lastReloadAt = 0;
         this.stallReloads = 0;
@@ -190,6 +198,19 @@ export class SupervisorRecoveryController {
         }
       }
     }
+  }
+
+  noteConversationAdopted() {
+    this.conversationGeneration += 1;
+    this.targetMisses = 0;
+    this.runningSince = null;
+    this.lastProgressMarker = null;
+    this.unavailableSince = null;
+    this.lastReloadAt = 0;
+    this.stallReloads = 0;
+    this.unavailableReloads = 0;
+    this.rolloverFailures = 0;
+    this.blocked = false;
   }
 
   status(action = RECOVERY_ACTIONS.NONE) {
