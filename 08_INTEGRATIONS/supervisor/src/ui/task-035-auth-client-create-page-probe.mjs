@@ -1,0 +1,56 @@
+import process from "node:process";
+const PROJECT="magasin-noibo";
+const PORTS=Array.from({length:11},(_,i)=>9222+i);
+
+async function findCdp(){
+  for(const port of PORTS){
+    try{
+      const r=await fetch(`http://127.0.0.1:${port}/json/version`,{cache:"no-store"});
+      if(!r.ok) continue;
+      const d=await r.json();
+      if(d?.webSocketDebuggerUrl) return `http://127.0.0.1:${port}`;
+    }catch{}
+  }
+  return null;
+}
+async function connect(cdp){
+  const {chromium}=await import("playwright-core");
+  const v=await fetch(cdp+"/json/version").then(r=>r.json());
+  const ws=new URL(v.webSocketDebuggerUrl),ep=new URL(cdp);
+  ws.hostname=ep.hostname;ws.port=ep.port;
+  return chromium.connectOverCDP(ws.toString());
+}
+function sanitize(s){
+  return String(s||"")
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"[email]")
+    .replace(/\s+/g," ").trim().slice(0,220);
+}
+const cdp=await findCdp(); if(!cdp) process.exit(0);
+const browser=await connect(cdp); const context=browser.contexts()[0]; if(!context) process.exit(0);
+const page=await context.newPage();
+try{
+  await page.goto(`https://console.cloud.google.com/auth/clients/create?project=${PROJECT}`,{waitUntil:"domcontentloaded",timeout:60000}).catch(()=>{});
+  await page.waitForTimeout(9000);
+  console.log("CREATE_PAGE_TITLE="+sanitize(await page.title()));
+  console.log("CREATE_PAGE_PROJECT_BOUND="+(new URL(page.url()).searchParams.get("project")===PROJECT));
+
+  const controls=await page.locator('input,textarea,select,[role="combobox"],[role="listbox"],button,[role="button"]').evaluateAll(nodes=>nodes.map(n=>({
+    tag:n.tagName,
+    type:n.getAttribute("type")||"",
+    role:n.getAttribute("role")||"",
+    aria:n.getAttribute("aria-label")||"",
+    placeholder:n.getAttribute("placeholder")||"",
+    name:n.getAttribute("name")||"",
+    text:(n.innerText||n.textContent||"").trim()
+  })));
+  const out=[];
+  const re=/application|type|name|desktop|web|android|ios|chrome|create|cancel|client|ứng dụng|loại|tên|máy tính|tạo|hủy/i;
+  for(const x of controls){
+    const label=sanitize(`${x.tag} | ${x.type} | ${x.role} | ${x.aria} | ${x.placeholder} | ${x.name} | ${x.text}`);
+    if(label && re.test(label) && !out.includes(label)) out.push(label);
+    if(out.length>=80) break;
+  }
+  console.log("CREATE_PAGE_CONTROL_COUNT="+out.length);
+  out.forEach((v,i)=>console.log(`CREATE_PAGE_CONTROL_${i+1}=${v}`));
+}finally{await page.close().catch(()=>{});}
+process.exit(0);
