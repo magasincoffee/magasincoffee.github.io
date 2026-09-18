@@ -23,9 +23,11 @@
 | TASK-015 | Workforce attention read adapter | 20m | adapter tests | DONE |
 | TASK-016 | Revenue read-adapter + reconciliation quality gate | 20m | contract tests | DONE |
 | TASK-017 | Partial-source/error-state integration | 20m | regression tests | DONE |
-| TASK-018 | Control Tower browser E2E + Day-7 usability gate | 20m | browser E2E | READY |
+| TASK-018 | Control Tower browser E2E + Day-7 usability gate | 20m | browser E2E | DONE |
 
-Sau TASK-018, queue được mở rộng theo kết quả field/E2E thực tế. Không tạo trước hàng trăm task nếu chưa biết dependency thật.
+| TASK-019 | People/Shift current-system gap review + acceptance contract | 20m | discovery/contract | READY |
+
+Sau TASK-019, chỉ mở implementation queue Day 8–10 theo evidence của Workforce hiện hữu; không tạo trước task khi dependency chưa được kiểm chứng.
 
 ## Execution rule
 
