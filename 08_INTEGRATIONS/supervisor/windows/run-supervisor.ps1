@@ -1,3 +1,7 @@
+param(
+    [switch]$DryRun
+)
+
 $ErrorActionPreference = 'Stop'
 
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
@@ -59,7 +63,9 @@ try {
 
         Push-Location $runtime
         try {
-            & node 'src/runtime/supervisor-loop-cli.mjs' --cdp-url 'http://127.0.0.1:9222' --execute --poll-ms 5000
+            $nodeArgs = @('src/runtime/supervisor-loop-cli.mjs', '--cdp-url', 'http://127.0.0.1:9222', '--poll-ms', '5000')
+            if (-not $DryRun) { $nodeArgs += '--execute' }
+            & node @nodeArgs
         } finally {
             Pop-Location
         }
