@@ -7,6 +7,7 @@ import { requireOwnerAccess } from "./access-v1.mjs";
 import { loadProcurementPayables } from "./payables-adapter-v1.mjs";
 import { loadWorkforceAttention } from "./workforce-adapter-v1.mjs";
 import { loadReconciledRevenue } from "./revenue-adapter-v1.mjs";
+import { loadSectionSafely } from "./source-isolation-v1.mjs";
 
 const rawState = {
   context: {
@@ -93,48 +94,71 @@ function render(snapshot) {
   }
 }
 
+function updateSection(name, section) {
+  rawState[name] = section;
+  rawState.context.refreshedAt =
+    section?.asOf || rawState.context.refreshedAt || new Date().toISOString();
+  render(normalizeControlTowerSnapshot(rawState));
+}
+
 async function boot() {
   const loading = document.getElementById("loading");
   const denied = document.getElementById("denied");
   const app = document.getElementById("app");
   const deniedText = document.getElementById("deniedText");
+  const core = globalThis.MAGASIN_CORE;
 
+  let profile;
   try {
-    const core = globalThis.MAGASIN_CORE;
-    const profile = await requireOwnerAccess(core);
-    setText("ownerIdentity", `${profile.full_name || profile.username || "Owner"} · OWNER`);
-
-    rawState.context.reportingDate = core.date?.dateKey?.() || null;
-    render(normalizeControlTowerSnapshot(rawState));
-    loading.classList.add("hidden");
-    denied.classList.add("hidden");
-    app.classList.remove("hidden");
-
-    const revenue = await loadReconciledRevenue({
-      reportingDate: rawState.context.reportingDate
-    });
-    rawState.revenue = revenue;
-    rawState.context.refreshedAt = revenue.asOf || new Date().toISOString();
-    render(normalizeControlTowerSnapshot(rawState));
-
-    const payables = await loadProcurementPayables(core.supabase.get());
-    rawState.payables = payables;
-    rawState.context.refreshedAt =
-      payables.asOf || rawState.context.refreshedAt || new Date().toISOString();
-    render(normalizeControlTowerSnapshot(rawState));
-
-    const workforce = await loadWorkforceAttention(core);
-    rawState.workforce = workforce;
-    rawState.context.refreshedAt =
-      workforce.asOf || rawState.context.refreshedAt || new Date().toISOString();
-    render(normalizeControlTowerSnapshot(rawState));
+    profile = await requireOwnerAccess(core);
   } catch (error) {
     console.error("[CONTROL_TOWER_AUTH]", error);
     loading.classList.add("hidden");
     app.classList.add("hidden");
     denied.classList.remove("hidden");
     deniedText.textContent = error?.message || "Không thể xác thực quyền Owner.";
+    return;
   }
+
+  setText("ownerIdentity", `${profile.full_name || profile.username || "Owner"} · OWNER`);
+  rawState.context.reportingDate = core.date?.dateKey?.() || null;
+  render(normalizeControlTowerSnapshot(rawState));
+  loading.classList.add("hidden");
+  denied.classList.add("hidden");
+  app.classList.remove("hidden");
+
+  const revenue = await loadSectionSafely(
+    async () =>
+      await loadReconciledRevenue({
+        reportingDate: rawState.context.reportingDate
+      }),
+    {
+      source: "reconciled daily revenue read model",
+      message: "Nguồn doanh thu đã đối chiếu tạm thời không khả dụng."
+    }
+  );
+  rawState.revenue = revenue;
+  updateSection("revenue", revenue);
+
+  const payables = await loadSectionSafely(
+    async () => await loadProcurementPayables(core.supabase.get()),
+    {
+      source: "v_procurement_supplier_payables + v_procurement_order_summary",
+      message: "Nguồn công nợ mua hàng tạm thời không khả dụng."
+    }
+  );
+  rawState.payables = payables;
+  updateSection("payables", payables);
+
+  const workforce = await loadSectionSafely(
+    async () => await loadWorkforceAttention(core),
+    {
+      source: "get_manager_transfer_requests + list_schedule_generations",
+      message: "Nguồn Workforce tạm thời không khả dụng."
+    }
+  );
+  rawState.workforce = workforce;
+  updateSection("workforce", workforce);
 }
 
 boot();

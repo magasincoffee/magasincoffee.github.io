@@ -96,3 +96,19 @@
 - Genuine numeric zero remains valid ACTUAL revenue: PASS.
 - BUG-CT-004: VERIFIED.
 - Project task state unchanged; TASK-017 remains current.
+
+## 2026-09-18 — TASK-017 Partial-source/error-state integration
+
+- Branch: `feat/control-tower-source-isolation`
+- Workflow: `Owner Control Tower Tests`
+- Pre-fix regression run: `35315562834` — **FAIL as expected** against the old controller.
+- Fixed HEAD regression/integration run: `35315590063` — **PASS**.
+- Unexpected source exceptions are converted to section-local `GAP`: PASS.
+- Source exception details are not exposed in the fallback section: PASS.
+- Malformed source results fail closed: PASS.
+- One failed source preserves healthy sibling source results: PASS.
+- Owner authentication remains the only path that can show the permission-denied screen: PASS.
+- Revenue / Payables / Workforce loaders all run behind the source-isolation boundary: PASS.
+- BUG-CT-005: VERIFIED.
+- Production writes: none.
+- Gate: TASK-017 **DONE**; TASK-018 may proceed.
