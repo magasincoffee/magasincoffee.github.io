@@ -185,6 +185,14 @@ test("hard-stop workflow is GitHub-hosted and reconciles every canonical final-s
   assert.match(workflow, /state\["status"\]\s*=\s*"WAIT_USER"/);
   assert.match(workflow, /state\["autonomy"\]\s*=\s*"MANUAL"/);
   assert.match(workflow, /night\["hard_stop_pending"\]\s*=\s*False/);
+  assert.match(workflow, /if night\.get\("status"\) == "NIGHT_WINDOW_COMPLETE":/);
+  assert.match(workflow, /preserve subsequent Owner state/);
+  assert.match(workflow, /raise SystemExit\(0\)/);
+  assert.ok(
+    workflow.indexOf('if night.get("status") == "NIGHT_WINDOW_COMPLETE":') <
+      workflow.indexOf('completed_at = night.get("completed_at")'),
+    "completed hard-stop guard must run before any final-state mutation"
+  );
   assert.match(workflow, /night\.get\("completed_at"\) or datetime\.now/);
   assert.match(workflow, /night\.get\("hard_stop_enforced_by"\) or "GITHUB_HOSTED_WORKFLOW"/);
   assert.match(workflow, /cursor_already_complete/);
