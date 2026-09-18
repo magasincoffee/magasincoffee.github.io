@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>MAGASIN QA · People Shift Day 10</title>
+  <style>
+    :root{--border:#dbe4ef;--muted:#718199;--text:#17263c}
+    *{box-sizing:border-box}body{margin:0;padding:20px;background:#f4f7fb;color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+    .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.qa-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px}
+    .card{background:#fff}.btn{border:1px solid var(--border);border-radius:9px;background:#fff;padding:8px 11px;font-weight:700}.btn.primary{background:#2f6fde;color:#fff}.btn:disabled{opacity:.5}
+    #employeeApp{width:100%;height:760px;border:1px solid var(--border);border-radius:12px;background:#fff}
+    @media(max-width:900px){.qa-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="qa-grid">
+    <section class="qa-card" aria-label="Owner Workforce Publish">
+      <div id="panel-publish"></div>
+    </section>
+    <section class="qa-card" aria-label="Employee Workforce">
+      <iframe id="employeeApp" title="Employee QA" srcdoc="<!doctype html><html lang='vi'><head><meta charset='utf-8'><style>
+        :root{--muted:#718199;--line:#dbe4ef}*{box-sizing:border-box}body{font:14px system-ui;margin:0;padding:14px}.btn{padding:8px 11px}.weekly-reg-form{display:none}.weekly-reg-form.open{display:block}.field{display:grid;gap:4px;margin:7px 0}.week-summary{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.mini{border:1px solid #ddd;padding:5px}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day{min-height:80px;border:1px solid #ddd;padding:6px}.shift{margin-top:5px;padding:6px}.muted{color:#718199}
+      </style></head><body>
+        <header><div class='header-user-text'><strong>Nhân viên</strong><span>STAFF</span></div><div class='header-avatar'>N</div></header>
+        <section>
+          <button class='btn primary' onclick='openWeeklyRegistration()'>Đăng ký lịch làm</button>
+          <div id='weeklyRegistrationPanel' class='weekly-reg-form'>
+            <button class='btn' onclick='closeWeeklyRegistration()'>Đóng</button>
+            <div class='field'><label>Ngày</label><select id='quickRegDay'></select></div>
+            <div class='field'><label>Bắt đầu</label><select id='quickRegStart'></select></div>
+            <div class='field'><label>Kết thúc</label><select id='quickRegEnd'></select></div>
+            <div class='field'><label>Chi nhánh</label><select id='quickRegStore'></select></div>
+            <button class='btn primary' onclick='quickRegister()'>Đăng ký</button>
+            <div id='quickRegMsg'></div>
+            <div class='week-summary'></div>
+            <button class='btn' onclick='finishQuickRegistration()'>Hoàn thành</button>
+          </div>
+        </section>
+        <nav><a href='#' data-view='schedule'>Lịch làm</a></nav>
+        <section id='view-schedule'><div class='schedule-main-panel'><span class='pill'></span><div class='days'></div></div></section>
+      </body></html>"></iframe>
+    </section>
+  </main>
+<script>
+(() => {
+  'use strict';
+  const calls = [];
+  const state = {
+    availability: [],
+    generation: null,
+    assignments: [],
+    official: []
+  };
+  const store = { id: 'store-qa', code: 'CN-QA', name: 'Cửa hàng QA' };
+  const employee = { id: 'employee-qa', username: 'qa-staff', full_name: 'Nhân viên QA', role: 'STAFF', status: 'ACTIVE' };
+
+  const dateFrom = (iso) => new Date(String(iso).slice(0,10) + 'T00:00:00Z');
+  const isoDate = (d) => d.toISOString().slice(0,10);
+  const addDays = (iso, days) => {
+    const d = dateFrom(iso);
+    d.setUTCDate(d.getUTCDate() + Number(days || 0));
+    return isoDate(d);
+  };
+  const minutes = (value) => {
+    const [h,m] = String(value || '00:00').slice(0,5).split(':').map(Number);
+    return h * 60 + m;
+  };
+  const time5 = (value) => String(value || '').slice(0,5);
+  const shiftKind = (value) => {
+    const m = minutes(value);
+    if (m < 720) return 'morning';
+    if (m < 1020) return 'afternoon';
+    return 'evening';
+  };
+  const escapeHtml = (value) => String(value ?? '')
+    .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+    .replaceAll('"','&quot;').replaceAll("'","&#39;");
+
+  window.__PEOPLE_SHIFT_QA = { calls, state, employee, store };
+
+  window.MAGASIN_CORE = {
+    DAYS: ['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ Nhật'],
+    roles: { label: { STAFF: 'Nhân viên' } },
+    date: {
+      monday() { return '2026-09-14'; },
+      dateKey() { return '2026-09-18'; },
+      addDays,
+      weekDays(week) { return Array.from({length:7}, (_,i) => addDays(week,i)); },
+      formatDate(value) {
+        const [y,m,d] = String(value).slice(0,10).split('-');
+        return d && m && y ? `${d}/${m}/${y}` : String(value ?? '');
+      }
+    },
+    time: { time5, minutes, shiftKind },
+    security: { escapeHtml },
+    stores: {
+      async active() { calls.push({kind:'stores', name:'active'}); return [store]; },
+      async accessible() { calls.push({kind:'stores', name:'accessible'}); return [store]; }
+    },
+    ui: {
+      toast(message, type) { calls.push({kind:'toast', message, type}); },
+      setLoading() {}
+    },
+    supabase: {
+      async rpc(name, args = {}) {
+        calls.push({ kind:'rpc', name, args: structuredClone(args) });
+
+        if (name === 'get_my_availability') {
+          const end = addDays(args.p_week_start, 6);
+          return {
+            data: state.availability.filter(row =>
+              row.work_date >= args.p_week_start && row.work_date <= end
+            ),
+            error: null
+          };
+        }
+
+        if (name === 'save_my_availability') {
+          state.availability.push({
+            id: 'availability-' + (state.availability.length + 1),
+            work_date: args.p_work_date,
+            start_time: args.p_start_time,
+            end_time: args.p_end_time,
+            preferred_store_id: args.p_preferred_store_id,
+            availability_type: args.p_availability_type
+          });
+          return { data: { saved: true }, error: null };
+        }
+
+        if (name === 'list_schedule_generations') {
+          const rows = state.generation &&
+            state.generation.store_id === args.p_store_id &&
+            state.generation.week_start === args.p_week_start
+              ? [state.generation] : [];
+          return { data: rows, error: null };
+        }
+
+        if (name === 'get_schedule_generation_assignments') {
+          return {
+            data: state.generation?.id === args.p_generation_id ? state.assignments : [],
+            error: null
+          };
+        }
+
+        if (name === 'auto_generate_schedule_generation') {
+          if (!state.availability.length) {
+            return { data: null, error: new Error('QA_REQUIRES_AVAILABILITY_FIRST') };
+          }
+          state.generation = {
+            id: 'generation-qa',
+            store_id: args.p_store_id,
+            week_start: args.p_week_start,
+            status: 'DRAFT',
+            algorithm_version: args.p_algorithm_version
+          };
+          state.assignments = [{
+            employee_id: employee.id,
+            employee_name: employee.full_name,
+            work_date: '2026-09-18',
+            start_time: '06:00',
+            end_time: '12:00',
+            store_id: store.id,
+            store_code: store.code,
+            score: 100,
+            warning: ''
+          }];
+          return {
+            data: {
+              generation_id: state.generation.id,
+              status: 'DRAFT',
+              algorithm_version: state.generation.algorithm_version
+            },
+            error: null
+          };
+        }
+
+        if (name === 'review_schedule_generation') {
+          if (!state.generation || args.p_generation_id !== state.generation.id) {
+            return { data: null, error: new Error('GENERATION_NOT_FOUND') };
+          }
+          state.generation.status = 'REVIEWED';
+          return { data: { status: 'REVIEWED' }, error: null };
+        }
+
+        if (name === 'publish_schedule_generation') {
+          if (!state.generation || state.generation.status !== 'REVIEWED') {
+            return { data: { published: false, error_code: 'NOT_REVIEWED' }, error: null };
+          }
+          state.generation.status = 'PUBLISHED';
+          state.official = state.assignments.map(row => ({ ...row, status: 'APPROVED' }));
+          return {
+            data: { published: true, inserted_schedule_count: state.official.length },
+            error: null
+          };
+        }
+
+        if (name === 'get_manager_weekly_schedule') {
+          const end = addDays(args.p_week_start, 6);
+          return {
+            data: state.official.filter(row =>
+              row.store_id === args.p_store_id &&
+              row.work_date >= args.p_week_start &&
+              row.work_date <= end
+            ),
+            error: null
+          };
+        }
+
+        if (name === 'list_my_approved_schedules_v2') {
+          const end = addDays(args.p_week_start, 6);
+          return {
+            data: state.official.filter(row =>
+              row.work_date >= args.p_week_start && row.work_date <= end
+            ),
+            error: null
+          };
+        }
+
+        return { data: null, error: new Error('UNEXPECTED_QA_RPC:' + name) };
+      }
+    }
+  };
+
+  window.MAGASIN_EMPLOYEE = {
+    profile: employee,
+    events: { emit(name, detail) { calls.push({kind:'event', name, detail}); } }
+  };
+})();
+</script>
+<script src="/04_OWNER/Workforce/03-publish/engine-v1.js"></script>
+<script src="/06_EMPLOYEE/availability/engine-v1.js"></script>
+<script src="/06_EMPLOYEE/schedule/engine-v1.js"></script>
+</body>
+</html>
