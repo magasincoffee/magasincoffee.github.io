@@ -65,4 +65,5 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 | TASK-045 | Restart/resume simulation | 50m | kill/restart/reconcile/resume regression | DONE |
 | TASK-046 | Night full QA | 35m | both-project regression + bounded fixes | DONE |
 | TASK-047 | Night docs / evidence / PR prep | 20m | changelog/test logs/reviewable PRs | DONE |
-| TASK-048 | Night final checkpoint | 10m | report + NIGHT_WINDOW_COMPLETE + WAIT_USER | IN_PROGRESS |
+| TASK-048 | Night final checkpoint | 10m | background hard-stop only; preserve later Owner task | TIME_GATED |
+| TASK-049 | Supervisor Brain/Worker multi-conversation orchestration | 120m | one Brain + bounded Worker pool + full-result relay + full-only rollover + auto-upgrade | IN_PROGRESS |
