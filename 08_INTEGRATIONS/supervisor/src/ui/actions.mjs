@@ -69,6 +69,55 @@ async function clickControlBySemantic(page, control) {
   await locator.click();
 }
 
+export async function sendComposerInstruction(
+  page,
+  instruction,
+  { dryRun = true } = {}
+) {
+  if (!page) throw new TypeError("page is required");
+  if (typeof instruction !== "string" || !instruction.trim()) {
+    throw new Error("composer instruction is required");
+  }
+
+  const surface = await inspectActionSurface(page);
+  if (!surface.composerReady) {
+    return {
+      executed: false,
+      dryRun,
+      action: ACTIONS.CONTINUE,
+      reason: "composer is not ready"
+    };
+  }
+
+  if (dryRun) {
+    return {
+      executed: false,
+      dryRun: true,
+      action: ACTIONS.CONTINUE,
+      target: "COMPOSER_SEND"
+    };
+  }
+
+  const composer = page
+    .locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible")
+    .first();
+  await composer.fill(instruction);
+
+  const afterFill = await inspectActionSurface(page);
+  if (afterFill.sendControl) {
+    await clickControlBySemantic(page, afterFill.sendControl);
+  } else {
+    await composer.press("Enter");
+  }
+
+  return {
+    executed: true,
+    dryRun: false,
+    action: ACTIONS.CONTINUE,
+    target: "COMPOSER_SEND"
+  };
+}
+
 export async function executeDecision({
   page,
   decision,
@@ -122,44 +171,11 @@ export async function executeDecision({
       };
     }
 
-    if (!surface.composerReady) {
-      return {
-        executed: false,
-        dryRun,
-        action: decision.action,
-        reason: "composer is not ready"
-      };
-    }
-
     if (typeof decision.instruction !== "string" || !decision.instruction.trim()) {
       throw new Error("continue decision is missing canonical instruction");
     }
 
-    if (dryRun) {
-      return {
-        executed: false,
-        dryRun: true,
-        action: decision.action,
-        target: "COMPOSER_SEND"
-      };
-    }
-
-    const composer = page.locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible").first();
-    await composer.fill(decision.instruction);
-
-    const afterFill = await inspectActionSurface(page);
-    if (afterFill.sendControl) {
-      await clickControlBySemantic(page, afterFill.sendControl);
-    } else {
-      await composer.press("Enter");
-    }
-
-    return {
-      executed: true,
-      dryRun: false,
-      action: decision.action,
-      target: "COMPOSER_SEND"
-    };
+    return sendComposerInstruction(page, decision.instruction, { dryRun });
   }
 
   throw new Error(`unsupported decision action: ${decision.action}`);

@@ -25,5 +25,6 @@ test("fresh-chat rollover atomically persists the new target instead of revisiti
   assert.match(source, /await writeTarget\(targetPath, newTarget\)/);
   assert.match(source, /page\.waitForURL/);
   assert.match(source, /ROLLOVER_CONVERSATION_FULL/);
-  assert.match(source, /ROLLOVER_TARGET_MISSING/);
+  assert.doesNotMatch(source, /ROLLOVER_TARGET_MISSING/);
+  assert.match(source, /rollover denied without conversationFull evidence/);
 });

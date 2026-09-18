@@ -51,13 +51,11 @@ jobs:
           report_path = Path("01_DOCS/MAGASIN/08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md")
           evidence_path = Path("01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE_V1.md")
 
-          def replace_required(path, replacements):
+          def replace_if_present(path, replacements):
               text = path.read_text(encoding="utf-8")
               for old, new in replacements:
                   if old in text:
                       text = text.replace(old, new, 1)
-                  elif new not in text:
-                      raise SystemExit(f"Hard-stop reconciliation marker missing in {path}: {old}")
               path.write_text(text, encoding="utf-8")
 
           state = json.loads(state_path.read_text(encoding="utf-8"))
@@ -68,33 +66,55 @@ jobs:
               print("Night-run hard stop already completed; preserve subsequent Owner state.")
               raise SystemExit(0)
 
+          owner_reprioritized = state.get("current_task") != "TASK-048"
+          preserved_task = state.get("current_task")
+          preserved_status = state.get("status")
+          preserved_autonomy = state.get("autonomy")
+          preserved_requires_user = state.get("requires_user")
+          preserved_owner_boundary = state.get("owner_boundary")
+
           completed_at = night.get("completed_at") or datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
           night["status"] = "NIGHT_WINDOW_COMPLETE"
           night["completed_at"] = completed_at
           night["hard_stop_enforced_by"] = night.get("hard_stop_enforced_by") or "GITHUB_HOSTED_WORKFLOW"
           night["hard_stop_pending"] = False
+
+          if owner_reprioritized:
+              temporal = night.get("temporal_gate") or {}
+              temporal["mode"] = "BACKGROUND_HARD_STOP_COMPLETE"
+              temporal["supervisor_continue_suppressed"] = False
+              temporal["completed_at"] = completed_at
+              temporal["owner_override_task"] = preserved_task
+              night["temporal_gate"] = temporal
+              night["owner_reprioritized_task_preserved"] = preserved_task
           state["night_run"] = night
-          state["current_task"] = "TASK-048"
-          state["current_task_title"] = "Night final checkpoint / Owner review"
-          state["status"] = "WAIT_USER"
-          state["autonomy"] = "MANUAL"
-          state["blocked"] = False
-          state["requires_user"] = True
-          state["next_task"] = None
+
+          if not owner_reprioritized:
+              state["current_task"] = "TASK-048"
+              state["current_task_title"] = "Night final checkpoint / Owner review"
+              state["status"] = "WAIT_USER"
+              state["autonomy"] = "MANUAL"
+              state["blocked"] = False
+              state["requires_user"] = True
+              state["next_task"] = None
+              state["owner_boundary"] = {
+                  "task": "TASK-048",
+                  "resolved": ["NIGHT_RUN_HARD_STOP_ENFORCED"],
+                  "pending": ["OWNER_REVIEW_NIGHT_RUN_REPORT"]
+              }
+          else:
+              assert state.get("current_task") == preserved_task
+              assert state.get("status") == preserved_status
+              assert state.get("autonomy") == preserved_autonomy
+              assert state.get("requires_user") == preserved_requires_user
+              assert state.get("owner_boundary") == preserved_owner_boundary
+
           state["last_updated"] = "2026-09-19"
-          state["owner_boundary"] = {
-              "task": "TASK-048",
-              "resolved": ["NIGHT_RUN_HARD_STOP_ENFORCED"],
-              "pending": ["OWNER_REVIEW_NIGHT_RUN_REPORT"]
-          }
           state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
           if cursor_path.exists():
               cursor = json.loads(cursor_path.read_text(encoding="utf-8"))
-              cursor_already_complete = (
-                  cursor.get("status") == "WAIT_USER"
-                  and cursor.get("checkpoint") == "NIGHT_WINDOW_COMPLETE"
-              )
+              cursor_already_complete = cursor.get("checkpoint") == "NIGHT_WINDOW_COMPLETE"
               cursor_updated_at = cursor.get("updated_at") if cursor_already_complete else completed_at
               completed_operations = cursor.setdefault("completed_operations", [])
               if "NIGHT_WINDOW_COMPLETE" not in completed_operations:
@@ -103,77 +123,78 @@ jobs:
                   "project_id": "magasin-business-os",
                   "task": "TASK-048",
                   "micro_task": "night_final_checkpoint",
-                  "status": "WAIT_USER",
+                  "status": "DONE" if owner_reprioritized else "WAIT_USER",
                   "checkpoint": "NIGHT_WINDOW_COMPLETE",
                   "lease": None,
                   "updated_at": cursor_updated_at
               })
               cursor_path.write_text(json.dumps(cursor, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-          replace_required(current_state_path, [
-              (
-                  "**TASK-048 — Night final checkpoint — IN_PROGRESS / PAUSED**",
-                  "**TASK-048 — Night final checkpoint / Owner review — WAIT_USER / MANUAL**"
-              ),
-              (
-                  "**PAUSED — TASK-048:** no actionable work remains before the approved 09:15 +07 hard stop; Supervisor continuation is intentionally suppressed until the boundary.",
-                  "**WAIT_USER — TASK-048:** `NIGHT_WINDOW_COMPLETE` has been enforced; Owner review of the night-run report is required."
-              ),
-              (
-                  "TASK-048 is now a temporal safety gate, not a feature task:",
-                  "TASK-048 is now an Owner-review gate after the completed autonomous night window:"
-              ),
-              (
-                  "5. at **2026-09-19 09:15 +07**, the GitHub-hosted hard-stop workflow sets `NIGHT_WINDOW_COMPLETE / WAIT_USER / MANUAL` and requires Owner review.",
-                  "5. the GitHub-hosted hard-stop enforced `NIGHT_WINDOW_COMPLETE / WAIT_USER / MANUAL`; Owner review is now required."
-              ),
-              (
-                  "The GitHub-hosted hard-stop guard will set the project to `WAIT_USER / NIGHT_WINDOW_COMPLETE` at 09:15 +07 even if the PC is offline.",
-                  "The GitHub-hosted hard-stop guard set the project to `WAIT_USER / NIGHT_WINDOW_COMPLETE` at the approved boundary independently of the PC."
-              )
-          ])
+          if owner_reprioritized:
+              replace_if_present(current_state_path, [
+                  (
+                      "Background night-run gate: **TASK-048 — TIME_GATED** until the approved 09:15 +07 hard stop. It may close the old night window but must preserve TASK-049 and its autonomy.",
+                      "Background night-run gate: **TASK-048 — NIGHT_WINDOW_COMPLETE**. The approved 09:15 +07 boundary closed the old night window and preserved the later Owner-selected active task/autonomy."
+                  )
+              ])
+          else:
+              replace_if_present(current_state_path, [
+                  (
+                      "**TASK-048 — Night final checkpoint — IN_PROGRESS / PAUSED**",
+                      "**TASK-048 — Night final checkpoint / Owner review — WAIT_USER / MANUAL**"
+                  )
+              ])
 
-          replace_required(task_queue_path, [
+          replace_if_present(task_queue_path, [
+              (
+                  "| TASK-048 | Night final checkpoint | 10m | background hard-stop only; preserve later Owner task | TIME_GATED |",
+                  "| TASK-048 | Night final checkpoint | 10m | background hard-stop only; preserve later Owner task | DONE |"
+              ),
               (
                   "| TASK-048 | Night final checkpoint | 10m | report + NIGHT_WINDOW_COMPLETE + WAIT_USER | IN_PROGRESS |",
                   "| TASK-048 | Night final checkpoint | 10m | report + NIGHT_WINDOW_COMPLETE + WAIT_USER | WAIT_USER |"
               )
           ])
 
-          replace_required(architecture_path, [
+          replace_if_present(architecture_path, [
               (
-                  "- **TASK-048 — Night final checkpoint:** final report prepared; remain time-gated until the approved 09:15 +07 GitHub-hosted hard stop sets NIGHT_WINDOW_COMPLETE / WAIT_USER. IN_PROGRESS.",
-                  "- **TASK-048 — Night final checkpoint:** hard stop enforced; final report ready; Owner review required before any new autonomous window. WAIT_USER."
+                  "- **TASK-048 — Night final checkpoint:** final report prepared; retained only as a background 09:15 +07 hard-stop gate. It must preserve any later Owner-reprioritized active task. TIME_GATED.",
+                  "- **TASK-048 — Night final checkpoint:** approved 09:15 +07 hard stop completed. A later Owner-reprioritized active task was preserved. DONE."
               )
           ])
 
-          replace_required(report_path, [
-              (
-                  "**Current status:** FINAL_CHECKPOINT_IN_PROGRESS / PAUSED",
-                  "**Current status:** NIGHT_WINDOW_COMPLETE / WAIT_USER"
-              ),
-              (
-                  "TASK-048 must **not** declare `NIGHT_WINDOW_COMPLETE` before the approved boundary.",
-                  "The approved 09:15 +07 boundary has been reached and the GitHub-hosted hard-stop declared `NIGHT_WINDOW_COMPLETE`."
-              ),
-              (
-                  "At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` is the canonical GitHub-hosted enforcement path. It will:",
-                  "At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` enforced the canonical boundary and:"
-              ),
-              (
-                  "Until that boundary, no new feature work, merge, live provider action, or production activation is authorized by TASK-048. Supervisor continuation is paused because no actionable work remains before the time boundary.",
-                  "Autonomy is now **MANUAL**. Owner review is required before any new autonomous window, merge, live provider action, or production activation."
-              )
-          ])
+          if owner_reprioritized:
+              replace_if_present(report_path, [
+                  (
+                      "**Current status:** FINAL_CHECKPOINT_IN_PROGRESS / PAUSED",
+                      "**Current status:** NIGHT_WINDOW_COMPLETE / BACKGROUND_CLOSED — later Owner task preserved"
+                  ),
+                  (
+                      "TASK-048 must **not** declare `NIGHT_WINDOW_COMPLETE` before the approved boundary.",
+                      "The approved 09:15 +07 boundary has been reached and the GitHub-hosted hard-stop declared `NIGHT_WINDOW_COMPLETE` without overwriting the later Owner-selected task."
+                  ),
+                  (
+                      "At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` is the canonical GitHub-hosted enforcement path. It will:",
+                      "At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` enforced the canonical background boundary and:"
+                  ),
+                  (
+                      "Until that boundary, no new feature work, merge, live provider action, or production activation is authorized by TASK-048. Supervisor continuation is paused because no actionable work remains before the time boundary.",
+                      "TASK-048 is closed as a background night-run gate. The later explicit Owner reprioritization remains authoritative for current task/autonomy."
+                  )
+              ])
+          else:
+              replace_if_present(report_path, [
+                  ("**Current status:** FINAL_CHECKPOINT_IN_PROGRESS / PAUSED", "**Current status:** NIGHT_WINDOW_COMPLETE / WAIT_USER")
+              ])
 
-          replace_required(evidence_path, [
+          replace_if_present(evidence_path, [
               (
                   "**Status:** TASK-037–047 COMPLETE / TASK-048 FINAL CHECKPOINT HARDENED / TEMPORAL GATE ACTIVE  ",
-                  "**Status:** TASK-037–047 COMPLETE / TASK-048 NIGHT_WINDOW_COMPLETE / OWNER REVIEW REQUIRED  "
+                  "**Status:** TASK-037–048 NIGHT WINDOW COMPLETE / LATER OWNER TASK PRESERVED  "
               ),
               (
                   "The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the project stays `READY / PAUSED` until the approved 2026-09-19 09:15 +07 boundary so the Supervisor does not busy-loop on a time-only gate.",
-                  "The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the approved 2026-09-19 09:15 +07 boundary has transitioned the project to `WAIT_USER / MANUAL` for Owner review."
+                  "The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the approved 2026-09-19 09:15 +07 boundary closed the old night window without overwriting a later Owner-selected active task."
               )
           ])
 

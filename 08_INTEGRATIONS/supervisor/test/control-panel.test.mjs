@@ -149,6 +149,8 @@ test("shared ChatGPT launcher uses the Supervisor browser profile and bounded CD
   assert.match(source, /browser_profile/);
   assert.match(source, /--remote-debugging-address=127\.0\.0\.1/);
   assert.match(source, /9222\.\.9232/);
+  assert.match(source, /orchestration\.json/);
+  assert.match(source, /brain\.target/);
   assert.match(source, /target\.json/);
   assert.match(source, /--user-data-dir=/);
 });

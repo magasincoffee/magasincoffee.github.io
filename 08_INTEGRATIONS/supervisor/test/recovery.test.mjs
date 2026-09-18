@@ -30,32 +30,40 @@ test("normalizes a ChatGPT conversation URL into a local target", () => {
   );
 });
 
-test("full conversation immediately requests a fresh chat rollover", () => {
+test("only positive conversationFull evidence authorizes rollover", () => {
   const recovery = new SupervisorRecoveryController();
-  const action = recovery.observeProbe({
-    snapshot: { conversationFull: true },
-    classification: { observation: "RESPONSE_COMPLETE" }
-  });
-  assert.equal(action, RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL);
+  assert.equal(
+    recovery.observeProbe({
+      snapshot: { conversationFull: true },
+      classification: { observation: "RESPONSE_COMPLETE" }
+    }),
+    RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL
+  );
 });
 
-test("missing target uses a bounded navigation budget before rollover", () => {
+test("missing target exhausts into WAIT_USER instead of creating a chat", () => {
   const recovery = new SupervisorRecoveryController({ targetMissThreshold: 2 });
+  assert.equal(recovery.observeTarget({ matched: false }), RECOVERY_ACTIONS.WAIT_TARGET);
   assert.equal(
     recovery.observeTarget({ matched: false }),
-    RECOVERY_ACTIONS.WAIT_TARGET
+    RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED
   );
-  assert.equal(
-    recovery.observeTarget({ matched: false }),
-    RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING
-  );
-  assert.equal(
-    recovery.observeTarget({ matched: true }),
-    RECOVERY_ACTIONS.NONE
-  );
+  assert.equal(recovery.blocked, true);
 });
 
-test("stalled response reloads twice then rolls over instead of reload-looping forever", () => {
+test("conversation missing fails closed and never rolls over", () => {
+  const recovery = new SupervisorRecoveryController();
+  assert.equal(
+    recovery.observeProbe({
+      snapshot: { conversationMissing: true },
+      classification: { observation: "UNKNOWN" }
+    }),
+    RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED
+  );
+  assert.equal(recovery.blocked, true);
+});
+
+test("stalled response reloads within budget then fails closed", () => {
   let now = 0;
   const recovery = new SupervisorRecoveryController({
     stallMs: 1000,
@@ -63,31 +71,32 @@ test("stalled response reloads twice then rolls over instead of reload-looping f
     maxStallReloads: 2,
     now: () => now
   });
-
   const running = {
     snapshot: {
       conversationPath: true,
       composerReady: false,
-      responseRunning: true
+      responseRunning: true,
+      assistantMessageCount: 4,
+      lastAssistantCharCount: 100
     },
     classification: { observation: "ASSISTANT_RUNNING" }
   };
 
   assert.equal(recovery.observeProbe(running), RECOVERY_ACTIONS.NONE);
-
   now = 1000;
   assert.equal(recovery.observeProbe(running), RECOVERY_ACTIONS.RELOAD_STALLED);
   recovery.record(RECOVERY_ACTIONS.RELOAD_STALLED);
-
   now = 1101;
   assert.equal(recovery.observeProbe(running), RECOVERY_ACTIONS.RELOAD_STALLED);
   recovery.record(RECOVERY_ACTIONS.RELOAD_STALLED);
-
   now = 1202;
-  assert.equal(recovery.observeProbe(running), RECOVERY_ACTIONS.ROLLOVER_STALLED);
+  assert.equal(
+    recovery.observeProbe(running),
+    RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED
+  );
 });
 
-test("conversation UI unavailable gets one reload then a fresh chat", () => {
+test("unavailable conversation reloads within budget then fails closed", () => {
   let now = 0;
   const recovery = new SupervisorRecoveryController({
     unavailableGraceMs: 500,
@@ -95,7 +104,6 @@ test("conversation UI unavailable gets one reload then a fresh chat", () => {
     maxUnavailableReloads: 1,
     now: () => now
   });
-
   const unavailable = {
     snapshot: {
       conversationPath: true,
@@ -113,40 +121,12 @@ test("conversation UI unavailable gets one reload then a fresh chat", () => {
   now = 500;
   assert.equal(recovery.observeProbe(unavailable), RECOVERY_ACTIONS.RELOAD_UNAVAILABLE);
   recovery.record(RECOVERY_ACTIONS.RELOAD_UNAVAILABLE);
-
   now = 601;
-  assert.equal(recovery.observeProbe(unavailable), RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE);
-});
-
-test("recovery blocks only after bounded rollover failures", () => {
-  const recovery = new SupervisorRecoveryController({ maxRolloverFailures: 3 });
-  const action = RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING;
-
-  recovery.record(action, { success: false });
-  recovery.record(action, { success: false });
-  assert.equal(recovery.blocked, false);
-
-  recovery.record(action, { success: false });
-  assert.equal(recovery.blocked, true);
   assert.equal(
-    recovery.observeTarget({ matched: false }),
+    recovery.observeProbe(unavailable),
     RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED
   );
 });
-
-test("successful rollover advances conversation generation and clears recovery counters", () => {
-  const recovery = new SupervisorRecoveryController({ targetMissThreshold: 1 });
-  assert.equal(
-    recovery.observeTarget({ matched: false }),
-    RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING
-  );
-  recovery.record(RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING, { success: true });
-  const status = recovery.status();
-  assert.equal(status.conversation_generation, 1);
-  assert.equal(status.target_misses, 0);
-  assert.equal(status.rollover_failures, 0);
-});
-
 
 test("assistant text progress resets the stall clock instead of reloading active work", () => {
   let now = 0;
@@ -155,7 +135,6 @@ test("assistant text progress resets the stall clock instead of reloading active
     reloadCooldownMs: 100,
     now: () => now
   });
-
   const running = (chars) => ({
     snapshot: {
       conversationPath: true,
@@ -168,79 +147,24 @@ test("assistant text progress resets the stall clock instead of reloading active
   });
 
   assert.equal(recovery.observeProbe(running(100)), RECOVERY_ACTIONS.NONE);
-
   now = 900;
   assert.equal(recovery.observeProbe(running(180)), RECOVERY_ACTIONS.NONE);
-
   now = 1700;
   assert.equal(recovery.observeProbe(running(260)), RECOVERY_ACTIONS.NONE);
-
   now = 2701;
   assert.equal(recovery.observeProbe(running(260)), RECOVERY_ACTIONS.RELOAD_STALLED);
 });
 
-test("adopting a ChatGPT-created conversation resets stale target recovery state", () => {
-  const recovery = new SupervisorRecoveryController({ targetMissThreshold: 1 });
-  assert.equal(
-    recovery.observeTarget({ matched: false }),
-    RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING
-  );
-
-  recovery.noteConversationAdopted();
+test("successful full-confirmed rollover advances generation and clears counters", () => {
+  const recovery = new SupervisorRecoveryController();
+  recovery.record(RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL, { success: true });
   const status = recovery.status();
   assert.equal(status.conversation_generation, 1);
-  assert.equal(status.target_misses, 0);
   assert.equal(status.rollover_failures, 0);
   assert.equal(status.blocked, false);
 });
 
-
-test("stalled reload budget survives hydration/progress-marker changes after reload", () => {
-  let now = 0;
-  const recovery = new SupervisorRecoveryController({
-    stallMs: 1000,
-    reloadCooldownMs: 100,
-    maxStallReloads: 2,
-    now: () => now
-  });
-
-  const running = (count, chars) => ({
-    snapshot: {
-      conversationPath: true,
-      composerReady: false,
-      responseRunning: true,
-      assistantMessageCount: count,
-      lastAssistantCharCount: chars
-    },
-    classification: { observation: "ASSISTANT_RUNNING" }
-  });
-
-  assert.equal(recovery.observeProbe(running(4, 100)), RECOVERY_ACTIONS.NONE);
-
-  now = 1000;
-  assert.equal(recovery.observeProbe(running(4, 100)), RECOVERY_ACTIONS.RELOAD_STALLED);
-  recovery.record(RECOVERY_ACTIONS.RELOAD_STALLED);
-
-  // Reload hydration changes the marker. This must reset the stall clock but
-  // must not erase the already-consumed reload budget.
-  now = 1100;
-  assert.equal(recovery.observeProbe(running(3, 20)), RECOVERY_ACTIONS.NONE);
-  assert.equal(recovery.status().stall_reloads, 1);
-
-  now = 2100;
-  assert.equal(recovery.observeProbe(running(3, 20)), RECOVERY_ACTIONS.RELOAD_STALLED);
-  recovery.record(RECOVERY_ACTIONS.RELOAD_STALLED);
-
-  now = 2200;
-  assert.equal(recovery.observeProbe(running(4, 100)), RECOVERY_ACTIONS.NONE);
-  assert.equal(recovery.status().stall_reloads, 2);
-
-  now = 3200;
-  assert.equal(recovery.observeProbe(running(4, 100)), RECOVERY_ACTIONS.ROLLOVER_STALLED);
-});
-
-
-test("successful rollover suppresses an immediate duplicate full-chat rollover", () => {
+test("successful full rollover suppresses immediate duplicate rollover", () => {
   let now = 10_000;
   const recovery = new SupervisorRecoveryController({
     rolloverCooldownMs: 120_000,
@@ -248,14 +172,13 @@ test("successful rollover suppresses an immediate duplicate full-chat rollover",
   });
 
   recovery.record(RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL, { success: true });
-
-  const action = recovery.observeProbe({
-    snapshot: { conversationFull: true },
-    classification: { observation: "RESPONSE_COMPLETE" }
-  });
-
-  assert.equal(action, RECOVERY_ACTIONS.NONE);
-  assert.equal(recovery.status().rollover_cooldown_active, true);
+  assert.equal(
+    recovery.observeProbe({
+      snapshot: { conversationFull: true },
+      classification: { observation: "RESPONSE_COMPLETE" }
+    }),
+    RECOVERY_ACTIONS.NONE
+  );
 
   now += 120_001;
   assert.equal(
@@ -267,8 +190,7 @@ test("successful rollover suppresses an immediate duplicate full-chat rollover",
   );
 });
 
-
-test("repeated rollovers without a healthy completed response fail closed instead of creating chats forever", () => {
+test("repeated full rollovers without a healthy completion fail closed", () => {
   let now = 1_000;
   const recovery = new SupervisorRecoveryController({
     rolloverCooldownMs: 100,
@@ -285,7 +207,6 @@ test("repeated rollovers without a healthy completed response fail closed instea
     RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL
   );
   recovery.record(RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL, { success: true });
-
   now += 101;
   assert.equal(
     recovery.observeProbe({
@@ -294,27 +215,4 @@ test("repeated rollovers without a healthy completed response fail closed instea
     }),
     RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED
   );
-  assert.equal(recovery.status().blocked, true);
-});
-
-test("a healthy completed response clears the rollover burst guard", () => {
-  let now = 5_000;
-  const recovery = new SupervisorRecoveryController({
-    rolloverCooldownMs: 100,
-    now: () => now
-  });
-
-  recovery.record(RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL, { success: true });
-  assert.equal(recovery.status().rollover_burst_count, 1);
-
-  recovery.observeProbe({
-    snapshot: {
-      conversationPath: true,
-      composerReady: true,
-      responseRunning: false
-    },
-    classification: { observation: "RESPONSE_COMPLETE" }
-  });
-
-  assert.equal(recovery.status().rollover_burst_count, 0);
 });

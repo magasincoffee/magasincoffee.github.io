@@ -10,6 +10,7 @@ $installScript = Join-Path $sourceRoot 'windows\install-supervisor.ps1'
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $runtime = Join-Path $root 'runtime'
 $runtimeLoop = Join-Path $runtime 'src\runtime\supervisor-loop-cli.mjs'
+$runtimeBrainWorker = Join-Path $runtime 'src\runtime\brain-worker-cli.mjs'
 $runtimeRun = Join-Path $runtime 'windows\run-supervisor.ps1'
 $runtimeStart = Join-Path $runtime 'windows\start-supervisor.ps1'
 $profile = Join-Path $root 'browser_profile'
@@ -17,7 +18,7 @@ $target = Join-Path $root 'target.json'
 $pidFile = Join-Path $root 'supervisor.pid'
 $logFile = Join-Path $root 'supervisor.log'
 $projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
-$expectedRuntimeVersion = '2026-09-19.16'
+$expectedRuntimeVersion = '2026-09-19.17'
 
 function Write-Step([string]$Message) {
     Write-Host ""
@@ -46,7 +47,7 @@ function Stop-OrphanedSupervisorLoops {
         }
 
     Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandLine -and $_.CommandLine -like '*supervisor-loop-cli.mjs*' } |
+        Where-Object { $_.CommandLine -and $_.CommandLine -match '(supervisor-loop-cli|brain-worker-cli)\.mjs' } |
         ForEach-Object {
             Write-Host "Stopping Supervisor Node PID $($_.ProcessId)."
             Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
@@ -66,6 +67,13 @@ function Assert-SourceFingerprint {
     if (-not (Select-String -Path $loopSource -SimpleMatch $expectedRuntimeVersion -Quiet)) {
         throw "Source does not contain Supervisor runtime version $expectedRuntimeVersion."
     }
+    $brainWorkerSource = Join-Path $sourceRoot 'src\runtime\brain-worker-cli.mjs'
+    if (-not (Test-Path $brainWorkerSource)) {
+        throw 'Source is missing brain-worker-cli.mjs.'
+    }
+    if (-not (Select-String -Path $brainWorkerSource -SimpleMatch $expectedRuntimeVersion -Quiet)) {
+        throw "Brain/Worker source does not contain runtime version $expectedRuntimeVersion."
+    }
     if (-not (Select-String -Path $runSource -SimpleMatch 'Get-FreeCdpPort' -Quiet)) {
         throw 'Source is missing Get-FreeCdpPort.'
     }
@@ -83,6 +91,9 @@ function Assert-InstalledFingerprint {
     }
     if (-not (Test-Path $runtimeRun)) {
         throw "Installed runtime launcher missing: $runtimeRun"
+    }
+    if (-not (Test-Path $runtimeBrainWorker)) {
+        throw "Installed Brain/Worker runtime missing: $runtimeBrainWorker"
     }
     if (-not (Select-String -Path $runtimeLoop -SimpleMatch $expectedRuntimeVersion -Quiet)) {
         throw "Installed runtime is not version $expectedRuntimeVersion."
@@ -172,9 +183,14 @@ try {
         $projectState -and
         [string]$projectState.autonomy -eq 'PAUSED'
     )
+    $brainWorkerMode = [bool](
+        $projectState -and
+        $projectState.supervisor_orchestration -and
+        [string]$projectState.supervisor_orchestration.mode -eq 'BRAIN_WORKER_V1'
+    )
 
-    if (-not $pausedInstallOnly -and -not (Test-Path $target)) {
-        throw "ChatGPT target is missing: $target. Installation succeeded, but one-time target setup is required before START."
+    if (-not $pausedInstallOnly -and -not $brainWorkerMode -and -not (Test-Path $target)) {
+        throw "Legacy ChatGPT target is missing: $target. Installation succeeded, but one-time target setup is required before legacy START."
     }
 
     if ($pausedInstallOnly) {
@@ -235,7 +251,7 @@ $tail"
     )
     $loopProcesses = @(
         Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-            Where-Object { $_.CommandLine -and $_.CommandLine -like '*supervisor-loop-cli.mjs*' }
+            Where-Object { $_.CommandLine -and $_.CommandLine -match '(supervisor-loop-cli|brain-worker-cli)\.mjs' }
     )
 
     if ($pausedInstallOnly) {

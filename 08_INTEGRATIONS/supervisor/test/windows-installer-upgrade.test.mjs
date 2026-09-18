@@ -35,7 +35,7 @@ test("installer stops orphaned Supervisor loops even when pid file is stale", as
   );
 
   assert.match(source, /run-supervisor\.ps1/);
-  assert.match(source, /supervisor-loop-cli\.mjs/);
+  assert.match(source, /supervisor-loop-cli\|brain-worker-cli/);
   assert.match(source, /Stopping orphaned Supervisor wrapper PID/);
   assert.match(source, /Stopping orphaned Supervisor Node PID/);
 });

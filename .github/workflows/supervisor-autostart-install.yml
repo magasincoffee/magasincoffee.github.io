@@ -5,11 +5,11 @@ on:
     branches:
       - main
     paths:
-      - 08_INTEGRATIONS/supervisor/windows/autostart-bootstrap.ps1
-      - 08_INTEGRATIONS/supervisor/windows/install-autostart.ps1
-      - 08_INTEGRATIONS/supervisor/windows/start-supervisor.ps1
-      - 08_INTEGRATIONS/supervisor/windows/stop-supervisor.ps1
-      - 08_INTEGRATIONS/supervisor/test/autostart-recovery.test.mjs
+      - 08_INTEGRATIONS/supervisor/src/**
+      - 08_INTEGRATIONS/supervisor/windows/**
+      - 08_INTEGRATIONS/supervisor/test/**
+      - 08_INTEGRATIONS/supervisor/package.json
+      - 01_DOCS/MAGASIN/00_PROJECT_STATE.json
       - .github/workflows/supervisor-autostart-install.yml
   workflow_dispatch:
 
@@ -39,6 +39,24 @@ jobs:
         shell: powershell
         run: |
           powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "08_INTEGRATIONS/supervisor/windows/install-supervisor.ps1"
+
+      - name: Wait for Brain/Worker source-of-truth visibility
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $stateUrl = "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json"
+          $ready = $false
+          for ($i = 0; $i -lt 30; $i++) {
+            try {
+              $state = Invoke-RestMethod -Uri $stateUrl -TimeoutSec 4 -Headers @{ 'Cache-Control'='no-cache' }
+              if ($state.supervisor_orchestration.mode -eq "BRAIN_WORKER_V1") {
+                $ready = $true
+                break
+              }
+            } catch {}
+            Start-Sleep -Seconds 2
+          }
+          if (-not $ready) { throw "BRAIN_WORKER_V1 source-of-truth was not visible within bounded wait" }
 
       - name: Register reboot/logon recovery and start now
         shell: powershell
@@ -107,9 +125,38 @@ jobs:
           $statusFile = Join-Path $root "autostart-install-status.json"
           if (-not (Test-Path $statusFile)) { throw "Autostart install status is missing" }
 
+          $brainWorker = $null
+          $brainTargetReady = $false
+          for ($i = 0; $i -lt 45; $i++) {
+            $brainWorker = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+              Where-Object { $_.CommandLine -and $_.CommandLine -like "*brain-worker-cli.mjs*" } |
+              Select-Object -First 1
+            $registryFile = Join-Path $root "orchestration.json"
+            if ($brainWorker -and (Test-Path $registryFile)) {
+              try {
+                $registry = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                if ($registry.mode -eq "BRAIN_WORKER_V1" -and $registry.brain.target.pathname) {
+                  $brainTargetReady = $true
+                  break
+                }
+              } catch {}
+            }
+            Start-Sleep -Seconds 2
+          }
+          if (-not $brainWorker) { throw "Brain/Worker Node runtime is not online" }
+          if (-not $brainTargetReady) { throw "Brain target was not registered within bounded wait" }
+
+          $runtimeBrain = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
+          if (-not (Test-Path $runtimeBrain)) { throw "Installed Brain/Worker runtime is missing" }
+          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.17" -Quiet)) {
+            throw "Installed Brain/Worker runtime is not v2026-09-19.17"
+          }
+
           Write-Host "AUTOSTART_REGISTERED=True"
           Write-Host "RUNNER_ONLINE=True"
           Write-Host "SUPERVISOR_ONLINE=True"
+          Write-Host "BRAIN_WORKER_RUNTIME=True"
+          Write-Host "BRAIN_TARGET_REGISTERED=True"
           Write-Host "BUSINESS_CHROME_ONLINE=True"
           Write-Host "BUSINESS_CHROME_CDP_HEALTHY=True"
           Write-Host "OWNER_STOP_LATCH=False"

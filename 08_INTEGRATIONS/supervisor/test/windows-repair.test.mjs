@@ -10,7 +10,7 @@ test("one-click repair updates main, installs fresh runtime and verifies the boo
 
   assert.match(source, /git -C \$repoRoot pull --ff-only origin main/);
   assert.match(source, /Node\.js 20\+/);
-  assert.match(source, /2026-09-19\.16/);
+  assert.match(source, /2026-09-19\.17/);
   assert.match(source, /Get-FreeCdpPort/);
   assert.match(source, /Test-DedicatedCdpEndpoint/);
   assert.match(source, /install-supervisor\.ps1/);
@@ -24,6 +24,7 @@ test("one-click repair updates main, installs fresh runtime and verifies the boo
   assert.match(source, /Supervisor wrapper count:/);
   assert.match(source, /Supervisor Node loop count:/);
   assert.match(source, /Supervisor singleton verification failed/);
+  assert.match(source, /brain-worker-cli\.mjs/);
 });
 
 test("one-click repair refuses dirty or non-main repositories", async () => {
@@ -60,4 +61,7 @@ test("repair script treats PAUSED autonomy as install-only success", async () =>
   assert.match(source, /PAUSED install verification failed/);
   assert.match(source, /Runtime status: PAUSED \(not launched by design\)/);
   assert.match(source, /boot was intentionally skipped because autonomy is PAUSED/);
+  assert.match(source, /\$brainWorkerMode/);
+  assert.match(source, /supervisor_orchestration/);
+  assert.match(source, /Legacy ChatGPT target is missing/);
 });

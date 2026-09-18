@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { ACTIONS } from "../src/decision.mjs";
-import { executeDecision } from "../src/ui/actions.mjs";
+import { executeDecision, sendComposerInstruction } from "../src/ui/actions.mjs";
 
 function fakeLocator({
   visible = true,
@@ -157,4 +157,29 @@ test("action surface targets only a visible composer", async () => {
   });
 
   assert.match(selectorSeen, /:visible/);
+});
+
+
+test("dynamic composer send never clicks Continue-generating as a substitute", async () => {
+  let filled = null;
+  let clicks = 0;
+  const controls = [
+    { text: "Continue generating", ariaLabel: "", testId: null },
+    { text: "", ariaLabel: "Send prompt", testId: "send-button" }
+  ];
+
+  const result = await sendComposerInstruction(
+    fakePage({
+      controls,
+      onFill: (value) => { filled = value; },
+      onClick: () => { clicks += 1; }
+    }),
+    "Dynamic Brain directive for worker-2",
+    { dryRun: false }
+  );
+
+  assert.equal(result.target, "COMPOSER_SEND");
+  assert.equal(result.executed, true);
+  assert.equal(filled, "Dynamic Brain directive for worker-2");
+  assert.equal(clicks, 1);
 });
