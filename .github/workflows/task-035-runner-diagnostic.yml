@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # current-phase: oauth-client-probe
+  # current-phase: oauth-client-form-probe
   operate:
     runs-on: self-hosted
     timeout-minutes: 10
@@ -35,8 +35,8 @@ jobs:
         run: |
           npm install --ignore-scripts --no-audit --no-fund
 
-      - name: Inspect OAuth clients
+      - name: Inspect OAuth client creation form
         shell: powershell
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
-          node src/ui/task-035-auth-client-probe.mjs
+          node src/ui/task-035-auth-client-form-probe.mjs
