@@ -24,5 +24,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Validate Store/Product foundation
-        run: node 09_QA/business-os/store-product-foundation.test.mjs
+      - name: Run all Business OS contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test_file in $(find 09_QA/business-os -maxdepth 1 -name '*.test.mjs' -type f | sort); do
+            echo "RUN $test_file"
+            node "$test_file"
+          done

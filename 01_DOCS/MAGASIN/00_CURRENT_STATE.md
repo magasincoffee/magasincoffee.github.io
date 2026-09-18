@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-010 — Database baseline/migration plan**
+**TASK-011 — Owner Control Tower vertical-slice plan**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Continue **TASK-010 — Database baseline/migration plan**, then TASK-011 Owner Control Tower vertical-slice plan.
+Continue **TASK-011 — Owner Control Tower vertical-slice plan**. After acceptance is defined, expand the queue from the resulting implementation dependencies.
 
 ## Session handoff
 

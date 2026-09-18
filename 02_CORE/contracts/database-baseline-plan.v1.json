@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "status": "PLAN_APPROVED_FOR_OFFLINE_IMPLEMENTATION",
+  "task": "TASK-010",
+  "strategy": "EXPAND_MAP_MIGRATE_CONTRACT",
+  "production_apply_requires_owner": true,
+  "live_schema_inventory_required_before_production": true,
+  "phases": [
+    {
+      "id": "M0",
+      "name": "sanitized live schema baseline",
+      "side_effect": "READ_ONLY"
+    },
+    {
+      "id": "M1",
+      "name": "canonical product master",
+      "side_effect": "ADDITIVE"
+    },
+    {
+      "id": "M2",
+      "name": "legacy product mapping",
+      "side_effect": "ADDITIVE"
+    },
+    {
+      "id": "M3",
+      "name": "shared unit conversion",
+      "side_effect": "ADDITIVE"
+    },
+    {
+      "id": "M4",
+      "name": "location registry/mapping",
+      "side_effect": "ADDITIVE"
+    },
+    {
+      "id": "M5",
+      "name": "consumer migrations by domain",
+      "side_effect": "ADDITIVE_THEN_CUTOVER"
+    },
+    {
+      "id": "M6",
+      "name": "legacy contract cleanup",
+      "side_effect": "DESTRUCTIVE_LATER"
+    }
+  ],
+  "legacy_product_mapping": {
+    "MATERIAL": "MATERIAL",
+    "PACKAGING": "PACKAGING",
+    "OTHER": "OTHER",
+    "GOODS": "UNRESOLVED"
+  },
+  "initial_forbidden_operations": [
+    "DROP_EXISTING_STORE_TABLE",
+    "DROP_PROCUREMENT_PRODUCTS",
+    "BULK_PRODUCTION_BACKFILL_WITHOUT_REVIEW",
+    "AUTO_CLASSIFY_LEGACY_GOODS"
+  ],
+  "verification": [
+    "row_counts",
+    "fk_orphans",
+    "unique_codes",
+    "unresolved_category_count",
+    "rls_access_review",
+    "rollback_or_forward_fix"
+  ]
+}
