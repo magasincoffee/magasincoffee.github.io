@@ -35,6 +35,15 @@ try {
         } catch {}
 
         if (-not $ready) {
+            # Only terminate Chrome processes that explicitly use the dedicated
+            # Supervisor profile. Never touch the Owner's normal Chrome profile.
+            Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+                Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" } |
+                ForEach-Object {
+                    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+                }
+            Start-Sleep -Milliseconds 750
+
             Start-Process -FilePath $chrome -ArgumentList @(
                 '--remote-debugging-address=127.0.0.1',
                 '--remote-debugging-port=9222',
@@ -71,6 +80,9 @@ try {
         }
 
         if (-not (Test-Path $stop)) {
+            # If the Node loop exited because CDP was repeatedly unavailable,
+            # return to the outer readiness gate so dedicated Chrome can be
+            # relaunched cleanly.
             Start-Sleep -Seconds 3
         }
     }
