@@ -53,10 +53,10 @@ try{
     console.log("GMAIL_SETUP_PROJECT_BOUND="+(current.searchParams.get("project")===PROJECT));
     console.log("GMAIL_SETUP_TITLE="+(await page.title()).replace(/[\r\n]+/g," ").slice(0,120));
 
-    const enable=page.getByRole("button",{name:/^Enable$|^Bật$/i});
-    const disable=page.getByRole("button",{name:/^Disable$|^Tắt$/i});
-    const manage=page.getByRole("button",{name:/^Manage$|^Quản lý$/i});
-    const enableLink=page.getByRole("link",{name:/^Enable$|^Bật$/i});
+    const enable=page.getByRole("button",{name:/enable this API|^Enable$|^Bật$/i});
+    const disable=page.getByRole("button",{name:/disable this API|^Disable$|^Tắt$/i});
+    const manage=page.getByRole("button",{name:/manage this API|^Manage$|^Quản lý$/i});
+    const enableLink=page.getByRole("link",{name:/enable this API|^Enable$|^Bật$/i});
 
     const enabledState=(await visible(disable)) || (await visible(manage));
     console.log("GMAIL_API_ALREADY_ENABLED="+enabledState);
@@ -69,8 +69,8 @@ try{
       console.log("GMAIL_API_ENABLE_CLICKED="+clicked);
       if(clicked){
         await page.waitForTimeout(12000);
-        const nowEnabled=(await visible(page.getByRole("button",{name:/^Disable$|^Tắt$/i}),2500)) ||
-          (await visible(page.getByRole("button",{name:/^Manage$|^Quản lý$/i}),2500)) ||
+        const nowEnabled=(await visible(page.getByRole("button",{name:/disable this API|^Disable$|^Tắt$/i}),2500)) ||
+          (await visible(page.getByRole("button",{name:/manage this API|^Manage$|^Quản lý$/i}),2500)) ||
           /apis\/api\/gmail\.googleapis\.com/i.test(page.url());
         console.log("GMAIL_API_ENABLED_AFTER_CLICK="+nowEnabled);
         acted=nowEnabled;
