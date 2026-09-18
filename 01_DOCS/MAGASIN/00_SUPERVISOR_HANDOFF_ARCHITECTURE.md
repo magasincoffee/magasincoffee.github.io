@@ -162,3 +162,26 @@ The reconciliation prompt is deliberately constrained: it may update source-of-t
 `BLOCKED`, authentication, MFA, CAPTCHA, destructive-action, admin-escalation and ambiguous-decision states remain hard stops and are never bypassed by this mechanism.
 
 For ChatGPT Work, the semantic `data-testid="stop-button"` is treated as a running signal. Completion stability uses conversation-turn metadata instead of whole-DOM size because the Work UI virtualizes content and can change DOM size while semantically idle.
+
+
+## 10. Manual Owner recheck control
+
+The Control Panel exposes a bounded manual control:
+
+```text
+✓ ĐÃ XỬ LÝ — KIỂM TRA LẠI
+```
+
+Its semantics are **recheck**, not **force continue**.
+
+When the project is in `WAIT_USER` and not `BLOCKED`:
+
+1. Owner presses the button after resolving the requested decision/setup in the shared ChatGPT workflow.
+2. Control Panel writes a local, non-secret `OWNER_RESOLVED.request.json` marker.
+3. Supervisor waits if ChatGPT is still running.
+4. Once safely idle, Supervisor sends exactly one constrained Owner-boundary reconciliation request.
+5. The local marker is consumed only when that reconciliation is actually sent.
+6. Repository remains `WAIT_USER` unless ChatGPT verifies the pending boundary is truly resolved and updates source-of-truth.
+7. `BLOCKED`, auth/MFA/CAPTCHA, destructive/admin, missing-secret and other unresolved security boundaries are never force-cleared by the button.
+
+This control exists to repair stale synchronization between Owner ↔ ChatGPT ↔ repository. It is not an approval bypass.

@@ -203,3 +203,22 @@
   7. completion stability uses conversation-turn metadata and ignores noisy whole-DOM size churn.
 - Runtime: `2026-09-18.10`.
 - Status: FIXED IN CODE — pending CI + field deployment.
+
+
+## BUG-SUP-015 — Owner needs an explicit recheck control after resolving a WAIT_USER boundary
+
+- Date: 2026-09-18
+- Component: Control Panel / Owner-boundary reconciliation
+- Field symptom: Owner resolves the requested decision or setup with ChatGPT, but Control Panel can remain on `WAIT_USER` while repository/runtime synchronization catches up; repeated START does not provide an explicit handoff signal.
+- Root cause:
+  1. there was no explicit Owner intent signal for “I handled the requested boundary; verify again now”;
+  2. after an Owner reconciliation had been sent, runtime could set `awaitingResponse=true` but then pass `ownerReconcile=false` on subsequent polls, causing `STOP_WAIT_USER` while ChatGPT was visibly still running.
+- Fix:
+  1. add `✓ ĐÃ XỬ LÝ — KIỂM TRA LẠI` in the Control Panel;
+  2. write only a local non-secret `OWNER_RESOLVED.request.json` marker;
+  3. marker arms one fail-closed reconciliation when `WAIT_USER` is active and not `BLOCKED`;
+  4. keep owner reconciliation active while its ChatGPT response is running;
+  5. consume marker only after the reconciliation message is actually sent;
+  6. the button never writes `READY` itself and never bypasses security/secret/approval boundaries.
+- Runtime: `2026-09-18.11`.
+- Status: FIXED IN CODE — pending CI + field deployment.
