@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
-test("Control Tower initializes Revenue only after Owner authorization", async () => {
+test("Control Tower initializes Revenue through source isolation only after Owner authorization", async () => {
   const source = await fs.readFile(
     new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
     "utf8"
@@ -10,12 +10,14 @@ test("Control Tower initializes Revenue only after Owner authorization", async (
 
   const bootAt = source.indexOf("async function boot");
   const authAt = source.indexOf("await requireOwnerAccess", bootAt);
-  const revenueAt = source.indexOf("await loadReconciledRevenue", bootAt);
+  const sectionAt = source.indexOf('"revenue"', authAt);
+  const adapterAt = source.indexOf("loadReconciledRevenue", sectionAt);
 
   assert.ok(bootAt >= 0);
-  assert.ok(authAt >= 0);
-  assert.ok(revenueAt > authAt);
-  assert.match(source, /rawState\.revenue = revenue/);
+  assert.ok(authAt > bootAt);
+  assert.ok(sectionAt > authAt);
+  assert.ok(adapterAt > sectionAt);
+  assert.match(source, /applySourceSection\(\s*"revenue"/s);
 });
 
 test("current production integration does not invent an unverified revenue reader", async () => {
