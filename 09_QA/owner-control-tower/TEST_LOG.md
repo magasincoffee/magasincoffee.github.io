@@ -84,3 +84,34 @@
 - Current repository has no source-controlled verified revenue read model, so production integration intentionally stays fail-closed until a reconciled source is connected.
 - Production writes: none.
 - Gate: TASK-016 **DONE**; TASK-017 may proceed.
+
+
+## 2026-09-18 — Post-TASK-016 revenue blank-amount regression
+
+- Branch: `fix/control-tower-revenue-blank-amount`
+- Workflow: `Owner Control Tower Tests`
+- Regression run: `35315530551`
+- Result: **PASS**
+- Trusted + RECONCILED row with `amount: null`, empty string or whitespace now fails closed to `GAP`: PASS.
+- Genuine numeric zero remains valid ACTUAL revenue: PASS.
+- BUG-CT-004: VERIFIED.
+- Project task state unchanged; TASK-017 remains current.
+
+
+## 2026-09-18 — TASK-017 Partial-source/error-state integration
+
+- Branch: `feat/control-tower-partial-source`
+- PR: `#64`
+- Workflow: `Owner Control Tower Tests`
+- Regression/PR run: `35315804088`
+- Result: **PASS**
+- One rejected source becomes section-local `GAP` while healthy source sections remain intact: PASS.
+- Synchronous Supabase client acquisition failure is isolated to Payables: PASS.
+- Adapter-declared `GAP` / `NOT_CONNECTED` states are preserved: PASS.
+- Invalid adapter return fails closed to section-local `GAP`: PASS.
+- Simultaneous source failures remain a renderable three-section error state instead of throwing: PASS.
+- Owner authentication is completed before post-auth source orchestration: PASS.
+- Revenue/Payables/Workforce integration regressions were updated to assert architecture invariants instead of direct calls inside `boot()`: PASS.
+- No production writes or business-rule changes introduced.
+- BUG-CT-005: VERIFIED.
+- Gate: TASK-017 **DONE**; TASK-018 may proceed.

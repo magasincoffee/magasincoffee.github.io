@@ -34,3 +34,27 @@
 - Root cause: Revenue shared the same numeric-trust rule as Payables/Workforce even though Revenue requires reconciliation before any official amount is exposed.
 - Fix: Revenue now has a stricter normalization path: only `ACTUAL` may retain `amount`; all non-ACTUAL revenue states redact it to `null`.
 - Status: VERIFIED — run `35315205100` PASS
+
+
+## BUG-CT-004 — Blank reconciled amount coerces to ACTUAL zero
+
+- Date: 2026-09-18
+- Component: `04_OWNER/ControlTower/revenue-adapter-v1.mjs`
+- Reproduction: pass a trusted, RECONCILED record for the selected date with `amount: null`, an empty string, or whitespace.
+- Observed: JavaScript numeric coercion converts blank/null values to `0`, allowing an incomplete record to appear as ACTUAL zero revenue.
+- Impact: missing revenue could be silently presented as a valid reconciled zero.
+- Root cause: amount validation called `Number(candidate.amount)` before rejecting blank/null source values.
+- Fix: reject null/undefined/blank string amounts before numeric conversion; keep genuine numeric zero valid.
+- Status: VERIFIED — run `35315530551` PASS
+
+
+## BUG-CT-005 — Post-auth source exception can blank the entire Control Tower
+
+- Date: 2026-09-18
+- Component: `04_OWNER/ControlTower/control-tower-v1.js`
+- Reproduction: after Owner authentication succeeds, make a source integration throw unexpectedly (including a synchronous failure while acquiring the Supabase client).
+- Observed: source loading shared the same outer `try/catch` as authentication, so the app was hidden and the denied state was shown.
+- Impact: one broken Revenue/Payables/Workforce source could blank healthy sections and be misreported as an Owner permission failure.
+- Root cause: authentication and post-auth data orchestration used one failure boundary.
+- Fix: isolate Owner authentication in `requireOwnerSession`; route Revenue/Payables/Workforce through `source-integration-v1.mjs`, where every source has an independent fail-closed `GAP` boundary.
+- Status: VERIFIED — regression run `35315804088` PASS
