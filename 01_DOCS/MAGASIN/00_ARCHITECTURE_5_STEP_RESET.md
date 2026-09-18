@@ -145,7 +145,7 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-029 — Schedule-first canonical flow contract:** canonical tables/RPC boundaries and role ownership locked; duplicate ownership classified transitional. DONE.
 - **TASK-030 — Employee weekly availability canonical slice:** single Employee availability owner, save/multi-window/delete regression verified. DONE.
 - **TASK-031 — Manager allocation + robot proposal + publish slice:** canonical Manager Workforce module owns review/allocation/explicit publish; Robot remains DRAFT-only. DONE.
-- **TASK-032 — Published schedule → attendance/swap/notification integration gate:** close the employee feedback loop. READY.
+- **TASK-032 — Published schedule → attendance/swap/notification integration gate:** schedule visibility + attendance + Swap verified; fake Give/unsafe auto-attendance deleted; Give lifecycle and notification production activation remain Owner boundaries SFB-001/SFB-002. WAIT_USER.
 
 ## 8. Definition of success
 
