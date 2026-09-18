@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><title>Manager official schedule QA</title>
+<style>
+:root{--border:#dce5f0;--muted:#617793;--text:#102a43;--primary:#16b7c5}
+body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid var(--border);border-radius:12px;padding:12px}.btn{padding:7px 10px;border:1px solid var(--border);background:#fff;border-radius:8px}.btn.primary{background:var(--primary);color:#fff}.badge{padding:5px 8px;border-radius:9px}.blue{background:#e9f1ff}.green{background:#e6f4ed}.muted{color:var(--muted)}.view,.panel{display:none}.view.active,.panel.active{display:block}.sidebar{display:flex;gap:8px;margin-bottom:12px}
+</style></head>
+<body>
+<nav class="sidebar">
+  <button data-view="workforce" class="active">Workforce</button>
+  <button data-view="schedule">Lịch làm</button>
+</nav>
+<section id="view-workforce" class="view active">
+  <div class="tabs"><button data-tab="review">Review</button><button data-tab="publish" class="active">Publish</button></div>
+  <div id="panel-review" class="panel"></div>
+  <div id="panel-publish" class="panel active"></div>
+</section>
+<section id="view-schedule" class="view"></section>
+<script>
+(() => {
+  const calls=[];
+  const store={id:"store-a",code:"CN-QA-A",name:"Cửa hàng QA A"};
+  const availability=[{availability_id:"av-1",user_id:"u-1",employee_name:"Nhân viên QA",username:"qa",work_date:"2026-09-21",start_time:"06:00",end_time:"12:00",preferred_store_id:"store-a",preferred_store_code:"CN-QA-A",availability_type:"AVAILABLE"}];
+  const state={generation:null,assignments:[],official:[]};
+  const api={
+    async rpc(name,args={}){
+      calls.push({kind:"rpc",name,args:structuredClone(args||{})});
+      if(name==="get_manager_accessible_stores")return {data:[store],error:null};
+      if(name==="get_manager_weekly_availability")return {data:availability.map(x=>({...x})),error:null};
+      if(name==="auto_generate_schedule_generation"){
+        state.generation={id:"gen-1",status:"DRAFT",store_id:args.p_store_id,week_start:args.p_week_start};
+        state.assignments=[{id:"asg-1",generation_id:"gen-1",user_id:"u-1",full_name:"Nhân viên QA",store_id:"store-a",store_code:"CN-QA-A",work_date:"2026-09-21",start_time:"06:00",end_time:"12:00",skill_code:null,skill_level:0,score:100,warning:null,status:"DRAFT",note:null}];
+        return {data:{generation_id:"gen-1",status:"DRAFT",assignment_count:1,minimum_shortages:[]},error:null};
+      }
+      if(name==="get_schedule_generation_assignments")return {data:state.assignments.map(x=>({...x})),error:null};
+      if(name==="validate_schedule_generation_v1")return {data:{valid:true,violations:[],warnings:[],assignment_count:state.assignments.length},error:null};
+      if(name==="replace_schedule_generation_assignments"){state.assignments=(args.p_assignments||[]).map((x,i)=>({...x,id:"asg-"+(i+1),generation_id:"gen-1",full_name:"Nhân viên QA",store_code:"CN-QA-A"}));return {data:state.assignments.length,error:null}};
+      if(name==="review_schedule_generation"){state.generation.status="REVIEWED";return {data:{status:"REVIEWED",validation:{valid:true,violations:[],warnings:[]}},error:null}};
+      if(name==="publish_schedule_generation"){
+        if(state.generation?.status!=="REVIEWED")return {data:{published:false,error_code:"NOT_REVIEWED"},error:null};
+        state.generation.status="PUBLISHED";
+        state.official=state.assignments.map((x,i)=>({schedule_id:"schedule-"+(i+1),work_date:x.work_date,start_time:x.start_time,end_time:x.end_time,store_id:x.store_id,store_code:"CN-QA-A",store_name:"Cửa hàng QA A",user_id:x.user_id,employee_name:"Nhân viên QA",status:"APPROVED",origin:"SCHEDULE_GENERATION"}));
+        return {data:{published:true,inserted_schedule_count:state.official.length},error:null};
+      }
+      if(name==="get_manager_weekly_schedule"){
+        const end=new Date(args.p_week_start+"T00:00:00Z");end.setUTCDate(end.getUTCDate()+6);const to=end.toISOString().slice(0,10);
+        return {data:state.official.filter(x=>(!args.p_store_id||x.store_id===args.p_store_id)&&x.work_date>=args.p_week_start&&x.work_date<=to),error:null};
+      }
+      return {data:null,error:{message:"unexpected rpc "+name}};
+    },
+    from(name){calls.push({kind:"from",name});throw new Error("Direct table access forbidden:"+name)}
+  };
+  window.__MANAGER_OFFICIAL_QA={calls,state,store};
+  window.supabase={createClient(){return api}};
+  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.querySelector('#view-'+b.dataset.view)?.classList.add('active');
+    document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===b));
+  }));
+  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelector('#panel-'+b.dataset.tab)?.classList.add('active');
+  }));
+})();
+</script>
+<script src="/05_MANAGER/runtime/compat/workforce/manager-schedule-draft-editor-v1.js"></script>
+<script src="/05_MANAGER/runtime/compat/workforce/manager-official-schedule-v1.js"></script>
+</body></html>
