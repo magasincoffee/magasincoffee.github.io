@@ -162,6 +162,16 @@ export class ChatGptUiAdapter {
       .filter((page) => !page.isClosed() && isChatGptUrl(page.url()));
   }
 
+  async getVisibleChatGptPages() {
+    const visible = [];
+    for (const page of this.getChatGptPages()) {
+      const isVisible = await page.evaluate(() => document.visibilityState === "visible")
+        .catch(() => false);
+      if (isVisible) visible.push(page);
+    }
+    return visible;
+  }
+
   async listRecentConversationUrls(page, { limit = 20 } = {}) {
     if (!page || page.isClosed()) return [];
     const urls = await page.evaluate((maxItems) => {
