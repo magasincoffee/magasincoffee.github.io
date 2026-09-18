@@ -59,6 +59,7 @@ test("Owner reconciliation remains active while its ChatGPT response is running"
     /ownerReconcileRequested \|\| ownerReconcileState\.awaitingResponse/
   );
   assert.match(source, /ownerReconcile: ownerReconcileActive/);
+  assert.match(source, /ownerReconcileAwaitingResponse/);
 });
 
 

@@ -57,6 +57,10 @@ function safeController(controller) {
       controller?.assistantCountAtAction == null
         ? null
         : safeNumber(controller.assistantCountAtAction),
+    turn_ordinal_at_action:
+      controller?.turnOrdinalAtAction == null
+        ? null
+        : safeNumber(controller.turnOrdinalAtAction),
     saw_running_after_action: Boolean(controller?.sawRunningAfterAction),
     user_pending_saw_progress: Boolean(controller?.userPendingSawProgress),
     last_action_at_ms: safeNumber(controller?.lastActionAt)

@@ -20,16 +20,23 @@ export class SupervisorLoopController {
     this.armed = true;
     this.lastActionAt = 0;
     this.assistantCountAtAction = null;
+    this.turnOrdinalAtAction = null;
     this.sawRunningAfterAction = false;
     this.userPendingSignature = null;
     this.userPendingSince = 0;
     this.userPendingSawProgress = false;
   }
 
-  markExternalContinuation(assistantMessageCount = 0, target = "EXTERNAL_CONTINUE") {
+  markExternalContinuation(
+    assistantMessageCount = 0,
+    target = "EXTERNAL_CONTINUE",
+    turnOrdinal = null
+  ) {
     this.armed = false;
     this.lastActionAt = this.now();
     this.assistantCountAtAction = Number(assistantMessageCount || 0);
+    this.turnOrdinalAtAction =
+      turnOrdinal == null ? null : Number(turnOrdinal || 0);
     this.sawRunningAfterAction = false;
     this.resetUserPendingTracker();
     this.onEvent({
@@ -159,14 +166,25 @@ export class SupervisorLoopController {
     const progressed =
       this.assistantCountAtAction != null &&
       count > this.assistantCountAtAction;
+    const turnOrdinal = Number(snapshot.maxConversationTurnOrdinal || 0);
+    const semanticTurnProgressed =
+      this.turnOrdinalAtAction != null &&
+      turnOrdinal > this.turnOrdinalAtAction &&
+      snapshot.lastMessageRole === "assistant";
 
     if (
       classification.observation === "RESPONSE_COMPLETE" &&
-      (progressed || this.sawRunningAfterAction || snapshot.workUiSettled)
+      (
+        progressed ||
+        semanticTurnProgressed ||
+        this.sawRunningAfterAction ||
+        snapshot.workUiSettled
+      )
     ) {
       this.armed = true;
       this.sawRunningAfterAction = false;
       this.assistantCountAtAction = null;
+      this.turnOrdinalAtAction = null;
       this.resetUserPendingTracker();
       this.onEvent({
         type: snapshot.workUiSettled
@@ -184,7 +202,8 @@ export class SupervisorLoopController {
     maxRetries = 2,
     handoff = false,
     ownerReconcile = false,
-    ownerRecheck = false
+    ownerRecheck = false,
+    ownerReconcileAwaitingResponse = false
   }) {
     const state = validateProjectState(projectState);
     const resolved = this.resolveWorkUiObservation(probe, {
@@ -205,6 +224,27 @@ export class SupervisorLoopController {
     };
 
     this.observeProgress(effectiveProbe);
+
+    if (
+      ownerReconcileAwaitingResponse &&
+      this.armed &&
+      observation === OBSERVATIONS.RESPONSE_COMPLETE
+    ) {
+      return {
+        decision: {
+          action: ACTIONS.WAIT,
+          reason: "owner reconciliation response completed; await repository refresh"
+        },
+        execution: {
+          executed: false,
+          dryRun: !this.execute,
+          action: ACTIONS.WAIT,
+          reason: "decision requires no UI action"
+        },
+        effectiveObservation: observation,
+        workUiSettled: resolved.workUiSettled
+      };
+    }
 
     const decision = decideContinuation({
       projectState: state,
@@ -282,6 +322,9 @@ export class SupervisorLoopController {
       this.lastActionAt = this.now();
       this.assistantCountAtAction = Number(
         probe?.snapshot?.assistantMessageCount || 0
+      );
+      this.turnOrdinalAtAction = Number(
+        probe?.snapshot?.maxConversationTurnOrdinal || 0
       );
       this.sawRunningAfterAction = false;
       this.resetUserPendingTracker();
