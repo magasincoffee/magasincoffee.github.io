@@ -4,24 +4,24 @@
   "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
   "target_days": 21,
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-047",
-  "current_task_title": "Night docs / evidence / PR prep",
+  "current_task": "TASK-048",
+  "current_task_title": "Night final checkpoint",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-048",
+  "next_task": null,
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
     "production_private_data_in_git": false,
     "red_actions_require_owner": true
   },
-  "last_updated": "2026-09-18",
+  "last_updated": "2026-09-19",
   "owner_boundary": {
-    "task": "TASK-047",
+    "task": "TASK-048",
     "resolved": [
-      "TASK_046_TWO_PROJECT_QA_VERIFIED"
+      "TASK_047_DOCS_EVIDENCE_COMPLETE"
     ],
     "pending": []
   },
@@ -48,7 +48,7 @@
       "magasin-business-os",
       "magasin-media-robot"
     ],
-    "current_order": 12,
+    "current_order": 13,
     "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
     "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json",
     "recovery_install": {
@@ -112,6 +112,10 @@
       "task_046_pr_test_run_id": 35371002442,
       "task_046_tests": 83,
       "task_046_failures": 0
-    }
+    },
+    "status": "FINAL_CHECKPOINT_IN_PROGRESS",
+    "final_report_ref": "01_DOCS/MAGASIN/08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md",
+    "evidence_ref": "01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE.md",
+    "hard_stop_pending": true
   }
 }
