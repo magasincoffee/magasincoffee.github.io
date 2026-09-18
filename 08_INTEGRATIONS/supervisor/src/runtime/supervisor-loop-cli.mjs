@@ -25,7 +25,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.10";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.11";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -261,6 +261,7 @@ if (!Number.isFinite(args.unavailableGraceMs) || args.unavailableGraceMs < 15_00
 const root = localRoot();
 const targetPath = args.targetPath || path.join(root, "target.json");
 const stopPath = path.join(root, "STOP");
+const ownerResolvedPath = path.join(root, "OWNER_RESOLVED.request.json");
 const logPath = path.join(root, "supervisor.log");
 const runtimeStatusPath = defaultRuntimeStatusPath();
 let target = validateTarget(JSON.parse(await fs.readFile(targetPath, "utf8")));
@@ -377,6 +378,7 @@ while (true) {
       }
     } else {
       ownerReconcileState = null;
+      await fs.unlink(ownerResolvedPath).catch(() => {});
     }
 
     if (recovery.blocked) {
@@ -680,18 +682,34 @@ while (true) {
     }
 
     const currentTurn = safeTurnMarker(probe);
+    const manualOwnerRecheck = ownerWait
+      ? await fs.access(ownerResolvedPath).then(() => true).catch(() => false)
+      : false;
     let ownerReconcileRequested = false;
 
     if (ownerWait && ownerReconcileState) {
       if (!ownerReconcileState.awaitingResponse) {
-        if (!ownerReconcileState.attempted) {
-          ownerReconcileRequested = true;
-        } else if (
+        if (
+          manualOwnerRecheck ||
+          !ownerReconcileState.attempted ||
           currentTurn > Number(ownerReconcileState.settledTurn || 0)
         ) {
           ownerReconcileRequested = true;
         }
       }
+    }
+
+    const ownerReconcileActive = Boolean(
+      ownerWait &&
+      ownerReconcileState &&
+      (ownerReconcileRequested || ownerReconcileState.awaitingResponse)
+    );
+
+    if (manualOwnerRecheck) {
+      await safeAppendLog(logPath, {
+        type: "OWNER_RECHECK_ARMED",
+        reason: "Owner pressed the local resolved/recheck control; verify the live boundary without bypassing safety."
+      });
     }
 
     const result = await controller.step({
@@ -701,7 +719,7 @@ while (true) {
       retryCount,
       maxRetries: 2,
       handoff: handoffPending && !ownerWait,
-      ownerReconcile: ownerReconcileRequested
+      ownerReconcile: ownerReconcileActive
     });
 
     if (
@@ -714,6 +732,7 @@ while (true) {
       ownerReconcileState.attempted = true;
       ownerReconcileState.awaitingResponse = true;
       handoffPending = false;
+      await fs.unlink(ownerResolvedPath).catch(() => {});
       await safeAppendLog(logPath, {
         type: "OWNER_RECONCILE_SENT",
         action: "CONTINUE",
