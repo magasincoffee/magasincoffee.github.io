@@ -12,6 +12,17 @@ $desktop = [Environment]::GetFolderPath('Desktop')
 
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 
+# Close any existing control-panel process before replacing the runtime. The
+# desktop shortcut used to set runtime as its working directory, which keeps
+# that directory locked on Windows even after the Supervisor itself stops.
+Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.CommandLine -like '*control-panel.ps1*' } |
+    ForEach-Object {
+        Write-Host "Stopping existing control panel PID $($_.ProcessId) before runtime upgrade."
+        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+Start-Sleep -Milliseconds 500
+
 # Upgrades are allowed only after stopping the dedicated Supervisor process.
 if (Test-Path $pidFile) {
     $pidValue = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -101,7 +112,7 @@ $wsh = New-Object -ComObject WScript.Shell
 $shortcut = $wsh.CreateShortcut($shortcutPath)
 $shortcut.TargetPath = 'powershell.exe'
 $shortcut.Arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $panelTarget + '"'
-$shortcut.WorkingDirectory = $runtime
+$shortcut.WorkingDirectory = $root
 $shortcut.Description = 'MAGASIN Business OS Supervisor Robot control panel'
 $shortcut.IconLocation = "$env:SystemRoot\System32\imageres.dll,72"
 $shortcut.Save()
