@@ -151,3 +151,31 @@ test("shared ChatGPT launcher uses the Supervisor browser profile and bounded CD
   assert.match(source, /target\.json/);
   assert.match(source, /--user-data-dir=/);
 });
+
+
+test("control panel exposes a fail-closed Owner resolved acknowledgement button", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /owner-resolved\.json/);
+  assert.match(source, /ĐÃ GIẢI QUYẾT/);
+  assert.match(source, /Write-OwnerResolvedAck/);
+  assert.match(source, /Nút này KHÔNG tự đổi repository sang READY/);
+  assert.match(source, /Project đang BLOCKED/);
+  assert.match(source, /Ensure-GitHubRunner -Interactive/);
+  assert.match(source, /Get-SupervisorProcess/);
+});
+
+test("Owner resolved acknowledgement is only surfaced for WAIT_USER and not BLOCKED", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /\$ownerWait = \(/);
+  assert.match(source, /\$projectStatus -ne 'BLOCKED'/);
+  assert.match(source, /\$ownerResolvedButton\.Visible = \[bool\]\$ownerWait/);
+  assert.match(source, /\$ownerResolvedButton\.Visible = \$false/);
+});
