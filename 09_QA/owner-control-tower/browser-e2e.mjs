@@ -12,6 +12,7 @@ const report = {
   status: "PASS",
   checks: [],
   console_errors: [],
+  expected_console_errors: [],
   page_errors: [],
   request_failures: [],
   http_errors: []
@@ -132,9 +133,17 @@ const sharedCoreMock = String.raw`
 
 function attachDiagnostics(page, label) {
   page.on("console", (msg) => {
-    if (msg.type() === "error") {
-      report.console_errors.push({ page: label, text: msg.text() });
+    if (msg.type() !== "error") return;
+    const text = msg.text();
+    if (
+      label === "denied" &&
+      text.includes("[CONTROL_TOWER_AUTH]") &&
+      /Chỉ Owner được mở Control Tower/i.test(text)
+    ) {
+      report.expected_console_errors.push({ page: label, text });
+      return;
     }
+    report.console_errors.push({ page: label, text });
   });
   page.on("pageerror", (error) => {
     report.page_errors.push({
@@ -422,7 +431,12 @@ try {
 if (report.console_errors.length) {
   fail("console_errors", JSON.stringify(report.console_errors));
 } else {
-  pass("console_errors");
+  pass(
+    "console_errors",
+    report.expected_console_errors.length
+      ? `ignored ${report.expected_console_errors.length} expected denied-auth diagnostic`
+      : ""
+  );
 }
 if (report.page_errors.length) {
   fail("page_errors", JSON.stringify(report.page_errors));
