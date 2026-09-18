@@ -183,7 +183,8 @@ export class SupervisorLoopController {
     retryCount = 0,
     maxRetries = 2,
     handoff = false,
-    ownerReconcile = false
+    ownerReconcile = false,
+    ownerRecheck = false
   }) {
     const state = validateProjectState(projectState);
     const resolved = this.resolveWorkUiObservation(probe, {
@@ -215,7 +216,10 @@ export class SupervisorLoopController {
     });
 
     if (decision.action === ACTIONS.CONTINUE) {
-      if (!this.armed) {
+      const ownerRecheckMayReleaseProgressLatch =
+        ownerReconcile && ownerRecheck;
+
+      if (!this.armed && !ownerRecheckMayReleaseProgressLatch) {
         return {
           decision,
           execution: {
@@ -225,6 +229,13 @@ export class SupervisorLoopController {
             reason: "awaiting observable assistant progress"
           }
         };
+      }
+
+      if (!this.armed && ownerRecheckMayReleaseProgressLatch) {
+        this.onEvent({
+          type: "OWNER_RECHECK_PROGRESS_LATCH_RELEASED",
+          reason: "Explicit Owner recheck permits one reconciliation attempt; business/security gates remain unchanged."
+        });
       }
 
       const elapsed = this.now() - this.lastActionAt;
