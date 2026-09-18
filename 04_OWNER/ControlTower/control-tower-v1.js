@@ -153,7 +153,7 @@ async function boot() {
   const workforce = await loadSectionSafely(
     async () => await loadWorkforceAttention(core),
     {
-      source: "get_manager_transfer_requests + list_schedule_generations",
+      source: "get_manager_transfer_requests + list_schedule_generations + get_workforce_staffing_requirements + get_schedule_generation_assignments",
       message: "Nguồn Workforce tạm thời không khả dụng."
     }
   );

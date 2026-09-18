@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-021 — Control Tower staffing-gap integration**
+**TASK-022 — People/Shift browser E2E + Day-10 usability gate**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Run **TASK-021 — Control Tower staffing-gap integration**. Extend the existing Workforce attention adapter to consume the verified staffing-gap reader, preserve section-local failure isolation, avoid duplicate workflow/write logic, then rerun adapter/integration and browser regression.
+Run **TASK-022 — People/Shift browser E2E + Day-10 usability gate**. Exercise the existing Owner Workforce and Employee availability/schedule flow with deterministic sanitized mocks, verify the generation→review→publish contract and approved schedule visibility, assert no unexpected browser/network errors, then close the Day-10 gate or open only reproducible defects.
 
 ## Session handoff
 

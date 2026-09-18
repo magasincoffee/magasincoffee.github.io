@@ -176,6 +176,25 @@ test("existing generation with zero active requirements is a verified zero gap",
   assert.equal(section.generationId, "g1");
 });
 
+test("preloaded generation rows avoid a duplicate generation RPC", async () => {
+  const { core, calls } = coreFixture({
+    requirements: [],
+    assignments: []
+  });
+
+  const section = await loadStoreStaffingGap(core, {
+    storeId: "s1",
+    generationRows: [{ id: "g-preloaded", status: "DRAFT" }]
+  });
+
+  assert.equal(section.quality, "ACTUAL");
+  assert.equal(section.staffingGapCount, 0);
+  assert.equal(
+    calls.some((call) => call.name === "list_schedule_generations"),
+    false
+  );
+});
+
 test("missing generation fails closed instead of fabricating zero", async () => {
   const { core, calls } = coreFixture({
     generations: []

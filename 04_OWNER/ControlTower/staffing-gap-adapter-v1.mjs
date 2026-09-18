@@ -167,6 +167,7 @@ export async function loadStoreStaffingGap(
   {
     storeId,
     weekStart = core?.date?.monday?.(),
+    generationRows,
     now = () => new Date()
   } = {}
 ) {
@@ -183,14 +184,23 @@ export async function loadStoreStaffingGap(
   }
 
   try {
-    const generations = await readArrayRpc(
-      core,
-      "list_schedule_generations",
-      {
-        p_store_id: storeId,
-        p_week_start: weekStart
+    let generations;
+    if (generationRows === undefined) {
+      generations = await readArrayRpc(
+        core,
+        "list_schedule_generations",
+        {
+          p_store_id: storeId,
+          p_week_start: weekStart
+        }
+      );
+    } else {
+      if (!Array.isArray(generationRows)) {
+        throw new Error("MALFORMED_GENERATION_SOURCE");
       }
-    );
+      generations = generationRows;
+    }
+
     const generation = selectScheduleGeneration(generations);
 
     if (!generation?.id) {
