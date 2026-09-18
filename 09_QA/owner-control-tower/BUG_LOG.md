@@ -58,3 +58,16 @@
 - Fix: authentication now returns through its own denial boundary; every post-auth source loader is wrapped by `loadSectionSafely`, which converts unexpected failures to section-local `GAP` without leaking backend error details.
 - Regression evidence: pre-fix run `35315562834` failed; fixed HEAD run `35315590063` passed.
 - Status: VERIFIED
+
+
+## BUG-CT-006 — Browser E2E treats expected Owner denial diagnostic as failure
+
+- Date: 2026-09-18
+- Component: `09_QA/owner-control-tower/browser-e2e.mjs`
+- Reproduction: execute the non-Owner denial scenario while collecting all browser `console.error` entries as unexpected failures.
+- Observed: the expected `[CONTROL_TOWER_AUTH] ... Chỉ Owner được mở Control Tower` diagnostic makes the E2E fail even though the denied screen is correct and the dashboard remains hidden.
+- Impact: false-negative browser gate blocks TASK-018 despite correct access-control behavior.
+- Root cause: the harness did not distinguish the explicitly exercised denial-path diagnostic from unexpected application console errors.
+- Fix: ignore only the exact expected denied-auth diagnostic on the denied scenario; every other console error remains a failing gate.
+- Regression evidence: run `35316203307` failed only this check; run `35316292673` passed all browser gates.
+- Status: VERIFIED
