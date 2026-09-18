@@ -1,0 +1,85 @@
+name: TASK-035 Runner Capability Diagnostic
+
+on:
+  push:
+    branches:
+      - ops/task-035-runner-diagnostic
+    paths:
+      - .github/workflows/task-035-runner-diagnostic.yml
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: self-hosted
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Privacy-safe local capability check
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "SilentlyContinue"
+
+          function Has-Command([string]$Name) {
+            return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
+          }
+
+          function Env-Present([string]$Name) {
+            $value = [Environment]::GetEnvironmentVariable($Name)
+            return -not [string]::IsNullOrWhiteSpace($value)
+          }
+
+          Write-Host "TASK035_DIAGNOSTIC_BEGIN"
+          Write-Host ("RUNNER_OS_WINDOWS=" + ($env:RUNNER_OS -eq "Windows"))
+          Write-Host ("HAS_GIT=" + (Has-Command "git"))
+          Write-Host ("HAS_NODE=" + (Has-Command "node"))
+          Write-Host ("HAS_PYTHON=" + ((Has-Command "python") -or (Has-Command "py")))
+          Write-Host ("HAS_SUPABASE_CLI=" + (Has-Command "supabase"))
+          Write-Host ("HAS_GCLOUD_CLI=" + (Has-Command "gcloud"))
+
+          $chromeCandidates = @(
+            "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+            "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+            "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
+          )
+          $hasChrome = $false
+          foreach ($candidate in $chromeCandidates) {
+            if ($candidate -and (Test-Path $candidate)) { $hasChrome = $true; break }
+          }
+          Write-Host ("HAS_CHROME=" + $hasChrome)
+
+          $chromeProfile = Join-Path $env:LOCALAPPDATA "Google\Chrome\User Data"
+          Write-Host ("HAS_CHROME_USER_DATA=" + (Test-Path $chromeProfile))
+
+          Write-Host ("ENV_SUPABASE_ACCESS_TOKEN=" + (Env-Present "SUPABASE_ACCESS_TOKEN"))
+          Write-Host ("ENV_GMAIL_OAUTH_CLIENT_ID=" + (Env-Present "GMAIL_OAUTH_CLIENT_ID"))
+          Write-Host ("ENV_GMAIL_OAUTH_CLIENT_SECRET=" + (Env-Present "GMAIL_OAUTH_CLIENT_SECRET"))
+          Write-Host ("ENV_GMAIL_OAUTH_REFRESH_TOKEN=" + (Env-Present "GMAIL_OAUTH_REFRESH_TOKEN"))
+          Write-Host ("ENV_MAGASIN_EMAIL_PROVIDER=" + (Env-Present "MAGASIN_EMAIL_PROVIDER"))
+          Write-Host ("ENV_MAGASIN_EMAIL_FROM=" + (Env-Present "MAGASIN_EMAIL_FROM"))
+
+          if (Has-Command "supabase") {
+            $null = supabase --version 2>$null
+            $projects = supabase projects list -o json 2>$null
+            $supabaseAuthenticated = ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace(($projects | Out-String)))
+            Write-Host ("SUPABASE_CLI_AUTHENTICATED=" + $supabaseAuthenticated)
+            $projectVisible = $false
+            if ($supabaseAuthenticated) {
+              $projectVisible = (($projects | Out-String) -match "menvbzlsncmpuvnaifxa")
+            }
+            Write-Host ("SUPABASE_PROJECT_VISIBLE=" + $projectVisible)
+          } else {
+            Write-Host "SUPABASE_CLI_AUTHENTICATED=False"
+            Write-Host "SUPABASE_PROJECT_VISIBLE=False"
+          }
+
+          if (Has-Command "gcloud") {
+            $active = gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>$null
+            $gcloudAuthenticated = ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace(($active | Out-String)))
+            Write-Host ("GCLOUD_AUTHENTICATED=" + $gcloudAuthenticated)
+          } else {
+            Write-Host "GCLOUD_AUTHENTICATED=False"
+          }
+
+          Write-Host "TASK035_DIAGNOSTIC_END"
