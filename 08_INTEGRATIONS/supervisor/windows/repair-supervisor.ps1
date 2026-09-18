@@ -1,0 +1,226 @@
+param(
+    [switch]$SkipGitPull
+)
+
+$ErrorActionPreference = 'Stop'
+
+$sourceRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$repoRoot = (Resolve-Path (Join-Path $sourceRoot '..\..')).Path
+$installScript = Join-Path $sourceRoot 'windows\install-supervisor.ps1'
+$root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
+$runtime = Join-Path $root 'runtime'
+$runtimeLoop = Join-Path $runtime 'src\runtime\supervisor-loop-cli.mjs'
+$runtimeRun = Join-Path $runtime 'windows\run-supervisor.ps1'
+$runtimeStart = Join-Path $runtime 'windows\start-supervisor.ps1'
+$profile = Join-Path $root 'browser_profile'
+$target = Join-Path $root 'target.json'
+$pidFile = Join-Path $root 'supervisor.pid'
+$logFile = Join-Path $root 'supervisor.log'
+$expectedRuntimeVersion = '2026-09-18.2'
+
+function Write-Step([string]$Message) {
+    Write-Host ""
+    Write-Host "=== $Message ===" -ForegroundColor Cyan
+}
+
+function Stop-DedicatedSupervisorChrome {
+    Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" } |
+        ForEach-Object {
+            Write-Host "Stopping dedicated Supervisor Chrome PID $($_.ProcessId)."
+            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+        }
+}
+
+function Require-Command([string]$Name) {
+    if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
+        throw "Required command not found: $Name"
+    }
+}
+
+function Assert-SourceFingerprint {
+    $loopSource = Join-Path $sourceRoot 'src\runtime\supervisor-loop-cli.mjs'
+    $runSource = Join-Path $sourceRoot 'windows\run-supervisor.ps1'
+
+    if (-not (Select-String -Path $loopSource -SimpleMatch $expectedRuntimeVersion -Quiet)) {
+        throw "Source does not contain Supervisor runtime version $expectedRuntimeVersion."
+    }
+    if (-not (Select-String -Path $runSource -SimpleMatch 'Get-FreeCdpPort' -Quiet)) {
+        throw 'Source is missing Get-FreeCdpPort.'
+    }
+    if (-not (Select-String -Path $runSource -SimpleMatch 'Test-DedicatedCdpEndpoint' -Quiet)) {
+        throw 'Source is missing Test-DedicatedCdpEndpoint.'
+    }
+}
+
+function Assert-InstalledFingerprint {
+    if (-not (Test-Path $runtimeLoop)) {
+        throw "Installed runtime loop missing: $runtimeLoop"
+    }
+    if (-not (Test-Path $runtimeRun)) {
+        throw "Installed runtime launcher missing: $runtimeRun"
+    }
+    if (-not (Select-String -Path $runtimeLoop -SimpleMatch $expectedRuntimeVersion -Quiet)) {
+        throw "Installed runtime is not version $expectedRuntimeVersion."
+    }
+    if (-not (Select-String -Path $runtimeRun -SimpleMatch 'Get-FreeCdpPort' -Quiet)) {
+        throw 'Installed runtime is missing Get-FreeCdpPort.'
+    }
+    if (-not (Select-String -Path $runtimeRun -SimpleMatch 'Test-DedicatedCdpEndpoint' -Quiet)) {
+        throw 'Installed runtime is missing Test-DedicatedCdpEndpoint.'
+    }
+}
+
+try {
+    Write-Step '1/7 Verify prerequisites'
+    Require-Command 'git'
+    Require-Command 'node'
+    Require-Command 'npm'
+
+    $nodeVersion = (& node --version).Trim()
+    if ($LASTEXITCODE -ne 0) { throw 'node --version failed.' }
+    $nodeMajor = [int](($nodeVersion -replace '^v','').Split('.')[0])
+    if ($nodeMajor -lt 20) {
+        throw "Node.js 20+ is required; found $nodeVersion."
+    }
+    Write-Host "Node: $nodeVersion"
+    Write-Host "Repository: $repoRoot"
+
+    if (-not $SkipGitPull) {
+        Write-Step '2/7 Update repository main'
+        $branchName = (& git -C $repoRoot branch --show-current).Trim()
+        if ($LASTEXITCODE -ne 0) { throw 'Could not read current Git branch.' }
+        if ($branchName -ne 'main') {
+            throw "Repository must be on main; current branch is '$branchName'."
+        }
+
+        $dirty = & git -C $repoRoot status --porcelain
+        if ($LASTEXITCODE -ne 0) { throw 'git status failed.' }
+        if ($dirty) {
+            throw 'Repository has local changes. Repair stopped to avoid overwriting them.'
+        }
+
+        & git -C $repoRoot pull --ff-only origin main
+        if ($LASTEXITCODE -ne 0) { throw 'git pull --ff-only origin main failed.' }
+    } else {
+        Write-Step '2/7 Repository update skipped by request'
+    }
+
+    Assert-SourceFingerprint
+    Write-Host "Source fingerprint: PASS ($expectedRuntimeVersion)"
+
+    Write-Step '3/7 Stop old Supervisor runtime'
+    $installedStop = Join-Path $runtime 'windows\stop-supervisor.ps1'
+    if (Test-Path $installedStop) {
+        & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installedStop
+    } elseif (Test-Path $pidFile) {
+        $pidValue = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($pidValue -and (Get-Process -Id $pidValue -ErrorAction SilentlyContinue)) {
+            & taskkill.exe /PID $pidValue /T /F | Out-Host
+        }
+        Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+    }
+    Stop-DedicatedSupervisorChrome
+    Start-Sleep -Milliseconds 750
+
+    Write-Step '4/7 Install fresh runtime'
+    if (-not (Test-Path $installScript)) {
+        throw "Installer missing: $installScript"
+    }
+    & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installScript -SourceRoot $sourceRoot
+    if ($LASTEXITCODE -ne 0) {
+        throw "Installer exited with code $LASTEXITCODE."
+    }
+
+    Write-Step '5/7 Verify installed runtime'
+    Assert-InstalledFingerprint
+    Write-Host "Installed runtime fingerprint: PASS ($expectedRuntimeVersion)"
+
+    if (-not (Test-Path $target)) {
+        throw "ChatGPT target is missing: $target. Installation succeeded, but one-time target setup is required before START."
+    }
+
+    Write-Step '6/7 Start Supervisor and verify boot'
+    $beforeCount = 0
+    if (Test-Path $logFile) {
+        $beforeCount = @(Get-Content $logFile -ErrorAction SilentlyContinue).Count
+    }
+
+    & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $runtimeStart -Hidden
+    if ($LASTEXITCODE -ne 0) {
+        throw "Supervisor START exited with code $LASTEXITCODE."
+    }
+
+    $bootVerified = $false
+    $newLines = @()
+    for ($i = 0; $i -lt 20; $i++) {
+        Start-Sleep -Seconds 1
+
+        if (Test-Path $logFile) {
+            $allLines = @(Get-Content $logFile -ErrorAction SilentlyContinue)
+            if ($allLines.Count -gt $beforeCount) {
+                $newLines = @($allLines | Select-Object -Skip $beforeCount)
+                if ($newLines -match "RUNTIME_BOOT.*version=$([regex]::Escape($expectedRuntimeVersion))") {
+                    $bootVerified = $true
+                    break
+                }
+            }
+        }
+    }
+
+    if (-not $bootVerified) {
+        $tail = if (Test-Path $logFile) {
+            (Get-Content $logFile -Tail 12 -ErrorAction SilentlyContinue) -join [Environment]::NewLine
+        } else {
+            'Supervisor log not found.'
+        }
+        throw "Supervisor did not emit RUNTIME_BOOT version=$expectedRuntimeVersion within 20 seconds.
+$tail"
+    }
+
+    Write-Host "Runtime boot marker: PASS (version=$expectedRuntimeVersion)"
+
+    Write-Step '7/7 Runtime status'
+    Start-Sleep -Seconds 2
+
+    $pidValue = if (Test-Path $pidFile) {
+        Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
+    } else {
+        $null
+    }
+
+    if (-not $pidValue -or -not (Get-Process -Id $pidValue -ErrorAction SilentlyContinue)) {
+        throw 'Supervisor wrapper process is not running after verified boot.'
+    }
+
+    Write-Host "Supervisor PID: $pidValue"
+    Write-Host 'Last safe log lines:'
+    Get-Content $logFile -Tail 10 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
+
+    $statusFile = Join-Path $root 'runtime-status.json'
+    if (Test-Path $statusFile) {
+        try {
+            $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            Write-Host ""
+            Write-Host "Runtime status: $($status.status)"
+            Write-Host "Task: $($status.current_task) — $($status.current_task_title)"
+            if ($status.error_name) { Write-Host "Error: $($status.error_name)" -ForegroundColor Yellow }
+        } catch {}
+    }
+
+    $shortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'MAGASIN BUSINESS OS CONTROL.lnk'
+    if (Test-Path $shortcutPath) {
+        Start-Process $shortcutPath
+    }
+
+    Write-Host ""
+    Write-Host 'REPAIR_RESULT=PASS' -ForegroundColor Green
+    Write-Host 'Supervisor was reinstalled from current main and booted with the expected runtime version.'
+} catch {
+    Write-Host ""
+    Write-Host 'REPAIR_RESULT=FAIL' -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host ""
+    Write-Host 'Do not retry repeatedly. Copy or screenshot this result for diagnosis.' -ForegroundColor Yellow
+    exit 1
+}
