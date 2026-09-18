@@ -3,7 +3,7 @@
 **Phase:** P1_SCHEDULE_FIRST_CORE_FLOW  
 **Task:** TASK-031 — Manager allocation + robot proposal + publish slice  
 **Date:** 2026-09-18  
-**Status:** IMPLEMENTED_PENDING_E2E_GATE
+**Status:** VERIFIED
 
 ## Five-Step
 
