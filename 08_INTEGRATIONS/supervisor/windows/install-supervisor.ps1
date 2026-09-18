@@ -55,15 +55,35 @@ try {
     Pop-Location
 }
 
-$startTarget = Join-Path $runtime 'windows\start-supervisor.ps1'
-$stopTarget = Join-Path $runtime 'windows\stop-supervisor.ps1'
+$panelTarget = Join-Path $runtime 'windows\control-panel.ps1'
+if (-not (Test-Path $panelTarget)) {
+    throw "Control panel is missing from installed runtime: $panelTarget"
+}
 
-$startCmd = Join-Path $desktop 'START_MAGASIN_SUPERVISOR.cmd'
-$stopCmd = Join-Path $desktop 'STOP_MAGASIN_SUPERVISOR.cmd'
+# The unified control panel replaces old separate START/STOP launchers and the
+# unrelated SAYDI panel that may have been installed by another repository.
+@(
+    'START_MAGASIN_SUPERVISOR.cmd',
+    'STOP_MAGASIN_SUPERVISOR.cmd',
+    'START_MAGASIN_SUPERVISOR.lnk',
+    'STOP_MAGASIN_SUPERVISOR.lnk',
+    'SAYDI CONTROL.lnk'
+) | ForEach-Object {
+    $old = Join-Path $desktop $_
+    if (Test-Path $old) {
+        Remove-Item $old -Force -ErrorAction SilentlyContinue
+    }
+}
 
-Set-Content -Path $startCmd -Encoding ascii -Value "@echo off`r`npowershell -NoLogo -ExecutionPolicy Bypass -File `"$startTarget`"`r`n"
-Set-Content -Path $stopCmd -Encoding ascii -Value "@echo off`r`npowershell -NoLogo -ExecutionPolicy Bypass -File `"$stopTarget`"`r`n"
+$shortcutPath = Join-Path $desktop 'MAGASIN BUSINESS OS CONTROL.lnk'
+$wsh = New-Object -ComObject WScript.Shell
+$shortcut = $wsh.CreateShortcut($shortcutPath)
+$shortcut.TargetPath = 'powershell.exe'
+$shortcut.Arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $panelTarget + '"'
+$shortcut.WorkingDirectory = $runtime
+$shortcut.Description = 'MAGASIN Business OS Supervisor Robot control panel'
+$shortcut.Save()
 
 Write-Host "Installed runtime: $runtime"
-Write-Host "Desktop START: $startCmd"
-Write-Host "Desktop STOP: $stopCmd"
+Write-Host "Unified control panel: $shortcutPath"
+Write-Host 'Old separate START/STOP and unrelated SAYDI desktop shortcuts were removed when present.'

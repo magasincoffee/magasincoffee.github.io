@@ -5,6 +5,7 @@ import { setTimeout as delay } from "node:timers/promises";
 
 import { SupervisorSession } from "./session.mjs";
 import { SupervisorLoopController } from "./loop.mjs";
+import { buildRuntimeStatus, defaultRuntimeStatusPath, writeRuntimeStatus } from "./status.mjs";
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
@@ -36,7 +37,7 @@ function localRoot() {
 async function fetchProjectState(url) {
   const response = await fetch(url, {
     cache: "no-store",
-    headers: { "user-agent": "MAGASIN-Supervisor/0.1" }
+    headers: { "user-agent": "MAGASIN-Supervisor/0.2" }
   });
   if (!response.ok) {
     throw new Error(`project state fetch failed: HTTP ${response.status}`);
@@ -67,6 +68,17 @@ async function safeAppendLog(logPath, event) {
   await fs.appendFile(logPath, JSON.stringify(safe) + "\n", "utf8");
 }
 
+function statusForStep(result, probe) {
+  const action = result?.decision?.action;
+  const observation = probe?.classification?.observation;
+  if (action === "STOP_DONE") return "DONE";
+  if (action === "STOP_WAIT_USER") return "WAIT_USER";
+  if (action === "RETRY") return "RETRYING";
+  if (observation === "ASSISTANT_RUNNING") return "RUNNING";
+  if (action === "CONTINUE") return result?.execution?.executed ? "RUNNING" : "READY";
+  return "READY";
+}
+
 const args = parseArgs(process.argv.slice(2));
 if (!Number.isFinite(args.pollMs) || args.pollMs < 1000) {
   throw new TypeError("poll-ms must be at least 1000");
@@ -76,6 +88,7 @@ const root = localRoot();
 const targetPath = args.targetPath || path.join(root, "target.json");
 const stopPath = path.join(root, "STOP");
 const logPath = path.join(root, "supervisor.log");
+const runtimeStatusPath = defaultRuntimeStatusPath();
 const target = validateTarget(JSON.parse(await fs.readFile(targetPath, "utf8")));
 
 const session = new SupervisorSession({
@@ -94,17 +107,50 @@ const controller = new SupervisorLoopController({
 });
 
 let retryCount = 0;
+let lastProjectState = {};
+
+await writeRuntimeStatus(
+  buildRuntimeStatus({
+    projectState: lastProjectState,
+    status: args.execute ? "STARTING" : "DRY_RUN"
+  }),
+  runtimeStatusPath
+).catch(() => {});
 
 while (true) {
   try {
     await fs.access(stopPath);
     await safeAppendLog(logPath, { type: "STOP_SENTINEL" });
+    await writeRuntimeStatus(
+      buildRuntimeStatus({
+        projectState: lastProjectState,
+        status: "STOPPED",
+        retryCount
+      }),
+      runtimeStatusPath
+    ).catch(() => {});
     process.exitCode = 0;
     break;
   } catch {}
 
   try {
     const projectState = await fetchProjectState(args.stateUrl);
+    lastProjectState = projectState;
+
+    if (
+      projectState.status === "DONE"
+    ) {
+      await writeRuntimeStatus(
+        buildRuntimeStatus({
+          projectState,
+          status: "DONE",
+          retryCount
+        }),
+        runtimeStatusPath
+      ).catch(() => {});
+      await delay(args.pollMs);
+      continue;
+    }
 
     if (
       projectState.requires_user ||
@@ -113,6 +159,14 @@ while (true) {
       projectState.status === "BLOCKED"
     ) {
       await safeAppendLog(logPath, { type: "WAIT_USER" });
+      await writeRuntimeStatus(
+        buildRuntimeStatus({
+          projectState,
+          status: "WAIT_USER",
+          retryCount
+        }),
+        runtimeStatusPath
+      ).catch(() => {});
       await delay(args.pollMs);
       continue;
     }
@@ -153,11 +207,33 @@ while (true) {
       action: result.decision.action,
       target: result.execution.target || undefined
     });
+
+    await writeRuntimeStatus(
+      buildRuntimeStatus({
+        projectState,
+        status: statusForStep(result, probe),
+        uiState: probe.classification.uiState,
+        observation: probe.classification.observation,
+        decision: result.decision,
+        execution: result.execution,
+        retryCount
+      }),
+      runtimeStatusPath
+    ).catch(() => {});
   } catch (error) {
     await safeAppendLog(logPath, {
       type: "LOOP_ERROR",
       errorName: error?.name || "Error"
     });
+    await writeRuntimeStatus(
+      buildRuntimeStatus({
+        projectState: lastProjectState,
+        status: "ERROR",
+        retryCount,
+        errorName: error?.name || "Error"
+      }),
+      runtimeStatusPath
+    ).catch(() => {});
     await session.disconnect().catch(() => {});
   }
 
