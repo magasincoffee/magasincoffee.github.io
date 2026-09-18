@@ -1,17 +1,158 @@
 (()=>{'use strict';
-const C=globalThis.MAGASIN_CORE;if(!C)return;const host=()=>document.getElementById('employeeApp'),d=()=>host()?.contentDocument||null,esc=C.security.escapeHtml,hm=C.time.time5,fmt=C.date.formatDate;
-let state={my:[],candidates:[],history:[]};
-function myShiftOptions(){return state.my.map(r=>`<option value="${esc(r.schedule_id||'')}">${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))} · ${esc(r.store_code||r.store_name||'')}</option>`).join('')}
+const C=globalThis.MAGASIN_CORE;if(!C)return;
+const host=()=>document.getElementById('employeeApp'),d=()=>host()?.contentDocument||null;
+const esc=C.security.escapeHtml,hm=C.time.time5,fmt=C.date.formatDate;
+let mode='swap',state={my:[],candidates:[],swapHistory:[],giveHistory:[],profile:null};
+
 function panel(){return d()?.getElementById('view-swap')}
-async function loadMy(){const q=await C.supabase.rpc('list_my_approved_schedules_v2',{p_week_start:C.date.monday()});if(q.error){C.ui.toast('Không tải được ca để đổi: '+q.error.message,'error');return}state.my=Array.isArray(q.data)?q.data:[];const x=panel();const card=x?.querySelector('.swap-card');if(card){const f=[...card.querySelectorAll('.field')];const old=card.querySelector('.employeeSwapSchedule');if(old)old.remove();const wrap=x.ownerDocument.createElement('div');wrap.className='field employeeSwapSchedule';wrap.innerHTML=`<label>Ca của tôi</label><select id="employeeRequesterSchedule">${myShiftOptions()}</select>`;card.insertBefore(wrap, f[0]||null)}await loadCandidates();await loadHistory()}
-async function loadCandidates(){const x=panel(),sel=x?.querySelector('#employeeRequesterSchedule');if(!sel)return;const q=await C.supabase.rpc('list_shift_swap_candidates_v1',{p_requester_schedule_id:sel.value||null});if(q.error){C.ui.toast('Không tải được nhân viên/ca đối ứng: '+q.error.message,'error');return}state.candidates=Array.isArray(q.data)?q.data:[];const box=x.querySelector('#employeeSwapTarget');if(box)box.innerHTML=state.candidates.map(r=>`<option value="${esc(r.schedule_id)}">${esc(r.user_name)} · ${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</option>`).join('')||'<option value="">Không có ca phù hợp</option>'}
-async function submit(){const x=panel(),req=x?.querySelector('#employeeRequesterSchedule'),target=x?.querySelector('#employeeSwapTarget'),reason=x?.querySelector('#employeeSwapReason');if(!req?.value||!target?.value)return show('Vui lòng chọn ca của bạn và ca muốn đổi.');const reasonText=String(reason?.value||'').trim();if(!reasonText)return show('Vui lòng nhập lý do đổi ca.');const q=await C.supabase.rpc('submit_shift_swap_request',{p_requester_schedule_id:req.value,p_target_schedule_id:target.value,p_reason:reasonText});if(q.error)return show('Gửi yêu cầu thất bại: '+q.error.message);show('Đã gửi yêu cầu đổi ca.');C.ui.toast('Đã gửi yêu cầu đổi ca.','success');await loadHistory()}
-async function loadHistory(){const q=await C.supabase.rpc('list_my_shift_swaps_v2');if(q.error)return;state.history=Array.isArray(q.data)?q.data:[];const x=panel(),box=x?.querySelector('#historyList');if(!box)return;box.innerHTML=state.history.length?state.history.map(r=>`<div class="history-item"><div><b>${esc(fmt(r.requester_date))} · ${esc(hm(r.requester_start))}–${esc(hm(r.requester_end))} · ${esc(r.store_code||'')}</b><div class="muted">${esc(r.target_user_name||'')} · ${esc(r.target_date?fmt(r.target_date):'')}</div></div><span class="badge ${String(r.status).toUpperCase()==='APPROVED'?'green':String(r.status).toUpperCase()==='REJECTED'?'red':'amber'}">${esc(r.status||'PENDING')}</span></div>`).join(''):'<div class="empty">Chưa có yêu cầu đổi ca.</div>'}
 function show(t){const x=panel(),e=x?.querySelector('#swapResult');if(e){e.textContent=t;e.classList.add('open')}}
-function configure(x){if(!x||x.dataset.employeeSwapEngine==='1')return;x.dataset.employeeSwapEngine='1';x.querySelectorAll('[onclick^="openSwapForm"]').forEach(b=>{const old=b.getAttribute('onclick');b.removeAttribute('onclick');const give=old.includes("'give'");if(give){b.dataset.giveShiftState='NOT_CONNECTED';b.setAttribute('aria-disabled','true');b.style.opacity='.62';b.style.cursor='not-allowed';const p=b.querySelector('p');if(p)p.textContent='Chưa kết nối backend Cho ca; không gửi yêu cầu Swap thay thế.';b.addEventListener('click',()=>C.ui.toast('Cho ca chưa có backend transfer đã xác minh.','error'))}else b.addEventListener('click',openForm)});x.querySelectorAll('[onclick="backToSwapChoices()"]') .forEach(b=>{b.removeAttribute('onclick');b.addEventListener('click',back)});x.querySelector('[onclick="sendSwapRequest()"]')?.removeAttribute('onclick');x.querySelector('#swapForm .swap-actions .btn.primary')?.addEventListener('click',submit);x.querySelector('[onclick="sendSwapRequest()"]')?.addEventListener('click',submit);x.querySelector('#employeeRequesterSchedule')?.addEventListener('change',loadCandidates)}
-function openForm(){const x=panel();if(!x)return;x.querySelector('#swapChoices')?.setAttribute('style','display:none');x.querySelector('#swapForm')?.classList.add('open');const extra=x.querySelector('#swapExtra'),hint=x.querySelector('#giveOnlyHint');if(extra)extra.style.display='block';if(hint)hint.style.display='none';loadMy()}
+function myShiftOptions(){return state.my.map(r=>`<option value="${esc(r.schedule_id||'')}">${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))} · ${esc(r.store_code||r.store_name||'')}</option>`).join('')}
+function statusBadge(status){const s=String(status||'').toUpperCase();return s==='APPROVED'?'green':s.startsWith('REJECTED')?'red':s==='PENDING_MANAGER'?'blue':'amber'}
+function statusLabel(status){return ({PENDING_RECIPIENT:'Chờ người nhận',PENDING_MANAGER:'Chờ quản lý',APPROVED:'Đã duyệt',REJECTED_RECIPIENT:'Người nhận từ chối',REJECTED_MANAGER:'Quản lý từ chối',PENDING:'Đang chờ',REJECTED:'Đã từ chối'})[String(status||'').toUpperCase()]||String(status||'')}
+
+async function loadProfile(){
+  if(state.profile)return state.profile;
+  try{
+    state.profile=await C.supabase.getProfile?.()||null;
+  }catch(_){state.profile=null}
+  return state.profile;
+}
+
+async function loadMy(){
+  const q=await C.supabase.rpc('list_my_approved_schedules_v2',{p_week_start:C.date.monday()});
+  if(q.error){C.ui.toast('Không tải được ca của bạn: '+q.error.message,'error');return}
+  state.my=Array.isArray(q.data)?q.data:[];
+  const x=panel(),card=x?.querySelector('.swap-card');
+  if(card){
+    card.querySelector('.employeeSwapSchedule')?.remove();
+    const wrap=x.ownerDocument.createElement('div');
+    wrap.className='field employeeSwapSchedule';
+    wrap.innerHTML=`<label>Ca của tôi</label><select id="employeeRequesterSchedule">${myShiftOptions()}</select>`;
+    card.appendChild(wrap);
+    wrap.querySelector('#employeeRequesterSchedule')?.addEventListener('change',loadCandidates);
+  }
+  await loadCandidates();
+  await loadHistory();
+}
+
+async function loadCandidates(){
+  const x=panel(),sel=x?.querySelector('#employeeRequesterSchedule'),box=x?.querySelector('#employeeSwapTarget');
+  if(!sel||!box)return;
+  const name=mode==='give'?'list_shift_give_candidates_v1':'list_shift_swap_candidates_v1';
+  const args=mode==='give'?{p_schedule_id:sel.value||null}:{p_requester_schedule_id:sel.value||null};
+  const q=await C.supabase.rpc(name,args);
+  if(q.error){C.ui.toast('Không tải được người phù hợp: '+q.error.message,'error');return}
+  state.candidates=Array.isArray(q.data)?q.data:[];
+  box.innerHTML=state.candidates.length
+    ?state.candidates.map(r=>mode==='give'
+      ?`<option value="${esc(r.user_id)}">${esc(r.user_name)} · ${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</option>`
+      :`<option value="${esc(r.schedule_id)}">${esc(r.user_name)} · ${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</option>`).join('')
+    :'<option value="">Không có người/ca phù hợp</option>';
+}
+
+async function submit(){
+  const x=panel(),req=x?.querySelector('#employeeRequesterSchedule'),target=x?.querySelector('#employeeSwapTarget'),reason=x?.querySelector('#employeeSwapReason');
+  if(!req?.value||!target?.value)return show(mode==='give'?'Vui lòng chọn ca của bạn và người nhận.':'Vui lòng chọn ca của bạn và ca muốn đổi.');
+  const reasonText=String(reason?.value||'').trim();
+  if(!reasonText)return show(mode==='give'?'Vui lòng nhập lý do cho ca.':'Vui lòng nhập lý do đổi ca.');
+  const rpcName=mode==='give'?'submit_shift_give_request':'submit_shift_swap_request';
+  const args=mode==='give'
+    ?{p_schedule_id:req.value,p_recipient_user_id:target.value,p_reason:reasonText}
+    :{p_requester_schedule_id:req.value,p_target_schedule_id:target.value,p_reason:reasonText};
+  const q=await C.supabase.rpc(rpcName,args);
+  if(q.error)return show('Gửi yêu cầu thất bại: '+q.error.message);
+  const message=mode==='give'?'Đã gửi yêu cầu cho ca. Chờ người nhận đồng ý.':'Đã gửi yêu cầu đổi ca.';
+  show(message);C.ui.toast(message,'success');await loadHistory();
+}
+
+async function respondGive(id,accept){
+  const q=await C.supabase.rpc('respond_shift_give_request',{p_give_id:id,p_accept:!!accept});
+  if(q.error){C.ui.toast('Xử lý yêu cầu cho ca thất bại: '+q.error.message,'error');return}
+  C.ui.toast(accept?'Đã đồng ý nhận ca. Yêu cầu đang chờ quản lý duyệt.':'Đã từ chối nhận ca.',accept?'success':'info');
+  await loadHistory();
+}
+
+async function loadHistory(){
+  await loadProfile();
+  const [swapQ,giveQ]=await Promise.all([
+    C.supabase.rpc('list_my_shift_swaps_v2'),
+    C.supabase.rpc('list_my_shift_gives_v1')
+  ]);
+  state.swapHistory=swapQ.error?[]:(Array.isArray(swapQ.data)?swapQ.data:[]);
+  state.giveHistory=giveQ.error?[]:(Array.isArray(giveQ.data)?giveQ.data:[]);
+  renderHistory();
+}
+
+function renderHistory(){
+  const x=panel(),box=x?.querySelector('#historyList');if(!box)return;
+  const rows=[];
+  for(const r of state.giveHistory){
+    const incoming=state.profile?.id&&String(r.recipient_id)===String(state.profile.id);
+    const actions=incoming&&String(r.status).toUpperCase()==='PENDING_RECIPIENT'
+      ?`<div style="display:flex;gap:6px;margin-top:8px"><button class="btn secondary js-give-reject" data-id="${esc(r.id)}">Từ chối</button><button class="btn primary js-give-accept" data-id="${esc(r.id)}">Đồng ý nhận ca</button></div>`:'';
+    rows.push(`<div class="history-item"><div><b>Cho ca · ${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</b><div class="muted">${incoming?'Từ '+esc(r.giver_name||'Nhân viên'):'Cho '+esc(r.recipient_name||'Nhân viên')} · ${esc(r.store_code||'')} · ${esc(r.reason||'')}</div>${actions}</div><span class="badge ${statusBadge(r.status)}">${esc(statusLabel(r.status))}</span></div>`);
+  }
+  for(const r of state.swapHistory){
+    rows.push(`<div class="history-item"><div><b>Đổi ca · ${esc(fmt(r.requester_date))} · ${esc(hm(r.requester_start))}–${esc(hm(r.requester_end))} · ${esc(r.store_code||'')}</b><div class="muted">${esc(r.target_user_name||'')} · ${esc(r.target_date?fmt(r.target_date):'')}</div></div><span class="badge ${statusBadge(r.status)}">${esc(statusLabel(r.status))}</span></div>`);
+  }
+  box.innerHTML=rows.length?rows.join(''):'<div class="empty">Chưa có yêu cầu đổi/cho ca.</div>';
+  box.querySelectorAll('.js-give-accept').forEach(b=>b.addEventListener('click',()=>respondGive(b.dataset.id,true)));
+  box.querySelectorAll('.js-give-reject').forEach(b=>b.addEventListener('click',()=>respondGive(b.dataset.id,false)));
+}
+
+function openForm(nextMode){
+  mode=nextMode==='give'?'give':'swap';
+  const x=panel();if(!x)return;
+  x.querySelector('#swapChoices')?.setAttribute('style','display:none');
+  x.querySelector('#swapForm')?.classList.add('open');
+  const title=x.querySelector('#swapFormTitle'),sub=x.querySelector('#swapFormSub'),partner=x.querySelector('#partnerTitle');
+  if(title)title.textContent=mode==='give'?'Cho ca':'Đổi ca';
+  if(sub)sub.textContent=mode==='give'?'Chọn ca của bạn và người sẽ nhận ca.':'Chọn ca của bạn và ca muốn đổi.';
+  if(partner)partner.textContent=mode==='give'?'Người nhận ca':'Ca muốn đổi';
+  const label=x.querySelector('#employeeSwapTarget')?.closest('.field')?.querySelector('label');
+  if(label)label.textContent=mode==='give'?'Nhân viên nhận ca':'Nhân viên / ca đối ứng';
+  loadMy();
+}
 function back(){const x=panel();if(!x)return;x.querySelector('#swapChoices')?.setAttribute('style','');x.querySelector('#swapForm')?.classList.remove('open')}
-function renderForm(){const x=panel();if(!x)return;const card=x.querySelector('.swap-card:nth-child(2)');if(!card)return;const fields=card.querySelector('.field');if(fields&&!x.querySelector('#employeeSwapTarget')){const wrap=x.ownerDocument.createElement('div');wrap.className='field';wrap.innerHTML='<label>Ca đối ứng</label><select id="employeeSwapTarget"><option value="">Chọn ca</option></select>';card.insertBefore(wrap,fields.nextSibling||null)}if(!x.querySelector('#employeeSwapReason')){const wrap=x.ownerDocument.createElement('div');wrap.className='field';wrap.innerHTML='<label>Lý do <span aria-hidden="true">*</span></label><input id="employeeSwapReason" type="text" required placeholder="Bắt buộc nhập lý do">';card.appendChild(wrap)}configure(x)}
-function init(){const f=host();if(!f||f.dataset.swapEngine==='1')return;f.dataset.swapEngine='1';f.addEventListener('load',()=>{renderForm();loadHistory()});if(f.contentDocument){renderForm();loadHistory()}}
-globalThis.MAGASIN_EMPLOYEE=globalThis.MAGASIN_EMPLOYEE||{};globalThis.MAGASIN_EMPLOYEE.swap={refresh:()=>{renderForm();loadMy();loadHistory()}};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+
+function configure(x){
+  if(!x||x.dataset.employeeSwapEngine==='1')return;
+  x.dataset.employeeSwapEngine='1';
+  x.querySelectorAll('[onclick^="openSwapForm"]').forEach(b=>{
+    const old=b.getAttribute('onclick')||'';
+    b.removeAttribute('onclick');
+    b.addEventListener('click',()=>openForm(old.includes("'give'")?'give':'swap'));
+  });
+  x.querySelectorAll('[onclick="backToSwapChoices()"]').forEach(b=>{b.removeAttribute('onclick');b.addEventListener('click',back)});
+  x.querySelector('[onclick="sendSwapRequest()"]')?.removeAttribute('onclick');
+  x.querySelector('#swapForm .swap-actions .btn.primary')?.addEventListener('click',submit);
+}
+
+function renderForm(){
+  const x=panel();if(!x)return;
+  const cards=x.querySelectorAll('.swap-card'),card=cards[1];if(!card)return;
+  const firstField=card.querySelector('.field');
+  if(firstField&&!x.querySelector('#employeeSwapTarget')){
+    const wrap=x.ownerDocument.createElement('div');wrap.className='field';
+    wrap.innerHTML='<label>Nhân viên / ca đối ứng</label><select id="employeeSwapTarget"><option value="">Chọn</option></select>';
+    card.insertBefore(wrap,firstField);
+  }
+  if(!x.querySelector('#employeeSwapReason')){
+    const wrap=x.ownerDocument.createElement('div');wrap.className='field';
+    wrap.innerHTML='<label>Lý do <span aria-hidden="true">*</span></label><input id="employeeSwapReason" type="text" required placeholder="Bắt buộc nhập lý do">';
+    card.appendChild(wrap);
+  }
+  const h=x.querySelector('.history-head h3');if(h)h.textContent='Yêu cầu đổi / cho ca';
+  configure(x);
+}
+
+function init(){
+  const f=host();if(!f||f.dataset.swapEngine==='1')return;
+  f.dataset.swapEngine='1';
+  f.addEventListener('load',()=>{renderForm();loadHistory()});
+  if(f.contentDocument){renderForm();loadHistory()}
+}
+globalThis.MAGASIN_EMPLOYEE=globalThis.MAGASIN_EMPLOYEE||{};
+globalThis.MAGASIN_EMPLOYEE.swap={refresh:()=>{renderForm();loadHistory()},openGive:()=>openForm('give'),openSwap:()=>openForm('swap')};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
