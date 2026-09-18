@@ -19,16 +19,26 @@ test("Control Tower payables card exposes all required attention fields", async 
   }
 });
 
-test("Control Tower boot wires trusted procurement adapter after Owner auth", async () => {
-  const source = await fs.readFile(
-    new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
-    "utf8"
-  );
+test("trusted procurement adapter remains behind post-auth source orchestration", async () => {
+  const [appSource, integrationSource] = await Promise.all([
+    fs.readFile(
+      new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
+      "utf8"
+    ),
+    fs.readFile(
+      new URL("../../04_OWNER/ControlTower/source-integration-v1.mjs", import.meta.url),
+      "utf8"
+    )
+  ]);
 
-  const authAt = source.indexOf("await requireOwnerAccess");
-  const adapterAt = source.indexOf("await loadProcurementPayables");
+  const bootAt = appSource.indexOf("async function boot");
+  const authAt = appSource.indexOf("await requireOwnerSession", bootAt);
+  const sourcesAt = appSource.indexOf("await loadControlTowerSources", bootAt);
+
   assert.ok(authAt >= 0);
-  assert.ok(adapterAt > authAt);
-  assert.match(source, /core\.supabase\.get\(\)/);
-  assert.match(source, /payableOverdueOrders/);
+  assert.ok(sourcesAt > authAt);
+  assert.match(appSource, /rawState\.payables = sections\.payables/);
+  assert.match(integrationSource, /import \{ loadProcurementPayables \}/);
+  assert.match(integrationSource, /loadProcurementPayables\(client\)/);
+  assert.match(integrationSource, /core\?\.supabase\?\.get\?\.\(\)/);
 });

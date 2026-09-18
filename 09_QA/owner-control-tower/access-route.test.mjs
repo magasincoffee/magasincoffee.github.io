@@ -64,15 +64,26 @@ test("Control Tower route loads shared auth conventions and explicit UI states",
   assert.match(html, /href="\/03_PLATFORM\/01_AUTH\/"/);
 });
 
-test("Control Tower app authorizes before rendering dashboard state", async () => {
+test("Control Tower authorizes before rendering or loading source state", async () => {
   const source = await fs.readFile(
     new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
     "utf8"
   );
-  const bootAt = source.indexOf("async function boot()");
-  const authAt = source.indexOf("await requireOwnerAccess", bootAt);
-  const renderAt = source.indexOf("render(", authAt);
-  assert.ok(bootAt >= 0);
-  assert.ok(authAt > bootAt);
-  assert.ok(renderAt > authAt);
+
+  const sessionAt = source.indexOf("async function requireOwnerSession");
+  const bootAt = source.indexOf("async function boot");
+  const sessionBlock = source.slice(sessionAt, bootAt);
+  const sessionCallAt = source.indexOf("await requireOwnerSession", bootAt);
+  const guardAt = source.indexOf("if (!profile) return", sessionCallAt);
+  const renderAt = source.indexOf("render(", guardAt);
+  const sourcesAt = source.indexOf("await loadControlTowerSources", guardAt);
+
+  assert.ok(sessionAt >= 0);
+  assert.ok(bootAt > sessionAt);
+  assert.match(sessionBlock, /await requireOwnerAccess/);
+  assert.doesNotMatch(sessionBlock, /loadControlTowerSources/);
+  assert.ok(sessionCallAt > bootAt);
+  assert.ok(guardAt > sessionCallAt);
+  assert.ok(renderAt > guardAt);
+  assert.ok(sourcesAt > renderAt);
 });

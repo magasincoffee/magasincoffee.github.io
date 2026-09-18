@@ -2,17 +2,27 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
-test("Control Tower wires Workforce adapter only after Owner auth", async () => {
-  const source = await fs.readFile(
-    new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
-    "utf8"
-  );
+test("Workforce adapter remains behind post-auth source orchestration", async () => {
+  const [appSource, integrationSource] = await Promise.all([
+    fs.readFile(
+      new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
+      "utf8"
+    ),
+    fs.readFile(
+      new URL("../../04_OWNER/ControlTower/source-integration-v1.mjs", import.meta.url),
+      "utf8"
+    )
+  ]);
 
-  const authAt = source.indexOf("await requireOwnerAccess");
-  const workforceAt = source.indexOf("await loadWorkforceAttention");
+  const bootAt = appSource.indexOf("async function boot");
+  const authAt = appSource.indexOf("await requireOwnerSession", bootAt);
+  const workforceAt = appSource.indexOf("await loadControlTowerSources", bootAt);
+
   assert.ok(authAt >= 0);
   assert.ok(workforceAt > authAt);
-  assert.match(source, /rawState\.workforce = workforce/);
+  assert.match(appSource, /rawState\.workforce = sections\.workforce/);
+  assert.match(integrationSource, /import \{ loadWorkforceAttention \}/);
+  assert.match(integrationSource, /loadWorkforceAttention\(runtimeCore\)/);
 });
 
 test("Workforce card remains a read-only drill-down to existing Workforce", async () => {
