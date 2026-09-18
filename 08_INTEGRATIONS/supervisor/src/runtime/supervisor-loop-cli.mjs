@@ -595,6 +595,29 @@ while (true) {
       maxRetries: 2
     });
 
+    if (
+      result.decision.action === "CONTINUE" &&
+      result.execution.executed &&
+      result.execution.target === "COMPOSER_SEND"
+    ) {
+      await page.waitForTimeout(1200);
+      try {
+        const observedTarget = targetFromUrl(page.url());
+        if (!pageMatchesTarget(page.url(), target)) {
+          target = observedTarget;
+          await writeTarget(targetPath, target);
+          recovery.noteConversationAdopted();
+          await safeAppendLog(logPath, {
+            type: "TARGET_ADOPTED",
+            action: "CONTINUE",
+            target: "NEW_CONVERSATION_PATH",
+            executed: true,
+            reason: "ChatGPT created a new conversation after a Supervisor send; local target updated atomically."
+          });
+        }
+      } catch {}
+    }
+
     if (result.decision.action === "RETRY" && result.execution.executed) {
       retryCount += 1;
     } else if (

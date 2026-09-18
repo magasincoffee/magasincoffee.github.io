@@ -34,6 +34,20 @@ export async function collectSafeUiSnapshot(page) {
         .join(" | ")
         .toLowerCase();
 
+      const nonMessageSurface = Array.from(
+        document.querySelectorAll("main [role='alert'],main [role='status'],main p,main div")
+      )
+        .filter(visible)
+        .filter((el) => !el.closest("[data-message-author-role]"))
+        .filter((el) => el.children.length === 0)
+        .slice(0, 120)
+        .map((el) => normalize(el.innerText || el.textContent).slice(0, 160))
+        .filter(Boolean)
+        .join(" | ")
+        .toLowerCase();
+
+      const recoveryHaystack = `${haystack} | ${nonMessageSurface}`;
+
       const composer = [
         document.querySelector("#prompt-textarea"),
         ...document.querySelectorAll("textarea,[contenteditable='true']")
@@ -70,6 +84,9 @@ export async function collectSafeUiSnapshot(page) {
           )).some(visible)
         )
       );
+      const lastAssistantCharCount = Number(
+        (lastAssistant && lastAssistant.textContent && lastAssistant.textContent.length) || 0
+      );
 
       const responseRunning =
         /stop generating|dừng tạo|stop response/.test(haystack) ||
@@ -82,10 +99,10 @@ export async function collectSafeUiSnapshot(page) {
         /something went wrong|đã xảy ra lỗi|try again|thử lại|retry/.test(haystack);
 
       const conversationFull =
-        /maximum length|conversation.{0,50}(too long|full|limit|maximum)|chat.{0,40}(too long|full|limit)|reached.{0,40}(conversation|chat).{0,40}limit|cuộc trò chuyện.{0,50}(quá dài|đầy|giới hạn)|đoạn chat.{0,40}(quá dài|đầy|giới hạn)|đạt.{0,30}giới hạn/.test(haystack);
+        /maximum length|conversation.{0,50}(too long|full|limit|maximum)|chat.{0,40}(too long|full|limit)|reached.{0,40}(conversation|chat).{0,40}limit|cuộc trò chuyện.{0,50}(quá dài|đầy|giới hạn)|đoạn chat.{0,40}(quá dài|đầy|giới hạn)|đạt.{0,30}giới hạn/.test(recoveryHaystack);
 
       const conversationMissing =
-        /conversation not found|unable to load conversation|couldn.t load conversation|chat not found|không tìm thấy cuộc trò chuyện|không thể tải cuộc trò chuyện|không tìm thấy đoạn chat|không thể tải đoạn chat/.test(haystack);
+        /conversation not found|unable to load conversation|couldn.t load conversation|chat not found|không tìm thấy cuộc trò chuyện|không thể tải cuộc trò chuyện|không tìm thấy đoạn chat|không thể tải đoạn chat/.test(recoveryHaystack);
 
       return {
         schemaVersion: "1.0",
@@ -94,6 +111,7 @@ export async function collectSafeUiSnapshot(page) {
         conversationPath,
         composerReady: Boolean(composer),
         assistantMessageCount: assistantMessages.length,
+        lastAssistantCharCount,
         userMessageCount: document.querySelectorAll(
           "[data-message-author-role='user']"
         ).length,
