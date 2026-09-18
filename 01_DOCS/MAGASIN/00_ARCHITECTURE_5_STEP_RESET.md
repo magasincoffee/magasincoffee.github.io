@@ -148,7 +148,7 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-032 — Published schedule → attendance/swap/notification integration gate:** verified core + SFB-001/SFB-002 decisions complete. DONE.
 - **TASK-033 — Give Shift production primitive:** recipient consent → Manager approval → server revalidation/transfer; production migration + browser E2E verified. DONE.
 - **TASK-034 — Notification event-outbox production:** durable RLS-protected schedule/attendance/Swap/Give outbox + Employee in-app reader + rollback integration smoke verified. DONE.
-- **TASK-035 — MAGASIN email adapter/config:** provider-neutral email delivery using secret store; external calendar disabled. READY.
+- **TASK-035 — MAGASIN email adapter/config:** provider-independent target resolution + worker contract verified; exact provider/sender/secret activation boundary reached. WAIT_USER.
 
 ## 8. Definition of success
 
