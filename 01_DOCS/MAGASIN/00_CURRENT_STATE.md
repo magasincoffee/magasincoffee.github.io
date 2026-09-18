@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-035 — MAGASIN email adapter/config — WAIT_USER (Gmail OAuth credentials)**
+**TASK-036 — Schedule-first closure regression + recovery gate — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -33,6 +33,7 @@ Canonical task/state files:
 - `05_SYSTEM/GIVE_SHIFT_PRODUCTION_V1.md`
 - `05_SYSTEM/NOTIFICATION_OUTBOX_PRODUCTION_V1.md`
 - `05_SYSTEM/MAGASIN_EMAIL_ADAPTER_CONFIG_V1.md`
+- `05_SYSTEM/SCHEDULE_FIRST_CLOSURE_REGRESSION_V1.md`
 
 ## Current target
 
@@ -100,30 +101,36 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**WAIT_USER:** Owner đã chốt Gmail/Google Workspace và sender; Gmail OAuth adapter đã được implement fail-closed.
+**AUTO_CONTINUE — TASK-036:** Owner explicitly deferred TASK-035 Gmail production activation so it no longer blocks the project.
 
-Resolved:
+TASK-035 remains fail-closed:
 
-- provider = `GMAIL_GOOGLE_WORKSPACE`;
-- sender = `bachvanti1994@gmail.com`;
-- Gmail API + OAuth 2.0 server-side adapter;
-- provider initialization occurs before queue claim;
-- service-to-service worker deployment uses `verify_jwt=false` with handler-level secret-key `apikey` authorization;
-- one-time OAuth activation runbook is documented in `05_SYSTEM/MAGASIN_EMAIL_ADAPTER_CONFIG_V1.md`;
-- activation send is bounded to `{"limit":1}` so the first live verification claims at most one pending email event;
-- external calendar remains disabled.
+- Gmail worker is not deployed;
+- no external email is sent;
+- OAuth production publish / refresh token / Supabase secret injection are deferred;
+- reactivation requires a later explicit Owner instruction.
 
-Remaining activation boundary is credential setup outside Git:
+Schedule-first feedback remains operational through the durable notification outbox + Employee in-app notification path.
 
-- `GMAIL_OAUTH_CLIENT_ID`;
-- `GMAIL_OAUTH_CLIENT_SECRET`;
-- `GMAIL_OAUTH_REFRESH_TOKEN`.
+TASK-036 now closes the current critical path by reusing existing verified assets only:
 
-No Edge Function is deployed and no email is sent until these runtime secrets are available. After that: set secrets/config → deploy → bounded send → verify `PENDING → PROCESSING → SENT` → regression → close TASK-035.
+1. run Five-Step/source-of-truth regression;
+2. run canonical schedule flow + availability regression;
+3. run attendance / Swap / Give / notification-outbox regression;
+4. verify email stays fail-closed without runtime OAuth secrets;
+5. run relevant Supervisor recovery/resume regression;
+6. fix only verified failures;
+7. update state/docs and mark the schedule-first critical path stable when all gates pass.
 
-TASK-026 remains deferred independently.
+Robot may auto-continue because there is no current Owner decision boundary:
 
-Do not implement write-capable SOP/Task automation until its six business-rule decisions are approved.
+```text
+status = READY
+autonomy = AUTO_CONTINUE
+requires_user = false
+```
+
+TASK-026 remains deferred independently. Do not implement write-capable SOP/Task automation until its six business-rule decisions are approved.
 
 ## Session handoff
 
