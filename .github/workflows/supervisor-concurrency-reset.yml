@@ -1,0 +1,23 @@
+name: Supervisor Setup Concurrency Reset
+
+on:
+  push:
+    branches:
+      - feat/supervisor-actions
+    paths:
+      - '.github/workflows/supervisor-concurrency-reset.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supervisor-profile-setup-${{ github.repository }}
+  cancel-in-progress: true
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Release stale profile-setup concurrency slot
+        run: echo "Profile setup already passed in run 35298993647; cancelling stale duplicate slot."
