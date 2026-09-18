@@ -34,6 +34,7 @@ TASK-047 reconciled the changelog, created canonical evidence, and expanded Busi
 - TASK-048 idempotence fix: commits `f63b71118f116151c37759046f08aa066793d9e9` + `998bc201966aa31bdda4049a21b9812b287794f2`; QA probe run `35373887433`: **162/162 PASS**, 0 failed; repeat post-boundary dispatch preserves completion timestamps; PR #122 closed without merge
 - TASK-048 one-shot guard fix: commits `80c9cdbcddec8af62b795caea4ed62e7f2d294b8` + `0e902d725dbfbb468ce56c1d59009718b0f69d33`; QA probe run `35374298573`: **162/162 PASS**, 0 failed; after `NIGHT_WINDOW_COMPLETE`, later dispatches exit before mutation and cannot overwrite a subsequent Owner-reviewed state; PR #123 closed without merge
 - TASK-048 evidence-surface fix: commits `6dfd738e0b75fbb2fb70d55ba27ee46c5ec46ae0` + `a91b95fb6e993d5fd17dc165a126b7f342f8bf53`; QA probe run `35375054600`: **162/162 PASS**, 0 failed; canonical evidence pack now transitions with the other final-state surfaces; PR #124 closed without merge
+- TASK-048 temporal-pause fix: verified probe head `6ac648056528f5ea1c53d62b29c14ccd49259e60`; QA run `35375852646`: **163/163 PASS**, 0 failed; `PAUSED` autonomy prevents Supervisor busy-loop before 09:15 without requiring Owner input; PR #125 closed without merge
 - Media Robot PR #21 head `3522886bb54ac5b69d245eb3ccd1285ada8571e0`
 - Media push run `35370775036`: **83/83 PASS**
 - Media PR run `35371002442`: **83/83 PASS**
