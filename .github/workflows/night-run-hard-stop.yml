@@ -20,7 +20,10 @@ jobs:
         id: guard
         shell: bash
         run: |
-          if [ "$(date -u +%Y-%m-%d)" = "2026-09-19" ]; then
+          now_epoch="$(date -u +%s)"
+          boundary_epoch="$(date -u -d '2026-09-19T02:15:00Z' +%s)"
+          day_end_epoch="$(date -u -d '2026-09-20T00:00:00Z' +%s)"
+          if [ "$now_epoch" -ge "$boundary_epoch" ] && [ "$now_epoch" -lt "$day_end_epoch" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
