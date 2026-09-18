@@ -85,6 +85,18 @@
 - Production writes: none.
 - Gate: TASK-016 **DONE**; TASK-017 may proceed.
 
+
+## 2026-09-18 — Post-TASK-016 revenue blank-amount regression
+
+- Branch: `fix/control-tower-revenue-blank-amount`
+- Workflow: `Owner Control Tower Tests`
+- Regression run: `35315530551`
+- Result: **PASS**
+- Trusted + RECONCILED row with `amount: null`, empty string or whitespace now fails closed to `GAP`: PASS.
+- Genuine numeric zero remains valid ACTUAL revenue: PASS.
+- BUG-CT-004: VERIFIED.
+- Project task state unchanged; TASK-017 remains current.
+
 ## 2026-09-18 — TASK-017 Partial-source/error-state integration
 
 - Branch: `feat/control-tower-source-isolation`
@@ -97,5 +109,6 @@
 - One failed source preserves healthy sibling source results: PASS.
 - Owner authentication remains the only path that can show the permission-denied screen: PASS.
 - Revenue / Payables / Workforce loaders all run behind the source-isolation boundary: PASS.
+- BUG-CT-005: VERIFIED.
 - Production writes: none.
 - Gate: TASK-017 **DONE**; TASK-018 may proceed.
