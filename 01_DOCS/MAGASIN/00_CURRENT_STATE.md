@@ -115,6 +115,7 @@ Final-checkpoint evidence:
 - TASK-048 idempotence QA: **162/162 PASS**, 0 failed, run `35373887433`; repeated post-boundary dispatch preserves completion timestamps and records `NIGHT_WINDOW_COMPLETE` once; QA probe PR #122 closed without merge;
 - TASK-048 one-shot guard QA: **162/162 PASS**, 0 failed, run `35374298573`; once `NIGHT_WINDOW_COMPLETE` exists, later manual reruns no-op before any state mutation so a subsequent Owner-reviewed state cannot be overwritten; QA probe PR #123 closed without merge;
 - TASK-048 evidence-surface QA: **162/162 PASS**, 0 failed, run `35375054600`; canonical night-run evidence pack is reconciled to `NIGHT_WINDOW_COMPLETE / OWNER REVIEW REQUIRED` by the hard-stop; QA probe PR #124 closed without merge;
+- TASK-048 temporal-pause QA: **163/163 PASS**, 0 failed, run `35375852646`; existing `PAUSED` autonomy suppresses repeated Supervisor continuation during the time-only gate without creating `WAIT_USER`; QA probe PR #125 closed without merge;
 - Media Robot QA: **83/83 PASS** runs `35370775036` and `35371002442`;
 - no bounded hard-stop regression remains after reconciliation, boundary-time guard, idempotence, post-review one-shot and canonical-evidence surface fixes; pre-boundary Supervisor busy-loop prevention now uses the existing `PAUSED` autonomy mode.
 
