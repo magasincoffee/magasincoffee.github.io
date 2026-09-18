@@ -80,8 +80,38 @@ try {
   console.log("MAGASIN_PROJECT_ROW_COUNT=" + rowCount);
 
   if (rowCount === 1) {
-    await rows.first().click();
-    await page.waitForTimeout(4000);
+    const row = rows.first();
+    let selectedControl = false;
+
+    for (const candidate of [
+      row.locator('input[type="radio"]'),
+      row.locator('[role="radio"]'),
+      row.getByRole("link"),
+      row.getByRole("button"),
+      row.locator("td").first()
+    ]) {
+      try {
+        if (await candidate.first().isVisible({ timeout: 800 })) {
+          await candidate.first().click({ force: true, timeout: 5000 });
+          selectedControl = true;
+          break;
+        }
+      } catch {}
+    }
+
+    if (!selectedControl) {
+      await row.click({ force: true, timeout: 5000 }).catch(() => {});
+    }
+
+    await page.waitForTimeout(1500);
+
+    const confirmClicked = await clickFirstVisible(page, [
+      p => p.getByRole("button", { name: /^Open$|^Mở$|Select|Chọn/i }),
+      p => p.getByRole("button", { name: /Confirm|Xác nhận/i })
+    ]);
+    console.log("MAGASIN_PROJECT_CONFIRM_CLICKED=" + confirmClicked);
+
+    await page.waitForTimeout(5000);
     const selected = new URL(page.url()).searchParams.has("project");
     console.log("MAGASIN_PROJECT_AUTO_SELECTED=" + selected);
   } else {
