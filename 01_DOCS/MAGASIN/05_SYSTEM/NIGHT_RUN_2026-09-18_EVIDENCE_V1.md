@@ -87,7 +87,7 @@ Automation remains fail-closed: active/stale lease reconciliation, operation-key
 
 ## 7. Release-prep conclusion
 
-TASK-037–047 are complete with current repository/CI evidence. TASK-048 is not a feature-expansion task; it is the final temporal safety gate. The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the project must stay `READY / AUTO_CONTINUE` only until the approved 2026-09-19 09:15 +07 boundary.
+TASK-037–047 are complete with current repository/CI evidence. TASK-048 is not a feature-expansion task; it is the final temporal safety gate. The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the project stays `READY / PAUSED` until the approved 2026-09-19 09:15 +07 boundary so the Supervisor does not busy-loop on a time-only gate.
 
 ## 8. TASK-048 hard-stop hardening evidence
 
