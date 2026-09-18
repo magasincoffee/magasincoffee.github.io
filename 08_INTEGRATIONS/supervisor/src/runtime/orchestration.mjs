@@ -6,7 +6,7 @@ export const BRAIN_DIRECTIVE_END = "<<<END_MAGASIN_BRAIN_DIRECTIVE_V1>>>";
 export const WORKER_RESULT_START = "<<<MAGASIN_WORKER_RESULT_V1>>>";
 export const WORKER_RESULT_END = "<<<END_MAGASIN_WORKER_RESULT_V1>>>";
 
-const SAFE_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,79}$/;
+const SAFE_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._:\/-]{0,79}$/;
 
 export function sha256(value) {
   return crypto.createHash("sha256").update(String(value || ""), "utf8").digest("hex");
