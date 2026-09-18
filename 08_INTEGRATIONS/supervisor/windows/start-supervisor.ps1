@@ -1,5 +1,6 @@
 param(
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$Hidden
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,12 +30,17 @@ $env:RUNNER_TRACKING_ID = 'MAGASIN_SUPERVISOR_PERSISTENT'
 
 $args = @(
     '-NoLogo',
-    '-NoExit',
     '-ExecutionPolicy', 'Bypass',
-    '-File', "`"$runScript`""
+    '-File', ('"' + $runScript + '"')
 )
 if ($DryRun) { $args += '-DryRun' }
 
-Start-Process powershell.exe -ArgumentList $args
-
-Write-Host 'MAGASIN Supervisor started in a separate PowerShell window.'
+if ($Hidden) {
+    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList $args
+    Write-Host 'MAGASIN Supervisor started in background mode.'
+} else {
+    $visibleArgs = @('-NoLogo', '-NoExit', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $runScript + '"'))
+    if ($DryRun) { $visibleArgs += '-DryRun' }
+    Start-Process powershell.exe -ArgumentList $visibleArgs
+    Write-Host 'MAGASIN Supervisor started in a separate PowerShell window.'
+}
