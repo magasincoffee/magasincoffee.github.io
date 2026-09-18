@@ -25,7 +25,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.6";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.7";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -261,6 +261,7 @@ const recovery = new SupervisorRecoveryController({
 let retryCount = 0;
 let lastProjectState = {};
 let consecutiveConnectFailures = 0;
+let handoffPending = true;
 
 await safeAppendLog(logPath, {
   type: "RUNTIME_BOOT",
@@ -636,8 +637,24 @@ while (true) {
       projectState,
       probe,
       retryCount,
-      maxRetries: 2
+      maxRetries: 2,
+      handoff: handoffPending
     });
+
+    if (
+      handoffPending &&
+      result.decision.action === "CONTINUE" &&
+      result.execution.executed
+    ) {
+      handoffPending = false;
+      await safeAppendLog(logPath, {
+        type: "HANDOFF_RECONCILED",
+        action: "CONTINUE",
+        target: result.execution.target || undefined,
+        executed: true,
+        reason: "Observed the active chat first, then handed control back to ChatGPT with live-conversation + repository reconciliation."
+      });
+    }
 
     if (
       result.decision.action === "CONTINUE" &&
