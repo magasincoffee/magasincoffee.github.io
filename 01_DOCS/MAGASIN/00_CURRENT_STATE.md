@@ -113,8 +113,9 @@ Final-checkpoint evidence:
 - TASK-048 hard-stop reconciliation QA: **162/162 PASS**, 0 failed, run `35372881851`; QA probe PR #120 closed without merge;
 - TASK-048 boundary-time guard QA: **162/162 PASS**, 0 failed, run `35373330382`; manual dispatch before 09:15 +07 is fail-closed; QA probe PR #121 closed without merge;
 - TASK-048 idempotence QA: **162/162 PASS**, 0 failed, run `35373887433`; repeated post-boundary dispatch preserves completion timestamps and records `NIGHT_WINDOW_COMPLETE` once; QA probe PR #122 closed without merge;
+- TASK-048 one-shot guard QA: **162/162 PASS**, 0 failed, run `35374298573`; once `NIGHT_WINDOW_COMPLETE` exists, later manual reruns no-op before any state mutation so a subsequent Owner-reviewed state cannot be overwritten; QA probe PR #123 closed without merge;
 - Media Robot QA: **83/83 PASS** runs `35370775036` and `35371002442`;
-- no bounded regression remains after the TASK-048 hard-stop reconciliation, boundary-time guard and idempotence fixes.
+- no bounded regression remains after the TASK-048 hard-stop reconciliation, boundary-time guard, idempotence and post-review one-shot fixes.
 
 TASK-048 is now a temporal safety gate, not a feature task:
 
