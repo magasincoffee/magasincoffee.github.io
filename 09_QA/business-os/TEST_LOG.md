@@ -94,3 +94,18 @@
 - TASK-026: **DEFERRED_BY_OWNER**; DST-001..DST-006 remain unresolved.
 - Production schema/backfill: none.
 - Gate target: Business OS Contract Tests + Supervisor state regression.
+
+## 2026-09-18 — TASK-028 Manager registration review hardening
+
+- Branch: `feat/schedule-v1-completion`
+- Static regression: **PASS**.
+- Manager registration Playwright regression: **PASS**.
+- Existing Employee Swap browser regression: **PASS**.
+- Existing People/Shift Day-10 browser E2E: **PASS**.
+- Existing Control Tower browser regression: **PASS**.
+- Manager week navigation: PASS.
+- Manager accessible-store filter forwarding to `get_manager_weekly_availability`: PASS.
+- Edit write path uses `manager_update_employee_availability`: PASS.
+- Direct `employee_availability` browser update: **forbidden / absent**.
+- Production schema/backfill: none.
+- Gate: TASK-028 **DONE**; TASK-029 may proceed.
