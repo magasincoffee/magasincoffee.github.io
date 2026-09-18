@@ -86,3 +86,14 @@ test("control panel shows only current runtime boot log events", async () => {
   assert.match(source, /Select-Object -Skip \$bootIndex/);
   assert.match(source, /Select-Object -Last 28/);
 });
+
+
+test("project card reads project_status instead of runtime recovery status", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /\$runtimeStatus\.project_status/);
+  assert.match(source, /\$script:lastRemoteState\.status/);
+});
