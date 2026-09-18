@@ -16,7 +16,7 @@ P0 baseline gate has passed. Owner decision `DEC-003` reprioritizes the current 
 
 ## Current task
 
-**TASK-030 — Employee weekly registration V2 — READY**
+**TASK-031 — Manager official schedule workspace — READY**
 
 Canonical task/state files:
 
@@ -24,6 +24,7 @@ Canonical task/state files:
 - `00_PROJECT_STATE.json`
 - `00_TASK_QUEUE.md`
 - `00_SUPERVISOR_ROBOT.md`
+- `00_ARCHITECTURE_5_STEP_RESET.md`
 - `05_SYSTEM/SCHEDULE_V1_COMPLETION_PLAN.md`
 
 ## Owner priority — DEC-003
@@ -75,7 +76,7 @@ Supervisor Robot V1 remains active. Project state is returned to `AUTO_CONTINUE`
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-030. Upgrade Employee weekly registration UX while preserving the existing availability RPC contract: multiple windows/day, type selection, delete, week navigation and immediate saved-state visibility. Do not invent exact “Cả Ngày” semantics.
+**AUTO_CONTINUE:** execute TASK-031. Replace the Manager hard-coded official schedule view with a scoped store/week reader backed by `get_manager_weekly_schedule`, integrated with the existing review/publish workflow. Keep published schedule state separate from registration/draft state; do not introduce a direct browser write to `work_schedules`.
 
 ## Session handoff
 
@@ -84,12 +85,13 @@ New chat must read:
 1. `00_CURRENT_STATE.md`
 2. `00_PROJECT_STATE.json`
 3. `00_TASK_QUEUE.md`
-4. `00_MASTER_PLAN.md`
-5. `00_BUSINESS_OS_BLUEPRINT.md`
-6. `06_DECISION_LOG.md`
-7. `07_CHANGE_LOG.md`
-8. `05_SYSTEM/SCHEDULE_V1_COMPLETION_PLAN.md`
-9. current domain/task docs
-10. repository/PR/CI state
+4. `00_ARCHITECTURE_5_STEP_RESET.md`
+5. `00_MASTER_PLAN.md`
+6. `00_BUSINESS_OS_BLUEPRINT.md`
+7. `06_DECISION_LOG.md`
+8. `07_CHANGE_LOG.md`
+9. `05_SYSTEM/SCHEDULE_V1_COMPLETION_PLAN.md`
+10. current domain/task docs
+11. repository/PR/CI state
 
 Repository evidence overrides stale chat memory.
