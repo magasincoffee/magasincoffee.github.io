@@ -23,7 +23,9 @@ test("auto-upgrade workflow installs runtime source changes and verifies a Brain
 
   assert.match(source, /08_INTEGRATIONS\/supervisor\/src\/\*\*/);
   assert.match(source, /00_PROJECT_STATE\.json/);
-  assert.match(source, /BRAIN_WORKER_V1 source-of-truth/);
+  assert.match(source, /Verify checked-out Brain\/Worker source-of-truth/);
+  assert.match(source, /SOURCE_OF_TRUTH_LOCAL_CHECK=True/);
+  assert.doesNotMatch(source, /raw\.githubusercontent\.com\/magasincoffee\/magasincoffee\.github\.io\/main\/01_DOCS\/MAGASIN\/00_PROJECT_STATE\.json/);
   assert.match(source, /brain-worker-cli\.mjs/);
   assert.match(source, /BRAIN_TARGET_REGISTERED=True/);
   assert.match(source, /2026-09-19\.17/);

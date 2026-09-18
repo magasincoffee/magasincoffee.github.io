@@ -40,23 +40,20 @@ jobs:
         run: |
           powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "08_INTEGRATIONS/supervisor/windows/install-supervisor.ps1"
 
-      - name: Wait for Brain/Worker source-of-truth visibility
+      - name: Verify checked-out Brain/Worker source-of-truth
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-          $stateUrl = "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json"
-          $ready = $false
-          for ($i = 0; $i -lt 30; $i++) {
-            try {
-              $state = Invoke-RestMethod -Uri $stateUrl -TimeoutSec 4 -Headers @{ 'Cache-Control'='no-cache' }
-              if ($state.supervisor_orchestration.mode -eq "BRAIN_WORKER_V1") {
-                $ready = $true
-                break
-              }
-            } catch {}
-            Start-Sleep -Seconds 2
+          $statePath = "01_DOCS/MAGASIN/00_PROJECT_STATE.json"
+          if (-not (Test-Path $statePath)) { throw "Checked-out PROJECT_STATE is missing" }
+          $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($state.supervisor_orchestration.mode -ne "BRAIN_WORKER_V1") {
+            throw "Checked-out PROJECT_STATE does not enable BRAIN_WORKER_V1"
           }
-          if (-not $ready) { throw "BRAIN_WORKER_V1 source-of-truth was not visible within bounded wait" }
+          if ($state.current_task -ne "TASK-049") {
+            throw "Checked-out PROJECT_STATE is not on TASK-049"
+          }
+          Write-Host "SOURCE_OF_TRUTH_LOCAL_CHECK=True"
 
       - name: Register reboot/logon recovery and start now
         shell: powershell
