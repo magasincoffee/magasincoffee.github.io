@@ -84,3 +84,15 @@
 - Current repository has no source-controlled verified revenue read model, so production integration intentionally stays fail-closed until a reconciled source is connected.
 - Production writes: none.
 - Gate: TASK-016 **DONE**; TASK-017 may proceed.
+
+
+## 2026-09-18 — Post-TASK-016 revenue blank-amount regression
+
+- Branch: `fix/control-tower-revenue-blank-amount`
+- Workflow: `Owner Control Tower Tests`
+- Regression run: `35315530551`
+- Result: **PASS**
+- Trusted + RECONCILED row with `amount: null`, empty string or whitespace now fails closed to `GAP`: PASS.
+- Genuine numeric zero remains valid ACTUAL revenue: PASS.
+- BUG-CT-004: VERIFIED.
+- Project task state unchanged; TASK-017 remains current.
