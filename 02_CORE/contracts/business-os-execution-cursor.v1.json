@@ -2,12 +2,12 @@
   "schema_version": "business-os-execution-cursor.v1",
   "night_run_id": "NIGHT_RUN_2026-09-18",
   "project_id": "magasin-business-os",
-  "task": "TASK-038",
-  "micro_task": "night_run_persistence_contract",
+  "task": "TASK-039",
+  "micro_task": "two_project_registry_and_adapters",
   "status": "IN_PROGRESS",
-  "checkpoint": "TASK_037_RECOVERY_VERIFIED",
+  "checkpoint": "TASK_038_PERSISTENCE_VERIFIED",
   "resume_policy": "SAFE_RECONCILE_HEAD_STATE_CI",
   "lease": null,
-  "last_commit": "a1c948f023edfdc7acc1c300c58054e72618923f",
-  "updated_at": "2026-09-18T23:35:00+07:00"
+  "last_commit": "08c56b463e75111fe9d6e433000f99a0738ec73e",
+  "updated_at": "2026-09-18T23:37:00+07:00"
 }
