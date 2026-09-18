@@ -124,16 +124,24 @@ Không commit credentials và không hiển thị trạng thái “đã gửi”
 
 ## Owner decisions còn thiếu
 
-### SFB-001 — Give lifecycle
+### SFB-001 — Give lifecycle — APPROVED
 
-Chọn một:
+Owner chốt ngày 2026-09-18:
 
-- `RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES`: người cho chọn người nhận → người nhận đồng ý → Manager duyệt → server chuyển ca.
-- `MANAGER_APPROVES_DIRECTLY`: người cho chọn người nhận → Manager duyệt → server chuyển ca.
-- `RECIPIENT_ACCEPTS_AUTO_TRANSFER`: người cho chọn người nhận → người nhận đồng ý → server validate và tự chuyển ca.
-- `OTHER:<rule>`.
+`RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES`
 
-Không có default.
+Canonical flow:
+
+```text
+Người cho chọn ca + người nhận
+→ Người nhận đồng ý
+→ Manager duyệt
+→ Server validate
+→ Chuyển ownership ca
+→ Refresh lịch các bên liên quan
+```
+
+Không auto-transfer trước khi người nhận đồng ý và Manager duyệt.
 
 ### SFB-002 — Notification production activation
 
@@ -148,6 +156,6 @@ Provider-neutral contract có thể draft offline; **apply production và provid
 
 ## Current gate result
 
-Safe core của TASK-032 đã VERIFIED. Không còn safe write-capable implementation nào cho Give/notification trước SFB-001/SFB-002.
+Safe core của TASK-032 đã VERIFIED. SFB-001 đã được Owner phê duyệt; TASK-032 hiện chỉ còn WAIT_USER ở SFB-002 trước khi mở production notification infrastructure/provider activation.
 
 Production schema/data/provider mutation trong TASK-032 đến thời điểm này: **none**.
