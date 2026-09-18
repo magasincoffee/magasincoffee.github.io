@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-043 — Cross-project handoff integration — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-044 — Portfolio-aware diagnostics — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,26 +101,28 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-043:** TASK-042 Media Robot offline adapter gate is verified.
+**AUTO_CONTINUE — TASK-044:** TASK-043 cross-project handoff integration is verified on draft PR #119.
 
-Verified TASK-042 evidence:
+Verified TASK-043 evidence:
 
-- Media Robot branch `feat/saydi-production-provider`;
-- privacy regression commit `8c679734c17ddc004e71c188384508e747959c5c`;
-- GitHub-hosted Windows run `35370559918`: 23 tests PASS + compile PASS;
-- hosted CI confirmed no authenticated Saydi profile and no live provider capability;
-- Media Robot TEST_LOG / BUG_LOG / CHANGELOG / CURRENT_STATUS / NEXT_STEP updated;
-- no live preflight, Generate, Download or PR merge occurred.
+- integration commit `d39cc211f19ce7223478d48ccfd19a7440c17d77`;
+- Supervisor Tests run `35370949854`: PASS;
+- Business OS → Media Robot → Business OS handoff stays inside the approved registry;
+- project-local WAIT_USER/BLOCKED does not become a global stop;
+- Media Robot constraints do not leak into Business OS state;
+- stale cursor advancement and checkpoint scope are verified;
+- no browser or live-provider side effect is executed by the integration test.
 
-TASK-043 now proves state isolation across the approved handoff:
+TASK-044 is intentionally narrow:
 
-1. Business OS runnable state selects Business OS and preserves its canonical task/checkpoint;
-2. a project-local `WAIT_USER` / `BLOCKED` boundary can switch to the other approved project without becoming a global stop;
-3. Media Robot constraints survive selection and handoff;
-4. handoff back to Business OS does not reuse Media Robot task/status/constraints;
-5. unregistered repositories remain impossible to select;
-6. lease/checkpoint recovery stays scoped to the cursor project;
-7. no project work or live provider side effect is executed by the integration test.
+1. extend diagnostics with portfolio project id/repository and cursor task/checkpoint context;
+2. preserve existing UI/controller/recovery diagnostics;
+3. sanitize error/message-like diagnostic text before disk persistence;
+4. never persist conversation text, prompt/request text, auth material, cookies or bearer/token values;
+5. keep incident classification behavior stable;
+6. add unit/regression coverage for portfolio fields and privacy redaction only.
+
+Do not add remote telemetry, new monitoring services, or broader observability infrastructure in this task.
 
 ## Session handoff
 
