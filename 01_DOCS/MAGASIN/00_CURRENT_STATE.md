@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-035 — MAGASIN email adapter/config — READY**
+**TASK-035 — MAGASIN email adapter/config — WAIT_USER**
 
 Canonical task/state files:
 
@@ -31,7 +31,7 @@ Canonical task/state files:
 - `05_SYSTEM/MANAGER_SCHEDULE_CANONICAL_SLICE_V1.md`
 - `05_SYSTEM/PUBLISHED_SCHEDULE_FEEDBACK_LOOP_V1.md`
 - `05_SYSTEM/GIVE_SHIFT_PRODUCTION_V1.md`
-- `05_SYSTEM/NOTIFICATION_OUTBOX_PRODUCTION_V1.md`
+- `05_SYSTEM/NOTIFICATION_OUTBOX_PRODUCTION_V1.md`\n- `05_SYSTEM/MAGASIN_EMAIL_ADAPTER_CONFIG_V1.md`
 
 ## Current target
 
@@ -99,21 +99,34 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-035 under Five-Step until the exact provider/account activation boundary.
+**WAIT_USER:** TASK-035 reached the exact MAGASIN email provider/account activation boundary.
 
-TASK-034 notification outbox V1 is production-applied and verified:
+Provider-independent work is complete and production-verified:
 
-- durable RLS-protected `notification_outbox`;
-- canonical triggers for schedule / attendance / Swap / Give;
-- Employee in-app `view-notice` reads `list_my_notifications_v1`;
-- clock-out reminder is scheduled at shift end and cancelled after actual clock-out;
-- provider-neutral email queue state machine verified;
-- trigger SECURITY DEFINER RPC exposure hardened;
-- no historical backfill and no persisted QA fixture rows.
+- production migration `20260918120917_notification_email_target_resolution_v1`;
+- service-role-only `resolve_notification_email_targets_v1`;
+- service-role-only `skip_notification_email_v1` for permanent no-target rows;
+- provider-neutral worker core at `02_CORE/notification/email-delivery-core-v1.mjs`;
+- config gate prevents queue claim until provider + sender + credential readiness all exist;
+- blind-recipient contract for multi-recipient audiences;
+- rollback smoke PASS with no persisted QA rows;
+- no email provider invoked and no credential stored in Git.
 
-TASK-035 may build provider-neutral adapter/config and inspect existing runtime configuration. Do not invent an email provider, sender account or credential. External calendar remains disabled by Owner.
+Live runtime inspection found no concrete MAGASIN email provider/account configuration:
 
-If no concrete MAGASIN email provider/account configuration exists, stop at that exact Owner boundary after completing all provider-independent work.
+- deployed Supabase Edge Functions: 0;
+- email-provider secret names in Vault: 0;
+- Supabase Vault is installed;
+- `pg_cron` and `pg_net` are not installed;
+- external calendar remains disabled by Owner.
+
+Owner input now required:
+
+1. **EMAIL-001:** concrete MAGASIN email provider/service;
+2. **EMAIL-002:** verified sender identity/account;
+3. **EMAIL-003:** after provider selection, provider credential must be created in Supabase secret store. Do not paste the credential into chat or public Git.
+
+After these inputs are resolved, continue only with the provider-specific adapter, minimum invocation/scheduler mechanism and bounded real-delivery smoke.
 
 TASK-026 remains deferred independently.
 
