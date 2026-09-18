@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-036 — Schedule-first closure regression + recovery gate — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-037 — Windows auto-reboot/logon recovery — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -147,3 +147,23 @@ New chat must read:
 9. repository/PR/CI state
 
 Repository evidence overrides stale chat memory.
+
+
+## Approved night run
+
+Owner approved `NIGHT_RUN_2026-09-18` for the window `2026-09-18 23:15 +07 → 2026-09-19 09:15 +07`.
+
+Execution scope is restricted to:
+
+- `magasincoffee/magasincoffee.github.io`;
+- `magasincoffee/magasin-media-robot`.
+
+Windows reboot/logon recovery is installed and verified on the self-hosted machine:
+
+- HKCU logon autostart registered;
+- canonical GitHub Runner verified online;
+- Supervisor verified online;
+- Owner STOP latch is clear;
+- Windows login/PIN is never bypassed.
+
+The GitHub-hosted hard-stop guard will set the project to `WAIT_USER / NIGHT_WINDOW_COMPLETE` at 09:15 +07 even if the PC is offline.
