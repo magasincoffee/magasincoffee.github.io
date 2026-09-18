@@ -141,3 +141,20 @@ No additional Day 8–10 task is opened unless one of these tests reveals a repr
 **PASS — current system inventory, verified gaps and minimal implementation queue are defined.**
 
 No Owner decision is required before TASK-020.
+
+## 9. TASK-022 Day-10 gate result
+
+**PASS — People / Shift Day 8–10 usability gate closed on deterministic sanitized browser evidence.**
+
+Verified browser flow:
+
+- Employee Availability engine saves a next-week availability entry through the mocked `save_my_availability` contract.
+- Existing Owner Publish engine executes generation → review → publish in order.
+- Published schedule is returned through the mocked approved-schedule read contract and rendered by the existing Employee Schedule engine.
+- Existing Owner Control Tower unit and browser regressions remain green.
+- Browser diagnostics report zero unexpected console errors, page errors, request failures, HTTP 5xx or external requests.
+- All schedule write RPC names exercised by the E2E terminate inside the deterministic in-page mock; no production Supabase connection or production write is used.
+- No production migration/schema change and no new scheduling/transfer/attendance/payroll/KPI rule were introduced.
+- Initial QA-fixture defect `BUG-PS-001` was fixed and regressed before closing the gate.
+
+Gate: TASK-022 **DONE**; Day 11–13 proceeds to TASK-023 SOP/Task current-system gap review.
