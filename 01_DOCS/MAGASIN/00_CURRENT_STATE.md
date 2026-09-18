@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-035 — MAGASIN email adapter/config — WAIT_USER (Gmail OAuth credentials)**
+**TASK-035 — MAGASIN email adapter/config — WAIT_USER (confirm OAuth app publish to Production)**
 
 Canonical task/state files:
 
@@ -113,13 +113,29 @@ Resolved:
 - activation send is bounded to `{"limit":1}` so the first live verification claims at most one pending email event;
 - external calendar remains disabled.
 
-Remaining activation boundary is credential setup outside Git:
+Activation progress completed outside Git:
 
-- `GMAIL_OAUTH_CLIENT_ID`;
-- `GMAIL_OAUTH_CLIENT_SECRET`;
-- `GMAIL_OAUTH_REFRESH_TOKEN`.
+- Gmail API enabled in Google Cloud project `magasin-noibo`;
+- canonical OAuth client created as **Web application**;
+- authorized redirect URI = `https://developers.google.com/oauthplayground`;
+- client ID + client secret captured without printing plaintext and stored encrypted locally on the self-hosted runner;
+- incorrect temporary Desktop client removed.
 
-No Edge Function is deployed and no email is sent until these runtime secrets are available. After that: set secrets/config → deploy → bounded send → verify `PENDING → PROCESSING → SENT` → regression → close TASK-035.
+Current Owner/admin boundary:
+
+- Google OAuth audience is still **Testing**;
+- Google exposes a second `Publish app` confirmation control;
+- repository safety requires explicit Owner approval before this admin action.
+
+Pending after approval:
+
+1. publish OAuth app to Production;
+2. run sender consent for least-privilege `gmail.send`;
+3. obtain and securely retain `GMAIL_OAUTH_REFRESH_TOKEN`;
+4. inject Gmail OAuth + sender/provider config into Supabase Edge Function Secrets;
+5. deploy → bounded `{"limit":1}` send → verify `PENDING → PROCESSING → SENT` → regression → close TASK-035.
+
+No Edge Function is deployed and no email has been sent.
 
 TASK-026 remains deferred independently.
 
