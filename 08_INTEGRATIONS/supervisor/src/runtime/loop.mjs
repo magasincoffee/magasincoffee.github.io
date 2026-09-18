@@ -69,10 +69,7 @@ export class SupervisorLoopController {
       maxRetries
     });
 
-    if (
-      decision.action === ACTIONS.CONTINUE ||
-      decision.action === ACTIONS.RETRY
-    ) {
+    if (decision.action === ACTIONS.CONTINUE) {
       if (!this.armed) {
         return {
           decision,
@@ -85,6 +82,21 @@ export class SupervisorLoopController {
         };
       }
 
+      const elapsed = this.now() - this.lastActionAt;
+      if (this.lastActionAt > 0 && elapsed < this.minActionIntervalMs) {
+        return {
+          decision,
+          execution: {
+            executed: false,
+            dryRun: !this.execute,
+            action: decision.action,
+            reason: "action cooldown active"
+          }
+        };
+      }
+    }
+
+    if (decision.action === ACTIONS.RETRY) {
       const elapsed = this.now() - this.lastActionAt;
       if (this.lastActionAt > 0 && elapsed < this.minActionIntervalMs) {
         return {
