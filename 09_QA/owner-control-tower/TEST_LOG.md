@@ -152,3 +152,20 @@
 - Existing Control Tower browser E2E: PASS.
 - Production writes/migrations: none.
 - Gate: TASK-020 **DONE**; TASK-021 may proceed.
+
+## 2026-09-18 — TASK-021 Control Tower staffing-gap integration
+
+- Branch: `feat/task-021-control-tower-staffing-gap`
+- Workflow: `Owner Control Tower Tests`
+- Adapter/integration/browser run: `35318311909`
+- Result: **PASS**
+- Workforce attention consumes the verified staffing-gap read adapter: PASS.
+- Existing generation rows are reused; `list_schedule_generations` is not duplicated per store: PASS.
+- Full scoped source returns ACTUAL staffing-gap count: PASS.
+- Partial/missing store generation redacts staffing gap instead of synthesizing zero: PASS.
+- Existing unresolved attention (PENDING transfer + DRAFT/REVIEWED generation) remains intact: PASS.
+- Browser E2E renders a verified staffing gap fixture: PASS.
+- Browser path remains read-only; added RPCs are read-only requirements/assignment reads only.
+- One unrelated source failure still leaves Workforce usable: PASS.
+- Production writes/migrations: none.
+- Gate: TASK-021 **DONE**; TASK-022 may proceed.
