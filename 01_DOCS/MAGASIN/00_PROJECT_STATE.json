@@ -4,12 +4,12 @@
   "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
   "target_days": 21,
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-035",
-  "current_task_title": "MAGASIN email adapter/config",
-  "status": "WAIT_USER",
-  "autonomy": "MANUAL",
+  "current_task": "TASK-036",
+  "current_task_title": "Schedule-first closure regression + recovery gate",
+  "status": "READY",
+  "autonomy": "AUTO_CONTINUE",
   "blocked": false,
-  "requires_user": true,
+  "requires_user": false,
   "next_task": null,
   "safety": {
     "repository_visibility": "public",
@@ -19,22 +19,25 @@
   },
   "last_updated": "2026-09-18",
   "owner_boundary": {
-    "task": "TASK-035",
+    "task": "TASK-036",
     "resolved": [
       "EXACT_MAGASIN_SENDER_EMAIL",
-      "CONCRETE_EMAIL_PROVIDER"
+      "CONCRETE_EMAIL_PROVIDER",
+      "DEFER_GMAIL_PRODUCTION_ACTIVATION_AND_CONTINUE"
     ],
     "pending": []
   },
-  "activation_boundary": {
-    "reason": "GMAIL_OAUTH_CREDENTIALS_REQUIRED",
-    "pending": [
-      "GMAIL_OAUTH_CLIENT_ID",
-      "GMAIL_OAUTH_CLIENT_SECRET",
-      "GMAIL_OAUTH_REFRESH_TOKEN"
-    ],
-    "deploy_edge_function": false,
+  "deferred_activation": {
+    "task": "TASK-035",
+    "reason": "OWNER_DEFERRED_GMAIL_OAUTH_PRODUCTION_ACTIVATION",
+    "blocking": false,
+    "email_worker_deployed": false,
     "send_email": false,
-    "activation_test_claim_limit": 1
+    "pending": [
+      "GOOGLE_OAUTH_APP_PRODUCTION_PUBLISH",
+      "GMAIL_OAUTH_REFRESH_TOKEN",
+      "SUPABASE_EDGE_FUNCTION_SECRET_INJECTION"
+    ],
+    "guardrail": "KEEP_EMAIL_FAIL_CLOSED_UNTIL_REACTIVATED_BY_OWNER"
   }
 }
