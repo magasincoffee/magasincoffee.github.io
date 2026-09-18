@@ -8,8 +8,8 @@
 | TASK-001 | Supervisor Robot discovery + bootstrap contract | 20m | spec + safe stop rules | DONE |
 | TASK-002 | Supervisor project-state reader | 15m | unit tests | DONE |
 | TASK-003 | Supervisor continuation decision engine | 20m | unit + regression | DONE |
-| TASK-004 | Supervisor ChatGPT UI adapter spike | 20m | local non-destructive smoke | WAIT_USER — runner for this repo required |
-| TASK-005 | Supervisor reconnect/retry policy | 15m | simulated failure tests | QUEUED |
+| TASK-004 | Supervisor ChatGPT UI adapter spike | 20m | local non-destructive smoke | DONE |
+| TASK-005 | Supervisor reconnect/retry policy | 15m | simulated failure tests | READY |
 | TASK-006 | Supervisor START/STOP launcher + kill switch | 20m | local smoke | QUEUED |
 | TASK-007 | Canonical CI/E2E skeleton | 20m | Actions PASS | QUEUED |
 | TASK-008 | Store/product canonical model review | 20m | discovery trace | QUEUED |
