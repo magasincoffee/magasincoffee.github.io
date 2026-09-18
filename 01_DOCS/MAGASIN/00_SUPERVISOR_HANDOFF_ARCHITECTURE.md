@@ -116,3 +116,27 @@ A valid handoff must prove:
 - later continuations use Five-Step + repository task context;
 - ChatGPT Robot opens the same browser profile used by automation;
 - no conversation text is persisted in logs.
+
+
+## 8. Work UI completion rule
+
+ChatGPT Work can expose tool/activity progress outside standard assistant-message containers. Therefore standard message-role order alone is not sufficient to decide completion.
+
+The Supervisor uses a privacy-safe activity state machine:
+
+```text
+USER_PENDING
+  + busy/loading/progress surface
+    → WAIT and record Work progress
+  + structural activity change
+    → WAIT and reset idle timer
+  + observed progress followed by 20s stable idle
+    → treat as RESPONSE_COMPLETE
+    → rearm AUTO_CONTINUE
+```
+
+At initial robot takeover only, a pre-existing `USER_PENDING` surface may settle after 20 seconds of stable idle even when the Supervisor did not witness the earlier Work progress. This is the bounded handoff fallback.
+
+After any Supervisor send, stable `USER_PENDING` alone is **not** enough. The Supervisor must first observe Work/running/structural progress before it can rearm. This prevents duplicate prompts when a newly sent request has not actually been handled.
+
+No message body is persisted for this decision. Only roles, busy flags and structural counts are used.
