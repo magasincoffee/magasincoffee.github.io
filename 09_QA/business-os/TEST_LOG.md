@@ -184,3 +184,26 @@
 - Pending Give vs Swap conflict guard: PASS.
 - Production synthetic/private test rows inserted: none.
 - Gate: TASK-033 **DONE**; TASK-034 **READY**.
+
+## 2026-09-18 — TASK-034 Notification event-outbox production
+
+- Branch: `feat/task-034-notification-outbox-v1`
+- Task doc: `01_DOCS/MAGASIN/05_SYSTEM/NOTIFICATION_OUTBOX_PRODUCTION_V1.md`
+- Production migrations:
+  - `20260918114654_notification_outbox_v1`
+  - `20260918114903_notification_outbox_trigger_privileges_v1`
+- People Shift run `35342003678`: **PASS**.
+- Static migration/RLS/trigger security contract: PASS.
+- Employee notification browser regression: PASS.
+- Existing Employee Swap/Give/availability/attendance regressions: PASS.
+- Manager Workforce regression: PASS.
+- Day-10 People/Shift browser E2E: PASS.
+- Control Tower browser regression: PASS.
+- Publish rollback smoke: 1 SCHEDULE_PUBLISHED + 1 CLOCK_OUT_REMINDER: PASS.
+- Attendance rollback smoke: clock-in/out events + reminder CANCELLED: PASS.
+- service_role email queue rollback smoke: PENDING → PROCESSING → SENT, attempts=1: PASS.
+- Trigger SECURITY DEFINER public/authenticated EXECUTE revoked: PASS.
+- Historical backfill: none.
+- Persisted production QA rows: none.
+- Email provider invoked: none.
+- Gate: TASK-034 **DONE**; TASK-035 **READY**.

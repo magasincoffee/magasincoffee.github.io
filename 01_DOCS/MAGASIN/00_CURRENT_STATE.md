@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-034 — Notification event-outbox production — READY**
+**TASK-035 — MAGASIN email adapter/config — READY**
 
 Canonical task/state files:
 
@@ -31,6 +31,7 @@ Canonical task/state files:
 - `05_SYSTEM/MANAGER_SCHEDULE_CANONICAL_SLICE_V1.md`
 - `05_SYSTEM/PUBLISHED_SCHEDULE_FEEDBACK_LOOP_V1.md`
 - `05_SYSTEM/GIVE_SHIFT_PRODUCTION_V1.md`
+- `05_SYSTEM/NOTIFICATION_OUTBOX_PRODUCTION_V1.md`
 
 ## Current target
 
@@ -98,20 +99,21 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-034 under Five-Step.
+**AUTO_CONTINUE:** execute TASK-035 under Five-Step until the exact provider/account activation boundary.
 
-TASK-033 Give Shift V1 is production-applied and verified:
+TASK-034 notification outbox V1 is production-applied and verified:
 
-- recipient consent required;
-- Manager approval required;
-- server revalidation before transfer;
-- RLS + RPC permission boundaries verified;
-- Employee/Manager browser E2E PASS;
-- production synthetic test data was not inserted.
+- durable RLS-protected `notification_outbox`;
+- canonical triggers for schedule / attendance / Swap / Give;
+- Employee in-app `view-notice` reads `list_my_notifications_v1`;
+- clock-out reminder is scheduled at shift end and cancelled after actual clock-out;
+- provider-neutral email queue state machine verified;
+- trigger SECURITY DEFINER RPC exposure hardened;
+- no historical backfill and no persisted QA fixture rows.
 
-TASK-034 scope is only durable notification event-outbox for schedule/attendance/Swap/Give events. Reuse canonical mutations and do not activate an email provider yet.
+TASK-035 may build provider-neutral adapter/config and inspect existing runtime configuration. Do not invent an email provider, sender account or credential. External calendar remains disabled by Owner.
 
-Do not invent an email provider or commit credentials. TASK-035 owns provider-specific email adapter/config and must stop at an exact provider/account boundary if unresolved.
+If no concrete MAGASIN email provider/account configuration exists, stop at that exact Owner boundary after completing all provider-independent work.
 
 TASK-026 remains deferred independently.
 

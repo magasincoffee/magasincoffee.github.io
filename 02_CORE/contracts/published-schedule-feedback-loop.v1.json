@@ -17,11 +17,16 @@
     "give_shift_v1": true,
     "give_recipient_consent": true,
     "give_manager_approval": true,
-    "official_schedule_refresh_after_give": true
+    "official_schedule_refresh_after_give": true,
+    "notification_outbox_v1": true,
+    "notification_employee_in_app_reader": true,
+    "clock_out_reminder": true,
+    "clock_out_cancels_pending_reminder": true,
+    "email_queue_state_machine": true
   },
   "fail_closed": {
     "give_shift_primitive": "CONNECTED_V1",
-    "notification_outbox": "APPROVED_FOR_IMPLEMENTATION",
+    "notification_outbox": "CONNECTED_V1",
     "email_delivery": "CONFIG_PENDING",
     "calendar_delivery": "DISABLED_BY_OWNER"
   },
