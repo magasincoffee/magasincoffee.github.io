@@ -16,7 +16,7 @@ P0 baseline gate has passed. Owner decision `DEC-003` reprioritizes the current 
 
 ## Current task
 
-**TASK-028 — Manager registration review hardening — READY**
+**TASK-029 — Robot draft + Manager assignment editor — READY**
 
 Canonical task/state files:
 
@@ -75,7 +75,7 @@ Supervisor Robot V1 remains active. Project state is returned to `AUTO_CONTINUE`
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-028. Harden Manager weekly registration review: week/store navigation, all scoped registrations, and route edits through `manager_update_employee_availability` instead of browser direct table update. Test regression, update state, then continue to TASK-029 if no Owner boundary is reached.
+**AUTO_CONTINUE:** execute TASK-029. Connect robot draft generation to the Manager workflow and add a DRAFT-only assignment editor using `get_schedule_generation_assignments` + `replace_schedule_generation_assignments`, followed by server validation. Do not auto-publish.
 
 ## Session handoff
 
