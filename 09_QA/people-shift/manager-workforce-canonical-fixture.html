@@ -24,7 +24,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
   const calls=[];
   const store={id:"store-a",code:"CN-QA-A",name:"Cửa hàng QA A"};
   const availability=[{availability_id:"av-1",user_id:"u-1",employee_name:"Nhân viên QA",username:"qa",work_date:"2026-09-21",start_time:"06:00",end_time:"12:00",preferred_store_id:"store-a",preferred_store_code:"CN-QA-A",availability_type:"AVAILABLE"}];
-  const state={generation:null,assignments:[],official:[],swapPending:true};
+  const state={generation:null,assignments:[],official:[],swapPending:true,givePending:true};
   const api={
     async rpc(name,args={}){
       calls.push({kind:"rpc",name,args:structuredClone(args||{})});
@@ -55,6 +55,9 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
       if(name==="list_shift_swap_requests_v1")return {data:state.swapPending?[{id:"swap-1",status:"PENDING",reason:"Đổi ca QA",requested_at:"2026-09-18T00:00:00Z",store_id:"store-a",store_code:"CN-QA-A",store_name:"Cửa hàng QA A",requester_id:"u-1",requester_name:"Nhân viên QA",requester_schedule_id:"schedule-1",target_schedule_id:"schedule-2",target_user_id:"u-2",target_user_name:"Bạn QA",requester_date:"2026-09-21",requester_start:"06:00",requester_end:"12:00",target_date:"2026-09-21",target_start:"12:00",target_end:"17:00"}]:[],error:null};
       if(name==="approve_shift_swap"){state.swapPending=false;if(state.official[0]){state.official[0].user_id="u-2";state.official[0].employee_name="Bạn QA"}return {data:{id:args.p_swap_id,status:"APPROVED",swapped:true},error:null};}
       if(name==="reject_shift_swap"){state.swapPending=false;return {data:{id:args.p_swap_id,status:"REJECTED"},error:null};}
+      if(name==="list_shift_give_requests_v1")return {data:state.givePending?[{id:"give-1",status:"PENDING_MANAGER",reason:"Cho ca QA",requested_at:"2026-09-18T00:00:00Z",giver_id:"u-2",giver_name:"Bạn QA",recipient_id:"u-3",recipient_name:"Người nhận Give QA",schedule_id:"schedule-1",work_date:"2026-09-21",start_time:"06:00",end_time:"12:00",store_id:"store-a",store_code:"CN-QA-A",store_name:"Cửa hàng QA A",recipient_responded_at:"2026-09-18T01:00:00Z"}]:[],error:null};
+      if(name==="approve_shift_give"){state.givePending=false;if(state.official[0]){state.official[0].user_id="u-3";state.official[0].employee_name="Người nhận Give QA"}return {data:{id:args.p_give_id,status:"APPROVED",transferred:true,schedule_id:"schedule-1",giver_id:"u-2",recipient_id:"u-3"},error:null};}
+      if(name==="reject_shift_give"){state.givePending=false;return {data:{id:args.p_give_id,status:"REJECTED_MANAGER"},error:null};}
       return {data:null,error:{message:"unexpected rpc "+name}};
     },
     from(name){calls.push({kind:"from",name});throw new Error("Direct table access forbidden:"+name)}
