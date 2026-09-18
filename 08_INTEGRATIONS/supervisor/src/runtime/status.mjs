@@ -23,7 +23,7 @@ export function buildRuntimeStatus({
   errorName = null
 } = {}) {
   return {
-    schema_version: 1,
+    schema_version: 2,
     project: projectState.project || "MAGASIN Business OS",
     repository: projectState.repository || "magasincoffee/magasincoffee.github.io",
     project_status: projectState.status || null,
@@ -35,6 +35,15 @@ export function buildRuntimeStatus({
     autonomy: projectState.autonomy || null,
     requires_user: Boolean(projectState.requires_user),
     blocked: Boolean(projectState.blocked),
+    owner_boundary_pending: Array.isArray(projectState?.owner_boundary?.pending)
+      ? projectState.owner_boundary.pending.map((value) => String(value))
+      : [],
+    activation_boundary_reason:
+      String(projectState?.activation_boundary?.reason || ""),
+    activation_boundary_pending:
+      Array.isArray(projectState?.activation_boundary?.pending)
+        ? projectState.activation_boundary.pending.map((value) => String(value))
+        : [],
     ui_state: uiState,
     observation,
     decision_action: decision?.action || null,
