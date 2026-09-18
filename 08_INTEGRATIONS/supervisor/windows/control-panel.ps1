@@ -45,7 +45,7 @@ function Ensure-GitHubRunner {
         return $false
     }
 
-    $runnerCommand = 'title MAGASIN-PC RUNNER - KEEP OPEN && cd /d "' + $runnerRoot + '" && call run.cmd'
+    $runnerCommand = 'title MAGASIN-BUSINESS-PC RUNNER - KEEP OPEN && cd /d "' + $runnerRoot + '" && call run.cmd'
     Start-Process -FilePath 'cmd.exe' -WorkingDirectory $runnerRoot -ArgumentList @('/k', $runnerCommand)
 
     for ($i = 0; $i -lt 16; $i++) {
@@ -55,7 +55,7 @@ function Ensure-GitHubRunner {
 
     if ($Interactive) {
         [Windows.Forms.MessageBox]::Show(
-            'GitHub Runner chưa ONLINE. Kiểm tra cửa sổ MAGASIN-PC RUNNER - KEEP OPEN.',
+            'GitHub Runner chưa ONLINE. Kiểm tra cửa sổ MAGASIN-BUSINESS-PC RUNNER - KEEP OPEN.',
             'MAGASIN Business OS',
             'OK',
             'Warning'
