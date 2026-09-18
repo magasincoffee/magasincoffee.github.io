@@ -32,7 +32,7 @@ test("auto-upgrade workflow installs runtime source changes and verifies a Brain
 });
 
 
-test("auto-upgrade fails if live v20 runtime remains blocked by stale Brain target mismatch", async () => {
+test("auto-upgrade fails if live v21 runtime remains blocked by stale Brain target mismatch", async () => {
   const source = await fs.readFile(
     new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
     "utf8"
