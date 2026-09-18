@@ -10,6 +10,7 @@ $runtime = Join-Path $root 'runtime'
 $runScript = Join-Path $runtime 'windows\run-supervisor.ps1'
 $pidFile = Join-Path $root 'supervisor.pid'
 $stop = Join-Path $root 'STOP'
+$autostartDisabled = Join-Path $root 'AUTOSTART_DISABLED'
 
 if (-not (Test-Path $runScript)) {
     throw "Supervisor runtime is not installed: $runScript"
@@ -38,6 +39,7 @@ if (Test-Path $pidFile) {
 }
 
 Remove-Item $stop -Force -ErrorAction SilentlyContinue
+Remove-Item $autostartDisabled -Force -ErrorAction SilentlyContinue
 
 # Prevent GitHub Actions orphan-process cleanup from claiming the persistent Supervisor shell.
 $env:RUNNER_TRACKING_ID = 'MAGASIN_SUPERVISOR_PERSISTENT'
