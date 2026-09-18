@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "status": "ACCEPTANCE_DEFINED",
+  "task": "TASK-011",
+  "route": "/04_OWNER/ControlTower/",
+  "access": [
+    "OWNER"
+  ],
+  "mode": "READ_ONLY_ATTENTION_LAYER",
+  "sections": [
+    "context",
+    "revenue",
+    "payables",
+    "workforce",
+    "inventory",
+    "tasks",
+    "data_quality"
+  ],
+  "quality_states": [
+    "ACTUAL",
+    "ESTIMATE",
+    "GAP",
+    "NOT_CONNECTED"
+  ],
+  "required_behaviors": {
+    "partial_source_tolerant": true,
+    "no_synthetic_numbers": true,
+    "source_metadata_per_metric_group": true,
+    "drill_down_not_workflow_duplication": true,
+    "no_new_write_actions": true
+  },
+  "acceptance": [
+    "owner_home_navigation",
+    "explicit_auth_loading_denied_error_states",
+    "revenue_requires_reconciled_or_non_actual_label",
+    "payables_reuses_trusted_read_model",
+    "workforce_partial_data_supported",
+    "unsupported_sections_show_gap_not_connected",
+    "per_section_data_quality",
+    "one_source_failure_does_not_blank_page",
+    "responsive_layout",
+    "fixture_tests_healthy_partial_error_empty",
+    "browser_e2e_owner_home_to_control_tower"
+  ],
+  "next_tasks": [
+    "TASK-012",
+    "TASK-013",
+    "TASK-014",
+    "TASK-015",
+    "TASK-016",
+    "TASK-017",
+    "TASK-018"
+  ]
+}
