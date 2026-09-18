@@ -10,7 +10,7 @@ test("runtime observes WAIT_USER instead of short-circuiting before ChatGPT", as
 
   assert.match(source, /const ownerWait = isOwnerWaitState\(projectState\)/);
   assert.match(source, /OWNER_BOUNDARY_OBSERVED/);
-  assert.match(source, /ownerReconcile: ownerReconcileRequested/);
+  assert.match(source, /ownerReconcile: ownerReconcileActive/);
   assert.match(source, /OWNER_RECONCILE_SENT/);
   assert.match(source, /OWNER_RECONCILE_SETTLED/);
 
