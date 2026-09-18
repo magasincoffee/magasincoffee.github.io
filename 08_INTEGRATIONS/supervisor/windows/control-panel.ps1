@@ -51,8 +51,22 @@ function Format-Time([string]$Value) {
 function Tail-SafeLog {
     if (-not (Test-Path $logFile)) { return 'Chưa có nhật ký.' }
     try {
-        $lines = Get-Content $logFile -Tail 28 -Encoding UTF8
-        if (-not $lines) { return 'Chưa có nhật ký.' }
+        $allLines = @(Get-Content $logFile -Tail 160 -Encoding UTF8)
+        if (-not $allLines) { return 'Chưa có nhật ký.' }
+
+        $bootIndex = -1
+        for ($i = 0; $i -lt $allLines.Count; $i++) {
+            if ($allLines[$i] -match '"type":"RUNTIME_BOOT"') {
+                $bootIndex = $i
+            }
+        }
+
+        $lines = if ($bootIndex -ge 0) {
+            @($allLines | Select-Object -Skip $bootIndex | Select-Object -Last 28)
+        } else {
+            @($allLines | Select-Object -Last 28)
+        }
+
         $out = foreach ($line in $lines) {
             try {
                 $e = $line | ConvertFrom-Json
