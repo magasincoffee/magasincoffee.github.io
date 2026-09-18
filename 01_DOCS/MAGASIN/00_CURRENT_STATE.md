@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-035 — MAGASIN email adapter/config — WAIT_USER**
+**TASK-035 — MAGASIN email adapter/config — WAIT_USER (Gmail OAuth credentials)**
 
 Canonical task/state files:
 
@@ -100,40 +100,23 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**WAIT_USER:** TASK-035 provider-neutral core is complete and fail-closed.
+**WAIT_USER:** Owner đã chốt Gmail/Google Workspace và sender; Gmail OAuth adapter đã được implement fail-closed.
 
-Verified discovery:
+Resolved:
 
-- repository contains no concrete Resend / SendGrid / Mailgun / SMTP / Gmail mailer configuration;
-- Supabase project currently has 0 deployed Edge Functions;
-- database has no mail-provider primitive beyond the TASK-034 outbox queue;
-- recipient emails are available server-side from `public.profiles.email`;
-- available connector cannot enumerate production secret values, so no claim is made about whether unrelated secrets exist.
+- provider = `GMAIL_GOOGLE_WORKSPACE`;
+- sender = `bachvanti1994@gmail.com`;
+- Gmail API + OAuth 2.0 server-side adapter;
+- provider initialization occurs before queue claim;
+- external calendar remains disabled.
 
-Safe implementation completed:
+Remaining activation boundary is credential setup outside Git:
 
-- provider-neutral worker contract;
-- USER / OWNER / STORE_MANAGERS recipient resolution;
-- Supabase server-secret authorization model;
-- config validation before queue claim;
-- no provider selected or invented;
-- exact MAGASIN sender email has been supplied by Owner and recorded in the canonical contract;
-- Edge Function not deployed;
-- no provider secrets set;
-- no email sent;
-- outbox rows remain untouched by TASK-035.
+- `GMAIL_OAUTH_CLIENT_ID`;
+- `GMAIL_OAUTH_CLIENT_SECRET`;
+- `GMAIL_OAUTH_REFRESH_TOKEN`.
 
-Owner must provide exactly:
-
-1. concrete system email provider.
-
-Resolved: exact MAGASIN sender email = `bachvanti1994@gmail.com`.
-
-Optional: reply-to address if different.
-
-After Owner supplies the provider, implement only the selected adapter, store provider credentials/runtime configuration in Supabase Edge Function Secrets outside Git, deploy, send one bounded test email, verify `PENDING → PROCESSING → SENT`, then close TASK-035.
-
-External calendar remains disabled.
+No Edge Function is deployed and no email is sent until these runtime secrets are available. After that: set secrets/config → deploy → bounded send → verify `PENDING → PROCESSING → SENT` → regression → close TASK-035.
 
 TASK-026 remains deferred independently.
 
