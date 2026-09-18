@@ -22,6 +22,21 @@ export function resolveChromeExecutable(env = process.env) {
   return candidates.find((candidate) => fs.existsSync(candidate)) || null;
 }
 
+export function isChatGptUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" &&
+      (url.hostname === "chatgpt.com" || url.hostname.endsWith(".chatgpt.com"));
+  } catch {
+    return false;
+  }
+}
+
+export function isTransientNavigationError(error) {
+  const message = String(error?.message || error || "");
+  return /execution context was destroyed|most likely because of a navigation|target page, context or browser has been closed|navigation/i.test(message);
+}
+
 export class ChatGptUiAdapter {
   constructor({
     profileDir = defaultSupervisorProfileDir(),
@@ -37,7 +52,6 @@ export class ChatGptUiAdapter {
     this.headless = headless;
     this.timeoutMs = timeoutMs;
     this.settleMs = settleMs;
-    this.playwright = null;
     this.context = null;
     this.page = null;
   }
@@ -67,9 +81,49 @@ export class ChatGptUiAdapter {
     return this.page;
   }
 
+  getActivePage() {
+    if (!this.context) return null;
+
+    const pages = this.context.pages().filter((page) => !page.isClosed());
+    if (!pages.length) {
+      this.page = null;
+      return null;
+    }
+
+    const chatGptPages = pages.filter((page) => isChatGptUrl(page.url()));
+    this.page = chatGptPages.at(-1) || pages.at(-1);
+    return this.page;
+  }
+
   async probe() {
-    if (!this.page) throw new Error("adapter is not open");
-    const snapshot = await collectSafeUiSnapshot(this.page);
+    const page = this.getActivePage();
+    if (!page) throw new Error("adapter is not open");
+
+    if (!isChatGptUrl(page.url())) {
+      return {
+        snapshot: {
+          schemaVersion: "1.0",
+          pathKind: "external_auth",
+          conversationPath: false,
+          composerReady: false,
+          assistantMessageCount: 0,
+          userMessageCount: 0,
+          loginRequired: true,
+          hasCaptcha: false,
+          responseRunning: false,
+          hasNetworkError: false,
+          hasTransientError: false,
+          hasContinueControl: false,
+          hasRetryControl: false
+        },
+        classification: {
+          uiState: "LOGIN_REQUIRED",
+          observation: "AUTH_REQUIRED"
+        }
+      };
+    }
+
+    const snapshot = await collectSafeUiSnapshot(page);
     const classification = classifyUiSnapshot(snapshot);
     return { snapshot, classification };
   }
