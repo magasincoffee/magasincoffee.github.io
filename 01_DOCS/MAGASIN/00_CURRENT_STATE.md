@@ -120,6 +120,8 @@ Không draft/apply write-capable Give hoặc notification provider production tr
 
 TASK-026 vẫn được defer độc lập; không triển khai SOP/Task write automation cho tới khi DST-001..DST-006 được phê duyệt.
 
+Do not implement write-capable SOP/Task automation until its six business-rule decisions are approved.
+
 ## Session handoff
 
 New chat must read:
