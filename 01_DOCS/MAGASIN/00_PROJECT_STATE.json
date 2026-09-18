@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
   "target_days": 21,
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-043",
-  "current_task_title": "Cross-project handoff integration",
+  "current_task": "TASK-044",
+  "current_task_title": "Portfolio-aware diagnostics",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-044",
+  "next_task": "TASK-045",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -19,11 +19,10 @@
   },
   "last_updated": "2026-09-18",
   "owner_boundary": {
-    "task": "TASK-043",
+    "task": "TASK-044",
     "resolved": [
       "TWO_PROJECT_SCOPE_APPROVED",
-      "TASK_041_RECOVERY_BOUNDARY_VERIFIED",
-      "TASK_042_MEDIA_OFFLINE_VERIFIED"
+      "TASK_043_HANDOFF_VERIFIED"
     ],
     "pending": []
   },
@@ -50,7 +49,7 @@
       "magasin-business-os",
       "magasin-media-robot"
     ],
-    "current_order": 8,
+    "current_order": 9,
     "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
     "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json",
     "recovery_install": {
@@ -81,7 +80,9 @@
       "task_042_media_test_run_id": 35370559918,
       "task_042_media_branch": "feat/saydi-production-provider",
       "task_042_media_test_commit": "8c679734c17ddc004e71c188384508e747959c5c",
-      "task_042_media_docs_commit": "306eff03e89a5bb6b072fad54675b6ca42e94f8e"
+      "task_042_media_docs_commit": "306eff03e89a5bb6b072fad54675b6ca42e94f8e",
+      "task_043_test_run_id": 35370949854,
+      "task_043_test_commit": "d39cc211f19ce7223478d48ccfd19a7440c17d77"
     }
   }
 }
