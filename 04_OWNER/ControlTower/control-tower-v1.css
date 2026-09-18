@@ -2,6 +2,13 @@
 :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033;background:#f4f7fb}
 body{margin:0;background:#f4f7fb}
 a{color:inherit}
+.hidden{display:none!important}
+.screen{min-height:100vh;display:grid;place-items:center;padding:24px}
+.message{max-width:560px;text-align:center;background:#fff;border:1px solid #e1e7ef;border-radius:18px;padding:28px;box-shadow:0 12px 34px rgba(16,33,59,.08)}
+.message h2{margin:0 0 8px}.message p{margin:0;color:#667085;line-height:1.6}
+.message-actions,.top-actions{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.message-actions{margin-top:18px}
+.owner-chip{display:inline-flex;align-items:center;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:900;background:#eaf1ff;color:#2455a8;border:1px solid #cbdaf8}
 .shell{max-width:1200px;margin:0 auto;padding:28px 18px 48px}
 .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px}
 .eyebrow{font-size:12px;font-weight:800;letter-spacing:.08em;color:#667085;text-transform:uppercase}
@@ -34,4 +41,4 @@ h1{font-size:30px;margin:4px 0 6px}
 .quality-name{font-weight:800}
 .quality-source{font-size:13px;color:#667085}
 .notice{margin-top:18px;background:#eef3f8;border:1px solid #d7e2ee;color:#344054;border-radius:14px;padding:13px 15px;font-size:13px;line-height:1.55}
-@media(max-width:760px){.topbar{display:block}.back{display:inline-block;margin-top:14px}.context{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.card.full{grid-column:auto}.quality-row{grid-template-columns:1fr;gap:6px}}
+@media(max-width:760px){.topbar{display:block}.top-actions{justify-content:flex-start;margin-top:14px}.back{display:inline-block;margin-top:14px}.context{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.card.full{grid-column:auto}.quality-row{grid-template-columns:1fr;gap:6px}}

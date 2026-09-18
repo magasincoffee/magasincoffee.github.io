@@ -5,17 +5,29 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>MAGASIN · Owner Control Tower</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/02_CORE/shared/shared-core-v1.js"></script>
 <link rel="stylesheet" href="./control-tower-v1.css">
 </head>
 <body>
-<main class="shell">
+<div id="loading" class="screen">
+  <div class="message"><h2>Đang kiểm tra quyền Owner…</h2><p>Control Tower chỉ mở sau khi xác thực tài khoản Owner đang hoạt động.</p></div>
+</div>
+<div id="denied" class="screen hidden">
+  <div class="message"><h2>Không có quyền truy cập</h2><p id="deniedText">Chỉ Owner được mở Control Tower.</p><div class="message-actions"><a class="back" href="/03_PLATFORM/01_AUTH/">Về đăng nhập</a><a class="back" href="/04_OWNER/">Trang Owner</a></div></div>
+</div>
+
+<main id="app" class="shell hidden">
   <div class="topbar">
     <div>
       <div class="eyebrow">MAGASIN BUSINESS OS</div>
       <h1>Owner Control Tower</h1>
       <p class="subtitle">Lớp quan sát read-only: việc gì cần Owner chú ý ngay.</p>
     </div>
-    <a class="back" href="/04_OWNER/">← Trang Owner</a>
+    <div class="top-actions">
+      <span id="ownerIdentity" class="owner-chip">OWNER</span>
+      <a class="back" href="/04_OWNER/">← Trang Owner</a>
+    </div>
   </div>
 
   <section class="context" aria-label="Bối cảnh báo cáo">
@@ -73,7 +85,7 @@
     </article>
   </section>
 
-  <div class="notice">TASK-012 shell: mặc định không hiển thị số giả. Nguồn chưa tích hợp phải ở trạng thái GAP / NOT CONNECTED cho đến khi adapter thật được nối và kiểm tra.</div>
+  <div class="notice">Control Tower chỉ đọc. Nguồn chưa tích hợp hoặc không đủ tin cậy phải hiển thị GAP / NOT CONNECTED và không được giữ số liệu.</div>
 </main>
 <script type="module" src="./control-tower-v1.js"></script>
 </body>
