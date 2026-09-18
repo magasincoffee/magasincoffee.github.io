@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "status": "ACCEPTANCE_DEFINED",
+  "task": "TASK-019",
+  "slice": "PEOPLE_SHIFT_DAY_8_10",
+  "existing_workflows_are_canonical": true,
+  "no_new_business_rules": true,
+  "verified_existing_capabilities": [
+    "owner_staffing_demand",
+    "owner_availability_review",
+    "owner_schedule_generation_review_publish",
+    "employee_availability",
+    "employee_approved_schedule",
+    "employee_attendance",
+    "employee_shift_swap"
+  ],
+  "verified_gaps": [
+    "STAFFING_GAP_READ_ADAPTER",
+    "PEOPLE_SHIFT_BROWSER_E2E",
+    "LIVE_WORKFORCE_RPC_SURFACE_NOT_FULLY_REPRODUCIBLE"
+  ],
+  "staffing_gap_contract": {
+    "shortage_rule": "assigned_headcount_below_minimum_headcount",
+    "generation_selection": "FIRST_DRAFT_OR_REVIEWED_ELSE_FIRST_RETURNED",
+    "read_only": true,
+    "missing_source_fails_closed": true,
+    "write_rpcs_forbidden": [
+      "auto_generate_schedule_generation",
+      "review_schedule_generation",
+      "publish_schedule_generation",
+      "review_store_transfer_request"
+    ]
+  },
+  "production_guardrails": {
+    "apply_schema_change": false,
+    "production_migration_requires_owner": true,
+    "live_schema_inventory_before_rebaseline": true
+  },
+  "acceptance": [
+    "reuse_existing_owner_employee_workflows",
+    "mirror_existing_minimum_shortage_semantics",
+    "read_only_staffing_gap_adapter",
+    "no_synthetic_zero_when_generation_or_source_missing",
+    "control_tower_fail_closed_gap_rendering",
+    "source_local_failure_isolation",
+    "forbidden_write_rpc_test",
+    "people_shift_browser_e2e",
+    "control_tower_regression_green",
+    "no_new_workforce_business_rule",
+    "no_production_schema_apply"
+  ],
+  "next_tasks": [
+    "TASK-020",
+    "TASK-021",
+    "TASK-022"
+  ]
+}
