@@ -682,12 +682,15 @@ test("conversation-turn progress rearms even when virtualized assistant counts s
         maxConversationTurnOrdinal: 28
       }
     },
-    ownerReconcile: true
+    ownerReconcile: true,
+    ownerReconcileAwaitingResponse: true
   });
 
   assert.equal(controller.armed, true);
   assert.equal(controller.turnOrdinalAtAction, null);
-  assert.equal(settled.decision.action, "CONTINUE");
+  assert.equal(settled.decision.action, "WAIT");
+  assert.equal(settled.execution.executed, false);
+  assert.match(settled.decision.reason, /response completed/);
 });
 
 test("turn advancement without an assistant-last turn does not rearm", async () => {
@@ -706,4 +709,39 @@ test("turn advancement without an assistant-last turn does not rearm", async () 
   });
 
   assert.equal(controller.armed, false);
+});
+
+
+test("awaiting Owner reconcile response never sends a duplicate continuation on semantic completion", async () => {
+  const controller = new SupervisorLoopController({
+    execute: true,
+    minActionIntervalMs: 1000
+  });
+  controller.armed = false;
+  controller.assistantCountAtAction = 5;
+  controller.turnOrdinalAtAction = 20;
+
+  const result = await controller.step({
+    page: page(),
+    projectState: state({
+      status: "WAIT_USER",
+      autonomy: "MANUAL",
+      blocked: false,
+      requires_user: true
+    }),
+    probe: {
+      classification: { observation: "RESPONSE_COMPLETE" },
+      snapshot: {
+        assistantMessageCount: 3,
+        lastMessageRole: "assistant",
+        maxConversationTurnOrdinal: 28
+      }
+    },
+    ownerReconcile: true,
+    ownerReconcileAwaitingResponse: true
+  });
+
+  assert.equal(controller.armed, true);
+  assert.equal(result.decision.action, "WAIT");
+  assert.equal(result.execution.executed, false);
 });
