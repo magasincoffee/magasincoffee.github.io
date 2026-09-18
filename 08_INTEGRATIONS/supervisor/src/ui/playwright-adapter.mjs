@@ -154,9 +154,38 @@ export class ChatGptUiAdapter {
     return this.page;
   }
 
-  async probe() {
-    const page = this.getActivePage();
-    if (!page) throw new Error("adapter is not open");
+  getChatGptPages() {
+    if (!this.context) return [];
+    return this.context
+      .pages()
+      .filter((page) => !page.isClosed() && isChatGptUrl(page.url()));
+  }
+
+  findPageForTarget(target) {
+    if (!target?.origin || !target?.pathname) return null;
+    return this.getChatGptPages().find((page) => {
+      try {
+        const url = new URL(page.url());
+        return url.origin === target.origin && url.pathname === target.pathname;
+      } catch {
+        return false;
+      }
+    }) || null;
+  }
+
+  async newChatPage(url = "https://chatgpt.com/") {
+    if (!this.context) throw new Error("adapter is not open");
+    const page = await this.context.newPage();
+    await page.goto(url, {
+      waitUntil: "domcontentloaded",
+      timeout: this.timeoutMs
+    });
+    await page.waitForTimeout(this.settleMs);
+    return page;
+  }
+
+  async probePage(page) {
+    if (!page || page.isClosed()) throw new Error("page is required");
 
     if (!isChatGptUrl(page.url())) {
       return {
@@ -188,6 +217,12 @@ export class ChatGptUiAdapter {
     const snapshot = await collectSafeUiSnapshot(page);
     const classification = classifyUiSnapshot(snapshot);
     return { snapshot, classification };
+  }
+
+  async probe() {
+    const page = this.getActivePage();
+    if (!page) throw new Error("adapter is not open");
+    return this.probePage(page);
   }
 
   async close() {
