@@ -51,6 +51,7 @@ function context(overrides = {}) {
     controller: {
       armed: false,
       assistantCountAtAction: 6,
+      turnOrdinalAtAction: 17,
       sawRunningAfterAction: false,
       userPendingSawProgress: false,
       lastActionAt: 123
@@ -84,6 +85,7 @@ test("diagnostics writes latest snapshot without conversation text", async () =>
   assert.equal(latest.project.current_task, "TASK-035");
   assert.equal(latest.ui.observation, "RESPONSE_COMPLETE");
   assert.equal(latest.controller.armed, false);
+  assert.equal(latest.controller.turn_ordinal_at_action, 17);
   assert.equal(latest.owner_reconcile.manual_recheck_marker, true);
   assert.equal("text" in latest.ui, false);
   assert.equal("message" in latest.ui, false);
