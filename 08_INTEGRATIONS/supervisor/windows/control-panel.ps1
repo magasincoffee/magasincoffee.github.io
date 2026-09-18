@@ -9,6 +9,7 @@ $pidFile = Join-Path $root 'supervisor.pid'
 $statusFile = Join-Path $root 'runtime-status.json'
 $logFile = Join-Path $root 'supervisor.log'
 $ownerResolvedFile = Join-Path $root 'OWNER_RESOLVED.request.json'
+$brainRebindFile = Join-Path $root 'BRAIN_REBIND.request.json'
 $diagnosticsRoot = Join-Path $root 'diagnostics'
 $startScript = Join-Path $runtime 'windows\start-supervisor.ps1'
 $stopScript = Join-Path $runtime 'windows\stop-supervisor.ps1'
@@ -330,6 +331,16 @@ $ownerResolvedButton.ForeColor = [Drawing.Color]::FromArgb(133,77,14)
 $ownerResolvedButton.Enabled = $false
 $errorPanel.Controls.Add($ownerResolvedButton)
 
+$brainRebindButton = New-Object Windows.Forms.Button
+$brainRebindButton.Text = 'DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO'
+$brainRebindButton.Location = New-Object Drawing.Point(515, 18)
+$brainRebindButton.Size = New-Object Drawing.Size(255, 38)
+$brainRebindButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
+$brainRebindButton.BackColor = [Drawing.Color]::FromArgb(219,234,254)
+$brainRebindButton.ForeColor = [Drawing.Color]::FromArgb(29,78,216)
+$brainRebindButton.Visible = $false
+$errorPanel.Controls.Add($brainRebindButton)
+
 $diagnosticsButton = New-Object Windows.Forms.Button
 $diagnosticsButton.Text = 'MỞ LOG LỖI'
 $diagnosticsButton.Location = New-Object Drawing.Point(780, 18)
@@ -486,12 +497,23 @@ function Refresh-ControlPanel {
         $projectStatus -eq 'WAIT_USER' -and
         -not $projectState.blocked
     )
+    $targetMismatchActive = [bool](
+        $runtimeStatus -and
+        [string]$runtimeStatus.status -eq 'WAIT_USER' -and
+        [string]$runtimeStatus.decision_reason -match 'target mismatch'
+    )
+    $brainRebindButton.Visible = $targetMismatchActive
+    $ownerResolvedButton.Visible = -not $targetMismatchActive
     $ownerResolvedButton.Enabled = [bool]$ownerBoundaryActive
     if (Test-Path $ownerResolvedFile) {
         $ownerResolvedButton.Text = '✓  ĐÃ NHẬN — ĐANG KIỂM TRA'
         $ownerResolvedButton.Enabled = $false
     } else {
         $ownerResolvedButton.Text = '✓  ĐÃ XỬ LÝ — KIỂM TRA LẠI'
+    }
+
+    if ($targetMismatchActive) {
+        $errorValue.Text = 'Robot mất liên kết với cuộc trò chuyện Bộ não. Mở đúng cuộc trò chuyện Bộ não trong Chrome Robot rồi bấm DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO.'
     }
 
     $currentTask = if ($projectState.current_task) {
@@ -684,6 +706,32 @@ $ownerResolvedButton.Add_Click({
         [Windows.Forms.MessageBox]::Show(
             $_.Exception.Message,
             'Không thể yêu cầu kiểm tra lại',
+            'OK',
+            'Error'
+        ) | Out-Null
+    }
+})
+
+$brainRebindButton.Add_Click({
+    try {
+        $request = [ordered]@{
+            requested_at = [DateTimeOffset]::UtcNow.ToString('o')
+            intent = 'OWNER_BRAIN_REBIND_VISIBLE_CHAT'
+        }
+        New-Item -ItemType Directory -Force -Path $root | Out-Null
+        $request | ConvertTo-Json | Set-Content -Path $brainRebindFile -Encoding UTF8
+
+        [Windows.Forms.MessageBox]::Show(
+            'Đã yêu cầu Robot dùng cuộc trò chuyện ChatGPT đang mở làm Bộ não. Robot sẽ tự kiểm tra đúng định dạng Brain trước khi nhận.',
+            'MAGASIN Business OS',
+            'OK',
+            'Information'
+        ) | Out-Null
+        Refresh-ControlPanel
+    } catch {
+        [Windows.Forms.MessageBox]::Show(
+            $_.Exception.Message,
+            'Không thể gắn lại Bộ não',
             'OK',
             'Error'
         ) | Out-Null
