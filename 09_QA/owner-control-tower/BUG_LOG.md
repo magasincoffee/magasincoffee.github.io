@@ -58,3 +58,15 @@
 - Fix: authentication now returns through its own denial boundary; every post-auth source loader is wrapped by `loadSectionSafely`, which converts unexpected failures to section-local `GAP` without leaking backend error details.
 - Regression evidence: pre-fix run `35315562834` failed; fixed HEAD run `35315590063` passed.
 - Status: VERIFIED
+
+## BUG-CT-006 — Global data-confidence field can remain blank after sources load
+
+- Date: 2026-09-18
+- Component: `04_OWNER/ControlTower/index.html` + `control-tower-v1.js`
+- Reproduction: open the Day-7 Control Tower after the global confidence context card is present and let source cards finish loading.
+- Observed: the card remains `—` because no renderer populates `#globalConfidence`.
+- Impact: the screen contract promises a global data-confidence state, but Owner cannot see an aggregate source-quality summary.
+- Root cause: UI markup was added without binding it to normalized `dataQuality`.
+- Fix: add a deterministic quality-count summary and render it on every snapshot update; unknown quality fails into GAP.
+- Regression: unit + browser E2E assert final Owner and partial-source confidence summaries.
+- Status: PENDING CI VERIFICATION
