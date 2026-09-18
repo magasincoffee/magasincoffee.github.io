@@ -61,6 +61,25 @@ test("unreconciled gross revenue fails closed and cannot expose a number", () =>
   assert.equal(snapshot.revenue.amount, null);
 });
 
+test("trusted reconciled record with blank amount fails closed instead of becoming zero", () => {
+  for (const amount of [null, "", "   "]) {
+    const result = assessRevenueCandidate(
+      {
+        reportingDate: "2026-09-18",
+        reconciliationStatus: "RECONCILED",
+        trusted: true,
+        source: "SANITIZED_RECONCILED_REVENUE",
+        amount
+      },
+      { reportingDate: "2026-09-18", now: fixedNow }
+    );
+
+    assert.equal(result.quality, "GAP");
+    assert.equal(result.amount, undefined);
+    assert.match(result.message, /không hợp lệ/i);
+  }
+});
+
 test("reconciled but untrusted source is still GAP", () => {
   const result = assessRevenueCandidate(
     {
