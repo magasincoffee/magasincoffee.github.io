@@ -57,4 +57,4 @@
 - Impact: one unhealthy source can blank all healthy Control Tower sections and present a data-source failure as an authorization failure.
 - Root cause: Owner authorization and section data loading shared the same error boundary.
 - Fix: the auth boundary now ends before source loading; Revenue, Payables and Workforce are each wrapped by a section-local loader that converts unexpected exceptions to explicit `GAP` without stopping later sections.
-- Status: VERIFIED — regression run pending on latest-main replay
+- Status: VERIFIED — run `35315896133` PASS
