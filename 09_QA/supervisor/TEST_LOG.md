@@ -26,3 +26,18 @@ Next gate: TASK-004 UI adapter local **non-destructive** smoke.
 - No local UI action has executed yet.
 - Required next action: register/start a self-hosted Windows X64 runner for `magasincoffee/magasincoffee.github.io`.
 - Smoke workflow is guarded to owner actor and performs no send/click/credential read.
+
+## 2026-09-18 — Real Chrome authenticated setup
+
+- Workflow: `Supervisor Profile Setup`
+- Run: `35298993647`
+- Runner: `MAGASIN-BUSINESS-PC`
+- Result: **PASS**
+- Real installed Chrome launched by Windows `Start-Process`: PASS.
+- Supervisor attached through local CDP endpoint: PASS.
+- Google/email authentication completed by Owner in real Chrome: PASS.
+- Navigation/auth redirects handled without closing the browser: PASS.
+- ChatGPT state transitioned to `READY_IDLE`: PASS.
+- Conversation target stored **local-only**: PASS.
+- No credential, cookie, token, message body, or conversation identifier uploaded to GitHub: PASS.
+- Temporary read-only smoke run `35296619840`: PASS.
