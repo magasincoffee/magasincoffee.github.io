@@ -111,8 +111,9 @@ Final-checkpoint evidence:
 - Media Robot PR #21 remains offline-only/unmerged;
 - Business OS QA: **203/203 PASS** run `35371642271`;
 - TASK-048 hard-stop reconciliation QA: **162/162 PASS**, 0 failed, run `35372881851`; QA probe PR #120 closed without merge;
+- TASK-048 boundary-time guard QA: **162/162 PASS**, 0 failed, run `35373330382`; manual dispatch before 09:15 +07 is fail-closed; QA probe PR #121 closed without merge;
 - Media Robot QA: **83/83 PASS** runs `35370775036` and `35371002442`;
-- no bounded regression remains after the TASK-048 hard-stop reconciliation fix.
+- no bounded regression remains after the TASK-048 hard-stop reconciliation and boundary-time guard fixes.
 
 TASK-048 is now a temporal safety gate, not a feature task:
 
