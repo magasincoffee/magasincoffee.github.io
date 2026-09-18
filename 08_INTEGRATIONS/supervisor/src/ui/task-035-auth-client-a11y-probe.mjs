@@ -1,5 +1,10 @@
 import process from "node:process";
+import fs from "node:fs";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+
 const PROJECT="magasin-noibo";
+const CLIENT_NAME="MAGASIN Gmail Worker";
 const PORTS=Array.from({length:11},(_,i)=>9222+i);
 
 async function findCdp(){
@@ -20,76 +25,116 @@ async function connect(cdp){
   ws.hostname=ep.hostname; ws.port=ep.port;
   return chromium.connectOverCDP(ws.toString());
 }
-function clean(s){
-  return String(s||"")
-    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"[email]")
-    .replace(/\s+/g," ").trim().slice(0,220);
+function protectWithDpapi(plaintext){
+  const script = [
+    "$ErrorActionPreference='Stop'",
+    "$raw=[Console]::In.ReadToEnd()",
+    "$bytes=[Text.Encoding]::UTF8.GetBytes($raw)",
+    "$enc=[Security.Cryptography.ProtectedData]::Protect($bytes,$null,[Security.Cryptography.DataProtectionScope]::CurrentUser)",
+    "[Console]::Out.Write([Convert]::ToBase64String($enc))"
+  ].join(";");
+  const r=spawnSync("powershell",["-NoProfile","-NonInteractive","-Command",script],{
+    input:plaintext,encoding:"utf8",windowsHide:true
+  });
+  if(r.status!==0 || !String(r.stdout||"").trim()) throw new Error("DPAPI_PROTECT_FAILED");
+  return String(r.stdout).trim();
 }
-const cdp=await findCdp(); if(!cdp) process.exit(0);
+const cdp=await findCdp();
+console.log("OAUTH_CREATE_CDP="+Boolean(cdp));
+if(!cdp) process.exit(1);
+
 const browser=await connect(cdp);
-const context=browser.contexts()[0]; if(!context) process.exit(0);
+const context=browser.contexts()[0];
+if(!context) process.exit(1);
 const page=await context.newPage();
 
 try{
-  await page.goto(`https://console.cloud.google.com/auth/clients/create?project=${PROJECT}`,{
-    waitUntil:"domcontentloaded", timeout:60000
+  await page.goto(`https://console.cloud.google.com/auth/clients?project=${PROJECT}`,{
+    waitUntil:"domcontentloaded",timeout:60000
   }).catch(()=>{});
-  await page.waitForTimeout(8000);
+  await page.waitForTimeout(7000);
 
-  const dismiss = page.getByRole("button",{name:/Dismiss/i}).first();
+  const existing=page.getByText(CLIENT_NAME,{exact:true}).first();
+  if(await existing.isVisible({timeout:1200}).catch(()=>false)){
+    console.log("OAUTH_CLIENT_ALREADY_EXISTS=true");
+    console.log("OAUTH_CLIENT_CREATED=false");
+    process.exit(0);
+  }
+
+  await page.goto(`https://console.cloud.google.com/auth/clients/create?project=${PROJECT}`,{
+    waitUntil:"domcontentloaded",timeout:60000
+  }).catch(()=>{});
+  await page.waitForTimeout(7000);
+
+  const dismiss=page.getByRole("button",{name:/Dismiss/i}).first();
   if(await dismiss.isVisible({timeout:800}).catch(()=>false)){
     await dismiss.click({force:true}).catch(()=>{});
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(500);
   }
 
-  const formCombos = page.locator('cfc-select[role="combobox"]');
-  console.log("FORM_COMBO_COUNT="+await formCombos.count());
-  const combo = formCombos.last();
-  const comboVisible = await combo.isVisible({timeout:2000}).catch(()=>false);
-  console.log("APPLICATION_TYPE_COMBO_VISIBLE="+comboVisible);
-  if(!comboVisible) process.exit(0);
-
+  const combo=page.locator('cfc-select[role="combobox"]').last();
+  if(!(await combo.isVisible({timeout:2000}).catch(()=>false))){
+    console.log("OAUTH_CREATE_FORM_READY=false");
+    process.exit(2);
+  }
   await combo.click({force:true});
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(600);
 
-  const options = await page.locator('[role="option"],mat-option,cfc-option').evaluateAll(ns=>ns.map(n=>(n.innerText||n.textContent||"").trim()).filter(Boolean));
-  const unique=[...new Set(options.map(clean))];
-  console.log("APPLICATION_TYPE_OPTION_COUNT="+unique.length);
-  unique.forEach((v,i)=>console.log(`APPLICATION_TYPE_OPTION_${i+1}=${v}`));
-
-  const desktop = page.getByRole("option",{name:/^Desktop app$/i}).first();
-  let selected=false;
-  if(await desktop.isVisible({timeout:1500}).catch(()=>false)){
-    await desktop.click({force:true});
-    selected=true;
-  } else {
-    const fallback=page.getByText(/^Desktop app$/i).first();
-    if(await fallback.isVisible({timeout:1200}).catch(()=>false)){
-      await fallback.click({force:true});
-      selected=true;
-    }
+  let desktop=page.getByRole("option",{name:/^Desktop app$/i}).first();
+  if(!(await desktop.isVisible({timeout:1200}).catch(()=>false))){
+    desktop=page.getByText(/^Desktop app$/i).first();
   }
-  console.log("DESKTOP_APP_SELECTED="+selected);
-  if(!selected) process.exit(0);
-
-  await page.waitForTimeout(1200);
-
-  const inputs=await page.locator('input,textarea,[role="textbox"],button,[role="button"],label,mat-label').evaluateAll(ns=>ns.map(n=>({
-    tag:n.tagName,
-    role:n.getAttribute("role")||"",
-    aria:n.getAttribute("aria-label")||"",
-    placeholder:n.getAttribute("placeholder")||"",
-    type:n.getAttribute("type")||"",
-    text:(n.innerText||n.textContent||"").trim()
-  })));
-  const out=[];
-  for(const x of inputs){
-    const label=clean(`${x.tag} | role=${x.role} | aria=${x.aria} | placeholder=${x.placeholder} | type=${x.type} | text=${x.text}`);
-    if(label && /name|create|cancel|desktop|client|tên|tạo|hủy/i.test(label) && !out.includes(label)) out.push(label);
-    if(out.length>=60) break;
+  if(!(await desktop.isVisible({timeout:1200}).catch(()=>false))){
+    console.log("OAUTH_DESKTOP_OPTION_FOUND=false");
+    process.exit(3);
   }
-  console.log("DESKTOP_FORM_CONTROL_COUNT="+out.length);
-  out.forEach((v,i)=>console.log(`DESKTOP_FORM_CONTROL_${i+1}=${v}`));
+  await desktop.click({force:true});
+  await page.waitForTimeout(700);
+
+  let nameInput=page.getByLabel(/^Name$/i).first();
+  if(!(await nameInput.isVisible({timeout:1200}).catch(()=>false))){
+    nameInput=page.getByRole("main").locator('input[type="text"]').first();
+  }
+  if(!(await nameInput.isVisible({timeout:1200}).catch(()=>false))){
+    console.log("OAUTH_NAME_INPUT_FOUND=false");
+    process.exit(4);
+  }
+
+  await nameInput.fill(CLIENT_NAME);
+  const create=page.getByRole("button",{name:/^Create$/i}).first();
+  if(!(await create.isVisible({timeout:1200}).catch(()=>false))){
+    console.log("OAUTH_CREATE_BUTTON_FOUND=false");
+    process.exit(5);
+  }
+
+  console.log("OAUTH_CREATE_FORM_READY=true");
+  await create.click({force:true});
+  await page.waitForTimeout(7000);
+
+  const body=await page.locator("body").innerText().catch(()=>"");
+  const clientId=(body.match(/[0-9]+-[a-z0-9_-]+\.apps\.googleusercontent\.com/i)||[])[0]||"";
+  const clientSecret=(body.match(/GOCSPX-[A-Za-z0-9_-]+/)||[])[0]||"";
+
+  console.log("OAUTH_CLIENT_CREATED="+Boolean(clientId));
+  console.log("OAUTH_CLIENT_ID_CAPTURED="+Boolean(clientId));
+  console.log("OAUTH_CLIENT_SECRET_CAPTURED="+Boolean(clientSecret));
+
+  if(!clientId || !clientSecret) process.exit(6);
+
+  const payload=JSON.stringify({
+    project:PROJECT,
+    client_name:CLIENT_NAME,
+    client_id:clientId,
+    client_secret:clientSecret,
+    captured_at:new Date().toISOString()
+  });
+
+  const encrypted=protectWithDpapi(payload);
+  const dir=path.join(process.env.USERPROFILE||process.env.HOME||".",".magasin");
+  fs.mkdirSync(dir,{recursive:true});
+  const out=path.join(dir,"task035-google-oauth.dpapi");
+  fs.writeFileSync(out,encrypted,{encoding:"utf8"});
+  console.log("OAUTH_DPAPI_FILE_SAVED="+fs.existsSync(out));
 }finally{
   await page.close().catch(()=>{});
 }
