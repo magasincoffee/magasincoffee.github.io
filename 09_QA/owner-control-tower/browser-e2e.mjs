@@ -282,6 +282,10 @@ async function runOwnerNavigationScenario() {
 
   assert.equal((await page.locator("#ownerIdentity").textContent())?.trim(), "E2E Owner · OWNER");
   assert.equal((await page.locator("#reportingDate").textContent())?.trim(), "2026-09-18");
+  assert.equal(
+    (await page.locator("#globalConfidence").textContent())?.trim(),
+    "ACTUAL 2 · ESTIMATE 0 · GAP 0 · NOT CONNECTED 3"
+  );
 
   assert.equal(await page.locator("#revenueQuality").getAttribute("data-quality"), "NOT_CONNECTED");
   assert.equal((await page.locator("#revenueValue").textContent())?.trim(), "—");
@@ -353,6 +357,10 @@ async function runPartialScenario() {
   assert.equal(await page.locator("#revenueQuality").getAttribute("data-quality"), "NOT_CONNECTED");
   assert.equal(await page.locator("#denied").isVisible(), false);
   assert.equal(await page.locator("#app").isVisible(), true);
+  assert.equal(
+    (await page.locator("#globalConfidence").textContent())?.trim(),
+    "ACTUAL 1 · ESTIMATE 0 · GAP 1 · NOT CONNECTED 3"
+  );
 
   await page.close();
   return {
