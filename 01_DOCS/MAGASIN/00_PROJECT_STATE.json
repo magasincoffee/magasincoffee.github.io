@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
   "target_days": 21,
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-043",
-  "current_task_title": "Cross-project handoff integration",
+  "current_task": "TASK-044",
+  "current_task_title": "Portfolio-aware diagnostics",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-044",
+  "next_task": "TASK-045",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -19,10 +19,10 @@
   },
   "last_updated": "2026-09-18",
   "owner_boundary": {
-    "task": "TASK-043",
+    "task": "TASK-044",
     "resolved": [
       "TWO_PROJECT_SCOPE_APPROVED",
-      "TASK_042_MEDIA_ADAPTER_OFFLINE_VERIFIED"
+      "TASK_043_HANDOFF_VERIFIED"
     ],
     "pending": []
   },
@@ -49,7 +49,7 @@
       "magasin-business-os",
       "magasin-media-robot"
     ],
-    "current_order": 8,
+    "current_order": 9,
     "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
     "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json",
     "recovery_install": {
