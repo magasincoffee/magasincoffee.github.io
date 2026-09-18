@@ -83,6 +83,7 @@ export class ChatGptUiAdapter {
     this.context = null;
     this.page = null;
     this.attachedOverCdp = false;
+    this.targetRecoveryPages = new Map();
   }
 
   async open() {
@@ -173,6 +174,43 @@ export class ChatGptUiAdapter {
     }) || null;
   }
 
+  async reopenTargetPage(url) {
+    if (!this.context) throw new Error("adapter is not open");
+
+    const parsed = new URL(url);
+    if (!isChatGptUrl(parsed.toString())) {
+      throw new Error("target recovery requires a ChatGPT URL");
+    }
+    const key = `${parsed.origin}${parsed.pathname}`;
+
+    const existing = this.getChatGptPages().find((page) => {
+      try {
+        const current = new URL(page.url());
+        return current.origin === parsed.origin && current.pathname === parsed.pathname;
+      } catch {
+        return false;
+      }
+    });
+    if (existing) return existing;
+
+    const cached = this.targetRecoveryPages.get(key);
+    if (cached && !cached.isClosed()) return cached;
+    this.targetRecoveryPages.delete(key);
+
+    const page = await this.newChatPage(url);
+    this.targetRecoveryPages.set(key, page);
+
+    if (typeof page.once === "function") {
+      page.once("close", () => {
+        if (this.targetRecoveryPages.get(key) === page) {
+          this.targetRecoveryPages.delete(key);
+        }
+      });
+    }
+
+    return page;
+  }
+
   async newChatPage(url = "https://chatgpt.com/") {
     if (!this.context) throw new Error("adapter is not open");
     const page = await this.context.newPage();
@@ -233,5 +271,6 @@ export class ChatGptUiAdapter {
     this.context = null;
     this.page = null;
     this.attachedOverCdp = false;
+    this.targetRecoveryPages.clear();
   }
 }
