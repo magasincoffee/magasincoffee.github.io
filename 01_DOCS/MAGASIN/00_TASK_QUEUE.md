@@ -31,7 +31,9 @@
 | TASK-021 | Control Tower staffing-gap integration | 20m | adapter/integration + browser regression | DONE |
 | TASK-022 | People/Shift browser E2E + Day-10 usability gate | 20m | browser E2E | DONE |
 
-Queue Day 8–10 được mở từ evidence của TASK-019 và đã hoàn tất. TASK-022 browser gate tái hiện `BUG-PS-001` (Employee không thể điều hướng sang tuần lịch đã publish kế tiếp), đã sửa ngay trong TASK-022 và regression same-week PASS. Hiện không còn defect tái hiện chưa xử lý và không có task kế tiếp trong queue; không tự mở task mới nếu chưa có repository evidence / approved slice.
+| TASK-023 | SOP/Task current-system gap review + acceptance contract | 20m | discovery/contract | READY |
+
+Queue Day 8–10 được mở từ evidence của TASK-019 và đã hoàn tất. TASK-022 browser gate tái hiện `BUG-PS-001` (Employee không thể điều hướng sang tuần lịch đã publish kế tiếp), đã sửa ngay trong TASK-022 và regression same-week PASS. `TASK-023` được mở từ Blueprint canonical đã APPROVED cho Day 11–13 (`SOP templates → checklist → corrective task → overdue/exception`). Chỉ mở implementation micro-task sau khi TASK-023 xác định được verified gaps.
 
 ## Execution rule
 
