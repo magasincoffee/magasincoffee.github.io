@@ -166,3 +166,15 @@ test("control panel exposes a fail-closed Owner resolved recheck control", async
   assert.match(source, /\$remote\.blocked/);
   assert.match(source, /không dùng để vượt BLOCKED\/security boundary/);
 });
+
+
+test("control panel exposes the persistent diagnostics folder", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /diagnosticsRoot/);
+  assert.match(source, /MỞ LOG LỖI/);
+  assert.match(source, /Start-Process explorer\.exe/);
+});
