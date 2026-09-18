@@ -98,3 +98,27 @@ test("missing loader is explicit GAP and cannot fabricate values", async () => {
   assert.equal(snapshot.inventory.warningCount, null);
   assert.match(result.message, /chưa có loader/i);
 });
+
+
+test("source loading starts after the auth-only denial boundary", async () => {
+  const fs = await import("node:fs/promises");
+  const source = await fs.readFile(
+    new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
+    "utf8"
+  );
+
+  const bootAt = source.indexOf("async function boot()");
+  const authAt = source.indexOf("await requireOwnerAccess", bootAt);
+  const authErrorAt = source.indexOf("[CONTROL_TOWER_AUTH]", authAt);
+  const revenueAt = source.indexOf("await loadReconciledRevenue", authAt);
+  const payablesAt = source.indexOf("await loadProcurementPayables", authAt);
+  const workforceAt = source.indexOf("await loadWorkforceAttention", authAt);
+
+  assert.ok(bootAt >= 0);
+  assert.ok(authAt > bootAt);
+  assert.ok(authErrorAt > authAt);
+  assert.ok(revenueAt > authErrorAt);
+  assert.ok(payablesAt > authErrorAt);
+  assert.ok(workforceAt > authErrorAt);
+  assert.match(source, /loadControlTowerSection/);
+});
