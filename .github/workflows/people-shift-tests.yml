@@ -79,3 +79,5 @@ jobs:
             qa-artifacts/control-tower-regression/
           if-no-files-found: warn
           retention-days: 30
+
+# TASK-022 final HEAD gate
