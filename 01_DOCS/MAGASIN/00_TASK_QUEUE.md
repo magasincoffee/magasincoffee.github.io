@@ -25,9 +25,13 @@
 | TASK-017 | Partial-source/error-state integration | 20m | regression tests | DONE |
 | TASK-018 | Control Tower browser E2E + Day-7 usability gate | 20m | browser E2E | DONE |
 
-| TASK-019 | People/Shift current-system gap review + acceptance contract | 20m | discovery/contract | READY |
+| TASK-019 | People/Shift current-system gap review + acceptance contract | 20m | discovery/contract | DONE |
 
-Sau TASK-019, chỉ mở implementation queue Day 8–10 theo evidence của Workforce hiện hữu; không tạo trước task khi dependency chưa được kiểm chứng.
+| TASK-020 | Staffing-gap read adapter + unit/regression contract | 20m | unit + forbidden-write regression | READY |
+| TASK-021 | Control Tower staffing-gap integration | 20m | adapter/integration + browser regression | QUEUED |
+| TASK-022 | People/Shift browser E2E + Day-10 usability gate | 20m | browser E2E | QUEUED |
+
+Queue Day 8–10 được mở từ evidence của TASK-019. Không mở thêm task trừ khi test phát hiện defect tái hiện được.
 
 ## Execution rule
 
