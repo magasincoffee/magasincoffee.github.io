@@ -15,7 +15,7 @@ $stopScript = Join-Path $runtime 'windows\stop-supervisor.ps1'
 $openChatScript = Join-Path $runtime 'windows\open-supervisor-chat.ps1'
 $projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
 $repoUrl = 'https://github.com/magasincoffee/magasincoffee.github.io'
-$runnerRoot = 'C:\actions-runner'
+$runnerRoot = 'C:\actions-runner-business\actions-runner'
 $runnerCmd = Join-Path $runnerRoot 'run.cmd'
 
 function Get-GitHubRunnerProcess {
