@@ -2,7 +2,7 @@
 
 **Phase:** P1_SCHEDULE_FIRST_CORE_FLOW  
 **Date:** 2026-09-18  
-**Status:** IMPLEMENTED / TESTING
+**Status:** VERIFIED / DONE
 
 ## QUESTION
 
@@ -73,3 +73,11 @@ Thêm nút `Xóa` vào từng khoảng availability đã lưu. Delete gọi `del
 - existing People/Shift regression + Day-10 E2E PASS;
 - no production schema/data/backfill/permission mutation;
 - source-of-truth có thể chuyển sang TASK-031.
+
+## Verification
+
+- People Shift Day-10 Tests run `35334004755`: **PASS**.
+- Canonical availability browser regression: PASS.
+- Existing People/Shift Day-10 E2E: PASS.
+- Existing Control Tower browser regression: PASS.
+- Production mutation outside normal Employee availability RPC calls: none.
