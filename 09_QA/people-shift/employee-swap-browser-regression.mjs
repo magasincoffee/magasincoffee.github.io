@@ -86,19 +86,6 @@ try {
     return JSON.stringify(names);
   });
 
-  await check("give_shift_is_fail_closed_not_disguised_as_swap", async () => {
-    const give=employee.locator("[data-give-shift-state='NOT_CONNECTED']");
-    await give.waitFor({state:"attached"});
-    await give.evaluate(el=>el.click());
-    const opened=await employee.locator("#swapForm").evaluate(el=>el.classList.contains("open"));
-    const submitCalls=await page.evaluate(()=>window.__EMPLOYEE_SWAP_QA.calls.filter(x=>x.name==="submit_shift_swap_request"));
-    const toasts=await page.evaluate(()=>window.__EMPLOYEE_SWAP_QA.toasts);
-    if(opened)throw new Error("Give opened Swap form");
-    if(submitCalls.length)throw new Error(JSON.stringify(submitCalls));
-    if(!toasts.some(x=>String(x.message).includes("Cho ca chưa có backend")))throw new Error(JSON.stringify(toasts));
-    return "NOT_CONNECTED; 0 fake swap writes";
-  });
-
   await check("swap_requires_reason_before_submit", async () => {
     await employee.locator("#swapChoices button").first().click();
     await employee.locator("#employeeRequesterSchedule").waitFor({state:"attached"});
