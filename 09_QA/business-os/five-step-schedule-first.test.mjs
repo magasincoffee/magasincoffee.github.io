@@ -47,3 +47,20 @@ test("deferred SOP write path remains fail-closed", async () => {
   assert.match(architecture, /SOP\/Task write automation/);
   assert.match(current, /Do not implement write-capable SOP\/Task automation/);
 });
+
+
+test("conversation-aware handoff architecture is part of Five-Step execution", async () => {
+  const [architecture, handoff, current] = await Promise.all([
+    read("01_DOCS/MAGASIN/00_ARCHITECTURE_5_STEP_RESET.md"),
+    read("01_DOCS/MAGASIN/00_SUPERVISOR_HANDOFF_ARCHITECTURE.md"),
+    read("01_DOCS/MAGASIN/00_CURRENT_STATE.md")
+  ]);
+
+  assert.match(architecture, /Conversation-aware execution handoff/);
+  assert.match(handoff, /same supervised ChatGPT browser profile/);
+  assert.match(handoff, /live explicit Owner instruction/);
+  assert.match(handoff, /assistant is running → WAIT/);
+  assert.match(handoff, /HANDOFF_RECONCILE/);
+  assert.match(handoff, /QUESTION[\s\S]*DELETE[\s\S]*SIMPLIFY[\s\S]*ACCELERATE[\s\S]*AUTOMATE/);
+  assert.match(current, /conversation-aware handoff/);
+});
