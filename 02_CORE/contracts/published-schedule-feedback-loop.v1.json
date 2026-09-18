@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "task": "TASK-032",
   "phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "status": "OWNER_DECISION_REQUIRED",
+  "status": "APPROVED",
   "verified_run": 35337154491,
   "verified": {
     "published_schedule_visibility": true,
@@ -17,9 +17,9 @@
   },
   "fail_closed": {
     "give_shift_primitive": "NOT_CONNECTED",
-    "notification_outbox": "NOT_CONNECTED",
-    "email_delivery": "NOT_CONNECTED",
-    "calendar_delivery": "NOT_CONNECTED"
+    "notification_outbox": "APPROVED_FOR_IMPLEMENTATION",
+    "email_delivery": "CONFIG_PENDING",
+    "calendar_delivery": "DISABLED_BY_OWNER"
   },
   "owner_decisions": [
     {
@@ -37,22 +37,28 @@
     {
       "id": "SFB-002",
       "topic": "NOTIFICATION_PRODUCTION_ACTIVATION",
-      "status": "OWNER_INPUT_REQUIRED",
+      "status": "APPROVED",
       "required_inputs": [
         "ALLOW_EVENT_OUTBOX_PRODUCTION_APPLY",
         "EMAIL_PROVIDER_OR_ACCOUNT_SOURCE",
         "CALENDAR_PROVIDER_OR_TARGET_IF_ENABLED",
         "ALLOW_EXTERNAL_CREDENTIALS_IN_SECRET_STORE"
-      ]
+      ],
+      "selected": {
+        "allow_event_outbox_production_apply": true,
+        "email_source": "MAGASIN_EMAIL",
+        "external_calendar": false,
+        "allow_secret_store_credentials": true
+      }
     }
   ],
   "guardrails": {
     "fake_give_as_swap": false,
     "fake_notification_sent_state": false,
-    "production_schema_apply": false,
+    "production_schema_apply": true,
     "production_provider_activation": false,
     "credentials_in_public_git": false,
     "auto_completed_attendance_without_clock_events": false
   },
-  "required_project_state": "WAIT_USER"
+  "required_project_state": "READY"
 }

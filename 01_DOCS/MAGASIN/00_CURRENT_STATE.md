@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-032 — Published schedule → attendance/swap/notification integration gate — WAIT_USER**
+**TASK-033 — Give Shift production primitive — READY**
 
 Canonical task/state files:
 
@@ -96,30 +96,19 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**WAIT_USER:** safe core của TASK-032 đã verified.
+**AUTO_CONTINUE:** execute TASK-033 under Five-Step.
 
-Đã hoàn tất và regression xanh:
+SFB-001 and SFB-002 are both APPROVED.
 
-- Employee xem lịch APPROVED;
-- attendance gắn schedule bằng clock-in/clock-out RPC;
-- unsafe auto-attendance bị loại khỏi active UI;
-- Swap reason/backend contract đồng bộ;
-- Employee Swap submit;
-- Manager approve/reject Swap;
-- official schedule refresh sau Swap;
-- fake Give-as-Swap bị loại và fail-closed;
-- notification/email/calendar gap đã được inventory;
-- production mutation: none.
+Critical-path implementation queue:
 
-`SFB-001 — Give lifecycle` đã được Owner chốt: `RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES`.
+1. TASK-033 — implement one-way Give Shift primitive with lifecycle `RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES`;
+2. TASK-034 — apply production notification event-outbox with RLS and schedule/Swap/attendance event generation;
+3. TASK-035 — connect email adapter using MAGASIN email source and secret store; external calendar remains disabled.
 
-Owner còn cần chốt duy nhất:
+Do not invent an email provider or commit credentials. If TASK-035 reaches a provider/account-specific configuration requirement that cannot be resolved from repository/runtime configuration, stop at that exact boundary.
 
-`SFB-002 — Notification production activation`: cho phép event-outbox production apply và xác định/ủy quyền email/calendar provider + secret-store credentials.
-
-Không apply production notification provider trước SFB-002. Give lifecycle đã có rule, nhưng production Give primitive/schema vẫn không được apply ngoài approval boundary tương ứng.
-
-TASK-026 vẫn được defer độc lập; không triển khai SOP/Task write automation cho tới khi DST-001..DST-006 được phê duyệt.
+TASK-026 remains deferred independently.
 
 Do not implement write-capable SOP/Task automation until its six business-rule decisions are approved.
 

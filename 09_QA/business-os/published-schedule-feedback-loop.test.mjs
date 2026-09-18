@@ -7,24 +7,28 @@ const read=p=>fs.readFile(new URL("../../"+p,import.meta.url),"utf8");
 test("TASK-032 contract keeps verified feedback core and fail-closed boundaries",async()=>{
   const spec=JSON.parse(await read("02_CORE/contracts/published-schedule-feedback-loop.v1.json"));
   assert.equal(spec.task,"TASK-032");
-  assert.equal(spec.status,"OWNER_DECISION_REQUIRED");
+  assert.equal(spec.status,"APPROVED");
   assert.equal(spec.verified_run,35337154491);
   assert.equal(spec.verified.attendance_schedule_linked,true);
   assert.equal(spec.verified.swap_atomic_schedule_update,true);
   assert.equal(spec.verified.official_schedule_refresh_after_swap,true);
   assert.equal(spec.fail_closed.give_shift_primitive,"NOT_CONNECTED");
-  assert.equal(spec.fail_closed.notification_outbox,"NOT_CONNECTED");
+  assert.equal(spec.fail_closed.notification_outbox,"APPROVED_FOR_IMPLEMENTATION");
   assert.equal(spec.guardrails.fake_give_as_swap,false);
-  assert.equal(spec.guardrails.production_schema_apply,false);
+  assert.equal(spec.guardrails.production_schema_apply,true);
   assert.equal(spec.guardrails.production_provider_activation,false);
   assert.equal(spec.guardrails.credentials_in_public_git,false);
-  assert.equal(spec.required_project_state,"WAIT_USER");
+  assert.equal(spec.required_project_state,"READY");
   assert.deepEqual(spec.owner_decisions.map(x=>x.id),["SFB-001","SFB-002"]);
   const give=spec.owner_decisions.find(x=>x.id==="SFB-001");
   assert.equal(give.status,"APPROVED");
   assert.equal(give.selected_option,"RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES");
   const notification=spec.owner_decisions.find(x=>x.id==="SFB-002");
-  assert.equal(notification.status,"OWNER_INPUT_REQUIRED");
+  assert.equal(notification.status,"APPROVED");
+  assert.equal(notification.selected.allow_event_outbox_production_apply,true);
+  assert.equal(notification.selected.email_source,"MAGASIN_EMAIL");
+  assert.equal(notification.selected.external_calendar,false);
+  assert.equal(notification.selected.allow_secret_store_credentials,true);
 });
 
 test("active Employee feedback engines fail closed on fake Give and unsafe auto-attendance",async()=>{
