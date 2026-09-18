@@ -8,6 +8,7 @@ $runtime = Join-Path $root 'runtime'
 $pidFile = Join-Path $root 'supervisor.pid'
 $statusFile = Join-Path $root 'runtime-status.json'
 $logFile = Join-Path $root 'supervisor.log'
+$ownerResolvedAckFile = Join-Path $root 'owner-resolved.json'
 $startScript = Join-Path $runtime 'windows\start-supervisor.ps1'
 $stopScript = Join-Path $runtime 'windows\stop-supervisor.ps1'
 $openChatScript = Join-Path $runtime 'windows\open-supervisor-chat.ps1'
@@ -84,6 +85,26 @@ function Read-ProjectState {
     } catch {
         return $null
     }
+}
+
+function Write-OwnerResolvedAck($ProjectState) {
+    if (-not $ProjectState -or -not $ProjectState.current_task) {
+        throw 'Không xác định được task đang chờ Owner.'
+    }
+
+    $payload = [ordered]@{
+        schema_version = '1.0'
+        current_phase = [string]$ProjectState.current_phase
+        current_task = [string]$ProjectState.current_task
+        current_task_title = [string]$ProjectState.current_task_title
+        acknowledged_at = [DateTimeOffset]::UtcNow.ToString('o')
+        source = 'CONTROL_PANEL_OWNER_RESOLVED'
+    }
+
+    New-Item -ItemType Directory -Force -Path $root | Out-Null
+    $temporary = "$ownerResolvedAckFile.tmp"
+    $payload | ConvertTo-Json -Depth 4 | Set-Content -Path $temporary -Encoding UTF8
+    Move-Item -Path $temporary -Destination $ownerResolvedAckFile -Force
 }
 
 function Format-Time([string]$Value) {
@@ -313,9 +334,19 @@ $errorPanel.Controls.Add($errorCaption)
 $errorValue = New-Object Windows.Forms.Label
 $errorValue.Text = 'Không có lỗi.'
 $errorValue.Location = New-Object Drawing.Point(16, 33)
-$errorValue.Size = New-Object Drawing.Size(920, 28)
+$errorValue.Size = New-Object Drawing.Size(690, 28)
 $errorValue.ForeColor = [Drawing.Color]::FromArgb(124,45,18)
 $errorPanel.Controls.Add($errorValue)
+
+$ownerResolvedButton = New-Object Windows.Forms.Button
+$ownerResolvedButton.Text = '✓  ĐÃ GIẢI QUYẾT'
+$ownerResolvedButton.Location = New-Object Drawing.Point(720, 14)
+$ownerResolvedButton.Size = New-Object Drawing.Size(220, 42)
+$ownerResolvedButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 10)
+$ownerResolvedButton.BackColor = [Drawing.Color]::FromArgb(220,252,231)
+$ownerResolvedButton.ForeColor = [Drawing.Color]::FromArgb(22,101,52)
+$ownerResolvedButton.Visible = $false
+$errorPanel.Controls.Add($ownerResolvedButton)
 
 $logBox = New-Object Windows.Forms.TextBox
 $logBox.Location = New-Object Drawing.Point(28, 680)
@@ -397,6 +428,33 @@ function Refresh-ControlPanel {
     $projectCardState = if ($projectStatus -eq 'WAIT_USER') { 'WAIT_USER' } elseif ($projectStatus -eq 'BLOCKED') { 'ERROR' } else { 'READY' }
     Set-StatusCard $projectCard $projectValue $projectCardState $projectText
 
+    $ownerWait = (
+        -not $projectState.blocked -and
+        $projectStatus -ne 'BLOCKED' -and
+        ($projectState.requires_user -or $projectStatus -eq 'WAIT_USER')
+    )
+    $ownerResolvedButton.Visible = [bool]$ownerWait
+    if ($ownerWait) {
+        $ack = Read-JsonFile $ownerResolvedAckFile
+        $ackMatches = (
+            $ack -and
+            [string]$ack.current_task -eq [string]$projectState.current_task -and
+            (
+                -not $ack.current_phase -or
+                [string]$ack.current_phase -eq [string]$projectState.current_phase
+            )
+        )
+        if ($ackMatches) {
+            $ownerResolvedButton.Text = '✓  ĐÃ BÁO ROBOT'
+            $ownerResolvedButton.Enabled = $false
+        } else {
+            $ownerResolvedButton.Text = '✓  ĐÃ GIẢI QUYẾT'
+            $ownerResolvedButton.Enabled = $true
+        }
+    } else {
+        $ownerResolvedButton.Enabled = $false
+    }
+
     $currentTask = if ($projectState.current_task) {
         "$($projectState.current_task) — $($projectState.current_task_title)"
     } else { '—' }
@@ -441,8 +499,14 @@ function Refresh-ControlPanel {
         } else {
             'Robot và GitHub Runner đang OFFLINE. START ROBOT sẽ khởi động Runner trước.'
         }
-    } elseif ($projectState.requires_user -or $projectState.blocked -or $projectStatus -in @('WAIT_USER','BLOCKED')) {
-        $errorValue.Text = 'Project state yêu cầu Owner xử lý. Robot sẽ không tự vượt approval/security boundary.'
+    } elseif ($projectState.blocked -or $projectStatus -eq 'BLOCKED') {
+        $errorValue.Text = 'Project đang BLOCKED. Nút ĐÃ GIẢI QUYẾT không thể vượt hard-stop/security boundary.'
+    } elseif ($ownerWait) {
+        if (Test-Path $ownerResolvedAckFile) {
+            $errorValue.Text = 'Đã báo Owner giải quyết. Robot sẽ chờ ChatGPT ổn định rồi reconcile; repo chỉ mở khóa khi quyết định hợp lệ.'
+        } else {
+            $errorValue.Text = 'Nếu anh đã chốt quyết định trong ChatGPT, bấm ĐÃ GIẢI QUYẾT để robot reconcile và tiếp tục an toàn.'
+        }
     } elseif ($runtimeStatus.recovery_blocked) {
         $errorValue.Text = 'Tự khôi phục đã dùng hết giới hạn an toàn. Cần Owner kiểm tra ChatGPT rồi START lại.'
     } elseif ($runtimeStatus.status -eq 'ERROR') {
@@ -495,6 +559,89 @@ $stopButton.Add_Click({
         '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$quoted
     )
     Refresh-ControlPanel
+})
+
+$ownerResolvedButton.Add_Click({
+    $runtimeStatus = Read-JsonFile $statusFile
+    $remoteState = Read-ProjectState
+    $projectState = if ($remoteState) { $remoteState } else { $runtimeStatus }
+
+    if (-not $projectState) {
+        [Windows.Forms.MessageBox]::Show(
+            'Không đọc được PROJECT_STATE. Chưa ghi nhận để tránh vượt boundary.',
+            'MAGASIN Business OS',
+            'OK',
+            'Warning'
+        ) | Out-Null
+        return
+    }
+
+    $projectStatus = [string]$projectState.status
+    if ($projectState.blocked -or $projectStatus -eq 'BLOCKED') {
+        [Windows.Forms.MessageBox]::Show(
+            'Project đang BLOCKED. Nút này không được phép vượt hard-stop/security boundary.',
+            'MAGASIN Business OS',
+            'OK',
+            'Warning'
+        ) | Out-Null
+        return
+    }
+
+    if (-not ($projectState.requires_user -or $projectStatus -eq 'WAIT_USER')) {
+        Remove-Item $ownerResolvedAckFile -Force -ErrorAction SilentlyContinue
+        [Windows.Forms.MessageBox]::Show(
+            'Repository không còn WAIT_USER. Robot sẽ tiếp tục theo source-of-truth hiện tại.',
+            'MAGASIN Business OS',
+            'OK',
+            'Information'
+        ) | Out-Null
+        Refresh-ControlPanel
+        return
+    }
+
+    $message = 'Xác nhận anh đã chốt quyết định cho ' + [string]$projectState.current_task + ' trong ChatGPT?' + [Environment]::NewLine + [Environment]::NewLine + 'Nút này KHÔNG tự đổi repository sang READY. Robot chỉ được phép reconcile quyết định đã chốt; nếu còn thiếu hoặc không đúng boundary, WAIT_USER phải được giữ nguyên.'
+    $answer = [Windows.Forms.MessageBox]::Show(
+        $message,
+        'Owner đã giải quyết?',
+        'YesNo',
+        'Question'
+    )
+    if ($answer -ne 'Yes') { return }
+
+    try {
+        Write-OwnerResolvedAck $projectState
+
+        if (-not (Ensure-GitHubRunner -Interactive)) {
+            Refresh-ControlPanel
+            return
+        }
+
+        if (-not (Get-SupervisorProcess)) {
+            if (-not (Test-Path $startScript)) {
+                throw "Supervisor chưa được cài: $startScript"
+            }
+            $quoted = '"' + $startScript + '"'
+            Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @(
+                '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$quoted,'-Hidden'
+            )
+            Start-Sleep -Milliseconds 800
+        }
+
+        [Windows.Forms.MessageBox]::Show(
+            'Đã ghi nhận. Nếu ChatGPT đang làm việc, robot sẽ chờ hoàn tất. Sau đó robot reconcile quyết định vào repository và chỉ tiếp tục khi source-of-truth thực sự cho phép.',
+            'MAGASIN Business OS',
+            'OK',
+            'Information'
+        ) | Out-Null
+        Refresh-ControlPanel
+    } catch {
+        [Windows.Forms.MessageBox]::Show(
+            $_.Exception.Message,
+            'Không thể ghi nhận Owner đã giải quyết',
+            'OK',
+            'Error'
+        ) | Out-Null
+    }
 })
 
 $runnerButton.Add_Click({
