@@ -84,3 +84,21 @@
 - Current repository has no source-controlled verified revenue read model, so production integration intentionally stays fail-closed until a reconciled source is connected.
 - Production writes: none.
 - Gate: TASK-016 **DONE**; TASK-017 may proceed.
+
+
+## 2026-09-18 — TASK-017 Partial-source/error-state integration
+
+- Branch: `fix/control-tower-partial-source-isolation`
+- Workflow: `Owner Control Tower Tests`
+- Regression/integration run: `35315663580`
+- Result: **PASS**
+- Unexpected source exception becomes section-local `GAP`: PASS.
+- Healthy sections continue loading after another source throws: PASS.
+- Partial Workforce `ESTIMATE` remains explicit while healthy Payables stays `ACTUAL`: PASS.
+- Revenue failure remains fail-closed with no numeric amount: PASS.
+- Owner auth denial boundary is completed before Revenue/Payables/Workforce source loading begins: PASS.
+- Source exception details are not leaked into UI fallback messages: PASS.
+- Existing Revenue/Payables/Workforce/Auth regression suite: PASS.
+- Production writes: none.
+- BUG-CT-004: VERIFIED.
+- Gate: TASK-017 **DONE**; TASK-018 may proceed.
