@@ -45,3 +45,19 @@ test("repair script is ASCII-only for Windows PowerShell 5.1 parsing", async () 
   const nonAscii = [...source].filter((byte) => byte > 0x7f);
   assert.deepEqual(nonAscii, []);
 });
+
+
+test("repair script treats PAUSED autonomy as install-only success", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/repair-supervisor.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /\$projectStateUrl/);
+  assert.match(source, /\$pausedInstallOnly/);
+  assert.match(source, /autonomy -eq 'PAUSED'/);
+  assert.match(source, /boot intentionally skipped/);
+  assert.match(source, /PAUSED install verification failed/);
+  assert.match(source, /Runtime status: PAUSED \(not launched by design\)/);
+  assert.match(source, /boot was intentionally skipped because autonomy is PAUSED/);
+});
