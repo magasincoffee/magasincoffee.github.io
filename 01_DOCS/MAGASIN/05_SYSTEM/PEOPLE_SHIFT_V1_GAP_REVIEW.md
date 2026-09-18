@@ -148,9 +148,10 @@ No Owner decision is required before TASK-020.
 
 - GAP-PS-01 is closed by TASK-020/TASK-021: staffing-gap read adapter is read-only, mirrors the existing `minimum_headcount` shortage semantics, fails closed on missing source, and is integrated into Control Tower with section-local isolation.
 - GAP-PS-02 is closed by TASK-022: deterministic Playwright browser E2E loads the canonical Owner Publish, Employee Availability and Employee Schedule engines against sanitized in-memory mocks.
-- Verified browser sequence: employee availability save → Owner generation `DRAFT` → review `REVIEWED` → publish `PUBLISHED` → Employee approved schedule visible.
+- Verified browser sequence uses the same target week: employee next-week availability save → Owner next-week generation `DRAFT` → review `REVIEWED` → publish `PUBLISHED` → Employee navigates to that week and sees the approved schedule.
 - Browser diagnostics: unexpected console errors 0; page errors 0; request failures 0; HTTP 5xx 0; external network requests 0.
 - Existing Owner Control Tower unit/regression and browser E2E remain green.
 - GAP-PS-03 remains a documented deferred live-schema reproducibility dependency; no speculative production migration/backfill was applied.
 - No new scheduling, transfer, attendance, payroll or KPI business rule was introduced.
-- No reproducible product defect was found, so no additional Day 8–10 task is opened.
+- `BUG-PS-001` was reproduced by hardening the E2E to a same-week contract: Employee Schedule had no week navigation even though availability registration targets next week and Owner Publish can publish that week. The existing schedule engine was minimally fixed with previous/current/next week navigation and the browser regression passes.
+- No unresolved reproducible defect remains, so no additional Day 8–10 task is opened.
