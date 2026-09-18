@@ -22,8 +22,8 @@
 | TASK-014 | Procurement/payables read adapter | 20m | adapter tests | DONE |
 | TASK-015 | Workforce attention read adapter | 20m | adapter tests | DONE |
 | TASK-016 | Revenue read-adapter + reconciliation quality gate | 20m | contract tests | DONE |
-| TASK-017 | Partial-source/error-state integration | 20m | regression tests | READY |
-| TASK-018 | Control Tower browser E2E + Day-7 usability gate | 20m | browser E2E | QUEUED |
+| TASK-017 | Partial-source/error-state integration | 20m | regression tests | DONE |
+| TASK-018 | Control Tower browser E2E + Day-7 usability gate | 20m | browser E2E | READY |
 
 Sau TASK-018, queue được mở rộng theo kết quả field/E2E thực tế. Không tạo trước hàng trăm task nếu chưa biết dependency thật.
 
