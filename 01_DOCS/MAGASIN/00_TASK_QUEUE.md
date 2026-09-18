@@ -61,8 +61,8 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 | TASK-041 | Business OS Robot V2 recovery engine | 45m | crash/reboot/reconnect/stale lease/duplicate suppression | DONE |
 | TASK-042 | SaydiVoiceProvider production adapter offline | 90m | request/result + preflight + one-attempt + timeout/error/unit tests | DONE |
 | TASK-043 | Cross-project handoff integration | 50m | Business OS → Media Robot → Business OS state isolation | DONE |
-| TASK-044 | Portfolio-aware diagnostics | 45m | project/task/checkpoint/error privacy-safe logs | IN_PROGRESS |
-| TASK-045 | Restart/resume simulation | 50m | kill/restart/reconcile/resume regression | READY |
+| TASK-044 | Portfolio-aware diagnostics | 45m | project/task/checkpoint/error privacy-safe logs | DONE |
+| TASK-045 | Restart/resume simulation | 50m | kill/restart/reconcile/resume regression | IN_PROGRESS |
 | TASK-046 | Night full QA | 35m | both-project regression + bounded fixes | READY |
 | TASK-047 | Night docs / evidence / PR prep | 20m | changelog/test logs/reviewable PRs | READY |
 | TASK-048 | Night final checkpoint | 10m | report + NIGHT_WINDOW_COMPLETE + WAIT_USER | READY |
