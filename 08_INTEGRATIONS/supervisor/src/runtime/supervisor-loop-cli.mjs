@@ -25,7 +25,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.8";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.9";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -110,7 +110,8 @@ async function safeAppendLog(logPath, event) {
 
 function statusForStep(result, probe) {
   const action = result?.decision?.action;
-  const observation = probe?.classification?.observation;
+  const observation =
+    result?.effectiveObservation || probe?.classification?.observation;
   if (action === "STOP_DONE") return "DONE";
   if (action === "STOP_WAIT_USER") return "WAIT_USER";
   if (action === "RETRY") return "RETRYING";
@@ -701,7 +702,8 @@ while (true) {
         projectState,
         status: statusForStep(result, probe),
         uiState: probe.classification.uiState,
-        observation: probe.classification.observation,
+        observation:
+          result.effectiveObservation || probe.classification.observation,
         decision: result.decision,
         execution: result.execution,
         retryCount,
