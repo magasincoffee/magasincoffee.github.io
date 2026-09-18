@@ -13,3 +13,16 @@ test("Windows STOP uses cooperative sentinel then bounded forced process-tree ki
   assert.match(source, /taskkill\.exe \/PID \$pidValue \/T \/F/);
   assert.match(source, /Remove-Item \$pidFile/);
 });
+
+
+test("Windows STOP also clears orphaned wrappers and loop nodes", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/stop-supervisor.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /Stopping orphaned Supervisor wrapper PID/);
+  assert.match(source, /Stopping orphaned Supervisor Node PID/);
+  assert.match(source, /run-supervisor\.ps1/);
+  assert.match(source, /supervisor-loop-cli\.mjs/);
+});
