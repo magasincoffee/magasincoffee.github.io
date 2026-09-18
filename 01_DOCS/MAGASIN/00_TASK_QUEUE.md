@@ -17,7 +17,7 @@
 | TASK-010 | Database baseline/migration plan | 20m | schema review | QUEUED |
 | TASK-011 | Owner Control Tower vertical-slice plan | 20m | acceptance defined | QUEUED |
 
-Sau TASK-010, queue được mở rộng theo kết quả thực tế. Không tạo trước hàng trăm task nếu chưa biết dependency thật.
+Sau TASK-011, queue được mở rộng theo kết quả thực tế. Không tạo trước hàng trăm task nếu chưa biết dependency thật.
 
 ## Execution rule
 
