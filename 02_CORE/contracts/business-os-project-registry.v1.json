@@ -1,0 +1,26 @@
+{
+  "schema_version": "business-os-project-registry.v1",
+  "projects": [
+    {
+      "id": "magasin-business-os",
+      "repository": "magasincoffee/magasincoffee.github.io",
+      "enabled": true,
+      "priority": 1,
+      "state_strategy": "PROJECT_STATE_JSON",
+      "state_ref": "01_DOCS/MAGASIN/00_PROJECT_STATE.json",
+      "task_queue_ref": "01_DOCS/MAGASIN/00_TASK_QUEUE.md"
+    },
+    {
+      "id": "magasin-media-robot",
+      "repository": "magasincoffee/magasin-media-robot",
+      "enabled": true,
+      "priority": 2,
+      "state_strategy": "DOC_PAIR",
+      "state_ref": "00_PROJECT/CURRENT_STATUS.md",
+      "next_ref": "00_PROJECT/NEXT_STEP.md",
+      "rules_ref": "00_PROJECT/DEVELOPMENT_RULES.md"
+    }
+  ],
+  "discovery_policy": "DENY_UNREGISTERED",
+  "owner_boundary_policy": "SKIP_BLOCKED_PROJECT_NOT_GLOBAL_STOP"
+}
