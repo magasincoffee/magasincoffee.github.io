@@ -102,7 +102,37 @@ const sharedCoreMock = String.raw`
         }
         if (name === "list_schedule_generations") {
           return {
-            data: [{ status: "DRAFT" }, { status: "PUBLISHED" }],
+            data: [
+              { id: "generation-qa", status: "DRAFT" },
+              { id: "generation-published", status: "PUBLISHED" }
+            ],
+            error: null
+          };
+        }
+        if (name === "get_workforce_staffing_requirements") {
+          return {
+            data: [{
+              id: "requirement-qa",
+              status: "ACTIVE",
+              work_date: "2026-09-14",
+              start_time: "06:00",
+              end_time: "12:00",
+              minimum_headcount: 2,
+              skill_code: null,
+              min_skill_level: 0
+            }],
+            error: null
+          };
+        }
+        if (name === "get_schedule_generation_assignments") {
+          return {
+            data: [{
+              work_date: "2026-09-14",
+              start_time: "06:00",
+              end_time: "12:00",
+              skill_code: null,
+              skill_level: 0
+            }],
             error: null
           };
         }
@@ -269,12 +299,12 @@ try {
     const quality = await page.locator("#workforceQuality").innerText();
     const unresolved = await page.locator("#workforceUnresolved").innerText();
     const gap = await page.locator("#workforceGap").innerText();
-    if (quality !== "ACTUAL" || unresolved !== "2" || gap.trim() !== "—") {
+    if (quality !== "ACTUAL" || unresolved !== "2" || gap !== "1") {
       throw new Error(
         `quality=${quality}, unresolved=${unresolved}, gap=${gap}`
       );
     }
-    return `unresolved=${unresolved}`;
+    return `gap=${gap}; unresolved=${unresolved}`;
   });
 
   await check("unconnected_sections_are_explicit", async () => {
@@ -312,7 +342,9 @@ try {
       .map((item) => item.name);
     const allowed = new Set([
       "get_manager_transfer_requests",
-      "list_schedule_generations"
+      "list_schedule_generations",
+      "get_workforce_staffing_requirements",
+      "get_schedule_generation_assignments"
     ]);
     const unexpected = rpcNames.filter((name) => !allowed.has(name));
     if (unexpected.length) {
