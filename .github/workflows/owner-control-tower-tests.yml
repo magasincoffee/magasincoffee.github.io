@@ -28,3 +28,29 @@ jobs:
           node-version: '20'
       - name: Run Control Tower unit/fixture tests
         run: node --test 09_QA/owner-control-tower/*.test.mjs
+
+  browser-e2e:
+    needs: unit-fixture-tests
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install browser E2E dependency
+        working-directory: 09_QA/owner-control-tower
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Run Control Tower browser E2E in installed Chrome
+        shell: powershell
+        run: |
+          $candidates = @(
+            "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+            "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+            "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
+          )
+          $chrome = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $chrome) {
+            throw "Installed Google Chrome was not found on the GitHub-hosted runner."
+          }
+          node 09_QA/owner-control-tower/browser-e2e.mjs --chrome "$chrome"
