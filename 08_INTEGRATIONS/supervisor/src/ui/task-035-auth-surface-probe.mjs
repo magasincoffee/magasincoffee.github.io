@@ -81,3 +81,5 @@ try {
 } finally {
   // Connected over CDP to the Owner/Robot Chrome. Never close that browser.
 }
+
+process.exit(0);
