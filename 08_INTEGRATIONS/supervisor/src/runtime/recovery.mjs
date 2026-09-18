@@ -4,10 +4,6 @@ export const RECOVERY_ACTIONS = Object.freeze({
   RELOAD_STALLED: "RELOAD_STALLED",
   RELOAD_UNAVAILABLE: "RELOAD_UNAVAILABLE",
   ROLLOVER_CONVERSATION_FULL: "ROLLOVER_CONVERSATION_FULL",
-  ROLLOVER_CONVERSATION_MISSING: "ROLLOVER_CONVERSATION_MISSING",
-  ROLLOVER_TARGET_MISSING: "ROLLOVER_TARGET_MISSING",
-  ROLLOVER_STALLED: "ROLLOVER_STALLED",
-  ROLLOVER_UNAVAILABLE: "ROLLOVER_UNAVAILABLE",
   WAIT_USER_RECOVERY_EXHAUSTED: "WAIT_USER_RECOVERY_EXHAUSTED"
 });
 
@@ -96,7 +92,8 @@ export class SupervisorRecoveryController {
 
     this.targetMisses += 1;
     if (this.targetMisses >= this.targetMissThreshold) {
-      return RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING;
+      this.blocked = true;
+      return RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED;
     }
     return RECOVERY_ACTIONS.WAIT_TARGET;
   }
@@ -111,15 +108,18 @@ export class SupervisorRecoveryController {
       this.lastRolloverAt > 0 &&
       now - this.lastRolloverAt < this.rolloverCooldownMs;
 
-    if (snapshot.conversationFull || snapshot.conversationMissing) {
+    if (snapshot.conversationMissing) {
+      this.blocked = true;
+      return RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED;
+    }
+
+    if (snapshot.conversationFull) {
       if (this.rolloverBurstCount >= 2 && !rolloverCoolingDown) {
         this.blocked = true;
         return RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED;
       }
       if (rolloverCoolingDown) return RECOVERY_ACTIONS.NONE;
-      return snapshot.conversationFull
-        ? RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL
-        : RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_MISSING;
+      return RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL;
     }
     const observation = classification.observation;
 
@@ -149,7 +149,8 @@ export class SupervisorRecoveryController {
         if (this.stallReloads < this.maxStallReloads) {
           return RECOVERY_ACTIONS.RELOAD_STALLED;
         }
-        return RECOVERY_ACTIONS.ROLLOVER_STALLED;
+        this.blocked = true;
+        return RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED;
       }
 
       return RECOVERY_ACTIONS.NONE;
@@ -170,7 +171,8 @@ export class SupervisorRecoveryController {
         if (this.unavailableReloads < this.maxUnavailableReloads) {
           return RECOVERY_ACTIONS.RELOAD_UNAVAILABLE;
         }
-        return RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE;
+        this.blocked = true;
+        return RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED;
       }
 
       return RECOVERY_ACTIONS.NONE;
@@ -196,7 +198,7 @@ export class SupervisorRecoveryController {
       return;
     }
 
-    if (String(action).startsWith("ROLLOVER_")) {
+    if (action === RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL) {
       if (success) {
         this.conversationGeneration += 1;
         this.lastRolloverAt = now;
