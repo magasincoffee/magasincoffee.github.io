@@ -1,0 +1,118 @@
+name: Supervisor Local Safe Diagnostic
+
+on:
+  push:
+    branches:
+      - 'diag/supervisor-local-target-*'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: self-hosted
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Safe local Supervisor diagnostic
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
+          $runtime = Join-Path $root 'runtime'
+          $profile = Join-Path $root 'browser_profile'
+          $pidFile = Join-Path $root 'supervisor.pid'
+          $targetFile = Join-Path $root 'target.json'
+          $statusFile = Join-Path $root 'runtime-status.json'
+          $logFile = Join-Path $root 'supervisor.log'
+
+          Write-Host "DIAG_ROOT_EXISTS=$([bool](Test-Path $root))"
+          Write-Host "DIAG_RUNTIME_EXISTS=$([bool](Test-Path $runtime))"
+
+          $wrapper = @(
+            Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+              Where-Object { $_.CommandLine -and $_.CommandLine -like '*run-supervisor.ps1*' }
+          )
+          $nodes = @(
+            Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+              Where-Object { $_.CommandLine -and $_.CommandLine -like '*supervisor-loop-cli.mjs*' }
+          )
+          $chromes = @(
+            Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+              Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" }
+          )
+
+          Write-Host "DIAG_WRAPPER_COUNT=$($wrapper.Count)"
+          Write-Host "DIAG_NODE_COUNT=$($nodes.Count)"
+          Write-Host "DIAG_DEDICATED_CHROME_COUNT=$($chromes.Count)"
+          if (Test-Path $pidFile) {
+            $pidValue = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
+            $alive = [bool](Get-Process -Id $pidValue -ErrorAction SilentlyContinue)
+            Write-Host "DIAG_PID_FILE=present"
+            Write-Host "DIAG_PID_ALIVE=$alive"
+          } else {
+            Write-Host "DIAG_PID_FILE=missing"
+          }
+
+          foreach ($port in 9222..9232) {
+            $listener = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($listener) {
+              $owner = Get-CimInstance Win32_Process -Filter "ProcessId=$($listener.OwningProcess)" -ErrorAction SilentlyContinue
+              $dedicated = [bool]($owner -and $owner.Name -eq 'chrome.exe' -and $owner.CommandLine -and $owner.CommandLine -like "*$profile*")
+              Write-Host ("DIAG_PORT_" + $port + "=LISTEN owner=" + $owner.Name + " dedicated=" + $dedicated)
+              try {
+                $version = Invoke-RestMethod -Uri ("http://127.0.0.1:" + $port + "/json/version") -TimeoutSec 2
+                Write-Host ("DIAG_PORT_" + $port + "_CDP=" + [bool]$version.webSocketDebuggerUrl)
+                $pages = @(Invoke-RestMethod -Uri ("http://127.0.0.1:" + $port + "/json/list") -TimeoutSec 2)
+                $chatPages = @($pages | Where-Object { $_.url -like 'https://chatgpt.com*' })
+                $conversationPages = @($chatPages | Where-Object { ([uri]$_.url).AbsolutePath -match '^/(c|g|project)/' })
+                $homePages = @($chatPages | Where-Object { ([uri]$_.url).AbsolutePath -eq '/' })
+                Write-Host ("DIAG_PORT_" + $port + "_CHAT_PAGES=" + $chatPages.Count)
+                Write-Host ("DIAG_PORT_" + $port + "_CONVERSATION_PAGES=" + $conversationPages.Count)
+                Write-Host ("DIAG_PORT_" + $port + "_HOME_PAGES=" + $homePages.Count)
+              } catch {
+                Write-Host ("DIAG_PORT_" + $port + "_CDP=false")
+              }
+            }
+          }
+
+          if (Test-Path $targetFile) {
+            try {
+              $target = Get-Content $targetFile -Raw -Encoding UTF8 | ConvertFrom-Json
+              $isConversation = [bool]([string]$target.pathname -match '^/(c|g|project)/')
+              Write-Host "DIAG_TARGET_EXISTS=true"
+              Write-Host "DIAG_TARGET_CONVERSATION_PATH=$isConversation"
+              Write-Host "DIAG_TARGET_UPDATED_AT=$($target.updated_at)"
+            } catch {
+              Write-Host "DIAG_TARGET_EXISTS=true"
+              Write-Host "DIAG_TARGET_PARSE=false"
+            }
+          } else {
+            Write-Host "DIAG_TARGET_EXISTS=false"
+          }
+
+          if (Test-Path $statusFile) {
+            try {
+              $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+              Write-Host "DIAG_STATUS=$($status.status)"
+              Write-Host "DIAG_TASK=$($status.current_task)"
+              Write-Host "DIAG_RECOVERY=$($status.recovery_action)"
+              Write-Host "DIAG_RECOVERY_BLOCKED=$($status.recovery_blocked)"
+              Write-Host "DIAG_TARGET_MISSES=$($status.recovery_target_misses)"
+              Write-Host "DIAG_ROLLOVER_FAILURES=$($status.recovery_rollover_failures)"
+              Write-Host "DIAG_ROLLOVER_BURST=$($status.rollover_burst_count)"
+              Write-Host "DIAG_CONVERSATION_GENERATION=$($status.conversation_generation)"
+            } catch {
+              Write-Host "DIAG_STATUS_PARSE=false"
+            }
+          }
+
+          if (Test-Path $logFile) {
+            Write-Host "DIAG_SAFE_LOG_TAIL_BEGIN"
+            Get-Content $logFile -Tail 30 -Encoding UTF8 | ForEach-Object { Write-Host $_ }
+            Write-Host "DIAG_SAFE_LOG_TAIL_END"
+          }
