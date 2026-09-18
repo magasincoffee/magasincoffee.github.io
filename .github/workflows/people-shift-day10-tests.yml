@@ -31,6 +31,9 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Run People Shift regression tests
+        run: node --test 09_QA/people-shift/*.test.mjs
+
       - name: Run Control Tower regression tests
         run: node --test 09_QA/owner-control-tower/*.test.mjs
 
