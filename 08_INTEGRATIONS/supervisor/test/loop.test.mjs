@@ -163,3 +163,66 @@ test("external rollover continuation is guarded against duplicate sends until pr
   });
   assert.equal(afterProgress.execution.executed, true);
 });
+
+
+test("failed continuation can execute a bounded retry before assistant progress", async () => {
+  let now = 80_000;
+  const controller = new SupervisorLoopController({
+    execute: true,
+    minActionIntervalMs: 1000,
+    now: () => now
+  });
+  const p = page();
+
+  const first = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: probe("RESPONSE_COMPLETE", 5)
+  });
+  assert.equal(first.execution.executed, true);
+  assert.equal(first.decision.action, "CONTINUE");
+
+  // The send failed before any assistant progress. ChatGPT now exposes the
+  // exact safe retry control. RETRY must not be blocked by the CONTINUE
+  // progress latch, otherwise the robot deadlocks in RETRYING forever.
+  now += 2000;
+  p.evaluate = async () => [
+    { text: "Thử lại", ariaLabel: "", testId: null }
+  ];
+
+  const retry = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: probe("TRANSIENT_ERROR", 5),
+    retryCount: 0,
+    maxRetries: 2
+  });
+
+  assert.equal(retry.decision.action, "RETRY");
+  assert.equal(retry.execution.executed, true);
+  assert.equal(retry.execution.target, "SAFE_RETRY_CONTROL");
+
+  // Duplicate retry clicks remain bounded by the existing action cooldown.
+  now += 500;
+  const cooldown = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: probe("TRANSIENT_ERROR", 5),
+    retryCount: 1,
+    maxRetries: 2
+  });
+  assert.equal(cooldown.execution.executed, false);
+  assert.match(cooldown.execution.reason, /action cooldown active/);
+
+  // The decision engine still hard-stops when the bounded retry budget is used.
+  now += 2000;
+  const exhausted = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: probe("TRANSIENT_ERROR", 5),
+    retryCount: 2,
+    maxRetries: 2
+  });
+  assert.equal(exhausted.decision.action, "STOP_WAIT_USER");
+  assert.equal(exhausted.execution.executed, false);
+});
