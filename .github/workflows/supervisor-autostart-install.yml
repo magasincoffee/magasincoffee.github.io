@@ -145,8 +145,8 @@ jobs:
 
           $runtimeBrain = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
           if (-not (Test-Path $runtimeBrain)) { throw "Installed Brain/Worker runtime is missing" }
-          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.18" -Quiet)) {
-            throw "Installed Brain/Worker runtime is not v2026-09-19.18"
+          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.19" -Quiet)) {
+            throw "Installed Brain/Worker runtime is not v2026-09-19.19"
           }
 
           Write-Host "AUTOSTART_REGISTERED=True"
