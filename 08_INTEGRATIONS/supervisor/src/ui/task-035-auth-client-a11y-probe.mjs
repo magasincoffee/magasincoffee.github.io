@@ -146,7 +146,7 @@ try{
   await redirectBtn.click({force:true});
   await page.waitForTimeout(500);
 
-  const inputs=page.locator('input[type="text"],input:not([type])');
+  const inputs=page.locator('input');
   const ic=await inputs.count();
   let redirectInput=null;
   let inputBestY=Number.POSITIVE_INFINITY;
