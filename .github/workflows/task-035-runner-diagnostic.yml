@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # current-phase: oauth-client-route-probe
+  # current-phase: oauth-client-create-page-probe
   operate:
     runs-on: self-hosted
     timeout-minutes: 10
@@ -35,8 +35,8 @@ jobs:
         run: |
           npm install --ignore-scripts --no-audit --no-fund
 
-      - name: Inspect OAuth client creation route
+      - name: Inspect OAuth client create page
         shell: powershell
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
-          node src/ui/task-035-auth-client-route-probe.mjs
+          node src/ui/task-035-auth-client-create-page-probe.mjs
