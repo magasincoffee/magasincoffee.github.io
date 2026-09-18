@@ -3,6 +3,11 @@ name: SOP Task Tests
 on:
   push:
     paths:
+      - '05_MANAGER/runtime/manager-shell-v1.html'
+      - '06_EMPLOYEE/app/employee-v40.html'
+      - '04_OWNER/ControlTower/index.html'
+      - '04_OWNER/ControlTower/control-tower-v1.js'
+      - '04_OWNER/ControlTower/snapshot-v1.mjs'
       - '05_MANAGER/Cong-viec/**'
       - '05_MANAGER/runtime/manager-runtime-v1.html'
       - '05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js'
@@ -11,6 +16,11 @@ on:
       - '.github/workflows/sop-task-tests.yml'
   pull_request:
     paths:
+      - '05_MANAGER/runtime/manager-shell-v1.html'
+      - '06_EMPLOYEE/app/employee-v40.html'
+      - '04_OWNER/ControlTower/index.html'
+      - '04_OWNER/ControlTower/control-tower-v1.js'
+      - '04_OWNER/ControlTower/snapshot-v1.mjs'
       - '05_MANAGER/Cong-viec/**'
       - '05_MANAGER/runtime/manager-runtime-v1.html'
       - '05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js'
@@ -59,6 +69,12 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8768
           QA_OUT: qa-artifacts/sop-task
         run: node 09_QA/sop-task/manager-task-route-browser.mjs
+
+      - name: Run SOP Task fail-closed browser regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8768
+          QA_OUT: qa-artifacts/sop-task
+        run: node 09_QA/sop-task/task-fail-closed-browser.mjs
 
       - name: Upload SOP Task QA artifacts
         if: always()
