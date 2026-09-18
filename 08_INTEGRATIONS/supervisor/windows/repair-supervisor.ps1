@@ -220,7 +220,27 @@ $tail"
         throw 'Supervisor wrapper process is not running after verified boot.'
     }
 
+    $wrapperProcesses = @(
+        Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+            Where-Object {
+                $_.CommandLine -and
+                $_.CommandLine -like '*run-supervisor.ps1*' -and
+                $_.CommandLine -like "*$root*"
+            }
+    )
+    $loopProcesses = @(
+        Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -and $_.CommandLine -like '*supervisor-loop-cli.mjs*' }
+    )
+
     Write-Host "Supervisor PID: $pidValue"
+    Write-Host "Supervisor wrapper count: $($wrapperProcesses.Count)"
+    Write-Host "Supervisor Node loop count: $($loopProcesses.Count)"
+
+    if ($wrapperProcesses.Count -ne 1 -or $loopProcesses.Count -ne 1) {
+        throw "Supervisor singleton verification failed: wrappers=$($wrapperProcesses.Count), nodeLoops=$($loopProcesses.Count)."
+    }
+
     Write-Host 'Last safe log lines:'
     Get-Content $logFile -Tail 10 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
 

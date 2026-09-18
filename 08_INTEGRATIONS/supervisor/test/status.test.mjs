@@ -16,6 +16,7 @@ test("runtime status exposes project/task/action metadata without private conten
       current_task_title: "Store/product canonical model review",
       next_task: "TASK-010",
       autonomy: "AUTO_CONTINUE",
+      status: "READY",
       requires_user: false,
       blocked: false
     },
@@ -29,6 +30,7 @@ test("runtime status exposes project/task/action metadata without private conten
 
   assert.equal(payload.project, "MAGASIN Business OS");
   assert.equal(payload.current_task, "TASK-009");
+  assert.equal(payload.project_status, "READY");
   assert.equal(payload.status, "RUNNING");
   assert.equal(payload.decision_action, "WAIT");
   assert.equal(payload.retry_count, 1);

@@ -21,6 +21,9 @@ test("one-click repair updates main, installs fresh runtime and verifies the boo
   assert.match(source, /RUNTIME_BOOT\.\*version=/);
   assert.match(source, /REPAIR_RESULT=PASS/);
   assert.match(source, /REPAIR_RESULT=FAIL/);
+  assert.match(source, /Supervisor wrapper count:/);
+  assert.match(source, /Supervisor Node loop count:/);
+  assert.match(source, /Supervisor singleton verification failed/);
 });
 
 test("one-click repair refuses dirty or non-main repositories", async () => {

@@ -26,6 +26,7 @@ export function buildRuntimeStatus({
     schema_version: 1,
     project: projectState.project || "MAGASIN Business OS",
     repository: projectState.repository || "magasincoffee/magasincoffee.github.io",
+    project_status: projectState.status || null,
     status,
     current_phase: projectState.current_phase || null,
     current_task: projectState.current_task || null,
