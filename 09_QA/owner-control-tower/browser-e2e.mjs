@@ -355,6 +355,10 @@ async function runPartialScenario() {
   assert.equal(await page.locator("#workforceQuality").getAttribute("data-quality"), "ACTUAL");
   assert.equal((await page.locator("#workforceUnresolved").textContent())?.trim(), "2");
   assert.equal(await page.locator("#revenueQuality").getAttribute("data-quality"), "NOT_CONNECTED");
+  assert.equal(
+    (await page.locator("#globalConfidence").textContent())?.trim(),
+    "1/5 ACTUAL · 4 chưa đủ"
+  );
   assert.equal(await page.locator("#denied").isVisible(), false);
   assert.equal(await page.locator("#app").isVisible(), true);
   assert.equal(
