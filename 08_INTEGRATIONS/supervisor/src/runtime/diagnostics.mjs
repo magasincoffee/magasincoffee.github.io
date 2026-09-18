@@ -14,7 +14,17 @@ function safeProject(projectState = {}) {
     status: String(projectState.status || ""),
     autonomy: String(projectState.autonomy || ""),
     blocked: Boolean(projectState.blocked),
-    requires_user: Boolean(projectState.requires_user)
+    requires_user: Boolean(projectState.requires_user),
+    owner_boundary_pending:
+      Array.isArray(projectState?.owner_boundary?.pending)
+        ? projectState.owner_boundary.pending.map((value) => String(value))
+        : [],
+    activation_boundary_reason:
+      String(projectState?.activation_boundary?.reason || ""),
+    activation_boundary_pending:
+      Array.isArray(projectState?.activation_boundary?.pending)
+        ? projectState.activation_boundary.pending.map((value) => String(value))
+        : []
   };
 }
 
@@ -160,7 +170,11 @@ export class SupervisorDiagnostics {
     if (
       snapshot.project.status === "WAIT_USER" &&
       snapshot.ui.observation === "RESPONSE_COMPLETE" &&
-      snapshot.step.decision_action === "STOP_WAIT_USER"
+      snapshot.step.decision_action === "STOP_WAIT_USER" &&
+      (
+        snapshot.owner_reconcile.awaiting_response ||
+        snapshot.owner_reconcile.manual_recheck_marker
+      )
     ) {
       return "WAIT_USER_RECONCILE_STALL";
     }
