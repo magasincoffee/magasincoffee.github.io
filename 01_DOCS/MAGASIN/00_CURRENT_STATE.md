@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-044 — Portfolio-aware diagnostics — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-045 — Restart/resume simulation — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,28 +101,30 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-044:** TASK-043 cross-project handoff integration is verified on draft PR #119.
+**AUTO_CONTINUE — TASK-045:** TASK-044 portfolio-aware diagnostics is verified on draft PR #119.
 
-Verified TASK-043 evidence:
+Verified TASK-044 evidence:
 
-- integration commit `d39cc211f19ce7223478d48ccfd19a7440c17d77`;
-- Supervisor Tests run `35370949854`: PASS;
-- Business OS → Media Robot → Business OS handoff stays inside the approved registry;
-- project-local WAIT_USER/BLOCKED does not become a global stop;
-- Media Robot constraints do not leak into Business OS state;
-- stale cursor advancement and checkpoint scope are verified;
-- no browser or live-provider side effect is executed by the integration test.
+- diagnostics implementation commit `a4a1dc1293b29c793f0cb88bb44fc67aa0b53cb8`;
+- privacy regression test commit `0aa727303482ee6552f143e0abec722d65e6103c`;
+- bounded handoff regression fix `b0758f72b9592e229e0c4c5969fa683048cdfd91`;
+- Supervisor Tests run `35371446531`: PASS;
+- diagnostics persist project/task/checkpoint context without conversation/request content;
+- raw error messages are not persisted; only safe error metadata remains;
+- existing incident classification and no-browser/live-side-effect guard remain green.
 
-TASK-044 is intentionally narrow:
+TASK-045 must simulate restart/resume without requiring an actual destructive reboot:
 
-1. extend diagnostics with portfolio project id/repository and cursor task/checkpoint context;
-2. preserve existing UI/controller/recovery diagnostics;
-3. sanitize error/message-like diagnostic text before disk persistence;
-4. never persist conversation text, prompt/request text, auth material, cookies or bearer/token values;
-5. keep incident classification behavior stable;
-6. add unit/regression coverage for portfolio fields and privacy redaction only.
+1. active lease prevents a second worker from taking over;
+2. expired lease stays fail-closed until HEAD and CI are reconciled;
+3. verified stale lease is cleared before resume;
+4. completed operation keys prevent duplicate side effects after restart;
+5. canonical task advancement discards stale cursor work;
+6. project handoff checkpoint remains project-local across restart;
+7. Owner STOP / WAIT_USER / BLOCKED boundaries remain fail-closed;
+8. simulation performs no browser mutation, live provider action, or production write.
 
-Do not add remote telemetry, new monitoring services, or broader observability infrastructure in this task.
+Reuse existing recovery/lease/handoff primitives; do not create another recovery subsystem.
 
 ## Session handoff
 
