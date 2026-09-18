@@ -192,3 +192,14 @@ test("control panel distinguishes Owner decision from technical activation wait"
   assert.match(source, /owner_boundary/);
   assert.match(source, /Cần cấu hình kỹ thuật trước khi tiếp tục/);
 });
+
+
+test("control panel reads live runtime flattened boundary metadata", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /activation_boundary_pending/);
+  assert.match(source, /owner_boundary_pending/);
+});
