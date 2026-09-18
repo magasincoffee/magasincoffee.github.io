@@ -62,6 +62,7 @@ function Tail-SafeLog {
                 if ($null -ne $e.executed) { $parts += "executed=$($e.executed)" }
                 if ($e.reason) { $parts += "reason=$($e.reason)" }
                 if ($e.errorName) { $parts += "error=$($e.errorName)" }
+                if ($e.errorCause) { $parts += "cause=$($e.errorCause)" }
                 $parts -join ' | '
             } catch {
                 $line
@@ -269,7 +270,16 @@ function Refresh-ControlPanel {
         $script:lastRemoteFetch = Get-Date
     }
 
-    $projectState = if ($runtimeStatus -and $runtimeStatus.current_task) { $runtimeStatus } else { $script:lastRemoteState }
+    # Runtime status is authoritative only while the Supervisor process is alive.
+    # When OFFLINE, prefer repository source-of-truth so stale local status cannot
+    # keep showing an already-completed task.
+    $projectState = if ($process -and $runtimeStatus -and $runtimeStatus.current_task) {
+        $runtimeStatus
+    } elseif ($script:lastRemoteState) {
+        $script:lastRemoteState
+    } else {
+        $runtimeStatus
+    }
 
     if ($process) {
         $state = if ($runtimeStatus.status) { [string]$runtimeStatus.status } else { 'STARTING' }
@@ -323,7 +333,15 @@ function Refresh-ControlPanel {
     } else {
         'Theo dõi ChatGPT; tự Continue khi source-of-truth cho phép.'
     }
-    $heartbeatValue.Text = if ($runtimeStatus.updated_at) { Format-Time ([string]$runtimeStatus.updated_at) } else { 'Chưa có runtime status.' }
+    $heartbeatValue.Text = if ($process -and $runtimeStatus.updated_at) {
+        Format-Time ([string]$runtimeStatus.updated_at)
+    } elseif ($projectState.last_updated) {
+        "Repository source-of-truth • $($projectState.last_updated)"
+    } elseif ($runtimeStatus.updated_at) {
+        "Runtime cũ • $(Format-Time ([string]$runtimeStatus.updated_at))"
+    } else {
+        'Chưa có runtime status.'
+    }
     $autonomyValue.Text = if ($projectState.autonomy) { "$($projectState.autonomy)  •  phase=$($projectState.current_phase)" } else { '—' }
 
     if (-not $process) {
