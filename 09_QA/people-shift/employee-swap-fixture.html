@@ -10,7 +10,10 @@
   <script>
   (() => {
     const calls = [];
-    window.__EMPLOYEE_SWAP_QA = { calls };
+    const toasts = [];
+    const requester={schedule_id:"sch-me",work_date:"2026-09-14",start_time:"06:00",end_time:"12:00",store_id:"store-a",store_code:"CN1",store_name:"Cửa hàng QA"};
+    const target={schedule_id:"sch-target",user_id:"u-2",user_name:"Bạn QA",work_date:"2026-09-14",start_time:"12:00",end_time:"17:00",store_id:"store-a",store_code:"CN1",store_name:"Cửa hàng QA"};
+    window.__EMPLOYEE_SWAP_QA = { calls, toasts, requester, target };
     window.MAGASIN_CORE = {
       security: { escapeHtml: (value) => String(value ?? "") },
       time: { time5: (value) => String(value ?? "").slice(0, 5) },
@@ -18,12 +21,12 @@
         monday: () => "2026-09-14",
         formatDate: (value) => String(value ?? "").slice(0, 10)
       },
-      ui: { toast() {} },
+      ui: { toast(message,type) { toasts.push({message,type}); } },
       supabase: {
         async rpc(name, args) {
           calls.push({ name, args });
-          if (name === "list_my_approved_schedules_v2") return { data: [], error: null };
-          if (name === "list_shift_swap_candidates_v1") return { data: [], error: null };
+          if (name === "list_my_approved_schedules_v2") return { data: [requester], error: null };
+          if (name === "list_shift_swap_candidates_v1") return { data: [target], error: null };
           if (name === "list_my_shift_swaps_v2") return { data: [], error: null };
           if (name === "submit_shift_swap_request") return { data: { saved: true }, error: null };
           return { data: [], error: null };
