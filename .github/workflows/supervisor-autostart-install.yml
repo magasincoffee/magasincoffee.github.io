@@ -74,22 +74,35 @@ jobs:
           if (-not $supervisor) { throw "Supervisor wrapper is not online" }
 
           $profile = Join-Path $root "browser_profile"
-          $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
-            Where-Object {
-              $_.CommandLine -and
-              $_.CommandLine -like "*$profile*" -and
-              $_.CommandLine -match "--remote-debugging-port=(\d+)"
-            } |
-            Select-Object -First 1
-          if (-not $chrome) { throw "Dedicated Business OS Chrome is not online" }
-
+          $chrome = $null
           $cdpPort = $null
-          if ($chrome.CommandLine -match "--remote-debugging-port=(\d+)") {
-            $cdpPort = [int]$Matches[1]
+          $version = $null
+
+          for ($i = 0; $i -lt 30; $i++) {
+            $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.CommandLine -and
+                $_.CommandLine -like "*$profile*" -and
+                $_.CommandLine -match "--remote-debugging-port=(\d+)"
+              } |
+              Select-Object -First 1
+
+            if ($chrome -and $chrome.CommandLine -match "--remote-debugging-port=(\d+)") {
+              $cdpPort = [int]$Matches[1]
+              try {
+                $version = Invoke-RestMethod -Uri "http://127.0.0.1:$cdpPort/json/version" -TimeoutSec 2
+              } catch {
+                $version = $null
+              }
+              if ($version -and $version.webSocketDebuggerUrl) { break }
+            }
+
+            Start-Sleep -Seconds 1
           }
-          if (-not $cdpPort) { throw "Dedicated Business OS Chrome CDP port is missing" }
-          $version = Invoke-RestMethod -Uri "http://127.0.0.1:$cdpPort/json/version" -TimeoutSec 3
-          if (-not $version.webSocketDebuggerUrl) { throw "Dedicated Business OS Chrome CDP endpoint is not healthy" }
+
+          if (-not $chrome) { throw "Dedicated Business OS Chrome is not online after bounded wait" }
+          if (-not $cdpPort) { throw "Dedicated Business OS Chrome CDP port is missing after bounded wait" }
+          if (-not $version -or -not $version.webSocketDebuggerUrl) { throw "Dedicated Business OS Chrome CDP endpoint is not healthy after bounded wait" }
 
           $statusFile = Join-Path $root "autostart-install-status.json"
           if (-not (Test-Path $statusFile)) { throw "Autostart install status is missing" }
