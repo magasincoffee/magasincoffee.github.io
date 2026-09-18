@@ -10,10 +10,10 @@
 | TASK-003 | Supervisor continuation decision engine | 20m | unit + regression | DONE |
 | TASK-004 | Supervisor ChatGPT UI adapter spike | 20m | local non-destructive smoke | DONE |
 | TASK-005 | Supervisor reconnect/retry policy | 15m | simulated failure tests | DONE |
-| TASK-006 | Supervisor action executor: Continue / safe Retry | 20m | unit + local dry-run | READY |
-| TASK-007 | Supervisor START/STOP launcher + kill switch | 20m | local smoke | QUEUED |
-| TASK-008 | Supervisor autonomy E2E loop | 20m | live bounded E2E | QUEUED |
-| TASK-009 | Store/product canonical model review | 20m | discovery trace | QUEUED |
+| TASK-006 | Supervisor action executor: Continue / safe Retry | 20m | unit + local dry-run | DONE |
+| TASK-007 | Supervisor START/STOP launcher + kill switch | 20m | local smoke | DONE |
+| TASK-008 | Supervisor autonomy E2E loop | 20m | live bounded E2E | DONE |
+| TASK-009 | Store/product canonical model review | 20m | discovery trace | READY |
 | TASK-010 | Database baseline/migration plan | 20m | schema review | QUEUED |
 | TASK-011 | Owner Control Tower vertical-slice plan | 20m | acceptance defined | QUEUED |
 
