@@ -242,3 +242,17 @@ test("START ROBOT does not launch runner or ChatGPT while repository autonomy is
   );
   assert.match(source.slice(pauseGuard, ensureRunner), /return/);
 });
+
+
+test("control panel exposes a plain-language Brain rebind control only for target mismatch recovery", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /BRAIN_REBIND\.request\.json/);
+  assert.match(source, /DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO/);
+  assert.match(source, /OWNER_BRAIN_REBIND_VISIBLE_CHAT/);
+  assert.match(source, /target mismatch/);
+  assert.match(source, /Mở đúng cuộc trò chuyện Bộ não trong Chrome Robot/);
+});
