@@ -21,8 +21,6 @@ export class SupervisorLoopController {
     this.lastActionAt = 0;
     this.assistantCountAtAction = null;
     this.sawRunningAfterAction = false;
-    this.handoffPendingSignature = null;
-    this.handoffPendingSince = 0;
     this.userPendingSignature = null;
     this.userPendingSince = 0;
     this.userPendingSawProgress = false;
