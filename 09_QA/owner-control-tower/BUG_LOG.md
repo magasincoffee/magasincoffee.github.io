@@ -45,4 +45,4 @@
 - Impact: missing revenue could be silently presented as a valid reconciled zero.
 - Root cause: amount validation called `Number(candidate.amount)` before rejecting blank/null source values.
 - Fix: reject null/undefined/blank string amounts before numeric conversion; keep genuine numeric zero valid.
-- Status: PENDING CI VERIFICATION
+- Status: VERIFIED — run `35315530551` PASS
