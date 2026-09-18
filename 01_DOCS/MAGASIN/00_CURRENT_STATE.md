@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-022 — People/Shift browser E2E + Day-10 usability gate**
+**TASK-022 — DONE — People/Shift browser E2E + Day-10 usability gate**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Run **TASK-022 — People/Shift browser E2E + Day-10 usability gate**. Exercise the existing Owner Workforce and Employee availability/schedule flow with deterministic sanitized mocks, verify the generation→review→publish contract and approved schedule visibility, assert no unexpected browser/network errors, then close the Day-10 gate or open only reproducible defects.
+**Day-10 People/Shift gate is PASS.** TASK-022 found no reproducible product defect. The Day 8–10 queue is exhausted; do not invent a new implementation task. Continue only after `00_TASK_QUEUE.md` is explicitly expanded from repository evidence / the next approved V1 slice.
 
 ## Session handoff
 
