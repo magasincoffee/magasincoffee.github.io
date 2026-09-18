@@ -33,7 +33,7 @@ export function classifyUiSnapshot(snapshot) {
     };
   }
 
-  if (snapshot.hasTransientError) {
+  if (snapshot.hasTransientError || snapshot.hasRetryControl) {
     return {
       uiState: UI_STATES.TRANSIENT_ERROR,
       observation: OBSERVATIONS.TRANSIENT_ERROR
