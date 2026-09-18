@@ -226,3 +226,24 @@
 - Production provider secrets changed: none.
 - Email sent: none.
 - Gate: TASK-035 **WAIT_USER** pending concrete provider + exact MAGASIN sender email.
+
+
+## 2026-09-18 — TASK-035 Gmail/Google Workspace provider implementation
+
+- Branch: `feat/task-035-gmail-provider`
+- PR: `#109`
+- Provider: `GMAIL_GOOGLE_WORKSPACE`
+- Transport: Gmail API + OAuth 2.0 refresh token.
+- Business OS Contract Tests run `35344439372`: **PASS**.
+- Supervisor Tests run `35344439358`: **PASS**.
+- Owner provider decision reconciled: PASS.
+- Gmail OAuth required-secret validation: PASS.
+- OAuth access-token initialization before queue claim: PASS.
+- Gmail raw RFC 2822/base64url envelope: PASS.
+- Gmail `users/me/messages/send` request contract: PASS.
+- Unknown provider fail-closed before queue claim: PASS.
+- Missing Gmail OAuth credential fail-closed before queue claim: PASS.
+- Production Edge Function deployment: none.
+- Production provider secrets changed: none.
+- Email sent: none.
+- Gate: implementation **PASS**; TASK-035 remains **WAIT_USER** only for Gmail OAuth credential activation.
