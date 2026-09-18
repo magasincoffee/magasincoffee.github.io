@@ -29,3 +29,15 @@
 - Corrective direction: use a real installed Chrome process launched normally with a dedicated local profile and remote-debugging endpoint; Supervisor attaches to that browser over CDP instead of launching the login browser itself.
 - Safety boundary: the Owner enters credentials directly into the real browser. Supervisor does not request, capture, log, or store credentials, cookies, tokens, MFA, or message bodies.
 - Status: FIXING
+
+
+## BUG-SUP-003 — Authenticated conversation not captured when composer is not visible
+
+- Date: 2026-09-18
+- Component: Supervisor profile setup
+- Reproduction: Owner is authenticated and opens a valid ChatGPT conversation URL, but the prompt composer is not currently rendered/visible in the captured viewport.
+- Observed: setup remains waiting because target capture required both `conversationPath` and `composerReady`.
+- Impact: successful authentication is not recognized promptly.
+- Root cause: one-time target capture used a UI visibility condition that is unnecessary for identifying a valid authenticated conversation.
+- Fix: capture the local conversation target when a ChatGPT conversation path is detected; runtime send eligibility remains separately gated by composer/state checks.
+- Status: FIXED — pending local verification
