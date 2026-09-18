@@ -46,3 +46,15 @@
 - Root cause: amount validation called `Number(candidate.amount)` before rejecting blank/null source values.
 - Fix: reject null/undefined/blank string amounts before numeric conversion; keep genuine numeric zero valid.
 - Status: VERIFIED — run `35315530551` PASS
+
+
+## BUG-CT-005 — Source exception is misclassified as Owner auth denial
+
+- Date: 2026-09-18
+- Component: `04_OWNER/ControlTower/control-tower-v1.js`
+- Reproduction: make a source dependency throw outside its adapter guard, for example `core.supabase.get()` before the Payables adapter receives a client.
+- Observed: the single outer `boot()` try/catch catches the source exception, hides the app and shows the Owner access-denied screen.
+- Impact: one unhealthy source can blank all healthy Control Tower sections and present a data-source failure as an authorization failure.
+- Root cause: Owner authorization and section data loading shared the same error boundary.
+- Fix: the auth boundary now ends before source loading; Revenue, Payables and Workforce are each wrapped by a section-local loader that converts unexpected exceptions to explicit `GAP` without stopping later sections.
+- Status: VERIFIED — regression run pending on latest-main replay
