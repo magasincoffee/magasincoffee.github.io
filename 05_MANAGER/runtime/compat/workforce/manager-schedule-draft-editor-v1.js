@@ -52,7 +52,7 @@ function render(){
  if(!document.getElementById('manager-schedule-draft-editor-css'))document.head.insertAdjacentHTML('beforeend',css);
  activate();
  const shortages=Array.isArray(state.robotResult?.minimum_shortages)?state.robotResult.minimum_shortages:[];
- p.innerHTML=`<section class="card msd"><div class="msd-head"><div><h2 style="margin:0">Robot xếp lịch · Lịch nháp</h2><div class="muted" style="margin-top:5px">Generation ${esc(state.generationId||'—')} · tuần ${esc(state.week||'—')} · chỉ DRAFT mới được chỉnh</div></div><div class="msd-actions"><button class="btn" id="msdReload">Tải lại</button><button class="btn" id="msdValidate">Kiểm tra</button><button class="btn primary" id="msdSave">Lưu lịch nháp</button></div></div><div class="msd-summary"><span class="msd-pill">${state.assignments.length} phân bổ</span><span class="msd-pill ${shortages.length?'msd-warning':'msd-ok'}">${shortages.length} thiếu tối thiểu từ Robot</span><span class="msd-pill">Không tự Publish</span></div>${state.assignments.length?`<div class="msd-list">${state.assignments.map((a,i)=>{const cs=candidates(a);return `<div class="msd-row" data-msd-row="${i}"><div class="msd-field"><label>Nhân viên</label><select class="msd-input" data-f="user_id">${cs.map(r=>`<option value="${esc(r.user_id)}"${String(r.user_id)===String(a.user_id)?' selected':''}>${esc(r.employee_name||r.username||r.user_id)}${r.preferred_store_code?' · '+esc(r.preferred_store_code):''}</option>`).join('')}</select><div class="msd-meta">${esc(String(a.work_date).slice(0,10))} · ${esc(a.skill_code||'Tổng hợp')} · ${esc(a.warning||'')}</div></div><div class="msd-field"><label>Bắt đầu</label><select class="msd-input" data-f="start_time">${timeOptions(a.start_time)}</select></div><div class="msd-field"><label>Kết thúc</label><select class="msd-input" data-f="end_time">${timeOptions(a.end_time)}</select></div><button class="btn" data-remove="${i}" type="button">Bỏ</button></div>`}).join('')}</div>`:'<div class="msd-empty">Robot chưa tạo assignment. Có thể thêm từ đăng ký hợp lệ bên dưới.</div>'}<div class="msd-add"><div class="msd-field"><label>Thêm phân bổ từ đăng ký nhân viên</label><select class="msd-input" id="msdAddAvailability"><option value="">Chọn đăng ký…</option>${availabilityOptions()}</select></div><button class="btn" id="msdAdd" type="button">+ Thêm vào draft</button></div><div id="msdStatus" class="msd-status">Robot chỉ tạo DRAFT. Hãy review/chỉnh, lưu và kiểm tra trước bước REVIEWED/PUBLISH.</div></section>`;
+ p.innerHTML=`<section class="card msd"><div class="msd-head"><div><h2 style="margin:0">Robot xếp lịch · Lịch nháp</h2><div class="muted" style="margin-top:5px">Generation ${esc(state.generationId||'—')} · tuần ${esc(state.week||'—')} · chỉ DRAFT mới được chỉnh</div></div><div class="msd-actions"><button class="btn" id="msdReload">Tải lại</button><button class="btn" id="msdValidate">Kiểm tra</button><button class="btn primary" id="msdSave">Lưu lịch nháp</button><button class="btn primary" id="msdReview">Duyệt lịch</button><button class="btn primary" id="msdPublish">Publish lịch</button></div></div><div class="msd-summary"><span class="msd-pill">${state.assignments.length} phân bổ</span><span class="msd-pill ${shortages.length?'msd-warning':'msd-ok'}">${shortages.length} thiếu tối thiểu từ Robot</span><span class="msd-pill" id="msdGenerationStatus">${esc(state.robotResult?.status||'DRAFT')}</span><span class="msd-pill">Không tự Publish</span></div>${state.assignments.length?`<div class="msd-list">${state.assignments.map((a,i)=>{const cs=candidates(a);return `<div class="msd-row" data-msd-row="${i}"><div class="msd-field"><label>Nhân viên</label><select class="msd-input" data-f="user_id">${cs.map(r=>`<option value="${esc(r.user_id)}"${String(r.user_id)===String(a.user_id)?' selected':''}>${esc(r.employee_name||r.username||r.user_id)}${r.preferred_store_code?' · '+esc(r.preferred_store_code):''}</option>`).join('')}</select><div class="msd-meta">${esc(String(a.work_date).slice(0,10))} · ${esc(a.skill_code||'Tổng hợp')} · ${esc(a.warning||'')}</div></div><div class="msd-field"><label>Bắt đầu</label><select class="msd-input" data-f="start_time">${timeOptions(a.start_time)}</select></div><div class="msd-field"><label>Kết thúc</label><select class="msd-input" data-f="end_time">${timeOptions(a.end_time)}</select></div><button class="btn" data-remove="${i}" type="button">Bỏ</button></div>`}).join('')}</div>`:'<div class="msd-empty">Robot chưa tạo assignment. Có thể thêm từ đăng ký hợp lệ bên dưới.</div>'}<div class="msd-add"><div class="msd-field"><label>Thêm phân bổ từ đăng ký nhân viên</label><select class="msd-input" id="msdAddAvailability"><option value="">Chọn đăng ký…</option>${availabilityOptions()}</select></div><button class="btn" id="msdAdd" type="button">+ Thêm vào draft</button></div><div id="msdStatus" class="msd-status">Robot chỉ tạo DRAFT. Hãy review/chỉnh, lưu và kiểm tra trước bước REVIEWED/PUBLISH.</div></section>`;
  bind();
 }
 function syncRowsFromDom(){
@@ -75,7 +75,9 @@ async function validate(){
  status(lines.join('\n'),q.data?.valid?'ok':'error');return q
 }
 async function save(){
- if(state.busy||!state.generationId)return;syncRowsFromDom();
+ if(state.busy||!state.generationId)return;
+ if(String(state.robotResult?.status||'DRAFT').toUpperCase()!=='DRAFT'){status('Chỉ generation DRAFT mới được sửa.','error');return}
+ syncRowsFromDom();
  for(const a of state.assignments){if(!a.user_id||mins(a.end_time)<=mins(a.start_time)){status('Có phân bổ thiếu nhân viên hoặc giờ kết thúc không sau giờ bắt đầu.','error');return}}
  state.busy=true;status('Đang lưu lịch nháp…');
  try{
@@ -93,11 +95,46 @@ function addFromAvailability(){
  state.assignments.push({id:null,generation_id:state.generationId,user_id:r.user_id,full_name:r.employee_name||r.username,store_id:state.storeId,store_code:r.preferred_store_code||'',work_date:String(r.work_date).slice(0,10),start_time:hm(r.start_time),end_time:hm(r.end_time),skill_code:null,skill_level:0,score:0,warning:null,status:'DRAFT',note:'MANUAL_FROM_AVAILABILITY'});
  render();status('Đã thêm vào bản nháp cục bộ. Bấm “Lưu lịch nháp” để ghi qua server RPC.')
 }
+async function review(){
+ if(state.busy||!state.generationId)return;
+ if(String(state.robotResult?.status||'DRAFT').toUpperCase()!=='DRAFT'){status('Chỉ generation DRAFT mới được đưa sang REVIEWED.','error');return}
+ state.busy=true;status('Đang validate và duyệt lịch…');
+ try{
+  const q=await client().rpc('review_schedule_generation',{p_generation_id:state.generationId,p_decision:'APPROVED'});
+  if(q.error)throw q.error;
+  state.robotResult={...(state.robotResult||{}),status:q.data?.status||'REVIEWED'};
+  render();status('Đã duyệt lịch. Generation ở trạng thái REVIEWED.','ok');
+ }catch(e){status('Duyệt lịch thất bại: '+(e.message||e.code||e),'error')}
+ finally{state.busy=false}
+}
+async function publish(){
+ if(state.busy||!state.generationId)return;
+ if(String(state.robotResult?.status||'').toUpperCase()!=='REVIEWED'){status('Phải duyệt lịch thành REVIEWED trước khi Publish.','error');return}
+ if(!confirm('Phát hành lịch REVIEWED thành lịch chính thức APPROVED?'))return;
+ state.busy=true;status('Đang phát hành lịch chính thức…');
+ try{
+  const q=await client().rpc('publish_schedule_generation',{p_generation_id:state.generationId});
+  if(q.error)throw q.error;
+  if(!q.data?.published)throw new Error(q.data?.error_code||'PUBLISH_NOT_COMPLETED');
+  state.robotResult={...(state.robotResult||{}),status:'PUBLISHED'};
+  const detail={generationId:state.generationId,storeId:state.storeId,weekStart:state.week,insertedScheduleCount:Number(q.data.inserted_schedule_count||0)};
+  document.dispatchEvent(new CustomEvent('magasin:schedule-published',{detail}));
+  render();status('Đã phát hành '+detail.insertedScheduleCount+' ca chính thức.','ok');
+ }catch(e){status('Publish thất bại: '+(e.message||e.code||e),'error')}
+ finally{state.busy=false}
+}
 function bind(){
  const p=panel();if(!p)return;
+ const stage=String(state.robotResult?.status||'DRAFT').toUpperCase();
  p.querySelector('#msdReload')?.addEventListener('click',async()=>{try{await loadDraft();render()}catch(e){status('Không tải được draft: '+(e.message||e),'error')}});
  p.querySelector('#msdValidate')?.addEventListener('click',validate);
  p.querySelector('#msdSave')?.addEventListener('click',save);
+ p.querySelector('#msdReview')?.addEventListener('click',review);
+ p.querySelector('#msdPublish')?.addEventListener('click',publish);
+ if(p.querySelector('#msdSave'))p.querySelector('#msdSave').disabled=stage!=='DRAFT';
+ if(p.querySelector('#msdReview'))p.querySelector('#msdReview').disabled=stage!=='DRAFT';
+ if(p.querySelector('#msdPublish'))p.querySelector('#msdPublish').disabled=stage!=='REVIEWED';
+ p.querySelectorAll('[data-msd-row] select,[data-remove],#msdAddAvailability,#msdAdd').forEach(el=>{el.disabled=stage!=='DRAFT'});
  p.querySelector('#msdAdd')?.addEventListener('click',addFromAvailability);
  p.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{syncRowsFromDom();state.assignments.splice(Number(b.dataset.remove),1);render();status('Đã bỏ khỏi bản nháp cục bộ. Bấm “Lưu lịch nháp” để ghi thay đổi.')}))
 }
@@ -114,5 +151,5 @@ async function robot(detail){
  }catch(e){if(panel())panel().innerHTML=`<section class="card"><h2>Robot xếp lịch</h2><div class="msd-status error">Không tạo được lịch nháp: ${esc(e.message||e.code||e)}</div></section>`}
 }
 document.addEventListener('magasin:schedule-robot-request',e=>robot(e.detail));
-window.MAGASIN_MANAGER_SCHEDULE_DRAFT={robot,validate,save,getState:()=>({...state,assignments:state.assignments.map(x=>({...x}))})};
+window.MAGASIN_MANAGER_SCHEDULE_DRAFT={robot,validate,save,review,publish,getState:()=>({...state,assignments:state.assignments.map(x=>({...x}))})};
 })();
