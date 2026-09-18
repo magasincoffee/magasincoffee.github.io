@@ -11,6 +11,7 @@ $runScript = Join-Path $runtime 'windows\run-supervisor.ps1'
 $pidFile = Join-Path $root 'supervisor.pid'
 $stop = Join-Path $root 'STOP'
 $autostartDisabled = Join-Path $root 'AUTOSTART_DISABLED'
+$projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
 
 if (-not (Test-Path $runScript)) {
     throw "Supervisor runtime is not installed: $runScript"
@@ -36,6 +37,20 @@ if (Test-Path $pidFile) {
         Write-Host "Supervisor already running (PID $existing)."
         exit 0
     }
+}
+
+try {
+    $projectState = Invoke-RestMethod -Uri $projectStateUrl -TimeoutSec 4 -Headers @{ 'Cache-Control'='no-cache' }
+    if ($projectState -and [string]$projectState.autonomy -eq 'PAUSED') {
+        Write-Host 'Supervisor not started: repository autonomy is PAUSED.'
+        if ($projectState.night_run -and $projectState.night_run.temporal_gate -and $projectState.night_run.temporal_gate.resume_at) {
+            Write-Host "Pause boundary: $($projectState.night_run.temporal_gate.resume_at)"
+        }
+        exit 0
+    }
+} catch {
+    # If repository state is temporarily unavailable, preserve the existing
+    # startup path so the runtime can perform its own authoritative fetch.
 }
 
 Remove-Item $stop -Force -ErrorAction SilentlyContinue
