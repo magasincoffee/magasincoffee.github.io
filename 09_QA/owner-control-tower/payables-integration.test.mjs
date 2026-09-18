@@ -19,16 +19,22 @@ test("Control Tower payables card exposes all required attention fields", async 
   }
 });
 
-test("Control Tower boot wires trusted procurement adapter after Owner auth", async () => {
+test("Control Tower wires trusted procurement adapter through source isolation after Owner auth", async () => {
   const source = await fs.readFile(
     new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
     "utf8"
   );
 
-  const authAt = source.indexOf("await requireOwnerAccess");
-  const adapterAt = source.indexOf("await loadProcurementPayables");
-  assert.ok(authAt >= 0);
-  assert.ok(adapterAt > authAt);
+  const bootAt = source.indexOf("async function boot");
+  const authAt = source.indexOf("await requireOwnerAccess", bootAt);
+  const sectionAt = source.indexOf('"payables"', authAt);
+  const adapterAt = source.indexOf("loadProcurementPayables", sectionAt);
+
+  assert.ok(bootAt >= 0);
+  assert.ok(authAt > bootAt);
+  assert.ok(sectionAt > authAt);
+  assert.ok(adapterAt > sectionAt);
+  assert.match(source, /applySourceSection\(\s*"payables"/s);
   assert.match(source, /core\.supabase\.get\(\)/);
   assert.match(source, /payableOverdueOrders/);
 });
