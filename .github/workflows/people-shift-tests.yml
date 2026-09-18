@@ -83,6 +83,12 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/manager-schedule-draft-browser.mjs
 
+      - name: Run Manager official schedule browser regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/manager-official-schedule-browser.mjs
+
       - name: Run Employee availability V2 browser regression
         env:
           QA_BASE_URL: http://127.0.0.1:8767
