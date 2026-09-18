@@ -8,6 +8,7 @@ $runtime = Join-Path $root 'runtime'
 $pidFile = Join-Path $root 'supervisor.pid'
 $statusFile = Join-Path $root 'runtime-status.json'
 $logFile = Join-Path $root 'supervisor.log'
+$ownerResolvedFile = Join-Path $root 'OWNER_RESOLVED.request.json'
 $startScript = Join-Path $runtime 'windows\start-supervisor.ps1'
 $stopScript = Join-Path $runtime 'windows\stop-supervisor.ps1'
 $openChatScript = Join-Path $runtime 'windows\open-supervisor-chat.ps1'
@@ -313,9 +314,19 @@ $errorPanel.Controls.Add($errorCaption)
 $errorValue = New-Object Windows.Forms.Label
 $errorValue.Text = 'Không có lỗi.'
 $errorValue.Location = New-Object Drawing.Point(16, 33)
-$errorValue.Size = New-Object Drawing.Size(920, 28)
+$errorValue.Size = New-Object Drawing.Size(640, 28)
 $errorValue.ForeColor = [Drawing.Color]::FromArgb(124,45,18)
 $errorPanel.Controls.Add($errorValue)
+
+$ownerResolvedButton = New-Object Windows.Forms.Button
+$ownerResolvedButton.Text = '✓  ĐÃ XỬ LÝ — KIỂM TRA LẠI'
+$ownerResolvedButton.Location = New-Object Drawing.Point(690, 18)
+$ownerResolvedButton.Size = New-Object Drawing.Size(250, 38)
+$ownerResolvedButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
+$ownerResolvedButton.BackColor = [Drawing.Color]::FromArgb(254,249,195)
+$ownerResolvedButton.ForeColor = [Drawing.Color]::FromArgb(133,77,14)
+$ownerResolvedButton.Enabled = $false
+$errorPanel.Controls.Add($ownerResolvedButton)
 
 $logBox = New-Object Windows.Forms.TextBox
 $logBox.Location = New-Object Drawing.Point(28, 680)
@@ -396,6 +407,18 @@ function Refresh-ControlPanel {
     $projectText = if ($projectStatus -eq 'READY') { 'READY • AUTO CONTINUE' } else { $projectStatus }
     $projectCardState = if ($projectStatus -eq 'WAIT_USER') { 'WAIT_USER' } elseif ($projectStatus -eq 'BLOCKED') { 'ERROR' } else { 'READY' }
     Set-StatusCard $projectCard $projectValue $projectCardState $projectText
+
+    $ownerBoundaryActive = (
+        $projectStatus -eq 'WAIT_USER' -and
+        -not $projectState.blocked
+    )
+    $ownerResolvedButton.Enabled = [bool]$ownerBoundaryActive
+    if (Test-Path $ownerResolvedFile) {
+        $ownerResolvedButton.Text = '✓  ĐÃ NHẬN — ĐANG KIỂM TRA'
+        $ownerResolvedButton.Enabled = $false
+    } else {
+        $ownerResolvedButton.Text = '✓  ĐÃ XỬ LÝ — KIỂM TRA LẠI'
+    }
 
     $currentTask = if ($projectState.current_task) {
         "$($projectState.current_task) — $($projectState.current_task_title)"
@@ -495,6 +518,46 @@ $stopButton.Add_Click({
         '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$quoted
     )
     Refresh-ControlPanel
+})
+
+$ownerResolvedButton.Add_Click({
+    try {
+        $remote = Read-ProjectState
+        if (-not $remote -or $remote.status -ne 'WAIT_USER' -or $remote.blocked) {
+            [Windows.Forms.MessageBox]::Show(
+                'Project hiện không ở WAIT_USER có thể xác minh. Nút này không dùng để vượt BLOCKED/security boundary.',
+                'MAGASIN Business OS',
+                'OK',
+                'Information'
+            ) | Out-Null
+            Refresh-ControlPanel
+            return
+        }
+
+        $request = [ordered]@{
+            requested_at = [DateTimeOffset]::UtcNow.ToString('o')
+            current_task = [string]$remote.current_task
+            project_status = [string]$remote.status
+            intent = 'OWNER_RESOLVED_RECHECK'
+        }
+        New-Item -ItemType Directory -Force -Path $root | Out-Null
+        $request | ConvertTo-Json | Set-Content -Path $ownerResolvedFile -Encoding UTF8
+
+        [Windows.Forms.MessageBox]::Show(
+            'Đã yêu cầu robot KIỂM TRA LẠI quyết định/boundary. Robot không tự bỏ qua security/secret boundary; nếu điều kiện chưa thực sự đủ, WAIT_USER sẽ được giữ nguyên.',
+            'MAGASIN Business OS',
+            'OK',
+            'Information'
+        ) | Out-Null
+        Refresh-ControlPanel
+    } catch {
+        [Windows.Forms.MessageBox]::Show(
+            $_.Exception.Message,
+            'Không thể yêu cầu kiểm tra lại',
+            'OK',
+            'Error'
+        ) | Out-Null
+    }
 })
 
 $runnerButton.Add_Click({
