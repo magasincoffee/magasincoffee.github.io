@@ -16,7 +16,6 @@
 | TASK-009 | Store/product canonical model review | 20m | discovery trace | DONE |
 | TASK-010 | Database baseline/migration plan | 20m | schema review | DONE |
 | TASK-011 | Owner Control Tower vertical-slice plan | 20m | acceptance defined | DONE |
-
 | TASK-012 | Control Tower shell + normalized fixture contract | 20m | unit/fixture tests | DONE |
 | TASK-013 | Owner home navigation + route/auth integration | 15m | integration test | DONE |
 | TASK-014 | Procurement/payables read adapter | 20m | adapter tests | DONE |
@@ -24,19 +23,29 @@
 | TASK-016 | Revenue read-adapter + reconciliation quality gate | 20m | contract tests | DONE |
 | TASK-017 | Partial-source/error-state integration | 20m | regression tests | DONE |
 | TASK-018 | Control Tower browser E2E + Day-7 usability gate | 20m | browser E2E | DONE |
-
 | TASK-019 | People/Shift current-system gap review + acceptance contract | 20m | discovery/contract | DONE |
-
 | TASK-020 | Staffing-gap read adapter + unit/regression contract | 20m | unit + forbidden-write regression | DONE |
 | TASK-021 | Control Tower staffing-gap integration | 20m | adapter/integration + browser regression | DONE |
 | TASK-022 | People/Shift browser E2E + Day-10 usability gate | 20m | browser E2E | DONE |
-
 | TASK-023 | SOP/Task current-system gap review + acceptance contract | 20m | discovery/contract | DONE |
 | TASK-024 | Manager Task route canonicalization + smoke regression | 15m | route/static + browser smoke | DONE |
 | TASK-025 | SOP/Task fail-closed UI integrity gate | 20m | static/unit + browser regression | DONE |
-| TASK-026 | SOP/Task rule decision pack + data/migration plan | 20m | traceability/contract + Owner boundary | WAIT_USER |
+| TASK-026 | SOP/Task rule decision pack + data/migration plan | 20m | Owner decisions DST-001..DST-006 | DEFERRED_BY_OWNER |
+| TASK-027 | Schedule priority + completion contract | 20m | evidence/contract + Owner decision trace | DONE |
+| TASK-028 | Manager registration review hardening | 20m | unit/static + browser regression | READY |
+| TASK-029 | Robot draft + Manager assignment editor | 20m | RPC contract + browser regression | QUEUED |
+| TASK-030 | Employee weekly registration V2 | 20m | multi-window + immediate visibility E2E | QUEUED |
+| TASK-031 | Manager official schedule workspace | 20m | read/publish integration + browser E2E | QUEUED |
+| TASK-032 | Give/Swap V2 | 20m | atomic update + impacted-user regression | QUEUED |
+| TASK-033 | Attendance + shift reminders | 20m | lifecycle + reminder contract | QUEUED |
+| TASK-034 | Notification / Calendar / Email connector | 20m | event/outbox tests; provider activation Owner-gated | QUEUED |
+| TASK-035 | Full Schedule E2E gate | 20m | sanitized browser E2E + regression | QUEUED |
 
-Queue Day 8–10 đã hoàn tất. TASK-023 xác nhận Day 11–13 hiện có SOP registry skeleton, Manager/Employee Task placeholders, Control Tower Task/SOP chưa có verified source, không có verified persistence/API contract, và exception/corrective/overdue/verify-close rules chưa được chốt. Live schema check chỉ đọc structural metadata và không tìm thấy public object name khớp Task/SOP/Checklist/Exception/Corrective. TASK-024–025 chỉ sửa route/UI fail-closed; TASK-026 là Owner/business-rule boundary trước mọi write-capable SOP/Task workflow.
+## DEC-003 priority
+
+Owner tạm hoãn phần Công việc/SOP/Task để hoàn thiện Lịch làm trước. TASK-026 vẫn giữ decision pack với DST-001..DST-006 chưa được chọn; không được xem DEFERRED là APPROVED.
+
+Schedule slice phải giữ các case thực tế đã quan sát từ hai workbook: đăng ký theo tuần, nhiều khoảng thời gian, nhiều chi nhánh và hỗ trợ chéo chi nhánh. Dữ liệu nhân viên thật không được commit vào public repo.
 
 ## Execution rule
 
