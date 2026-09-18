@@ -5,6 +5,7 @@ import {
 } from "./snapshot-v1.mjs";
 import { requireOwnerAccess } from "./access-v1.mjs";
 import { loadProcurementPayables } from "./payables-adapter-v1.mjs";
+import { loadWorkforceAttention } from "./workforce-adapter-v1.mjs";
 
 const rawState = {
   context: {
@@ -111,6 +112,12 @@ async function boot() {
     const payables = await loadProcurementPayables(core.supabase.get());
     rawState.payables = payables;
     rawState.context.refreshedAt = payables.asOf || new Date().toISOString();
+    render(normalizeControlTowerSnapshot(rawState));
+
+    const workforce = await loadWorkforceAttention(core);
+    rawState.workforce = workforce;
+    rawState.context.refreshedAt =
+      workforce.asOf || rawState.context.refreshedAt || new Date().toISOString();
     render(normalizeControlTowerSnapshot(rawState));
   } catch (error) {
     console.error("[CONTROL_TOWER_AUTH]", error);

@@ -49,3 +49,20 @@
 - Production writes: none.
 - BUG-CT-002 stale test contract: VERIFIED.
 - Gate: TASK-014 **DONE**; TASK-015 may proceed.
+
+## 2026-09-18 — TASK-015 Workforce attention read adapter
+
+- Branch: `feat/control-tower-workforce`
+- Workflow: `Owner Control Tower Tests`
+- Adapter/integration run: `35311316383`
+- Result: **PASS**
+- Read-only sources: `get_manager_transfer_requests` + `list_schedule_generations`.
+- Pending transfer requests counted as unresolved attention: PASS.
+- DRAFT/REVIEWED schedule generations counted as unresolved attention: PASS.
+- PUBLISHED/CANCELLED items excluded: PASS.
+- Partial source failure returns `ESTIMATE` with a verified lower-bound count: PASS.
+- Complete source failure returns `GAP`: PASS.
+- Staffing gap remains `—` because no verified read-only shortage model exists; no KPI is invented.
+- No schedule-generation/review/publish write RPC is invoked.
+- UI integration after Owner auth: PASS.
+- Gate: TASK-015 **DONE**; TASK-016 may proceed.
