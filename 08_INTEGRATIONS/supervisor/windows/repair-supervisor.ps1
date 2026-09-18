@@ -16,6 +16,7 @@ $profile = Join-Path $root 'browser_profile'
 $target = Join-Path $root 'target.json'
 $pidFile = Join-Path $root 'supervisor.pid'
 $logFile = Join-Path $root 'supervisor.log'
+$projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
 $expectedRuntimeVersion = '2026-09-19.16'
 
 function Write-Step([string]$Message) {
@@ -163,62 +164,66 @@ try {
     Assert-InstalledFingerprint
     Write-Host "Installed runtime fingerprint: PASS ($expectedRuntimeVersion)"
 
-    if (-not (Test-Path $target)) {
+    $projectState = $null
+    try {
+        $projectState = Invoke-RestMethod -Uri $projectStateUrl -TimeoutSec 4 -Headers @{ 'Cache-Control'='no-cache' }
+    } catch {}
+    $pausedInstallOnly = [bool](
+        $projectState -and
+        [string]$projectState.autonomy -eq 'PAUSED'
+    )
+
+    if (-not $pausedInstallOnly -and -not (Test-Path $target)) {
         throw "ChatGPT target is missing: $target. Installation succeeded, but one-time target setup is required before START."
     }
 
-    Write-Step '6/7 Start Supervisor and verify boot'
-    $beforeCount = 0
-    if (Test-Path $logFile) {
-        $beforeCount = @(Get-Content $logFile -ErrorAction SilentlyContinue).Count
-    }
-
-    & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $runtimeStart -Hidden
-    if ($LASTEXITCODE -ne 0) {
-        throw "Supervisor START exited with code $LASTEXITCODE."
-    }
-
-    $bootVerified = $false
-    $newLines = @()
-    for ($i = 0; $i -lt 20; $i++) {
-        Start-Sleep -Seconds 1
-
+    if ($pausedInstallOnly) {
+        Write-Step '6/7 PAUSED autonomy - boot intentionally skipped'
+        Write-Host 'Repository autonomy is PAUSED. Runtime is installed but Supervisor/Chrome will remain stopped.'
+    } else {
+        Write-Step '6/7 Start Supervisor and verify boot'
+        $beforeCount = 0
         if (Test-Path $logFile) {
-            $allLines = @(Get-Content $logFile -ErrorAction SilentlyContinue)
-            if ($allLines.Count -gt $beforeCount) {
-                $newLines = @($allLines | Select-Object -Skip $beforeCount)
-                if ($newLines -match "RUNTIME_BOOT.*version=$([regex]::Escape($expectedRuntimeVersion))") {
-                    $bootVerified = $true
-                    break
+            $beforeCount = @(Get-Content $logFile -ErrorAction SilentlyContinue).Count
+        }
+
+        & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $runtimeStart -Hidden
+        if ($LASTEXITCODE -ne 0) {
+            throw "Supervisor START exited with code $LASTEXITCODE."
+        }
+
+        $bootVerified = $false
+        $newLines = @()
+        for ($i = 0; $i -lt 20; $i++) {
+            Start-Sleep -Seconds 1
+
+            if (Test-Path $logFile) {
+                $allLines = @(Get-Content $logFile -ErrorAction SilentlyContinue)
+                if ($allLines.Count -gt $beforeCount) {
+                    $newLines = @($allLines | Select-Object -Skip $beforeCount)
+                    if ($newLines -match "RUNTIME_BOOT.*version=$([regex]::Escape($expectedRuntimeVersion))") {
+                        $bootVerified = $true
+                        break
+                    }
                 }
             }
         }
-    }
 
-    if (-not $bootVerified) {
-        $tail = if (Test-Path $logFile) {
-            (Get-Content $logFile -Tail 12 -ErrorAction SilentlyContinue) -join [Environment]::NewLine
-        } else {
-            'Supervisor log not found.'
-        }
-        throw "Supervisor did not emit RUNTIME_BOOT version=$expectedRuntimeVersion within 20 seconds.
+        if (-not $bootVerified) {
+            $tail = if (Test-Path $logFile) {
+                (Get-Content $logFile -Tail 12 -ErrorAction SilentlyContinue) -join [Environment]::NewLine
+            } else {
+                'Supervisor log not found.'
+            }
+            throw "Supervisor did not emit RUNTIME_BOOT version=$expectedRuntimeVersion within 20 seconds.
 $tail"
-    }
+        }
 
-    Write-Host "Runtime boot marker: PASS (version=$expectedRuntimeVersion)"
+        Write-Host "Runtime boot marker: PASS (version=$expectedRuntimeVersion)"
+    }
 
     Write-Step '7/7 Runtime status'
     Start-Sleep -Seconds 2
-
-    $pidValue = if (Test-Path $pidFile) {
-        Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
-    } else {
-        $null
-    }
-
-    if (-not $pidValue -or -not (Get-Process -Id $pidValue -ErrorAction SilentlyContinue)) {
-        throw 'Supervisor wrapper process is not running after verified boot.'
-    }
 
     $wrapperProcesses = @(
         Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
@@ -233,26 +238,45 @@ $tail"
             Where-Object { $_.CommandLine -and $_.CommandLine -like '*supervisor-loop-cli.mjs*' }
     )
 
-    Write-Host "Supervisor PID: $pidValue"
-    Write-Host "Supervisor wrapper count: $($wrapperProcesses.Count)"
-    Write-Host "Supervisor Node loop count: $($loopProcesses.Count)"
+    if ($pausedInstallOnly) {
+        Write-Host "Supervisor wrapper count: $($wrapperProcesses.Count)"
+        Write-Host "Supervisor Node loop count: $($loopProcesses.Count)"
+        if ($wrapperProcesses.Count -ne 0 -or $loopProcesses.Count -ne 0) {
+            throw "PAUSED install verification failed: wrappers=$($wrapperProcesses.Count), nodeLoops=$($loopProcesses.Count)."
+        }
+        Write-Host 'Runtime status: PAUSED (not launched by design)'
+    } else {
+        $pidValue = if (Test-Path $pidFile) {
+            Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
+        } else {
+            $null
+        }
 
-    if ($wrapperProcesses.Count -ne 1 -or $loopProcesses.Count -ne 1) {
-        throw "Supervisor singleton verification failed: wrappers=$($wrapperProcesses.Count), nodeLoops=$($loopProcesses.Count)."
-    }
+        if (-not $pidValue -or -not (Get-Process -Id $pidValue -ErrorAction SilentlyContinue)) {
+            throw 'Supervisor wrapper process is not running after verified boot.'
+        }
 
-    Write-Host 'Last safe log lines:'
-    Get-Content $logFile -Tail 10 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
+        Write-Host "Supervisor PID: $pidValue"
+        Write-Host "Supervisor wrapper count: $($wrapperProcesses.Count)"
+        Write-Host "Supervisor Node loop count: $($loopProcesses.Count)"
 
-    $statusFile = Join-Path $root 'runtime-status.json'
-    if (Test-Path $statusFile) {
-        try {
-            $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-            Write-Host ""
-            Write-Host "Runtime status: $($status.status)"
-            Write-Host "Task: $($status.current_task) - $($status.current_task_title)"
-            if ($status.error_name) { Write-Host "Error: $($status.error_name)" -ForegroundColor Yellow }
-        } catch {}
+        if ($wrapperProcesses.Count -ne 1 -or $loopProcesses.Count -ne 1) {
+            throw "Supervisor singleton verification failed: wrappers=$($wrapperProcesses.Count), nodeLoops=$($loopProcesses.Count)."
+        }
+
+        Write-Host 'Last safe log lines:'
+        Get-Content $logFile -Tail 10 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
+
+        $statusFile = Join-Path $root 'runtime-status.json'
+        if (Test-Path $statusFile) {
+            try {
+                $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                Write-Host ""
+                Write-Host "Runtime status: $($status.status)"
+                Write-Host "Task: $($status.current_task) - $($status.current_task_title)"
+                if ($status.error_name) { Write-Host "Error: $($status.error_name)" -ForegroundColor Yellow }
+            } catch {}
+        }
     }
 
     $shortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'MAGASIN BUSINESS OS CONTROL.lnk'
@@ -262,7 +286,11 @@ $tail"
 
     Write-Host ""
     Write-Host 'REPAIR_RESULT=PASS' -ForegroundColor Green
-    Write-Host 'Supervisor was reinstalled from current main and booted with the expected runtime version.'
+    if ($pausedInstallOnly) {
+        Write-Host 'Supervisor was reinstalled from current main; boot was intentionally skipped because autonomy is PAUSED.'
+    } else {
+        Write-Host 'Supervisor was reinstalled from current main and booted with the expected runtime version.'
+    }
 } catch {
     Write-Host ""
     Write-Host 'REPAIR_RESULT=FAIL' -ForegroundColor Red
