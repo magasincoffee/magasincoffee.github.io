@@ -149,7 +149,10 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-033 — Give Shift production primitive:** recipient consent → Manager approval → server revalidation/transfer; production migration + browser E2E verified. DONE.
 - **TASK-034 — Notification event-outbox production:** durable RLS-protected schedule/attendance/Swap/Give outbox + Employee in-app reader + rollback integration smoke verified. DONE.
 - **TASK-035 — MAGASIN email adapter/config:** Gmail adapter/config prepared; production OAuth activation explicitly deferred by Owner and remains fail-closed/non-blocking. DEFERRED.
-- **TASK-036 — Schedule-first closure regression + recovery gate:** run the existing canonical flow regressions, verify external email remains fail-closed, and prove recovery/resume before declaring this critical path stable. IN_PROGRESS.
+- **TASK-036 — Schedule-first closure regression + recovery gate:** canonical schedule regression/recovery gate completed; external email remains fail-closed. DONE.
+- **TASK-037 — Windows auto-reboot/logon recovery:** canonical runner + Supervisor + dedicated Business OS Chrome/CDP recovery verified on self-hosted Windows. DONE.
+- **TASK-038 — Night-run persistence:** deadline + cursor + lease + checkpoint + GitHub-hosted hard-stop contract. IN_PROGRESS.
+- **TASK-039–048 — Business OS Robot V2 + SaydiVoice night queue:** restricted to the two Owner-approved repositories and executed only after each preceding gate passes.
 
 ## 8. Definition of success
 
