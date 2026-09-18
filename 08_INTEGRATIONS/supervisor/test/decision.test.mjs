@@ -98,3 +98,48 @@ test("stops cleanly when project is DONE", () => {
   });
   assert.equal(result.action, ACTIONS.STOP_DONE);
 });
+
+
+test("first idle continuation uses handoff reconciliation instruction", () => {
+  const result = decideContinuation({
+    projectState: state({
+      current_phase: "P1_SCHEDULE_FIRST_CORE_FLOW",
+      current_task: "TASK-029",
+      current_task_title: "Schedule-first canonical flow contract"
+    }),
+    observation: OBSERVATIONS.RESPONSE_COMPLETE,
+    handoff: true
+  });
+
+  assert.equal(result.action, ACTIONS.CONTINUE);
+  assert.match(result.instruction, /TIẾP QUẢN PHIÊN ĐANG MỞ/);
+  assert.match(result.instruction, /QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE/);
+  assert.match(result.reason, /reconcile live Owner\/chat context/);
+});
+
+test("normal continuation carries Five-Step and current repository task context", () => {
+  const result = decideContinuation({
+    projectState: state({
+      current_phase: "P1_SCHEDULE_FIRST_CORE_FLOW",
+      current_task: "TASK-029",
+      current_task_title: "Schedule-first canonical flow contract"
+    }),
+    observation: OBSERVATIONS.RESPONSE_COMPLETE
+  });
+
+  assert.equal(result.action, ACTIONS.CONTINUE);
+  assert.match(result.instruction, /Five-Step/);
+  assert.match(result.instruction, /TASK-029/);
+  assert.match(result.instruction, /Schedule-first canonical flow contract/);
+});
+
+test("waits when the latest visible message is still the Owner request", () => {
+  const result = decideContinuation({
+    projectState: state(),
+    observation: OBSERVATIONS.USER_PENDING,
+    handoff: true
+  });
+
+  assert.equal(result.action, ACTIONS.WAIT);
+  assert.match(result.reason, /latest visible message is from Owner/);
+});
