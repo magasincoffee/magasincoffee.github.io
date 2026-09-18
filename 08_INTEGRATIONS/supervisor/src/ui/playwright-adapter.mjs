@@ -135,7 +135,9 @@ export class ChatGptUiAdapter {
           hasNetworkError: false,
           hasTransientError: false,
           hasContinueControl: false,
-          hasRetryControl: false
+          hasRetryControl: false,
+          conversationFull: false,
+          conversationMissing: false
         },
         classification: {
           uiState: "LOGIN_REQUIRED",
