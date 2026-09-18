@@ -73,11 +73,31 @@ jobs:
             Select-Object -First 1
           if (-not $supervisor) { throw "Supervisor wrapper is not online" }
 
+          $profile = Join-Path $root "browser_profile"
+          $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.CommandLine -and
+              $_.CommandLine -like "*$profile*" -and
+              $_.CommandLine -match "--remote-debugging-port=(\d+)"
+            } |
+            Select-Object -First 1
+          if (-not $chrome) { throw "Dedicated Business OS Chrome is not online" }
+
+          $cdpPort = $null
+          if ($chrome.CommandLine -match "--remote-debugging-port=(\d+)") {
+            $cdpPort = [int]$Matches[1]
+          }
+          if (-not $cdpPort) { throw "Dedicated Business OS Chrome CDP port is missing" }
+          $version = Invoke-RestMethod -Uri "http://127.0.0.1:$cdpPort/json/version" -TimeoutSec 3
+          if (-not $version.webSocketDebuggerUrl) { throw "Dedicated Business OS Chrome CDP endpoint is not healthy" }
+
           $statusFile = Join-Path $root "autostart-install-status.json"
           if (-not (Test-Path $statusFile)) { throw "Autostart install status is missing" }
 
           Write-Host "AUTOSTART_REGISTERED=True"
           Write-Host "RUNNER_ONLINE=True"
           Write-Host "SUPERVISOR_ONLINE=True"
+          Write-Host "BUSINESS_CHROME_ONLINE=True"
+          Write-Host "BUSINESS_CHROME_CDP_HEALTHY=True"
           Write-Host "OWNER_STOP_LATCH=False"
           Write-Host "WINDOWS_LOGIN_BYPASS=False"
