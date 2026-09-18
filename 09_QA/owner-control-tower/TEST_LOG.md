@@ -135,3 +135,20 @@
 - BUG-CT-006 harness false positive: VERIFIED.
 - Day-7 Owner Control Tower usability gate: **PASS** for the current explicitly partial/read-only V1 slice.
 - Gate: TASK-018 **DONE**; Day 8–10 People/Shift review may proceed.
+
+## 2026-09-18 — TASK-020 Staffing-gap read adapter + unit/regression contract
+
+- Branch: `feat/task-020-staffing-gap-read-adapter`
+- Workflow: `Owner Control Tower Tests`
+- Regression/browser run: `35317933172`
+- Result: **PASS**
+- Generation selection mirrors current Publish engine: first DRAFT/REVIEWED row, otherwise first returned row.
+- Staffing shortage mirrors existing generator semantics: assigned headcount below `minimum_headcount`.
+- Missing generation/source/malformed requirement fails closed; no fabricated zero.
+- Existing generation with zero active requirements returns verified ACTUAL zero gaps, matching generator semantics.
+- Skill-bound requirement coverage regression: PASS.
+- Adapter RPC surface is read-only: `list_schedule_generations`, `get_workforce_staffing_requirements`, `get_schedule_generation_assignments`.
+- Forbidden schedule/transfer write RPC regression: PASS.
+- Existing Control Tower browser E2E: PASS.
+- Production writes/migrations: none.
+- Gate: TASK-020 **DONE**; TASK-021 may proceed.

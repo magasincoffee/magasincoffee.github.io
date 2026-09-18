@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-020 — Staffing-gap read adapter + unit/regression contract**
+**TASK-021 — Control Tower staffing-gap integration**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Run **TASK-020 — Staffing-gap read adapter + unit/regression contract**. Reuse the existing read RPC surface and current schedule-generation shortage semantics; add a pure read-side adapter that fails closed when generation/source data is unavailable and prove it never invokes schedule-generation/review/publish writes.
+Run **TASK-021 — Control Tower staffing-gap integration**. Extend the existing Workforce attention adapter to consume the verified staffing-gap reader, preserve section-local failure isolation, avoid duplicate workflow/write logic, then rerun adapter/integration and browser regression.
 
 ## Session handoff
 
