@@ -146,23 +146,16 @@ try{
   await redirectBtn.click({force:true});
   await page.waitForTimeout(500);
 
-  const selectors=[
-    ["input","input"],
-    ["textarea","textarea"],
-    ["textbox-role",'[role="textbox"]'],
-    ["contenteditable",'[contenteditable="true"]'],
-    ["cfc-text-field","cfc-text-field"],
-    ["mat-form-field","mat-form-field"]
-  ];
-  for(const [label,selector] of selectors){
-    const loc=page.locator(selector);
-    const count=await loc.count();
-    let visible=0;
-    for(let i=0;i<count;i++) if(await loc.nth(i).isVisible().catch(()=>false)) visible++;
-    console.log(`REDIRECT_PROBE_${label.toUpperCase().replace(/[^A-Z0-9]+/g,"_")}_COUNT=${count}`);
-    console.log(`REDIRECT_PROBE_${label.toUpperCase().replace(/[^A-Z0-9]+/g,"_")}_VISIBLE=${visible}`);
-  }
-  process.exit(0);
+  const visibleInputs=page.locator('input:visible');
+  const visibleInputCount=await visibleInputs.count();
+  console.log("WEB_VISIBLE_INPUT_COUNT="+visibleInputCount);
+  if(visibleInputCount<3) process.exit(7);
+
+  const redirectInput=visibleInputs.last();
+  await redirectInput.fill(REDIRECT_URI);
+  const filled=await redirectInput.inputValue().catch(()=>"");
+  console.log("WEB_REDIRECT_URI_VERIFIED="+(filled===REDIRECT_URI));
+  if(filled!==REDIRECT_URI) process.exit(8);
 
   const create=page.getByRole("button",{name:/^Create$/i}).first();
   if(!(await create.isVisible({timeout:900}).catch(()=>false))) process.exit(9);
