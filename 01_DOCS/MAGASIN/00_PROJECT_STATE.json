@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
   "target_days": 21,
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-045",
-  "current_task_title": "Restart/resume simulation",
+  "current_task": "TASK-046",
+  "current_task_title": "Night full QA",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-046",
+  "next_task": "TASK-047",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -19,10 +19,9 @@
   },
   "last_updated": "2026-09-18",
   "owner_boundary": {
-    "task": "TASK-045",
+    "task": "TASK-046",
     "resolved": [
-      "TWO_PROJECT_SCOPE_APPROVED",
-      "TASK_044_DIAGNOSTICS_VERIFIED"
+      "TASK_045_RESTART_RESUME_VERIFIED"
     ],
     "pending": []
   },
@@ -49,7 +48,7 @@
       "magasin-business-os",
       "magasin-media-robot"
     ],
-    "current_order": 10,
+    "current_order": 11,
     "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
     "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json",
     "recovery_install": {
@@ -86,7 +85,9 @@
       "task_044_test_run_id": 35371446531,
       "task_044_diagnostics_commit": "a4a1dc1293b29c793f0cb88bb44fc67aa0b53cb8",
       "task_044_test_commit": "0aa727303482ee6552f143e0abec722d65e6103c",
-      "task_044_regression_fix_commit": "b0758f72b9592e229e0c4c5969fa683048cdfd91"
+      "task_044_regression_fix_commit": "b0758f72b9592e229e0c4c5969fa683048cdfd91",
+      "task_045_test_run_id": 35371642271,
+      "task_045_test_commit": "311bf4413a3dd5cdc5d7d01f8d6642d13e061629"
     },
     "media_robot": {
       "branch": "feat/saydivoice-production-adapter-offline",
