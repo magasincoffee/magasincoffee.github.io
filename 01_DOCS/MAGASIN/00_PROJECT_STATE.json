@@ -1,13 +1,13 @@
 {
   "project": "MAGASIN Business OS",
   "repository": "magasincoffee/magasincoffee.github.io",
-  "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
+  "plan_version": "BOS-V1-5STEP-BRAIN-WORKER-2026-09-19",
   "target_days": 21,
-  "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-048",
-  "current_task_title": "Night final checkpoint",
+  "current_phase": "P1_AUTONOMY_ORCHESTRATION_UPGRADE",
+  "current_task": "TASK-049",
+  "current_task_title": "Supervisor Brain/Worker multi-conversation orchestration",
   "status": "READY",
-  "autonomy": "PAUSED",
+  "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
   "next_task": null,
@@ -19,9 +19,9 @@
   },
   "last_updated": "2026-09-19",
   "owner_boundary": {
-    "task": "TASK-048",
+    "task": "TASK-049",
     "resolved": [
-      "TASK_047_DOCS_EVIDENCE_COMPLETE"
+      "OWNER_APPROVED_BRAIN_WORKER_ARCHITECTURE"
     ],
     "pending": []
   },
@@ -48,7 +48,7 @@
       "magasin-business-os",
       "magasin-media-robot"
     ],
-    "current_order": 13,
+    "current_order": 14,
     "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
     "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json",
     "recovery_install": {
@@ -167,10 +167,40 @@
     "evidence_ref": "01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE_V1.md",
     "hard_stop_pending": true,
     "temporal_gate": {
-      "mode": "PAUSED_UNTIL_HARD_STOP",
+      "mode": "BACKGROUND_HARD_STOP_ONLY",
       "resume_at": "2026-09-19T09:15:00+07:00",
-      "reason": "NO_ACTIONABLE_WORK_BEFORE_APPROVED_HARD_STOP",
-      "supervisor_continue_suppressed": true
+      "reason": "OWNER_REPRIORITIZED_TO_TASK_049",
+      "supervisor_continue_suppressed": false,
+      "owner_override_task": "TASK-049",
+      "owner_reprioritized_at": "2026-09-19T05:03:00+07:00"
+    }
+  },
+  "supervisor_orchestration": {
+    "schema_version": "brain-worker.v1",
+    "mode": "BRAIN_WORKER_V1",
+    "brain": {
+      "bootstrap_authorized": true,
+      "single_brain": true,
+      "message_body_persistence": false
+    },
+    "workers": {
+      "max_parallel_workers": 3,
+      "instruction_source": "BRAIN_DYNAMIC_DIRECTIVE_ONLY",
+      "result_relay": "FULL_COMPLETED_ASSISTANT_RESPONSE_ONCE",
+      "message_body_persistence": false
+    },
+    "rollover": {
+      "policy": "FULL_CONFIRMED_ONLY",
+      "evidence": "CHATGPT_UI_CONVERSATION_FULL",
+      "target_missing": "FAIL_CLOSED",
+      "conversation_missing": "FAIL_CLOSED",
+      "stalled": "RELOAD_THEN_FAIL_CLOSED",
+      "unavailable": "RELOAD_THEN_FAIL_CLOSED"
+    },
+    "auto_upgrade": {
+      "enabled": true,
+      "source_branch": "main",
+      "self_hosted_install": true
     }
   }
 }
