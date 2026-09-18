@@ -15,6 +15,7 @@ function parseArgs(argv) {
     else if (key === "--chrome") result.chromeExecutable = argv[++i];
     else if (key === "--url") result.url = argv[++i];
     else if (key === "--headless") result.headless = true;
+    else if (key === "--cdp-url") result.cdpUrl = argv[++i];
     else throw new Error(`unknown argument: ${key}`);
   }
   return result;
@@ -27,7 +28,8 @@ const adapter = new ChatGptUiAdapter({
     : defaultSupervisorProfileDir(),
   chromeExecutable: args.chromeExecutable || resolveChromeExecutable(),
   url: args.url || "https://chatgpt.com/",
-  headless: Boolean(args.headless)
+  headless: Boolean(args.headless),
+  cdpUrl: args.cdpUrl || null
 });
 
 try {
