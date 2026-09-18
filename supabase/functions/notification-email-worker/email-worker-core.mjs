@@ -8,6 +8,14 @@ export function readEmailConfig(env){
   return {provider,from,replyTo,ready:missing.length===0,missing};
 }
 
+export function normalizeBatchLimit(value,defaultLimit=25,maxLimit=25){
+  const fallback=Math.max(1,Math.trunc(Number(defaultLimit))||25);
+  const maximum=Math.max(1,Math.trunc(Number(maxLimit))||25);
+  const parsed=Number(value);
+  if(!Number.isFinite(parsed))return Math.min(fallback,maximum);
+  return Math.min(maximum,Math.max(1,Math.trunc(parsed)));
+}
+
 export function accessScopeIncludesStore(accessScope,storeCode){
   const code=String(storeCode||"").trim().toUpperCase();
   if(!code)return false;
