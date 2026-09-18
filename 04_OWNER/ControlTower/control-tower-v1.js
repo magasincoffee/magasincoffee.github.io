@@ -3,6 +3,7 @@ import {
   formatMoney,
   normalizeControlTowerSnapshot
 } from "./snapshot-v1.mjs";
+import { classifyOwnerAccess } from "./auth-policy-v1.mjs";
 
 const state = normalizeControlTowerSnapshot({});
 
@@ -82,4 +83,50 @@ function render(snapshot) {
   }
 }
 
-render(state);
+function showDenied(access) {
+  const loading = document.getElementById("authLoading");
+  const denied = document.getElementById("authDenied");
+  const app = document.getElementById("app");
+  if (loading) loading.hidden = true;
+  if (app) app.hidden = true;
+  if (denied) {
+    denied.hidden = false;
+    denied.dataset.state = access.state;
+    const text = denied.querySelector("[data-auth-message]");
+    if (text) text.textContent = access.message;
+  }
+}
+
+function showApp() {
+  const loading = document.getElementById("authLoading");
+  const denied = document.getElementById("authDenied");
+  const app = document.getElementById("app");
+  if (loading) loading.hidden = true;
+  if (denied) denied.hidden = true;
+  if (app) app.hidden = false;
+}
+
+async function bootstrap() {
+  const core = window.MAGASIN_CORE;
+  if (!core?.supabase?.requireActive) {
+    showDenied(classifyOwnerAccess({ error: new Error("Shared Core unavailable") }));
+    return;
+  }
+
+  try {
+    const profile = await core.supabase.requireActive();
+    const access = classifyOwnerAccess({ profile });
+    if (!access.allowed) {
+      showDenied(access);
+      return;
+    }
+
+    render(state);
+    showApp();
+  } catch (error) {
+    console.error("Owner Control Tower auth failed", error);
+    showDenied(classifyOwnerAccess({ error }));
+  }
+}
+
+bootstrap();
