@@ -4,7 +4,9 @@ import assert from "node:assert/strict";
 import {
   ChatGptUiAdapter,
   isChatGptUrl,
-  isTransientNavigationError
+  isTransientNavigationError,
+  normalizeCdpWebSocketUrl,
+  resolveCdpEndpoint
 } from "../src/ui/playwright-adapter.mjs";
 
 test("recognizes ChatGPT pages only", () => {
@@ -64,4 +66,36 @@ test("selects another ChatGPT page only after the managed page is closed", () =>
 
   assert.equal(adapter.getActivePage(), other);
   assert.equal(adapter.getActivePage().url(), "https://chatgpt.com/c/other");
+});
+
+
+test("normalizes localhost CDP websocket to the explicit loopback endpoint", () => {
+  assert.equal(
+    normalizeCdpWebSocketUrl(
+      "ws://localhost:9222/devtools/browser/example",
+      "http://127.0.0.1:9231"
+    ),
+    "ws://127.0.0.1:9231/devtools/browser/example"
+  );
+});
+
+test("resolves Chrome json/version into a normalized websocket endpoint", async () => {
+  const requested = [];
+  const endpoint = await resolveCdpEndpoint(
+    "http://127.0.0.1:9230",
+    async (url) => {
+      requested.push(url);
+      return {
+        ok: true,
+        async json() {
+          return {
+            webSocketDebuggerUrl: "ws://localhost:9230/devtools/browser/abc"
+          };
+        }
+      };
+    }
+  );
+
+  assert.deepEqual(requested, ["http://127.0.0.1:9230/json/version"]);
+  assert.equal(endpoint, "ws://127.0.0.1:9230/devtools/browser/abc");
 });

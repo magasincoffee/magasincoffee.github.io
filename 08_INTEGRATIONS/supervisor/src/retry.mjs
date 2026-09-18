@@ -16,10 +16,18 @@ export function defaultRetryDelaysMs(maxRetries = 2) {
 }
 
 export function isRetryableConnectionError(error) {
-  const message = String(error?.message || error || "").toLowerCase();
+  const message = [
+    error?.message,
+    error?.code,
+    error?.cause?.message,
+    error?.cause?.code,
+    error
+  ].filter(Boolean).map((value) => String(value).toLowerCase()).join(" | ");
+
   return [
     "econnrefused",
     "connection refused",
+    "fetch failed",
     "websocket error",
     "connectovercdp",
     "browser has been closed",

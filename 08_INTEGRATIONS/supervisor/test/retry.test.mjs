@@ -68,3 +68,13 @@ test("connection error classifier stays narrow", () => {
   assert.equal(isRetryableConnectionError(new Error("permission denied")), false);
   assert.equal(isRetryableConnectionError(new Error("invalid business rule")), false);
 });
+
+
+test("nested fetch failure is retryable for CDP discovery", () => {
+  const error = new TypeError("fetch failed", {
+    cause: Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:9230"), {
+      code: "ECONNREFUSED"
+    })
+  });
+  assert.equal(isRetryableConnectionError(error), true);
+});

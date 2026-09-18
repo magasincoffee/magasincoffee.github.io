@@ -78,3 +78,21 @@
 - Root cause: installer assumed the runtime directory was idle and did not stop an already-running Supervisor before replacement.
 - Fix: installer first reads the local Supervisor PID, force-stops only that dedicated process tree when present, removes stale PID/STOP files, then retries runtime replacement with a bounded loop.
 - Status: VERIFIED — installer/START/STOP smoke run 35301449363 PASS
+
+
+## BUG-SUP-007 — Fixed CDP port can attach to the wrong/stale listener
+
+- Date: 2026-09-18
+- Component: Windows Supervisor launcher / Playwright CDP attach
+- Reproduction: port `9222` is already occupied or its HTTP `/json/version` endpoint is reachable while the listener is not the dedicated Supervisor Chrome process.
+- Observed: the wrapper treats the port as ready, but Playwright cannot establish a valid CDP session and eventually reports `RetryBudgetExhaustedError`.
+- Impact: automatic Chrome restart can repeat without recovering because the wrapper keeps trusting the same fixed port.
+- Root cause: readiness checked only HTTP reachability on a hard-coded port; it did not verify listener ownership, and Playwright consumed the HTTP endpoint instead of the normalized browser websocket URL.
+- Fix:
+  1. validate that the listening PID is Chrome launched with the dedicated Supervisor profile and matching remote-debugging port;
+  2. choose the first free port in the bounded range 9222–9232 when the default is occupied;
+  3. pass the selected port to the Node Supervisor;
+  4. resolve `/json/version` and normalize `webSocketDebuggerUrl` to the explicit loopback host before `connectOverCDP`;
+  5. keep nested `fetch failed / ECONNREFUSED` errors inside the bounded retry/restart policy.
+- Regression coverage: Windows port-ownership contract, websocket normalization, nested fetch retry.
+- Status: FIXED IN CODE — pending field verification on MAGASIN-BUSINESS-PC.

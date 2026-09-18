@@ -25,6 +25,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.2";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -260,6 +261,11 @@ const recovery = new SupervisorRecoveryController({
 let retryCount = 0;
 let lastProjectState = {};
 let consecutiveConnectFailures = 0;
+
+await safeAppendLog(logPath, {
+  type: "RUNTIME_BOOT",
+  reason: `version=${SUPERVISOR_RUNTIME_VERSION}`
+}).catch(() => {});
 
 await writeRuntimeStatus(
   buildRuntimeStatus({
