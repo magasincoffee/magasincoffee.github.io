@@ -128,6 +128,15 @@ export async function collectSafeUiSnapshot(page) {
         ? String(lastMessage.getAttribute("data-message-author-role") || "")
         : null;
       const lastAssistant = assistantMessages.at(-1) || null;
+      const main = document.querySelector("main");
+      const mainBusy = Boolean(
+        main && (
+          main.getAttribute("aria-busy") === "true" ||
+          Array.from(main.querySelectorAll(
+            "[aria-busy='true'],[data-testid*='loading'],[data-testid*='spinner'],[data-testid*='progress']"
+          )).some(visible)
+        )
+      );
       const assistantBusy = Boolean(
         lastAssistant && (
           lastAssistant.getAttribute("aria-busy") === "true" ||
@@ -145,6 +154,7 @@ export async function collectSafeUiSnapshot(page) {
 
       const responseRunning =
         /stop generating|dừng tạo|stop response/.test(haystack) ||
+        mainBusy ||
         assistantBusy ||
         modelSwitching;
 
@@ -186,6 +196,13 @@ export async function collectSafeUiSnapshot(page) {
         lastMessageRole,
         lastMessageCharCount: Number(
           (lastMessage && lastMessage.textContent && lastMessage.textContent.length) || 0
+        ),
+        mainBusy,
+        mainTextCharCount: Number(
+          (main && main.textContent && main.textContent.length) || 0
+        ),
+        mainElementCount: Number(
+          (main && main.querySelectorAll("*").length) || 0
         ),
         loginRequired,
         hasCaptcha,
