@@ -23,6 +23,15 @@ jobs:
 
       - name: Privacy-safe local capability check
         shell: powershell
+        env:
+          GH_SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          GH_GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
+          GH_GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
+          GH_GMAIL_OAUTH_REFRESH_TOKEN: ${{ secrets.GMAIL_OAUTH_REFRESH_TOKEN }}
+          GH_MAGASIN_EMAIL_PROVIDER_SECRET: ${{ secrets.MAGASIN_EMAIL_PROVIDER }}
+          GH_MAGASIN_EMAIL_FROM_SECRET: ${{ secrets.MAGASIN_EMAIL_FROM }}
+          GH_MAGASIN_EMAIL_PROVIDER_VAR: ${{ vars.MAGASIN_EMAIL_PROVIDER }}
+          GH_MAGASIN_EMAIL_FROM_VAR: ${{ vars.MAGASIN_EMAIL_FROM }}
         run: |
           $ErrorActionPreference = "SilentlyContinue"
 
@@ -63,10 +72,35 @@ jobs:
           Write-Host ("ENV_GMAIL_OAUTH_REFRESH_TOKEN=" + (Env-Present "GMAIL_OAUTH_REFRESH_TOKEN"))
           Write-Host ("ENV_MAGASIN_EMAIL_PROVIDER=" + (Env-Present "MAGASIN_EMAIL_PROVIDER"))
           Write-Host ("ENV_MAGASIN_EMAIL_FROM=" + (Env-Present "MAGASIN_EMAIL_FROM"))
+          Write-Host ("GH_SECRET_SUPABASE_ACCESS_TOKEN=" + (Env-Present "GH_SUPABASE_ACCESS_TOKEN"))
+          Write-Host ("GH_SECRET_GMAIL_OAUTH_CLIENT_ID=" + (Env-Present "GH_GMAIL_OAUTH_CLIENT_ID"))
+          Write-Host ("GH_SECRET_GMAIL_OAUTH_CLIENT_SECRET=" + (Env-Present "GH_GMAIL_OAUTH_CLIENT_SECRET"))
+          Write-Host ("GH_SECRET_GMAIL_OAUTH_REFRESH_TOKEN=" + (Env-Present "GH_GMAIL_OAUTH_REFRESH_TOKEN"))
+          Write-Host ("GH_SECRET_MAGASIN_EMAIL_PROVIDER=" + (Env-Present "GH_MAGASIN_EMAIL_PROVIDER_SECRET"))
+          Write-Host ("GH_SECRET_MAGASIN_EMAIL_FROM=" + (Env-Present "GH_MAGASIN_EMAIL_FROM_SECRET"))
+          Write-Host ("GH_VAR_MAGASIN_EMAIL_PROVIDER=" + (Env-Present "GH_MAGASIN_EMAIL_PROVIDER_VAR"))
+          Write-Host ("GH_VAR_MAGASIN_EMAIL_FROM=" + (Env-Present "GH_MAGASIN_EMAIL_FROM_VAR"))
 
+          $supabaseCmd = $null
           if (Has-Command "supabase") {
-            $null = supabase --version 2>$null
-            $projects = supabase projects list -o json 2>$null
+            $supabaseCmd = "supabase"
+          } elseif (Has-Command "npx") {
+            $null = npx --yes supabase@latest --version 2>$null
+            if ($LASTEXITCODE -eq 0) { $supabaseCmd = "npx --yes supabase@latest" }
+          }
+
+          if ($supabaseCmd) {
+            $originalToken = $env:SUPABASE_ACCESS_TOKEN
+            if (-not [string]::IsNullOrWhiteSpace($env:GH_SUPABASE_ACCESS_TOKEN)) {
+              $env:SUPABASE_ACCESS_TOKEN = $env:GH_SUPABASE_ACCESS_TOKEN
+            }
+
+            if ($supabaseCmd -eq "supabase") {
+              $projects = supabase projects list -o json 2>$null
+            } else {
+              $projects = npx --yes supabase@latest projects list -o json 2>$null
+            }
+
             $supabaseAuthenticated = ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace(($projects | Out-String)))
             Write-Host ("SUPABASE_CLI_AUTHENTICATED=" + $supabaseAuthenticated)
             $projectVisible = $false
@@ -74,6 +108,26 @@ jobs:
               $projectVisible = (($projects | Out-String) -match "menvbzlsncmpuvnaifxa")
             }
             Write-Host ("SUPABASE_PROJECT_VISIBLE=" + $projectVisible)
+
+            if ($projectVisible) {
+              if ($supabaseCmd -eq "supabase") {
+                $secretList = supabase secrets list --project-ref menvbzlsncmpuvnaifxa -o json 2>$null
+              } else {
+                $secretList = npx --yes supabase@latest secrets list --project-ref menvbzlsncmpuvnaifxa -o json 2>$null
+              }
+              if ($LASTEXITCODE -eq 0 -and $secretList) {
+                $secretText = ($secretList | Out-String)
+                Write-Host ("SUPABASE_SECRET_GMAIL_OAUTH_CLIENT_ID=" + ($secretText -match '"GMAIL_OAUTH_CLIENT_ID"'))
+                Write-Host ("SUPABASE_SECRET_GMAIL_OAUTH_CLIENT_SECRET=" + ($secretText -match '"GMAIL_OAUTH_CLIENT_SECRET"'))
+                Write-Host ("SUPABASE_SECRET_GMAIL_OAUTH_REFRESH_TOKEN=" + ($secretText -match '"GMAIL_OAUTH_REFRESH_TOKEN"'))
+                Write-Host ("SUPABASE_SECRET_MAGASIN_EMAIL_PROVIDER=" + ($secretText -match '"MAGASIN_EMAIL_PROVIDER"'))
+                Write-Host ("SUPABASE_SECRET_MAGASIN_EMAIL_FROM=" + ($secretText -match '"MAGASIN_EMAIL_FROM"'))
+              } else {
+                Write-Host "SUPABASE_SECRET_LIST_AVAILABLE=False"
+              }
+            }
+
+            $env:SUPABASE_ACCESS_TOKEN = $originalToken
           } else {
             Write-Host "SUPABASE_CLI_AUTHENTICATED=False"
             Write-Host "SUPABASE_PROJECT_VISIBLE=False"
