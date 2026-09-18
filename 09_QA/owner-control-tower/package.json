@@ -1,0 +1,12 @@
+{
+  "name": "magasin-owner-control-tower-e2e",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "playwright-core": "1.57.0"
+  }
+}
