@@ -1,11 +1,7 @@
-import {
-  loadStoreStaffingGap,
-  STAFFING_GAP_SOURCE_LABEL
-} from "./staffing-gap-adapter-v1.mjs";
+import { loadStoreStaffingGap } from "./staffing-gap-adapter-v1.mjs";
 
 const SOURCE_LABEL =
-  "get_manager_transfer_requests + list_schedule_generations + " +
-  STAFFING_GAP_SOURCE_LABEL;
+  "get_manager_transfer_requests + list_schedule_generations + get_workforce_staffing_requirements + get_schedule_generation_assignments";
 
 const UNPUBLISHED_GENERATION_STATUSES = new Set(["DRAFT", "REVIEWED"]);
 
