@@ -110,6 +110,7 @@ Resolved:
 - provider initialization occurs before queue claim;
 - service-to-service worker deployment uses `verify_jwt=false` with handler-level secret-key `apikey` authorization;
 - one-time OAuth activation runbook is documented in `05_SYSTEM/MAGASIN_EMAIL_ADAPTER_CONFIG_V1.md`;
+- activation send is bounded to `{"limit":1}` so the first live verification claims at most one pending email event;
 - external calendar remains disabled.
 
 Remaining activation boundary is credential setup outside Git:
