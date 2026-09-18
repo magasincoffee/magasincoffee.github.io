@@ -185,6 +185,11 @@ test("hard-stop workflow is GitHub-hosted and reconciles every canonical final-s
   assert.match(workflow, /state\["status"\]\s*=\s*"WAIT_USER"/);
   assert.match(workflow, /state\["autonomy"\]\s*=\s*"MANUAL"/);
   assert.match(workflow, /night\["hard_stop_pending"\]\s*=\s*False/);
+  assert.match(workflow, /night\.get\("completed_at"\) or datetime\.now/);
+  assert.match(workflow, /night\.get\("hard_stop_enforced_by"\) or "GITHUB_HOSTED_WORKFLOW"/);
+  assert.match(workflow, /cursor_already_complete/);
+  assert.match(workflow, /cursor_updated_at = cursor\.get\("updated_at"\) if cursor_already_complete else completed_at/);
+  assert.match(workflow, /if "NIGHT_WINDOW_COMPLETE" not in completed_operations:/);
   assert.match(workflow, /current_state_path\s*=\s*Path\("01_DOCS\/MAGASIN\/00_CURRENT_STATE\.md"\)/);
   assert.match(workflow, /task_queue_path\s*=\s*Path\("01_DOCS\/MAGASIN\/00_TASK_QUEUE\.md"\)/);
   assert.match(workflow, /architecture_path\s*=\s*Path\("01_DOCS\/MAGASIN\/00_ARCHITECTURE_5_STEP_RESET\.md"\)/);
