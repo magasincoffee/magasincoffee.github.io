@@ -203,7 +203,7 @@ $tail"
             $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
             Write-Host ""
             Write-Host "Runtime status: $($status.status)"
-            Write-Host "Task: $($status.current_task) — $($status.current_task_title)"
+            Write-Host "Task: $($status.current_task) - $($status.current_task_title)"
             if ($status.error_name) { Write-Host "Error: $($status.error_name)" -ForegroundColor Yellow }
         } catch {}
     }
