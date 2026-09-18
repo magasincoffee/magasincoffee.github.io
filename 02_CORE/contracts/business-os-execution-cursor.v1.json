@@ -2,13 +2,13 @@
   "schema_version": "business-os-execution-cursor.v1",
   "night_run_id": "NIGHT_RUN_2026-09-18",
   "project_id": "magasin-business-os",
-  "task": "TASK-045",
-  "micro_task": "restart_resume_simulation",
+  "task": "TASK-046",
+  "micro_task": "night_full_qa",
   "status": "IN_PROGRESS",
-  "checkpoint": "TASK_044_DIAGNOSTICS_VERIFIED",
+  "checkpoint": "TASK_045_RESTART_RESUME_VERIFIED",
   "resume_policy": "SAFE_RECONCILE_HEAD_STATE_CI",
   "lease": null,
-  "last_commit": "b0758f72b9592e229e0c4c5969fa683048cdfd91",
-  "updated_at": "2026-09-18T23:58:00+07:00",
+  "last_commit": "311bf4413a3dd5cdc5d7d01f8d6642d13e061629",
+  "updated_at": "2026-09-19T00:00:00+07:00",
   "completed_operations": []
 }
