@@ -98,3 +98,21 @@
 - Pre-reset PR `#90`: closed / not merged.
 - Production schema/data/backfill/permission mutation: none.
 - Gate: TASK-029 **DONE**; TASK-030 **READY**.
+
+## 2026-09-18 — TASK-030 Employee weekly availability canonical slice
+
+- Branch: `feat/task-030-employee-availability-canonical`
+- PR: `#96`
+- Task doc: `01_DOCS/MAGASIN/05_SYSTEM/EMPLOYEE_AVAILABILITY_CANONICAL_SLICE_V1.md`
+- People Shift Day-10 Tests run `35334004755`: **PASS**.
+- Single active availability engine ownership: PASS.
+- Employee shell contains no availability business RPC logic: PASS.
+- Save one interval + immediate visibility: PASS.
+- Multiple intervals on same day: PASS.
+- Delete via `delete_my_availability` + immediate refresh: PASS.
+- Direct table access: absent.
+- Existing Employee Swap regression: PASS.
+- Existing People/Shift Day-10 E2E: PASS.
+- Existing Control Tower browser regression: PASS.
+- Production schema/backfill/permission changes: none.
+- Gate: TASK-030 **DONE**; TASK-031 **READY**.

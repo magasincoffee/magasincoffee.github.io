@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-030 — Employee weekly availability canonical slice — READY**
+**TASK-031 — Manager allocation + robot proposal + publish slice — READY**
 
 Canonical task/state files:
 
@@ -27,6 +27,7 @@ Canonical task/state files:
 - `00_SUPERVISOR_HANDOFF_ARCHITECTURE.md`
 - `00_ARCHITECTURE_5_STEP_RESET.md`
 - `05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`
+- `05_SYSTEM/EMPLOYEE_AVAILABILITY_CANONICAL_SLICE_V1.md`
 
 ## Current target
 
@@ -93,9 +94,9 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-030 from `00_ARCHITECTURE_5_STEP_RESET.md` and `05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`.
+**AUTO_CONTINUE:** execute TASK-031 from `00_ARCHITECTURE_5_STEP_RESET.md` and `05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`.
 
-Apply QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE before code. Preserve Employee weekly availability behavior, identify and remove/defer duplicate Employee availability ownership, keep `06_EMPLOYEE/availability/engine-v1.js` as the canonical projection, keep writes on `save_my_availability/delete_my_availability`, then run unit/browser regression before advancing to TASK-031.
+Apply QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE before code. Consolidate Manager daily scheduling ownership for availability review → staffing demand → Robot DRAFT → Manager allocation/validation/review → explicit publish. Remove duplicate Manager compatibility ownership and direct browser table writes only after replacement behavior has regression/E2E coverage. Robot must not auto-publish.
 
 TASK-026 remains preserved as a deferred Owner boundary. Do not implement write-capable SOP/Task automation until its six business-rule decisions are approved.
 
