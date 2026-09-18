@@ -45,3 +45,23 @@
 - No new write action in initial shell: PASS.
 - Healthy/partial/error/empty + browser navigation acceptance requirements present.
 - Gate: TASK-011 **DONE**; implementation queue TASK-012–TASK-018 derived.
+
+## 2026-09-18 — TASK-023 SOP/Task current-system gap review
+
+- Branch: `docs/task-023-sop-task-gap-review-final`
+- Review: `01_DOCS/MAGASIN/05_SYSTEM/SOP_TASK_V1_GAP_REVIEW.md`
+- Contract: `02_CORE/contracts/sop-task-gap-plan.v1.json`
+- Workflow: `Business OS Contract Tests`
+- Run: `35320970148`
+- Result: **PASS**
+- Existing SOP workspace classified as registry/index skeleton: PASS.
+- Manager hard-coded Task examples classified as prototype, not operational facts: PASS.
+- Employee Task indefinite-loading placeholder recorded as unconnected: PASS.
+- Owner Control Tower Task/SOP source remains NOT_CONNECTED until a verified reader exists: PASS.
+- Stale Manager `/05_MANAGER/Cong-viec/` legacy-runtime target recorded as technical gap: PASS.
+- Read-only live `public` schema structural inventory found no named Task/SOP/Checklist/Exception/Corrective table/view/routine: PASS.
+- Production writes/DDL/migration/backfill during inventory: none.
+- New exception/corrective/overdue/verify-close Business Rules: none.
+- Owner decision boundary is explicit before write-capable SOP/Task workflow.
+- Gate: TASK-023 **DONE**; TASK-024 may proceed.
+
