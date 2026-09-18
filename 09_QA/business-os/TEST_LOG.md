@@ -82,3 +82,19 @@
 - RLS required for exposed tables: PASS.
 - Production mutation/backfill: none.
 - Gate: TASK-026 **WAIT_USER** pending Owner answers DST-001..DST-006.
+
+## 2026-09-18 — TASK-029 Schedule-first canonical flow contract
+
+- Branch: `docs/task-029-schedule-first-canonical-contract`
+- PR: `#95`
+- Contract: `02_CORE/contracts/schedule-first-flow.v1.json`
+- Architecture doc: `01_DOCS/MAGASIN/05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`
+- Business OS Contract Tests run `35333472481`: **PASS**.
+- People Shift Day-10 regression run `35333397695`: **PASS**.
+- Manager daily scheduling ownership: PASS.
+- Owner policy/exception/attention-only target: PASS.
+- Canonical data/RPC chain inventory: PASS.
+- Duplicate/compat ownership mapped to TASK-031: PASS.
+- Pre-reset PR `#90`: closed / not merged.
+- Production schema/data/backfill/permission mutation: none.
+- Gate: TASK-029 **DONE**; TASK-030 **READY**.
