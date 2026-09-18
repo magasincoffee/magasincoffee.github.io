@@ -159,8 +159,9 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-043 — Cross-project handoff integration:** Business OS → Media Robot → Business OS state/checkpoint/constraint isolation verified. DONE.
 - **TASK-044 — Portfolio-aware diagnostics:** project/task/checkpoint/error context with privacy-safe persistence verified. DONE.
 - **TASK-045 — Restart/resume simulation:** kill/restart/reconcile/resume regression over existing Robot V2 primitives verified. DONE.
-- **TASK-046 — Night full QA:** both-project regression evidence + bounded fixes only. IN_PROGRESS.
-- **TASK-047–048 — Docs/evidence and final checkpoint:** execute only after each preceding gate passes.
+- **TASK-046 — Night full QA:** both-project regression evidence verified; no bounded fix remains. DONE.
+- **TASK-047 — Night docs / evidence / PR prep:** reconcile changelog, evidence and reviewable draft PRs. IN_PROGRESS.
+- **TASK-048 — Night final checkpoint:** execute only after TASK-047 evidence is complete.
 
 ## 8. Definition of success
 
