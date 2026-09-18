@@ -1,0 +1,13 @@
+{
+  "schema_version": "business-os-execution-cursor.v1",
+  "night_run_id": "NIGHT_RUN_2026-09-18",
+  "project_id": "magasin-business-os",
+  "task": "TASK-036",
+  "micro_task": "schedule_first_closure_regression",
+  "status": "IN_PROGRESS",
+  "checkpoint": "NIGHT_RUN_APPROVED",
+  "resume_policy": "SAFE_RECONCILE_HEAD_STATE_CI",
+  "lease": null,
+  "last_commit": "463f56a2d4cc9c11a743a955f806152d88d72e9f",
+  "updated_at": "2026-09-18T23:17:00+07:00"
+}
