@@ -85,7 +85,7 @@ try {
       lastState = classification.uiState;
     }
 
-    if (snapshot.conversationPath && snapshot.composerReady) {
+    if (snapshot.conversationPath) {
       const currentUrl = new URL(adapter.getActivePage().url());
       await fs.mkdir(path.dirname(targetFile), { recursive: true });
       await fs.writeFile(
