@@ -54,8 +54,8 @@ TASK-026 remains a valid Owner decision pack but is deferred; it no longer block
 Task tiếp theo chỉ chạy khi task hiện tại đạt Definition of Done hoặc được chuyển rõ sang `WAIT_USER` / `BLOCKED`.
 
 Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
-| TASK-037 | Windows auto-reboot/logon recovery | 75m | runner + Supervisor + Business Chrome autostart / Owner STOP latch | IN_PROGRESS |
-| TASK-038 | Night-run persistence | 35m | deadline + cursor + lease + checkpoint + hard-stop contract | READY |
+| TASK-037 | Windows auto-reboot/logon recovery | 75m | runner + Supervisor + Business Chrome autostart / Owner STOP latch | DONE |
+| TASK-038 | Night-run persistence | 35m | deadline + cursor + lease + checkpoint + hard-stop contract | IN_PROGRESS |
 | TASK-039 | Business OS Robot V2 project registry | 60m | two-project registry + project adapter contract | READY |
 | TASK-040 | Business OS Robot V2 portfolio scheduler | 55m | project isolation + WAIT_USER skip policy | READY |
 | TASK-041 | Business OS Robot V2 recovery engine | 45m | crash/reboot/reconnect/stale lease/duplicate suppression | READY |
