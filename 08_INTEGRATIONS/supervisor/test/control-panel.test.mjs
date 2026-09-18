@@ -52,3 +52,24 @@ test("installer normalizes the panel for Windows PowerShell 5.1 and parses it be
   assert.match(source, /Control panel PowerShell syntax check failed/);
   assert.match(source, /imageres\.dll,72/);
 });
+
+
+test("offline control panel prefers repository state over stale runtime task", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /\$projectState = if \(\$process -and \$runtimeStatus -and \$runtimeStatus\.current_task\)/);
+  assert.match(source, /elseif \(\$script:lastRemoteState\)/);
+  assert.match(source, /Repository source-of-truth/);
+});
+
+test("control panel surfaces the bounded CDP cause tag in the safe log", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /cause=\$\(\$e\.errorCause\)/);
+});
