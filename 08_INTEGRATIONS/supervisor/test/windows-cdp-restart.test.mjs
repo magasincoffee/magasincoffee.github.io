@@ -14,3 +14,19 @@ test("Windows wrapper force-restarts only dedicated Chrome after CDP restart exi
   assert.match(source, /\$nodeExitCode -eq 75/);
   assert.match(source, /Stop-DedicatedChrome[\s\S]*continue/);
 });
+
+
+test("Windows wrapper verifies port ownership and skips occupied ports", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/run-supervisor.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /function Get-FreeCdpPort/);
+  assert.match(source, /9222\.\.9232/);
+  assert.match(source, /Get-NetTCPConnection -State Listen -LocalPort \$candidate/);
+  assert.match(source, /function Test-DedicatedCdpEndpoint/);
+  assert.match(source, /OwningProcess/);
+  assert.match(source, /CommandLine -notlike "\*\$profile\*"/);
+  assert.match(source, /--cdp-url', \$cdpBaseUrl/);
+});
