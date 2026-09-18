@@ -2,12 +2,12 @@
   "schema_version": "business-os-execution-cursor.v1",
   "night_run_id": "NIGHT_RUN_2026-09-18",
   "project_id": "magasin-business-os",
-  "task": "TASK-037",
-  "micro_task": "windows_autostart_recovery",
+  "task": "TASK-038",
+  "micro_task": "night_run_persistence_contract",
   "status": "IN_PROGRESS",
-  "checkpoint": "AUTOSTART_INSTALLED_AND_VERIFIED",
+  "checkpoint": "TASK_037_RECOVERY_VERIFIED",
   "resume_policy": "SAFE_RECONCILE_HEAD_STATE_CI",
   "lease": null,
-  "last_commit": "0c20bd3c03b2715e96ab8e80c709458c224df2be",
-  "updated_at": "2026-09-18T23:26:00+07:00"
+  "last_commit": "a1c948f023edfdc7acc1c300c58054e72618923f",
+  "updated_at": "2026-09-18T23:35:00+07:00"
 }
