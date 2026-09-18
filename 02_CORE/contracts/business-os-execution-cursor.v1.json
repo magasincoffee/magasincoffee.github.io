@@ -5,14 +5,15 @@
   "task": "TASK-048",
   "micro_task": "night_final_checkpoint",
   "status": "IN_PROGRESS",
-  "checkpoint": "TASK_048_HARD_STOP_IDEMPOTENCE_VERIFIED",
+  "checkpoint": "TASK_048_HARD_STOP_ONE_SHOT_VERIFIED",
   "resume_policy": "SAFE_RECONCILE_HEAD_STATE_CI",
   "lease": null,
-  "last_commit": "998bc201966aa31bdda4049a21b9812b287794f2",
-  "updated_at": "2026-09-19T00:22:48+07:00",
+  "last_commit": "0e902d725dbfbb468ce56c1d59009718b0f69d33",
+  "updated_at": "2026-09-19T00:26:55+07:00",
   "completed_operations": [
     "TASK_048_HARD_STOP_RECONCILIATION_VERIFIED",
     "TASK_048_HARD_STOP_TIME_GUARD_VERIFIED",
-    "TASK_048_HARD_STOP_IDEMPOTENCE_VERIFIED"
+    "TASK_048_HARD_STOP_IDEMPOTENCE_VERIFIED",
+    "TASK_048_HARD_STOP_ONE_SHOT_VERIFIED"
   ]
 }
