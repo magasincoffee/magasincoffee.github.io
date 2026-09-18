@@ -6,7 +6,8 @@ export const PORTFOLIO_RECOVERY_ACTIONS = Object.freeze({
   WAIT_ACTIVE_LEASE: "WAIT_ACTIVE_LEASE",
   WAIT_RECONCILE_HEAD_CI: "WAIT_RECONCILE_HEAD_CI",
   RESUME_CHECKPOINT: "RESUME_CHECKPOINT",
-  ADOPT_CANONICAL_CURSOR: "ADOPT_CANONICAL_CURSOR"
+  ADOPT_CANONICAL_CURSOR: "ADOPT_CANONICAL_CURSOR",
+  WAIT_PROJECT_BOUNDARY: "WAIT_PROJECT_BOUNDARY"
 });
 
 function validDate(value) {
@@ -85,6 +86,7 @@ export function reconcilePortfolioCursor({
   cursor,
   canonicalProjectId,
   canonicalTask,
+  canonicalProjectState,
   now = new Date(),
   headVerified = false,
   ciVerified = false
@@ -96,6 +98,17 @@ export function reconcilePortfolioCursor({
   const projectId = requireText(canonicalProjectId, "canonicalProjectId");
   const task = requireText(canonicalTask, "canonicalTask");
   const at = validDate(now);
+
+  const state = canonicalProjectState;
+  const stateMatchesProject = Boolean(state && state.id === projectId);
+  const boundaryBlocked = Boolean(
+    !stateMatchesProject ||
+    state.blocked ||
+    state.requires_user ||
+    state.status === "WAIT_USER" ||
+    state.status === "BLOCKED" ||
+    state.runnable_hint !== true
+  );
 
   let working = { ...cursor };
 
@@ -132,6 +145,16 @@ export function reconcilePortfolioCursor({
     }
 
     working = stale.cursor;
+  }
+
+  if (boundaryBlocked) {
+    return {
+      action: PORTFOLIO_RECOVERY_ACTIONS.WAIT_PROJECT_BOUNDARY,
+      reason: stateMatchesProject
+        ? "CANONICAL_PROJECT_NOT_SAFELY_RUNNABLE"
+        : "CANONICAL_PROJECT_STATE_MISSING_OR_MISMATCHED",
+      cursor: working
+    };
   }
 
   if (
