@@ -11,6 +11,16 @@ import {
   resolveChromeExecutable
 } from "./playwright-adapter.mjs";
 
+function parseArgs(argv) {
+  const result = {};
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--cdp-url") result.cdpUrl = argv[++i];
+    else throw new Error(`unknown argument: ${argv[i]}`);
+  }
+  return result;
+}
+
+const args = parseArgs(process.argv.slice(2));
 const profileDir = defaultSupervisorProfileDir();
 const targetFile = path.join(path.dirname(profileDir), "target.json");
 const timeoutMs = 15 * 60 * 1000;
@@ -22,7 +32,8 @@ const adapter = new ChatGptUiAdapter({
   url: "https://chatgpt.com/",
   headless: false,
   timeoutMs: 60_000,
-  settleMs: 1_500
+  settleMs: 1_500,
+  cdpUrl: args.cdpUrl || null
 });
 
 const started = Date.now();
