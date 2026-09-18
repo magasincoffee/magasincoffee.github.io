@@ -28,11 +28,11 @@ test("auto-upgrade workflow installs runtime source changes and verifies a Brain
   assert.doesNotMatch(source, /raw\.githubusercontent\.com\/magasincoffee\/magasincoffee\.github\.io\/main\/01_DOCS\/MAGASIN\/00_PROJECT_STATE\.json/);
   assert.match(source, /brain-worker-cli\.mjs/);
   assert.match(source, /BRAIN_TARGET_REGISTERED=True/);
-  assert.match(source, /2026-09-19\.20/);
+  assert.match(source, /2026-09-19\.21/);
 });
 
 
-test("auto-upgrade fails if live v20 runtime remains blocked by stale Brain target mismatch", async () => {
+test("auto-upgrade fails if live v21 runtime remains blocked by stale Brain target mismatch", async () => {
   const source = await fs.readFile(
     new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
     "utf8"
@@ -41,5 +41,5 @@ test("auto-upgrade fails if live v20 runtime remains blocked by stale Brain targ
   assert.match(source, /runtime-status\.json/);
   assert.match(source, /supervisor_runtime_version/);
   assert.match(source, /target mismatch/);
-  assert.match(source, /Brain target recovery is still blocked by target mismatch after v2026-09-19\.20 install/);
+  assert.match(source, /Brain target recovery is still blocked by target mismatch after v2026-09-19\.21 install/);
 });

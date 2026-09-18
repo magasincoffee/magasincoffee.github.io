@@ -100,3 +100,17 @@ test("stale Brain target recovery uses prior processed digest and refuses ambigu
   assert.match(source, /multiple ChatGPT conversations match Brain continuity; automatic target rebind denied/);
   assert.match(source, /BRAIN_TARGET_REBOUND_CONTINUITY/);
 });
+
+
+test("stale Brain target may fall back only to one open conversation with a valid Brain directive signature", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /findBrainByDirectiveSignature/);
+  assert.match(source, /parseBrainDirective\(captured\.text/);
+  assert.match(source, /DIRECTIVE_SIGNATURE/);
+  assert.match(source, /multiple open ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied/);
+  assert.match(source, /BRAIN_TARGET_REBOUND_SIGNATURE/);
+});

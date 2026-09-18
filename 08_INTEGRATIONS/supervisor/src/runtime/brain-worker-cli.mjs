@@ -29,7 +29,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.20";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.21";
 
 function parseArgs(argv) {
   const result = {
@@ -199,13 +199,52 @@ async function findBrainByContinuity(adapter, registry) {
 
     const digests = await captureAssistantTurnDigests(page).catch(() => []);
     if (digests.includes(expectedDigest)) {
-      candidates.push({ page, target });
+      candidates.push({ page, target, method: "CONTINUITY" });
     }
   }
 
   if (candidates.length === 1) return candidates[0];
   if (candidates.length > 1) {
     throw new Error("multiple ChatGPT conversations match Brain continuity; automatic target rebind denied");
+  }
+  return null;
+}
+
+async function findBrainByDirectiveSignature(adapter, config) {
+  const candidates = [];
+
+  for (const page of adapter.getChatGptPages()) {
+    let target = null;
+    try {
+      target = targetFromUrl(page.url());
+    } catch {
+      continue;
+    }
+
+    const probe = await adapter.probePage(page).catch(() => null);
+    if (!probe || probe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
+      continue;
+    }
+    if (hardStopObservation(probe.classification.observation)) {
+      continue;
+    }
+
+    const captured = await captureCompletedAssistantTurn(page).catch(() => null);
+    if (!captured?.text) continue;
+
+    try {
+      parseBrainDirective(captured.text, {
+        maxWorkers: workerCapacity(config)
+      });
+      candidates.push({ page, target, method: "DIRECTIVE_SIGNATURE" });
+    } catch {
+      // Not a Brain response.
+    }
+  }
+
+  if (candidates.length === 1) return candidates[0];
+  if (candidates.length > 1) {
+    throw new Error("multiple open ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied");
   }
   return null;
 }
@@ -218,14 +257,18 @@ async function ensureBrain({ adapter, registry, projectState, config, execute, r
       const message = String(error?.message || error);
       if (!/target mismatch/.test(message)) throw error;
 
-      const recovered = await findBrainByContinuity(adapter, registry);
+      const recovered =
+        await findBrainByContinuity(adapter, registry) ||
+        await findBrainByDirectiveSignature(adapter, config);
       if (!recovered) throw error;
       if (!execute) return recovered.page;
 
       registry.brain.target = recovered.target;
       await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
       await safeLog(logPath, {
-        type: "BRAIN_TARGET_REBOUND_CONTINUITY",
+        type: recovered.method === "CONTINUITY"
+          ? "BRAIN_TARGET_REBOUND_CONTINUITY"
+          : "BRAIN_TARGET_REBOUND_SIGNATURE",
         role: "brain",
         generation: registry.brain.generation
       });
