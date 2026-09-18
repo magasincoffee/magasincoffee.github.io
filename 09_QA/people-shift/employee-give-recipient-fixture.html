@@ -1,0 +1,26 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Give Recipient QA</title></head><body>
+<iframe id="employeeApp" title="Give Recipient QA"></iframe>
+<script>
+(()=>{
+ const calls=[],toasts=[];
+ const state={give:{id:"give-1",status:"PENDING_RECIPIENT",reason:"Nhờ nhận ca",giver_id:"u-giver",giver_name:"Người cho QA",recipient_id:"u-recipient",recipient_name:"Người nhận QA",schedule_id:"sch-give",work_date:"2026-09-21",start_time:"06:00",end_time:"12:00",store_code:"CN1"}};
+ window.__GIVE_RECIPIENT_QA={calls,toasts,state};
+ window.MAGASIN_CORE={
+  security:{escapeHtml:v=>String(v??"")},time:{time5:v=>String(v??"").slice(0,5)},
+  date:{monday:()=>"2026-09-21",formatDate:v=>String(v??"").slice(0,10)},
+  ui:{toast:(message,type)=>toasts.push({message,type})},
+  supabase:{
+   async getProfile(){return {id:"u-recipient",full_name:"Người nhận QA"}},
+   async rpc(name,args={}){calls.push({name,args:structuredClone(args||{})});
+    if(name==="list_my_approved_schedules_v2")return {data:[],error:null};
+    if(name==="list_my_shift_swaps_v2")return {data:[],error:null};
+    if(name==="list_my_shift_gives_v1")return {data:[{...state.give}],error:null};
+    if(name==="respond_shift_give_request"){state.give.status=args.p_accept?"PENDING_MANAGER":"REJECTED_RECIPIENT";return {data:{id:args.p_give_id,status:state.give.status},error:null};}
+    return {data:[],error:null};
+   }
+  }
+ };
+ const f=document.getElementById("employeeApp");
+ f.srcdoc=`<!doctype html><html lang="vi"><body><section id="view-swap"><h2>Đổi ca</h2><div id="swapChoices"><button onclick="openSwapForm('swap')">Đổi ca</button><button onclick="openSwapForm('give')">Cho ca</button></div><div id="swapForm" class="swap-form"><div class="swap-card"><h3>Ca của tôi</h3></div><div class="swap-card"><div class="field"><label>Trường hiện hữu</label><select></select></div></div><div class="swap-actions"><button onclick="backToSwapChoices()">Hủy</button><button class="btn primary" onclick="sendSwapRequest()">Gửi</button></div><div id="swapResult"></div></div><div class="history-head"><h3>Lịch sử</h3></div><div id="historyList"></div></section></body></html>`;
+})();
+</script><script src="/06_EMPLOYEE/swap/engine-v1.js"></script></body></html>
