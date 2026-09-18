@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-042 — SaydiVoiceProvider production adapter OFFLINE — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-043 — Cross-project handoff integration — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,26 +101,26 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-042:** TASK-041 Robot V2 recovery engine is verified on draft PR #119.
+**AUTO_CONTINUE — TASK-043:** TASK-042 Media Robot offline adapter gate is verified.
 
-Execution now switches to the second approved repository only:
+Verified TASK-042 evidence:
 
-`magasincoffee/magasin-media-robot`
+- Media Robot branch `feat/saydi-production-provider`;
+- privacy regression commit `8c679734c17ddc004e71c188384508e747959c5c`;
+- GitHub-hosted Windows run `35370559918`: 23 tests PASS + compile PASS;
+- hosted CI confirmed no authenticated Saydi profile and no live provider capability;
+- Media Robot TEST_LOG / BUG_LOG / CHANGELOG / CURRENT_STATUS / NEXT_STEP updated;
+- no live preflight, Generate, Download or PR merge occurred.
 
-Offline-only acceptance gate:
+TASK-043 now proves state isolation across the approved handoff:
 
-1. stable provider request/result model;
-2. preset validation before touching live UI;
-3. authenticated preflight failure classification;
-4. exactly-one Generate attempt guard;
-5. bounded timeout + terminal error classification;
-6. output path / byte count / sha256 metadata contract;
-7. privacy/redaction tests;
-8. no live Generate;
-9. no live Download;
-10. update Media Robot BUG_LOG/TEST_LOG/CHANGELOG/CURRENT_STATUS/NEXT_STEP when the offline gate passes.
-
-The Business OS cursor remains authoritative for night-run sequencing while Media Robot repository remains authoritative for SaydiVoice implementation details.
+1. Business OS runnable state selects Business OS and preserves its canonical task/checkpoint;
+2. a project-local `WAIT_USER` / `BLOCKED` boundary can switch to the other approved project without becoming a global stop;
+3. Media Robot constraints survive selection and handoff;
+4. handoff back to Business OS does not reuse Media Robot task/status/constraints;
+5. unregistered repositories remain impossible to select;
+6. lease/checkpoint recovery stays scoped to the cursor project;
+7. no project work or live provider side effect is executed by the integration test.
 
 ## Session handoff
 
