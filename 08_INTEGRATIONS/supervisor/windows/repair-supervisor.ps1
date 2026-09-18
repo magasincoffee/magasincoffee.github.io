@@ -16,7 +16,7 @@ $profile = Join-Path $root 'browser_profile'
 $target = Join-Path $root 'target.json'
 $pidFile = Join-Path $root 'supervisor.pid'
 $logFile = Join-Path $root 'supervisor.log'
-$expectedRuntimeVersion = '2026-09-18.2'
+$expectedRuntimeVersion = '2026-09-18.3'
 
 function Write-Step([string]$Message) {
     Write-Host ""
@@ -28,6 +28,26 @@ function Stop-DedicatedSupervisorChrome {
         Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" } |
         ForEach-Object {
             Write-Host "Stopping dedicated Supervisor Chrome PID $($_.ProcessId)."
+            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+        }
+}
+
+function Stop-OrphanedSupervisorLoops {
+    Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.CommandLine -and
+            $_.CommandLine -like '*run-supervisor.ps1*' -and
+            $_.CommandLine -like "*$root*"
+        } |
+        ForEach-Object {
+            Write-Host "Stopping Supervisor wrapper PID $($_.ProcessId)."
+            & taskkill.exe /PID $_.ProcessId /T /F | Out-Host
+        }
+
+    Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandLine -and $_.CommandLine -like '*supervisor-loop-cli.mjs*' } |
+        ForEach-Object {
+            Write-Host "Stopping Supervisor Node PID $($_.ProcessId)."
             Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
         }
 }
@@ -51,6 +71,9 @@ function Assert-SourceFingerprint {
     if (-not (Select-String -Path $runSource -SimpleMatch 'Test-DedicatedCdpEndpoint' -Quiet)) {
         throw 'Source is missing Test-DedicatedCdpEndpoint.'
     }
+    if (-not (Select-String -Path $runSource -SimpleMatch 'MAGASIN_BUSINESS_OS_SUPERVISOR' -Quiet)) {
+        throw 'Source is missing the singleton Supervisor mutex.'
+    }
 }
 
 function Assert-InstalledFingerprint {
@@ -68,6 +91,9 @@ function Assert-InstalledFingerprint {
     }
     if (-not (Select-String -Path $runtimeRun -SimpleMatch 'Test-DedicatedCdpEndpoint' -Quiet)) {
         throw 'Installed runtime is missing Test-DedicatedCdpEndpoint.'
+    }
+    if (-not (Select-String -Path $runtimeRun -SimpleMatch 'MAGASIN_BUSINESS_OS_SUPERVISOR' -Quiet)) {
+        throw 'Installed runtime is missing the singleton Supervisor mutex.'
     }
 }
 
@@ -120,6 +146,7 @@ try {
         }
         Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
     }
+    Stop-OrphanedSupervisorLoops
     Stop-DedicatedSupervisorChrome
     Start-Sleep -Milliseconds 750
 
