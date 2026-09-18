@@ -118,7 +118,10 @@ export class SupervisorRecoveryController {
       if (this.runningSince == null || progressMarker !== this.lastProgressMarker) {
         this.runningSince = now;
         this.lastProgressMarker = progressMarker;
-        this.stallReloads = 0;
+        // Do not reset stallReloads here. After a reload, ChatGPT hydration/model
+        // switching can temporarily change message counts/lengths even though the
+        // same response is still stuck. Reset the bounded reload budget only once
+        // the response actually leaves ASSISTANT_RUNNING.
       }
       this.unavailableSince = null;
       this.unavailableReloads = 0;
