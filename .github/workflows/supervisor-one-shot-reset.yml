@@ -19,4 +19,4 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - run: echo "Resetting queued one-shot so the fixed CLI can be tested."
+      - run: echo "Resetting live one-shot while final Supervisor installation work is still running."
