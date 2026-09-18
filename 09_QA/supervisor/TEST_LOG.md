@@ -76,3 +76,25 @@ Next gate: TASK-004 UI adapter local **non-destructive** smoke.
 - Public Git boundary retained: credentials/cookies/tokens/browser profile/conversation target remain local only.
 
 Final gate: install/start persistent Supervisor and verify it survives GitHub Actions job cleanup.
+
+
+## 2026-09-18 — Persistent Supervisor V1 acceptance
+
+- Unit/regression suite latest Supervisor runs: **PASS**.
+- Synthetic real-Chrome action E2E run `35301582550`: **PASS**.
+  - canonical Continue composer fill/send semantics: PASS on isolated synthetic DOM;
+  - safe Retry semantic click: PASS;
+  - external/ChatGPT side effect: none.
+- Bounded live one-shot run `35301293965`: executor classified Continue but returned `NO_SAFE_ACTION`; **fail-closed PASS**, no message sent.
+- Live safe-Retry smoke run `35301796025`: **PASS**; workflow is limited to recognized Retry controls and cannot send Continue/arbitrary text.
+- Installer + START/STOP kill-switch smoke run `35301449363`: **PASS**.
+  - local runtime install/upgrade: PASS;
+  - dedicated process START: PASS;
+  - deterministic STOP: PASS.
+- Persistent install run `35301801896`: **PASS**.
+  - install/start job: PASS;
+  - second-job persistence check after Actions cleanup: PASS;
+  - `PERSISTENT_SUPERVISOR_ALIVE=True`;
+  - `DESKTOP_KILL_SWITCH_READY=True`;
+  - local authenticated target present.
+- Supervisor is installed live on `MAGASIN-BUSINESS-PC`; it reads canonical project state and pauses on Owner/security gates.
