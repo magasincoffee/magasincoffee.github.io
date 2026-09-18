@@ -42,7 +42,9 @@ try{
     await page.waitForTimeout(600);
   }
 
-  const combo = page.getByRole("combobox",{name:/Application type/i}).first();
+  const formCombos = page.locator('cfc-select[role="combobox"]');
+  console.log("FORM_COMBO_COUNT="+await formCombos.count());
+  const combo = formCombos.last();
   const comboVisible = await combo.isVisible({timeout:2000}).catch(()=>false);
   console.log("APPLICATION_TYPE_COMBO_VISIBLE="+comboVisible);
   if(!comboVisible) process.exit(0);
