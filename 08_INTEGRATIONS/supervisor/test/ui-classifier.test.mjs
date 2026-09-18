@@ -144,3 +144,27 @@ test("transient error detector requires an actual error alert phrase", () => {
   assert.equal(matchesTransientErrorAlert("Something went wrong"), true);
   assert.equal(matchesTransientErrorAlert("Đã xảy ra lỗi"), true);
 });
+
+
+test("waits when the latest visible message is the Owner and ChatGPT has not answered yet", () => {
+  const result = classifyUiSnapshot({
+    ...base,
+    responseRunning: false,
+    hasTransientError: false,
+    hasRetryControl: false,
+    lastMessageRole: "user"
+  });
+
+  assert.equal(result.uiState, UI_STATES.USER_PENDING);
+  assert.equal(result.observation, OBSERVATIONS.USER_PENDING);
+});
+
+test("completed assistant message remains ready for handoff", () => {
+  const result = classifyUiSnapshot({
+    ...base,
+    lastMessageRole: "assistant"
+  });
+
+  assert.equal(result.uiState, UI_STATES.READY_IDLE);
+  assert.equal(result.observation, OBSERVATIONS.RESPONSE_COMPLETE);
+});
