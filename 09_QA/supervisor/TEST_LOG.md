@@ -75,7 +75,6 @@ Next gate: TASK-004 UI adapter local **non-destructive** smoke.
 - Anti-duplicate continuation controller: PASS.
 - Public Git boundary retained: credentials/cookies/tokens/browser profile/conversation target remain local only.
 
-Final gate: install/start persistent Supervisor and verify it survives GitHub Actions job cleanup.
 
 
 ## 2026-09-18 — Persistent Supervisor V1 acceptance
@@ -98,3 +97,11 @@ Final gate: install/start persistent Supervisor and verify it survives GitHub Ac
   - `DESKTOP_KILL_SWITCH_READY=True`;
   - local authenticated target present.
 - Supervisor is installed live on `MAGASIN-BUSINESS-PC`; it reads canonical project state and pauses on Owner/security gates.
+
+- Persistent install refresh run `35302028604`: **PASS**.
+  - latest branch runtime installed: PASS;
+  - live Supervisor START: PASS;
+  - separate persistence-verification job: PASS;
+  - process survived GitHub Actions cleanup;
+  - Desktop START/STOP controls verified present.
+- Temporary self-hosted bootstrap/smoke workflows were removed from the branch before merge; permanent offline `Supervisor Tests` remains.
