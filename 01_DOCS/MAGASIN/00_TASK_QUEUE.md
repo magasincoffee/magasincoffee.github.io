@@ -33,8 +33,8 @@
 
 | TASK-023 | SOP/Task current-system gap review + acceptance contract | 20m | discovery/contract | DONE |
 | TASK-024 | Manager Task route canonicalization + smoke regression | 15m | route/static + browser smoke | DONE |
-| TASK-025 | SOP/Task fail-closed UI integrity gate | 20m | static/unit + browser regression | READY |
-| TASK-026 | SOP/Task rule decision pack + data/migration plan | 20m | traceability/contract + Owner boundary | QUEUED |
+| TASK-025 | SOP/Task fail-closed UI integrity gate | 20m | static/unit + browser regression | DONE |
+| TASK-026 | SOP/Task rule decision pack + data/migration plan | 20m | traceability/contract + Owner boundary | READY |
 
 Queue Day 8–10 đã hoàn tất. TASK-023 xác nhận Day 11–13 hiện có SOP registry skeleton, Manager/Employee Task placeholders, Control Tower Task/SOP chưa có verified source, không có verified persistence/API contract, và exception/corrective/overdue/verify-close rules chưa được chốt. Live schema check chỉ đọc structural metadata và không tìm thấy public object name khớp Task/SOP/Checklist/Exception/Corrective. TASK-024–025 chỉ sửa route/UI fail-closed; TASK-026 là Owner/business-rule boundary trước mọi write-capable SOP/Task workflow.
 

@@ -107,6 +107,12 @@ console.log("TASK_ROUTE_DEBUG " + JSON.stringify(debug));
 
 assert.equal(taskActive, true, "Task view must become active from /05_MANAGER/Cong-viec/");
 assert.equal(heading?.trim(), "Công việc");
+assert.equal(await shell.locator('#view-tasks [data-task-quality="NOT_CONNECTED"]').innerText(), "NOT CONNECTED");
+assert.equal(await shell.locator('#view-tasks [data-task-source-state="NOT_CONNECTED"]').count(), 1);
+assert.equal(await shell.locator('#view-tasks [data-modal="Giao việc"]').count(), 0);
+for (const prototype of ["Kiểm tra tồn hàng cuối ca","Vệ sinh máy dập nắp","Checklist mở ca","Kiểm tra thiết bị đầu ca"]) {
+  assert.equal(await shell.getByText(prototype, { exact:true }).count(), 0, `prototype Task row leaked: ${prototype}`);
+}
 assert.equal(new URL(page.url()).pathname, "/05_MANAGER/Cong-viec/");
 assert.deepEqual(diagnostics.legacyRuntimeRequests, [], "legacy Manager runtime must never be requested");
 assert.deepEqual(diagnostics.pageErrors, [], "unexpected page errors");
