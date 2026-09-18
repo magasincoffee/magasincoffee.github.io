@@ -65,3 +65,20 @@
 - Owner decision boundary is explicit before write-capable SOP/Task workflow.
 - Gate: TASK-023 **DONE**; TASK-024 may proceed.
 
+## 2026-09-18 — TASK-026 SOP/Task rule decision + migration boundary
+
+- Branch: `docs/task-026-sop-task-decision-pack`
+- Decision pack: `01_DOCS/MAGASIN/05_SYSTEM/SOP_TASK_RULE_DECISION_PACK_V1.md`
+- Contract: `02_CORE/contracts/sop-task-rule-decision-pack.v1.json`
+- Workflow: `Business OS Contract Tests`
+- Verified run: `35324873334`
+- Result: **PASS**
+- Six Owner decisions present and ordered DST-001..DST-006: PASS.
+- Every decision remains `OWNER_INPUT_REQUIRED`: PASS.
+- Every `selected_option` remains null: PASS.
+- Decision-independent data core separated from policy automation: PASS.
+- Production apply disabled and Owner-gated: PASS.
+- Task writes / auto exception / auto corrective / auto escalation disabled: PASS.
+- RLS required for exposed tables: PASS.
+- Production mutation/backfill: none.
+- Gate: TASK-026 **WAIT_USER** pending Owner answers DST-001..DST-006.
