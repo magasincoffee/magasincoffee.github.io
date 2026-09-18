@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
   "target_days": 21,
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-042",
-  "current_task_title": "SaydiVoiceProvider production adapter offline",
+  "current_task": "TASK-043",
+  "current_task_title": "Cross-project handoff integration",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-043",
+  "next_task": "TASK-044",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -19,11 +19,11 @@
   },
   "last_updated": "2026-09-18",
   "owner_boundary": {
-    "task": "TASK-042",
+    "task": "TASK-043",
     "resolved": [
-      "MEDIA_ROBOT_OFFLINE_IMPLEMENTATION_APPROVED",
-      "NO_LIVE_GENERATE_DOWNLOAD",
-      "TASK_041_RECOVERY_VERIFIED"
+      "TWO_PROJECT_SCOPE_APPROVED",
+      "TASK_041_RECOVERY_BOUNDARY_VERIFIED",
+      "TASK_042_MEDIA_OFFLINE_VERIFIED"
     ],
     "pending": []
   },
@@ -50,7 +50,7 @@
       "magasin-business-os",
       "magasin-media-robot"
     ],
-    "current_order": 7,
+    "current_order": 8,
     "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
     "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json",
     "recovery_install": {
@@ -77,7 +77,11 @@
       "task_039_test_run_id": 35369745821,
       "auto_merge": false,
       "task_040_test_run_id": 35369968875,
-      "task_041_test_run_id": 35370241479
+      "task_041_test_run_id": 35370365658,
+      "task_042_media_test_run_id": 35370559918,
+      "task_042_media_branch": "feat/saydi-production-provider",
+      "task_042_media_test_commit": "8c679734c17ddc004e71c188384508e747959c5c",
+      "task_042_media_docs_commit": "306eff03e89a5bb6b072fad54675b6ca42e94f8e"
     }
   }
 }
