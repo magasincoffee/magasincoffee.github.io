@@ -14,6 +14,8 @@ test("Manager official schedule uses scoped approved-schedule RPC and no direct 
   assert.match(source,/data-mos-week="prev"/);
   assert.match(source,/data-mos-week="next"/);
   assert.match(source,/magasin:schedule-published/);
+  assert.match(source,/if\(detail\.weekStart\)state\.week=/);
+  assert.match(source,/if\(detail\.storeId\)state\.storeId=/);
   assert.doesNotMatch(source,/\.from\(['"]work_schedules['"]\)\.update/);
   assert.match(source,/Lịch chính thức không được sửa trực tiếp từ browser/);
 });
