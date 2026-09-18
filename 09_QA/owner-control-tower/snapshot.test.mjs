@@ -92,3 +92,23 @@ test("missing quality defaults to NOT_CONNECTED", () => {
   assert.equal(s.workforce.quality, "NOT_CONNECTED");
   assert.equal(s.workforce.staffingGapCount, null);
 });
+
+test("global data-confidence summary counts every quality state", () => {
+  assert.equal(
+    formatDataQualitySummary([
+      { quality: "ACTUAL" },
+      { quality: "ACTUAL" },
+      { quality: "ESTIMATE" },
+      { quality: "GAP" },
+      { quality: "NOT_CONNECTED" }
+    ]),
+    "2/5 ACTUAL · 1 ESTIMATE · 1 GAP · 1 NOT CONNECTED"
+  );
+});
+
+test("global data-confidence summary fails unknown quality into GAP", () => {
+  assert.equal(
+    formatDataQualitySummary([{ quality: "UNKNOWN" }]),
+    "0/1 ACTUAL · 0 ESTIMATE · 1 GAP · 0 NOT CONNECTED"
+  );
+});
