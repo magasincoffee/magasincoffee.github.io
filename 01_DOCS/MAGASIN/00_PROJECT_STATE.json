@@ -21,7 +21,7 @@
   "owner_boundary": {
     "task": "TASK-047",
     "resolved": [
-      "TASK_046_TWO_PROJECT_FULL_QA_VERIFIED"
+      "TASK_046_TWO_PROJECT_QA_VERIFIED"
     ],
     "pending": []
   },
@@ -90,7 +90,9 @@
       "task_045_test_commit": "311bf4413a3dd5cdc5d7d01f8d6642d13e061629",
       "task_046_business_head": "311bf4413a3dd5cdc5d7d01f8d6642d13e061629",
       "task_046_business_test_run_id": 35371642271,
-      "task_046_business_tests_passed": 203
+      "task_046_business_tests_passed": 203,
+      "task_046_business_tests": 203,
+      "task_046_business_failures": 0
     },
     "media_robot": {
       "branch": "feat/saydivoice-production-adapter-offline",
@@ -105,7 +107,11 @@
       "task_046_media_test_run_id": 35371002442,
       "task_046_media_tests_passed": 83,
       "task_046_no_live_generate": true,
-      "task_046_no_live_download": true
+      "task_046_no_live_download": true,
+      "task_046_push_test_run_id": 35370775036,
+      "task_046_pr_test_run_id": 35371002442,
+      "task_046_tests": 83,
+      "task_046_failures": 0
     }
   }
 }
