@@ -160,8 +160,8 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-044 — Portfolio-aware diagnostics:** project/task/checkpoint/error context with privacy-safe persistence verified. DONE.
 - **TASK-045 — Restart/resume simulation:** kill/restart/reconcile/resume regression over existing Robot V2 primitives verified. DONE.
 - **TASK-046 — Night full QA:** both-project regression evidence verified; no bounded fix remains. DONE.
-- **TASK-047 — Night docs / evidence / PR prep:** reconcile changelog, evidence and reviewable draft PRs. IN_PROGRESS.
-- **TASK-048 — Night final checkpoint:** execute only after TASK-047 evidence is complete.
+- **TASK-047 — Night docs / evidence / PR prep:** changelog, canonical evidence report and reviewable PR descriptions reconciled. DONE.
+- **TASK-048 — Night final checkpoint:** final report prepared; remain time-gated until the approved 09:15 +07 GitHub-hosted hard stop sets NIGHT_WINDOW_COMPLETE / WAIT_USER. IN_PROGRESS.
 
 ## 8. Definition of success
 
