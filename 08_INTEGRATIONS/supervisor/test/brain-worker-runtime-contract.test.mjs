@@ -133,3 +133,23 @@ test("stale Brain recovery scans only a bounded recent sidebar and still fails c
   assert.match(adapter, /async listRecentConversationUrls/);
   assert.match(adapter, /Math\.max\(1, Math\.min\(50, Number\(limit\) \|\| 20\)\)/);
 });
+
+
+test("Owner Brain rebind accepts only one visible ChatGPT conversation with a valid Brain directive", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+  const adapter = await fs.readFile(
+    new URL("../src/ui/playwright-adapter.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(runtime, /BRAIN_REBIND\.request\.json/);
+  assert.match(runtime, /applyOwnerBrainRebind/);
+  assert.match(runtime, /getVisibleChatGptPages/);
+  assert.match(runtime, /parseBrainDirective\(captured\.text/);
+  assert.match(runtime, /candidates\.length !== 1/);
+  assert.match(runtime, /BRAIN_TARGET_REBOUND_OWNER/);
+  assert.match(adapter, /document\.visibilityState === "visible"/);
+});
