@@ -206,3 +206,16 @@ The diagnostic snapshot contains runtime/project/UI state, safe counters, contro
 Repeated non-executed continuation stalls are promoted to incidents after a bounded threshold. Control Panel exposes **MỞ LOG LỖI** so the Owner can inspect the folder, while the local GitHub Runner can collect the same evidence for remote troubleshooting. The intended operator flow is that the Owner can report simply “robot lỗi”; diagnostics should provide the technical evidence without requiring the Owner to reconstruct the failure manually.
 
 An explicit **ĐÃ XỬ LÝ — KIỂM TRA LẠI** click may release only the stale UI progress latch for one Owner-reconciliation attempt. It never changes repository status directly and never bypasses business/security/secret gates.
+
+
+## 12. Brain/Worker V17 supersession
+
+Owner decision DEC-010 supersedes the single-work-chat runtime topology for active autonomous execution.
+
+The shared-profile, observe-first, Owner-boundary and fail-closed rules in this document remain valid. However, when `00_PROJECT_STATE.json.supervisor_orchestration.mode = BRAIN_WORKER_V1`, active topology is defined by `00_SUPERVISOR_BRAIN_WORKER_ARCHITECTURE.md`:
+
+- one Brain chat is the only orchestration brain;
+- Worker chats execute bounded Brain directives;
+- Supervisor transports complete Worker results back to Brain;
+- no generic repeated continuation prompt drives Worker work;
+- existing logical chats can roll over only on positive `conversationFull` UI evidence.
