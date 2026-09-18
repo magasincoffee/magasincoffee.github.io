@@ -63,6 +63,9 @@ jobs:
           night = state.get("night_run") or {}
           if night.get("id") != "NIGHT_RUN_2026-09-18":
               raise SystemExit("Approved night-run id is not active; no mutation.")
+          if night.get("status") == "NIGHT_WINDOW_COMPLETE":
+              print("Night-run hard stop already completed; preserve subsequent Owner state.")
+              raise SystemExit(0)
 
           completed_at = night.get("completed_at") or datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
           night["status"] = "NIGHT_WINDOW_COMPLETE"
