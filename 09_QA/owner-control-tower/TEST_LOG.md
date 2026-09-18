@@ -112,3 +112,26 @@
 - BUG-CT-005: VERIFIED.
 - Production writes: none.
 - Gate: TASK-017 **DONE**; TASK-018 may proceed.
+
+## 2026-09-18 — TASK-018 Control Tower browser E2E + Day-7 usability gate
+
+- Branch: `test/control-tower-day7-e2e`
+- Workflow: `Owner Control Tower Tests`
+- Browser E2E run: `35316155903`
+- Result: **PASS**
+- Browser: installed Google Chrome on GitHub-hosted Windows runner via `playwright-core`.
+- Owner home → Control Tower browser navigation: PASS.
+- Active Owner identity/reporting context: PASS.
+- Revenue remains fail-closed `NOT_CONNECTED` with no synthetic value: PASS.
+- Payables trusted fixture renders `ACTUAL`: PASS.
+- Workforce trusted fixture renders `ACTUAL`: PASS.
+- Partial-source scenario keeps healthy sibling sections visible and failed source at `GAP`: PASS.
+- Role-denied scenario shows denied state without rendering app: PASS.
+- Existing Workforce drill-down route navigation: PASS.
+- Desktop two-column layout: PASS.
+- 390px narrow-width single-column layout with no horizontal overflow: PASS.
+- Production external requests: 0.
+- Non-GET browser requests: 0.
+- Production writes: none.
+- Day-7 Owner Control Tower usability gate: **PASS**.
+- Gate: TASK-018 **DONE**; proceed to Day 8–10 People/Shift planning.
