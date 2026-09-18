@@ -121,3 +121,19 @@
 - Fix: before stale-target navigation, probe and atomically adopt the active usable ChatGPT conversation; reset target-recovery counters after adoption.
 - Regression coverage: source-order gate requires active target adoption before `page.goto(wanted)`.
 - Status: FIXED IN CODE — pending field verification.
+
+
+## BUG-SUP-010 — Advisory "thử lại" text falsely classified as transient error
+
+- Date: 2026-09-18
+- Component: ChatGPT UI snapshot / transient-error classifier
+- Field symptom: a completed assistant response is visible, but Control Panel reports `RETRYING`, `UI=TRANSIENT_ERROR`, `OBS=TRANSIENT_ERROR`, and repeatedly logs `executed=false | reason=awaiting observable assistant progress`.
+- Reproduction: ChatGPT displays a non-error advisory such as "Bạn có thể thử lại với mô hình nhanh hơn..." while the response itself is complete.
+- Root cause: snapshot detection treated any visible control text containing `try again`, `thử lại`, or `retry` as a retry/error signal.
+- Fix:
+  1. retry controls now require an exact semantic label: `Try again`, `Retry`, or `Thử lại`;
+  2. generic transient-error text is accepted only from an actual `role=alert` surface containing a recognized error phrase;
+  3. advisory/help copy containing retry wording no longer changes the UI classification.
+- Regression coverage: advisory wording false-positive and explicit retry/error positive cases.
+- Runtime: `2026-09-18.4`.
+- Status: FIXED IN CODE — pending field verification.

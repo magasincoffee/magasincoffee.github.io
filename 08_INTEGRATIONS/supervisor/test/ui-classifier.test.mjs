@@ -6,7 +6,9 @@ import { UI_STATES, classifyUiSnapshot } from "../src/ui/classifier.mjs";
 import {
   matchesConversationFullText,
   matchesConversationMissingText,
-  matchesModelSwitchingText
+  matchesModelSwitchingText,
+  matchesExplicitRetryControl,
+  matchesTransientErrorAlert
 } from "../src/ui/snapshot.mjs";
 
 const base = {
@@ -119,4 +121,26 @@ test("recognizes missing/unavailable conversation surfaces", () => {
 test("recognizes model switching as a running recovery surface", () => {
   assert.equal(matchesModelSwitchingText("Switching to another model"), true);
   assert.equal(matchesModelSwitchingText("Đang chuyển sang mô hình khác"), true);
+});
+
+
+test("retry detector ignores advisory wording containing 'thử lại' when it is not an explicit retry control", () => {
+  assert.equal(
+    matchesExplicitRetryControl(
+      "Bạn có thể thử lại với mô hình nhanh hơn để nhận phản hồi sớm hơn"
+    ),
+    false
+  );
+  assert.equal(matchesExplicitRetryControl("Thử lại"), true);
+  assert.equal(matchesExplicitRetryControl("Try again"), true);
+  assert.equal(matchesExplicitRetryControl("Retry"), true);
+});
+
+test("transient error detector requires an actual error alert phrase", () => {
+  assert.equal(
+    matchesTransientErrorAlert("Bạn có thể thử lại với mô hình nhanh hơn"),
+    false
+  );
+  assert.equal(matchesTransientErrorAlert("Something went wrong"), true);
+  assert.equal(matchesTransientErrorAlert("Đã xảy ra lỗi"), true);
 });
