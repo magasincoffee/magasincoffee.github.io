@@ -49,7 +49,7 @@ function sourceLine(section) {
 function render(snapshot) {
   setText("reportingDate", snapshot.context.reportingDate || "Chưa chọn ngày");
   setText("branchScope", snapshot.context.branchScope || "ALL");
-  setText("refreshedAt", snapshot.context.refreshedAt || "Chưa đồng bộ");
+  setText("refreshedAt", snapshot.context.refreshedAt || "Chưa đồng bộ");\n  setText("globalConfidence", formatDataQualitySummary(snapshot.dataQuality));
 
   setText("revenueValue", formatMoney(snapshot.revenue.amount));
   setText("revenueMeta", sourceLine(snapshot.revenue));
