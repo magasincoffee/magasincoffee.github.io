@@ -38,8 +38,8 @@
 | TASK-027 | Control Panel local GitHub Runner lifecycle + reboot recovery | 20m | PowerShell syntax + control regression | DONE |
 | TASK-028 | Five-Step architecture reset + delete/defer map | 20m | architecture/source-of-truth review | DONE |
 | TASK-029 | Schedule-first canonical flow contract | 20m | QUESTION/DELETE map + canonical ownership/data/RPC contract | DONE |
-| TASK-030 | Employee weekly availability canonical slice | 20m | unit + browser regression | READY |
-| TASK-031 | Manager allocation + robot proposal + publish slice | 20m | integration + browser E2E | QUEUED |
+| TASK-030 | Employee weekly availability canonical slice | 20m | unit + browser regression | DONE |
+| TASK-031 | Manager allocation + robot proposal + publish slice | 20m | integration + browser E2E | READY |
 | TASK-032 | Published schedule → attendance/swap/notification integration gate | 20m | end-to-end operating-loop gate | QUEUED |
 
 TASK-026 remains a valid Owner decision pack but is deferred; it no longer blocks the enterprise queue. Architecture execution is now schedule-first under `00_ARCHITECTURE_5_STEP_RESET.md`. Every new task must pass QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE before implementation.
