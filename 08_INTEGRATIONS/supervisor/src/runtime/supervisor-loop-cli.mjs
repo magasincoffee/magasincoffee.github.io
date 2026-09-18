@@ -25,7 +25,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.10";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.11";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -76,6 +76,33 @@ function validateTarget(value) {
     throw new Error("invalid local ChatGPT target origin");
   }
   return targetFromUrl(`${value.origin}${value.pathname}`);
+}
+
+async function readOwnerResolvedAck(filePath) {
+  try {
+    const value = JSON.parse(await fs.readFile(filePath, "utf8"));
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    return value;
+  } catch {
+    return null;
+  }
+}
+
+async function clearOwnerResolvedAck(filePath) {
+  await fs.rm(filePath, { force: true }).catch(() => {});
+}
+
+function ownerAckMatchesProject(ack, projectState = {}) {
+  if (!ack) return false;
+  const task = String(ack.current_task || "").trim();
+  const phase = String(ack.current_phase || "").trim();
+  if (!task || task !== String(projectState.current_task || "").trim()) {
+    return false;
+  }
+  if (phase && phase !== String(projectState.current_phase || "").trim()) {
+    return false;
+  }
+  return true;
 }
 
 async function writeTarget(filePath, target) {
@@ -260,6 +287,7 @@ if (!Number.isFinite(args.unavailableGraceMs) || args.unavailableGraceMs < 15_00
 
 const root = localRoot();
 const targetPath = args.targetPath || path.join(root, "target.json");
+const ownerResolvedAckPath = path.join(root, "owner-resolved.json");
 const stopPath = path.join(root, "STOP");
 const logPath = path.join(root, "supervisor.log");
 const runtimeStatusPath = defaultRuntimeStatusPath();
@@ -342,6 +370,10 @@ while (true) {
 
     const ownerWait = isOwnerWaitState(projectState);
 
+    if (!ownerWait) {
+      await clearOwnerResolvedAck(ownerResolvedAckPath);
+    }
+
     if (projectState.blocked || projectState.status === "BLOCKED") {
       ownerReconcileState = null;
       await safeAppendLog(logPath, {
@@ -368,7 +400,8 @@ while (true) {
           key,
           attempted: false,
           awaitingResponse: false,
-          settledTurn: null
+          settledTurn: null,
+          manualAck: false
         };
         await safeAppendLog(logPath, {
           type: "OWNER_BOUNDARY_OBSERVED",
@@ -683,8 +716,25 @@ while (true) {
     let ownerReconcileRequested = false;
 
     if (ownerWait && ownerReconcileState) {
+      const manualAck = await readOwnerResolvedAck(ownerResolvedAckPath);
+      if (ownerAckMatchesProject(manualAck, projectState)) {
+        if (!ownerReconcileState.manualAck) {
+          await safeAppendLog(logPath, {
+            type: "OWNER_RESOLVED_ACK_OBSERVED",
+            reason: "Owner explicitly marked the current WAIT_USER boundary as resolved; reconcile the live chat before unlocking repository state."
+          });
+        }
+        ownerReconcileState.manualAck = true;
+      } else if (manualAck) {
+        await safeAppendLog(logPath, {
+          type: "OWNER_RESOLVED_ACK_IGNORED",
+          reason: "Owner resolved acknowledgement does not match the current project task/phase."
+        });
+      }
       if (!ownerReconcileState.awaitingResponse) {
-        if (!ownerReconcileState.attempted) {
+        if (ownerReconcileState.manualAck) {
+          ownerReconcileRequested = true;
+        } else if (!ownerReconcileState.attempted) {
           ownerReconcileRequested = true;
         } else if (
           currentTurn > Number(ownerReconcileState.settledTurn || 0)
@@ -713,6 +763,8 @@ while (true) {
     ) {
       ownerReconcileState.attempted = true;
       ownerReconcileState.awaitingResponse = true;
+      ownerReconcileState.manualAck = false;
+      await clearOwnerResolvedAck(ownerResolvedAckPath);
       handoffPending = false;
       await safeAppendLog(logPath, {
         type: "OWNER_RECONCILE_SENT",
