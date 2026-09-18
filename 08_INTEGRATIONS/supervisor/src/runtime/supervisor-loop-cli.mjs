@@ -26,7 +26,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.13";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.14";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -687,6 +687,7 @@ while (true) {
     }
 
     const currentTurn = safeTurnMarker(probe);
+    const currentLastRole = String(probe?.snapshot?.lastMessageRole || "");
     const manualOwnerRecheck = ownerWait
       ? await fs.access(ownerResolvedPath).then(() => true).catch(() => false)
       : false;
@@ -697,7 +698,10 @@ while (true) {
         if (
           manualOwnerRecheck ||
           !ownerReconcileState.attempted ||
-          currentTurn > Number(ownerReconcileState.settledTurn || 0)
+          (
+            currentLastRole === "user" &&
+            currentTurn > Number(ownerReconcileState.settledTurn || 0)
+          )
         ) {
           ownerReconcileRequested = true;
         }
