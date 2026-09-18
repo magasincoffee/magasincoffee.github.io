@@ -175,20 +175,31 @@ async function ensureBrain({ adapter, registry, projectState, config, execute, r
   if (registry.brain.target) {
     return openTargetPage(adapter, registry.brain.target);
   }
+  if (!execute) return null;
   if (!config?.brain?.bootstrap_authorized) {
     throw new Error("brain bootstrap is not authorized by source of truth");
   }
+  if (registry.brain.bootstrap_consumed || registry.brain.creation_latch) {
+    throw new Error("Brain bootstrap outcome is uncertain; automatic second Brain creation is denied");
+  }
+
+  registry.brain.bootstrap_consumed = true;
+  registry.brain.creation_latch = {
+    kind: "OWNER_AUTHORIZED_INITIAL_BRAIN",
+    generation: 1
+  };
+  await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
 
   const created = await createConversationWithMessage(
     adapter,
     buildBrainBootstrapInstruction(projectState),
-    { execute }
+    { execute: true }
   );
-  if (!execute) return created.page;
 
   registry.brain.target = created.target;
   registry.brain.generation = 1;
   registry.brain.awaiting_response = true;
+  registry.brain.creation_latch = null;
   await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
   await safeLog(logPath, {
     type: "BRAIN_BOOTSTRAPPED",
@@ -200,17 +211,29 @@ async function ensureBrain({ adapter, registry, projectState, config, execute, r
 
 async function rolloverBrain({ adapter, registry, projectState, execute, registryPath, logPath, snapshot }) {
   assertRolloverAuthorized(snapshot);
+  if (!execute) return null;
+  if (registry.brain.creation_latch) {
+    throw new Error("Brain rollover outcome is uncertain; duplicate conversation creation is denied");
+  }
+
+  const nextGeneration = registry.brain.generation + 1;
+  registry.brain.creation_latch = {
+    kind: "ROLLOVER_FULL_CONFIRMED",
+    generation: nextGeneration
+  };
+  await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
+
   const created = await createConversationWithMessage(
     adapter,
     buildBrainRolloverInstruction(projectState, registry),
-    { execute }
+    { execute: true }
   );
-  if (!execute) return created.page;
 
   registry.brain.target = created.target;
-  registry.brain.generation += 1;
+  registry.brain.generation = nextGeneration;
   registry.brain.awaiting_response = true;
   registry.brain.last_processed_digest = null;
+  registry.brain.creation_latch = null;
   await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
   await safeLog(logPath, {
     type: "BRAIN_ROLLOVER_FULL_CONFIRMED",
@@ -258,9 +281,14 @@ async function dispatchWorker({
     instruction_digest: null,
     last_result_relay_id: null,
     last_result_digest: null,
-    relay_inflight_id: null
+    relay_inflight_id: null,
+    creation_latch: null,
+    dispatch_latch: null
   };
 
+  if (worker.creation_latch || worker.dispatch_latch) {
+    throw new Error(`worker ${worker.worker_id} has an uncertain prior create/send outcome; automatic retry is denied`);
+  }
   if (
     worker.awaiting_result &&
     worker.task_id === action.task_id &&
@@ -271,9 +299,11 @@ async function dispatchWorker({
   if (worker.awaiting_result) {
     throw new Error(`worker ${worker.worker_id} is busy`);
   }
+  if (!execute) return;
 
   let page = null;
   let isNewConversation = false;
+  let creationReason = null;
 
   if (worker.target) {
     page = await openTargetPage(adapter, worker.target);
@@ -286,7 +316,7 @@ async function dispatchWorker({
     }
     if (probe.snapshot.conversationFull) {
       assertRolloverAuthorized(probe.snapshot);
-      page = await adapter.newChatPage("https://chatgpt.com/");
+      creationReason = "ROLLOVER_FULL_CONFIRMED";
       isNewConversation = true;
     } else if (
       probe.classification.observation === OBSERVATIONS.ASSISTANT_RUNNING ||
@@ -295,27 +325,51 @@ async function dispatchWorker({
       throw new Error(`worker ${worker.worker_id} is not idle`);
     }
   } else {
-    page = await adapter.newChatPage("https://chatgpt.com/");
+    creationReason = "BRAIN_DIRECTIVE_NEW_WORKER";
     isNewConversation = true;
   }
 
+  worker.task_id = action.task_id;
+  worker.instruction_digest = action.instruction_digest;
+  worker.dispatch_latch = {
+    task_id: action.task_id,
+    instruction_digest: action.instruction_digest,
+    generation: worker.generation + (isNewConversation ? 1 : 0)
+  };
+
+  if (isNewConversation) {
+    worker.generation += 1;
+    worker.status = "CREATING";
+    worker.creation_latch = {
+      kind: creationReason,
+      generation: worker.generation,
+      instruction_digest: action.instruction_digest
+    };
+  } else {
+    worker.status = "DISPATCHING";
+  }
+  registry.workers[action.worker_id] = worker;
+  await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
+
+  if (isNewConversation) {
+    page = await adapter.newChatPage("https://chatgpt.com/");
+  }
+
   const execution = await sendComposerInstruction(page, action.instruction, {
-    dryRun: !execute
+    dryRun: false
   });
-  if (!execute) return;
   if (!execution.executed) {
     throw new Error(`worker ${worker.worker_id} dispatch failed: ${execution.reason || "unknown"}`);
   }
 
   if (isNewConversation) {
     worker.target = await waitForTarget(page);
-    worker.generation += 1;
   }
-  worker.task_id = action.task_id;
   worker.status = "RUNNING";
   worker.awaiting_result = true;
-  worker.instruction_digest = action.instruction_digest;
   worker.relay_inflight_id = null;
+  worker.creation_latch = null;
+  worker.dispatch_latch = null;
   registry.workers[action.worker_id] = worker;
   await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
   await safeLog(logPath, {
@@ -458,13 +512,20 @@ async function relayWorkerResult({
     return { brainPage: page, relayed: false };
   }
 
+  if (ready.worker.relay_inflight_id) {
+    if (ready.worker.relay_inflight_id === envelope.relay_id) {
+      throw new Error(`relay ${envelope.relay_id} has an uncertain prior send outcome; exact-once policy denies resend`);
+    }
+    throw new Error("worker has a conflicting relay-inflight latch");
+  }
+  if (!execute) return { brainPage: page, relayed: false };
+
   ready.worker.relay_inflight_id = envelope.relay_id;
   await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
 
   const execution = await sendComposerInstruction(page, envelope.text, {
-    dryRun: !execute
+    dryRun: false
   });
-  if (!execute) return { brainPage: page, relayed: false };
   if (!execution.executed) {
     throw new Error(`Worker result relay failed: ${execution.reason || "unknown"}`);
   }
