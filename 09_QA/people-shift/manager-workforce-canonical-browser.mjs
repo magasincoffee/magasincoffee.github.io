@@ -82,8 +82,8 @@ await check("manager_swap_approval_updates_official_schedule_through_rpc",async(
     await page.waitForFunction(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==="get_manager_weekly_schedule").at(-1)?.args?.p_week_start==="2026-09-21");
   }
   await page.locator('[data-view="swap"]').click();
-  await page.locator("#view-swap .js-approve").waitFor();
-  await page.locator("#view-swap .js-approve").click();
+  await page.locator("#view-swap .js-swap-approve").waitFor();
+  await page.locator("#view-swap .js-swap-approve").click();
   await page.waitForFunction(()=>globalThis.__MW31_QA.calls.some(x=>x.name==="approve_shift_swap"));
   await page.locator("#view-swap").filter({hasText:"Không có yêu cầu đổi ca đang chờ"}).waitFor();
   const direct=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.kind==="from"));
@@ -93,6 +93,23 @@ await check("manager_swap_approval_updates_official_schedule_through_rpc",async(
   const call=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==="approve_shift_swap").at(-1));
   if(call.args.p_swap_id!=="swap-1")throw new Error(JSON.stringify(call));
   return "approve_shift_swap -> official schedule refresh";
+});
+
+await check("manager_give_approval_transfers_schedule_after_recipient_acceptance",async()=>{
+  await page.locator('[data-view="swap"]').click();
+  await page.locator("#view-swap .js-give-approve").waitFor();
+  const giveText=await page.locator("#view-swap").innerText();
+  if(!giveText.includes("Người nhận đã đồng ý"))throw new Error(giveText);
+  await page.locator("#view-swap .js-give-approve").click();
+  await page.waitForFunction(()=>globalThis.__MW31_QA.calls.some(x=>x.name==="approve_shift_give"));
+  await page.locator("#view-swap").filter({hasText:"Không có yêu cầu cho ca chờ quản lý"}).waitFor();
+  await page.locator('[data-view="schedule"]').click();
+  await page.locator("#view-schedule").filter({hasText:"Người nhận Give QA"}).waitFor();
+  const call=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==="approve_shift_give").at(-1));
+  if(call.args.p_give_id!=="give-1")throw new Error(JSON.stringify(call));
+  const direct=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.kind==="from"));
+  if(direct.length)throw new Error(JSON.stringify(direct));
+  return "PENDING_MANAGER -> approve_shift_give -> official refresh";
 });
 
 await check("browser_diagnostics",async()=>{

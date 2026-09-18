@@ -63,6 +63,7 @@ function capture(e){
 document.addEventListener('click',capture,true);
 document.addEventListener('magasin:schedule-published',e=>{const detail=e.detail||{};if(detail.weekStart)state.week=String(detail.weekStart).slice(0,10);if(detail.storeId)state.storeId=detail.storeId;if(view()?.classList.contains('active'))refresh()});
 document.addEventListener('magasin:shift-swap-resolved',()=>{if(view()?.classList.contains('active'))refresh()});
+document.addEventListener('magasin:shift-give-resolved',()=>{if(view()?.classList.contains('active'))refresh()});
 function boot(){if(view()?.classList.contains('active'))refresh()}
 window.MAGASIN_MANAGER_OFFICIAL_SCHEDULE={refresh,getState:()=>({...state,stores:state.stores.map(x=>({...x})),rows:state.rows.map(x=>({...x}))})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

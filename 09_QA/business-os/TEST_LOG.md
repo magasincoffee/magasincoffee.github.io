@@ -159,3 +159,28 @@
 - Notification/email/calendar/outbox primitive inventory: NOT_CONNECTED.
 - Production schema/data/provider/permission mutation: none.
 - Gate: safe core **VERIFIED**; TASK-032 **WAIT_USER** on SFB-001/SFB-002.
+
+## 2026-09-18 — TASK-033 Give Shift production primitive
+
+- Branch: `feat/task-033-give-shift-v1`
+- Task doc: `01_DOCS/MAGASIN/05_SYSTEM/GIVE_SHIFT_PRODUCTION_V1.md`
+- Production migration: `20260918112940_shift_give_v1`.
+- Repository migration: `07_DATABASE/migrations/20260918112940_shift_give_v1.sql`.
+- People Shift Day-10 run `35340623723`: **PASS**.
+- Static migration/RPC/RLS lifecycle tests: PASS.
+- Employee Swap regression: PASS.
+- Employee Give giver submit browser: PASS.
+- Employee Give recipient consent browser: PASS.
+- Employee availability regression: PASS.
+- Employee attendance schedule-linked regression: PASS.
+- Manager Swap/Give approval + official schedule refresh browser E2E: PASS.
+- Day-10 People/Shift browser E2E: PASS.
+- Control Tower browser regression: PASS.
+- Production RLS enabled: PASS.
+- anon table SELECT: denied.
+- authenticated direct table SELECT: denied.
+- Give RPC anon EXECUTE: denied.
+- authenticated permissioned Give RPC EXECUTE: granted.
+- Pending Give vs Swap conflict guard: PASS.
+- Production synthetic/private test rows inserted: none.
+- Gate: TASK-033 **DONE**; TASK-034 **READY**.
