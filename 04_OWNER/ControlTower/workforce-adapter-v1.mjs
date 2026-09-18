@@ -1,7 +1,11 @@
-import { loadStoreStaffingGap } from "./staffing-gap-adapter-v1.mjs";
+import {
+  loadStoreStaffingGap,
+  STAFFING_GAP_SOURCE_LABEL
+} from "./staffing-gap-adapter-v1.mjs";
 
 const SOURCE_LABEL =
-  "get_manager_transfer_requests + list_schedule_generations + get_workforce_staffing_requirements + get_schedule_generation_assignments";
+  "get_manager_transfer_requests + list_schedule_generations + " +
+  STAFFING_GAP_SOURCE_LABEL;
 
 const UNPUBLISHED_GENERATION_STATUSES = new Set(["DRAFT", "REVIEWED"]);
 
@@ -17,8 +21,7 @@ function isUnpublishedGeneration(row) {
 
 export function summarizeWorkforceAttention({
   transferRows = [],
-  generationsByStore = [],
-  staffingGapByStore = []
+  generationsByStore = []
 } = {}) {
   const pendingTransfers = transferRows.filter(isPendingTransfer).length;
   const unpublishedGenerations = generationsByStore.reduce(
@@ -30,44 +33,51 @@ export function summarizeWorkforceAttention({
     0
   );
 
-  const scopedStoreCount = Array.isArray(generationsByStore)
-    ? generationsByStore.length
-    : 0;
-  const gapRows = Array.isArray(staffingGapByStore)
-    ? staffingGapByStore
-    : [];
-  const staffingGapComplete =
-    scopedStoreCount === 0 ||
-    (gapRows.length === scopedStoreCount &&
-      gapRows.every(
-        (row) =>
-          row?.quality === "ACTUAL" &&
-          Number.isFinite(row?.staffingGapCount)
-      ));
-
-  const staffingGapCount =
-    scopedStoreCount === 0
-      ? null
-      : staffingGapComplete
-        ? gapRows.reduce((sum, row) => sum + row.staffingGapCount, 0)
-        : null;
-
   return {
-    staffingGapCount,
-    staffingGapComplete,
     unresolvedCount: pendingTransfers + unpublishedGenerations,
     pendingTransfers,
     unpublishedGenerations
   };
 }
 
+export function summarizeStaffingGapSections(
+  sections = [],
+  expectedStoreCount = sections.length
+) {
+  if (
+    !Array.isArray(sections) ||
+    sections.length !== expectedStoreCount
+  ) {
+    return {
+      complete: false,
+      staffingGapCount: null
+    };
+  }
+
+  let staffingGapCount = 0;
+  for (const section of sections) {
+    if (
+      section?.quality !== "ACTUAL" ||
+      !Number.isFinite(section?.staffingGapCount)
+    ) {
+      return {
+        complete: false,
+        staffingGapCount: null
+      };
+    }
+    staffingGapCount += section.staffingGapCount;
+  }
+
+  return {
+    complete: true,
+    staffingGapCount
+  };
+}
+
 async function readRpc(core, name, args) {
   const result = await core.supabase.rpc(name, args);
   if (result?.error) throw result.error;
-  if (!Array.isArray(result?.data)) {
-    throw new Error(`MALFORMED_RPC_RESULT:${name}`);
-  }
-  return result.data;
+  return Array.isArray(result?.data) ? result.data : [];
 }
 
 export async function loadWorkforceAttention(
@@ -77,8 +87,7 @@ export async function loadWorkforceAttention(
     now = () => new Date()
   } = {}
 ) {
-  const nowValue = now();
-  const asOf = nowValue.toISOString();
+  const asOf = now().toISOString();
 
   if (
     !core?.supabase?.rpc ||
@@ -105,6 +114,8 @@ export async function loadWorkforceAttention(
     };
   }
 
+  stores = Array.isArray(stores) ? stores : [];
+
   let transferRows = [];
   let transferOk = false;
   try {
@@ -117,40 +128,60 @@ export async function loadWorkforceAttention(
   } catch {}
 
   const generationsByStore = [];
-  const staffingGapByStore = [];
   let generationSuccesses = 0;
 
-  for (const store of Array.isArray(stores) ? stores : []) {
+  for (const store of stores) {
     try {
-      const generationRows = await readRpc(
-        core,
-        "list_schedule_generations",
-        {
-          p_store_id: store.id,
-          p_week_start: weekStart
-        }
+      generationsByStore.push(
+        await readRpc(
+          core,
+          "list_schedule_generations",
+          {
+            p_store_id: store.id,
+            p_week_start: weekStart
+          }
+        )
       );
-      generationsByStore.push(generationRows);
       generationSuccesses += 1;
-
-      staffingGapByStore.push(
-        await loadStoreStaffingGap(core, {
-          storeId: store.id,
-          weekStart,
-          generationRows,
-          now: () => nowValue
-        })
-      );
     } catch {
       generationsByStore.push(null);
-      staffingGapByStore.push(null);
     }
   }
 
-  const storeCount = Array.isArray(stores) ? stores.length : 0;
+  const staffingGapSections = [];
+  for (let index = 0; index < stores.length; index += 1) {
+    const generationRows = generationsByStore[index];
+    if (!Array.isArray(generationRows)) {
+      staffingGapSections.push(null);
+      continue;
+    }
+    staffingGapSections.push(
+      await loadStoreStaffingGap(
+        core,
+        {
+          storeId: stores[index].id,
+          weekStart,
+          generationRows,
+          now
+        }
+      )
+    );
+  }
+
+  const storeCount = stores.length;
   const generationsComplete = generationSuccesses === storeCount;
+  const staffingGap = summarizeStaffingGapSections(
+    staffingGapSections,
+    storeCount
+  );
+  const anyGapSourceOk = staffingGapSections.some(
+    (section) => section?.quality === "ACTUAL"
+  );
   const anySourceOk =
-    transferOk || generationSuccesses > 0 || storeCount === 0;
+    transferOk ||
+    generationSuccesses > 0 ||
+    anyGapSourceOk ||
+    storeCount === 0;
 
   if (!anySourceOk) {
     return {
@@ -163,23 +194,22 @@ export async function loadWorkforceAttention(
 
   const summary = summarizeWorkforceAttention({
     transferRows: transferOk ? transferRows : [],
-    generationsByStore,
-    staffingGapByStore
+    generationsByStore
   });
 
   const complete =
     transferOk &&
     generationsComplete &&
-    summary.staffingGapComplete;
+    staffingGap.complete;
 
   return {
     quality: complete ? "ACTUAL" : "ESTIMATE",
     source: SOURCE_LABEL,
     asOf,
-    staffingGapCount: summary.staffingGapCount,
+    staffingGapCount: staffingGap.staffingGapCount,
     unresolvedCount: summary.unresolvedCount,
     message: complete
-      ? "Staffing gap = số nhu cầu ACTIVE có phân công thấp hơn minimum_headcount. Chưa xử lý = yêu cầu chuyển PENDING + lịch DRAFT/REVIEWED."
-      : "Một phần nguồn Workforce chưa khả dụng; số chưa xử lý là tối thiểu từ các nguồn đọc được. Staffing gap chỉ hiển thị khi đủ read model cho toàn bộ cửa hàng."
+      ? "Staffing gap = nhu cầu ACTIVE có phân công dưới minimum_headcount. Chưa xử lý = yêu cầu chuyển PENDING + lịch DRAFT/REVIEWED."
+      : "Một phần nguồn Workforce chưa khả dụng; số chưa xử lý là tối thiểu từ nguồn đọc được và staffing gap chỉ hiển thị khi đủ nguồn kiểm chứng."
   };
 }
