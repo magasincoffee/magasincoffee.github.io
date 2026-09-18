@@ -1,6 +1,33 @@
 import { ChatGptUiAdapter } from "../ui/playwright-adapter.mjs";
 import { retryOperation } from "../retry.mjs";
 
+export function safeConnectionErrorCause(error) {
+  const cause = error?.lastError || error?.cause || error;
+  const rawCode = String(cause?.code || cause?.cause?.code || "").trim();
+  if (rawCode) return rawCode.slice(0, 64).toUpperCase();
+
+  const message = String(cause?.message || "").toLowerCase();
+  if (message.includes("econnrefused") || message.includes("connection refused")) {
+    return "ECONNREFUSED";
+  }
+  if (message.includes("websocket")) return "WEBSOCKET_ERROR";
+  if (
+    message.includes("browser has been closed") ||
+    message.includes("target page, context or browser has been closed")
+  ) {
+    return "BROWSER_CLOSED";
+  }
+  if (message.includes("socket hang up")) return "SOCKET_HANG_UP";
+  if (message.includes("connectovercdp")) return "CONNECT_OVER_CDP";
+
+  const netError = message.match(/net::err_[a-z0-9_]+/i);
+  if (netError) return netError[0].toUpperCase();
+
+  const name = String(cause?.name || "").trim();
+  if (name && name !== "Error") return name.slice(0, 64);
+  return "UNKNOWN_CONNECTION_ERROR";
+}
+
 export class SupervisorSession {
   constructor({
     cdpUrl = "http://127.0.0.1:9222",
@@ -47,7 +74,8 @@ export class SupervisorSession {
       await adapter.close().catch(() => {});
       this.onEvent({
         type: "CONNECT_FAILED",
-        errorName: error?.name || "Error"
+        errorName: error?.name || "Error",
+        errorCause: safeConnectionErrorCause(error)
       });
       throw error;
     }
