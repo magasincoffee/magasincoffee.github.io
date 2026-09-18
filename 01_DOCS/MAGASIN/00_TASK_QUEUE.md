@@ -29,9 +29,11 @@
 
 | TASK-020 | Staffing-gap read adapter + unit/regression contract | 20m | unit + forbidden-write regression | DONE |
 | TASK-021 | Control Tower staffing-gap integration | 20m | adapter/integration + browser regression | DONE |
-| TASK-022 | People/Shift browser E2E + Day-10 usability gate | 20m | browser E2E | READY |
+| TASK-022 | People/Shift browser E2E + Day-10 usability gate | 20m | browser E2E | DONE |
 
-Queue Day 8–10 được mở từ evidence của TASK-019. Không mở thêm task trừ khi test phát hiện defect tái hiện được.
+| TASK-023 | SOP/Task current-system gap review + acceptance contract | 20m | discovery/contract | READY |
+
+Queue Day 8–10 đã đóng sau TASK-022. Day 11–13 bắt đầu bằng TASK-023 discovery/acceptance; chưa mở implementation task SOP/Task cho đến khi review xác định gap tái hiện được.
 
 ## Execution rule
 
