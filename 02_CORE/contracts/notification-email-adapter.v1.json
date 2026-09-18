@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-035",
+  "status": "OWNER_DECISION_REQUIRED",
+  "provider_evidence": {
+    "repository_provider_config_found": false,
+    "supabase_edge_functions_found": 0,
+    "public_or_private_mail_primitive_found": false,
+    "secret_values_enumerated": false
+  },
+  "owner_approved": {
+    "email_source": "MAGASIN_EMAIL",
+    "external_calendar": false,
+    "secret_store_credentials": true
+  },
+  "provider_independent": {
+    "outbox_rpc": "claim_notification_email_batch_v1",
+    "completion_rpc": "complete_notification_email_v1",
+    "recipient_source": "public.profiles.email",
+    "audience_resolution": {
+      "USER": "recipient_user_id",
+      "OWNER": "profiles.role=OWNER AND status=ACTIVE",
+      "STORE_MANAGERS": "profiles.role=STORE_MANAGER AND access_scope contains stores.code"
+    },
+    "config_keys": [
+      "MAGASIN_EMAIL_PROVIDER",
+      "MAGASIN_EMAIL_FROM",
+      "MAGASIN_EMAIL_REPLY_TO"
+    ],
+    "server_key_sources": [
+      "SUPABASE_SECRET_KEYS",
+      "SUPABASE_SERVICE_ROLE_KEY"
+    ],
+    "claim_after_provider_initialization": true,
+    "credentials_in_git": false
+  },
+  "activation_boundary": {
+    "required_owner_inputs": [
+      "CONCRETE_EMAIL_PROVIDER",
+      "EXACT_MAGASIN_SENDER_EMAIL"
+    ],
+    "optional_input": "MAGASIN_REPLY_TO_EMAIL",
+    "deploy_edge_function": false,
+    "set_provider_secrets": false,
+    "send_email": false
+  },
+  "required_project_state": "WAIT_USER"
+}
