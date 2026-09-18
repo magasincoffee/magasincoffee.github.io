@@ -3,7 +3,7 @@
 **Phase:** P1_SCHEDULE_FIRST_CORE_FLOW  
 **Task:** TASK-032 — Published schedule → attendance/swap/notification integration gate  
 **Date:** 2026-09-18  
-**Status:** OWNER_BOUNDARY_AFTER_VERIFIED_CORE
+**Status:** VERIFIED_DECISIONS_COMPLETE
 
 ## Five-Step
 
@@ -143,19 +143,25 @@ Người cho chọn ca + người nhận
 
 Không auto-transfer trước khi người nhận đồng ý và Manager duyệt.
 
-### SFB-002 — Notification production activation
+### SFB-002 — Notification production activation — APPROVED
 
-Owner đã yêu cầu thông báo cho người liên quan, email và calendar. Phần còn thiếu là authorization production:
+Owner chốt ngày 2026-09-18:
 
-1. cho phép tạo/apply event-outbox primitive dùng chung cho schedule events;
-2. chọn/ủy quyền nguồn tài khoản hoặc provider email;
-3. nếu external calendar được bật, chọn/ủy quyền provider/calendar target;
-4. cho phép cấu hình credentials ở secret store ngoài public Git.
+- event-outbox production: **CHO PHÉP**;
+- email source: **email MAGASIN**;
+- external calendar: **CHƯA CẦN / DISABLED**;
+- external credentials: **CHO PHÉP lưu trong secret store ngoài public Git**.
 
-Provider-neutral contract có thể draft offline; **apply production và provider activation vẫn cần Owner approval**.
+Implementation rule:
+
+1. event-outbox được phép apply production;
+2. notification core phải provider-neutral;
+3. email adapter chỉ được bật khi account/provider MAGASIN cụ thể được cấu hình bằng secret store;
+4. external calendar không nằm trong active scope;
+5. tuyệt đối không commit credential vào repository public.
 
 ## Current gate result
 
-Safe core của TASK-032 đã VERIFIED. SFB-001 đã được Owner phê duyệt; TASK-032 hiện chỉ còn WAIT_USER ở SFB-002 trước khi mở production notification infrastructure/provider activation.
+Safe core của TASK-032 đã VERIFIED. SFB-001 và SFB-002 đều đã được Owner phê duyệt. Decision gate đóng; implementation được chia thành TASK-033 Give primitive, TASK-034 notification outbox production và TASK-035 email adapter/config.
 
 Production schema/data/provider mutation trong TASK-032 đến thời điểm này: **none**.
