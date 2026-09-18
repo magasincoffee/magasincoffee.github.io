@@ -28,3 +28,18 @@
 - Reproducible product defects: `BUG-PS-001` found and fixed within TASK-022; unresolved defects: none.
 - Day-10 People/Shift usability gate: **PASS**.
 - Gate: TASK-022 **DONE**. Approved Blueprint evidence advances execution to TASK-023, the Day 11–13 SOP/Task discovery gate.
+
+## 2026-09-18 — BUG-PS-002 Employee Shift Swap DOM API regression
+
+- Branch: `fix/bug-ps-002-employee-swap-dom-api`
+- Pull request: `#82`
+- Workflow: `People Shift Day-10 Tests`
+- Verified run: `35320689975`
+- Root-cause regression test: PASS.
+- Employee Swap isolated Playwright regression: PASS.
+- Swap controls `#employeeSwapTarget` and `#employeeSwapReason` initialize without DOM API exception.
+- Browser diagnostics: page errors 0; console errors 0; request failures 0; HTTP 5xx 0.
+- Existing People/Shift Day-10 browser E2E: PASS.
+- Existing Owner Control Tower browser E2E: PASS.
+- No production endpoint, data migration, backfill or schema change was introduced.
+- Result: **BUG-PS-002 FIXED / VERIFIED**.
