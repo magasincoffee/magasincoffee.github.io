@@ -145,8 +145,8 @@ jobs:
 
           $runtimeBrain = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
           if (-not (Test-Path $runtimeBrain)) { throw "Installed Brain/Worker runtime is missing" }
-          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.22" -Quiet)) {
-            throw "Installed Brain/Worker runtime is not v2026-09-19.22"
+          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.23" -Quiet)) {
+            throw "Installed Brain/Worker runtime is not v2026-09-19.23"
           }
 
           $runtimeStatusFile = Join-Path $root "runtime-status.json"
@@ -156,7 +156,7 @@ jobs:
               try {
                 $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
                 if (
-                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.22" -and
+                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.23" -and
                   -not (
                     $runtimeStatus.status -eq "WAIT_USER" -and
                     [string]$runtimeStatus.decision_reason -match "target mismatch"
@@ -170,7 +170,19 @@ jobs:
             Start-Sleep -Seconds 1
           }
           if (-not $targetHealthy) {
-            throw "Brain target recovery is still blocked by target mismatch after v2026-09-19.22 install"
+            $controlPanel = Join-Path $root "runtime\windows\control-panel.ps1"
+            $brainRuntime = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
+            if (
+              -not (Test-Path $controlPanel) -or
+              -not (Select-String -Path $controlPanel -SimpleMatch "DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO" -Quiet) -or
+              -not (Test-Path $brainRuntime) -or
+              -not (Select-String -Path $brainRuntime -SimpleMatch "BRAIN_TARGET_REBOUND_OWNER" -Quiet)
+            ) {
+              throw "v2026-09-19.23 target mismatch remains but the Owner Brain rebind recovery path is unavailable"
+            }
+            Write-Host "BRAIN_REBIND_REQUIRED=True"
+          } else {
+            Write-Host "BRAIN_REBIND_REQUIRED=False"
           }
 
           Write-Host "AUTOSTART_REGISTERED=True"
