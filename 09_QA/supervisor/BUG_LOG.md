@@ -169,3 +169,19 @@
 - Privacy boundary: no message body or Work activity text is logged; only counts/roles/busy flags participate in the local decision.
 - Runtime: `2026-09-18.8`.
 - Status: FIXED IN CODE — pending field verification.
+
+
+## BUG-SUP-013 — Work UI can deadlock again after HANDOFF_RECONCILE is sent
+
+- Date: 2026-09-18
+- Component: loop rearm / ChatGPT Work completion
+- Field evidence: runtime v8 successfully emitted exactly one `HANDOFF_IDLE_CONFIRMED` and `HANDOFF_RECONCILED`, but the next live runtime status returned to `UI=USER_PENDING / OBS=USER_PENDING`.
+- Root cause: v8 solved only the first startup handoff. After the Supervisor sends HANDOFF_RECONCILE, the loop disarms until observable assistant progress; Work can again render that progress outside standard assistant-message containers, so the loop cannot rearm from standard message counts alone.
+- Fix:
+  1. track privacy-safe Work activity while USER_PENDING;
+  2. require actual busy/running or structural change as post-send progress evidence;
+  3. after progress, require a 20-second stable idle window before treating Work as complete;
+  4. feed the synthetic effective `RESPONSE_COMPLETE` through the existing rearm gate;
+  5. stable USER_PENDING with no post-send progress evidence remains WAIT, preventing duplicate sends.
+- Runtime: `2026-09-18.9`.
+- Status: FIXED IN CODE — pending field verification.
