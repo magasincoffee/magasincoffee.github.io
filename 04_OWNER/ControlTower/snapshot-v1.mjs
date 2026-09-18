@@ -13,6 +13,7 @@ const DEFAULT_MESSAGE = Object.freeze({
 });
 
 function normalizeQuality(value) {
+  if (value == null || value === "") return "NOT_CONNECTED";
   return QUALITY_STATES.includes(value) ? value : "GAP";
 }
 
@@ -32,8 +33,9 @@ function normalizeMetricSection(raw = {}, fields = []) {
         : DEFAULT_MESSAGE[quality]
   };
 
+  const metricsTrusted = quality === "ACTUAL" || quality === "ESTIMATE";
   for (const field of fields) {
-    section[field] = nullableNumber(raw[field]);
+    section[field] = metricsTrusted ? nullableNumber(raw[field]) : null;
   }
 
   return section;
