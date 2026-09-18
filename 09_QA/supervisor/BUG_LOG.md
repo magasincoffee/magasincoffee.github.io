@@ -53,7 +53,7 @@
 - Impact: self-hosted runner remains occupied and later Supervisor jobs queue unnecessarily.
 - Root cause: logical session detach did not close the Playwright CDP socket handle, and calling Browser.close() would undesirably close the owner's real Chrome.
 - Fix: short-lived CI CLIs explicitly terminate the Node process after their finally/disconnect path. The continuous Supervisor loop does not use this forced-exit path.
-- Status: FIXED — pending verification
+- Status: VERIFIED — short-lived CLI regression + live retry smoke completed without lingering CLI
 
 
 ## BUG-SUP-005 — STOP sentinel does not guarantee prompt kill-switch termination
@@ -65,7 +65,7 @@
 - Impact: a STOP request can be delayed while the runtime is blocked in browser/network work; this is not strong enough for the required local kill switch.
 - Root cause: stop script only wrote a sentinel and relied on the cooperative loop to return to its next sentinel check.
 - Fix: keep cooperative STOP first, then after a short grace period force-terminate the Supervisor process tree and remove the PID file. This applies only to the dedicated Supervisor process, not the GitHub runner.
-- Status: FIXING
+- Status: VERIFIED — installer/START/STOP smoke run 35301449363 PASS
 
 
 ## BUG-SUP-006 — Installer cannot replace runtime while previous Supervisor process is alive
@@ -77,4 +77,4 @@
 - Impact: upgrades/reinstalls cannot proceed deterministically.
 - Root cause: installer assumed the runtime directory was idle and did not stop an already-running Supervisor before replacement.
 - Fix: installer first reads the local Supervisor PID, force-stops only that dedicated process tree when present, removes stale PID/STOP files, then retries runtime replacement with a bounded loop.
-- Status: FIXING
+- Status: VERIFIED — installer/START/STOP smoke run 35301449363 PASS
