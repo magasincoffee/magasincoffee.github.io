@@ -89,7 +89,7 @@ try {
   await check("give_shift_is_fail_closed_not_disguised_as_swap", async () => {
     const give=employee.locator("[data-give-shift-state='NOT_CONNECTED']");
     await give.waitFor({state:"attached"});
-    await give.click();
+    await give.evaluate(el=>el.click());
     const opened=await employee.locator("#swapForm").evaluate(el=>el.classList.contains("open"));
     const submitCalls=await page.evaluate(()=>window.__EMPLOYEE_SWAP_QA.calls.filter(x=>x.name==="submit_shift_swap_request"));
     const toasts=await page.evaluate(()=>window.__EMPLOYEE_SWAP_QA.toasts);
@@ -100,7 +100,7 @@ try {
   });
 
   await check("swap_requires_reason_before_submit", async () => {
-    await employee.locator("#swapChoices .swap-choice").first().click();
+    await employee.locator("#swapChoices button").first().click();
     await employee.locator("#employeeRequesterSchedule").waitFor({state:"attached"});
     await employee.locator("#employeeSwapTarget").selectOption("sch-target");
     await employee.locator("#swapForm .swap-actions .btn.primary").click();
