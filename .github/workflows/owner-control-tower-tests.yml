@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - '04_OWNER/ControlTower/**'
+      - '04_OWNER/index.html'
       - '09_QA/owner-control-tower/**'
       - '.github/workflows/owner-control-tower-tests.yml'
   pull_request:
     paths:
       - '04_OWNER/ControlTower/**'
+      - '04_OWNER/index.html'
       - '09_QA/owner-control-tower/**'
       - '.github/workflows/owner-control-tower-tests.yml'
 
