@@ -4,7 +4,7 @@
 **Task:** TASK-034 — Notification event-outbox production  
 **Date:** 2026-09-18  
 **Owner rule:** SFB-002 approved  
-**Status:** IMPLEMENTED_PENDING_GATE
+**Status:** VERIFIED
 
 ## Five-Step
 
