@@ -30,10 +30,11 @@ TASK-047 reconciled the changelog, created canonical evidence, and expanded Busi
 - Business OS PR #119 head `311bf4413a3dd5cdc5d7d01f8d6642d13e061629`
 - Supervisor Tests run `35371642271`: **203/203 PASS**
 - TASK-048 hard-stop reconciliation fix: commits `b248af37ddd6eab40b485a8d8f2c06c9b8c533d6` + `9d3a9f6a290e25a9a4bdb2f13eeb7d045b66c477`; observable QA probe run `35372881851`: **162/162 PASS**, 0 failed; PR #120 closed without merge
+- TASK-048 boundary-time guard fix: commits `148fb5b7ab0c2f33536248573c0ae2116c740cfa` + `525554e31ce0cb91e8c8bfb29ab25fa16ec48091`; QA probe run `35373330382`: **162/162 PASS**, 0 failed; manual dispatch before 09:15 +07 is blocked; PR #121 closed without merge
 - Media Robot PR #21 head `3522886bb54ac5b69d245eb3ccd1285ada8571e0`
 - Media push run `35370775036`: **83/83 PASS**
 - Media PR run `35371002442`: **83/83 PASS**
-- No bounded regression remains; TASK-048 hard-stop now reconciles PROJECT_STATE, cursor, CURRENT_STATE, TASK_QUEUE, architecture status and the final report at the 09:15 boundary.
+- No bounded regression remains; TASK-048 hard-stop now both reconciles every canonical final-state surface and refuses manual dispatch before the approved 09:15 +07 boundary.
 
 ## Safety checkpoint
 
