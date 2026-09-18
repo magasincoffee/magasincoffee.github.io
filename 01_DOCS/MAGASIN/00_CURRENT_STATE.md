@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-022 — People/Shift browser E2E + Day-10 usability gate**
+**TASK-023 — SOP/Task current-system gap review + acceptance contract**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Run **TASK-022 — People/Shift browser E2E + Day-10 usability gate**. Exercise the existing Owner Workforce and Employee availability/schedule flow with deterministic sanitized mocks, verify the generation→review→publish contract and approved schedule visibility, assert no unexpected browser/network errors, then close the Day-10 gate or open only reproducible defects.
+Run **TASK-023 — SOP/Task current-system gap review + acceptance contract** from the canonical Day 11–13 Blueprint slice. Inventory existing SOP/checklist/task surfaces and data contracts, preserve working workflows, define only verified gaps for `SOP template → execution → responsible person → exception → corrective task → verify → close`, then open the smallest implementation queue. Discovery/read-only work is GREEN; do not apply production migrations or invent ambiguous business rules.
 
 ## Session handoff
 
