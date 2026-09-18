@@ -66,3 +66,15 @@
 - Root cause: stop script only wrote a sentinel and relied on the cooperative loop to return to its next sentinel check.
 - Fix: keep cooperative STOP first, then after a short grace period force-terminate the Supervisor process tree and remove the PID file. This applies only to the dedicated Supervisor process, not the GitHub runner.
 - Status: FIXING
+
+
+## BUG-SUP-006 — Installer cannot replace runtime while previous Supervisor process is alive
+
+- Date: 2026-09-18
+- Component: Windows Supervisor installer
+- Reproduction: a previous persistent/dry-run Supervisor process survives Actions cleanup and still has the runtime directory open; installer attempts `Remove-Item -Recurse`.
+- Observed: installer smoke run `35301290507` fails with "process cannot access ... runtime because it is being used by another process."
+- Impact: upgrades/reinstalls cannot proceed deterministically.
+- Root cause: installer assumed the runtime directory was idle and did not stop an already-running Supervisor before replacement.
+- Fix: installer first reads the local Supervisor PID, force-stops only that dedicated process tree when present, removes stale PID/STOP files, then retries runtime replacement with a bounded loop.
+- Status: FIXING
