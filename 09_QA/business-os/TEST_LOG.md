@@ -126,3 +126,20 @@
 - Existing Control Tower browser regression: PASS.
 - Production writes/schema/backfill during QA: none; sanitized mocks only.
 - Gate: TASK-029 **DONE**; TASK-030 may proceed.
+
+## 2026-09-18 — TASK-030 Employee weekly registration V2
+
+- Branch: `feat/schedule-v1-completion`
+- Implementation commit series culminated at `43de2bf3cc22e935df8b244cb735462eab6f6c67`.
+- Business OS Contract Tests run `35328605839`: **PASS**.
+- People Shift Day-10 Tests run `35328605806`: **PASS**.
+- Supervisor Tests run `35328605763`: **PASS**.
+- SOP Task regressions run `35328605777`: **PASS**.
+- Multiple availability windows on same day: PASS.
+- AVAILABLE / PREFERRED / UNAVAILABLE: PASS.
+- UNAVAILABLE stores no preferred store: PASS.
+- Delete refreshes saved state immediately: PASS.
+- Week navigation re-queries the server contract: PASS.
+- Exact “Cả Ngày” semantics not invented: PASS.
+- Production schema/backfill: none.
+- Gate: TASK-030 **DONE**; TASK-031 may proceed.
