@@ -6,7 +6,7 @@ const CONVERSATION_FULL_RE =
   /maximum (?:length|duration)|reached.{0,50}maximum|conversation.{0,60}(?:too long|full|limit|maximum)|chat.{0,50}(?:too long|full|limit|maximum)|start (?:a )?new (?:chat|conversation)|continue.{0,40}(?:new chat|new conversation)|thời lượng tối đa|độ dài tối đa|cuộc trò chuyện.{0,60}(?:quá dài|đầy|giới hạn|tối đa)|đoạn chat.{0,50}(?:quá dài|đầy|giới hạn|tối đa)|đạt.{0,50}(?:giới hạn|tối đa)|bắt đầu.{0,30}(?:đoạn chat|cuộc trò chuyện) mới/i;
 
 const CONVERSATION_MISSING_RE =
-  /conversation not found|unable to load conversation|couldn.t load conversation|conversation unavailable|chat not found|chat unavailable|không tìm thấy cuộc trò chuyện|không thể tải cuộc trò chuyện|cuộc trò chuyện không khả dụng|không tìm thấy đoạn chat|không thể tải đoạn chat|đoạn chat không khả dụng/i;
+  /conversation not found|unable to load conversation|couldn.t load conversation|conversation.{0,20}unavailable|chat not found|chat.{0,20}unavailable|không tìm thấy cuộc trò chuyện|không thể tải cuộc trò chuyện|cuộc trò chuyện.{0,20}không khả dụng|không tìm thấy đoạn chat|không thể tải đoạn chat|đoạn chat.{0,20}không khả dụng/i;
 
 const MODEL_SWITCHING_RE =
   /switching.{0,30}model|switched.{0,30}model|using.{0,30}(?:different|another) model|continue.{0,30}another model|đang chuyển.{0,30}mô hình|chuyển sang.{0,30}mô hình|đang dùng.{0,30}mô hình khác/i;
