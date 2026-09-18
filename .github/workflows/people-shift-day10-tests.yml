@@ -1,0 +1,78 @@
+name: People Shift Day-10 Tests
+
+on:
+  push:
+    paths:
+      - '04_OWNER/Workforce/**'
+      - '06_EMPLOYEE/**'
+      - '09_QA/people-shift/**'
+      - '09_QA/owner-control-tower/**'
+      - '04_OWNER/ControlTower/**'
+      - '.github/workflows/people-shift-day10-tests.yml'
+  pull_request:
+    paths:
+      - '04_OWNER/Workforce/**'
+      - '06_EMPLOYEE/**'
+      - '09_QA/people-shift/**'
+      - '09_QA/owner-control-tower/**'
+      - '04_OWNER/ControlTower/**'
+      - '.github/workflows/people-shift-day10-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  day10-browser-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Control Tower regression tests
+        run: node --test 09_QA/owner-control-tower/*.test.mjs
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start local QA server
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/people-shift qa-artifacts/control-tower
+          nohup python3 -m http.server 8767 --bind 127.0.0.1 > /tmp/people-shift-http.log 2>&1 &
+          echo $! > /tmp/people-shift-http.pid
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -fsS http://127.0.0.1:8767/04_OWNER/Workforce/ > /dev/null && curl -fsS http://127.0.0.1:8767/06_EMPLOYEE/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/people-shift-http.log || true
+          exit 1
+
+      - name: Run People Shift browser E2E
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/browser-e2e.mjs
+
+      - name: Run Control Tower browser regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/control-tower
+        run: node 09_QA/owner-control-tower/browser-e2e.mjs
+
+      - name: Upload browser artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: people-shift-day10-e2e-${{ github.run_id }}
+          path: |
+            qa-artifacts/people-shift/
+            qa-artifacts/control-tower/
+          if-no-files-found: warn
+          retention-days: 30
