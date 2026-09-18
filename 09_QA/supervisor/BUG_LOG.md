@@ -54,3 +54,15 @@
 - Root cause: logical session detach did not close the Playwright CDP socket handle, and calling Browser.close() would undesirably close the owner's real Chrome.
 - Fix: short-lived CI CLIs explicitly terminate the Node process after their finally/disconnect path. The continuous Supervisor loop does not use this forced-exit path.
 - Status: FIXED — pending verification
+
+
+## BUG-SUP-005 — STOP sentinel does not guarantee prompt kill-switch termination
+
+- Date: 2026-09-18
+- Component: Windows Supervisor launcher/kill switch
+- Reproduction: install runtime, start Supervisor in dry-run mode, create the STOP sentinel and wait for the wrapper PID file to disappear.
+- Observed: installer smoke run `35300984151` passed install/start but failed the STOP step because the wrapper PID file remained beyond the smoke grace period.
+- Impact: a STOP request can be delayed while the runtime is blocked in browser/network work; this is not strong enough for the required local kill switch.
+- Root cause: stop script only wrote a sentinel and relied on the cooperative loop to return to its next sentinel check.
+- Fix: keep cooperative STOP first, then after a short grace period force-terminate the Supervisor process tree and remove the PID file. This applies only to the dedicated Supervisor process, not the GitHub runner.
+- Status: FIXING
