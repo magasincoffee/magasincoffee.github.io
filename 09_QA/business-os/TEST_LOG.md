@@ -143,3 +143,22 @@
 - Exact “Cả Ngày” semantics not invented: PASS.
 - Production schema/backfill: none.
 - Gate: TASK-030 **DONE**; TASK-031 may proceed.
+
+## 2026-09-18 — TASK-031 Manager official schedule workspace
+
+- Branch: `feat/schedule-v1-completion`
+- People Shift workflow run: `35332605981`
+- Result: **PASS**.
+- Manager official schedule browser regression: PASS.
+- Employee Availability V2 browser regression: PASS.
+- Existing People/Shift Day-10 E2E: PASS.
+- Existing Control Tower browser regression: PASS.
+- Deep-link `/05_MANAGER/Lich-lam/` uses canonical runtime: PASS.
+- Official rows load through `get_manager_weekly_schedule`: PASS.
+- Store/week scoped reader: PASS.
+- Explicit Manager `DRAFT → REVIEWED → PUBLISHED`: PASS.
+- Robot auto-review / auto-publish: forbidden.
+- BUG fixed during gate: published week/store context was initially lost when official view was opened after publish; regression now preserves `weekStart` + `storeId`.
+- Direct browser write to `work_schedules`: absent.
+- Production schema/backfill: none.
+- Gate: TASK-031 **DONE**; TASK-032 may proceed.
