@@ -100,3 +100,41 @@ test("runtime status exposes recovery state without conversation content", () =>
   const keys = Object.keys(payload).join(" ");
   assert.doesNotMatch(keys, /cookie|token|credential|message_body|prompt|conversation_text/i);
 });
+
+
+test("runtime status preserves safe WAIT_USER boundary metadata", () => {
+  const payload = buildRuntimeStatus({
+    projectState: {
+      project: "MAGASIN Business OS",
+      repository: "magasincoffee/magasincoffee.github.io",
+      current_task: "TASK-035",
+      status: "WAIT_USER",
+      autonomy: "MANUAL",
+      requires_user: true,
+      blocked: false,
+      owner_boundary: {
+        pending: []
+      },
+      activation_boundary: {
+        reason: "GMAIL_OAUTH_CREDENTIALS_REQUIRED",
+        pending: [
+          "GMAIL_OAUTH_CLIENT_ID",
+          "GMAIL_OAUTH_CLIENT_SECRET",
+          "GMAIL_OAUTH_REFRESH_TOKEN"
+        ]
+      }
+    }
+  });
+
+  assert.equal(payload.schema_version, 2);
+  assert.deepEqual(payload.owner_boundary_pending, []);
+  assert.equal(
+    payload.activation_boundary_reason,
+    "GMAIL_OAUTH_CREDENTIALS_REQUIRED"
+  );
+  assert.deepEqual(payload.activation_boundary_pending, [
+    "GMAIL_OAUTH_CLIENT_ID",
+    "GMAIL_OAUTH_CLIENT_SECRET",
+    "GMAIL_OAUTH_REFRESH_TOKEN"
+  ]);
+});
