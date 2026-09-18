@@ -6,6 +6,7 @@ on:
       - ops/task-035-runner-diagnostic
     paths:
       - .github/workflows/task-035-runner-diagnostic.yml
+      - 08_INTEGRATIONS/supervisor/src/ui/task-035-auth-surface-probe.mjs
   workflow_dispatch:
 
 concurrency:
