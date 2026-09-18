@@ -11,6 +11,7 @@ import {
 import { executeDecision } from "../ui/actions.mjs";
 import { SupervisorSession } from "./session.mjs";
 import { SupervisorLoopController } from "./loop.mjs";
+import { SupervisorDiagnostics } from "./diagnostics.mjs";
 import {
   RECOVERY_ACTIONS,
   SupervisorRecoveryController,
@@ -25,7 +26,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.11";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-18.12";
 
 const ROLLOVER_INSTRUCTION =
   "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
@@ -264,6 +265,10 @@ const stopPath = path.join(root, "STOP");
 const ownerResolvedPath = path.join(root, "OWNER_RESOLVED.request.json");
 const logPath = path.join(root, "supervisor.log");
 const runtimeStatusPath = defaultRuntimeStatusPath();
+const diagnostics = new SupervisorDiagnostics({
+  root,
+  runtimeVersion: SUPERVISOR_RUNTIME_VERSION
+});
 let target = validateTarget(JSON.parse(await fs.readFile(targetPath, "utf8")));
 
 const session = new SupervisorSession({
@@ -719,7 +724,8 @@ while (true) {
       retryCount,
       maxRetries: 2,
       handoff: handoffPending && !ownerWait,
-      ownerReconcile: ownerReconcileActive
+      ownerReconcile: ownerReconcileActive,
+      ownerRecheck: manualOwnerRecheck
     });
 
     if (
@@ -812,6 +818,23 @@ while (true) {
       reason: result.execution.reason || undefined
     });
 
+    const diagnosticResult = await diagnostics.recordStep({
+      projectState,
+      probe,
+      result,
+      controller,
+      ownerReconcileState,
+      manualOwnerRecheck,
+      recovery
+    }).catch(() => ({ incident: false }));
+
+    if (diagnosticResult?.incident) {
+      await safeAppendLog(logPath, {
+        type: "DIAGNOSTIC_INCIDENT",
+        reason: diagnosticResult.kind
+      }).catch(() => {});
+    }
+
     await writeRuntimeStatus(
       buildRuntimeStatus({
         projectState,
@@ -834,6 +857,13 @@ while (true) {
     } else {
       consecutiveConnectFailures = 0;
     }
+
+    await diagnostics.recordError({
+      projectState: lastProjectState,
+      error,
+      ownerReconcileState,
+      recovery
+    }).catch(() => {});
 
     await safeAppendLog(logPath, {
       type: "LOOP_ERROR",
