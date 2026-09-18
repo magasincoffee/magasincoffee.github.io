@@ -61,7 +61,20 @@ export function assessRevenueCandidate(
     });
   }
 
-  const amount = Number(candidate.amount);
+  const rawAmount = candidate.amount;
+  if (
+    rawAmount === null ||
+    rawAmount === undefined ||
+    (typeof rawAmount === "string" && !rawAmount.trim())
+  ) {
+    return failClosed({
+      source,
+      asOf,
+      message: "Giá trị doanh thu đã đối chiếu không hợp lệ."
+    });
+  }
+
+  const amount = Number(rawAmount);
   if (!Number.isFinite(amount) || amount < 0) {
     return failClosed({
       source,
