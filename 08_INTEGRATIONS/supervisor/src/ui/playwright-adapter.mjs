@@ -105,6 +105,18 @@ export class ChatGptUiAdapter {
   getActivePage() {
     if (!this.context) return null;
 
+    // Once the Supervisor has attached to a page, keep that page sticky.
+    // Real Chrome may contain multiple ChatGPT tabs. Re-selecting the last
+    // ChatGPT tab on every probe can make the robot jump away from the chat it
+    // just created, then navigate back to an obsolete target forever.
+    if (
+      this.page &&
+      !this.page.isClosed() &&
+      isChatGptUrl(this.page.url())
+    ) {
+      return this.page;
+    }
+
     const pages = this.context.pages().filter((page) => !page.isClosed());
     if (!pages.length) {
       this.page = null;
