@@ -167,7 +167,7 @@ test("unregistered projects and missing safety rules are rejected", async () => 
 });
 
 
-test("hard-stop workflow is GitHub-hosted and independent of the PC", async () => {
+test("hard-stop workflow is GitHub-hosted and reconciles every canonical final-state surface", async () => {
   const workflow = await fs.readFile(
     new URL(".github/workflows/night-run-hard-stop.yml", repoRoot),
     "utf8"
@@ -178,5 +178,13 @@ test("hard-stop workflow is GitHub-hosted and independent of the PC", async () =
   assert.match(workflow, /NIGHT_WINDOW_COMPLETE/);
   assert.match(workflow, /state\["status"\]\s*=\s*"WAIT_USER"/);
   assert.match(workflow, /state\["autonomy"\]\s*=\s*"MANUAL"/);
+  assert.match(workflow, /night\["hard_stop_pending"\]\s*=\s*False/);
+  assert.match(workflow, /current_state_path\s*=\s*Path\("01_DOCS\/MAGASIN\/00_CURRENT_STATE\.md"\)/);
+  assert.match(workflow, /task_queue_path\s*=\s*Path\("01_DOCS\/MAGASIN\/00_TASK_QUEUE\.md"\)/);
+  assert.match(workflow, /architecture_path\s*=\s*Path\("01_DOCS\/MAGASIN\/00_ARCHITECTURE_5_STEP_RESET\.md"\)/);
+  assert.match(workflow, /report_path\s*=\s*Path\("01_DOCS\/MAGASIN\/08_AUTONOMY\/NIGHT_RUN_REPORT_2026-09-19\.md"\)/);
+  assert.match(workflow, /NIGHT_WINDOW_COMPLETE \/ WAIT_USER/);
+  assert.match(workflow, /Owner review is now required/);
+  assert.doesNotMatch(workflow, /if not report_path\.exists\(\):/);
   assert.doesNotMatch(workflow, /runs-on:\s*self-hosted/);
 });
