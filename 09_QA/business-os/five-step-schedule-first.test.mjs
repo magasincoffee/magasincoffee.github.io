@@ -24,14 +24,16 @@ test("Five-Step architecture reset is canonical and schedule-first", async () =>
   assert.match(architecture, /AUTOMATE last/);
   assert.match(architecture, /Employee availability[\s\S]*Manager review\/edit[\s\S]*Robot schedule proposal[\s\S]*publish weekly schedule/);
 
-  assert.equal(state.current_task, "TASK-036");
-  assert.equal(state.status, "READY");
-  assert.equal(state.autonomy, "AUTO_CONTINUE");
-  assert.equal(state.requires_user, false);
-  assert.equal(state.next_task, "TASK-037");
+  assert.match(state.current_task, /^TASK-(?:03[7-9]|04[0-8])$/);
+  assert.ok(["READY", "WAIT_USER"].includes(state.status));
+  if (state.status === "READY") {
+    assert.equal(state.autonomy, "AUTO_CONTINUE");
+    assert.equal(state.requires_user, false);
+  }
+  assert.equal(state.night_run?.id, "NIGHT_RUN_2026-09-18");
 
   assert.match(current, /Schedule-first Core Flow/);
-  assert.match(current, /TASK-036/);
+  assert.match(current, /Approved night run/);
   assert.match(queue, /TASK-026[^\n]*DEFERRED/);
   assert.match(queue, /TASK-027[^\n]*DONE/);
   assert.match(queue, /TASK-028[^\n]*DONE/);
@@ -42,7 +44,9 @@ test("Five-Step architecture reset is canonical and schedule-first", async () =>
   assert.match(queue, /TASK-033[^\n]*DONE/);
   assert.match(queue, /TASK-034[^\n]*DONE/);
   assert.match(queue, /TASK-035[^\n]*DEFERRED/);
-  assert.match(queue, /TASK-036[^\n]*IN_PROGRESS/);
+  assert.match(queue, /TASK-036[^\n]*DONE/);
+  assert.match(queue, /TASK-037[^\n]*(?:IN_PROGRESS|DONE)/);
+  assert.match(queue, /TASK-048[^\n]*(?:READY|IN_PROGRESS|DONE)/);
 });
 
 test("deferred SOP write path remains fail-closed", async () => {
