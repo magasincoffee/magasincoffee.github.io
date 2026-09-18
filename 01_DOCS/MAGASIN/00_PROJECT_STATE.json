@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
   "target_days": 21,
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-039",
-  "current_task_title": "Business OS Robot V2 project registry",
+  "current_task": "TASK-040",
+  "current_task_title": "Business OS Robot V2 portfolio scheduler",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-040",
+  "next_task": "TASK-041",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -19,11 +19,10 @@
   },
   "last_updated": "2026-09-18",
   "owner_boundary": {
-    "task": "TASK-039",
+    "task": "TASK-040",
     "resolved": [
-      "NIGHT_RUN_APPROVED",
       "TWO_PROJECT_SCOPE_APPROVED",
-      "TASK_038_PERSISTENCE_VERIFIED"
+      "TASK_039_REGISTRY_VERIFIED"
     ],
     "pending": []
   },
@@ -50,7 +49,7 @@
       "magasin-business-os",
       "magasin-media-robot"
     ],
-    "current_order": 4,
+    "current_order": 5,
     "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
     "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json",
     "recovery_install": {
@@ -70,6 +69,12 @@
       "stale_lease_fail_closed": true,
       "hard_stop_github_hosted": true,
       "supervisor_test_run_id": 35369406307
+    },
+    "robot_v2": {
+      "branch": "feat/business-os-robot-v2-core",
+      "pull_request": 119,
+      "task_039_test_run_id": 35369745821,
+      "auto_merge": false
     }
   }
 }
