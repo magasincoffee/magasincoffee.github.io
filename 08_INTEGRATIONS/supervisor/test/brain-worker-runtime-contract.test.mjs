@@ -62,3 +62,27 @@ test("Worker result relay is at-most-once under uncertain send outcome", async (
   assert.ok(sendIndex > latchIndex);
   assert.match(source, /exact-once policy denies resend/);
 });
+
+
+test("Brain runtime reconciles the latest completed Brain turn after restart even when awaiting_response is false", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.doesNotMatch(
+    source,
+    /if \(registry\.brain\.awaiting_response\) \{\s*await processBrainResponse\(/
+  );
+  assert.match(source, /Always reconcile the latest completed Brain turn by digest/);
+});
+
+test("registered Brain or Worker target must be restored exactly before automation continues", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /pageMatchesTarget/);
+  assert.match(source, /registered ChatGPT target could not be restored; target mismatch; new conversation denied/);
+});
