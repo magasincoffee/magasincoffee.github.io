@@ -82,3 +82,15 @@
 - RLS required for exposed tables: PASS.
 - Production mutation/backfill: none.
 - Gate: TASK-026 **WAIT_USER** pending Owner answers DST-001..DST-006.
+
+## 2026-09-18 — TASK-027 Schedule priority + completion contract
+
+- Branch: `feat/schedule-v1-completion`
+- Decision: `DEC-003`
+- Plan: `01_DOCS/MAGASIN/05_SYSTEM/SCHEDULE_V1_COMPLETION_PLAN.md`
+- Contract: `02_CORE/contracts/schedule-v1-completion-plan.v1.json`
+- Source evidence: sanitized structure/rules from `Lịch Đk Tuần` + `Lịch làm hàng tuần`; repository Workforce; read-only live RPC inventory.
+- Private employee rows committed: **none**.
+- TASK-026: **DEFERRED_BY_OWNER**; DST-001..DST-006 remain unresolved.
+- Production schema/backfill: none.
+- Gate target: Business OS Contract Tests + Supervisor state regression.
