@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-041 — Business OS Robot V2 recovery engine — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-042 — SaydiVoiceProvider production adapter OFFLINE — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,18 +101,26 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-041:** TASK-040 portfolio scheduler is verified on draft PR #119.
+**AUTO_CONTINUE — TASK-042:** TASK-041 Robot V2 recovery engine is verified on draft PR #119.
 
-TASK-041 recovery contract must prove:
+Execution now switches to the second approved repository only:
 
-1. crash/reboot does not replay an operation already checkpointed;
-2. an active lease owned elsewhere blocks duplicate execution;
-3. an expired lease remains fail-closed until repository HEAD and CI are reconciled;
-4. after safe reconciliation, the worker resumes from the canonical task/checkpoint;
-5. if canonical project state has already advanced, stale cursor work is discarded instead of replayed;
-6. recovery never bypasses project WAIT_USER/BLOCKED/security boundaries.
+`magasincoffee/magasin-media-robot`
 
-This task changes only Robot V2 orchestration logic on the review branch. Existing Supervisor V1 recovery remains unchanged.
+Offline-only acceptance gate:
+
+1. stable provider request/result model;
+2. preset validation before touching live UI;
+3. authenticated preflight failure classification;
+4. exactly-one Generate attempt guard;
+5. bounded timeout + terminal error classification;
+6. output path / byte count / sha256 metadata contract;
+7. privacy/redaction tests;
+8. no live Generate;
+9. no live Download;
+10. update Media Robot BUG_LOG/TEST_LOG/CHANGELOG/CURRENT_STATUS/NEXT_STEP when the offline gate passes.
+
+The Business OS cursor remains authoritative for night-run sequencing while Media Robot repository remains authoritative for SaydiVoice implementation details.
 
 ## Session handoff
 
