@@ -41,3 +41,16 @@ Next gate: TASK-004 UI adapter local **non-destructive** smoke.
 - Conversation target stored **local-only**: PASS.
 - No credential, cookie, token, message body, or conversation identifier uploaded to GitHub: PASS.
 - Temporary read-only smoke run `35296619840`: PASS.
+
+## 2026-09-18 — Bounded reconnect/retry policy
+
+- Branch: `feat/supervisor-recovery`
+- Workflow: `Supervisor Tests`
+- Run: `35299877934`
+- Result: **PASS**
+- Retryable CDP/network failures: bounded retry PASS.
+- Non-retryable programming/business errors: fail immediately PASS.
+- Retry budget exhaustion: typed terminal failure PASS.
+- Probe failure: session disconnects and next probe can reconnect PASS.
+- Disconnect idempotency: PASS.
+- No browser live action or ChatGPT message side effect in this task.
