@@ -10,7 +10,7 @@
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": null,
+  "next_task": "TASK-037",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -39,5 +39,19 @@
       "SUPABASE_EDGE_FUNCTION_SECRET_INJECTION"
     ],
     "guardrail": "KEEP_EMAIL_FAIL_CLOSED_UNTIL_REACTIVATED_BY_OWNER"
+  },
+  "night_run": {
+    "id": "NIGHT_RUN_2026-09-18",
+    "approved": true,
+    "start_at": "2026-09-18T23:15:00+07:00",
+    "stop_at": "2026-09-19T09:15:00+07:00",
+    "hard_stop": true,
+    "allowed_projects": [
+      "magasin-business-os",
+      "magasin-media-robot"
+    ],
+    "current_order": 1,
+    "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
+    "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json"
   }
 }
