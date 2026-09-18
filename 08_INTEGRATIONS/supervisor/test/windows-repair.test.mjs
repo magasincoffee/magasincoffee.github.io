@@ -10,11 +10,13 @@ test("one-click repair updates main, installs fresh runtime and verifies the boo
 
   assert.match(source, /git -C \$repoRoot pull --ff-only origin main/);
   assert.match(source, /Node\.js 20\+/);
-  assert.match(source, /2026-09-18\.2/);
+  assert.match(source, /2026-09-18\.3/);
   assert.match(source, /Get-FreeCdpPort/);
   assert.match(source, /Test-DedicatedCdpEndpoint/);
   assert.match(source, /install-supervisor\.ps1/);
   assert.match(source, /Stop-DedicatedSupervisorChrome/);
+  assert.match(source, /Stop-OrphanedSupervisorLoops/);
+  assert.match(source, /MAGASIN_BUSINESS_OS_SUPERVISOR/);
   assert.match(source, /CommandLine -like "\*\$profile\*"/);
   assert.match(source, /RUNTIME_BOOT\.\*version=/);
   assert.match(source, /REPAIR_RESULT=PASS/);
