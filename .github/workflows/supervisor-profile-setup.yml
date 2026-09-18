@@ -1,5 +1,5 @@
 name: Supervisor Profile Setup
-# real Chrome + CDP setup
+# real Chrome + CDP setup — target detection v2
 
 on:
   push:
