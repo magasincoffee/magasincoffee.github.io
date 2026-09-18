@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-048 — Night final checkpoint — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-048 — Night final checkpoint — IN_PROGRESS / PAUSED**
 
 Canonical task/state files:
 
@@ -101,7 +101,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-048:** TASK-047 documentation/evidence is complete.
+**PAUSED — TASK-048:** no actionable work remains before the approved 09:15 +07 hard stop; Supervisor continuation is intentionally suppressed until the boundary.
 
 Final-checkpoint evidence:
 
@@ -116,7 +116,7 @@ Final-checkpoint evidence:
 - TASK-048 one-shot guard QA: **162/162 PASS**, 0 failed, run `35374298573`; once `NIGHT_WINDOW_COMPLETE` exists, later manual reruns no-op before any state mutation so a subsequent Owner-reviewed state cannot be overwritten; QA probe PR #123 closed without merge;
 - TASK-048 evidence-surface QA: **162/162 PASS**, 0 failed, run `35375054600`; canonical night-run evidence pack is reconciled to `NIGHT_WINDOW_COMPLETE / OWNER REVIEW REQUIRED` by the hard-stop; QA probe PR #124 closed without merge;
 - Media Robot QA: **83/83 PASS** runs `35370775036` and `35371002442`;
-- no bounded regression remains after the TASK-048 hard-stop reconciliation, boundary-time guard, idempotence, post-review one-shot and canonical-evidence surface fixes.
+- no bounded hard-stop regression remains after reconciliation, boundary-time guard, idempotence, post-review one-shot and canonical-evidence surface fixes; pre-boundary Supervisor busy-loop prevention now uses the existing `PAUSED` autonomy mode.
 
 TASK-048 is now a temporal safety gate, not a feature task:
 
