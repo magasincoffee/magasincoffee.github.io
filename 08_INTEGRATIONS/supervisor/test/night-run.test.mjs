@@ -174,6 +174,12 @@ test("hard-stop workflow is GitHub-hosted and reconciles every canonical final-s
   );
 
   assert.match(workflow, /cron:\s*"15 2 19 9 \*"/);
+  assert.match(workflow, /2026-09-19T02:15:00Z/);
+  assert.match(workflow, /2026-09-20T00:00:00Z/);
+  assert.match(workflow, /now_epoch/);
+  assert.match(workflow, /boundary_epoch/);
+  assert.match(workflow, /day_end_epoch/);
+  assert.doesNotMatch(workflow, /date -u \\+%Y-%m-%d/);
   assert.match(workflow, /runs-on:\s*ubuntu-latest/);
   assert.match(workflow, /NIGHT_WINDOW_COMPLETE/);
   assert.match(workflow, /state\["status"\]\s*=\s*"WAIT_USER"/);
