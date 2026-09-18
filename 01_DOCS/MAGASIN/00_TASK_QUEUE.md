@@ -43,7 +43,7 @@
 | TASK-032 | Published schedule → attendance/swap/notification integration gate | 20m | end-to-end operating-loop gate + SFB-001/SFB-002 Owner boundary | DONE |
 | TASK-033 | Give Shift production primitive | 20m | migration/RLS/RPC + browser E2E | DONE |
 | TASK-034 | Notification event-outbox production | 20m | migration/RLS/triggers + SQL/integration tests | DONE |
-| TASK-035 | MAGASIN email adapter/config | 20m | provider-neutral adapter + secret-store activation gate | WAIT_USER |
+| TASK-035 | MAGASIN email adapter/config | 20m | Gmail OAuth adapter + secret-store activation gate | WAIT_USER |
 
 TASK-026 remains a valid Owner decision pack but is deferred; it no longer blocks the enterprise queue. Architecture execution is now schedule-first under `00_ARCHITECTURE_5_STEP_RESET.md`. Every new task must pass QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE before implementation.
 

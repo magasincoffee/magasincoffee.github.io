@@ -1,4 +1,5 @@
 import {accessScopeIncludesStore,buildEnvelope,readEmailConfig,uniqueRecipients} from "./email-worker-core.mjs";
+import {createGmailProvider} from "./gmail-provider.mjs";
 
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json; charset=utf-8"}});
 
@@ -54,10 +55,11 @@ async function complete(id,success,error=null){
 }
 
 async function loadProviderAdapter(providerName){
-  // Intentionally empty until Owner selects a concrete provider.
-  // IMPORTANT: adapter initialization occurs before claim(), so an unconfigured
-  // provider can never strand PENDING rows in PROCESSING.
-  throw new Error("PROVIDER_NOT_REGISTERED:"+providerName);
+  const normalized=String(providerName||"").trim().toUpperCase();
+  if(normalized!=="GMAIL_GOOGLE_WORKSPACE")throw new Error("PROVIDER_NOT_REGISTERED:"+providerName);
+  const adapter=createGmailProvider(Deno.env,fetch);
+  await adapter.initialize();
+  return adapter;
 }
 
 Deno.serve(async(req)=>{
@@ -69,7 +71,16 @@ Deno.serve(async(req)=>{
 
   let provider;
   try{provider=await loadProviderAdapter(config.provider)}
-  catch(e){return json({ok:false,code:"PROVIDER_NOT_REGISTERED",provider:config.provider,detail:String(e?.message||e)},503)}
+  catch(e){
+    const detail=String(e?.message||e);
+    if(detail.startsWith("GMAIL_OAUTH_CONFIG_REQUIRED:")){
+      return json({ok:false,code:"PROVIDER_CONFIG_REQUIRED",provider:config.provider,missing:detail.split(":").slice(1).join(":").split(",").filter(Boolean)},503);
+    }
+    if(detail.startsWith("PROVIDER_NOT_REGISTERED:")){
+      return json({ok:false,code:"PROVIDER_NOT_REGISTERED",provider:config.provider},503);
+    }
+    return json({ok:false,code:"PROVIDER_INITIALIZATION_FAILED",provider:config.provider,detail:detail.slice(0,300)},503);
+  }
 
   // No queue row is claimed before provider configuration and adapter initialization succeed.
   const rows=await claim(25);

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "task": "TASK-035",
-  "status": "OWNER_DECISION_REQUIRED",
+  "status": "PROVIDER_SELECTED_CREDENTIALS_REQUIRED",
   "provider_evidence": {
     "repository_provider_config_found": false,
     "supabase_edge_functions_found": 0,
@@ -12,7 +12,8 @@
     "email_source": "MAGASIN_EMAIL",
     "external_calendar": false,
     "secret_store_credentials": true,
-    "sender_email": "bachvanti1994@gmail.com"
+    "sender_email": "bachvanti1994@gmail.com",
+    "provider": "GMAIL_GOOGLE_WORKSPACE"
   },
   "provider_independent": {
     "outbox_rpc": "claim_notification_email_batch_v1",
@@ -36,16 +37,32 @@
     "credentials_in_git": false
   },
   "activation_boundary": {
-    "required_owner_inputs": [
-      "CONCRETE_EMAIL_PROVIDER"
-    ],
+    "required_owner_inputs": [],
     "optional_input": "MAGASIN_REPLY_TO_EMAIL",
     "deploy_edge_function": false,
     "set_provider_secrets": false,
     "send_email": false,
     "resolved_owner_inputs": {
-      "EXACT_MAGASIN_SENDER_EMAIL": "bachvanti1994@gmail.com"
-    }
+      "EXACT_MAGASIN_SENDER_EMAIL": "bachvanti1994@gmail.com",
+      "CONCRETE_EMAIL_PROVIDER": "GMAIL_GOOGLE_WORKSPACE"
+    },
+    "required_runtime_config": {
+      "MAGASIN_EMAIL_PROVIDER": "GMAIL_GOOGLE_WORKSPACE",
+      "MAGASIN_EMAIL_FROM": "bachvanti1994@gmail.com"
+    },
+    "required_runtime_secrets": [
+      "GMAIL_OAUTH_CLIENT_ID",
+      "GMAIL_OAUTH_CLIENT_SECRET",
+      "GMAIL_OAUTH_REFRESH_TOKEN"
+    ]
   },
-  "required_project_state": "WAIT_USER"
+  "required_project_state": "WAIT_USER",
+  "provider_implementation": {
+    "transport": "GMAIL_API",
+    "auth": "OAUTH2_REFRESH_TOKEN",
+    "send_endpoint": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+    "token_endpoint": "https://oauth2.googleapis.com/token",
+    "scope": "https://www.googleapis.com/auth/gmail.send",
+    "initialization_before_claim": true
+  }
 }
