@@ -1,5 +1,5 @@
 name: Supervisor Installer Dry Run Smoke
-# rerun after deterministic STOP fix
+# rerun after deterministic STOP + upgrade-lock fixes
 
 on:
   push:
