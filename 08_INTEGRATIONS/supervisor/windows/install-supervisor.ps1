@@ -6,13 +6,41 @@ $ErrorActionPreference = 'Stop'
 
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $runtime = Join-Path $root 'runtime'
+$pidFile = Join-Path $root 'supervisor.pid'
+$stopFile = Join-Path $root 'STOP'
 $desktop = [Environment]::GetFolderPath('Desktop')
 
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 
-if (Test-Path $runtime) {
-    Remove-Item $runtime -Recurse -Force
+# Upgrades are allowed only after stopping the dedicated Supervisor process.
+if (Test-Path $pidFile) {
+    $pidValue = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($pidValue -and (Get-Process -Id $pidValue -ErrorAction SilentlyContinue)) {
+        Write-Host "Stopping existing Supervisor PID $pidValue before runtime upgrade."
+        & taskkill.exe /PID $pidValue /T /F | Out-Host
+        Start-Sleep -Seconds 1
+    }
 }
+Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+Remove-Item $stopFile -Force -ErrorAction SilentlyContinue
+
+if (Test-Path $runtime) {
+    $removed = $false
+    for ($i = 0; $i -lt 8; $i++) {
+        try {
+            Remove-Item $runtime -Recurse -Force -ErrorAction Stop
+            $removed = $true
+            break
+        } catch {
+            if ($i -ge 7) { throw }
+            Start-Sleep -Milliseconds 750
+        }
+    }
+    if (-not $removed -and (Test-Path $runtime)) {
+        throw "Could not replace Supervisor runtime after bounded retries."
+    }
+}
+
 New-Item -ItemType Directory -Force -Path $runtime | Out-Null
 
 Copy-Item (Join-Path $SourceRoot 'src') (Join-Path $runtime 'src') -Recurse -Force
