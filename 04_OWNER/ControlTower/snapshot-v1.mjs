@@ -41,6 +41,18 @@ function normalizeMetricSection(raw = {}, fields = []) {
   return section;
 }
 
+function normalizeRevenueSection(raw = {}) {
+  const section = normalizeMetricSection(raw, ["amount"]);
+
+  // Revenue is intentionally stricter than generic attention metrics:
+  // only reconciled/trusted ACTUAL may expose a number.
+  if (section.quality !== "ACTUAL") {
+    section.amount = null;
+  }
+
+  return section;
+}
+
 export function normalizeControlTowerSnapshot(raw = {}) {
   const context = raw.context || {};
 
@@ -59,7 +71,7 @@ export function normalizeControlTowerSnapshot(raw = {}) {
           ? context.refreshedAt.trim()
           : null
     },
-    revenue: normalizeMetricSection(raw.revenue, ["amount"]),
+    revenue: normalizeRevenueSection(raw.revenue),
     payables: normalizeMetricSection(raw.payables, [
       "totalDue",
       "overdueAmount",
