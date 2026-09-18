@@ -64,3 +64,37 @@ test("runtime status exposes why an action did not execute", () => {
   assert.equal(payload.execution_executed, false);
   assert.equal(payload.execution_reason, "awaiting observable assistant progress");
 });
+
+
+test("runtime status exposes recovery state without conversation content", () => {
+  const payload = buildRuntimeStatus({
+    projectState: {
+      project: "MAGASIN Business OS",
+      repository: "magasincoffee/magasincoffee.github.io",
+      current_phase: "P1",
+      current_task: "TASK-009",
+      current_task_title: "Store/product canonical model review",
+      next_task: "TASK-010",
+      autonomy: "AUTO_CONTINUE"
+    },
+    status: "RECOVERING",
+    recovery: {
+      action: "RELOAD_STALLED",
+      reason: "ChatGPT response stayed running too long",
+      stall_reloads: 1,
+      unavailable_reloads: 0,
+      target_misses: 0,
+      rollover_failures: 0,
+      conversation_generation: 2,
+      blocked: false
+    }
+  });
+
+  assert.equal(payload.recovery_action, "RELOAD_STALLED");
+  assert.equal(payload.recovery_stall_reloads, 1);
+  assert.equal(payload.conversation_generation, 2);
+  assert.equal(payload.recovery_blocked, false);
+
+  const keys = Object.keys(payload).join(" ");
+  assert.doesNotMatch(keys, /cookie|token|credential|message_body|prompt|conversation_text/i);
+});
