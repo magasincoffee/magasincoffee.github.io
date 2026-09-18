@@ -32,11 +32,19 @@ const page=await context.newPage();
 try{
   await page.goto(`https://console.cloud.google.com/auth/clients?project=${PROJECT}`,{waitUntil:"domcontentloaded",timeout:60000}).catch(()=>{});
   await page.waitForTimeout(7000);
-  const create=page.getByRole("button",{name:/Create client/i}).first();
-  const visible=await create.isVisible({timeout:1500}).catch(()=>false);
-  console.log("CREATE_CLIENT_VISIBLE="+visible);
-  if(!visible) process.exit(0);
-  await create.click();
+  const candidates=[
+    page.getByRole("button",{name:/Create client/i}).first(),
+    page.getByRole("link",{name:/Create client/i}).first(),
+    page.getByText(/^Create client$/i).first(),
+    page.locator('[aria-label*="Create client" i]').first()
+  ];
+  let create=null;
+  for(const candidate of candidates){
+    if(await candidate.isVisible({timeout:1200}).catch(()=>false)){ create=candidate; break; }
+  }
+  console.log("CREATE_CLIENT_VISIBLE="+Boolean(create));
+  if(!create) process.exit(0);
+  await create.click({force:true,timeout:10000});
   await page.waitForTimeout(2500);
 
   const inputs=await page.locator('input,textarea,select,[role="combobox"],[role="listbox"],button').evaluateAll(nodes=>nodes.map(n=>({
