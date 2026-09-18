@@ -39,6 +39,9 @@ jobs:
       - name: Verify People Shift acceptance contract
         run: node 09_QA/business-os/people-shift-gap-plan.test.mjs
 
+      - name: Run People Shift regression tests
+        run: node --test 09_QA/people-shift/*.test.mjs
+
       - name: Run Control Tower regression tests
         run: node --test 09_QA/owner-control-tower/*.test.mjs
 
@@ -61,6 +64,12 @@ jobs:
           done
           cat /tmp/people-shift-http.log || true
           exit 1
+
+      - name: Run Employee Swap browser regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/employee-swap-browser-regression.mjs
 
       - name: Run People Shift Day-10 browser E2E
         env:
