@@ -8,7 +8,9 @@
 <link rel="stylesheet" href="./control-tower-v1.css">
 </head>
 <body>
-<main class="shell">
+<section id="authLoading" class="gate"><h2>Đang mở Owner Control Tower…</h2><p>Đang xác minh tài khoản Owner.</p></section>
+<section id="authDenied" class="gate" hidden><h2>Không có quyền truy cập</h2><p data-auth-message></p><a class="back" href="/03_PLATFORM/01_AUTH/">Về đăng nhập</a></section>
+<main id="app" class="shell" hidden>
   <div class="topbar">
     <div>
       <div class="eyebrow">MAGASIN BUSINESS OS</div>
@@ -75,6 +77,8 @@
 
   <div class="notice">TASK-012 shell: mặc định không hiển thị số giả. Nguồn chưa tích hợp phải ở trạng thái GAP / NOT CONNECTED cho đến khi adapter thật được nối và kiểm tra.</div>
 </main>
+<script src="/02_CORE/shared/shared-core-v1.js?v=20260918-control-tower"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script type="module" src="./control-tower-v1.js"></script>
 </body>
 </html>
