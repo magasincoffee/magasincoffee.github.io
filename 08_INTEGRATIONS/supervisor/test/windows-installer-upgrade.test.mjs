@@ -13,3 +13,16 @@ test("installer stops existing dedicated Supervisor before replacing runtime", a
   assert.match(source, /for \(\$i = 0; \$i -lt 8; \$i\+\+\)/);
   assert.match(source, /Remove-Item \$runtime -Recurse -Force/);
 });
+
+
+test("installer closes an existing control panel before replacing runtime", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/install-supervisor.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /control-panel\.ps1/);
+  assert.match(source, /Get-CimInstance Win32_Process/);
+  assert.match(source, /Stop-Process -Id \$_\.ProcessId -Force/);
+  assert.match(source, /\$shortcut\.WorkingDirectory = \$root/);
+});
