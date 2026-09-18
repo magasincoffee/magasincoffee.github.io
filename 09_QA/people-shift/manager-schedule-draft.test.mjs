@@ -16,9 +16,15 @@ test("Manager draft editor uses robot/replace/validate RPCs and never auto-publi
   ]) {
     assert.match(source, new RegExp(rpc), `missing ${rpc}`);
   }
-  assert.doesNotMatch(source, /rpc\(['"]review_schedule_generation['"]/);
-  assert.doesNotMatch(source, /rpc\(['"]publish_schedule_generation['"]/);
+  assert.match(source, /async function review\(\)/);
+  assert.match(source, /review_schedule_generation/);
+  assert.match(source, /async function publish\(\)/);
+  assert.match(source, /publish_schedule_generation/);
   assert.match(source, /status:'DRAFT'/);
+  assert.match(source, /Phải duyệt lịch thành REVIEWED trước khi Publish/);
+  const robot = source.slice(source.indexOf("async function robot"), source.indexOf("document.addEventListener('magasin:schedule-robot-request'"));
+  assert.doesNotMatch(robot, /review_schedule_generation/);
+  assert.doesNotMatch(robot, /publish_schedule_generation/);
   assert.match(source, /MANUAL_FROM_AVAILABILITY/);
 });
 
