@@ -101,19 +101,28 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-043:** TASK-042 Media Robot provider adapter passed both push and PR CI with 83 tests and no live Saydi side effects.
+**AUTO_CONTINUE — TASK-044:** TASK-043 cross-project handoff integration is verified on draft PR #119.
 
-TASK-043 must prove Business OS → Media Robot → Business OS handoff without state contamination:
+Verified TASK-043 evidence:
 
-1. only registry-approved project IDs may participate;
-2. handoff target must be the scheduler-selected runnable project;
-3. each project keeps its own task/checkpoint/constraints snapshot;
-4. switching projects does not copy source task IDs or Owner-boundary flags into the target;
-5. returning to a project resumes its last canonical checkpoint, not the other project's checkpoint;
-6. operation/handoff keys suppress duplicate transitions after restart;
-7. unregistered targets and fail-closed target state are rejected.
+- integration commit `d39cc211f19ce7223478d48ccfd19a7440c17d77`;
+- Supervisor Tests run `35370949854`: PASS;
+- Business OS → Media Robot → Business OS handoff stays inside the approved registry;
+- project-local WAIT_USER/BLOCKED does not become a global stop;
+- Media Robot constraints do not leak into Business OS state;
+- stale cursor advancement and checkpoint scope are verified;
+- no browser or live-provider side effect is executed by the integration test.
 
-Implementation remains on draft PR #119 and must not auto-merge.
+TASK-044 is intentionally narrow:
+
+1. extend diagnostics with portfolio project id/repository and cursor task/checkpoint context;
+2. preserve existing UI/controller/recovery diagnostics;
+3. sanitize error/message-like diagnostic text before disk persistence;
+4. never persist conversation text, prompt/request text, auth material, cookies or bearer/token values;
+5. keep incident classification behavior stable;
+6. add unit/regression coverage for portfolio fields and privacy redaction only.
+
+Do not add remote telemetry, new monitoring services, or broader observability infrastructure in this task.
 
 ## Session handoff
 
