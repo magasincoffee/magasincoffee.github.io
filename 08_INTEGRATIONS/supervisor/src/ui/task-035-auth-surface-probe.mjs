@@ -79,5 +79,5 @@ try {
     await supabase.close().catch(() => {});
   }
 } finally {
-  await browser.close().catch(() => {});
+  // Connected over CDP to the Owner/Robot Chrome. Never close that browser.
 }
