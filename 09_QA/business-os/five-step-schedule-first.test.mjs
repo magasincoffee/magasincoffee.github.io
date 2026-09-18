@@ -37,7 +37,8 @@ test("Five-Step architecture reset is canonical and schedule-first", async () =>
   assert.match(queue, /TASK-028[^\n]*DONE/);
   assert.match(queue, /TASK-029[^\n]*DONE/);
   assert.match(queue, /TASK-030[^\n]*DONE/);
-  assert.match(queue, /TASK-031[^\n]*DONE/);\n  assert.match(queue, /TASK-032[^\n]*READY/);
+  assert.match(queue, /TASK-031[^\n]*DONE/);
+  assert.match(queue, /TASK-032[^\n]*READY/);
 });
 
 test("deferred SOP write path remains fail-closed", async () => {
