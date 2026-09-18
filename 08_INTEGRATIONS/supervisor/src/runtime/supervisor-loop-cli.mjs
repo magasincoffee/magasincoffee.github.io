@@ -100,7 +100,8 @@ async function safeAppendLog(logPath, event) {
     target: event.target || undefined,
     executed: typeof event.executed === "boolean" ? event.executed : undefined,
     reason: event.reason || undefined,
-    errorName: event.errorName || undefined
+    errorName: event.errorName || undefined,
+    errorCause: event.errorCause || undefined
   };
   await fs.mkdir(path.dirname(logPath), { recursive: true });
   await fs.appendFile(logPath, JSON.stringify(safe) + "\n", "utf8");
