@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-031 — Manager allocation + robot proposal + publish slice — READY**
+**TASK-032 — Published schedule → attendance/swap/notification integration gate — READY**
 
 Canonical task/state files:
 
@@ -28,6 +28,7 @@ Canonical task/state files:
 - `00_ARCHITECTURE_5_STEP_RESET.md`
 - `05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`
 - `05_SYSTEM/EMPLOYEE_AVAILABILITY_CANONICAL_SLICE_V1.md`
+- `05_SYSTEM/MANAGER_SCHEDULE_CANONICAL_SLICE_V1.md`
 
 ## Current target
 
@@ -94,9 +95,9 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-031 from `00_ARCHITECTURE_5_STEP_RESET.md` and `05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`.
+**AUTO_CONTINUE:** execute TASK-032 from `00_ARCHITECTURE_5_STEP_RESET.md` and the verified schedule slice docs.
 
-Apply QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE before code. Consolidate Manager daily scheduling ownership for availability review → staffing demand → Robot DRAFT → Manager allocation/validation/review → explicit publish. Remove duplicate Manager compatibility ownership and direct browser table writes only after replacement behavior has regression/E2E coverage. Robot must not auto-publish.
+Close the published-schedule feedback loop only: Employee official schedule visibility → attendance → give/swap → affected-person notification contract. Reuse existing canonical Employee schedule/attendance/swap engines; do not invent Give semantics or notification business rules. If Give requires a new production primitive or notification provider activation requires credentials/permission changes, stop at that real Owner boundary after completing all safe read/test/contract work.
 
 TASK-026 remains preserved as a deferred Owner boundary. Do not implement write-capable SOP/Task automation until its six business-rule decisions are approved.
 
