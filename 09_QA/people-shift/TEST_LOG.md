@@ -5,7 +5,7 @@
 - Branch: `test/task-022-people-shift-e2e`
 - Pull request: `#77`
 - Workflow: `People Shift Day-10 Tests`
-- PR run: `35319588926`
+- Verified same-week regression run: `35319816359`
 - Result: **PASS**
 - People/Shift acceptance contract: PASS.
 - Owner Control Tower unit/regression: 56 passed, 0 failed.
@@ -27,4 +27,4 @@
 - Production migration/backfill/admin calls: none.
 - Reproducible product defects: `BUG-PS-001` found and fixed within TASK-022; unresolved defects: none.
 - Day-10 People/Shift usability gate: **PASS**.
-- Gate: TASK-022 **DONE**. Day 8–10 queue exhausted; no new task opened without new repository evidence / approved slice.
+- Gate: TASK-022 **DONE**. Approved Blueprint evidence advances execution to TASK-023, the Day 11–13 SOP/Task discovery gate.
