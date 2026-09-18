@@ -7,7 +7,7 @@
   "current_task": "TASK-048",
   "current_task_title": "Night final checkpoint",
   "status": "READY",
-  "autonomy": "AUTO_CONTINUE",
+  "autonomy": "PAUSED",
   "blocked": false,
   "requires_user": false,
   "next_task": null,
@@ -156,6 +156,12 @@
     "status": "FINAL_CHECKPOINT_IN_PROGRESS",
     "final_report_ref": "01_DOCS/MAGASIN/08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md",
     "evidence_ref": "01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE_V1.md",
-    "hard_stop_pending": true
+    "hard_stop_pending": true,
+    "temporal_gate": {
+      "mode": "PAUSED_UNTIL_HARD_STOP",
+      "resume_at": "2026-09-19T09:15:00+07:00",
+      "reason": "NO_ACTIONABLE_WORK_BEFORE_APPROVED_HARD_STOP",
+      "supervisor_continue_suppressed": true
+    }
   }
 }
