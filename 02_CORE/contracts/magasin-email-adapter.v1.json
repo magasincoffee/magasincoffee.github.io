@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-035",
+  "phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
+  "status": "WAIT_PROVIDER_ACTIVATION",
+  "five_step": {
+    "question": "Can MAGASIN deliver schedule-critical email without coupling business mutations to a provider or exposing secrets?",
+    "delete": [
+      "DIRECT_EMAIL_FROM_BUSINESS_MUTATIONS",
+      "DUPLICATE_NOTIFICATION_PIPELINES",
+      "EXTERNAL_CALENDAR",
+      "MARKETING_EMAIL_SCOPE",
+      "PROVIDER_ASSUMPTION_WITHOUT_OWNER_SOURCE",
+      "SCHEDULER_INSTALL_BEFORE_TRANSPORT_ACTIVATION"
+    ],
+    "simplify": "ONE_NOTIFICATION_OUTBOX_TO_ONE_PROVIDER_NEUTRAL_WORKER_CONTRACT",
+    "accelerate": [
+      "SERVICE_ROLE_TARGET_RESOLUTION",
+      "PERMANENT_NO_TARGET_SKIP",
+      "FAIL_CLOSED_ACTIVATION_GATE",
+      "DETERMINISTIC_CORE_TESTS"
+    ],
+    "automate": "ENABLE_PROVIDER_ADAPTER_AND_SCHEDULER_ONLY_AFTER_OWNER_PROVIDER_ACCOUNT_SECRET_INPUT"
+  },
+  "live_runtime_evidence": {
+    "supabase_vault_installed": true,
+    "edge_functions_deployed": 0,
+    "email_provider_secret_names_found": 0,
+    "pg_cron_installed": false,
+    "pg_net_installed": false
+  },
+  "provider_independent": {
+    "outbox": "public.notification_outbox",
+    "claim_rpc": "claim_notification_email_batch_v1",
+    "complete_rpc": "complete_notification_email_v1",
+    "resolve_targets_rpc": "resolve_notification_email_targets_v1",
+    "skip_rpc": "skip_notification_email_v1",
+    "core_module": "02_CORE/notification/email-delivery-core-v1.mjs",
+    "production_migration": "20260918120917_notification_email_target_resolution_v1"
+  },
+  "worker_contract": {
+    "config_gate": [
+      "provider",
+      "sender",
+      "credential"
+    ],
+    "claim_only_when_config_ready": true,
+    "blind_recipient_semantics": true,
+    "logical_idempotency_key": "event_key",
+    "no_target_outcome": "SKIPPED",
+    "transient_transport_error_outcome": "FAILED_RETRY",
+    "successful_transport_outcome": "SENT"
+  },
+  "activation_boundary": {
+    "status": "OWNER_INPUT_REQUIRED",
+    "required": [
+      {
+        "id": "EMAIL-001",
+        "field": "provider",
+        "value": null
+      },
+      {
+        "id": "EMAIL-002",
+        "field": "sender_identity",
+        "value": null
+      },
+      {
+        "id": "EMAIL-003",
+        "field": "provider_credential_in_secret_store",
+        "value": null
+      }
+    ],
+    "credential_rule": "Never commit or paste provider credentials into the public repository.",
+    "external_calendar": false
+  },
+  "guardrails": {
+    "provider_invented": false,
+    "sender_invented": false,
+    "credentials_in_public_git": false,
+    "provider_send_invoked": false,
+    "scheduler_enabled": false,
+    "production_provider_activation": false
+  },
+  "required_project_state": "WAIT_USER"
+}
