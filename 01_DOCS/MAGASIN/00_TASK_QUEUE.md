@@ -13,8 +13,8 @@
 | TASK-006 | Supervisor action executor: Continue / safe Retry | 20m | unit + local dry-run | DONE |
 | TASK-007 | Supervisor START/STOP launcher + kill switch | 20m | local smoke | DONE |
 | TASK-008 | Supervisor autonomy E2E loop | 20m | live bounded E2E | DONE |
-| TASK-009 | Store/product canonical model review | 20m | discovery trace | READY |
-| TASK-010 | Database baseline/migration plan | 20m | schema review | QUEUED |
+| TASK-009 | Store/product canonical model review | 20m | discovery trace | DONE |
+| TASK-010 | Database baseline/migration plan | 20m | schema review | READY |
 | TASK-011 | Owner Control Tower vertical-slice plan | 20m | acceptance defined | QUEUED |
 
 Sau TASK-011, queue được mở rộng theo kết quả thực tế. Không tạo trước hàng trăm task nếu chưa biết dependency thật.
