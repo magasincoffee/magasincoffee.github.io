@@ -20,8 +20,8 @@
 | TASK-012 | Control Tower shell + normalized fixture contract | 20m | unit/fixture tests | DONE |
 | TASK-013 | Owner home navigation + route/auth integration | 15m | integration test | DONE |
 | TASK-014 | Procurement/payables read adapter | 20m | adapter tests | DONE |
-| TASK-015 | Workforce attention read adapter | 20m | adapter tests | READY |
-| TASK-016 | Revenue read-adapter + reconciliation quality gate | 20m | contract tests | QUEUED |
+| TASK-015 | Workforce attention read adapter | 20m | adapter tests | DONE |
+| TASK-016 | Revenue read-adapter + reconciliation quality gate | 20m | contract tests | READY |
 | TASK-017 | Partial-source/error-state integration | 20m | regression tests | QUEUED |
 | TASK-018 | Control Tower browser E2E + Day-7 usability gate | 20m | browser E2E | QUEUED |
 
