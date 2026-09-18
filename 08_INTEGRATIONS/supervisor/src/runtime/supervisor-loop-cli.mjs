@@ -124,17 +124,17 @@ function recoveryReason(action) {
     case RECOVERY_ACTIONS.RELOAD_STALLED:
       return "ChatGPT response stayed running too long; reload the same conversation once, then re-evaluate.";
     case RECOVERY_ACTIONS.RELOAD_UNAVAILABLE:
-      return "Conversation UI stayed unavailable after grace period; reload once before rollover.";
+      return "Conversation UI stayed unavailable after grace period; reload once, then fail closed if it remains ambiguous.";
     case RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL:
       return "ChatGPT reports the current conversation is full; create a fresh conversation and continue from repository state.";
     case RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_MISSING:
       return "Target conversation cannot be loaded; create a fresh conversation and continue from repository state.";
     case RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING:
-      return "Target conversation path could not be reached after bounded attempts; create a fresh conversation.";
+      return "Target conversation path could not be reached after bounded attempts; do not create another chat automatically.";
     case RECOVERY_ACTIONS.ROLLOVER_STALLED:
       return "The same response remained stuck after bounded reloads; create a fresh conversation.";
     case RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE:
-      return "Conversation stayed unavailable after reload; create a fresh conversation.";
+      return "Conversation stayed unavailable after reload; stop automatic recovery rather than create another chat.";
     case RECOVERY_ACTIONS.WAIT_TARGET:
       return "Retrying target conversation navigation within a bounded budget.";
     case RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED:
@@ -160,6 +160,20 @@ function isHardStopObservation(observation) {
     OBSERVATIONS.ADMIN_ESCALATION,
     OBSERVATIONS.AMBIGUOUS_DECISION
   ]).has(observation);
+}
+
+function isHealthyConversationProbe(probe) {
+  const snapshot = probe?.snapshot || {};
+  return Boolean(
+    snapshot.conversationPath &&
+    snapshot.composerReady &&
+    !snapshot.loginRequired &&
+    !snapshot.hasCaptcha &&
+    !snapshot.hasNetworkError &&
+    !snapshot.hasTransientError &&
+    !snapshot.conversationFull &&
+    !snapshot.conversationMissing
+  );
 }
 
 async function createFreshConversation({
@@ -396,6 +410,39 @@ while (true) {
           continue;
         }
 
+        if (isHealthyConversationProbe(mismatchProbe)) {
+          try {
+            const observedTarget = targetFromUrl(page.url());
+            target = observedTarget;
+            await writeTarget(targetPath, target);
+            recovery.noteConversationAdopted();
+            await safeAppendLog(logPath, {
+              type: "TARGET_ADOPTED",
+              action: "RECOVER_TARGET",
+              target: "CURRENT_HEALTHY_CONVERSATION",
+              executed: true,
+              reason: "Stored target was stale or unreachable; adopted the existing healthy ChatGPT conversation instead of creating another chat."
+            });
+            await writeRuntimeStatus(
+              buildRuntimeStatus({
+                projectState,
+                status: "READY",
+                uiState: mismatchProbe?.classification?.uiState || null,
+                observation: mismatchObservation || null,
+                retryCount,
+                recovery: recoveryPayload(
+                  recovery,
+                  RECOVERY_ACTIONS.NONE,
+                  "Adopted existing healthy conversation; no new chat was created."
+                )
+              }),
+              runtimeStatusPath
+            ).catch(() => {});
+            await delay(args.pollMs);
+            continue;
+          } catch {}
+        }
+
         const targetRecovery = recovery.observeTarget({ matched: false });
         await safeAppendLog(logPath, {
           type: "TARGET_RECOVERY",
@@ -419,53 +466,30 @@ while (true) {
         }
 
         if (targetRecovery === RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING) {
-          try {
-            const rollover = await createFreshConversation({
-              page,
-              targetPath,
-              controller,
-              execute: args.execute,
+          recovery.block();
+          const decision = {
+            action: ACTIONS.STOP_WAIT_USER,
+            reason: "Stored conversation target could not be reached and no healthy current conversation was available. Automatic creation of another chat is disabled to prevent a chat storm."
+          };
+          await safeAppendLog(logPath, {
+            type: "RECOVERY_BLOCKED",
+            action: targetRecovery,
+            executed: false,
+            reason: decision.reason,
+            errorName: navigationErrorName || undefined
+          });
+          await writeRuntimeStatus(
+            buildRuntimeStatus({
               projectState,
-              recoveryAction: targetRecovery
-            });
-            if (rollover.target) target = rollover.target;
-            recovery.record(targetRecovery, { success: true });
-            await safeAppendLog(logPath, {
-              type: "CONVERSATION_ROLLOVER",
-              action: targetRecovery,
-              executed: Boolean(rollover.execution?.executed),
-              target: rollover.execution?.target || undefined,
-              reason: recoveryReason(targetRecovery)
-            });
-            await writeRuntimeStatus(
-              buildRuntimeStatus({
-                projectState,
-                status: args.execute ? "ROLLOVER" : "DRY_RUN",
-                retryCount,
-                execution: rollover.execution,
-                recovery: recoveryPayload(recovery, targetRecovery)
-              }),
-              runtimeStatusPath
-            ).catch(() => {});
-          } catch (error) {
-            recovery.record(targetRecovery, { success: false });
-            await safeAppendLog(logPath, {
-              type: "ROLLOVER_FAILED",
-              action: targetRecovery,
-              reason: recoveryReason(targetRecovery),
-              errorName: error?.name || "Error"
-            });
-            await writeRuntimeStatus(
-              buildRuntimeStatus({
-                projectState,
-                status: recovery.blocked ? "WAIT_USER" : "RECOVERING",
-                retryCount,
-                recovery: recoveryPayload(recovery, targetRecovery),
-                errorName: error?.name || "Error"
-              }),
-              runtimeStatusPath
-            ).catch(() => {});
-          }
+              status: "WAIT_USER",
+              uiState: mismatchProbe?.classification?.uiState || null,
+              observation: mismatchObservation || null,
+              decision,
+              retryCount,
+              recovery: recoveryPayload(recovery, targetRecovery, decision.reason)
+            }),
+            runtimeStatusPath
+          ).catch(() => {});
           await delay(args.pollMs);
           continue;
         }
@@ -510,11 +534,38 @@ while (true) {
       continue;
     }
 
+    if (recoveryAction === RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE) {
+      recovery.block();
+      const decision = {
+        action: ACTIONS.STOP_WAIT_USER,
+        reason: "Conversation UI remained unavailable after its bounded reload. Automatic fresh-chat creation is disabled for this ambiguous state to prevent repeated new chats."
+      };
+      await safeAppendLog(logPath, {
+        type: "RECOVERY_BLOCKED",
+        action: recoveryAction,
+        executed: false,
+        reason: decision.reason
+      });
+      await writeRuntimeStatus(
+        buildRuntimeStatus({
+          projectState,
+          status: "WAIT_USER",
+          uiState: probe.classification.uiState,
+          observation: probe.classification.observation,
+          decision,
+          retryCount,
+          recovery: recoveryPayload(recovery, recoveryAction, decision.reason)
+        }),
+        runtimeStatusPath
+      ).catch(() => {});
+      await delay(args.pollMs);
+      continue;
+    }
+
     if (
       recoveryAction === RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL ||
       recoveryAction === RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_MISSING ||
-      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_STALLED ||
-      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE
+      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_STALLED
     ) {
       try {
         const rollover = await createFreshConversation({
