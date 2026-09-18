@@ -1,0 +1,105 @@
+name: Night Run Hard Stop
+
+on:
+  schedule:
+    - cron: "15 2 19 9 *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: night-run-2026-09-18-hard-stop
+  cancel-in-progress: false
+
+jobs:
+  hard-stop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Guard approved night window
+        id: guard
+        shell: bash
+        run: |
+          if [ "$(date -u +%Y-%m-%d)" = "2026-09-19" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.guard.outputs.run == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Enforce 09:15 +07 hard stop
+        if: steps.guard.outputs.run == 'true'
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          state_path = Path("01_DOCS/MAGASIN/00_PROJECT_STATE.json")
+          cursor_path = Path("02_CORE/contracts/business-os-execution-cursor.v1.json")
+          report_path = Path("01_DOCS/MAGASIN/08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md")
+
+          state = json.loads(state_path.read_text(encoding="utf-8"))
+          night = state.get("night_run") or {}
+          if night.get("id") != "NIGHT_RUN_2026-09-18":
+              raise SystemExit("Approved night-run id is not active; no mutation.")
+
+          completed_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+          night["status"] = "NIGHT_WINDOW_COMPLETE"
+          night["completed_at"] = completed_at
+          night["hard_stop_enforced_by"] = "GITHUB_HOSTED_WORKFLOW"
+          state["night_run"] = night
+          state["current_task"] = "TASK-048"
+          state["current_task_title"] = "Night final checkpoint / Owner review"
+          state["status"] = "WAIT_USER"
+          state["autonomy"] = "MANUAL"
+          state["blocked"] = False
+          state["requires_user"] = True
+          state["next_task"] = None
+          state["owner_boundary"] = {
+              "task": "TASK-048",
+              "resolved": ["NIGHT_RUN_HARD_STOP_ENFORCED"],
+              "pending": ["OWNER_REVIEW_NIGHT_RUN_REPORT"]
+          }
+          state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          if cursor_path.exists():
+              cursor = json.loads(cursor_path.read_text(encoding="utf-8"))
+              cursor.update({
+                  "project_id": "magasin-business-os",
+                  "task": "TASK-048",
+                  "micro_task": "night_final_checkpoint",
+                  "status": "WAIT_USER",
+                  "checkpoint": "NIGHT_WINDOW_COMPLETE",
+                  "lease": None,
+                  "updated_at": completed_at
+              })
+              cursor_path.write_text(json.dumps(cursor, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          if not report_path.exists():
+              report_path.write_text(
+                  "# MAGASIN — NIGHT RUN REPORT 2026-09-19\n\n"
+                  "**Status:** NIGHT_WINDOW_COMPLETE / WAIT_USER\n\n"
+                  "The GitHub-hosted hard-stop guard reached the approved 09:15 +07 boundary. "
+                  "Review repository commits, CI evidence, project state and task logs before starting another autonomous window.\n",
+                  encoding="utf-8"
+              )
+
+      - name: Commit hard-stop checkpoint
+        if: steps.guard.outputs.run == 'true'
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No hard-stop changes required."
+            exit 0
+          fi
+          git config user.name "MAGASIN Night Guard"
+          git config user.email "actions@users.noreply.github.com"
+          git add             01_DOCS/MAGASIN/00_PROJECT_STATE.json             02_CORE/contracts/business-os-execution-cursor.v1.json             01_DOCS/MAGASIN/08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md
+          git commit -m "state: enforce approved night-run hard stop"
+          git push origin HEAD:main
