@@ -350,3 +350,138 @@ test("Work UI busy state never promotes USER_PENDING to handoff continuation", a
   assert.equal(result.decision.action, "WAIT");
   assert.equal(result.execution.executed, false);
 });
+
+
+test("Work UI progress rearms autonomous continuation after structural idle settles", async () => {
+  let now = 300_000;
+  const controller = new SupervisorLoopController({
+    execute: true,
+    minActionIntervalMs: 1000,
+    workIdleConfirmMs: 5000,
+    now: () => now
+  });
+  const p = page();
+
+  const initial = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: {
+      classification: { observation: "RESPONSE_COMPLETE" },
+      snapshot: {
+        assistantMessageCount: 1,
+        userMessageCount: 1,
+        lastMessageRole: "assistant",
+        lastMessageCharCount: 100,
+        lastAssistantCharCount: 100,
+        mainTextCharCount: 700,
+        mainElementCount: 120
+      }
+    }
+  });
+  assert.equal(initial.execution.executed, true);
+
+  now += 1500;
+  const running = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: {
+      classification: { observation: "ASSISTANT_RUNNING" },
+      snapshot: {
+        assistantMessageCount: 1,
+        userMessageCount: 2,
+        lastMessageRole: "user",
+        lastMessageCharCount: 180,
+        lastAssistantCharCount: 100,
+        mainTextCharCount: 950,
+        mainElementCount: 160,
+        responseRunning: true,
+        mainBusy: true
+      }
+    }
+  });
+  assert.equal(running.decision.action, "WAIT");
+
+  now += 1000;
+  const pending = {
+    classification: { observation: "USER_PENDING" },
+    snapshot: {
+      assistantMessageCount: 1,
+      userMessageCount: 2,
+      lastMessageRole: "user",
+      lastMessageCharCount: 180,
+      lastAssistantCharCount: 100,
+      mainTextCharCount: 950,
+      mainElementCount: 160,
+      responseRunning: false,
+      mainBusy: false
+    }
+  };
+  const waiting = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: pending
+  });
+  assert.equal(waiting.decision.action, "WAIT");
+
+  now += 5500;
+  const resumed = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: pending
+  });
+
+  assert.equal(resumed.effectiveObservation, "RESPONSE_COMPLETE");
+  assert.equal(resumed.workUiSettled, true);
+  assert.equal(resumed.decision.action, "CONTINUE");
+  assert.equal(resumed.execution.executed, true);
+});
+
+test("post-action USER_PENDING without observable Work progress does not auto-continue", async () => {
+  let now = 400_000;
+  const controller = new SupervisorLoopController({
+    execute: true,
+    minActionIntervalMs: 1000,
+    workIdleConfirmMs: 5000,
+    now: () => now
+  });
+  const p = page();
+
+  const first = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: probe("RESPONSE_COMPLETE", 2)
+  });
+  assert.equal(first.execution.executed, true);
+
+  const pending = {
+    classification: { observation: "USER_PENDING" },
+    snapshot: {
+      assistantMessageCount: 2,
+      userMessageCount: 2,
+      lastMessageRole: "user",
+      lastMessageCharCount: 90,
+      lastAssistantCharCount: 80,
+      mainTextCharCount: 600,
+      mainElementCount: 100,
+      responseRunning: false,
+      mainBusy: false
+    }
+  };
+
+  now += 1000;
+  await controller.step({
+    page: p,
+    projectState: state(),
+    probe: pending
+  });
+
+  now += 20_000;
+  const result = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: pending
+  });
+
+  assert.equal(result.decision.action, "WAIT");
+  assert.equal(result.execution.executed, false);
+});
