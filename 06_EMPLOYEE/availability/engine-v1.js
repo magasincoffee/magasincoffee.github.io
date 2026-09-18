@@ -109,7 +109,7 @@ async function register(){
   p_note:null
  });
  if(q.error){if(msg)msg.textContent='Đăng ký thất bại: '+q.error.message;return}
- if(msg)msg.textContent='Đã đăng ký lịch làm và cập nhật ngay bên dưới.';
+ if(msg)msg.textContent='Đã đăng ký lịch làm. Đã cập nhật ngay bên dưới.';
  C.ui.toast('Đã lưu đăng ký lịch làm.','success');
  await load()
 }
