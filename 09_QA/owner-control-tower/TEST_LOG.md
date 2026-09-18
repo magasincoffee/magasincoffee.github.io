@@ -96,3 +96,22 @@
 - Genuine numeric zero remains valid ACTUAL revenue: PASS.
 - BUG-CT-004: VERIFIED.
 - Project task state unchanged; TASK-017 remains current.
+
+
+## 2026-09-18 — TASK-017 Partial-source/error-state integration
+
+- Branch: `feat/control-tower-partial-sources`
+- Workflow: `Owner Control Tower Tests`
+- Regression/integration run: `35315683012`
+- Result: **PASS**
+- Authentication failure returns before any business-data source is loaded: PASS.
+- Authenticated shell becomes visible before source loading starts: PASS.
+- Revenue, Payables and Workforce use independent source-isolation boundaries: PASS.
+- Unexpected source exception becomes section-local `GAP`: PASS.
+- Invalid loader result fails closed instead of entering raw state: PASS.
+- One failed source preserves healthy sibling sections: PASS.
+- Source loaders execute concurrently; one failed source does not block completion of the others: PASS.
+- Existing Revenue reconciliation, Payables and Workforce regression contracts: PASS.
+- BUG-CT-005 source-error/auth-error conflation: VERIFIED.
+- Production writes: none.
+- Gate: TASK-017 **DONE**; TASK-018 may proceed.

@@ -46,3 +46,15 @@
 - Root cause: amount validation called `Number(candidate.amount)` before rejecting blank/null source values.
 - Fix: reject null/undefined/blank string amounts before numeric conversion; keep genuine numeric zero valid.
 - Status: VERIFIED — run `35315530551` PASS
+
+
+## BUG-CT-005 — Source exception can be misclassified as auth denial and blank the dashboard
+
+- Date: 2026-09-18
+- Component: `04_OWNER/ControlTower/control-tower-v1.js`
+- Reproduction: after successful Owner authentication, make one Control Tower source loader throw outside its adapter's expected error path.
+- Observed: the previous broad `boot()` try/catch treated the source exception as `CONTROL_TOWER_AUTH`, hid the app and showed the denied screen.
+- Impact: one source failure could blank healthy sections and incorrectly present a data-source problem as an access problem.
+- Root cause: authentication and all source loading shared one exception boundary.
+- Fix: authentication now has its own fail/return boundary; the authenticated shell is shown first; Revenue, Payables and Workforce load concurrently through `loadControlTowerSection`, which converts unexpected per-source failures into section-local `GAP` states.
+- Status: VERIFIED — pull-request regression run `35315683012` PASS
