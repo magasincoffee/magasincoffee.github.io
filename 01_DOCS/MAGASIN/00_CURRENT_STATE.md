@@ -86,7 +86,8 @@ Supervisor Robot V1 is implemented and verified:
 - conversation-aware handoff: observe the active supervised chat before first continuation;
 - shared Owner/Robot ChatGPT browser profile opened by the Control Panel;
 - local-only target/profile/logs;
-- stop gates for WAIT_USER/BLOCKED/auth/MFA/CAPTCHA/destructive/admin/ambiguous states.
+- fail-closed gates for BLOCKED/auth/MFA/CAPTCHA/destructive/admin/ambiguous states;
+- WAIT_USER owner-boundary observer: may only reconcile an explicit live Owner decision back into repository state, never invent or bypass the decision.
 
 Owner does not need to sit at the computer and repeatedly ask ChatGPT to continue. Normal operation is: open `MAGASIN BUSINESS OS CONTROL` → START ROBOT → return only when the panel/state reaches `WAIT_USER` or another real Owner boundary. The Supervisor may continue only while `AUTO_CONTINUE` is allowed.
 
