@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-5STEP-SCHEDULE-FIRST-2026-09-18",
   "target_days": 21,
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
-  "current_task": "TASK-038",
-  "current_task_title": "Night-run persistence",
+  "current_task": "TASK-039",
+  "current_task_title": "Business OS Robot V2 project registry",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-039",
+  "next_task": "TASK-040",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -19,11 +19,11 @@
   },
   "last_updated": "2026-09-18",
   "owner_boundary": {
-    "task": "TASK-038",
+    "task": "TASK-039",
     "resolved": [
       "NIGHT_RUN_APPROVED",
-      "AUTO_REBOOT_APPROVED",
-      "TASK_037_RECOVERY_VERIFIED"
+      "TWO_PROJECT_SCOPE_APPROVED",
+      "TASK_038_PERSISTENCE_VERIFIED"
     ],
     "pending": []
   },
@@ -50,7 +50,7 @@
       "magasin-business-os",
       "magasin-media-robot"
     ],
-    "current_order": 3,
+    "current_order": 4,
     "cursor_ref": "02_CORE/contracts/business-os-execution-cursor.v1.json",
     "schedule_ref": "02_CORE/contracts/night-run-2026-09-18.v2.json",
     "recovery_install": {
@@ -63,6 +63,13 @@
       "workflow_run_id": 35369009209,
       "business_chrome_verified_online": true,
       "business_chrome_cdp_healthy": true
+    },
+    "persistence": {
+      "contract_validated": true,
+      "lease_semantics_verified": true,
+      "stale_lease_fail_closed": true,
+      "hard_stop_github_hosted": true,
+      "supervisor_test_run_id": 35369406307
     }
   }
 }
