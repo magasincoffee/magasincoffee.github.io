@@ -239,3 +239,25 @@
   6. add Control Panel `MỞ LOG LỖI` and a diagnostic collector script.
 - Runtime: `2026-09-18.12`.
 - Status: FIXED IN CODE — pending CI + field deployment.
+
+
+## BUG-SUP-017 — ChatGPT Work virtualization hides assistant-count progress after reconcile
+
+- Date: 2026-09-18
+- Component: continuation rearm / persistent diagnostics
+- Evidence captured automatically by runtime v12:
+  - project `TASK-035 / WAIT_USER`;
+  - UI `READY_IDLE / RESPONSE_COMPLETE`;
+  - `execution_reason=awaiting observable assistant progress`;
+  - controller `armed=false`;
+  - Owner reconcile `awaiting_response=true`;
+  - visible assistant count changed from the send-time surface instead of monotonically increasing;
+  - semantic conversation turn advanced from the prior surface to a later assistant turn.
+- Root cause: ChatGPT Work virtualizes visible conversation DOM. `assistantMessageCount` is not monotonic and therefore cannot be the sole progress latch. A completed response can have fewer currently rendered assistant nodes than existed at send time.
+- Fix:
+  1. capture `maxConversationTurnOrdinal` when a Supervisor action is sent;
+  2. on `RESPONSE_COMPLETE`, accept semantic progress when the turn ordinal advanced and the latest visible message role is `assistant`;
+  3. retain assistant-count/running/Work-idle progress as additional signals;
+  4. log `turn_ordinal_at_action` in privacy-safe diagnostics.
+- Runtime: `2026-09-18.13`.
+- Status: FIXED IN CODE — pending CI + field deployment.
