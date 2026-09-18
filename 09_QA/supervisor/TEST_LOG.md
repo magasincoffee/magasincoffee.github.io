@@ -54,3 +54,54 @@ Next gate: TASK-004 UI adapter local **non-destructive** smoke.
 - Probe failure: session disconnects and next probe can reconnect PASS.
 - Disconnect idempotency: PASS.
 - No browser live action or ChatGPT message side effect in this task.
+
+
+## 2026-09-18 — Supervisor action executor / persistence gates
+
+- Unit/regression tests on `feat/supervisor-actions`: **PASS**.
+- Installer + START/STOP smoke run `35301449363`: **PASS**.
+- Synthetic real-browser action E2E run `35301582550`: **PASS**.
+  - canonical CONTINUE action semantics: PASS in isolated synthetic DOM.
+  - safe RETRY action semantics: PASS in isolated synthetic DOM.
+  - no ChatGPT/external side effect during synthetic action E2E.
+- Vietnamese timeout / `Thử lại` path: unit regression PASS.
+- Live retry-only smoke run `35301796025`: **PASS**.
+  - observed live state at verification: `READY_IDLE`.
+  - no safe Retry control remained at verification time, so no click was executed.
+  - boundary confirmed: retry-only smoke cannot send Continue or arbitrary text.
+- Short-lived CDP CLIs terminate deterministically after logical detach: regression PASS.
+- Runtime-upgrade lock handling: PASS via installer smoke.
+- Deterministic STOP kill switch: PASS via installer smoke.
+- Anti-duplicate continuation controller: PASS.
+- Public Git boundary retained: credentials/cookies/tokens/browser profile/conversation target remain local only.
+
+
+
+## 2026-09-18 — Persistent Supervisor V1 acceptance
+
+- Unit/regression suite latest Supervisor runs: **PASS**.
+- Synthetic real-Chrome action E2E run `35301582550`: **PASS**.
+  - canonical Continue composer fill/send semantics: PASS on isolated synthetic DOM;
+  - safe Retry semantic click: PASS;
+  - external/ChatGPT side effect: none.
+- Bounded live one-shot run `35301293965`: executor classified Continue but returned `NO_SAFE_ACTION`; **fail-closed PASS**, no message sent.
+- Live safe-Retry smoke run `35301796025`: **PASS**; workflow is limited to recognized Retry controls and cannot send Continue/arbitrary text.
+- Installer + START/STOP kill-switch smoke run `35301449363`: **PASS**.
+  - local runtime install/upgrade: PASS;
+  - dedicated process START: PASS;
+  - deterministic STOP: PASS.
+- Persistent install run `35301801896`: **PASS**.
+  - install/start job: PASS;
+  - second-job persistence check after Actions cleanup: PASS;
+  - `PERSISTENT_SUPERVISOR_ALIVE=True`;
+  - `DESKTOP_KILL_SWITCH_READY=True`;
+  - local authenticated target present.
+- Supervisor is installed live on `MAGASIN-BUSINESS-PC`; it reads canonical project state and pauses on Owner/security gates.
+
+- Persistent install refresh run `35302028604`: **PASS**.
+  - latest branch runtime installed: PASS;
+  - live Supervisor START: PASS;
+  - separate persistence-verification job: PASS;
+  - process survived GitHub Actions cleanup;
+  - Desktop START/STOP controls verified present.
+- Temporary self-hosted bootstrap/smoke workflows were removed from the branch before merge; permanent offline `Supervisor Tests` remains.

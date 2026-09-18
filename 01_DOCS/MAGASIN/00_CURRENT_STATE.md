@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-001 — Autonomy Supervisor discovery and project bootstrap**
+**TASK-009 — Store/product canonical model review**
 
 Canonical task/state files:
 
@@ -62,11 +62,25 @@ Never commit secrets, credentials, cookies, tokens, browser profiles, private em
 
 Production/private data remains outside Git with appropriate access controls.
 
+## Supervisor status
+
+Supervisor Robot V1 is implemented and verified:
+
+- real installed Chrome with local authenticated profile;
+- privacy-safe UI observation;
+- bounded Continue / safe Retry executor;
+- reconnect/retry policy;
+- anti-duplicate continuation loop;
+- START/STOP desktop kill switch;
+- persistent local runtime;
+- local-only target/profile/logs;
+- stop gates for WAIT_USER/BLOCKED/auth/MFA/CAPTCHA/destructive/admin/ambiguous states.
+
+Owner does not need to sit at the computer and repeatedly ask ChatGPT to continue. The Supervisor may continue only while `AUTO_CONTINUE` is allowed.
+
 ## Next action
 
-Implement TASK-001: inspect the current local/ChatGPT/GitHub execution surfaces and build the safest Supervisor Robot foundation without credentials, destructive actions, or production data.
-
-If a local machine action is required, create a bounded GitHub Actions/local-runner task and ask Owner only for the physical/install/approval step.
+Continue **TASK-009 — Store/product canonical model review**, then TASK-010 database baseline/migration plan.
 
 ## Session handoff
 

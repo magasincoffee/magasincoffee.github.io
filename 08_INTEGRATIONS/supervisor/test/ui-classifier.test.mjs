@@ -60,3 +60,21 @@ test("network errors map to bounded-retry observation", () => {
   assert.equal(result.uiState, UI_STATES.NETWORK_ERROR);
   assert.equal(result.observation, OBSERVATIONS.NETWORK_ERROR);
 });
+
+
+test("explicit retry control is transient even when error banner parsing misses", () => {
+  const result = classifyUiSnapshot({
+    composerReady: true,
+    assistantMessageCount: 1,
+    userMessageCount: 1,
+    conversationPath: true,
+    loginRequired: false,
+    hasCaptcha: false,
+    responseRunning: false,
+    hasNetworkError: false,
+    hasTransientError: false,
+    hasRetryControl: true
+  });
+  assert.equal(result.uiState, UI_STATES.TRANSIENT_ERROR);
+  assert.equal(result.observation, OBSERVATIONS.TRANSIENT_ERROR);
+});

@@ -62,3 +62,47 @@ Log only:
 - safe error summary.
 
 Never log credentials, cookies, tokens, page auth state dumps, private chat content beyond the minimum needed for state classification.
+
+
+## Operational V1
+
+Status: **implemented and field-verified on MAGASIN-BUSINESS-PC**.
+
+Runtime:
+
+```text
+%LOCALAPPDATA%\MAGASIN\BusinessOS\supervisor\
+├── browser_profile\      # local only
+├── target.json            # local only
+├── supervisor.log         # safe event log only
+├── supervisor.pid
+└── runtime\
+```
+
+Desktop controls:
+
+- `START_MAGASIN_SUPERVISOR.cmd`
+- `STOP_MAGASIN_SUPERVISOR.cmd`
+
+The Supervisor uses the installed real Chrome and attaches locally through CDP. It does not ask for or export login secrets.
+
+### Autonomous continuation contract
+
+When all conditions hold:
+
+- `autonomy = AUTO_CONTINUE`;
+- state is not `WAIT_USER`, `BLOCKED`, or `DONE`;
+- ChatGPT response is complete;
+- no auth/CAPTCHA/destructive/admin/ambiguous stop condition exists;
+
+the Supervisor may send the canonical continue instruction.
+
+After sending once, it disarms until observable assistant progress occurs, preventing duplicate continuation spam.
+
+A recognized transient `Try again / Thử lại` control may be retried within the bounded retry policy.
+
+### Kill switch
+
+`STOP_MAGASIN_SUPERVISOR.cmd` first requests cooperative stop. If the dedicated Supervisor process does not exit within the bounded grace period, only that Supervisor process tree is force-stopped.
+
+The GitHub runner is a separate process and is not stopped by the Supervisor kill switch.
