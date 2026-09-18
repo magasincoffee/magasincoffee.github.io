@@ -105,12 +105,13 @@ test("control panel integrates the local GitHub Actions runner lifecycle", async
     "utf8"
   );
 
-  assert.match(source, /C:\\actions-runner/);
+  assert.match(source, /C:\\actions-runner-business\\actions-runner/);
   assert.match(source, /Runner\.Listener\.exe/);
   assert.match(source, /MAGASIN-BUSINESS-PC RUNNER - KEEP OPEN/);
   assert.match(source, /START RUNNER/);
   assert.match(source, /RUNNER ONLINE/);
-  assert.match(source, /Ensure-GitHubRunner -Interactive/);\n  assert.doesNotMatch(source, /\\$runnerRoot = \'C:\\\\actions-runner\'/);
+  assert.match(source, /Ensure-GitHubRunner -Interactive/);
+  assert.doesNotMatch(source, /\$runnerRoot = 'C:\\actions-runner'/);
   assert.match(source, /START ROBOT sẽ khởi động Runner trước/);
 });
 
