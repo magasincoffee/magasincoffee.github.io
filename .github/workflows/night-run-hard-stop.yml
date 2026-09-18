@@ -112,11 +112,11 @@ jobs:
 
           replace_required(current_state_path, [
               (
-                  "**TASK-048 — Night final checkpoint — IN_PROGRESS / AUTO_CONTINUE**",
+                  "**TASK-048 — Night final checkpoint — IN_PROGRESS / PAUSED**",
                   "**TASK-048 — Night final checkpoint / Owner review — WAIT_USER / MANUAL**"
               ),
               (
-                  "**AUTO_CONTINUE — TASK-048:** TASK-047 documentation/evidence is complete.",
+                  "**PAUSED — TASK-048:** no actionable work remains before the approved 09:15 +07 hard stop; Supervisor continuation is intentionally suppressed until the boundary.",
                   "**WAIT_USER — TASK-048:** `NIGHT_WINDOW_COMPLETE` has been enforced; Owner review of the night-run report is required."
               ),
               (
@@ -149,7 +149,7 @@ jobs:
 
           replace_required(report_path, [
               (
-                  "**Current status:** FINAL_CHECKPOINT_IN_PROGRESS / AUTO_CONTINUE",
+                  "**Current status:** FINAL_CHECKPOINT_IN_PROGRESS / PAUSED",
                   "**Current status:** NIGHT_WINDOW_COMPLETE / WAIT_USER"
               ),
               (
@@ -161,7 +161,7 @@ jobs:
                   "At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` enforced the canonical boundary and:"
               ),
               (
-                  "Until that boundary, no new feature work, merge, live provider action, or production activation is authorized by TASK-048.",
+                  "Until that boundary, no new feature work, merge, live provider action, or production activation is authorized by TASK-048. Supervisor continuation is paused because no actionable work remains before the time boundary.",
                   "Autonomy is now **MANUAL**. Owner review is required before any new autonomous window, merge, live provider action, or production activation."
               )
           ])
@@ -172,7 +172,7 @@ jobs:
                   "**Status:** TASK-037–047 COMPLETE / TASK-048 NIGHT_WINDOW_COMPLETE / OWNER REVIEW REQUIRED  "
               ),
               (
-                  "The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the project must stay `READY / AUTO_CONTINUE` only until the approved 2026-09-19 09:15 +07 boundary.",
+                  "The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the project stays `READY / PAUSED` until the approved 2026-09-19 09:15 +07 boundary so the Supervisor does not busy-loop on a time-only gate.",
                   "The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the approved 2026-09-19 09:15 +07 boundary has transitioned the project to `WAIT_USER / MANUAL` for Owner review."
               )
           ])
