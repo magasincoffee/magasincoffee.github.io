@@ -265,7 +265,7 @@ async function findBrainFromRecentSidebar(adapter, config) {
   if (!recentUrls.length) return null;
 
   const scout = discoveryPage;
-  const candidates = [];
+  const candidateTargets = [];
 
   for (const url of recentUrls) {
     let target = null;
@@ -302,8 +302,8 @@ async function findBrainFromRecentSidebar(adapter, config) {
       parseBrainDirective(captured.text, {
         maxWorkers: workerCapacity(config)
       });
-      candidates.push({ page, target, method: "SIDEBAR_SIGNATURE" });
-      if (candidates.length > 1) {
+      candidateTargets.push(target);
+      if (candidateTargets.length > 1) {
         throw new Error("multiple recent ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied");
       }
     } catch (error) {
@@ -313,7 +313,17 @@ async function findBrainFromRecentSidebar(adapter, config) {
     }
   }
 
-  return candidates[0] || null;
+  if (candidateTargets.length !== 1) return null;
+  const target = candidateTargets[0];
+  const existing = adapter.findPageForTarget(target);
+  if (existing) return { page: existing, target, method: "SIDEBAR_SIGNATURE" };
+
+  await scout.goto(targetUrl(target), {
+    waitUntil: "domcontentloaded",
+    timeout: 15_000
+  });
+  await scout.waitForTimeout(1200);
+  return { page: scout, target, method: "SIDEBAR_SIGNATURE" };
 }
 
 async function ensureBrain({ adapter, registry, projectState, config, execute, registryPath, logPath }) {
