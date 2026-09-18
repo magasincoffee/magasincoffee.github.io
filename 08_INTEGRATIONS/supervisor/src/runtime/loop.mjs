@@ -7,12 +7,14 @@ export class SupervisorLoopController {
     execute = false,
     minActionIntervalMs = 15_000,
     handoffIdleConfirmMs = 20_000,
+    workIdleConfirmMs = 20_000,
     now = () => Date.now(),
     onEvent = () => {}
   } = {}) {
     this.execute = execute;
     this.minActionIntervalMs = minActionIntervalMs;
     this.handoffIdleConfirmMs = handoffIdleConfirmMs;
+    this.workIdleConfirmMs = workIdleConfirmMs;
     this.now = now;
     this.onEvent = onEvent;
     this.armed = true;
@@ -21,6 +23,9 @@ export class SupervisorLoopController {
     this.sawRunningAfterAction = false;
     this.handoffPendingSignature = null;
     this.handoffPendingSince = 0;
+    this.userPendingSignature = null;
+    this.userPendingSince = 0;
+    this.userPendingSawProgress = false;
   }
 
   markExternalContinuation(assistantMessageCount = 0, target = "EXTERNAL_CONTINUE") {
@@ -28,11 +33,112 @@ export class SupervisorLoopController {
     this.lastActionAt = this.now();
     this.assistantCountAtAction = Number(assistantMessageCount || 0);
     this.sawRunningAfterAction = false;
+    this.resetUserPendingTracker();
     this.onEvent({
       type: "ACTION_EXECUTED",
       action: ACTIONS.CONTINUE,
       target
     });
+  }
+
+  resetUserPendingTracker() {
+    this.userPendingSignature = null;
+    this.userPendingSince = 0;
+    this.userPendingSawProgress = false;
+  }
+
+  safeActivitySignature(snapshot = {}) {
+    return [
+      Number(snapshot.userMessageCount || 0),
+      Number(snapshot.assistantMessageCount || 0),
+      String(snapshot.lastMessageRole || ""),
+      Number(snapshot.lastMessageCharCount || 0),
+      Number(snapshot.lastAssistantCharCount || 0),
+      Number(snapshot.mainTextCharCount || 0),
+      Number(snapshot.mainElementCount || 0)
+    ].join("|");
+  }
+
+  resolveWorkUiObservation(probe, { handoff = false } = {}) {
+    const snapshot = probe?.snapshot || {};
+    const original = probe?.classification?.observation;
+    const signature = this.safeActivitySignature(snapshot);
+
+    if (
+      original === OBSERVATIONS.ASSISTANT_RUNNING &&
+      snapshot.lastMessageRole === "user"
+    ) {
+      this.userPendingSignature = signature;
+      this.userPendingSince = this.now();
+      this.userPendingSawProgress = true;
+      return {
+        observation: original,
+        workUiSettled: false
+      };
+    }
+
+    if (original !== OBSERVATIONS.USER_PENDING) {
+      this.resetUserPendingTracker();
+      return {
+        observation: original,
+        workUiSettled: false
+      };
+    }
+
+    if (snapshot.responseRunning || snapshot.mainBusy) {
+      this.userPendingSignature = signature;
+      this.userPendingSince = this.now();
+      this.userPendingSawProgress = true;
+      return {
+        observation: original,
+        workUiSettled: false
+      };
+    }
+
+    if (this.userPendingSignature == null) {
+      this.userPendingSignature = signature;
+      this.userPendingSince = this.now();
+      return {
+        observation: original,
+        workUiSettled: false
+      };
+    }
+
+    if (signature !== this.userPendingSignature) {
+      this.userPendingSignature = signature;
+      this.userPendingSince = this.now();
+      this.userPendingSawProgress = true;
+      return {
+        observation: original,
+        workUiSettled: false
+      };
+    }
+
+    const confirmMs = handoff
+      ? this.handoffIdleConfirmMs
+      : this.workIdleConfirmMs;
+    const stableLongEnough =
+      this.userPendingSince > 0 &&
+      this.now() - this.userPendingSince >= confirmMs;
+    const maySettle = handoff || this.userPendingSawProgress;
+
+    if (stableLongEnough && maySettle) {
+      this.onEvent({
+        type: handoff ? "HANDOFF_IDLE_CONFIRMED" : "WORK_UI_IDLE_CONFIRMED",
+        reason: handoff
+          ? "Owner-pending role stayed structurally idle; reconcile the visible conversation instead of waiting forever."
+          : "Observed Work UI progress followed by a stable idle window; treat the response as complete."
+      });
+      return {
+        observation: OBSERVATIONS.RESPONSE_COMPLETE,
+        workUiSettled: true
+      };
+    }
+
+    return {
+      observation: original,
+      workUiSettled: false
+    };
   }
 
   observeProgress(probe) {
@@ -53,12 +159,17 @@ export class SupervisorLoopController {
 
     if (
       classification.observation === "RESPONSE_COMPLETE" &&
-      (progressed || this.sawRunningAfterAction)
+      (progressed || this.sawRunningAfterAction || snapshot.workUiSettled)
     ) {
       this.armed = true;
       this.sawRunningAfterAction = false;
       this.assistantCountAtAction = null;
-      this.onEvent({ type: "REARMED_AFTER_RESPONSE" });
+      this.resetUserPendingTracker();
+      this.onEvent({
+        type: snapshot.workUiSettled
+          ? "REARMED_AFTER_WORK_UI"
+          : "REARMED_AFTER_RESPONSE"
+      });
     }
   }
 
@@ -71,47 +182,21 @@ export class SupervisorLoopController {
     handoff = false
   }) {
     const state = validateProjectState(projectState);
-    this.observeProgress(probe);
-
-    let observation = probe.classification.observation;
-    const snapshot = probe?.snapshot || {};
-
-    // ChatGPT Work can render tool/activity traces outside the standard
-    // assistant message container. The last standard role can therefore stay
-    // "user" even after Work has visibly finished. To avoid a permanent
-    // USER_PENDING deadlock, confirm that privacy-safe UI structure is stable
-    // for a bounded idle window before the one-time handoff reconciliation.
-    if (handoff && observation === OBSERVATIONS.USER_PENDING) {
-      const signature = [
-        Number(snapshot.userMessageCount || 0),
-        Number(snapshot.assistantMessageCount || 0),
-        String(snapshot.lastMessageRole || ""),
-        Number(snapshot.lastMessageCharCount || 0),
-        Number(snapshot.lastAssistantCharCount || 0),
-        Number(snapshot.mainTextCharCount || 0),
-        Number(snapshot.mainElementCount || 0)
-      ].join("|");
-
-      if (snapshot.responseRunning || snapshot.mainBusy) {
-        this.handoffPendingSignature = signature;
-        this.handoffPendingSince = this.now();
-      } else if (signature !== this.handoffPendingSignature) {
-        this.handoffPendingSignature = signature;
-        this.handoffPendingSince = this.now();
-      } else if (
-        this.handoffPendingSince > 0 &&
-        this.now() - this.handoffPendingSince >= this.handoffIdleConfirmMs
-      ) {
-        observation = OBSERVATIONS.RESPONSE_COMPLETE;
-        this.onEvent({
-          type: "HANDOFF_IDLE_CONFIRMED",
-          reason: "Owner-pending role stayed structurally idle; reconcile the visible conversation instead of waiting forever."
-        });
+    const resolved = this.resolveWorkUiObservation(probe, { handoff });
+    const observation = resolved.observation;
+    const effectiveProbe = {
+      ...probe,
+      classification: {
+        ...probe.classification,
+        observation
+      },
+      snapshot: {
+        ...(probe?.snapshot || {}),
+        workUiSettled: resolved.workUiSettled
       }
-    } else {
-      this.handoffPendingSignature = null;
-      this.handoffPendingSince = 0;
-    }
+    };
+
+    this.observeProgress(effectiveProbe);
 
     const decision = decideContinuation({
       projectState: state,
@@ -180,6 +265,7 @@ export class SupervisorLoopController {
         probe?.snapshot?.assistantMessageCount || 0
       );
       this.sawRunningAfterAction = false;
+      this.resetUserPendingTracker();
       this.onEvent({
         type: "ACTION_EXECUTED",
         action: decision.action,
@@ -187,6 +273,11 @@ export class SupervisorLoopController {
       });
     }
 
-    return { decision, execution };
+    return {
+      decision,
+      execution,
+      effectiveObservation: observation,
+      workUiSettled: resolved.workUiSettled
+    };
   }
 }
