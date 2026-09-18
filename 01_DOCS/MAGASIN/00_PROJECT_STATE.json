@@ -6,10 +6,10 @@
   "current_phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
   "current_task": "TASK-035",
   "current_task_title": "MAGASIN email adapter/config",
-  "status": "READY",
-  "autonomy": "AUTO_CONTINUE",
+  "status": "WAIT_USER",
+  "autonomy": "MANUAL",
   "blocked": false,
-  "requires_user": false,
+  "requires_user": true,
   "next_task": null,
   "safety": {
     "repository_visibility": "public",
