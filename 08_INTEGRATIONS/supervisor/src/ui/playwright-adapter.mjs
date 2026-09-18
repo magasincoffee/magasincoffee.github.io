@@ -37,6 +37,31 @@ export function isTransientNavigationError(error) {
   return /execution context was destroyed|most likely because of a navigation|target page, context or browser has been closed|navigation/i.test(message);
 }
 
+export function normalizeCdpWebSocketUrl(value, cdpUrl) {
+  const websocket = new URL(value);
+  const endpoint = new URL(cdpUrl);
+  if (["localhost", "127.0.0.1", "::1"].includes(websocket.hostname)) {
+    websocket.hostname = endpoint.hostname;
+  }
+  if (endpoint.port) websocket.port = endpoint.port;
+  return websocket.toString();
+}
+
+export async function resolveCdpEndpoint(cdpUrl, fetchImpl = fetch) {
+  const base = String(cdpUrl || "").replace(/\/+$/, "");
+  const response = await fetchImpl(`${base}/json/version`, {
+    cache: "no-store"
+  });
+  if (!response.ok) {
+    throw new Error(`CDP version endpoint failed: HTTP ${response.status}`);
+  }
+  const payload = await response.json();
+  if (!payload?.webSocketDebuggerUrl) {
+    throw new Error("CDP version endpoint missing webSocketDebuggerUrl");
+  }
+  return normalizeCdpWebSocketUrl(payload.webSocketDebuggerUrl, base);
+}
+
 export class ChatGptUiAdapter {
   constructor({
     profileDir = defaultSupervisorProfileDir(),
@@ -64,7 +89,8 @@ export class ChatGptUiAdapter {
     const { chromium } = await import("playwright-core");
 
     if (this.cdpUrl) {
-      this.browser = await chromium.connectOverCDP(this.cdpUrl);
+      const resolvedCdpEndpoint = await resolveCdpEndpoint(this.cdpUrl);
+      this.browser = await chromium.connectOverCDP(resolvedCdpEndpoint);
       this.attachedOverCdp = true;
       this.context = this.browser.contexts()[0] || null;
       if (!this.context) {
