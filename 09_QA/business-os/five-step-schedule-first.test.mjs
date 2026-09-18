@@ -24,21 +24,21 @@ test("Five-Step architecture reset is canonical and schedule-first", async () =>
   assert.match(architecture, /AUTOMATE last/);
   assert.match(architecture, /Employee availability[\s\S]*Manager review\/edit[\s\S]*Robot schedule proposal[\s\S]*publish weekly schedule/);
 
-  assert.equal(state.current_task, "TASK-032");
-  assert.equal(state.status, "WAIT_USER");
-  assert.equal(state.autonomy, "MANUAL");
-  assert.equal(state.requires_user, true);
-  assert.equal(state.next_task, null);
+  assert.equal(state.current_task, "TASK-033");
+  assert.equal(state.status, "READY");
+  assert.equal(state.autonomy, "AUTO_CONTINUE");
+  assert.equal(state.requires_user, false);
+  assert.equal(state.next_task, "TASK-034");
 
   assert.match(current, /Schedule-first Core Flow/);
-  assert.match(current, /TASK-032/);
+  assert.match(current, /TASK-033/);
   assert.match(queue, /TASK-026[^\n]*DEFERRED/);
   assert.match(queue, /TASK-027[^\n]*DONE/);
   assert.match(queue, /TASK-028[^\n]*DONE/);
   assert.match(queue, /TASK-029[^\n]*DONE/);
   assert.match(queue, /TASK-030[^\n]*DONE/);
   assert.match(queue, /TASK-031[^\n]*DONE/);
-  assert.match(queue, /TASK-032[^\n]*WAIT_USER/);
+  assert.match(queue, /TASK-032[^\n]*DONE/);\n  assert.match(queue, /TASK-033[^\n]*READY/);
 });
 
 test("deferred SOP write path remains fail-closed", async () => {
