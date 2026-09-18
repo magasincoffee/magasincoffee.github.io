@@ -33,10 +33,11 @@ TASK-047 reconciled the changelog, created canonical evidence, and expanded Busi
 - TASK-048 boundary-time guard fix: commits `148fb5b7ab0c2f33536248573c0ae2116c740cfa` + `525554e31ce0cb91e8c8bfb29ab25fa16ec48091`; QA probe run `35373330382`: **162/162 PASS**, 0 failed; manual dispatch before 09:15 +07 is blocked; PR #121 closed without merge
 - TASK-048 idempotence fix: commits `f63b71118f116151c37759046f08aa066793d9e9` + `998bc201966aa31bdda4049a21b9812b287794f2`; QA probe run `35373887433`: **162/162 PASS**, 0 failed; repeat post-boundary dispatch preserves completion timestamps; PR #122 closed without merge
 - TASK-048 one-shot guard fix: commits `80c9cdbcddec8af62b795caea4ed62e7f2d294b8` + `0e902d725dbfbb468ce56c1d59009718b0f69d33`; QA probe run `35374298573`: **162/162 PASS**, 0 failed; after `NIGHT_WINDOW_COMPLETE`, later dispatches exit before mutation and cannot overwrite a subsequent Owner-reviewed state; PR #123 closed without merge
+- TASK-048 evidence-surface fix: commits `6dfd738e0b75fbb2fb70d55ba27ee46c5ec46ae0` + `a91b95fb6e993d5fd17dc165a126b7f342f8bf53`; QA probe run `35375054600`: **162/162 PASS**, 0 failed; canonical evidence pack now transitions with the other final-state surfaces; PR #124 closed without merge
 - Media Robot PR #21 head `3522886bb54ac5b69d245eb3ccd1285ada8571e0`
 - Media push run `35370775036`: **83/83 PASS**
 - Media PR run `35371002442`: **83/83 PASS**
-- No bounded regression remains; TASK-048 hard-stop reconciles every canonical final-state surface, refuses manual dispatch before 09:15 +07, preserves first-completion timestamps, and becomes a one-shot no-op after `NIGHT_WINDOW_COMPLETE` so later Owner-reviewed state is protected.
+- No bounded regression remains; TASK-048 hard-stop reconciles every canonical final-state surface including the canonical evidence pack, refuses manual dispatch before 09:15 +07, preserves first-completion timestamps, and becomes a one-shot no-op after `NIGHT_WINDOW_COMPLETE` so later Owner-reviewed state is protected.
 
 ## Safety checkpoint
 
