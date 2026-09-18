@@ -139,3 +139,23 @@
 - Staffing demand write permission: live RPC remains OWNER_ONLY; Manager projection is fail-closed read-only; no permission bypass.
 - Production schema/data/backfill/permission mutation: none.
 - Gate: TASK-031 **DONE**; TASK-032 **READY**.
+
+## 2026-09-18 — TASK-032 Published schedule feedback integration gate
+
+- Branch: `feat/task-032-schedule-feedback-gate`
+- Task doc: `01_DOCS/MAGASIN/05_SYSTEM/PUBLISHED_SCHEDULE_FEEDBACK_LOOP_V1.md`
+- Contract: `02_CORE/contracts/published-schedule-feedback-loop.v1.json`
+- People Shift Day-10 run `35337154491`: **PASS**.
+- Employee Swap/Give integrity browser regression: PASS.
+- Employee availability canonical browser regression: PASS.
+- Employee attendance schedule-linked browser regression: PASS.
+- Manager Workforce + Swap approval + official refresh browser E2E: PASS.
+- Existing People/Shift Day-10 browser E2E: PASS.
+- Existing Control Tower browser regression: PASS.
+- Give-as-Swap behavior removed/fail-closed: PASS.
+- Swap reason required before submit: PASS.
+- `approve_shift_swap` feedback reflected in official schedule: PASS.
+- Unsafe `auto_attendance_from_approved_schedules` removed from active Employee UI: PASS.
+- Notification/email/calendar/outbox primitive inventory: NOT_CONNECTED.
+- Production schema/data/provider/permission mutation: none.
+- Gate: safe core **VERIFIED**; TASK-032 **WAIT_USER** on SFB-001/SFB-002.

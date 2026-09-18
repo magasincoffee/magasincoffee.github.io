@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-032",
+  "phase": "P1_SCHEDULE_FIRST_CORE_FLOW",
+  "status": "OWNER_DECISION_REQUIRED",
+  "verified_run": 35337154491,
+  "verified": {
+    "published_schedule_visibility": true,
+    "attendance_schedule_linked": true,
+    "unsafe_auto_attendance_active_ui": false,
+    "swap_submit": true,
+    "swap_reason_required": true,
+    "manager_swap_resolution": true,
+    "swap_atomic_schedule_update": true,
+    "official_schedule_refresh_after_swap": true,
+    "browser_direct_table_write": false
+  },
+  "fail_closed": {
+    "give_shift_primitive": "NOT_CONNECTED",
+    "notification_outbox": "NOT_CONNECTED",
+    "email_delivery": "NOT_CONNECTED",
+    "calendar_delivery": "NOT_CONNECTED"
+  },
+  "owner_decisions": [
+    {
+      "id": "SFB-001",
+      "topic": "GIVE_LIFECYCLE",
+      "status": "OWNER_INPUT_REQUIRED",
+      "options": [
+        "RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES",
+        "MANAGER_APPROVES_DIRECTLY",
+        "RECIPIENT_ACCEPTS_AUTO_TRANSFER",
+        "OTHER"
+      ],
+      "selected_option": null
+    },
+    {
+      "id": "SFB-002",
+      "topic": "NOTIFICATION_PRODUCTION_ACTIVATION",
+      "status": "OWNER_INPUT_REQUIRED",
+      "required_inputs": [
+        "ALLOW_EVENT_OUTBOX_PRODUCTION_APPLY",
+        "EMAIL_PROVIDER_OR_ACCOUNT_SOURCE",
+        "CALENDAR_PROVIDER_OR_TARGET_IF_ENABLED",
+        "ALLOW_EXTERNAL_CREDENTIALS_IN_SECRET_STORE"
+      ]
+    }
+  ],
+  "guardrails": {
+    "fake_give_as_swap": false,
+    "fake_notification_sent_state": false,
+    "production_schema_apply": false,
+    "production_provider_activation": false,
+    "credentials_in_public_git": false,
+    "auto_completed_attendance_without_clock_events": false
+  },
+  "required_project_state": "WAIT_USER"
+}

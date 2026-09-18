@@ -74,6 +74,27 @@ await check("workforce_handoff_returns_to_review",async()=>{
   return "official -> workforce review";
 });
 
+await check("manager_swap_approval_updates_official_schedule_through_rpc",async()=>{
+  await page.locator('[data-view="schedule"]').click();
+  const currentWeek=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==="get_manager_weekly_schedule").at(-1)?.args?.p_week_start);
+  if(currentWeek!=="2026-09-21"){
+    await page.locator('[data-mos-week="prev"]').click();
+    await page.waitForFunction(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==="get_manager_weekly_schedule").at(-1)?.args?.p_week_start==="2026-09-21");
+  }
+  await page.locator('[data-view="swap"]').click();
+  await page.locator("#view-swap .js-approve").waitFor();
+  await page.locator("#view-swap .js-approve").click();
+  await page.waitForFunction(()=>globalThis.__MW31_QA.calls.some(x=>x.name==="approve_shift_swap"));
+  await page.locator("#view-swap").filter({hasText:"Không có yêu cầu đổi ca đang chờ"}).waitFor();
+  const direct=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.kind==="from"));
+  if(direct.length)throw new Error(JSON.stringify(direct));
+  await page.locator('[data-view="schedule"]').click();
+  await page.locator("#view-schedule").filter({hasText:"Bạn QA"}).waitFor();
+  const call=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==="approve_shift_swap").at(-1));
+  if(call.args.p_swap_id!=="swap-1")throw new Error(JSON.stringify(call));
+  return "approve_shift_swap -> official schedule refresh";
+});
+
 await check("browser_diagnostics",async()=>{
   if(report.page_errors.length)throw new Error(report.page_errors.join("\n"));
   if(report.console_errors.length)throw new Error(report.console_errors.join("\n"));

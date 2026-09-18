@@ -86,6 +86,40 @@ try {
     return JSON.stringify(names);
   });
 
+  await check("give_shift_is_fail_closed_not_disguised_as_swap", async () => {
+    const give=employee.locator("[data-give-shift-state='NOT_CONNECTED']");
+    await give.waitFor({state:"attached"});
+    await give.evaluate(el=>el.click());
+    const opened=await employee.locator("#swapForm").evaluate(el=>el.classList.contains("open"));
+    const submitCalls=await page.evaluate(()=>window.__EMPLOYEE_SWAP_QA.calls.filter(x=>x.name==="submit_shift_swap_request"));
+    const toasts=await page.evaluate(()=>window.__EMPLOYEE_SWAP_QA.toasts);
+    if(opened)throw new Error("Give opened Swap form");
+    if(submitCalls.length)throw new Error(JSON.stringify(submitCalls));
+    if(!toasts.some(x=>String(x.message).includes("Cho ca chưa có backend")))throw new Error(JSON.stringify(toasts));
+    return "NOT_CONNECTED; 0 fake swap writes";
+  });
+
+  await check("swap_requires_reason_before_submit", async () => {
+    await employee.locator("#swapChoices button").first().click();
+    await employee.locator("#employeeRequesterSchedule").waitFor({state:"attached"});
+    await employee.locator("#employeeSwapTarget").selectOption("sch-target");
+    await employee.locator("#swapForm .swap-actions .btn.primary").click();
+    const result=await employee.locator("#swapResult").innerText();
+    const calls=await page.evaluate(()=>window.__EMPLOYEE_SWAP_QA.calls.filter(x=>x.name==="submit_shift_swap_request"));
+    if(!result.includes("Vui lòng nhập lý do đổi ca"))throw new Error(result);
+    if(calls.length)throw new Error("submitted without reason");
+    return "reason blocked before RPC";
+  });
+
+  await check("swap_submit_uses_verified_rpc_after_reason", async () => {
+    await employee.locator("#employeeSwapReason").fill("Đổi ca vì lịch học");
+    await employee.locator("#swapForm .swap-actions .btn.primary").click();
+    await page.waitForFunction(()=>window.__EMPLOYEE_SWAP_QA.calls.some(x=>x.name==="submit_shift_swap_request"));
+    const call=await page.evaluate(()=>window.__EMPLOYEE_SWAP_QA.calls.filter(x=>x.name==="submit_shift_swap_request").at(-1));
+    if(call.args.p_requester_schedule_id!=="sch-me"||call.args.p_target_schedule_id!=="sch-target"||call.args.p_reason!=="Đổi ca vì lịch học")throw new Error(JSON.stringify(call));
+    return JSON.stringify(call.args);
+  });
+
   if (report.page_errors.length) {
     add("page_errors", "FAIL", JSON.stringify(report.page_errors));
   } else add("page_errors", "PASS", "0");
