@@ -47,7 +47,7 @@ function bind(){
  root.querySelector('#mosStore')?.addEventListener('change',async e=>{state.storeId=e.target.value||null;await refresh()});
  root.querySelectorAll('[data-mos-week]').forEach(b=>b.addEventListener('click',async()=>{const a=b.dataset.mosWeek;state.week=a==='prev'?add(state.week,-7):a==='next'?add(state.week,7):monday(new Date());await refresh()}));
  root.querySelector('#mosRefresh')?.addEventListener('click',refresh);
- root.querySelector('#mosWorkforce')?.addEventListener('click',()=>{document.querySelector('.sidebar [data-view="workforce"]')?.click();setTimeout(()=>document.querySelector('#view-workforce [data-tab="review"]')?.click(),0)});
+ root.querySelector('#mosWorkforce')?.addEventListener('click',()=>{document.querySelector('.sidebar [data-view="workforce"]')?.click();const tab=document.querySelector('#view-workforce [data-tab="review"]');document.querySelectorAll('#view-workforce [data-tab]').forEach(x=>x.classList.remove('active'));document.querySelectorAll('#view-workforce .panel').forEach(x=>x.classList.remove('active'));tab?.classList.add('active');document.querySelector('#panel-review')?.classList.add('active')});
 }
 async function refresh(){
  const root=view();if(!root||state.loading)return;
