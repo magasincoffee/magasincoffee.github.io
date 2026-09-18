@@ -117,6 +117,16 @@ export async function collectSafeUiSnapshot(page) {
       const assistantMessages = Array.from(
         document.querySelectorAll("[data-message-author-role='assistant']")
       );
+      const userMessages = Array.from(
+        document.querySelectorAll("[data-message-author-role='user']")
+      );
+      const conversationMessages = Array.from(
+        document.querySelectorAll("[data-message-author-role]")
+      );
+      const lastMessage = conversationMessages.at(-1) || null;
+      const lastMessageRole = lastMessage
+        ? String(lastMessage.getAttribute("data-message-author-role") || "")
+        : null;
       const lastAssistant = assistantMessages.at(-1) || null;
       const assistantBusy = Boolean(
         lastAssistant && (
@@ -172,9 +182,11 @@ export async function collectSafeUiSnapshot(page) {
         composerReady: Boolean(composer),
         assistantMessageCount: assistantMessages.length,
         lastAssistantCharCount,
-        userMessageCount: document.querySelectorAll(
-          "[data-message-author-role='user']"
-        ).length,
+        userMessageCount: userMessages.length,
+        lastMessageRole,
+        lastMessageCharCount: Number(
+          (lastMessage && lastMessage.textContent && lastMessage.textContent.length) || 0
+        ),
         loginRequired,
         hasCaptcha,
         responseRunning,

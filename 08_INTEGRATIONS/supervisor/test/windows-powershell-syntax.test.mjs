@@ -12,7 +12,8 @@ const scripts = [
   "../windows/stop-supervisor.ps1",
   "../windows/install-supervisor.ps1",
   "../windows/repair-supervisor.ps1",
-  "../windows/control-panel.ps1"
+  "../windows/control-panel.ps1",
+  "../windows/open-supervisor-chat.ps1"
 ];
 
 for (const relative of scripts) {

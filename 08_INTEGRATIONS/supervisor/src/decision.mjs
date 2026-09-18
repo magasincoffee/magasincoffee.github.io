@@ -3,6 +3,7 @@ import { validateProjectState } from "./state.mjs";
 export const OBSERVATIONS = Object.freeze({
   RESPONSE_COMPLETE: "RESPONSE_COMPLETE",
   ASSISTANT_RUNNING: "ASSISTANT_RUNNING",
+  USER_PENDING: "USER_PENDING",
   NETWORK_ERROR: "NETWORK_ERROR",
   TRANSIENT_ERROR: "TRANSIENT_ERROR",
   AUTH_REQUIRED: "AUTH_REQUIRED",
@@ -23,7 +24,30 @@ export const ACTIONS = Object.freeze({
 });
 
 export const CANONICAL_CONTINUE_INSTRUCTION =
-  "Tiếp tục dự án MAGASIN theo repository source of truth. Đọc CURRENT_STATE, PROJECT_STATE, TASK_QUEUE và tiếp tục đúng micro-task hiện tại; test, sửa lỗi, regression/E2E, cập nhật state rồi sang task kế tiếp nếu không cần Owner.";
+  "Tiếp tục dự án MAGASIN theo repository source of truth và kiến trúc Five-Step. " +
+  "Đọc CURRENT_STATE, PROJECT_STATE, TASK_QUEUE, 00_ARCHITECTURE_5_STEP_RESET và current task docs. " +
+  "Trước mỗi thay đổi áp dụng QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE; không mở rộng module ngoài critical path. " +
+  "Tiếp tục đúng micro-task hiện tại, test/fix/regression/E2E, cập nhật state rồi sang task kế tiếp nếu không cần Owner.";
+
+export const HANDOFF_RECONCILE_INSTRUCTION =
+  "TIẾP QUẢN PHIÊN ĐANG MỞ — không khởi động lại công việc một cách máy móc. " +
+  "Trước tiên đọc ngữ cảnh hội thoại hiện tại để xác định Owner vừa yêu cầu gì, ChatGPT đang làm gì hoặc vừa hoàn tất phần nào. " +
+  "Sau đó đối chiếu CURRENT_STATE, PROJECT_STATE, TASK_QUEUE và 00_ARCHITECTURE_5_STEP_RESET. " +
+  "Nếu yêu cầu trực tiếp mới nhất của Owner làm thay đổi ưu tiên hoặc kiến trúc so với repository, hãy reconcile và cập nhật source-of-truth trước khi tự tiếp tục. " +
+  "Không lặp lại việc đã hoàn tất trong chat. Áp dụng QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE; ưu tiên critical path hiện tại, test/fix/regression/E2E và chỉ hỏi Owner khi gặp boundary thật.";
+
+export function buildContinueInstruction(projectState = {}) {
+  const task = String(projectState.current_task || "").trim();
+  const title = String(projectState.current_task_title || "").trim();
+  const phase = String(projectState.current_phase || "").trim();
+  const focus = [task, title].filter(Boolean).join(" — ");
+  const context = [
+    phase ? `Phase hiện tại: ${phase}.` : "",
+    focus ? `Micro-task repository hiện tại: ${focus}.` : ""
+  ].filter(Boolean).join(" ");
+
+  return `${CANONICAL_CONTINUE_INSTRUCTION} ${context}`.trim();
+}
 
 const HARD_STOPS = new Set([
   OBSERVATIONS.AUTH_REQUIRED,
@@ -43,7 +67,8 @@ export function decideContinuation({
   projectState,
   observation,
   retryCount = 0,
-  maxRetries = 2
+  maxRetries = 2,
+  handoff = false
 }) {
   const state = validateProjectState(projectState);
 
@@ -101,13 +126,24 @@ export function decideContinuation({
   if (observation === OBSERVATIONS.RESPONSE_COMPLETE) {
     return {
       action: ACTIONS.CONTINUE,
-      reason: "assistant response completed and autonomous continuation is allowed",
-      instruction: CANONICAL_CONTINUE_INSTRUCTION
+      reason: handoff
+        ? "active conversation is idle; reconcile live Owner/chat context before autonomous continuation"
+        : "assistant response completed and autonomous continuation is allowed",
+      instruction: handoff
+        ? HANDOFF_RECONCILE_INSTRUCTION
+        : buildContinueInstruction(state)
     };
   }
 
   if (observation === OBSERVATIONS.ASSISTANT_RUNNING) {
     return { action: ACTIONS.WAIT, reason: "assistant is still running" };
+  }
+
+  if (observation === OBSERVATIONS.USER_PENDING) {
+    return {
+      action: ACTIONS.WAIT,
+      reason: "latest visible message is from Owner; wait for ChatGPT to answer before takeover"
+    };
   }
 
   return {

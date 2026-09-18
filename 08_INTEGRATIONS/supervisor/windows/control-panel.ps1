@@ -10,6 +10,7 @@ $statusFile = Join-Path $root 'runtime-status.json'
 $logFile = Join-Path $root 'supervisor.log'
 $startScript = Join-Path $runtime 'windows\start-supervisor.ps1'
 $stopScript = Join-Path $runtime 'windows\stop-supervisor.ps1'
+$openChatScript = Join-Path $runtime 'windows\open-supervisor-chat.ps1'
 $projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
 $repoUrl = 'https://github.com/magasincoffee/magasincoffee.github.io'
 $runnerRoot = 'C:\actions-runner'
@@ -229,7 +230,7 @@ $runnerButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9.5)
 $controls.Controls.Add($runnerButton)
 
 $chatButton = New-Object Windows.Forms.Button
-$chatButton.Text = 'Mở ChatGPT'
+$chatButton.Text = 'ChatGPT Robot'
 $chatButton.Location = New-Object Drawing.Point(602, 21)
 $chatButton.Size = New-Object Drawing.Size(145, 42)
 $controls.Controls.Add($chatButton)
@@ -505,7 +506,22 @@ $runnerButton.Add_Click({
     }
 })
 
-$chatButton.Add_Click({ Start-Process 'https://chatgpt.com/' })
+$chatButton.Add_Click({
+    if (-not (Test-Path $openChatScript)) {
+        [Windows.Forms.MessageBox]::Show(
+            "Không tìm thấy shared ChatGPT launcher: $openChatScript",
+            'MAGASIN Business OS',
+            'OK',
+            'Error'
+        ) | Out-Null
+        return
+    }
+
+    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @(
+        '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + $openChatScript + '"')
+    )
+})
+
 $repoButton.Add_Click({ Start-Process $repoUrl })
 
 $timer = New-Object Windows.Forms.Timer
