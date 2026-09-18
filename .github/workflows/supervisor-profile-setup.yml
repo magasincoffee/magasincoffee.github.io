@@ -1,0 +1,52 @@
+name: Supervisor Profile Setup
+
+on:
+  push:
+    branches:
+      - feat/supervisor-ui-adapter
+    paths:
+      - '.github/workflows/supervisor-profile-setup.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supervisor-profile-setup-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  profile-setup:
+    if: github.actor == 'magasincoffee'
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: 08_INTEGRATIONS/supervisor
+        shell: powershell
+
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pinned UI dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Run manual-auth profile setup
+        run: |
+          node src/ui/profile-setup-cli.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Confirm local-only target
+        run: |
+          $target = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor\target.json'
+          if (-not (Test-Path $target)) { throw 'Local supervisor target was not created.' }
+          Write-Host 'PASS: Supervisor profile and conversation target exist locally.'
+          Write-Host 'No target URL, conversation ID, credentials, cookies, tokens, or message text are uploaded.'
