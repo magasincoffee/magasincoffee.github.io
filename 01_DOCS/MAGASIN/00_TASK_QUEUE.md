@@ -9,12 +9,13 @@
 | TASK-002 | Supervisor project-state reader | 15m | unit tests | DONE |
 | TASK-003 | Supervisor continuation decision engine | 20m | unit + regression | DONE |
 | TASK-004 | Supervisor ChatGPT UI adapter spike | 20m | local non-destructive smoke | DONE |
-| TASK-005 | Supervisor reconnect/retry policy | 15m | simulated failure tests | READY |
-| TASK-006 | Supervisor START/STOP launcher + kill switch | 20m | local smoke | QUEUED |
-| TASK-007 | Canonical CI/E2E skeleton | 20m | Actions PASS | QUEUED |
-| TASK-008 | Store/product canonical model review | 20m | discovery trace | QUEUED |
-| TASK-009 | Database baseline/migration plan | 20m | schema review | QUEUED |
-| TASK-010 | Owner Control Tower vertical-slice plan | 20m | acceptance defined | QUEUED |
+| TASK-005 | Supervisor reconnect/retry policy | 15m | simulated failure tests | DONE |
+| TASK-006 | Supervisor action executor: Continue / safe Retry | 20m | unit + local dry-run | READY |
+| TASK-007 | Supervisor START/STOP launcher + kill switch | 20m | local smoke | QUEUED |
+| TASK-008 | Supervisor autonomy E2E loop | 20m | live bounded E2E | QUEUED |
+| TASK-009 | Store/product canonical model review | 20m | discovery trace | QUEUED |
+| TASK-010 | Database baseline/migration plan | 20m | schema review | QUEUED |
+| TASK-011 | Owner Control Tower vertical-slice plan | 20m | acceptance defined | QUEUED |
 
 Sau TASK-010, queue được mở rộng theo kết quả thực tế. Không tạo trước hàng trăm task nếu chưa biết dependency thật.
 
