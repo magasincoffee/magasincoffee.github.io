@@ -4,7 +4,7 @@
 **Checkpoint:** TASK-048 — Night final checkpoint  
 **Current status:** FINAL_CHECKPOINT_IN_PROGRESS / AUTO_CONTINUE  
 **Approved hard stop:** 2026-09-19 09:15 +07  
-**Canonical evidence:** `01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE.md`
+**Canonical evidence:** `01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE_V1.md`
 
 ## Completed execution
 
