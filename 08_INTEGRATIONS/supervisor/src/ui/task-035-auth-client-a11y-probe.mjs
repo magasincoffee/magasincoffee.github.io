@@ -1,142 +1,45 @@
 import process from "node:process";
-import fs from "node:fs";
-import path from "node:path";
-import { spawnSync } from "node:child_process";
-
 const PROJECT="magasin-noibo";
 const CLIENT_NAME="MAGASIN Gmail Worker";
 const PORTS=Array.from({length:11},(_,i)=>9222+i);
+async function findCdp(){for(const port of PORTS){try{const r=await fetch(`http://127.0.0.1:${port}/json/version`,{cache:"no-store"});if(!r.ok)continue;const d=await r.json();if(d?.webSocketDebuggerUrl)return `http://127.0.0.1:${port}`;}catch{}}return null;}
+async function connect(cdp){const {chromium}=await import("playwright-core");const v=await fetch(cdp+"/json/version").then(r=>r.json());const ws=new URL(v.webSocketDebuggerUrl),ep=new URL(cdp);ws.hostname=ep.hostname;ws.port=ep.port;return chromium.connectOverCDP(ws.toString());}
+function sanitize(s){return String(s||"").replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"[email]").replace(/[0-9]+-[a-z0-9_-]+\.apps\.googleusercontent\.com/gi,"[client-id]").replace(/GOCSPX-[A-Za-z0-9_-]+/g,"[client-secret]").replace(/\s+/g," ").trim().slice(0,260);}
 
-async function findCdp(){
-  for(const port of PORTS){
-    try{
-      const r=await fetch(`http://127.0.0.1:${port}/json/version`,{cache:"no-store"});
-      if(!r.ok) continue;
-      const d=await r.json();
-      if(d?.webSocketDebuggerUrl) return `http://127.0.0.1:${port}`;
-    }catch{}
-  }
-  return null;
-}
-async function connect(cdp){
-  const {chromium}=await import("playwright-core");
-  const v=await fetch(cdp+"/json/version").then(r=>r.json());
-  const ws=new URL(v.webSocketDebuggerUrl),ep=new URL(cdp);
-  ws.hostname=ep.hostname;ws.port=ep.port;
-  return chromium.connectOverCDP(ws.toString());
-}
-function psRun(script,input){
-  const r=spawnSync("powershell",["-NoProfile","-NonInteractive","-Command",script],{
-    input,encoding:"utf8",windowsHide:true
-  });
-  if(r.status!==0) throw new Error("POWERSHELL_SECURESTRING_FAILED");
-  return String(r.stdout||"").trim();
-}
-function protect(plaintext){
-  return psRun([
-    "$ErrorActionPreference='Stop'",
-    "$raw=[Console]::In.ReadToEnd()",
-    "$secure=ConvertTo-SecureString -String $raw -AsPlainText -Force",
-    "$enc=ConvertFrom-SecureString -SecureString $secure",
-    "[Console]::Out.Write($enc)"
-  ].join(";"),plaintext);
-}
-function unprotect(ciphertext){
-  return psRun([
-    "$ErrorActionPreference='Stop'",
-    "$enc=[Console]::In.ReadToEnd()",
-    "$secure=ConvertTo-SecureString -String $enc",
-    "$b=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)",
-    "try {[Console]::Out.Write([Runtime.InteropServices.Marshal]::PtrToStringBSTR($b))} finally {[Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b)}"
-  ].join(";"),ciphertext);
-}
-
-const probe="MAGASIN_TASK035_DPAPI_PROBE";
-let preflight=false;
-try{
-  const enc=protect(probe);
-  preflight=Boolean(enc) && unprotect(enc)===probe;
-}catch{}
-console.log("SECURESTRING_PREFLIGHT="+preflight);
-if(!preflight) process.exit(10);
-
-const cdp=await findCdp();
-console.log("OAUTH_ADD_SECRET_CDP="+Boolean(cdp));
-if(!cdp) process.exit(1);
-const browser=await connect(cdp);
-const context=browser.contexts()[0];
-if(!context) process.exit(1);
+const cdp=await findCdp();console.log("ADD_SECRET_MODAL_CDP="+Boolean(cdp));if(!cdp)process.exit(1);
+const browser=await connect(cdp);const context=browser.contexts()[0];if(!context)process.exit(1);
 const page=await context.newPage();
-
 try{
-  await page.goto(`https://console.cloud.google.com/auth/clients?project=${PROJECT}`,{
-    waitUntil:"domcontentloaded",timeout:60000
-  }).catch(()=>{});
+  await page.goto(`https://console.cloud.google.com/auth/clients?project=${PROJECT}`,{waitUntil:"domcontentloaded",timeout:60000}).catch(()=>{});
   await page.waitForTimeout(7000);
-
   const target=page.getByText(CLIENT_NAME,{exact:true}).first();
-  if(!(await target.isVisible({timeout:2000}).catch(()=>false))){
-    console.log("OAUTH_CLIENT_FOUND=false");
-    process.exit(2);
-  }
-  console.log("OAUTH_CLIENT_FOUND=true");
+  if(!(await target.isVisible({timeout:2000}).catch(()=>false))) process.exit(2);
   await target.click({force:true});
   await page.waitForTimeout(5000);
-
-  let body=await page.locator("body").innerText().catch(()=>"");
-  const clientId=(body.match(/[0-9]+-[a-z0-9_-]+\.apps\.googleusercontent\.com/i)||[])[0]||"";
-  console.log("OAUTH_CLIENT_ID_CAPTURED="+Boolean(clientId));
-  if(!clientId) process.exit(3);
-
   const add=page.getByRole("button",{name:/Add client secret|Add secret/i}).first();
-  if(!(await add.isVisible({timeout:2000}).catch(()=>false))){
-    console.log("OAUTH_ADD_SECRET_BUTTON_FOUND=false");
-    process.exit(4);
-  }
-  console.log("OAUTH_ADD_SECRET_BUTTON_FOUND=true");
+  if(!(await add.isVisible({timeout:1500}).catch(()=>false))) process.exit(3);
   await add.click({force:true});
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(1500);
 
-  body=await page.locator("body").innerText().catch(()=>"");
-  let secret=(body.match(/GOCSPX-[A-Za-z0-9_-]+/)||[])[0]||"";
+  const dialogs=page.locator('[role="dialog"],[role="alertdialog"],mat-dialog-container');
+  console.log("ADD_SECRET_DIALOG_COUNT="+await dialogs.count());
 
-  if(!secret){
-    const confirmCandidates=[
-      page.getByRole("button",{name:/^Add$|^Create$|^Confirm$/i}).last(),
-      page.getByRole("button",{name:/Add secret|Create secret/i}).last()
-    ];
-    for(const btn of confirmCandidates){
-      if(await btn.isVisible({timeout:800}).catch(()=>false)){
-        await btn.click({force:true}).catch(()=>{});
-        await page.waitForTimeout(2500);
-        body=await page.locator("body").innerText().catch(()=>"");
-        secret=(body.match(/GOCSPX-[A-Za-z0-9_-]+/)||[])[0]||"";
-        if(secret) break;
-      }
-    }
+  const controls=await page.locator('button,[role="button"],input,textarea,label,mat-label,[role="textbox"]').evaluateAll(ns=>ns.map(n=>({
+    tag:n.tagName,role:n.getAttribute("role")||"",aria:n.getAttribute("aria-label")||"",placeholder:n.getAttribute("placeholder")||"",type:n.getAttribute("type")||"",text:(n.innerText||n.textContent||"").trim()
+  })));
+  const out=[];
+  for(const x of controls){
+    const label=sanitize(`${x.tag} | role=${x.role} | aria=${x.aria} | placeholder=${x.placeholder} | type=${x.type} | text=${x.text}`);
+    if(label && /secret|add|create|cancel|confirm|name|description|hủy|tạo|thêm|xác nhận|tên/i.test(label) && !out.includes(label)) out.push(label);
+    if(out.length>=80) break;
   }
+  console.log("ADD_SECRET_CONTROL_COUNT="+out.length);
+  out.forEach((v,i)=>console.log(`ADD_SECRET_CONTROL_${i+1}=${v}`));
 
-  console.log("OAUTH_NEW_SECRET_CAPTURED="+Boolean(secret));
-  if(!secret) process.exit(5);
-
-  const payload=JSON.stringify({
-    project:PROJECT,
-    client_name:CLIENT_NAME,
-    client_id:clientId,
-    client_secret:secret,
-    captured_at:new Date().toISOString()
-  });
-  const encrypted=protect(payload);
-  const verified=unprotect(encrypted)===payload;
-  console.log("OAUTH_SECURESTRING_VERIFIED="+verified);
-  if(!verified) process.exit(6);
-
-  const dir=path.join(process.env.USERPROFILE||process.env.HOME||".",".magasin");
-  fs.mkdirSync(dir,{recursive:true});
-  const out=path.join(dir,"task035-google-oauth.securestring");
-  fs.writeFileSync(out,encrypted,{encoding:"utf8"});
-  console.log("OAUTH_SECURE_FILE_SAVED="+fs.existsSync(out));
-}finally{
-  await page.close().catch(()=>{});
-}
+  const body=await page.locator("body").innerText().catch(()=>"");
+  const lines=String(body).split(/\r?\n/).map(sanitize).filter(Boolean);
+  const rel=[...new Set(lines.filter(v=>/secret|add|create|cancel|confirm|name|description/i.test(v)))].slice(0,60);
+  console.log("ADD_SECRET_TEXT_COUNT="+rel.length);
+  rel.forEach((v,i)=>console.log(`ADD_SECRET_TEXT_${i+1}=${v}`));
+}finally{await page.close().catch(()=>{});}
 process.exit(0);
