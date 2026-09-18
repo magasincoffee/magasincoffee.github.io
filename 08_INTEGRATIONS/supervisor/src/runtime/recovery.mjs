@@ -57,6 +57,7 @@ export class SupervisorRecoveryController {
     maxStallReloads = 2,
     maxUnavailableReloads = 1,
     maxRolloverFailures = 3,
+    rolloverCooldownMs = 120_000,
     now = () => Date.now()
   } = {}) {
     this.stallMs = stallMs;
@@ -66,6 +67,7 @@ export class SupervisorRecoveryController {
     this.maxStallReloads = maxStallReloads;
     this.maxUnavailableReloads = maxUnavailableReloads;
     this.maxRolloverFailures = maxRolloverFailures;
+    this.rolloverCooldownMs = rolloverCooldownMs;
     this.now = now;
 
     this.runningSince = null;
@@ -77,6 +79,7 @@ export class SupervisorRecoveryController {
     this.targetMisses = 0;
     this.rolloverFailures = 0;
     this.conversationGeneration = 0;
+    this.lastRolloverAt = 0;
     this.blocked = false;
   }
 
@@ -102,15 +105,22 @@ export class SupervisorRecoveryController {
       return RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED;
     }
 
+    const now = this.now();
+    const rolloverCoolingDown =
+      this.lastRolloverAt > 0 &&
+      now - this.lastRolloverAt < this.rolloverCooldownMs;
+
     if (snapshot.conversationFull) {
-      return RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL;
+      return rolloverCoolingDown
+        ? RECOVERY_ACTIONS.NONE
+        : RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL;
     }
 
     if (snapshot.conversationMissing) {
-      return RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_MISSING;
+      return rolloverCoolingDown
+        ? RECOVERY_ACTIONS.NONE
+        : RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_MISSING;
     }
-
-    const now = this.now();
     const observation = classification.observation;
 
     if (observation === "ASSISTANT_RUNNING") {
@@ -185,6 +195,7 @@ export class SupervisorRecoveryController {
     if (String(action).startsWith("ROLLOVER_")) {
       if (success) {
         this.conversationGeneration += 1;
+        this.lastRolloverAt = now;
         this.rolloverFailures = 0;
         this.targetMisses = 0;
         this.runningSince = null;
@@ -205,6 +216,7 @@ export class SupervisorRecoveryController {
 
   noteConversationAdopted() {
     this.conversationGeneration += 1;
+    this.lastRolloverAt = this.now();
     this.targetMisses = 0;
     this.runningSince = null;
     this.lastProgressMarker = null;
@@ -224,6 +236,9 @@ export class SupervisorRecoveryController {
       target_misses: this.targetMisses,
       rollover_failures: this.rolloverFailures,
       conversation_generation: this.conversationGeneration,
+      rollover_cooldown_active:
+        this.lastRolloverAt > 0 &&
+        this.now() - this.lastRolloverAt < this.rolloverCooldownMs,
       blocked: this.blocked
     };
   }
