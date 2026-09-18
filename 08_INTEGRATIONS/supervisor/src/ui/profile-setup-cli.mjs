@@ -1,10 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { setTimeout as delay } from "node:timers/promises";
 
 import {
   ChatGptUiAdapter,
   defaultSupervisorProfileDir,
+  isChatGptUrl,
+  isTransientNavigationError,
   resolveChromeExecutable
 } from "./playwright-adapter.mjs";
 
@@ -24,6 +27,7 @@ const adapter = new ChatGptUiAdapter({
 
 const started = Date.now();
 let lastState = null;
+let captured = false;
 
 try {
   await adapter.open();
@@ -31,7 +35,39 @@ try {
   console.log("No credentials, cookies, tokens, or message text will be captured.");
 
   while (Date.now() - started < timeoutMs) {
-    const { snapshot, classification } = await adapter.probe();
+    const activePage = adapter.getActivePage();
+
+    if (!activePage) {
+      console.error("SETUP_BROWSER_CLOSED: no browser page remains open.");
+      process.exitCode = 25;
+      break;
+    }
+
+    if (!isChatGptUrl(activePage.url())) {
+      if (lastState !== "AUTH_NAVIGATION") {
+        console.log("UI_STATE=AUTH_NAVIGATION");
+        lastState = "AUTH_NAVIGATION";
+      }
+      await delay(pollMs);
+      continue;
+    }
+
+    let result;
+    try {
+      result = await adapter.probe();
+    } catch (error) {
+      if (isTransientNavigationError(error)) {
+        if (lastState !== "NAVIGATING") {
+          console.log("UI_STATE=NAVIGATING");
+          lastState = "NAVIGATING";
+        }
+        await delay(pollMs);
+        continue;
+      }
+      throw error;
+    }
+
+    const { snapshot, classification } = result;
 
     if (classification.uiState !== lastState) {
       console.log(`UI_STATE=${classification.uiState}`);
@@ -39,7 +75,7 @@ try {
     }
 
     if (snapshot.conversationPath && snapshot.composerReady) {
-      const currentUrl = new URL(adapter.page.url());
+      const currentUrl = new URL(adapter.getActivePage().url());
       await fs.mkdir(path.dirname(targetFile), { recursive: true });
       await fs.writeFile(
         targetFile,
@@ -53,16 +89,15 @@ try {
 
       console.log("SETUP_PASS: authenticated conversation target stored locally.");
       console.log("TARGET_STORAGE=LOCAL_ONLY");
+      captured = true;
       process.exitCode = 0;
       break;
     }
 
-    await adapter.page.waitForTimeout(pollMs);
+    await delay(pollMs);
   }
 
-  if (!adapter.page) {
-    process.exitCode = 25;
-  } else if (Date.now() - started >= timeoutMs) {
+  if (!captured && process.exitCode !== 25) {
     console.error("SETUP_TIMEOUT: conversation target was not detected within 15 minutes.");
     process.exitCode = 25;
   }
