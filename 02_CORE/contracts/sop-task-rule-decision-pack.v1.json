@@ -1,0 +1,176 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-026",
+  "status": "OWNER_DECISION_REQUIRED",
+  "canonical_workflow": [
+    "SOP_TEMPLATE",
+    "EXECUTION",
+    "RESPONSIBLE_PERSON",
+    "EXCEPTION",
+    "CORRECTIVE_TASK",
+    "VERIFY",
+    "CLOSE"
+  ],
+  "approved_business_rules_found": 0,
+  "owner_decisions": [
+    {
+      "id": "DST-001",
+      "key": "EXCEPTION_TRIGGER",
+      "status": "OWNER_INPUT_REQUIRED",
+      "selected_option": null,
+      "options": [
+        "MANUAL_ONLY",
+        "FAILED_REQUIRED_STEP",
+        "TEMPLATE_DECLARED",
+        "OTHER"
+      ],
+      "also_requires": [
+        "SKIP_NOT_APPLICABLE_SEMANTICS"
+      ]
+    },
+    {
+      "id": "DST-002",
+      "key": "CORRECTIVE_TASK_CREATION_RULE",
+      "status": "OWNER_INPUT_REQUIRED",
+      "selected_option": null,
+      "options": [
+        "MANUAL_CONVERSION",
+        "AUTO_ALL_EXCEPTIONS",
+        "TEMPLATE_DECLARED_AUTO",
+        "OTHER"
+      ]
+    },
+    {
+      "id": "DST-003",
+      "key": "RESPONSIBLE_PERSON_RULE",
+      "status": "OWNER_INPUT_REQUIRED",
+      "selected_option": null,
+      "options": [
+        "MANAGER_ASSIGN",
+        "EXECUTION_ASSIGNEE",
+        "SOP_ROLE_DEFAULT",
+        "OTHER"
+      ]
+    },
+    {
+      "id": "DST-004",
+      "key": "VERIFY_CLOSE_AUTHORITY",
+      "status": "OWNER_INPUT_REQUIRED",
+      "selected_option": null,
+      "options": [
+        "MANAGER_ONLY",
+        "SEPARATION_OF_DUTIES",
+        "ROLE_MATRIX",
+        "OTHER"
+      ],
+      "also_requires": [
+        "COMPLETE_VERIFY_CLOSE_STATE_SEPARATION"
+      ]
+    },
+    {
+      "id": "DST-005",
+      "key": "OVERDUE_ESCALATION_POLICY",
+      "status": "OWNER_INPUT_REQUIRED",
+      "selected_option": null,
+      "options": [
+        "NO_AUTO_ESCALATION",
+        "MANAGER_AT_DUE",
+        "MANAGER_THEN_OWNER_AFTER_GRACE",
+        "OTHER"
+      ],
+      "also_requires": [
+        "DUE_TIME_SOURCE",
+        "GRACE_PERIOD_IF_ANY"
+      ]
+    },
+    {
+      "id": "DST-006",
+      "key": "COMPLETION_EVIDENCE_POLICY",
+      "status": "OWNER_INPUT_REQUIRED",
+      "selected_option": null,
+      "options": [
+        "NONE",
+        "NOTE",
+        "PHOTO_OR_FILE",
+        "TEMPLATE_DECLARED",
+        "OTHER"
+      ],
+      "also_requires": [
+        "MEDIA_RETENTION_ACCESS_IF_APPLICABLE"
+      ]
+    }
+  ],
+  "decision_independent_entities": [
+    "SOP_TEMPLATE",
+    "SOP_TEMPLATE_VERSION",
+    "SOP_STEP",
+    "SOP_EXECUTION",
+    "SOP_STEP_EXECUTION",
+    "SOP_EXCEPTION",
+    "CORRECTIVE_TASK",
+    "SOP_TASK_AUDIT_EVENT"
+  ],
+  "decision_dependent_features": {
+    "checklist_outcome_and_skip": "DST-001",
+    "auto_exception_trigger": "DST-001",
+    "auto_corrective_task": "DST-002",
+    "auto_assignee_resolution": "DST-003",
+    "transition_authorization": "DST-004",
+    "due_overdue_escalation": "DST-005",
+    "evidence_storage_enforcement": "DST-006"
+  },
+  "migration_phases": [
+    {
+      "id": "M0",
+      "name": "OWNER_DECISION_AND_BUSINESS_RULE_GATE",
+      "side_effect": "DOCUMENTATION_ONLY"
+    },
+    {
+      "id": "M1",
+      "name": "ADDITIVE_SCHEMA_DRAFT",
+      "side_effect": "OFFLINE_DRAFT_ONLY"
+    },
+    {
+      "id": "M2",
+      "name": "SANDBOX_SECURITY_ACCESS",
+      "side_effect": "SANDBOX_ONLY"
+    },
+    {
+      "id": "M3",
+      "name": "READ_ADAPTERS",
+      "side_effect": "READ_ONLY"
+    },
+    {
+      "id": "M4",
+      "name": "EXPLICIT_WRITE_WORKFLOW",
+      "side_effect": "BLOCKED_UNTIL_RULES_APPROVED"
+    },
+    {
+      "id": "M5",
+      "name": "POLICY_AUTOMATION",
+      "side_effect": "BLOCKED_UNTIL_EXPLICIT_APPROVAL"
+    },
+    {
+      "id": "M6",
+      "name": "DAY13_WRITE_FLOW_E2E",
+      "side_effect": "SANITIZED_TEST_ONLY"
+    },
+    {
+      "id": "M7",
+      "name": "PRODUCTION_APPLY",
+      "side_effect": "OWNER_APPROVAL_REQUIRED"
+    }
+  ],
+  "guardrails": {
+    "production_apply": false,
+    "production_apply_requires_owner": true,
+    "task_writes_enabled": false,
+    "auto_exception_enabled": false,
+    "auto_corrective_task_enabled": false,
+    "auto_escalation_enabled": false,
+    "rls_required_for_exposed_tables": true,
+    "mutate_approved_sop_version": false,
+    "private_data_in_public_repo": false
+  },
+  "required_project_state_after_gate": "WAIT_USER"
+}

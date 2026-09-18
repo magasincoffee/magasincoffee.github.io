@@ -6,10 +6,10 @@
   "current_phase": "P1_ACCELERATED_DISCOVERY_AND_FOUNDATION",
   "current_task": "TASK-026",
   "current_task_title": "SOP/Task rule decision pack + data/migration plan",
-  "status": "READY",
-  "autonomy": "AUTO_CONTINUE",
+  "status": "WAIT_USER",
+  "autonomy": "MANUAL",
   "blocked": false,
-  "requires_user": false,
+  "requires_user": true,
   "next_task": null,
   "safety": {
     "repository_visibility": "public",

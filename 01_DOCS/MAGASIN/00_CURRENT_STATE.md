@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-026 — SOP/Task rule decision pack + data/migration plan**
+**TASK-026 — SOP/Task rule decision pack + data/migration plan — WAIT_USER**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Run **TASK-026 — SOP/Task rule decision pack + data/migration plan**. Convert the unresolved exception/corrective/responsibility/verify-close/overdue/evidence semantics into an explicit Owner decision pack and a minimum versioned data/migration plan that does not invent answers. Prepare offline contracts/tests only; do not apply production schema or enable Task writes. Enter WAIT_USER only when the exact Owner decisions are packaged and required.
+**WAIT_USER:** Owner must answer DST-001..DST-006 in `05_SYSTEM/SOP_TASK_RULE_DECISION_PACK_V1.md`. The decision pack, machine-readable contract and migration boundary are complete and tested. Do not open a write-capable SOP/Task implementation task, apply production schema, or enable automation until these six business-rule decisions are approved.
 
 ## Session handoff
 
