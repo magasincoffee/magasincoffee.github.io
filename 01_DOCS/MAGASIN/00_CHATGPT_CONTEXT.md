@@ -72,7 +72,7 @@ Current phase:
 
 Current task:
 
-`TASK-001 — Autonomy Supervisor discovery and project bootstrap`
+`TASK-009 — Store/product canonical model review`
 
 Machine-readable execution state: `00_PROJECT_STATE.json`.
 
@@ -210,10 +210,8 @@ Trước khi thay đổi code/database/UI, phải kiểm tra tài liệu nghiệ
 
 ## 16. First task now
 
-**TASK-001 — Autonomy Supervisor discovery and project bootstrap**
+**TASK-009 — Store/product canonical model review**
 
-Mục tiêu đầu tiên là tạo cơ chế dự án có thể tiếp tục theo state/task queue mà không cần Owner ngồi chờ từng lượt ChatGPT.
+Supervisor Robot V1 đã được cài đặt và xác minh trên máy local. Nó có thể tự tiếp tục khi state cho phép, retry lỗi UI/network an toàn, và dừng ở approval/security boundary.
 
-Không được dùng Supervisor để vượt credential/MFA/CAPTCHA, quyết định nghiệp vụ, hành động destructive hoặc approval boundary.
-
-Khi cần thao tác local, ưu tiên tạo bounded GitHub Actions/self-hosted-runner task và chỉ yêu cầu Owner thực hiện bước vật lý/cài đặt/approval thật sự cần thiết.
+Nhiệm vụ hiện tại là rà soát canonical Store/Product model để chuẩn bị Data Foundation. Tiếp tục theo task queue; chỉ yêu cầu Owner khi state chuyển sang WAIT_USER hoặc có quyết định nghiệp vụ thật sự cần chốt.
