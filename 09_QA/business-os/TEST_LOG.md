@@ -109,3 +109,20 @@
 - Direct `employee_availability` browser update: **forbidden / absent**.
 - Production schema/backfill: none.
 - Gate: TASK-028 **DONE**; TASK-029 may proceed.
+
+## 2026-09-18 — TASK-029 Robot draft + Manager assignment editor
+
+- Branch: `feat/schedule-v1-completion`
+- Manager Robot DRAFT Playwright regression: **PASS**.
+- Robot requires concrete store: PASS.
+- `auto_generate_schedule_generation`: PASS in sanitized browser fixture.
+- Assignment edit/add/remove → `replace_schedule_generation_assignments`: PASS.
+- Server `validate_schedule_generation_v1` after save: PASS.
+- Auto `review_schedule_generation`: **forbidden / absent**.
+- Auto `publish_schedule_generation`: **forbidden / absent**.
+- Existing Manager registration review browser regression: PASS.
+- Existing Employee Swap browser regression: PASS.
+- Existing People/Shift Day-10 E2E: PASS.
+- Existing Control Tower browser regression: PASS.
+- Production writes/schema/backfill during QA: none; sanitized mocks only.
+- Gate: TASK-029 **DONE**; TASK-030 may proceed.
