@@ -34,3 +34,15 @@
 - Root cause: Revenue shared the same numeric-trust rule as Payables/Workforce even though Revenue requires reconciliation before any official amount is exposed.
 - Fix: Revenue now has a stricter normalization path: only `ACTUAL` may retain `amount`; all non-ACTUAL revenue states redact it to `null`.
 - Status: VERIFIED — run `35315205100` PASS
+
+
+## BUG-CT-004 — Blank reconciled amount coerces to ACTUAL zero
+
+- Date: 2026-09-18
+- Component: `04_OWNER/ControlTower/revenue-adapter-v1.mjs`
+- Reproduction: pass a trusted, RECONCILED record for the selected date with `amount: null`, an empty string, or whitespace.
+- Observed: JavaScript numeric coercion converts blank/null values to `0`, allowing an incomplete record to appear as ACTUAL zero revenue.
+- Impact: missing revenue could be silently presented as a valid reconciled zero.
+- Root cause: amount validation called `Number(candidate.amount)` before rejecting blank/null source values.
+- Fix: reject null/undefined/blank string amounts before numeric conversion; keep genuine numeric zero valid.
+- Status: PENDING CI VERIFICATION
