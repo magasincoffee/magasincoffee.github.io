@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-017 — Partial-source/error-state integration**
+**TASK-018 — Control Tower browser E2E + Day-7 usability gate**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Implement **TASK-017 — Partial-source/error-state integration**, proving one source failure does not blank healthy Control Tower sections and that partial/error states remain explicit.
+Run **TASK-018 — Control Tower browser E2E + Day-7 usability gate**, verifying Owner navigation, auth, source-local degradation, drill-down links and narrow-width usability before expanding the next queue.
 
 ## Session handoff
 
