@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-015 — Workforce attention read adapter**
+**TASK-016 — Revenue read-adapter + reconciliation quality gate**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Implement **TASK-015 — Workforce attention read adapter**, preserving read-only and partial-data boundaries, then continue while no Owner boundary is reached.
+Implement **TASK-016 — Revenue read-adapter + reconciliation quality gate**, showing ACTUAL only for reconciled trusted revenue and failing closed otherwise.
 
 ## Session handoff
 
