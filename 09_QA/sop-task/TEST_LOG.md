@@ -19,3 +19,19 @@
 - Browser HTTP 5xx: 0.
 - Task write RPC/schema/production mutation: none.
 - Gate: TASK-024 **DONE**; TASK-025 may proceed.
+
+## 2026-09-18 — TASK-025 SOP/Task fail-closed UI integrity
+
+- Branch: `fix/task-025-sop-task-fail-closed`
+- Workflow: `SOP Task Tests`
+- Verified run: `35324428300`
+- Static/unit fail-closed contract: **PASS**
+- Manager canonical Task route + active Task view: PASS.
+- Manager prototype Task rows/action removed: PASS.
+- Employee Task state explicit `NOT_CONNECTED`: PASS.
+- Employee indefinite loading / false-empty state removed: PASS.
+- Owner Task quality `NOT CONNECTED`, overdue/open metrics `—`: PASS.
+- Manager/Employee/Owner Playwright regression: PASS.
+- People Shift Day-10 regression run `35324428363`: PASS.
+- Production Task writes/schema/business-rule changes: none.
+- Gate: TASK-025 **DONE**; TASK-026 may proceed.
