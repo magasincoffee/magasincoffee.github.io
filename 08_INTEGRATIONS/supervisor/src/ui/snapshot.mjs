@@ -2,9 +2,35 @@ const NORMALIZE = String.raw`
 (text) => (text || "").replace(/\s+/g, " ").trim()
 `;
 
+const CONVERSATION_FULL_RE =
+  /maximum (?:length|duration)|reached.{0,50}maximum|conversation.{0,60}(?:too long|full|limit|maximum)|chat.{0,50}(?:too long|full|limit|maximum)|start (?:a )?new (?:chat|conversation)|continue.{0,40}(?:new chat|new conversation)|thời lượng tối đa|độ dài tối đa|cuộc trò chuyện.{0,60}(?:quá dài|đầy|giới hạn|tối đa)|đoạn chat.{0,50}(?:quá dài|đầy|giới hạn|tối đa)|đạt.{0,50}(?:giới hạn|tối đa)|bắt đầu.{0,30}(?:đoạn chat|cuộc trò chuyện) mới/i;
+
+const CONVERSATION_MISSING_RE =
+  /conversation not found|unable to load conversation|couldn.t load conversation|conversation.{0,20}unavailable|chat not found|chat.{0,20}unavailable|không tìm thấy cuộc trò chuyện|không thể tải cuộc trò chuyện|cuộc trò chuyện.{0,20}không khả dụng|không tìm thấy đoạn chat|không thể tải đoạn chat|đoạn chat.{0,20}không khả dụng/i;
+
+const MODEL_SWITCHING_RE =
+  /switching.{0,30}model|switched.{0,30}model|using.{0,30}(?:different|another) model|continue.{0,30}another model|đang chuyển.{0,30}mô hình|chuyển sang.{0,30}mô hình|đang dùng.{0,30}mô hình khác/i;
+
+export function matchesConversationFullText(value) {
+  return CONVERSATION_FULL_RE.test(String(value || ""));
+}
+
+export function matchesConversationMissingText(value) {
+  return CONVERSATION_MISSING_RE.test(String(value || ""));
+}
+
+export function matchesModelSwitchingText(value) {
+  return MODEL_SWITCHING_RE.test(String(value || ""));
+}
+
 export async function collectSafeUiSnapshot(page) {
   return page.evaluate(
-    ({ normalizeSource }) => {
+    ({
+      normalizeSource,
+      conversationFullPattern,
+      conversationMissingPattern,
+      modelSwitchingPattern
+    }) => {
       const normalize = eval(normalizeSource);
       const visible = (el) => {
         if (!el) return false;
@@ -88,9 +114,13 @@ export async function collectSafeUiSnapshot(page) {
         (lastAssistant && lastAssistant.textContent && lastAssistant.textContent.length) || 0
       );
 
+      const modelSwitching =
+        new RegExp(modelSwitchingPattern, "i").test(recoveryHaystack);
+
       const responseRunning =
         /stop generating|dừng tạo|stop response/.test(haystack) ||
-        assistantBusy;
+        assistantBusy ||
+        modelSwitching;
 
       const hasNetworkError =
         /network error|lỗi mạng|connection lost|mất kết nối/.test(haystack);
@@ -99,10 +129,10 @@ export async function collectSafeUiSnapshot(page) {
         /something went wrong|đã xảy ra lỗi|try again|thử lại|retry/.test(haystack);
 
       const conversationFull =
-        /maximum length|conversation.{0,50}(too long|full|limit|maximum)|chat.{0,40}(too long|full|limit)|reached.{0,40}(conversation|chat).{0,40}limit|cuộc trò chuyện.{0,50}(quá dài|đầy|giới hạn)|đoạn chat.{0,40}(quá dài|đầy|giới hạn)|đạt.{0,30}giới hạn/.test(recoveryHaystack);
+        new RegExp(conversationFullPattern, "i").test(recoveryHaystack);
 
       const conversationMissing =
-        /conversation not found|unable to load conversation|couldn.t load conversation|chat not found|không tìm thấy cuộc trò chuyện|không thể tải cuộc trò chuyện|không tìm thấy đoạn chat|không thể tải đoạn chat/.test(recoveryHaystack);
+        new RegExp(conversationMissingPattern, "i").test(recoveryHaystack);
 
       return {
         schemaVersion: "1.0",
@@ -119,6 +149,7 @@ export async function collectSafeUiSnapshot(page) {
         hasCaptcha,
         responseRunning,
         assistantBusy,
+        modelSwitching,
         hasNetworkError,
         hasTransientError,
         hasContinueControl:
@@ -129,6 +160,11 @@ export async function collectSafeUiSnapshot(page) {
         conversationMissing
       };
     },
-    { normalizeSource: NORMALIZE }
+    {
+      normalizeSource: NORMALIZE,
+      conversationFullPattern: CONVERSATION_FULL_RE.source,
+      conversationMissingPattern: CONVERSATION_MISSING_RE.source,
+      modelSwitchingPattern: MODEL_SWITCHING_RE.source
+    }
   );
 }

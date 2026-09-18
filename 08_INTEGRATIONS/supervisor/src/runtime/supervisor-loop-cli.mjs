@@ -37,7 +37,7 @@ function parseArgs(argv) {
     stateUrl: DEFAULT_STATE_URL,
     execute: false,
     pollMs: 5000,
-    stallMs: 8 * 60_000,
+    stallMs: 4 * 60_000,
     unavailableGraceMs: 90_000
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -258,6 +258,7 @@ const recovery = new SupervisorRecoveryController({
 
 let retryCount = 0;
 let lastProjectState = {};
+let consecutiveConnectFailures = 0;
 
 await writeRuntimeStatus(
   buildRuntimeStatus({
@@ -344,6 +345,7 @@ while (true) {
     }
 
     const adapter = await session.connect();
+    consecutiveConnectFailures = 0;
     const page = adapter.getActivePage();
     if (!page) throw new Error("no active ChatGPT page");
 
@@ -649,9 +651,18 @@ while (true) {
       runtimeStatusPath
     ).catch(() => {});
   } catch (error) {
+    if (error?.name === "RetryBudgetExhaustedError") {
+      consecutiveConnectFailures += 1;
+    } else {
+      consecutiveConnectFailures = 0;
+    }
+
     await safeAppendLog(logPath, {
       type: "LOOP_ERROR",
-      errorName: error?.name || "Error"
+      errorName: error?.name || "Error",
+      reason: consecutiveConnectFailures >= 3
+        ? "CDP connection failed repeatedly; exit the loop so the Windows supervisor can restart its dedicated Chrome."
+        : undefined
     });
     await writeRuntimeStatus(
       buildRuntimeStatus({
@@ -664,6 +675,16 @@ while (true) {
       runtimeStatusPath
     ).catch(() => {});
     await session.disconnect().catch(() => {});
+
+    if (consecutiveConnectFailures >= 3) {
+      await safeAppendLog(logPath, {
+        type: "CDP_RESTART_REQUESTED",
+        errorName: error?.name || "Error",
+        reason: "Repeated CDP connection failures exceeded the bounded restart threshold."
+      }).catch(() => {});
+      process.exitCode = 75;
+      break;
+    }
   }
 
   await delay(args.pollMs);

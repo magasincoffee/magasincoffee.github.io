@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 
 import { OBSERVATIONS } from "../src/decision.mjs";
 import { UI_STATES, classifyUiSnapshot } from "../src/ui/classifier.mjs";
+import {
+  matchesConversationFullText,
+  matchesConversationMissingText,
+  matchesModelSwitchingText
+} from "../src/ui/snapshot.mjs";
 
 const base = {
   composerReady: true,
@@ -77,4 +82,41 @@ test("explicit retry control is transient even when error banner parsing misses"
   });
   assert.equal(result.uiState, UI_STATES.TRANSIENT_ERROR);
   assert.equal(result.observation, OBSERVATIONS.TRANSIENT_ERROR);
+});
+
+
+test("recognizes the Vietnamese max-duration banner as a full conversation", () => {
+  assert.equal(
+    matchesConversationFullText(
+      "Bạn đã đạt đến thời lượng tối đa cho cuộc trò chuyện này nhưng bạn có thể tiếp tục trò chuyện bằng cách bắt đầu một đoạn chat mới."
+    ),
+    true
+  );
+});
+
+test("recognizes explicit new-chat continuation surfaces as conversation rollover", () => {
+  assert.equal(
+    matchesConversationFullText("Start a new chat to continue this conversation"),
+    true
+  );
+  assert.equal(
+    matchesConversationFullText("Bắt đầu cuộc trò chuyện mới để tiếp tục"),
+    true
+  );
+});
+
+test("recognizes missing/unavailable conversation surfaces", () => {
+  assert.equal(
+    matchesConversationMissingText("This conversation is unavailable"),
+    true
+  );
+  assert.equal(
+    matchesConversationMissingText("Không thể tải cuộc trò chuyện"),
+    true
+  );
+});
+
+test("recognizes model switching as a running recovery surface", () => {
+  assert.equal(matchesModelSwitchingText("Switching to another model"), true);
+  assert.equal(matchesModelSwitchingText("Đang chuyển sang mô hình khác"), true);
 });
