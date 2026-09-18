@@ -80,7 +80,8 @@ function validateTarget(value) {
 
 async function readOwnerResolvedAck(filePath) {
   try {
-    const value = JSON.parse(await fs.readFile(filePath, "utf8"));
+    const raw = await fs.readFile(filePath, "utf8");
+    const value = JSON.parse(raw.replace(/^\uFEFF/, ""));
     if (!value || typeof value !== "object" || Array.isArray(value)) return null;
     return value;
   } catch {
@@ -728,8 +729,9 @@ while (true) {
       } else if (manualAck) {
         await safeAppendLog(logPath, {
           type: "OWNER_RESOLVED_ACK_IGNORED",
-          reason: "Owner resolved acknowledgement does not match the current project task/phase."
+          reason: "Owner resolved acknowledgement does not match the current project task/phase; stale acknowledgement cleared."
         });
+        await clearOwnerResolvedAck(ownerResolvedAckPath);
       }
       if (!ownerReconcileState.awaitingResponse) {
         if (ownerReconcileState.manualAck) {
