@@ -116,3 +116,26 @@
 - Existing Control Tower browser regression: PASS.
 - Production schema/backfill/permission changes: none.
 - Gate: TASK-030 **DONE**; TASK-031 **READY**.
+
+## 2026-09-18 — TASK-031 Manager allocation + robot proposal + publish slice
+
+- Branch: `feat/task-031-manager-schedule-canonical`
+- Task doc: `01_DOCS/MAGASIN/05_SYSTEM/MANAGER_SCHEDULE_CANONICAL_SLICE_V1.md`
+- People Shift Day-10 Tests run `35335703470`: **PASS**.
+- Canonical Manager Workforce static regression: PASS.
+- Canonical Manager Workforce browser E2E: PASS.
+- Existing Employee availability canonical browser regression: PASS.
+- Existing Employee Swap browser regression: PASS.
+- Existing People/Shift Day-10 browser E2E: PASS.
+- Existing Control Tower browser regression: PASS.
+- Active Manager runtime loads `/05_MANAGER/Workforce/engine-v1.js`: PASS.
+- Old Workforce compat loaders removed from active runtime: PASS.
+- Availability edit uses `manager_update_employee_availability`: PASS.
+- Robot auto review/publish: forbidden / absent.
+- Manager DRAFT allocation replacement + validation: PASS.
+- Explicit Manager REVIEWED → PUBLISHED: PASS.
+- Official schedule reads `get_manager_weekly_schedule`: PASS.
+- Direct browser business-table writes: absent.
+- Staffing demand write permission: live RPC remains OWNER_ONLY; Manager projection is fail-closed read-only; no permission bypass.
+- Production schema/data/backfill/permission mutation: none.
+- Gate: TASK-031 **DONE**; TASK-032 **READY**.
