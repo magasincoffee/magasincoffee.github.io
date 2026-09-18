@@ -104,6 +104,9 @@ const MOCK_CORE = String.raw`
     from(name) {
       return {
         async select() {
+          if (scenario === "slow-payables") {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
           if (name === "v_procurement_supplier_payables") {
             return {
               data: [
@@ -143,6 +146,9 @@ const MOCK_CORE = String.raw`
     },
     supabase: {
       async requireActive() {
+        if (scenario === "slow-auth") {
+          await new Promise((resolve) => setTimeout(resolve, 350));
+        }
         return scenario === "denied" ? deniedProfile : ownerProfile;
       },
       get() {
@@ -371,6 +377,58 @@ async function runDeniedScenario() {
   return { roleDenied: true };
 }
 
+async function runLoadingScenario() {
+  const page = await context.newPage();
+  await page.goto(`${baseURL}/04_OWNER/ControlTower/?scenario=slow-auth`, {
+    waitUntil: "domcontentloaded"
+  });
+
+  assert.equal(await page.locator("#loading").isVisible(), true);
+  assert.equal(await page.locator("#app").isVisible(), false);
+  assert.equal(await page.locator("#denied").isVisible(), false);
+
+  await page.locator("#app").waitFor({ state: "visible" });
+  assert.equal(await page.locator("#loading").isVisible(), false);
+
+  await page.close();
+  return { loadingVisibleDuringAuth: true, appVisibleAfterAuth: true };
+}
+
+async function runIndependentSourceScenario() {
+  const page = await context.newPage();
+  await page.goto(`${baseURL}/04_OWNER/ControlTower/?scenario=slow-payables`, {
+    waitUntil: "domcontentloaded"
+  });
+  await page.locator("#app").waitFor({ state: "visible" });
+
+  await page.waitForFunction(
+    () => document.querySelector("#workforceQuality")?.textContent === "ACTUAL",
+    null,
+    { timeout: 1000 }
+  );
+
+  assert.equal(
+    await page.locator("#payableQuality").getAttribute("data-quality"),
+    "NOT_CONNECTED"
+  );
+  assert.equal(
+    await page.locator("#workforceQuality").getAttribute("data-quality"),
+    "ACTUAL"
+  );
+
+  await page.waitForFunction(
+    () => document.querySelector("#payableQuality")?.textContent === "ACTUAL",
+    null,
+    { timeout: 2500 }
+  );
+
+  await page.close();
+  return {
+    slowPayablesDoesNotBlockWorkforce: true,
+    payablesEventuallyLoads: true
+  };
+}
+
 async function runMobileScenario() {
   const page = await context.newPage();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -405,6 +463,8 @@ try {
   const owner = await runOwnerNavigationScenario();
   const partial = await runPartialScenario();
   const denied = await runDeniedScenario();
+  const loading = await runLoadingScenario();
+  const independentSources = await runIndependentSourceScenario();
   const mobile = await runMobileScenario();
 
   assert.deepEqual(blockedExternal, []);
@@ -416,6 +476,8 @@ try {
     owner,
     partial,
     denied,
+    loading,
+    independentSources,
     mobile,
     network: {
       productionExternalRequests: blockedExternal.length,
