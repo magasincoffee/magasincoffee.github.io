@@ -112,8 +112,11 @@ try {
     console.log("MAGASIN_PROJECT_CONFIRM_CLICKED=" + confirmClicked);
 
     await page.waitForTimeout(5000);
-    const selected = new URL(page.url()).searchParams.has("project");
+    const selectedUrl = new URL(page.url());
+    const projectId = selectedUrl.searchParams.get("project");
+    const selected = Boolean(projectId);
     console.log("MAGASIN_PROJECT_AUTO_SELECTED=" + selected);
+    if (projectId) console.log("MAGASIN_PROJECT_ID=" + projectId);
   } else {
     console.log("MAGASIN_PROJECT_AUTO_SELECTED=False");
   }
