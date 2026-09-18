@@ -71,12 +71,14 @@ Supervisor Robot V1 is implemented and verified:
 - bounded Continue / safe Retry executor;
 - reconnect/retry policy;
 - anti-duplicate continuation loop;
-- START/STOP desktop kill switch;
+- unified `MAGASIN BUSINESS OS CONTROL` desktop panel with START ROBOT / STOP;
+- privacy-safe runtime status for current task, next task, ChatGPT UI state/action, update time and errors;
+- background START mode so normal use does not require a separate PowerShell window;
 - persistent local runtime;
 - local-only target/profile/logs;
 - stop gates for WAIT_USER/BLOCKED/auth/MFA/CAPTCHA/destructive/admin/ambiguous states.
 
-Owner does not need to sit at the computer and repeatedly ask ChatGPT to continue. The Supervisor may continue only while `AUTO_CONTINUE` is allowed.
+Owner does not need to sit at the computer and repeatedly ask ChatGPT to continue. Normal operation is: open `MAGASIN BUSINESS OS CONTROL` → START ROBOT → return only when the panel/state reaches `WAIT_USER` or another real Owner boundary. The Supervisor may continue only while `AUTO_CONTINUE` is allowed.
 
 ## Next action
 

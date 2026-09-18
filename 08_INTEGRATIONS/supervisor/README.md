@@ -19,7 +19,7 @@ Capabilities:
 - pauses on `WAIT_USER` / `BLOCKED` and security-sensitive states;
 - reconnects after ordinary browser/network interruptions;
 - persists outside a GitHub Actions job;
-- provides Owner-controlled START/STOP desktop kill switches.
+- provides one Owner-facing `MAGASIN BUSINESS OS CONTROL` panel with START ROBOT / STOP, task/action/error/status visibility, and privacy-safe local logs.
 
 ## Local files
 
@@ -31,14 +31,15 @@ Local-only runtime root:
 
 Sensitive runtime/profile state must stay local and must never be committed.
 
-Desktop controls:
+Desktop control:
 
 ```text
-START_MAGASIN_SUPERVISOR.cmd
-STOP_MAGASIN_SUPERVISOR.cmd
+MAGASIN BUSINESS OS CONTROL.lnk
 ```
 
-Closing the dedicated Supervisor PowerShell window or using the STOP shortcut stops UI continuation automation. Closing the separate GitHub runner shell stops new local Actions jobs.
+The panel is the normal Owner entry point. START ROBOT launches the Supervisor in background mode. STOP invokes the bounded Supervisor kill-switch contract. The panel reads local `runtime-status.json` plus canonical public `00_PROJECT_STATE.json`; it shows current/next task, UI observation, continuation decision/action, update time, and Owner-required errors without storing private chat message bodies.
+
+The GitHub runner remains a separate process and is not controlled by the Supervisor STOP button.
 
 ## Safety stops
 
