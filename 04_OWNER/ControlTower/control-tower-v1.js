@@ -46,6 +46,27 @@ function sourceLine(section) {
   return parts.join(" · ") || "Chưa có metadata nguồn.";
 }
 
+function globalConfidenceLine(items = []) {
+  const counts = {
+    ACTUAL: 0,
+    ESTIMATE: 0,
+    GAP: 0,
+    NOT_CONNECTED: 0
+  };
+
+  for (const item of items) {
+    const quality = Object.hasOwn(counts, item?.quality) ? item.quality : "GAP";
+    counts[quality] += 1;
+  }
+
+  return [
+    `ACTUAL ${counts.ACTUAL}`,
+    `ESTIMATE ${counts.ESTIMATE}`,
+    `GAP ${counts.GAP}`,
+    `NOT CONNECTED ${counts.NOT_CONNECTED}`
+  ].join(" · ");
+}
+
 function render(snapshot) {
   setText("reportingDate", snapshot.context.reportingDate || "Chưa chọn ngày");
   setText("branchScope", snapshot.context.branchScope || "ALL");
