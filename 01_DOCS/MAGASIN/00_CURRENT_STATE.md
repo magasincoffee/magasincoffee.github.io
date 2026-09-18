@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-039 — Business OS Robot V2 project registry — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-040 — Business OS Robot V2 portfolio scheduler — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,25 +101,19 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-039:** TASK-038 night-run persistence is verified complete.
+**AUTO_CONTINUE — TASK-040:** TASK-039 two-project registry/adapters are verified on draft PR #119.
 
-Verified persistence evidence:
+TASK-040 scheduler rules are intentionally narrow:
 
-- approved 10-hour window validates against the two-project registry;
-- one canonical execution cursor exists;
-- cursor lease blocks duplicate workers;
-- stale lease remains fail-closed until repository HEAD + CI are reconciled;
-- checkpoint updates require lease ownership;
-- 09:15 +07 hard stop is enforced by a GitHub-hosted `ubuntu-latest` workflow independent of the PC.
+1. schedule only projects registered and enabled in the approved two-project registry;
+2. keep the current project when it remains safely runnable;
+3. if the current project becomes `WAIT_USER`, `BLOCKED`, `DONE` or fail-closed `UNKNOWN`, skip it without stopping the whole portfolio;
+4. select another registered `READY` project by priority;
+5. if no project is runnable, wait without inventing work;
+6. never execute a third/unregistered repository;
+7. project-level Owner/security boundaries remain isolated and fail-closed.
 
-TASK-039 now builds the smallest multi-project registry/adapter layer for exactly two Owner-approved repositories:
-
-1. `magasincoffee/magasincoffee.github.io` using canonical `PROJECT_STATE_JSON`;
-2. `magasincoffee/magasin-media-robot` using the existing `CURRENT_STATUS + NEXT_STEP + DEVELOPMENT_RULES` doc pair.
-
-No third repository discovery or execution is allowed. The registry must stay deny-by-default and project adapters must normalize state without inventing missing business decisions.
-
-Large Robot V2 implementation remains on a review branch; source-of-truth and safety gates stay on `main`.
+The scheduler does not perform project work itself; it only returns a deterministic project selection/skip decision. Crash/reboot/stale-lease recovery remains TASK-041.
 
 ## Session handoff
 
