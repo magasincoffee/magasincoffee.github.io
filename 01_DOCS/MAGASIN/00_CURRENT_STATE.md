@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-037 — Windows auto-reboot/logon recovery — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-038 — Night-run persistence — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,36 +101,28 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-036:** Owner explicitly deferred TASK-035 Gmail production activation so it no longer blocks the project.
+**AUTO_CONTINUE — TASK-038:** TASK-037 Windows reboot/logon recovery is verified complete.
 
-TASK-035 remains fail-closed:
+Verified local recovery evidence:
 
-- Gmail worker is not deployed;
-- no external email is sent;
-- OAuth production publish / refresh token / Supabase secret injection are deferred;
-- reactivation requires a later explicit Owner instruction.
+- HKCU logon autostart registered;
+- canonical GitHub Runner online;
+- Supervisor wrapper online;
+- dedicated Business OS Chrome online;
+- Chrome CDP endpoint healthy;
+- Owner STOP latch remains explicit and disables reboot resume;
+- Windows login/PIN is never bypassed.
 
-Schedule-first feedback remains operational through the durable notification outbox + Employee in-app notification path.
+TASK-038 now makes the approved 10-hour run resumable and deadline-safe:
 
-TASK-036 now closes the current critical path by reusing existing verified assets only:
+1. validate the approved night-run schedule/allowed-project contract;
+2. persist one execution cursor with checkpoint + last verified commit;
+3. add bounded lease semantics to prevent duplicate concurrent work;
+4. reconcile stale lease/cursor after crash or reboot;
+5. enforce the 09:15 +07 hard stop independently through GitHub-hosted automation;
+6. regression-test resume/hard-stop behavior before advancing to TASK-039.
 
-1. run Five-Step/source-of-truth regression;
-2. run canonical schedule flow + availability regression;
-3. run attendance / Swap / Give / notification-outbox regression;
-4. verify email stays fail-closed without runtime OAuth secrets;
-5. run relevant Supervisor recovery/resume regression;
-6. fix only verified failures;
-7. update state/docs and mark the schedule-first critical path stable when all gates pass.
-
-Robot may auto-continue because there is no current Owner decision boundary:
-
-```text
-status = READY
-autonomy = AUTO_CONTINUE
-requires_user = false
-```
-
-TASK-026 remains deferred independently. Do not implement write-capable SOP/Task automation until its six business-rule decisions are approved.
+No Gmail activation, third-project execution, live SaydiVoice Generate/Download, destructive production DB work, MFA/CAPTCHA bypass or large architecture auto-merge is allowed.
 
 ## Session handoff
 
