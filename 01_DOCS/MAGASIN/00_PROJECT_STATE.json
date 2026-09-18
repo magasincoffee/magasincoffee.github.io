@@ -75,7 +75,15 @@
       "task_048_hard_stop_failures": 0,
       "task_048_canonical_surface_reconciliation": true,
       "task_048_probe_pr": 120,
-      "task_048_probe_merged": false
+      "task_048_probe_merged": false,
+      "task_048_time_guard_fix_commit": "148fb5b7ab0c2f33536248573c0ae2116c740cfa",
+      "task_048_time_guard_test_commit": "525554e31ce0cb91e8c8bfb29ab25fa16ec48091",
+      "task_048_time_guard_test_run_id": 35373330382,
+      "task_048_time_guard_tests_passed": 162,
+      "task_048_time_guard_failures": 0,
+      "task_048_manual_dispatch_before_boundary_blocked": true,
+      "task_048_time_guard_probe_pr": 121,
+      "task_048_time_guard_probe_merged": false
     },
     "robot_v2": {
       "branch": "feat/business-os-robot-v2-core",
