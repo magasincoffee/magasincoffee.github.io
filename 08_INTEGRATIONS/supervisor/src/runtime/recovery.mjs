@@ -214,6 +214,10 @@ export class SupervisorRecoveryController {
     }
   }
 
+  block() {
+    this.blocked = true;
+  }
+
   noteConversationAdopted() {
     this.conversationGeneration += 1;
     this.lastRolloverAt = this.now();
