@@ -16,15 +16,15 @@ try{
   if(!visible)process.exit(0);
   await publish.click({force:true});
   await page.waitForTimeout(900);
-  const dialog=page.locator('[role="dialog"],[role="alertdialog"],mat-dialog-container').first();
-  const dialogVisible=await dialog.isVisible({timeout:1200}).catch(()=>false);
-  console.log("PUBLISH_CONFIRM_DIALOG_VISIBLE="+dialogVisible);
-  if(dialogVisible){
-    const text=clean(await dialog.innerText().catch(()=>""));
-    console.log("PUBLISH_CONFIRM_HAS_PRODUCTION="+/production/i.test(text));
-    console.log("PUBLISH_CONFIRM_HAS_VERIFICATION="+/verification|verify/i.test(text));
-    console.log("PUBLISH_CONFIRM_HAS_USER_LIMIT="+/100 users|user cap|limit/i.test(text));
-    console.log("PUBLISH_CONFIRM_BUTTON_COUNT="+await dialog.locator('button,[role="button"]').count());
-  }
+  const body=clean(await page.locator("body").innerText().catch(()=>""));
+  console.log("PUBLISH_AFTER_CLICK_HAS_PRODUCTION="+/production/i.test(body));
+  console.log("PUBLISH_AFTER_CLICK_HAS_VERIFICATION="+/verification|verify/i.test(body));
+  console.log("PUBLISH_AFTER_CLICK_HAS_CONFIRM="+/confirm|push to production|publish/i.test(body));
+  const buttons=await page.locator('button,[role="button"]').evaluateAll(ns=>ns.map(n=>({
+    text:(n.innerText||n.textContent||"").trim(),
+    aria:n.getAttribute("aria-label")||""
+  })).filter(x=>/publish|production|confirm|cancel|testing/i.test((x.text||"")+" "+(x.aria||""))));
+  console.log("PUBLISH_AFTER_CLICK_BUTTON_COUNT="+buttons.length);
+  buttons.slice(0,30).forEach((b,i)=>console.log(`PUBLISH_AFTER_CLICK_BUTTON_${i+1}=${clean((b.text||"")+" | "+(b.aria||""))}`));
 }finally{await page.close().catch(()=>{});}
 process.exit(0);
