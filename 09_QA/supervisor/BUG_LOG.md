@@ -153,3 +153,19 @@
 - Regression coverage: CONTINUE -> no assistant progress -> TRANSIENT_ERROR -> safe Retry executes; immediate duplicate is cooldown-blocked; exhausted retry budget fail-closes.
 - Runtime: `2026-09-18.5`.
 - Status: FIXED IN CODE — pending field verification.
+
+
+## BUG-SUP-012 — ChatGPT Work activity can leave the standard last-message role stuck on Owner
+
+- Date: 2026-09-18
+- Component: conversation-aware handoff / ChatGPT Work UI observation
+- Field symptom: Control Panel stays `ONLINE • CHỜ CHATGPT` with `UI=USER_PENDING` / `OBS=USER_PENDING` even though the visible ChatGPT Work surface has already completed a long sequence of repository/tool activity.
+- Root cause: the handoff observer relied on `[data-message-author-role]`. ChatGPT Work can render tool/activity traces outside the standard assistant message container, so the last standard message can remain `user` indefinitely.
+- Fix:
+  1. observe privacy-safe Work UI activity metadata (`aria-busy`, loading/progress surfaces, main text character count and element count);
+  2. while startup handoff is pending, `USER_PENDING` remains WAIT if Work is busy or the safe UI signature is changing;
+  3. if the safe UI signature is unchanged for 20 seconds, treat the surface as idle and execute exactly one `HANDOFF_RECONCILE`;
+  4. normal post-send duplicate protection remains armed after that handoff message.
+- Privacy boundary: no message body or Work activity text is logged; only counts/roles/busy flags participate in the local decision.
+- Runtime: `2026-09-18.8`.
+- Status: FIXED IN CODE — pending field verification.

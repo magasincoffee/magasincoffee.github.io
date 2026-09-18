@@ -226,3 +226,127 @@ test("failed continuation can execute a bounded retry before assistant progress"
   assert.equal(exhausted.decision.action, "STOP_WAIT_USER");
   assert.equal(exhausted.execution.executed, false);
 });
+
+
+test("Work UI USER_PENDING settles into one handoff reconcile after a stable idle window", async () => {
+  let now = 100_000;
+  const controller = new SupervisorLoopController({
+    execute: true,
+    minActionIntervalMs: 1000,
+    handoffIdleConfirmMs: 10_000,
+    now: () => now
+  });
+  const p = page();
+
+  const pendingProbe = {
+    classification: { observation: "USER_PENDING" },
+    snapshot: {
+      assistantMessageCount: 0,
+      userMessageCount: 1,
+      lastMessageRole: "user",
+      lastMessageCharCount: 120,
+      lastAssistantCharCount: 0,
+      mainTextCharCount: 900,
+      mainElementCount: 150,
+      responseRunning: false,
+      mainBusy: false
+    }
+  };
+
+  const first = await controller.step({
+    page: p,
+    projectState: state({
+      current_phase: "P1_SCHEDULE_FIRST_CORE_FLOW",
+      current_task: "TASK-029",
+      current_task_title: "Schedule-first canonical flow contract"
+    }),
+    probe: pendingProbe,
+    handoff: true
+  });
+  assert.equal(first.decision.action, "WAIT");
+  assert.equal(first.execution.executed, false);
+
+  now += 5000;
+  const stillWaiting = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: pendingProbe,
+    handoff: true
+  });
+  assert.equal(stillWaiting.decision.action, "WAIT");
+
+  // A visible Work activity change resets the quiet window.
+  now += 1000;
+  const changed = structuredClone(pendingProbe);
+  changed.snapshot.mainElementCount += 1;
+  const reset = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: changed,
+    handoff: true
+  });
+  assert.equal(reset.decision.action, "WAIT");
+
+  now += 10_500;
+  const reconcile = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: changed,
+    handoff: true
+  });
+  assert.equal(reconcile.decision.action, "CONTINUE");
+  assert.equal(reconcile.execution.executed, true);
+  assert.match(reconcile.decision.instruction, /TIẾP QUẢN PHIÊN ĐANG MỞ/);
+
+  // Normal duplicate protection still applies immediately after handoff send.
+  now += 2000;
+  const duplicate = await controller.step({
+    page: p,
+    projectState: state(),
+    probe: probe("RESPONSE_COMPLETE", 0),
+    handoff: false
+  });
+  assert.equal(duplicate.execution.executed, false);
+  assert.match(duplicate.execution.reason, /awaiting observable assistant progress/);
+});
+
+test("Work UI busy state never promotes USER_PENDING to handoff continuation", async () => {
+  let now = 200_000;
+  const controller = new SupervisorLoopController({
+    execute: true,
+    handoffIdleConfirmMs: 5000,
+    now: () => now
+  });
+
+  const busyProbe = {
+    classification: { observation: "USER_PENDING" },
+    snapshot: {
+      assistantMessageCount: 0,
+      userMessageCount: 1,
+      lastMessageRole: "user",
+      lastMessageCharCount: 80,
+      mainTextCharCount: 500,
+      mainElementCount: 90,
+      responseRunning: true,
+      mainBusy: true
+    }
+  };
+
+  await controller.step({
+    page: page(),
+    projectState: state(),
+    probe: busyProbe,
+    handoff: true
+  });
+
+  now += 20_000;
+  const result = await controller.step({
+    page: page(),
+    projectState: state(),
+    probe: busyProbe,
+    handoff: true
+  });
+
+  assert.equal(result.decision.action, "WAIT");
+  assert.equal(result.execution.executed, false);
+});
