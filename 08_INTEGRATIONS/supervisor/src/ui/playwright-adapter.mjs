@@ -44,7 +44,8 @@ export class ChatGptUiAdapter {
     url = "https://chatgpt.com/",
     headless = false,
     timeoutMs = 60_000,
-    settleMs = 2_500
+    settleMs = 2_500,
+    cdpUrl = null
   } = {}) {
     this.profileDir = profileDir;
     this.chromeExecutable = chromeExecutable;
@@ -52,16 +53,36 @@ export class ChatGptUiAdapter {
     this.headless = headless;
     this.timeoutMs = timeoutMs;
     this.settleMs = settleMs;
+    this.cdpUrl = cdpUrl;
+    this.browser = null;
     this.context = null;
     this.page = null;
+    this.attachedOverCdp = false;
   }
 
   async open() {
+    const { chromium } = await import("playwright-core");
+
+    if (this.cdpUrl) {
+      this.browser = await chromium.connectOverCDP(this.cdpUrl);
+      this.attachedOverCdp = true;
+      this.context = this.browser.contexts()[0] || null;
+      if (!this.context) {
+        throw new Error("real Chrome CDP connection has no browser context");
+      }
+      this.context.setDefaultTimeout(this.timeoutMs);
+      this.page = this.getActivePage();
+      if (!this.page) {
+        throw new Error("real Chrome CDP connection has no open page");
+      }
+      await this.page.waitForTimeout(this.settleMs);
+      return this.page;
+    }
+
     if (!this.chromeExecutable) {
       throw new Error("Google Chrome executable was not found");
     }
 
-    const { chromium } = await import("playwright-core");
     fs.mkdirSync(this.profileDir, { recursive: true });
 
     this.context = await chromium.launchPersistentContext(this.profileDir, {
@@ -129,10 +150,12 @@ export class ChatGptUiAdapter {
   }
 
   async close() {
-    if (this.context) {
+    if (this.context && !this.attachedOverCdp) {
       await this.context.close();
     }
+    this.browser = null;
     this.context = null;
     this.page = null;
+    this.attachedOverCdp = false;
   }
 }
