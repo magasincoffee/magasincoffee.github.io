@@ -127,38 +127,44 @@ async function boot() {
   denied.classList.add("hidden");
   app.classList.remove("hidden");
 
-  const revenue = await loadSectionSafely(
-    async () =>
-      await loadReconciledRevenue({
-        reportingDate: rawState.context.reportingDate
-      }),
-    {
-      source: "reconciled daily revenue read model",
-      message: "Nguồn doanh thu đã đối chiếu tạm thời không khả dụng."
-    }
-  );
-  rawState.revenue = revenue;
-  updateSection("revenue", revenue);
-
-  const payables = await loadSectionSafely(
-    async () => await loadProcurementPayables(core.supabase.get()),
-    {
-      source: "v_procurement_supplier_payables + v_procurement_order_summary",
-      message: "Nguồn công nợ mua hàng tạm thời không khả dụng."
-    }
-  );
-  rawState.payables = payables;
-  updateSection("payables", payables);
-
-  const workforce = await loadSectionSafely(
-    async () => await loadWorkforceAttention(core),
-    {
-      source: "get_manager_transfer_requests + list_schedule_generations",
-      message: "Nguồn Workforce tạm thời không khả dụng."
-    }
-  );
-  rawState.workforce = workforce;
-  updateSection("workforce", workforce);
+  await Promise.all([
+    (async () => {
+      const revenue = await loadSectionSafely(
+        async () =>
+          await loadReconciledRevenue({
+            reportingDate: rawState.context.reportingDate
+          }),
+        {
+          source: "reconciled daily revenue read model",
+          message: "Nguồn doanh thu đã đối chiếu tạm thời không khả dụng."
+        }
+      );
+      rawState.revenue = revenue;
+      updateSection("revenue", revenue);
+    })(),
+    (async () => {
+      const payables = await loadSectionSafely(
+        async () => await loadProcurementPayables(core.supabase.get()),
+        {
+          source: "v_procurement_supplier_payables + v_procurement_order_summary",
+          message: "Nguồn công nợ mua hàng tạm thời không khả dụng."
+        }
+      );
+      rawState.payables = payables;
+      updateSection("payables", payables);
+    })(),
+    (async () => {
+      const workforce = await loadSectionSafely(
+        async () => await loadWorkforceAttention(core),
+        {
+          source: "get_manager_transfer_requests + list_schedule_generations",
+          message: "Nguồn Workforce tạm thời không khả dụng."
+        }
+      );
+      rawState.workforce = workforce;
+      updateSection("workforce", workforce);
+    })()
+  ]);
 }
 
 boot();
