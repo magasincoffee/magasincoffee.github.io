@@ -262,3 +262,20 @@
 - Production provider secrets changed: none.
 - Email sent: none.
 - Gate: TASK-035 remains **WAIT_USER** only for Gmail OAuth credential activation.
+
+
+## 2026-09-18 — TASK-035 bounded activation send
+
+- Branch: `fix/task-035-bounded-activation-send`
+- PR: `#111`
+- Initial Business OS Contract Tests run `35345577263`: **FAIL** — new test helper import missing; implementation tests after that point remained otherwise unaffected.
+- Fix: import `normalizeBatchLimit` into the TASK-035 regression test.
+- Business OS Contract Tests rerun `35345655565`: **PASS**.
+- Normal email-worker batch default remains 25: PASS.
+- Hard batch maximum 25: PASS.
+- Activation request `{"limit":1}` claims at most one pending email event: PASS.
+- Provider initialization still occurs before any queue claim: PASS.
+- Production Edge Function deployment: none.
+- Production provider secrets changed: none.
+- Email sent: none.
+- Gate: TASK-035 remains **WAIT_USER** only for Gmail OAuth credential activation.
