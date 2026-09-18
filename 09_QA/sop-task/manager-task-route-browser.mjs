@@ -75,21 +75,42 @@ for (let i = 0; i < 40; i++) {
 }
 assert.ok(shell, "canonical Manager shell frame must load");
 
-await shell.waitForSelector("#view-tasks.active", { timeout: 5000 });
+let taskActive = false;
+for (let i = 0; i < 50; i++) {
+  taskActive = await shell.locator("#view-tasks").evaluate(el => el.classList.contains("active"));
+  if (taskActive) break;
+  await page.waitForTimeout(100);
+}
+
+const runtimeFrame = page.frames().find(f => f.url().includes("/05_MANAGER/runtime/manager-runtime-v1.html"));
 const heading = await shell.locator("#view-tasks h2").first().textContent();
+const debug = {
+  topUrl: page.url(),
+  frames: page.frames().map(f => f.url()),
+  runtime: runtimeFrame ? await runtimeFrame.evaluate(() => ({
+    bridgeLoaded: Boolean(window.MAGASIN_MANAGER_ROUTE_BRIDGE_V1),
+    scripts: [...document.scripts].map(x => x.src || "inline")
+  })) : null,
+  shell: await shell.evaluate(() => ({
+    taskClass: document.getElementById("view-tasks")?.className || null,
+    activeViews: [...document.querySelectorAll(".view.active")].map(x => x.id),
+    pageTitle: document.getElementById("pageTitle")?.textContent || null,
+    routeBridgeBound: document.documentElement.dataset.routeBridgeBound || null
+  })),
+  heading: heading?.trim(),
+  diagnostics
+};
+
+await page.screenshot({ path: path.join(outDir, "manager-task-route.png"), fullPage: true });
+fs.writeFileSync(path.join(outDir, "manager-task-route-result.json"), JSON.stringify(debug, null, 2));
+console.log("TASK_ROUTE_DEBUG " + JSON.stringify(debug));
+
+assert.equal(taskActive, true, "Task view must become active from /05_MANAGER/Cong-viec/");
 assert.equal(heading?.trim(), "Công việc");
 assert.equal(new URL(page.url()).pathname, "/05_MANAGER/Cong-viec/");
 assert.deepEqual(diagnostics.legacyRuntimeRequests, [], "legacy Manager runtime must never be requested");
 assert.deepEqual(diagnostics.pageErrors, [], "unexpected page errors");
 assert.deepEqual(diagnostics.http5xx, [], "unexpected HTTP 5xx");
-
-await page.screenshot({ path: path.join(outDir, "manager-task-route.png"), fullPage: true });
-fs.writeFileSync(path.join(outDir, "manager-task-route-result.json"), JSON.stringify({
-  status: "PASS",
-  url: page.url(),
-  heading: heading?.trim(),
-  diagnostics
-}, null, 2));
 
 await browser.close();
 console.log("PASS Manager Task canonical deep-link browser smoke");
