@@ -77,9 +77,12 @@ test("TASK-035 machine contract preserves exact Owner activation boundary",async
   assert.equal(spec.status,"OWNER_DECISION_REQUIRED");
   assert.equal(spec.provider_independent.claim_after_provider_initialization,true);
   assert.equal(spec.provider_independent.credentials_in_git,false);
+  assert.equal(spec.owner_approved.sender_email,"bachvanti1994@gmail.com");
+  assert.deepEqual(spec.activation_boundary.resolved_owner_inputs,{
+    EXACT_MAGASIN_SENDER_EMAIL:"bachvanti1994@gmail.com"
+  });
   assert.deepEqual(spec.activation_boundary.required_owner_inputs,[
-    "CONCRETE_EMAIL_PROVIDER",
-    "EXACT_MAGASIN_SENDER_EMAIL"
+    "CONCRETE_EMAIL_PROVIDER"
   ]);
   assert.equal(spec.activation_boundary.deploy_edge_function,false);
   assert.equal(spec.activation_boundary.set_provider_secrets,false);
