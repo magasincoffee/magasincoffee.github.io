@@ -192,3 +192,15 @@ No write-capable SOP/Task implementation task is opened before TASK-026 resolves
 No Owner action is required for TASK-024 or TASK-025 because both are fail-closed integrity repairs with no production writes and no new Business Rules.
 
 Owner/business-rule input is expected at TASK-026 before any write-capable SOP/Task workflow is treated as production-ready.
+
+## 9. TASK-024 closure — Manager Task route canonicalization
+
+**Result: PASS.**
+
+- `/05_MANAGER/Cong-viec/` now uses the canonical Shared Core auth path and `/05_MANAGER/runtime/manager-runtime-v1.html`.
+- Employee/Staff deep-link access still routes to `/06_EMPLOYEE/`.
+- Browser regression exposed a second route defect: `manager-route-state-v2.js` still owned the legacy `/manager/` prefix and reset the Task deep link to Dashboard.
+- The route-state owner now uses the canonical `/05_MANAGER` prefix, consistent with `manager-route-bridge-v1.js`.
+- Deterministic Playwright smoke verifies top URL `/05_MANAGER/Cong-viec/`, canonical runtime + shell, Task view active, zero page errors, zero request failures, zero HTTP 5xx and zero legacy-runtime requests.
+- No Task write RPC, production schema change or new business rule was introduced.
+- `BUG-ST-001` is closed. TASK-025 may proceed.
