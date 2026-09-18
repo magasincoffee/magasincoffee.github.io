@@ -1,0 +1,67 @@
+# MAGASIN — NIGHT RUN REPORT 2026-09-19
+
+**Night run:** `NIGHT_RUN_2026-09-18`  
+**Checkpoint:** TASK-048 — Night final checkpoint  
+**Current status:** FINAL_CHECKPOINT_IN_PROGRESS / AUTO_CONTINUE  
+**Approved hard stop:** 2026-09-19 09:15 +07  
+**Canonical evidence:** `01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE.md`
+
+## Completed execution
+
+TASK-036 through TASK-047 are complete in source-of-truth.
+
+Night-run TASK-037–046 delivered and verified:
+
+- Windows reboot/logon recovery;
+- night-run deadline/cursor/lease/checkpoint persistence;
+- two-project Robot V2 registry;
+- portfolio scheduler;
+- recovery engine;
+- offline-only SaydiVoiceProvider adapter work;
+- cross-project handoff isolation;
+- privacy-safe portfolio diagnostics;
+- restart/resume simulation;
+- two-project full QA.
+
+TASK-047 reconciled the changelog, created canonical evidence, and expanded Business OS PR #119 to the full Robot V2 review scope.
+
+## QA checkpoint
+
+- Business OS PR #119 head `311bf4413a3dd5cdc5d7d01f8d6642d13e061629`
+- Supervisor Tests run `35371642271`: **203/203 PASS**
+- Media Robot PR #21 head `3522886bb54ac5b69d245eb3ccd1285ada8571e0`
+- Media push run `35370775036`: **83/83 PASS**
+- Media PR run `35371002442`: **83/83 PASS**
+- No bounded regression remains from TASK-046.
+
+## Safety checkpoint
+
+- only the two Owner-approved repositories were used;
+- no automatic merge;
+- no third-project discovery;
+- no live Saydi Generate;
+- no live Saydi Download;
+- no secrets/private production data committed;
+- no production-destructive action added;
+- TASK-035 Gmail production activation remains deferred and fail-closed.
+
+## Review state
+
+- Business OS PR #119: draft/open/unmerged, manual review required.
+- Media Robot PR #21: offline-only draft review/unmerged, manual review required.
+- No merge decision is inferred.
+
+## Temporal final gate
+
+TASK-048 must **not** declare `NIGHT_WINDOW_COMPLETE` before the approved boundary.
+
+At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` is the canonical GitHub-hosted enforcement path. It will:
+
+1. set `night_run.status = NIGHT_WINDOW_COMPLETE`;
+2. set project `status = WAIT_USER`;
+3. set `autonomy = MANUAL`;
+4. set `requires_user = true`;
+5. set cursor checkpoint to `NIGHT_WINDOW_COMPLETE`;
+6. require `OWNER_REVIEW_NIGHT_RUN_REPORT`.
+
+Until that boundary, no new feature work, merge, live provider action, or production activation is authorized by TASK-048.
