@@ -8,4 +8,4 @@
 - Impact: new Business OS contract tests can appear covered by CI while not actually executing.
 - Root cause: workflow command hard-coded one test file.
 - Fix: execute every `09_QA/business-os/*.test.mjs` file in deterministic filename order.
-- Status: FIXING
+- Status: VERIFIED — all Business OS contract tests executed in run `35309647967`
