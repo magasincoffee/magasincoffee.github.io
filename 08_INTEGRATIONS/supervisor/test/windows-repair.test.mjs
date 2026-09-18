@@ -10,7 +10,7 @@ test("one-click repair updates main, installs fresh runtime and verifies the boo
 
   assert.match(source, /git -C \$repoRoot pull --ff-only origin main/);
   assert.match(source, /Node\.js 20\+/);
-  assert.match(source, /2026-09-18\.11/);
+  assert.match(source, /2026-09-18\.12/);
   assert.match(source, /Get-FreeCdpPort/);
   assert.match(source, /Test-DedicatedCdpEndpoint/);
   assert.match(source, /install-supervisor\.ps1/);
