@@ -29,7 +29,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.22";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.23";
 
 function parseArgs(argv) {
   const result = {
@@ -247,6 +247,69 @@ async function findBrainByDirectiveSignature(adapter, config) {
     throw new Error("multiple open ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied");
   }
   return null;
+}
+
+async function applyOwnerBrainRebind({
+  adapter,
+  registry,
+  config,
+  execute,
+  requestPath,
+  registryPath,
+  logPath
+}) {
+  const requested = await fs.access(requestPath).then(() => true).catch(() => false);
+  if (!requested) return null;
+
+  const visiblePages = await adapter.getVisibleChatGptPages();
+  const candidates = [];
+
+  for (const page of visiblePages) {
+    let target = null;
+    try {
+      target = targetFromUrl(page.url());
+    } catch {
+      continue;
+    }
+
+    const probe = await adapter.probePage(page).catch(() => null);
+    if (!probe || hardStopObservation(probe.classification.observation)) continue;
+    if (probe.snapshot.conversationMissing || probe.snapshot.conversationFull) continue;
+
+    const captured = await captureCompletedAssistantTurn(page).catch(() => null);
+    if (!captured?.text) continue;
+
+    try {
+      parseBrainDirective(captured.text, {
+        maxWorkers: workerCapacity(config)
+      });
+      candidates.push({ page, target });
+    } catch {
+      // Visible page is not a valid Brain conversation.
+    }
+  }
+
+  await fs.unlink(requestPath).catch(() => {});
+
+  if (candidates.length !== 1) {
+    throw new Error(
+      candidates.length > 1
+        ? "more than one visible ChatGPT conversation looks like Brain; owner rebind denied"
+        : "open the intended Brain conversation in Robot Chrome, keep that tab visible, then press the Brain rebind button again"
+    );
+  }
+
+  if (!execute) return candidates[0].page;
+
+  registry.brain.target = candidates[0].target;
+  registry.brain.awaiting_response = true;
+  await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
+  await safeLog(logPath, {
+    type: "BRAIN_TARGET_REBOUND_OWNER",
+    role: "brain",
+    generation: registry.brain.generation
+  });
+  return candidates[0].page;
 }
 
 async function findBrainFromRecentSidebar(adapter, config) {
@@ -742,6 +805,7 @@ const root = localRoot();
 const stopPath = path.join(root, "STOP");
 const registryPath = path.join(root, "orchestration.json");
 const logPath = path.join(root, "supervisor.log");
+const ownerBrainRebindPath = path.join(root, "BRAIN_REBIND.request.json");
 const runtimeStatusPath = defaultRuntimeStatusPath();
 
 let registry = await loadRegistry(registryPath);
@@ -816,15 +880,27 @@ try {
         continue;
       }
 
-      let brainPage = await ensureBrain({
+      let brainPage = await applyOwnerBrainRebind({
         adapter,
         registry,
-        projectState,
         config,
         execute: args.execute,
+        requestPath: ownerBrainRebindPath,
         registryPath,
         logPath
       });
+
+      if (!brainPage) {
+        brainPage = await ensureBrain({
+          adapter,
+          registry,
+          projectState,
+          config,
+          execute: args.execute,
+          registryPath,
+          logPath
+        });
+      }
 
       if (!args.execute && !registry.brain.target) {
         await writeStatus(runtimeStatusPath, projectState, {
