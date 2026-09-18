@@ -276,3 +276,20 @@
   4. Control Panel distinguishes `CẦN QUYẾT ĐỊNH` from `CẦN CẤU HÌNH` using canonical boundary metadata.
 - Runtime: `2026-09-18.14`.
 - Status: FIXED IN CODE — pending CI + field deployment.
+
+
+## BUG-SUP-019 — Valid technical WAIT_USER was logged as a reconciliation stall
+
+- Date: 2026-09-18
+- Component: diagnostics / Control Panel boundary display
+- Field evidence from v14: Owner reconciliation sent exactly once and settled; controller ended `armed=true`, `awaiting_response=false`, while canonical TASK-035 correctly remained `WAIT_USER` because Gmail OAuth activation secrets are still pending.
+- Root causes:
+  1. diagnostics classified every `WAIT_USER + RESPONSE_COMPLETE + STOP_WAIT_USER` as a stall, even after reconciliation had correctly settled;
+  2. live `runtime-status.json` omitted nested owner/activation boundary metadata, so Control Panel could not reliably distinguish a business decision from technical configuration while the robot was online.
+- Fix:
+  1. preserve safe `owner_boundary_pending`, `activation_boundary_reason`, and `activation_boundary_pending` in runtime status;
+  2. include the same safe key names in persistent diagnostics;
+  3. only classify `WAIT_USER_RECONCILE_STALL` when a reconciliation is actually awaiting a response or a manual recheck marker is still pending;
+  4. Control Panel uses flattened live boundary metadata to show `CẦN QUYẾT ĐỊNH` vs `CẦN CẤU HÌNH`.
+- Runtime: `2026-09-18.15`.
+- Status: FIXED IN CODE — pending CI + field deployment.

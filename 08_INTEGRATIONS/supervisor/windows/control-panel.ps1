@@ -384,11 +384,15 @@ function Refresh-ControlPanel {
     if ($process) {
         $state = if ($runtimeStatus.status) { [string]$runtimeStatus.status } else { 'STARTING' }
         $activationPending = @()
-        if ($projectState -and $projectState.activation_boundary -and $projectState.activation_boundary.pending) {
+        if ($projectState -and $projectState.activation_boundary_pending) {
+            $activationPending = @($projectState.activation_boundary_pending)
+        } elseif ($projectState -and $projectState.activation_boundary -and $projectState.activation_boundary.pending) {
             $activationPending = @($projectState.activation_boundary.pending)
         }
         $ownerPending = @()
-        if ($projectState -and $projectState.owner_boundary -and $projectState.owner_boundary.pending) {
+        if ($projectState -and $projectState.owner_boundary_pending) {
+            $ownerPending = @($projectState.owner_boundary_pending)
+        } elseif ($projectState -and $projectState.owner_boundary -and $projectState.owner_boundary.pending) {
             $ownerPending = @($projectState.owner_boundary.pending)
         }
 
@@ -487,11 +491,15 @@ function Refresh-ControlPanel {
         }
     } elseif ($projectState.requires_user -or $projectState.blocked -or $projectStatus -in @('WAIT_USER','BLOCKED')) {
         $activationPending = @()
-        if ($projectState -and $projectState.activation_boundary -and $projectState.activation_boundary.pending) {
+        if ($projectState -and $projectState.activation_boundary_pending) {
+            $activationPending = @($projectState.activation_boundary_pending)
+        } elseif ($projectState -and $projectState.activation_boundary -and $projectState.activation_boundary.pending) {
             $activationPending = @($projectState.activation_boundary.pending)
         }
         $ownerPending = @()
-        if ($projectState -and $projectState.owner_boundary -and $projectState.owner_boundary.pending) {
+        if ($projectState -and $projectState.owner_boundary_pending) {
+            $ownerPending = @($projectState.owner_boundary_pending)
+        } elseif ($projectState -and $projectState.owner_boundary -and $projectState.owner_boundary.pending) {
             $ownerPending = @($projectState.owner_boundary.pending)
         }
 
