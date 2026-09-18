@@ -16,7 +16,7 @@ $profile = Join-Path $root 'browser_profile'
 $target = Join-Path $root 'target.json'
 $pidFile = Join-Path $root 'supervisor.pid'
 $logFile = Join-Path $root 'supervisor.log'
-$expectedRuntimeVersion = '2026-09-18.9'
+$expectedRuntimeVersion = '2026-09-18.10'
 
 function Write-Step([string]$Message) {
     Write-Host ""
