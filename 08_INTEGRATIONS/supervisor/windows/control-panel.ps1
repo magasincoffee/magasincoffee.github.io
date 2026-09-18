@@ -317,7 +317,15 @@ function Refresh-ControlPanel {
         $stopButton.Enabled = $false
     }
 
-    $projectStatus = if ($projectState.status) { [string]$projectState.status } else { 'UNKNOWN' }
+    $projectStatus = if ($process -and $runtimeStatus.project_status) {
+        [string]$runtimeStatus.project_status
+    } elseif ($script:lastRemoteState -and $script:lastRemoteState.status) {
+        [string]$script:lastRemoteState.status
+    } elseif ($projectState.status) {
+        [string]$projectState.status
+    } else {
+        'UNKNOWN'
+    }
     $projectText = if ($projectStatus -eq 'READY') { 'READY • AUTO CONTINUE' } else { $projectStatus }
     $projectCardState = if ($projectStatus -eq 'WAIT_USER') { 'WAIT_USER' } elseif ($projectStatus -eq 'BLOCKED') { 'ERROR' } else { 'READY' }
     Set-StatusCard $projectCard $projectValue $projectCardState $projectText
