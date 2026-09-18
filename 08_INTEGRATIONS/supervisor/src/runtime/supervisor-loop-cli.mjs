@@ -3,19 +3,42 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as delay } from "node:timers/promises";
 
+import {
+  ACTIONS,
+  CANONICAL_CONTINUE_INSTRUCTION,
+  OBSERVATIONS
+} from "../decision.mjs";
+import { executeDecision } from "../ui/actions.mjs";
 import { SupervisorSession } from "./session.mjs";
 import { SupervisorLoopController } from "./loop.mjs";
-import { buildRuntimeStatus, defaultRuntimeStatusPath, writeRuntimeStatus } from "./status.mjs";
+import {
+  RECOVERY_ACTIONS,
+  SupervisorRecoveryController,
+  pageMatchesTarget,
+  targetFromUrl
+} from "./recovery.mjs";
+import {
+  buildRuntimeStatus,
+  defaultRuntimeStatusPath,
+  writeRuntimeStatus
+} from "./status.mjs";
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
+
+const ROLLOVER_INSTRUCTION =
+  "Tiếp tục dự án MAGASIN trong cuộc trò chuyện mới vì cuộc trò chuyện trước đã đầy, bị kẹt hoặc không thể khôi phục. " +
+  CANONICAL_CONTINUE_INSTRUCTION +
+  " Không yêu cầu Owner lặp lại bối cảnh nếu repository source of truth đã đủ.";
 
 function parseArgs(argv) {
   const result = {
     cdpUrl: "http://127.0.0.1:9222",
     stateUrl: DEFAULT_STATE_URL,
     execute: false,
-    pollMs: 5000
+    pollMs: 5000,
+    stallMs: 8 * 60_000,
+    unavailableGraceMs: 90_000
   };
   for (let i = 0; i < argv.length; i += 1) {
     const key = argv[i];
@@ -24,6 +47,8 @@ function parseArgs(argv) {
     else if (key === "--target") result.targetPath = argv[++i];
     else if (key === "--execute") result.execute = true;
     else if (key === "--poll-ms") result.pollMs = Number(argv[++i]);
+    else if (key === "--stall-ms") result.stallMs = Number(argv[++i]);
+    else if (key === "--unavailable-grace-ms") result.unavailableGraceMs = Number(argv[++i]);
     else throw new Error(`unknown argument: ${key}`);
   }
   return result;
@@ -37,7 +62,7 @@ function localRoot() {
 async function fetchProjectState(url) {
   const response = await fetch(url, {
     cache: "no-store",
-    headers: { "user-agent": "MAGASIN-Supervisor/0.2" }
+    headers: { "user-agent": "MAGASIN-Supervisor/0.3" }
   });
   if (!response.ok) {
     throw new Error(`project state fetch failed: HTTP ${response.status}`);
@@ -49,11 +74,22 @@ function validateTarget(value) {
   if (!value || value.origin !== "https://chatgpt.com") {
     throw new Error("invalid local ChatGPT target origin");
   }
-  if (typeof value.pathname !== "string" ||
-      !/^\/(c|g|project)\//.test(value.pathname)) {
-    throw new Error("invalid local ChatGPT target path");
-  }
-  return value;
+  return targetFromUrl(`${value.origin}${value.pathname}`);
+}
+
+async function writeTarget(filePath, target) {
+  const temporary = `${filePath}.tmp`;
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(
+    temporary,
+    JSON.stringify({
+      origin: target.origin,
+      pathname: target.pathname,
+      updated_at: new Date().toISOString()
+    }, null, 2) + "\n",
+    "utf8"
+  );
+  await fs.rename(temporary, filePath);
 }
 
 async function safeAppendLog(logPath, event) {
@@ -77,13 +113,120 @@ function statusForStep(result, probe) {
   if (action === "STOP_WAIT_USER") return "WAIT_USER";
   if (action === "RETRY") return "RETRYING";
   if (observation === "ASSISTANT_RUNNING") return "RUNNING";
-  if (action === "CONTINUE") return result?.execution?.executed ? "RUNNING" : "READY";
+  if (action === "CONTINUE") {
+    return result?.execution?.executed ? "RUNNING" : "READY";
+  }
   return "READY";
+}
+
+function recoveryReason(action) {
+  switch (action) {
+    case RECOVERY_ACTIONS.RELOAD_STALLED:
+      return "ChatGPT response stayed running too long; reload the same conversation once, then re-evaluate.";
+    case RECOVERY_ACTIONS.RELOAD_UNAVAILABLE:
+      return "Conversation UI stayed unavailable after grace period; reload once before rollover.";
+    case RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL:
+      return "ChatGPT reports the current conversation is full; create a fresh conversation and continue from repository state.";
+    case RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_MISSING:
+      return "Target conversation cannot be loaded; create a fresh conversation and continue from repository state.";
+    case RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING:
+      return "Target conversation path could not be reached after bounded attempts; create a fresh conversation.";
+    case RECOVERY_ACTIONS.ROLLOVER_STALLED:
+      return "The same response remained stuck after bounded reloads; create a fresh conversation.";
+    case RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE:
+      return "Conversation stayed unavailable after reload; create a fresh conversation.";
+    case RECOVERY_ACTIONS.WAIT_TARGET:
+      return "Retrying target conversation navigation within a bounded budget.";
+    case RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED:
+      return "Automatic recovery budget exhausted; Owner intervention is required.";
+    default:
+      return null;
+  }
+}
+
+function recoveryPayload(recovery, action, reason = recoveryReason(action)) {
+  return {
+    ...recovery.status(action),
+    reason
+  };
+}
+
+function isHardStopObservation(observation) {
+  return new Set([
+    OBSERVATIONS.AUTH_REQUIRED,
+    OBSERVATIONS.MFA_REQUIRED,
+    OBSERVATIONS.CAPTCHA,
+    OBSERVATIONS.DESTRUCTIVE_ACTION,
+    OBSERVATIONS.ADMIN_ESCALATION,
+    OBSERVATIONS.AMBIGUOUS_DECISION
+  ]).has(observation);
+}
+
+async function createFreshConversation({
+  page,
+  targetPath,
+  controller,
+  execute,
+  projectState,
+  recoveryAction
+}) {
+  await page.goto("https://chatgpt.com/", {
+    waitUntil: "domcontentloaded",
+    timeout: 60_000
+  });
+  await page.waitForTimeout(1500);
+
+  const execution = await executeDecision({
+    page,
+    decision: {
+      action: ACTIONS.CONTINUE,
+      reason: recoveryReason(recoveryAction),
+      instruction: ROLLOVER_INSTRUCTION
+    },
+    dryRun: !execute
+  });
+
+  if (!execute) {
+    return { target: null, execution };
+  }
+
+  if (!execution.executed) {
+    throw new Error(`fresh conversation instruction was not sent: ${execution.reason || "unknown reason"}`);
+  }
+
+  controller.markExternalContinuation(0, "ROLLOVER_COMPOSER_SEND");
+
+  await page.waitForURL(
+    (value) => {
+      try {
+        targetFromUrl(value);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { timeout: 45_000 }
+  );
+
+  const newTarget = targetFromUrl(page.url());
+  await writeTarget(targetPath, newTarget);
+
+  return {
+    target: newTarget,
+    execution,
+    project: projectState.project || "MAGASIN Business OS"
+  };
 }
 
 const args = parseArgs(process.argv.slice(2));
 if (!Number.isFinite(args.pollMs) || args.pollMs < 1000) {
   throw new TypeError("poll-ms must be at least 1000");
+}
+if (!Number.isFinite(args.stallMs) || args.stallMs < 60_000) {
+  throw new TypeError("stall-ms must be at least 60000");
+}
+if (!Number.isFinite(args.unavailableGraceMs) || args.unavailableGraceMs < 15_000) {
+  throw new TypeError("unavailable-grace-ms must be at least 15000");
 }
 
 const root = localRoot();
@@ -91,7 +234,7 @@ const targetPath = args.targetPath || path.join(root, "target.json");
 const stopPath = path.join(root, "STOP");
 const logPath = path.join(root, "supervisor.log");
 const runtimeStatusPath = defaultRuntimeStatusPath();
-const target = validateTarget(JSON.parse(await fs.readFile(targetPath, "utf8")));
+let target = validateTarget(JSON.parse(await fs.readFile(targetPath, "utf8")));
 
 const session = new SupervisorSession({
   cdpUrl: args.cdpUrl,
@@ -108,13 +251,19 @@ const controller = new SupervisorLoopController({
   }
 });
 
+const recovery = new SupervisorRecoveryController({
+  stallMs: args.stallMs,
+  unavailableGraceMs: args.unavailableGraceMs
+});
+
 let retryCount = 0;
 let lastProjectState = {};
 
 await writeRuntimeStatus(
   buildRuntimeStatus({
     projectState: lastProjectState,
-    status: args.execute ? "STARTING" : "DRY_RUN"
+    status: args.execute ? "STARTING" : "DRY_RUN",
+    recovery: recoveryPayload(recovery, RECOVERY_ACTIONS.NONE)
   }),
   runtimeStatusPath
 ).catch(() => {});
@@ -127,7 +276,8 @@ while (true) {
       buildRuntimeStatus({
         projectState: lastProjectState,
         status: "STOPPED",
-        retryCount
+        retryCount,
+        recovery: recoveryPayload(recovery, RECOVERY_ACTIONS.NONE)
       }),
       runtimeStatusPath
     ).catch(() => {});
@@ -139,14 +289,13 @@ while (true) {
     const projectState = await fetchProjectState(args.stateUrl);
     lastProjectState = projectState;
 
-    if (
-      projectState.status === "DONE"
-    ) {
+    if (projectState.status === "DONE") {
       await writeRuntimeStatus(
         buildRuntimeStatus({
           projectState,
           status: "DONE",
-          retryCount
+          retryCount,
+          recovery: recoveryPayload(recovery, RECOVERY_ACTIONS.NONE)
         }),
         runtimeStatusPath
       ).catch(() => {});
@@ -165,7 +314,28 @@ while (true) {
         buildRuntimeStatus({
           projectState,
           status: "WAIT_USER",
-          retryCount
+          retryCount,
+          recovery: recoveryPayload(recovery, RECOVERY_ACTIONS.NONE)
+        }),
+        runtimeStatusPath
+      ).catch(() => {});
+      await delay(args.pollMs);
+      continue;
+    }
+
+    if (recovery.blocked) {
+      const action = RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED;
+      await safeAppendLog(logPath, {
+        type: "RECOVERY_BLOCKED",
+        action,
+        reason: recoveryReason(action)
+      });
+      await writeRuntimeStatus(
+        buildRuntimeStatus({
+          projectState,
+          status: "WAIT_USER",
+          retryCount,
+          recovery: recoveryPayload(recovery, action)
         }),
         runtimeStatusPath
       ).catch(() => {});
@@ -178,15 +348,245 @@ while (true) {
     if (!page) throw new Error("no active ChatGPT page");
 
     const wanted = `${target.origin}${target.pathname}`;
-    if (page.url() !== wanted) {
-      await page.goto(wanted, {
-        waitUntil: "domcontentloaded",
-        timeout: 60_000
-      });
-      await page.waitForTimeout(1200);
+    let matched = pageMatchesTarget(page.url(), target);
+    let navigationErrorName = null;
+
+    if (!matched) {
+      try {
+        const response = await page.goto(wanted, {
+          waitUntil: "domcontentloaded",
+          timeout: 60_000
+        });
+        await page.waitForTimeout(1200);
+        matched = pageMatchesTarget(page.url(), target) &&
+          (!response || response.status() < 400);
+      } catch (error) {
+        navigationErrorName = error?.name || "Error";
+        matched = false;
+      }
+
+      if (!matched) {
+        const mismatchProbe = await session.probe().catch(() => null);
+        const mismatchObservation = mismatchProbe?.classification?.observation;
+
+        if (isHardStopObservation(mismatchObservation)) {
+          const decision = {
+            action: ACTIONS.STOP_WAIT_USER,
+            reason: `owner-required observation while recovering target: ${mismatchObservation}`
+          };
+          await safeAppendLog(logPath, {
+            type: "WAIT_USER",
+            action: decision.action,
+            reason: decision.reason,
+            errorName: navigationErrorName || undefined
+          });
+          await writeRuntimeStatus(
+            buildRuntimeStatus({
+              projectState,
+              status: "WAIT_USER",
+              uiState: mismatchProbe?.classification?.uiState || null,
+              observation: mismatchObservation || null,
+              decision,
+              retryCount,
+              recovery: recoveryPayload(recovery, RECOVERY_ACTIONS.WAIT_TARGET)
+            }),
+            runtimeStatusPath
+          ).catch(() => {});
+          await delay(args.pollMs);
+          continue;
+        }
+
+        const targetRecovery = recovery.observeTarget({ matched: false });
+        await safeAppendLog(logPath, {
+          type: "TARGET_RECOVERY",
+          action: targetRecovery,
+          reason: recoveryReason(targetRecovery),
+          errorName: navigationErrorName || undefined
+        });
+
+        if (targetRecovery === RECOVERY_ACTIONS.WAIT_TARGET) {
+          await writeRuntimeStatus(
+            buildRuntimeStatus({
+              projectState,
+              status: "RECOVERING",
+              retryCount,
+              recovery: recoveryPayload(recovery, targetRecovery)
+            }),
+            runtimeStatusPath
+          ).catch(() => {});
+          await delay(args.pollMs);
+          continue;
+        }
+
+        if (targetRecovery === RECOVERY_ACTIONS.ROLLOVER_TARGET_MISSING) {
+          try {
+            const rollover = await createFreshConversation({
+              page,
+              targetPath,
+              controller,
+              execute: args.execute,
+              projectState,
+              recoveryAction: targetRecovery
+            });
+            if (rollover.target) target = rollover.target;
+            recovery.record(targetRecovery, { success: true });
+            await safeAppendLog(logPath, {
+              type: "CONVERSATION_ROLLOVER",
+              action: targetRecovery,
+              executed: Boolean(rollover.execution?.executed),
+              target: rollover.execution?.target || undefined,
+              reason: recoveryReason(targetRecovery)
+            });
+            await writeRuntimeStatus(
+              buildRuntimeStatus({
+                projectState,
+                status: args.execute ? "ROLLOVER" : "DRY_RUN",
+                retryCount,
+                execution: rollover.execution,
+                recovery: recoveryPayload(recovery, targetRecovery)
+              }),
+              runtimeStatusPath
+            ).catch(() => {});
+          } catch (error) {
+            recovery.record(targetRecovery, { success: false });
+            await safeAppendLog(logPath, {
+              type: "ROLLOVER_FAILED",
+              action: targetRecovery,
+              reason: recoveryReason(targetRecovery),
+              errorName: error?.name || "Error"
+            });
+            await writeRuntimeStatus(
+              buildRuntimeStatus({
+                projectState,
+                status: recovery.blocked ? "WAIT_USER" : "RECOVERING",
+                retryCount,
+                recovery: recoveryPayload(recovery, targetRecovery),
+                errorName: error?.name || "Error"
+              }),
+              runtimeStatusPath
+            ).catch(() => {});
+          }
+          await delay(args.pollMs);
+          continue;
+        }
+      } else {
+        recovery.observeTarget({ matched: true });
+      }
+    } else {
+      recovery.observeTarget({ matched: true });
     }
 
     const probe = await session.probe();
+    const recoveryAction = recovery.observeProbe(probe);
+
+    if (
+      recoveryAction === RECOVERY_ACTIONS.RELOAD_STALLED ||
+      recoveryAction === RECOVERY_ACTIONS.RELOAD_UNAVAILABLE
+    ) {
+      recovery.record(recoveryAction);
+      await safeAppendLog(logPath, {
+        type: "RECOVERY_RELOAD",
+        action: recoveryAction,
+        reason: recoveryReason(recoveryAction)
+      });
+      await writeRuntimeStatus(
+        buildRuntimeStatus({
+          projectState,
+          status: "RECOVERING",
+          uiState: probe.classification.uiState,
+          observation: probe.classification.observation,
+          retryCount,
+          recovery: recoveryPayload(recovery, recoveryAction)
+        }),
+        runtimeStatusPath
+      ).catch(() => {});
+
+      await page.reload({
+        waitUntil: "domcontentloaded",
+        timeout: 60_000
+      });
+      await page.waitForTimeout(1500);
+      await delay(args.pollMs);
+      continue;
+    }
+
+    if (
+      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL ||
+      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_MISSING ||
+      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_STALLED ||
+      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE
+    ) {
+      try {
+        const rollover = await createFreshConversation({
+          page,
+          targetPath,
+          controller,
+          execute: args.execute,
+          projectState,
+          recoveryAction
+        });
+        if (rollover.target) target = rollover.target;
+        recovery.record(recoveryAction, { success: true });
+        await safeAppendLog(logPath, {
+          type: "CONVERSATION_ROLLOVER",
+          action: recoveryAction,
+          executed: Boolean(rollover.execution?.executed),
+          target: rollover.execution?.target || undefined,
+          reason: recoveryReason(recoveryAction)
+        });
+        await writeRuntimeStatus(
+          buildRuntimeStatus({
+            projectState,
+            status: args.execute ? "ROLLOVER" : "DRY_RUN",
+            uiState: probe.classification.uiState,
+            observation: probe.classification.observation,
+            execution: rollover.execution,
+            retryCount,
+            recovery: recoveryPayload(recovery, recoveryAction)
+          }),
+          runtimeStatusPath
+        ).catch(() => {});
+      } catch (error) {
+        recovery.record(recoveryAction, { success: false });
+        await safeAppendLog(logPath, {
+          type: "ROLLOVER_FAILED",
+          action: recoveryAction,
+          reason: recoveryReason(recoveryAction),
+          errorName: error?.name || "Error"
+        });
+        await writeRuntimeStatus(
+          buildRuntimeStatus({
+            projectState,
+            status: recovery.blocked ? "WAIT_USER" : "RECOVERING",
+            uiState: probe.classification.uiState,
+            observation: probe.classification.observation,
+            retryCount,
+            recovery: recoveryPayload(recovery, recoveryAction),
+            errorName: error?.name || "Error"
+          }),
+          runtimeStatusPath
+        ).catch(() => {});
+      }
+      await delay(args.pollMs);
+      continue;
+    }
+
+    if (recoveryAction === RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED) {
+      await writeRuntimeStatus(
+        buildRuntimeStatus({
+          projectState,
+          status: "WAIT_USER",
+          uiState: probe.classification.uiState,
+          observation: probe.classification.observation,
+          retryCount,
+          recovery: recoveryPayload(recovery, recoveryAction)
+        }),
+        runtimeStatusPath
+      ).catch(() => {});
+      await delay(args.pollMs);
+      continue;
+    }
+
     const result = await controller.step({
       page,
       projectState,
@@ -220,7 +620,8 @@ while (true) {
         observation: probe.classification.observation,
         decision: result.decision,
         execution: result.execution,
-        retryCount
+        retryCount,
+        recovery: recoveryPayload(recovery, RECOVERY_ACTIONS.NONE)
       }),
       runtimeStatusPath
     ).catch(() => {});
@@ -234,6 +635,7 @@ while (true) {
         projectState: lastProjectState,
         status: "ERROR",
         retryCount,
+        recovery: recoveryPayload(recovery, RECOVERY_ACTIONS.NONE),
         errorName: error?.name || "Error"
       }),
       runtimeStatusPath
