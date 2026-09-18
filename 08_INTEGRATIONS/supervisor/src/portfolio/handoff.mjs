@@ -1,4 +1,8 @@
-import { getRegisteredProject, validateProjectRegistry } from "./project-registry.mjs";
+import {
+  ProjectRegistryError,
+  getRegisteredProject,
+  validateProjectRegistry
+} from "./project-registry.mjs";
 import { PORTFOLIO_ACTIONS } from "./scheduler.mjs";
 
 export const HANDOFF_ACTIONS = Object.freeze({
@@ -19,6 +23,17 @@ function requireText(value, label) {
     throw new ProjectHandoffError(`${label} must be a non-empty string`);
   }
   return value.trim();
+}
+
+function asHandoffRegistryBoundary(operation) {
+  try {
+    return operation();
+  } catch (error) {
+    if (error instanceof ProjectRegistryError) {
+      throw new ProjectHandoffError(error.message);
+    }
+    throw error;
+  }
 }
 
 function checkpointFor(checkpoints, projectId, normalizedState) {
@@ -84,7 +99,7 @@ export function planProjectHandoff({
   checkpoints = {},
   completedOperations = []
 }) {
-  validateProjectRegistry(registry);
+  asHandoffRegistryBoundary(() => validateProjectRegistry(registry));
 
   if (
     !schedulerDecision ||
@@ -98,8 +113,8 @@ export function planProjectHandoff({
   const currentId = requireText(currentProjectId, "currentProjectId");
   const targetId = requireText(schedulerDecision.project_id, "schedulerDecision.project_id");
 
-  getRegisteredProject(registry, currentId);
-  getRegisteredProject(registry, targetId);
+  asHandoffRegistryBoundary(() => getRegisteredProject(registry, currentId));
+  asHandoffRegistryBoundary(() => getRegisteredProject(registry, targetId));
 
   const states = new Map(
     (normalizedStates || [])
