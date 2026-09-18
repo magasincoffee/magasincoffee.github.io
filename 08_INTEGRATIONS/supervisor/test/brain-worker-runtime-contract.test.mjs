@@ -114,3 +114,22 @@ test("stale Brain target may fall back only to one open conversation with a vali
   assert.match(source, /multiple open ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied/);
   assert.match(source, /BRAIN_TARGET_REBOUND_SIGNATURE/);
 });
+
+
+test("stale Brain recovery scans only a bounded recent sidebar and still fails closed on ambiguity", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+  const adapter = await fs.readFile(
+    new URL("../src/ui/playwright-adapter.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(runtime, /findBrainFromRecentSidebar/);
+  assert.match(runtime, /listRecentConversationUrls\(discoveryPage, \{ limit: 20 \}\)/);
+  assert.match(runtime, /multiple recent ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied/);
+  assert.match(runtime, /BRAIN_TARGET_REBOUND_SIDEBAR/);
+  assert.match(adapter, /async listRecentConversationUrls/);
+  assert.match(adapter, /Math\.max\(1, Math\.min\(50, Number\(limit\) \|\| 20\)\)/);
+});
