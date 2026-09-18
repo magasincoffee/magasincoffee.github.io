@@ -2,13 +2,13 @@
   "schema_version": "business-os-execution-cursor.v1",
   "night_run_id": "NIGHT_RUN_2026-09-18",
   "project_id": "magasin-business-os",
-  "task": "TASK-044",
-  "micro_task": "portfolio_aware_privacy_safe_diagnostics",
+  "task": "TASK-043",
+  "micro_task": "cross_project_handoff_state_isolation",
   "status": "IN_PROGRESS",
-  "checkpoint": "TASK_043_HANDOFF_VERIFIED",
+  "checkpoint": "TASK_042_MEDIA_ADAPTER_OFFLINE_VERIFIED",
   "resume_policy": "SAFE_RECONCILE_HEAD_STATE_CI",
   "lease": null,
-  "last_commit": "d39cc211f19ce7223478d48ccfd19a7440c17d77",
+  "last_commit": "3522886bb54ac5b69d245eb3ccd1285ada8571e0",
   "updated_at": "2026-09-18T23:53:00+07:00",
   "completed_operations": []
 }
