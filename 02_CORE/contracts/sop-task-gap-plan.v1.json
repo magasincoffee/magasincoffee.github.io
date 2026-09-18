@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "status": "ACCEPTANCE_DEFINED",
+  "task": "TASK-023",
+  "slice": "SOP_TASK_DAY_11_13",
+  "canonical_workflow": [
+    "SOP_TEMPLATE",
+    "EXECUTION",
+    "RESPONSIBLE_PERSON",
+    "EXCEPTION",
+    "CORRECTIVE_TASK",
+    "VERIFY",
+    "CLOSE"
+  ],
+  "repository_evidence": {
+    "sop_workspace": "INDEX_SKELETON_ONLY",
+    "manager_task_surface": "STATIC_DEMO_PLACEHOLDER",
+    "employee_task_surface": "UNCONNECTED_LOADING_PLACEHOLDER",
+    "owner_control_tower_task_source": "NOT_CONNECTED",
+    "manager_task_deep_link": "STALE_LEGACY_RUNTIME_TARGET",
+    "verified_task_backend_in_repo": false
+  },
+  "live_schema_inventory": {
+    "mode": "READ_ONLY_STRUCTURAL_METADATA",
+    "project": "MAGASIN-NOIBO",
+    "matching_named_public_table_view_routine": false,
+    "production_write_performed": false,
+    "row_data_exported": false
+  },
+  "verified_gaps": [
+    "NO_APPROVED_EXECUTABLE_SOP_TEMPLATE_VERSION",
+    "TASK_UI_NOT_CONNECTED_TO_VERIFIED_SOURCE",
+    "NO_VERIFIED_SOP_TASK_PERSISTENCE_API",
+    "EXCEPTION_CORRECTIVE_OVERDUE_VERIFY_CLOSE_RULES_UNRESOLVED",
+    "NO_SOP_TASK_BROWSER_E2E",
+    "MANAGER_TASK_DEEP_LINK_STALE"
+  ],
+  "guardrails": {
+    "no_fabricated_operational_tasks": true,
+    "missing_source_fails_closed": true,
+    "no_new_business_rules": true,
+    "apply_production_schema_change": false,
+    "auto_corrective_task_forbidden_until_rules_approved": true,
+    "task_write_workflow_forbidden_until_rules_approved": true
+  },
+  "owner_decisions_required_before_write_workflow": [
+    "EXCEPTION_TRIGGER",
+    "CORRECTIVE_TASK_CREATION_RULE",
+    "RESPONSIBLE_PERSON_RULE",
+    "VERIFY_CLOSE_AUTHORITY",
+    "OVERDUE_ESCALATION_POLICY",
+    "COMPLETION_EVIDENCE_POLICY"
+  ],
+  "acceptance": [
+    "classify_existing_task_surfaces_as_placeholders",
+    "fail_closed_when_task_source_missing",
+    "record_stale_manager_task_deep_link",
+    "repair_route_without_business_rule_change",
+    "remove_fabricated_manager_task_facts",
+    "replace_employee_indefinite_loading_state",
+    "keep_control_tower_task_source_fail_closed",
+    "no_task_write_workflow_from_ui_assumptions",
+    "no_production_schema_apply",
+    "no_exception_corrective_overdue_verification_rule_invention",
+    "read_only_structural_live_schema_inventory",
+    "owner_rule_boundary_before_write_workflow"
+  ],
+  "next_tasks": [
+    "TASK-024",
+    "TASK-025",
+    "TASK-026"
+  ]
+}

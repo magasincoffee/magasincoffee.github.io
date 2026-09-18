@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-023 — SOP/Task current-system gap review + acceptance contract**
+**TASK-024 — Manager Task route canonicalization + smoke regression**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Run **TASK-023 — SOP/Task current-system gap review + acceptance contract** from the canonical Day 11–13 Blueprint slice. Inventory existing SOP/checklist/task surfaces and data contracts, preserve working workflows, define only verified gaps for `SOP template → execution → responsible person → exception → corrective task → verify → close`, then open the smallest implementation queue. Discovery/read-only work is GREEN; do not apply production migrations or invent ambiguous business rules.
+Run **TASK-024 — Manager Task route canonicalization + smoke regression**. Repair `/05_MANAGER/Cong-viec/` so it loads the current canonical Manager runtime/auth path instead of the removed legacy runtime, preserve role routing, add regression coverage, and verify the deep link in a deterministic browser smoke where practical. This is a GREEN technical-integrity fix: do not add Task writes, production schema changes, or new SOP/Task business rules.
 
 ## Session handoff
 
