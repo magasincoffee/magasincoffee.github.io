@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-029 — Schedule-first canonical flow contract — READY**
+**TASK-030 — Employee weekly availability canonical slice — READY**
 
 Canonical task/state files:
 
@@ -26,6 +26,7 @@ Canonical task/state files:
 - `00_SUPERVISOR_ROBOT.md`
 - `00_SUPERVISOR_HANDOFF_ARCHITECTURE.md`
 - `00_ARCHITECTURE_5_STEP_RESET.md`
+- `05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`
 
 ## Current target
 
@@ -92,9 +93,9 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-029 from `00_ARCHITECTURE_5_STEP_RESET.md`.
+**AUTO_CONTINUE:** execute TASK-030 from `00_ARCHITECTURE_5_STEP_RESET.md` and `05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`.
 
-TASK-029 must identify the canonical modules/data/RPC boundaries for availability → review/allocation → robot proposal → publish and delete/defer duplicate ownership before any new implementation.
+Apply QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE before code. Preserve Employee weekly availability behavior, identify and remove/defer duplicate Employee availability ownership, keep `06_EMPLOYEE/availability/engine-v1.js` as the canonical projection, keep writes on `save_my_availability/delete_my_availability`, then run unit/browser regression before advancing to TASK-031.
 
 TASK-026 remains preserved as a deferred Owner boundary. Do not implement write-capable SOP/Task automation until its six business-rule decisions are approved.
 
