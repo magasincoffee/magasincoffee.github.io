@@ -144,8 +144,8 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-028 — Five-Step architecture reset + delete/defer map:** this document plus source-of-truth reprioritization. DONE.
 - **TASK-029 — Schedule-first canonical flow contract:** canonical tables/RPC boundaries and role ownership locked; duplicate ownership classified transitional. DONE.
 - **TASK-030 — Employee weekly availability canonical slice:** single Employee availability owner, save/multi-window/delete regression verified. DONE.
-- **TASK-031 — Manager allocation + robot proposal + publish slice:** manager is the operating owner; robot proposes, manager adjusts/publishes. READY.
-- **TASK-032 — Published schedule → attendance/swap/notification integration gate:** close the employee feedback loop. QUEUED.
+- **TASK-031 — Manager allocation + robot proposal + publish slice:** canonical Manager Workforce module owns review/allocation/explicit publish; Robot remains DRAFT-only. DONE.
+- **TASK-032 — Published schedule → attendance/swap/notification integration gate:** close the employee feedback loop. READY.
 
 ## 8. Definition of success
 
