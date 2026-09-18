@@ -58,7 +58,14 @@ export class SupervisorLoopController {
     }
   }
 
-  async step({ page, projectState, probe, retryCount = 0, maxRetries = 2 }) {
+  async step({
+    page,
+    projectState,
+    probe,
+    retryCount = 0,
+    maxRetries = 2,
+    handoff = false
+  }) {
     const state = validateProjectState(projectState);
     this.observeProgress(probe);
 
@@ -66,7 +73,8 @@ export class SupervisorLoopController {
       projectState: state,
       observation: probe.classification.observation,
       retryCount,
-      maxRetries
+      maxRetries,
+      handoff
     });
 
     if (decision.action === ACTIONS.CONTINUE) {
