@@ -1,0 +1,60 @@
+name: Install MAGASIN Business OS Control Panel
+
+on:
+  push:
+    branches:
+      - ops/install-business-os-control-panel
+    paths:
+      - '.github/workflows/supervisor-control-panel-install.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supervisor-control-panel-install
+  cancel-in-progress: false
+
+jobs:
+  install:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 12
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify canonical project
+        run: |
+          $state = Get-Content '01_DOCS/MAGASIN/00_PROJECT_STATE.json' -Raw | ConvertFrom-Json
+          if ($state.project -ne 'MAGASIN Business OS') { throw "Unexpected project: $($state.project)" }
+          if ($state.repository -ne 'magasincoffee/magasincoffee.github.io') { throw "Unexpected repository: $($state.repository)" }
+          Write-Host "PROJECT=$($state.project)"
+          Write-Host "TASK=$($state.current_task) - $($state.current_task_title)"
+
+      - name: Install upgraded Supervisor runtime and unified control panel
+        run: |
+          $installer = Join-Path $env:GITHUB_WORKSPACE '08_INTEGRATIONS\supervisor\windows\install-supervisor.ps1'
+          & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installer
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Launch MAGASIN Business OS Control
+        run: |
+          $runtime = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor\runtime'
+          $panel = Join-Path $runtime 'windows\control-panel.ps1'
+          if (-not (Test-Path $panel)) { throw "Panel missing: $panel" }
+
+          $env:RUNNER_TRACKING_ID = 'MAGASIN_BUSINESS_OS_CONTROL_PERSISTENT'
+          $argLine = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $panel + '"'
+          Start-Process powershell.exe -ArgumentList $argLine
+          Start-Sleep -Seconds 3
+
+          $desktop = [Environment]::GetFolderPath('Desktop')
+          $shortcut = Join-Path $desktop 'MAGASIN BUSINESS OS CONTROL.lnk'
+          if (-not (Test-Path $shortcut)) { throw "Shortcut missing: $shortcut" }
+
+          Write-Host "CONTROL_PANEL_READY=True"
+          Write-Host "SHORTCUT=$shortcut"
+          Write-Host "The panel is the only normal operator entry point. START launches the verified local Supervisor Robot."
