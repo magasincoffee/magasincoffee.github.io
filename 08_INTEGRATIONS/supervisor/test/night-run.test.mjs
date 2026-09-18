@@ -1,3 +1,4 @@
+// TASK-048 CI probe: exercise current hard-stop regression suite through PR-triggered Supervisor Tests.
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
