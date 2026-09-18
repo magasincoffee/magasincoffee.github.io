@@ -25,9 +25,9 @@ test("Five-Step architecture reset is canonical and schedule-first", async () =>
   assert.match(architecture, /Employee availability[\s\S]*Manager review\/edit[\s\S]*Robot schedule proposal[\s\S]*publish weekly schedule/);
 
   assert.equal(state.current_task, "TASK-035");
-  assert.equal(state.status, "READY");
-  assert.equal(state.autonomy, "AUTO_CONTINUE");
-  assert.equal(state.requires_user, false);
+  assert.equal(state.status, "WAIT_USER");
+  assert.equal(state.autonomy, "MANUAL");
+  assert.equal(state.requires_user, true);
   assert.equal(state.next_task, null);
 
   assert.match(current, /Schedule-first Core Flow/);
@@ -41,7 +41,7 @@ test("Five-Step architecture reset is canonical and schedule-first", async () =>
   assert.match(queue, /TASK-032[^\n]*DONE/);
   assert.match(queue, /TASK-033[^\n]*DONE/);
   assert.match(queue, /TASK-034[^\n]*DONE/);
-  assert.match(queue, /TASK-035[^\n]*READY/);
+  assert.match(queue, /TASK-035[^\\n]*WAIT_USER/);
 });
 
 test("deferred SOP write path remains fail-closed", async () => {
