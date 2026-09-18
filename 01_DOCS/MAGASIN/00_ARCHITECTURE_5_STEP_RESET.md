@@ -148,7 +148,8 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-032 — Published schedule → attendance/swap/notification integration gate:** verified core + SFB-001/SFB-002 decisions complete. DONE.
 - **TASK-033 — Give Shift production primitive:** recipient consent → Manager approval → server revalidation/transfer; production migration + browser E2E verified. DONE.
 - **TASK-034 — Notification event-outbox production:** durable RLS-protected schedule/attendance/Swap/Give outbox + Employee in-app reader + rollback integration smoke verified. DONE.
-- **TASK-035 — MAGASIN email adapter/config:** provider-neutral worker/config contract verified; no existing provider/account evidence found; activation requires concrete provider + exact MAGASIN sender email. WAIT_USER.
+- **TASK-035 — MAGASIN email adapter/config:** Gmail adapter/config prepared; production OAuth activation explicitly deferred by Owner and remains fail-closed/non-blocking. DEFERRED.
+- **TASK-036 — Schedule-first closure regression + recovery gate:** run the existing canonical flow regressions, verify external email remains fail-closed, and prove recovery/resume before declaring this critical path stable. IN_PROGRESS.
 
 ## 8. Definition of success
 
