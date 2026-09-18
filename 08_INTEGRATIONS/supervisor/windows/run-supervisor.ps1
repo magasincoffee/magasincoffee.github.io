@@ -10,6 +10,25 @@ $profile = Join-Path $root 'browser_profile'
 $target = Join-Path $root 'target.json'
 $stop = Join-Path $root 'STOP'
 $pidFile = Join-Path $root 'supervisor.pid'
+$mutexName = 'Local\MAGASIN_BUSINESS_OS_SUPERVISOR'
+$mutex = New-Object System.Threading.Mutex($false, $mutexName)
+$ownsMutex = $false
+
+try {
+    try {
+        $ownsMutex = $mutex.WaitOne(0, $false)
+    } catch [System.Threading.AbandonedMutexException] {
+        $ownsMutex = $true
+    }
+
+    if (-not $ownsMutex) {
+        Write-Host 'Another MAGASIN Supervisor wrapper already owns the singleton mutex.'
+        exit 0
+    }
+} catch {
+    $mutex.Dispose()
+    throw
+}
 
 function Get-DedicatedChromeProcesses {
     return @(Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
@@ -144,4 +163,8 @@ try {
     }
 } finally {
     Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+    if ($ownsMutex) {
+        try { $mutex.ReleaseMutex() } catch {}
+    }
+    $mutex.Dispose()
 }
