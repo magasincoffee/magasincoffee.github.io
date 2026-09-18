@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-013 — Owner home navigation + route/auth integration**
+**TASK-014 — Procurement/payables read adapter**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Implement **TASK-013 — Owner home navigation + route/auth integration**, then continue through the Control Tower queue while no Owner boundary is reached.
+Implement **TASK-014 — Procurement/payables read adapter**, preserving read-only and data-quality boundaries, then continue while no Owner boundary is reached.
 
 ## Session handoff
 
