@@ -176,3 +176,9 @@ jobs:
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
           node src/ui/task-035-google-project-picker.mjs
+
+      - name: Verify Google Cloud state after project selection
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          node src/ui/task-035-google-cloud-state.mjs
