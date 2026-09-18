@@ -1,0 +1,25 @@
+# MAGASIN Business OS — Task Queue
+
+**Plan:** BOS V1 / 21 days  
+**Rule:** mỗi implementation task mục tiêu <= ~20 phút active work; lớn hơn phải chia.
+
+| ID | Task | Est. | Gate | Status |
+|---|---|---:|---|---|
+| TASK-001 | Supervisor Robot discovery + bootstrap contract | 20m | spec + safe stop rules | READY |
+| TASK-002 | Supervisor project-state reader | 15m | unit tests | QUEUED |
+| TASK-003 | Supervisor continuation decision engine | 20m | unit + regression | QUEUED |
+| TASK-004 | Supervisor ChatGPT UI adapter spike | 20m | local non-destructive smoke | QUEUED |
+| TASK-005 | Supervisor reconnect/retry policy | 15m | simulated failure tests | QUEUED |
+| TASK-006 | Supervisor START/STOP launcher + kill switch | 20m | local smoke | QUEUED |
+| TASK-007 | Canonical CI/E2E skeleton | 20m | Actions PASS | QUEUED |
+| TASK-008 | Store/product canonical model review | 20m | discovery trace | QUEUED |
+| TASK-009 | Database baseline/migration plan | 20m | schema review | QUEUED |
+| TASK-010 | Owner Control Tower vertical-slice plan | 20m | acceptance defined | QUEUED |
+
+Sau TASK-010, queue được mở rộng theo kết quả thực tế. Không tạo trước hàng trăm task nếu chưa biết dependency thật.
+
+## Execution rule
+
+Task tiếp theo chỉ chạy khi task hiện tại đạt Definition of Done hoặc được chuyển rõ sang `WAIT_USER` / `BLOCKED`.
+
+Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
