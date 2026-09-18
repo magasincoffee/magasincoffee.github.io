@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-045 — Restart/resume simulation — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-046 — Night full QA — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,30 +101,28 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-045:** TASK-044 portfolio-aware diagnostics is verified on draft PR #119.
+**AUTO_CONTINUE — TASK-046:** TASK-045 restart/resume simulation is verified on draft PR #119.
 
-Verified TASK-044 evidence:
+Verified TASK-045 evidence:
 
-- diagnostics implementation commit `a4a1dc1293b29c793f0cb88bb44fc67aa0b53cb8`;
-- privacy regression test commit `0aa727303482ee6552f143e0abec722d65e6103c`;
-- bounded handoff regression fix `b0758f72b9592e229e0c4c5969fa683048cdfd91`;
-- Supervisor Tests run `35371446531`: PASS;
-- diagnostics persist project/task/checkpoint context without conversation/request content;
-- raw error messages are not persisted; only safe error metadata remains;
-- existing incident classification and no-browser/live-side-effect guard remain green.
+- integration simulation commit `311bf4413a3dd5cdc5d7d01f8d6642d13e061629`;
+- Supervisor Tests run `35371642271`: PASS;
+- active lease blocks takeover;
+- stale lease remains fail-closed until HEAD + CI reconciliation;
+- verified stale lease resumes the same checkpoint;
+- completed operation keys survive restart and suppress duplicate side effects;
+- WAIT_USER/BLOCKED boundaries remain fail-closed;
+- project handoff checkpoint remains project-local across restart;
+- no browser/live-provider side effect is executed.
 
-TASK-045 must simulate restart/resume without requiring an actual destructive reboot:
+TASK-046 is evidence-driven full QA over the two approved repositories only:
 
-1. active lease prevents a second worker from taking over;
-2. expired lease stays fail-closed until HEAD and CI are reconciled;
-3. verified stale lease is cleared before resume;
-4. completed operation keys prevent duplicate side effects after restart;
-5. canonical task advancement discards stale cursor work;
-6. project handoff checkpoint remains project-local across restart;
-7. Owner STOP / WAIT_USER / BLOCKED boundaries remain fail-closed;
-8. simulation performs no browser mutation, live provider action, or production write.
-
-Reuse existing recovery/lease/handoff primitives; do not create another recovery subsystem.
+1. verify latest Business OS Robot V2 PR #119 head and full Supervisor CI;
+2. verify latest Media Robot offline adapter PR head and full offline CI;
+3. verify both branches remain unmerged/auto-merge disabled;
+4. verify no live Saydi Generate/Download evidence was introduced;
+5. inspect failures only; apply bounded fixes if a current regression is real;
+6. do not add new features, projects, live provider work, or production writes.
 
 ## Session handoff
 
