@@ -115,7 +115,7 @@
     },
     "status": "FINAL_CHECKPOINT_IN_PROGRESS",
     "final_report_ref": "01_DOCS/MAGASIN/08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md",
-    "evidence_ref": "01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE.md",
+    "evidence_ref": "01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE_V1.md",
     "hard_stop_pending": true
   }
 }
