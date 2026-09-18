@@ -54,3 +54,25 @@ Next gate: TASK-004 UI adapter local **non-destructive** smoke.
 - Probe failure: session disconnects and next probe can reconnect PASS.
 - Disconnect idempotency: PASS.
 - No browser live action or ChatGPT message side effect in this task.
+
+
+## 2026-09-18 — Supervisor action executor / persistence gates
+
+- Unit/regression tests on `feat/supervisor-actions`: **PASS**.
+- Installer + START/STOP smoke run `35301449363`: **PASS**.
+- Synthetic real-browser action E2E run `35301582550`: **PASS**.
+  - canonical CONTINUE action semantics: PASS in isolated synthetic DOM.
+  - safe RETRY action semantics: PASS in isolated synthetic DOM.
+  - no ChatGPT/external side effect during synthetic action E2E.
+- Vietnamese timeout / `Thử lại` path: unit regression PASS.
+- Live retry-only smoke run `35301796025`: **PASS**.
+  - observed live state at verification: `READY_IDLE`.
+  - no safe Retry control remained at verification time, so no click was executed.
+  - boundary confirmed: retry-only smoke cannot send Continue or arbitrary text.
+- Short-lived CDP CLIs terminate deterministically after logical detach: regression PASS.
+- Runtime-upgrade lock handling: PASS via installer smoke.
+- Deterministic STOP kill switch: PASS via installer smoke.
+- Anti-duplicate continuation controller: PASS.
+- Public Git boundary retained: credentials/cookies/tokens/browser profile/conversation target remain local only.
+
+Final gate: install/start persistent Supervisor and verify it survives GitHub Actions job cleanup.
