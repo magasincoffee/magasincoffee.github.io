@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-046 — Night full QA — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-047 — Night docs / evidence / PR prep — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,28 +101,23 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-046:** TASK-045 restart/resume simulation is verified on draft PR #119.
+**AUTO_CONTINUE — TASK-047:** TASK-046 two-project full QA is verified.
 
-Verified TASK-045 evidence:
+QA evidence:
 
-- integration simulation commit `311bf4413a3dd5cdc5d7d01f8d6642d13e061629`;
-- Supervisor Tests run `35371642271`: PASS;
-- active lease blocks takeover;
-- stale lease remains fail-closed until HEAD + CI reconciliation;
-- verified stale lease resumes the same checkpoint;
-- completed operation keys survive restart and suppress duplicate side effects;
-- WAIT_USER/BLOCKED boundaries remain fail-closed;
-- project handoff checkpoint remains project-local across restart;
-- no browser/live-provider side effect is executed.
+- Business OS draft PR #119 remains open/unmerged; latest Supervisor run `35371642271`: **203/203 PASS** plus no-browser/live-side-effect guard PASS;
+- Media Robot draft PR #21 remains open/unmerged; push run `35370775036` and PR run `35371002442`: **83/83 PASS**;
+- Media branch source-of-truth explicitly records no live Generate and no live Download in the approved night window;
+- neither PR's task-specific probe file exists on `main`, confirming no automatic merge occurred;
+- no current regression requires another code fix.
 
-TASK-046 is evidence-driven full QA over the two approved repositories only:
+TASK-047 is documentation/evidence only:
 
-1. verify latest Business OS Robot V2 PR #119 head and full Supervisor CI;
-2. verify latest Media Robot offline adapter PR head and full offline CI;
-3. verify both branches remain unmerged/auto-merge disabled;
-4. verify no live Saydi Generate/Download evidence was introduced;
-5. inspect failures only; apply bounded fixes if a current regression is real;
-6. do not add new features, projects, live provider work, or production writes.
+1. reconcile changelog with TASK-037–046 night-run work;
+2. create one canonical night-run evidence report with commits, CI run IDs, safety boundaries and remaining manual gates;
+3. update PR #119 description so it represents Robot V2 as a reviewable whole rather than only TASK-039;
+4. keep Media PR #21 reviewable and explicitly offline-only;
+5. do not merge either PR and do not add features.
 
 ## Session handoff
 
