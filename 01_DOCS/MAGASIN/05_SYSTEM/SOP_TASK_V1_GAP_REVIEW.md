@@ -204,3 +204,16 @@ Owner/business-rule input is expected at TASK-026 before any write-capable SOP/T
 - Deterministic Playwright smoke verifies top URL `/05_MANAGER/Cong-viec/`, canonical runtime + shell, Task view active, zero page errors, zero request failures, zero HTTP 5xx and zero legacy-runtime requests.
 - No Task write RPC, production schema change or new business rule was introduced.
 - `BUG-ST-001` is closed. TASK-025 may proceed.
+
+## 10. TASK-025 closure — fail-closed UI integrity
+
+**Result: PASS.**
+
+- Manager Task view no longer presents hard-coded operational rows or a write-looking “Giao việc” action while no verified Task source exists.
+- Manager dashboard no longer presents the prototype “2 công việc cuối ca chưa hoàn tất” fact; the Task/SOP row is explicitly NOT_CONNECTED, and the composite attention count is not presented as a trusted number.
+- Employee “Công việc hôm nay” no longer stays in indefinite loading or claims a false empty day; it explicitly states that the Task/SOP source is not connected.
+- Owner Control Tower keeps Task/SOP quality at NOT_CONNECTED and both open/overdue metrics at —.
+- Static/unit regression and deterministic Playwright checks pass across Manager, Employee and Owner surfaces.
+- Existing People/Shift and Control Tower browser regressions remain green.
+- No Task write RPC, production schema change or new SOP/Task Business Rule was introduced.
+- Gate: TASK-025 **DONE**; TASK-026 may proceed.
