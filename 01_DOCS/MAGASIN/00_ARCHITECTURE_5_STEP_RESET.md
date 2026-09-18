@@ -150,3 +150,21 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 ## 8. Definition of success
 
 The reset is successful when the repository can trace one weekly schedule from employee availability through manager publication to employee execution without relying on duplicate systems or unverified business rules.
+
+
+## 9. Conversation-aware execution handoff
+
+The Five-Step method also governs **how automation takes over work**, not only which business module is built.
+
+Canonical runtime handoff is defined in `00_SUPERVISOR_HANDOFF_ARCHITECTURE.md`:
+
+```text
+Owner works in ChatGPT Robot browser
+  → Supervisor observes current chat first
+  → WAIT if assistant is running or Owner message is pending
+  → reconcile live Owner instruction + repository once
+  → continue exact current work
+  → AUTO_CONTINUE from canonical state
+```
+
+This deletes the old behavior of blindly sending the same generic continuation prompt at startup. The Supervisor must preserve work already in progress and must not treat a stale repository task as more recent than an explicit live Owner redirect without first reconciling that redirect back into source-of-truth.
