@@ -193,3 +193,48 @@ test("adopting a ChatGPT-created conversation resets stale target recovery state
   assert.equal(status.rollover_failures, 0);
   assert.equal(status.blocked, false);
 });
+
+
+test("stalled reload budget survives hydration/progress-marker changes after reload", () => {
+  let now = 0;
+  const recovery = new SupervisorRecoveryController({
+    stallMs: 1000,
+    reloadCooldownMs: 100,
+    maxStallReloads: 2,
+    now: () => now
+  });
+
+  const running = (count, chars) => ({
+    snapshot: {
+      conversationPath: true,
+      composerReady: false,
+      responseRunning: true,
+      assistantMessageCount: count,
+      lastAssistantCharCount: chars
+    },
+    classification: { observation: "ASSISTANT_RUNNING" }
+  });
+
+  assert.equal(recovery.observeProbe(running(4, 100)), RECOVERY_ACTIONS.NONE);
+
+  now = 1000;
+  assert.equal(recovery.observeProbe(running(4, 100)), RECOVERY_ACTIONS.RELOAD_STALLED);
+  recovery.record(RECOVERY_ACTIONS.RELOAD_STALLED);
+
+  // Reload hydration changes the marker. This must reset the stall clock but
+  // must not erase the already-consumed reload budget.
+  now = 1100;
+  assert.equal(recovery.observeProbe(running(3, 20)), RECOVERY_ACTIONS.NONE);
+  assert.equal(recovery.status().stall_reloads, 1);
+
+  now = 2100;
+  assert.equal(recovery.observeProbe(running(3, 20)), RECOVERY_ACTIONS.RELOAD_STALLED);
+  recovery.record(RECOVERY_ACTIONS.RELOAD_STALLED);
+
+  now = 2200;
+  assert.equal(recovery.observeProbe(running(4, 100)), RECOVERY_ACTIONS.NONE);
+  assert.equal(recovery.status().stall_reloads, 2);
+
+  now = 3200;
+  assert.equal(recovery.observeProbe(running(4, 100)), RECOVERY_ACTIONS.ROLLOVER_STALLED);
+});
