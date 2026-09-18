@@ -1,0 +1,128 @@
+{
+  "schema_version": "night-run.v2",
+  "id": "NIGHT_RUN_2026-09-18",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "approved_by": "OWNER",
+  "start_at": "2026-09-18T23:15:00+07:00",
+  "stop_at": "2026-09-19T09:15:00+07:00",
+  "hard_stop": true,
+  "autonomy": "AUTO_CONTINUE",
+  "allowed_projects": [
+    {
+      "id": "magasin-business-os",
+      "repository": "magasincoffee/magasincoffee.github.io",
+      "state_ref": "01_DOCS/MAGASIN/00_PROJECT_STATE.json",
+      "priority": 1
+    },
+    {
+      "id": "magasin-media-robot",
+      "repository": "magasincoffee/magasin-media-robot",
+      "state_ref": "00_PROJECT/CURRENT_STATUS.md",
+      "next_ref": "00_PROJECT/NEXT_STEP.md",
+      "priority": 2,
+      "live_generation_allowed": false,
+      "live_download_allowed": false
+    }
+  ],
+  "excluded_repositories": [
+    "*"
+  ],
+  "execution": [
+    {
+      "order": 1,
+      "task": "TASK-036",
+      "start_at": "2026-09-18T23:15:00+07:00",
+      "stop_at": "2026-09-18T23:45:00+07:00"
+    },
+    {
+      "order": 2,
+      "task": "TASK-037",
+      "start_at": "2026-09-18T23:45:00+07:00",
+      "stop_at": "2026-09-19T01:00:00+07:00"
+    },
+    {
+      "order": 3,
+      "task": "TASK-038",
+      "start_at": "2026-09-19T01:00:00+07:00",
+      "stop_at": "2026-09-19T01:35:00+07:00"
+    },
+    {
+      "order": 4,
+      "task": "TASK-039",
+      "start_at": "2026-09-19T01:35:00+07:00",
+      "stop_at": "2026-09-19T02:35:00+07:00"
+    },
+    {
+      "order": 5,
+      "task": "TASK-040",
+      "start_at": "2026-09-19T02:35:00+07:00",
+      "stop_at": "2026-09-19T03:30:00+07:00"
+    },
+    {
+      "order": 6,
+      "task": "TASK-041",
+      "start_at": "2026-09-19T03:30:00+07:00",
+      "stop_at": "2026-09-19T04:15:00+07:00"
+    },
+    {
+      "order": 7,
+      "task": "TASK-042",
+      "start_at": "2026-09-19T04:15:00+07:00",
+      "stop_at": "2026-09-19T05:45:00+07:00"
+    },
+    {
+      "order": 8,
+      "task": "TASK-043",
+      "start_at": "2026-09-19T05:45:00+07:00",
+      "stop_at": "2026-09-19T06:35:00+07:00"
+    },
+    {
+      "order": 9,
+      "task": "TASK-044",
+      "start_at": "2026-09-19T06:35:00+07:00",
+      "stop_at": "2026-09-19T07:20:00+07:00"
+    },
+    {
+      "order": 10,
+      "task": "TASK-045",
+      "start_at": "2026-09-19T07:20:00+07:00",
+      "stop_at": "2026-09-19T08:10:00+07:00"
+    },
+    {
+      "order": 11,
+      "task": "TASK-046",
+      "start_at": "2026-09-19T08:10:00+07:00",
+      "stop_at": "2026-09-19T08:45:00+07:00"
+    },
+    {
+      "order": 12,
+      "task": "TASK-047",
+      "start_at": "2026-09-19T08:45:00+07:00",
+      "stop_at": "2026-09-19T09:05:00+07:00"
+    },
+    {
+      "order": 13,
+      "task": "TASK-048",
+      "start_at": "2026-09-19T09:05:00+07:00",
+      "stop_at": "2026-09-19T09:15:00+07:00"
+    }
+  ],
+  "reboot_policy": {
+    "resume_after_unexpected_restart": true,
+    "windows_session_required_for_browser": true,
+    "bypass_windows_login": false,
+    "owner_stop_disables_autostart": true
+  },
+  "forbidden": [
+    "GMAIL_OAUTH_PUBLISH",
+    "GMAIL_WORKER_DEPLOY",
+    "SECRET_EXPOSURE",
+    "MFA_BYPASS",
+    "CAPTCHA_BYPASS",
+    "DESTRUCTIVE_PRODUCTION_DB",
+    "LIVE_SAYDIVOICE_GENERATE",
+    "LIVE_SAYDIVOICE_DOWNLOAD",
+    "THIRD_PROJECT_EXECUTION",
+    "LARGE_ARCHITECTURE_AUTO_MERGE"
+  ]
+}
