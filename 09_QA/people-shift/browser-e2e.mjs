@@ -119,14 +119,23 @@ try {
   });
 
   await check("owner_generate_requires_registered_availability", async () => {
+    await page.locator('[data-week="next"]').click();
+    await page.locator("#owpWeek").filter({ hasText: "21/09/2026" }).waitFor();
     await page.locator("#owpGenerate").click();
     await page.locator("#owpSummary").filter({ hasText: "DRAFT" }).waitFor();
     await page.locator("#owpDraft").filter({ hasText: "Nhân viên QA" }).waitFor();
     const state = await page.evaluate(() => ({
       status: globalThis.__PEOPLE_SHIFT_QA.state.generation?.status,
+      weekStart: globalThis.__PEOPLE_SHIFT_QA.state.generation?.week_start,
+      assignmentDate: globalThis.__PEOPLE_SHIFT_QA.state.assignments[0]?.work_date,
       assignments: globalThis.__PEOPLE_SHIFT_QA.state.assignments.length
     }));
-    if (state.status !== "DRAFT" || state.assignments !== 1) {
+    if (
+      state.status !== "DRAFT" ||
+      state.weekStart !== "2026-09-21" ||
+      state.assignmentDate !== "2026-09-21" ||
+      state.assignments !== 1
+    ) {
       throw new Error(JSON.stringify(state));
     }
     return JSON.stringify(state);
@@ -159,9 +168,8 @@ try {
   });
 
   await check("employee_approved_schedule_visible_after_publish", async () => {
-    await page.evaluate(async () => {
-      await globalThis.MAGASIN_EMPLOYEE.schedule.refresh();
-    });
+    await employee.locator('[data-schedule-week="next"]').click();
+    await employee.locator("#view-schedule .pill").filter({ hasText: "21/09/2026" }).waitFor();
     await employee.locator("#view-schedule .shift").filter({ hasText: "06:00–12:00" }).waitFor();
     const text = await employee.locator("#view-schedule").innerText();
     if (!text.includes("CN-QA")) throw new Error(text);
