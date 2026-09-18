@@ -11,6 +11,12 @@ const CONVERSATION_MISSING_RE =
 const MODEL_SWITCHING_RE =
   /switching.{0,30}model|switched.{0,30}model|using.{0,30}(?:different|another) model|continue.{0,30}another model|đang chuyển.{0,30}mô hình|chuyển sang.{0,30}mô hình|đang dùng.{0,30}mô hình khác/i;
 
+const EXPLICIT_RETRY_CONTROL_RE =
+  /^(?:try again|retry|thử lại)$/i;
+
+const TRANSIENT_ERROR_ALERT_RE =
+  /something went wrong|đã xảy ra lỗi/i;
+
 export function matchesConversationFullText(value) {
   return CONVERSATION_FULL_RE.test(String(value || ""));
 }
@@ -23,13 +29,23 @@ export function matchesModelSwitchingText(value) {
   return MODEL_SWITCHING_RE.test(String(value || ""));
 }
 
+export function matchesExplicitRetryControl(value) {
+  return EXPLICIT_RETRY_CONTROL_RE.test(String(value || "").trim());
+}
+
+export function matchesTransientErrorAlert(value) {
+  return TRANSIENT_ERROR_ALERT_RE.test(String(value || ""));
+}
+
 export async function collectSafeUiSnapshot(page) {
   return page.evaluate(
     ({
       normalizeSource,
       conversationFullPattern,
       conversationMissingPattern,
-      modelSwitchingPattern
+      modelSwitchingPattern,
+      explicitRetryControlPattern,
+      transientErrorAlertPattern
     }) => {
       const normalize = eval(normalizeSource);
       const visible = (el) => {
@@ -125,8 +141,22 @@ export async function collectSafeUiSnapshot(page) {
       const hasNetworkError =
         /network error|lỗi mạng|connection lost|mất kết nối/.test(haystack);
 
+      const explicitRetryRe = new RegExp(explicitRetryControlPattern, "i");
+      const transientAlertRe = new RegExp(transientErrorAlertPattern, "i");
+
+      const hasRetryControl = controls.some((control) => {
+        if (control.tag !== "button" && control.role !== "button") return false;
+        return [control.text, control.ariaLabel]
+          .filter(Boolean)
+          .some((value) => explicitRetryRe.test(String(value).trim()));
+      });
+
       const hasTransientError =
-        /something went wrong|đã xảy ra lỗi|try again|thử lại|retry/.test(haystack);
+        hasRetryControl ||
+        controls.some((control) =>
+          control.role === "alert" &&
+          transientAlertRe.test(`${control.text} ${control.ariaLabel}`)
+        );
 
       const conversationFull =
         new RegExp(conversationFullPattern, "i").test(recoveryHaystack);
@@ -154,8 +184,7 @@ export async function collectSafeUiSnapshot(page) {
         hasTransientError,
         hasContinueControl:
           /continue generating|tiếp tục tạo|continue response/.test(haystack),
-        hasRetryControl:
-          /try again|thử lại|retry/.test(haystack),
+        hasRetryControl,
         conversationFull,
         conversationMissing
       };
@@ -164,7 +193,9 @@ export async function collectSafeUiSnapshot(page) {
       normalizeSource: NORMALIZE,
       conversationFullPattern: CONVERSATION_FULL_RE.source,
       conversationMissingPattern: CONVERSATION_MISSING_RE.source,
-      modelSwitchingPattern: MODEL_SWITCHING_RE.source
+      modelSwitchingPattern: MODEL_SWITCHING_RE.source,
+      explicitRetryControlPattern: EXPLICIT_RETRY_CONTROL_RE.source,
+      transientErrorAlertPattern: TRANSIENT_ERROR_ALERT_RE.source
     }
   );
 }
