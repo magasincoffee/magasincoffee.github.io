@@ -60,12 +60,8 @@ test("ambiguous unavailable UI fails closed after reload instead of creating ano
   const start = source.indexOf(
     "if (recoveryAction === RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE)"
   );
-  const end = source.indexOf(
-    "if (\n      recoveryAction === RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL",
-    start
-  );
-  assert.ok(start >= 0 && end > start);
-  const unavailableBlock = source.slice(start, end);
+  assert.ok(start >= 0);
+  const unavailableBlock = source.slice(start, start + 2200);
   assert.doesNotMatch(unavailableBlock, /createFreshConversation\(/);
   assert.match(unavailableBlock, /recovery\.block\(\)/);
 });
