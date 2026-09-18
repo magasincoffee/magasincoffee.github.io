@@ -169,3 +169,21 @@
 - One unrelated source failure still leaves Workforce usable: PASS.
 - Production writes/migrations: none.
 - Gate: TASK-021 **DONE**; TASK-022 may proceed.
+
+## 2026-09-18 — TASK-021 Control Tower staffing-gap integration
+
+- Branch: `feat/task-021-control-tower-staffing-gap`
+- Workflow: `Owner Control Tower Tests`
+- Implementation regression/browser run: `35318333955`
+- Result: **PASS**
+- Workforce attention reuses the verified TASK-020 staffing-gap reader: PASS.
+- Existing generation rows are passed into the gap reader; no duplicate `list_schedule_generations` call per store: PASS.
+- Staffing gaps aggregate only when every accessible store has verified `ACTUAL` gap data: PASS.
+- Any missing generation/requirements/assignments source redacts the aggregate staffing-gap number instead of fabricating zero: PASS.
+- Pending transfer + DRAFT/REVIEWED unresolved attention remains available as a verified lower bound under partial-source failure: PASS.
+- Deterministic browser fixture renders Workforce `ACTUAL`, staffing gap `1`, unresolved `2`: PASS.
+- Payables-source degradation still leaves Workforce healthy and dashboard usable: PASS.
+- Browser/adapter RPC surface remains read-only; schedule generation/review/publish/transfer-review writes are not invoked.
+- Production writes/migrations: none.
+- Gate: TASK-021 **DONE**; TASK-022 may proceed.
+
