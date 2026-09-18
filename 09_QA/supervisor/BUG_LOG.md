@@ -137,3 +137,19 @@
 - Regression coverage: advisory wording false-positive and explicit retry/error positive cases.
 - Runtime: `2026-09-18.4`.
 - Status: FIXED IN CODE — pending field verification.
+
+
+## BUG-SUP-011 — Real send timeout retry is blocked by the continuation progress latch
+
+- Date: 2026-09-18
+- Component: Supervisor loop controller / bounded Retry action
+- Field symptom: ChatGPT shows an actual send-timeout surface with the safe `Thử lại` button, while Control Panel reports `RETRYING` and repeatedly logs `executed=false | reason=awaiting observable assistant progress`; the browser never clicks Retry.
+- Root cause: after every successful CONTINUE send, the controller disarms until observable assistant progress. The same `armed` gate was also applied to RETRY, so a send that failed before any assistant progress could never execute its recovery action.
+- Fix:
+  1. the progress latch remains mandatory for another CONTINUE;
+  2. an explicit safe RETRY may execute while the controller is disarmed;
+  3. the existing action cooldown still prevents rapid duplicate Retry clicks;
+  4. the existing retry budget still stops after bounded attempts.
+- Regression coverage: CONTINUE -> no assistant progress -> TRANSIENT_ERROR -> safe Retry executes; immediate duplicate is cooldown-blocked; exhausted retry budget fail-closes.
+- Runtime: `2026-09-18.5`.
+- Status: FIXED IN CODE — pending field verification.
