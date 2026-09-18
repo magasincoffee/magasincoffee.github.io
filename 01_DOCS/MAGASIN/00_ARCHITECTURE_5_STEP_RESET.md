@@ -142,8 +142,8 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 
 - **TASK-027 — Control Panel local GitHub Runner lifecycle + reboot recovery:** integrate the local runner into the unified control surface. DONE.
 - **TASK-028 — Five-Step architecture reset + delete/defer map:** this document plus source-of-truth reprioritization. DONE.
-- **TASK-029 — Schedule-first canonical flow contract:** map availability → review/allocation → robot proposal → publish, identify canonical modules/data/RPC boundaries, delete duplicates from the active architecture. READY.
-- **TASK-030 — Employee weekly availability canonical slice:** preserve the current registration behavior while removing duplicate/compat ownership. QUEUED.
+- **TASK-029 — Schedule-first canonical flow contract:** canonical tables/RPC boundaries and role ownership locked; duplicate ownership classified transitional. DONE.
+- **TASK-030 — Employee weekly availability canonical slice:** preserve current registration behavior while removing duplicate/compat ownership. READY.
 - **TASK-031 — Manager allocation + robot proposal + publish slice:** manager is the operating owner; robot proposes, manager adjusts/publishes. QUEUED.
 - **TASK-032 — Published schedule → attendance/swap/notification integration gate:** close the employee feedback loop. QUEUED.
 
