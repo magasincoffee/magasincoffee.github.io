@@ -3,6 +3,7 @@ import {
   formatMoney,
   normalizeControlTowerSnapshot
 } from "./snapshot-v1.mjs";
+import { requireOwnerAccess } from "./access-v1.mjs";
 
 const state = normalizeControlTowerSnapshot({});
 
@@ -82,4 +83,26 @@ function render(snapshot) {
   }
 }
 
-render(state);
+async function boot() {
+  const loading = document.getElementById("loading");
+  const denied = document.getElementById("denied");
+  const app = document.getElementById("app");
+  const deniedText = document.getElementById("deniedText");
+
+  try {
+    const profile = await requireOwnerAccess(globalThis.MAGASIN_CORE);
+    setText("ownerIdentity", `${profile.full_name || profile.username || "Owner"} · OWNER`);
+    render(state);
+    loading.classList.add("hidden");
+    denied.classList.add("hidden");
+    app.classList.remove("hidden");
+  } catch (error) {
+    console.error("[CONTROL_TOWER_AUTH]", error);
+    loading.classList.add("hidden");
+    app.classList.add("hidden");
+    denied.classList.remove("hidden");
+    deniedText.textContent = error?.message || "Không thể xác thực quyền Owner.";
+  }
+}
+
+boot();
