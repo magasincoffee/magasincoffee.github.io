@@ -77,6 +77,12 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/manager-registration-review-browser.mjs
 
+      - name: Run Manager robot draft browser regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/manager-schedule-draft-browser.mjs
+
       - name: Run People Shift Day-10 browser E2E
         env:
           QA_BASE_URL: http://127.0.0.1:8767
