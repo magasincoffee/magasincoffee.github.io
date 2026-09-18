@@ -79,10 +79,11 @@ Runtime:
 └── runtime\
 ```
 
-Desktop controls:
+Normal Owner control is the single desktop entry point:
 
-- `START_MAGASIN_SUPERVISOR.cmd`
-- `STOP_MAGASIN_SUPERVISOR.cmd`
+- `MAGASIN BUSINESS OS CONTROL.lnk`
+
+The control panel exposes START ROBOT / STOP and displays project state, current task, next task, runtime action, UI observation, heartbeat/update time, errors requiring Owner intervention, and privacy-safe local logs. START runs the dedicated Supervisor in background mode; a separate PowerShell window is no longer part of the normal operator workflow.
 
 The Supervisor uses the installed real Chrome and attaches locally through CDP. It does not ask for or export login secrets.
 
@@ -103,6 +104,6 @@ A recognized transient `Try again / Thử lại` control may be retried within t
 
 ### Kill switch
 
-`STOP_MAGASIN_SUPERVISOR.cmd` first requests cooperative stop. If the dedicated Supervisor process does not exit within the bounded grace period, only that Supervisor process tree is force-stopped.
+The `STOP` button in `MAGASIN BUSINESS OS CONTROL` calls the dedicated Supervisor stop contract: cooperative STOP sentinel first, then a bounded forced process-tree stop only if needed.
 
 The GitHub runner is a separate process and is not stopped by the Supervisor kill switch.
