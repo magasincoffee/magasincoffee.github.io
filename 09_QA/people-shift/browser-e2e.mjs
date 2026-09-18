@@ -388,7 +388,15 @@ async function newQaContext(browser) {
     await route.fulfill({
       status: 200,
       contentType: "application/javascript",
-      body: "globalThis.supabase = globalThis.supabase || {};"
+      body: "globalThis.supabase = { createClient(){ return { auth:{ async getSession(){ return { data:{ session:null }, error:null }; }, async signOut(){ return { error:null }; }, onAuthStateChange(){ return { data:{ subscription:{ unsubscribe(){} } } }; } } }; } };"
+    });
+  });
+
+  await context.route("**/02_CORE/security/security-runtime.js*", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: "globalThis.MAGASIN_SECURITY = globalThis.MAGASIN_SECURITY || {};"
     });
   });
 
@@ -451,8 +459,7 @@ try {
     await employeeApp.locator("#quickRegStore").selectOption("CN1");
 
     await employeeApp
-      .locator("#weeklyRegistrationPanel button")
-      .filter({ hasText: "Đăng ký" })
+      .getByRole("button", { name: "Đăng ký", exact: true })
       .click();
 
     await employeeApp.locator("#quickRegMsg").filter({
@@ -487,7 +494,7 @@ try {
     .frameLocator("#app");
 
   await check("owner_workforce_publish_surface", async () => {
-    const workforceNav = ownerShell.locator('button[data-view="workforce"]');
+    const workforceNav = ownerShell.locator('button[data-view="workforce"]').last();
     await workforceNav.waitFor({ state: "visible", timeout: 15000 });
     await workforceNav.click();
 
@@ -558,6 +565,7 @@ try {
   await check("employee_sees_approved_schedule", async () => {
     const scheduleLink = publishedEmployeeApp.locator('a[data-view="schedule"]');
     await scheduleLink.waitFor({ state: "visible", timeout: 15000 });
+    await publishedEmployeeApp.locator(".header-menu").click();
     await scheduleLink.click();
 
     const scheduleView = publishedEmployeeApp.locator("#view-schedule");
