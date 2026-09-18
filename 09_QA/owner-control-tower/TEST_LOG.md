@@ -112,3 +112,26 @@
 - BUG-CT-005: VERIFIED.
 - Production writes: none.
 - Gate: TASK-017 **DONE**; TASK-018 may proceed.
+
+
+## 2026-09-18 — TASK-018 Control Tower browser E2E + Day-7 usability gate
+
+- Branch: `test/control-tower-browser-e2e`
+- Workflow: `Owner Control Tower Tests`
+- Initial browser run: `35316203307` — **FAIL** only because the harness counted the expected non-Owner denial diagnostic as an unexpected console error.
+- Fixed regression/browser run: `35316292673` — **PASS**.
+- Owner Home → Control Tower browser navigation: PASS.
+- Active Owner identity + reporting context: PASS.
+- Revenue without a verified reader remains `NOT CONNECTED` and numeric value stays hidden: PASS.
+- Payables trusted read fixture renders `ACTUAL`: PASS.
+- Workforce trusted read fixture renders `ACTUAL`; staffing-gap remains `—` because no verified shortage read model exists: PASS.
+- Inventory and Task/SOP not-yet-connected states remain explicit: PASS.
+- Non-Owner is denied before any data-source read: PASS.
+- One Payables source failure leaves Workforce healthy and keeps the dashboard visible: PASS.
+- Drill-down links target existing Mua hàng and Workforce modules: PASS.
+- Browser path exercised only read models/read RPCs: PASS; production writes: none.
+- Mobile 390px viewport: PASS; no horizontal overflow.
+- Unexpected console errors: 0; page errors: 0; request failures: 0; HTTP 5xx: 0.
+- BUG-CT-006 harness false positive: VERIFIED.
+- Day-7 Owner Control Tower usability gate: **PASS** for the current explicitly partial/read-only V1 slice.
+- Gate: TASK-018 **DONE**; Day 8–10 People/Shift review may proceed.
