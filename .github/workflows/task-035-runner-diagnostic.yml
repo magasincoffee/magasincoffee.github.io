@@ -154,7 +154,7 @@ jobs:
         shell: powershell
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
-          npm ci --ignore-scripts
+          npm install --ignore-scripts --no-audit --no-fund
 
       - name: Probe Google Cloud and Supabase web auth surfaces
         shell: powershell
