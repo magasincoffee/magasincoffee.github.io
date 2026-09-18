@@ -3,6 +3,7 @@ import path from "node:path";
 import process from "node:process";
 
 import { ACTIONS, decideContinuation } from "../decision.mjs";
+import { inspectActionSurface } from "../ui/actions.mjs";
 import { readProjectState } from "../state.mjs";
 import { executeDecision } from "../ui/actions.mjs";
 import { SupervisorSession } from "./session.mjs";
@@ -56,10 +57,28 @@ try {
     await page.waitForTimeout(1500);
   }
 
-  const probe = await session.probe();
+  let probe = null;
+  let surface = null;
+
+  for (let i = 0; i < 8; i += 1) {
+    probe = await session.probe();
+    surface = await inspectActionSurface(page);
+    if (
+      probe.classification.observation !== "UNKNOWN" ||
+      surface.retryControl
+    ) {
+      break;
+    }
+    await page.waitForTimeout(1000);
+  }
+
+  const observation = surface?.retryControl
+    ? "TRANSIENT_ERROR"
+    : probe.classification.observation;
+
   const decision = decideContinuation({
     projectState,
-    observation: probe.classification.observation,
+    observation,
     retryCount: 0,
     maxRetries: 1
   });
@@ -74,7 +93,9 @@ try {
     output = {
       status: execution.executed ? "PASS" : "NO_SAFE_RETRY_CONTROL",
       uiState: probe.classification.uiState,
-      observation: probe.classification.observation,
+      observation,
+      safeRetryPresent: Boolean(surface?.retryControl),
+      composerReady: Boolean(surface?.composerReady),
       action: decision.action,
       executed: execution.executed,
       target: execution.target || null
@@ -85,7 +106,9 @@ try {
     output = {
       status: "NO_RETRY_NEEDED",
       uiState: probe.classification.uiState,
-      observation: probe.classification.observation,
+      observation,
+      safeRetryPresent: Boolean(surface?.retryControl),
+      composerReady: Boolean(surface?.composerReady),
       action: decision.action,
       executed: false
     };
