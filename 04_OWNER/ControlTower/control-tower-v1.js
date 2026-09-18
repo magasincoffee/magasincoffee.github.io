@@ -4,9 +4,7 @@ import {
   normalizeControlTowerSnapshot
 } from "./snapshot-v1.mjs";
 import { requireOwnerAccess } from "./access-v1.mjs";
-import { loadProcurementPayables } from "./payables-adapter-v1.mjs";
-import { loadWorkforceAttention } from "./workforce-adapter-v1.mjs";
-import { loadReconciledRevenue } from "./revenue-adapter-v1.mjs";
+import { loadControlTowerSources } from "./source-integration-v1.mjs";
 
 const rawState = {
   context: {
@@ -93,48 +91,58 @@ function render(snapshot) {
   }
 }
 
-async function boot() {
-  const loading = document.getElementById("loading");
-  const denied = document.getElementById("denied");
-  const app = document.getElementById("app");
-  const deniedText = document.getElementById("deniedText");
-
+async function requireOwnerSession(core, { loading, denied, app, deniedText }) {
   try {
-    const core = globalThis.MAGASIN_CORE;
     const profile = await requireOwnerAccess(core);
-    setText("ownerIdentity", `${profile.full_name || profile.username || "Owner"} · OWNER`);
-
-    rawState.context.reportingDate = core.date?.dateKey?.() || null;
-    render(normalizeControlTowerSnapshot(rawState));
     loading.classList.add("hidden");
     denied.classList.add("hidden");
     app.classList.remove("hidden");
-
-    const revenue = await loadReconciledRevenue({
-      reportingDate: rawState.context.reportingDate
-    });
-    rawState.revenue = revenue;
-    rawState.context.refreshedAt = revenue.asOf || new Date().toISOString();
-    render(normalizeControlTowerSnapshot(rawState));
-
-    const payables = await loadProcurementPayables(core.supabase.get());
-    rawState.payables = payables;
-    rawState.context.refreshedAt =
-      payables.asOf || rawState.context.refreshedAt || new Date().toISOString();
-    render(normalizeControlTowerSnapshot(rawState));
-
-    const workforce = await loadWorkforceAttention(core);
-    rawState.workforce = workforce;
-    rawState.context.refreshedAt =
-      workforce.asOf || rawState.context.refreshedAt || new Date().toISOString();
-    render(normalizeControlTowerSnapshot(rawState));
+    return profile;
   } catch (error) {
     console.error("[CONTROL_TOWER_AUTH]", error);
     loading.classList.add("hidden");
     app.classList.add("hidden");
     denied.classList.remove("hidden");
     deniedText.textContent = error?.message || "Không thể xác thực quyền Owner.";
+    return null;
   }
+}
+
+async function boot() {
+  const loading = document.getElementById("loading");
+  const denied = document.getElementById("denied");
+  const app = document.getElementById("app");
+  const deniedText = document.getElementById("deniedText");
+  const core = globalThis.MAGASIN_CORE;
+
+  const profile = await requireOwnerSession(core, {
+    loading,
+    denied,
+    app,
+    deniedText
+  });
+  if (!profile) return;
+
+  setText("ownerIdentity", `${profile.full_name || profile.username || "Owner"} · OWNER`);
+
+  rawState.context.reportingDate = core.date?.dateKey?.() || null;
+  render(normalizeControlTowerSnapshot(rawState));
+
+  const sections = await loadControlTowerSources({
+    reportingDate: rawState.context.reportingDate,
+    core
+  });
+
+  rawState.revenue = sections.revenue;
+  rawState.payables = sections.payables;
+  rawState.workforce = sections.workforce;
+  rawState.context.refreshedAt =
+    sections.workforce?.asOf ||
+    sections.payables?.asOf ||
+    sections.revenue?.asOf ||
+    new Date().toISOString();
+
+  render(normalizeControlTowerSnapshot(rawState));
 }
 
 boot();
