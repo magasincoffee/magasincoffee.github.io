@@ -1,0 +1,71 @@
+name: Supervisor UI Read-Only Smoke
+
+on:
+  push:
+    branches:
+      - feat/supervisor-ui-adapter
+    paths:
+      - '.github/workflows/supervisor-ui-readonly-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supervisor-ui-readonly-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  read-only-ui-probe:
+    if: github.actor == 'magasincoffee'
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: 08_INTEGRATIONS/supervisor
+        shell: powershell
+
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pinned UI dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Resolve installed Chrome
+        run: |
+          $candidates = @(
+            "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+            "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+            "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
+          )
+          $chrome = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+          if (-not $chrome) { throw "Installed Google Chrome not found." }
+          "MAGASIN_SUPERVISOR_CHROME=$chrome" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Run privacy-safe read-only ChatGPT UI probe
+        run: |
+          node src/ui/probe-cli.mjs | Tee-Object -FilePath supervisor-ui-probe.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $r = Get-Content supervisor-ui-probe.json -Raw | ConvertFrom-Json
+          if ($r.sideEffects.messageSent -or $r.sideEffects.controlClicked -or $r.sideEffects.credentialsRead -or $r.sideEffects.messageTextCaptured) {
+            throw "Read-only boundary violated."
+          }
+
+          Write-Host "UI_STATE=$($r.classification.uiState)"
+          Write-Host "OBSERVATION=$($r.classification.observation)"
+          Write-Host "COMPOSER_READY=$($r.snapshot.composerReady)"
+          Write-Host "CONVERSATION_EVIDENCE=$($r.snapshot.conversationPath)"
+          Write-Host "PASS: no message text captured, no message sent, no controls clicked, no credentials read."
+
+      - name: Remove local probe output
+        if: always()
+        run: Remove-Item supervisor-ui-probe.json -Force -ErrorAction SilentlyContinue
