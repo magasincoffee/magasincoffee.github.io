@@ -62,6 +62,8 @@ async function safeAppendLog(logPath, event) {
     type: String(event.type || "EVENT"),
     action: event.action || undefined,
     target: event.target || undefined,
+    executed: typeof event.executed === "boolean" ? event.executed : undefined,
+    reason: event.reason || undefined,
     errorName: event.errorName || undefined
   };
   await fs.mkdir(path.dirname(logPath), { recursive: true });
@@ -205,7 +207,9 @@ while (true) {
     await safeAppendLog(logPath, {
       type: "STEP",
       action: result.decision.action,
-      target: result.execution.target || undefined
+      target: result.execution.target || undefined,
+      executed: Boolean(result.execution.executed),
+      reason: result.execution.reason || undefined
     });
 
     await writeRuntimeStatus(
