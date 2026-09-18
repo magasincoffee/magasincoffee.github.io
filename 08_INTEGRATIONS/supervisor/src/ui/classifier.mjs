@@ -2,6 +2,7 @@ import { OBSERVATIONS } from "../decision.mjs";
 
 export const UI_STATES = Object.freeze({
   READY_IDLE: "READY_IDLE",
+  USER_PENDING: "USER_PENDING",
   RUNNING: "RUNNING",
   LOGIN_REQUIRED: "LOGIN_REQUIRED",
   CAPTCHA: "CAPTCHA",
@@ -44,6 +45,13 @@ export function classifyUiSnapshot(snapshot) {
     return {
       uiState: UI_STATES.RUNNING,
       observation: OBSERVATIONS.ASSISTANT_RUNNING
+    };
+  }
+
+  if (snapshot.lastMessageRole === "user") {
+    return {
+      uiState: UI_STATES.USER_PENDING,
+      observation: OBSERVATIONS.USER_PENDING
     };
   }
 
