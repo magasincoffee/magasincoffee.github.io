@@ -32,3 +32,20 @@
 - Missing source quality defaults to `NOT_CONNECTED`: PASS.
 - Production writes: none.
 - Gate: TASK-013 **DONE**; TASK-014 may proceed.
+
+## 2026-09-18 — TASK-014 Procurement/payables read adapter
+
+- Branch: `feat/control-tower-payables`
+- Workflow: `Owner Control Tower Tests`
+- Adapter/regression run: `35310936375`
+- Result: **PASS**
+- Trusted read models: `v_procurement_supplier_payables` + `v_procurement_order_summary`.
+- Total payable / overdue payable aggregation: PASS.
+- Open / overdue purchase-order counts: PASS.
+- Cancelled orders excluded from attention counts: PASS.
+- Empty trusted source returns ACTUAL zeroes: PASS.
+- Source failure returns section-local GAP and no numeric metrics: PASS.
+- UI integration after Owner auth: PASS.
+- Production writes: none.
+- BUG-CT-002 stale test contract: VERIFIED.
+- Gate: TASK-014 **DONE**; TASK-015 may proceed.

@@ -69,8 +69,10 @@ test("Control Tower app authorizes before rendering dashboard state", async () =
     new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
     "utf8"
   );
-  const authAt = source.indexOf("await requireOwnerAccess");
-  const renderAt = source.indexOf("render(state)");
-  assert.ok(authAt >= 0);
+  const bootAt = source.indexOf("async function boot()");
+  const authAt = source.indexOf("await requireOwnerAccess", bootAt);
+  const renderAt = source.indexOf("render(", authAt);
+  assert.ok(bootAt >= 0);
+  assert.ok(authAt > bootAt);
   assert.ok(renderAt > authAt);
 });

@@ -4,8 +4,15 @@ import {
   normalizeControlTowerSnapshot
 } from "./snapshot-v1.mjs";
 import { requireOwnerAccess } from "./access-v1.mjs";
+import { loadProcurementPayables } from "./payables-adapter-v1.mjs";
 
-const state = normalizeControlTowerSnapshot({});
+const rawState = {
+  context: {
+    reportingDate: null,
+    branchScope: "ALL",
+    refreshedAt: null
+  }
+};
 
 function qualityLabel(value) {
   return {
@@ -48,6 +55,7 @@ function render(snapshot) {
   setText("payableValue", formatMoney(snapshot.payables.totalDue));
   setText("payableOverdue", formatMoney(snapshot.payables.overdueAmount));
   setText("payableOpenOrders", formatCount(snapshot.payables.openOrders));
+  setText("payableOverdueOrders", formatCount(snapshot.payables.overdueOrders));
   setText("payableMeta", sourceLine(snapshot.payables));
   paintQuality("payableQuality", snapshot.payables.quality);
 
@@ -90,12 +98,20 @@ async function boot() {
   const deniedText = document.getElementById("deniedText");
 
   try {
-    const profile = await requireOwnerAccess(globalThis.MAGASIN_CORE);
+    const core = globalThis.MAGASIN_CORE;
+    const profile = await requireOwnerAccess(core);
     setText("ownerIdentity", `${profile.full_name || profile.username || "Owner"} · OWNER`);
-    render(state);
+
+    rawState.context.reportingDate = core.date?.dateKey?.() || null;
+    render(normalizeControlTowerSnapshot(rawState));
     loading.classList.add("hidden");
     denied.classList.add("hidden");
     app.classList.remove("hidden");
+
+    const payables = await loadProcurementPayables(core.supabase.get());
+    rawState.payables = payables;
+    rawState.context.refreshedAt = payables.asOf || new Date().toISOString();
+    render(normalizeControlTowerSnapshot(rawState));
   } catch (error) {
     console.error("[CONTROL_TOWER_AUTH]", error);
     loading.classList.add("hidden");
