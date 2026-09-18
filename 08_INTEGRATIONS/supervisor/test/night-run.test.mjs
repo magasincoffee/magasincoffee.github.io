@@ -165,3 +165,18 @@ test("unregistered projects and missing safety rules are rejected", async () => 
     NightRunContractError
   );
 });
+
+
+test("hard-stop workflow is GitHub-hosted and independent of the PC", async () => {
+  const workflow = await fs.readFile(
+    new URL(".github/workflows/night-run-hard-stop.yml", repoRoot),
+    "utf8"
+  );
+
+  assert.match(workflow, /cron:\s*"15 2 19 9 \*"/);
+  assert.match(workflow, /runs-on:\s*ubuntu-latest/);
+  assert.match(workflow, /NIGHT_WINDOW_COMPLETE/);
+  assert.match(workflow, /state\["status"\]\s*=\s*"WAIT_USER"/);
+  assert.match(workflow, /state\["autonomy"\]\s*=\s*"MANUAL"/);
+  assert.doesNotMatch(workflow, /runs-on:\s*self-hosted/);
+});
