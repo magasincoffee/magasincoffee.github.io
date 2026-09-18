@@ -1,5 +1,7 @@
+import { loadStoreStaffingGap } from "./staffing-gap-adapter-v1.mjs";
+
 const SOURCE_LABEL =
-  "get_manager_transfer_requests + list_schedule_generations";
+  "get_manager_transfer_requests + list_schedule_generations + get_workforce_staffing_requirements + get_schedule_generation_assignments";
 
 const UNPUBLISHED_GENERATION_STATUSES = new Set(["DRAFT", "REVIEWED"]);
 
@@ -15,7 +17,8 @@ function isUnpublishedGeneration(row) {
 
 export function summarizeWorkforceAttention({
   transferRows = [],
-  generationsByStore = []
+  generationsByStore = [],
+  staffingGapByStore = []
 } = {}) {
   const pendingTransfers = transferRows.filter(isPendingTransfer).length;
   const unpublishedGenerations = generationsByStore.reduce(
@@ -27,8 +30,31 @@ export function summarizeWorkforceAttention({
     0
   );
 
+  const scopedStoreCount = Array.isArray(generationsByStore)
+    ? generationsByStore.length
+    : 0;
+  const gapRows = Array.isArray(staffingGapByStore)
+    ? staffingGapByStore
+    : [];
+  const staffingGapComplete =
+    scopedStoreCount === 0 ||
+    (gapRows.length === scopedStoreCount &&
+      gapRows.every(
+        (row) =>
+          row?.quality === "ACTUAL" &&
+          Number.isFinite(row?.staffingGapCount)
+      ));
+
+  const staffingGapCount =
+    scopedStoreCount === 0
+      ? null
+      : staffingGapComplete
+        ? gapRows.reduce((sum, row) => sum + row.staffingGapCount, 0)
+        : null;
+
   return {
-    staffingGapCount: null,
+    staffingGapCount,
+    staffingGapComplete,
     unresolvedCount: pendingTransfers + unpublishedGenerations,
     pendingTransfers,
     unpublishedGenerations
@@ -38,7 +64,10 @@ export function summarizeWorkforceAttention({
 async function readRpc(core, name, args) {
   const result = await core.supabase.rpc(name, args);
   if (result?.error) throw result.error;
-  return Array.isArray(result?.data) ? result.data : [];
+  if (!Array.isArray(result?.data)) {
+    throw new Error(`MALFORMED_RPC_RESULT:${name}`);
+  }
+  return result.data;
 }
 
 export async function loadWorkforceAttention(
@@ -48,7 +77,8 @@ export async function loadWorkforceAttention(
     now = () => new Date()
   } = {}
 ) {
-  const asOf = now().toISOString();
+  const nowValue = now();
+  const asOf = nowValue.toISOString();
 
   if (
     !core?.supabase?.rpc ||
@@ -87,23 +117,33 @@ export async function loadWorkforceAttention(
   } catch {}
 
   const generationsByStore = [];
+  const staffingGapByStore = [];
   let generationSuccesses = 0;
 
   for (const store of Array.isArray(stores) ? stores : []) {
     try {
-      generationsByStore.push(
-        await readRpc(
-          core,
-          "list_schedule_generations",
-          {
-            p_store_id: store.id,
-            p_week_start: weekStart
-          }
-        )
+      const generationRows = await readRpc(
+        core,
+        "list_schedule_generations",
+        {
+          p_store_id: store.id,
+          p_week_start: weekStart
+        }
       );
+      generationsByStore.push(generationRows);
       generationSuccesses += 1;
+
+      staffingGapByStore.push(
+        await loadStoreStaffingGap(core, {
+          storeId: store.id,
+          weekStart,
+          generationRows,
+          now: () => nowValue
+        })
+      );
     } catch {
       generationsByStore.push(null);
+      staffingGapByStore.push(null);
     }
   }
 
@@ -123,18 +163,23 @@ export async function loadWorkforceAttention(
 
   const summary = summarizeWorkforceAttention({
     transferRows: transferOk ? transferRows : [],
-    generationsByStore
+    generationsByStore,
+    staffingGapByStore
   });
 
-  const complete = transferOk && generationsComplete;
+  const complete =
+    transferOk &&
+    generationsComplete &&
+    summary.staffingGapComplete;
+
   return {
     quality: complete ? "ACTUAL" : "ESTIMATE",
     source: SOURCE_LABEL,
     asOf,
-    staffingGapCount: null,
+    staffingGapCount: summary.staffingGapCount,
     unresolvedCount: summary.unresolvedCount,
     message: complete
-      ? "Staffing gap chưa có read model kiểm chứng; chưa hiển thị số. Chưa xử lý = yêu cầu chuyển PENDING + lịch DRAFT/REVIEWED."
-      : "Một phần nguồn Workforce chưa khả dụng; số chưa xử lý là tối thiểu từ các nguồn đọc được. Staffing gap chưa có read model kiểm chứng."
+      ? "Staffing gap = số nhu cầu ACTIVE có phân công thấp hơn minimum_headcount. Chưa xử lý = yêu cầu chuyển PENDING + lịch DRAFT/REVIEWED."
+      : "Một phần nguồn Workforce chưa khả dụng; số chưa xử lý là tối thiểu từ các nguồn đọc được. Staffing gap chỉ hiển thị khi đủ read model cho toàn bộ cửa hàng."
   };
 }
