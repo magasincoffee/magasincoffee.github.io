@@ -183,9 +183,14 @@ try {
         $projectState -and
         [string]$projectState.autonomy -eq 'PAUSED'
     )
+    $brainWorkerMode = [bool](
+        $projectState -and
+        $projectState.supervisor_orchestration -and
+        [string]$projectState.supervisor_orchestration.mode -eq 'BRAIN_WORKER_V1'
+    )
 
-    if (-not $pausedInstallOnly -and -not (Test-Path $target)) {
-        throw "ChatGPT target is missing: $target. Installation succeeded, but one-time target setup is required before START."
+    if (-not $pausedInstallOnly -and -not $brainWorkerMode -and -not (Test-Path $target)) {
+        throw "Legacy ChatGPT target is missing: $target. Installation succeeded, but one-time target setup is required before legacy START."
     }
 
     if ($pausedInstallOnly) {
