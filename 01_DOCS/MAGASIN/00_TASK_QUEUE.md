@@ -31,9 +31,12 @@
 | TASK-021 | Control Tower staffing-gap integration | 20m | adapter/integration + browser regression | DONE |
 | TASK-022 | People/Shift browser E2E + Day-10 usability gate | 20m | browser E2E | DONE |
 
-| TASK-023 | SOP/Task current-system gap review + acceptance contract | 20m | discovery/contract | READY |
+| TASK-023 | SOP/Task current-system gap review + acceptance contract | 20m | discovery/contract | DONE |
+| TASK-024 | Manager Task route canonicalization + smoke regression | 15m | route/static + browser smoke | READY |
+| TASK-025 | SOP/Task fail-closed UI integrity gate | 20m | static/unit + browser regression | QUEUED |
+| TASK-026 | SOP/Task rule decision pack + data/migration plan | 20m | traceability/contract + Owner boundary | QUEUED |
 
-Queue Day 8–10 được mở từ evidence của TASK-019 và đã hoàn tất. TASK-022 browser gate tái hiện `BUG-PS-001` (Employee không thể điều hướng sang tuần lịch đã publish kế tiếp), đã sửa ngay trong TASK-022 và regression same-week PASS. `TASK-023` được mở từ Blueprint canonical đã APPROVED cho Day 11–13 (`SOP templates → checklist → corrective task → overdue/exception`). Chỉ mở implementation micro-task sau khi TASK-023 xác định được verified gaps.
+Queue Day 8–10 đã hoàn tất. TASK-023 xác nhận Day 11–13 hiện có SOP registry skeleton, Manager/Employee Task placeholders, Control Tower Task/SOP chưa có verified source, không có verified persistence/API contract, và exception/corrective/overdue/verify-close rules chưa được chốt. Live schema check chỉ đọc structural metadata và không tìm thấy public object name khớp Task/SOP/Checklist/Exception/Corrective. TASK-024–025 chỉ sửa route/UI fail-closed; TASK-026 là Owner/business-rule boundary trước mọi write-capable SOP/Task workflow.
 
 ## Execution rule
 
