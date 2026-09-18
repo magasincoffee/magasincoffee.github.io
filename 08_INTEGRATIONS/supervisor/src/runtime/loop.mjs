@@ -47,25 +47,22 @@ export class SupervisorLoopController {
 
   safeActivitySignature(snapshot = {}) {
     return [
-      Number(snapshot.userMessageCount || 0),
-      Number(snapshot.assistantMessageCount || 0),
+      Number(snapshot.maxConversationTurnOrdinal || 0),
       String(snapshot.lastMessageRole || ""),
       Number(snapshot.lastMessageCharCount || 0),
-      Number(snapshot.lastAssistantCharCount || 0),
-      Number(snapshot.mainTextCharCount || 0),
-      Number(snapshot.mainElementCount || 0)
+      Number(snapshot.assistantMessageCount || 0)
     ].join("|");
   }
 
-  resolveWorkUiObservation(probe, { handoff = false } = {}) {
+  resolveWorkUiObservation(
+    probe,
+    { handoff = false, ownerReconcile = false } = {}
+  ) {
     const snapshot = probe?.snapshot || {};
     const original = probe?.classification?.observation;
     const signature = this.safeActivitySignature(snapshot);
 
-    if (
-      original === OBSERVATIONS.ASSISTANT_RUNNING &&
-      snapshot.lastMessageRole === "user"
-    ) {
+    if (original === OBSERVATIONS.ASSISTANT_RUNNING) {
       this.userPendingSignature = signature;
       this.userPendingSince = this.now();
       this.userPendingSawProgress = true;
@@ -112,20 +109,28 @@ export class SupervisorLoopController {
       };
     }
 
-    const confirmMs = handoff
+    const idleFallback = handoff || ownerReconcile;
+    const confirmMs = idleFallback
       ? this.handoffIdleConfirmMs
       : this.workIdleConfirmMs;
     const stableLongEnough =
       this.userPendingSince > 0 &&
       this.now() - this.userPendingSince >= confirmMs;
-    const maySettle = handoff || this.userPendingSawProgress;
+    const maySettle = idleFallback || this.userPendingSawProgress;
 
     if (stableLongEnough && maySettle) {
+      const eventType = ownerReconcile
+        ? "OWNER_RECONCILE_IDLE_CONFIRMED"
+        : handoff
+          ? "HANDOFF_IDLE_CONFIRMED"
+          : "WORK_UI_IDLE_CONFIRMED";
       this.onEvent({
-        type: handoff ? "HANDOFF_IDLE_CONFIRMED" : "WORK_UI_IDLE_CONFIRMED",
-        reason: handoff
-          ? "Owner-pending role stayed structurally idle; reconcile the visible conversation instead of waiting forever."
-          : "Observed Work UI progress followed by a stable idle window; treat the response as complete."
+        type: eventType,
+        reason: ownerReconcile
+          ? "WAIT_USER chat is idle; reconcile only an explicit Owner decision into repository state."
+          : handoff
+            ? "Owner-pending role stayed structurally idle; reconcile the visible conversation instead of waiting forever."
+            : "Observed Work UI progress followed by a stable idle window; treat the response as complete."
       });
       return {
         observation: OBSERVATIONS.RESPONSE_COMPLETE,
@@ -177,10 +182,14 @@ export class SupervisorLoopController {
     probe,
     retryCount = 0,
     maxRetries = 2,
-    handoff = false
+    handoff = false,
+    ownerReconcile = false
   }) {
     const state = validateProjectState(projectState);
-    const resolved = this.resolveWorkUiObservation(probe, { handoff });
+    const resolved = this.resolveWorkUiObservation(probe, {
+      handoff,
+      ownerReconcile
+    });
     const observation = resolved.observation;
     const effectiveProbe = {
       ...probe,
@@ -201,7 +210,8 @@ export class SupervisorLoopController {
       observation,
       retryCount,
       maxRetries,
-      handoff
+      handoff,
+      ownerReconcile
     });
 
     if (decision.action === ACTIONS.CONTINUE) {
