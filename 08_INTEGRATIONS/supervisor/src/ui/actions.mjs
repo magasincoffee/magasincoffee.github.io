@@ -38,7 +38,7 @@ function findSafeControl(controls, pattern, allowedTestIds = []) {
 export async function inspectActionSurface(page) {
   if (!page) throw new TypeError("page is required");
 
-  const composer = page.locator("#prompt-textarea, textarea, [contenteditable='true']").first();
+  const composer = page.locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible").first();
   const composerReady = await composer.isVisible().catch(() => false);
   const controls = await visibleControlSnapshot(page);
 
@@ -144,7 +144,7 @@ export async function executeDecision({
       };
     }
 
-    const composer = page.locator("#prompt-textarea, textarea, [contenteditable='true']").first();
+    const composer = page.locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible").first();
     await composer.fill(decision.instruction);
 
     const afterFill = await inspectActionSurface(page);
