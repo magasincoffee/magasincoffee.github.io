@@ -25,14 +25,14 @@
     {
       "id": "SFB-001",
       "topic": "GIVE_LIFECYCLE",
-      "status": "OWNER_INPUT_REQUIRED",
+      "status": "APPROVED",
       "options": [
         "RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES",
         "MANAGER_APPROVES_DIRECTLY",
         "RECIPIENT_ACCEPTS_AUTO_TRANSFER",
         "OTHER"
       ],
-      "selected_option": null
+      "selected_option": "RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES"
     },
     {
       "id": "SFB-002",
