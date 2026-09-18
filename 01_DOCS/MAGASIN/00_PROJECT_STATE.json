@@ -17,5 +17,14 @@
     "production_private_data_in_git": false,
     "red_actions_require_owner": true
   },
-  "last_updated": "2026-09-18"
+  "last_updated": "2026-09-18",
+  "owner_boundary": {
+    "task": "TASK-035",
+    "resolved": [
+      "EXACT_MAGASIN_SENDER_EMAIL"
+    ],
+    "pending": [
+      "CONCRETE_EMAIL_PROVIDER"
+    ]
+  }
 }

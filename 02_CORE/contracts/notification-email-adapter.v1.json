@@ -11,7 +11,8 @@
   "owner_approved": {
     "email_source": "MAGASIN_EMAIL",
     "external_calendar": false,
-    "secret_store_credentials": true
+    "secret_store_credentials": true,
+    "sender_email": "bachvanti1994@gmail.com"
   },
   "provider_independent": {
     "outbox_rpc": "claim_notification_email_batch_v1",
@@ -36,13 +37,15 @@
   },
   "activation_boundary": {
     "required_owner_inputs": [
-      "CONCRETE_EMAIL_PROVIDER",
-      "EXACT_MAGASIN_SENDER_EMAIL"
+      "CONCRETE_EMAIL_PROVIDER"
     ],
     "optional_input": "MAGASIN_REPLY_TO_EMAIL",
     "deploy_edge_function": false,
     "set_provider_secrets": false,
-    "send_email": false
+    "send_email": false,
+    "resolved_owner_inputs": {
+      "EXACT_MAGASIN_SENDER_EMAIL": "bachvanti1994@gmail.com"
+    }
   },
   "required_project_state": "WAIT_USER"
 }
