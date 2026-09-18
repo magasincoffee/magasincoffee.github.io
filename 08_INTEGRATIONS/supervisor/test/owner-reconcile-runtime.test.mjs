@@ -28,3 +28,35 @@ test("BLOCKED remains a hard stop while WAIT_USER has a reconciliation path", as
   assert.match(source, /projectState\.blocked \|\| projectState\.status === "BLOCKED"/);
   assert.match(source, /Project is BLOCKED; no automatic Owner reconciliation is allowed/);
 });
+
+
+test("manual Owner recheck marker arms reconciliation and is consumed only on send", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/supervisor-loop-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /OWNER_RESOLVED\.request\.json/);
+  assert.match(source, /const manualOwnerRecheck = ownerWait/);
+  assert.match(source, /manualOwnerRecheck \|\|/);
+  assert.match(source, /OWNER_RECHECK_ARMED/);
+  assert.match(source, /OWNER_RECONCILE_SENT/);
+
+  const unlinkIndex = source.indexOf("await fs.unlink(ownerResolvedPath).catch(() => {});", source.indexOf("OWNER_RECONCILE_SENT") - 500);
+  const sentIndex = source.indexOf('type: "OWNER_RECONCILE_SENT"');
+  assert.ok(unlinkIndex >= 0);
+  assert.ok(unlinkIndex < sentIndex);
+});
+
+test("Owner reconciliation remains active while its ChatGPT response is running", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/supervisor-loop-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(
+    source,
+    /ownerReconcileRequested \|\| ownerReconcileState\.awaitingResponse/
+  );
+  assert.match(source, /ownerReconcile: ownerReconcileActive/);
+});
