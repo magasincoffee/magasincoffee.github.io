@@ -23,6 +23,28 @@ Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction Silen
     }
 Start-Sleep -Milliseconds 500
 
+# Stop every Supervisor wrapper that points at the installed local runtime.
+# A stale/missing pid file must not leave an orphaned loop alive during upgrade.
+Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+    Where-Object {
+        $_.CommandLine -and
+        $_.CommandLine -like '*run-supervisor.ps1*' -and
+        $_.CommandLine -like "*$root*"
+    } |
+    ForEach-Object {
+        Write-Host "Stopping orphaned Supervisor wrapper PID $($_.ProcessId) before runtime upgrade."
+        & taskkill.exe /PID $_.ProcessId /T /F | Out-Host
+    }
+
+Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.CommandLine -and $_.CommandLine -like '*supervisor-loop-cli.mjs*' } |
+    ForEach-Object {
+        Write-Host "Stopping orphaned Supervisor Node PID $($_.ProcessId) before runtime upgrade."
+        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+
+Start-Sleep -Milliseconds 500
+
 # Upgrades are allowed only after stopping the dedicated Supervisor process.
 if (Test-Path $pidFile) {
     $pidValue = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
