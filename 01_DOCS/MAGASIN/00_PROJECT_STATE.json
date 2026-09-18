@@ -67,7 +67,15 @@
       "lease_semantics_verified": true,
       "stale_lease_fail_closed": true,
       "hard_stop_github_hosted": true,
-      "supervisor_test_run_id": 35369406307
+      "supervisor_test_run_id": 35369406307,
+      "task_048_hard_stop_fix_commit": "b248af37ddd6eab40b485a8d8f2c06c9b8c533d6",
+      "task_048_hard_stop_test_commit": "9d3a9f6a290e25a9a4bdb2f13eeb7d045b66c477",
+      "task_048_hard_stop_test_run_id": 35372881851,
+      "task_048_hard_stop_tests_passed": 162,
+      "task_048_hard_stop_failures": 0,
+      "task_048_canonical_surface_reconciliation": true,
+      "task_048_probe_pr": 120,
+      "task_048_probe_merged": false
     },
     "robot_v2": {
       "branch": "feat/business-os-robot-v2-core",
