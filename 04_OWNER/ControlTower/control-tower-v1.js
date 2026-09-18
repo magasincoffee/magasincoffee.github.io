@@ -7,6 +7,7 @@ import { requireOwnerAccess } from "./access-v1.mjs";
 import { loadProcurementPayables } from "./payables-adapter-v1.mjs";
 import { loadWorkforceAttention } from "./workforce-adapter-v1.mjs";
 import { loadReconciledRevenue } from "./revenue-adapter-v1.mjs";
+import { loadControlTowerSection } from "./section-loader-v1.mjs";
 
 const rawState = {
   context: {
@@ -99,8 +100,9 @@ async function boot() {
   const app = document.getElementById("app");
   const deniedText = document.getElementById("deniedText");
 
+  let core;
   try {
-    const core = globalThis.MAGASIN_CORE;
+    core = globalThis.MAGASIN_CORE;
     const profile = await requireOwnerAccess(core);
     setText("ownerIdentity", `${profile.full_name || profile.username || "Owner"} · OWNER`);
 
@@ -109,32 +111,54 @@ async function boot() {
     loading.classList.add("hidden");
     denied.classList.add("hidden");
     app.classList.remove("hidden");
-
-    const revenue = await loadReconciledRevenue({
-      reportingDate: rawState.context.reportingDate
-    });
-    rawState.revenue = revenue;
-    rawState.context.refreshedAt = revenue.asOf || new Date().toISOString();
-    render(normalizeControlTowerSnapshot(rawState));
-
-    const payables = await loadProcurementPayables(core.supabase.get());
-    rawState.payables = payables;
-    rawState.context.refreshedAt =
-      payables.asOf || rawState.context.refreshedAt || new Date().toISOString();
-    render(normalizeControlTowerSnapshot(rawState));
-
-    const workforce = await loadWorkforceAttention(core);
-    rawState.workforce = workforce;
-    rawState.context.refreshedAt =
-      workforce.asOf || rawState.context.refreshedAt || new Date().toISOString();
-    render(normalizeControlTowerSnapshot(rawState));
   } catch (error) {
     console.error("[CONTROL_TOWER_AUTH]", error);
     loading.classList.add("hidden");
     app.classList.add("hidden");
     denied.classList.remove("hidden");
     deniedText.textContent = error?.message || "Không thể xác thực quyền Owner.";
+    return;
   }
-}
 
+  const revenue = await loadControlTowerSection({
+    sectionName: "Revenue",
+    source: "reconciled daily revenue read model",
+    failureMessage:
+      "Nguồn doanh thu tạm thời lỗi ngoài dự kiến; doanh thu được ẩn nhưng các khu vực khác vẫn tiếp tục tải.",
+    loader: async () =>
+      await loadReconciledRevenue({
+        reportingDate: rawState.context.reportingDate
+      })
+  });
+  rawState.revenue = revenue;
+  rawState.context.refreshedAt =
+    revenue.asOf || rawState.context.refreshedAt || new Date().toISOString();
+  render(normalizeControlTowerSnapshot(rawState));
+
+  const payables = await loadControlTowerSection({
+    sectionName: "Payables",
+    source: "procurement payables read adapter",
+    failureMessage:
+      "Nguồn công nợ mua hàng lỗi ngoài dự kiến; khu vực này chuyển GAP và các khu vực khác vẫn tiếp tục tải.",
+    loader: async () =>
+      await loadProcurementPayables(core.supabase.get())
+  });
+  rawState.payables = payables;
+  rawState.context.refreshedAt =
+    payables.asOf || rawState.context.refreshedAt || new Date().toISOString();
+  render(normalizeControlTowerSnapshot(rawState));
+
+  const workforce = await loadControlTowerSection({
+    sectionName: "Workforce",
+    source: "workforce attention read adapter",
+    failureMessage:
+      "Nguồn Workforce lỗi ngoài dự kiến; khu vực này chuyển GAP và dashboard vẫn giữ các nguồn khỏe.",
+    loader: async () =>
+      await loadWorkforceAttention(core)
+  });
+  rawState.workforce = workforce;
+  rawState.context.refreshedAt =
+    workforce.asOf || rawState.context.refreshedAt || new Date().toISOString();
+  render(normalizeControlTowerSnapshot(rawState));
+}
 boot();
