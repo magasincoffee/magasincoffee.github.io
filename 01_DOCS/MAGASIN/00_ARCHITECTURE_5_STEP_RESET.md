@@ -158,8 +158,9 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-042 — SaydiVoiceProvider production adapter offline:** Media Robot offline gate verified with 23 tests; no live provider action or merge. DONE.
 - **TASK-043 — Cross-project handoff integration:** Business OS → Media Robot → Business OS state/checkpoint/constraint isolation verified. DONE.
 - **TASK-044 — Portfolio-aware diagnostics:** project/task/checkpoint/error context with privacy-safe persistence verified. DONE.
-- **TASK-045 — Restart/resume simulation:** kill/restart/reconcile/resume regression over existing Robot V2 primitives. IN_PROGRESS.
-- **TASK-046–048 — Full QA, docs/evidence and final checkpoint:** execute only after each preceding gate passes.
+- **TASK-045 — Restart/resume simulation:** kill/restart/reconcile/resume regression over existing Robot V2 primitives verified. DONE.
+- **TASK-046 — Night full QA:** both-project regression evidence + bounded fixes only. IN_PROGRESS.
+- **TASK-047–048 — Docs/evidence and final checkpoint:** execute only after each preceding gate passes.
 
 ## 8. Definition of success
 
