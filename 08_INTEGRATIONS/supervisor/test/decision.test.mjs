@@ -143,3 +143,50 @@ test("waits when the latest visible message is still the Owner request", () => {
   assert.equal(result.action, ACTIONS.WAIT);
   assert.match(result.reason, /latest visible message is from Owner/);
 });
+
+
+test("Owner decision reconciliation may safely run while repository is WAIT_USER", () => {
+  const result = decideContinuation({
+    projectState: state({
+      status: "WAIT_USER",
+      autonomy: "MANUAL",
+      requires_user: true
+    }),
+    observation: OBSERVATIONS.RESPONSE_COMPLETE,
+    ownerReconcile: true
+  });
+
+  assert.equal(result.action, ACTIONS.CONTINUE);
+  assert.match(result.instruction, /RECONCILE QUYẾT ĐỊNH OWNER/);
+  assert.match(result.instruction, /Nếu và chỉ nếu/);
+  assert.match(result.instruction, /không suy đoán/);
+});
+
+test("Owner reconciliation never bypasses a BLOCKED project state", () => {
+  const result = decideContinuation({
+    projectState: state({
+      status: "BLOCKED",
+      blocked: true,
+      requires_user: true
+    }),
+    observation: OBSERVATIONS.RESPONSE_COMPLETE,
+    ownerReconcile: true
+  });
+
+  assert.equal(result.action, ACTIONS.STOP_WAIT_USER);
+  assert.match(result.reason, /blocked/i);
+});
+
+test("Owner reconciliation waits while the live decision exchange is running", () => {
+  const result = decideContinuation({
+    projectState: state({
+      status: "WAIT_USER",
+      autonomy: "MANUAL",
+      requires_user: true
+    }),
+    observation: OBSERVATIONS.ASSISTANT_RUNNING,
+    ownerReconcile: true
+  });
+
+  assert.equal(result.action, ACTIONS.WAIT);
+});
