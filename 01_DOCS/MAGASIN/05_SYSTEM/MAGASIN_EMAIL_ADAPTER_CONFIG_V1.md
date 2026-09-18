@@ -9,15 +9,16 @@
 
 ### QUESTION
 
-Outbox đã có. Câu hỏi còn lại là: **MAGASIN sẽ gửi email bằng provider nào và từ địa chỉ gửi chính xác nào?**
+Outbox đã có và Owner đã chốt địa chỉ sender chính xác. Câu hỏi còn lại là: **MAGASIN sẽ gửi email bằng provider nào?**
 
 Owner đã duyệt:
 
 - dùng email MAGASIN;
 - credential được lưu trong secret store ngoài public Git;
-- external calendar chưa cần.
+- external calendar chưa cần;
+- sender email chính xác: `bachvanti1994@gmail.com`.
 
-Owner **chưa chọn** provider hoặc địa chỉ sender cụ thể.
+Owner **chưa chọn** provider cụ thể.
 
 ### DELETE
 
@@ -108,13 +109,16 @@ The available connector does not expose production secret values, so this review
 Owner input required:
 
 1. **Concrete email provider** to use for system mail.
-2. **Exact MAGASIN sender email address**.
+
+Resolved Owner input:
+
+- exact MAGASIN sender email: `bachvanti1994@gmail.com`.
 
 Optional:
 
 - reply-to address, if different from sender.
 
-After those are supplied:
+After the provider is supplied:
 
 1. implement exactly that provider adapter;
 2. store required credentials in Supabase Edge Function Secrets, never Git;
