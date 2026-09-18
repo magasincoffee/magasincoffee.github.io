@@ -70,6 +70,10 @@ Supervisor Robot V1 is implemented and verified:
 - privacy-safe UI observation;
 - bounded Continue / safe Retry executor;
 - reconnect/retry policy;
+- bounded recovery for model-switch stalls and unavailable conversation UI;
+- full/missing conversation detection in English/Vietnamese with automatic fresh-chat rollover;
+- rollover cooldown + burst guard so the robot cannot create chats indefinitely;
+- dedicated Chrome/CDP self-restart after repeated local connection failures;
 - anti-duplicate continuation loop;
 - unified `MAGASIN BUSINESS OS CONTROL` desktop panel with START ROBOT / STOP;
 - privacy-safe runtime status for current task, next task, ChatGPT UI state/action, update time and errors;
