@@ -29,9 +29,9 @@
 
 | TASK-020 | Staffing-gap read adapter + unit/regression contract | 20m | unit + forbidden-write regression | DONE |
 | TASK-021 | Control Tower staffing-gap integration | 20m | adapter/integration + browser regression | DONE |
-| TASK-022 | People/Shift browser E2E + Day-10 usability gate | 20m | browser E2E | READY |
+| TASK-022 | People/Shift browser E2E + Day-10 usability gate | 20m | browser E2E | DONE |
 
-Queue Day 8–10 được mở từ evidence của TASK-019. Không mở thêm task trừ khi test phát hiện defect tái hiện được.
+Queue Day 8–10 được mở từ evidence của TASK-019 và đã hoàn tất. TASK-022 browser/regression gate PASS, không phát hiện defect tái hiện được. Hiện không có task kế tiếp trong queue; không tự mở task mới nếu chưa có repository evidence / approved slice.
 
 ## Execution rule
 
