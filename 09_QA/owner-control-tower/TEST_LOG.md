@@ -66,3 +66,19 @@
 - No schedule-generation/review/publish write RPC is invoked.
 - UI integration after Owner auth: PASS.
 - Gate: TASK-015 **DONE**; TASK-016 may proceed.
+
+## 2026-09-18 — TASK-016 Revenue read-adapter + reconciliation quality gate
+
+- Branch: `feat/control-tower-revenue-contract`
+- Workflow: `Owner Control Tower Tests`
+- Contract/integration run: `35311584686`
+- Result: **PASS**
+- `RECONCILED` + finite amount → `ACTUAL`: PASS.
+- Explicit trusted `ESTIMATE` → `ESTIMATE`: PASS.
+- `PENDING / UNRECONCILED / GROSS / RAW / REVIEW_REQUIRED` → `GAP` and amount hidden: PASS.
+- Missing production provider → `NOT_CONNECTED` and no revenue number: PASS.
+- Provider failure → section-local `GAP`: PASS.
+- Control Tower does not query a gross marketplace source directly.
+- Current repository has no verified production reconciled-revenue provider, therefore production shell remains NOT_CONNECTED until such a provider is connected.
+- Production writes: none.
+- Gate: TASK-016 **DONE**; TASK-017 may proceed.
