@@ -19,6 +19,7 @@ export function buildRuntimeStatus({
   decision = null,
   execution = null,
   retryCount = 0,
+  recovery = null,
   errorName = null
 } = {}) {
   return {
@@ -41,6 +42,14 @@ export function buildRuntimeStatus({
     execution_executed: Boolean(execution?.executed),
     execution_reason: execution?.reason || null,
     retry_count: Number.isInteger(retryCount) ? retryCount : 0,
+    recovery_action: recovery?.action || null,
+    recovery_reason: recovery?.reason || null,
+    recovery_stall_reloads: Number.isInteger(recovery?.stall_reloads) ? recovery.stall_reloads : 0,
+    recovery_unavailable_reloads: Number.isInteger(recovery?.unavailable_reloads) ? recovery.unavailable_reloads : 0,
+    recovery_target_misses: Number.isInteger(recovery?.target_misses) ? recovery.target_misses : 0,
+    recovery_rollover_failures: Number.isInteger(recovery?.rollover_failures) ? recovery.rollover_failures : 0,
+    conversation_generation: Number.isInteger(recovery?.conversation_generation) ? recovery.conversation_generation : 0,
+    recovery_blocked: Boolean(recovery?.blocked),
     error_name: errorName,
     updated_at: new Date().toISOString()
   };
