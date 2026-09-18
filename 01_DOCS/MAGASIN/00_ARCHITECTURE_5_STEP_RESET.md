@@ -145,7 +145,10 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-029 — Schedule-first canonical flow contract:** canonical tables/RPC boundaries and role ownership locked; duplicate ownership classified transitional. DONE.
 - **TASK-030 — Employee weekly availability canonical slice:** single Employee availability owner, save/multi-window/delete regression verified. DONE.
 - **TASK-031 — Manager allocation + robot proposal + publish slice:** canonical Manager Workforce module owns review/allocation/explicit publish; Robot remains DRAFT-only. DONE.
-- **TASK-032 — Published schedule → attendance/swap/notification integration gate:** schedule visibility + attendance + Swap verified; fake Give/unsafe auto-attendance deleted; Give lifecycle and notification production activation remain Owner boundaries SFB-001/SFB-002. WAIT_USER.
+- **TASK-032 — Published schedule → attendance/swap/notification integration gate:** verified core + SFB-001/SFB-002 decisions complete. DONE.
+- **TASK-033 — Give Shift production primitive:** implement recipient-accepts → Manager-approves → server transfer. READY.
+- **TASK-034 — Notification event-outbox production:** durable RLS-protected events for schedule/attendance/shift changes. QUEUED.
+- **TASK-035 — MAGASIN email adapter/config:** provider-neutral email delivery using secret store; external calendar disabled. QUEUED.
 
 ## 8. Definition of success
 
