@@ -12,7 +12,11 @@ test("TASK-032 contract keeps verified feedback core and fail-closed boundaries"
   assert.equal(spec.verified.attendance_schedule_linked,true);
   assert.equal(spec.verified.swap_atomic_schedule_update,true);
   assert.equal(spec.verified.official_schedule_refresh_after_swap,true);
-  assert.equal(spec.fail_closed.give_shift_primitive,"NOT_CONNECTED");
+  assert.equal(spec.fail_closed.give_shift_primitive,"CONNECTED_V1");
+  assert.equal(spec.verified.give_shift_v1,true);
+  assert.equal(spec.verified.give_recipient_consent,true);
+  assert.equal(spec.verified.give_manager_approval,true);
+  assert.equal(spec.verified.official_schedule_refresh_after_give,true);
   assert.equal(spec.fail_closed.notification_outbox,"APPROVED_FOR_IMPLEMENTATION");
   assert.equal(spec.guardrails.fake_give_as_swap,false);
   assert.equal(spec.guardrails.production_schema_apply,true);
@@ -31,14 +35,16 @@ test("TASK-032 contract keeps verified feedback core and fail-closed boundaries"
   assert.equal(notification.selected.allow_secret_store_credentials,true);
 });
 
-test("active Employee feedback engines fail closed on fake Give and unsafe auto-attendance",async()=>{
+test("active Employee feedback engines use real Give lifecycle and keep unsafe auto-attendance removed",async()=>{
   const [swap,attendance,manager]=await Promise.all([
     read("06_EMPLOYEE/swap/engine-v1.js"),
     read("06_EMPLOYEE/attendance/engine-v1.js"),
     read("05_MANAGER/Workforce/swap-approval-v1.js")
   ]);
-  assert.match(swap,/giveShiftState='NOT_CONNECTED'/);
-  assert.doesNotMatch(swap,/mode='give'/);
+  assert.match(swap,/submit_shift_give_request/);
+  assert.match(swap,/respond_shift_give_request/);
+  assert.match(swap,/PENDING_RECIPIENT/);
+  assert.match(swap,/PENDING_MANAGER/);
   assert.match(swap,/Vui lòng nhập lý do đổi ca/);
   assert.doesNotMatch(attendance,/auto_attendance_from_approved_schedules/);
   assert.match(attendance,/clock_in_for_schedule/);
@@ -46,4 +52,7 @@ test("active Employee feedback engines fail closed on fake Give and unsafe auto-
   assert.match(manager,/list_shift_swap_requests_v1/);
   assert.match(manager,/approve_shift_swap/);
   assert.match(manager,/reject_shift_swap/);
+  assert.match(manager,/list_shift_give_requests_v1/);
+  assert.match(manager,/approve_shift_give/);
+  assert.match(manager,/reject_shift_give/);
 });
