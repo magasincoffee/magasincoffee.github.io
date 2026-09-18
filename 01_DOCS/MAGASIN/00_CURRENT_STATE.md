@@ -24,6 +24,7 @@ Canonical task/state files:
 - `00_PROJECT_STATE.json`
 - `00_TASK_QUEUE.md`
 - `00_SUPERVISOR_ROBOT.md`
+- `00_SUPERVISOR_HANDOFF_ARCHITECTURE.md`
 - `00_ARCHITECTURE_5_STEP_RESET.md`
 
 ## Current target
@@ -82,6 +83,8 @@ Supervisor Robot V1 is implemented and verified:
 - privacy-safe runtime status for current task, next task, ChatGPT UI state/action, update time and errors;
 - background START mode so normal use does not require a separate PowerShell window;
 - persistent local runtime;
+- conversation-aware handoff: observe the active supervised chat before first continuation;
+- shared Owner/Robot ChatGPT browser profile opened by the Control Panel;
 - local-only target/profile/logs;
 - stop gates for WAIT_USER/BLOCKED/auth/MFA/CAPTCHA/destructive/admin/ambiguous states.
 
