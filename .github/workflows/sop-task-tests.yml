@@ -1,0 +1,68 @@
+name: SOP Task Tests
+
+on:
+  push:
+    paths:
+      - '05_MANAGER/Cong-viec/**'
+      - '05_MANAGER/runtime/manager-runtime-v1.html'
+      - '05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js'
+      - '09_QA/sop-task/**'
+      - '.github/workflows/sop-task-tests.yml'
+  pull_request:
+    paths:
+      - '05_MANAGER/Cong-viec/**'
+      - '05_MANAGER/runtime/manager-runtime-v1.html'
+      - '05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js'
+      - '09_QA/sop-task/**'
+      - '.github/workflows/sop-task-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sop-task-route-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run SOP Task static regressions
+        run: node --test 09_QA/sop-task/*.test.mjs
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start local QA server
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/sop-task
+          nohup python3 -m http.server 8768 --bind 127.0.0.1 > /tmp/sop-task-http.log 2>&1 &
+          echo $! > /tmp/sop-task-http.pid
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -fsS http://127.0.0.1:8768/05_MANAGER/Cong-viec/ > /dev/null && curl -fsS http://127.0.0.1:8768/05_MANAGER/runtime/manager-runtime-v1.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/sop-task-http.log || true
+          exit 1
+
+      - name: Run Manager Task deep-link browser smoke
+        env:
+          QA_BASE_URL: http://127.0.0.1:8768
+          QA_OUT: qa-artifacts/sop-task
+        run: node 09_QA/sop-task/manager-task-route-browser.mjs
+
+      - name: Upload SOP Task QA artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sop-task-route-${{ github.run_id }}
+          path: qa-artifacts/sop-task/
+          if-no-files-found: warn
+          retention-days: 30
