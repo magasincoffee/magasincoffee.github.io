@@ -7,7 +7,7 @@ import { ChatGptUiAdapter } from "../ui/playwright-adapter.mjs";
 import { sendComposerInstruction } from "../ui/actions.mjs";
 import { captureCompletedAssistantTurn } from "../ui/message-capture.mjs";
 import { OBSERVATIONS } from "../decision.mjs";
-import { targetFromUrl } from "./recovery.mjs";
+import { pageMatchesTarget, targetFromUrl } from "./recovery.mjs";
 import {
   BRAIN_WORKER_MODE,
   assertRolloverAuthorized,
@@ -26,7 +26,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.18";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.19";
 
 function parseArgs(argv) {
   const result = {
@@ -154,8 +154,18 @@ async function waitForTarget(page) {
 async function openTargetPage(adapter, target) {
   const existing = adapter.findPageForTarget(target);
   if (existing) return existing;
+
   const page = await adapter.reopenTargetPage(targetUrl(target));
-  await page.waitForTimeout(1200);
+  try {
+    await page.waitForURL(
+      (value) => pageMatchesTarget(String(value), target),
+      { timeout: 10_000 }
+    );
+  } catch {
+    if (!pageMatchesTarget(page.url(), target)) {
+      throw new Error("registered ChatGPT target could not be restored; target mismatch; new conversation denied");
+    }
+  }
   return page;
 }
 
@@ -656,18 +666,20 @@ try {
         continue;
       }
 
-      if (registry.brain.awaiting_response) {
-        await processBrainResponse({
-          adapter,
-          page: brainPage,
-          registry,
-          projectState,
-          config,
-          execute: args.execute,
-          registryPath,
-          logPath
-        });
-      }
+      // Always reconcile the latest completed Brain turn by digest. This is
+      // required after a Supervisor/browser restart because Owner may have
+      // continued the Brain conversation while the local runtime was offline.
+      // processBrainResponse is idempotent for an already-processed digest.
+      await processBrainResponse({
+        adapter,
+        page: brainPage,
+        registry,
+        projectState,
+        config,
+        execute: args.execute,
+        registryPath,
+        logPath
+      });
 
       if (!registry.brain.awaiting_response) {
         const ready = await findReadyWorkerResult(adapter, registry);
