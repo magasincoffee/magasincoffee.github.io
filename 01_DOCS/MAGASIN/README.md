@@ -48,7 +48,7 @@ Không lấy UI, database hoặc code hiện tại làm nguồn sự thật cho 
 
 **Current phase: P1 — Accelerated Enterprise Discovery + Foundation**
 
-**Current task: TASK-001 — Autonomy Supervisor discovery and project bootstrap**
+**Current task: TASK-009 — Store/product canonical model review**
 
 Khi mở chat mới, ưu tiên đọc `00_CURRENT_STATE.md`, `00_PROJECT_STATE.json`, `00_TASK_QUEUE.md`, `00_MASTER_PLAN.md`, `00_BUSINESS_OS_BLUEPRINT.md`, `06_DECISION_LOG.md`, `07_CHANGE_LOG.md`, `00_CHATGPT_CONTEXT.md`, sau đó kiểm tra task/domain và PR/CI thực tế.
 
