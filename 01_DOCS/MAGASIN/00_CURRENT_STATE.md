@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-040 — Business OS Robot V2 portfolio scheduler — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-041 — Business OS Robot V2 recovery engine — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,19 +101,18 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**AUTO_CONTINUE — TASK-040:** TASK-039 two-project registry/adapters are verified on draft PR #119.
+**AUTO_CONTINUE — TASK-041:** TASK-040 portfolio scheduler is verified on draft PR #119.
 
-TASK-040 scheduler rules are intentionally narrow:
+TASK-041 recovery contract must prove:
 
-1. schedule only projects registered and enabled in the approved two-project registry;
-2. keep the current project when it remains safely runnable;
-3. if the current project becomes `WAIT_USER`, `BLOCKED`, `DONE` or fail-closed `UNKNOWN`, skip it without stopping the whole portfolio;
-4. select another registered `READY` project by priority;
-5. if no project is runnable, wait without inventing work;
-6. never execute a third/unregistered repository;
-7. project-level Owner/security boundaries remain isolated and fail-closed.
+1. crash/reboot does not replay an operation already checkpointed;
+2. an active lease owned elsewhere blocks duplicate execution;
+3. an expired lease remains fail-closed until repository HEAD and CI are reconciled;
+4. after safe reconciliation, the worker resumes from the canonical task/checkpoint;
+5. if canonical project state has already advanced, stale cursor work is discarded instead of replayed;
+6. recovery never bypasses project WAIT_USER/BLOCKED/security boundaries.
 
-The scheduler does not perform project work itself; it only returns a deterministic project selection/skip decision. Crash/reboot/stale-lease recovery remains TASK-041.
+This task changes only Robot V2 orchestration logic on the review branch. Existing Supervisor V1 recovery remains unchanged.
 
 ## Session handoff
 
