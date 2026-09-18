@@ -152,7 +152,7 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-036 — Schedule-first closure regression + recovery gate:** canonical schedule regression/recovery gate completed; external email remains fail-closed. DONE.
 - **TASK-037 — Windows auto-reboot/logon recovery:** canonical runner + Supervisor + dedicated Business OS Chrome/CDP recovery verified on self-hosted Windows. DONE.
 - **TASK-038 — Night-run persistence:** deadline + cursor + lease + checkpoint + GitHub-hosted hard-stop contract verified. DONE.
-- **TASK-039 — Business OS Robot V2 project registry:** exactly two Owner-approved project state strategies normalized with deny-unregistered policy; verified on draft PR #119. DONE.\n- **TASK-040 — Business OS Robot V2 portfolio scheduler:** isolate project WAIT/BLOCKED states and select the next registered runnable project deterministically. IN_PROGRESS.\n- **TASK-041–048 — Recovery engine, SaydiVoice offline adapter, cross-project QA and final checkpoint:** execute only after each preceding gate passes.
+- **TASK-039 — Business OS Robot V2 project registry:** exactly two Owner-approved project state strategies normalized with deny-unregistered policy; verified on draft PR #119. DONE.\n- **TASK-040 — Business OS Robot V2 portfolio scheduler:** project WAIT/BLOCKED isolation and deterministic runnable-project selection verified on draft PR #119. DONE.\n- **TASK-041 — Business OS Robot V2 recovery engine:** crash/reboot/reconnect/stale-lease reconciliation + duplicate suppression. IN_PROGRESS.\n- **TASK-042–048 — SaydiVoice offline adapter, cross-project QA and final checkpoint:** execute only after each preceding gate passes.
 
 ## 8. Definition of success
 
