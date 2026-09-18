@@ -64,5 +64,5 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 | TASK-044 | Portfolio-aware diagnostics | 45m | project/task/checkpoint/error privacy-safe logs | DONE |
 | TASK-045 | Restart/resume simulation | 50m | kill/restart/reconcile/resume regression | DONE |
 | TASK-046 | Night full QA | 35m | both-project regression + bounded fixes | DONE |
-| TASK-047 | Night docs / evidence / PR prep | 20m | changelog/test logs/reviewable PRs | IN_PROGRESS |
-| TASK-048 | Night final checkpoint | 10m | report + NIGHT_WINDOW_COMPLETE + WAIT_USER | READY |
+| TASK-047 | Night docs / evidence / PR prep | 20m | changelog/test logs/reviewable PRs | DONE |
+| TASK-048 | Night final checkpoint | 10m | report + NIGHT_WINDOW_COMPLETE + WAIT_USER | IN_PROGRESS |
