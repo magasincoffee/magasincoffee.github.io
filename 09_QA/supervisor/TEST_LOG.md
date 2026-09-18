@@ -15,3 +15,14 @@
 - No browser/login/live ChatGPT/self-hosted side effect in this foundation workflow: PASS
 
 Next gate: TASK-004 UI adapter local **non-destructive** smoke.
+
+## 2026-09-18 — TASK-004 UI adapter offline gate
+
+- Privacy-safe UI classifier: PASS on GitHub-hosted Windows.
+- Adapter captures only control/error state and message counts; message bodies are not captured.
+- Conversation path/identifier is not emitted to public logs.
+- Read-only local workflow run `35296619840` created.
+- Local job status: **QUEUED**.
+- No local UI action has executed yet.
+- Required next action: register/start a self-hosted Windows X64 runner for `magasincoffee/magasincoffee.github.io`.
+- Smoke workflow is guarded to owner actor and performs no send/click/credential read.
