@@ -57,11 +57,11 @@ test("ambiguous unavailable UI fails closed after reload instead of creating ano
     "utf8"
   );
 
-  const start = source.indexOf(
-    "if (recoveryAction === RECOVERY_ACTIONS.ROLLOVER_UNAVAILABLE)"
+  const match = source.match(
+    /if \(recoveryAction === RECOVERY_ACTIONS\.ROLLOVER_UNAVAILABLE\) \{([\s\S]*?)\n    \}\n\n    if \(/
   );
-  assert.ok(start >= 0);
-  const unavailableBlock = source.slice(start, start + 2200);
+  assert.ok(match);
+  const unavailableBlock = match[1];
   assert.doesNotMatch(unavailableBlock, /createFreshConversation\(/);
   assert.match(unavailableBlock, /recovery\.block\(\)/);
 });
