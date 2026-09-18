@@ -3,7 +3,7 @@
 **Phase:** P1_SCHEDULE_FIRST_CORE_FLOW  
 **Task:** TASK-035 — MAGASIN email adapter/config  
 **Date:** 2026-09-18  
-**Status:** GMAIL_ADAPTER_IMPLEMENTED_AWAITING_OAUTH_CREDENTIALS
+**Status:** GMAIL_ADAPTER_IMPLEMENTED_AWAITING_OAUTH_PRODUCTION_PUBLISH_APPROVAL
 
 ## Five-Step
 
@@ -146,26 +146,37 @@ This prevents the first production activation from unintentionally claiming the 
 
 ## Current boundary
 
-Owner business decisions are resolved.
+Owner business decisions remain resolved.
 
-Remaining activation input is operational credential setup for the selected Gmail account:
+Completed activation work outside Git:
 
-1. `GMAIL_OAUTH_CLIENT_ID`;
-2. `GMAIL_OAUTH_CLIENT_SECRET`;
-3. `GMAIL_OAUTH_REFRESH_TOKEN` authorized for Gmail send.
+1. Google Cloud project confirmed: `magasin-noibo`;
+2. Gmail API enabled;
+3. canonical OAuth client created as **Web application**;
+4. authorized redirect URI configured exactly as `https://developers.google.com/oauthplayground`;
+5. OAuth client ID + secret captured without plaintext logging and stored encrypted locally on the self-hosted runner;
+6. temporary Desktop client removed.
 
-These values must be stored in Supabase Edge Function Secrets, never in Git or chat documentation.
+Current fail-closed Owner/admin boundary:
 
-After credentials are available:
+- OAuth audience is **Testing**;
+- Google exposes a second `Publish app` confirmation control;
+- no final publish action is executed until Owner explicitly approves it.
 
-1. set runtime config/secrets;
-2. deploy `notification-email-worker`;
-3. invoke one bounded test with request body `{"limit":1}`;
-4. verify outbox `PENDING → PROCESSING → SENT`;
-5. run regression;
-6. close TASK-035 and continue the schedule-first critical path.
+Reason this gate matters: the canonical runbook requires a durable production/published OAuth configuration before minting the Gmail refresh token used by the worker.
 
-Supabase production Edge Functions inventory remains **0** at this boundary; no email has been sent.
+After Owner approval:
+
+1. publish OAuth app to Production;
+2. authorize only `https://www.googleapis.com/auth/gmail.send` for the approved sender;
+3. securely obtain `GMAIL_OAUTH_REFRESH_TOKEN`;
+4. write OAuth/provider/sender values directly to Supabase Edge Function Secrets;
+5. deploy `notification-email-worker`;
+6. invoke one bounded test with `{"limit":1}`;
+7. verify `PENDING → PROCESSING → SENT`;
+8. run regression and close TASK-035.
+
+No Edge Function is deployed and no email has been sent.
 
 External calendar remains disabled.
 

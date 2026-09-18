@@ -1,0 +1,42 @@
+name: TASK-035 Runner Operator
+
+on:
+  push:
+    branches:
+      - ops/task-035-runner-diagnostic
+    paths:
+      - .github/workflows/task-035-runner-diagnostic.yml
+      - 08_INTEGRATIONS/supervisor/src/ui/task-035-*.mjs
+  workflow_dispatch:
+
+concurrency:
+  group: task-035-runner-operator
+  cancel-in-progress: true
+
+jobs:
+  # current-phase: oauth-publish-control-probe
+  operate:
+    runs-on: self-hosted
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure shared Supervisor Chrome is available
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          & "08_INTEGRATIONS/supervisor/windows/open-supervisor-chat.ps1"
+          Start-Sleep -Seconds 3
+
+      - name: Install browser dependency
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Inspect OAuth publish confirmation controls
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          node src/ui/task-035-oauth-publish-probe.mjs

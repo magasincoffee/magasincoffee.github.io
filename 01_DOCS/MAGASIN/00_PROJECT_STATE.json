@@ -22,17 +22,28 @@
     "task": "TASK-035",
     "resolved": [
       "EXACT_MAGASIN_SENDER_EMAIL",
-      "CONCRETE_EMAIL_PROVIDER"
+      "CONCRETE_EMAIL_PROVIDER",
+      "GOOGLE_CLOUD_PROJECT",
+      "GMAIL_API_ENABLED",
+      "CANONICAL_WEB_OAUTH_CLIENT_CREATED",
+      "OAUTH_REDIRECT_URI_CONFIGURED"
     ],
-    "pending": []
+    "pending": [
+      "CONFIRM_GOOGLE_OAUTH_PUBLISH_TO_PRODUCTION"
+    ]
   },
   "activation_boundary": {
-    "reason": "GMAIL_OAUTH_CREDENTIALS_REQUIRED",
+    "reason": "GOOGLE_OAUTH_PUBLISH_CONFIRMATION_REQUIRED",
     "pending": [
-      "GMAIL_OAUTH_CLIENT_ID",
-      "GMAIL_OAUTH_CLIENT_SECRET",
-      "GMAIL_OAUTH_REFRESH_TOKEN"
+      "GOOGLE_OAUTH_APP_PRODUCTION_PUBLISH",
+      "GMAIL_OAUTH_REFRESH_TOKEN",
+      "SUPABASE_EDGE_FUNCTION_SECRET_INJECTION"
     ],
+    "local_runner_credentials": {
+      "web_client_id_and_secret_encrypted": true,
+      "plaintext_in_git": false,
+      "plaintext_in_logs": false
+    },
     "deploy_edge_function": false,
     "send_email": false,
     "activation_test_claim_limit": 1
