@@ -59,6 +59,8 @@ function Tail-SafeLog {
                 $parts = @($e.timestamp, $e.type)
                 if ($e.action) { $parts += "action=$($e.action)" }
                 if ($e.target) { $parts += "target=$($e.target)" }
+                if ($null -ne $e.executed) { $parts += "executed=$($e.executed)" }
+                if ($e.reason) { $parts += "reason=$($e.reason)" }
                 if ($e.errorName) { $parts += "error=$($e.errorName)" }
                 $parts -join ' | '
             } catch {
@@ -78,6 +80,8 @@ function Set-StatusCard($Panel, $Label, [string]$State, [string]$Text) {
         'READY' = @([Drawing.Color]::FromArgb(220,252,231), [Drawing.Color]::FromArgb(22,101,52))
         'RUNNING' = @([Drawing.Color]::FromArgb(219,234,254), [Drawing.Color]::FromArgb(29,78,216))
         'RETRYING' = @([Drawing.Color]::FromArgb(255,237,213), [Drawing.Color]::FromArgb(154,52,18))
+        'RECOVERING' = @([Drawing.Color]::FromArgb(224,242,254), [Drawing.Color]::FromArgb(3,105,161))
+        'ROLLOVER' = @([Drawing.Color]::FromArgb(237,233,254), [Drawing.Color]::FromArgb(91,33,182))
         'WAIT_USER' = @([Drawing.Color]::FromArgb(254,249,195), [Drawing.Color]::FromArgb(133,77,14))
         'ERROR' = @([Drawing.Color]::FromArgb(254,226,226), [Drawing.Color]::FromArgb(153,27,27))
         'DONE' = @([Drawing.Color]::FromArgb(220,252,231), [Drawing.Color]::FromArgb(22,101,52))
@@ -273,6 +277,8 @@ function Refresh-ControlPanel {
             'READY' { 'ONLINE • CHỜ CHATGPT' }
             'RUNNING' { 'RUNNING • ĐANG LÀM VIỆC' }
             'RETRYING' { 'RETRYING • ĐANG THỬ LẠI' }
+            'RECOVERING' { 'RECOVERING • TỰ KHÔI PHỤC' }
+            'ROLLOVER' { 'ROLLOVER • CHUYỂN CHAT MỚI' }
             'WAIT_USER' { 'WAIT_USER • CẦN OWNER' }
             'ERROR' { 'ERROR' }
             'DONE' { 'DONE' }
@@ -301,11 +307,22 @@ function Refresh-ControlPanel {
     $observation = if ($runtimeStatus.observation) { [string]$runtimeStatus.observation } else { '—' }
     $uiState = if ($runtimeStatus.ui_state) { [string]$runtimeStatus.ui_state } else { '—' }
     $executed = if ($runtimeStatus.execution_executed) { 'đã thực thi' } else { 'chưa thực thi' }
+    $recoveryAction = if ($runtimeStatus.recovery_action) { [string]$runtimeStatus.recovery_action } else { 'NONE' }
 
     $currentTaskValue.Text = $currentTask
     $nextTaskValue.Text = $nextTask
-    $currentActionValue.Text = "$decision  •  UI=$uiState  •  OBS=$observation  •  $executed"
-    $nextActionValue.Text = if ($runtimeStatus.decision_reason) { [string]$runtimeStatus.decision_reason } else { 'Theo dõi ChatGPT; tự Continue khi source-of-truth cho phép.' }
+    if ($recoveryAction -ne 'NONE') {
+        $currentActionValue.Text = "$recoveryAction  •  UI=$uiState  •  OBS=$observation"
+    } else {
+        $currentActionValue.Text = "$decision  •  UI=$uiState  •  OBS=$observation  •  $executed"
+    }
+    $nextActionValue.Text = if ($runtimeStatus.recovery_reason) {
+        [string]$runtimeStatus.recovery_reason
+    } elseif ($runtimeStatus.decision_reason) {
+        [string]$runtimeStatus.decision_reason
+    } else {
+        'Theo dõi ChatGPT; tự Continue khi source-of-truth cho phép.'
+    }
     $heartbeatValue.Text = if ($runtimeStatus.updated_at) { Format-Time ([string]$runtimeStatus.updated_at) } else { 'Chưa có runtime status.' }
     $autonomyValue.Text = if ($projectState.autonomy) { "$($projectState.autonomy)  •  phase=$($projectState.current_phase)" } else { '—' }
 
@@ -313,10 +330,15 @@ function Refresh-ControlPanel {
         $errorValue.Text = 'Robot đang OFFLINE. Bấm START ROBOT.'
     } elseif ($projectState.requires_user -or $projectState.blocked -or $projectStatus -in @('WAIT_USER','BLOCKED')) {
         $errorValue.Text = 'Project state yêu cầu Owner xử lý. Robot sẽ không tự vượt approval/security boundary.'
+    } elseif ($runtimeStatus.recovery_blocked) {
+        $errorValue.Text = 'Tự khôi phục đã dùng hết giới hạn an toàn. Cần Owner kiểm tra ChatGPT rồi START lại.'
     } elseif ($runtimeStatus.status -eq 'ERROR') {
         $errorValue.Text = "Supervisor lỗi: $($runtimeStatus.error_name). Xem nhật ký trước khi khởi động lại."
     } elseif ($runtimeStatus.status -eq 'WAIT_USER') {
-        $errorValue.Text = "Robot đang chờ Owner. Lý do: $($runtimeStatus.decision_reason)"
+        $waitReason = if ($runtimeStatus.recovery_reason) { $runtimeStatus.recovery_reason } else { $runtimeStatus.decision_reason }
+        $errorValue.Text = "Robot đang chờ Owner. Lý do: $waitReason"
+    } elseif ($runtimeStatus.status -in @('RECOVERING','ROLLOVER')) {
+        $errorValue.Text = 'Robot đang tự khôi phục ChatGPT; chưa cần Owner thao tác.'
     } else {
         $errorValue.Text = 'Không có lỗi.'
     }
