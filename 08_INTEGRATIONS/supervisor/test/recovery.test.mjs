@@ -238,3 +238,31 @@ test("stalled reload budget survives hydration/progress-marker changes after rel
   now = 3200;
   assert.equal(recovery.observeProbe(running(4, 100)), RECOVERY_ACTIONS.ROLLOVER_STALLED);
 });
+
+
+test("successful rollover suppresses an immediate duplicate full-chat rollover", () => {
+  let now = 10_000;
+  const recovery = new SupervisorRecoveryController({
+    rolloverCooldownMs: 120_000,
+    now: () => now
+  });
+
+  recovery.record(RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL, { success: true });
+
+  const action = recovery.observeProbe({
+    snapshot: { conversationFull: true },
+    classification: { observation: "RESPONSE_COMPLETE" }
+  });
+
+  assert.equal(action, RECOVERY_ACTIONS.NONE);
+  assert.equal(recovery.status().rollover_cooldown_active, true);
+
+  now += 120_001;
+  assert.equal(
+    recovery.observeProbe({
+      snapshot: { conversationFull: true },
+      classification: { observation: "RESPONSE_COMPLETE" }
+    }),
+    RECOVERY_ACTIONS.ROLLOVER_CONVERSATION_FULL
+  );
+});
