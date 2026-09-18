@@ -31,3 +31,12 @@ test("one-click repair refuses dirty or non-main repositories", async () => {
   assert.match(source, /Repository has local changes/);
   assert.match(source, /--ff-only/);
 });
+
+
+test("repair script is ASCII-only for Windows PowerShell 5.1 parsing", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/repair-supervisor.ps1", import.meta.url)
+  );
+  const nonAscii = [...source].filter((byte) => byte > 0x7f);
+  assert.deepEqual(nonAscii, []);
+});
