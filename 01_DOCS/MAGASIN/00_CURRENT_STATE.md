@@ -16,7 +16,7 @@ P0 baseline gate has passed. Owner decision `DEC-003` reprioritizes the current 
 
 ## Current task
 
-**TASK-029 — Robot draft + Manager assignment editor — READY**
+**TASK-030 — Employee weekly registration V2 — READY**
 
 Canonical task/state files:
 
@@ -75,7 +75,7 @@ Supervisor Robot V1 remains active. Project state is returned to `AUTO_CONTINUE`
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-029. Connect robot draft generation to the Manager workflow and add a DRAFT-only assignment editor using `get_schedule_generation_assignments` + `replace_schedule_generation_assignments`, followed by server validation. Do not auto-publish.
+**AUTO_CONTINUE:** execute TASK-030. Upgrade Employee weekly registration UX while preserving the existing availability RPC contract: multiple windows/day, type selection, delete, week navigation and immediate saved-state visibility. Do not invent exact “Cả Ngày” semantics.
 
 ## Session handoff
 
