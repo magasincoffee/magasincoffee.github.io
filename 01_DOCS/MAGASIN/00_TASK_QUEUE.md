@@ -34,9 +34,15 @@
 | TASK-023 | SOP/Task current-system gap review + acceptance contract | 20m | discovery/contract | DONE |
 | TASK-024 | Manager Task route canonicalization + smoke regression | 15m | route/static + browser smoke | DONE |
 | TASK-025 | SOP/Task fail-closed UI integrity gate | 20m | static/unit + browser regression | DONE |
-| TASK-026 | SOP/Task rule decision pack + data/migration plan | 20m | traceability/contract + Owner boundary | WAIT_USER |
+| TASK-026 | SOP/Task rule decision pack + data/migration plan | 20m | traceability/contract + Owner boundary | DEFERRED |
+| TASK-027 | Control Panel local GitHub Runner lifecycle + reboot recovery | 20m | PowerShell syntax + control regression | DONE |
+| TASK-028 | Five-Step architecture reset + delete/defer map | 20m | architecture/source-of-truth review | DONE |
+| TASK-029 | Schedule-first canonical flow contract | 20m | QUESTION/DELETE map + canonical ownership/data/RPC contract | READY |
+| TASK-030 | Employee weekly availability canonical slice | 20m | unit + browser regression | QUEUED |
+| TASK-031 | Manager allocation + robot proposal + publish slice | 20m | integration + browser E2E | QUEUED |
+| TASK-032 | Published schedule → attendance/swap/notification integration gate | 20m | end-to-end operating-loop gate | QUEUED |
 
-Queue Day 8–10 đã hoàn tất. TASK-023 xác nhận Day 11–13 hiện có SOP registry skeleton, Manager/Employee Task placeholders, Control Tower Task/SOP chưa có verified source, không có verified persistence/API contract, và exception/corrective/overdue/verify-close rules chưa được chốt. Live schema check chỉ đọc structural metadata và không tìm thấy public object name khớp Task/SOP/Checklist/Exception/Corrective. TASK-024–025 chỉ sửa route/UI fail-closed; TASK-026 là Owner/business-rule boundary trước mọi write-capable SOP/Task workflow.
+TASK-026 remains a valid Owner decision pack but is deferred; it no longer blocks the enterprise queue. Architecture execution is now schedule-first under `00_ARCHITECTURE_5_STEP_RESET.md`. Every new task must pass QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE before implementation.
 
 ## Execution rule
 
