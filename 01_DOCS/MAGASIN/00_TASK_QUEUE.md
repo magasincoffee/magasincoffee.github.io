@@ -35,8 +35,8 @@
 | TASK-028 | Manager registration review hardening | 20m | unit/static + browser regression | DONE |
 | TASK-029 | Robot draft + Manager assignment editor | 20m | RPC contract + browser regression | DONE |
 | TASK-030 | Employee weekly registration V2 | 20m | multi-window + immediate visibility E2E | DONE |
-| TASK-031 | Manager official schedule workspace | 20m | read/publish integration + browser E2E | READY |
-| TASK-032 | Give/Swap V2 | 20m | atomic update + impacted-user regression | QUEUED |
+| TASK-031 | Manager official schedule workspace | 20m | read/publish integration + browser E2E | DONE |
+| TASK-032 | Give/Swap V2 | 20m | atomic update + impacted-user regression | READY |
 | TASK-033 | Attendance + shift reminders | 20m | lifecycle + reminder contract | QUEUED |
 | TASK-034 | Notification / Calendar / Email connector | 20m | event/outbox tests; provider activation Owner-gated | QUEUED |
 | TASK-035 | Full Schedule E2E gate | 20m | sanitized browser E2E + regression | QUEUED |
