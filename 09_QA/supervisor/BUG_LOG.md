@@ -185,3 +185,21 @@
   5. stable USER_PENDING with no post-send progress evidence remains WAIT, preventing duplicate sends.
 - Runtime: `2026-09-18.9`.
 - Status: FIXED IN CODE — pending field verification.
+
+
+## BUG-SUP-014 — WAIT_USER becomes a permanent dead-end after Owner has decided
+
+- Date: 2026-09-18
+- Component: runtime project-state gate / Owner handoff
+- Field symptom: Control Panel shows `WAIT_USER • CẦN OWNER`. Owner resolves the requested business rule directly with ChatGPT, then presses START ROBOT, but the Supervisor never inspects the live conversation and continues to report `WAIT_USER`.
+- Root cause: `supervisor-loop-cli.mjs` short-circuited before connecting to ChatGPT whenever repository state was `WAIT_USER` / `requires_user=true`. Therefore the robot had no path to observe that the human decision had already occurred and no path to ask ChatGPT to reconcile it back into source-of-truth.
+- Fix:
+  1. `BLOCKED` remains a hard stop;
+  2. `WAIT_USER` remains fail-closed for business execution but no longer skips live-chat observation;
+  3. one constrained Owner-decision reconciliation may run after the chat is safely idle;
+  4. the reconciliation instruction updates repository only for an explicit Owner decision matching the pending boundary; otherwise it must preserve `WAIT_USER`;
+  5. after a reconciliation response settles, no duplicate reconcile is sent until a newer conversation turn appears;
+  6. ChatGPT Work `data-testid=stop-button` is a semantic running signal;
+  7. completion stability uses conversation-turn metadata and ignores noisy whole-DOM size churn.
+- Runtime: `2026-09-18.10`.
+- Status: FIXED IN CODE — pending CI + field deployment.
