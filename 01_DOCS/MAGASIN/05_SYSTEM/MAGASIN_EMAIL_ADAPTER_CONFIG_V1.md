@@ -3,7 +3,7 @@
 **Phase:** P1_SCHEDULE_FIRST_CORE_FLOW  
 **Task:** TASK-035 — MAGASIN email adapter/config  
 **Date:** 2026-09-18  
-**Status:** GMAIL_ADAPTER_IMPLEMENTED_AWAITING_OAUTH_CREDENTIALS
+**Status:** DEFERRED_BY_OWNER / FAIL_CLOSED
 
 ## Five-Step
 
@@ -146,28 +146,35 @@ This prevents the first production activation from unintentionally claiming the 
 
 ## Current boundary
 
-Owner business decisions are resolved.
+Owner explicitly deferred Gmail production activation so it no longer blocks the schedule-first critical path.
 
-Remaining activation input is operational credential setup for the selected Gmail account:
+Prepared outside Git before defer:
 
-1. `GMAIL_OAUTH_CLIENT_ID`;
-2. `GMAIL_OAUTH_CLIENT_SECRET`;
-3. `GMAIL_OAUTH_REFRESH_TOKEN` authorized for Gmail send.
+- Google Cloud project selected: `magasin-noibo`;
+- Gmail API enabled;
+- canonical OAuth client prepared as **Web application**;
+- redirect URI configured as `https://developers.google.com/oauthplayground`;
+- client credential material was handled outside Git/logs and not committed;
+- temporary Desktop client was removed.
 
-These values must be stored in Supabase Edge Function Secrets, never in Git or chat documentation.
+Deferred activation debt:
 
-After credentials are available:
+1. move OAuth app from Testing to the appropriate production/published state;
+2. authorize `https://www.googleapis.com/auth/gmail.send`;
+3. obtain `GMAIL_OAUTH_REFRESH_TOKEN`;
+4. inject runtime values into Supabase Edge Function Secrets;
+5. deploy and verify one bounded `{"limit":1}` send.
 
-1. set runtime config/secrets;
-2. deploy `notification-email-worker`;
-3. invoke one bounded test with request body `{"limit":1}`;
-4. verify outbox `PENDING → PROCESSING → SENT`;
-5. run regression;
-6. close TASK-035 and continue the schedule-first critical path.
+Guardrail while deferred:
 
-Supabase production Edge Functions inventory remains **0** at this boundary; no email has been sent.
+```text
+notification-email-worker not deployed
+external email not sent
+missing OAuth secrets remain fail-closed
+notification outbox + Employee in-app notification remain the active feedback path
+```
 
-External calendar remains disabled.
+Reactivation requires an explicit Owner instruction. It is not a current WAIT_USER boundary.
 
 ## Owner activation runbook — one-time OAuth setup
 
@@ -256,4 +263,4 @@ deploy notification-email-worker with verify_jwt=false
 → close TASK-035
 ```
 
-Until that setup is complete, project state remains `WAIT_USER`; no queue row should be claimed and no email should be sent.
+While activation is deferred, project state may continue on other critical-path tasks; no email queue row may be claimed by a production Gmail worker and no external email is sent.
