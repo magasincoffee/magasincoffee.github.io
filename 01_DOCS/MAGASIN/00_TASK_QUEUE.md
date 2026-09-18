@@ -45,7 +45,7 @@
 | TASK-034 | Notification event-outbox production | 20m | migration/RLS/triggers + SQL/integration tests | DONE |
 | TASK-035 | MAGASIN email adapter/config | 20m | Gmail OAuth adapter + secret-store activation gate | DEFERRED |
 
-| TASK-036 | Schedule-first closure regression + recovery gate | 20m | full canonical-flow regression + fail-closed external-email check + recovery/resume evidence | IN_PROGRESS |
+| TASK-036 | Schedule-first closure regression + recovery gate | 20m | full canonical-flow regression + fail-closed external-email check + recovery/resume evidence | DONE |
 
 TASK-026 remains a valid Owner decision pack but is deferred; it no longer blocks the enterprise queue. Architecture execution is now schedule-first under `00_ARCHITECTURE_5_STEP_RESET.md`. Every new task must pass QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE before implementation.
 
@@ -54,7 +54,7 @@ TASK-026 remains a valid Owner decision pack but is deferred; it no longer block
 Task tiếp theo chỉ chạy khi task hiện tại đạt Definition of Done hoặc được chuyển rõ sang `WAIT_USER` / `BLOCKED`.
 
 Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
-| TASK-037 | Windows auto-reboot/logon recovery | 75m | runner + Supervisor + Business Chrome autostart / Owner STOP latch | READY |
+| TASK-037 | Windows auto-reboot/logon recovery | 75m | runner + Supervisor + Business Chrome autostart / Owner STOP latch | IN_PROGRESS |
 | TASK-038 | Night-run persistence | 35m | deadline + cursor + lease + checkpoint + hard-stop contract | READY |
 | TASK-039 | Business OS Robot V2 project registry | 60m | two-project registry + project adapter contract | READY |
 | TASK-040 | Business OS Robot V2 portfolio scheduler | 55m | project isolation + WAIT_USER skip policy | READY |
