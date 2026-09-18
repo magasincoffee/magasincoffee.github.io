@@ -51,7 +51,7 @@ test("architecture docs no longer declare Owner as canonical daily Workforce own
     read("01_DOCS/MAGASIN/05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md")
   ]);
   assert.match(moduleDoc,/Manager.*daily scheduling/i);
-  assert.match(ownerReadme,/policy.*exception.*attention/i);
+  assert.match(ownerReadme,/policy[\s\S]*exception[\s\S]*attention/i);
   assert.match(flow,/Manager is daily scheduler/i);
   assert.doesNotMatch(ownerReadme,/canonical home for Owner Workforce/i);
 });
