@@ -35,6 +35,36 @@ GOVERNANCE / CONTINUOUS IMPROVEMENT
 
 Profitability & Cash là **critical cross-domain track** chạy song song với P1, không phải một phase thay thế Enterprise Discovery.
 
+## 2A. Accelerated V1 Overlay — 21 ngày
+
+Kể từ 2026-09-18, V1 chạy theo delivery overlay 21 ngày mà không phá vỡ nguyên tắc Discovery-first.
+
+Mỗi vertical slice chỉ được implement sau khi phần Discovery/Rule/SOP cần thiết cho chính slice đó đủ rõ. Không yêu cầu hoàn tất toàn bộ D02–D12 trước khi bắt đầu mọi code; thay vào đó dùng incremental traceability theo slice.
+
+Phương pháp bắt buộc:
+
+```text
+QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE
+```
+
+Milestones:
+
+- Day 3: foundation data visible.
+- Day 7: Owner Control Tower usable.
+- Day 14: Alerts + Daily Brief usable.
+- Day 21: V1 production acceptance.
+
+V1 locked scope và autonomy contract được quản lý tại:
+
+- `00_BUSINESS_OS_BLUEPRINT.md`
+- `00_PROJECT_STATE.json`
+- `00_TASK_QUEUE.md`
+- `00_SUPERVISOR_ROBOT.md`
+
+Micro-task implementation bình thường mục tiêu <= khoảng 20 phút active work. Nếu lớn hơn phải chia nhỏ.
+
+Mỗi task phải qua test → fix → regression → integration/E2E phù hợp → update state/docs → commit trước khi tự động chuyển task.
+
 ## 3. Bảng kế hoạch tổng thể
 
 | ID | Phase | Nội dung chính | Mục tiêu đầu ra | Trạng thái | Điều kiện hoàn thành |
