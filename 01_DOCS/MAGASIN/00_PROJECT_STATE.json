@@ -99,7 +99,15 @@
       "task_048_one_shot_failures": 0,
       "task_048_post_review_state_protected": true,
       "task_048_one_shot_probe_pr": 123,
-      "task_048_one_shot_probe_merged": false
+      "task_048_one_shot_probe_merged": false,
+      "task_048_evidence_surface_fix_commit": "6dfd738e0b75fbb2fb70d55ba27ee46c5ec46ae0",
+      "task_048_evidence_surface_test_commit": "a91b95fb6e993d5fd17dc165a126b7f342f8bf53",
+      "task_048_evidence_surface_test_run_id": 35375054600,
+      "task_048_evidence_surface_tests_passed": 162,
+      "task_048_evidence_surface_failures": 0,
+      "task_048_canonical_evidence_reconciled_at_hard_stop": true,
+      "task_048_evidence_surface_probe_pr": 124,
+      "task_048_evidence_surface_probe_merged": false
     },
     "robot_v2": {
       "branch": "feat/business-os-robot-v2-core",
