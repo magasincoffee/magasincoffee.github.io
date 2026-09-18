@@ -12,6 +12,54 @@ $startScript = Join-Path $runtime 'windows\start-supervisor.ps1'
 $stopScript = Join-Path $runtime 'windows\stop-supervisor.ps1'
 $projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
 $repoUrl = 'https://github.com/magasincoffee/magasincoffee.github.io'
+$runnerRoot = 'C:\actions-runner'
+$runnerCmd = Join-Path $runnerRoot 'run.cmd'
+
+function Get-GitHubRunnerProcess {
+    return Get-CimInstance Win32_Process -Filter "Name='Runner.Listener.exe'" -ErrorAction SilentlyContinue |
+        Where-Object {
+            ($_.ExecutablePath -and $_.ExecutablePath -like "$runnerRoot*") -or
+            ($_.CommandLine -and $_.CommandLine -like "*$runnerRoot*")
+        } |
+        Select-Object -First 1
+}
+
+function Ensure-GitHubRunner {
+    param([switch]$Interactive)
+
+    $existing = Get-GitHubRunnerProcess
+    if ($existing) { return $true }
+
+    if (-not (Test-Path $runnerCmd)) {
+        if ($Interactive) {
+            [Windows.Forms.MessageBox]::Show(
+                "Không tìm thấy GitHub Runner: $runnerCmd",
+                'MAGASIN Business OS',
+                'OK',
+                'Error'
+            ) | Out-Null
+        }
+        return $false
+    }
+
+    $runnerCommand = 'title MAGASIN-PC RUNNER - KEEP OPEN && cd /d "' + $runnerRoot + '" && call run.cmd'
+    Start-Process -FilePath 'cmd.exe' -WorkingDirectory $runnerRoot -ArgumentList @('/k', $runnerCommand)
+
+    for ($i = 0; $i -lt 16; $i++) {
+        Start-Sleep -Milliseconds 500
+        if (Get-GitHubRunnerProcess) { return $true }
+    }
+
+    if ($Interactive) {
+        [Windows.Forms.MessageBox]::Show(
+            'GitHub Runner chưa ONLINE. Kiểm tra cửa sổ MAGASIN-PC RUNNER - KEEP OPEN.',
+            'MAGASIN Business OS',
+            'OK',
+            'Warning'
+        ) | Out-Null
+    }
+    return $false
+}
 
 function Get-SupervisorProcess {
     if (-not (Test-Path $pidFile)) { return $null }
@@ -173,6 +221,13 @@ $stopButton.Size = New-Object Drawing.Size(150, 50)
 $stopButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 11)
 $controls.Controls.Add($stopButton)
 
+$runnerButton = New-Object Windows.Forms.Button
+$runnerButton.Text = '▶  GITHUB RUNNER'
+$runnerButton.Location = New-Object Drawing.Point(420, 18)
+$runnerButton.Size = New-Object Drawing.Size(170, 50)
+$runnerButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9.5)
+$controls.Controls.Add($runnerButton)
+
 $chatButton = New-Object Windows.Forms.Button
 $chatButton.Text = 'Mở ChatGPT'
 $chatButton.Location = New-Object Drawing.Point(602, 21)
@@ -277,7 +332,18 @@ $script:lastRemoteFetch = [DateTime]::MinValue
 
 function Refresh-ControlPanel {
     $process = Get-SupervisorProcess
+    $runnerProcess = Get-GitHubRunnerProcess
     $runtimeStatus = Read-JsonFile $statusFile
+
+    if ($runnerProcess) {
+        $runnerButton.Text = '✓  RUNNER ONLINE'
+        $runnerButton.BackColor = [Drawing.Color]::FromArgb(220,252,231)
+        $runnerButton.ForeColor = [Drawing.Color]::FromArgb(22,101,52)
+    } else {
+        $runnerButton.Text = '▶  START RUNNER'
+        $runnerButton.BackColor = [Drawing.Color]::FromArgb(255,247,237)
+        $runnerButton.ForeColor = [Drawing.Color]::FromArgb(154,52,18)
+    }
 
     if (((Get-Date) - $script:lastRemoteFetch).TotalSeconds -ge 10 -or -not $script:lastRemoteState) {
         $script:lastRemoteState = Read-ProjectState
@@ -366,8 +432,14 @@ function Refresh-ControlPanel {
     }
     $autonomyValue.Text = if ($projectState.autonomy) { "$($projectState.autonomy)  •  phase=$($projectState.current_phase)" } else { '—' }
 
-    if (-not $process) {
-        $errorValue.Text = 'Robot đang OFFLINE. Bấm START ROBOT.'
+    if (-not $runnerProcess -and $process) {
+        $errorValue.Text = 'GitHub Runner đang OFFLINE. Local-machine GitHub jobs sẽ không chạy; bấm START RUNNER.'
+    } elseif (-not $process) {
+        $errorValue.Text = if ($runnerProcess) {
+            'Robot đang OFFLINE. Bấm START ROBOT.'
+        } else {
+            'Robot và GitHub Runner đang OFFLINE. START ROBOT sẽ khởi động Runner trước.'
+        }
     } elseif ($projectState.requires_user -or $projectState.blocked -or $projectStatus -in @('WAIT_USER','BLOCKED')) {
         $errorValue.Text = 'Project state yêu cầu Owner xử lý. Robot sẽ không tự vượt approval/security boundary.'
     } elseif ($runtimeStatus.recovery_blocked) {
@@ -392,6 +464,11 @@ $startButton.Add_Click({
         return
     }
     try {
+        if (-not (Ensure-GitHubRunner -Interactive)) {
+            Refresh-ControlPanel
+            return
+        }
+
         $quoted = '"' + $startScript + '"'
         Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @(
             '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$quoted,'-Hidden'
@@ -417,6 +494,15 @@ $stopButton.Add_Click({
         '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$quoted
     )
     Refresh-ControlPanel
+})
+
+$runnerButton.Add_Click({
+    try {
+        [void](Ensure-GitHubRunner -Interactive)
+        Refresh-ControlPanel
+    } catch {
+        [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Không thể START RUNNER', 'OK', 'Error') | Out-Null
+    }
 })
 
 $chatButton.Add_Click({ Start-Process 'https://chatgpt.com/' })
