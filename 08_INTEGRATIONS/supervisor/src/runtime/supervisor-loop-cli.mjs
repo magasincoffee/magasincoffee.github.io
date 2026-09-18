@@ -141,7 +141,10 @@ while (true) {
 
     if (result.decision.action === "RETRY" && result.execution.executed) {
       retryCount += 1;
-    } else if (result.probe?.classification?.observation !== "NETWORK_ERROR") {
+    } else if (
+      probe.classification.observation !== "NETWORK_ERROR" &&
+      probe.classification.observation !== "TRANSIENT_ERROR"
+    ) {
       retryCount = 0;
     }
 
