@@ -20,6 +20,11 @@ test("TASK-032 contract keeps verified feedback core and fail-closed boundaries"
   assert.equal(spec.guardrails.credentials_in_public_git,false);
   assert.equal(spec.required_project_state,"WAIT_USER");
   assert.deepEqual(spec.owner_decisions.map(x=>x.id),["SFB-001","SFB-002"]);
+  const give=spec.owner_decisions.find(x=>x.id==="SFB-001");
+  assert.equal(give.status,"APPROVED");
+  assert.equal(give.selected_option,"RECIPIENT_ACCEPTS_THEN_MANAGER_APPROVES");
+  const notification=spec.owner_decisions.find(x=>x.id==="SFB-002");
+  assert.equal(notification.status,"OWNER_INPUT_REQUIRED");
 });
 
 test("active Employee feedback engines fail closed on fake Give and unsafe auto-attendance",async()=>{
