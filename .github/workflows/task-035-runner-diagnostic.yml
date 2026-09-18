@@ -11,6 +11,7 @@ on:
       - 08_INTEGRATIONS/supervisor/src/ui/task-035-google-project-picker.mjs
       - 08_INTEGRATIONS/supervisor/src/ui/task-035-google-ui-state.mjs
       - 08_INTEGRATIONS/supervisor/src/ui/task-035-gmail-api-setup.mjs
+      - 08_INTEGRATIONS/supervisor/src/ui/task-035-gmail-control-probe.mjs
   workflow_dispatch:
 
 concurrency:
@@ -196,3 +197,9 @@ jobs:
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
           node src/ui/task-035-gmail-api-setup.mjs
+
+      - name: Inspect Gmail API controls
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          node src/ui/task-035-gmail-control-probe.mjs
