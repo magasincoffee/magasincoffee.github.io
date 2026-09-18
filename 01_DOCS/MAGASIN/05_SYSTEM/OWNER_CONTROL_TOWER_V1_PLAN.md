@@ -1,6 +1,6 @@
 # TASK-011 — Owner Control Tower V1 Vertical-Slice Plan
 
-**Status:** ACCEPTANCE DEFINED  
+**Status:** DAY-7 USABILITY GATE PASSED  
 **Date:** 2026-09-18  
 **Milestone:** Owner Control Tower usable by approximately Day 7.
 
@@ -236,3 +236,31 @@ Inventory, tasks, profitability and Daily Brief become later slices once their s
 **PASS — acceptance and next implementation queue are defined.**
 
 No Owner decision is required before TASK-012.
+
+## 13. TASK-018 Day-7 usability gate result
+
+**PASS — Owner Control Tower V1 is usable under the acceptance contract.**
+
+Evidence:
+
+- GitHub Actions workflow: `Owner Control Tower Tests`;
+- browser E2E run: `35316155903`;
+- installed Chrome + actual repository route/modules/CSS;
+- synthetic browser-local Owner/read-source mocks only;
+- production external requests: 0;
+- non-GET browser requests: 0;
+- production writes: none;
+- desktop and 390px narrow-width layouts passed;
+- Owner home → Control Tower → Workforce drill-down navigation passed;
+- role-denied and partial-source states passed.
+
+Known data gaps remain explicit by design and are **not** converted into facts:
+
+- reconciled Revenue source: `NOT_CONNECTED`;
+- Inventory attention: `NOT_CONNECTED`;
+- Task attention: `NOT_CONNECTED`;
+- staffing-gap count remains unavailable until a verified read model exists.
+
+These gaps do not invalidate the Day-7 gate because the V1 contract explicitly requires fail-closed quality labels rather than synthetic values.
+
+Next accelerated slice follows the canonical Blueprint: **Day 8–10 People / Shift**.
