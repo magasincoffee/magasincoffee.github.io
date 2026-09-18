@@ -8,6 +8,7 @@ on:
       - .github/workflows/task-035-runner-diagnostic.yml
       - 08_INTEGRATIONS/supervisor/src/ui/task-035-auth-surface-probe.mjs
       - 08_INTEGRATIONS/supervisor/src/ui/task-035-google-cloud-state.mjs
+      - 08_INTEGRATIONS/supervisor/src/ui/task-035-google-project-picker.mjs
   workflow_dispatch:
 
 concurrency:
@@ -169,3 +170,9 @@ jobs:
         working-directory: 08_INTEGRATIONS/supervisor
         run: |
           node src/ui/task-035-google-cloud-state.mjs
+
+      - name: Select unique MAGASIN Google project
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          node src/ui/task-035-google-project-picker.mjs
