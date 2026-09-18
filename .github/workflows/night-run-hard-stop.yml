@@ -42,7 +42,19 @@ jobs:
 
           state_path = Path("01_DOCS/MAGASIN/00_PROJECT_STATE.json")
           cursor_path = Path("02_CORE/contracts/business-os-execution-cursor.v1.json")
+          current_state_path = Path("01_DOCS/MAGASIN/00_CURRENT_STATE.md")
+          task_queue_path = Path("01_DOCS/MAGASIN/00_TASK_QUEUE.md")
+          architecture_path = Path("01_DOCS/MAGASIN/00_ARCHITECTURE_5_STEP_RESET.md")
           report_path = Path("01_DOCS/MAGASIN/08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md")
+
+          def replace_required(path, replacements):
+              text = path.read_text(encoding="utf-8")
+              for old, new in replacements:
+                  if old in text:
+                      text = text.replace(old, new, 1)
+                  elif new not in text:
+                      raise SystemExit(f"Hard-stop reconciliation marker missing in {path}: {old}")
+              path.write_text(text, encoding="utf-8")
 
           state = json.loads(state_path.read_text(encoding="utf-8"))
           night = state.get("night_run") or {}
@@ -53,6 +65,7 @@ jobs:
           night["status"] = "NIGHT_WINDOW_COMPLETE"
           night["completed_at"] = completed_at
           night["hard_stop_enforced_by"] = "GITHUB_HOSTED_WORKFLOW"
+          night["hard_stop_pending"] = False
           state["night_run"] = night
           state["current_task"] = "TASK-048"
           state["current_task_title"] = "Night final checkpoint / Owner review"
@@ -61,6 +74,7 @@ jobs:
           state["blocked"] = False
           state["requires_user"] = True
           state["next_task"] = None
+          state["last_updated"] = "2026-09-19"
           state["owner_boundary"] = {
               "task": "TASK-048",
               "resolved": ["NIGHT_RUN_HARD_STOP_ENFORCED"],
@@ -81,14 +95,61 @@ jobs:
               })
               cursor_path.write_text(json.dumps(cursor, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-          if not report_path.exists():
-              report_path.write_text(
-                  "# MAGASIN — NIGHT RUN REPORT 2026-09-19\n\n"
-                  "**Status:** NIGHT_WINDOW_COMPLETE / WAIT_USER\n\n"
-                  "The GitHub-hosted hard-stop guard reached the approved 09:15 +07 boundary. "
-                  "Review repository commits, CI evidence, project state and task logs before starting another autonomous window.\n",
-                  encoding="utf-8"
+          replace_required(current_state_path, [
+              (
+                  "**TASK-048 — Night final checkpoint — IN_PROGRESS / AUTO_CONTINUE**",
+                  "**TASK-048 — Night final checkpoint / Owner review — WAIT_USER / MANUAL**"
+              ),
+              (
+                  "**AUTO_CONTINUE — TASK-048:** TASK-047 documentation/evidence is complete.",
+                  "**WAIT_USER — TASK-048:** `NIGHT_WINDOW_COMPLETE` has been enforced; Owner review of the night-run report is required."
+              ),
+              (
+                  "TASK-048 is now a temporal safety gate, not a feature task:",
+                  "TASK-048 is now an Owner-review gate after the completed autonomous night window:"
+              ),
+              (
+                  "5. at **2026-09-19 09:15 +07**, the GitHub-hosted hard-stop workflow sets `NIGHT_WINDOW_COMPLETE / WAIT_USER / MANUAL` and requires Owner review.",
+                  "5. the GitHub-hosted hard-stop enforced `NIGHT_WINDOW_COMPLETE / WAIT_USER / MANUAL`; Owner review is now required."
+              ),
+              (
+                  "The GitHub-hosted hard-stop guard will set the project to `WAIT_USER / NIGHT_WINDOW_COMPLETE` at 09:15 +07 even if the PC is offline.",
+                  "The GitHub-hosted hard-stop guard set the project to `WAIT_USER / NIGHT_WINDOW_COMPLETE` at the approved boundary independently of the PC."
               )
+          ])
+
+          replace_required(task_queue_path, [
+              (
+                  "| TASK-048 | Night final checkpoint | 10m | report + NIGHT_WINDOW_COMPLETE + WAIT_USER | IN_PROGRESS |",
+                  "| TASK-048 | Night final checkpoint | 10m | report + NIGHT_WINDOW_COMPLETE + WAIT_USER | WAIT_USER |"
+              )
+          ])
+
+          replace_required(architecture_path, [
+              (
+                  "- **TASK-048 — Night final checkpoint:** final report prepared; remain time-gated until the approved 09:15 +07 GitHub-hosted hard stop sets NIGHT_WINDOW_COMPLETE / WAIT_USER. IN_PROGRESS.",
+                  "- **TASK-048 — Night final checkpoint:** hard stop enforced; final report ready; Owner review required before any new autonomous window. WAIT_USER."
+              )
+          ])
+
+          replace_required(report_path, [
+              (
+                  "**Current status:** FINAL_CHECKPOINT_IN_PROGRESS / AUTO_CONTINUE",
+                  "**Current status:** NIGHT_WINDOW_COMPLETE / WAIT_USER"
+              ),
+              (
+                  "TASK-048 must **not** declare `NIGHT_WINDOW_COMPLETE` before the approved boundary.",
+                  "The approved 09:15 +07 boundary has been reached and the GitHub-hosted hard-stop declared `NIGHT_WINDOW_COMPLETE`."
+              ),
+              (
+                  "At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` is the canonical GitHub-hosted enforcement path. It will:",
+                  "At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` enforced the canonical boundary and:"
+              ),
+              (
+                  "Until that boundary, no new feature work, merge, live provider action, or production activation is authorized by TASK-048.",
+                  "Autonomy is now **MANUAL**. Owner review is required before any new autonomous window, merge, live provider action, or production activation."
+              )
+          ])
 
       - name: Commit hard-stop checkpoint
         if: steps.guard.outputs.run == 'true'
@@ -100,6 +161,12 @@ jobs:
           fi
           git config user.name "MAGASIN Night Guard"
           git config user.email "actions@users.noreply.github.com"
-          git add             01_DOCS/MAGASIN/00_PROJECT_STATE.json             02_CORE/contracts/business-os-execution-cursor.v1.json             01_DOCS/MAGASIN/08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md
+          git add \
+            01_DOCS/MAGASIN/00_PROJECT_STATE.json \
+            01_DOCS/MAGASIN/00_CURRENT_STATE.md \
+            01_DOCS/MAGASIN/00_TASK_QUEUE.md \
+            01_DOCS/MAGASIN/00_ARCHITECTURE_5_STEP_RESET.md \
+            02_CORE/contracts/business-os-execution-cursor.v1.json \
+            01_DOCS/MAGASIN/08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md
           git commit -m "state: enforce approved night-run hard stop"
           git push origin HEAD:main
