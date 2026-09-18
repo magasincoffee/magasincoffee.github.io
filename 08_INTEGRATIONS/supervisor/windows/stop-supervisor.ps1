@@ -3,9 +3,11 @@ $ErrorActionPreference = 'Stop'
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $stop = Join-Path $root 'STOP'
 $pidFile = Join-Path $root 'supervisor.pid'
+$autostartDisabled = Join-Path $root 'AUTOSTART_DISABLED'
 
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 Set-Content -Path $stop -Value 'STOP' -Encoding ascii
+Set-Content -Path $autostartDisabled -Value 'OWNER_STOP' -Encoding ascii
 
 $pidValue = $null
 if (Test-Path $pidFile) {
@@ -49,4 +51,4 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyCon
     }
 
 Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
-Write-Host 'MAGASIN Supervisor stopped. STOP sentinel remains until next START.'
+Write-Host 'MAGASIN Supervisor stopped. Owner STOP latch disables automatic reboot/logon restart until next explicit START.'
