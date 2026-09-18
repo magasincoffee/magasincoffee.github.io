@@ -13,10 +13,14 @@
     "manager_swap_resolution": true,
     "swap_atomic_schedule_update": true,
     "official_schedule_refresh_after_swap": true,
-    "browser_direct_table_write": false
+    "browser_direct_table_write": false,
+    "give_shift_v1": true,
+    "give_recipient_consent": true,
+    "give_manager_approval": true,
+    "official_schedule_refresh_after_give": true
   },
   "fail_closed": {
-    "give_shift_primitive": "NOT_CONNECTED",
+    "give_shift_primitive": "CONNECTED_V1",
     "notification_outbox": "APPROVED_FOR_IMPLEMENTATION",
     "email_delivery": "CONFIG_PENDING",
     "calendar_delivery": "DISABLED_BY_OWNER"
