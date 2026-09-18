@@ -33,5 +33,5 @@ test("Worker response bodies are not part of persistent registry/log payloads", 
   );
 
   assert.match(source, /intentionally not written to logs\/status\/registry/);
-  assert.doesNotMatch(source, /responseText:\s*ready\.captured\.text[\s\S]*atomicJsonWrite/);
+  assert.doesNotMatch(source, /response_body|response_text|worker_response_body/);
 });
