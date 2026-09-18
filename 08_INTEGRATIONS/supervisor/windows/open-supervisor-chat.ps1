@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $profile = Join-Path $root 'browser_profile'
 $targetFile = Join-Path $root 'target.json'
+$orchestrationFile = Join-Path $root 'orchestration.json'
 
 function Resolve-ChromeExecutable {
     $candidates = @(
@@ -29,14 +30,27 @@ function Get-FreeCdpPort {
 }
 
 function Resolve-TargetUrl {
-    if (-not (Test-Path $targetFile)) { return 'https://chatgpt.com/' }
+    # Brain/Worker V17: Owner-facing ChatGPT Robot always opens the one Brain
+    # conversation. Worker targets are intentionally not exposed by this launcher.
+    if (Test-Path $orchestrationFile) {
+        try {
+            $orchestration = Get-Content $orchestrationFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            $brain = $orchestration.brain.target
+            if ($brain.origin -eq 'https://chatgpt.com' -and [string]$brain.pathname -match '^/(c|g|project)/') {
+                return "$($brain.origin)$($brain.pathname)"
+            }
+        } catch {}
+    }
 
-    try {
-        $target = Get-Content $targetFile -Raw -Encoding UTF8 | ConvertFrom-Json
-        if ($target.origin -eq 'https://chatgpt.com' -and [string]$target.pathname -match '^/(c|g|project)/') {
-            return "$($target.origin)$($target.pathname)"
-        }
-    } catch {}
+    # Compatibility fallback for the legacy single-conversation runtime.
+    if (Test-Path $targetFile) {
+        try {
+            $target = Get-Content $targetFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($target.origin -eq 'https://chatgpt.com' -and [string]$target.pathname -match '^/(c|g|project)/') {
+                return "$($target.origin)$($target.pathname)"
+            }
+        } catch {}
+    }
 
     return 'https://chatgpt.com/'
 }
