@@ -17,7 +17,12 @@ test("TASK-032 contract keeps verified feedback core and fail-closed boundaries"
   assert.equal(spec.verified.give_recipient_consent,true);
   assert.equal(spec.verified.give_manager_approval,true);
   assert.equal(spec.verified.official_schedule_refresh_after_give,true);
-  assert.equal(spec.fail_closed.notification_outbox,"APPROVED_FOR_IMPLEMENTATION");
+  assert.equal(spec.fail_closed.notification_outbox,"CONNECTED_V1");
+  assert.equal(spec.verified.notification_outbox_v1,true);
+  assert.equal(spec.verified.notification_employee_in_app_reader,true);
+  assert.equal(spec.verified.clock_out_reminder,true);
+  assert.equal(spec.verified.clock_out_cancels_pending_reminder,true);
+  assert.equal(spec.verified.email_queue_state_machine,true);
   assert.equal(spec.guardrails.fake_give_as_swap,false);
   assert.equal(spec.guardrails.production_schema_apply,true);
   assert.equal(spec.guardrails.production_provider_activation,false);
