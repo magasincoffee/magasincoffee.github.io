@@ -126,3 +126,28 @@ test("START ROBOT fail-closes if the local runner cannot be started", async () =
   assert.ok(startIndex > ensureIndex);
   assert.match(source.slice(ensureIndex, startIndex), /return/);
 });
+
+
+test("control panel uses the shared supervised ChatGPT launcher", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /open-supervisor-chat\.ps1/);
+  assert.match(source, /ChatGPT Robot/);
+  assert.doesNotMatch(source, /\$chatButton\.Add_Click\(\{ Start-Process 'https:\/\/chatgpt\.com\/' \}\)/);
+});
+
+test("shared ChatGPT launcher uses the Supervisor browser profile and bounded CDP port range", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/open-supervisor-chat.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /browser_profile/);
+  assert.match(source, /--remote-debugging-address=127\.0\.0\.1/);
+  assert.match(source, /9222\.\.9232/);
+  assert.match(source, /target\.json/);
+  assert.match(source, /--user-data-dir=/);
+});
