@@ -494,8 +494,14 @@ try {
     .frameLocator("#app");
 
   await check("owner_workforce_publish_surface", async () => {
-    const workforceNav = ownerShell.locator('button[data-view="workforce"]').last();
-    await workforceNav.waitFor({ state: "visible", timeout: 15000 });
+    const menu = ownerShell.locator(".manager-v3-menu");
+    await menu.waitFor({ state: "visible", timeout: 15000 });
+    await menu.click();
+
+    const workforceNav = ownerShell.locator(
+      '#managerV3Drawer button[data-view="workforce"]'
+    );
+    await workforceNav.waitFor({ state: "visible", timeout: 10000 });
     await workforceNav.click();
 
     const publishTab = ownerShell.locator('button[data-tab="publish"]');
