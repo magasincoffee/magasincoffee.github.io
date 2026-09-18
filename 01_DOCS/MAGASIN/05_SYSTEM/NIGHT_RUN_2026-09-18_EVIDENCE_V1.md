@@ -2,7 +2,7 @@
 
 **Window:** 2026-09-18 23:15 +07 → 2026-09-19 09:15 +07  
 **Scope:** `magasincoffee/magasincoffee.github.io` + `magasincoffee/magasin-media-robot` only  
-**Status:** TASK-037–046 VERIFIED / TASK-047 RELEASE PREP  
+**Status:** TASK-037–047 COMPLETE / TASK-048 FINAL CHECKPOINT HARDENED / TEMPORAL GATE ACTIVE  
 **Rule:** QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE
 
 ## 1. Purpose
@@ -87,4 +87,15 @@ Automation remains fail-closed: active/stale lease reconciliation, operation-key
 
 ## 7. Release-prep conclusion
 
-TASK-037–046 have current PASS evidence and no unresolved regression was found during TASK-046. TASK-047 may therefore prepare documentation and draft PR descriptions only. TASK-048 must produce the final checkpoint and enter the prescribed `NIGHT_WINDOW_COMPLETE / WAIT_USER` boundary without merging either PR or activating deferred external providers.
+TASK-037–047 are complete with current repository/CI evidence. TASK-048 is not a feature-expansion task; it is the final temporal safety gate. The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the project must stay `READY / AUTO_CONTINUE` only until the approved 2026-09-19 09:15 +07 boundary.
+
+## 8. TASK-048 hard-stop hardening evidence
+
+| Guard | Evidence | Result |
+|---|---|---|
+| Canonical final-state reconciliation | commits `b248af37ddd6eab40b485a8d8f2c06c9b8c533d6` + `9d3a9f6a290e25a9a4bdb2f13eeb7d045b66c477`; run `35372881851`; probe PR #120 | 162/162 PASS; PROJECT_STATE, cursor, CURRENT_STATE, TASK_QUEUE, architecture and final report reconciled |
+| Approved-boundary time guard | commits `148fb5b7ab0c2f33536248573c0ae2116c740cfa` + `525554e31ce0cb91e8c8bfb29ab25fa16ec48091`; run `35373330382`; probe PR #121 | 162/162 PASS; manual dispatch before 09:15 +07 is fail-closed |
+| Completion idempotence | commits `f63b71118f116151c37759046f08aa066793d9e9` + `998bc201966aa31bdda4049a21b9812b287794f2`; run `35373887433`; probe PR #122 | 162/162 PASS; first completion timestamps are preserved |
+| One-shot post-review protection | commits `80c9cdbcddec8af62b795caea4ed62e7f2d294b8` + `0e902d725dbfbb468ce56c1d59009718b0f69d33`; run `35374298573`; probe PR #123 | 162/162 PASS; once `NIGHT_WINDOW_COMPLETE` exists, reruns exit before mutation so later Owner-reviewed state is protected |
+
+All TASK-048 probe PRs were closed without merge after the exact verified contents were applied to `main`. No live SaydiVoice Generate/Download, Gmail production activation, auto-merge, third-project execution or destructive production action was introduced.
