@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import {
   accessScopeIncludesStore,
   buildEnvelope,
+  normalizeBatchLimit,
   readEmailConfig,
   uniqueRecipients
 } from "../../supabase/functions/notification-email-worker/email-worker-core.mjs";
