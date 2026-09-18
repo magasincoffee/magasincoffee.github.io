@@ -91,6 +91,21 @@ test("does not continue in MANUAL autonomy mode", () => {
   assert.equal(result.action, ACTIONS.WAIT);
 });
 
+test("PAUSED temporal gate suppresses repeated continuation without creating an Owner boundary", () => {
+  const result = decideContinuation({
+    projectState: state({
+      current_task: "TASK-048",
+      status: "READY",
+      autonomy: "PAUSED",
+      requires_user: false,
+      next_task: null
+    }),
+    observation: OBSERVATIONS.RESPONSE_COMPLETE
+  });
+  assert.equal(result.action, ACTIONS.WAIT);
+  assert.match(result.reason, /autonomy mode is PAUSED/);
+});
+
 test("stops cleanly when project is DONE", () => {
   const result = decideContinuation({
     projectState: state({ status: "DONE" }),
