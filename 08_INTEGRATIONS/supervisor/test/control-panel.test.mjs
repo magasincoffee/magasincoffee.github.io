@@ -162,6 +162,7 @@ test("control panel exposes a fail-closed Owner resolved recheck control", async
   assert.match(source, /ĐÃ XỬ LÝ — KIỂM TRA LẠI/);
   assert.match(source, /OWNER_RESOLVED\.request\.json/);
   assert.match(source, /OWNER_RESOLVED_RECHECK/);
-  assert.match(source, /-not \$remote\.blocked/);
+  assert.match(source, /\$remote\.status -ne 'WAIT_USER'/);
+  assert.match(source, /\$remote\.blocked/);
   assert.match(source, /không dùng để vượt BLOCKED\/security boundary/);
 });
