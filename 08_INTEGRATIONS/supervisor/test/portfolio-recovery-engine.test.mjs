@@ -24,6 +24,15 @@ const baseCursor = () => ({
   updated_at: "2026-09-18T23:40:00.000Z"
 });
 
+const runnableState = (id, overrides = {}) => ({
+  id,
+  status: "READY",
+  blocked: false,
+  requires_user: false,
+  runnable_hint: true,
+  ...overrides
+});
+
 test("active lease blocks crash/reboot takeover to prevent duplicate work", () => {
   const cursor = baseCursor();
   cursor.lease = {
@@ -36,6 +45,7 @@ test("active lease blocks crash/reboot takeover to prevent duplicate work", () =
     cursor,
     canonicalProjectId: "magasin-business-os",
     canonicalTask: "TASK-041",
+    canonicalProjectState: runnableState("magasin-business-os"),
     now: "2026-09-18T23:45:00.000Z",
     headVerified: true,
     ciVerified: true
@@ -60,6 +70,7 @@ test("expired lease still waits until both HEAD and CI are reconciled", () => {
     cursor,
     canonicalProjectId: "magasin-business-os",
     canonicalTask: "TASK-041",
+    canonicalProjectState: runnableState("magasin-business-os"),
     now: "2026-09-18T23:45:00.000Z",
     headVerified: true,
     ciVerified: false
@@ -84,6 +95,7 @@ test("verified stale lease is released and resumes the current checkpoint", () =
     cursor,
     canonicalProjectId: "magasin-business-os",
     canonicalTask: "TASK-041",
+    canonicalProjectState: runnableState("magasin-business-os"),
     now: "2026-09-18T23:45:00.000Z",
     headVerified: true,
     ciVerified: true
@@ -104,6 +116,7 @@ test("canonical task advancement discards stale task replay", () => {
     cursor,
     canonicalProjectId: "magasin-media-robot",
     canonicalTask: "TASK-042",
+    canonicalProjectState: runnableState("magasin-media-robot"),
     now: "2026-09-18T23:45:00.000Z",
     headVerified: true,
     ciVerified: true
@@ -116,6 +129,50 @@ test("canonical task advancement discards stale task replay", () => {
   assert.equal(result.cursor.project_id, "magasin-media-robot");
   assert.equal(result.cursor.task, "TASK-042");
   assert.equal(result.cursor.checkpoint, "CANONICAL_STATE_ADOPTED");
+});
+
+test("WAIT_USER boundary prevents recovery from adopting an advanced cursor", () => {
+  const cursor = baseCursor();
+
+  const result = reconcilePortfolioCursor({
+    cursor,
+    canonicalProjectId: "magasin-media-robot",
+    canonicalTask: "TASK-042",
+    canonicalProjectState: runnableState("magasin-media-robot", {
+      status: "WAIT_USER",
+      requires_user: true,
+      runnable_hint: false
+    }),
+    now: "2026-09-18T23:45:00.000Z",
+    headVerified: true,
+    ciVerified: true
+  });
+
+  assert.equal(
+    result.action,
+    PORTFOLIO_RECOVERY_ACTIONS.WAIT_PROJECT_BOUNDARY
+  );
+  assert.equal(result.cursor.project_id, "magasin-business-os");
+  assert.equal(result.cursor.task, "TASK-041");
+  assert.notEqual(result.cursor.status, "READY");
+});
+
+test("missing or mismatched canonical project state fails closed", () => {
+  const result = reconcilePortfolioCursor({
+    cursor: baseCursor(),
+    canonicalProjectId: "magasin-business-os",
+    canonicalTask: "TASK-041",
+    canonicalProjectState: runnableState("magasin-media-robot"),
+    now: "2026-09-18T23:45:00.000Z",
+    headVerified: true,
+    ciVerified: true
+  });
+
+  assert.equal(
+    result.action,
+    PORTFOLIO_RECOVERY_ACTIONS.WAIT_PROJECT_BOUNDARY
+  );
+  assert.equal(result.reason, "CANONICAL_PROJECT_STATE_MISSING_OR_MISMATCHED");
 });
 
 test("completed operation keys suppress duplicate side effects after restart", () => {
