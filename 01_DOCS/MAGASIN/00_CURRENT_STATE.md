@@ -16,7 +16,7 @@ P0 baseline gate has passed. Owner decision `DEC-003` reprioritizes the current 
 
 ## Current task
 
-**TASK-031 — Manager official schedule workspace — READY**
+**TASK-032 — Give/Swap V2 — READY**
 
 Canonical task/state files:
 
@@ -76,7 +76,7 @@ Supervisor Robot V1 remains active. Project state is returned to `AUTO_CONTINUE`
 
 ## Next action
 
-**AUTO_CONTINUE:** execute TASK-031. Replace the Manager hard-coded official schedule view with a scoped store/week reader backed by `get_manager_weekly_schedule`, integrated with the existing review/publish workflow. Keep published schedule state separate from registration/draft state; do not introduce a direct browser write to `work_schedules`.
+**AUTO_CONTINUE:** execute TASK-032. Separate true Give Shift from Swap Shift semantics. Reuse the existing atomic swap workflow for Swap; inventory whether Give can be implemented safely with the current live schema. Do not disguise Give as Swap. If a new production RPC/schema primitive is required, prepare the smallest versioned implementation + sanitized tests and stop at the production-apply Owner boundary.
 
 ## Session handoff
 
