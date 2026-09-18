@@ -26,7 +26,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.17";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.18";
 
 function parseArgs(argv) {
   const result = {
@@ -154,7 +154,7 @@ async function waitForTarget(page) {
 async function openTargetPage(adapter, target) {
   const existing = adapter.findPageForTarget(target);
   if (existing) return existing;
-  const page = await adapter.newChatPage(targetUrl(target));
+  const page = await adapter.reopenTargetPage(targetUrl(target));
   await page.waitForTimeout(1200);
   return page;
 }
