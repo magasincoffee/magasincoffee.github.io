@@ -43,3 +43,24 @@ test("runtime status path stays under local MAGASIN BusinessOS supervisor root",
   });
   assert.match(file, /MAGASIN[\\/]BusinessOS[\\/]supervisor[\\/]runtime-status\.json$/);
 });
+
+
+test("runtime status exposes why an action did not execute", () => {
+  const payload = buildRuntimeStatus({
+    projectState: {
+      project: "MAGASIN Business OS",
+      repository: "magasincoffee/magasincoffee.github.io",
+      current_phase: "P1",
+      current_task: "TASK-009",
+      current_task_title: "Store/product canonical model review",
+      next_task: "TASK-010",
+      autonomy: "AUTO_CONTINUE"
+    },
+    status: "READY",
+    decision: { action: "CONTINUE", reason: "assistant response completed" },
+    execution: { executed: false, reason: "awaiting observable assistant progress" }
+  });
+
+  assert.equal(payload.execution_executed, false);
+  assert.equal(payload.execution_reason, "awaiting observable assistant progress");
+});

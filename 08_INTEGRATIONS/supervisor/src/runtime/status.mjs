@@ -39,6 +39,7 @@ export function buildRuntimeStatus({
     decision_reason: decision?.reason || null,
     execution_target: execution?.target || null,
     execution_executed: Boolean(execution?.executed),
+    execution_reason: execution?.reason || null,
     retry_count: Number.isInteger(retryCount) ? retryCount : 0,
     error_name: errorName,
     updated_at: new Date().toISOString()

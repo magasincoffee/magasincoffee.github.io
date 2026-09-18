@@ -139,3 +139,22 @@ test("wait/stop decisions never mutate UI", async () => {
     assert.equal(result.executed, false);
   }
 });
+
+
+test("action surface targets only a visible composer", async () => {
+  let selectorSeen = "";
+  const page = fakePage();
+  const original = page.locator;
+  page.locator = (selector) => {
+    selectorSeen = selector;
+    return original(selector);
+  };
+
+  await executeDecision({
+    page,
+    decision: { action: ACTIONS.CONTINUE, instruction: "continue" },
+    dryRun: true
+  });
+
+  assert.match(selectorSeen, /:visible/);
+});
