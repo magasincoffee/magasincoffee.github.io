@@ -60,10 +60,13 @@ await check("manager_edit_uses_server_rpc",async()=>{
   return "manager_update_employee_availability; no direct table update";
 });
 
-await check("robot_button_is_draft_only_handoff",async()=>{
+await check("robot_requires_concrete_store_before_handoff",async()=>{
+  await page.locator("#mwr2StoreFilter").selectOption("");
   await page.locator("#mwr2Auto").click();
   const text=await page.locator("#mwr2Info").innerText();
-  if(!text.includes("lịch nháp")||!text.includes("review/chỉnh")) throw new Error(text);
+  if(!text.includes("chọn một chi nhánh cụ thể")) throw new Error(text);
+  const autoCalls=await page.evaluate(()=>globalThis.__MANAGER_REVIEW_QA.calls.filter(x=>x.name==="auto_generate_schedule_generation").length);
+  if(autoCalls!==0) throw new Error("robot should not run without a concrete store");
   return text;
 });
 
