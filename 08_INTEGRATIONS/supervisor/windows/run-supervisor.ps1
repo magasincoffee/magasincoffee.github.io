@@ -11,14 +11,59 @@ $target = Join-Path $root 'target.json'
 $stop = Join-Path $root 'STOP'
 $pidFile = Join-Path $root 'supervisor.pid'
 
+function Get-DedicatedChromeProcesses {
+    return @(Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" })
+}
+
 function Stop-DedicatedChrome {
     # Only terminate Chrome processes that explicitly use the dedicated
     # Supervisor profile. Never touch the Owner's normal Chrome profile.
-    Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" } |
-        ForEach-Object {
-            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+    Get-DedicatedChromeProcesses | ForEach-Object {
+        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Get-ExistingDedicatedCdpPort {
+    foreach ($process in (Get-DedicatedChromeProcesses)) {
+        if ($process.CommandLine -match '--remote-debugging-port=(\d+)') {
+            return [int]$Matches[1]
         }
+    }
+    return $null
+}
+
+function Get-FreeCdpPort {
+    foreach ($candidate in 9222..9232) {
+        $listener = Get-NetTCPConnection -State Listen -LocalPort $candidate -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+        if (-not $listener) { return $candidate }
+    }
+    throw 'No free Supervisor CDP port in range 9222-9232.'
+}
+
+function Test-DedicatedCdpEndpoint([int]$Port) {
+    $listener = Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if (-not $listener) { return $false }
+
+    $owner = Get-CimInstance Win32_Process -Filter "ProcessId=$($listener.OwningProcess)" -ErrorAction SilentlyContinue
+    if (
+        -not $owner -or
+        $owner.Name -ne 'chrome.exe' -or
+        -not $owner.CommandLine -or
+        $owner.CommandLine -notlike "*$profile*" -or
+        $owner.CommandLine -notmatch ("--remote-debugging-port=" + $Port + "(\s|$)")
+    ) {
+        return $false
+    }
+
+    try {
+        $version = Invoke-RestMethod -Uri "http://127.0.0.1:$Port/json/version" -TimeoutSec 2
+        return [bool]$version.webSocketDebuggerUrl
+    } catch {
+        return $false
+    }
 }
 
 if (-not (Test-Path $target)) {
@@ -38,20 +83,21 @@ try {
     if (-not $chrome) { throw 'Installed Google Chrome not found.' }
 
     while (-not (Test-Path $stop)) {
-        $ready = $false
-        try {
-            $null = Invoke-RestMethod -Uri 'http://127.0.0.1:9222/json/version' -TimeoutSec 2
-            $ready = $true
-        } catch {}
+        $cdpPort = Get-ExistingDedicatedCdpPort
+        if (-not $cdpPort) { $cdpPort = Get-FreeCdpPort }
+        $cdpBaseUrl = "http://127.0.0.1:$cdpPort"
+        $ready = Test-DedicatedCdpEndpoint -Port $cdpPort
 
         if (-not $ready) {
             Stop-DedicatedChrome
             Start-Sleep -Milliseconds 750
+            $cdpPort = Get-FreeCdpPort
+            $cdpBaseUrl = "http://127.0.0.1:$cdpPort"
 
             Start-Process -FilePath $chrome -ArgumentList @(
                 '--remote-debugging-address=127.0.0.1',
-                '--remote-debugging-port=9222',
-                "--user-data-dir=$profile",
+                "--remote-debugging-port=$cdpPort",
+                ('--user-data-dir="' + $profile + '"'),
                 '--no-first-run',
                 '--no-default-browser-check',
                 'https://chatgpt.com/'
@@ -59,13 +105,11 @@ try {
 
             for ($i = 0; $i -lt 30; $i++) {
                 if (Test-Path $stop) { break }
-                try {
-                    $null = Invoke-RestMethod -Uri 'http://127.0.0.1:9222/json/version' -TimeoutSec 2
+                if (Test-DedicatedCdpEndpoint -Port $cdpPort) {
                     $ready = $true
                     break
-                } catch {
-                    Start-Sleep -Seconds 1
                 }
+                Start-Sleep -Seconds 1
             }
         }
 
@@ -76,7 +120,7 @@ try {
 
         Push-Location $runtime
         try {
-            $nodeArgs = @('src/runtime/supervisor-loop-cli.mjs', '--cdp-url', 'http://127.0.0.1:9222', '--poll-ms', '5000')
+            $nodeArgs = @('src/runtime/supervisor-loop-cli.mjs', '--cdp-url', $cdpBaseUrl, '--poll-ms', '5000')
             if (-not $DryRun) { $nodeArgs += '--execute' }
             & node @nodeArgs
             $nodeExitCode = $LASTEXITCODE
