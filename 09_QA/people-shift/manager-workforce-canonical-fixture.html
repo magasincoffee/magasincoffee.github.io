@@ -9,6 +9,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
 <nav class="sidebar">
   <button data-view="workforce" class="active">Workforce</button>
   <button data-view="schedule">Lịch làm</button>
+  <button data-view="swap">Đổi ca</button>
 </nav>
 <section id="view-workforce" class="view active">
   <div class="tabs"><button data-tab="demand" class="active">Demand</button><button data-tab="review">Review</button><button data-tab="publish">Publish</button></div>
@@ -17,12 +18,13 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
   <div id="panel-publish" class="panel"></div>
 </section>
 <section id="view-schedule" class="view"></section>
+<section id="view-swap" class="view"></section>
 <script>
 (() => {
   const calls=[];
   const store={id:"store-a",code:"CN-QA-A",name:"Cửa hàng QA A"};
   const availability=[{availability_id:"av-1",user_id:"u-1",employee_name:"Nhân viên QA",username:"qa",work_date:"2026-09-21",start_time:"06:00",end_time:"12:00",preferred_store_id:"store-a",preferred_store_code:"CN-QA-A",availability_type:"AVAILABLE"}];
-  const state={generation:null,assignments:[],official:[]};
+  const state={generation:null,assignments:[],official:[],swapPending:true};
   const api={
     async rpc(name,args={}){
       calls.push({kind:"rpc",name,args:structuredClone(args||{})});
@@ -50,6 +52,9 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
         const end=new Date(args.p_week_start+"T00:00:00Z");end.setUTCDate(end.getUTCDate()+6);const to=end.toISOString().slice(0,10);
         return {data:state.official.filter(x=>(!args.p_store_id||x.store_id===args.p_store_id)&&x.work_date>=args.p_week_start&&x.work_date<=to),error:null};
       }
+      if(name==="list_shift_swap_requests_v1")return {data:state.swapPending?[{id:"swap-1",status:"PENDING",reason:"Đổi ca QA",requested_at:"2026-09-18T00:00:00Z",store_id:"store-a",store_code:"CN-QA-A",store_name:"Cửa hàng QA A",requester_id:"u-1",requester_name:"Nhân viên QA",requester_schedule_id:"schedule-1",target_schedule_id:"schedule-2",target_user_id:"u-2",target_user_name:"Bạn QA",requester_date:"2026-09-21",requester_start:"06:00",requester_end:"12:00",target_date:"2026-09-21",target_start:"12:00",target_end:"17:00"}]:[],error:null};
+      if(name==="approve_shift_swap"){state.swapPending=false;if(state.official[0]){state.official[0].user_id="u-2";state.official[0].employee_name="Bạn QA"}return {data:{id:args.p_swap_id,status:"APPROVED",swapped:true},error:null};}
+      if(name==="reject_shift_swap"){state.swapPending=false;return {data:{id:args.p_swap_id,status:"REJECTED"},error:null};}
       return {data:null,error:{message:"unexpected rpc "+name}};
     },
     from(name){calls.push({kind:"from",name});throw new Error("Direct table access forbidden:"+name)}
