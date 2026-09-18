@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "status": "ACCEPTANCE_DEFINED",
+  "task": "TASK-019",
+  "milestone": "DAY_8_10_PEOPLE_SHIFT",
+  "reuse": {
+    "employee_availability": true,
+    "manager_weekly_review": true,
+    "recurring_staffing_demand": true,
+    "auto_schedule_generation": true,
+    "review_publish_schedule": true,
+    "employee_approved_schedule": true,
+    "shift_swap_existing": true,
+    "attendance_existing": true
+  },
+  "verified_gaps": [
+    "trusted_people_roster_read_surface",
+    "stable_staffing_gap_read_model",
+    "dedicated_people_shift_browser_e2e"
+  ],
+  "staffing_gap": {
+    "threshold": "minimum_headcount",
+    "formula": "max(minimum_headcount-qualified_assigned_headcount,0)",
+    "stable_after_reload": true,
+    "fail_closed_on_incomplete_source": true,
+    "target_headcount_is_not_shortage_threshold": true
+  },
+  "people_roster": {
+    "mode": "OPERATIONAL_MINIMUM",
+    "allowed_fields": [
+      "profile_id",
+      "display_name",
+      "username",
+      "role",
+      "status",
+      "verified_store_scope"
+    ],
+    "forbidden_unverified_fields": [
+      "kpi_score",
+      "academy_score",
+      "salary",
+      "hr_notes"
+    ]
+  },
+  "required_behaviors": {
+    "canonical_numbered_routes": true,
+    "reuse_existing_schedule_engine": true,
+    "no_synthetic_people_metrics": true,
+    "preserve_role_store_scope": true,
+    "partial_source_fail_closed": true,
+    "no_production_write_in_e2e": true,
+    "no_production_migration_in_acceptance_gate": true
+  },
+  "acceptance": [
+    "manager_workforce_direct_route_uses_canonical_runtime",
+    "employee_availability_load_and_submit",
+    "manager_owner_weekly_availability_review",
+    "owner_staffing_demand",
+    "trusted_people_roster",
+    "existing_auto_generation_semantics_preserved",
+    "stable_staffing_gap_with_quality_metadata",
+    "owner_generate_review_publish",
+    "employee_reads_approved_schedule",
+    "partial_sources_do_not_create_synthetic_actuals",
+    "role_store_access_preserved",
+    "responsive_browser_e2e",
+    "swap_attendance_entry_points_regression"
+  ],
+  "next_tasks": [
+    "TASK-020",
+    "TASK-021",
+    "TASK-022"
+  ]
+}
