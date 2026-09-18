@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-024 — Manager Task route canonicalization + smoke regression**
+**TASK-025 — SOP/Task fail-closed UI integrity gate**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Run **TASK-024 — Manager Task route canonicalization + smoke regression**. Repair `/05_MANAGER/Cong-viec/` so it loads the current canonical Manager runtime/auth path instead of the removed legacy runtime, preserve role routing, add regression coverage, and verify the deep link in a deterministic browser smoke where practical. This is a GREEN technical-integrity fix: do not add Task writes, production schema changes, or new SOP/Task business rules.
+Run **TASK-025 — SOP/Task fail-closed UI integrity gate**. Remove hard-coded Manager Task examples from trusted presentation, replace Employee indefinite Task loading with an explicit not-connected state, keep Control Tower Task/SOP fail-closed, and verify Manager/Employee/Owner surfaces with deterministic browser regression. Do not add Task writes, production schema changes, or new SOP/Task business rules.
 
 ## Session handoff
 

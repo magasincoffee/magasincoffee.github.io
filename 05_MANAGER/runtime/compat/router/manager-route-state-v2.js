@@ -1,9 +1,10 @@
-/* MAGASIN Manager route persistence V2 — always bind to the top-level /manager/ URL */
+/* MAGASIN Manager route persistence V2 — bind to the canonical top-level /05_MANAGER/ URL */
 (function(window, document){
   'use strict';
   if(window.MAGASIN_MANAGER_ROUTE_STATE_V2) return;
   window.MAGASIN_MANAGER_ROUTE_STATE_V2 = true;
 
+  const PREFIX='/05_MANAGER';
   const MAP = {
     dashboard: '',
     staff: 'Nhan-su',
@@ -35,20 +36,20 @@
   }
 
   function topPath(){
-    try{return String(topWindow().location.pathname||'/manager/');}
-    catch(_){return '/manager/';}
+    try{return String(topWindow().location.pathname||`${PREFIX}/`);}
+    catch(_){return `${PREFIX}/`;}
   }
 
   function routeView(){
     const raw=topPath().replace(/^\/+|\/+$/g,'');
     const parts=raw.split('/');
-    if(parts[0].toLowerCase()!=='manager' || !parts[1]) return 'dashboard';
+    if(parts[0].toLowerCase()!==PREFIX.slice(1).toLowerCase() || !parts[1]) return 'dashboard';
     return reverse[String(parts[1]).toLowerCase()] || 'dashboard';
   }
 
   function routeFor(view){
     const slug=MAP[view]||'';
-    return slug ? `/manager/${slug}/` : '/manager/';
+    return slug ? `${PREFIX}/${slug}/` : `${PREFIX}/`;
   }
 
   function setRoute(view, replace){
