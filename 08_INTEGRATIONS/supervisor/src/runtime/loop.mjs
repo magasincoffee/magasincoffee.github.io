@@ -19,6 +19,18 @@ export class SupervisorLoopController {
     this.sawRunningAfterAction = false;
   }
 
+  markExternalContinuation(assistantMessageCount = 0, target = "EXTERNAL_CONTINUE") {
+    this.armed = false;
+    this.lastActionAt = this.now();
+    this.assistantCountAtAction = Number(assistantMessageCount || 0);
+    this.sawRunningAfterAction = false;
+    this.onEvent({
+      type: "ACTION_EXECUTED",
+      action: ACTIONS.CONTINUE,
+      target
+    });
+  }
+
   observeProgress(probe) {
     const snapshot = probe?.snapshot || {};
     const classification = probe?.classification || {};
