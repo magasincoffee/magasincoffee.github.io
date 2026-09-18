@@ -132,6 +132,7 @@ export class ChatGptUiAdapter {
           loginRequired: true,
           hasCaptcha: false,
           responseRunning: false,
+          assistantBusy: false,
           hasNetworkError: false,
           hasTransientError: false,
           hasContinueControl: false,
