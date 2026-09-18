@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "task": "TASK-027",
+  "decision": "DEC-003",
+  "status": "APPROVED",
+  "deferred_slice": {
+    "task": "TASK-026",
+    "domain": "SOP_TASK",
+    "state": "DEFERRED_BY_OWNER",
+    "owner_decisions_still_unresolved": [
+      "DST-001",
+      "DST-002",
+      "DST-003",
+      "DST-004",
+      "DST-005",
+      "DST-006"
+    ]
+  },
+  "evidence": {
+    "sources": [
+      "Lịch Đk Tuần",
+      "Lịch làm hàng tuần",
+      "REPOSITORY_WORKFORCE",
+      "LIVE_SUPABASE_READ_ONLY_INVENTORY"
+    ],
+    "private_rows_in_public_repo": false,
+    "observed_capabilities": [
+      "WEEKLY_AVAILABILITY",
+      "MULTI_WINDOW_PER_EMPLOYEE_WEEK",
+      "MULTI_BRANCH_SCHEDULE",
+      "CROSS_BRANCH_SUPPORT"
+    ]
+  },
+  "canonical_workflow": [
+    "EMPLOYEE_AVAILABILITY",
+    "MANAGER_REGISTRATION_REVIEW",
+    "STAFFING_REQUIREMENTS",
+    "ROBOT_DRAFT",
+    "MANAGER_ASSIGNMENT_REVIEW_EDIT",
+    "VALIDATE",
+    "REVIEWED",
+    "PUBLISH",
+    "EMPLOYEE_OFFICIAL_SCHEDULE",
+    "ATTENDANCE",
+    "GIVE_OR_SWAP",
+    "SCHEDULE_REFRESH",
+    "NOTIFICATION"
+  ],
+  "manager_capabilities": [
+    "VIEW_SCOPED_REGISTRATIONS",
+    "FILTER_WEEK_STORE",
+    "EDIT_REGISTRATION_VIA_RPC",
+    "EDIT_STAFFING_DEMAND",
+    "GENERATE_ROBOT_DRAFT",
+    "REVIEW_EDIT_ASSIGNMENTS",
+    "VALIDATE_REVIEW_PUBLISH",
+    "PROCESS_GIVE_SWAP",
+    "VIEW_OFFICIAL_SCHEDULE"
+  ],
+  "employee_capabilities": [
+    "REGISTER_AVAILABILITY",
+    "VIEW_SAVED_AVAILABILITY",
+    "VIEW_OFFICIAL_SCHEDULE",
+    "CLOCK_IN_OUT",
+    "REQUEST_GIVE_SHIFT",
+    "REQUEST_SWAP_SHIFT",
+    "RECEIVE_RELEVANT_NOTIFICATIONS"
+  ],
+  "notifications": [
+    "SCHEDULE_PUBLISHED",
+    "SCHEDULE_CHANGED",
+    "GIVE_SWAP_SUBMITTED",
+    "GIVE_SWAP_APPROVED",
+    "GIVE_SWAP_REJECTED",
+    "SHIFT_START_REMINDER",
+    "SHIFT_END_CHECKOUT_REMINDER"
+  ],
+  "existing_live_rpc_contracts": [
+    "get_manager_weekly_availability",
+    "manager_update_employee_availability",
+    "get_workforce_staffing_requirements",
+    "auto_generate_schedule_generation",
+    "get_schedule_generation_assignments",
+    "replace_schedule_generation_assignments",
+    "validate_schedule_generation_v1",
+    "review_schedule_generation",
+    "publish_schedule_generation",
+    "list_my_approved_schedules_v2",
+    "save_my_availability",
+    "submit_shift_swap_request",
+    "approve_shift_swap",
+    "reject_shift_swap",
+    "clock_in_for_schedule",
+    "clock_out_attendance"
+  ],
+  "guardrails": {
+    "robot_auto_publish": false,
+    "direct_browser_table_update_when_rpc_exists": false,
+    "production_schema_apply": false,
+    "production_schema_apply_requires_owner": true,
+    "private_employee_schedule_in_public_repo": false,
+    "exact_all_day_semantics_invented": false,
+    "email_calendar_credentials_in_git": false
+  },
+  "implementation_queue": [
+    "TASK-028",
+    "TASK-029",
+    "TASK-030",
+    "TASK-031",
+    "TASK-032",
+    "TASK-033",
+    "TASK-034",
+    "TASK-035"
+  ],
+  "required_project_state_after_gate": "READY"
+}
