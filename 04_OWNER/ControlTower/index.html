@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>MAGASIN · Owner Control Tower</title>
+<link rel="stylesheet" href="./control-tower-v1.css">
+</head>
+<body>
+<main class="shell">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow">MAGASIN BUSINESS OS</div>
+      <h1>Owner Control Tower</h1>
+      <p class="subtitle">Lớp quan sát read-only: việc gì cần Owner chú ý ngay.</p>
+    </div>
+    <a class="back" href="/04_OWNER/">← Trang Owner</a>
+  </div>
+
+  <section class="context" aria-label="Bối cảnh báo cáo">
+    <div class="context-card"><span class="label">Ngày báo cáo</span><strong id="reportingDate">—</strong></div>
+    <div class="context-card"><span class="label">Phạm vi</span><strong id="branchScope">ALL</strong></div>
+    <div class="context-card"><span class="label">Cập nhật</span><strong id="refreshedAt">—</strong></div>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <div class="card-head"><h2>Doanh thu</h2><span id="revenueQuality" class="quality-chip">—</span></div>
+      <div id="revenueValue" class="metric">—</div>
+      <div id="revenueMeta" class="meta"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><h2>Công nợ NCC</h2><span id="payableQuality" class="quality-chip">—</span></div>
+      <div id="payableValue" class="metric">—</div>
+      <div class="metric-row">
+        <div class="mini"><span class="label">Quá hạn</span><strong id="payableOverdue">—</strong></div>
+        <div class="mini"><span class="label">Đơn mở</span><strong id="payableOpenOrders">—</strong></div>
+      </div>
+      <div id="payableMeta" class="meta"></div>
+      <div class="actions"><a href="/nhap-hang/">Mở Mua hàng →</a></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><h2>Workforce</h2><span id="workforceQuality" class="quality-chip">—</span></div>
+      <div class="metric-row">
+        <div class="mini"><span class="label">Staffing gap</span><strong id="workforceGap">—</strong></div>
+        <div class="mini"><span class="label">Chưa xử lý</span><strong id="workforceUnresolved">—</strong></div>
+      </div>
+      <div id="workforceMeta" class="meta"></div>
+      <div class="actions"><a href="/04_OWNER/Workforce/">Mở Workforce →</a></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><h2>Tồn kho</h2><span id="inventoryQuality" class="quality-chip">—</span></div>
+      <div class="metric-row"><div class="mini"><span class="label">Cảnh báo</span><strong id="inventoryWarnings">—</strong></div></div>
+      <div id="inventoryMeta" class="meta"></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head"><h2>Task / SOP</h2><span id="taskQuality" class="quality-chip">—</span></div>
+      <div class="metric-row">
+        <div class="mini"><span class="label">Quá hạn</span><strong id="taskOverdue">—</strong></div>
+        <div class="mini"><span class="label">Đang mở</span><strong id="taskOpen">—</strong></div>
+      </div>
+      <div id="taskMeta" class="meta"></div>
+    </article>
+
+    <article class="card full">
+      <div class="card-head"><h2>Chất lượng dữ liệu</h2></div>
+      <div id="qualityList"></div>
+    </article>
+  </section>
+
+  <div class="notice">TASK-012 shell: mặc định không hiển thị số giả. Nguồn chưa tích hợp phải ở trạng thái GAP / NOT CONNECTED cho đến khi adapter thật được nối và kiểm tra.</div>
+</main>
+<script type="module" src="./control-tower-v1.js"></script>
+</body>
+</html>

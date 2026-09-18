@@ -17,8 +17,8 @@
 | TASK-010 | Database baseline/migration plan | 20m | schema review | DONE |
 | TASK-011 | Owner Control Tower vertical-slice plan | 20m | acceptance defined | DONE |
 
-| TASK-012 | Control Tower shell + normalized fixture contract | 20m | unit/fixture tests | READY |
-| TASK-013 | Owner home navigation + route/auth integration | 15m | integration test | QUEUED |
+| TASK-012 | Control Tower shell + normalized fixture contract | 20m | unit/fixture tests | DONE |
+| TASK-013 | Owner home navigation + route/auth integration | 15m | integration test | READY |
 | TASK-014 | Procurement/payables read adapter | 20m | adapter tests | QUEUED |
 | TASK-015 | Workforce attention read adapter | 20m | adapter tests | QUEUED |
 | TASK-016 | Revenue read-adapter + reconciliation quality gate | 20m | contract tests | QUEUED |
