@@ -281,7 +281,7 @@ async function runOwnerNavigationScenario() {
   await waitForOwnerSources(page);
 
   assert.equal((await page.locator("#ownerIdentity").textContent())?.trim(), "E2E Owner · OWNER");
-  assert.equal((await page.locator("#reportingDate").textContent())?.trim(), "2026-09-18");
+  assert.equal((await page.locator("#reportingDate").textContent())?.trim(), "2026-09-18");\n\n  await page.waitForFunction(() =>\n    document.querySelector("#payableQuality")?.getAttribute("data-quality") === "ACTUAL"\n  );
   assert.equal(
     (await page.locator("#globalConfidence").textContent())?.trim(),
     "ACTUAL 2 · ESTIMATE 0 · GAP 0 · NOT CONNECTED 3"
@@ -301,7 +301,7 @@ async function runOwnerNavigationScenario() {
 
   assert.equal(await page.locator("#inventoryQuality").getAttribute("data-quality"), "NOT_CONNECTED");
   assert.equal(await page.locator("#taskQuality").getAttribute("data-quality"), "NOT_CONNECTED");
-  assert.equal(await page.locator("#qualityList .quality-row").count(), 5);
+  assert.equal(await page.locator("#qualityList .quality-row").count(), 5);\n  assert.equal(\n    (await page.locator("#globalConfidence").textContent())?.trim(),\n    "2/5 ACTUAL · 0 ESTIMATE · 0 GAP · 3 NOT CONNECTED"\n  );
 
   assert.equal(
     await page.locator('a[href="/nhap-hang/"]').getAttribute("href"),
@@ -338,7 +338,7 @@ async function runOwnerNavigationScenario() {
     payablesActual: true,
     workforceActual: true,
     drillDownRoute: true,
-    desktopLayout: true
+    desktopLayout: true,\n    globalConfidence: true
   };
 }
 
