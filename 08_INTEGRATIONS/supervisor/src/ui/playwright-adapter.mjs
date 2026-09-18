@@ -1,0 +1,161 @@
+import fs from "node:fs";
+import path from "node:path";
+
+import { classifyUiSnapshot } from "./classifier.mjs";
+import { collectSafeUiSnapshot } from "./snapshot.mjs";
+
+export function defaultSupervisorProfileDir(env = process.env) {
+  const base = env.LOCALAPPDATA || env.HOME || process.cwd();
+  return path.join(base, "MAGASIN", "BusinessOS", "supervisor", "browser_profile");
+}
+
+export function resolveChromeExecutable(env = process.env) {
+  const explicit = env.MAGASIN_SUPERVISOR_CHROME;
+  if (explicit && fs.existsSync(explicit)) return explicit;
+
+  const candidates = [
+    env.ProgramFiles && path.join(env.ProgramFiles, "Google", "Chrome", "Application", "chrome.exe"),
+    env["ProgramFiles(x86)"] && path.join(env["ProgramFiles(x86)"], "Google", "Chrome", "Application", "chrome.exe"),
+    env.LOCALAPPDATA && path.join(env.LOCALAPPDATA, "Google", "Chrome", "Application", "chrome.exe")
+  ].filter(Boolean);
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) || null;
+}
+
+export function isChatGptUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" &&
+      (url.hostname === "chatgpt.com" || url.hostname.endsWith(".chatgpt.com"));
+  } catch {
+    return false;
+  }
+}
+
+export function isTransientNavigationError(error) {
+  const message = String(error?.message || error || "");
+  return /execution context was destroyed|most likely because of a navigation|target page, context or browser has been closed|navigation/i.test(message);
+}
+
+export class ChatGptUiAdapter {
+  constructor({
+    profileDir = defaultSupervisorProfileDir(),
+    chromeExecutable = resolveChromeExecutable(),
+    url = "https://chatgpt.com/",
+    headless = false,
+    timeoutMs = 60_000,
+    settleMs = 2_500,
+    cdpUrl = null
+  } = {}) {
+    this.profileDir = profileDir;
+    this.chromeExecutable = chromeExecutable;
+    this.url = url;
+    this.headless = headless;
+    this.timeoutMs = timeoutMs;
+    this.settleMs = settleMs;
+    this.cdpUrl = cdpUrl;
+    this.browser = null;
+    this.context = null;
+    this.page = null;
+    this.attachedOverCdp = false;
+  }
+
+  async open() {
+    const { chromium } = await import("playwright-core");
+
+    if (this.cdpUrl) {
+      this.browser = await chromium.connectOverCDP(this.cdpUrl);
+      this.attachedOverCdp = true;
+      this.context = this.browser.contexts()[0] || null;
+      if (!this.context) {
+        throw new Error("real Chrome CDP connection has no browser context");
+      }
+      this.context.setDefaultTimeout(this.timeoutMs);
+      this.page = this.getActivePage();
+      if (!this.page) {
+        throw new Error("real Chrome CDP connection has no open page");
+      }
+      await this.page.waitForTimeout(this.settleMs);
+      return this.page;
+    }
+
+    if (!this.chromeExecutable) {
+      throw new Error("Google Chrome executable was not found");
+    }
+
+    fs.mkdirSync(this.profileDir, { recursive: true });
+
+    this.context = await chromium.launchPersistentContext(this.profileDir, {
+      executablePath: this.chromeExecutable,
+      headless: this.headless,
+      acceptDownloads: false,
+      viewport: { width: 1440, height: 1000 }
+    });
+
+    this.context.setDefaultTimeout(this.timeoutMs);
+    this.page = this.context.pages()[0] || await this.context.newPage();
+    await this.page.goto(this.url, {
+      waitUntil: "domcontentloaded",
+      timeout: this.timeoutMs
+    });
+    await this.page.waitForTimeout(this.settleMs);
+    return this.page;
+  }
+
+  getActivePage() {
+    if (!this.context) return null;
+
+    const pages = this.context.pages().filter((page) => !page.isClosed());
+    if (!pages.length) {
+      this.page = null;
+      return null;
+    }
+
+    const chatGptPages = pages.filter((page) => isChatGptUrl(page.url()));
+    this.page = chatGptPages.at(-1) || pages.at(-1);
+    return this.page;
+  }
+
+  async probe() {
+    const page = this.getActivePage();
+    if (!page) throw new Error("adapter is not open");
+
+    if (!isChatGptUrl(page.url())) {
+      return {
+        snapshot: {
+          schemaVersion: "1.0",
+          pathKind: "external_auth",
+          conversationPath: false,
+          composerReady: false,
+          assistantMessageCount: 0,
+          userMessageCount: 0,
+          loginRequired: true,
+          hasCaptcha: false,
+          responseRunning: false,
+          hasNetworkError: false,
+          hasTransientError: false,
+          hasContinueControl: false,
+          hasRetryControl: false
+        },
+        classification: {
+          uiState: "LOGIN_REQUIRED",
+          observation: "AUTH_REQUIRED"
+        }
+      };
+    }
+
+    const snapshot = await collectSafeUiSnapshot(page);
+    const classification = classifyUiSnapshot(snapshot);
+    return { snapshot, classification };
+  }
+
+  async close() {
+    if (this.context && !this.attachedOverCdp) {
+      await this.context.close();
+    }
+    this.browser = null;
+    this.context = null;
+    this.page = null;
+    this.attachedOverCdp = false;
+  }
+}
