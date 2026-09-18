@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-018 — Control Tower browser E2E + Day-7 usability gate**
+**TASK-019 — People/Shift current-system gap review + acceptance contract**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Implement **TASK-018 — Control Tower browser E2E + Day-7 usability gate**, verifying Owner navigation, authenticated/denied behavior, source-quality rendering, drill-down links and responsive usability without production writes.
+Run **TASK-019 — People/Shift current-system gap review + acceptance contract**. Inventory the existing Workforce/employee/availability/schedule/staffing-gap implementation and evidence, identify only the verified Day 8–10 gaps, define acceptance, then open the smallest implementation queue required.
 
 ## Session handoff
 
