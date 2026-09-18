@@ -1,6 +1,6 @@
 # TASK-019 — People / Shift Current-System Gap Review + Acceptance Contract
 
-**Status:** ACCEPTANCE DEFINED  
+**Status:** DAY-10 GATE PASSED  
 **Date:** 2026-09-18  
 **Milestone:** Day 8–10 People / Shift.
 
@@ -141,3 +141,16 @@ No additional Day 8–10 task is opened unless one of these tests reveals a repr
 **PASS — current system inventory, verified gaps and minimal implementation queue are defined.**
 
 No Owner decision is required before TASK-020.
+
+## 9. Day-10 closure — TASK-020 to TASK-022
+
+**Result: PASS.**
+
+- GAP-PS-01 is closed by TASK-020/TASK-021: staffing-gap read adapter is read-only, mirrors the existing `minimum_headcount` shortage semantics, fails closed on missing source, and is integrated into Control Tower with section-local isolation.
+- GAP-PS-02 is closed by TASK-022: deterministic Playwright browser E2E loads the canonical Owner Publish, Employee Availability and Employee Schedule engines against sanitized in-memory mocks.
+- Verified browser sequence: employee availability save → Owner generation `DRAFT` → review `REVIEWED` → publish `PUBLISHED` → Employee approved schedule visible.
+- Browser diagnostics: unexpected console errors 0; page errors 0; request failures 0; HTTP 5xx 0; external network requests 0.
+- Existing Owner Control Tower unit/regression and browser E2E remain green.
+- GAP-PS-03 remains a documented deferred live-schema reproducibility dependency; no speculative production migration/backfill was applied.
+- No new scheduling, transfer, attendance, payroll or KPI business rule was introduced.
+- No reproducible product defect was found, so no additional Day 8–10 task is opened.
