@@ -16,7 +16,7 @@ P0 baseline gate has already passed according to the Master Plan. Domain Discove
 
 ## Current task
 
-**TASK-025 — SOP/Task fail-closed UI integrity gate**
+**TASK-026 — SOP/Task rule decision pack + data/migration plan**
 
 Canonical task/state files:
 
@@ -82,7 +82,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-Run **TASK-025 — SOP/Task fail-closed UI integrity gate**. Remove hard-coded Manager Task examples from trusted presentation, replace Employee indefinite Task loading with an explicit not-connected state, keep Control Tower Task/SOP fail-closed, and verify Manager/Employee/Owner surfaces with deterministic browser regression. Do not add Task writes, production schema changes, or new SOP/Task business rules.
+Run **TASK-026 — SOP/Task rule decision pack + data/migration plan**. Convert the unresolved exception/corrective/responsibility/verify-close/overdue/evidence semantics into an explicit Owner decision pack and a minimum versioned data/migration plan that does not invent answers. Prepare offline contracts/tests only; do not apply production schema or enable Task writes. Enter WAIT_USER only when the exact Owner decisions are packaged and required.
 
 ## Session handoff
 
