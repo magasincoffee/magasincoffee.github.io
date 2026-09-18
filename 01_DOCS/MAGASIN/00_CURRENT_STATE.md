@@ -117,6 +117,7 @@ Safe implementation completed:
 - Supabase server-secret authorization model;
 - config validation before queue claim;
 - no provider selected or invented;
+- exact MAGASIN sender email has been supplied by Owner and recorded in the canonical contract;
 - Edge Function not deployed;
 - no provider secrets set;
 - no email sent;
@@ -124,12 +125,13 @@ Safe implementation completed:
 
 Owner must provide exactly:
 
-1. concrete system email provider;
-2. exact MAGASIN sender email address.
+1. concrete system email provider.
+
+Resolved: exact MAGASIN sender email = `bachvanti1994@gmail.com`.
 
 Optional: reply-to address if different.
 
-After Owner supplies these, implement only the selected adapter, store credentials in Supabase Edge Function Secrets outside Git, deploy, send one bounded test email, verify `PENDING → PROCESSING → SENT`, then close TASK-035.
+After Owner supplies the provider, implement only the selected adapter, store provider credentials/runtime configuration in Supabase Edge Function Secrets outside Git, deploy, send one bounded test email, verify `PENDING → PROCESSING → SENT`, then close TASK-035.
 
 External calendar remains disabled.
 
