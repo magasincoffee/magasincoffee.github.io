@@ -21,10 +21,19 @@
   "owner_boundary": {
     "task": "TASK-035",
     "resolved": [
-      "EXACT_MAGASIN_SENDER_EMAIL"
-    ],
-    "pending": [
+      "EXACT_MAGASIN_SENDER_EMAIL",
       "CONCRETE_EMAIL_PROVIDER"
-    ]
+    ],
+    "pending": []
+  },
+  "activation_boundary": {
+    "reason": "GMAIL_OAUTH_CREDENTIALS_REQUIRED",
+    "pending": [
+      "GMAIL_OAUTH_CLIENT_ID",
+      "GMAIL_OAUTH_CLIENT_SECRET",
+      "GMAIL_OAUTH_REFRESH_TOKEN"
+    ],
+    "deploy_edge_function": false,
+    "send_email": false
   }
 }
