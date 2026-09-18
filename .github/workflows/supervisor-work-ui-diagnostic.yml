@@ -1,0 +1,134 @@
+name: Supervisor Work UI Diagnostic
+
+on:
+  push:
+    branches:
+      - 'diag/supervisor-user-pending-work-ui-*'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: self-hosted
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inspect sanitized ChatGPT DOM metadata
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
+          $runtime = Join-Path $root 'runtime'
+          $profile = Join-Path $root 'browser_profile'
+          $port = $null
+
+          foreach ($candidate in 9222..9232) {
+            $listener = Get-NetTCPConnection -State Listen -LocalPort $candidate -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $listener) { continue }
+
+            $owner = Get-CimInstance Win32_Process -Filter "ProcessId=$($listener.OwningProcess)" -ErrorAction SilentlyContinue
+            if (
+              $owner -and
+              $owner.Name -eq 'chrome.exe' -and
+              $owner.CommandLine -and
+              $owner.CommandLine -like "*$profile*"
+            ) {
+              $port = $candidate
+              break
+            }
+          }
+
+          if (-not $port) {
+            Write-Host 'DIAG_CDP_PORT=missing'
+            exit 1
+          }
+
+          Write-Host "DIAG_CDP_PORT=$port"
+          $env:MAGASIN_DIAG_CDP = "http://127.0.0.1:$port"
+          $env:MAGASIN_RUNTIME = $runtime
+
+          @'
+          import path from "node:path";
+          import { pathToFileURL } from "node:url";
+
+          const runtime = process.env.MAGASIN_RUNTIME;
+          const cdp = process.env.MAGASIN_DIAG_CDP;
+          const playwrightPath = path.join(runtime, "node_modules", "playwright-core", "index.js");
+          const { chromium } = await import(pathToFileURL(playwrightPath).href);
+
+          const browser = await chromium.connectOverCDP(cdp);
+          const context = browser.contexts()[0];
+          const pages = context.pages().filter((page) => !page.isClosed());
+
+          const chatPages = pages.filter((page) => {
+            try { return new URL(page.url()).hostname === "chatgpt.com"; }
+            catch { return false; }
+          });
+
+          console.log("DIAG_CHAT_PAGE_COUNT=" + chatPages.length);
+
+          for (let index = 0; index < chatPages.length; index++) {
+            const page = chatPages[index];
+            const meta = await page.evaluate(() => {
+              const visible = (el) => {
+                if (!el) return false;
+                const style = getComputedStyle(el);
+                const box = el.getBoundingClientRect();
+                return style.display !== "none" &&
+                  style.visibility !== "hidden" &&
+                  box.width > 0 &&
+                  box.height > 0;
+              };
+
+              const messageNodes = Array.from(document.querySelectorAll("[data-message-author-role]"));
+              const roles = messageNodes.map((el) => el.getAttribute("data-message-author-role"));
+
+              const visibleTestIds = Array.from(document.querySelectorAll("[data-testid]"))
+                .filter(visible)
+                .map((el) => el.getAttribute("data-testid"))
+                .filter(Boolean);
+
+              const roleCounts = {};
+              for (const el of Array.from(document.querySelectorAll("[role]")).filter(visible)) {
+                const role = el.getAttribute("role") || "";
+                roleCounts[role] = (roleCounts[role] || 0) + 1;
+              }
+
+              const semanticCandidates = Array.from(
+                document.querySelectorAll("main article, main section, main [data-testid], main [aria-busy='true'], main [role='status'], main [role='alert']")
+              )
+                .filter(visible)
+                .slice(-120)
+                .map((el) => ({
+                  tag: el.tagName.toLowerCase(),
+                  role: el.getAttribute("role"),
+                  testId: el.getAttribute("data-testid"),
+                  ariaBusy: el.getAttribute("aria-busy"),
+                  authorRole: el.getAttribute("data-message-author-role"),
+                  childCount: el.children.length
+                }));
+
+              return {
+                path: location.pathname,
+                roles,
+                assistantCount: roles.filter((x) => x === "assistant").length,
+                userCount: roles.filter((x) => x === "user").length,
+                lastRole: roles.at(-1) || null,
+                visibleTestIds: [...new Set(visibleTestIds)].slice(-80),
+                roleCounts,
+                semanticCandidates
+              };
+            });
+
+            console.log("DIAG_PAGE_" + index + "=" + JSON.stringify(meta));
+          }
+
+          await browser.close();
+          '@ | Set-Content -Path (Join-Path $env:RUNNER_TEMP 'magasin-chat-dom-diag.mjs') -Encoding UTF8
+
+          node (Join-Path $env:RUNNER_TEMP 'magasin-chat-dom-diag.mjs')
