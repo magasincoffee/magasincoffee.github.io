@@ -725,7 +725,10 @@ while (true) {
       maxRetries: 2,
       handoff: handoffPending && !ownerWait,
       ownerReconcile: ownerReconcileActive,
-      ownerRecheck: manualOwnerRecheck
+      ownerRecheck: manualOwnerRecheck,
+      ownerReconcileAwaitingResponse: Boolean(
+        ownerReconcileState?.awaitingResponse
+      )
     });
 
     if (
