@@ -174,7 +174,9 @@ export function newRegistry() {
       target: null,
       generation: 0,
       awaiting_response: false,
-      last_processed_digest: null
+      last_processed_digest: null,
+      bootstrap_consumed: false,
+      creation_latch: null
     },
     workers: {}
   };
@@ -186,7 +188,9 @@ export function sanitizeRegistry(registry = {}) {
     target: registry?.brain?.target || null,
     generation: Number(registry?.brain?.generation || 0),
     awaiting_response: Boolean(registry?.brain?.awaiting_response),
-    last_processed_digest: registry?.brain?.last_processed_digest || null
+    last_processed_digest: registry?.brain?.last_processed_digest || null,
+    bootstrap_consumed: Boolean(registry?.brain?.bootstrap_consumed),
+    creation_latch: registry?.brain?.creation_latch || null
   };
 
   for (const [key, worker] of Object.entries(registry.workers || {})) {
@@ -200,7 +204,9 @@ export function sanitizeRegistry(registry = {}) {
       instruction_digest: worker.instruction_digest || null,
       last_result_relay_id: worker.last_result_relay_id || null,
       last_result_digest: worker.last_result_digest || null,
-      relay_inflight_id: worker.relay_inflight_id || null
+      relay_inflight_id: worker.relay_inflight_id || null,
+      creation_latch: worker.creation_latch || null,
+      dispatch_latch: worker.dispatch_latch || null
     };
   }
   return safe;
