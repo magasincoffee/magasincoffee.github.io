@@ -197,7 +197,7 @@ test("v45 startup migration clears only legacy relay blocked metadata across all
   assert.equal("reconcile_started_at" in registry.lanes["lane-1"].relay_inflight, false);
 });
 
-test("v45 runtime performs blocked relay migration before lane processing", async () => {
+test("current runtime performs blocked relay migration before lane processing", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -205,5 +205,5 @@ test("v45 runtime performs blocked relay migration before lane processing", asyn
   assert.match(source, /startupRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
   assert.match(source, /RUNTIME_RELAY_BLOCKED_LATCHES_MIGRATED/);
   assert.match(source, /loopRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
-  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-19\.46"/);
+  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-19\.47"/);
 });
