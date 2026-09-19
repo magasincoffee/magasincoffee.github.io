@@ -86,22 +86,31 @@ export class ChatGptUiAdapter {
     this.targetRecoveryPages = new Map();
   }
 
+  async reconnectOverCdp() {
+    if (!this.cdpUrl) throw new Error("CDP reconnect requires cdpUrl");
+
+    const { chromium } = await import("playwright-core");
+    const resolvedCdpEndpoint = await resolveCdpEndpoint(this.cdpUrl);
+    this.browser = await chromium.connectOverCDP(resolvedCdpEndpoint);
+    this.attachedOverCdp = true;
+    this.context = this.browser.contexts()[0] || null;
+    if (!this.context) {
+      throw new Error("real Chrome CDP connection has no browser context");
+    }
+    this.context.setDefaultTimeout(this.timeoutMs);
+    this.page = this.getActivePage();
+    if (!this.page) {
+      throw new Error("real Chrome CDP connection has no open page");
+    }
+    this.targetRecoveryPages.clear();
+    return this.page;
+  }
+
   async open() {
     const { chromium } = await import("playwright-core");
 
     if (this.cdpUrl) {
-      const resolvedCdpEndpoint = await resolveCdpEndpoint(this.cdpUrl);
-      this.browser = await chromium.connectOverCDP(resolvedCdpEndpoint);
-      this.attachedOverCdp = true;
-      this.context = this.browser.contexts()[0] || null;
-      if (!this.context) {
-        throw new Error("real Chrome CDP connection has no browser context");
-      }
-      this.context.setDefaultTimeout(this.timeoutMs);
-      this.page = this.getActivePage();
-      if (!this.page) {
-        throw new Error("real Chrome CDP connection has no open page");
-      }
+      await this.reconnectOverCdp();
       await this.page.waitForTimeout(this.settleMs);
       return this.page;
     }
@@ -250,11 +259,31 @@ export class ChatGptUiAdapter {
 
   async newChatPage(url = "https://chatgpt.com/") {
     if (!this.context) throw new Error("adapter is not open");
-    const page = await this.context.newPage();
-    await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout: this.timeoutMs
-    });
+
+    let page = null;
+    try {
+      page = await this.context.newPage();
+    } catch (error) {
+      if (!this.cdpUrl || !isTransientNavigationError(error)) throw error;
+      await this.reconnectOverCdp();
+      page = await this.context.newPage();
+    }
+
+    try {
+      await page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: this.timeoutMs
+      });
+    } catch (error) {
+      if (!this.cdpUrl || !isTransientNavigationError(error)) throw error;
+      await this.reconnectOverCdp();
+      page = await this.context.newPage();
+      await page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: this.timeoutMs
+      });
+    }
+
     await page.waitForTimeout(this.settleMs);
     return page;
   }
