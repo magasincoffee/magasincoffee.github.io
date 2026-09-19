@@ -41,9 +41,9 @@ function New-DefaultConfig {
         schema_version = 'three-lane-config.v1'
         mode = 'THREE_LANE_V1'
         lanes = @(
-            [ordered]@{ lane_id='lane-1'; project_name='Dự án 1'; brain_url=''; work_url=''; work_url_revision=0; enabled=$false },
-            [ordered]@{ lane_id='lane-2'; project_name='Dự án 2'; brain_url=''; work_url=''; work_url_revision=0; enabled=$false },
-            [ordered]@{ lane_id='lane-3'; project_name='Dự án 3'; brain_url=''; work_url=''; work_url_revision=0; enabled=$false }
+            [ordered]@{ lane_id='lane-1'; project_name='Dự án 1'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; enabled=$false },
+            [ordered]@{ lane_id='lane-2'; project_name='Dự án 2'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; enabled=$false },
+            [ordered]@{ lane_id='lane-3'; project_name='Dự án 3'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; enabled=$false }
         )
     }
 }
@@ -201,6 +201,10 @@ function Save-Lane(
     $lane = Get-LaneConfig $config $LaneId
     if (-not $lane) { throw "Không tìm thấy $LaneId" }
 
+    if (-not $lane.PSObject.Properties['brain_url_revision']) {
+        $initialBrainRevision = if ([string]$lane.brain_url) { 1 } else { 0 }
+        $lane | Add-Member -NotePropertyName 'brain_url_revision' -NotePropertyValue $initialBrainRevision
+    }
     if (-not $lane.PSObject.Properties['work_url']) {
         $lane | Add-Member -NotePropertyName 'work_url' -NotePropertyValue ''
     }
@@ -208,16 +212,44 @@ function Save-Lane(
         $lane | Add-Member -NotePropertyName 'work_url_revision' -NotePropertyValue 0
     }
 
+    $newBrainUrl = if ($BrainUrl) { $BrainUrl.Trim() } else { '' }
     $newWorkUrl = if ($WorkUrl) { $WorkUrl.Trim() } else { '' }
+    if ([string]$lane.brain_url -ne $newBrainUrl) {
+        $lane.brain_url_revision = [int]$lane.brain_url_revision + 1
+    }
     if ([string]$lane.work_url -ne $newWorkUrl) {
         $lane.work_url_revision = [int]$lane.work_url_revision + 1
     }
 
     $lane.project_name = if ($ProjectName) { $ProjectName.Trim() } else { $LaneId }
-    $lane.brain_url = $BrainUrl.Trim()
+    $lane.brain_url = $newBrainUrl
     $lane.work_url = $newWorkUrl
     $lane.enabled = $Enabled
     Write-JsonAtomic $configFile $config
+}
+
+function Save-BrainTarget(
+    [string]$LaneId,
+    [string]$BrainUrl
+) {
+    $config = Ensure-Config
+    $lane = Get-LaneConfig $config $LaneId
+    if (-not $lane) { throw "Không tìm thấy $LaneId" }
+
+    if (-not $lane.PSObject.Properties['brain_url_revision']) {
+        $initialBrainRevision = if ([string]$lane.brain_url) { 1 } else { 0 }
+        $lane | Add-Member -NotePropertyName 'brain_url_revision' -NotePropertyValue $initialBrainRevision
+    }
+
+    $newBrainUrl = if ($BrainUrl) { $BrainUrl.Trim() } else { '' }
+    if ([string]$lane.brain_url -ne $newBrainUrl) {
+        $lane.brain_url_revision = [int]$lane.brain_url_revision + 1
+        $lane.brain_url = $newBrainUrl
+        Write-JsonAtomic $configFile $config
+        return $true
+    }
+
+    return $false
 }
 
 [Windows.Forms.Application]::EnableVisualStyles()
@@ -325,8 +357,14 @@ for ($i = 0; $i -lt 3; $i++) {
     $openBrain = New-Object Windows.Forms.Button
     $openBrain.Text = 'MỞ BỘ NÃO'
     $openBrain.Location = New-Object Drawing.Point(900, 52)
-    $openBrain.Size = New-Object Drawing.Size(225, 34)
+    $openBrain.Size = New-Object Drawing.Size(108, 34)
     $panel.Controls.Add($openBrain)
+
+    $saveBrain = New-Object Windows.Forms.Button
+    $saveBrain.Text = 'LƯU BỘ NÃO'
+    $saveBrain.Location = New-Object Drawing.Point(1017, 52)
+    $saveBrain.Size = New-Object Drawing.Size(108, 34)
+    $panel.Controls.Add($saveBrain)
 
     $workLabel = New-Object Windows.Forms.Label
     $workLabel.Text = 'LINK WORK (TÙY CHỌN)'
@@ -394,6 +432,7 @@ for ($i = 0; $i -lt 3; $i++) {
         Start = $startButton
         Stop = $stopButton
         OpenBrain = $openBrain
+        SaveBrain = $saveBrain
         OpenWork = $openWork
         ResetWork = $resetWork
     }
@@ -446,6 +485,32 @@ for ($i = 0; $i -lt 3; $i++) {
         Open-RobotUrl $laneUi[$id].Brain.Text
     })
     $openBrain.Tag = $currentLaneId
+
+    $saveBrain.Add_Click({
+        $id = $this.Tag
+        $ui = $laneUi[$id]
+        $brainUrl = $ui.Brain.Text.Trim()
+        if (-not (Test-ChatConversationUrl $brainUrl)) {
+            [Windows.Forms.MessageBox]::Show(
+                'LINK BỘ NÃO không hợp lệ. Hãy dán đúng link cuộc trò chuyện ChatGPT mới.',
+                'MAGASIN BUSINESS OS',
+                'OK',
+                'Warning'
+            ) | Out-Null
+            return
+        }
+
+        $changed = Save-BrainTarget $id $brainUrl
+        if ($changed) {
+            [Windows.Forms.MessageBox]::Show(
+                'Đã lưu Bộ não mới. Robot sẽ chuyển sang Bộ não này ở vòng xử lý kế tiếp, kể cả khi Work hiện tại vẫn đang chạy.',
+                'MAGASIN BUSINESS OS',
+                'OK',
+                'Information'
+            ) | Out-Null
+        }
+    })
+    $saveBrain.Tag = $currentLaneId
 
     $openWork.Add_Click({
         $id = $this.Tag
@@ -516,9 +581,21 @@ function Refresh-Ui {
         }
 
         if (-not $ui.Project.Focused) { $ui.Project.Text = [string]$cfg.project_name }
-        if (-not $ui.Brain.Focused) { $ui.Brain.Text = [string]$cfg.brain_url }
 
         $enabled = [bool]$cfg.enabled
+        if (-not $ui.Brain.Focused) {
+            if ($enabled -and $st -and $st.brain_url) {
+                $ui.Brain.Text = [string]$st.brain_url
+            } elseif ($enabled -and $reg -and $reg.brain_url) {
+                $ui.Brain.Text = [string]$reg.brain_url
+            } elseif ($cfg -and $cfg.brain_url) {
+                $ui.Brain.Text = [string]$cfg.brain_url
+            } elseif ($reg -and $reg.brain_url) {
+                $ui.Brain.Text = [string]$reg.brain_url
+            } else {
+                $ui.Brain.Text = ''
+            }
+        }
         if (-not $ui.Work.Focused) {
             if ($enabled -and $st -and $st.work_url) {
                 $ui.Work.Text = [string]$st.work_url
@@ -534,10 +611,11 @@ function Refresh-Ui {
         }
 
         $ui.Project.Enabled = -not $enabled
-        $ui.Brain.Enabled = -not $enabled
+        $ui.Brain.Enabled = $true
         $ui.Work.Enabled = -not $enabled
         $ui.Start.Enabled = -not $enabled
         $ui.Stop.Enabled = $enabled
+        $ui.SaveBrain.Enabled = $true
 
         $state = if ($st -and $st.status) { [string]$st.status } elseif ($enabled) { 'STARTING' } else { 'STOPPED' }
         $ui.Status.Text = Get-FriendlyStatus $state
