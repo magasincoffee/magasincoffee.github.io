@@ -110,12 +110,15 @@ try {
             $cdpPort = Get-FreeCdpPort
             $cdpBaseUrl = "http://127.0.0.1:$cdpPort"
 
-            Start-Process -FilePath $chrome -ArgumentList @(
+            # Keep the real Supervisor Chrome UI available for CDP, but automatic
+            # boot/recovery must not jump in front of the Owner.
+            Start-Process -FilePath $chrome -WindowStyle Minimized -ArgumentList @(
                 '--remote-debugging-address=127.0.0.1',
                 "--remote-debugging-port=$cdpPort",
                 ('--user-data-dir="' + $profile + '"'),
                 '--no-first-run',
                 '--no-default-browser-check',
+                '--start-minimized',
                 'https://chatgpt.com/'
             )
 
