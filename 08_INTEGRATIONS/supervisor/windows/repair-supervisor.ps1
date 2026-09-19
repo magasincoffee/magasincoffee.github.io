@@ -11,6 +11,7 @@ $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $runtime = Join-Path $root 'runtime'
 $runtimeLoop = Join-Path $runtime 'src\runtime\supervisor-loop-cli.mjs'
 $runtimeBrainWorker = Join-Path $runtime 'src\runtime\brain-worker-cli.mjs'
+$runtimeThreeLane = Join-Path $runtime 'src\runtime\three-lane-cli.mjs'
 $runtimeRun = Join-Path $runtime 'windows\run-supervisor.ps1'
 $runtimeStart = Join-Path $runtime 'windows\start-supervisor.ps1'
 $profile = Join-Path $root 'browser_profile'
@@ -18,7 +19,7 @@ $target = Join-Path $root 'target.json'
 $pidFile = Join-Path $root 'supervisor.pid'
 $logFile = Join-Path $root 'supervisor.log'
 $projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
-$expectedRuntimeVersion = '2026-09-19.29'
+$expectedRuntimeVersion = '2026-09-19.30'
 
 function Write-Step([string]$Message) {
     Write-Host ""
@@ -47,7 +48,7 @@ function Stop-OrphanedSupervisorLoops {
         }
 
     Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandLine -and $_.CommandLine -match '(supervisor-loop-cli|brain-worker-cli)\.mjs' } |
+        Where-Object { $_.CommandLine -and $_.CommandLine -match '(supervisor-loop-cli|brain-worker-cli|three-lane-cli)\.mjs' } |
         ForEach-Object {
             Write-Host "Stopping Supervisor Node PID $($_.ProcessId)."
             Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
@@ -61,18 +62,17 @@ function Require-Command([string]$Name) {
 }
 
 function Assert-SourceFingerprint {
-    $loopSource = Join-Path $sourceRoot 'src\runtime\supervisor-loop-cli.mjs'
+    $threeLaneSource = Join-Path $sourceRoot 'src\runtime\three-lane-cli.mjs'
     $runSource = Join-Path $sourceRoot 'windows\run-supervisor.ps1'
 
-    if (-not (Select-String -Path $loopSource -SimpleMatch $expectedRuntimeVersion -Quiet)) {
-        throw "Source does not contain Supervisor runtime version $expectedRuntimeVersion."
+    if (-not (Test-Path $threeLaneSource)) {
+        throw 'Source is missing three-lane-cli.mjs.'
     }
-    $brainWorkerSource = Join-Path $sourceRoot 'src\runtime\brain-worker-cli.mjs'
-    if (-not (Test-Path $brainWorkerSource)) {
-        throw 'Source is missing brain-worker-cli.mjs.'
+    if (-not (Select-String -Path $threeLaneSource -SimpleMatch $expectedRuntimeVersion -Quiet)) {
+        throw "Three-Lane source does not contain runtime version $expectedRuntimeVersion."
     }
-    if (-not (Select-String -Path $brainWorkerSource -SimpleMatch $expectedRuntimeVersion -Quiet)) {
-        throw "Brain/Worker source does not contain runtime version $expectedRuntimeVersion."
+    if (-not (Select-String -Path $runSource -SimpleMatch 'THREE_LANE_V1' -Quiet)) {
+        throw 'Source launcher is missing THREE_LANE_V1 mode.'
     }
     if (-not (Select-String -Path $runSource -SimpleMatch 'Get-FreeCdpPort' -Quiet)) {
         throw 'Source is missing Get-FreeCdpPort.'
@@ -86,17 +86,17 @@ function Assert-SourceFingerprint {
 }
 
 function Assert-InstalledFingerprint {
-    if (-not (Test-Path $runtimeLoop)) {
-        throw "Installed runtime loop missing: $runtimeLoop"
-    }
     if (-not (Test-Path $runtimeRun)) {
         throw "Installed runtime launcher missing: $runtimeRun"
     }
-    if (-not (Test-Path $runtimeBrainWorker)) {
-        throw "Installed Brain/Worker runtime missing: $runtimeBrainWorker"
+    if (-not (Test-Path $runtimeThreeLane)) {
+        throw "Installed Three-Lane runtime missing: $runtimeThreeLane"
     }
-    if (-not (Select-String -Path $runtimeLoop -SimpleMatch $expectedRuntimeVersion -Quiet)) {
-        throw "Installed runtime is not version $expectedRuntimeVersion."
+    if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch $expectedRuntimeVersion -Quiet)) {
+        throw "Installed Three-Lane runtime is not version $expectedRuntimeVersion."
+    }
+    if (-not (Select-String -Path $runtimeRun -SimpleMatch 'THREE_LANE_V1' -Quiet)) {
+        throw 'Installed runtime launcher is missing THREE_LANE_V1 mode.'
     }
     if (-not (Select-String -Path $runtimeRun -SimpleMatch 'Get-FreeCdpPort' -Quiet)) {
         throw 'Installed runtime is missing Get-FreeCdpPort.'
@@ -183,13 +183,18 @@ try {
         $projectState -and
         [string]$projectState.autonomy -eq 'PAUSED'
     )
+    $threeLaneMode = [bool](
+        $projectState -and
+        $projectState.supervisor_orchestration -and
+        [string]$projectState.supervisor_orchestration.mode -eq 'THREE_LANE_V1'
+    )
     $brainWorkerMode = [bool](
         $projectState -and
         $projectState.supervisor_orchestration -and
         [string]$projectState.supervisor_orchestration.mode -eq 'BRAIN_WORKER_V1'
     )
 
-    if (-not $pausedInstallOnly -and -not $brainWorkerMode -and -not (Test-Path $target)) {
+    if (-not $pausedInstallOnly -and -not $threeLaneMode -and -not $brainWorkerMode -and -not (Test-Path $target)) {
         throw "Legacy ChatGPT target is missing: $target. Installation succeeded, but one-time target setup is required before legacy START."
     }
 
@@ -251,7 +256,7 @@ $tail"
     )
     $loopProcesses = @(
         Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-            Where-Object { $_.CommandLine -and $_.CommandLine -match '(supervisor-loop-cli|brain-worker-cli)\.mjs' }
+            Where-Object { $_.CommandLine -and $_.CommandLine -match '(supervisor-loop-cli|brain-worker-cli|three-lane-cli)\.mjs' }
     )
 
     if ($pausedInstallOnly) {
@@ -283,14 +288,23 @@ $tail"
         Write-Host 'Last safe log lines:'
         Get-Content $logFile -Tail 10 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
 
-        $statusFile = Join-Path $root 'runtime-status.json'
+        $statusFile = if ($threeLaneMode) {
+            Join-Path $root 'lane-status.json'
+        } else {
+            Join-Path $root 'runtime-status.json'
+        }
         if (Test-Path $statusFile) {
             try {
                 $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
                 Write-Host ""
-                Write-Host "Runtime status: $($status.status)"
-                Write-Host "Task: $($status.current_task) - $($status.current_task_title)"
-                if ($status.error_name) { Write-Host "Error: $($status.error_name)" -ForegroundColor Yellow }
+                if ($threeLaneMode) {
+                    Write-Host "Runtime mode: THREE_LANE_V1"
+                    Write-Host "Lane status count: $(@($status.lanes).Count)"
+                } else {
+                    Write-Host "Runtime status: $($status.status)"
+                    Write-Host "Task: $($status.current_task) - $($status.current_task_title)"
+                    if ($status.error_name) { Write-Host "Error: $($status.error_name)" -ForegroundColor Yellow }
+                }
             } catch {}
         }
     }
