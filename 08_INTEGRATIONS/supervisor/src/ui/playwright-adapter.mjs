@@ -34,7 +34,7 @@ export function isChatGptUrl(value) {
 
 export function isTransientNavigationError(error) {
   const message = String(error?.message || error || "");
-  return /execution context was destroyed|most likely because of a navigation|target page, context or browser has been closed|navigation/i.test(message);
+  return /execution context was destroyed|most likely because of a navigation|target page, context or browser has been closed|navigation|fetch failed|ECONNRESET|ETIMEDOUT|ECONNREFUSED|socket hang up|network.*(?:failed|reset|changed)|CDP version endpoint failed|websocket.*closed|connectOverCDP/i.test(message);
 }
 
 export function normalizeCdpWebSocketUrl(value, cdpUrl) {
