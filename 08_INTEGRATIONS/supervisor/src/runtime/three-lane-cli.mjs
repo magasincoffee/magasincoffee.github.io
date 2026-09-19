@@ -33,7 +33,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.30";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.31";
 
 function parseArgs(argv) {
   const result = {
@@ -120,6 +120,10 @@ async function waitForConversationUrl(page) {
       return false;
     }
   }, { timeout: 45_000 });
+
+  // ChatGPT may briefly expose an internal /c/WEB:<uuid> route immediately
+  // after a new conversation is created. Store only the canonical target so
+  // the next exact restore opens the same conversation successfully.
   const target = targetFromUrl(page.url());
   return `${target.origin}${target.pathname}`;
 }
