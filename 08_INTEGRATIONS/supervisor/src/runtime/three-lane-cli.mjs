@@ -980,7 +980,25 @@ async function relayWorkResult({
     });
     return;
   }
-  if (!sent.executed) return;
+  if (!sent.executed) {
+    await safeLog(logPath, {
+      type: "LANE_RESULT_RELAY_NOT_EXECUTED",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: relay.relay_id,
+      digest: relay.response_digest,
+      reason: sent.reason || "unknown"
+    });
+    return;
+  }
+
+  await safeLog(logPath, {
+    type: "LANE_RESULT_RELAY_SEND_CLICKED",
+    laneId: lane.lane_id,
+    taskId: registryLane.task_id,
+    relayId: relay.relay_id,
+    digest: relay.response_digest
+  });
 
   const relayConfirmed = await waitForRelayMarker(
     brainPage,
