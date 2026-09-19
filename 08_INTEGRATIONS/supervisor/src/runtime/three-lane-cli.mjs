@@ -33,7 +33,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.32";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.33";
 
 function parseArgs(argv) {
   const result = {
@@ -815,6 +815,8 @@ await atomicJsonWrite(registryPath, registry);
 
 const statuses = {};
 let adapter = null;
+let cdpRecoveryFailures = 0;
+let restartRequested = false;
 
 await safeLog(logPath, {
   type: "RUNTIME_BOOT",
@@ -860,10 +862,19 @@ try {
           evidenceDir,
           logPath
         });
+        if (lane.enabled) cdpRecoveryFailures = 0;
       } catch (error) {
         const transient = isTransientNavigationError(error);
+        let reconnected = false;
         if (transient) {
-          await adapter.reconnectOverCdp().catch(() => {});
+          reconnected = await adapter.reconnectOverCdp()
+            .then(() => true)
+            .catch(() => false);
+          if (reconnected) {
+            cdpRecoveryFailures = 0;
+          } else {
+            cdpRecoveryFailures += 1;
+          }
         }
         statuses[lane.lane_id] = laneStatus(
           lane,
@@ -881,10 +892,25 @@ try {
           errorName: error?.name || "Error",
           reason: String(error?.message || error).slice(0, 240)
         });
+
+        if (transient && !reconnected && cdpRecoveryFailures >= 3) {
+          restartRequested = true;
+          await safeLog(logPath, {
+            type: "RUNTIME_CDP_RESTART_REQUESTED",
+            laneId: lane.lane_id,
+            taskId: registryLane.task_id,
+            reason: "bounded transient CDP reconnect budget exhausted"
+          });
+          break;
+        }
       }
     }
 
     await writeLaneStatus(statusPath, statuses);
+    if (restartRequested) {
+      process.exitCode = 75;
+      break;
+    }
     await delay(args.pollMs);
   }
 } finally {
