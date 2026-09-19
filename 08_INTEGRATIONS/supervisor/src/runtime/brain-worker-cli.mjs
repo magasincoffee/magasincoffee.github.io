@@ -35,7 +35,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.26";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.27";
 
 function parseArgs(argv) {
   const result = {
@@ -60,15 +60,32 @@ function localRoot() {
   return path.join(base, "MAGASIN", "BusinessOS", "supervisor");
 }
 
-async function fetchProjectState(url) {
-  const response = await fetch(url, {
-    cache: "no-store",
-    headers: { "user-agent": "MAGASIN-Supervisor-BrainWorker/0.4" }
-  });
-  if (!response.ok) {
-    throw new Error(`project state fetch failed: HTTP ${response.status}`);
+class ProjectStateFetchError extends Error {
+  constructor(message, cause = null) {
+    super(message, cause ? { cause } : undefined);
+    this.name = "ProjectStateFetchError";
   }
-  return response.json();
+}
+
+async function fetchProjectState(url) {
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      headers: { "user-agent": "MAGASIN-Supervisor-BrainWorker/0.4" }
+    });
+    if (!response.ok) {
+      throw new ProjectStateFetchError(
+        `project state fetch failed: HTTP ${response.status}`
+      );
+    }
+    return response.json();
+  } catch (error) {
+    if (error instanceof ProjectStateFetchError) throw error;
+    throw new ProjectStateFetchError(
+      `project state fetch temporarily unavailable: ${String(error?.message || error)}`,
+      error
+    );
+  }
 }
 
 async function atomicJsonWrite(filePath, value) {
@@ -988,6 +1005,7 @@ const runtimeStatusPath = defaultRuntimeStatusPath();
 let registry = await loadRegistry(registryPath);
 let projectState = {};
 let adapter = null;
+let projectStateFetchFailures = 0;
 
 await safeLog(logPath, {
   type: "RUNTIME_BOOT",
@@ -1010,7 +1028,35 @@ try {
     } catch {}
 
     try {
-      projectState = await fetchProjectState(args.stateUrl);
+      try {
+        projectState = await fetchProjectState(args.stateUrl);
+        projectStateFetchFailures = 0;
+      } catch (error) {
+        if (!(error instanceof ProjectStateFetchError)) throw error;
+
+        projectStateFetchFailures += 1;
+        const retryMs = Math.min(
+          30_000,
+          Math.max(args.pollMs, args.pollMs * (2 ** Math.min(projectStateFetchFailures - 1, 3)))
+        );
+
+        await safeLog(logPath, {
+          type: "PROJECT_STATE_FETCH_RETRY",
+          role: "orchestrator",
+          errorName: error.name,
+          reason: `${error.message}; retrying automatically in ${retryMs}ms`
+        });
+        await writeStatus(runtimeStatusPath, projectState, {
+          status: "RECOVERING",
+          brainStatus: registry.brain.awaiting_response ? "THINKING" : "IDLE",
+          workers: registry.workers,
+          errorName: error.name,
+          reason: "project state temporarily unavailable; retrying automatically"
+        }).catch(() => {});
+        await delay(retryMs);
+        continue;
+      }
+
       const config = projectState.supervisor_orchestration || {};
 
       if (config.mode !== BRAIN_WORKER_MODE) {
