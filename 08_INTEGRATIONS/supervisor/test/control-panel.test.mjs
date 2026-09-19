@@ -2,331 +2,93 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
-test("control panel is branded for MAGASIN Business OS and controls the real Supervisor", async () => {
+test("control panel is a three-lane Owner-facing surface", async () => {
   const source = await fs.readFile(
     new URL("../windows/control-panel.ps1", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /MAGASIN BUSINESS OS/);
-  assert.match(source, /BẮT ĐẦU ROBOT/);
-  assert.match(source, /start-supervisor\.ps1/);
-  assert.match(source, /stop-supervisor\.ps1/);
-  assert.match(source, /runtime-status\.json/);
-  assert.match(source, /00_PROJECT_STATE\.json/);
-  assert.doesNotMatch(source, /SAYDI CONTROL/i);
+  assert.match(source, /MAGASIN BUSINESS OS — 3 LUỒNG LÀM VIỆC/);
+  assert.match(source, /3 LUỒNG ĐỘC LẬP/);
+  assert.match(source, /for \(\$i = 0; \$i -lt 3; \$i\+\+\)/);
+  assert.match(source, /lane-1/);
+  assert.match(source, /lane-2/);
+  assert.match(source, /lane-3/);
+  assert.match(source, /lanes\.json/);
+  assert.match(source, /lane-registry\.json/);
+  assert.match(source, /lane-status\.json/);
 });
 
-test("installer creates one Business OS control shortcut and removes legacy desktop launchers", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/install-supervisor.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /MAGASIN BUSINESS OS CONTROL\.lnk/);
-  assert.match(source, /control-panel\.ps1/);
-  assert.match(source, /START_MAGASIN_SUPERVISOR\.cmd/);
-  assert.match(source, /STOP_MAGASIN_SUPERVISOR\.cmd/);
-  assert.match(source, /SAYDI CONTROL\.lnk/);
-});
-
-test("start script supports hidden background mode for the unified control panel", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/start-supervisor.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /\[switch\]\$Hidden/);
-  assert.match(source, /WindowStyle Hidden/);
-});
-
-
-test("installer normalizes the panel for Windows PowerShell 5.1 and parses it before creating the shortcut", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/install-supervisor.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /UTF8Encoding\(\$true\)/);
-  assert.match(source, /Language\.Parser\]::ParseFile/);
-  assert.match(source, /Control panel PowerShell syntax check failed/);
-  assert.match(source, /imageres\.dll,72/);
-});
-
-
-test("offline control panel prefers repository state over stale runtime task", async () => {
+test("each lane has Owner Brain URL and Robot-managed read-only Work URL", async () => {
   const source = await fs.readFile(
     new URL("../windows/control-panel.ps1", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /\$projectState = if \(\$process -and \$runtimeStatus -and \$runtimeStatus\.current_task\)/);
-  assert.match(source, /elseif \(\$script:lastRemoteState\)/);
-  assert.match(source, /Dữ liệu dự án/);
+  assert.match(source, /LINK BỘ NÃO/);
+  assert.match(source, /LINK WORK/);
+  assert.match(source, /\$workBox\.ReadOnly = \$true/);
+  assert.match(source, /Test-ChatConversationUrl/);
+  assert.match(source, /brain_url/);
+  assert.match(source, /work_url/);
+  assert.doesNotMatch(source, /DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO/);
+  assert.doesNotMatch(source, /BRAIN_REBIND\.request\.json/);
 });
 
-test("control panel surfaces the bounded CDP cause tag in the safe log", async () => {
+test("each lane has independent start and stop controls", async () => {
   const source = await fs.readFile(
     new URL("../windows/control-panel.ps1", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /cause=\$\(\$e\.errorCause\)/);
+  assert.match(source, /▶  BẮT ĐẦU LUỒNG/);
+  assert.match(source, /■  DỪNG LUỒNG/);
+  assert.match(source, /Save-Lane \$id/);
+  assert.match(source, /\$lane\.enabled = \$Enabled/);
+  assert.match(source, /\$ui\.Project\.Enabled = -not \$enabled/);
+  assert.match(source, /\$ui\.Brain\.Enabled = -not \$enabled/);
 });
 
-
-test("control panel shows only current runtime boot log events", async () => {
-  const source = await fs.readFile(
+test("Owner opens explicit Brain or Work URLs in the dedicated Robot Chrome profile", async () => {
+  const panel = await fs.readFile(
     new URL("../windows/control-panel.ps1", import.meta.url),
     "utf8"
   );
-
-  assert.match(source, /\$bootIndex = -1/);
-  assert.match(source, /"type":"RUNTIME_BOOT"/);
-  assert.match(source, /Select-Object -Skip \$bootIndex/);
-  assert.match(source, /Select-Object -Last 28/);
-});
-
-
-test("project card reads project_status instead of runtime recovery status", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /\$runtimeStatus\.project_status/);
-  assert.match(source, /\$script:lastRemoteState\.status/);
-});
-
-
-test("control panel integrates the local GitHub Actions runner lifecycle", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /C:\\actions-runner-business\\actions-runner/);
-  assert.match(source, /Runner\.Listener\.exe/);
-  assert.match(source, /MAGASIN-BUSINESS-PC RUNNER - KEEP OPEN/);
-  assert.match(source, /KẾT NỐI GITHUB/);
-  assert.match(source, /KẾT NỐI GITHUB: ĐANG HOẠT ĐỘNG/);
-  assert.match(source, /Ensure-GitHubRunner -Interactive/);
-  assert.doesNotMatch(source, /\$runnerRoot = 'C:\\actions-runner'/);
-  assert.match(source, /BẮT ĐẦU ROBOT sẽ kết nối GitHub trước/);
-});
-
-test("START ROBOT fail-closes if the local runner cannot be started", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  const ensureIndex = source.indexOf("if (-not (Ensure-GitHubRunner -Interactive))");
-  const startIndex = source.indexOf("Start-Process powershell.exe -WindowStyle Hidden", ensureIndex);
-  assert.ok(ensureIndex >= 0);
-  assert.ok(startIndex > ensureIndex);
-  assert.match(source.slice(ensureIndex, startIndex), /return/);
-});
-
-
-test("control panel uses the shared supervised ChatGPT launcher", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /open-supervisor-chat\.ps1/);
-  assert.match(source, /MỞ CỬA SỔ ROBOT/);
-  assert.doesNotMatch(source, /\$chatButton\.Add_Click\(\{ Start-Process 'https:\/\/chatgpt\.com\/' \}\)/);
-});
-
-test("shared ChatGPT launcher uses the Supervisor browser profile and bounded CDP port range", async () => {
-  const source = await fs.readFile(
+  const launcher = await fs.readFile(
     new URL("../windows/open-supervisor-chat.ps1", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /browser_profile/);
-  assert.match(source, /--remote-debugging-address=127\.0\.0\.1/);
-  assert.match(source, /9222\.\.9232/);
-  assert.match(source, /orchestration\.json/);
-  assert.match(source, /brain\.target/);
-  assert.match(source, /target\.json/);
-  assert.match(source, /--user-data-dir=/);
+  assert.match(panel, /Open-RobotUrl/);
+  assert.match(panel, /open-supervisor-chat\.ps1/);
+  assert.match(panel, /'-Url'/);
+  assert.match(launcher, /\[string\]\$Url/);
+  assert.match(launcher, /browser_profile/);
+  assert.match(launcher, /--user-data-dir=/);
+  assert.match(launcher, /--remote-debugging-address=127\.0\.0\.1/);
 });
 
-
-test("control panel exposes a fail-closed Owner resolved recheck control", async () => {
+test("lane UI exposes plain-language live states", async () => {
   const source = await fs.readFile(
     new URL("../windows/control-panel.ps1", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /ĐÃ XỬ LÝ — KIỂM TRA LẠI/);
-  assert.match(source, /OWNER_RESOLVED\.request\.json/);
-  assert.match(source, /OWNER_RESOLVED_RECHECK/);
-  assert.match(source, /\$remote\.status -ne 'WAIT_USER'/);
-  assert.match(source, /\$remote\.blocked/);
-  assert.match(source, /không dùng để vượt BLOCKED\/security boundary/);
+  for (const label of [
+    "ĐÃ DỪNG",
+    "CẦN LINK BỘ NÃO",
+    "ĐANG CHỜ BỘ NÃO",
+    "ĐANG LÀM VIỆC",
+    "ĐANG GỬI KẾT QUẢ",
+    "SẴN SÀNG",
+    "ĐANG TỰ KHÔI PHỤC",
+    "CẦN BẠN XỬ LÝ"
+  ]) {
+    assert.match(source, new RegExp(label));
+  }
 });
 
-
-test("control panel exposes the persistent diagnostics folder", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /diagnosticsRoot/);
-  assert.match(source, /MỞ NHẬT KÝ LỖI/);
-  assert.match(source, /Start-Process explorer\.exe/);
-});
-
-
-test("control panel distinguishes Owner decision from technical activation wait", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /ĐANG CHỜ BẠN • CẦN QUYẾT ĐỊNH/);
-  assert.match(source, /ĐANG CHỜ BẠN • CẦN CẤU HÌNH/);
-  assert.match(source, /activation_boundary/);
-  assert.match(source, /owner_boundary/);
-  assert.match(source, /Cần cấu hình kỹ thuật trước khi tiếp tục/);
-});
-
-
-test("control panel reads live runtime flattened boundary metadata", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /activation_boundary_pending/);
-  assert.match(source, /owner_boundary_pending/);
-});
-
-
-test("control panel represents PAUSED autonomy as a first-class non-error state", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /'PAUSED' = @\(/);
-  assert.match(source, /\$projectAutonomy -eq 'PAUSED'/);
-  assert.match(source, /TẠM DỪNG • CHỜ/);
-  assert.match(source, /không mở hoặc điều khiển ChatGPT/);
-  assert.match(source, /Không có lỗi\. Robot đang tạm dừng theo trạng thái dự án/);
-});
-
-test("START ROBOT does not launch runner or ChatGPT while repository autonomy is PAUSED", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  const handler = source.indexOf("$startButton.Add_Click({");
-  const pauseGuard = source.indexOf("$remoteBeforeStart.autonomy -eq 'PAUSED'", handler);
-  const ensureRunner = source.indexOf("Ensure-GitHubRunner -Interactive", handler);
-  const launchSupervisor = source.indexOf("Start-Process powershell.exe -WindowStyle Hidden", handler);
-
-  assert.ok(handler >= 0);
-  assert.ok(pauseGuard > handler);
-  assert.ok(ensureRunner > pauseGuard);
-  assert.ok(launchSupervisor > ensureRunner);
-  assert.match(
-    source.slice(pauseGuard, ensureRunner),
-    /BẮT ĐẦU ROBOT sẽ không mở ChatGPT hoặc gửi lệnh/
-  );
-  assert.match(source.slice(pauseGuard, ensureRunner), /return/);
-});
-
-
-test("control panel exposes a plain-language Brain rebind control only for target mismatch recovery", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /BRAIN_REBIND\.request\.json/);
-  assert.match(source, /DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO/);
-  assert.match(source, /OWNER_BRAIN_REBIND_VISIBLE_CHAT/);
-  assert.match(source, /target mismatch/);
-  assert.match(source, /Mở đúng cuộc trò chuyện Bộ não trong Chrome Robot/);
-});
-
-
-test("control panel offers one plain-language bounded retry for an uncertain Worker send", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /WORKER_RETRY\.request\.json/);
-  assert.match(source, /TIẾP TỤC CÔNG VIỆC BỊ KẸT/);
-  assert.match(source, /OWNER_RETRY_UNCERTAIN_WORKER_ONCE/);
-  assert.match(source, /uncertain prior create\/send outcome/);
-  assert.match(source, /thử lại đúng một lần/);
-});
-
-
-test("control panel keeps automatic technical recovery visible instead of showing an irrelevant Owner button", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /ROBOT ĐANG TỰ KHÔI PHỤC/);
-  assert.match(source, /missing MAGASIN_BRAIN_DIRECTIVE_V1 block/);
-  assert.match(source, /Target page, context or browser has been closed/);
-  assert.match(source, /\$autoRecoveryButton\.Visible = \$autoRecoveryActive/);
-  assert.match(source, /\$ownerResolvedButton\.Visible = -not \(\$targetMismatchActive -or \$uncertainWorkerActive -or \$autoRecoveryActive\)/);
-  assert.match(source, /Không cần bấm ĐÃ XỬ LÝ/);
-});
-
-
-test("Owner-facing control panel uses Vietnamese labels and hides English technical labels from the main surface", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /BẢNG ĐIỀU KHIỂN ROBOT/);
-  assert.match(source, /TRẠNG THÁI ROBOT/);
-  assert.match(source, /TRẠNG THÁI DỰ ÁN/);
-  assert.match(source, /BẮT ĐẦU ROBOT/);
-  assert.match(source, /DỪNG ROBOT/);
-  assert.match(source, /KẾT NỐI GITHUB/);
-  assert.match(source, /MỞ CỬA SỔ ROBOT/);
-  assert.match(source, /MỞ DỰ ÁN/);
-  assert.match(source, /CÔNG VIỆC HIỆN TẠI/);
-  assert.match(source, /HOẠT ĐỘNG HIỆN TẠI/);
-  assert.match(source, /CẬP NHẬT GẦN NHẤT/);
-  assert.doesNotMatch(source, /\$robotCaption\.Text = 'SUPERVISOR ROBOT'/);
-  assert.doesNotMatch(source, /\$projectCaption\.Text = 'PROJECT STATE'/);
-  assert.doesNotMatch(source, /\$startButton\.Text = '▶  START ROBOT'/);
-  assert.doesNotMatch(source, /\$stopButton\.Text = '■  STOP'/);
-});
-
-test("control panel shows ĐANG LÀM VIỆC only from live worker evidence", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /orchestration\.json/);
-  assert.match(source, /worker_running/);
-  assert.match(source, /\$runningWorkers\.Count -gt 0/);
-  assert.match(source, /ĐANG LÀM VIỆC/);
-  assert.match(source, /\$firstWorker\.worker_id/);
-  assert.match(source, /\$firstWorker\.task_id/);
-  assert.match(source, /ĐANG ĐIỀU PHỐI/);
-  assert.doesNotMatch(source, /'RUNNING' \{ 'RUNNING • ĐANG LÀM VIỆC' \}/);
-});
-
-test("all Owner-visible timestamps use fixed Vietnam time instead of Windows local timezone", async () => {
+test("control panel uses fixed Vietnam time", async () => {
   const source = await fs.readFile(
     new URL("../windows/control-panel.ps1", import.meta.url),
     "utf8"
@@ -336,47 +98,29 @@ test("all Owner-visible timestamps use fixed Vietnam time instead of Windows loc
   assert.match(source, /TimeZoneInfo\]::ConvertTime/);
   assert.match(source, /dd\/MM\/yyyy HH:mm:ss/);
   assert.match(source, /giờ Việt Nam/);
-  assert.match(source, /Format-VietnamClock/);
   assert.doesNotMatch(source, /ToLocalTime\(\)/);
 });
 
-test("main activity and next-step fields avoid raw UI OBS phase and source-of-truth jargon", async () => {
+test("control panel integrates the canonical local GitHub Runner", async () => {
   const source = await fs.readFile(
     new URL("../windows/control-panel.ps1", import.meta.url),
     "utf8"
   );
 
-  assert.doesNotMatch(source, /UI=\$uiState/);
-  assert.doesNotMatch(source, /OBS=\$observation/);
-  assert.doesNotMatch(source, /phase=\$\(\$projectState\.current_phase\)/);
-  assert.match(source, /Get-FriendlyReason/);
-  assert.match(source, /Robot đang theo dõi Bộ não và điều phối công việc/);
+  assert.match(source, /C:\\actions-runner-business\\actions-runner/);
+  assert.match(source, /Runner\.Listener\.exe/);
+  assert.match(source, /KẾT NỐI GITHUB/);
+  assert.match(source, /GITHUB ĐANG KẾT NỐI/);
 });
 
-test("recovery action controls remain mutually exclusive and readable", async () => {
+test("installer normalizes Vietnamese panel to UTF-8 BOM and syntax-checks it", async () => {
   const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
+    new URL("../windows/install-supervisor.ps1", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /\$brainRebindButton\.Visible = \$targetMismatchActive/);
-  assert.match(source, /\$workerRetryButton\.Visible = \$uncertainWorkerActive/);
-  assert.match(source, /\$autoRecoveryButton\.Visible = \$autoRecoveryActive/);
-  assert.match(source, /\$ownerResolvedButton\.Visible = -not \(\$targetMismatchActive -or \$uncertainWorkerActive -or \$autoRecoveryActive\)/);
-  assert.match(source, /DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO/);
-  assert.match(source, /TIẾP TỤC CÔNG VIỆC BỊ KẸT/);
-  assert.match(source, /ROBOT ĐANG TỰ KHÔI PHỤC/);
-});
-
-
-test("control panel suppresses stale worker activity whenever runtime is blocked", async () => {
-  const source = await fs.readFile(
-    new URL("../windows/control-panel.ps1", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /\$runtimeAllowsWorkerDisplay/);
-  assert.match(source, /\[string\]\$runtimeStatus\.status -in @\('RUNNING','READY'\)/);
-  assert.match(source, /if \(\$runtimeAllowsWorkerDisplay -and \$registry/);
-  assert.match(source, /ĐANG LÀM VIỆC/);
+  assert.match(source, /UTF8Encoding\(\$true\)/);
+  assert.match(source, /Language\.Parser\]::ParseFile/);
+  assert.match(source, /Control panel PowerShell syntax check failed/);
+  assert.match(source, /MAGASIN BUSINESS OS CONTROL\.lnk/);
 });

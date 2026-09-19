@@ -180,3 +180,87 @@ export async function executeDecision({
 
   throw new Error(`unsupported decision action: ${decision.action}`);
 }
+
+
+const ATTACHMENT_BUTTON_RE =
+  /attach|upload|add files|add photos|đính kèm|tải lên|thêm tệp|thêm ảnh/i;
+
+async function resolveFileInput(page) {
+  let input = page.locator("input[type='file']").first();
+  if (await input.count().catch(() => 0)) return input;
+
+  const attachButton = page.getByRole("button", { name: ATTACHMENT_BUTTON_RE }).first();
+  if (await attachButton.isVisible().catch(() => false)) {
+    await attachButton.click();
+    await page.waitForTimeout(250);
+    input = page.locator("input[type='file']").first();
+    if (await input.count().catch(() => 0)) return input;
+  }
+  return null;
+}
+
+export async function sendComposerWithAttachment(
+  page,
+  instruction,
+  filePath,
+  { dryRun = true } = {}
+) {
+  if (!page) throw new TypeError("page is required");
+  if (typeof instruction !== "string" || !instruction.trim()) {
+    throw new Error("composer instruction is required");
+  }
+  if (typeof filePath !== "string" || !filePath.trim()) {
+    throw new Error("attachment path is required");
+  }
+
+  const surface = await inspectActionSurface(page);
+  if (!surface.composerReady) {
+    return {
+      executed: false,
+      dryRun,
+      action: ACTIONS.CONTINUE,
+      reason: "composer is not ready"
+    };
+  }
+
+  if (dryRun) {
+    return {
+      executed: false,
+      dryRun: true,
+      action: ACTIONS.CONTINUE,
+      target: "COMPOSER_ATTACHMENT_SEND"
+    };
+  }
+
+  const input = await resolveFileInput(page);
+  if (!input) {
+    return {
+      executed: false,
+      dryRun: false,
+      action: ACTIONS.CONTINUE,
+      reason: "attachment input is not available"
+    };
+  }
+
+  await input.setInputFiles(filePath);
+  await page.waitForTimeout(750);
+
+  const composer = page
+    .locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible")
+    .first();
+  await composer.fill(instruction);
+
+  const afterFill = await inspectActionSurface(page);
+  if (afterFill.sendControl) {
+    await clickControlBySemantic(page, afterFill.sendControl);
+  } else {
+    await composer.press("Enter");
+  }
+
+  return {
+    executed: true,
+    dryRun: false,
+    action: ACTIONS.CONTINUE,
+    target: "COMPOSER_ATTACHMENT_SEND"
+  };
+}

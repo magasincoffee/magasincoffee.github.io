@@ -40,15 +40,21 @@ jobs:
         run: |
           powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "08_INTEGRATIONS/supervisor/windows/install-supervisor.ps1"
 
-      - name: Verify checked-out Brain/Worker source-of-truth
+      - name: Verify checked-out Three-Lane source-of-truth
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           $statePath = "01_DOCS/MAGASIN/00_PROJECT_STATE.json"
           if (-not (Test-Path $statePath)) { throw "Checked-out PROJECT_STATE is missing" }
           $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ($state.supervisor_orchestration.mode -ne "BRAIN_WORKER_V1") {
-            throw "Checked-out PROJECT_STATE does not enable BRAIN_WORKER_V1"
+          if ($state.supervisor_orchestration.mode -ne "THREE_LANE_V1") {
+            throw "Checked-out PROJECT_STATE does not enable THREE_LANE_V1"
+          }
+          if ([int]$state.supervisor_orchestration.lane_count -ne 3) {
+            throw "Checked-out PROJECT_STATE does not define exactly three lanes"
+          }
+          if ([bool]$state.supervisor_orchestration.brain_autodiscovery) {
+            throw "Brain autodiscovery must be disabled in THREE_LANE_V1"
           }
           if ($state.current_task -ne "TASK-049") {
             throw "Checked-out PROJECT_STATE is not on TASK-049"
@@ -122,118 +128,56 @@ jobs:
           $statusFile = Join-Path $root "autostart-install-status.json"
           if (-not (Test-Path $statusFile)) { throw "Autostart install status is missing" }
 
-          $brainWorker = $null
-          $brainTargetReady = $false
+          $threeLane = $null
           for ($i = 0; $i -lt 45; $i++) {
-            $brainWorker = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-              Where-Object { $_.CommandLine -and $_.CommandLine -like "*brain-worker-cli.mjs*" } |
+            $threeLane = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+              Where-Object { $_.CommandLine -and $_.CommandLine -like "*three-lane-cli.mjs*" } |
               Select-Object -First 1
-            $registryFile = Join-Path $root "orchestration.json"
-            if ($brainWorker -and (Test-Path $registryFile)) {
-              try {
-                $registry = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json
-                if ($registry.mode -eq "BRAIN_WORKER_V1" -and $registry.brain.target.pathname) {
-                  $brainTargetReady = $true
-                  break
-                }
-              } catch {}
-            }
-            Start-Sleep -Seconds 2
+            if ($threeLane) { break }
+            Start-Sleep -Seconds 1
           }
-          if (-not $brainWorker) { throw "Brain/Worker Node runtime is not online" }
-          if (-not $brainTargetReady) { throw "Brain target was not registered within bounded wait" }
+          if (-not $threeLane) { throw "Three-Lane Node runtime is not online" }
 
-          $runtimeBrain = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
-          if (-not (Test-Path $runtimeBrain)) { throw "Installed Brain/Worker runtime is missing" }
-          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.29" -Quiet)) {
-            throw "Installed Brain/Worker runtime is not v2026-09-19.29"
+          $runtimeThreeLane = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
+          if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
+          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.30" -Quiet)) {
+            throw "Installed Three-Lane runtime is not v2026-09-19.30"
           }
 
-          $runtimeStatusFile = Join-Path $root "runtime-status.json"
-          $targetHealthy = $false
-          for ($i = 0; $i -lt 20; $i++) {
-            if (Test-Path $runtimeStatusFile) {
+          $laneConfigFile = Join-Path $root "lanes.json"
+          $laneStatusFile = Join-Path $root "lane-status.json"
+          $laneReady = $false
+          for ($i = 0; $i -lt 30; $i++) {
+            if ((Test-Path $laneConfigFile) -and (Test-Path $laneStatusFile)) {
               try {
-                $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                $laneConfig = Get-Content $laneConfigFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                $laneStatus = Get-Content $laneStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
                 if (
-                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.29" -and
-                  -not (
-                    $runtimeStatus.status -eq "WAIT_USER" -and
-                    [string]$runtimeStatus.decision_reason -match "target mismatch"
-                  )
+                  $laneConfig.mode -eq "THREE_LANE_V1" -and
+                  @($laneConfig.lanes).Count -eq 3 -and
+                  $laneStatus.mode -eq "THREE_LANE_V1" -and
+                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.30" -and
+                  @($laneStatus.lanes).Count -eq 3
                 ) {
-                  $targetHealthy = $true
+                  $laneReady = $true
                   break
                 }
               } catch {}
             }
             Start-Sleep -Seconds 1
           }
-          if (-not $targetHealthy) {
-            $controlPanel = Join-Path $root "runtime\windows\control-panel.ps1"
-            $brainRuntime = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
-            if (
-              -not (Test-Path $controlPanel) -or
-              -not (Select-String -Path $controlPanel -SimpleMatch "BRAIN_REBIND.request.json" -Quiet) -or
-              -not (Test-Path $brainRuntime) -or
-              -not (Select-String -Path $brainRuntime -SimpleMatch "BRAIN_TARGET_REBOUND_OWNER" -Quiet)
-            ) {
-              throw "v2026-09-19.29 target mismatch remains but the Owner Brain rebind recovery path is unavailable"
-            }
-            Write-Host "BRAIN_REBIND_REQUIRED=True"
-          } else {
-            Write-Host "BRAIN_REBIND_REQUIRED=False"
-          }
+          if (-not $laneReady) { throw "Three-Lane local config/status did not become ready" }
 
-          $workerRetryRequired = $false
-          if (Test-Path $runtimeStatusFile) {
-            try {
-              $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-              $workerRetryRequired = [bool](
-                $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.29" -and
-                $runtimeStatus.status -eq "WAIT_USER" -and
-                [string]$runtimeStatus.decision_reason -match "uncertain prior create/send outcome"
-              )
-            } catch {}
-          }
-
-          if ($workerRetryRequired) {
-            $controlPanel = Join-Path $root "runtime\windows\control-panel.ps1"
-            $brainRuntime = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
-            if (
-              -not (Test-Path $controlPanel) -or
-              -not (Select-String -Path $controlPanel -SimpleMatch "WORKER_RETRY.request.json" -Quiet) -or
-              -not (Test-Path $brainRuntime) -or
-              -not (Select-String -Path $brainRuntime -SimpleMatch "WORKER_OWNER_RETRY_ARMED" -Quiet)
-            ) {
-              throw "v2026-09-19.29 uncertain Worker send remains but the bounded Owner retry path is unavailable"
-            }
-            Write-Host "WORKER_RETRY_REQUIRED=True"
-          } else {
-            Write-Host "WORKER_RETRY_REQUIRED=False"
-          }
-
-          $technicalRecoveryStuck = $false
-          if (Test-Path $runtimeStatusFile) {
-            try {
-              $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-              $technicalRecoveryStuck = [bool](
-                $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.29" -and
-                $runtimeStatus.status -eq "WAIT_USER" -and
-                [string]$runtimeStatus.decision_reason -match "missing MAGASIN_BRAIN_DIRECTIVE_V1 block|Target page, context or browser has been closed"
-              )
-            } catch {}
-          }
-          if ($technicalRecoveryStuck) {
-            throw "v2026-09-19.29 is still stuck on an automatically recoverable Brain/CDP condition"
-          }
-          Write-Host "TECHNICAL_RECOVERY_STUCK=False"
+          Write-Host "THREE_LANE_RUNTIME=True"
+          Write-Host "THREE_LANE_COUNT=3"
+          Write-Host "BRAIN_AUTODISCOVERY_ACTIVE=False"
+          Write-Host "WORK_URL_OWNER_REQUIRED=False"
 
           Write-Host "AUTOSTART_REGISTERED=True"
           Write-Host "RUNNER_ONLINE=True"
           Write-Host "SUPERVISOR_ONLINE=True"
-          Write-Host "BRAIN_WORKER_RUNTIME=True"
-          Write-Host "BRAIN_TARGET_REGISTERED=True"
+          Write-Host "THREE_LANE_RUNTIME=True"
+          Write-Host "THREE_LANE_COUNT=3"
           Write-Host "BUSINESS_CHROME_ONLINE=True"
           Write-Host "BUSINESS_CHROME_CDP_HEALTHY=True"
           Write-Host "OWNER_STOP_LATCH=False"
@@ -261,10 +205,10 @@ jobs:
             Select-Object -First 1
           if (-not $wrapper) { throw "Supervisor wrapper did not survive the previous self-hosted job" }
 
-          $brainWorker = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-            Where-Object { $_.CommandLine -and $_.CommandLine -like "*brain-worker-cli.mjs*" } |
+          $threeLane = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -and $_.CommandLine -like "*three-lane-cli.mjs*" } |
             Select-Object -First 1
-          if (-not $brainWorker) { throw "Brain/Worker runtime did not survive the previous self-hosted job" }
+          if (-not $threeLane) { throw "Three-Lane runtime did not survive the previous self-hosted job" }
 
           $profile = Join-Path $root "browser_profile"
           $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
@@ -276,20 +220,17 @@ jobs:
             Select-Object -First 1
           if (-not $chrome) { throw "Dedicated Robot Chrome did not survive the previous self-hosted job" }
 
-          $statusFile = Join-Path $root "runtime-status.json"
-          if (-not (Test-Path $statusFile)) { throw "Runtime status is missing after previous job cleanup" }
+          $statusFile = Join-Path $root "lane-status.json"
+          if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing after previous job cleanup" }
           $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ($status.supervisor_runtime_version -ne "2026-09-19.29") {
-            throw "Post-job Supervisor runtime is not v2026-09-19.29"
+          if ($status.supervisor_runtime_version -ne "2026-09-19.30") {
+            throw "Post-job Three-Lane runtime is not v2026-09-19.30"
           }
-          if (
-            $status.status -eq "WAIT_USER" -and
-            [string]$status.decision_reason -match "fetch failed|project state fetch"
-          ) {
-            throw "Transient project-state fetch failure still escalated to WAIT_USER"
+          if ($status.mode -ne "THREE_LANE_V1" -or @($status.lanes).Count -ne 3) {
+            throw "Post-job Three-Lane status is invalid"
           }
 
           Write-Host "POST_JOB_SUPERVISOR_ALIVE=True"
-          Write-Host "POST_JOB_BRAIN_WORKER_ALIVE=True"
+          Write-Host "POST_JOB_THREE_LANE_ALIVE=True"
           Write-Host "POST_JOB_ROBOT_CHROME_ALIVE=True"
-          Write-Host "FETCH_FAILURE_ESCALATED_TO_OWNER=False"
+          Write-Host "POST_JOB_LANE_COUNT=3"
