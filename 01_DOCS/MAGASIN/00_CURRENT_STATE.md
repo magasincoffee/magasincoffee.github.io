@@ -6,7 +6,7 @@ Last updated: 2026-09-19
 
 **MAGASIN Business OS V1 — Five-Step / Profitability & Cash first**
 
-The enterprise architecture is **OWNER APPROVED / CANONICAL**. Owner and ChatGPT continue detailing it while Supervisor/Brain/Work remains paused until explicit Robot release.
+The enterprise architecture is **OWNER APPROVED / CANONICAL**. Owner has explicitly released Supervisor/Brain/Work for the prepared Profitability & Cash 3-hour execution queue.
 
 Canonical architecture — **READ FIRST in every new session:**
 
@@ -36,20 +36,25 @@ Existing Schedule-first work remains a proven vertical-slice pattern, but it is 
 
 ## Current task
 
-**TASK-050 — Canonical enterprise architecture locked — Owner detailing continues — WAIT_USER / PAUSED**
+**TASK-051 — PFC source inventory + delete/defer map — IN_PROGRESS / AUTO_CONTINUE**
 
-Robot handoff is explicitly locked.
+Robot handoff is ACTIVE for `PFC_3H_V1`.
 
 ```text
-Owner + ChatGPT detail canonical architecture
-→ Five-Step runs continuously across every workstream
-→ implementation queue is derived from the locked architecture
-→ Owner explicitly releases Robot
-→ PROJECT_STATE = READY / AUTO_CONTINUE
-→ Supervisor / Brain / Work may execute
+OWNER RELEASED PFC_3H_V1
+→ TASK-051
+→ TASK-052
+→ TASK-053
+→ TASK-054
+→ TASK-055
+→ TASK-056
+→ TASK-057
+→ TASK-058
+→ TASK-059
+→ stop only at true Owner/security boundary or queue completion
 ```
 
-Until then, `00_PROJECT_STATE.json` is authoritative as `WAIT_USER / PAUSED`.
+`00_PROJECT_STATE.json` is authoritative as `READY / AUTO_CONTINUE` for this run.
 
 ## Current target
 
@@ -123,7 +128,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**ACTIVE — TASK-050:** Canonical architecture is locked. Owner and ChatGPT continue detailing it under continuous Five-Step. No implementation is handed to Supervisor/Brain/Work until Owner explicitly releases Robot.
+**ACTIVE — TASK-051:** Execute `PFC_3H_V1` autonomously under continuous Five-Step. Google Drive may be used read-only as real evidence. Continue through TASK-059 unless a true Owner/security boundary is reached.
 
 Background night-run gate: **TASK-048 — NIGHT_WINDOW_COMPLETE**. The approved 09:15 +07 boundary closed the old night window and preserved the later Owner-selected active task/autonomy.
 
