@@ -75,6 +75,8 @@ export function defaultLaneConfig() {
       lane_id: laneId,
       project_name: `Dự án ${index + 1}`,
       brain_url: "",
+      work_url: "",
+      work_url_revision: 0,
       enabled: false
     }))
   };
@@ -92,6 +94,8 @@ export function normalizeLaneConfig(value = {}) {
         lane_id: laneId,
         project_name: String(lane.project_name || `Dự án ${index + 1}`).slice(0, 120),
         brain_url: String(lane.brain_url || "").trim(),
+        work_url: String(lane.work_url || "").trim(),
+        work_url_revision: Number(lane.work_url_revision || 0),
         enabled: Boolean(lane.enabled)
       };
     })
@@ -126,7 +130,8 @@ export function defaultLaneRegistry() {
       relay_inflight: null,
       brain_request_inflight: null,
       brain_request_sent: false,
-      awaiting_work: false
+      awaiting_work: false,
+      applied_work_url_revision: 0
     }]))
   };
 }
@@ -149,7 +154,8 @@ export function normalizeLaneRegistry(value = {}) {
       relay_inflight: lane.relay_inflight || null,
       brain_request_inflight: lane.brain_request_inflight || null,
       brain_request_sent: Boolean(lane.brain_request_sent),
-      awaiting_work: Boolean(lane.awaiting_work)
+      awaiting_work: Boolean(lane.awaiting_work),
+      applied_work_url_revision: Number(lane.applied_work_url_revision || 0)
     };
   }
   return safe;
