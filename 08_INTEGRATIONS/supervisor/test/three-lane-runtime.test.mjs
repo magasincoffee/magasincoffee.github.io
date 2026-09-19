@@ -126,7 +126,7 @@ test("v45 active Brain status comes from persisted registry target", async () =>
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-19\.46/);
+  assert.match(source, /2026-09-19\.47/);
 });
 
 test("v43 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
@@ -389,4 +389,15 @@ test("v46 Owner Work revision resets stale task state even when Work URL is unch
   assert.match(applyWork, /registryLane\.brain_request_inflight = null/);
   assert.match(applyWork, /registryLane\.awaiting_work = false/);
   assert.match(applyWork, /LANE_OWNER_WORK_TARGET_RESET/);
+});
+
+
+test("v47 new Work persistence waits past transient WEB route", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.match(source, /isPersistableConversationUrl/);
+  assert.match(source, /waitForURL\([\s\S]*?isPersistableConversationUrl/);
+  assert.doesNotMatch(source, /Store only the canonical target/);
 });
