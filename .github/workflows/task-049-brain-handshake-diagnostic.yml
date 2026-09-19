@@ -1,0 +1,147 @@
+name: TASK-049 Brain Handshake Diagnostic
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/task-049-brain-handshake-diagnostic.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: self-hosted
+    timeout-minutes: 5
+    steps:
+      - name: Inspect exact persisted Brain safely
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $profile = Join-Path $root "browser_profile"
+          $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction Stop |
+            Where-Object {
+              $_.CommandLine -and
+              $_.CommandLine -like "*$profile*" -and
+              $_.CommandLine -match "--remote-debugging-port=(\d+)"
+            } |
+            Select-Object -First 1
+          if (-not $chrome) { throw "Dedicated Robot Chrome is not running" }
+          $null = $chrome.CommandLine -match "--remote-debugging-port=(\d+)"
+          $port = [int]$Matches[1]
+
+          $env:MAGASIN_DIAG_ROOT = $root
+          $env:MAGASIN_DIAG_CDP = "http://127.0.0.1:$port"
+
+          $diag = @'
+          import fs from "node:fs/promises";
+          import path from "node:path";
+          import { pathToFileURL } from "node:url";
+
+          const root = process.env.MAGASIN_DIAG_ROOT;
+          const cdpUrl = process.env.MAGASIN_DIAG_CDP;
+          const runtime = path.join(root, "runtime", "src");
+
+          const { ChatGptUiAdapter } = await import(
+            pathToFileURL(path.join(runtime, "ui", "playwright-adapter.mjs")).href
+          );
+          const { captureRecentConversationTurns } = await import(
+            pathToFileURL(path.join(runtime, "ui", "message-capture.mjs")).href
+          );
+          const { targetFromUrl, pageMatchesTarget } = await import(
+            pathToFileURL(path.join(runtime, "runtime", "recovery.mjs")).href
+          );
+          const {
+            normalizeChatGptConversationUrl,
+            parseLaneDirective,
+            buildBrainStartRequest,
+            sha256
+          } = await import(
+            pathToFileURL(path.join(runtime, "runtime", "three-lane.mjs")).href
+          );
+
+          const readJson = async (name) =>
+            JSON.parse(String(await fs.readFile(path.join(root, name), "utf8")).replace(/^\uFEFF/, ""));
+
+          const config = await readJson("lanes.json");
+          const registry = await readJson("lane-registry.json");
+          const status = await readJson("lane-status.json").catch(() => ({}));
+          const lane = config.lanes.find((item) => item.lane_id === "lane-1");
+          const reg = registry.lanes["lane-1"];
+          const brainUrl = normalizeChatGptConversationUrl(reg.brain_url || lane.brain_url);
+          const target = targetFromUrl(brainUrl);
+
+          const adapter = new ChatGptUiAdapter({ cdpUrl });
+          await adapter.open();
+          let page = adapter.findPageForTarget(target);
+          if (!page) page = await adapter.reopenTargetPage(brainUrl);
+
+          const probe = await adapter.probePage(page);
+          const turns = await captureRecentConversationTurns(page, { limit: 30 });
+          const expectedHandshakeDigest = sha256(buildBrainStartRequest({
+            laneId: lane.lane_id,
+            projectName: lane.project_name
+          }));
+
+          const safeTurns = turns.map((turn) => {
+            let directive = null;
+            if (turn.role === "assistant") {
+              try {
+                const parsed = parseLaneDirective(turn.text);
+                directive = {
+                  valid: true,
+                  action: parsed.action,
+                  task_id: parsed.task_id || null,
+                  digest_prefix: parsed.digest.slice(0, 12)
+                };
+              } catch {
+                directive = { valid: false };
+              }
+            }
+            return {
+              role: turn.role,
+              turn: turn.turn,
+              digest_prefix: turn.digest.slice(0, 12),
+              handshake_match: turn.role === "user" && turn.digest === expectedHandshakeDigest,
+              directive
+            };
+          });
+
+          const output = {
+            runtime_version: status.supervisor_runtime_version || null,
+            page_matches_target: pageMatchesTarget(page.url(), target),
+            config_brain_revision: Number(lane.brain_url_revision || 0),
+            applied_brain_revision: Number(reg.applied_brain_url_revision || 0),
+            brain_request_sent: Boolean(reg.brain_request_sent),
+            brain_request_inflight: Boolean(reg.brain_request_inflight),
+            brain_request_inflight_blocked: Boolean(reg.brain_request_inflight?.reconcile_blocked),
+            expected_handshake_digest_prefix: expectedHandshakeDigest.slice(0, 12),
+            snapshot: {
+              pathKind: probe.snapshot.pathKind,
+              conversationPath: probe.snapshot.conversationPath,
+              composerReady: probe.snapshot.composerReady,
+              assistantMessageCount: probe.snapshot.assistantMessageCount,
+              userMessageCount: probe.snapshot.userMessageCount,
+              lastMessageRole: probe.snapshot.lastMessageRole,
+              responseRunning: probe.snapshot.responseRunning,
+              conversationFull: probe.snapshot.conversationFull,
+              conversationMissing: probe.snapshot.conversationMissing,
+              conversationAccessDenied: probe.snapshot.conversationAccessDenied,
+              loginRequired: probe.snapshot.loginRequired
+            },
+            observation: probe.classification.observation,
+            recent_turns: safeTurns
+          };
+
+          console.log("BRAIN_DIAG_BEGIN");
+          console.log(JSON.stringify(output));
+          console.log("BRAIN_DIAG_END");
+          await adapter.close();
+          '@
+
+          $temp = Join-Path $env:RUNNER_TEMP "magasin-brain-diag.mjs"
+          [System.IO.File]::WriteAllText($temp, $diag, (New-Object System.Text.UTF8Encoding($false)))
+          node $temp
+          if ($LASTEXITCODE -ne 0) { throw "Brain diagnostic failed" }
