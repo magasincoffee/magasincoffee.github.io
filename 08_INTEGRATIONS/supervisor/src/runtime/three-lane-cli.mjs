@@ -36,8 +36,12 @@ import {
   workDispatchMarker,
   buildLaneResultRelay
 } from "./three-lane.mjs";
+import {
+  classifyRelayMarkerState,
+  activeRelayScreenshotPaths
+} from "./relay-reconciliation.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.43";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.44";
 
 function parseArgs(argv) {
   const result = {
@@ -261,6 +265,63 @@ function normalizeWorkInstructionText(value) {
 
 function relayMarker(relayId) {
   return `relay_id=${relayId}`;
+}
+
+async function unlinkRelayScreenshot(latch) {
+  const screenshotPath = String(latch?.screenshot_path || "").trim();
+  if (!screenshotPath) return false;
+  await fs.unlink(screenshotPath).catch(() => {});
+  return true;
+}
+
+async function clearRelayInflight(registryLane) {
+  const latch = registryLane?.relay_inflight || null;
+  if (latch) await unlinkRelayScreenshot(latch);
+  if (registryLane) registryLane.relay_inflight = null;
+  return latch;
+}
+
+async function finalizeConfirmedRelay({
+  registryLane,
+  registry,
+  registryPath,
+  latch
+}) {
+  registryLane.last_result_relay_id = latch.relay_id;
+  registryLane.last_work_result_digest = latch.response_digest;
+  registryLane.awaiting_work = false;
+  await clearRelayInflight(registryLane);
+  await atomicJsonWrite(registryPath, registry);
+}
+
+async function cleanupOrphanRelayEvidence({
+  evidenceDir,
+  registry,
+  logPath,
+  maxDeletes = 24
+}) {
+  await fs.mkdir(evidenceDir, { recursive: true });
+  const active = new Set(
+    [...activeRelayScreenshotPaths(registry)].map((item) => path.resolve(item))
+  );
+  const entries = await fs.readdir(evidenceDir, { withFileTypes: true })
+    .catch(() => []);
+  let deleted = 0;
+  for (const entry of entries) {
+    if (deleted >= maxDeletes) break;
+    if (!entry.isFile() || !entry.name.toLowerCase().endsWith(".png")) continue;
+    const candidate = path.resolve(evidenceDir, entry.name);
+    if (active.has(candidate)) continue;
+    await fs.unlink(candidate).catch(() => {});
+    deleted += 1;
+  }
+  if (deleted > 0) {
+    await safeLog(logPath, {
+      type: "LANE_RELAY_ORPHAN_EVIDENCE_CLEANED",
+      reason: `count=${deleted}`
+    });
+  }
+  return deleted;
 }
 
 async function hasRelayMarker(page, relayId) {
@@ -1027,17 +1088,18 @@ async function reconcileRelayInflight({
   const latch = registryLane.relay_inflight;
   if (!latch) return "NONE";
 
-  if (latch.reconcile_blocked) return "BLOCKED";
-  const reload =
-    !latch.reconcile_reloaded ||
-    latch.reconcile_runtime_version !== SUPERVISOR_RUNTIME_VERSION;
-  if (reload) {
-    latch.reconcile_reloaded = true;
-    latch.reconcile_runtime_version = SUPERVISOR_RUNTIME_VERSION;
-    latch.reconcile_started_at = new Date().toISOString();
+  // v43 and older may have persisted a terminal reconcile_blocked latch after
+  // unrelated Brain activity changed the old text/baseline heuristic. Relay
+  // recovery is marker-authoritative in v44, so blocked is migration metadata,
+  // never an Owner stop by itself.
+  if (latch.reconcile_blocked) {
+    latch.reconcile_blocked = false;
+    delete latch.reconcile_started_at;
+    delete latch.reconcile_reloaded;
+    delete latch.reconcile_runtime_version;
     await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
-      type: "LANE_RESULT_RELAY_RECONCILE_RELOAD",
+      type: "LANE_RESULT_RELAY_BLOCKED_LATCH_RECOVERED",
       laneId: lane.lane_id,
       taskId: registryLane.task_id,
       relayId: latch.relay_id,
@@ -1045,73 +1107,73 @@ async function reconcileRelayInflight({
     });
   }
 
-  if (await hasRelayMarker(brainPage, latch.relay_id)) {
-    registryLane.last_result_relay_id = latch.relay_id;
-    registryLane.last_work_result_digest = latch.response_digest;
-    registryLane.awaiting_work = false;
-    registryLane.relay_inflight = null;
-    await fs.unlink(latch.screenshot_path).catch(() => {});
-    await atomicJsonWrite(registryPath, registry);
+  let markerPresent = await hasRelayMarker(brainPage, latch.relay_id);
+  if (markerPresent) {
+    await finalizeConfirmedRelay({
+      registryLane,
+      registry,
+      registryPath,
+      latch
+    });
+    await safeLog(logPath, {
+      type: "LANE_RESULT_RELAY_RECONCILE_CONFIRMED",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: latch.relay_id,
+      digest: latch.response_digest
+    });
     return "CONFIRMED";
   }
 
-  const outcome = await inspectKnownTargetSendOutcome({
-    adapter,
-    page: brainPage,
-    digest: latch.text_digest,
-    preUserCount: latch.pre_user_count,
-    preMaxTurnOrdinal: latch.pre_max_turn_ordinal,
+  const observed = await waitForStableSendSurface(adapter, brainPage, {
     brain: true,
-    reload
+    timeoutMs: 4_000
+  });
+  markerPresent = await hasRelayMarker(brainPage, latch.relay_id);
+
+  const outcome = classifyRelayMarkerState({
+    markerPresent,
+    brainStable: Boolean(observed.stable && observed.probe)
   });
 
-  if (await hasRelayMarker(brainPage, latch.relay_id)) {
-    registryLane.last_result_relay_id = latch.relay_id;
-    registryLane.last_work_result_digest = latch.response_digest;
-    registryLane.awaiting_work = false;
-    registryLane.relay_inflight = null;
-    await fs.unlink(latch.screenshot_path).catch(() => {});
-    await atomicJsonWrite(registryPath, registry);
-    return "CONFIRMED";
-  }
-
-  if (outcome === "PENDING") return "PENDING";
-
   if (outcome === "CONFIRMED") {
-    registryLane.last_result_relay_id = latch.relay_id;
-    registryLane.last_work_result_digest = latch.response_digest;
-    registryLane.awaiting_work = false;
-    registryLane.relay_inflight = null;
-    await fs.unlink(latch.screenshot_path).catch(() => {});
-    await atomicJsonWrite(registryPath, registry);
-    return "CONFIRMED";
-  }
-
-  if (outcome === "NOT_CONFIRMED") {
-    registryLane.relay_inflight = null;
-    await fs.unlink(latch.screenshot_path).catch(() => {});
-    await atomicJsonWrite(registryPath, registry);
+    await finalizeConfirmedRelay({
+      registryLane,
+      registry,
+      registryPath,
+      latch
+    });
     await safeLog(logPath, {
-      type: "LANE_RESULT_RELAY_NOT_CONFIRMED_RETRY",
+      type: "LANE_RESULT_RELAY_RECONCILE_CONFIRMED",
       laneId: lane.lane_id,
       taskId: registryLane.task_id,
       relayId: latch.relay_id,
       digest: latch.response_digest
     });
-    return "NOT_CONFIRMED";
+    return "CONFIRMED";
   }
 
-  latch.reconcile_blocked = true;
+  if (outcome === "PENDING") {
+    await safeLog(logPath, {
+      type: "LANE_RESULT_RELAY_RECONCILE_PENDING",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: latch.relay_id,
+      digest: latch.response_digest
+    });
+    return "PENDING";
+  }
+
+  await clearRelayInflight(registryLane);
   await atomicJsonWrite(registryPath, registry);
   await safeLog(logPath, {
-    type: "LANE_RESULT_RELAY_RECONCILE_BLOCKED",
+    type: "LANE_RESULT_RELAY_NOT_CONFIRMED_RETRY",
     laneId: lane.lane_id,
     taskId: registryLane.task_id,
     relayId: latch.relay_id,
-    digest: latch.response_digest,
-    reason: "stable Brain target changed without matching relay digest"
+    digest: latch.response_digest
   });
-  return "BLOCKED";
+  return "NOT_CONFIRMED";
 }
 
 async function relayWorkResult({
@@ -1142,7 +1204,7 @@ async function relayWorkResult({
     registryLane.last_result_relay_id = relay.relay_id;
     registryLane.last_work_result_digest = relay.response_digest;
     registryLane.awaiting_work = false;
-    registryLane.relay_inflight = null;
+    await clearRelayInflight(registryLane);
     await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
       type: "LANE_RESULT_RELAY_DEDUPED_BY_MARKER",
@@ -1164,7 +1226,7 @@ async function relayWorkResult({
       registryPath,
       logPath
     });
-    if (outcome === "CONFIRMED" || outcome === "PENDING" || outcome === "BLOCKED") return;
+    if (outcome === "CONFIRMED" || outcome === "PENDING") return;
   }
 
   const brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
@@ -1180,6 +1242,7 @@ async function relayWorkResult({
   await captureCompletedAssistantTurnScreenshot(workPage, screenshotPath);
   const screenshotStat = await fs.stat(screenshotPath);
   if (!screenshotStat.isFile() || screenshotStat.size <= 0) {
+    await fs.unlink(screenshotPath).catch(() => {});
     throw new Error("Work result screenshot was not created correctly");
   }
   await safeLog(logPath, {
@@ -1259,8 +1322,7 @@ async function relayWorkResult({
   registryLane.last_result_relay_id = relay.relay_id;
   registryLane.last_work_result_digest = relay.response_digest;
   registryLane.awaiting_work = false;
-  registryLane.relay_inflight = null;
-  await fs.unlink(screenshotPath).catch(() => {});
+  await clearRelayInflight(registryLane);
   await atomicJsonWrite(registryPath, registry);
   await safeLog(logPath, {
     type: "LANE_WORK_RESULT_RELAYED",
@@ -1295,9 +1357,7 @@ async function applyOwnerBrainTarget({
 
   const changed = configuredUrl !== String(registryLane.brain_url || "");
   if (changed) {
-    if (registryLane.relay_inflight?.screenshot_path) {
-      await fs.unlink(registryLane.relay_inflight.screenshot_path).catch(() => {});
-    }
+    await clearRelayInflight(registryLane);
 
     registryLane.brain_url = configuredUrl;
     registryLane.brain_request_sent = false;
@@ -1322,10 +1382,9 @@ async function applyOwnerBrainTarget({
       registryLane.instruction_digest = null;
     }
 
-    // A relay latch is target-specific. When Owner changes Brain, abandon only
-    // the old Brain delivery latch; keep the active Work task/result pending so
-    // it can be relayed to the newly selected Brain exactly once.
-    registryLane.relay_inflight = null;
+    // A relay latch is target-specific. When Owner changes Brain, its evidence
+    // has already been cleaned above; keep the active Work task/result pending
+    // so it can be relayed to the newly selected Brain exactly once.
 
     await safeLog(logPath, {
       type: "LANE_OWNER_BRAIN_TARGET_CHANGED",
@@ -1363,9 +1422,7 @@ async function applyOwnerWorkTarget({
 
   const changed = configuredUrl !== String(registryLane.work_url || "");
   if (changed) {
-    if (registryLane.relay_inflight?.screenshot_path) {
-      await fs.unlink(registryLane.relay_inflight.screenshot_path).catch(() => {});
-    }
+    await clearRelayInflight(registryLane);
 
     registryLane.work_url = configuredUrl;
     registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
@@ -1375,7 +1432,6 @@ async function applyOwnerWorkTarget({
     registryLane.last_work_result_digest = null;
     registryLane.last_result_relay_id = null;
     registryLane.dispatch_inflight = null;
-    registryLane.relay_inflight = null;
     registryLane.awaiting_work = false;
 
     await safeLog(logPath, {
@@ -1454,14 +1510,6 @@ async function processLane({
         registryLane,
         "RECOVERING",
         "Đang tự xác minh lần gửi kết quả trước; Robot không tải lại trang lặp lại."
-      );
-    }
-    if (relayOutcome === "BLOCKED") {
-      return laneStatus(
-        lane,
-        registryLane,
-        "WAIT_OWNER",
-        "Kết quả gửi về Bộ não có thay đổi ngoài dự kiến; Robot đã dừng tự gửi lại để tránh trùng."
       );
     }
   }
@@ -1689,8 +1737,14 @@ let registry = normalizeLaneRegistry(
 );
 await atomicJsonWrite(configPath, config);
 await atomicJsonWrite(registryPath, registry);
+await cleanupOrphanRelayEvidence({
+  evidenceDir,
+  registry,
+  logPath
+});
 
 const statuses = {};
+let evidenceCleanupTicks = 0;
 let adapter = null;
 let cdpRecoveryFailures = 0;
 let restartRequested = false;
@@ -1725,6 +1779,16 @@ try {
     registry = normalizeLaneRegistry(
       await readJson(registryPath, defaultLaneRegistry())
     );
+
+    evidenceCleanupTicks += 1;
+    if (evidenceCleanupTicks >= 12) {
+      await cleanupOrphanRelayEvidence({
+        evidenceDir,
+        registry,
+        logPath
+      });
+      evidenceCleanupTicks = 0;
+    }
 
     for (const lane of config.lanes) {
       const registryLane = registry.lanes[lane.lane_id];
