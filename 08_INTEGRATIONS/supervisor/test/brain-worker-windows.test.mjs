@@ -90,3 +90,15 @@ test("post-job survival verifies Three-Lane runtime and Robot Chrome", async () 
   assert.match(source, /LIVE_LANE1_OWNER_BRAIN_ACTION_REQUIRED/);
   assert.match(source, /ownerBrainActionState/);
 });
+
+
+test("Control Panel explicit AUTO Work reset always advances work revision", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /\[bool\]\$ForceWorkRevision = \$false/);
+  assert.match(source, /work_url -ne \$newWorkUrl -or \$ForceWorkRevision/);
+  assert.match(source, /Save-Lane \$id \$ui\.Project\.Text \$ui\.Brain\.Text '' \$false \$true/);
+});
