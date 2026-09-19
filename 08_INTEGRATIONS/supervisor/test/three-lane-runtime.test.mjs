@@ -102,7 +102,7 @@ test("new Work URLs are stored through canonical target normalization", async ()
 
 
 
-test("v39 Owner Brain URL override is revisioned and can hot-swap during active Work", async () => {
+test("v40 Owner Brain URL override is revisioned and can hot-swap during active Work", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -119,15 +119,30 @@ test("v39 Owner Brain URL override is revisioned and can hot-swap during active 
   assert.match(source, /normalizeChatGptConversationUrl\(registryLane\.brain_url\)/);
 });
 
-test("v39 active Brain status comes from persisted registry target", async () => {
+test("v40 active Brain status comes from persisted registry target", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-19\.39/);
+  assert.match(source, /2026-09-19\.40/);
 });
+
+test("v40 explicit Brain rebind clears only a blocked old-Brain dispatch when no Work result is pending", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /LANE_OWNER_BRAIN_REBASE_CANCELLED_BLOCKED_DISPATCH/);
+  assert.match(source, /!registryLane\.awaiting_work/);
+  assert.match(source, /registryLane\.dispatch_inflight\?\.reconcile_blocked/);
+  assert.match(source, /registryLane\.dispatch_inflight = null/);
+  assert.match(source, /registryLane\.task_id = null/);
+  assert.match(source, /registryLane\.instruction_digest = null/);
+});
+
 
 test("Owner Work URL override is revisioned and resets stale pending Work state once", async () => {
   const source = await fs.readFile(

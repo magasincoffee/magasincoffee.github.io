@@ -34,7 +34,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.39";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.40";
 
 function parseArgs(argv) {
   const result = {
@@ -1062,6 +1062,24 @@ async function applyOwnerBrainTarget({
     registryLane.brain_request_sent = false;
     registryLane.brain_request_inflight = null;
     registryLane.last_brain_directive_digest = null;
+
+    // A blocked Work-dispatch latch belongs to the old Brain directive. An
+    // explicit Owner Brain change is the authority to abandon that blocked
+    // directive, but only when no Work result is actively pending.
+    if (
+      !registryLane.awaiting_work &&
+      registryLane.dispatch_inflight?.reconcile_blocked
+    ) {
+      await safeLog(logPath, {
+        type: "LANE_OWNER_BRAIN_REBASE_CANCELLED_BLOCKED_DISPATCH",
+        laneId: lane.lane_id,
+        taskId: registryLane.dispatch_inflight.task_id,
+        digest: registryLane.dispatch_inflight.instruction_digest
+      });
+      registryLane.dispatch_inflight = null;
+      registryLane.task_id = null;
+      registryLane.instruction_digest = null;
+    }
 
     // A relay latch is target-specific. When Owner changes Brain, abandon only
     // the old Brain delivery latch; keep the active Work task/result pending so
