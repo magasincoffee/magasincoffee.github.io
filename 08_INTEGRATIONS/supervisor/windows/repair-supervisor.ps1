@@ -19,7 +19,7 @@ $target = Join-Path $root 'target.json'
 $pidFile = Join-Path $root 'supervisor.pid'
 $logFile = Join-Path $root 'supervisor.log'
 $projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
-$expectedRuntimeVersion = '2026-09-19.48'
+$expectedRuntimeVersion = '2026-09-19.49'
 
 function Write-Step([string]$Message) {
     Write-Host ""
