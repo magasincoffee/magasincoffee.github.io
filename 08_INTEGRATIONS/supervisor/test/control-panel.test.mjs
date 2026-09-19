@@ -9,7 +9,7 @@ test("control panel is branded for MAGASIN Business OS and controls the real Sup
   );
 
   assert.match(source, /MAGASIN BUSINESS OS/);
-  assert.match(source, /START ROBOT/);
+  assert.match(source, /BẮT ĐẦU ROBOT/);
   assert.match(source, /start-supervisor\.ps1/);
   assert.match(source, /stop-supervisor\.ps1/);
   assert.match(source, /runtime-status\.json/);
@@ -62,7 +62,7 @@ test("offline control panel prefers repository state over stale runtime task", a
 
   assert.match(source, /\$projectState = if \(\$process -and \$runtimeStatus -and \$runtimeStatus\.current_task\)/);
   assert.match(source, /elseif \(\$script:lastRemoteState\)/);
-  assert.match(source, /Repository source-of-truth/);
+  assert.match(source, /Dữ liệu dự án/);
 });
 
 test("control panel surfaces the bounded CDP cause tag in the safe log", async () => {
@@ -108,11 +108,11 @@ test("control panel integrates the local GitHub Actions runner lifecycle", async
   assert.match(source, /C:\\actions-runner-business\\actions-runner/);
   assert.match(source, /Runner\.Listener\.exe/);
   assert.match(source, /MAGASIN-BUSINESS-PC RUNNER - KEEP OPEN/);
-  assert.match(source, /START RUNNER/);
-  assert.match(source, /RUNNER ONLINE/);
+  assert.match(source, /KẾT NỐI GITHUB/);
+  assert.match(source, /KẾT NỐI GITHUB: ĐANG HOẠT ĐỘNG/);
   assert.match(source, /Ensure-GitHubRunner -Interactive/);
   assert.doesNotMatch(source, /\$runnerRoot = 'C:\\actions-runner'/);
-  assert.match(source, /START ROBOT sẽ khởi động Runner trước/);
+  assert.match(source, /BẮT ĐẦU ROBOT sẽ kết nối GitHub trước/);
 });
 
 test("START ROBOT fail-closes if the local runner cannot be started", async () => {
@@ -136,7 +136,7 @@ test("control panel uses the shared supervised ChatGPT launcher", async () => {
   );
 
   assert.match(source, /open-supervisor-chat\.ps1/);
-  assert.match(source, /ChatGPT Robot/);
+  assert.match(source, /MỞ CỬA SỔ ROBOT/);
   assert.doesNotMatch(source, /\$chatButton\.Add_Click\(\{ Start-Process 'https:\/\/chatgpt\.com\/' \}\)/);
 });
 
@@ -189,8 +189,8 @@ test("control panel distinguishes Owner decision from technical activation wait"
     "utf8"
   );
 
-  assert.match(source, /WAIT_USER • CẦN QUYẾT ĐỊNH/);
-  assert.match(source, /WAIT_USER • CẦN CẤU HÌNH/);
+  assert.match(source, /ĐANG CHỜ BẠN • CẦN QUYẾT ĐỊNH/);
+  assert.match(source, /ĐANG CHỜ BẠN • CẦN CẤU HÌNH/);
   assert.match(source, /activation_boundary/);
   assert.match(source, /owner_boundary/);
   assert.match(source, /Cần cấu hình kỹ thuật trước khi tiếp tục/);
@@ -216,7 +216,7 @@ test("control panel represents PAUSED autonomy as a first-class non-error state"
 
   assert.match(source, /'PAUSED' = @\(/);
   assert.match(source, /\$projectAutonomy -eq 'PAUSED'/);
-  assert.match(source, /PAUSED • CHỜ/);
+  assert.match(source, /TẠM DỪNG • CHỜ/);
   assert.match(source, /không mở\/điều khiển ChatGPT/);
   assert.match(source, /Không có lỗi\. Robot đang tạm dừng có chủ đích/);
 });
@@ -238,7 +238,7 @@ test("START ROBOT does not launch runner or ChatGPT while repository autonomy is
   assert.ok(launchSupervisor > ensureRunner);
   assert.match(
     source.slice(pauseGuard, ensureRunner),
-    /START sẽ không mở ChatGPT hoặc gửi lệnh/
+    /BẮT ĐẦU ROBOT sẽ không mở ChatGPT hoặc gửi lệnh/
   );
   assert.match(source.slice(pauseGuard, ensureRunner), /return/);
 });
@@ -284,4 +284,86 @@ test("control panel keeps automatic technical recovery visible instead of showin
   assert.match(source, /\$autoRecoveryButton\.Visible = \$autoRecoveryActive/);
   assert.match(source, /\$ownerResolvedButton\.Visible = -not \(\$targetMismatchActive -or \$uncertainWorkerActive -or \$autoRecoveryActive\)/);
   assert.match(source, /Không cần bấm ĐÃ XỬ LÝ/);
+});
+
+
+test("Owner-facing control panel uses Vietnamese labels and hides English technical labels from the main surface", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /BẢNG ĐIỀU KHIỂN ROBOT/);
+  assert.match(source, /TRẠNG THÁI ROBOT/);
+  assert.match(source, /TRẠNG THÁI DỰ ÁN/);
+  assert.match(source, /BẮT ĐẦU ROBOT/);
+  assert.match(source, /DỪNG ROBOT/);
+  assert.match(source, /KẾT NỐI GITHUB/);
+  assert.match(source, /MỞ CỬA SỔ ROBOT/);
+  assert.match(source, /MỞ DỰ ÁN/);
+  assert.match(source, /CÔNG VIỆC HIỆN TẠI/);
+  assert.match(source, /HOẠT ĐỘNG HIỆN TẠI/);
+  assert.match(source, /CẬP NHẬT GẦN NHẤT/);
+  assert.doesNotMatch(source, /\$robotCaption\.Text = 'SUPERVISOR ROBOT'/);
+  assert.doesNotMatch(source, /\$projectCaption\.Text = 'PROJECT STATE'/);
+  assert.doesNotMatch(source, /\$startButton\.Text = '▶  START ROBOT'/);
+  assert.doesNotMatch(source, /\$stopButton\.Text = '■  STOP'/);
+});
+
+test("control panel shows ĐANG LÀM VIỆC only from live worker evidence", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /orchestration\.json/);
+  assert.match(source, /worker_running/);
+  assert.match(source, /\$runningWorkers\.Count -gt 0/);
+  assert.match(source, /ĐANG LÀM VIỆC/);
+  assert.match(source, /\$firstWorker\.worker_id/);
+  assert.match(source, /\$firstWorker\.task_id/);
+  assert.match(source, /ĐANG ĐIỀU PHỐI/);
+  assert.doesNotMatch(source, /'RUNNING' \{ 'RUNNING • ĐANG LÀM VIỆC' \}/);
+});
+
+test("all Owner-visible timestamps use fixed Vietnam time instead of Windows local timezone", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /SE Asia Standard Time/);
+  assert.match(source, /TimeZoneInfo\]::ConvertTime/);
+  assert.match(source, /dd\/MM\/yyyy HH:mm:ss/);
+  assert.match(source, /giờ Việt Nam/);
+  assert.match(source, /Format-VietnamClock/);
+  assert.doesNotMatch(source, /ToLocalTime\(\)/);
+});
+
+test("main activity and next-step fields avoid raw UI OBS phase and source-of-truth jargon", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.doesNotMatch(source, /UI=\$uiState/);
+  assert.doesNotMatch(source, /OBS=\$observation/);
+  assert.doesNotMatch(source, /phase=\$\(\$projectState\.current_phase\)/);
+  assert.match(source, /Get-FriendlyReason/);
+  assert.match(source, /Robot đang theo dõi Bộ não và điều phối công việc/);
+});
+
+test("recovery action controls remain mutually exclusive and readable", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /\$brainRebindButton\.Visible = \$targetMismatchActive/);
+  assert.match(source, /\$workerRetryButton\.Visible = \$uncertainWorkerActive/);
+  assert.match(source, /\$autoRecoveryButton\.Visible = \$autoRecoveryActive/);
+  assert.match(source, /\$ownerResolvedButton\.Visible = -not \(\$targetMismatchActive -or \$uncertainWorkerActive -or \$autoRecoveryActive\)/);
+  assert.match(source, /DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO/);
+  assert.match(source, /TIẾP TỤC CÔNG VIỆC BỊ KẸT/);
+  assert.match(source, /ROBOT ĐANG TỰ KHÔI PHỤC/);
 });
