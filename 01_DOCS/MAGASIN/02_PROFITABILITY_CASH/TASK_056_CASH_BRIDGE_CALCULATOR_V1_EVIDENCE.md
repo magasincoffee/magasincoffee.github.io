@@ -467,6 +467,119 @@ Core calculator was assembled in bounded commits:
 - PR: `#179`
 - merge: `8a7db9fa2e9ba10e0b51ea899e7ca5acb387bf98`
 
+## Recovery / interruption reconciliation
+
+The TASK-056 Work connection was interrupted after the calculator branch had already accumulated implementation commits. Recovery resumed the same branch `task-056-cash-bridge-calculator`; no new task branch was created and TASK-057 implementation was not started by this recovery.
+
+### Interrupted failure evidence
+
+The explicit recovery point supplied by Brain/Owner was:
+
+- branch head: `4cd6ab301f2d0fae69b8107d5cb56dea45838a4a`;
+- Business OS Contract Tests run: `35450621641`;
+- job: `105917012771`;
+- Node: `v20.20.2`;
+- conclusion: `failure`;
+- helper syntax check: PASS;
+- legacy Cash Bridge taxonomy suite: 28/29 PASS.
+
+The single verified failure was the historical TASK-055 contract assertion that still required:
+
+`contract.bridge_shape.computed_ending_balance.includes("TASK-056")`
+
+and the equivalent variance text check.
+
+The contract had already moved to executable TASK-056 semantics, so this was a stale regression expectation rather than a calculator formula/quality/coverage defect.
+
+### Recovery Five-Step
+
+QUESTION — Is the failure business semantics or stale QA?  
+Answer: stale QA assertion. Calculator semantics remained canonical.
+
+DELETE — No calculator rollback, no formula change to satisfy display text, no duplicate helper/contract, no branch restart.
+
+SIMPLIFY — Update only `09_QA/business-os/cash-bridge.test.mjs` so the legacy taxonomy contract regression validates the canonical transition:
+- exact taxonomy remains unchanged;
+- `status=CANONICAL_EXECUTABLE`;
+- `calculator_task=TASK-056`;
+- exact formulas;
+- dependency graph;
+- quality precedence;
+- explicit coverage semantics.
+
+ACCELERATE — Reuse the existing 46-case calculator suite and existing full Business OS workflow.
+
+AUTOMATE — CI only; no financial action/source integration.
+
+### Remote branch reconciliation
+
+When recovery reconnected, the same branch had progressed to head `f7253352b95dcef43d507349cf5ef147b3cb6a5a` and PR #179 had already merged the calculator implementation as `8a7db9fa2e9ba10e0b51ea899e7ca5acb387bf98`.
+
+The stale TASK-055 assertion was still present in source even though its old text happened to pass against traceability strings inside the executable contract. Recovery therefore fixed the semantic regression rather than relying on that accidental text coupling.
+
+QA-only recovery fix:
+
+- commit: `68bd4ac21b8c79e34943a34f721e5ed7246d9e6b`;
+- file: `09_QA/business-os/cash-bridge.test.mjs`;
+- calculator/helper/contract business logic changed: NONE.
+
+The fixed regression now verifies:
+- schema version;
+- exact taxonomy;
+- `CANONICAL_EXECUTABLE`;
+- `calculator_task=TASK-056`;
+- computed formula `opening_balance + total_known_inflows - total_known_outflows`;
+- variance formula `observed_ending_balance - computed_ending_balance`;
+- dependency graph;
+- quality precedence `NOT_CONNECTED > GAP > ESTIMATE > ACTUAL`;
+- caller-provided coverage semantics;
+- observed-ending independence from computed ending.
+
+### Recovery remote CI
+
+Same-branch push verification:
+
+- run: `35450758071`;
+- job: `105917373039`;
+- Node: `v20.20.2`;
+- conclusion: `success`;
+- taxonomy targeted: 29/29 PASS;
+- calculator targeted: 46/46 PASS;
+- full Business OS suite: 143 logical checks / 0 FAIL.
+
+Because PR #179 had already merged before the recovery QA fix, the recovery diff was isolated into a bounded follow-up PR on the same branch:
+
+- PR: `#180`;
+- changed files: one QA file only;
+- additions/deletions: +38/-4;
+- no Core calculator/contract/helper changes.
+
+Required final PR-head check for the recovery diff:
+
+- run: `35450826348`;
+- job: `105917548782`;
+- Node: `v20.20.2`;
+- conclusion: `success`;
+- taxonomy targeted: 29/29 PASS;
+- calculator targeted: 46/46 PASS;
+- full Business OS suite: 143 logical checks / 0 FAIL.
+
+Recovery merge:
+
+`28c4bd6792531b6e696d94c1faa36f517c280403`
+
+Exact post-merge Business OS verification:
+
+- run: `35450894238`;
+- job: `105917735745`;
+- Node: `v20.20.2`;
+- conclusion: `success`;
+- taxonomy targeted: 29/29 PASS;
+- calculator targeted: 46/46 PASS;
+- full Business OS suite: 143 logical checks / 0 FAIL.
+
+No calculator defect was found during recovery after the stale assertion was corrected. The formulas, dependency graph, coverage semantics, transfer rules, duplicate protection and component-local quality behavior remained unchanged.
+
 ## Gaps carried forward
 
 TASK-056 is source-agnostic. Therefore existing source gaps remain explicit:
