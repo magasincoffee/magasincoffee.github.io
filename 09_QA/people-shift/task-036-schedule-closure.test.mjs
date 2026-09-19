@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 const root=new URL("../../",import.meta.url);
 const read=p=>fs.readFile(new URL(p,root),"utf8");
 
-test("TASK-036 keeps schedule-first closure on canonical in-app path",async()=>{
+test("TASK-036 schedule-first closure remains preserved after later task advancement",async()=>{
   const [stateRaw,queue,current,closure,emailConfig,notification]=await Promise.all([
     read("01_DOCS/MAGASIN/00_PROJECT_STATE.json"),
     read("01_DOCS/MAGASIN/00_TASK_QUEUE.md"),
@@ -16,13 +16,13 @@ test("TASK-036 keeps schedule-first closure on canonical in-app path",async()=>{
   ]);
   const state=JSON.parse(stateRaw);
 
-  assert.equal(state.current_task,"TASK-036");
+  assert.notEqual(state.current_task,"TASK-036");
   assert.equal(state.status,"READY");
   assert.equal(state.autonomy,"AUTO_CONTINUE");
   assert.equal(state.requires_user,false);
   assert.match(queue,/TASK-035[^\n]*DEFERRED/);
-  assert.match(queue,/TASK-036[^\n]*IN_PROGRESS/);
-  assert.match(current,/Schedule-first closure regression \+ recovery gate/);
+  assert.match(queue,/TASK-036[^\n]*DONE/);
+  assert.match(current,/Schedule-first[\s\S]*proven vertical-slice pattern/i);
   assert.match(closure,/notification outbox[\s\S]*Employee in-app notification/i);
   assert.match(emailConfig,/DEFERRED_BY_OWNER \/ FAIL_CLOSED/);
   assert.match(notification,/list_my_notifications_v1/);
