@@ -103,6 +103,7 @@ export function defaultLaneRegistry() {
     mode: THREE_LANE_MODE,
     lanes: Object.fromEntries(LANE_IDS.map((laneId) => [laneId, {
       lane_id: laneId,
+      brain_url: "",
       work_url: "",
       work_generation: 0,
       task_id: null,
@@ -112,6 +113,7 @@ export function defaultLaneRegistry() {
       last_result_relay_id: null,
       dispatch_inflight: null,
       relay_inflight: null,
+      brain_request_inflight: null,
       brain_request_sent: false,
       awaiting_work: false
     }]))
@@ -124,6 +126,7 @@ export function normalizeLaneRegistry(value = {}) {
     const lane = value?.lanes?.[laneId] || {};
     safe.lanes[laneId] = {
       lane_id: laneId,
+      brain_url: String(lane.brain_url || "").trim(),
       work_url: String(lane.work_url || "").trim(),
       work_generation: Number(lane.work_generation || 0),
       task_id: lane.task_id || null,
@@ -133,6 +136,7 @@ export function normalizeLaneRegistry(value = {}) {
       last_result_relay_id: lane.last_result_relay_id || null,
       dispatch_inflight: lane.dispatch_inflight || null,
       relay_inflight: lane.relay_inflight || null,
+      brain_request_inflight: lane.brain_request_inflight || null,
       brain_request_sent: Boolean(lane.brain_request_sent),
       awaiting_work: Boolean(lane.awaiting_work)
     };
