@@ -114,6 +114,23 @@ jobs:
               conversationAccessDenied: probe.snapshot.conversationAccessDenied,
               loginRequired: probe.snapshot.loginRequired
             };
+            const composerCandidates = page.locator("#prompt-textarea, textarea, [contenteditable]");
+            const composerCount = await composerCandidates.count().catch(() => 0);
+            output.composer_candidates = [];
+            for (let i = 0; i < Math.min(composerCount, 12); i += 1) {
+              const node = composerCandidates.nth(i);
+              output.composer_candidates.push({
+                tag: await node.evaluate((el) => el.tagName.toLowerCase()).catch(() => null),
+                id: await node.getAttribute("id").catch(() => null),
+                contenteditable: await node.getAttribute("contenteditable").catch(() => null),
+                disabled_attr: await node.getAttribute("disabled").catch(() => null),
+                aria_disabled: await node.getAttribute("aria-disabled").catch(() => null),
+                role: await node.getAttribute("role").catch(() => null),
+                visible: await node.isVisible().catch(() => false),
+                enabled: await node.isEnabled().catch(() => false),
+                editable: await node.isEditable().catch(() => false)
+              });
+            }
             output.work_observation = probe.classification.observation;
             output.expected_instruction_digest_prefix = expected ? expected.slice(0, 12) : null;
             output.expected_instruction_found = Boolean(expected && userDigests.includes(expected));
