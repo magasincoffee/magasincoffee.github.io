@@ -39,7 +39,7 @@ The Brain directive digest is persisted when dispatch is confirmed so the same d
 
 Result relay carries a deterministic `relay_id=<id>` marker and the full Work result plus one screenshot.
 
-Relay reconciliation in v2026-09-19.44 is marker-authoritative on the exact persisted Brain:
+Relay reconciliation in v2026-09-19.45 is marker-authoritative on the exact persisted Brain:
 
 - relay marker present: confirmed exact-once;
 - Brain stable and marker absent: not confirmed, clear the latch and retry safely;
