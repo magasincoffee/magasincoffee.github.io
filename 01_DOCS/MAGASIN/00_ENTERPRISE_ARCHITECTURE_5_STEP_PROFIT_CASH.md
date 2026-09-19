@@ -6,14 +6,14 @@
 
 ## 1. Owner handoff gate — bắt buộc
 
-Trong giai đoạn Owner đang trao đổi/chốt kiến trúc với ChatGPT:
+Sau khi kiến trúc đã được chốt nhưng Owner vẫn đang trao đổi/chi tiết hóa trước khi release Robot:
 
 - Supervisor/Brain/Work **không được chủ động thay Owner triển khai kiến trúc hoặc mở task implementation mới**.
 - Source-of-truth phải ở trạng thái `PAUSED / WAIT_USER`.
 - Robot chỉ được tiếp tục sau khi Owner **chốt kiến trúc và ra lệnh bàn giao rõ ràng**.
 - Việc bàn giao phải đổi source-of-truth về trạng thái cho phép execution trước khi Robot chạy.
 - Không được suy diễn im lặng của Owner là approval.
-- Không được lấy một task cũ trong queue làm lý do tự tiếp tục khi architecture discussion đang active.
+- Không được lấy một task cũ trong queue làm lý do tự tiếp tục khi Robot chưa được Owner release.
 
 Canonical release condition:
 
