@@ -1,7 +1,7 @@
 {
   "project": "MAGASIN Business OS",
   "repository": "magasincoffee/magasincoffee.github.io",
-  "plan_version": "BOS-V1-5STEP-THREE-LANE-BOM-SAFE-2026-09-19",
+  "plan_version": "BOS-V1-5STEP-THREE-LANE-RELAY-MARKER-2026-09-19",
   "target_days": 21,
   "current_phase": "P1_AUTONOMY_THREE_LANE_UPGRADE",
   "current_task": "TASK-049",
@@ -195,7 +195,9 @@
       "full_text": true,
       "destination": "LANE_BRAIN",
       "exact_once": true,
-      "transient_artifacts": true
+      "transient_artifacts": true,
+      "idempotency_key": "relay_id",
+      "confirmation": "USER_TURN_CONTAINS_EXACT_RELAY_ID_MARKER"
     },
     "local_state": {
       "config": "%LOCALAPPDATA%\\MAGASIN\\BusinessOS\\supervisor\\lanes.json",
@@ -218,7 +220,7 @@
     },
     "acceptance_evidence": {
       "status": "PENDING",
-      "note": "v37 must parse the current BOM-prefixed lanes.json, resume lane-1, complete live dispatch acceptance, and shell-open Control Panel."
+      "note": "v38 must prove no duplicate relay for an already delivered relay_id and then complete E2E-03."
     },
     "work_target_edit_policy": "OWNER_EDITABLE_WHEN_LANE_STOPPED",
     "work_target_blank_policy": "ROBOT_AUTO_CREATE",
