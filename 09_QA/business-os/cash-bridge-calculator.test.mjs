@@ -238,3 +238,242 @@ test("only outflows use explicit complete coverage to prove zero inflows", () =>
 test("no events with explicit COMPLETE coverage legitimately proves zero movement", () => {
   const result = calculate({
     openingBalance: balance("cash_opening_balance", "2026-09-01", 100),
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      100
+    ),
+    events: [],
+    coverage: true
+  });
+
+  assert.equal(result.coverage.status, "COMPLETE");
+  assert.equal(result.total_known_inflows.value, 0);
+  assert.equal(result.total_known_outflows.value, 0);
+  assert.equal(result.computed_ending_balance.value, 100);
+});
+
+test("missing coverage never turns absent events into zero", () => {
+  const result = calculate({
+    events: [],
+    coverage: undefined
+  });
+
+  assert.equal(result.coverage.status, "MISSING");
+  assert.equal(result.total_known_inflows.value, null);
+  assert.equal(result.total_known_outflows.value, null);
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.equal(result.computed_ending_balance.quality, "GAP");
+});
+
+test("missing opening makes computed ending GAP", () => {
+  const result = calculate({ openingBalance: undefined });
+
+  assert.equal(result.opening_balance.value, null);
+  assert.equal(result.computed_ending_balance.quality, "GAP");
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.equal(result.cash_variance.value, null);
+});
+
+test("NOT_CONNECTED opening balance directly propagates to computed ending", () => {
+  const result = calculate({
+    openingBalance: balance(
+      "cash_opening_balance",
+      "2026-09-01",
+      1000,
+      { quality: "NOT_CONNECTED" }
+    )
+  });
+
+  assert.equal(result.opening_balance.quality, "NOT_CONNECTED");
+  assert.equal(result.opening_balance.value, null);
+  assert.equal(result.computed_ending_balance.quality, "NOT_CONNECTED");
+  assert.equal(result.computed_ending_balance.value, null);
+});
+
+test("NOT_CONNECTED observed ending does not erase computed ending but variance is NOT_CONNECTED", () => {
+  const result = calculate({
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      1150,
+      { quality: "NOT_CONNECTED" }
+    )
+  });
+
+  assert.equal(result.computed_ending_balance.quality, "ACTUAL");
+  assert.equal(result.computed_ending_balance.value, 1150);
+  assert.equal(result.cash_variance.quality, "NOT_CONNECTED");
+  assert.equal(result.cash_variance.value, null);
+});
+
+test("opening balance scope mismatch fails closed", () => {
+  const result = calculate({
+    openingBalance: balance(
+      "cash_opening_balance",
+      "2026-09-01",
+      1000,
+      { scope: { branch: "CN2" } }
+    )
+  });
+
+  assert.equal(result.opening_balance.quality, "GAP");
+  assert.equal(result.opening_balance.value, null);
+  assert.equal(result.opening_balance.reason, "BALANCE_SCOPE_MISMATCH");
+  assert.equal(result.computed_ending_balance.value, null);
+});
+
+test("missing observed ending does not erase a valid computed ending", () => {
+  const result = calculate({ observedEndingBalance: undefined });
+
+  assert.equal(result.computed_ending_balance.quality, "ACTUAL");
+  assert.equal(result.computed_ending_balance.value, 1150);
+  assert.equal(result.cash_variance.quality, "GAP");
+  assert.equal(result.cash_variance.value, null);
+});
+
+test("PARTIAL coverage keeps known evidenced sums but computed ending stays GAP", () => {
+  const result = calculate({
+    coverage: {
+      status: "PARTIAL",
+      as_of: "2026-09-03T23:00:00+07:00",
+      lineage: ["PARTIAL_COVERAGE"]
+    }
+  });
+
+  assert.equal(result.total_known_inflows.value, 300);
+  assert.equal(result.total_known_outflows.value, 150);
+  assert.equal(result.total_known_inflows.metric, "known_evidenced_cash_inflows");
+  assert.equal(result.computed_ending_balance.quality, "GAP");
+  assert.equal(result.computed_ending_balance.value, null);
+});
+
+test("MISSING coverage can still show valid known event sums but cannot compute period ending", () => {
+  const result = calculate({
+    coverage: { status: "MISSING" }
+  });
+
+  assert.equal(result.total_known_inflows.value, 300);
+  assert.equal(result.total_known_outflows.value, 150);
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.equal(result.computed_ending_balance.quality, "GAP");
+});
+
+test("required NOT_CONNECTED event source propagates deterministically", () => {
+  const result = calculate({
+    coverage: {
+      status: "COMPLETE",
+      source_coverage: [
+        {
+          source: "BANK_ACCOUNT_SOURCE",
+          status: "NOT_CONNECTED",
+          required: true
+        }
+      ]
+    }
+  });
+
+  assert.equal(result.coverage.status, "PARTIAL");
+  assert.equal(result.coverage.required_not_connected, true);
+  assert.equal(result.total_known_inflows.value, 300);
+  assert.equal(result.computed_ending_balance.quality, "NOT_CONNECTED");
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(result.diagnostics.includes("REQUIRED_EVENT_SOURCE_NOT_CONNECTED"));
+});
+
+test("ESTIMATE opening downgrades computed ending and variance but never becomes ACTUAL", () => {
+  const result = calculate({
+    openingBalance: balance(
+      "cash_opening_balance",
+      "2026-09-01",
+      1000,
+      { quality: "ESTIMATE" }
+    )
+  });
+
+  assert.equal(result.computed_ending_balance.quality, "ESTIMATE");
+  assert.equal(result.computed_ending_balance.value, 1150);
+  assert.equal(result.cash_variance.quality, "ESTIMATE");
+});
+
+test("ESTIMATE cash event downgrades computed ending", () => {
+  const events = clone(fixture.events);
+  events[0].quality = "ESTIMATE";
+  events[0].reconciliation_status = "PARTIAL";
+
+  const result = calculate({ events });
+
+  assert.equal(result.total_known_inflows.quality, "ESTIMATE");
+  assert.equal(result.computed_ending_balance.quality, "ESTIMATE");
+  assert.equal(result.computed_ending_balance.value, 1150);
+});
+
+test("GAP event dependency is excluded from known sum and blocks computed ending", () => {
+  const events = [
+    cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-02", 100),
+    cashEvent("OUTFLOW", "OTHER_OPEX", "2026-09-02", undefined)
+  ];
+  const result = calculate({ events });
+
+  assert.equal(result.total_known_inflows.value, 100);
+  assert.equal(result.total_known_outflows.value, null);
+  assert.equal(result.computed_ending_balance.quality, "GAP");
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(result.diagnostics.includes("EVENT_DEPENDENCY_GAP"));
+});
+
+test("NOT_CONNECTED event dependency propagates NOT_CONNECTED", () => {
+  const events = [
+    cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-02", 100),
+    cashEvent("OUTFLOW", "OTHER_OPEX", "2026-09-02", null, {
+      quality: "NOT_CONNECTED"
+    })
+  ];
+  const result = calculate({ events });
+
+  assert.equal(result.computed_ending_balance.quality, "NOT_CONNECTED");
+  assert.equal(result.computed_ending_balance.value, null);
+});
+
+test("consolidated INTERNAL_TRANSFER is reported but neutral to formula", () => {
+  const scope = {
+    branch: "ALL",
+    channel: "ALL",
+    aggregate_proven: true
+  };
+  const result = calculate({
+    scope,
+    openingBalance: balance(
+      "cash_opening_balance",
+      "2026-09-01",
+      1000,
+      { scope }
+    ),
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      1000,
+      { scope }
+    ),
+    events: [
+      cashEvent("TRANSFER", "INTERNAL_TRANSFER", "2026-09-02", 500, {
+        scope,
+        proof_basis: "INTERNAL_TRANSFER"
+      })
+    ]
+  });
+
+  assert.equal(result.transfers.event_count, 1);
+  assert.equal(result.transfers.consolidated_neutral, true);
+  assert.equal(result.transfers.known_evidenced_amount.value, 500);
+  assert.equal(result.total_known_inflows.value, 0);
+  assert.equal(result.total_known_outflows.value, 0);
+  assert.equal(result.computed_ending_balance.value, 1000);
+});
+
+test("branch-scoped INTERNAL_TRANSFER fails closed rather than guessing net effect", () => {
+  const result = calculate({
+    events: [
+      cashEvent("TRANSFER", "INTERNAL_TRANSFER", "2026-09-02", 500, {
+        proof_basis: "INTERNAL_TRANSFER"
+      })
