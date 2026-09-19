@@ -86,3 +86,15 @@ test("WORKING status requires enabled lane with an active pending Work result", 
   assert.match(source, /if \(registryLane\.awaiting_work\)/);
   assert.match(source, /laneStatus\([\s\S]*?"WORKING"/);
 });
+
+
+test("new Work URLs are stored through canonical target normalization", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /const target = targetFromUrl\(page\.url\(\)\)/);
+  assert.match(source, /return \`\$\{target\.origin\}\$\{target\.pathname\}\`/);
+  assert.match(source, /internal \/c\/WEB:<uuid> route/);
+});

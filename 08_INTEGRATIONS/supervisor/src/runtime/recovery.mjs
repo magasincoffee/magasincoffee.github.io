@@ -12,6 +12,13 @@ export function isConversationPathname(pathname) {
     /^\/(c|g|project)\//.test(pathname);
 }
 
+export function canonicalConversationPathname(pathname) {
+  const raw = String(pathname || "");
+  const match = raw.match(/^\/c\/WEB:([0-9a-fA-F-]{36})$/);
+  if (match) return `/c/${match[1]}`;
+  return raw;
+}
+
 export function targetFromUrl(value) {
   const url = value instanceof URL ? value : new URL(value);
   if (url.protocol !== "https:" ||
@@ -21,14 +28,16 @@ export function targetFromUrl(value) {
   }
   return {
     origin: "https://chatgpt.com",
-    pathname: url.pathname
+    pathname: canonicalConversationPathname(url.pathname)
   };
 }
 
 export function pageMatchesTarget(value, target) {
   try {
     const url = value instanceof URL ? value : new URL(value);
-    return url.origin === target?.origin && url.pathname === target?.pathname;
+    return url.origin === target?.origin &&
+      canonicalConversationPathname(url.pathname) ===
+      canonicalConversationPathname(target?.pathname);
   } catch {
     return false;
   }

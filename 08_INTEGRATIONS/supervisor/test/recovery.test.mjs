@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   RECOVERY_ACTIONS,
   SupervisorRecoveryController,
+  canonicalConversationPathname,
   isConversationPathname,
   pageMatchesTarget,
   targetFromUrl
@@ -214,5 +215,25 @@ test("repeated full rollovers without a healthy completion fail closed", () => {
       classification: { observation: "UNKNOWN" }
     }),
     RECOVERY_ACTIONS.WAIT_USER_RECOVERY_EXHAUSTED
+  );
+});
+
+
+test("canonicalizes transient ChatGPT WEB-prefixed conversation paths", () => {
+  const uuid = "6b744b22-161a-4125-80b8-d12f747a72a9";
+  assert.equal(
+    canonicalConversationPathname(`/c/WEB:${uuid}`),
+    `/c/${uuid}`
+  );
+  assert.deepEqual(
+    targetFromUrl(`https://chatgpt.com/c/WEB:${uuid}`),
+    { origin: "https://chatgpt.com", pathname: `/c/${uuid}` }
+  );
+  assert.equal(
+    pageMatchesTarget(
+      `https://chatgpt.com/c/${uuid}`,
+      { origin: "https://chatgpt.com", pathname: `/c/WEB:${uuid}` }
+    ),
+    true
   );
 });
