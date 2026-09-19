@@ -153,3 +153,20 @@ test("Owner Brain rebind accepts only one visible ChatGPT conversation with a va
   assert.match(runtime, /BRAIN_TARGET_REBOUND_OWNER/);
   assert.match(adapter, /document\.visibilityState === "visible"/);
 });
+
+
+test("uncertain Worker send is reconciled only by matching instruction digest or one explicit Owner retry", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(runtime, /reconcileUncertainWorkerDispatch/);
+  assert.match(runtime, /captureUserTurnDigests/);
+  assert.match(runtime, /WORKER_DISPATCH_RECONCILED/);
+  assert.match(runtime, /WORKER_RETRY\.request\.json/);
+  assert.match(runtime, /applyOwnerWorkerRetry/);
+  assert.match(runtime, /WORKER_OWNER_RETRY_ARMED/);
+  assert.match(runtime, /Owner retry was already used for this instruction/);
+  assert.match(runtime, /automatic retry is denied/);
+});
