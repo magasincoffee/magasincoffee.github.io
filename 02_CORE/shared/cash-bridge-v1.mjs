@@ -38,6 +38,26 @@ export const CASH_PAYMENT_METHODS = Object.freeze([
   "OTHER"
 ]);
 
+export const CASH_BRIDGE_COVERAGE_STATES = Object.freeze([
+  "COMPLETE",
+  "PARTIAL",
+  "MISSING"
+]);
+
+export const CASH_BRIDGE_QUALITY_PRECEDENCE = Object.freeze([
+  "NOT_CONNECTED",
+  "GAP",
+  "ESTIMATE",
+  "ACTUAL"
+]);
+
+const SOURCE_COVERAGE_STATES = Object.freeze([
+  "COMPLETE",
+  "PARTIAL",
+  "MISSING",
+  "NOT_CONNECTED"
+]);
+
 const FORBIDDEN_PROOF_BASIS = Object.freeze([
   "PURCHASE",
   "AP_BALANCE",
@@ -47,6 +67,11 @@ const FORBIDDEN_PROOF_BASIS = Object.freeze([
   "DEBT_SCHEDULE_ESTIMATE",
   "OWNER_FREE_TEXT_NOTE"
 ]);
+
+const DERIVED_SOURCE = Object.freeze({
+  class: "DERIVED_CALCULATION",
+  label: "CASH_BRIDGE_V1"
+});
 
 function text(value) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -266,7 +291,7 @@ export function normalizeCashEvent(raw = {}) {
   });
 
   if (
-    truth.quality === "ACTUAL" &&
+    (truth.quality === "ACTUAL" || truth.quality === "ESTIMATE") &&
     (typeof truth.value !== "number" || !Number.isFinite(truth.value) || truth.value <= 0)
   ) {
     return diagnosticResult({
@@ -309,3 +334,299 @@ export function isConsolidatedNeutralTransfer(event) {
     event.consolidated_role === "NEUTRAL_TRANSFER"
   );
 }
+
+function isIsoDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function isIsoTimestampWithZone(value) {
+  const normalized = text(value);
+  if (!normalized || !/T/.test(normalized) || !/(?:Z|[+-]\d{2}:\d{2})$/i.test(normalized)) {
+    return false;
+  }
+  return Number.isFinite(Date.parse(normalized));
+}
+
+function normalizeTargetPeriod(raw = {}) {
+  const start = isIsoDate(raw?.start) ? raw.start : null;
+  const end = isIsoDate(raw?.end) ? raw.end : null;
+  const timezone = text(raw?.timezone);
+  return {
+    start,
+    end,
+    timezone,
+    valid: Boolean(start && end && timezone && start <= end)
+  };
+}
+
+function normalizeTargetScope(raw = {}) {
+  const aggregateProven = raw?.aggregate_proven === true || raw?.aggregateProven === true;
+  const normalizeDimension = (value) => {
+    const normalized = text(value);
+    if (!normalized) return null;
+    if (normalized.toUpperCase() === "ALL") return aggregateProven ? "ALL" : null;
+    return normalized;
+  };
+  const branch = normalizeDimension(raw?.branch ?? raw?.branchScope);
+  const channel = normalizeDimension(raw?.channel ?? raw?.channelScope);
+  const accountQualifier = safeText(
+    raw?.account ??
+    raw?.account_id ??
+    raw?.accountId ??
+    raw?.cash_location ??
+    raw?.cashLocation
+  );
+  return {
+    branch,
+    channel,
+    aggregate_proven: aggregateProven,
+    account_scoped: Boolean(accountQualifier),
+    valid: Boolean(branch && channel)
+  };
+}
+
+function sameScope(left = {}, right = {}) {
+  return (
+    left?.branch === right?.branch &&
+    left?.channel === right?.channel &&
+    left?.aggregate_proven === right?.aggregate_proven
+  );
+}
+
+function maxAsOf(values) {
+  let selected = null;
+  let selectedTime = Number.NEGATIVE_INFINITY;
+  for (const value of values) {
+    if (!isIsoTimestampWithZone(value)) continue;
+    const time = Date.parse(value);
+    if (time > selectedTime) {
+      selected = value;
+      selectedTime = time;
+    }
+  }
+  return selected;
+}
+
+function worstQuality(qualities) {
+  const normalized = qualities
+    .map((quality) => text(quality)?.toUpperCase())
+    .filter(Boolean);
+  for (const quality of CASH_BRIDGE_QUALITY_PRECEDENCE) {
+    if (normalized.includes(quality)) return quality;
+  }
+  return "GAP";
+}
+
+function normalizeCoverage(raw) {
+  let source = raw;
+  if (typeof raw === "boolean") {
+    source = { status: raw ? "COMPLETE" : "MISSING" };
+  } else if (typeof raw === "string") {
+    source = { status: raw };
+  } else if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    source = {};
+  }
+
+  const declaredStatus = normalizeEnum(source.status, CASH_BRIDGE_COVERAGE_STATES);
+  const sourceCoverage = Array.isArray(source.source_coverage ?? source.sourceCoverage)
+    ? (source.source_coverage ?? source.sourceCoverage)
+        .map((entry) => {
+          const label = safeText(entry?.source ?? entry?.label);
+          const status = normalizeEnum(entry?.status, SOURCE_COVERAGE_STATES);
+          if (!label || !status) return null;
+          return {
+            source: label,
+            status,
+            required: entry?.required !== false,
+            as_of: isIsoTimestampWithZone(entry?.as_of ?? entry?.asOf)
+              ? (entry.as_of ?? entry.asOf)
+              : null,
+            lineage: safeList(entry?.lineage)
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.source.localeCompare(b.source) || a.status.localeCompare(b.status))
+    : [];
+
+  const requiredSources = sourceCoverage.filter((entry) => entry.required);
+  const requiredNotConnected = requiredSources.some((entry) => entry.status === "NOT_CONNECTED");
+  const requiredIncomplete = requiredSources.some((entry) => entry.status !== "COMPLETE");
+
+  let status = declaredStatus || "MISSING";
+  if (status === "COMPLETE" && requiredIncomplete) status = "PARTIAL";
+
+  const diagnostics = safeList(source.diagnostics);
+  if (!declaredStatus) diagnostics.push("MISSING_EVENT_SOURCE_COVERAGE");
+  if (requiredNotConnected) diagnostics.push("REQUIRED_EVENT_SOURCE_NOT_CONNECTED");
+  if (declaredStatus === "COMPLETE" && requiredIncomplete) {
+    diagnostics.push("COVERAGE_COMPLETE_CONTRADICTS_SOURCE_STATUS");
+  }
+
+  return {
+    status,
+    declared_status: declaredStatus,
+    source_coverage: sourceCoverage,
+    as_of: isIsoTimestampWithZone(source.as_of ?? source.asOf)
+      ? (source.as_of ?? source.asOf)
+      : null,
+    lineage: safeList(source.lineage),
+    diagnostics: [...new Set(diagnostics)].sort(),
+    required_not_connected: requiredNotConnected
+  };
+}
+
+function bridgeFailureTruth({
+  metric,
+  targetPeriod,
+  targetScope,
+  pointDate = null,
+  quality = "GAP",
+  reason,
+  lineage = []
+}) {
+  const period = pointDate
+    ? { start: pointDate, end: pointDate, timezone: targetPeriod.timezone }
+    : {
+        start: targetPeriod.start,
+        end: targetPeriod.end,
+        timezone: targetPeriod.timezone
+      };
+
+  return normalizeFinancialTruth({
+    period,
+    scope: targetScope,
+    group: "CASH",
+    metric,
+    value: null,
+    quality,
+    source: DERIVED_SOURCE,
+    as_of: null,
+    reconciliation_status: "UNKNOWN",
+    evidence: [],
+    lineage: ["CASH_BRIDGE_V1", ...lineage],
+    message: "Cash Bridge dependency is incomplete.",
+    reason
+  });
+}
+
+function normalizeBalanceTruth(raw, {
+  metric,
+  pointDate,
+  targetPeriod,
+  targetScope,
+  missingReason
+}) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return bridgeFailureTruth({
+      metric,
+      targetPeriod,
+      targetScope,
+      pointDate,
+      reason: missingReason
+    });
+  }
+
+  const suppliedGroup = text(raw.group)?.toUpperCase();
+  const suppliedMetric = text(raw.metric);
+  if (suppliedGroup && suppliedGroup !== "CASH") {
+    return bridgeFailureTruth({
+      metric,
+      targetPeriod,
+      targetScope,
+      pointDate,
+      reason: "INVALID_BALANCE_GROUP"
+    });
+  }
+  if (suppliedMetric && suppliedMetric !== metric) {
+    return bridgeFailureTruth({
+      metric,
+      targetPeriod,
+      targetScope,
+      pointDate,
+      reason: "INVALID_BALANCE_METRIC"
+    });
+  }
+
+  const truth = normalizeFinancialTruth({
+    period: raw.period,
+    scope: raw.scope,
+    group: suppliedGroup || "CASH",
+    metric: suppliedMetric || metric,
+    value: raw.value,
+    quality: raw.quality,
+    source: raw.source,
+    as_of: raw.as_of ?? raw.asOf,
+    reconciliation_status: raw.reconciliation_status ?? raw.reconciliationStatus,
+    evidence: raw.evidence,
+    lineage: raw.lineage,
+    message: raw.message,
+    reason: raw.reason
+  });
+
+  if (truth.quality !== "ACTUAL" && truth.quality !== "ESTIMATE") {
+    return truth;
+  }
+
+  if (
+    truth.period.start !== pointDate ||
+    truth.period.end !== pointDate ||
+    truth.period.timezone !== targetPeriod.timezone
+  ) {
+    return bridgeFailureTruth({
+      metric,
+      targetPeriod,
+      targetScope,
+      pointDate,
+      reason: "BALANCE_PERIOD_MISMATCH",
+      lineage: truth.lineage
+    });
+  }
+
+  if (!sameScope(truth.scope, targetScope)) {
+    return bridgeFailureTruth({
+      metric,
+      targetPeriod,
+      targetScope,
+      pointDate,
+      reason: "BALANCE_SCOPE_MISMATCH",
+      lineage: truth.lineage
+    });
+  }
+
+  return truth;
+}
+
+function normalizeEventInput(raw = {}) {
+  if (raw?.amount_truth && typeof raw.amount_truth === "object") {
+    const truth = raw.amount_truth;
+    if (
+      truth.group && truth.group !== "CASH" ||
+      truth.metric && truth.metric !== "cash_movement_amount"
+    ) {
+      return diagnosticResult({
+        raw: {
+          ...raw,
+          period: truth.period,
+          scope: truth.scope,
+          source: truth.source,
+          as_of: truth.as_of,
+          reconciliation_status: truth.reconciliation_status,
+          evidence: truth.evidence,
+          lineage: truth.lineage
+        },
+        direction: normalizeEnum(raw.direction, CASH_EVENT_DIRECTIONS),
+        category: text(raw.category)?.toUpperCase() || null,
+        paymentMethod: normalizeEnum(raw.payment_method, CASH_PAYMENT_METHODS),
+        location: safeLocation(raw.cash_location),
+        reason: "INVALID_CASH_EVENT_TRUTH_IDENTITY"
+      });
+    }
+
+    return normalizeCashEvent({
+      event_id: raw.event_id,
+      direction: raw.direction,
+      category: raw.category,
+      event_date: raw.event_date,
+      period: truth.period,
