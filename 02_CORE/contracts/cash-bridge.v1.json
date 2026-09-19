@@ -69,9 +69,9 @@
     "categorized_inflows": "calculator output: categorized_known_inflows; exact known evidenced amounts/counts",
     "categorized_outflows": "calculator output: categorized_known_outflows; exact known evidenced amounts/counts",
     "transfers": "calculator output; INTERNAL_TRANSFER neutral only for proven consolidated scope",
-    "computed_ending_balance": "financial-truth.v1 metric cash_computed_ending_balance; formula opening + known inflows - known outflows only under COMPLETE coverage",
+    "computed_ending_balance": "financial-truth.v1 metric cash_computed_ending_balance; TASK-056 calculator formula opening + known inflows - known outflows only under COMPLETE coverage",
     "observed_ending_balance": "financial-truth.v1 metric cash_observed_ending_balance",
-    "cash_variance": "financial-truth.v1 metric cash_variance; observed ending - computed ending",
+    "cash_variance": "financial-truth.v1 metric cash_variance; TASK-056 calculator formula observed ending - computed ending",
     "quality": "ACTUAL|ESTIMATE|GAP|NOT_CONNECTED",
     "coverage": "explicit period/source/account coverage metadata",
     "diagnostics": [
