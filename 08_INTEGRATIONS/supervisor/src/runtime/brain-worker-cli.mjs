@@ -29,7 +29,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.23";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.24";
 
 function parseArgs(argv) {
   const result = {
