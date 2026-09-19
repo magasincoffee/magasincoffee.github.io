@@ -247,7 +247,8 @@ jobs:
             $panelSource = Get-Content $panelScript -Raw -Encoding UTF8
             if ($panelSource -notmatch 'Get-LifecycleProcessTruth') { throw "K failed: panel lacks process truth" }
             if ($panelSource -notmatch 'elseif \(-not \$processTruth\.healthy\)') { throw "K failed: panel does not gate lane state on process truth" }
-            if ($panelSource -notmatch 'ROBOT NỀN: ĐANG TỰ KHÔI PHỤC') { throw "K failed: process banner recovery state missing" }
+            if ($panelSource -notmatch "'STARTING'") { throw "K failed: STARTING process state missing" }
+            if ($panelSource -notmatch "'RECOVERING'") { throw "K failed: RECOVERING process state missing" }
             Write-Host "ACCEPTANCE_K=PASS"
 
             # F — real Owner STOP latches must suppress panel recovery.
