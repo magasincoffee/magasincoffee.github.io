@@ -6,6 +6,43 @@ function safeNumber(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function safeIdentifier(value, maxLength = 200) {
+  return String(value || "")
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .trim()
+    .slice(0, maxLength);
+}
+
+function safePortfolio(portfolio = {}) {
+  const cursor = portfolio.cursor || {};
+  const scheduler = portfolio.scheduler || {};
+  return {
+    project_id: safeIdentifier(
+      portfolio.project_id || cursor.project_id || scheduler.project_id
+    ),
+    repository: safeIdentifier(portfolio.repository),
+    cursor_task: safeIdentifier(cursor.task),
+    cursor_micro_task: safeIdentifier(cursor.micro_task),
+    cursor_checkpoint: safeIdentifier(cursor.checkpoint),
+    cursor_status: safeIdentifier(cursor.status),
+    cursor_last_commit: safeIdentifier(cursor.last_commit),
+    scheduler_action: safeIdentifier(scheduler.action),
+    selected_project_id: safeIdentifier(
+      portfolio.selected_project_id || scheduler.project_id
+    )
+  };
+}
+
+function safeError(error = {}) {
+  const rawMessage = String(error?.message || "");
+  return {
+    name: safeIdentifier(error?.name || "Error", 120),
+    code: safeIdentifier(error?.code, 120),
+    message_present: Boolean(rawMessage),
+    message_length: rawMessage.length
+  };
+}
+
 function safeProject(projectState = {}) {
   return {
     current_phase: String(projectState.current_phase || ""),
@@ -134,12 +171,14 @@ export class SupervisorDiagnostics {
     controller,
     ownerReconcileState,
     manualOwnerRecheck = false,
-    recovery
+    recovery,
+    portfolio
   }) {
     return {
       timestamp: new Date(this.now()).toISOString(),
       runtime_version: this.runtimeVersion,
       project: safeProject(projectState),
+      portfolio: safePortfolio(portfolio),
       ui: safeUi(probe),
       step: safeResult(result),
       controller: safeController(controller),
@@ -250,6 +289,9 @@ export class SupervisorDiagnostics {
         kind,
         current_task: incident.project.current_task,
         project_status: incident.project.status,
+        project_id: incident.portfolio.project_id,
+        cursor_task: incident.portfolio.cursor_task,
+        checkpoint: incident.portfolio.cursor_checkpoint,
         observation: incident.ui.observation,
         decision_action: incident.step.decision_action,
         execution_reason: incident.step.execution_reason,
@@ -267,16 +309,15 @@ export class SupervisorDiagnostics {
     projectState,
     error,
     ownerReconcileState,
-    recovery
+    recovery,
+    portfolio
   }) {
     const snapshot = {
       timestamp: new Date(this.now()).toISOString(),
       runtime_version: this.runtimeVersion,
       project: safeProject(projectState),
-      error: {
-        name: String(error?.name || "Error"),
-        message: String(error?.message || "").slice(0, 500)
-      },
+      portfolio: safePortfolio(portfolio),
+      error: safeError(error),
       owner_reconcile: safeOwnerState(ownerReconcileState, false),
       recovery: safeRecovery(recovery)
     };
@@ -294,7 +335,11 @@ export class SupervisorDiagnostics {
         kind: "LOOP_ERROR",
         current_task: snapshot.project.current_task,
         project_status: snapshot.project.status,
+        project_id: snapshot.portfolio.project_id,
+        cursor_task: snapshot.portfolio.cursor_task,
+        checkpoint: snapshot.portfolio.cursor_checkpoint,
         error_name: snapshot.error.name,
+        error_code: snapshot.error.code,
         file: path.basename(filePath)
       }) + "\n",
       "utf8"
