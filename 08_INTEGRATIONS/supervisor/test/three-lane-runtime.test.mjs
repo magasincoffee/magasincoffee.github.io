@@ -229,3 +229,23 @@ test("v37 strips a UTF-8 BOM before parsing local JSON state", async () => {
   assert.match(source, /replace\(\/\^\\uFEFF\//);
   assert.match(source, /parseJsonText\(await fs\.readFile\(filePath, "utf8"\)\)/);
 });
+
+
+test("v38 result relay uses relay_id marker rather than full DOM text digest for exact-once dedupe", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+  const capture = await fs.readFile(
+    new URL("../src/ui/message-capture.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(runtime, /function relayMarker/);
+  assert.match(runtime, /hasRelayMarker/);
+  assert.match(runtime, /waitForRelayMarker/);
+  assert.match(runtime, /LANE_RESULT_RELAY_DEDUPED_BY_MARKER/);
+  assert.match(runtime, /relay_id=\$\{relayId\}/);
+  assert.match(capture, /export async function captureUserTurnTexts/);
+  assert.doesNotMatch(runtime, /const relayConfirmed = await waitForUserTurnDigest\(\s*brainPage,\s*sha256\(relay\.text\)/);
+});
