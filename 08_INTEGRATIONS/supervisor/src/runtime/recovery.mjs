@@ -19,6 +19,16 @@ export function canonicalConversationPathname(pathname) {
   return raw;
 }
 
+export function isPersistableConversationUrl(value) {
+  try {
+    const url = value instanceof URL ? value : new URL(value);
+    targetFromUrl(url);
+    return !/^\/c\/WEB:/i.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
 export function targetFromUrl(value) {
   const url = value instanceof URL ? value : new URL(value);
   if (url.protocol !== "https:" ||
