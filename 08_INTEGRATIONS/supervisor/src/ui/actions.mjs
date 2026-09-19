@@ -22,13 +22,15 @@ function visibleControlSnapshot(page) {
       .map((el) => ({
         text: String(el.innerText || el.textContent || "").trim(),
         ariaLabel: String(el.getAttribute("aria-label") || "").trim(),
-        testId: el.getAttribute("data-testid") || null
+        testId: el.getAttribute("data-testid") || null,
+        disabled: Boolean(el.disabled) || el.getAttribute("aria-disabled") === "true"
       }));
   });
 }
 
 function findSafeControl(controls, pattern, allowedTestIds = []) {
   return controls.find((control) => {
+    if (control.disabled) return false;
     const candidates = [control.text, control.ariaLabel].filter(Boolean);
     return candidates.some((value) => pattern.test(value)) ||
       (control.testId && allowedTestIds.includes(control.testId));
@@ -199,6 +201,32 @@ async function resolveFileInput(page) {
   return null;
 }
 
+async function waitForAttachmentReady(
+  page,
+  { timeoutMs = 45_000, intervalMs = 250 } = {}
+) {
+  const composer = page
+    .locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible")
+    .first();
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() <= deadline) {
+    const visible = await composer.isVisible().catch(() => false);
+    const enabled = await composer.isEnabled().catch(() => false);
+    const surface = await inspectActionSurface(page).catch(() => null);
+
+    if (visible && enabled && surface?.sendControl) {
+      return { ready: true, sendControl: surface.sendControl };
+    }
+    await page.waitForTimeout(intervalMs);
+  }
+
+  return {
+    ready: false,
+    reason: "attachment upload did not become ready before timeout"
+  };
+}
+
 export async function sendComposerWithAttachment(
   page,
   instruction,
@@ -232,6 +260,15 @@ export async function sendComposerWithAttachment(
     };
   }
 
+  const composer = page
+    .locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible")
+    .first();
+
+  // ChatGPT disables the composer while an uploaded image is being processed.
+  // Fill the relay text first, then attach the screenshot, then wait until both
+  // the composer and the explicit Send control are enabled again.
+  await composer.fill(instruction);
+
   const input = await resolveFileInput(page);
   if (!input) {
     return {
@@ -243,19 +280,18 @@ export async function sendComposerWithAttachment(
   }
 
   await input.setInputFiles(filePath);
-  await page.waitForTimeout(750);
 
-  const composer = page
-    .locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible")
-    .first();
-  await composer.fill(instruction);
-
-  const afterFill = await inspectActionSurface(page);
-  if (afterFill.sendControl) {
-    await clickControlBySemantic(page, afterFill.sendControl);
-  } else {
-    await composer.press("Enter");
+  const ready = await waitForAttachmentReady(page);
+  if (!ready.ready) {
+    return {
+      executed: false,
+      dryRun: false,
+      action: ACTIONS.CONTINUE,
+      reason: ready.reason
+    };
   }
+
+  await clickControlBySemantic(page, ready.sendControl);
 
   return {
     executed: true,
