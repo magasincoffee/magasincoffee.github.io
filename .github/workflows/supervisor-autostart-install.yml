@@ -181,16 +181,13 @@ jobs:
           $controlPanel = Join-Path $root "runtime\windows\control-panel.ps1"
           if (-not (Test-Path $controlPanel)) { throw "Installed Control Panel is missing" }
           $controlPanelSource = Get-Content $controlPanel -Raw -Encoding UTF8
-          if ($controlPanelSource -notmatch 'LƯU BỘ NÃO') { throw "Installed Control Panel is missing LƯU BỘ NÃO" }
           if ($controlPanelSource -notmatch 'Save-BrainTarget') { throw "Installed Control Panel is missing Brain target persistence action" }
+          if ($controlPanelSource -notmatch 'brain_url_revision') { throw "Installed Control Panel is missing Brain revision persistence support" }
 
           foreach ($laneEntry in @($laneConfig.lanes)) {
             if (-not $laneEntry.PSObject.Properties['brain_url_revision']) {
               throw "lanes.json was not migrated with brain_url_revision"
             }
-          }
-          foreach ($laneName in @('lane-1','lane-2','lane-3')) {
-            $registryEntry = $registry = $null
           }
           $laneRegistryFile = Join-Path $root "lane-registry.json"
           if (-not (Test-Path $laneRegistryFile)) { throw "lane-registry.json is missing" }
