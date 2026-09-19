@@ -67,6 +67,8 @@ test("auto-upgrade requires v39 Three-Lane runtime and three local lanes", async
   assert.match(source, /BRAIN_URL_OWNER_EDITABLE=True/);
   assert.match(source, /BRAIN_URL_PERSISTED=True/);
   assert.match(source, /BRAIN_URL_HOT_SWAP=True/);
+  assert.match(source, /Save-BrainTarget/);
+  assert.match(source, /brain_url_revision/);
 });
 
 test("post-job survival verifies Three-Lane runtime and Robot Chrome", async () => {
