@@ -302,7 +302,7 @@ $autonomyValue = Add-KeyValueRow $details 247 'CHẾ ĐỘ'
 
 $errorPanel = New-Object Windows.Forms.Panel
 $errorPanel.Location = New-Object Drawing.Point(28, 594)
-$errorPanel.Size = New-Object Drawing.Size(964, 70)
+$errorPanel.Size = New-Object Drawing.Size(964, 82)
 $errorPanel.BackColor = [Drawing.Color]::FromArgb(255,247,237)
 $errorPanel.BorderStyle = 'FixedSingle'
 $form.Controls.Add($errorPanel)
@@ -317,15 +317,15 @@ $errorPanel.Controls.Add($errorCaption)
 
 $errorValue = New-Object Windows.Forms.Label
 $errorValue.Text = 'Không có lỗi.'
-$errorValue.Location = New-Object Drawing.Point(16, 33)
-$errorValue.Size = New-Object Drawing.Size(500, 28)
+$errorValue.Location = New-Object Drawing.Point(16, 31)
+$errorValue.Size = New-Object Drawing.Size(440, 44)
 $errorValue.ForeColor = [Drawing.Color]::FromArgb(124,45,18)
 $errorPanel.Controls.Add($errorValue)
 
 $ownerResolvedButton = New-Object Windows.Forms.Button
 $ownerResolvedButton.Text = '✓  ĐÃ XỬ LÝ — KIỂM TRA LẠI'
-$ownerResolvedButton.Location = New-Object Drawing.Point(515, 18)
-$ownerResolvedButton.Size = New-Object Drawing.Size(255, 38)
+$ownerResolvedButton.Location = New-Object Drawing.Point(468, 18)
+$ownerResolvedButton.Size = New-Object Drawing.Size(300, 40)
 $ownerResolvedButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
 $ownerResolvedButton.BackColor = [Drawing.Color]::FromArgb(254,249,195)
 $ownerResolvedButton.ForeColor = [Drawing.Color]::FromArgb(133,77,14)
@@ -334,8 +334,8 @@ $errorPanel.Controls.Add($ownerResolvedButton)
 
 $brainRebindButton = New-Object Windows.Forms.Button
 $brainRebindButton.Text = 'DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO'
-$brainRebindButton.Location = New-Object Drawing.Point(515, 18)
-$brainRebindButton.Size = New-Object Drawing.Size(255, 38)
+$brainRebindButton.Location = New-Object Drawing.Point(468, 18)
+$brainRebindButton.Size = New-Object Drawing.Size(300, 40)
 $brainRebindButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
 $brainRebindButton.BackColor = [Drawing.Color]::FromArgb(219,234,254)
 $brainRebindButton.ForeColor = [Drawing.Color]::FromArgb(29,78,216)
@@ -344,24 +344,35 @@ $errorPanel.Controls.Add($brainRebindButton)
 
 $workerRetryButton = New-Object Windows.Forms.Button
 $workerRetryButton.Text = 'TIẾP TỤC CÔNG VIỆC BỊ KẸT'
-$workerRetryButton.Location = New-Object Drawing.Point(515, 18)
-$workerRetryButton.Size = New-Object Drawing.Size(255, 38)
+$workerRetryButton.Location = New-Object Drawing.Point(468, 18)
+$workerRetryButton.Size = New-Object Drawing.Size(300, 40)
 $workerRetryButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
 $workerRetryButton.BackColor = [Drawing.Color]::FromArgb(219,234,254)
 $workerRetryButton.ForeColor = [Drawing.Color]::FromArgb(29,78,216)
 $workerRetryButton.Visible = $false
 $errorPanel.Controls.Add($workerRetryButton)
 
+$autoRecoveryButton = New-Object Windows.Forms.Button
+$autoRecoveryButton.Text = 'ROBOT ĐANG TỰ KHÔI PHỤC'
+$autoRecoveryButton.Location = New-Object Drawing.Point(468, 18)
+$autoRecoveryButton.Size = New-Object Drawing.Size(300, 40)
+$autoRecoveryButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
+$autoRecoveryButton.BackColor = [Drawing.Color]::FromArgb(224,242,254)
+$autoRecoveryButton.ForeColor = [Drawing.Color]::FromArgb(3,105,161)
+$autoRecoveryButton.Enabled = $false
+$autoRecoveryButton.Visible = $false
+$errorPanel.Controls.Add($autoRecoveryButton)
+
 $diagnosticsButton = New-Object Windows.Forms.Button
 $diagnosticsButton.Text = 'MỞ LOG LỖI'
 $diagnosticsButton.Location = New-Object Drawing.Point(780, 18)
-$diagnosticsButton.Size = New-Object Drawing.Size(160, 38)
+$diagnosticsButton.Size = New-Object Drawing.Size(165, 40)
 $diagnosticsButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
 $errorPanel.Controls.Add($diagnosticsButton)
 
 $logBox = New-Object Windows.Forms.TextBox
-$logBox.Location = New-Object Drawing.Point(28, 680)
-$logBox.Size = New-Object Drawing.Size(964, 92)
+$logBox.Location = New-Object Drawing.Point(28, 688)
+$logBox.Size = New-Object Drawing.Size(964, 84)
 $logBox.Multiline = $true
 $logBox.ReadOnly = $true
 $logBox.ScrollBars = 'Vertical'
@@ -518,9 +529,15 @@ function Refresh-ControlPanel {
         [string]$runtimeStatus.status -eq 'WAIT_USER' -and
         [string]$runtimeStatus.decision_reason -match 'uncertain prior create/send outcome'
     )
+    $autoRecoveryActive = [bool](
+        $runtimeStatus -and
+        [string]$runtimeStatus.status -eq 'WAIT_USER' -and
+        [string]$runtimeStatus.decision_reason -match 'missing MAGASIN_BRAIN_DIRECTIVE_V1 block|Target page, context or browser has been closed'
+    )
     $brainRebindButton.Visible = $targetMismatchActive
     $workerRetryButton.Visible = $uncertainWorkerActive
-    $ownerResolvedButton.Visible = -not ($targetMismatchActive -or $uncertainWorkerActive)
+    $autoRecoveryButton.Visible = $autoRecoveryActive
+    $ownerResolvedButton.Visible = -not ($targetMismatchActive -or $uncertainWorkerActive -or $autoRecoveryActive)
     $ownerResolvedButton.Enabled = [bool]$ownerBoundaryActive
     if (Test-Path $ownerResolvedFile) {
         $ownerResolvedButton.Text = '✓  ĐÃ NHẬN — ĐANG KIỂM TRA'
@@ -573,6 +590,8 @@ function Refresh-ControlPanel {
         $errorValue.Text = 'Robot mất liên kết với cuộc trò chuyện Bộ não. Mở đúng cuộc trò chuyện Bộ não trong Chrome Robot rồi bấm DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO.'
     } elseif ($uncertainWorkerActive) {
         $errorValue.Text = 'Một công việc bị gián đoạn đúng lúc gửi lệnh. Robot sẽ không tự gửi trùng. Bấm TIẾP TỤC CÔNG VIỆC BỊ KẸT để cho phép thử lại đúng một lần.'
+    } elseif ($autoRecoveryActive) {
+        $errorValue.Text = 'Robot đang tự khôi phục kết nối hoặc đang chờ lệnh Brain hoàn chỉnh. Không cần bấm ĐÃ XỬ LÝ.'
     } elseif ($projectAutonomy -eq 'PAUSED') {
         $currentActionValue.Text = 'PAUSED  •  không mở/điều khiển ChatGPT'
         $nextActionValue.Text = if ($pauseResumeAt) {
