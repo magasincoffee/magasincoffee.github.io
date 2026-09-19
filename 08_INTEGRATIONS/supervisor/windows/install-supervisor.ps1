@@ -8,6 +8,8 @@ $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $runtime = Join-Path $root 'runtime'
 $pidFile = Join-Path $root 'supervisor.pid'
 $stopFile = Join-Path $root 'STOP'
+$autostartDisabled = Join-Path $root 'AUTOSTART_DISABLED'
+$ownerStopWasPresent = [bool]((Test-Path $stopFile) -or (Test-Path $autostartDisabled))
 $desktop = [Environment]::GetFolderPath('Desktop')
 
 New-Item -ItemType Directory -Force -Path $root | Out-Null
@@ -55,7 +57,8 @@ if (Test-Path $pidFile) {
     }
 }
 Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
-Remove-Item $stopFile -Force -ErrorAction SilentlyContinue
+# Installation is process replacement, not an Owner START. Preserve STOP/AUTOSTART_DISABLED exactly as found.
+if ($ownerStopWasPresent) { Write-Host 'OWNER_STOP_PRESERVED_DURING_INSTALL=True' }
 
 if (Test-Path $runtime) {
     $removed = $false
