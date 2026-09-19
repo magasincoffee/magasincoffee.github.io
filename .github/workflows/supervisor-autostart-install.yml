@@ -34,29 +34,30 @@ jobs:
           npm install --ignore-scripts --no-audit --no-fund
           npm test
 
-      - name: Snapshot lifecycle targets
+      - name: Snapshot lifecycle target fingerprint
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
           $configFile = Join-Path $root "lanes.json"
-          $snapshotFile = Join-Path $env:RUNNER_TEMP "magasin-lifecycle-targets-before.json"
-          if (Test-Path $configFile) {
-            $config = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
-            $snapshot = @($config.lanes | ForEach-Object {
-              [ordered]@{
-                lane_id = [string]$_.lane_id
-                brain_url = [string]$_.brain_url
-                work_url = [string]$_.work_url
-                brain_url_revision = [int]$_.brain_url_revision
-                work_url_revision = [int]$_.work_url_revision
-                enabled = [bool]$_.enabled
-              }
-            })
-            $snapshot | ConvertTo-Json -Depth 6 | Set-Content -Path $snapshotFile -Encoding UTF8
-          } else {
-            "[]" | Set-Content -Path $snapshotFile -Encoding UTF8
+          $fingerprintFile = Join-Path $env:RUNNER_TEMP "magasin-lifecycle-targets-before.sha256"
+
+          function Get-TargetFingerprint([string]$Path) {
+            if (-not (Test-Path $Path)) { return "NO_CONFIG" }
+            $config = Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+            $canonical = @($config.lanes | Sort-Object lane_id | ForEach-Object {
+              "$([string]$_.lane_id)|$([string]$_.brain_url)|$([int]$_.brain_url_revision)|$([string]$_.work_url)|$([int]$_.work_url_revision)"
+            }) -join "`n"
+            $bytes = [Text.Encoding]::UTF8.GetBytes($canonical)
+            $hasher = [Security.Cryptography.SHA256]::Create()
+            try {
+              return ([BitConverter]::ToString($hasher.ComputeHash($bytes))).Replace("-","").ToLowerInvariant()
+            } finally {
+              $hasher.Dispose()
+            }
           }
+
+          Set-Content -Path $fingerprintFile -Value (Get-TargetFingerprint $configFile) -Encoding ascii
           Write-Host "TARGET_SNAPSHOT_CREATED=True"
 
       - name: Install latest Supervisor runtime
@@ -122,7 +123,7 @@ jobs:
           $lifecycle = Join-Path $runtime "windows\lifecycle-truth.ps1"
           $configFile = Join-Path $root "lanes.json"
           $statusFile = Join-Path $root "lane-status.json"
-          $snapshotFile = Join-Path $env:RUNNER_TEMP "magasin-lifecycle-targets-before.json"
+          $fingerprintFile = Join-Path $env:RUNNER_TEMP "magasin-lifecycle-targets-before.sha256"
 
           if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
           . $lifecycle
@@ -137,15 +138,29 @@ jobs:
             throw "Installed Three-Lane runtime is not v2026-09-19.50"
           }
 
-          if ((Test-Path $snapshotFile) -and (Test-Path $configFile)) {
-            $before = @(Get-Content $snapshotFile -Raw -Encoding UTF8 | ConvertFrom-Json)
-            $afterConfig = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
-            foreach ($beforeLane in $before) {
-              $afterLane = @($afterConfig.lanes | Where-Object { [string]$_.lane_id -eq [string]$beforeLane.lane_id }) | Select-Object -First 1
-              if (-not $afterLane) { throw "Lane disappeared during install" }
-              if ([string]$afterLane.brain_url -ne [string]$beforeLane.brain_url) { throw "Brain URL changed during install" }
-              if ([string]$afterLane.work_url -ne [string]$beforeLane.work_url) { throw "Work URL changed during install" }
+          function Get-TargetFingerprint([string]$Path) {
+            if (-not (Test-Path $Path)) { return "NO_CONFIG" }
+            $config = Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+            $canonical = @($config.lanes | Sort-Object lane_id | ForEach-Object {
+              "$([string]$_.lane_id)|$([string]$_.brain_url)|$([int]$_.brain_url_revision)|$([string]$_.work_url)|$([int]$_.work_url_revision)"
+            }) -join "`n"
+            $bytes = [Text.Encoding]::UTF8.GetBytes($canonical)
+            $hasher = [Security.Cryptography.SHA256]::Create()
+            try {
+              return ([BitConverter]::ToString($hasher.ComputeHash($bytes))).Replace("-","").ToLowerInvariant()
+            } finally {
+              $hasher.Dispose()
             }
+          }
+
+          $beforeFingerprint = if (Test-Path $fingerprintFile) {
+            (Get-Content $fingerprintFile -ErrorAction Stop | Select-Object -First 1).Trim()
+          } else {
+            throw "Target fingerprint snapshot is missing"
+          }
+          $afterFingerprint = Get-TargetFingerprint $configFile
+          if ($beforeFingerprint -ne $afterFingerprint) {
+            throw "Brain/Work target fingerprint changed during install"
           }
           Write-Host "TARGET_URLS_UNCHANGED=True"
 
