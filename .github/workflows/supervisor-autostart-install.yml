@@ -140,8 +140,8 @@ jobs:
 
           $runtimeThreeLane = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
           if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.39" -Quiet)) {
-            throw "Installed Three-Lane runtime is not v2026-09-19.39"
+          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.40" -Quiet)) {
+            throw "Installed Three-Lane runtime is not v2026-09-19.40"
           }
 
           $laneConfigFile = Join-Path $root "lanes.json"
@@ -156,7 +156,7 @@ jobs:
                   $laneConfig.mode -eq "THREE_LANE_V1" -and
                   @($laneConfig.lanes).Count -eq 3 -and
                   $laneStatus.mode -eq "THREE_LANE_V1" -and
-                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.39" -and
+                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.40" -and
                   @($laneStatus.lanes).Count -eq 3
                 ) {
                   $laneReady = $true
@@ -265,8 +265,8 @@ jobs:
           $statusFile = Join-Path $root "lane-status.json"
           if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing after previous job cleanup" }
           $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ($status.supervisor_runtime_version -ne "2026-09-19.39") {
-            throw "Post-job Three-Lane runtime is not v2026-09-19.39"
+          if ($status.supervisor_runtime_version -ne "2026-09-19.40") {
+            throw "Post-job Three-Lane runtime is not v2026-09-19.40"
           }
           if ($status.mode -ne "THREE_LANE_V1" -or @($status.lanes).Count -ne 3) {
             throw "Post-job Three-Lane status is invalid"
@@ -311,6 +311,7 @@ jobs:
           }
 
           $healthy = $false
+          $ownerBrainActionRequired = $false
           $lane1 = $null
           $registryLane = $null
 
@@ -349,9 +350,20 @@ jobs:
                 "READY",
                 "STARTING"
               )
+              $ownerBrainActionState = [bool](
+                [string]$lane1.status -eq "WAIT_OWNER" -and
+                [string]$lane1.message -match "Chrome Robot" -and
+                $registryLane -and
+                -not [string]::IsNullOrWhiteSpace([string]$registryLane.brain_url)
+              )
 
               if ($stableStatus -and -not $badLoopMessage -and -not $blockedLatch) {
                 $healthy = $true
+                break
+              }
+              if ($ownerBrainActionState -and -not $badLoopMessage) {
+                $healthy = $true
+                $ownerBrainActionRequired = $true
                 break
               }
             }
@@ -371,6 +383,7 @@ jobs:
             Write-Host "LIVE_LANE1_AWAITING_WORK=$([bool]$registryLane.awaiting_work)"
             Write-Host "LIVE_LANE1_DISPATCH_INFLIGHT=$([bool]$registryLane.dispatch_inflight)"
           }
+          Write-Host "LIVE_LANE1_OWNER_BRAIN_ACTION_REQUIRED=$ownerBrainActionRequired"
 
           Write-Host "SAFE_LOG_TAIL_BEGIN"
           if (Test-Path $logFile) {
