@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
   "current_phase": "P3_PFC_8H_V2_EXECUTION",
-  "current_task": "TASK-061",
-  "current_task_title": "Cash Balance Financial Truth Contract",
+  "current_task": "TASK-062",
+  "current_task_title": "Cash Balance Source Mapper",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-062",
+  "next_task": "TASK-063",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -291,7 +291,7 @@
     ],
     "prepared_queue": "PFC_8H_V2",
     "queue_status": "ACTIVE",
-    "next_planned_task": "TASK-061",
+    "next_planned_task": "TASK-062",
     "next_task_release_required": false
   },
   "session_bootstrap": {
@@ -371,8 +371,8 @@
     ],
     "execution_generation": "PFC_8H_V2_RUN_01",
     "started_task": "TASK-060",
-    "current_task": "TASK-061",
-    "next_task": "TASK-062",
+    "current_task": "TASK-062",
+    "next_task": "TASK-063",
     "task_060": {
       "status": "DONE",
       "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md",
@@ -397,6 +397,28 @@
       ],
       "current_cash_movement_coverage_verified_through": "2026-09-16",
       "conclusion": "SOURCE_TRUTH_DISCOVERY_COMPLETE"
+    },
+    "task_061": {
+      "status": "DONE",
+      "contract": "02_CORE/contracts/cash-balance-truth.v1.json",
+      "helper": "02_CORE/shared/cash-balance-truth-v1.mjs",
+      "tests": "09_QA/business-os/cash-balance-truth.test.mjs",
+      "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md",
+      "pull_request": 186,
+      "merge_commit": "a9313eadc4492f144ca3c08b1021d1aa51f31a0b",
+      "push_run_id": 35467887723,
+      "push_job_id": 105963446151,
+      "pr_head_run_id": 35467911185,
+      "pr_head_job_id": 105963509793,
+      "merge_push_run_id": 35467940997,
+      "merge_push_job_id": 105963589708,
+      "runtime": "Node v20.20.2",
+      "targeted_tests": 40,
+      "full_business_os_logical_checks": 254,
+      "failures": 0,
+      "cash_bridge_changed": false,
+      "google_drive": "READ_ONLY_NOT_RESCANNED",
+      "conclusion": "REMOTE_CI_GREEN"
     }
   },
   "data_evidence_policy": {
