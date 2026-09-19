@@ -75,6 +75,7 @@ export function defaultLaneConfig() {
       lane_id: laneId,
       project_name: `Dự án ${index + 1}`,
       brain_url: "",
+      brain_url_revision: 0,
       work_url: "",
       work_url_revision: 0,
       enabled: false
@@ -94,6 +95,9 @@ export function normalizeLaneConfig(value = {}) {
         lane_id: laneId,
         project_name: String(lane.project_name || `Dự án ${index + 1}`).slice(0, 120),
         brain_url: String(lane.brain_url || "").trim(),
+        brain_url_revision: Number(
+          lane.brain_url_revision ?? (String(lane.brain_url || "").trim() ? 1 : 0)
+        ),
         work_url: String(lane.work_url || "").trim(),
         work_url_revision: Number(lane.work_url_revision || 0),
         enabled: Boolean(lane.enabled)
@@ -119,6 +123,7 @@ export function defaultLaneRegistry() {
     lanes: Object.fromEntries(LANE_IDS.map((laneId) => [laneId, {
       lane_id: laneId,
       brain_url: "",
+      applied_brain_url_revision: 0,
       work_url: "",
       work_generation: 0,
       task_id: null,
@@ -143,6 +148,7 @@ export function normalizeLaneRegistry(value = {}) {
     safe.lanes[laneId] = {
       lane_id: laneId,
       brain_url: normalizeStoredConversationUrl(lane.brain_url),
+      applied_brain_url_revision: Number(lane.applied_brain_url_revision || 0),
       work_url: normalizeStoredConversationUrl(lane.work_url),
       work_generation: Number(lane.work_generation || 0),
       task_id: lane.task_id || null,
