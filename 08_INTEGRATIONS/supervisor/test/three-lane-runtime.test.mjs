@@ -126,7 +126,7 @@ test("v45 active Brain status comes from persisted registry target", async () =>
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-19\.47/);
+  assert.match(source, /2026-09-19\.48/);
 });
 
 test("v43 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
@@ -400,4 +400,16 @@ test("v47 new Work persistence waits past transient WEB route", async () => {
   assert.match(source, /isPersistableConversationUrl/);
   assert.match(source, /waitForURL\([\s\S]*?isPersistableConversationUrl/);
   assert.doesNotMatch(source, /Store only the canonical target/);
+});
+
+
+test("v48 relay exhaustion is a stable Owner stop rather than an infinite retry loop", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.match(source, /LANE_RESULT_RELAY_RETRY_EXHAUSTED/);
+  assert.match(source, /Robot đã thử gửi kết quả 3 lần/);
+  assert.match(source, /relayRetryState/);
+  assert.match(source, /retry_not_before/);
 });

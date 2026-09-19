@@ -45,8 +45,14 @@ import {
   activeRelayScreenshotPaths,
   migrateLegacyBlockedRelayLatches
 } from "./relay-reconciliation.mjs";
+import {
+  RELAY_RETRY_STATES,
+  beginRelaySendAttempt,
+  relayRetryState,
+  scheduleRelayRetry
+} from "./relay-retry.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.47";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.48";
 
 function parseArgs(argv) {
   const result = {
@@ -1092,8 +1098,7 @@ async function reconcileRelayInflight({
 
   // v43 and older may have persisted a terminal reconcile_blocked latch after
   // unrelated Brain activity changed the old text/baseline heuristic. Relay
-  // recovery is marker-authoritative in v44, so blocked is migration metadata,
-  // never an Owner stop by itself.
+  // recovery remains marker-authoritative; blocked is migration metadata only.
   if (latch.reconcile_blocked) {
     latch.reconcile_blocked = false;
     delete latch.reconcile_started_at;
@@ -1125,6 +1130,24 @@ async function reconcileRelayInflight({
       digest: latch.response_digest
     });
     return "CONFIRMED";
+  }
+
+  const retryState = relayRetryState(latch);
+  if (retryState === RELAY_RETRY_STATES.EXHAUSTED) {
+    return "EXHAUSTED";
+  }
+  if (retryState === RELAY_RETRY_STATES.WAIT) {
+    return "PENDING";
+  }
+
+  // A latch with no completed send attempt (including a pre-v48 latch left
+  // behind by a pre-send UI failure) is safe to retry with the same evidence.
+  if (
+    Number(latch.attempt_count || 0) === 0 ||
+    latch.last_attempt_state === "RETRY_SCHEDULED" ||
+    latch.last_attempt_state === "PRE_SEND_FAILED"
+  ) {
+    return "RETRY_READY";
   }
 
   const observed = await waitForStableSendSurface(adapter, brainPage, {
@@ -1166,16 +1189,24 @@ async function reconcileRelayInflight({
     return "PENDING";
   }
 
-  await clearRelayInflight(registryLane);
+  // Stable Brain + missing relay marker proves the previous send did not
+  // persist. Keep the same latch/screenshot, back off, and count the attempt
+  // instead of clearing evidence and recapturing forever.
+  const scheduled = scheduleRelayRetry(latch);
   await atomicJsonWrite(registryPath, registry);
   await safeLog(logPath, {
-    type: "LANE_RESULT_RELAY_NOT_CONFIRMED_RETRY",
+    type: scheduled === RELAY_RETRY_STATES.EXHAUSTED
+      ? "LANE_RESULT_RELAY_RETRY_EXHAUSTED"
+      : "LANE_RESULT_RELAY_NOT_CONFIRMED_RETRY",
     laneId: lane.lane_id,
     taskId: registryLane.task_id,
     relayId: latch.relay_id,
-    digest: latch.response_digest
+    digest: latch.response_digest,
+    reason: `attempts=${Number(latch.attempt_count || 0)}`
   });
-  return "NOT_CONFIRMED";
+  return scheduled === RELAY_RETRY_STATES.EXHAUSTED
+    ? "EXHAUSTED"
+    : "PENDING";
 }
 
 async function relayWorkResult({
@@ -1215,10 +1246,11 @@ async function relayWorkResult({
       relayId: relay.relay_id,
       digest: relay.response_digest
     });
-    return;
+    return "CONFIRMED";
   }
 
-  if (registryLane.relay_inflight) {
+  let latch = registryLane.relay_inflight;
+  if (latch) {
     const outcome = await reconcileRelayInflight({
       adapter,
       lane,
@@ -1228,44 +1260,83 @@ async function relayWorkResult({
       registryPath,
       logPath
     });
-    if (outcome === "CONFIRMED" || outcome === "PENDING") return;
+    if (
+      outcome === "CONFIRMED" ||
+      outcome === "PENDING" ||
+      outcome === "EXHAUSTED"
+    ) {
+      return outcome;
+    }
+    latch = registryLane.relay_inflight;
   }
 
   const brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
   if (brainProbe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
-    return;
+    return "PENDING";
   }
 
-  await fs.mkdir(evidenceDir, { recursive: true });
-  const screenshotPath = path.join(
-    evidenceDir,
-    `${lane.lane_id}-${relay.relay_id}.png`
-  );
-  await captureCompletedAssistantTurnScreenshot(workPage, screenshotPath);
-  const screenshotStat = await fs.stat(screenshotPath);
-  if (!screenshotStat.isFile() || screenshotStat.size <= 0) {
-    await fs.unlink(screenshotPath).catch(() => {});
-    throw new Error("Work result screenshot was not created correctly");
-  }
-  await safeLog(logPath, {
-    type: "LANE_RESULT_SCREENSHOT_CAPTURED",
-    laneId: lane.lane_id,
-    taskId: registryLane.task_id,
-    relayId: relay.relay_id,
-    digest: relay.response_digest
-  });
+  if (!latch) {
+    await fs.mkdir(evidenceDir, { recursive: true });
+    const screenshotPath = path.join(
+      evidenceDir,
+      `${lane.lane_id}-${relay.relay_id}.png`
+    );
+    await captureCompletedAssistantTurnScreenshot(workPage, screenshotPath);
+    const screenshotStat = await fs.stat(screenshotPath);
+    if (!screenshotStat.isFile() || screenshotStat.size <= 0) {
+      await fs.unlink(screenshotPath).catch(() => {});
+      throw new Error("Work result screenshot was not created correctly");
+    }
+    await safeLog(logPath, {
+      type: "LANE_RESULT_SCREENSHOT_CAPTURED",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: relay.relay_id,
+      digest: relay.response_digest
+    });
 
-  const relayBaseline = await captureSendBaseline(adapter, brainPage);
-  registryLane.relay_inflight = {
-    relay_id: relay.relay_id,
-    response_digest: relay.response_digest,
-    text_digest: sha256(relay.text),
-    screenshot_path: screenshotPath,
-    ...relayBaseline
-  };
+    const relayBaseline = await captureSendBaseline(adapter, brainPage);
+    latch = {
+      relay_id: relay.relay_id,
+      response_digest: relay.response_digest,
+      text_digest: sha256(relay.text),
+      screenshot_path: screenshotPath,
+      attempt_count: 0,
+      retry_not_before: null,
+      retry_exhausted: false,
+      last_attempt_state: "READY",
+      ...relayBaseline
+    };
+    registryLane.relay_inflight = latch;
+    await atomicJsonWrite(registryPath, registry);
+  }
+
+  if (relayRetryState(latch) === RELAY_RETRY_STATES.EXHAUSTED) {
+    return "EXHAUSTED";
+  }
+
+  const screenshotPath = String(latch.screenshot_path || "").trim();
+  const screenshotStat = screenshotPath
+    ? await fs.stat(screenshotPath).catch(() => null)
+    : null;
+  if (!screenshotStat?.isFile() || screenshotStat.size <= 0) {
+    await clearRelayInflight(registryLane);
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_RESULT_RELAY_EVIDENCE_MISSING",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: relay.relay_id,
+      digest: relay.response_digest
+    });
+    return "PENDING";
+  }
+
+  if (!execute) return "PENDING";
+
+  beginRelaySendAttempt(latch);
   await atomicJsonWrite(registryPath, registry);
 
-  if (!execute) return;
   let sent = null;
   try {
     sent = await sendComposerWithAttachment(
@@ -1275,6 +1346,9 @@ async function relayWorkResult({
       { dryRun: false }
     );
   } catch (error) {
+    latch.last_attempt_state = "PRE_SEND_FAILED";
+    const scheduled = scheduleRelayRetry(latch);
+    await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
       type: "LANE_RESULT_RELAY_ATTEMPT_ERROR",
       laneId: lane.lane_id,
@@ -1282,11 +1356,26 @@ async function relayWorkResult({
       relayId: relay.relay_id,
       digest: relay.response_digest,
       errorName: error?.name || "Error",
-      reason: String(error?.message || error).slice(0, 220)
+      reason: String(error?.message || error).slice(0, 180)
     });
-    return;
+    if (scheduled === RELAY_RETRY_STATES.EXHAUSTED) {
+      await safeLog(logPath, {
+        type: "LANE_RESULT_RELAY_RETRY_EXHAUSTED",
+        laneId: lane.lane_id,
+        taskId: registryLane.task_id,
+        relayId: relay.relay_id,
+        digest: relay.response_digest,
+        reason: `attempts=${latch.attempt_count}`
+      });
+      return "EXHAUSTED";
+    }
+    return "PENDING";
   }
+
   if (!sent.executed) {
+    latch.last_attempt_state = "PRE_SEND_FAILED";
+    const scheduled = scheduleRelayRetry(latch);
+    await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
       type: "LANE_RESULT_RELAY_NOT_EXECUTED",
       laneId: lane.lane_id,
@@ -1295,9 +1384,23 @@ async function relayWorkResult({
       digest: relay.response_digest,
       reason: sent.reason || "unknown"
     });
-    return;
+    if (scheduled === RELAY_RETRY_STATES.EXHAUSTED) {
+      await safeLog(logPath, {
+        type: "LANE_RESULT_RELAY_RETRY_EXHAUSTED",
+        laneId: lane.lane_id,
+        taskId: registryLane.task_id,
+        relayId: relay.relay_id,
+        digest: relay.response_digest,
+        reason: `attempts=${latch.attempt_count}`
+      });
+      return "EXHAUSTED";
+    }
+    return "PENDING";
   }
 
+  latch.last_attempt_state = "SEND_CLICKED";
+  latch.retry_not_before = null;
+  await atomicJsonWrite(registryPath, registry);
   await safeLog(logPath, {
     type: "LANE_RESULT_RELAY_SEND_CLICKED",
     laneId: lane.lane_id,
@@ -1318,7 +1421,7 @@ async function relayWorkResult({
       relayId: relay.relay_id,
       digest: relay.response_digest
     });
-    return;
+    return "PENDING";
   }
 
   registryLane.last_result_relay_id = relay.relay_id;
@@ -1333,6 +1436,7 @@ async function relayWorkResult({
     relayId: relay.relay_id,
     digest: relay.response_digest
   });
+  return "CONFIRMED";
 }
 
 async function applyOwnerBrainTarget({
@@ -1512,12 +1616,20 @@ async function processLane({
       registryPath,
       logPath
     });
+    if (relayOutcome === "EXHAUSTED") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WAIT_OWNER",
+        "Robot đã thử gửi kết quả 3 lần nhưng ô nhập Bộ não vẫn không sẵn sàng. Đã dừng retry để tránh vòng lặp; không có gửi trùng."
+      );
+    }
     if (relayOutcome === "PENDING") {
       return laneStatus(
         lane,
         registryLane,
         "RECOVERING",
-        "Đang tự xác minh lần gửi kết quả trước; Robot không tải lại trang lặp lại."
+        "Đang chờ xác minh/backoff lần gửi kết quả trước; Robot không tải lại hoặc gửi lặp liên tục."
       );
     }
   }
@@ -1594,7 +1706,7 @@ async function processLane({
       registryLane.awaiting_work = false;
       await atomicJsonWrite(registryPath, registry);
     } else {
-      await relayWorkResult({
+      const relayOutcome = await relayWorkResult({
         adapter,
         lane,
         brainPage,
@@ -1608,6 +1720,22 @@ async function processLane({
         logPath
       });
       if (registryLane.awaiting_work) {
+        if (relayOutcome === "EXHAUSTED") {
+          return laneStatus(
+            lane,
+            registryLane,
+            "WAIT_OWNER",
+            "Robot đã thử gửi kết quả 3 lần nhưng ô nhập Bộ não vẫn không sẵn sàng. Đã dừng retry để tránh vòng lặp; không có gửi trùng."
+          );
+        }
+        if (relayOutcome === "PENDING") {
+          return laneStatus(
+            lane,
+            registryLane,
+            "RECOVERING",
+            "Kết quả Work đã sẵn sàng; Robot đang backoff/xác minh lần gửi trước."
+          );
+        }
         return laneStatus(
           lane,
           registryLane,
