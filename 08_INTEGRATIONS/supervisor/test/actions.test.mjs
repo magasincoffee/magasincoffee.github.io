@@ -262,7 +262,9 @@ test("live composer send uses bounded editable readiness instead of a 60s implic
   assert.match(source, /async function waitForReadyComposer/);
   assert.match(source, /timeoutMs = 8_000/);
   assert.match(source, /isEditable/);
-  assert.match(source, /async function setComposerText/);\n  assert.match(source, /composer\\.fill\\(instruction, \\{ timeout: 2_500 \\}\\)/);\n  assert.match(source, /page\\.keyboard\\.insertText\\(instruction\\)/);
+  assert.match(source, /async function setComposerText/);
+  assert.match(source, /composer\.fill\(instruction, \{ timeout: 2_500 \}\)/);
+  assert.match(source, /page\.keyboard\.insertText\(instruction\)/);
   assert.match(source, /did not become editable before bounded timeout/);
 });
 
@@ -275,7 +277,9 @@ test("attachment relay retry resets stale draft and attachments with bounded wai
   assert.match(source, /async function resetAttachmentDraft/);
   assert.match(source, /clearExistingAttachments/);
   assert.match(source, /maxRemovals = 8/);
-  assert.match(source, /composer\.fill\("", \{ timeout: 3_000 \}\)/);
+  assert.match(source, /async function clearComposerText/);
+  assert.match(source, /composer\.fill\("", \{ timeout: 1_500 \}\)/);
+  assert.match(source, /keyboardClearComposer/);
   assert.match(source, /setInputFiles\(filePath, \{ timeout: 10_000 \}\)/);
   assert.match(source, /timeoutMs = 20_000/);
   assert.match(source, /await resetAttachmentDraft\(page, \{ timeoutMs: 2_000 \}\)/);
