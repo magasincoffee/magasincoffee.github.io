@@ -18,6 +18,7 @@ on:
       - '02_CORE/shared/monthly-revenue-baseline-v1.mjs'
       - '02_CORE/shared/cash-bridge-v1.mjs'
       - '02_CORE/shared/procurement-financial-truth-v1.mjs'
+      - '02_CORE/shared/partial-financial-baseline-v1.mjs'
       - '09_QA/business-os/**'
       - '.github/workflows/business-os-contract-tests.yml'
 
