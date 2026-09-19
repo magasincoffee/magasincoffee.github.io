@@ -119,14 +119,14 @@ test("v43 Owner Brain URL override is revisioned and can hot-swap during active 
   assert.match(source, /normalizeChatGptConversationUrl\(registryLane\.brain_url\)/);
 });
 
-test("v44 active Brain status comes from persisted registry target", async () => {
+test("v45 active Brain status comes from persisted registry target", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-19\.44/);
+  assert.match(source, /2026-09-19\.45/);
 });
 
 test("v43 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
