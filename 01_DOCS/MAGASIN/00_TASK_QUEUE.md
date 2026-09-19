@@ -68,7 +68,7 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 | TASK-048 | Night final checkpoint | 10m | background hard-stop only; preserve later Owner task | DONE |
 | TASK-049 | Supervisor Three-Lane owner-bound Brain/Work orchestration | 120m | 3 fixed lanes + Owner Brain URLs + Robot-managed Work URLs + screenshot/full-text relay + full-only Work rollover + auto-upgrade | PAUSED — no further expansion during architecture discussion |
 
-| TASK-050 | Enterprise architecture lock — Profitability & Cash first | Owner discussion | Five-Step QUESTION → DELETE → SIMPLIFY; capability map + financial truth spine + source-of-truth + role/integration boundaries + delete/defer map + V1 acceptance; Robot release requires explicit Owner approval | WAIT_USER / DISCUSSION_ACTIVE |
+| TASK-050 | Canonical enterprise architecture locked — Profitability & Cash first | Owner detailing | Apply Five-Step continuously across every aspect; derive implementation queue from canonical architecture; Robot release requires explicit Owner approval | WAIT_USER / ARCHITECTURE_LOCKED / ROBOT_PAUSED |
 
 TASK-049 partial acceptance checkpoint (does not close the task):
 - **E2 ACCEPTED** — PR #141 / merge `f076779c4d1e3afd709385f0558a7185caeabf51`; Vietnamese Owner UI, evidence-backed live Worker status, fixed UTC+7 display, mutually exclusive recovery controls.
@@ -78,13 +78,13 @@ TASK-049 partial acceptance checkpoint (does not close the task):
 
 ## Owner architecture handoff gate
 
-While TASK-050 is `DISCUSSION_ACTIVE`:
+While TASK-050 is `ARCHITECTURE_LOCKED / ROBOT_PAUSED`:
 
 - source-of-truth remains `WAIT_USER / PAUSED`;
 - Supervisor/Brain/Work must not start implementation tasks;
 - silence or an old queued task is not approval;
 - no new automation expansion is allowed merely to make Robot more autonomous;
 - Profitability & Cash is the enterprise critical path;
-- Robot may resume only after Owner locks architecture, this queue is rebuilt from the locked architecture, and `00_PROJECT_STATE.json` is explicitly returned to `READY / AUTO_CONTINUE`.
+- Robot may resume only after Owner explicitly releases execution, the implementation queue traces to the canonical architecture, and `00_PROJECT_STATE.json` is explicitly returned to `READY / AUTO_CONTINUE`.
 
-Canonical architecture discussion: `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md`.
+Canonical architecture: `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — mandatory first read.
