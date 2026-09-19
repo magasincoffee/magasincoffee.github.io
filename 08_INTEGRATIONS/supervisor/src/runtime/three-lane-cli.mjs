@@ -52,7 +52,7 @@ import {
   scheduleRelayRetry
 } from "./relay-retry.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.49";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.50";
 
 function parseArgs(argv) {
   const result = {
@@ -189,6 +189,9 @@ async function writeLaneStatus(statusPath, statuses) {
     schema_version: "three-lane-status.v1",
     mode: THREE_LANE_MODE,
     supervisor_runtime_version: SUPERVISOR_RUNTIME_VERSION,
+    truth_order: ["PROCESS_TRUTH", "LANE_TRUTH", "PERSISTED_RECOVERY_STATE"],
+    persisted_state_role: "RECOVERY_ONLY",
+    process_truth_required: true,
     updated_at: new Date().toISOString(),
     lanes: LANE_IDS.map((laneId) => statuses[laneId] || {
       lane_id: laneId,
