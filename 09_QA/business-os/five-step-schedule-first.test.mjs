@@ -40,8 +40,14 @@ test("Five-Step architecture reset remains canonical under Profitability & Cash 
   assert.match(current, /financial truth spine/i);
   assert.match(queue, /TASK-026[^\n]*DEFERRED/);
   assert.match(queue, /TASK-051[^\n]*DONE/);
-  assert.match(queue, /TASK-052[^\n]*(?:REOPENED|DONE)/);
-  assert.match(queue, /TASK-053[^\n]*(?:QUEUED|READY)/);
+  assert.match(queue, /TASK-052[^\n]*DONE/);
+  assert.match(queue, /TASK-053[^\n]*DONE/);
+  assert.match(queue, /TASK-054[^\n]*DONE/);
+  if (state.status === "READY" && state.current_task) {
+    const escapedTask = String(state.current_task).replace(/[.*+?^${}()|[\]\\]/g, "\\  assert.match(queue, /TASK-052[^\n]*(?:REOPENED|DONE)/);
+  assert.match(queue, /TASK-053[^\n]*(?:QUEUED|READY)/);");
+    assert.match(queue, new RegExp(`${escapedTask}[^\\n]*READY / AUTO_CONTINUE`));
+  }
 });
 
 test("deferred SOP write path remains fail-closed", async () => {
