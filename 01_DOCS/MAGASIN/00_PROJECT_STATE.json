@@ -254,7 +254,7 @@
     }
   },
   "architecture_handoff": {
-    "state": "ARCHITECTURE_LOCKED_OWNER_DISCUSSION_CONTINUES",
+    "state": "ARCHITECTURE_LOCKED_EXECUTION_QUEUE_STAGED_AWAITING_OWNER_RELEASE",
     "canonical_architecture_ref": "01_DOCS/MAGASIN/00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md",
     "read_first_on_new_session": true,
     "primary_priority": "PROFITABILITY_CASH",
@@ -282,12 +282,13 @@
     "robot_may_execute": false,
     "robot_release_policy": "OWNER_EXPLICIT_RELEASE_ONLY",
     "silence_is_approval": false,
-    "implementation_queue_locked": true,
+    "implementation_queue_locked": false,
     "release_conditions": [
       "OWNER_EXPLICIT_ROBOT_RELEASE",
       "IMPLEMENTATION_QUEUE_TRACES_TO_CANONICAL_ARCHITECTURE",
       "PROJECT_STATE_CHANGED_TO_READY_AUTO_CONTINUE"
-    ]
+    ],
+    "prepared_queue": "PFC_3H_V1"
   },
   "session_bootstrap": {
     "read_order": [
@@ -300,5 +301,41 @@
     ],
     "canonical_first": true,
     "reconcile_older_conflicts": true
+  },
+  "prepared_execution_queue": {
+    "id": "PFC_3H_V1",
+    "status": "READY_ON_OWNER_RELEASE",
+    "runbook": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/THREE_HOUR_EXECUTION_QUEUE_V1.md",
+    "estimated_active_minutes": 180,
+    "owner_dependency_during_run": "NONE_UNLESS_TRUE_BOUNDARY",
+    "tasks": [
+      "TASK-051",
+      "TASK-052",
+      "TASK-053",
+      "TASK-054",
+      "TASK-055",
+      "TASK-056",
+      "TASK-057",
+      "TASK-058",
+      "TASK-059"
+    ],
+    "priority": "PROFITABILITY_CASH",
+    "target_output": "PARTIAL_FINANCIAL_BASELINE_V1",
+    "forbidden_during_run": [
+      "PRICING_DECISION",
+      "KPI_AUTOMATION",
+      "AI_FORECASTING",
+      "SYNTHETIC_FINANCIAL_NUMBERS",
+      "DESTRUCTIVE_PRODUCTION_ACTION",
+      "SECRET_OR_PRIVATE_EXPORT_IN_GIT",
+      "SUPERVISOR_FEATURE_EXPANSION"
+    ],
+    "stop_only_for": [
+      "UNRESOLVED_BUSINESS_RULE",
+      "AUTH_MFA_SECURITY",
+      "DESTRUCTIVE_PRODUCTION_ACTION",
+      "SECRET_PRIVATE_DATA_REQUIREMENT",
+      "CONTRADICTORY_CANONICAL_SOURCES"
+    ]
   }
 }
