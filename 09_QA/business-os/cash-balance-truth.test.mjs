@@ -500,7 +500,12 @@ test("normalization is deterministic and idempotent for canonical wrapper input"
   const raw = observed();
   const first = normalize(raw, { targetPoint: POINT_START, targetScope: SCOPE });
   const second = normalize(raw, { targetPoint: POINT_START, targetScope: SCOPE });
+  const normalizedAgain = normalize(first, {
+    targetPoint: POINT_START,
+    targetScope: SCOPE
+  });
   assert.deepEqual(second, first);
+  assert.deepEqual(normalizedAgain, first);
 });
 
 test("valid wrappers expose inner Financial Truth directly to existing Cash Bridge", () => {
