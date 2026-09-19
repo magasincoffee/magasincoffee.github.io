@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { canonicalConversationPathname } from "./recovery.mjs";
 
 export const THREE_LANE_MODE = "THREE_LANE_V1";
 export const LANE_DIRECTIVE_START = "<<<MAGASIN_LANE_DIRECTIVE_V1>>>";
@@ -25,7 +26,7 @@ export function normalizeChatGptConversationUrl(value) {
   ) {
     throw new Error("Brain/Work URL must be a specific ChatGPT conversation");
   }
-  return `${url.origin}${url.pathname}`;
+  return `${url.origin}${canonicalConversationPathname(url.pathname)}`;
 }
 
 export function parseLaneDirective(text) {
@@ -97,6 +98,16 @@ export function normalizeLaneConfig(value = {}) {
   };
 }
 
+function normalizeStoredConversationUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    return normalizeChatGptConversationUrl(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export function defaultLaneRegistry() {
   return {
     schema_version: "three-lane-registry.v1",
@@ -126,8 +137,8 @@ export function normalizeLaneRegistry(value = {}) {
     const lane = value?.lanes?.[laneId] || {};
     safe.lanes[laneId] = {
       lane_id: laneId,
-      brain_url: String(lane.brain_url || "").trim(),
-      work_url: String(lane.work_url || "").trim(),
+      brain_url: normalizeStoredConversationUrl(lane.brain_url),
+      work_url: normalizeStoredConversationUrl(lane.work_url),
       work_generation: Number(lane.work_generation || 0),
       task_id: lane.task_id || null,
       instruction_digest: lane.instruction_digest || null,
