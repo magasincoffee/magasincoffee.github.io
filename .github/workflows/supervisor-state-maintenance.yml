@@ -13,6 +13,7 @@ on:
         options:
           - audit
           - reset-work-state
+          - owner-start
       lane_id:
         description: Lane to inspect or reset
         required: true
@@ -70,13 +71,19 @@ jobs:
           }
 
           if ([string]$env:GITHUB_EVENT_NAME -eq "push") {
-            $match = [regex]::Match(
+            $resetMatch = [regex]::Match(
               [string]$env:HEAD_MESSAGE,
               '\[supervisor-reset-work-state:(lane-[123])\]'
             )
-            if ($match.Success) {
+            $ownerStartMatch = [regex]::IsMatch(
+              [string]$env:HEAD_MESSAGE,
+              '\[supervisor-owner-start\]'
+            )
+            if ($ownerStartMatch) {
+              $operation = "owner-start"
+            } elseif ($resetMatch.Success) {
               $operation = "reset-work-state"
-              $laneId = $match.Groups[1].Value
+              $laneId = $resetMatch.Groups[1].Value
             } else {
               $operation = "audit"
             }
@@ -85,11 +92,71 @@ jobs:
           if ($laneId -notin @("lane-1","lane-2","lane-3")) {
             throw "Unsupported lane id"
           }
-          if ($operation -notin @("audit","reset-work-state")) {
+          if ($operation -notin @("audit","reset-work-state","owner-start")) {
             throw "Unsupported maintenance operation"
           }
           if (-not (Test-Path $configFile)) { throw "lanes.json is missing" }
           if (-not (Test-Path $registryFile)) { throw "lane-registry.json is missing" }
+
+          if ($operation -eq "owner-start") {
+            if (-not (Test-Path $startScript)) { throw "Supervisor start script is missing" }
+            $lifecycle = Join-Path $runtime "windows\lifecycle-truth.ps1"
+            if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
+            . $lifecycle
+
+            $enabledLaneCount = Get-EnabledLaneCount -Root $root
+            if ($enabledLaneCount -lt 1) {
+              throw "Explicit Owner START requires at least one enabled lane"
+            }
+
+            function Get-TargetFingerprint([string]$Path) {
+              $cfg = Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+              $canonical = @($cfg.lanes | Sort-Object lane_id | ForEach-Object {
+                "$([string]$_.lane_id)|$([string]$_.brain_url)|$([int]$_.brain_url_revision)|$([string]$_.work_url)|$([int]$_.work_url_revision)"
+              }) -join "`n"
+              $bytes = [Text.Encoding]::UTF8.GetBytes($canonical)
+              $hasher = [Security.Cryptography.SHA256]::Create()
+              try {
+                return ([BitConverter]::ToString($hasher.ComputeHash($bytes))).Replace("-","").ToLowerInvariant()
+              } finally {
+                $hasher.Dispose()
+              }
+            }
+
+            $targetBefore = Get-TargetFingerprint $configFile
+            $stopBefore = Get-LifecycleOwnerStopState -Root $root
+
+            $env:RUNNER_TRACKING_ID = "MAGASIN_SUPERVISOR_OWNER_START"
+            & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $startScript -Hidden
+            if ($LASTEXITCODE -ne 0) { throw "Explicit Owner START failed" }
+
+            $healthy = $false
+            for ($i = 0; $i -lt 60; $i++) {
+              Start-Sleep -Seconds 1
+              $truth = Get-LifecycleProcessTruth -Root $root
+              if ($truth.healthy) {
+                $healthy = $true
+                break
+              }
+            }
+            if (-not $healthy) { throw "Runtime did not become healthy after explicit Owner START" }
+
+            $stopAfter = Get-LifecycleOwnerStopState -Root $root
+            if ($stopAfter.blocked) { throw "Explicit Owner START did not clear STOP/AUTOSTART_DISABLED" }
+
+            $targetAfter = Get-TargetFingerprint $configFile
+            if ($targetAfter -ne $targetBefore) {
+              throw "Brain/Work target fingerprint changed during explicit Owner START"
+            }
+
+            Write-Host "MAINTENANCE_OPERATION=OWNER_START"
+            Write-Host "OWNER_START_EXPLICIT=True"
+            Write-Host "OWNER_STOP_WAS_PRESENT=$([bool]$stopBefore.blocked)"
+            Write-Host "OWNER_STOP_LATCH=False"
+            Write-Host "TARGET_URLS_UNCHANGED=True"
+            Write-Host "SUPERVISOR_PROCESS_TRUTH_HEALTHY=True"
+            exit 0
+          }
 
           if ($operation -eq "audit") {
             if (-not (Test-Path $statusFile)) { throw "lane-status.json is missing" }
