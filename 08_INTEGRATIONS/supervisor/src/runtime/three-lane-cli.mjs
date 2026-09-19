@@ -33,7 +33,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.36";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.37";
 
 function parseArgs(argv) {
   const result = {
@@ -63,9 +63,13 @@ async function atomicJsonWrite(filePath, value) {
   await fs.rename(temp, filePath);
 }
 
+function parseJsonText(text) {
+  return JSON.parse(String(text || "").replace(/^\uFEFF/, ""));
+}
+
 async function readJson(filePath, fallback) {
   try {
-    return JSON.parse(await fs.readFile(filePath, "utf8"));
+    return parseJsonText(await fs.readFile(filePath, "utf8"));
   } catch (error) {
     if (error?.code !== "ENOENT") throw error;
     return fallback;
