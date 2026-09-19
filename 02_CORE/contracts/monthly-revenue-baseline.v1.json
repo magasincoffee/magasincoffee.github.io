@@ -1,0 +1,31 @@
+{
+  "schema_version": "monthly-revenue-baseline.v1",
+  "status": "ACCEPTANCE_DEFINED",
+  "task": "TASK-053",
+  "canonical_truth_contract": "financial-truth.v1",
+  "purpose": "Aggregate only trusted reconciled Revenue facts into one period baseline without raw/gross fallback or synthetic zero.",
+  "coverage_states": ["COMPLETE", "PARTIAL", "MISSING"],
+  "coverage_modes": ["DAILY", "PERIODS"],
+  "rules": [
+    "ACTUAL output requires every included Revenue fact to normalize to ACTUAL with RECONCILED status, finite non-negative value, valid source/as_of/lineage, compatible explicit scope and target timezone.",
+    "DAILY mode requires expected_dates to explicitly equal the full requested date range; missing dates fail closed to GAP with value=null.",
+    "PERIODS mode derives coverage only from explicit fact periods; periods must be non-overlapping, contiguous and exactly cover the requested period.",
+    "Records outside the requested period fail closed; they are never silently ignored.",
+    "Mixed branch/channel scopes fail closed and are never collapsed to ALL.",
+    "ALL is accepted only when the target and every contributing fact explicitly carry aggregate_proven=true.",
+    "Duplicate facts are deterministically de-duplicated only when they carry the same privacy-safe stable fact identity and identical normalized financial truth; conflicts fail closed.",
+    "Missing, partial, untrusted, unreconciled, gross, invalid or negative Revenue never becomes monthly ACTUAL and never becomes zero.",
+    "Explicit proven zero remains ACTUAL zero when complete reconciled coverage is proven.",
+    "The derived output preserves privacy-safe lineage/evidence and never stores Drive locators or raw private records.",
+    "Missing reader returns NOT_CONNECTED; reader failure returns GAP; neither path falls back to raw or gross Revenue."
+  ],
+  "non_goals": [
+    "dashboard",
+    "database_or_migration",
+    "RPC_or_write_path",
+    "live_source_integration",
+    "pricing_or_KPI",
+    "gross_foodapp_fallback",
+    "new_quality_vocabulary"
+  ]
+}
