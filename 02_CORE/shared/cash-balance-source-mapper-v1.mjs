@@ -228,7 +228,8 @@ function invalidNumericBalance({
       lineage,
       reason
     }),
-    proof
+    proof,
+    payment_method: raw.payment_method ?? raw.paymentMethod
   }, {
     targetPoint,
     targetScope
@@ -314,7 +315,8 @@ export function mapInternalMonthlyCashOpening(raw = {}, {
       message: raw.message,
       reason: raw.reason
     }),
-    proof
+    proof,
+    payment_method: raw.payment_method ?? raw.paymentMethod
   }, {
     targetPoint,
     targetScope
@@ -365,7 +367,8 @@ export function mapInternalMonthlyCashRemainder(raw = {}, {
       message: raw.message,
       reason: numeric.ok ? raw.reason : numeric.reason
     }),
-    proof
+    proof,
+    payment_method: raw.payment_method ?? raw.paymentMethod
   }, {
     targetPoint,
     targetScope
@@ -466,7 +469,8 @@ export function mapObservedCashPoint(raw = {}, {
     proof: {
       observed_proven: raw.observed_proven === true,
       evidence_kind: raw.evidence_kind
-    }
+    },
+    payment_method: raw.payment_method ?? raw.paymentMethod
   }, {
     targetPoint,
     targetScope
@@ -509,7 +513,8 @@ export function mapUnavailableCashBalanceSource(raw = {}, {
       message: raw.message,
       reason: "BALANCE_SOURCE_NOT_CONNECTED"
     }),
-    proof: {}
+    proof: {},
+    payment_method: raw.payment_method ?? raw.paymentMethod
   }, {
     targetPoint,
     targetScope
@@ -563,7 +568,8 @@ export function mapNonBalanceSourceFact(raw = {}, {
     }),
     proof: {
       evidence_kind: basis
-    }
+    },
+    payment_method: raw.payment_method ?? raw.paymentMethod
   }, {
     targetPoint,
     targetScope
