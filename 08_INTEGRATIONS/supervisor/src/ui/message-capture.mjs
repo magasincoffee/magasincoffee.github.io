@@ -60,3 +60,33 @@ export async function captureUserTurnDigests(page) {
 
   return texts.map((text) => digestCapturedResponse(text));
 }
+
+
+export async function captureRecentAssistantTurns(page, { limit = 12 } = {}) {
+  if (!page) throw new TypeError("page is required");
+
+  const turns = await page.evaluate((maxItems) => {
+    const nodes = Array.from(
+      document.querySelectorAll("[data-message-author-role='assistant']")
+    ).slice(-Math.max(1, Math.min(50, Number(maxItems) || 12)));
+
+    return nodes.map((node) => {
+      const text = String(node.innerText || node.textContent || "").trim();
+      let turn = 0;
+      const turnNode = node.closest("[data-testid^='conversation-turn-']") ||
+        node.querySelector("[data-testid^='conversation-turn-']");
+      if (turnNode) {
+        const match = /^conversation-turn-(\d+)$/.exec(
+          String(turnNode.getAttribute("data-testid") || "")
+        );
+        if (match) turn = Number(match[1]);
+      }
+      return { text, turn, chars: text.length };
+    }).filter((item) => item.text);
+  }, limit);
+
+  return turns.map((item) => ({
+    ...item,
+    digest: digestCapturedResponse(item.text)
+  }));
+}
