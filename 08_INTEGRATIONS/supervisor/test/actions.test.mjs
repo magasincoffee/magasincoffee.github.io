@@ -252,5 +252,5 @@ test("live composer send uses bounded editable readiness instead of a 60s implic
   assert.match(source, /timeoutMs = 8_000/);
   assert.match(source, /isEditable/);
   assert.match(source, /composer\.fill\(instruction, \{ timeout: 10_000 \}\)/);
-  assert.match(source, /composer did not become editable before bounded timeout/);
+  assert.match(source, /did not become editable before bounded timeout/);
 });
