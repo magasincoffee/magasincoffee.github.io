@@ -43,13 +43,13 @@ No financial action automated. Only later deterministic read/aggregation/test au
 | Procurement — Drive history | YES | mixed history; evidence through 2026-08 | date, material, supplier, quantity, price, amount | MEDIUM | ACTUAL | history/reconciliation only | overlaps repository ownership; variable freshness | do not create second canonical purchase ledger |
 | Supplier Payments — repository | YES | current live-query design | payment date, amount, method, order link, status/reference | HIGH | ACTUAL | YES | BANK/CASH/MOMO method does not prove account balance | map active payments to cash outflow in TASK-057 |
 | AP — repository views | YES | current live-query design | supplier, purchase/paid/balance, overdue, order status | HIGH | ACTUAL | YES | must fail closed on runtime read error | reuse existing AP views |
-| Cash — monthly operating cash workbook | YES | history from 2024; current September 2026 source updated 2026-09-18 | date, branch, opening carry, recorded cash in/out | MEDIUM-HIGH | ACTUAL | YES for recorded cash | not Bank/MoMo reconciliation; coverage can be incomplete | use in Cash Bridge with explicit lineage |
+| Cash — monthly operating cash workbook | YES | history from 2024; September 2026 workbook file modified 2026-09-18; dated current-month cash rows verified through 2026-09-16 | date, branch, opening carry, recorded cash in/out | MEDIUM-HIGH | ACTUAL | YES for recorded cash through verified dated coverage | file modification time is not transaction coverage; not Bank/MoMo reconciliation | use in Cash Bridge with explicit lineage and as-of date |
 | Bank account truth | NO verified source | none current identified | none verified | NONE | NOT_CONNECTED | NO | BANK-tagged supplier payment is not a bank statement | locate real statement/read-only feed later |
 | MoMo account truth | NO verified source | none current identified | none verified | NONE | NOT_CONNECTED | NO | MOMO payment method is classification only | locate real wallet export later |
 | COD / delivery settlement | NO verified source | none current identified | none verified | NONE | NOT_CONNECTED | NO | delivery/ship operating fields do not prove COD settlement | locate settlement source later |
 | FoodApp provider settlement/fees | YES, partial | dated 2026 provider exports; not continuous through current September | order, branch/store, completion state, gross, fee/discount/tax, net | HIGH for covered export | ACTUAL | YES for covered dates/provider | incomplete by date/provider | reconcile only matching covered periods; carry rest GAP |
 | FoodApp gross operating sales | YES | current through 2026-09-18 | date, branch, app gross | MEDIUM-HIGH | ACTUAL | YES for gross evidence | gross is not settlement/net cash | reconcile gross to provider settlement |
-| Payroll / labor | YES | recorded rows verified through 2026-09-18 | date, branch, hours, pay calculation | MEDIUM-HIGH | ACTUAL | YES, bounded to recorded period | open period can be incomplete | preserve missing attendance as GAP |
+| Payroll / labor | YES | attendance evidence has dated entries through 2026-09-18; payroll-calculation workbook was last modified 2026-09-07 and contains future-dated/pre-entered rows | date, branch, hours, pay calculation | MEDIUM-HIGH scoped | ACTUAL only after attendance/period actuality gate | YES, bounded to verified actual attendance/pay period | future-dated rows must not be treated as worked/paid actual; open period can be incomplete | separate attendance actuality from payroll calculation and preserve unclosed/future rows as GAP |
 | Rent / Utilities | PARTIAL historical only | current 2026 source not verified | some historical branch fields | LOW current-period | GAP | NO for current period | active PFC period lacks verified fixed-cost source | establish current fixed-cost evidence |
 | Other branch OPEX | YES, partial | current operating/cash records through 2026-09-18 | date, branch, recorded operating expense | MEDIUM | ACTUAL | YES for recorded rows | company/shared OPEX taxonomy incomplete | map evidenced rows; unclassified/shared remains GAP |
 | Debt | YES, management schedule | updated September 2026 | debt category, paid/remaining management fields | MEDIUM-LOW | ESTIMATE | context only | not independently reconciled financing truth | keep ESTIMATE until linked to payment/account evidence |
@@ -57,7 +57,7 @@ No financial action automated. Only later deterministic read/aggregation/test au
 | Owner contribution / withdrawal | NO structured source | current movement ledger not verified | none verified | NONE | GAP | NO | free-text cash notes cannot be promoted to structured Owner movement | identify explicit evidenced events later |
 | Inventory counts / standards | YES | current standardized source updated September 2026 | material, unit/conversion, location, book/physical count, variance | MEDIUM-HIGH | ACTUAL | YES where populated | company-wide transaction coverage not yet proven | retain as inventory lineage |
 | Inventory consumption | PARTIAL | bounded branch evidence for September 2026 | branch, period, material, opening, purchases, ending, consumption | MEDIUM-HIGH scoped | ACTUAL | YES only for proven scope | not company-wide | expand only when count/purchase coverage is proven |
-| Recipe / formula | YES | active recipe standards updated September 2026 | product, ingredient, unit, size, packaging/prep context | HIGH standard | ACTUAL | YES | standard recipe is not actual consumption | reuse after unit normalization; do not call recipe cost ACTUAL COGS alone |
+| Recipe / formula | YES | workbook modified 2026-09-16; sampled coffee recipe tab carries internal update date 2026-03-21 | product, ingredient, unit, size, packaging/prep context | HIGH as standard definition; freshness must remain explicit | ACTUAL standard, not transaction actual | YES as recipe standard | standard recipe is not actual consumption and internal recipe-date freshness is separate from file modified time | reuse after unit normalization; validate version when material, and do not call recipe cost ACTUAL COGS alone |
 
 ## Repository facts confirmed
 
@@ -99,6 +99,10 @@ The Revenue adapter is usable now as a quality gate, not yet as a connected live
 - Company-wide consumption coverage not proven.
 - Recipe + purchase must never be promoted directly to ACTUAL COGS.
 - Profit/net profit remains GAP until required cost and consumption inputs are valid.
+
+## Re-verification note
+
+A later read-only verification pass confirmed the same source-status map and tightened freshness semantics without reopening the task: file modified time is not treated as transaction coverage; future-dated payroll rows are not treated as worked/paid actual; recipe file freshness is kept separate from the recipe tab's own update date. No Drive write, locator, raw private record or synthetic financial value was introduced.
 
 ## DoD
 
