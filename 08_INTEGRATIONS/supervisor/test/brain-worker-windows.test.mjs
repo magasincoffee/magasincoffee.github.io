@@ -28,11 +28,11 @@ test("auto-upgrade workflow installs runtime source changes and verifies a Brain
   assert.doesNotMatch(source, /raw\.githubusercontent\.com\/magasincoffee\/magasincoffee\.github\.io\/main\/01_DOCS\/MAGASIN\/00_PROJECT_STATE\.json/);
   assert.match(source, /brain-worker-cli\.mjs/);
   assert.match(source, /BRAIN_TARGET_REGISTERED=True/);
-  assert.match(source, /2026-09-19\.26/);
+  assert.match(source, /2026-09-19\.27/);
 });
 
 
-test("auto-upgrade exposes explicit Owner Brain rebind when live v26 still has target mismatch", async () => {
+test("auto-upgrade exposes explicit Owner Brain rebind when live v27 still has target mismatch", async () => {
   const source = await fs.readFile(
     new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
     "utf8"
@@ -70,4 +70,32 @@ test("auto-upgrade rejects a v26 runtime still stuck on progress-turn or closed-
   assert.match(source, /missing MAGASIN_BRAIN_DIRECTIVE_V1 block/);
   assert.match(source, /Target page, context or browser has been closed/);
   assert.match(source, /automatically recoverable Brain\/CDP condition/);
+});
+
+
+test("Windows wrapper never downgrades Brain/Worker mode to legacy because project-state fetch failed", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/run-supervisor.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /\$brainWorkerMode = \$null/);
+  assert.match(source, /orchestration\.json/);
+  assert.match(source, /runtime-status\.json/);
+  assert.match(source, /Project state is temporarily unavailable; preserving Supervisor wrapper and retrying without mode downgrade/);
+  assert.doesNotMatch(source, /Preserve the last safe legacy behavior only when its target exists/);
+});
+
+test("self-hosted deployment verifies Supervisor survives the previous job cleanup", async () => {
+  const source = await fs.readFile(
+    new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /verify-survival:/);
+  assert.match(source, /needs: install/);
+  assert.match(source, /POST_JOB_SUPERVISOR_ALIVE=True/);
+  assert.match(source, /POST_JOB_BRAIN_WORKER_ALIVE=True/);
+  assert.match(source, /POST_JOB_ROBOT_CHROME_ALIVE=True/);
+  assert.match(source, /FETCH_FAILURE_ESCALATED_TO_OWNER=False/);
 });
