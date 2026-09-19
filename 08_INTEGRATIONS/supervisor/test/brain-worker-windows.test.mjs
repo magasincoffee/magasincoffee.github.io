@@ -56,7 +56,7 @@ test("auto-upgrade requires v45 Three-Lane runtime and three local lanes", async
     "utf8"
   );
 
-  assert.match(source, /2026-09-19\.47/);
+  assert.match(source, /2026-09-19\.48/);
   assert.match(source, /three-lane-cli\.mjs/);
   assert.match(source, /lane-status\.json/);
   assert.match(source, /lanes\.json/);
@@ -116,7 +116,7 @@ test("production state maintenance resets Work state by revision without changin
   assert.match(source, /Brain URL changed during state reset/);
   assert.match(source, /Work URL changed during state reset/);
   assert.match(source, /applied_work_url_revision/);
-  assert.match(source, /2026-09-19\.47/);
+  assert.match(source, /2026-09-19\.48/);
   assert.doesNotMatch(source, /brain_url\s*=/);
   assert.doesNotMatch(source, /work_url\s*=/);
 });
