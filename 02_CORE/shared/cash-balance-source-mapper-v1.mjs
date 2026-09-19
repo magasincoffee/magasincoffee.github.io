@@ -568,9 +568,7 @@ export function mapNonBalanceSourceFact(raw = {}, {
         ? "MOVEMENT_ONLY_IS_NOT_BALANCE"
         : "CONTEXT_ONLY_IS_NOT_BALANCE"
     }),
-    proof: {
-      evidence_kind: basis
-    },
+    proof: {},
     payment_method: raw.payment_method ?? raw.paymentMethod
   }, {
     targetPoint,
