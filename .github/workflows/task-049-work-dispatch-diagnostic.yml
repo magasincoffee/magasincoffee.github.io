@@ -1,0 +1,157 @@
+name: TASK-049 Work Dispatch Diagnostic
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/task-049-work-dispatch-diagnostic.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: self-hosted
+    timeout-minutes: 4
+    steps:
+      - name: Inspect lane-1 Work dispatch safely
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $profile = Join-Path $root "browser_profile"
+          $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction Stop |
+            Where-Object {
+              $_.CommandLine -and
+              $_.CommandLine -like "*$profile*" -and
+              $_.CommandLine -match "--remote-debugging-port=(\d+)"
+            } |
+            Select-Object -First 1
+          if (-not $chrome) { throw "Dedicated Robot Chrome is not running" }
+          $null = $chrome.CommandLine -match "--remote-debugging-port=(\d+)"
+          $port = [int]$Matches[1]
+
+          $env:MAGASIN_DIAG_ROOT = $root
+          $env:MAGASIN_DIAG_CDP = "http://127.0.0.1:$port"
+
+          $diag = @'
+          import fs from "node:fs/promises";
+          import path from "node:path";
+          import { pathToFileURL } from "node:url";
+
+          const root = process.env.MAGASIN_DIAG_ROOT;
+          const cdpUrl = process.env.MAGASIN_DIAG_CDP;
+          const runtime = path.join(root, "runtime", "src");
+
+          const { ChatGptUiAdapter } = await import(
+            pathToFileURL(path.join(runtime, "ui", "playwright-adapter.mjs")).href
+          );
+          const {
+            captureRecentConversationTurns,
+            captureUserTurnDigests
+          } = await import(
+            pathToFileURL(path.join(runtime, "ui", "message-capture.mjs")).href
+          );
+          const { targetFromUrl, pageMatchesTarget } = await import(
+            pathToFileURL(path.join(runtime, "runtime", "recovery.mjs")).href
+          );
+          const { normalizeChatGptConversationUrl } = await import(
+            pathToFileURL(path.join(runtime, "runtime", "three-lane.mjs")).href
+          );
+
+          const readJson = async (name) =>
+            JSON.parse(String(await fs.readFile(path.join(root, name), "utf8")).replace(/^\uFEFF/, ""));
+
+          const config = await readJson("lanes.json");
+          const registry = await readJson("lane-registry.json");
+          const status = await readJson("lane-status.json").catch(() => ({}));
+          const lane = config.lanes.find((item) => item.lane_id === "lane-1");
+          const reg = registry.lanes["lane-1"];
+          const laneStatus = (status.lanes || []).find((item) => item.lane_id === "lane-1") || {};
+
+          const output = {
+            runtime_version: status.supervisor_runtime_version || null,
+            lane_status: laneStatus.status || null,
+            lane_message: laneStatus.message || null,
+            lane_task: laneStatus.task_id || null,
+            awaiting_work: Boolean(reg.awaiting_work),
+            dispatch_inflight: Boolean(reg.dispatch_inflight),
+            dispatch_task: reg.dispatch_inflight?.task_id || null,
+            dispatch_create_new: Boolean(reg.dispatch_inflight?.create_new),
+            dispatch_reconcile_blocked: Boolean(reg.dispatch_inflight?.reconcile_blocked),
+            dispatch_reconcile_reloaded: Boolean(reg.dispatch_inflight?.reconcile_reloaded),
+            work_generation: Number(reg.work_generation || 0),
+            work_url_present: Boolean(reg.work_url || lane.work_url),
+            last_brain_directive_present: Boolean(reg.last_brain_directive_digest),
+            current_task: reg.task_id || null
+          };
+
+          if (reg.work_url || lane.work_url) {
+            const workUrl = normalizeChatGptConversationUrl(reg.work_url || lane.work_url);
+            const target = targetFromUrl(workUrl);
+            const adapter = new ChatGptUiAdapter({ cdpUrl });
+            await adapter.open();
+            let page = adapter.findPageForTarget(target);
+            if (!page) page = await adapter.reopenTargetPage(workUrl);
+
+            const probe = await adapter.probePage(page);
+            const turns = await captureRecentConversationTurns(page, { limit: 16 });
+            const userDigests = await captureUserTurnDigests(page);
+            const expected = reg.dispatch_inflight?.instruction_digest || reg.instruction_digest || null;
+
+            output.work_page_matches_target = pageMatchesTarget(page.url(), target);
+            output.work_snapshot = {
+              pathKind: probe.snapshot.pathKind,
+              conversationPath: probe.snapshot.conversationPath,
+              composerReady: probe.snapshot.composerReady,
+              assistantMessageCount: probe.snapshot.assistantMessageCount,
+              userMessageCount: probe.snapshot.userMessageCount,
+              lastMessageRole: probe.snapshot.lastMessageRole,
+              responseRunning: probe.snapshot.responseRunning,
+              conversationFull: probe.snapshot.conversationFull,
+              conversationMissing: probe.snapshot.conversationMissing,
+              conversationAccessDenied: probe.snapshot.conversationAccessDenied,
+              loginRequired: probe.snapshot.loginRequired
+            };
+            output.work_observation = probe.classification.observation;
+            output.expected_instruction_digest_prefix = expected ? expected.slice(0, 12) : null;
+            output.expected_instruction_found = Boolean(expected && userDigests.includes(expected));
+            output.recent_turns = turns.map((turn) => ({
+              role: turn.role,
+              turn: turn.turn,
+              digest_prefix: turn.digest.slice(0, 12),
+              expected_instruction_match: Boolean(expected && turn.role === "user" && turn.digest === expected)
+            }));
+          }
+
+          const logText = await fs.readFile(path.join(root, "supervisor.log"), "utf8").catch(() => "");
+          const safeEvents = logText.split(/\r?\n/).filter(Boolean).slice(-180)
+            .map((line) => {
+              try {
+                const event = JSON.parse(line);
+                if (event.lane_id !== "lane-1") return null;
+                if (!/^LANE_(WORK|BRAIN|ERROR)/.test(String(event.type || ""))) return null;
+                return {
+                  timestamp: event.timestamp || null,
+                  type: event.type || null,
+                  task_id: event.task_id || null,
+                  reason: event.reason ? String(event.reason).slice(0, 160) : null,
+                  error_name: event.error_name || null
+                };
+              } catch {
+                return null;
+              }
+            }).filter(Boolean).slice(-30);
+          output.safe_events = safeEvents;
+
+          console.log("WORK_DIAG_BEGIN");
+          console.log(JSON.stringify(output));
+          console.log("WORK_DIAG_END");
+          process.exit(0);
+          '@
+
+          $temp = Join-Path $env:RUNNER_TEMP "magasin-work-diag.mjs"
+          [System.IO.File]::WriteAllText($temp, $diag, (New-Object System.Text.UTF8Encoding($false)))
+          node $temp
+          if ($LASTEXITCODE -ne 0) { throw "Work diagnostic failed" }
