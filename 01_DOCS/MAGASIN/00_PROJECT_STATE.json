@@ -3,7 +3,7 @@
   "repository": "magasincoffee/magasincoffee.github.io",
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
-  "current_phase": "P2_PFC_3H_EXECUTION",
+  "current_phase": "P2_PFC_3H_EXECUTION_RESTART",
   "current_task": "TASK-051",
   "current_task_title": "PFC source inventory + delete/defer map",
   "status": "READY",
@@ -28,7 +28,8 @@
       "OWNER_ARCHITECTURE_LOCKED",
       "OWNER_APPROVED_CONTINUOUS_FIVE_STEP_ALL_ASPECTS",
       "OWNER_APPROVED_PROFITABILITY_CASH_FINANCIAL_TRUTH_SPINE",
-      "OWNER_EXPLICIT_ROBOT_RELEASE"
+      "OWNER_EXPLICIT_ROBOT_RELEASE",
+      "OWNER_EXPLICIT_RESTART_AND_RELEASE"
     ],
     "pending": []
   },
@@ -249,11 +250,11 @@
       "required_autonomy": "AUTO_CONTINUE",
       "current_autonomy": "AUTO_CONTINUE",
       "robot_may_execute": true,
-      "reason": "OWNER_EXPLICITLY_RELEASED_PFC_3H_V1"
+      "reason": "OWNER_EXPLICIT_RESTART_AND_OFFICIAL_RELEASE_PFC_3H_V1"
     }
   },
   "architecture_handoff": {
-    "state": "ROBOT_RELEASED_PFC_3H_EXECUTION_ACTIVE",
+    "state": "ROBOT_RELEASED_PFC_3H_RESTART_ACTIVE",
     "canonical_architecture_ref": "01_DOCS/MAGASIN/00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md",
     "read_first_on_new_session": true,
     "primary_priority": "PROFITABILITY_CASH",
@@ -303,7 +304,7 @@
   },
   "prepared_execution_queue": {
     "id": "PFC_3H_V1",
-    "status": "ACTIVE",
+    "status": "ACTIVE_RESTARTED",
     "runbook": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/THREE_HOUR_EXECUTION_QUEUE_V1.md",
     "estimated_active_minutes": 180,
     "owner_dependency_during_run": "NONE_UNLESS_TRUE_BOUNDARY",
@@ -338,7 +339,9 @@
     ],
     "google_drive_evidence": "AUTHORIZED_READ_ONLY",
     "started_task": "TASK-051",
-    "execution_policy": "AUTO_CONTINUE_UNTIL_TRUE_OWNER_BOUNDARY_OR_QUEUE_COMPLETE"
+    "execution_policy": "AUTO_CONTINUE_UNTIL_TRUE_OWNER_BOUNDARY_OR_QUEUE_COMPLETE",
+    "execution_generation": "PFC_3H_V1_RESTART_01",
+    "restart_from_task": "TASK-051"
   },
   "data_evidence_policy": {
     "google_drive": {
