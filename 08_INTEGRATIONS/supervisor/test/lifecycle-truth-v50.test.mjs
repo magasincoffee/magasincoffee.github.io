@@ -107,9 +107,9 @@ test("K process banner and lane business state are composed from separate truth 
   const panel = await read("../windows/control-panel.ps1");
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
 
-  assert.match(panel, /ROBOT NỀN: ĐANG HOẠT ĐỘNG/);
-  assert.match(panel, /ROBOT NỀN: ĐANG TỰ KHÔI PHỤC/);
   assert.match(panel, /\$processState/);
+  assert.match(panel, /'STARTING'/);
+  assert.match(panel, /'RECOVERING'/);
   assert.match(runtime, /truth_order: \["PROCESS_TRUTH", "LANE_TRUTH", "PERSISTED_RECOVERY_STATE"\]/);
   assert.match(runtime, /persisted_state_role: "RECOVERY_ONLY"/);
   assert.match(runtime, /process_truth_required: true/);
