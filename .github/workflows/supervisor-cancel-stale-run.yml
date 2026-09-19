@@ -30,4 +30,10 @@ jobs:
           fi
           gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${STALE_RUN_ID}/cancel"
           echo "STALE_RUN_CANCEL_REQUESTED=True"
+          sleep 5
+          status="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${STALE_RUN_ID}" --jq '.status')"
+          if [ "$status" != "completed" ]; then
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${STALE_RUN_ID}/force-cancel"
+            echo "STALE_RUN_FORCE_CANCEL_REQUESTED=True"
+          fi
           echo "STALE_RUN_ID=${STALE_RUN_ID}"
