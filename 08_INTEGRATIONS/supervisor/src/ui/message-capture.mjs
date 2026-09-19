@@ -48,3 +48,15 @@ export async function captureAssistantTurnDigests(page) {
 
   return texts.map((text) => digestCapturedResponse(text));
 }
+
+
+export async function captureUserTurnDigests(page) {
+  if (!page) throw new TypeError("page is required");
+
+  const texts = await page.evaluate(() => Array.from(
+    document.querySelectorAll("[data-message-author-role='user']")
+  ).map((node) => String(node.innerText || node.textContent || "").trim())
+    .filter(Boolean));
+
+  return texts.map((text) => digestCapturedResponse(text));
+}
