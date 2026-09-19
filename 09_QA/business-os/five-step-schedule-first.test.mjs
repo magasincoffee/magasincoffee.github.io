@@ -8,6 +8,10 @@ async function read(relative) {
   return fs.readFile(new URL(relative, root), "utf8");
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^$\\{}()|[\\]\\\\]/g, "\\$&");
+}
+
 test("Five-Step architecture reset remains canonical under Profitability & Cash priority", async () => {
   const [architecture, enterprise, current, queue, stateRaw] = await Promise.all([
     read("01_DOCS/MAGASIN/00_ARCHITECTURE_5_STEP_RESET.md"),
@@ -20,7 +24,7 @@ test("Five-Step architecture reset remains canonical under Profitability & Cash 
 
   assert.match(architecture, /QUESTION every requirement/);
   assert.match(architecture, /DELETE before adding/);
-  assert.match(architecture, /SIMPLIFY \/ OPTIMIZE/);
+  assert.match(architecture, /SIMPLIFY \\/ OPTIMIZE/);
   assert.match(architecture, /ACCELERATE cycle time/);
   assert.match(architecture, /AUTOMATE last/);
   assert.match(architecture, /Current critical path: Profitability & Cash first/i);
@@ -38,15 +42,17 @@ test("Five-Step architecture reset remains canonical under Profitability & Cash 
 
   assert.match(current, /Profitability & Cash first/);
   assert.match(current, /financial truth spine/i);
-  assert.match(queue, /TASK-026[^\n]*DEFERRED/);
-  assert.match(queue, /TASK-051[^\n]*DONE/);
-  assert.match(queue, /TASK-052[^\n]*DONE/);
-  assert.match(queue, /TASK-053[^\n]*DONE/);
-  assert.match(queue, /TASK-054[^\n]*DONE/);
+  assert.match(queue, /TASK-026[^\\n]*DEFERRED/);
+  assert.match(queue, /TASK-051[^\\n]*DONE/);
+  assert.match(queue, /TASK-052[^\\n]*DONE/);
+  assert.match(queue, /TASK-053[^\\n]*DONE/);
+  assert.match(queue, /TASK-054[^\\n]*DONE/);
+
   if (state.status === "READY" && state.current_task) {
-    const escapedTask = String(state.current_task).replace(/[.*+?^${}()|[\]\\]/g, "\\  assert.match(queue, /TASK-052[^\n]*(?:REOPENED|DONE)/);
-  assert.match(queue, /TASK-053[^\n]*(?:QUEUED|READY)/);");
-    assert.match(queue, new RegExp(`${escapedTask}[^\\n]*READY / AUTO_CONTINUE`));
+    const currentTaskPattern = new RegExp(
+      escapeRegExp(state.current_task) + "[^\\n]*READY / AUTO_CONTINUE"
+    );
+    assert.match(queue, currentTaskPattern);
   }
 });
 
@@ -56,8 +62,8 @@ test("deferred SOP write path remains fail-closed", async () => {
     read("01_DOCS/MAGASIN/00_TASK_QUEUE.md")
   ]);
 
-  assert.match(architecture, /SOP\/Task write automation while its Owner rule boundary is still unresolved/);
-  assert.match(queue, /TASK-026[^\n]*DEFERRED/);
+  assert.match(architecture, /SOP\\/Task write automation while its Owner rule boundary is still unresolved/);
+  assert.match(queue, /TASK-026[^\\n]*DEFERRED/);
 });
 
 test("conversation-aware handoff architecture is part of Five-Step execution", async () => {
@@ -72,7 +78,7 @@ test("conversation-aware handoff architecture is part of Five-Step execution", a
   assert.match(handoff, /live explicit Owner instruction/);
   assert.match(handoff, /assistant is running → WAIT/);
   assert.match(handoff, /HANDOFF_RECONCILE/);
-  assert.match(handoff, /QUESTION[\s\S]*DELETE[\s\S]*SIMPLIFY[\s\S]*ACCELERATE[\s\S]*AUTOMATE/);
+  assert.match(handoff, /QUESTION[\\s\\S]*DELETE[\\s\\S]*SIMPLIFY[\\s\\S]*ACCELERATE[\\s\\S]*AUTOMATE/);
   assert.match(current, /conversation-aware handoff/);
 });
 
@@ -84,7 +90,7 @@ test("deferred Gmail activation stays fail-closed and non-blocking", async () =>
   ]);
   const state = JSON.parse(stateRaw);
 
-  assert.match(emailConfig, /DEFERRED_BY_OWNER \/ FAIL_CLOSED/);
+  assert.match(emailConfig, /DEFERRED_BY_OWNER \\/ FAIL_CLOSED/);
   assert.match(emailConfig, /notification-email-worker not deployed/);
   assert.match(task036, /external email is not required/i);
   assert.equal(state.deferred_activation.blocking, false);
