@@ -153,3 +153,17 @@ test("production lifecycle acceptance installs its checked-out runtime before A-
   assert.match(workflow.slice(installIndex, acceptanceIndex), /2026-09-19\.50/);
   assert.match(workflow.slice(installIndex, acceptanceIndex), /LIFECYCLE_ACCEPTANCE_INSTALL_READY=True/);
 });
+
+
+test("explicit Owner START maintenance is marker-authorized and preserves targets", async () => {
+  const workflow = await read("../../../.github/workflows/supervisor-state-maintenance.yml");
+
+  assert.match(workflow, /owner-start/);
+  assert.match(workflow, /\\\[supervisor-owner-start\\\]/);
+  assert.match(workflow, /MAINTENANCE_OPERATION=OWNER_START/);
+  assert.match(workflow, /OWNER_START_EXPLICIT=True/);
+  assert.match(workflow, /TARGET_URLS_UNCHANGED=True/);
+  assert.match(workflow, /SUPERVISOR_PROCESS_TRUTH_HEALTHY=True/);
+  assert.match(workflow, /-File \$startScript -Hidden/);
+  assert.doesNotMatch(workflow, /-File \$startScript -Hidden -Recovery/);
+});
