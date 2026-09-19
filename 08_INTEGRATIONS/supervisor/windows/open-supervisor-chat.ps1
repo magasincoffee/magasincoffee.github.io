@@ -1,3 +1,7 @@
+param(
+    [string]$Url = ''
+)
+
 $ErrorActionPreference = 'Stop'
 
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
@@ -94,7 +98,41 @@ if (-not $chrome) {
 }
 
 New-Item -ItemType Directory -Force -Path $profile | Out-Null
-$url = Resolve-TargetUrl
+$url = if (
+    $Url -and
+    [Uri]::IsWellFormedUriString($Url, [UriKind]::Absolute) -and
+    ([Uri]$Url).Host -match '(^|\.)chatgpt\.com
+$existing = Get-DedicatedChromeProcesses | Select-Object -First 1
+
+if ($existing) {
+    # Reuse the same authenticated Supervisor profile so Owner and Robot share
+    # one ChatGPT workspace. Chrome forwards this URL to the existing instance.
+    Start-Process -FilePath $chrome -ArgumentList @(
+        ('--user-data-dir="' + $profile + '"'),
+        $url
+    )
+    Show-DedicatedChromeWindow | Out-Null
+    exit 0
+}
+
+$port = Get-FreeCdpPort
+Start-Process -FilePath $chrome -ArgumentList @(
+    '--remote-debugging-address=127.0.0.1',
+    "--remote-debugging-port=$port",
+    ('--user-data-dir="' + $profile + '"'),
+    '--no-first-run',
+    '--no-default-browser-check',
+    $url
+)
+
+Show-DedicatedChromeWindow | Out-Null
+ -and
+    ([Uri]$Url).AbsolutePath -match '^/(c|g|project)/'
+) {
+    $Url
+} else {
+    Resolve-TargetUrl
+}
 $existing = Get-DedicatedChromeProcesses | Select-Object -First 1
 
 if ($existing) {
