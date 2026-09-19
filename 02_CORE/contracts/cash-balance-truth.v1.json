@@ -1,0 +1,121 @@
+{
+  "schema_version": "cash-balance-truth.v1",
+  "status": "CANONICAL_CONTRACT",
+  "task": "TASK-061",
+  "canonical_truth_contract": "financial-truth.v1",
+  "cash_bridge_contract": "cash-bridge.v1",
+  "purpose": "Represent a single Cash point-balance truth by role, basis, point, account/location and Financial Truth scope without source-specific mapping or balance arithmetic.",
+  "balance_roles": [
+    "OPENING",
+    "OBSERVED_ENDING"
+  ],
+  "balance_bases": [
+    "OBSERVED_BALANCE",
+    "COMPUTED_BALANCE",
+    "MOVEMENT_ONLY",
+    "CONTEXT_ONLY",
+    "NOT_CONNECTED"
+  ],
+  "account_classes": [
+    "PHYSICAL_CASH",
+    "BANK",
+    "MOMO_WALLET",
+    "COD_HELD_CASH",
+    "OWNER_HELD_COMPANY_CASH",
+    "PROVIDER_ACCOUNT",
+    "OTHER_EVIDENCED_CASH"
+  ],
+  "metric_mapping": {
+    "OPENING": "cash_opening_balance",
+    "OBSERVED_ENDING": "cash_observed_ending_balance"
+  },
+  "shape": {
+    "schema_version": "cash-balance-truth.v1",
+    "balance_role": "OPENING | OBSERVED_ENDING",
+    "balance_basis": "OBSERVED_BALANCE | COMPUTED_BALANCE | MOVEMENT_ONLY | CONTEXT_ONLY | NOT_CONNECTED",
+    "point": {
+      "date": "YYYY-MM-DD",
+      "timezone": "explicit IANA timezone",
+      "timestamp": "exact ISO-8601 timestamp with zone",
+      "boundary_proven": "boolean"
+    },
+    "account": {
+      "class": "account class enum",
+      "label": "privacy-safe logical account/location label",
+      "aggregate_proven": "boolean; required when label=ALL"
+    },
+    "truth": "financial-truth.v1 record; group=CASH; role-specific metric",
+    "proof": "minimal observed/computed provenance metadata",
+    "diagnostics": "deterministic privacy-safe reason list"
+  },
+  "observed_balance_rules": [
+    "Numeric observed balance requires balance_basis=OBSERVED_BALANCE.",
+    "observed_proven=true is required for numeric observed balance.",
+    "boundary_proven=true is required.",
+    "Point date/timezone/timestamp, account, scope, source, as_of, reconciliation and lineage must be valid.",
+    "MOVEMENT_ONLY and CONTEXT_ONLY can never normalize to a numeric balance.",
+    "NOT_CONNECTED always remains value=null and quality=NOT_CONNECTED.",
+    "Explicit observed zero is valid when all evidence gates pass.",
+    "Payment-method metadata is not balance evidence."
+  ],
+  "computed_balance_rules": [
+    "COMPUTED_BALANCE is provenance-distinct from OBSERVED_BALANCE.",
+    "COMPUTED_BALANCE is allowed only for balance_role=OPENING in V1.",
+    "OBSERVED_ENDING + COMPUTED_BALANCE fails closed with OBSERVED_ENDING_REQUIRES_OBSERVED_BALANCE.",
+    "Numeric computed opening requires computation_proven=true.",
+    "Numeric computed opening requires anchor_observed=true.",
+    "Numeric computed opening requires movement_coverage=COMPLETE.",
+    "Numeric computed opening requires non-empty privacy-safe computation lineage.",
+    "Dependency GAP fails closed; explicit NOT_CONNECTED dependency remains NOT_CONNECTED.",
+    "Any ESTIMATE dependency caps output quality at ESTIMATE.",
+    "TASK-061 validates caller-provided computation proof and never calculates anchor plus movements."
+  ],
+  "point_rules": [
+    "Financial Truth period is start=end=point.date using exact point.timezone.",
+    "point.timestamp must be a valid zoned timestamp representing point.date in point.timezone.",
+    "Caller-supplied targetPoint is validated exactly; helper never chooses a business opening/closing date or clock window.",
+    "OPENING must match the requested target start point/date.",
+    "OBSERVED_ENDING must match the requested target end point/date.",
+    "Current balance cannot be backdated to a historical target."
+  ],
+  "scope_rules": [
+    "Financial Truth branch/channel scope remains explicit.",
+    "Unknown branch/channel never becomes ALL.",
+    "Financial Truth ALL requires aggregate_proven=true.",
+    "Account label ALL requires account.aggregate_proven=true.",
+    "One branch/account is never silently promoted to enterprise ALL."
+  ],
+  "numeric_rules": [
+    "Missing, NaN and Infinity fail closed.",
+    "Missing balance never becomes zero.",
+    "Explicit proven zero is allowed.",
+    "Finite negative generic balance is allowed because account-specific overdraft/physical-cash policy is outside TASK-061.",
+    "-0 normalizes to 0 through Financial Truth V1."
+  ],
+  "reconciliation_rules": [
+    "Numeric balance may use any canonical non-UNKNOWN Financial Truth reconciliation status supported by evidence.",
+    "TASK-061 does not require every observed point to be RECONCILED.",
+    "UNKNOWN reconciliation cannot carry a numeric value."
+  ],
+  "cash_bridge_compatibility": [
+    "OPENING.truth is directly compatible with Cash Bridge openingBalance when target start date/timezone/scope match.",
+    "OBSERVED_ENDING.truth is directly compatible with Cash Bridge observedEndingBalance when target end date/timezone/scope match.",
+    "No Cash Bridge arithmetic is duplicated or modified by TASK-061."
+  ],
+  "non_goals": [
+    "source_specific_reader",
+    "google_drive_mapper",
+    "bank_connector",
+    "momo_connector",
+    "coverage_engine",
+    "database",
+    "migration",
+    "rpc",
+    "write_path",
+    "ui",
+    "dashboard",
+    "cash_movement_arithmetic",
+    "balance_inference_from_payment_method",
+    "balance_inference_from_revenue_purchase_ap_or_foodapp_gross"
+  ]
+}

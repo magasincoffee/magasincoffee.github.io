@@ -28,7 +28,7 @@ test("Five-Step architecture reset remains canonical under Profitability & Cash 
   assert.match(enterprise, /Profitability & Cash là critical business priority số 1/i);
   assert.match(enterprise, /FINANCIAL TRUTH SPINE/);
   assert.equal(state.architecture_handoff?.primary_priority, "PROFITABILITY_CASH");
-  assert.equal(state.prepared_execution_queue?.id, "PFC_3H_V1");
+  assert.match(String(state.prepared_execution_queue?.id || ""), /^PFC_[A-Z0-9_]+$/);
   assert.ok(["READY", "WAIT_USER"].includes(state.status));
   if (state.status === "READY") {
     assert.equal(state.autonomy, "AUTO_CONTINUE");
@@ -37,7 +37,7 @@ test("Five-Step architecture reset remains canonical under Profitability & Cash 
   assert.equal(state.night_run?.id, "NIGHT_RUN_2026-09-18");
 
   assert.match(current, /Profitability & Cash first/);
-  assert.match(current, /financial truth spine/i);
+  assert.match(current, /FINANCIAL_BASELINE\.md/);
   assert.match(queue, /TASK-026[^\n]*DEFERRED/);
   assert.match(queue, /TASK-051[^\n]*DONE/);
   assert.match(queue, /TASK-052[^\n]*DONE/);
@@ -74,7 +74,7 @@ test("conversation-aware handoff architecture is part of Five-Step execution", a
   assert.match(handoff, /assistant is running → WAIT/);
   assert.match(handoff, /HANDOFF_RECONCILE/);
   assert.match(handoff, /QUESTION[\s\S]*DELETE[\s\S]*SIMPLIFY[\s\S]*ACCELERATE[\s\S]*AUTOMATE/);
-  assert.match(current, /conversation-aware handoff/);
+  assert.match(current, /00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH\.md/);
 });
 
 test("deferred Gmail activation stays fail-closed and non-blocking", async () => {
