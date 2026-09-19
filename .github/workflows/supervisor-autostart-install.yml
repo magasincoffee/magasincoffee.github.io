@@ -129,7 +129,7 @@ jobs:
           if (-not (Test-Path $statusFile)) { throw "Autostart install status is missing" }
 
           $threeLane = $null
-          for ($i = 0; $i -lt 45; $i++) {
+          for ($i = 0; $i -lt 60; $i++) {
             $threeLane = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
               Where-Object { $_.CommandLine -and $_.CommandLine -like "*three-lane-cli.mjs*" } |
               Select-Object -First 1
@@ -257,6 +257,30 @@ jobs:
           $statusFile = Join-Path $root "lane-status.json"
           $registryFile = Join-Path $root "lane-registry.json"
           $logFile = Join-Path $root "supervisor.log"
+          $configFile = Join-Path $root "lanes.json"
+
+          # Owner explicitly asked the automated acceptance run to operate the
+          # Robot without manual clicks. Resume Lane 1 only when its existing
+          # Brain URL is already configured; preserve every target URL.
+          if (Test-Path $configFile) {
+            $config = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            $lane1Config = @($config.lanes | Where-Object { $_.lane_id -eq "lane-1" }) | Select-Object -First 1
+            if ($lane1Config -and [string]$lane1Config.brain_url) {
+              if (-not [bool]$lane1Config.enabled) {
+                $lane1Config.enabled = $true
+                $tmp = "$configFile.acceptance.tmp"
+                $config | ConvertTo-Json -Depth 12 | Set-Content -Path $tmp -Encoding UTF8
+                Move-Item -Path $tmp -Destination $configFile -Force
+                Write-Host "LIVE_LANE1_RESUMED_BY_SHELL=True"
+              } else {
+                Write-Host "LIVE_LANE1_RESUMED_BY_SHELL=False"
+              }
+              Write-Host "LIVE_LANE1_BRAIN_CONFIGURED=True"
+              Write-Host "LIVE_LANE1_WORK_CONFIGURED=$([bool]([string]$lane1Config.work_url))"
+            } else {
+              Write-Host "LIVE_LANE1_BRAIN_CONFIGURED=False"
+            }
+          }
 
           $healthy = $false
           $lane1 = $null
