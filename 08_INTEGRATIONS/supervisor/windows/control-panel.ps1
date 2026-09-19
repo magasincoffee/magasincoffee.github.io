@@ -10,6 +10,7 @@ $statusFile = Join-Path $root 'runtime-status.json'
 $logFile = Join-Path $root 'supervisor.log'
 $ownerResolvedFile = Join-Path $root 'OWNER_RESOLVED.request.json'
 $brainRebindFile = Join-Path $root 'BRAIN_REBIND.request.json'
+$workerRetryFile = Join-Path $root 'WORKER_RETRY.request.json'
 $diagnosticsRoot = Join-Path $root 'diagnostics'
 $startScript = Join-Path $runtime 'windows\start-supervisor.ps1'
 $stopScript = Join-Path $runtime 'windows\stop-supervisor.ps1'
@@ -341,6 +342,16 @@ $brainRebindButton.ForeColor = [Drawing.Color]::FromArgb(29,78,216)
 $brainRebindButton.Visible = $false
 $errorPanel.Controls.Add($brainRebindButton)
 
+$workerRetryButton = New-Object Windows.Forms.Button
+$workerRetryButton.Text = 'TIẾP TỤC CÔNG VIỆC BỊ KẸT'
+$workerRetryButton.Location = New-Object Drawing.Point(515, 18)
+$workerRetryButton.Size = New-Object Drawing.Size(255, 38)
+$workerRetryButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
+$workerRetryButton.BackColor = [Drawing.Color]::FromArgb(219,234,254)
+$workerRetryButton.ForeColor = [Drawing.Color]::FromArgb(29,78,216)
+$workerRetryButton.Visible = $false
+$errorPanel.Controls.Add($workerRetryButton)
+
 $diagnosticsButton = New-Object Windows.Forms.Button
 $diagnosticsButton.Text = 'MỞ LOG LỖI'
 $diagnosticsButton.Location = New-Object Drawing.Point(780, 18)
@@ -502,8 +513,14 @@ function Refresh-ControlPanel {
         [string]$runtimeStatus.status -eq 'WAIT_USER' -and
         [string]$runtimeStatus.decision_reason -match 'target mismatch'
     )
+    $uncertainWorkerActive = [bool](
+        $runtimeStatus -and
+        [string]$runtimeStatus.status -eq 'WAIT_USER' -and
+        [string]$runtimeStatus.decision_reason -match 'uncertain prior create/send outcome'
+    )
     $brainRebindButton.Visible = $targetMismatchActive
-    $ownerResolvedButton.Visible = -not $targetMismatchActive
+    $workerRetryButton.Visible = $uncertainWorkerActive
+    $ownerResolvedButton.Visible = -not ($targetMismatchActive -or $uncertainWorkerActive)
     $ownerResolvedButton.Enabled = [bool]$ownerBoundaryActive
     if (Test-Path $ownerResolvedFile) {
         $ownerResolvedButton.Text = '✓  ĐÃ NHẬN — ĐANG KIỂM TRA'
@@ -554,6 +571,8 @@ function Refresh-ControlPanel {
 
     if ($targetMismatchActive) {
         $errorValue.Text = 'Robot mất liên kết với cuộc trò chuyện Bộ não. Mở đúng cuộc trò chuyện Bộ não trong Chrome Robot rồi bấm DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO.'
+    } elseif ($uncertainWorkerActive) {
+        $errorValue.Text = 'Một công việc bị gián đoạn đúng lúc gửi lệnh. Robot sẽ không tự gửi trùng. Bấm TIẾP TỤC CÔNG VIỆC BỊ KẸT để cho phép thử lại đúng một lần.'
     } elseif ($projectAutonomy -eq 'PAUSED') {
         $currentActionValue.Text = 'PAUSED  •  không mở/điều khiển ChatGPT'
         $nextActionValue.Text = if ($pauseResumeAt) {
@@ -734,6 +753,32 @@ $brainRebindButton.Add_Click({
         [Windows.Forms.MessageBox]::Show(
             $_.Exception.Message,
             'Không thể gắn lại Bộ não',
+            'OK',
+            'Error'
+        ) | Out-Null
+    }
+})
+
+$workerRetryButton.Add_Click({
+    try {
+        $request = [ordered]@{
+            requested_at = [DateTimeOffset]::UtcNow.ToString('o')
+            intent = 'OWNER_RETRY_UNCERTAIN_WORKER_ONCE'
+        }
+        New-Item -ItemType Directory -Force -Path $root | Out-Null
+        $request | ConvertTo-Json | Set-Content -Path $workerRetryFile -Encoding UTF8
+
+        [Windows.Forms.MessageBox]::Show(
+            'Đã cho phép Robot thử lại đúng một lần đối với công việc bị gián đoạn. Robot vẫn kiểm tra chống gửi trùng trước khi tiếp tục.',
+            'MAGASIN Business OS',
+            'OK',
+            'Information'
+        ) | Out-Null
+        Refresh-ControlPanel
+    } catch {
+        [Windows.Forms.MessageBox]::Show(
+            $_.Exception.Message,
+            'Không thể tiếp tục công việc bị kẹt',
             'OK',
             'Error'
         ) | Out-Null
