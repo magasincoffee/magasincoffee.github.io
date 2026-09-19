@@ -79,6 +79,13 @@ No work available:
 
 The directive belongs only to the lane whose Brain URL produced it.
 
+## Work access and Owner reset
+
+- A manually entered Work URL must be accessible to the account/session inside the dedicated Robot Chrome profile.
+- If ChatGPT reports that the conversation is not accessible, the lane waits for Owner instead of silently replacing the explicit target.
+- Control Panel exposes **TỰ TẠO WORK** while the lane is stopped. This clears the explicit Work target and returns the lane to Robot auto-create mode.
+- Access-denied errors must be shown in plain Vietnamese; the generic exact-restore error is not acceptable for this case.
+
 ## Work lifecycle
 
 1. Lane is enabled.
