@@ -1,7 +1,7 @@
 {
   "project": "MAGASIN Business OS",
   "repository": "magasincoffee/magasincoffee.github.io",
-  "plan_version": "BOS-V1-5STEP-THREE-LANE-MANUAL-WORK-2026-09-19",
+  "plan_version": "BOS-V1-5STEP-THREE-LANE-WORK-ACCESS-2026-09-19",
   "target_days": 21,
   "current_phase": "P1_AUTONOMY_THREE_LANE_UPGRADE",
   "current_task": "TASK-049",
@@ -208,7 +208,8 @@
       "brain_url_missing": "WAIT_OWNER",
       "brain_url_invalid": "WAIT_OWNER",
       "work_missing": "CREATE_ONLY_FROM_ACTIVE_LANE",
-      "network": "AUTO_RETRY_BOUNDED_NO_OWNER_ESCALATION_FOR_TRANSIENT_FETCH_CDP"
+      "network": "AUTO_RETRY_BOUNDED_NO_OWNER_ESCALATION_FOR_TRANSIENT_FETCH_CDP",
+      "work_access_denied": "WAIT_OWNER_WITH_PLAIN_LANGUAGE_RESET_OPTION"
     },
     "auto_upgrade": {
       "enabled": true,
@@ -217,9 +218,10 @@
     },
     "acceptance_evidence": {
       "status": "PENDING",
-      "note": "THREE_LANE_V1 manual Work URL override and transient network recovery require E2E acceptance."
+      "note": "THREE_LANE_V1 v34 access-denied detection and one-click Work reset require E2E acceptance."
     },
     "work_target_edit_policy": "OWNER_EDITABLE_WHEN_LANE_STOPPED",
-    "work_target_blank_policy": "ROBOT_AUTO_CREATE"
+    "work_target_blank_policy": "ROBOT_AUTO_CREATE",
+    "work_target_reset_policy": "OWNER_ONE_CLICK_CLEAR_THEN_ROBOT_AUTO_CREATE"
   }
 }
