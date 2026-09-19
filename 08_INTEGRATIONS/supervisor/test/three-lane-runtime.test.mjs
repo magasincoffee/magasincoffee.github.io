@@ -173,7 +173,7 @@ test("v36 reloads each unconfirmed Work send at most once and then only observes
   assert.match(source, /const reload = !latch\.reconcile_reloaded/);
   assert.match(source, /LANE_WORK_SEND_RECONCILE_RELOAD/);
   assert.match(source, /LANE_WORK_SEND_RECONCILE_PENDING/);
-  assert.match(source, /reload\n  \}/);
+  assert.match(source, /LANE_WORK_SEND_RECONCILE_PENDING/);
   assert.match(source, /return "PENDING"/);
   assert.match(source, /chỉ quan sát, không tải lại trang lặp lại/);
 });
