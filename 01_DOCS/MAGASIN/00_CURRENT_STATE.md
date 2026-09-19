@@ -13,7 +13,8 @@ Canonical architecture:
 - `02_PROFITABILITY_CASH/PFC_8H_V2_EXECUTION_PLAN.md`;
 - `02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`;
 - `02_PROFITABILITY_CASH/TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`;
-- `02_PROFITABILITY_CASH/TASK_062_CASH_BALANCE_SOURCE_MAPPER_V1_EVIDENCE.md`.
+- `02_PROFITABILITY_CASH/TASK_062_CASH_BALANCE_SOURCE_MAPPER_V1_EVIDENCE.md`;
+- `02_PROFITABILITY_CASH/TASK_063_CASH_SOURCE_COVERAGE_V1_EVIDENCE.md`.
 
 ## PFC execution handoff
 
@@ -27,11 +28,11 @@ Current state:
 
 ```text
 PFC_3H_V1_RESTART_01 = COMPLETE
-TASK-051 → TASK-062   = DONE
+TASK-051 → TASK-063   = DONE
 
-current_task          = TASK-063
-TASK-063              = READY / AUTO_CONTINUE
-next_task             = TASK-064
+current_task          = TASK-064
+TASK-064              = READY / AUTO_CONTINUE
+next_task             = TASK-065
 status                = READY
 autonomy              = AUTO_CONTINUE
 requires_user         = false
@@ -54,7 +55,7 @@ Current verified balance landscape:
 
 Missing balance sources remain gaps; they do not pause PFC_8H_V2.
 
-TASK-062 source mapper is complete. TASK-063 is now the active canonical task.
+TASK-063 source coverage engine is complete. TASK-064 is now the active canonical task.
 
 ## Financial baseline state
 
@@ -118,7 +119,7 @@ These remain mandatory:
 
 ## Current PFC V2 priority
 
-### TASK-063 — Cash Source Coverage V1
+### TASK-064 — Cash Bridge Source Integration
 
 Status:
 
@@ -126,7 +127,7 @@ Status:
 
 Goal:
 
-Define source/account/period Cash coverage explicitly without upgrading source provenance, while keeping:
+Integrate proven balance truth + explicit MOVEMENT_EVENTS coverage into existing Cash Bridge without changing source provenance, while keeping:
 
 ```text
 OBSERVED_BALANCE != COMPUTED_BALANCE
@@ -136,11 +137,11 @@ unknown scope != ALL
 missing != zero
 ```
 
-TASK-060 source truth + TASK-061 contract + TASK-062 mapper are the canonical inputs for coverage.
+TASK-061 balance truth + TASK-062 mapper + TASK-063 coverage are the canonical inputs for Cash Bridge source integration.
 
-Next queued task after TASK-063:
+Next queued task after TASK-064:
 
-`TASK-064 — Cash Bridge Source Integration`
+`TASK-065 — Cash Truth Regression & Evidence`
 
 ## Remaining major gaps
 
