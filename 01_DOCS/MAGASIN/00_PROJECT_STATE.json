@@ -1,11 +1,11 @@
 {
   "project": "MAGASIN Business OS",
   "repository": "magasincoffee/magasincoffee.github.io",
-  "plan_version": "BOS-V1-5STEP-PROFIT-CASH-OWNER-GATE-2026-09-19",
+  "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
-  "current_phase": "P1_ARCHITECTURE_REVIEW_PROFITABILITY_CASH",
+  "current_phase": "P1_CANONICAL_ARCHITECTURE_LOCKED_PROFITABILITY_CASH",
   "current_task": "TASK-050",
-  "current_task_title": "Enterprise architecture lock — Profitability & Cash first",
+  "current_task_title": "Canonical enterprise architecture locked — continue Owner detailing",
   "status": "WAIT_USER",
   "autonomy": "PAUSED",
   "blocked": false,
@@ -24,10 +24,12 @@
       "OWNER_APPROVED_BRAIN_WORKER_ARCHITECTURE",
       "OWNER_APPROVED_THREE_LANE_ARCHITECTURE",
       "OWNER_CONFIRMED_PROFITABILITY_CASH_TOP_PRIORITY",
-      "OWNER_REQUIRES_DISCUSSION_BEFORE_ROBOT_HANDOFF"
+      "OWNER_REQUIRES_DISCUSSION_BEFORE_ROBOT_HANDOFF",
+      "OWNER_ARCHITECTURE_LOCKED",
+      "OWNER_APPROVED_CONTINUOUS_FIVE_STEP_ALL_ASPECTS",
+      "OWNER_APPROVED_PROFITABILITY_CASH_FINANCIAL_TRUTH_SPINE"
     ],
     "pending": [
-      "OWNER_ARCHITECTURE_LOCK",
       "OWNER_EXPLICIT_ROBOT_RELEASE"
     ]
   },
@@ -248,23 +250,55 @@
       "required_autonomy": "AUTO_CONTINUE",
       "current_autonomy": "PAUSED",
       "robot_may_execute": false,
-      "reason": "OWNER_ARCHITECTURE_DISCUSSION_ACTIVE"
+      "reason": "OWNER_ARCHITECTURE_LOCKED_BUT_ROBOT_NOT_RELEASED"
     }
   },
   "architecture_handoff": {
-    "state": "DISCUSSION_ACTIVE",
+    "state": "ARCHITECTURE_LOCKED_OWNER_DISCUSSION_CONTINUES",
     "canonical_architecture_ref": "01_DOCS/MAGASIN/00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md",
+    "read_first_on_new_session": true,
     "primary_priority": "PROFITABILITY_CASH",
-    "five_step_gate": "QUESTION_DELETE_SIMPLIFY",
+    "five_step_policy": {
+      "required": true,
+      "continuous": true,
+      "parallel_across_workstreams": true,
+      "ordered_within_each_change": [
+        "QUESTION",
+        "DELETE",
+        "SIMPLIFY",
+        "ACCELERATE",
+        "AUTOMATE"
+      ],
+      "reapply_on": [
+        "NEW_REQUIREMENT",
+        "NEW_DATA",
+        "FIELD_FEEDBACK",
+        "INCIDENT",
+        "BUSINESS_RULE_CHANGE",
+        "ARCHITECTURE_CHANGE",
+        "RELEASE"
+      ]
+    },
     "robot_may_execute": false,
-    "robot_release_policy": "OWNER_EXPLICIT_RELEASE_AFTER_ARCHITECTURE_LOCK",
+    "robot_release_policy": "OWNER_EXPLICIT_RELEASE_ONLY",
     "silence_is_approval": false,
     "implementation_queue_locked": true,
     "release_conditions": [
-      "ARCHITECTURE_LOCKED_BY_OWNER",
-      "TASK_QUEUE_REBUILT_FROM_LOCKED_ARCHITECTURE",
-      "PROJECT_STATE_CHANGED_TO_READY_AUTO_CONTINUE",
-      "OWNER_EXPLICIT_ROBOT_RELEASE"
+      "OWNER_EXPLICIT_ROBOT_RELEASE",
+      "IMPLEMENTATION_QUEUE_TRACES_TO_CANONICAL_ARCHITECTURE",
+      "PROJECT_STATE_CHANGED_TO_READY_AUTO_CONTINUE"
     ]
+  },
+  "session_bootstrap": {
+    "read_order": [
+      "01_DOCS/MAGASIN/00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md",
+      "01_DOCS/MAGASIN/00_CURRENT_STATE.md",
+      "01_DOCS/MAGASIN/00_PROJECT_STATE.json",
+      "01_DOCS/MAGASIN/00_TASK_QUEUE.md",
+      "01_DOCS/MAGASIN/00_MASTER_PLAN.md",
+      "01_DOCS/MAGASIN/06_DECISION_LOG.md"
+    ],
+    "canonical_first": true,
+    "reconcile_older_conflicts": true
   }
 }
