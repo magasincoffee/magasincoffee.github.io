@@ -23,3 +23,18 @@ export function activeRelayScreenshotPaths(registry) {
   }
   return active;
 }
+
+
+export function migrateLegacyBlockedRelayLatches(registry) {
+  let migrated = 0;
+  for (const lane of Object.values(registry?.lanes || {})) {
+    const latch = lane?.relay_inflight;
+    if (!latch?.reconcile_blocked) continue;
+    latch.reconcile_blocked = false;
+    delete latch.reconcile_started_at;
+    delete latch.reconcile_reloaded;
+    delete latch.reconcile_runtime_version;
+    migrated += 1;
+  }
+  return migrated;
+}
