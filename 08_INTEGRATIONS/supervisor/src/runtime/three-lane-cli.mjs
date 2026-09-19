@@ -14,7 +14,8 @@ import {
 import {
   captureCompletedAssistantTurn,
   captureCompletedAssistantTurnScreenshot,
-  captureUserTurnDigests
+  captureUserTurnDigests,
+  captureUserTurnTexts
 } from "../ui/message-capture.mjs";
 import { OBSERVATIONS } from "../decision.mjs";
 import { pageMatchesTarget, targetFromUrl } from "./recovery.mjs";
@@ -33,7 +34,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.37";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.38";
 
 function parseArgs(argv) {
   const result = {
@@ -226,6 +227,29 @@ async function waitForUserTurnDigest(
   while (Date.now() <= deadline) {
     const digests = await captureUserTurnDigests(page).catch(() => []);
     if (digests.includes(digest)) return true;
+    await delay(intervalMs);
+  }
+  return false;
+}
+
+function relayMarker(relayId) {
+  return `relay_id=${relayId}`;
+}
+
+async function hasRelayMarker(page, relayId) {
+  const marker = relayMarker(relayId);
+  const texts = await captureUserTurnTexts(page).catch(() => []);
+  return texts.some((text) => text.includes(marker));
+}
+
+async function waitForRelayMarker(
+  page,
+  relayId,
+  { timeoutMs = 6000, intervalMs = 250 } = {}
+) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() <= deadline) {
+    if (await hasRelayMarker(page, relayId)) return true;
     await delay(intervalMs);
   }
   return false;
@@ -777,6 +801,16 @@ async function reconcileRelayInflight({
     });
   }
 
+  if (await hasRelayMarker(brainPage, latch.relay_id)) {
+    registryLane.last_result_relay_id = latch.relay_id;
+    registryLane.last_work_result_digest = latch.response_digest;
+    registryLane.awaiting_work = false;
+    registryLane.relay_inflight = null;
+    await fs.unlink(latch.screenshot_path).catch(() => {});
+    await atomicJsonWrite(registryPath, registry);
+    return "CONFIRMED";
+  }
+
   const outcome = await inspectKnownTargetSendOutcome({
     adapter,
     page: brainPage,
@@ -786,6 +820,16 @@ async function reconcileRelayInflight({
     brain: true,
     reload
   });
+
+  if (await hasRelayMarker(brainPage, latch.relay_id)) {
+    registryLane.last_result_relay_id = latch.relay_id;
+    registryLane.last_work_result_digest = latch.response_digest;
+    registryLane.awaiting_work = false;
+    registryLane.relay_inflight = null;
+    await fs.unlink(latch.screenshot_path).catch(() => {});
+    await atomicJsonWrite(registryPath, registry);
+    return "CONFIRMED";
+  }
 
   if (outcome === "PENDING") return "PENDING";
 
@@ -847,9 +891,22 @@ async function relayWorkResult({
     responseText: captured.text
   });
 
-  if (registryLane.last_result_relay_id === relay.relay_id) {
+  if (
+    registryLane.last_result_relay_id === relay.relay_id ||
+    await hasRelayMarker(brainPage, relay.relay_id)
+  ) {
+    registryLane.last_result_relay_id = relay.relay_id;
+    registryLane.last_work_result_digest = relay.response_digest;
     registryLane.awaiting_work = false;
+    registryLane.relay_inflight = null;
     await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_RESULT_RELAY_DEDUPED_BY_MARKER",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: relay.relay_id,
+      digest: relay.response_digest
+    });
     return;
   }
 
@@ -911,9 +968,9 @@ async function relayWorkResult({
   }
   if (!sent.executed) return;
 
-  const relayConfirmed = await waitForUserTurnDigest(
+  const relayConfirmed = await waitForRelayMarker(
     brainPage,
-    sha256(relay.text)
+    relay.relay_id
   );
   if (!relayConfirmed) {
     await safeLog(logPath, {

@@ -50,14 +50,17 @@ export async function captureAssistantTurnDigests(page) {
 }
 
 
-export async function captureUserTurnDigests(page) {
+export async function captureUserTurnTexts(page) {
   if (!page) throw new TypeError("page is required");
 
-  const texts = await page.evaluate(() => Array.from(
+  return page.evaluate(() => Array.from(
     document.querySelectorAll("[data-message-author-role='user']")
   ).map((node) => String(node.innerText || node.textContent || "").trim())
     .filter(Boolean));
+}
 
+export async function captureUserTurnDigests(page) {
+  const texts = await captureUserTurnTexts(page);
   return texts.map((text) => digestCapturedResponse(text));
 }
 

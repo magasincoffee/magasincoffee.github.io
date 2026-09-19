@@ -50,13 +50,13 @@ test("auto-upgrade validates THREE_LANE_V1 source of truth", async () => {
   assert.match(source, /SOURCE_OF_TRUTH_LOCAL_CHECK=True/);
 });
 
-test("auto-upgrade requires v37 Three-Lane runtime and three local lanes", async () => {
+test("auto-upgrade requires v38 Three-Lane runtime and three local lanes", async () => {
   const source = await fs.readFile(
     new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /2026-09-19\.37/);
+  assert.match(source, /2026-09-19\.38/);
   assert.match(source, /three-lane-cli\.mjs/);
   assert.match(source, /lane-status\.json/);
   assert.match(source, /lanes\.json/);
