@@ -13,7 +13,7 @@ test("active Three-Lane runtime contains no Brain auto-discovery path", async ()
   assert.doesNotMatch(source, /getVisibleChatGptPages/);
   assert.doesNotMatch(source, /BRAIN_REBIND/);
   assert.match(source, /normalizeChatGptConversationUrl\(lane\.brain_url\)/);
-  assert.match(source, /openExactConversation\(adapter, brainUrl\)/);
+  assert.match(source, /openExactConversation\(adapter, brainUrl, \{ brain: true \}\)/);
 });
 
 test("Work URL is Robot-managed and rollover requires positive conversationFull", async () => {
