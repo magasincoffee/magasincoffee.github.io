@@ -40,8 +40,6 @@ public static class MagasinSupervisorChromeWindow {
 '@
 
 function Show-DedicatedChromeWindow {
-    # This launcher is Owner-initiated. Restore/focus only a top-level window
-    # belonging to the dedicated Supervisor profile; never target personal Chrome.
     for ($attempt = 0; $attempt -lt 30; $attempt++) {
         foreach ($candidate in (Get-DedicatedChromeProcesses)) {
             $process = Get-Process -Id $candidate.ProcessId -ErrorAction SilentlyContinue
@@ -66,14 +64,34 @@ function Get-FreeCdpPort {
     throw 'No free Supervisor CDP port in range 9222-9232.'
 }
 
+function Test-ExplicitChatUrl([string]$Value) {
+    if (-not $Value) { return $false }
+    try {
+        $uri = [Uri]$Value
+        return (
+            $uri.Scheme -eq 'https' -and
+            $uri.Host -match '(^|\.)chatgpt\.com$' -and
+            $uri.AbsolutePath -match '^/(c|g|project)/'
+        )
+    } catch {
+        return $false
+    }
+}
+
 function Resolve-TargetUrl {
-    # Brain/Worker V17: Owner-facing ChatGPT Robot always opens the one Brain
-    # conversation. Worker targets are intentionally not exposed by this launcher.
+    if (Test-ExplicitChatUrl $Url) {
+        return $Url
+    }
+
+    # Compatibility fallback for the superseded Brain/Worker runtime.
     if (Test-Path $orchestrationFile) {
         try {
             $orchestration = Get-Content $orchestrationFile -Raw -Encoding UTF8 | ConvertFrom-Json
             $brain = $orchestration.brain.target
-            if ($brain.origin -eq 'https://chatgpt.com' -and [string]$brain.pathname -match '^/(c|g|project)/') {
+            if (
+                $brain.origin -eq 'https://chatgpt.com' -and
+                [string]$brain.pathname -match '^/(c|g|project)/'
+            ) {
                 return "$($brain.origin)$($brain.pathname)"
             }
         } catch {}
@@ -83,7 +101,10 @@ function Resolve-TargetUrl {
     if (Test-Path $targetFile) {
         try {
             $target = Get-Content $targetFile -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ($target.origin -eq 'https://chatgpt.com' -and [string]$target.pathname -match '^/(c|g|project)/') {
+            if (
+                $target.origin -eq 'https://chatgpt.com' -and
+                [string]$target.pathname -match '^/(c|g|project)/'
+            ) {
                 return "$($target.origin)$($target.pathname)"
             }
         } catch {}
@@ -98,18 +119,13 @@ if (-not $chrome) {
 }
 
 New-Item -ItemType Directory -Force -Path $profile | Out-Null
-$url = if (
-    $Url -and
-    [Uri]::IsWellFormedUriString($Url, [UriKind]::Absolute) -and
-    ([Uri]$Url).Host -match '(^|\.)chatgpt\.com
+$urlToOpen = Resolve-TargetUrl
 $existing = Get-DedicatedChromeProcesses | Select-Object -First 1
 
 if ($existing) {
-    # Reuse the same authenticated Supervisor profile so Owner and Robot share
-    # one ChatGPT workspace. Chrome forwards this URL to the existing instance.
     Start-Process -FilePath $chrome -ArgumentList @(
         ('--user-data-dir="' + $profile + '"'),
-        $url
+        $urlToOpen
     )
     Show-DedicatedChromeWindow | Out-Null
     exit 0
@@ -122,38 +138,7 @@ Start-Process -FilePath $chrome -ArgumentList @(
     ('--user-data-dir="' + $profile + '"'),
     '--no-first-run',
     '--no-default-browser-check',
-    $url
-)
-
-Show-DedicatedChromeWindow | Out-Null
- -and
-    ([Uri]$Url).AbsolutePath -match '^/(c|g|project)/'
-) {
-    $Url
-} else {
-    Resolve-TargetUrl
-}
-$existing = Get-DedicatedChromeProcesses | Select-Object -First 1
-
-if ($existing) {
-    # Reuse the same authenticated Supervisor profile so Owner and Robot share
-    # one ChatGPT workspace. Chrome forwards this URL to the existing instance.
-    Start-Process -FilePath $chrome -ArgumentList @(
-        ('--user-data-dir="' + $profile + '"'),
-        $url
-    )
-    Show-DedicatedChromeWindow | Out-Null
-    exit 0
-}
-
-$port = Get-FreeCdpPort
-Start-Process -FilePath $chrome -ArgumentList @(
-    '--remote-debugging-address=127.0.0.1',
-    "--remote-debugging-port=$port",
-    ('--user-data-dir="' + $profile + '"'),
-    '--no-first-run',
-    '--no-default-browser-check',
-    $url
+    $urlToOpen
 )
 
 Show-DedicatedChromeWindow | Out-Null
