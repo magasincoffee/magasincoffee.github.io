@@ -2,7 +2,7 @@
 
 **Night run:** `NIGHT_RUN_2026-09-18`  
 **Checkpoint:** TASK-048 — Night final checkpoint  
-**Current status:** FINAL_CHECKPOINT_IN_PROGRESS / PAUSED  
+**Current status:** NIGHT_WINDOW_COMPLETE / BACKGROUND_CLOSED — later Owner task preserved  
 **Approved hard stop:** 2026-09-19 09:15 +07  
 **Canonical evidence:** `01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE_V1.md`
 
@@ -59,9 +59,9 @@ TASK-047 reconciled the changelog, created canonical evidence, and expanded Busi
 
 ## Temporal final gate
 
-TASK-048 must **not** declare `NIGHT_WINDOW_COMPLETE` before the approved boundary.
+The approved 09:15 +07 boundary has been reached and the GitHub-hosted hard-stop declared `NIGHT_WINDOW_COMPLETE` without overwriting the later Owner-selected task.
 
-At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` is the canonical GitHub-hosted enforcement path. It will:
+At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` enforced the canonical background boundary and:
 
 1. set `night_run.status = NIGHT_WINDOW_COMPLETE`;
 2. set project `status = WAIT_USER`;
@@ -70,4 +70,4 @@ At **09:15 +07**, `.github/workflows/night-run-hard-stop.yml` is the canonical G
 5. set cursor checkpoint to `NIGHT_WINDOW_COMPLETE`;
 6. require `OWNER_REVIEW_NIGHT_RUN_REPORT`.
 
-Until that boundary, no new feature work, merge, live provider action, or production activation is authorized by TASK-048. Supervisor continuation is paused because no actionable work remains before the time boundary.
+TASK-048 is closed as a background night-run gate. The later explicit Owner reprioritization remains authoritative for current task/autonomy.

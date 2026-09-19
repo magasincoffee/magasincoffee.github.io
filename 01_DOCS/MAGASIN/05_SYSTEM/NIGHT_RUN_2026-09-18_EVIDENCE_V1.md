@@ -2,7 +2,7 @@
 
 **Window:** 2026-09-18 23:15 +07 → 2026-09-19 09:15 +07  
 **Scope:** `magasincoffee/magasincoffee.github.io` + `magasincoffee/magasin-media-robot` only  
-**Status:** TASK-037–047 COMPLETE / TASK-048 FINAL CHECKPOINT HARDENED / TEMPORAL GATE ACTIVE  
+**Status:** TASK-037–048 NIGHT WINDOW COMPLETE / LATER OWNER TASK PRESERVED  
 **Rule:** QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE
 
 ## 1. Purpose
@@ -87,7 +87,7 @@ Automation remains fail-closed: active/stale lease reconciliation, operation-key
 
 ## 7. Release-prep conclusion
 
-TASK-037–047 are complete with current repository/CI evidence. TASK-048 is not a feature-expansion task; it is the final temporal safety gate. The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the project stays `READY / PAUSED` until the approved 2026-09-19 09:15 +07 boundary so the Supervisor does not busy-loop on a time-only gate.
+TASK-037–047 are complete with current repository/CI evidence. TASK-048 is not a feature-expansion task; it is the final temporal safety gate. The final report is prepared, both review PRs remain unmerged, deferred providers remain fail-closed, and the approved 2026-09-19 09:15 +07 boundary closed the old night window without overwriting a later Owner-selected active task.
 
 ## 8. TASK-048 hard-stop hardening evidence
 

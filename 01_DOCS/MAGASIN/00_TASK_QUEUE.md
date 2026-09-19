@@ -65,7 +65,7 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 | TASK-045 | Restart/resume simulation | 50m | kill/restart/reconcile/resume regression | DONE |
 | TASK-046 | Night full QA | 35m | both-project regression + bounded fixes | DONE |
 | TASK-047 | Night docs / evidence / PR prep | 20m | changelog/test logs/reviewable PRs | DONE |
-| TASK-048 | Night final checkpoint | 10m | background hard-stop only; preserve later Owner task | TIME_GATED |
+| TASK-048 | Night final checkpoint | 10m | background hard-stop only; preserve later Owner task | DONE |
 | TASK-049 | Supervisor Three-Lane owner-bound Brain/Work orchestration | 120m | 3 fixed lanes + Owner Brain URLs + Robot-managed Work URLs + screenshot/full-text relay + full-only Work rollover + auto-upgrade | IN_PROGRESS |
 
 TASK-049 partial acceptance checkpoint (does not close the task):

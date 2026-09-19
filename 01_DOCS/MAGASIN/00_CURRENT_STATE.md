@@ -103,7 +103,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 **ACTIVE — TASK-049:** Owner replaced Brain auto-discovery with three fixed, isolated project lanes. Each lane has an Owner-entered Brain URL, a Robot-managed Work URL, independent START/STOP, per-lane status/message, exact-once Work result relay with screenshot + full text, and Work rollover only on positive `conversationFull` evidence.
 
-Background night-run gate: **TASK-048 — TIME_GATED** until the approved 09:15 +07 hard stop. It may close the old night window but must preserve TASK-049 and its autonomy.
+Background night-run gate: **TASK-048 — NIGHT_WINDOW_COMPLETE**. The approved 09:15 +07 boundary closed the old night window and preserved the later Owner-selected active task/autonomy.
 
 Final-checkpoint evidence:
 

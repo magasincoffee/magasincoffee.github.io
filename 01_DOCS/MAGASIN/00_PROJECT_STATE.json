@@ -163,18 +163,22 @@
       "task_046_tests": 83,
       "task_046_failures": 0
     },
-    "status": "FINAL_CHECKPOINT_IN_PROGRESS",
+    "status": "NIGHT_WINDOW_COMPLETE",
     "final_report_ref": "01_DOCS/MAGASIN/08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md",
     "evidence_ref": "01_DOCS/MAGASIN/05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE_V1.md",
-    "hard_stop_pending": true,
+    "hard_stop_pending": false,
     "temporal_gate": {
-      "mode": "BACKGROUND_HARD_STOP_ONLY",
+      "mode": "BACKGROUND_HARD_STOP_COMPLETE",
       "resume_at": "2026-09-19T09:15:00+07:00",
       "reason": "OWNER_REPRIORITIZED_TO_TASK_049",
       "supervisor_continue_suppressed": false,
       "owner_override_task": "TASK-049",
-      "owner_reprioritized_at": "2026-09-19T05:03:00+07:00"
-    }
+      "owner_reprioritized_at": "2026-09-19T05:03:00+07:00",
+      "completed_at": "2026-09-19T07:20:05.409165Z"
+    },
+    "completed_at": "2026-09-19T07:20:05.409165Z",
+    "hard_stop_enforced_by": "GITHUB_HOSTED_WORKFLOW",
+    "owner_reprioritized_task_preserved": "TASK-049"
   },
   "supervisor_orchestration": {
     "schema_version": "three-lane.v1",
