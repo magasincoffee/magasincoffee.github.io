@@ -77,30 +77,62 @@ Robot scheduling, notifications, alerts and automatic state transitions are adde
 
 Automation must fail closed and must never hide an unresolved business-rule decision.
 
-## 3. New critical path: Schedule-first
+## 3. Current critical path: Profitability & Cash first
 
-The highest-priority operating loop is weekly workforce scheduling.
+Owner reprioritized the enterprise architecture on 2026-09-19.
 
-Canonical flow:
+The highest-priority management loop is now:
 
 ```text
-Employee availability
-  → Manager review/edit
-  → staffing demand / constraints
-  → Robot schedule proposal
-  → Manager allocation/adjustment
-  → publish weekly schedule
-  → Employee schedule visibility
-  → attendance / give-shift / swap
-  → notifications to affected people
+Revenue truth
+  → Cash truth
+  → Cost / AP / debt truth
+  → COGS reliability
+  → Unit economics
+  → Profit ↔ Cash reconciliation
+  → Branch / channel economics
+  → Break-even
+  → Pricing diagnosis
 ```
 
-### Role boundary
+The core design principle is a **Financial Truth Spine** shared across domains:
 
-- **Employee:** register availability, see published schedule, attendance, give/swap shift.
-- **Manager:** see availability, edit/allocate staff, review robot proposal, publish/adjust schedule.
-- **Owner:** policy/exception/approval/attention view; Owner is not the primary daily scheduler.
-- **Robot:** proposes/updates within approved rules; it does not invent missing business rules.
+```text
+Sales / Procurement / Inventory / Workforce / Expenses / Cash Events
+                         ↓
+                 Canonical ledgers
+                         ↓
+Revenue → COGS/Cost → Cash → Contribution → Profitability → Break-even
+                         ↓
+            Owner / Manager decisions
+```
+
+### Owner handoff gate
+
+Architecture discussion is a hard Owner boundary:
+
+- `00_PROJECT_STATE.json = WAIT_USER / PAUSED`;
+- Supervisor/Brain/Work must not execute new implementation tasks;
+- existing task history is not permission to continue;
+- Owner must explicitly lock architecture and release Robot;
+- only then may source-of-truth return to `READY / AUTO_CONTINUE`.
+
+Canonical discussion document: `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md`.
+
+### Schedule-first status
+
+Schedule-first is now a **proven vertical-slice reference**, not the enterprise priority.
+
+TASK-029 → TASK-036 proved:
+
+- one canonical capability instead of role-duplicated truth;
+- server/RPC boundaries;
+- role-specific projections;
+- explicit Manager review/publish;
+- deterministic tests and browser E2E;
+- automation after manual/canonical flow.
+
+Reuse that delivery pattern for Profitability & Cash. Do not keep expanding Workforce merely to complete a module.
 
 ## 4. Reuse before rebuild
 
@@ -115,15 +147,17 @@ Existing verified assets are inputs, not reasons to create another layer:
 
 TASK-029 must determine which of these is canonical and which is compatibility/legacy before new code is added.
 
-## 5. Deferred until the schedule critical path is stable
+## 5. Deferred during Profitability & Cash architecture lock
 
+- new Supervisor/Robot autonomy features not required for the Owner handoff gate;
 - SOP/Task write-capable workflow after TASK-026 Owner decisions;
-- broad dashboard expansion unrelated to the schedule loop;
+- broad dashboard expansion before financial truth exists;
 - payroll/KPI/recruitment expansion;
+- AI forecasting/recommendations before actual data is reliable;
 - speculative production schema rewrite;
 - cosmetic architecture cleanup with no critical-path effect.
 
-TASK-026 remains preserved as an Owner decision pack but no longer blocks the whole project.
+TASK-026 remains preserved. TASK-049 is infrastructure work and is paused from further expansion. TASK-050 owns the current architecture discussion.
 
 ## 6. Architecture rules from now on
 
@@ -163,10 +197,11 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-047 — Night docs / evidence / PR prep:** changelog, canonical evidence report and reviewable PR descriptions reconciled. DONE.
 - **TASK-048 — Night final checkpoint:** approved 09:15 +07 hard stop completed. A later Owner-reprioritized active task was preserved. DONE.
 - **TASK-049 — Supervisor Three-Lane owner-bound Brain/Work orchestration:** one Brain coordinates a bounded Worker pool; dynamic directives, full-result relay, strict `conversationFull` rollover, local-only registry and automatic runtime upgrade. IN_PROGRESS.
+- **TASK-050 — Enterprise architecture lock — Profitability & Cash first:** Owner/ChatGPT discussion only; implementation queue locked; source-of-truth WAIT_USER/PAUSED until explicit Owner release. ACTIVE DISCUSSION.
 
 ## 8. Definition of success
 
-The reset is successful when the repository can trace one weekly schedule from employee availability through manager publication to employee execution without relying on duplicate systems or unverified business rules.
+The reset is successful when MAGASIN can trace operating events into a trustworthy financial truth spine and use it to explain Revenue, COGS/Cost, Cash, Contribution, Profitability and Break-even without competing sources of truth. Schedule-first remains a proven example of the required vertical-slice discipline.
 
 
 ## 9. Conversation-aware execution handoff
