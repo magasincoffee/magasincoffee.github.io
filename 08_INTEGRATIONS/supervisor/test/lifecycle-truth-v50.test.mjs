@@ -140,3 +140,16 @@ test("lifecycle architecture document locks Five-Step and truth order before imp
   assert.match(doc, /ACCELERATE/);
   assert.match(doc, /AUTOMATE/);
 });
+
+
+test("production lifecycle acceptance installs its checked-out runtime before A-L", async () => {
+  const workflow = await read("../../../.github/workflows/supervisor-lifecycle-acceptance.yml");
+  const installIndex = workflow.indexOf("Install checked-out Supervisor runtime before lifecycle acceptance");
+  const acceptanceIndex = workflow.indexOf("Run lifecycle acceptance A-L on installed production runtime");
+
+  assert.ok(installIndex >= 0);
+  assert.ok(acceptanceIndex > installIndex);
+  assert.match(workflow.slice(installIndex, acceptanceIndex), /install-supervisor\.ps1/);
+  assert.match(workflow.slice(installIndex, acceptanceIndex), /2026-09-19\.50/);
+  assert.match(workflow.slice(installIndex, acceptanceIndex), /LIFECYCLE_ACCEPTANCE_INSTALL_READY=True/);
+});
