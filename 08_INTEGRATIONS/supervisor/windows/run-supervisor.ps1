@@ -10,6 +10,8 @@ $profile = Join-Path $root 'browser_profile'
 $target = Join-Path $root 'target.json'
 $stop = Join-Path $root 'STOP'
 $pidFile = Join-Path $root 'supervisor.pid'
+$registryFile = Join-Path $root 'orchestration.json'
+$runtimeStatusFile = Join-Path $root 'runtime-status.json'
 $projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
 $mutexName = 'Local\MAGASIN_BUSINESS_OS_SUPERVISOR'
 $mutex = New-Object System.Threading.Mutex($false, $mutexName)
@@ -137,7 +139,7 @@ try {
             continue
         }
 
-        $brainWorkerMode = $false
+        $brainWorkerMode = $null
         try {
             $projectState = Invoke-RestMethod -Uri $projectStateUrl -TimeoutSec 4 -Headers @{ 'Cache-Control'='no-cache' }
             $brainWorkerMode = [bool](
@@ -146,8 +148,33 @@ try {
                 [string]$projectState.supervisor_orchestration.mode -eq 'BRAIN_WORKER_V1'
             )
         } catch {
-            # Preserve the last safe legacy behavior only when its target exists.
-            $brainWorkerMode = $false
+            # A transient GitHub/raw fetch failure must never downgrade the
+            # already-established Brain/Worker architecture to legacy mode.
+            try {
+                if (Test-Path $registryFile) {
+                    $registry = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                    if ([string]$registry.mode -eq 'BRAIN_WORKER_V1') {
+                        $brainWorkerMode = $true
+                    }
+                }
+            } catch {}
+
+            if ($null -eq $brainWorkerMode) {
+                try {
+                    if (Test-Path $runtimeStatusFile) {
+                        $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                        if ([string]$runtimeStatus.orchestration_mode -eq 'BRAIN_WORKER_V1') {
+                            $brainWorkerMode = $true
+                        }
+                    }
+                } catch {}
+            }
+
+            if ($null -eq $brainWorkerMode) {
+                Write-Host 'Project state is temporarily unavailable; preserving Supervisor wrapper and retrying without mode downgrade.'
+                Start-Sleep -Seconds 5
+                continue
+            }
         }
 
         $entryPoint = if ($brainWorkerMode) {
@@ -157,7 +184,9 @@ try {
         }
 
         if (-not $brainWorkerMode -and -not (Test-Path $target)) {
-            throw "Legacy Supervisor target is missing: $target"
+            Write-Host 'Legacy mode was explicitly selected but no legacy target exists; waiting for authoritative project state instead of terminating.'
+            Start-Sleep -Seconds 5
+            continue
         }
 
         Write-Host "Supervisor entry point: $entryPoint"
