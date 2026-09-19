@@ -1,5 +1,7 @@
 name: Supervisor State Maintenance
 
+# Commit-message reset markers are reserved for explicit Owner-authorized maintenance pushes.
+
 on:
   workflow_dispatch:
     inputs:
