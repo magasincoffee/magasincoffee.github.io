@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
   "current_phase": "P3_PFC_8H_V2_EXECUTION",
-  "current_task": "TASK-060",
-  "current_task_title": "Actual Cash Opening/Ending Source Truth V1",
+  "current_task": "TASK-061",
+  "current_task_title": "Cash Balance Financial Truth Contract",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-061",
+  "next_task": "TASK-062",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -251,7 +251,7 @@
       "required_autonomy": "AUTO_CONTINUE",
       "current_autonomy": "AUTO_CONTINUE",
       "robot_may_execute": true,
-      "reason": "OWNER_EXPLICIT_RELEASE_PFC_8H_V2"
+      "reason": "PFC_8H_V2_OWNER_RELEASE_ACTIVE"
     }
   },
   "architecture_handoff": {
@@ -291,7 +291,7 @@
     ],
     "prepared_queue": "PFC_8H_V2",
     "queue_status": "ACTIVE",
-    "next_planned_task": "TASK-060",
+    "next_planned_task": "TASK-061",
     "next_task_release_required": false
   },
   "session_bootstrap": {
@@ -370,7 +370,34 @@
       "CONTRADICTORY_CANONICAL_EVIDENCE"
     ],
     "execution_generation": "PFC_8H_V2_RUN_01",
-    "started_task": "TASK-060"
+    "started_task": "TASK-060",
+    "current_task": "TASK-061",
+    "next_task": "TASK-062",
+    "task_060": {
+      "status": "DONE",
+      "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md",
+      "implementation": "DOCS_EVIDENCE_ONLY",
+      "google_drive": "READ_ONLY",
+      "observed_balance_sources_verified": 0,
+      "computed_balance_sources_verified": [
+        "INTERNAL_MONTHLY_CASH_COMPUTED_BALANCE"
+      ],
+      "movement_only_sources_verified": [
+        "INTERNAL_MONTHLY_CASH_MOVEMENTS",
+        "STORE_OPERATING_SUMMARY",
+        "FOODAPP_PROVIDER_SETTLEMENT_EXPORT"
+      ],
+      "not_connected_balance_sources": [
+        "PHYSICAL_STORE_TILL_COUNT",
+        "BANK_ACCOUNT_BALANCE_STATEMENT",
+        "MOMO_WALLET_BALANCE",
+        "COD_DELIVERY_HELD_CASH",
+        "OWNER_HELD_COMPANY_CASH",
+        "PROVIDER_ACCOUNT_BALANCE"
+      ],
+      "current_cash_movement_coverage_verified_through": "2026-09-16",
+      "conclusion": "SOURCE_TRUTH_DISCOVERY_COMPLETE"
+    }
   },
   "data_evidence_policy": {
     "google_drive": {
