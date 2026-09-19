@@ -1,0 +1,88 @@
+name: TASK-049 Open Robot Now
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/task-049-open-robot-now.yml
+
+permissions:
+  contents: read
+
+jobs:
+  open-robot:
+    runs-on: self-hosted
+    timeout-minutes: 5
+    steps:
+      - name: Start Supervisor and open Control Panel
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtime = Join-Path $root "runtime"
+          $startScript = Join-Path $runtime "windows\start-supervisor.ps1"
+          $shortcut = Join-Path ([Environment]::GetFolderPath("Desktop")) "MAGASIN BUSINESS OS CONTROL.lnk"
+          $controlPanel = Join-Path $runtime "windows\control-panel.ps1"
+          $profile = Join-Path $root "browser_profile"
+
+          if (-not (Test-Path $startScript)) {
+            throw "Supervisor start script is missing: $startScript"
+          }
+
+          $env:RUNNER_TRACKING_ID = "MAGASIN_ROBOT_OPEN_PERSISTENT"
+          & $startScript -Hidden
+
+          $wrapper = $null
+          $threeLane = $null
+          $chrome = $null
+
+          for ($i = 0; $i -lt 60; $i++) {
+            $wrapper = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.CommandLine -and
+                $_.CommandLine -like "*run-supervisor.ps1*" -and
+                $_.CommandLine -like "*MAGASIN\BusinessOS\supervisor*"
+              } |
+              Select-Object -First 1
+
+            $threeLane = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+              Where-Object { $_.CommandLine -and $_.CommandLine -like "*three-lane-cli.mjs*" } |
+              Select-Object -First 1
+
+            $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.CommandLine -and
+                $_.CommandLine -like "*$profile*" -and
+                $_.CommandLine -match "--remote-debugging-port=(\d+)"
+              } |
+              Select-Object -First 1
+
+            if ($wrapper -and $threeLane -and $chrome) { break }
+            Start-Sleep -Seconds 1
+          }
+
+          if (-not $wrapper) { throw "Supervisor wrapper is not running" }
+          if (-not $threeLane) { throw "Three-Lane runtime is not running" }
+          if (-not $chrome) { throw "Dedicated Robot Chrome is not running" }
+
+          if (Test-Path $shortcut) {
+            Start-Process $shortcut
+          } elseif (Test-Path $controlPanel) {
+            Start-Process powershell.exe -ArgumentList @(
+              "-NoLogo",
+              "-NoProfile",
+              "-ExecutionPolicy", "Bypass",
+              "-File", ('"' + $controlPanel + '"')
+            )
+          } else {
+            throw "Control Panel launcher is missing"
+          }
+
+          Start-Sleep -Seconds 3
+
+          Write-Host "ROBOT_SUPERVISOR_RUNNING=True"
+          Write-Host "ROBOT_THREE_LANE_RUNNING=True"
+          Write-Host "ROBOT_CHROME_RUNNING=True"
+          Write-Host "CONTROL_PANEL_OPENED=True"
