@@ -42,7 +42,7 @@ import {
   migrateLegacyBlockedRelayLatches
 } from "./relay-reconciliation.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.45";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.46";
 
 function parseArgs(argv) {
   const result = {
@@ -1422,29 +1422,35 @@ async function applyOwnerWorkTarget({
   }
 
   const changed = configuredUrl !== String(registryLane.work_url || "");
-  if (changed) {
-    await clearRelayInflight(registryLane);
 
-    registryLane.work_url = configuredUrl;
-    registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
-    registryLane.task_id = null;
-    registryLane.instruction_digest = null;
-    registryLane.last_brain_directive_digest = null;
-    registryLane.last_work_result_digest = null;
-    registryLane.last_result_relay_id = null;
-    registryLane.dispatch_inflight = null;
-    registryLane.awaiting_work = false;
+  // A newer Owner Work revision is authoritative even when the normalized URL
+  // is unchanged (for example AUTO -> AUTO). This is the explicit reset
+  // signal used to abandon stale completed task/latch state without changing
+  // the Owner-selected Brain or guessing another Work target.
+  await clearRelayInflight(registryLane);
 
-    await safeLog(logPath, {
-      type: "LANE_OWNER_WORK_TARGET_CHANGED",
-      laneId: lane.lane_id,
-      digest: configuredUrl ? sha256(configuredUrl) : "AUTO"
-    });
-  }
+  registryLane.work_url = configuredUrl;
+  registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
+  registryLane.task_id = null;
+  registryLane.instruction_digest = null;
+  registryLane.last_brain_directive_digest = null;
+  registryLane.last_work_result_digest = null;
+  registryLane.last_result_relay_id = null;
+  registryLane.dispatch_inflight = null;
+  registryLane.brain_request_inflight = null;
+  registryLane.awaiting_work = false;
+
+  await safeLog(logPath, {
+    type: changed
+      ? "LANE_OWNER_WORK_TARGET_CHANGED"
+      : "LANE_OWNER_WORK_TARGET_RESET",
+    laneId: lane.lane_id,
+    digest: configuredUrl ? sha256(configuredUrl) : "AUTO"
+  });
 
   registryLane.applied_work_url_revision = revision;
   await atomicJsonWrite(registryPath, registry);
-  return changed;
+  return true;
 }
 
 async function processLane({

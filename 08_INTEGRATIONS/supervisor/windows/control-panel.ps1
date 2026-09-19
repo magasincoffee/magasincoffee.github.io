@@ -195,7 +195,8 @@ function Save-Lane(
     [string]$ProjectName,
     [string]$BrainUrl,
     [string]$WorkUrl,
-    [bool]$Enabled
+    [bool]$Enabled,
+    [bool]$ForceWorkRevision = $false
 ) {
     $config = Ensure-Config
     $lane = Get-LaneConfig $config $LaneId
@@ -217,7 +218,7 @@ function Save-Lane(
     if ([string]$lane.brain_url -ne $newBrainUrl) {
         $lane.brain_url_revision = [int]$lane.brain_url_revision + 1
     }
-    if ([string]$lane.work_url -ne $newWorkUrl) {
+    if ([string]$lane.work_url -ne $newWorkUrl -or $ForceWorkRevision) {
         $lane.work_url_revision = [int]$lane.work_url_revision + 1
     }
 
@@ -533,7 +534,7 @@ for ($i = 0; $i -lt 3; $i++) {
             return
         }
 
-        Save-Lane $id $ui.Project.Text $ui.Brain.Text '' $false
+        Save-Lane $id $ui.Project.Text $ui.Brain.Text '' $false $true
         $ui.Work.Text = ''
         [Windows.Forms.MessageBox]::Show(
             'Đã chuyển sang chế độ Robot tự tạo Work. Bấm BẮT ĐẦU LUỒNG để tiếp tục.',

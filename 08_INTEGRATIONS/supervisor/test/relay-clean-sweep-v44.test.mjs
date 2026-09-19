@@ -205,5 +205,5 @@ test("v45 runtime performs blocked relay migration before lane processing", asyn
   assert.match(source, /startupRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
   assert.match(source, /RUNTIME_RELAY_BLOCKED_LATCHES_MIGRATED/);
   assert.match(source, /loopRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
-  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-19\.45"/);
+  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-19\.46"/);
 });
