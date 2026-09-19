@@ -1,6 +1,7 @@
 param(
     [switch]$DryRun,
-    [switch]$Hidden
+    [switch]$Hidden,
+    [switch]$Recovery
 )
 
 $ErrorActionPreference = 'Stop'
@@ -8,23 +9,21 @@ $ErrorActionPreference = 'Stop'
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $runtime = Join-Path $root 'runtime'
 $runScript = Join-Path $runtime 'windows\run-supervisor.ps1'
+$lifecycleScript = Join-Path $runtime 'windows\lifecycle-truth.ps1'
 $pidFile = Join-Path $root 'supervisor.pid'
 $stop = Join-Path $root 'STOP'
 $autostartDisabled = Join-Path $root 'AUTOSTART_DISABLED'
-$projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
 
 if (-not (Test-Path $runScript)) {
     throw "Supervisor runtime is not installed: $runScript"
 }
+if (-not (Test-Path $lifecycleScript)) {
+    throw "Lifecycle truth helper is not installed: $lifecycleScript"
+}
 
-$existingWrapper = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
-    Where-Object {
-        $_.CommandLine -and
-        $_.CommandLine -like '*run-supervisor.ps1*' -and
-        $_.CommandLine -like "*$root*"
-    } |
-    Select-Object -First 1
+. $lifecycleScript
 
+$existingWrapper = Get-LifecycleSupervisorWrapper -Root $root
 if ($existingWrapper) {
     Set-Content -Path $pidFile -Value $existingWrapper.ProcessId -Encoding ascii
     Write-Host "Supervisor wrapper already running (PID $($existingWrapper.ProcessId))."
@@ -39,22 +38,24 @@ if (Test-Path $pidFile) {
     }
 }
 
-try {
-    $projectState = Invoke-RestMethod -Uri $projectStateUrl -TimeoutSec 4 -Headers @{ 'Cache-Control'='no-cache' }
-    if ($projectState -and [string]$projectState.autonomy -eq 'PAUSED') {
-        Write-Host 'Supervisor not started: repository autonomy is PAUSED.'
-        if ($projectState.night_run -and $projectState.night_run.temporal_gate -and $projectState.night_run.temporal_gate.resume_at) {
-            Write-Host "Pause boundary: $($projectState.night_run.temporal_gate.resume_at)"
-        }
+if ($Recovery) {
+    $ownerStop = Get-LifecycleOwnerStopState -Root $root
+    if ($ownerStop.blocked) {
+        Write-Host 'RECOVERY_START_BLOCKED_OWNER_STOP=True'
         exit 0
     }
-} catch {
-    # If repository state is temporarily unavailable, preserve the existing
-    # startup path so the runtime can perform its own authoritative fetch.
-}
 
-Remove-Item $stop -Force -ErrorAction SilentlyContinue
-Remove-Item $autostartDisabled -Force -ErrorAction SilentlyContinue
+    $enabledLaneCount = Get-EnabledLaneCount -Root $root
+    if ($enabledLaneCount -lt 1) {
+        Write-Host 'RECOVERY_START_SKIPPED_ALL_LANES_DISABLED=True'
+        exit 0
+    }
+} else {
+    # Only an explicit Owner START may clear the Owner STOP latches.
+    Remove-Item $stop -Force -ErrorAction SilentlyContinue
+    Remove-Item $autostartDisabled -Force -ErrorAction SilentlyContinue
+    Write-Host 'OWNER_START_LATCH_CLEAR=True'
+}
 
 # Prevent GitHub Actions orphan-process cleanup from claiming the persistent Supervisor shell.
 $env:RUNNER_TRACKING_ID = 'MAGASIN_SUPERVISOR_PERSISTENT'
