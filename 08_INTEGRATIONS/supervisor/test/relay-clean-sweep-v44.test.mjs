@@ -99,7 +99,7 @@ test("v44 runtime migrates pre-existing blocked relay and never terminal-blocks 
   assert.doesNotMatch(reconcile, /LANE_RESULT_RELAY_RECONCILE_RELOAD/);
 });
 
-test("v44 relay dedupe, retry, confirmation and Owner rebind all clear relay screenshot evidence", async () => {
+test("relay confirmation, dedupe and Owner target changes clear screenshot evidence while retries retain it", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -107,7 +107,7 @@ test("v44 relay dedupe, retry, confirmation and Owner rebind all clear relay scr
 
   assert.match(source, /async function clearRelayInflight/);
   assert.match(source, /await unlinkRelayScreenshot\(latch\)/);
-  assert.match(source, /LANE_RESULT_RELAY_DEDUPED_BY_MARKER[\s\S]*?return;/);
+  assert.match(source, /LANE_RESULT_RELAY_DEDUPED_BY_MARKER[\s\S]*?return "CONFIRMED";/);
   assert.match(source, /await clearRelayInflight\(registryLane\)/);
   assert.match(source, /async function finalizeConfirmedRelay/);
   assert.match(source, /applyOwnerBrainTarget[\s\S]*?await clearRelayInflight\(registryLane\)/);
@@ -221,11 +221,13 @@ test("v48 relay retries reuse one screenshot and stop after a bounded budget", a
   assert.match(relay, /beginRelaySendAttempt\(latch\)/);
   assert.match(relay, /scheduleRelayRetry\(latch\)/);
   assert.match(relay, /return "EXHAUSTED"/);
-  assert.match(relay, /if \(!latch\) \{[\s\S]*?captureCompletedAssistantTurnScreenshot/);
-  assert.doesNotMatch(
-    relay,
-    /if \(latch\)[\s\S]*?captureCompletedAssistantTurnScreenshot/
-  );
+  const screenshotCaptures = relay.match(/captureCompletedAssistantTurnScreenshot/g) || [];
+  assert.equal(screenshotCaptures.length, 1);
+  const createEvidence = relay.indexOf("if (!latch) {");
+  const captureEvidence = relay.indexOf("captureCompletedAssistantTurnScreenshot");
+  assert.ok(createEvidence >= 0);
+  assert.ok(captureEvidence > createEvidence);
+  assert.match(relay, /const screenshotPath = String\(latch\.screenshot_path/);
 });
 
 test("v48 attachment relay foregrounds Brain before composer probing", async () => {
