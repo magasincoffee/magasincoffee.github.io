@@ -63,3 +63,12 @@ Theo dõi thay đổi đối với bộ Enterprise Source of Truth.
 | CHG-057 | 2026-09-19 | Reconcile canonical night-run evidence pack through TASK-048 pre-boundary hardening; record runs 35372881851/35373330382/35373887433/35374298573 and keep temporal gate active until 09:15 +07 | Governance / Documentation / Evidence / QA | Loại drift giữa canonical evidence status cũ và PROJECT_STATE/CURRENT_STATE/final report hiện tại mà không mở rộng runtime scope | NIGHT_RUN_2026-09-18 / TASK-048 / PR-120..123 | COMPLETED |
 | CHG-058 | 2026-09-19 | Harden TASK-048 hard-stop canonical evidence surface: evidence pack now transitions from `TEMPORAL GATE ACTIVE` to `NIGHT_WINDOW_COMPLETE / OWNER REVIEW REQUIRED` with the other source-of-truth surfaces; QA probe 162/162 PASS | Governance / Documentation / Evidence / Recovery / QA | Ngăn canonical evidence còn báo gate active sau khi PROJECT_STATE/cursor/docs đã chuyển WAIT_USER tại boundary | NIGHT_RUN_2026-09-18 / TASK-048 / run 35375054600 / PR-124 | COMPLETED |
 | CHG-059 | 2026-09-19 | Fix TASK-048 temporal-gate Supervisor busy-loop by switching pre-boundary autonomy from `AUTO_CONTINUE` to existing `PAUSED` mode while keeping `READY`, `requires_user=false`, TASK-048 `IN_PROGRESS`, and the GitHub-hosted 09:15 hard stop authoritative; QA 163/163 PASS | Supervisor / Governance / Recovery / QA | Xóa vòng lặp gửi `CONTINUE` khi không còn actionable work trước boundary mà không tạo WAIT_USER sớm hoặc mở rộng state machine | NIGHT_RUN_2026-09-18 / TASK-048 / run 35375852646 / PR-125 | COMPLETED |
+
+## 2026-09-19 — CANONICAL_FIVE_STEP_PROFIT_CASH_LOCK_2026_09_19
+
+- Owner approved `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` as the canonical MAGASIN Business OS architecture.
+- Profitability & Cash remains critical priority #1; Financial Truth Spine is the cross-domain backbone.
+- Five-Step `QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE` is now continuous governance across every system layer and may run in parallel across workstreams while preserving order inside each change.
+- New-chat bootstrap must read the canonical architecture first.
+- `00_PROJECT_STATE.json` remains `WAIT_USER / PAUSED`; Robot execution remains denied until explicit Owner release.
+
