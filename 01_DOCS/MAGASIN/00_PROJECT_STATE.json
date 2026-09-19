@@ -415,7 +415,26 @@
       "merge_push_run_id": 35450750950,
       "merge_push_job_id": 105917355763,
       "merge_push_runtime": "Node v20.20.2",
-      "merge_push_conclusion": "success"
+      "merge_push_conclusion": "success",
+      "recovery": {
+        "interrupted_head": "4cd6ab301f2d0fae69b8107d5cb56dea45838a4a",
+        "interrupted_failed_run_id": 35450621641,
+        "interrupted_failed_job_id": 105917012771,
+        "failure": "STALE_TASK_055_CONTRACT_ASSERTION",
+        "recovery_branch": "task-056-cash-bridge-calculator",
+        "recovery_fix_commit": "68bd4ac21b8c79e34943a34f721e5ed7246d9e6b",
+        "recovery_push_run_id": 35450758071,
+        "recovery_push_job_id": 105917373039,
+        "recovery_pull_request": 180,
+        "recovery_pr_run_id": 35450826348,
+        "recovery_pr_job_id": 105917548782,
+        "recovery_merge_commit": "28c4bd6792531b6e696d94c1faa36f517c280403",
+        "recovery_merge_push_run_id": 35450894238,
+        "recovery_merge_push_job_id": 105917735745,
+        "runtime": "Node v20.20.2",
+        "conclusion": "success",
+        "business_semantics_changed": false
+      }
     }
   },
   "data_evidence_policy": {
