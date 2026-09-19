@@ -591,6 +591,20 @@ export function mapNonBalanceSourceFact(raw = {}, {
 }
 
 export function mapCashBalanceSourceFact(raw = {}, options = {}) {
+  if (
+    raw?.mapper_version === CASH_BALANCE_SOURCE_MAPPER_VERSION &&
+    raw?.balance &&
+    typeof raw.balance === "object"
+  ) {
+    return canonicalResult({
+      sourceClass: enumValue(raw.source_class, CASH_BALANCE_SOURCE_CLASSES),
+      classification: enumValue(raw.classification, SOURCE_CLASSIFICATIONS),
+      balance: raw.balance,
+      diagnostics: Array.isArray(raw.diagnostics) ? raw.diagnostics : [],
+      coverageHint: raw.coverage_hint
+    });
+  }
+
   const sourceClass = enumValue(raw.source_class, CASH_BALANCE_SOURCE_CLASSES);
 
   if (sourceClass === "INTERNAL_MONTHLY_CASH_WORKBOOK") {
