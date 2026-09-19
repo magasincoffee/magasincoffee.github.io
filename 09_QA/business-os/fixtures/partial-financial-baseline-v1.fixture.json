@@ -1,0 +1,166 @@
+{
+  "target_period": {
+    "start": "2026-09-01",
+    "end": "2026-09-03",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "scope": {
+    "branch": "CN1",
+    "channel": "DIRECT",
+    "aggregate_proven": false
+  },
+  "snapshot_as_of": "2026-09-03T23:30:00+07:00",
+  "revenue": {
+    "period": {"start":"2026-09-01","end":"2026-09-03","timezone":"Asia/Ho_Chi_Minh"},
+    "scope": {"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+    "group": "REVENUE",
+    "metric": "reconciled_revenue",
+    "value": 1000,
+    "quality": "ACTUAL",
+    "source": {"class":"DERIVED_AGGREGATION","label":"MONTHLY_REVENUE_BASELINE_V1"},
+    "as_of": "2026-09-03T22:00:00+07:00",
+    "reconciliation_status": "RECONCILED",
+    "evidence": ["REVENUE_RECONCILED_ONLY","COVERAGE_COMPLETE"],
+    "lineage": ["MONTHLY_REVENUE_BASELINE_V1","SANITIZED_REVENUE_INPUT"],
+    "baseline_schema_version": "monthly-revenue-baseline.v1",
+    "coverage": {"status":"COMPLETE","mode":"PERIODS","reason":null},
+    "diagnostics": []
+  },
+  "cogs": {
+    "period": {"start":"2026-09-01","end":"2026-09-03","timezone":"Asia/Ho_Chi_Minh"},
+    "scope": {"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+    "group": "COGS",
+    "metric": "cogs",
+    "value": 400,
+    "quality": "ACTUAL",
+    "source": {"class":"CANONICAL_COST_SOURCE","label":"SANITIZED_COGS"},
+    "as_of": "2026-09-03T22:10:00+07:00",
+    "reconciliation_status": "RECONCILED",
+    "evidence": ["COGS_EVIDENCED"],
+    "lineage": ["COGS:SANITIZED"]
+  },
+  "operating_costs": {
+    "period": {"start":"2026-09-01","end":"2026-09-03","timezone":"Asia/Ho_Chi_Minh"},
+    "scope": {"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+    "group": "OPEX",
+    "metric": "operating_costs",
+    "value": 250,
+    "quality": "ACTUAL",
+    "source": {"class":"CANONICAL_OPEX_SOURCE","label":"SANITIZED_OPEX"},
+    "as_of": "2026-09-03T22:15:00+07:00",
+    "reconciliation_status": "RECONCILED",
+    "evidence": ["OPERATING_COST_EVIDENCED"],
+    "lineage": ["OPEX:SANITIZED"]
+  },
+  "cash_inputs": {
+    "coverage": {
+      "status": "COMPLETE",
+      "as_of": "2026-09-03T23:00:00+07:00",
+      "lineage": ["CASH_COVERAGE:SANITIZED"],
+      "source_coverage": [
+        {
+          "source": "RECORDED_CASH_SOURCE",
+          "status": "COMPLETE",
+          "required": true,
+          "as_of": "2026-09-03T23:00:00+07:00",
+          "lineage": ["RECORDED_CASH:COVERAGE"]
+        }
+      ]
+    },
+    "openingBalance": {
+      "period": {"start":"2026-09-01","end":"2026-09-01","timezone":"Asia/Ho_Chi_Minh"},
+      "scope": {"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+      "group": "CASH",
+      "metric": "cash_opening_balance",
+      "value": 100,
+      "quality": "ACTUAL",
+      "source": {"class":"RECORDED_CASH_SOURCE","label":"SANITIZED_OPENING"},
+      "as_of": "2026-09-01T06:00:00+07:00",
+      "reconciliation_status": "RECONCILED",
+      "evidence": ["OPENING_EVIDENCED"],
+      "lineage": ["OPENING:SANITIZED"]
+    },
+    "observedEndingBalance": {
+      "period": {"start":"2026-09-03","end":"2026-09-03","timezone":"Asia/Ho_Chi_Minh"},
+      "scope": {"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+      "group": "CASH",
+      "metric": "cash_observed_ending_balance",
+      "value": 130,
+      "quality": "ACTUAL",
+      "source": {"class":"RECORDED_CASH_SOURCE","label":"SANITIZED_ENDING"},
+      "as_of": "2026-09-03T22:30:00+07:00",
+      "reconciliation_status": "RECONCILED",
+      "evidence": ["ENDING_EVIDENCED"],
+      "lineage": ["ENDING:SANITIZED"]
+    },
+    "events": [
+      {
+        "event_id":"E-1",
+        "direction":"INFLOW",
+        "category":"SALES_COLLECTION",
+        "event_date":"2026-09-02",
+        "timezone":"Asia/Ho_Chi_Minh",
+        "scope":{"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+        "amount":50,
+        "quality":"ACTUAL",
+        "source":{"class":"RECORDED_CASH_SOURCE","label":"SANITIZED_EVENT"},
+        "as_of":"2026-09-02T22:00:00+07:00",
+        "reconciliation_status":"RECONCILED",
+        "evidence":["CASH_EVENT_EVIDENCED"],
+        "lineage":["CASH_EVENT:E1"],
+        "cash_movement_proven":true,
+        "proof_basis":"DIRECT_CASH_EVENT",
+        "status":"ACTIVE"
+      },
+      {
+        "event_id":"E-2",
+        "direction":"OUTFLOW",
+        "category":"OTHER_OPEX",
+        "event_date":"2026-09-02",
+        "timezone":"Asia/Ho_Chi_Minh",
+        "scope":{"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+        "amount":20,
+        "quality":"ACTUAL",
+        "source":{"class":"RECORDED_CASH_SOURCE","label":"SANITIZED_EVENT"},
+        "as_of":"2026-09-02T22:05:00+07:00",
+        "reconciliation_status":"RECONCILED",
+        "evidence":["CASH_EVENT_EVIDENCED"],
+        "lineage":["CASH_EVENT:E2"],
+        "cash_movement_proven":true,
+        "proof_basis":"DIRECT_CASH_EVENT",
+        "status":"ACTIVE"
+      }
+    ]
+  },
+  "ap": {
+    "quality": "ACTUAL",
+    "outstanding": {
+      "period":{"start":"2026-09-03","end":"2026-09-03","timezone":"Asia/Ho_Chi_Minh"},
+      "scope":{"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+      "group":"AP",
+      "metric":"procurement_supplier_ap_outstanding",
+      "value":300,
+      "quality":"ACTUAL",
+      "source":{"class":"PROCUREMENT_CURRENT_AP_VIEW","label":"V_PROCUREMENT_SUPPLIER_PAYABLES"},
+      "as_of":"2026-09-03T22:20:00+07:00",
+      "reconciliation_status":"NOT_APPLICABLE",
+      "evidence":["CURRENT_PROCUREMENT_AP_VIEW"],
+      "lineage":["V_PROCUREMENT_SUPPLIER_PAYABLES_CURRENT_STATE"]
+    },
+    "overdue": {
+      "period":{"start":"2026-09-03","end":"2026-09-03","timezone":"Asia/Ho_Chi_Minh"},
+      "scope":{"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+      "group":"AP",
+      "metric":"procurement_supplier_ap_overdue",
+      "value":50,
+      "quality":"ACTUAL",
+      "source":{"class":"PROCUREMENT_CURRENT_AP_VIEW","label":"V_PROCUREMENT_SUPPLIER_PAYABLES"},
+      "as_of":"2026-09-03T22:20:00+07:00",
+      "reconciliation_status":"NOT_APPLICABLE",
+      "evidence":["CURRENT_PROCUREMENT_AP_VIEW"],
+      "lineage":["V_PROCUREMENT_SUPPLIER_PAYABLES_CURRENT_STATE"]
+    },
+    "coverage":{"source":"V_PROCUREMENT_SUPPLIER_PAYABLES","status":"COMPLETE","point_in_time":true,"current_source_date":"2026-09-03"},
+    "diagnostics":[]
+  }
+}
