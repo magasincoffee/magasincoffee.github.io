@@ -33,7 +33,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.34";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.35";
 
 function parseArgs(argv) {
   const result = {
@@ -202,15 +202,140 @@ async function assertConversationSafe(adapter, page, {
   return probe;
 }
 
-async function reconcileBrainRequest({ page, lane, registryLane }) {
-  if (!registryLane.brain_request_inflight) return false;
+async function captureSendBaseline(adapter, page) {
   const digests = await captureUserTurnDigests(page).catch(() => []);
-  if (!digests.includes(registryLane.brain_request_inflight.digest)) {
-    throw new Error("Brain start request outcome is uncertain; stop the lane and verify the Brain chat");
+  const probe = await adapter.probePage(page).catch(() => null);
+  return {
+    pre_user_count: digests.length,
+    pre_max_turn_ordinal: Number(
+      probe?.snapshot?.maxConversationTurnOrdinal || 0
+    )
+  };
+}
+
+async function waitForUserTurnDigest(
+  page,
+  digest,
+  { timeoutMs = 6000, intervalMs = 250 } = {}
+) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() <= deadline) {
+    const digests = await captureUserTurnDigests(page).catch(() => []);
+    if (digests.includes(digest)) return true;
+    await delay(intervalMs);
   }
-  registryLane.brain_request_sent = true;
-  registryLane.brain_request_inflight = null;
-  return true;
+  return false;
+}
+
+async function inspectKnownTargetSendOutcome({
+  adapter,
+  page,
+  digest,
+  preUserCount,
+  preMaxTurnOrdinal,
+  brain = false
+}) {
+  if (await waitForUserTurnDigest(page, digest, { timeoutMs: 1200 })) {
+    return "CONFIRMED";
+  }
+
+  await page.reload({
+    waitUntil: "domcontentloaded",
+    timeout: 30_000
+  });
+  await delay(750);
+
+  const reloadedDigests = await captureUserTurnDigests(page).catch(() => []);
+  if (reloadedDigests.includes(digest)) return "CONFIRMED";
+
+  const probe = await assertConversationSafe(adapter, page, {
+    brain,
+    allowFull: !brain
+  });
+  const stable = Boolean(
+    probe.snapshot.composerReady &&
+    !probe.snapshot.responseRunning &&
+    probe.snapshot.lastMessageRole !== "user" &&
+    probe.classification.observation === OBSERVATIONS.RESPONSE_COMPLETE
+  );
+
+  const baselineKnown =
+    Number.isFinite(Number(preUserCount)) &&
+    Number.isFinite(Number(preMaxTurnOrdinal));
+  if (baselineKnown) {
+    const noNewUserTurn =
+      reloadedDigests.length <= Number(preUserCount) &&
+      Number(probe.snapshot.maxConversationTurnOrdinal || 0) <=
+        Number(preMaxTurnOrdinal);
+    if (stable && noNewUserTurn) return "NOT_CONFIRMED";
+  }
+
+  // v34 and older latches did not persist a pre-send baseline. A hard reload
+  // followed by a stable assistant-complete surface with no matching user
+  // digest is sufficient migration evidence that the attempted send was not
+  // persisted server-side.
+  if (!baselineKnown && stable) return "NOT_CONFIRMED";
+
+  return "UNCERTAIN";
+}
+
+async function finalizeConfirmedDispatch({
+  foundUrl,
+  registryLane,
+  latch,
+  registry,
+  registryPath
+}) {
+  if (foundUrl) registryLane.work_url = foundUrl;
+  registryLane.task_id = latch.task_id;
+  registryLane.instruction_digest = latch.instruction_digest;
+  registryLane.awaiting_work = true;
+  registryLane.dispatch_inflight = null;
+  await atomicJsonWrite(registryPath, registry);
+}
+
+async function reconcileBrainRequest({
+  adapter,
+  page,
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  logPath
+}) {
+  const latch = registryLane.brain_request_inflight;
+  if (!latch) return "NONE";
+
+  const outcome = await inspectKnownTargetSendOutcome({
+    adapter,
+    page,
+    digest: latch.digest,
+    preUserCount: latch.pre_user_count,
+    preMaxTurnOrdinal: latch.pre_max_turn_ordinal,
+    brain: true
+  });
+
+  if (outcome === "CONFIRMED") {
+    registryLane.brain_request_sent = true;
+    registryLane.brain_request_inflight = null;
+    await atomicJsonWrite(registryPath, registry);
+    return "CONFIRMED";
+  }
+
+  if (outcome === "NOT_CONFIRMED") {
+    registryLane.brain_request_inflight = null;
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_BRAIN_SEND_NOT_CONFIRMED_RETRY",
+      laneId: lane.lane_id,
+      digest: latch.digest
+    });
+    return "NOT_CONFIRMED";
+  }
+
+  throw new Error(
+    "Không thể xác định lệnh khởi tạo Brain đã gửi hay chưa; Robot giữ an toàn để tránh gửi trùng."
+  );
 }
 
 async function ensureBrainRequest({
@@ -225,11 +350,16 @@ async function ensureBrainRequest({
 }) {
   if (registryLane.brain_request_sent) return false;
   if (registryLane.brain_request_inflight) {
-    const reconciled = await reconcileBrainRequest({ page, lane, registryLane });
-    if (reconciled) {
-      await atomicJsonWrite(registryPath, registry);
-      return true;
-    }
+    const outcome = await reconcileBrainRequest({
+      adapter,
+      page,
+      lane,
+      registryLane,
+      registry,
+      registryPath,
+      logPath
+    });
+    if (outcome === "CONFIRMED") return true;
   }
 
   const probe = await assertConversationSafe(adapter, page, { brain: true });
@@ -242,13 +372,37 @@ async function ensureBrainRequest({
     projectName: lane.project_name
   });
   const digest = sha256(request);
-  registryLane.brain_request_inflight = { digest };
+  const baseline = await captureSendBaseline(adapter, page);
+  registryLane.brain_request_inflight = {
+    digest,
+    ...baseline
+  };
   await atomicJsonWrite(registryPath, registry);
 
   if (!execute) return false;
-  const sent = await sendComposerInstruction(page, request, { dryRun: false });
-  if (!sent.executed) {
-    throw new Error(`Brain start request failed: ${sent.reason || "unknown"}`);
+  let sent = null;
+  try {
+    sent = await sendComposerInstruction(page, request, { dryRun: false });
+  } catch (error) {
+    await safeLog(logPath, {
+      type: "LANE_BRAIN_SEND_ATTEMPT_ERROR",
+      laneId: lane.lane_id,
+      digest,
+      errorName: error?.name || "Error",
+      reason: String(error?.message || error).slice(0, 220)
+    });
+    return false;
+  }
+  if (!sent.executed) return false;
+
+  const confirmed = await waitForUserTurnDigest(page, digest);
+  if (!confirmed) {
+    await safeLog(logPath, {
+      type: "LANE_BRAIN_SEND_PENDING_CONFIRMATION",
+      laneId: lane.lane_id,
+      digest
+    });
+    return false;
   }
 
   registryLane.brain_request_sent = true;
@@ -287,25 +441,76 @@ async function findWorkConversationByInstruction(adapter, instructionDigest) {
 
 async function reconcileDispatchInflight({
   adapter,
+  lane,
   registryLane,
   registry,
-  registryPath
+  registryPath,
+  logPath
 }) {
   const latch = registryLane.dispatch_inflight;
-  if (!latch) return false;
+  if (!latch) return "NONE";
 
-  const found = await findWorkConversationByInstruction(adapter, latch.instruction_digest);
-  if (!found) {
-    throw new Error("Work instruction send outcome is uncertain; automatic resend is denied");
+  const found = await findWorkConversationByInstruction(
+    adapter,
+    latch.instruction_digest
+  );
+  if (found) {
+    await finalizeConfirmedDispatch({
+      foundUrl: found.url,
+      registryLane,
+      latch,
+      registry,
+      registryPath
+    });
+    return "CONFIRMED";
   }
 
-  registryLane.work_url = found.url;
-  registryLane.task_id = latch.task_id;
-  registryLane.instruction_digest = latch.instruction_digest;
-  registryLane.awaiting_work = true;
-  registryLane.dispatch_inflight = null;
-  await atomicJsonWrite(registryPath, registry);
-  return true;
+  if (!registryLane.work_url || latch.create_new) {
+    throw new Error(
+      "Robot chưa thể xác minh lần gửi vào Work mới; giữ an toàn để không tạo/gửi trùng."
+    );
+  }
+
+  const page = await openExactConversation(
+    adapter,
+    registryLane.work_url,
+    { brain: false }
+  );
+  const outcome = await inspectKnownTargetSendOutcome({
+    adapter,
+    page,
+    digest: latch.instruction_digest,
+    preUserCount: latch.pre_user_count,
+    preMaxTurnOrdinal: latch.pre_max_turn_ordinal,
+    brain: false
+  });
+
+  if (outcome === "CONFIRMED") {
+    await finalizeConfirmedDispatch({
+      foundUrl: registryLane.work_url,
+      registryLane,
+      latch,
+      registry,
+      registryPath
+    });
+    return "CONFIRMED";
+  }
+
+  if (outcome === "NOT_CONFIRMED") {
+    registryLane.dispatch_inflight = null;
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_WORK_SEND_NOT_CONFIRMED_RETRY",
+      laneId: lane.lane_id,
+      taskId: latch.task_id,
+      digest: latch.instruction_digest
+    });
+    return "NOT_CONFIRMED";
+  }
+
+  throw new Error(
+    "Work chat đã thay đổi trong lúc xác minh lần gửi; Robot giữ an toàn để tránh gửi trùng."
+  );
 }
 
 async function createWorkConversation(adapter, instruction) {
@@ -339,13 +544,15 @@ async function dispatchWork({
   }
 
   if (registryLane.dispatch_inflight) {
-    await reconcileDispatchInflight({
+    const outcome = await reconcileDispatchInflight({
       adapter,
+      lane,
       registryLane,
       registry,
-      registryPath
+      registryPath,
+      logPath
     });
-    return;
+    if (outcome === "CONFIRMED") return;
   }
 
   let page = null;
@@ -375,27 +582,70 @@ async function dispatchWork({
   }
 
   const instructionDigest = sha256(outgoingInstruction);
+  const baseline = page
+    ? await captureSendBaseline(adapter, page)
+    : { pre_user_count: 0, pre_max_turn_ordinal: 0 };
   registryLane.dispatch_inflight = {
     task_id: directive.task_id,
     instruction_digest: instructionDigest,
     directive_digest: directive.digest,
-    create_new: createNew
+    create_new: createNew,
+    ...baseline
   };
   await atomicJsonWrite(registryPath, registry);
 
   if (!execute) return;
 
   let workUrl = registryLane.work_url;
-  if (createNew) {
-    const created = await createWorkConversation(adapter, outgoingInstruction);
-    page = created.page;
-    workUrl = created.url;
-    registryLane.work_generation += 1;
-  } else {
-    const sent = await sendComposerInstruction(page, outgoingInstruction, { dryRun: false });
-    if (!sent.executed) {
-      throw new Error(`Work instruction send failed: ${sent.reason || "unknown"}`);
+  try {
+    if (createNew) {
+      const created = await createWorkConversation(adapter, outgoingInstruction);
+      page = created.page;
+      workUrl = created.url;
+      registryLane.work_generation += 1;
+    } else {
+      const sent = await sendComposerInstruction(
+        page,
+        outgoingInstruction,
+        { dryRun: false }
+      );
+      if (!sent.executed) {
+        await safeLog(logPath, {
+          type: "LANE_WORK_SEND_NOT_EXECUTED",
+          laneId: lane.lane_id,
+          taskId: directive.task_id,
+          digest: instructionDigest,
+          reason: sent.reason || "unknown"
+        });
+        return;
+      }
     }
+  } catch (error) {
+    await safeLog(logPath, {
+      type: "LANE_WORK_SEND_ATTEMPT_ERROR",
+      laneId: lane.lane_id,
+      taskId: directive.task_id,
+      digest: instructionDigest,
+      errorName: error?.name || "Error",
+      reason: String(error?.message || error).slice(0, 220)
+    });
+    return;
+  }
+
+  const confirmed = await waitForUserTurnDigest(page, instructionDigest);
+  if (!confirmed) {
+    // Persist a discovered conversation URL even while the send itself still
+    // needs reconciliation. This lets the next loop hard-reload the exact
+    // Work target and prove whether the instruction reached the server.
+    if (workUrl) registryLane.work_url = workUrl;
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_WORK_SEND_PENDING_CONFIRMATION",
+      laneId: lane.lane_id,
+      taskId: directive.task_id,
+      digest: instructionDigest
+    });
+    return;
   }
 
   registryLane.work_url = workUrl;
@@ -414,26 +664,53 @@ async function dispatchWork({
 }
 
 async function reconcileRelayInflight({
+  adapter,
+  lane,
   brainPage,
   registryLane,
   registry,
-  registryPath
+  registryPath,
+  logPath
 }) {
   const latch = registryLane.relay_inflight;
-  if (!latch) return false;
+  if (!latch) return "NONE";
 
-  const digests = await captureUserTurnDigests(brainPage).catch(() => []);
-  if (!digests.includes(latch.text_digest)) {
-    throw new Error("Work result relay outcome is uncertain; automatic resend is denied");
+  const outcome = await inspectKnownTargetSendOutcome({
+    adapter,
+    page: brainPage,
+    digest: latch.text_digest,
+    preUserCount: latch.pre_user_count,
+    preMaxTurnOrdinal: latch.pre_max_turn_ordinal,
+    brain: true
+  });
+
+  if (outcome === "CONFIRMED") {
+    registryLane.last_result_relay_id = latch.relay_id;
+    registryLane.last_work_result_digest = latch.response_digest;
+    registryLane.awaiting_work = false;
+    registryLane.relay_inflight = null;
+    await fs.unlink(latch.screenshot_path).catch(() => {});
+    await atomicJsonWrite(registryPath, registry);
+    return "CONFIRMED";
   }
 
-  registryLane.last_result_relay_id = latch.relay_id;
-  registryLane.last_work_result_digest = latch.response_digest;
-  registryLane.awaiting_work = false;
-  registryLane.relay_inflight = null;
-  await fs.unlink(latch.screenshot_path).catch(() => {});
-  await atomicJsonWrite(registryPath, registry);
-  return true;
+  if (outcome === "NOT_CONFIRMED") {
+    registryLane.relay_inflight = null;
+    await fs.unlink(latch.screenshot_path).catch(() => {});
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_RESULT_RELAY_NOT_CONFIRMED_RETRY",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: latch.relay_id,
+      digest: latch.response_digest
+    });
+    return "NOT_CONFIRMED";
+  }
+
+  throw new Error(
+    "Không thể xác định kết quả Work đã gửi về Brain hay chưa; Robot giữ an toàn để tránh gửi trùng."
+  );
 }
 
 async function relayWorkResult({
@@ -464,13 +741,16 @@ async function relayWorkResult({
   }
 
   if (registryLane.relay_inflight) {
-    await reconcileRelayInflight({
+    const outcome = await reconcileRelayInflight({
+      adapter,
+      lane,
       brainPage,
       registryLane,
       registry,
-      registryPath
+      registryPath,
+      logPath
     });
-    return;
+    if (outcome === "CONFIRMED") return;
   }
 
   const brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
@@ -485,23 +765,52 @@ async function relayWorkResult({
   );
   await captureCompletedAssistantTurnScreenshot(workPage, screenshotPath);
 
+  const relayBaseline = await captureSendBaseline(adapter, brainPage);
   registryLane.relay_inflight = {
     relay_id: relay.relay_id,
     response_digest: relay.response_digest,
     text_digest: sha256(relay.text),
-    screenshot_path: screenshotPath
+    screenshot_path: screenshotPath,
+    ...relayBaseline
   };
   await atomicJsonWrite(registryPath, registry);
 
   if (!execute) return;
-  const sent = await sendComposerWithAttachment(
+  let sent = null;
+  try {
+    sent = await sendComposerWithAttachment(
+      brainPage,
+      relay.text,
+      screenshotPath,
+      { dryRun: false }
+    );
+  } catch (error) {
+    await safeLog(logPath, {
+      type: "LANE_RESULT_RELAY_ATTEMPT_ERROR",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: relay.relay_id,
+      digest: relay.response_digest,
+      errorName: error?.name || "Error",
+      reason: String(error?.message || error).slice(0, 220)
+    });
+    return;
+  }
+  if (!sent.executed) return;
+
+  const relayConfirmed = await waitForUserTurnDigest(
     brainPage,
-    relay.text,
-    screenshotPath,
-    { dryRun: false }
+    sha256(relay.text)
   );
-  if (!sent.executed) {
-    throw new Error(`Work result relay failed: ${sent.reason || "unknown"}`);
+  if (!relayConfirmed) {
+    await safeLog(logPath, {
+      type: "LANE_RESULT_RELAY_PENDING_CONFIRMATION",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: relay.relay_id,
+      digest: relay.response_digest
+    });
+    return;
   }
 
   registryLane.last_result_relay_id = relay.relay_id;
@@ -628,18 +937,23 @@ async function processLane({
 
   if (registryLane.relay_inflight) {
     await reconcileRelayInflight({
+      adapter,
+      lane,
       brainPage,
       registryLane,
       registry,
-      registryPath
+      registryPath,
+      logPath
     });
   }
   if (registryLane.dispatch_inflight) {
     await reconcileDispatchInflight({
       adapter,
+      lane,
       registryLane,
       registry,
-      registryPath
+      registryPath,
+      logPath
     });
   }
 
