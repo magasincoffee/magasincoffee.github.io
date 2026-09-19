@@ -13,7 +13,7 @@ test("active Three-Lane runtime contains no Brain auto-discovery path", async ()
   assert.doesNotMatch(source, /getVisibleChatGptPages/);
   assert.doesNotMatch(source, /BRAIN_REBIND/);
   assert.match(source, /normalizeChatGptConversationUrl\(lane\.brain_url\)/);
-  assert.match(source, /openExactConversation\(adapter, brainUrl\)/);
+  assert.match(source, /openExactConversation\(adapter, brainUrl, \{ brain: true \}\)/);
 });
 
 test("Work URL is Robot-managed and rollover requires positive conversationFull", async () => {
@@ -145,4 +145,18 @@ test("exhausted transient CDP recovery exits 75 so Windows wrapper relaunches Ro
   assert.match(source, /RUNTIME_CDP_RESTART_REQUESTED/);
   assert.match(source, /process\.exitCode = 75/);
   assert.match(source, /bounded transient CDP reconnect budget exhausted/);
+});
+
+
+test("inaccessible Brain or Work conversations surface plain-language Owner guidance", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /function accessDeniedMessage/);
+  assert.match(source, /Work này không mở được trong Chrome Robot/);
+  assert.match(source, /Bộ não này không mở được trong Chrome Robot/);
+  assert.match(source, /conversationAccessDenied/);
+  assert.match(source, /TỰ TẠO WORK/);
 });

@@ -33,7 +33,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.33";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.34";
 
 function parseArgs(argv) {
   const result = {
@@ -98,15 +98,35 @@ function hardStopObservation(observation) {
   ]).has(observation);
 }
 
-async function openExactConversation(adapter, url) {
+function accessDeniedMessage({ brain = false } = {}) {
+  return brain
+    ? "Bộ não này không mở được trong Chrome Robot. Hãy dùng link Brain mà tài khoản trong Chrome Robot có quyền truy cập."
+    : "Work này không mở được trong Chrome Robot. Dừng luồng rồi dán LINK WORK khác hoặc bấm TỰ TẠO WORK để Robot tạo chat mới.";
+}
+
+async function openExactConversation(adapter, url, { brain = false } = {}) {
   const normalized = normalizeChatGptConversationUrl(url);
   const target = targetFromUrl(normalized);
   const existing = adapter.findPageForTarget(target);
-  if (existing) return existing;
+  if (existing) {
+    const probe = await adapter.probePage(existing).catch(() => null);
+    if (probe?.snapshot?.conversationAccessDenied) {
+      throw new Error(accessDeniedMessage({ brain }));
+    }
+    return existing;
+  }
 
   const page = await adapter.reopenTargetPage(normalized);
+  const probe = await adapter.probePage(page).catch(() => null);
+  if (probe?.snapshot?.conversationAccessDenied) {
+    throw new Error(accessDeniedMessage({ brain }));
+  }
   if (!pageMatchesTarget(page.url(), target)) {
-    throw new Error("configured conversation could not be restored exactly");
+    throw new Error(
+      brain
+        ? "Không thể mở đúng cuộc trò chuyện Bộ não trong Chrome Robot."
+        : "Không thể mở đúng cuộc trò chuyện Work trong Chrome Robot. Dừng luồng rồi dán LINK WORK khác hoặc bấm TỰ TẠO WORK."
+    );
   }
   return page;
 }
@@ -165,6 +185,9 @@ async function assertConversationSafe(adapter, page, {
   const probe = await adapter.probePage(page);
   if (hardStopObservation(probe.classification.observation)) {
     throw new Error("Owner/security boundary detected");
+  }
+  if (probe.snapshot.conversationAccessDenied) {
+    throw new Error(accessDeniedMessage({ brain }));
   }
   if (probe.snapshot.conversationMissing) {
     throw new Error(brain
@@ -330,7 +353,7 @@ async function dispatchWork({
   let outgoingInstruction = directive.instruction;
 
   if (registryLane.work_url) {
-    page = await openExactConversation(adapter, registryLane.work_url);
+    page = await openExactConversation(adapter, registryLane.work_url, { brain: false });
     const probe = await assertConversationSafe(adapter, page, {
       brain: false,
       allowFull: true
@@ -600,7 +623,7 @@ async function processLane({
     logPath
   });
 
-  const brainPage = await openExactConversation(adapter, brainUrl);
+  const brainPage = await openExactConversation(adapter, brainUrl, { brain: true });
   const brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
 
   if (registryLane.relay_inflight) {
@@ -624,7 +647,7 @@ async function processLane({
     if (!registryLane.work_url) {
       throw new Error("Work URL is missing while a result is pending");
     }
-    const workPage = await openExactConversation(adapter, registryLane.work_url);
+    const workPage = await openExactConversation(adapter, registryLane.work_url, { brain: false });
     const workProbe = await assertConversationSafe(adapter, workPage, {
       brain: false,
       allowFull: true

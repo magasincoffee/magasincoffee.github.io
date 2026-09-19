@@ -344,8 +344,14 @@ for ($i = 0; $i -lt 3; $i++) {
     $openWork = New-Object Windows.Forms.Button
     $openWork.Text = 'MỞ WORK'
     $openWork.Location = New-Object Drawing.Point(900, 94)
-    $openWork.Size = New-Object Drawing.Size(225, 34)
+    $openWork.Size = New-Object Drawing.Size(108, 34)
     $panel.Controls.Add($openWork)
+
+    $resetWork = New-Object Windows.Forms.Button
+    $resetWork.Text = 'TỰ TẠO WORK'
+    $resetWork.Location = New-Object Drawing.Point(1017, 94)
+    $resetWork.Size = New-Object Drawing.Size(108, 34)
+    $panel.Controls.Add($resetWork)
 
     $messageLabel = New-Object Windows.Forms.Label
     $messageLabel.Text = 'THÔNG BÁO'
@@ -389,6 +395,7 @@ for ($i = 0; $i -lt 3; $i++) {
         Stop = $stopButton
         OpenBrain = $openBrain
         OpenWork = $openWork
+        ResetWork = $resetWork
     }
 
     $currentLaneId = $laneId
@@ -445,6 +452,32 @@ for ($i = 0; $i -lt 3; $i++) {
         Open-RobotUrl $laneUi[$id].Work.Text
     })
     $openWork.Tag = $currentLaneId
+
+    $resetWork.Add_Click({
+        $id = $this.Tag
+        $ui = $laneUi[$id]
+        $config = Ensure-Config
+        $lane = Get-LaneConfig $config $id
+        if ($lane -and [bool]$lane.enabled) {
+            [Windows.Forms.MessageBox]::Show(
+                'Hãy DỪNG LUỒNG trước khi đổi Work.',
+                'MAGASIN BUSINESS OS',
+                'OK',
+                'Information'
+            ) | Out-Null
+            return
+        }
+
+        Save-Lane $id $ui.Project.Text $ui.Brain.Text '' $false
+        $ui.Work.Text = ''
+        [Windows.Forms.MessageBox]::Show(
+            'Đã chuyển sang chế độ Robot tự tạo Work. Bấm BẮT ĐẦU LUỒNG để tiếp tục.',
+            'MAGASIN BUSINESS OS',
+            'OK',
+            'Information'
+        ) | Out-Null
+    })
+    $resetWork.Tag = $currentLaneId
 }
 
 function Refresh-Ui {
@@ -524,6 +557,7 @@ function Refresh-Ui {
 
         $ui.OpenBrain.Enabled = Test-ChatConversationUrl $ui.Brain.Text
         $ui.OpenWork.Enabled = Test-ChatConversationUrl $ui.Work.Text
+        $ui.ResetWork.Enabled = -not $enabled
     }
 }
 

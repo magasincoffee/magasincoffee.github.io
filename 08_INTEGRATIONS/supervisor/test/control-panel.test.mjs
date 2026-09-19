@@ -127,3 +127,16 @@ test("installer normalizes Vietnamese panel to UTF-8 BOM and syntax-checks it", 
   assert.match(source, /Control panel PowerShell syntax check failed/);
   assert.match(source, /MAGASIN BUSINESS OS CONTROL\.lnk/);
 });
+
+
+test("control panel provides one-click Robot Work reset while stopped", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /TỰ TẠO WORK/);
+  assert.match(source, /Save-Lane \$id \$ui\.Project\.Text \$ui\.Brain\.Text '' \$false/);
+  assert.match(source, /Đã chuyển sang chế độ Robot tự tạo Work/);
+  assert.match(source, /\$ui\.ResetWork\.Enabled = -not \$enabled/);
+});
