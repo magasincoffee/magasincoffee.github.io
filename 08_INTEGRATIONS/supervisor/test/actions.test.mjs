@@ -11,12 +11,14 @@ function fakeLocator({
   onPress = () => {},
   onSetFiles = () => {},
   enabled = true,
+  editable = true,
   count = 1
 } = {}) {
   return {
     first() { return this; },
     async isVisible() { return visible; },
     async isEnabled() { return enabled; },
+    async isEditable() { return editable; },
     async count() { return count; },
     async click() { onClick(); },
     async fill(value) { onFill(value); },
@@ -238,4 +240,17 @@ test("disabled Send control is never selected as an attachment send target", asy
     source,
     /await input\.setInputFiles\(filePath\);[\s\S]{0,200}await composer\.fill\(instruction\)/
   );
+});
+
+
+test("live composer send uses bounded editable readiness instead of a 60s implicit fill wait", async () => {
+  const source = await import("node:fs/promises").then((fs) =>
+    fs.readFile(new URL("../src/ui/actions.mjs", import.meta.url), "utf8")
+  );
+
+  assert.match(source, /async function waitForReadyComposer/);
+  assert.match(source, /timeoutMs = 8_000/);
+  assert.match(source, /isEditable/);
+  assert.match(source, /composer\.fill\(instruction, \{ timeout: 10_000 \}\)/);
+  assert.match(source, /did not become editable before bounded timeout/);
 });

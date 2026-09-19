@@ -3,6 +3,39 @@ import { ACTIONS } from "../decision.mjs";
 const SAFE_RETRY_RE = /^(try again|retry|thử lại)$/i;
 const SAFE_CONTINUE_RE = /^(continue generating|continue response|tiếp tục tạo|tiếp tục)$/i;
 const SAFE_SEND_RE = /^(send|send prompt|gửi|gửi tin nhắn)$/i;
+const COMPOSER_SELECTOR =
+  "#prompt-textarea:visible, [contenteditable='true'][role='textbox']:visible, textarea:visible, [contenteditable='true']:visible";
+
+function composerLocator(page) {
+  return page.locator(COMPOSER_SELECTOR).first();
+}
+
+async function composerReadyState(composer) {
+  const visible = typeof composer?.isVisible === "function"
+    ? await composer.isVisible().catch(() => false)
+    : false;
+  const enabled = typeof composer?.isEnabled === "function"
+    ? await composer.isEnabled().catch(() => false)
+    : visible;
+  const editable = typeof composer?.isEditable === "function"
+    ? await composer.isEditable().catch(() => false)
+    : enabled;
+  return { visible, enabled, editable, ready: visible && enabled && editable };
+}
+
+async function waitForReadyComposer(
+  page,
+  { timeoutMs = 8_000, intervalMs = 200 } = {}
+) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() <= deadline) {
+    const composer = composerLocator(page);
+    const state = await composerReadyState(composer);
+    if (state.ready) return composer;
+    await page.waitForTimeout(intervalMs);
+  }
+  return null;
+}
 
 function visibleControlSnapshot(page) {
   return page.evaluate(() => {
@@ -40,8 +73,9 @@ function findSafeControl(controls, pattern, allowedTestIds = []) {
 export async function inspectActionSurface(page) {
   if (!page) throw new TypeError("page is required");
 
-  const composer = page.locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible").first();
-  const composerReady = await composer.isVisible().catch(() => false);
+  const composer = composerLocator(page);
+  const composerState = await composerReadyState(composer);
+  const composerReady = composerState.ready;
   const controls = await visibleControlSnapshot(page);
 
   return {
@@ -82,7 +116,7 @@ export async function sendComposerInstruction(
   }
 
   const surface = await inspectActionSurface(page);
-  if (!surface.composerReady) {
+  if (!surface.composerReady && dryRun) {
     return {
       executed: false,
       dryRun,
@@ -100,10 +134,16 @@ export async function sendComposerInstruction(
     };
   }
 
-  const composer = page
-    .locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible")
-    .first();
-  await composer.fill(instruction);
+  const composer = await waitForReadyComposer(page);
+  if (!composer) {
+    return {
+      executed: false,
+      dryRun: false,
+      action: ACTIONS.CONTINUE,
+      reason: "composer is not ready; did not become editable before bounded timeout"
+    };
+  }
+  await composer.fill(instruction, { timeout: 10_000 });
 
   const afterFill = await inspectActionSurface(page);
   if (afterFill.sendControl) {
@@ -205,17 +245,14 @@ async function waitForAttachmentReady(
   page,
   { timeoutMs = 45_000, intervalMs = 250 } = {}
 ) {
-  const composer = page
-    .locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible")
-    .first();
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() <= deadline) {
-    const visible = await composer.isVisible().catch(() => false);
-    const enabled = await composer.isEnabled().catch(() => false);
+    const composer = composerLocator(page);
+    const state = await composerReadyState(composer);
     const surface = await inspectActionSurface(page).catch(() => null);
 
-    if (visible && enabled && surface?.sendControl) {
+    if (state.ready && surface?.sendControl) {
       return { ready: true, sendControl: surface.sendControl };
     }
     await page.waitForTimeout(intervalMs);
@@ -242,7 +279,7 @@ export async function sendComposerWithAttachment(
   }
 
   const surface = await inspectActionSurface(page);
-  if (!surface.composerReady) {
+  if (!surface.composerReady && dryRun) {
     return {
       executed: false,
       dryRun,
@@ -260,14 +297,20 @@ export async function sendComposerWithAttachment(
     };
   }
 
-  const composer = page
-    .locator("#prompt-textarea:visible, textarea:visible, [contenteditable='true']:visible")
-    .first();
+  const composer = await waitForReadyComposer(page);
+  if (!composer) {
+    return {
+      executed: false,
+      dryRun: false,
+      action: ACTIONS.CONTINUE,
+      reason: "composer is not ready; did not become editable before bounded timeout"
+    };
+  }
 
   // ChatGPT disables the composer while an uploaded image is being processed.
   // Fill the relay text first, then attach the screenshot, then wait until both
   // the composer and the explicit Send control are enabled again.
-  await composer.fill(instruction);
+  await composer.fill(instruction, { timeout: 10_000 });
 
   const input = await resolveFileInput(page);
   if (!input) {

@@ -102,7 +102,7 @@ test("new Work URLs are stored through canonical target normalization", async ()
 
 
 
-test("v42 Owner Brain URL override is revisioned and can hot-swap during active Work", async () => {
+test("v43 Owner Brain URL override is revisioned and can hot-swap during active Work", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -119,17 +119,17 @@ test("v42 Owner Brain URL override is revisioned and can hot-swap during active 
   assert.match(source, /normalizeChatGptConversationUrl\(registryLane\.brain_url\)/);
 });
 
-test("v42 active Brain status comes from persisted registry target", async () => {
+test("v43 active Brain status comes from persisted registry target", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-19\.42/);
+  assert.match(source, /2026-09-19\.43/);
 });
 
-test("v42 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
+test("v43 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -148,7 +148,7 @@ test("v42 valid completed Brain directive can complete a stuck first-handshake w
 });
 
 
-test("v42 explicit Brain rebind clears only a blocked old-Brain dispatch when no Work result is pending", async () => {
+test("v43 explicit Brain rebind clears only a blocked old-Brain dispatch when no Work result is pending", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -326,7 +326,7 @@ test("v38 result relay validates screenshot and logs attachment lifecycle", asyn
   assert.match(source, /reconcile_runtime_version/);
 });
 
-test("v42 can recover the latest valid directive when only duplicate Robot handshake turns follow it", async () => {
+test("v43 can recover the latest valid directive when only duplicate Robot handshake turns follow it", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -338,4 +338,33 @@ test("v42 can recover the latest valid directive when only duplicate Robot hands
   assert.match(source, /turn\.role === "user" && turn\.digest === expectedStartDigest/);
   assert.match(source, /LANE_BRAIN_DIRECTIVE_RECOVERED_BEFORE_DUPLICATE_HANDSHAKE/);
   assert.match(source, /if \(laterTurns\.length && !onlyRobotHandshakeAfterDirective\) return null/);
+});
+
+
+test("v43 Work dispatch uses marker confirmation and repairs legacy blocked latches", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /buildWorkDispatchInstruction/);
+  assert.match(source, /workDispatchMarker/);
+  assert.match(source, /dispatch_id/);
+  assert.match(source, /waitForUserTurnMarker/);
+  assert.match(source, /marker: latch\.dispatch_id \? workDispatchMarker/);
+  assert.match(source, /if \(marker\) return "NOT_CONFIRMED"/);
+  assert.match(source, /LANE_WORK_LEGACY_BLOCKED_LATCH_REBASED/);
+  assert.match(source, /LANE_WORK_LEGACY_BLOCKED_LATCH_CONFIRMED/);
+  assert.match(source, /last_brain_directive_digest/);
+  assert.match(source, /directive_instruction_digest/);
+});
+
+test("v43 a reconciled Work dispatch records the Brain directive digest to prevent redispatch", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /registryLane\.last_brain_directive_digest =\s*latch\.directive_digest/);
+  assert.match(source, /registryLane\.instruction_digest =\s*latch\.directive_instruction_digest/);
 });

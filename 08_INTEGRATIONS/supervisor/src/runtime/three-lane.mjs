@@ -193,6 +193,28 @@ export function buildWorkRolloverInstruction({ projectName, taskId, instruction 
   ].join("\n");
 }
 
+export function workDispatchMarker(dispatchId) {
+  const id = String(dispatchId || "").trim();
+  if (!id) throw new Error("dispatch_id is required");
+  return `dispatch_id=${id}`;
+}
+
+export function buildWorkDispatchInstruction({
+  taskId,
+  dispatchId,
+  instruction
+}) {
+  const body = String(instruction || "").trim();
+  if (!body) throw new Error("Work instruction is required");
+  return [
+    "MAGASIN_WORK_DISPATCH_V1",
+    `task_id=${String(taskId || "").trim()}`,
+    workDispatchMarker(dispatchId),
+    "",
+    body
+  ].join("\n");
+}
+
 export function buildLaneResultRelay({
   laneId,
   projectName,
