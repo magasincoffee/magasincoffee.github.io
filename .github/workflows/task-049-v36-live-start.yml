@@ -1,4 +1,4 @@
-name: TASK-049 Final Live Monitor
+name: TASK-049 v38 Final Live Monitor
 
 on:
   push:
@@ -28,8 +28,8 @@ jobs:
           $runtimeFile = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
 
           if (-not (Test-Path $runtimeFile)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeFile -SimpleMatch "2026-09-19.37" -Quiet)) {
-            throw "Installed runtime is not v2026-09-19.37"
+          if (-not (Select-String -Path $runtimeFile -SimpleMatch "2026-09-19.38" -Quiet)) {
+            throw "Installed runtime is not v2026-09-19.38"
           }
           if (-not (Test-Path $configFile)) { throw "lanes.json is missing" }
 
@@ -49,6 +49,7 @@ jobs:
 
           $dispatchSeen = $false
           $relaySeen = $false
+          $oldRelayDuplicateSeen = $false
           $lastStatus = $null
           $lastRegistryLane = $null
           $newLines = @()
@@ -87,11 +88,18 @@ jobs:
               throw "lane-1 exceeded the one-reload reconciliation budget"
             }
 
-            if ($newLines -match '"type":"LANE_WORK_(DISPATCHED|CREATED)"') {
+            if ($newLines -match '"type":"LANE_WORK_(DISPATCHED|CREATED)".*"task_id":"TASK-049/THREE-LANE-E2E-03"') {
               $dispatchSeen = $true
             }
-            if ($newLines -match '"type":"LANE_WORK_RESULT_RELAYED"') {
+            if ($newLines -match '"type":"LANE_WORK_RESULT_RELAYED".*"task_id":"TASK-049/THREE-LANE-E2E-03"') {
               $relaySeen = $true
+            }
+
+            $oldRelayDuplicateSeen = [bool](
+              $newLines -match '"type":"LANE_RESULT_RELAY_(PENDING_CONFIRMATION|ATTEMPT_ERROR|RECONCILE_RELOAD|NOT_CONFIRMED_RETRY)".*"relay_id":"8aadc974646fce649ff60950992bd20c"'
+            )
+            if ($oldRelayDuplicateSeen) {
+              throw "v38 attempted to resend the already-delivered E2E-02 relay"
             }
             if ($newLines -match '"type":"LANE_WORK_SEND_RECONCILE_BLOCKED"') {
               throw "lane-1 reconciliation blocked during final live monitor"
@@ -126,6 +134,7 @@ jobs:
 
           Write-Host "FINAL_DISPATCH_SEEN=$dispatchSeen"
           Write-Host "FINAL_RELAY_SEEN=$relaySeen"
+          Write-Host "OLD_RELAY_DUPLICATE_SEEN=$oldRelayDuplicateSeen"
 
           if (-not $dispatchSeen) {
             throw "No live Brain-to-Work dispatch was observed"
@@ -147,3 +156,4 @@ jobs:
 
           Write-Host "CONTROL_PANEL_OPENED=True"
           Write-Host "ROBOT_FINAL_LIVE=True"
+          Write-Host "RELAY_MARKER_DEDUPE=True"
