@@ -32,10 +32,12 @@ import {
   normalizeLaneRegistry,
   buildBrainStartRequest,
   buildWorkRolloverInstruction,
+  buildWorkDispatchInstruction,
+  workDispatchMarker,
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.42";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.43";
 
 function parseArgs(argv) {
   const result = {
@@ -233,6 +235,30 @@ async function waitForUserTurnDigest(
   return false;
 }
 
+async function hasUserTurnMarker(page, marker) {
+  const expected = String(marker || "");
+  if (!expected) return false;
+  const texts = await captureUserTurnTexts(page).catch(() => []);
+  return texts.some((text) => String(text).includes(expected));
+}
+
+async function waitForUserTurnMarker(
+  page,
+  marker,
+  { timeoutMs = 6000, intervalMs = 250 } = {}
+) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() <= deadline) {
+    if (await hasUserTurnMarker(page, marker)) return true;
+    await delay(intervalMs);
+  }
+  return false;
+}
+
+function normalizeWorkInstructionText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
 function relayMarker(relayId) {
   return `relay_id=${relayId}`;
 }
@@ -292,12 +318,16 @@ async function inspectKnownTargetSendOutcome({
   adapter,
   page,
   digest,
+  marker = null,
   preUserCount,
   preMaxTurnOrdinal,
   brain = false,
   reload = false
 }) {
-  if (await waitForUserTurnDigest(page, digest, { timeoutMs: 1200 })) {
+  if (marker && await hasUserTurnMarker(page, marker)) {
+    return "CONFIRMED";
+  }
+  if (!marker && await waitForUserTurnDigest(page, digest, { timeoutMs: 1200 })) {
     return "CONFIRMED";
   }
 
@@ -313,8 +343,14 @@ async function inspectKnownTargetSendOutcome({
     timeoutMs: reload ? 15_000 : 4_000
   });
   const digests = observed.digests || [];
-  if (digests.includes(digest)) return "CONFIRMED";
+  if (marker && await hasUserTurnMarker(page, marker)) return "CONFIRMED";
+  if (!marker && digests.includes(digest)) return "CONFIRMED";
   if (!observed.stable || !observed.probe) return "PENDING";
+
+  // Marker-backed Work sends are unambiguous. Once the exact Work page is
+  // stable, absence of the marker proves this dispatch was not persisted,
+  // even if unrelated Work activity changed the baseline in the meantime.
+  if (marker) return "NOT_CONFIRMED";
 
   const probe = observed.probe;
   const baselineKnown =
@@ -345,7 +381,10 @@ async function finalizeConfirmedDispatch({
 }) {
   if (foundUrl) registryLane.work_url = foundUrl;
   registryLane.task_id = latch.task_id;
-  registryLane.instruction_digest = latch.instruction_digest;
+  registryLane.instruction_digest =
+    latch.directive_instruction_digest || latch.instruction_digest;
+  registryLane.last_brain_directive_digest =
+    latch.directive_digest || registryLane.last_brain_directive_digest;
   registryLane.awaiting_work = true;
   registryLane.dispatch_inflight = null;
   await atomicJsonWrite(registryPath, registry);
@@ -588,11 +627,18 @@ async function ensureBrainRequest({
   return null;
 }
 
-async function findWorkConversationByInstruction(adapter, instructionDigest) {
+async function findWorkConversationForLatch(adapter, latch) {
   const candidates = [];
+  const marker = latch.dispatch_id ? workDispatchMarker(latch.dispatch_id) : null;
   for (const page of adapter.getChatGptPages()) {
-    const digests = await captureUserTurnDigests(page).catch(() => []);
-    if (!digests.includes(instructionDigest)) continue;
+    let matched = false;
+    if (marker) {
+      matched = await hasUserTurnMarker(page, marker);
+    } else {
+      const digests = await captureUserTurnDigests(page).catch(() => []);
+      matched = digests.includes(latch.instruction_digest);
+    }
+    if (!matched) continue;
     try {
       const target = targetFromUrl(page.url());
       candidates.push({
@@ -606,9 +652,38 @@ async function findWorkConversationByInstruction(adapter, instructionDigest) {
 
   const unique = new Map(candidates.map((item) => [item.url, item]));
   if (unique.size > 1) {
-    throw new Error("multiple Work conversations match an uncertain instruction");
+    throw new Error("multiple Work conversations match an uncertain dispatch");
   }
   return unique.size === 1 ? [...unique.values()][0] : null;
+}
+
+async function findBrainDirectiveForLatch(brainPage, latch, currentDirective = null) {
+  if (
+    currentDirective &&
+    currentDirective.action === "WORK" &&
+    currentDirective.digest === latch.directive_digest
+  ) {
+    return currentDirective;
+  }
+  if (!brainPage) return null;
+
+  const turns = await captureRecentConversationTurns(brainPage, { limit: 30 })
+    .catch(() => []);
+  for (let index = turns.length - 1; index >= 0; index -= 1) {
+    if (turns[index].role !== "assistant") continue;
+    try {
+      const directive = parseLaneDirective(turns[index].text);
+      if (
+        directive.action === "WORK" &&
+        directive.digest === latch.directive_digest
+      ) {
+        return directive;
+      }
+    } catch {
+      // Ignore non-directive assistant turns.
+    }
+  }
+  return null;
 }
 
 async function reconcileDispatchInflight({
@@ -617,15 +692,14 @@ async function reconcileDispatchInflight({
   registryLane,
   registry,
   registryPath,
-  logPath
+  logPath,
+  brainPage = null,
+  directive = null
 }) {
   const latch = registryLane.dispatch_inflight;
   if (!latch) return "NONE";
 
-  const found = await findWorkConversationByInstruction(
-    adapter,
-    latch.instruction_digest
-  );
+  const found = await findWorkConversationForLatch(adapter, latch);
   if (found) {
     await finalizeConfirmedDispatch({
       foundUrl: found.url,
@@ -648,6 +722,63 @@ async function reconcileDispatchInflight({
     registryLane.work_url,
     { brain: false }
   );
+
+  // v42 and older could permanently block when unrelated Work activity
+  // changed the baseline after an unconfirmed send. On the first v43 pass,
+  // recover only a known existing Work target: if the exact Brain directive
+  // can be recovered and its normalized instruction is absent from a stable
+  // Work conversation, the old latch is safe to discard and retry.
+  if (latch.reconcile_blocked && !latch.dispatch_id && !latch.create_new) {
+    const legacyDirective = await findBrainDirectiveForLatch(
+      brainPage,
+      latch,
+      directive
+    );
+    const stable = await waitForStableSendSurface(adapter, page, {
+      brain: false,
+      timeoutMs: 4_000
+    });
+    if (!stable.stable || !stable.probe) return "PENDING";
+    if (!legacyDirective) return "BLOCKED";
+
+    const userTexts = await captureUserTurnTexts(page).catch(() => []);
+    const normalizedExpected = normalizeWorkInstructionText(
+      legacyDirective.instruction
+    );
+    const legacySendExists = userTexts.some((text) =>
+      normalizeWorkInstructionText(text) === normalizedExpected
+    );
+    if (legacySendExists) {
+      await finalizeConfirmedDispatch({
+        foundUrl: registryLane.work_url,
+        registryLane,
+        latch: {
+          ...latch,
+          directive_instruction_digest: legacyDirective.instruction_digest
+        },
+        registry,
+        registryPath
+      });
+      await safeLog(logPath, {
+        type: "LANE_WORK_LEGACY_BLOCKED_LATCH_CONFIRMED",
+        laneId: lane.lane_id,
+        taskId: latch.task_id,
+        digest: latch.instruction_digest
+      });
+      return "CONFIRMED";
+    }
+
+    registryLane.dispatch_inflight = null;
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_WORK_LEGACY_BLOCKED_LATCH_REBASED",
+      laneId: lane.lane_id,
+      taskId: latch.task_id,
+      digest: latch.instruction_digest
+    });
+    return "NOT_CONFIRMED";
+  }
+
   if (latch.reconcile_blocked) return "BLOCKED";
   const reload = !latch.reconcile_reloaded;
   if (reload) {
@@ -666,6 +797,7 @@ async function reconcileDispatchInflight({
     adapter,
     page,
     digest: latch.instruction_digest,
+    marker: latch.dispatch_id ? workDispatchMarker(latch.dispatch_id) : null,
     preUserCount: latch.pre_user_count,
     preMaxTurnOrdinal: latch.pre_max_turn_ordinal,
     brain: false,
@@ -754,14 +886,15 @@ async function dispatchWork({
       registryLane,
       registry,
       registryPath,
-      logPath
+      logPath,
+      directive
     });
     if (outcome === "CONFIRMED" || outcome === "PENDING" || outcome === "BLOCKED") return;
   }
 
   let page = null;
   let createNew = !registryLane.work_url;
-  let outgoingInstruction = directive.instruction;
+  let workBody = directive.instruction;
 
   if (registryLane.work_url) {
     page = await openExactConversation(adapter, registryLane.work_url, { brain: false });
@@ -772,7 +905,7 @@ async function dispatchWork({
 
     if (probe.snapshot.conversationFull) {
       createNew = true;
-      outgoingInstruction = buildWorkRolloverInstruction({
+      workBody = buildWorkRolloverInstruction({
         projectName: lane.project_name,
         taskId: directive.task_id,
         instruction: directive.instruction
@@ -785,13 +918,25 @@ async function dispatchWork({
     }
   }
 
+  const dispatchId = sha256([
+    lane.lane_id,
+    directive.task_id,
+    directive.digest
+  ].join("|")).slice(0, 32);
+  const outgoingInstruction = buildWorkDispatchInstruction({
+    taskId: directive.task_id,
+    dispatchId,
+    instruction: workBody
+  });
   const instructionDigest = sha256(outgoingInstruction);
   const baseline = page
     ? await captureSendBaseline(adapter, page)
     : { pre_user_count: 0, pre_max_turn_ordinal: 0 };
   registryLane.dispatch_inflight = {
     task_id: directive.task_id,
+    dispatch_id: dispatchId,
     instruction_digest: instructionDigest,
+    directive_instruction_digest: directive.instruction_digest,
     directive_digest: directive.digest,
     create_new: createNew,
     ...baseline
@@ -836,7 +981,10 @@ async function dispatchWork({
     return;
   }
 
-  const confirmed = await waitForUserTurnDigest(page, instructionDigest);
+  const confirmed = await waitForUserTurnMarker(
+    page,
+    workDispatchMarker(dispatchId)
+  );
   if (!confirmed) {
     // Persist a discovered conversation URL even while the send itself still
     // needs reconciliation. This lets the next loop hard-reload the exact
@@ -854,7 +1002,7 @@ async function dispatchWork({
 
   registryLane.work_url = workUrl;
   registryLane.task_id = directive.task_id;
-  registryLane.instruction_digest = instructionDigest;
+  registryLane.instruction_digest = directive.instruction_digest;
   registryLane.last_brain_directive_digest = directive.digest;
   registryLane.awaiting_work = true;
   registryLane.dispatch_inflight = null;
@@ -1324,7 +1472,8 @@ async function processLane({
       registryLane,
       registry,
       registryPath,
-      logPath
+      logPath,
+      brainPage
     });
     if (dispatchOutcome === "PENDING") {
       return laneStatus(
