@@ -181,6 +181,16 @@ export class ChatGptUiAdapter {
     return visible;
   }
 
+  async getFocusedChatGptPages() {
+    const focused = [];
+    for (const page of this.getChatGptPages()) {
+      const hasFocus = await page.evaluate(() => document.hasFocus())
+        .catch(() => false);
+      if (hasFocus) focused.push(page);
+    }
+    return focused;
+  }
+
   async listRecentConversationUrls(page, { limit = 20 } = {}) {
     if (!page || page.isClosed()) return [];
     const urls = await page.evaluate((maxItems) => {
