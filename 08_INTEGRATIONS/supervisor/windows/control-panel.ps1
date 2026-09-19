@@ -9,10 +9,17 @@ $configFile = Join-Path $root 'lanes.json'
 $registryFile = Join-Path $root 'lane-registry.json'
 $statusFile = Join-Path $root 'lane-status.json'
 $startScript = Join-Path $runtime 'windows\start-supervisor.ps1'
+$lifecycleScript = Join-Path $runtime 'windows\lifecycle-truth.ps1'
 $openChatScript = Join-Path $runtime 'windows\open-supervisor-chat.ps1'
 $runnerRoot = 'C:\actions-runner-business\actions-runner'
 $repoUrl = 'https://github.com/magasincoffee/magasincoffee.github.io'
 $vietnamTimeZone = [TimeZoneInfo]::FindSystemTimeZoneById('SE Asia Standard Time')
+$script:lastRecoveryRequestAt = [DateTimeOffset]::MinValue
+
+if (-not (Test-Path $lifecycleScript)) {
+    throw "Không tìm thấy lifecycle truth helper: $lifecycleScript"
+}
+. $lifecycleScript
 
 function Read-JsonFile([string]$Path) {
     if (-not (Test-Path $Path)) { return $null }
@@ -76,13 +83,19 @@ function Test-ChatConversationUrl([string]$Url) {
 }
 
 function Get-SupervisorProcess {
-    return Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
-        Where-Object {
-            $_.CommandLine -and
-            $_.CommandLine -like '*run-supervisor.ps1*' -and
-            $_.CommandLine -like "*$root*"
-        } |
-        Select-Object -First 1
+    return Get-LifecycleSupervisorWrapper -Root $root
+}
+
+function Request-LifecycleRecovery {
+    $now = [DateTimeOffset]::UtcNow
+    if (($now - $script:lastRecoveryRequestAt).TotalSeconds -lt 5) {
+        return
+    }
+
+    $result = Invoke-LifecycleRecoveryStart -StartScript $startScript -Root $root
+    if ([string]$result.state -in @('STARTING','RECOVERING')) {
+        $script:lastRecoveryRequestAt = $now
+    }
 }
 
 function Get-RunnerProcess {
@@ -103,21 +116,6 @@ function Ensure-Runner {
         Start-Process -FilePath 'cmd.exe' -WindowStyle Hidden -WorkingDirectory $runnerRoot -ArgumentList @('/c','run.cmd')
         Start-Sleep -Seconds 2
         return [bool](Get-RunnerProcess)
-    } catch {
-        return $false
-    }
-}
-
-function Ensure-Supervisor {
-    if (Get-SupervisorProcess) { return $true }
-    if (-not (Test-Path $startScript)) { return $false }
-    try {
-        Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @(
-            '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass',
-            '-File',('"' + $startScript + '"'),'-Hidden'
-        )
-        Start-Sleep -Seconds 2
-        return [bool](Get-SupervisorProcess)
     } catch {
         return $false
     }
@@ -300,6 +298,39 @@ $runtimeLabel.Size = New-Object Drawing.Size(500, 32)
 $runtimeLabel.Font = New-Object Drawing.Font('Segoe UI Semibold', 10)
 $form.Controls.Add($runtimeLabel)
 
+$runtimeStartButton = New-Object Windows.Forms.Button
+$runtimeStartButton.Location = New-Object Drawing.Point(820, 76)
+$runtimeStartButton.Size = New-Object Drawing.Size(175, 42)
+$runtimeStartButton.Text = 'KHỞI ĐỘNG ROBOT NỀN'
+$runtimeStartButton.Add_Click({
+    $enabledLaneCount = Get-EnabledLaneCount -Root $root
+    if ($enabledLaneCount -lt 1) {
+        [Windows.Forms.MessageBox]::Show(
+            'Hãy bật ít nhất một luồng trước khi khởi động Robot nền.',
+            'MAGASIN BUSINESS OS',
+            'OK',
+            'Information'
+        ) | Out-Null
+        return
+    }
+
+    if (-not (Test-Path $startScript)) {
+        [Windows.Forms.MessageBox]::Show(
+            'Không tìm thấy Supervisor runtime.',
+            'MAGASIN BUSINESS OS',
+            'OK',
+            'Error'
+        ) | Out-Null
+        return
+    }
+
+    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @(
+        '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass',
+        '-File',('"' + $startScript + '"'),'-Hidden'
+    )
+})
+$form.Controls.Add($runtimeStartButton)
+
 $repoButton = New-Object Windows.Forms.Button
 $repoButton.Location = New-Object Drawing.Point(1015, 76)
 $repoButton.Size = New-Object Drawing.Size(170, 42)
@@ -462,15 +493,9 @@ for ($i = 0; $i -lt 3; $i++) {
             ) | Out-Null
             return
         }
+        # Lane START changes only Owner lane intent: disabled -> enabled.
+        # Process recovery is a separate lifecycle concern handled by Refresh-Ui.
         Save-Lane $id $ui.Project.Text $brainUrl $workUrl $true
-        if (-not (Ensure-Supervisor)) {
-            [Windows.Forms.MessageBox]::Show(
-                'Không thể khởi động Supervisor runtime.',
-                'MAGASIN BUSINESS OS',
-                'OK',
-                'Error'
-            ) | Out-Null
-        }
     })
     $startButton.Tag = $currentLaneId
 
@@ -560,14 +585,51 @@ function Refresh-Ui {
         $runnerButton.BackColor = [Drawing.Color]::FromArgb(255,247,237)
     }
 
-    $supervisor = Get-SupervisorProcess
-    if ($supervisor) {
-        $runtimeLabel.Text = 'ROBOT NỀN: ĐANG HOẠT ĐỘNG'
-        $runtimeLabel.ForeColor = [Drawing.Color]::FromArgb(22,101,52)
-    } else {
-        $runtimeLabel.Text = 'ROBOT NỀN: ĐANG TẮT — BẮT ĐẦU MỘT LUỒNG ĐỂ KHỞI ĐỘNG'
-        $runtimeLabel.ForeColor = [Drawing.Color]::FromArgb(154,52,18)
+    $enabledLaneCount = @($config.lanes | Where-Object { [bool]$_.enabled }).Count
+    $ownerStop = Get-LifecycleOwnerStopState -Root $root
+    $processTruth = Get-LifecycleProcessTruth -Root $root
+
+    if ($enabledLaneCount -gt 0 -and -not $ownerStop.blocked -and -not $processTruth.healthy) {
+        Request-LifecycleRecovery
+        $processTruth = Get-LifecycleProcessTruth -Root $root
     }
+
+    $processState = if ($enabledLaneCount -lt 1) {
+        'ALL_DISABLED'
+    } elseif ($ownerStop.blocked) {
+        'OWNER_STOP'
+    } elseif ($processTruth.healthy) {
+        'HEALTHY'
+    } elseif (-not $processTruth.wrapper_alive) {
+        'STARTING'
+    } else {
+        'RECOVERING'
+    }
+
+    switch ($processState) {
+        'HEALTHY' {
+            $runtimeLabel.Text = 'ROBOT NỀN: ĐANG HOẠT ĐỘNG'
+            $runtimeLabel.ForeColor = [Drawing.Color]::FromArgb(22,101,52)
+        }
+        'OWNER_STOP' {
+            $runtimeLabel.Text = 'ROBOT NỀN: OWNER STOP — CHỈ BẠN CÓ THỂ KHỞI ĐỘNG LẠI'
+            $runtimeLabel.ForeColor = [Drawing.Color]::FromArgb(185,28,28)
+        }
+        'ALL_DISABLED' {
+            $runtimeLabel.Text = 'ROBOT NỀN: KHÔNG CẦN CHẠY — TẤT CẢ LUỒNG ĐANG TẮT'
+            $runtimeLabel.ForeColor = [Drawing.Color]::FromArgb(71,85,105)
+        }
+        'STARTING' {
+            $runtimeLabel.Text = 'ROBOT NỀN: ĐANG KHỞI ĐỘNG'
+            $runtimeLabel.ForeColor = [Drawing.Color]::FromArgb(161,98,7)
+        }
+        default {
+            $runtimeLabel.Text = 'ROBOT NỀN: ĐANG TỰ KHÔI PHỤC'
+            $runtimeLabel.ForeColor = [Drawing.Color]::FromArgb(161,98,7)
+        }
+    }
+
+    $runtimeStartButton.Enabled = [bool]($enabledLaneCount -gt 0 -and $ownerStop.blocked)
 
     foreach ($laneId in @('lane-1','lane-2','lane-3')) {
         $ui = $laneUi[$laneId]
@@ -618,18 +680,37 @@ function Refresh-Ui {
         $ui.Stop.Enabled = $enabled
         $ui.SaveBrain.Enabled = $true
 
-        $state = if ($st -and $st.status) { [string]$st.status } elseif ($enabled) { 'STARTING' } else { 'STOPPED' }
+        $state = 'STOPPED'
+        $message = 'Luồng đang dừng. Nhập link Bộ não rồi bấm BẮT ĐẦU LUỒNG.'
+
+        if ($enabled) {
+            if ($ownerStop.blocked) {
+                $state = 'WAIT_OWNER'
+                $message = 'Robot nền đang ở Owner STOP. Luồng vẫn được lưu; bấm KHỞI ĐỘNG ROBOT NỀN khi bạn muốn tiếp tục.'
+            } elseif (-not $processTruth.healthy) {
+                if ($processState -eq 'STARTING') {
+                    $state = 'STARTING'
+                    $message = 'Đang khởi động Robot nền; trạng thái cũ chỉ được giữ để recovery.'
+                } else {
+                    $state = 'RECOVERING'
+                    $message = 'Đang tự khôi phục Supervisor / Three-Lane / Chrome / CDP trước khi tiếp tục task.'
+                }
+            } elseif ($st -and $st.status) {
+                $state = [string]$st.status
+                $message = if ($st.message) { [string]$st.message } else { 'Robot đang hoạt động.' }
+            } else {
+                $state = 'STARTING'
+                $message = 'Runtime đã sống; đang chờ lane status mới.'
+            }
+        }
+
         $ui.Status.Text = Get-FriendlyStatus $state
         $ui.Panel.BackColor = Get-StatusBackColor $state
-        $ui.Message.Text = if ($st -and $st.message) {
-            [string]$st.message
-        } elseif ($enabled) {
-            'Đang khởi động luồng...'
-        } else {
-            'Luồng đang dừng. Nhập link Bộ não rồi bấm BẮT ĐẦU LUỒNG.'
-        }
-        $ui.Updated.Text = if ($st -and $st.updated_at) {
+        $ui.Message.Text = $message
+        $ui.Updated.Text = if ($processTruth.healthy -and $st -and $st.updated_at) {
             'Cập nhật: ' + (Format-VietnamTime ([string]$st.updated_at))
+        } elseif ($enabled -and -not $processTruth.healthy) {
+            'Cập nhật: đang xác minh PROCESS TRUTH'
         } else {
             'Cập nhật: —'
         }
