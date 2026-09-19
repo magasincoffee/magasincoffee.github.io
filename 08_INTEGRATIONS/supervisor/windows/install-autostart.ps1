@@ -22,8 +22,11 @@ New-Item -Path $runKey -Force | Out-Null
 $command = 'powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $bootstrap + '"'
 Set-ItemProperty -Path $runKey -Name $runName -Value $command -Type String
 
-# Installation/explicit enable means future unexpected reboot/logon may resume.
-Remove-Item $disabled -Force -ErrorAction SilentlyContinue
+# Installing the recovery registration must never clear an Owner STOP latch.
+# Only explicit Owner START may clear AUTOSTART_DISABLED.
+if (Test-Path $disabled) {
+    Write-Host 'OWNER_STOP_PRESERVED_DURING_AUTOSTART_INSTALL=True'
+}
 
 $stored = (Get-ItemProperty -Path $runKey -Name $runName -ErrorAction Stop).$runName
 if ($stored -ne $command) {
@@ -44,7 +47,7 @@ $status | ConvertTo-Json | Set-Content -Path $statusPath -Encoding UTF8
 
 Write-Host "Autostart registered: $runName"
 Write-Host 'Recovery boundary: Windows user logon is required for Chrome/ChatGPT automation.'
-Write-Host 'Owner STOP creates AUTOSTART_DISABLED; explicit START/install clears it.'
+Write-Host 'Owner STOP creates AUTOSTART_DISABLED; only explicit Owner START clears it.'
 
 if ($StartNow) {
     & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $bootstrap
