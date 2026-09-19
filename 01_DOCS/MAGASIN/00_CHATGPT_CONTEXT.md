@@ -184,10 +184,10 @@ The Owner-released generation `PFC_8H_V2_RUN_01` is ACTIVE.
 Current authoritative state:
 
 ```text
-TASK-051..TASK-061 = DONE
-current_task        = TASK-062
-TASK-062            = READY / AUTO_CONTINUE
-next_task           = TASK-063
+TASK-051..TASK-062 = DONE
+current_task        = TASK-063
+TASK-063            = READY / AUTO_CONTINUE
+next_task           = TASK-064
 status              = READY
 autonomy            = AUTO_CONTINUE
 requires_user       = false
@@ -255,7 +255,7 @@ The repository is public. Never commit secrets, credentials, tokens, cookies, pr
 
 ## 12. Current task
 
-**TASK-062 — Cash Balance Source Mapper — READY / AUTO_CONTINUE.**
+**TASK-063 — Cash Source Coverage V1 — READY / AUTO_CONTINUE.**
 
 Immediate behavior for a new Work session:
 
@@ -263,8 +263,9 @@ Immediate behavior for a new Work session:
 2. read `PFC_8H_V2_EXECUTION_PLAN.md`;
 3. read `TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`;
 4. read `TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`;
-5. map only source evidence whose provenance is proven by TASK-060;
-6. preserve `OBSERVED_BALANCE != COMPUTED_BALANCE` and never infer balance from payment method/movement rows;
-7. keep missing external balances GAP / NOT_CONNECTED, never zero;
-8. continue automatically to TASK-063 after TASK-062 DoD unless a true Owner/security boundary occurs.
+5. read `TASK_062_CASH_BALANCE_SOURCE_MAPPER_V1_EVIDENCE.md`;
+6. define source/account/period coverage without changing source classification or truth quality;
+7. preserve current internal cash source as computed-only and current direct external balances as NOT_CONNECTED until evidenced;
+8. never infer COMPLETE from row presence or from one branch/account;
+9. continue automatically to TASK-064 after TASK-063 DoD unless a true Owner/security boundary occurs.
 
