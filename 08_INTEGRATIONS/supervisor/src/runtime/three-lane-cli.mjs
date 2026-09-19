@@ -787,9 +787,12 @@ async function reconcileRelayInflight({
   if (!latch) return "NONE";
 
   if (latch.reconcile_blocked) return "BLOCKED";
-  const reload = !latch.reconcile_reloaded;
+  const reload =
+    !latch.reconcile_reloaded ||
+    latch.reconcile_runtime_version !== SUPERVISOR_RUNTIME_VERSION;
   if (reload) {
     latch.reconcile_reloaded = true;
+    latch.reconcile_runtime_version = SUPERVISOR_RUNTIME_VERSION;
     latch.reconcile_started_at = new Date().toISOString();
     await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
@@ -934,6 +937,17 @@ async function relayWorkResult({
     `${lane.lane_id}-${relay.relay_id}.png`
   );
   await captureCompletedAssistantTurnScreenshot(workPage, screenshotPath);
+  const screenshotStat = await fs.stat(screenshotPath);
+  if (!screenshotStat.isFile() || screenshotStat.size <= 0) {
+    throw new Error("Work result screenshot was not created correctly");
+  }
+  await safeLog(logPath, {
+    type: "LANE_RESULT_SCREENSHOT_CAPTURED",
+    laneId: lane.lane_id,
+    taskId: registryLane.task_id,
+    relayId: relay.relay_id,
+    digest: relay.response_digest
+  });
 
   const relayBaseline = await captureSendBaseline(adapter, brainPage);
   registryLane.relay_inflight = {
@@ -966,7 +980,25 @@ async function relayWorkResult({
     });
     return;
   }
-  if (!sent.executed) return;
+  if (!sent.executed) {
+    await safeLog(logPath, {
+      type: "LANE_RESULT_RELAY_NOT_EXECUTED",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: relay.relay_id,
+      digest: relay.response_digest,
+      reason: sent.reason || "unknown"
+    });
+    return;
+  }
+
+  await safeLog(logPath, {
+    type: "LANE_RESULT_RELAY_SEND_CLICKED",
+    laneId: lane.lane_id,
+    taskId: registryLane.task_id,
+    relayId: relay.relay_id,
+    digest: relay.response_digest
+  });
 
   const relayConfirmed = await waitForRelayMarker(
     brainPage,

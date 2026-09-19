@@ -2,20 +2,26 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { ACTIONS } from "../src/decision.mjs";
-import { executeDecision, sendComposerInstruction } from "../src/ui/actions.mjs";
+import { executeDecision, sendComposerInstruction, sendComposerWithAttachment } from "../src/ui/actions.mjs";
 
 function fakeLocator({
   visible = true,
   onClick = () => {},
   onFill = () => {},
-  onPress = () => {}
+  onPress = () => {},
+  onSetFiles = () => {},
+  enabled = true,
+  count = 1
 } = {}) {
   return {
     first() { return this; },
     async isVisible() { return visible; },
+    async isEnabled() { return enabled; },
+    async count() { return count; },
     async click() { onClick(); },
     async fill(value) { onFill(value); },
-    async press(key) { onPress(key); }
+    async press(key) { onPress(key); },
+    async setInputFiles(value) { onSetFiles(value); }
   };
 }
 
@@ -24,7 +30,9 @@ function fakePage({
   controls = [],
   onClick = () => {},
   onFill = () => {},
-  onPress = () => {}
+  onPress = () => {},
+  onSetFiles = () => {},
+  fileInputPresent = true
 } = {}) {
   return {
     async evaluate() { return controls; },
@@ -32,15 +40,25 @@ function fakePage({
       if (selector.includes("prompt-textarea") || selector.includes("contenteditable")) {
         return fakeLocator({
           visible: composerVisible,
+          enabled: true,
           onFill,
           onPress
         });
       }
-      if (selector.includes("data-testid")) {
-        return fakeLocator({ visible: true, onClick });
+      if (selector.includes("input[type='file']")) {
+        return fakeLocator({
+          visible: fileInputPresent,
+          enabled: true,
+          count: fileInputPresent ? 1 : 0,
+          onSetFiles
+        });
       }
-      return fakeLocator({ visible: false });
+      if (selector.includes("data-testid")) {
+        return fakeLocator({ visible: true, enabled: true, onClick });
+      }
+      return fakeLocator({ visible: false, enabled: false, count: 0 });
     },
+    async waitForTimeout() {},
     getByRole() {
       return fakeLocator({ visible: true, onClick });
     }
@@ -182,4 +200,42 @@ test("dynamic composer send never clicks Continue-generating as a substitute", a
   assert.equal(result.executed, true);
   assert.equal(filled, "Dynamic Brain directive for worker-2");
   assert.equal(clicks, 1);
+});
+
+
+test("attachment relay fills text before upload and waits for explicit enabled Send", async () => {
+  const events = [];
+  const controls = [{
+    text: "",
+    ariaLabel: "Send prompt",
+    testId: "send-button",
+    disabled: false
+  }];
+
+  const result = await sendComposerWithAttachment(
+    fakePage({
+      controls,
+      onFill: () => { events.push("fill"); },
+      onSetFiles: () => { events.push("attach"); },
+      onClick: () => { events.push("send"); }
+    }),
+    "relay full text",
+    "C:\\temp\\work.png",
+    { dryRun: false }
+  );
+
+  assert.equal(result.executed, true);
+  assert.deepEqual(events, ["fill", "attach", "send"]);
+});
+
+test("disabled Send control is never selected as an attachment send target", async () => {
+  const source = await import("node:fs/promises").then((fs) =>
+    fs.readFile(new URL("../src/ui/actions.mjs", import.meta.url), "utf8")
+  );
+  assert.match(source, /if \(control\.disabled\) return false/);
+  assert.match(source, /attachment upload did not become ready before timeout/);
+  assert.doesNotMatch(
+    source,
+    /await input\.setInputFiles\(filePath\);[\s\S]{0,200}await composer\.fill\(instruction\)/
+  );
 });
