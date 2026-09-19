@@ -49,7 +49,7 @@ function normalizePrivacyList(value) {
 
 function isIsoDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return false;
-  const date = new Date(\`\${value}T00:00:00Z\`);
+  const date = new Date(`${value}T00:00:00Z`);
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
@@ -116,7 +116,7 @@ function failClosed(record, reason) {
     ...record,
     value: null,
     quality: "GAP",
-    message: \`Financial truth record failed closed: \${reason}.\`,
+    message: `Financial truth record failed closed: ${reason}.`,
     reason
   };
 }
