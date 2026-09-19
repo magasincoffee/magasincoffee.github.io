@@ -57,9 +57,6 @@ jobs:
             throw "Brain autodiscovery must be disabled in THREE_LANE_V1"
           }
           if ([string]$state.autonomy -eq "PAUSED") {
-            if ($state.current_task -ne "TASK-050") {
-              throw "PAUSED architecture gate must point to TASK-050"
-            }
             if (-not $state.architecture_handoff -or [bool]$state.architecture_handoff.robot_may_execute) {
               throw "PAUSED architecture gate must deny Robot execution"
             }
@@ -75,13 +72,12 @@ jobs:
               $preparedTasks = @($state.prepared_execution_queue.tasks | ForEach-Object { [string]$_ })
             }
 
-            $legacyTaskAllowed = ([string]$state.current_task -eq "TASK-049")
             $preparedQueueTaskAllowed = (
               [string]$state.prepared_execution_queue.status -match '^ACTIVE' -and
               $preparedTasks -contains [string]$state.current_task
             )
 
-            if (-not $legacyTaskAllowed -and -not $preparedQueueTaskAllowed) {
+            if (-not $preparedQueueTaskAllowed) {
               throw "Executable source-of-truth current_task is not part of an Owner-released queue"
             }
 
