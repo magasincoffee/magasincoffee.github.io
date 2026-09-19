@@ -1,35 +1,90 @@
 # MAGASIN Supervisor
 
-Local autonomy helper for MAGASIN Business OS.
+Production local autonomy runtime for MAGASIN Business OS.
 
-## Current status
+## Current architecture
 
-Supervisor V1 is implemented and field-verified on `MAGASIN-BUSINESS-PC`.
+The active production orchestration mode is **Three-Lane V1**. Each lane has isolated persisted state:
 
-Capabilities:
+- one Owner-selected **Brain** conversation;
+- one Owner-selected or Robot-created **Work** conversation;
+- one lane registry entry containing task, dispatch, relay and generation state.
 
-- reads the public canonical `00_PROJECT_STATE.json`;
-- attaches to the Owner-authenticated **real installed Chrome** through local CDP;
-- never asks for or stores credentials, MFA, cookies, tokens, or message bodies;
-- classifies ChatGPT UI state with fail-closed behavior;
-- sends only the canonical Continue instruction when `AUTO_CONTINUE` permits it;
-- clicks only a semantically recognized safe Retry control for transient failures;
-- uses a bounded retry budget;
-- prevents duplicate Continue sends until observable assistant progress occurs;
-- pauses on `WAIT_USER` / `BLOCKED` and security-sensitive states;
-- reconnects after ordinary browser/network interruptions;
-- persists outside a GitHub Actions job;
-- provides one Owner-facing `MAGASIN BUSINESS OS CONTROL` panel with START ROBOT / STOP, task/action/error/status visibility, and privacy-safe local logs.
+The Robot never auto-discovers or auto-replaces an Owner-selected Brain. Brain and Work conversation URLs remain local and are not written to repository logs.
 
-## Local files
+The Windows wrapper still retains the legacy `BRAIN_WORKER_V1` entry point as a compatibility fallback because `run-supervisor.ps1` can select that mode from previously persisted authoritative state. It is not the current Three-Lane production path.
 
-Local-only runtime root:
+## Three-Lane delivery contracts
+
+### Brain -> Work
+
+Work delivery uses the machine envelope:
+
+```text
+MAGASIN_WORK_DISPATCH_V1
+task_id=<task>
+dispatch_id=<deterministic id>
+```
+
+`dispatch_id` is deterministic from lane + Brain directive. Reconciliation is marker-authoritative on the exact Work conversation:
+
+- marker present: confirmed;
+- stable Work with marker absent: not confirmed and safe to retry;
+- busy/unstable Work: pending;
+- one reconciliation reload is bounded for Work dispatch recovery.
+
+The Brain directive digest is persisted when dispatch is confirmed so the same directive cannot be redispatched after restart.
+
+### Work -> Brain
+
+Result relay carries a deterministic `relay_id=<id>` marker and the full Work result plus one screenshot.
+
+Relay reconciliation in v2026-09-19.44 is marker-authoritative on the exact persisted Brain:
+
+- relay marker present: confirmed exact-once;
+- Brain stable and marker absent: not confirmed, clear the latch and retry safely;
+- Brain busy/unstable: pending;
+- unrelated Brain activity does not create a terminal blocked latch;
+- legacy v43 `reconcile_blocked` relay latches self-heal without Owner intervention.
+
+No relay reconciliation path performs an unbounded reload loop.
+
+## Temporary evidence lifecycle
+
+Relay screenshots live under the local-only `lane-evidence` directory.
+
+A screenshot remains only while referenced by an active `relay_inflight` latch. It is deleted on:
+
+- marker-confirmed relay;
+- relay dedupe;
+- stable marker-absent retry;
+- Brain rebind;
+- Work rebind/reset;
+- invalid screenshot capture.
+
+Runtime startup and periodic bounded GC remove only orphan PNG evidence that is not referenced by any active relay latch in any lane. Cleanup is capped per pass.
+
+## Attachment send safety
+
+Attachment relay retries begin from a clean composer draft and remove stale attachment chips before re-upload. Composer readiness, fill, file upload and attachment readiness waits are bounded. This prevents an uncertain prior attempt from stacking duplicate draft text or attachments.
+
+## Cross-lane isolation
+
+Every loop iteration resolves state as `registry.lanes[lane.lane_id]`. A lane's task, Work page, dispatch latch, relay latch and evidence reference are never shared with another lane. Disabled lanes remain stopped and do not affect enabled lane state.
+
+## Windows production entry points
+
+- `windows/run-supervisor.ps1` — persistent wrapper and mode selection.
+- `windows/start-supervisor.ps1` / `stop-supervisor.ps1` — bounded start/stop.
+- `windows/repair-supervisor.ps1` — verified repair/install path.
+- `windows/control-panel.ps1` — Owner control panel.
+- `windows/open-supervisor-chat.ps1` — opens the configured target through the dedicated Robot browser boundary.
+
+Local runtime root:
 
 ```text
 %LOCALAPPDATA%\MAGASIN\BusinessOS\supervisor
 ```
-
-Sensitive runtime/profile state must stay local and must never be committed.
 
 Desktop control:
 
@@ -37,9 +92,16 @@ Desktop control:
 MAGASIN BUSINESS OS CONTROL.lnk
 ```
 
-The panel is the normal Owner entry point. START ROBOT launches the Supervisor in background mode. STOP invokes the bounded Supervisor kill-switch contract. The panel reads local `runtime-status.json` plus canonical public `00_PROJECT_STATE.json`; it shows current/next task, UI observation, continuation decision/action, update time, and Owner-required errors without storing private chat message bodies.
+Sensitive runtime/profile state, authenticated browser data, target conversation identifiers, tokens and message bodies remain local and must never be committed.
 
-The GitHub runner remains a separate process and is not controlled by the Supervisor STOP button.
+## Production workflows
+
+- `supervisor-tests.yml` — unit/regression test suite.
+- `supervisor-autostart-install.yml` — install/deploy and survival verification on the self-hosted machine.
+- `supervisor-integrity.yml` — task-independent static audit plus self-hosted runtime integrity audit.
+- `supervisor-open-control-panel.yml` — generic production Robot/control-panel opener.
+
+Historical TASK-049 diagnostic/live-monitor workflows are not part of production.
 
 ## Safety stops
 
@@ -51,7 +113,7 @@ Supervisor must not continue through:
 - destructive production actions;
 - admin/security escalation;
 - ambiguous business decisions;
-- project state `WAIT_USER` or `BLOCKED`.
+- authoritative project state `WAIT_USER` or `BLOCKED`.
 
 ## Development test
 
