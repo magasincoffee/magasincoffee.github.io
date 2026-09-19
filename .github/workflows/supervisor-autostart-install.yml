@@ -65,8 +65,32 @@ jobs:
             }
             Write-Host "OWNER_ARCHITECTURE_GATE=PAUSED"
             Write-Host "ROBOT_MAY_EXECUTE=False"
-          } elseif ($state.current_task -ne "TASK-049") {
-            throw "Executable Three-Lane source-of-truth must be on TASK-049 until the next Owner-approved implementation queue is released"
+          } else {
+            if (-not $state.architecture_handoff -or -not [bool]$state.architecture_handoff.robot_may_execute) {
+              throw "Executable source-of-truth must explicitly allow Robot execution"
+            }
+
+            $preparedTasks = @()
+            if ($state.prepared_execution_queue -and $state.prepared_execution_queue.tasks) {
+              $preparedTasks = @($state.prepared_execution_queue.tasks | ForEach-Object { [string]$_ })
+            }
+
+            $legacyTaskAllowed = ([string]$state.current_task -eq "TASK-049")
+            $preparedQueueTaskAllowed = (
+              [string]$state.prepared_execution_queue.status -match '^ACTIVE' -and
+              $preparedTasks -contains [string]$state.current_task
+            )
+
+            if (-not $legacyTaskAllowed -and -not $preparedQueueTaskAllowed) {
+              throw "Executable source-of-truth current_task is not part of an Owner-released queue"
+            }
+
+            Write-Host "ROBOT_MAY_EXECUTE=True"
+            if ($preparedQueueTaskAllowed) {
+              Write-Host "PREPARED_QUEUE_ACTIVE=True"
+              Write-Host "PREPARED_QUEUE_ID=$($state.prepared_execution_queue.id)"
+              Write-Host "PREPARED_QUEUE_GENERATION=$($state.prepared_execution_queue.execution_generation)"
+            }
           }
           Write-Host "SOURCE_OF_TRUTH_LOCAL_CHECK=True"
 
