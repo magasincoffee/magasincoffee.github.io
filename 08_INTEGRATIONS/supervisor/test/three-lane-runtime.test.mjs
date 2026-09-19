@@ -102,7 +102,7 @@ test("new Work URLs are stored through canonical target normalization", async ()
 
 
 
-test("v41 Owner Brain URL override is revisioned and can hot-swap during active Work", async () => {
+test("v42 Owner Brain URL override is revisioned and can hot-swap during active Work", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -119,17 +119,17 @@ test("v41 Owner Brain URL override is revisioned and can hot-swap during active 
   assert.match(source, /normalizeChatGptConversationUrl\(registryLane\.brain_url\)/);
 });
 
-test("v41 active Brain status comes from persisted registry target", async () => {
+test("v42 active Brain status comes from persisted registry target", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-19\.41/);
+  assert.match(source, /2026-09-19\.42/);
 });
 
-test("v41 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
+test("v42 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -148,7 +148,7 @@ test("v41 valid completed Brain directive can complete a stuck first-handshake w
 });
 
 
-test("v41 explicit Brain rebind clears only a blocked old-Brain dispatch when no Work result is pending", async () => {
+test("v42 explicit Brain rebind clears only a blocked old-Brain dispatch when no Work result is pending", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -324,4 +324,18 @@ test("v38 result relay validates screenshot and logs attachment lifecycle", asyn
   assert.match(source, /LANE_RESULT_RELAY_SEND_CLICKED/);
   assert.match(source, /screenshotStat\.size <= 0/);
   assert.match(source, /reconcile_runtime_version/);
+});
+
+test("v42 can recover the latest valid directive when only duplicate Robot handshake turns follow it", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /captureRecentConversationTurns/);
+  assert.match(source, /expectedStartDigest = sha256\(buildBrainStartRequest/);
+  assert.match(source, /onlyRobotHandshakeAfterDirective/);
+  assert.match(source, /turn\.role === "user" && turn\.digest === expectedStartDigest/);
+  assert.match(source, /LANE_BRAIN_DIRECTIVE_RECOVERED_BEFORE_DUPLICATE_HANDSHAKE/);
+  assert.match(source, /if \(laterTurns\.length && !onlyRobotHandshakeAfterDirective\) return null/);
 });
