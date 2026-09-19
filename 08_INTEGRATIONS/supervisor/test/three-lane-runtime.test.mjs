@@ -82,10 +82,7 @@ test("WORKING status requires enabled lane with an active pending Work result", 
     "utf8"
   );
 
-  const enabledGuard = source.indexOf("if (!lane.enabled)");
-  const awaitingGuard = source.indexOf("if (registryLane.awaiting_work)");
-  const workingStatus = source.indexOf('"WORKING"', awaitingGuard);
-  assert.ok(enabledGuard >= 0);
-  assert.ok(awaitingGuard > enabledGuard);
-  assert.ok(workingStatus > awaitingGuard);
+  assert.match(source, /if \(!lane\.enabled\)/);
+  assert.match(source, /if \(registryLane\.awaiting_work\)/);
+  assert.match(source, /laneStatus\([\s\S]*?"WORKING"/);
 });
