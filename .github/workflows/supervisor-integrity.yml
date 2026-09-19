@@ -54,6 +54,11 @@ jobs:
             exit 1
           fi
 
+          if grep -R -nE 'TASK-0[0-9]+' 08_INTEGRATIONS/supervisor/src 08_INTEGRATIONS/supervisor/windows .github/workflows/supervisor-autostart-install.yml .github/workflows/supervisor-open-control-panel.yml .github/workflows/supervisor-integrity.yml; then
+            echo "Task-specific production hard-code found"
+            exit 1
+          fi
+
           echo "STATIC_SUPERVISOR_INTEGRITY=True"
 
   runtime-audit:
