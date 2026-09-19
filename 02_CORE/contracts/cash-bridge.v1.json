@@ -1,10 +1,14 @@
 {
   "schema_version": "cash-bridge.v1",
-  "status": "ACCEPTANCE_DEFINED",
+  "status": "CANONICAL_EXECUTABLE",
   "task": "TASK-055",
   "canonical_truth_contract": "financial-truth.v1",
   "purpose": "Define cash-movement taxonomy and Cash Bridge semantics without mixing liquidity movement with Revenue, COGS or expense recognition.",
-  "directions": ["INFLOW", "OUTFLOW", "TRANSFER"],
+  "directions": [
+    "INFLOW",
+    "OUTFLOW",
+    "TRANSFER"
+  ],
   "categories": {
     "INFLOW": [
       "SALES_COLLECTION",
@@ -25,7 +29,9 @@
       "OWNER_WITHDRAWAL",
       "OTHER_EVIDENCED_OUTFLOW"
     ],
-    "TRANSFER": ["INTERNAL_TRANSFER"]
+    "TRANSFER": [
+      "INTERNAL_TRANSFER"
+    ]
   },
   "event_shape": {
     "event_id": "optional privacy-safe stable identity|null",
@@ -47,7 +53,9 @@
     "proof_basis": "privacy-safe evidence semantics label|null",
     "amount_truth": "financial-truth.v1 record with group=CASH and metric=cash_movement_amount",
     "consolidated_role": "INFLOW|OUTFLOW|NEUTRAL_TRANSFER",
-    "diagnostics": ["privacy-safe diagnostic"]
+    "diagnostics": [
+      "privacy-safe diagnostic"
+    ]
   },
   "bridge_shape": {
     "target_period": {
@@ -58,15 +66,19 @@
     "scope": "financial-truth compatible explicit scope",
     "opening_balance": "financial-truth.v1 metric cash_opening_balance",
     "events": "normalized cash event collection",
-    "categorized_inflows": "TASK-056 derived collection/summary",
-    "categorized_outflows": "TASK-056 derived collection/summary",
-    "transfers": "TASK-056 derived collection/summary; neutral for consolidated liquidity",
-    "computed_ending_balance": "financial-truth.v1 metric cash_computed_ending_balance; TASK-056 only",
+    "categorized_inflows": "calculator output: categorized_known_inflows; exact known evidenced amounts/counts",
+    "categorized_outflows": "calculator output: categorized_known_outflows; exact known evidenced amounts/counts",
+    "transfers": "calculator output; INTERNAL_TRANSFER neutral only for proven consolidated scope",
+    "computed_ending_balance": "financial-truth.v1 metric cash_computed_ending_balance; formula opening + known inflows - known outflows only under COMPLETE coverage",
     "observed_ending_balance": "financial-truth.v1 metric cash_observed_ending_balance",
-    "cash_variance": "financial-truth.v1 metric cash_variance; TASK-056 only",
+    "cash_variance": "financial-truth.v1 metric cash_variance; observed ending - computed ending",
     "quality": "ACTUAL|ESTIMATE|GAP|NOT_CONNECTED",
     "coverage": "explicit period/source/account coverage metadata",
-    "diagnostics": ["privacy-safe diagnostic"]
+    "diagnostics": [
+      "privacy-safe diagnostic"
+    ],
+    "total_known_inflows": "financial-truth.v1 metric known_evidenced_cash_inflows",
+    "total_known_outflows": "financial-truth.v1 metric known_evidenced_cash_outflows"
   },
   "rules": [
     "Cash Bridge is liquidity truth, not Profit and Loss recognition.",
@@ -97,5 +109,44 @@
     "foodapp_settlement": "PARTIAL",
     "debt_schedule": "ESTIMATE context only",
     "owner_movements": "GAP"
-  }
+  },
+  "calculator_task": "TASK-056",
+  "formulas": {
+    "computed_ending_balance": "opening_balance + total_known_inflows - total_known_outflows",
+    "cash_variance": "observed_ending_balance - computed_ending_balance"
+  },
+  "dependency_graph": {
+    "computed_ending_balance": [
+      "valid explicit target period and scope",
+      "opening_balance",
+      "eligible normalized cash events",
+      "explicit COMPLETE event-source coverage"
+    ],
+    "observed_ending_balance": "independent Financial Truth input; not a dependency of computed ending",
+    "cash_variance": [
+      "computed_ending_balance",
+      "observed_ending_balance"
+    ]
+  },
+  "quality_precedence": [
+    "NOT_CONNECTED",
+    "GAP",
+    "ESTIMATE",
+    "ACTUAL"
+  ],
+  "calculator_rules": [
+    "Coverage is caller-provided evidence. Record presence, sparse dates, or an empty event array never infer COMPLETE.",
+    "Known evidenced inflow/outflow sums may remain numeric for valid ACTUAL/ESTIMATE events under PARTIAL/MISSING coverage, but they do not prove a complete-period total.",
+    "Computed ending is numeric only when opening and eligible event dependencies are numeric ACTUAL/ESTIMATE and explicit event-source coverage is COMPLETE.",
+    "Observed ending is independent of computed ending. Missing observed ending cannot erase a valid computed ending.",
+    "Cash variance is numeric only when both computed ending and observed ending are numeric.",
+    "Derived quality follows deterministic precedence NOT_CONNECTED > GAP > ESTIMATE > ACTUAL; an ESTIMATE dependency caps its derived component at ESTIMATE.",
+    "A GAP dependency makes the corresponding derived component GAP/null. A directly missing required connection makes it NOT_CONNECTED/null.",
+    "INTERNAL_TRANSFER is excluded from consolidated inflow/outflow arithmetic. Scoped/account-level transfer arithmetic is unsupported in V1 and fails closed when neutrality cannot be proven.",
+    "Stable event_id + identical canonical event is de-duplicated. A conflicting same event_id fails closed. No-ID events are never de-duplicated merely because their visible fields match.",
+    "Opening and observed ending balances are Financial Truth CASH metrics at target start/end respectively. Explicit proven zero is valid; missing is never zero.",
+    "Negative balances are not prohibited by this generic calculator. Cash movement event amounts remain positive magnitudes whose direction is carried separately.",
+    "Payment method remains metadata and never creates a balance.",
+    "The calculator performs no source-specific recognition-to-cash mapping; raw inputs are accepted only through normalizeCashEvent()."
+  ]
 }
