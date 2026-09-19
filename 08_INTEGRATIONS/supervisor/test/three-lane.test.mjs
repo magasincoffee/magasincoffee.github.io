@@ -106,3 +106,26 @@ test("result relay is deterministic and includes full Work text", () => {
   assert.match(a.text, /FULL RESULT BODY/);
   assert.match(a.text, /Ảnh đính kèm/);
 });
+
+
+test("Three-Lane normalizes transient WEB Work URLs from existing registry state", () => {
+  const uuid = "6b744b22-161a-4125-80b8-d12f747a72a9";
+  assert.equal(
+    normalizeChatGptConversationUrl(`https://chatgpt.com/c/WEB:${uuid}`),
+    `https://chatgpt.com/c/${uuid}`
+  );
+
+  const registry = normalizeLaneRegistry({
+    lanes: {
+      "lane-1": {
+        work_url: `https://chatgpt.com/c/WEB:${uuid}`,
+        awaiting_work: true,
+        task_id: "TASK-049/THREE-LANE-E2E-01"
+      }
+    }
+  });
+  assert.equal(
+    registry.lanes["lane-1"].work_url,
+    `https://chatgpt.com/c/${uuid}`
+  );
+});
