@@ -47,7 +47,7 @@ function event(overrides = {}) {
   };
 }
 
-test("acceptance contract exposes exact minimal taxonomy and reserves arithmetic for TASK-056", async () => {
+test("acceptance contract preserves taxonomy and exposes canonical TASK-056 calculator semantics", async () => {
   const raw = await fs.readFile(
     new URL("02_CORE/contracts/cash-bridge.v1.json", root),
     "utf8"
@@ -55,15 +55,49 @@ test("acceptance contract exposes exact minimal taxonomy and reserves arithmetic
   const contract = JSON.parse(raw);
 
   assert.equal(contract.schema_version, CASH_BRIDGE_SCHEMA_VERSION);
+  assert.equal(contract.status, "CANONICAL_EXECUTABLE");
+  assert.equal(contract.calculator_task, "TASK-056");
   assert.deepEqual(contract.directions, CASH_EVENT_DIRECTIONS);
   assert.deepEqual(contract.categories.INFLOW, CASH_EVENT_CATEGORIES.INFLOW);
   assert.deepEqual(contract.categories.OUTFLOW, CASH_EVENT_CATEGORIES.OUTFLOW);
   assert.deepEqual(contract.categories.TRANSFER, CASH_EVENT_CATEGORIES.TRANSFER);
   assert.equal(
-    contract.bridge_shape.computed_ending_balance.includes("TASK-056"),
-    true
+    contract.formulas.computed_ending_balance,
+    "opening_balance + total_known_inflows - total_known_outflows"
   );
-  assert.equal(contract.bridge_shape.cash_variance.includes("TASK-056"), true);
+  assert.equal(
+    contract.formulas.cash_variance,
+    "observed_ending_balance - computed_ending_balance"
+  );
+  assert.deepEqual(contract.dependency_graph.computed_ending_balance, [
+    "valid explicit target period and scope",
+    "opening_balance",
+    "eligible normalized cash events",
+    "explicit COMPLETE event-source coverage"
+  ]);
+  assert.equal(
+    contract.dependency_graph.observed_ending_balance,
+    "independent Financial Truth input; not a dependency of computed ending"
+  );
+  assert.deepEqual(contract.dependency_graph.cash_variance, [
+    "computed_ending_balance",
+    "observed_ending_balance"
+  ]);
+  assert.deepEqual(contract.quality_precedence, [
+    "NOT_CONNECTED",
+    "GAP",
+    "ESTIMATE",
+    "ACTUAL"
+  ]);
+  assert.ok(Array.isArray(contract.calculator_rules));
+  assert.match(
+    contract.calculator_rules.join("\n"),
+    /Coverage is caller-provided evidence/
+  );
+  assert.match(
+    contract.calculator_rules.join("\n"),
+    /Observed ending is independent of computed ending/
+  );
 });
 
 test("accepted taxonomy constants are exact", () => {
