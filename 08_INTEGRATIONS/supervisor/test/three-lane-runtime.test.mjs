@@ -61,7 +61,8 @@ test("dispatch and relay use exact-once inflight latches", async () => {
   assert.match(source, /dispatch_inflight/);
   assert.match(source, /relay_inflight/);
   assert.match(source, /captureUserTurnDigests/);
-  assert.match(source, /automatic resend is denied/);
+  assert.match(source, /inspectKnownTargetSendOutcome/);
+  assert.match(source, /LANE_WORK_SEND_NOT_CONFIRMED_RETRY/);
   assert.match(source, /last_result_relay_id/);
 });
 
@@ -159,4 +160,85 @@ test("inaccessible Brain or Work conversations surface plain-language Owner guid
   assert.match(source, /Bộ não này không mở được trong Chrome Robot/);
   assert.match(source, /conversationAccessDenied/);
   assert.match(source, /TỰ TẠO WORK/);
+});
+
+
+test("unconfirmed existing-Work send reloads exact target and auto-retries only when server state proves no send", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /async function inspectKnownTargetSendOutcome/);
+  assert.match(source, /page\.reload\(/);
+  assert.match(source, /waitForUserTurnDigest/);
+  assert.match(source, /pre_user_count/);
+  assert.match(source, /pre_max_turn_ordinal/);
+  assert.match(source, /return "NOT_CONFIRMED"/);
+  assert.match(source, /LANE_WORK_SEND_NOT_CONFIRMED_RETRY/);
+  assert.match(source, /if \(outcome === "CONFIRMED"\) return/);
+  assert.doesNotMatch(source, /Work instruction send outcome is uncertain; automatic resend is denied/);
+});
+
+test("legacy v34 inflight latch can self-heal after hard reload on a stable completed Work chat", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /v34 and older latches did not persist a pre-send baseline/);
+  assert.match(source, /if \(!baselineKnown && stable\) return "NOT_CONFIRMED"/);
+});
+
+test("Brain request and result relay use the same safe send reconciliation", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /LANE_BRAIN_SEND_NOT_CONFIRMED_RETRY/);
+  assert.match(source, /LANE_RESULT_RELAY_NOT_CONFIRMED_RETRY/);
+  assert.match(source, /LANE_BRAIN_SEND_PENDING_CONFIRMATION/);
+  assert.match(source, /LANE_RESULT_RELAY_PENDING_CONFIRMATION/);
+  assert.match(source, /captureSendBaseline/);
+});
+
+
+test("unconfirmed existing-Work send hard-reloads and auto-retries only when server state proves no send", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /async function inspectKnownTargetSendOutcome/);
+  assert.match(source, /page\.reload\(/);
+  assert.match(source, /waitForUserTurnDigest/);
+  assert.match(source, /pre_user_count/);
+  assert.match(source, /pre_max_turn_ordinal/);
+  assert.match(source, /return "NOT_CONFIRMED"/);
+  assert.match(source, /LANE_WORK_SEND_NOT_CONFIRMED_RETRY/);
+  assert.doesNotMatch(source, /Work instruction send outcome is uncertain; automatic resend is denied/);
+});
+
+test("legacy v34 inflight latch self-heals after hard reload on a stable completed Work chat", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /v34 and older latches did not persist a pre-send baseline/);
+  assert.match(source, /if \(!baselineKnown && stable\) return "NOT_CONFIRMED"/);
+});
+
+test("Brain request and result relay use the same safe send reconciliation", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /LANE_BRAIN_SEND_NOT_CONFIRMED_RETRY/);
+  assert.match(source, /LANE_RESULT_RELAY_NOT_CONFIRMED_RETRY/);
+  assert.match(source, /LANE_BRAIN_SEND_PENDING_CONFIRMATION/);
+  assert.match(source, /LANE_RESULT_RELAY_PENDING_CONFIRMATION/);
+  assert.match(source, /captureSendBaseline/);
 });
