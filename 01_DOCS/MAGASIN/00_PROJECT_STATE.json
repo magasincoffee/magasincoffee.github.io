@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
   "current_phase": "P3_PFC_8H_V2_EXECUTION",
-  "current_task": "TASK-062",
-  "current_task_title": "Cash Balance Source Mapper",
+  "current_task": "TASK-063",
+  "current_task_title": "Cash Source Coverage V1",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-063",
+  "next_task": "TASK-064",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -291,7 +291,7 @@
     ],
     "prepared_queue": "PFC_8H_V2",
     "queue_status": "ACTIVE",
-    "next_planned_task": "TASK-062",
+    "next_planned_task": "TASK-063",
     "next_task_release_required": false
   },
   "session_bootstrap": {
@@ -371,8 +371,8 @@
     ],
     "execution_generation": "PFC_8H_V2_RUN_01",
     "started_task": "TASK-060",
-    "current_task": "TASK-062",
-    "next_task": "TASK-063",
+    "current_task": "TASK-063",
+    "next_task": "TASK-064",
     "task_060": {
       "status": "DONE",
       "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md",
@@ -418,6 +418,25 @@
       "failures": 0,
       "cash_bridge_changed": false,
       "google_drive": "READ_ONLY_NOT_RESCANNED",
+      "conclusion": "REMOTE_CI_GREEN"
+    },
+    "task_062": {
+      "status": "DONE",
+      "helper": "02_CORE/shared/cash-balance-source-mapper-v1.mjs",
+      "tests": "09_QA/business-os/cash-balance-source-mapper.test.mjs",
+      "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_062_CASH_BALANCE_SOURCE_MAPPER_V1_EVIDENCE.md",
+      "pull_request": 187,
+      "merge_commit": "cf8b24715c3f6b3ed2368f5d6f568bd331130a0d",
+      "pr_head_run_id": 35472567129,
+      "pr_head_job_id": 105976091343,
+      "merge_push_run_id": 35472597015,
+      "merge_push_job_id": 105976172672,
+      "runtime": "Node v20.20.2",
+      "targeted_tests": 47,
+      "full_business_os_logical_checks": 301,
+      "failures": 0,
+      "cash_bridge_changed": false,
+      "google_drive": "READ_ONLY",
       "conclusion": "REMOTE_CI_GREEN"
     }
   },
