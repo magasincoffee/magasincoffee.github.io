@@ -207,6 +207,7 @@ function invalidNumericBalance({
   lineage,
   reason,
   proof,
+  paymentMethod,
   targetPoint,
   targetScope
 }) {
@@ -229,7 +230,7 @@ function invalidNumericBalance({
       reason
     }),
     proof,
-    payment_method: raw.payment_method ?? raw.paymentMethod
+    payment_method: paymentMethod
   }, {
     targetPoint,
     targetScope
@@ -284,6 +285,7 @@ export function mapInternalMonthlyCashOpening(raw = {}, {
       lineage,
       reason: numeric.reason,
       proof,
+      paymentMethod: raw.payment_method ?? raw.paymentMethod,
       targetPoint,
       targetScope
     });
