@@ -98,3 +98,37 @@ test("new Work URLs are stored through canonical target normalization", async ()
   assert.match(source, /return \`\$\{target\.origin\}\$\{target\.pathname\}\`/);
   assert.match(source, /internal \/c\/WEB:<uuid> route/);
 });
+
+
+test("Owner Work URL override is revisioned and resets stale pending Work state once", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /async function applyOwnerWorkTarget/);
+  assert.match(source, /work_url_revision/);
+  assert.match(source, /applied_work_url_revision/);
+  assert.match(source, /LANE_OWNER_WORK_TARGET_CHANGED/);
+  assert.match(source, /registryLane\.dispatch_inflight = null/);
+  assert.match(source, /registryLane\.relay_inflight = null/);
+  assert.match(source, /registryLane\.awaiting_work = false/);
+});
+
+test("transient fetch and CDP failures recover instead of escalating to Owner", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+  const adapter = await fs.readFile(
+    new URL("../src/ui/playwright-adapter.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(adapter, /fetch failed/);
+  assert.match(adapter, /ECONNRESET/);
+  assert.match(adapter, /ETIMEDOUT/);
+  assert.match(runtime, /transient \? "RECOVERING" : "WAIT_OWNER"/);
+  assert.match(runtime, /reconnectOverCdp/);
+  assert.match(runtime, /Robot đang tự kết nối lại và sẽ thử tiếp/);
+});
