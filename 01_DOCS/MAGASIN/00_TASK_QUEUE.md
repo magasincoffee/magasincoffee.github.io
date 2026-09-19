@@ -70,6 +70,16 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 
 | TASK-050 | Canonical enterprise architecture locked — Profitability & Cash first | Owner detailing | Apply Five-Step continuously across every aspect; derive implementation queue from canonical architecture; Robot release requires explicit Owner approval | WAIT_USER / ARCHITECTURE_LOCKED / ROBOT_PAUSED |
 
+| TASK-051 | PFC source inventory + delete/defer map | 20m | verified existing financial sources + trust/quality classification + explicit non-goals | READY_ON_OWNER_RELEASE |
+| TASK-052 | Financial Truth contract v1 | 20m | canonical period/scope/quality/source/as-of/lineage contract; no synthetic zero | READY_ON_OWNER_RELEASE |
+| TASK-053 | Monthly Revenue baseline contract + aggregator | 20m | trusted RECONCILED revenue aggregation with quality/lineage propagation | READY_ON_OWNER_RELEASE |
+| TASK-054 | Revenue baseline adapter tests/integration | 20m | fail-closed ACTUAL/GAP/NOT_CONNECTED + partial-source regression | READY_ON_OWNER_RELEASE |
+| TASK-055 | Cash event taxonomy + Cash Bridge contract v1 | 20m | opening/inflow/outflow/ending/variance categories; missing stays GAP | READY_ON_OWNER_RELEASE |
+| TASK-056 | Cash Bridge pure calculator + fixtures/tests | 20m | deterministic evidence-aware calculator; no bank/MoMo assumptions | READY_ON_OWNER_RELEASE |
+| TASK-057 | Procurement payment/AP → financial truth mapping | 20m | supplier payment cash-outflow + AP mapping; purchase != COGS | READY_ON_OWNER_RELEASE |
+| TASK-058 | Partial Financial Baseline snapshot v1 | 20m | Revenue + known Cash/AP + explicit missing sources in one normalized truth object | READY_ON_OWNER_RELEASE |
+| TASK-059 | PFC 3-hour regression + docs/state handoff | 20m | affected tests + evidence + state/docs reconciliation + next non-owner task | READY_ON_OWNER_RELEASE |
+
 TASK-049 partial acceptance checkpoint (does not close the task):
 - **E2 ACCEPTED** — PR #141 / merge `f076779c4d1e3afd709385f0558a7185caeabf51`; Vietnamese Owner UI, evidence-backed live Worker status, fixed UTC+7 display, mutually exclusive recovery controls.
 - **F ACCEPTED** — Supervisor Autostart Install run `35414750942`: **212/212 PASS**, install + verify-survival success; no `WORKER_RETRY_REQUIRED` or `TECHNICAL_RECOVERY_STUCK`; Supervisor / Brain-Worker / Robot Chrome survived post-job verification.
@@ -88,3 +98,10 @@ While TASK-050 is `ARCHITECTURE_LOCKED / ROBOT_PAUSED`:
 - Robot may resume only after Owner explicitly releases execution, the implementation queue traces to the canonical architecture, and `00_PROJECT_STATE.json` is explicitly returned to `READY / AUTO_CONTINUE`.
 
 Canonical architecture: `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — mandatory first read.
+
+
+## Profitability & Cash 3-hour autonomous queue
+
+Canonical runbook: `02_PROFITABILITY_CASH/THREE_HOUR_EXECUTION_QUEUE_V1.md`.
+
+TASK-051 → TASK-059 are deliberately restricted to work that does not require Owner business decisions, secrets, private production exports or destructive actions. The queue must stop at a true Owner/security boundary only. Project autonomy remains PAUSED until explicit Owner release.
