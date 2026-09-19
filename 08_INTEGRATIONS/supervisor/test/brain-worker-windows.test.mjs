@@ -28,11 +28,11 @@ test("auto-upgrade workflow installs runtime source changes and verifies a Brain
   assert.doesNotMatch(source, /raw\.githubusercontent\.com\/magasincoffee\/magasincoffee\.github\.io\/main\/01_DOCS\/MAGASIN\/00_PROJECT_STATE\.json/);
   assert.match(source, /brain-worker-cli\.mjs/);
   assert.match(source, /BRAIN_TARGET_REGISTERED=True/);
-  assert.match(source, /2026-09-19\.24/);
+  assert.match(source, /2026-09-19\.25/);
 });
 
 
-test("auto-upgrade exposes explicit Owner Brain rebind when live v24 still has target mismatch", async () => {
+test("auto-upgrade exposes explicit Owner Brain rebind when live v25 still has target mismatch", async () => {
   const source = await fs.readFile(
     new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
     "utf8"
@@ -44,4 +44,17 @@ test("auto-upgrade exposes explicit Owner Brain rebind when live v24 still has t
   assert.match(source, /BRAIN_REBIND_REQUIRED=True/);
   assert.match(source, /BRAIN_REBIND\.request\.json/);
   assert.match(source, /BRAIN_TARGET_REBOUND_OWNER/);
+});
+
+
+test("auto-upgrade verifies the bounded Owner recovery path for an uncertain Worker send", async () => {
+  const source = await fs.readFile(
+    new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /WORKER_RETRY_REQUIRED=True/);
+  assert.match(source, /WORKER_RETRY\.request\.json/);
+  assert.match(source, /WORKER_OWNER_RETRY_ARMED/);
+  assert.match(source, /uncertain prior create\/send outcome/);
 });
