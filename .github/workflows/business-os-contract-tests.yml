@@ -33,6 +33,9 @@ jobs:
       - name: Check Cash Bridge helper syntax
         run: node --check 02_CORE/shared/cash-bridge-v1.mjs
 
+      - name: Run Cash Bridge targeted tests
+        run: node --test 09_QA/business-os/cash-bridge.test.mjs
+
       - name: Run all Business OS contract tests
         shell: bash
         run: |
