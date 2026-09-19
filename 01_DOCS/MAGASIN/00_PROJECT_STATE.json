@@ -4,12 +4,12 @@
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
   "current_phase": "P2_PFC_3H_EXECUTION_RESTART",
-  "current_task": "TASK-059",
-  "current_task_title": "PFC 3-hour regression + docs/state handoff",
-  "status": "READY",
-  "autonomy": "AUTO_CONTINUE",
+  "current_task": "TASK-060",
+  "current_task_title": "Actual Cash Opening/Ending Source Truth V1",
+  "status": "WAIT_USER",
+  "autonomy": "PAUSED",
   "blocked": false,
-  "requires_user": false,
+  "requires_user": true,
   "next_task": null,
   "safety": {
     "repository_visibility": "public",
@@ -247,14 +247,14 @@
     "local_json_compatibility": "UTF8_BOM_TOLERANT",
     "owner_handoff_gate": {
       "policy": "PROJECT_STATE_AUTHORITY",
-      "required_autonomy": "AUTO_CONTINUE",
-      "current_autonomy": "AUTO_CONTINUE",
-      "robot_may_execute": true,
-      "reason": "OWNER_EXPLICIT_RESTART_AND_OFFICIAL_RELEASE_PFC_3H_V1"
+      "required_autonomy": "PAUSED",
+      "current_autonomy": "PAUSED",
+      "robot_may_execute": false,
+      "reason": "QUEUE_COMPLETE_WAIT_OWNER_NEXT_RELEASE"
     }
   },
   "architecture_handoff": {
-    "state": "ROBOT_RELEASED_PFC_3H_RESTART_ACTIVE",
+    "state": "PFC_3H_COMPLETE_WAIT_OWNER_NEXT_RELEASE",
     "canonical_architecture_ref": "01_DOCS/MAGASIN/00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md",
     "read_first_on_new_session": true,
     "primary_priority": "PROFITABILITY_CASH",
@@ -279,16 +279,19 @@
         "RELEASE"
       ]
     },
-    "robot_may_execute": true,
+    "robot_may_execute": false,
     "robot_release_policy": "OWNER_EXPLICIT_RELEASE_ONLY",
     "silence_is_approval": false,
-    "implementation_queue_locked": false,
+    "implementation_queue_locked": true,
     "release_conditions": [
       "OWNER_EXPLICIT_ROBOT_RELEASE",
       "IMPLEMENTATION_QUEUE_TRACES_TO_CANONICAL_ARCHITECTURE",
       "PROJECT_STATE_CHANGED_TO_READY_AUTO_CONTINUE"
     ],
-    "prepared_queue": "PFC_3H_V1"
+    "prepared_queue": "PFC_3H_V1",
+    "queue_status": "COMPLETE",
+    "next_planned_task": "TASK-060",
+    "next_task_release_required": true
   },
   "session_bootstrap": {
     "read_order": [
@@ -304,7 +307,7 @@
   },
   "prepared_execution_queue": {
     "id": "PFC_3H_V1",
-    "status": "ACTIVE_RESTARTED",
+    "status": "COMPLETE",
     "runbook": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/THREE_HOUR_EXECUTION_QUEUE_V1.md",
     "estimated_active_minutes": 180,
     "owner_dependency_during_run": "NONE_UNLESS_TRUE_BOUNDARY",
@@ -339,7 +342,7 @@
     ],
     "google_drive_evidence": "AUTHORIZED_READ_ONLY",
     "started_task": "TASK-051",
-    "execution_policy": "AUTO_CONTINUE_UNTIL_TRUE_OWNER_BOUNDARY_OR_QUEUE_COMPLETE",
+    "execution_policy": "QUEUE_COMPLETE_WAIT_OWNER_NEXT_RELEASE",
     "execution_generation": "PFC_3H_V1_RESTART_01",
     "restart_from_task": "TASK-051",
     "reconciliation_override": {
@@ -475,6 +478,58 @@
       "merge_push_job_id": 105923982205,
       "merge_push_runtime": "Node v20.20.2",
       "merge_push_conclusion": "success"
+    },
+    "completed_tasks": [
+      "TASK-051",
+      "TASK-052",
+      "TASK-053",
+      "TASK-054",
+      "TASK-055",
+      "TASK-056",
+      "TASK-057",
+      "TASK-058",
+      "TASK-059"
+    ],
+    "completed_on": "2026-09-19",
+    "completion_evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md",
+    "final_regression": {
+      "executable_equivalence_verified": true,
+      "business_os_run_id": 35453257400,
+      "business_os_attempt": 2,
+      "business_os_job_id": 105926272352,
+      "business_os_runtime": "Node v20.20.2",
+      "business_os_logical_checks": 214,
+      "business_os_failures": 0,
+      "business_os_conclusion": "success",
+      "owner_control_tower_run_id": 35448195046,
+      "owner_control_tower_attempt": 2,
+      "owner_control_tower_job_id": 105926275823,
+      "owner_control_tower_runtime": "Node v20.20.2",
+      "owner_control_tower_tests": 74,
+      "owner_control_tower_failures": 0,
+      "owner_control_tower_browser_e2e": "PASS",
+      "owner_control_tower_conclusion": "success",
+      "procurement_production_qa": "NOT_APPLICABLE_NO_PROCUREMENT_PRODUCTION_OR_MIGRATION_CHANGE",
+      "local_clone": "UNAVAILABLE_DNS_GITHUB_COM",
+      "static_financial_write_scan": "PASS_0_MATCHES"
+    },
+    "task_059": {
+      "status": "DONE",
+      "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md",
+      "business_os_regression_run_id": 35453257400,
+      "business_os_regression_attempt": 2,
+      "business_os_regression_job_id": 105926272352,
+      "owner_control_tower_regression_run_id": 35448195046,
+      "owner_control_tower_regression_attempt": 2,
+      "owner_control_tower_regression_job_id": 105926275823,
+      "conclusion": "QUEUE_COMPLETE"
+    },
+    "post_run_next_task": {
+      "task_id": "TASK-060",
+      "title": "Actual Cash Opening/Ending Source Truth V1",
+      "status": "PLANNED_WAIT_OWNER_RELEASE",
+      "objective": "Normalize evidenced opening cash, observed ending cash and explicit source/account coverage so Cash Bridge can progress toward COMPLETE without inferring balances from payment-method rows.",
+      "robot_may_execute": false
     }
   },
   "data_evidence_policy": {
