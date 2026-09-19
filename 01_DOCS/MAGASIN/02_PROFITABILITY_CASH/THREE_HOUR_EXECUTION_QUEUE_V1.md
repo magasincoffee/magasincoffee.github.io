@@ -62,6 +62,44 @@ Deliver thin vertical slices with deterministic fixtures/tests, then integrate i
 ### AUTOMATE
 Automation in this run means only deterministic read/aggregation/test automation. No autonomous financial action.
 
+## 2A. Google Drive evidence policy
+
+Owner authorizes the connected Google Drive as a **read-only source of real MAGASIN evidence** for this run.
+
+Work may:
+- search Drive for relevant operational/financial spreadsheets and exports;
+- inspect spreadsheet metadata, headers and bounded ranges;
+- use real values for analysis/reconciliation when the source is identifiable and internally consistent;
+- classify results as ACTUAL / ESTIMATE / GAP / NOT_CONNECTED;
+- cross-check multiple Drive sources.
+
+Work must not:
+- edit/delete/rename/move/share Drive files unless Owner explicitly asks later;
+- commit raw private employee/customer/financial records to public Git;
+- commit Drive file IDs, private URLs, credentials or tokens;
+- copy large raw datasets into repository docs/tests;
+- treat a spreadsheet title or historical number as authoritative without checking period/source semantics.
+
+Safe repository evidence should contain:
+- source class/type, not private Drive locator;
+- field/schema mappings;
+- quality state;
+- reconciliation method;
+- aggregate/test-safe values only when non-sensitive;
+- gaps and lineage descriptions that do not expose private records.
+
+Relevant source classes already confirmed available on Drive include:
+- consolidated operating/sales data;
+- finance reporting;
+- transaction/inventory records;
+- payroll;
+- inventory count/standards;
+- recipe/formula data;
+- FoodApp settlement/export data;
+- branch reports.
+
+If Drive source evidence conflicts with repository assumptions, **real operating evidence wins**, but Work must document the conflict and reconcile the canonical model rather than silently overwrite it.
+
 ## 3. Execution queue
 
 | Order | Task | Est. | Deliverable | Owner required? |
