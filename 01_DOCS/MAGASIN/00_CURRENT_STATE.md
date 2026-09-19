@@ -4,55 +4,77 @@ Last updated: 2026-09-19
 
 ## Current program
 
-**MAGASIN Business OS V1 — Five-Step / Schedule-first execution**
+**MAGASIN Business OS V1 — Five-Step / Profitability & Cash first**
 
-The Enterprise Source-of-Truth discipline remains mandatory. The delivery order is no longer module-first/top-down. Work now follows the highest-value operating loop and must pass the Five-Step gate before implementation.
+The project is in **Owner architecture discussion mode**. The purpose is to lock a comprehensive enterprise management architecture before implementation is handed back to Supervisor/Brain/Work.
+
+Canonical architecture discussion:
+
+- `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md`
+- `02_PROFITABILITY_CASH/README.md`
+- `02_PROFITABILITY_CASH/PROFITABILITY_ARCHITECTURE.md`
+- `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`
 
 ## Current phase
 
-**P1 — Schedule-first Core Flow**
+**P1 — Architecture Review / Profitability & Cash**
 
-The active critical path is weekly workforce scheduling: employee availability → manager review/allocation → robot proposal → publish → employee execution/attendance/swap/notification. Discovery is limited to evidence needed to complete that loop safely.
+Current architecture priority is the financial truth spine:
+
+```text
+Revenue
+→ COGS / Variable Cost
+→ Operating / Fixed Cost
+→ Cash Inflow / Outflow
+→ AP / Debt / Owner Movement
+→ Contribution
+→ Profitability
+→ Break-even
+```
+
+Existing Schedule-first work remains a proven vertical-slice pattern, but it is no longer the enterprise critical priority.
 
 ## Current task
 
-**TASK-049 — Supervisor Three-Lane owner-bound Brain/Work orchestration — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-050 — Enterprise architecture lock — Profitability & Cash first — WAIT_USER / DISCUSSION_ACTIVE**
 
-Canonical task/state files:
+Robot handoff is explicitly locked.
 
-- `00_BUSINESS_OS_BLUEPRINT.md`
-- `00_PROJECT_STATE.json`
-- `00_TASK_QUEUE.md`
-- `00_SUPERVISOR_ROBOT.md`
-- `00_SUPERVISOR_HANDOFF_ARCHITECTURE.md`
-- `00_ARCHITECTURE_5_STEP_RESET.md`
-- `05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`
-- `05_SYSTEM/EMPLOYEE_AVAILABILITY_CANONICAL_SLICE_V1.md`
-- `05_SYSTEM/MANAGER_SCHEDULE_CANONICAL_SLICE_V1.md`
-- `05_SYSTEM/PUBLISHED_SCHEDULE_FEEDBACK_LOOP_V1.md`
-- `05_SYSTEM/GIVE_SHIFT_PRODUCTION_V1.md`
-- `05_SYSTEM/NOTIFICATION_OUTBOX_PRODUCTION_V1.md`
-- `05_SYSTEM/MAGASIN_EMAIL_ADAPTER_CONFIG_V1.md`
-- `05_SYSTEM/SCHEDULE_FIRST_CLOSURE_REGRESSION_V1.md`
+```text
+Owner + ChatGPT discuss architecture
+→ Owner locks architecture
+→ task queue is rebuilt
+→ Owner explicitly releases Robot
+→ PROJECT_STATE = READY / AUTO_CONTINUE
+→ Supervisor / Brain / Work may execute
+```
+
+Until then, `00_PROJECT_STATE.json` is authoritative as `WAIT_USER / PAUSED`.
 
 ## Current target
 
-Prove one operational weekly schedule end to end before expanding non-critical modules:
+Before any new implementation, lock:
 
-1. employee availability;
-2. manager review/edit/allocation;
-3. robot schedule proposal within approved rules;
-4. manager publish;
-5. employee sees and executes the published schedule;
-6. attendance / give-shift / swap / affected-person notification close the loop.
+1. enterprise capability map;
+2. financial truth spine;
+3. source-of-truth / ledger strategy;
+4. role boundaries Owner / Manager / Employee;
+5. integration boundary with Sapo / Sheets / FoodApp / bank / manual inputs;
+6. Profitability & Cash sequence PFC-01 → PFC-08;
+7. DELETE / defer map;
+8. V1 acceptance metrics;
+9. production/security boundaries;
+10. explicit Robot handoff rule.
 
 ## Active scope
 
-**Primary:** People / Shift weekly scheduling critical path.
+**Primary:** Profitability & Cash / enterprise management architecture.
 
-**Supporting only when required by that path:** shared data/contracts, auth, notifications, audit/recovery, Supervisor Robot.
+**Supporting domains:** Sales, Procurement/AP, Inventory/Consumption, Workforce, SOP/Task, Organization/Access — only insofar as they feed operating truth and financial truth.
 
-**Deferred:** SOP/Task write automation (TASK-026 decision pack preserved), broad dashboard expansion, payroll/KPI/recruitment expansion, speculative production schema cleanup, cosmetic architecture refactors.
+**Automation:** held. Supervisor/Brain/Work is an outer execution layer, not the enterprise architecture core.
+
+**Deferred during architecture discussion:** new Robot features, broad dashboard expansion, speculative schemas, AI forecasting, KPI automation, payroll/recruitment expansion, cosmetic refactors, and non-critical module completion.
 
 ## Working method
 
@@ -101,7 +123,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**ACTIVE — TASK-049:** Owner replaced Brain auto-discovery with three fixed, isolated project lanes. Each lane has an Owner-entered Brain URL, a Robot-managed Work URL, independent START/STOP, per-lane status/message, exact-once Work result relay with screenshot + full text, and Work rollover only on positive `conversationFull` evidence.
+**ACTIVE — TASK-050:** Owner is locking the enterprise architecture using Five-Step, with Profitability & Cash as priority #1. No new implementation is handed to Supervisor/Brain/Work until Owner explicitly locks architecture and releases Robot.
 
 Background night-run gate: **TASK-048 — NIGHT_WINDOW_COMPLETE**. The approved 09:15 +07 boundary closed the old night window and preserved the later Owner-selected active task/autonomy.
 
