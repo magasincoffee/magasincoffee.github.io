@@ -52,7 +52,7 @@ import {
   scheduleRelayRetry
 } from "./relay-retry.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.48";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.49";
 
 function parseArgs(argv) {
   const result = {
