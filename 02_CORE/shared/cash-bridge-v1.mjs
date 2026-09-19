@@ -630,3 +630,216 @@ function normalizeEventInput(raw = {}) {
       category: raw.category,
       event_date: raw.event_date,
       period: truth.period,
+      scope: truth.scope,
+      payment_method: raw.payment_method,
+      cash_location: raw.cash_location,
+      status: raw.status,
+      cash_movement_proven: raw.cash_movement_proven,
+      proof_basis: raw.proof_basis,
+      amount: truth.value,
+      quality: truth.quality,
+      source: truth.source,
+      as_of: truth.as_of,
+      reconciliation_status: truth.reconciliation_status,
+      evidence: truth.evidence,
+      lineage: truth.lineage,
+      message: truth.message,
+      reason: truth.reason
+    });
+  }
+  return normalizeCashEvent(raw);
+}
+
+function eventFingerprint(event) {
+  return JSON.stringify({
+    direction: event.direction,
+    category: event.category,
+    event_date: event.event_date,
+    scope: event.scope,
+    payment_method: event.payment_method,
+    cash_location: event.cash_location,
+    status: event.status,
+    cash_movement_proven: event.cash_movement_proven,
+    proof_basis: event.proof_basis,
+    amount_truth: event.amount_truth,
+    consolidated_role: event.consolidated_role
+  });
+}
+
+function eventSortKey(event) {
+  return [
+    event.event_date || "",
+    event.direction || "",
+    event.category || "",
+    event.event_id || "",
+    eventFingerprint(event)
+  ].join("|");
+}
+
+function eventCompatibilityDiagnostics(event, targetPeriod, targetScope) {
+  const diagnostics = [];
+  const truth = event.amount_truth || {};
+  const period = truth.period || {};
+
+  if (
+    period.start &&
+    period.end &&
+    (
+      period.start < targetPeriod.start ||
+      period.end > targetPeriod.end
+    )
+  ) {
+    diagnostics.push("EVENT_PERIOD_OUTSIDE_TARGET");
+  }
+  if (period.timezone && period.timezone !== targetPeriod.timezone) {
+    diagnostics.push("EVENT_TIMEZONE_MISMATCH");
+  }
+  if (truth.scope && !sameScope(truth.scope, targetScope)) {
+    diagnostics.push("EVENT_SCOPE_MISMATCH");
+  }
+  return diagnostics;
+}
+
+function isConsolidatedTarget(scope, accountScoped = false) {
+  return Boolean(
+    !accountScoped &&
+    scope?.aggregate_proven === true &&
+    scope?.branch === "ALL" &&
+    scope?.channel === "ALL"
+  );
+}
+
+function normalizeAndDeduplicateEvents(rawEvents, targetPeriod, targetScope, accountScoped = false) {
+  const rawList = Array.isArray(rawEvents) ? rawEvents : [];
+  const normalized = rawList.map(normalizeEventInput);
+
+  const byId = new Map();
+  const noId = [];
+  for (const event of normalized) {
+    if (!event.event_id) {
+      noId.push(event);
+      continue;
+    }
+    const entries = byId.get(event.event_id) || [];
+    entries.push(event);
+    byId.set(event.event_id, entries);
+  }
+
+  const diagnostics = [];
+  const kept = [...noId];
+  for (const entries of byId.values()) {
+    const fingerprints = [...new Set(entries.map(eventFingerprint))];
+    if (fingerprints.length === 1) {
+      kept.push(entries[0]);
+    } else {
+      diagnostics.push("DUPLICATE_EVENT_ID_CONFLICT");
+    }
+  }
+
+  kept.sort((a, b) => eventSortKey(a).localeCompare(eventSortKey(b)));
+
+  const numericEvents = [];
+  const failureQualities = [];
+  let transferAmbiguous = false;
+
+  for (const event of kept) {
+    for (const item of event.diagnostics || []) diagnostics.push(item);
+    const compatibility = eventCompatibilityDiagnostics(event, targetPeriod, targetScope);
+    diagnostics.push(...compatibility);
+
+    const truth = event.amount_truth || {};
+    const numericQuality = truth.quality === "ACTUAL" || truth.quality === "ESTIMATE";
+    const numericValue = typeof truth.value === "number" && Number.isFinite(truth.value) && truth.value > 0;
+    const compatible = compatibility.length === 0;
+
+    if (event.direction === "TRANSFER" && event.category === "INTERNAL_TRANSFER") {
+      if (!isConsolidatedTarget(targetScope, accountScoped)) {
+        transferAmbiguous = true;
+        diagnostics.push("TRANSFER_SCOPE_AMBIGUOUS_UNSUPPORTED_V1");
+        failureQualities.push("GAP");
+        continue;
+      }
+      if (!numericQuality || !numericValue || !compatible) {
+        if (truth.quality === "NOT_CONNECTED") {
+          diagnostics.push("TRANSFER_SOURCE_NOT_CONNECTED");
+        } else if (!compatible) {
+          diagnostics.push("TRANSFER_INPUT_INCOMPATIBLE");
+        } else {
+          diagnostics.push("TRANSFER_EVENT_NOT_NUMERIC");
+        }
+        continue;
+      }
+      numericEvents.push(event);
+      continue;
+    }
+
+    if (!compatible) {
+      failureQualities.push("GAP");
+      continue;
+    }
+
+    if (!numericQuality || !numericValue) {
+      const quality = truth.quality === "NOT_CONNECTED" ? "NOT_CONNECTED" : "GAP";
+      failureQualities.push(quality);
+      diagnostics.push(
+        quality === "NOT_CONNECTED"
+          ? "EVENT_SOURCE_NOT_CONNECTED"
+          : "EVENT_DEPENDENCY_GAP"
+      );
+      continue;
+    }
+
+    numericEvents.push(event);
+  }
+
+  if (diagnostics.includes("DUPLICATE_EVENT_ID_CONFLICT")) {
+    failureQualities.push("GAP");
+  }
+
+  return {
+    events: kept,
+    numeric_events: numericEvents,
+    failure_qualities: failureQualities,
+    transfer_ambiguous: transferAmbiguous,
+    diagnostics: [...new Set(diagnostics)].sort()
+  };
+}
+
+function eventLineage(events) {
+  return [...new Set(events.flatMap((event) => event.amount_truth?.lineage || []).filter(Boolean))].sort();
+}
+
+function derivedNumericTruth({
+  metric,
+  period,
+  scope,
+  value,
+  quality,
+  asOf,
+  lineage,
+  evidence = [],
+  reason,
+  message
+}) {
+  return normalizeFinancialTruth({
+    period,
+    scope,
+    group: "CASH",
+    metric,
+    value,
+    quality,
+    source: DERIVED_SOURCE,
+    as_of: asOf,
+    reconciliation_status: quality === "ACTUAL" ? "RECONCILED" : "PARTIAL",
+    evidence,
+    lineage: ["CASH_BRIDGE_V1", ...lineage],
+    message,
+    reason
+  });
+}
+
+function knownSum({
+  direction,
+  events,
+  coverage,
+  targetPeriod,
