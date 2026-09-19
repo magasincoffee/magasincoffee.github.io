@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: supervisor-integrity-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   static-audit:
@@ -66,16 +66,15 @@ jobs:
     needs: static-audit
     if: github.event_name != 'pull_request'
     runs-on: self-hosted
-    timeout-minutes: 7
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-
       - name: Audit installed Supervisor runtime without mutation
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
 
-          $sourceRuntime = Get-Content "08_INTEGRATIONS/supervisor/src/runtime/three-lane-cli.mjs" -Raw -Encoding UTF8
+          $sourceUrl = "https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/$env:GITHUB_SHA/08_INTEGRATIONS/supervisor/src/runtime/three-lane-cli.mjs"
+          $sourceRuntime = (Invoke-WebRequest -UseBasicParsing -Uri $sourceUrl -TimeoutSec 15).Content
           $versionMatch = [regex]::Match($sourceRuntime, 'SUPERVISOR_RUNTIME_VERSION\s*=\s*"([^"]+)"')
           if (-not $versionMatch.Success) { throw "Source runtime version not found" }
           $expectedVersion = $versionMatch.Groups[1].Value
@@ -149,7 +148,7 @@ jobs:
           }
 
           if (-not $healthy) {
-            throw "Installed Supervisor did not reach the checked-out Three-Lane runtime version and healthy CDP state"
+            throw "Installed Supervisor did not reach the exact-commit Three-Lane runtime version and healthy CDP state"
           }
 
           $blockedRelayCount = 0
