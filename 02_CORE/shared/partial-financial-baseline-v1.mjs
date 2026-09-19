@@ -204,16 +204,10 @@ function normalizePeriodComponent(raw, {
     containsUnsafeText(raw?.evidence) ||
     containsUnsafeText(raw?.diagnostics);
 
-  const truth = normalizeFinancialTruth({
-    ...raw,
-    group: raw?.group ?? expectedGroup,
-    metric: raw?.metric ?? defaultMetric
-  }, { allowNegative });
-
   const diagnostics = safeList(raw?.diagnostics);
   const coverage = sanitizeTree(raw?.coverage ?? null);
 
-  if (unsafe && (truth.quality === "ACTUAL" || truth.quality === "ESTIMATE")) {
+  if (unsafe) {
     return {
       truth: missingTruth({
         group: expectedGroup,
@@ -226,6 +220,12 @@ function normalizePeriodComponent(raw, {
       coverage
     };
   }
+
+  const truth = normalizeFinancialTruth({
+    ...raw,
+    group: raw?.group ?? expectedGroup,
+    metric: raw?.metric ?? defaultMetric
+  }, { allowNegative });
 
   if (truth.group !== expectedGroup) {
     return {
