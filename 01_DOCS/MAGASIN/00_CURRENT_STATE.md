@@ -226,3 +226,18 @@ Canonical contract: `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md`.
 - **TASK-049/F — runtime survival / technical-recovery acceptance: ACCEPTED.** Supervisor Autostart Install run `35414750942` completed with Supervisor Tests **212/212 PASS**, install success and `verify-survival` success. Install evidence: `WORKER_RETRY_REQUIRED=False`, `TECHNICAL_RECOVERY_STUCK=False`, `SUPERVISOR_ONLINE=True`, `BRAIN_WORKER_RUNTIME=True`, `BUSINESS_CHROME_ONLINE=True`, `BUSINESS_CHROME_CDP_HEALTHY=True`. Post-job survival evidence: `POST_JOB_SUPERVISOR_ALIVE=True`, `POST_JOB_BRAIN_WORKER_ALIVE=True`, `POST_JOB_ROBOT_CHROME_ALIVE=True`.
 - This checkpoint does **not** assert the remaining TASK-049 acceptance items in `00_SUPERVISOR_BRAIN_WORKER_ARCHITECTURE.md`; those must be independently reconciled before TASK-049 can become DONE.
 
+
+
+## PFC 8-hour V2 — ACTIVE
+
+Owner explicitly released `PFC_8H_V2` on 2026-09-20.
+
+- generation: `PFC_8H_V2_RUN_01`
+- current task: `TASK-060 — Actual Cash Opening/Ending Source Truth V1`
+- state: `READY / AUTO_CONTINUE`
+- Robot may execute: `true`
+- Google Drive: `AUTHORIZED_READ_ONLY`
+- primary queue: `TASK-060 → TASK-083`
+- overflow if time remains: `TASK-084 → TASK-089`
+- method: `QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE`
+- emphasis: `SIMPLIFY → ACCELERATE → AUTOMATE`
