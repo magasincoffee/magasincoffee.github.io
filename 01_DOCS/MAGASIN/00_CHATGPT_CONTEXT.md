@@ -11,7 +11,9 @@ Before doing any work in a new chat, read:
 5. `00_MASTER_PLAN.md`.
 6. `06_DECISION_LOG.md`.
 7. current domain/task docs.
-8. repository/PR/CI state.
+8. `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`.
+9. `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
+10. repository/PR/CI state.
 
 Do not continue from stale chat memory when repository evidence is newer.
 
@@ -177,20 +179,25 @@ Reuse the pattern. Do not keep expanding Workforce merely to complete a module.
 
 ## 9. Current Owner / Robot boundary
 
-Canonical architecture is **OWNER APPROVED / LOCKED**.
+The Owner-released generation `PFC_3H_V1_RESTART_01` is **COMPLETE**.
 
-Current state remains:
+Current authoritative state:
 
 ```text
-WAIT_USER / PAUSED
-robot_may_execute = false
+TASK-051..TASK-059 = DONE
+current_task        = TASK-060
+TASK-060            = PLANNED / WAIT_OWNER_RELEASE
+status              = WAIT_USER
+autonomy            = PAUSED
+requires_user       = true
+robot_may_execute   = false
 ```
 
-Owner and ChatGPT may continue detailing architecture.
+This is a completed execution-scope boundary, not a business-rule blocker.
 
-Supervisor/Brain/Work must not start implementation until Owner explicitly releases Robot and `00_PROJECT_STATE.json` is changed to `READY / AUTO_CONTINUE`.
+TASK-060 must not be dispatched or implemented until the Owner explicitly releases it. Silence is not approval.
 
-Silence is not approval.
+The completed PFC slice now contains Financial Truth V1, Monthly Revenue, Revenue projection, Cash taxonomy/calculator, Procurement payment/AP mapping and Partial Financial Baseline V1.
 
 ## 10. Working method
 
@@ -244,12 +251,14 @@ The repository is public. Never commit secrets, credentials, tokens, cookies, pr
 
 ## 12. Current task
 
-**TASK-050 — Canonical enterprise architecture locked — Owner detailing continues.**
+**TASK-060 — Actual Cash Opening/Ending Source Truth V1 — PLANNED / WAIT_OWNER_RELEASE.**
 
 Immediate behavior for a new chat:
 
-1. read the canonical architecture first;
-2. apply Five-Step continuously;
+1. read the canonical architecture and TASK-059 final handoff first;
+2. recognize `PFC_3H_V1_RESTART_01 = COMPLETE`;
 3. keep Profitability & Cash as priority #1;
-4. continue from current repository state;
-5. do not release or dispatch Robot without explicit Owner instruction.
+4. preserve PARTIAL Financial Baseline semantics and all component-level quality/gaps;
+5. do not execute TASK-060 without explicit Owner release;
+6. keep Robot `PAUSED` and `robot_may_execute=false` until that release.
+
