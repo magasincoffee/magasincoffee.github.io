@@ -640,6 +640,43 @@ test("mapping is idempotent for canonical mapper output", () => {
   assert.deepEqual(second, first);
 });
 
+test("pre-mapped envelope cannot bypass source/classification provenance gates", () => {
+  const first = mapCashBalanceSourceFact(
+    observed("PHYSICAL_STORE_TILL_COUNT", "PHYSICAL_CASH")
+  );
+  const forged = {
+    ...first,
+    source_class: "INTERNAL_MONTHLY_CASH_WORKBOOK",
+    classification: "COMPUTED_BALANCE"
+  };
+
+  const result = mapCashBalanceSourceFact(forged);
+  assert.equal(result.classification, "CONTEXT_ONLY");
+  assert.equal(result.balance.truth.quality, "GAP");
+  assert.equal(result.balance.truth.value, null);
+  assert.ok(
+    result.diagnostics.includes("PREMAPPED_BALANCE_PROVENANCE_MISMATCH")
+  );
+});
+
+test("pre-mapped NOT_CONNECTED envelope cannot be relabeled as observed numeric truth", () => {
+  const unavailableResult = mapUnavailableCashBalanceSource(
+    unavailable("BANK_ACCOUNT_BALANCE_STATEMENT", "BANK")
+  );
+  const forged = {
+    ...unavailableResult,
+    classification: "OBSERVED_BALANCE"
+  };
+
+  const result = mapCashBalanceSourceFact(forged);
+  assert.equal(result.classification, "CONTEXT_ONLY");
+  assert.equal(result.balance.truth.value, null);
+  assert.notEqual(result.source_status, "MAPPED");
+  assert.ok(
+    result.diagnostics.includes("PREMAPPED_BALANCE_PROVENANCE_MISMATCH")
+  );
+});
+
 test("future observed wrappers remain directly compatible with existing Cash Bridge", () => {
   const opening = mapObservedCashPoint(
     observed("PHYSICAL_STORE_TILL_COUNT", "PHYSICAL_CASH", {
