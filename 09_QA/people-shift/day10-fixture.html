@@ -236,7 +236,28 @@
 })();
 </script>
 <script src="/04_OWNER/Workforce/03-publish/engine-v1.js"></script>
-<script src="/06_EMPLOYEE/availability/engine-v1.js"></script>
-<script src="/06_EMPLOYEE/schedule/engine-v1.js"></script>
+<script>
+(() => {
+  const frame = document.getElementById('employeeApp');
+  let loaded = false;
+  function loadEmployeeEngines() {
+    if (loaded) return;
+    loaded = true;
+    for (const src of [
+      '/06_EMPLOYEE/availability/engine-v1.js',
+      '/06_EMPLOYEE/schedule/engine-v1.js'
+    ]) {
+      const script = document.createElement('script');
+      script.src = src;
+      document.body.appendChild(script);
+    }
+  }
+  if (frame?.contentDocument?.readyState === 'complete' && frame.contentDocument.body) {
+    loadEmployeeEngines();
+  } else {
+    frame?.addEventListener('load', loadEmployeeEngines, { once: true });
+  }
+})();
+</script>
 </body>
 </html>
