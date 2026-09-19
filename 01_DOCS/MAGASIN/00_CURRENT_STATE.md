@@ -6,171 +6,167 @@ Last updated: 2026-09-19
 
 **MAGASIN Business OS V1 — Five-Step / Profitability & Cash first**
 
-The enterprise architecture is **OWNER APPROVED / CANONICAL**. Owner has explicitly released Supervisor/Brain/Work for the prepared Profitability & Cash 3-hour execution queue.
+Canonical architecture:
 
-Canonical architecture — **READ FIRST in every new session:**
+- `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — READ FIRST;
+- `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`;
+- `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
 
-- `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md`
-- `02_PROFITABILITY_CASH/README.md`
-- `02_PROFITABILITY_CASH/PROFITABILITY_ARCHITECTURE.md`
-- `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`
+## PFC execution handoff
 
-## Current phase
+Execution generation:
 
-**P1 — Canonical Architecture Locked / Profitability & Cash**
+`PFC_3H_V1_RESTART_01`
 
-Current architecture priority is the financial truth spine:
-
-```text
-Revenue
-→ COGS / Variable Cost
-→ Operating / Fixed Cost
-→ Cash Inflow / Outflow
-→ AP / Debt / Owner Movement
-→ Contribution
-→ Profitability
-→ Break-even
-```
-
-Existing Schedule-first work remains a proven vertical-slice pattern, but it is no longer the enterprise critical priority.
-
-## Current task
-
-**TASK-051 — PFC source inventory + delete/defer map — IN_PROGRESS / AUTO_CONTINUE**
-
-Robot handoff is ACTIVE for `PFC_3H_V1`.
+Final state:
 
 ```text
-OWNER RELEASED PFC_3H_V1
-→ TASK-051
-→ TASK-052
-→ TASK-053
-→ TASK-054
-→ TASK-055
-→ TASK-056
-→ TASK-057
-→ TASK-058
-→ TASK-059
-→ stop only at true Owner/security boundary or queue completion
+TASK-051 → TASK-059 = DONE
+PFC_3H_V1          = COMPLETE
+
+current_task       = TASK-060
+TASK-060           = PLANNED / WAIT_OWNER_RELEASE
+status             = WAIT_USER
+autonomy           = PAUSED
+requires_user      = true
+blocked            = false
+next_task          = null
+
+Robot may execute  = false
 ```
 
-`00_PROJECT_STATE.json` is authoritative as `READY / AUTO_CONTINUE` for this run.
+The 3-hour Owner-released implementation scope is complete. This is an execution-scope boundary, not a business-rule blocker.
 
-## Current target
+**Do not dispatch or implement TASK-060 without a new explicit Owner release. Silence is not approval.**
 
-Continue detailing the locked architecture without releasing Robot. All work must preserve:
+## Financial baseline state
 
-1. Profitability & Cash as priority #1;
-2. Financial Truth Spine as cross-domain backbone;
-3. one canonical source of truth per business fact;
-4. Owner / Manager / Employee as projections over shared capabilities;
-5. Five-Step applied continuously and in parallel across every workstream;
-6. ordered Five-Step inside every change: QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE;
-7. automation as the outermost layer, never the business core;
-8. explicit Owner release before autonomous implementation.
+**PARTIAL FINANCIAL BASELINE V1 IMPLEMENTED / DISCOVERY CONTINUES**
 
-## Active scope
+Implemented:
 
-**Primary:** Profitability & Cash / enterprise management architecture.
+1. Financial Truth V1;
+2. fail-closed Monthly Revenue Baseline V1;
+3. Revenue Control Tower projection;
+4. Cash event taxonomy;
+5. deterministic Cash Bridge calculator;
+6. Procurement supplier-payment → Cash mapping;
+7. current Procurement AP point-in-time truth;
+8. Partial Financial Baseline V1 composer.
 
-**Supporting domains:** Sales, Procurement/AP, Inventory/Consumption, Workforce, SOP/Task, Organization/Access — only insofar as they feed operating truth and financial truth.
+The system does **not** claim:
+- full P&L;
+- complete month-end close;
+- complete company Profit;
+- full Bank/MoMo/COD truth;
+- complete COGS/OPEX truth.
 
-**Automation:** held. Supervisor/Brain/Work is an outer execution layer, not the enterprise architecture core.
+Missing evidence remains GAP / NOT_CONNECTED / ESTIMATE as appropriate and never defaults to zero.
 
-**Deferred while Owner detailing continues:** new Robot features, broad dashboard expansion, speculative schemas, AI forecasting, KPI automation, payroll/recruitment expansion, cosmetic refactors, and non-critical module completion.
+## Final regression checkpoint
+
+Fresh no-code-churn regression after TASK-058:
+
+- Business OS run `35453257400`, attempt 2, job `105926272352`:
+  - Node v20.20.2;
+  - **214 logical checks / 0 fail**;
+  - conclusion `success`.
+- Owner Control Tower run `35448195046`, attempt 2, job `105926275823`:
+  - Node v20.20.2;
+  - **74/74 PASS / 0 fail**;
+  - `CONTROL_TOWER_BROWSER_E2E=PASS`;
+  - conclusion `success`.
+- Static scan of the five PFC Core helpers: **0 financial write primitive matches**.
+- Procurement production QA: `NOT_APPLICABLE` because TASK-059 changes no Procurement production/migration path.
+
+Current executable main is equivalent to those tested executable trees; subsequent TASK-059 changes are documentation/state only.
+
+## Core invariants
+
+These remain mandatory:
+
+- missing != 0;
+- ACTUAL / ESTIMATE / GAP / NOT_CONNECTED stay distinct;
+- purchase != COGS;
+- purchase/AP != cash movement;
+- Revenue recognition != cash collection;
+- FoodApp gross != settlement cash;
+- payment method != account balance;
+- current AP != historical AP;
+- Cash != Profit;
+- Profit requires compatible Revenue + COGS + Operating Costs;
+- component failure stays isolated;
+- unknown scope != ALL;
+- ALL requires explicit aggregate proof.
+
+## Next planned priority
+
+### TASK-060 — Actual Cash Opening/Ending Source Truth V1
+
+Status:
+
+`PLANNED / WAIT_OWNER_RELEASE`
+
+Goal:
+
+Normalize evidenced opening cash, observed ending cash and explicit source/account coverage so Cash Bridge can progress toward COMPLETE.
+
+Do not infer balance from CASH/BANK/MOMO payment-method rows.
+
+TASK-060 is not released by completion of TASK-059.
+
+## Remaining major gaps
+
+Priority gaps after the completed run:
+
+1. opening cash + observed ending cash source truth;
+2. Bank / MoMo / COD account truth;
+3. complete current FoodApp settlement;
+4. complete payroll / rent / utilities / other OPEX recognition;
+5. company-wide consumption-based COGS;
+6. structured Owner contributions / withdrawals;
+7. historical AP snapshots;
+8. live reconciled Revenue reader where still not connected;
+9. Profit ↔ Cash reconciliation;
+10. Break-even / branch economics;
+11. Pricing diagnosis.
 
 ## Working method
 
-Every requirement, domain, workflow, field, report, integration, KPI, automation, incident and change request:
+Every future requirement/change continues to use:
 
 ```text
 QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE
 ```
 
-Five-Step is continuous: re-run it whenever new evidence, field feedback, incidents or business changes appear. Workstreams may run Five-Step in parallel, but each individual change must preserve the order above.
-
-Every implementation micro-task:
+For implementation tasks after explicit Owner release:
 
 ```text
 Estimate → Implement → Unit → Fix → Regression → Integration → E2E → Docs/State → Commit → Next
 ```
 
-Normal implementation task target: <= ~20 minutes active work. Split larger tasks.
-
 ## Safety
 
 This repository is PUBLIC.
 
-Never commit secrets, credentials, cookies, tokens, browser profiles, private employee/customer/financial records, production exports or private generated media.
+Never commit secrets, credentials, cookies, tokens, browser profiles, private employee/customer/financial records, production exports, Drive locators or other private operating evidence.
 
-Production/private data remains outside Git with appropriate access controls.
-
-## Supervisor status
-
-Supervisor Robot V1 is implemented and verified:
-
-- real installed Chrome with local authenticated profile;
-- privacy-safe UI observation;
-- bounded Continue / safe Retry executor;
-- reconnect/retry policy;
-- anti-duplicate continuation loop;
-- unified `MAGASIN BUSINESS OS CONTROL` desktop panel with START ROBOT / STOP;
-- privacy-safe runtime status for current task, next task, ChatGPT UI state/action, update time and errors;
-- background START mode so normal use does not require a separate PowerShell window;
-- persistent local runtime;
-- conversation-aware handoff: observe the active supervised chat before first continuation;
-- shared Owner/Robot ChatGPT browser profile opened by the Control Panel;
-- local-only target/profile/logs;
-- fail-closed gates for BLOCKED/auth/MFA/CAPTCHA/destructive/admin/ambiguous states;
-- WAIT_USER owner-boundary observer: may only reconcile an explicit live Owner decision back into repository state, never invent or bypass the decision.
-
-Owner does not need to sit at the computer and repeatedly ask ChatGPT to continue. Normal operation is: open `MAGASIN BUSINESS OS CONTROL` → START ROBOT → return only when the panel/state reaches `WAIT_USER` or another real Owner boundary. The Supervisor may continue only while `AUTO_CONTINUE` is allowed.
-
-## Next action
-
-**ACTIVE — TASK-051:** Execute `PFC_3H_V1` autonomously under continuous Five-Step. Google Drive may be used read-only as real evidence. Continue through TASK-059 unless a true Owner/security boundary is reached.
-
-Background night-run gate: **TASK-048 — NIGHT_WINDOW_COMPLETE**. The approved 09:15 +07 boundary closed the old night window and preserved the later Owner-selected active task/autonomy.
-
-Final-checkpoint evidence:
-
-- canonical evidence report: `05_SYSTEM/NIGHT_RUN_2026-09-18_EVIDENCE_V1.md`;
-- final review report: `08_AUTONOMY/NIGHT_RUN_REPORT_2026-09-19.md`;
-- Business OS PR #119 remains draft/open/unmerged with full Robot V2 review scope;
-- Media Robot PR #21 remains offline-only/unmerged;
-- Business OS QA: **203/203 PASS** run `35371642271`;
-- TASK-048 hard-stop reconciliation QA: **162/162 PASS**, 0 failed, run `35372881851`; QA probe PR #120 closed without merge;
-- TASK-048 boundary-time guard QA: **162/162 PASS**, 0 failed, run `35373330382`; manual dispatch before 09:15 +07 is fail-closed; QA probe PR #121 closed without merge;
-- TASK-048 idempotence QA: **162/162 PASS**, 0 failed, run `35373887433`; repeated post-boundary dispatch preserves completion timestamps and records `NIGHT_WINDOW_COMPLETE` once; QA probe PR #122 closed without merge;
-- TASK-048 one-shot guard QA: **162/162 PASS**, 0 failed, run `35374298573`; once `NIGHT_WINDOW_COMPLETE` exists, later manual reruns no-op before any state mutation so a subsequent Owner-reviewed state cannot be overwritten; QA probe PR #123 closed without merge;
-- TASK-048 evidence-surface QA: **162/162 PASS**, 0 failed, run `35375054600`; canonical night-run evidence pack is reconciled to `NIGHT_WINDOW_COMPLETE / OWNER REVIEW REQUIRED` by the hard-stop; QA probe PR #124 closed without merge;
-- TASK-048 temporal-pause QA: **163/163 PASS**, 0 failed, run `35375852646`; existing `PAUSED` autonomy suppresses repeated Supervisor continuation during the time-only gate without creating `WAIT_USER`; QA probe PR #125 closed without merge;
-- Media Robot QA: **83/83 PASS** runs `35370775036` and `35371002442`;
-- no bounded hard-stop regression remains after reconciliation, boundary-time guard, idempotence, post-review one-shot and canonical-evidence surface fixes; pre-boundary Supervisor busy-loop prevention now uses the existing `PAUSED` autonomy mode.
-
-TASK-048/TASK-049 notes below are historical safety evidence only; they do not override current TASK-050 or the PAUSED Owner gate:
-
-1. preserve the verified reports/state;
-2. do not merge either PR;
-3. do not execute live Saydi Generate/Download;
-4. do not reactivate TASK-035 Gmail production email;
-5. completed hard-stop history must not overwrite current TASK-050, the canonical architecture, or `WAIT_USER / PAUSED`.
+Google Drive evidence remains READ-ONLY unless the Owner explicitly changes that policy.
 
 ## Session handoff
 
-**Mandatory new-chat bootstrap — do not skip:**
+Mandatory new-chat bootstrap:
 
 1. **`00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — READ FIRST / CANONICAL.**
 2. `00_CURRENT_STATE.md`.
 3. `00_PROJECT_STATE.json`.
 4. `00_TASK_QUEUE.md`.
-5. `00_MASTER_PLAN.md`.
-6. `06_DECISION_LOG.md`.
-7. `00_CHATGPT_CONTEXT.md`.
-8. current domain/task docs.
-9. repository/PR/CI state.
-
-A new chat must apply the canonical architecture immediately. It must keep Profitability & Cash as priority #1 and apply Five-Step continuously at every level. If older documentation conflicts, reconcile it against the canonical architecture and newer Owner decisions before acting.
+5. `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`.
+6. `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
+7. `00_MASTER_PLAN.md`.
+8. `06_DECISION_LOG.md`.
+9. `00_CHATGPT_CONTEXT.md`.
+10. repository/PR/CI state.
 
 Repository evidence overrides stale chat memory.
 
