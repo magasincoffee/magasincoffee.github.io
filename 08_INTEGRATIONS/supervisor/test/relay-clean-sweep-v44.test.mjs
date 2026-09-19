@@ -5,7 +5,8 @@ import fs from "node:fs/promises";
 import {
   RELAY_RECONCILE_OUTCOMES,
   classifyRelayMarkerState,
-  activeRelayScreenshotPaths
+  activeRelayScreenshotPaths,
+  migrateLegacyBlockedRelayLatches
 } from "../src/runtime/relay-reconciliation.mjs";
 import {
   normalizeLaneConfig,
@@ -156,4 +157,53 @@ test("v43 Work dispatch marker envelope remains unchanged in v44", () => {
     workDispatchMarker("17bb5c7442e65d9f6350f61330c595dd"),
     "dispatch_id=17bb5c7442e65d9f6350f61330c595dd"
   );
+});
+
+
+test("v45 startup migration clears only legacy relay blocked metadata across all lanes", () => {
+  const registry = normalizeLaneRegistry({
+    lanes: {
+      "lane-1": {
+        relay_inflight: {
+          relay_id: "r1",
+          screenshot_path: "C:/evidence/lane-1.png",
+          reconcile_blocked: true,
+          reconcile_reloaded: true,
+          reconcile_runtime_version: "2026-09-19.43",
+          reconcile_started_at: "2026-09-19T00:00:00Z"
+        }
+      },
+      "lane-2": {
+        relay_inflight: {
+          relay_id: "r2",
+          screenshot_path: "C:/evidence/lane-2.png",
+          reconcile_blocked: true
+        }
+      },
+      "lane-3": {
+        relay_inflight: null
+      }
+    }
+  });
+
+  const migrated = migrateLegacyBlockedRelayLatches(registry);
+  assert.equal(migrated, 2);
+  assert.equal(registry.lanes["lane-1"].relay_inflight.reconcile_blocked, false);
+  assert.equal(registry.lanes["lane-2"].relay_inflight.reconcile_blocked, false);
+  assert.equal(registry.lanes["lane-1"].relay_inflight.relay_id, "r1");
+  assert.equal(registry.lanes["lane-1"].relay_inflight.screenshot_path, "C:/evidence/lane-1.png");
+  assert.equal("reconcile_reloaded" in registry.lanes["lane-1"].relay_inflight, false);
+  assert.equal("reconcile_runtime_version" in registry.lanes["lane-1"].relay_inflight, false);
+  assert.equal("reconcile_started_at" in registry.lanes["lane-1"].relay_inflight, false);
+});
+
+test("v45 runtime performs blocked relay migration before lane processing", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.match(source, /startupRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
+  assert.match(source, /RUNTIME_RELAY_BLOCKED_LATCHES_MIGRATED/);
+  assert.match(source, /loopRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
+  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-19\.45"/);
 });
