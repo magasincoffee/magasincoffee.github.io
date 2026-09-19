@@ -12,6 +12,7 @@ import {
   captureAssistantTurnDigests,
   captureCompletedAssistantTurn,
   captureRecentAssistantTurns,
+  captureRecentConversationTurns,
   captureUserTurnDigests
 } from "../ui/message-capture.mjs";
 import { OBSERVATIONS } from "../decision.mjs";
@@ -190,8 +191,15 @@ async function createConversationWithMessage(adapter, message, { execute }) {
 }
 
 async function captureLatestValidBrainDirective(page, config) {
-  const turns = await captureRecentAssistantTurns(page, { limit: 30 });
-  for (const captured of [...turns].reverse()) {
+  const turns = await captureRecentConversationTurns(page, { limit: 40 });
+  let latestUserIndex = -1;
+  for (let index = 0; index < turns.length; index += 1) {
+    if (turns[index].role === "user") latestUserIndex = index;
+  }
+
+  for (let index = turns.length - 1; index > latestUserIndex; index -= 1) {
+    const captured = turns[index];
+    if (captured.role !== "assistant") continue;
     try {
       const directive = parseBrainDirective(captured.text, {
         maxWorkers: workerCapacity(config)
