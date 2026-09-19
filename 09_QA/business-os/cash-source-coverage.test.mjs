@@ -564,6 +564,8 @@ test("fully proven computed opening can satisfy OPENING_BALANCE coverage without
     }),
     sources: [pointEntry({
       sourceClass: "INTERNAL_MONTHLY_CASH_WORKBOOK",
+      accountClass: "OTHER_EVIDENCED_CASH",
+      label: "INTERNAL_CASH_POOL",
       balance: computed
     })]
   }));
@@ -583,6 +585,8 @@ test("computed opening without valid provenance remains incomplete", () => {
     }),
     sources: [pointEntry({
       sourceClass: "INTERNAL_MONTHLY_CASH_WORKBOOK",
+      accountClass: "OTHER_EVIDENCED_CASH",
+      label: "INTERNAL_CASH_POOL",
       balance: computed
     })]
   }));
@@ -816,6 +820,8 @@ test("coverage evaluation does not mutate mapped balance quality/value/classific
     }),
     sources: [pointEntry({
       sourceClass: "INTERNAL_MONTHLY_CASH_WORKBOOK",
+      accountClass: "OTHER_EVIDENCED_CASH",
+      label: "INTERNAL_CASH_POOL",
       balance: mapped
     })]
   }));
@@ -901,6 +907,8 @@ test("current TASK-060/062 profile stays non-COMPLETE and Cash Bridge computed e
     }),
     sources: [pointEntry({
       sourceClass: "INTERNAL_MONTHLY_CASH_WORKBOOK",
+      accountClass: "OTHER_EVIDENCED_CASH",
+      label: "INTERNAL_CASH_POOL",
       balance: openingMapped
     })]
   }));
