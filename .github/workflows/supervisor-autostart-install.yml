@@ -140,8 +140,8 @@ jobs:
 
           $runtimeThreeLane = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
           if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.32" -Quiet)) {
-            throw "Installed Three-Lane runtime is not v2026-09-19.32"
+          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.33" -Quiet)) {
+            throw "Installed Three-Lane runtime is not v2026-09-19.33"
           }
 
           $laneConfigFile = Join-Path $root "lanes.json"
@@ -156,7 +156,7 @@ jobs:
                   $laneConfig.mode -eq "THREE_LANE_V1" -and
                   @($laneConfig.lanes).Count -eq 3 -and
                   $laneStatus.mode -eq "THREE_LANE_V1" -and
-                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.32" -and
+                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.33" -and
                   @($laneStatus.lanes).Count -eq 3
                 ) {
                   $laneReady = $true
@@ -197,35 +197,48 @@ jobs:
           Start-Sleep -Seconds 15
 
           $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
-          $wrapper = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
-            Where-Object {
-              $_.CommandLine -and
-              $_.CommandLine -like "*run-supervisor.ps1*" -and
-              $_.CommandLine -like "*MAGASIN\BusinessOS\supervisor*"
-            } |
-            Select-Object -First 1
-          if (-not $wrapper) { throw "Supervisor wrapper did not survive the previous self-hosted job" }
-
-          $threeLane = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-            Where-Object { $_.CommandLine -and $_.CommandLine -like "*three-lane-cli.mjs*" } |
-            Select-Object -First 1
-          if (-not $threeLane) { throw "Three-Lane runtime did not survive the previous self-hosted job" }
-
           $profile = Join-Path $root "browser_profile"
-          $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
-            Where-Object {
-              $_.CommandLine -and
-              $_.CommandLine -like "*$profile*" -and
-              $_.CommandLine -match "--remote-debugging-port=(\d+)"
-            } |
-            Select-Object -First 1
-          if (-not $chrome) { throw "Dedicated Robot Chrome did not survive the previous self-hosted job" }
+          $wrapper = $null
+          $threeLane = $null
+          $chrome = $null
+
+          # The self-hosted runner may clean up the first Chrome process after
+          # the install job. v33 gives the Supervisor a bounded recovery window
+          # to request exit code 75 and relaunch the dedicated Robot Chrome.
+          for ($i = 0; $i -lt 60; $i++) {
+            $wrapper = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.CommandLine -and
+                $_.CommandLine -like "*run-supervisor.ps1*" -and
+                $_.CommandLine -like "*MAGASIN\BusinessOS\supervisor*"
+              } |
+              Select-Object -First 1
+
+            $threeLane = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+              Where-Object { $_.CommandLine -and $_.CommandLine -like "*three-lane-cli.mjs*" } |
+              Select-Object -First 1
+
+            $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.CommandLine -and
+                $_.CommandLine -like "*$profile*" -and
+                $_.CommandLine -match "--remote-debugging-port=(\d+)"
+              } |
+              Select-Object -First 1
+
+            if ($wrapper -and $threeLane -and $chrome) { break }
+            Start-Sleep -Seconds 1
+          }
+
+          if (-not $wrapper) { throw "Supervisor wrapper did not recover after the previous self-hosted job" }
+          if (-not $threeLane) { throw "Three-Lane runtime did not recover after the previous self-hosted job" }
+          if (-not $chrome) { throw "Dedicated Robot Chrome did not recover after the previous self-hosted job" }
 
           $statusFile = Join-Path $root "lane-status.json"
           if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing after previous job cleanup" }
           $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ($status.supervisor_runtime_version -ne "2026-09-19.32") {
-            throw "Post-job Three-Lane runtime is not v2026-09-19.32"
+          if ($status.supervisor_runtime_version -ne "2026-09-19.33") {
+            throw "Post-job Three-Lane runtime is not v2026-09-19.33"
           }
           if ($status.mode -ne "THREE_LANE_V1" -or @($status.lanes).Count -ne 3) {
             throw "Post-job Three-Lane status is invalid"

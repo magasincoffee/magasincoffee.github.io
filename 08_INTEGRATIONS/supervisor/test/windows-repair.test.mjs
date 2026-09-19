@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
-test("repair installs and verifies Three-Lane v32", async () => {
+test("repair installs and verifies Three-Lane v33", async () => {
   const source = await fs.readFile(
     new URL("../windows/repair-supervisor.ps1", import.meta.url),
     "utf8"
@@ -10,7 +10,7 @@ test("repair installs and verifies Three-Lane v32", async () => {
 
   assert.match(source, /git -C \$repoRoot pull --ff-only origin main/);
   assert.match(source, /Node\.js 20\+/);
-  assert.match(source, /2026-09-19\.32/);
+  assert.match(source, /2026-09-19\.33/);
   assert.match(source, /three-lane-cli\.mjs/);
   assert.match(source, /THREE_LANE_V1/);
   assert.match(source, /Stop-OrphanedSupervisorLoops/);

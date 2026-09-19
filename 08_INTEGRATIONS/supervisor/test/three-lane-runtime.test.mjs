@@ -132,3 +132,17 @@ test("transient fetch and CDP failures recover instead of escalating to Owner", 
   assert.match(runtime, /reconnectOverCdp/);
   assert.match(runtime, /Robot đang tự kết nối lại và sẽ thử tiếp/);
 });
+
+
+test("exhausted transient CDP recovery exits 75 so Windows wrapper relaunches Robot Chrome", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /cdpRecoveryFailures/);
+  assert.match(source, /cdpRecoveryFailures >= 3/);
+  assert.match(source, /RUNTIME_CDP_RESTART_REQUESTED/);
+  assert.match(source, /process\.exitCode = 75/);
+  assert.match(source, /bounded transient CDP reconnect budget exhausted/);
+});
