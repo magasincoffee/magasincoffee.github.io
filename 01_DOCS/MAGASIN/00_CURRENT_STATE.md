@@ -11,7 +11,8 @@ Canonical architecture:
 - `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — READ FIRST;
 - `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`;
 - `02_PROFITABILITY_CASH/PFC_8H_V2_EXECUTION_PLAN.md`;
-- `02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`.
+- `02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`;
+- `02_PROFITABILITY_CASH/TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`.
 
 ## PFC execution handoff
 
@@ -25,11 +26,11 @@ Current state:
 
 ```text
 PFC_3H_V1_RESTART_01 = COMPLETE
-TASK-051 → TASK-060   = DONE
+TASK-051 → TASK-061   = DONE
 
-current_task          = TASK-061
-TASK-061              = READY / AUTO_CONTINUE
-next_task             = TASK-062
+current_task          = TASK-062
+TASK-062              = READY / AUTO_CONTINUE
+next_task             = TASK-063
 status                = READY
 autonomy              = AUTO_CONTINUE
 requires_user         = false
@@ -52,7 +53,7 @@ Current verified balance landscape:
 
 Missing balance sources remain gaps; they do not pause PFC_8H_V2.
 
-TASK-061 is now the active canonical task.
+TASK-061 contract is complete. TASK-062 is now the active canonical task.
 
 ## Financial baseline state
 
@@ -116,7 +117,7 @@ These remain mandatory:
 
 ## Current PFC V2 priority
 
-### TASK-061 — Cash Balance Financial Truth Contract
+### TASK-062 — Cash Balance Source Mapper
 
 Status:
 
@@ -124,7 +125,7 @@ Status:
 
 Goal:
 
-Define canonical point-balance Financial Truth semantics by account/scope/time while keeping:
+Map available read-only source evidence into the canonical Cash Balance Financial Truth contract while keeping:
 
 ```text
 OBSERVED_BALANCE != COMPUTED_BALANCE
@@ -134,11 +135,11 @@ unknown scope != ALL
 missing != zero
 ```
 
-TASK-060 evidence is the discovery input for this contract.
+TASK-060 evidence + TASK-061 contract are the canonical inputs for this mapper.
 
-Next queued task after TASK-061:
+Next queued task after TASK-062:
 
-`TASK-062 — Cash Balance Source Mapper`
+`TASK-063 — Cash Source Coverage V1`
 
 ## Remaining major gaps
 
