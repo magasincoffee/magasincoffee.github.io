@@ -8,9 +8,10 @@ async function read(relative) {
   return fs.readFile(new URL(relative, root), "utf8");
 }
 
-test("Five-Step architecture reset is canonical and schedule-first", async () => {
-  const [architecture, current, queue, stateRaw] = await Promise.all([
+test("Five-Step architecture reset remains canonical under Profitability & Cash priority", async () => {
+  const [architecture, enterprise, current, queue, stateRaw] = await Promise.all([
     read("01_DOCS/MAGASIN/00_ARCHITECTURE_5_STEP_RESET.md"),
+    read("01_DOCS/MAGASIN/00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md"),
     read("01_DOCS/MAGASIN/00_CURRENT_STATE.md"),
     read("01_DOCS/MAGASIN/00_TASK_QUEUE.md"),
     read("01_DOCS/MAGASIN/00_PROJECT_STATE.json")
@@ -22,9 +23,12 @@ test("Five-Step architecture reset is canonical and schedule-first", async () =>
   assert.match(architecture, /SIMPLIFY \/ OPTIMIZE/);
   assert.match(architecture, /ACCELERATE cycle time/);
   assert.match(architecture, /AUTOMATE last/);
-  assert.match(architecture, /Employee availability[\s\S]*Manager review\/edit[\s\S]*Robot schedule proposal[\s\S]*publish weekly schedule/);
+  assert.match(architecture, /Current critical path: Profitability & Cash first/i);
 
-  assert.match(state.current_task, /^TASK-(?:03[7-9]|04[0-8])$/);
+  assert.match(enterprise, /Profitability & Cash là critical business priority số 1/i);
+  assert.match(enterprise, /FINANCIAL TRUTH SPINE/);
+  assert.equal(state.architecture_handoff?.primary_priority, "PROFITABILITY_CASH");
+  assert.equal(state.prepared_execution_queue?.id, "PFC_3H_V1");
   assert.ok(["READY", "WAIT_USER"].includes(state.status));
   if (state.status === "READY") {
     assert.equal(state.autonomy, "AUTO_CONTINUE");
@@ -32,33 +36,23 @@ test("Five-Step architecture reset is canonical and schedule-first", async () =>
   }
   assert.equal(state.night_run?.id, "NIGHT_RUN_2026-09-18");
 
-  assert.match(current, /Schedule-first Core Flow/);
-  assert.match(current, /Approved night run/);
+  assert.match(current, /Profitability & Cash first/);
+  assert.match(current, /financial truth spine/i);
   assert.match(queue, /TASK-026[^\n]*DEFERRED/);
-  assert.match(queue, /TASK-027[^\n]*DONE/);
-  assert.match(queue, /TASK-028[^\n]*DONE/);
-  assert.match(queue, /TASK-029[^\n]*DONE/);
-  assert.match(queue, /TASK-030[^\n]*DONE/);
-  assert.match(queue, /TASK-031[^\n]*DONE/);
-  assert.match(queue, /TASK-032[^\n]*DONE/);
-  assert.match(queue, /TASK-033[^\n]*DONE/);
-  assert.match(queue, /TASK-034[^\n]*DONE/);
-  assert.match(queue, /TASK-035[^\n]*DEFERRED/);
-  assert.match(queue, /TASK-036[^\n]*DONE/);
-  assert.match(queue, /TASK-037[^\n]*(?:IN_PROGRESS|DONE)/);
-  assert.match(queue, /TASK-048[^\n]*(?:READY|IN_PROGRESS|DONE)/);
+  assert.match(queue, /TASK-051[^\n]*DONE/);
+  assert.match(queue, /TASK-052[^\n]*(?:REOPENED|DONE)/);
+  assert.match(queue, /TASK-053[^\n]*(?:QUEUED|READY)/);
 });
 
 test("deferred SOP write path remains fail-closed", async () => {
-  const [architecture, current] = await Promise.all([
+  const [architecture, queue] = await Promise.all([
     read("01_DOCS/MAGASIN/00_ARCHITECTURE_5_STEP_RESET.md"),
-    read("01_DOCS/MAGASIN/00_CURRENT_STATE.md")
+    read("01_DOCS/MAGASIN/00_TASK_QUEUE.md")
   ]);
 
-  assert.match(architecture, /SOP\/Task write automation/);
-  assert.match(current, /Do not implement write-capable SOP\/Task automation/);
+  assert.match(architecture, /SOP\/Task write automation while its Owner rule boundary is still unresolved/);
+  assert.match(queue, /TASK-026[^\n]*DEFERRED/);
 });
-
 
 test("conversation-aware handoff architecture is part of Five-Step execution", async () => {
   const [architecture, handoff, current] = await Promise.all([
@@ -76,10 +70,8 @@ test("conversation-aware handoff architecture is part of Five-Step execution", a
   assert.match(current, /conversation-aware handoff/);
 });
 
-
 test("deferred Gmail activation stays fail-closed and non-blocking", async () => {
-  const [current, emailConfig, task036, stateRaw] = await Promise.all([
-    read("01_DOCS/MAGASIN/00_CURRENT_STATE.md"),
+  const [emailConfig, task036, stateRaw] = await Promise.all([
     read("01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_EMAIL_ADAPTER_CONFIG_V1.md"),
     read("01_DOCS/MAGASIN/05_SYSTEM/SCHEDULE_FIRST_CLOSURE_REGRESSION_V1.md"),
     read("01_DOCS/MAGASIN/00_PROJECT_STATE.json")
@@ -88,9 +80,12 @@ test("deferred Gmail activation stays fail-closed and non-blocking", async () =>
 
   assert.match(emailConfig, /DEFERRED_BY_OWNER \/ FAIL_CLOSED/);
   assert.match(emailConfig, /notification-email-worker not deployed/);
-  assert.match(current, /AUTO_CONTINUE — TASK-036/);
   assert.match(task036, /external email is not required/i);
   assert.equal(state.deferred_activation.blocking, false);
   assert.equal(state.deferred_activation.email_worker_deployed, false);
   assert.equal(state.deferred_activation.send_email, false);
+  assert.equal(
+    state.deferred_activation.guardrail,
+    "KEEP_EMAIL_FAIL_CLOSED_UNTIL_REACTIVATED_BY_OWNER"
+  );
 });
