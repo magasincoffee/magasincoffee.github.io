@@ -165,6 +165,29 @@ jobs:
               )
             );
 
+            const recentDirectiveMatches = [];
+            for (const brainTurn of brainTurns) {
+              if (brainTurn.role !== "assistant") continue;
+              try {
+                const { parseLaneDirective } = await import(
+                  pathToFileURL(path.join(runtime, "runtime", "three-lane.mjs")).href
+                );
+                const parsed = parseLaneDirective(brainTurn.text);
+                if (parsed.action !== "WORK") continue;
+                const matchedTurn = turns.find((turn) =>
+                  turn.role === "user" &&
+                  normalizeText(turn.text) === normalizeText(parsed.instruction)
+                );
+                recentDirectiveMatches.push({
+                  task_id: parsed.task_id,
+                  directive_digest_prefix: parsed.digest.slice(0, 12),
+                  normalized_work_match: Boolean(matchedTurn),
+                  matched_work_turn: matchedTurn?.turn || null
+                });
+              } catch {}
+            }
+            output.recent_brain_directive_matches = recentDirectiveMatches;
+
             output.recent_turns = turns.map((turn) => ({
               role: turn.role,
               turn: turn.turn,
