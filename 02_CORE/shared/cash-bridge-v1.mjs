@@ -1072,3 +1072,224 @@ export function calculateCashBridge({
   const targetPeriodState = normalizeTargetPeriod(rawTargetPeriod ?? rawTargetPeriodSnake ?? {});
   const targetScopeState = normalizeTargetScope(rawScope ?? {});
   const targetPeriod = {
+    start: targetPeriodState.start,
+    end: targetPeriodState.end,
+    timezone: targetPeriodState.timezone
+  };
+  const targetScope = {
+    branch: targetScopeState.branch,
+    channel: targetScopeState.channel,
+    aggregate_proven: targetScopeState.aggregate_proven
+  };
+  const coverage = normalizeCoverage(rawCoverage);
+  const diagnostics = [...coverage.diagnostics];
+
+  if (!targetPeriodState.valid) diagnostics.push("INVALID_TARGET_PERIOD");
+  if (!targetScopeState.valid) diagnostics.push("INVALID_TARGET_SCOPE");
+
+  const opening = normalizeBalanceTruth(
+    openingBalance ?? openingBalanceSnake,
+    {
+      metric: "cash_opening_balance",
+      pointDate: targetPeriod.start,
+      targetPeriod,
+      targetScope,
+      missingReason: "MISSING_OPENING_BALANCE"
+    }
+  );
+
+  const observedEnding = normalizeBalanceTruth(
+    observedEndingBalance ?? observedEndingBalanceSnake,
+    {
+      metric: "cash_observed_ending_balance",
+      pointDate: targetPeriod.end,
+      targetPeriod,
+      targetScope,
+      missingReason: "MISSING_OBSERVED_ENDING_BALANCE"
+    }
+  );
+
+  if (opening.quality === "GAP" && opening.reason) diagnostics.push(opening.reason);
+  if (opening.quality === "NOT_CONNECTED") diagnostics.push("OPENING_BALANCE_NOT_CONNECTED");
+  if (observedEnding.quality === "GAP" && observedEnding.reason) diagnostics.push(observedEnding.reason);
+  if (observedEnding.quality === "NOT_CONNECTED") diagnostics.push("OBSERVED_ENDING_BALANCE_NOT_CONNECTED");
+
+  const eventResult = targetPeriodState.valid && targetScopeState.valid
+    ? normalizeAndDeduplicateEvents(
+        events,
+        targetPeriod,
+        targetScope,
+        targetScopeState.account_scoped
+      )
+    : {
+        events: [],
+        numeric_events: [],
+        failure_qualities: ["GAP"],
+        transfer_ambiguous: false,
+        diagnostics: ["EVENTS_NOT_EVALUATED_INVALID_TARGET"]
+      };
+  diagnostics.push(...eventResult.diagnostics);
+
+  const inflowEvents = eventResult.numeric_events.filter((event) => event.direction === "INFLOW");
+  const outflowEvents = eventResult.numeric_events.filter((event) => event.direction === "OUTFLOW");
+  const transferEvents = eventResult.events.filter(
+    (event) => event.direction === "TRANSFER"
+  );
+
+  const failureByDirection = {
+    INFLOW: [],
+    OUTFLOW: []
+  };
+  const hasUnattributedEventFailure =
+    eventResult.diagnostics.includes("DUPLICATE_EVENT_ID_CONFLICT") ||
+    eventResult.events.some(
+      (event) =>
+        !["INFLOW", "OUTFLOW", "TRANSFER"].includes(event.direction) ||
+        !event.category
+    );
+  if (hasUnattributedEventFailure) {
+    failureByDirection.INFLOW.push("GAP");
+    failureByDirection.OUTFLOW.push("GAP");
+  }
+  for (const event of eventResult.events) {
+    const truth = event.amount_truth || {};
+    if (event.direction !== "INFLOW" && event.direction !== "OUTFLOW") continue;
+    const compatibility = eventCompatibilityDiagnostics(event, targetPeriod, targetScope);
+    if (compatibility.length > 0) {
+      failureByDirection[event.direction].push("GAP");
+      continue;
+    }
+    if (truth.quality === "NOT_CONNECTED") {
+      failureByDirection[event.direction].push("NOT_CONNECTED");
+    } else if (
+      truth.quality !== "ACTUAL" &&
+      truth.quality !== "ESTIMATE"
+    ) {
+      failureByDirection[event.direction].push("GAP");
+    }
+  }
+
+  const fallbackAsOf = maxAsOf([
+    opening.as_of,
+    observedEnding.as_of,
+    coverage.as_of,
+    ...eventResult.numeric_events.map((event) => event.amount_truth.as_of)
+  ]);
+
+  const totalKnownInflows = knownSum({
+    direction: "INFLOW",
+    events: eventResult.numeric_events,
+    coverage,
+    targetPeriod,
+    targetScope,
+    fallbackAsOf,
+    directionFailureQualities: failureByDirection.INFLOW
+  });
+
+  const totalKnownOutflows = knownSum({
+    direction: "OUTFLOW",
+    events: eventResult.numeric_events,
+    coverage,
+    targetPeriod,
+    targetScope,
+    fallbackAsOf,
+    directionFailureQualities: failureByDirection.OUTFLOW
+  });
+
+  const categorizedInflows = categorizedKnown(
+    eventResult.numeric_events,
+    "INFLOW",
+    targetPeriod,
+    targetScope,
+    coverage
+  );
+  const categorizedOutflows = categorizedKnown(
+    eventResult.numeric_events,
+    "OUTFLOW",
+    targetPeriod,
+    targetScope,
+    coverage
+  );
+  const transfers = transferSummary(
+    transferEvents,
+    targetPeriod,
+    targetScope,
+    coverage,
+    fallbackAsOf,
+    targetScopeState.account_scoped
+  );
+
+  const computedFailureQualities = [];
+  if (!targetPeriodState.valid || !targetScopeState.valid) computedFailureQualities.push("GAP");
+
+  const openingFailure = componentFailureQuality(opening);
+  if (openingFailure) computedFailureQualities.push(openingFailure);
+
+  if (coverage.required_not_connected) {
+    computedFailureQualities.push("NOT_CONNECTED");
+  } else if (coverage.status !== "COMPLETE") {
+    computedFailureQualities.push("GAP");
+  }
+
+  computedFailureQualities.push(...eventResult.failure_qualities);
+
+  if (
+    totalKnownInflows.quality === "GAP" ||
+    totalKnownInflows.quality === "NOT_CONNECTED"
+  ) {
+    computedFailureQualities.push(totalKnownInflows.quality);
+  }
+  if (
+    totalKnownOutflows.quality === "GAP" ||
+    totalKnownOutflows.quality === "NOT_CONNECTED"
+  ) {
+    computedFailureQualities.push(totalKnownOutflows.quality);
+  }
+
+  let computedEnding;
+  if (computedFailureQualities.length > 0) {
+    computedEnding = bridgeFailureTruth({
+      metric: "cash_computed_ending_balance",
+      targetPeriod,
+      targetScope,
+      pointDate: targetPeriod.end,
+      quality: worstQuality(computedFailureQualities),
+      reason: "COMPUTED_ENDING_DEPENDENCY_INCOMPLETE",
+      lineage: [
+        ...(opening.lineage || []),
+        ...eventLineage(eventResult.numeric_events),
+        ...coverage.lineage
+      ]
+    });
+  } else {
+    const derivedQuality = worstQuality([
+      opening.quality,
+      ...inflowEvents.map((event) => event.amount_truth.quality),
+      ...outflowEvents.map((event) => event.amount_truth.quality)
+    ]);
+    const value =
+      opening.value +
+      totalKnownInflows.value -
+      totalKnownOutflows.value;
+    computedEnding = derivedNumericTruth({
+      metric: "cash_computed_ending_balance",
+      period: {
+        start: targetPeriod.end,
+        end: targetPeriod.end,
+        timezone: targetPeriod.timezone
+      },
+      scope: targetScope,
+      value,
+      quality: derivedQuality,
+      asOf: maxAsOf([
+        opening.as_of,
+        totalKnownInflows.as_of,
+        totalKnownOutflows.as_of,
+        coverage.as_of
+      ]),
+      lineage: [
+        ...(opening.lineage || []),
+        ...(totalKnownInflows.lineage || []),
+        ...(totalKnownOutflows.lineage || []),
+        ...coverage.lineage
+      ],
