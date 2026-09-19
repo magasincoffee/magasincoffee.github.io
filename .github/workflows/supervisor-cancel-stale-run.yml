@@ -37,3 +37,13 @@ jobs:
             echo "STALE_RUN_FORCE_CANCEL_REQUESTED=True"
           fi
           echo "STALE_RUN_ID=${STALE_RUN_ID}"
+
+      - name: Report repository self-hosted runner state
+        shell: bash
+        run: |
+          set -euo pipefail
+          json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runners")"
+          echo "SELF_HOSTED_RUNNER_COUNT=$(jq '.total_count' <<<"$json")"
+          echo "SELF_HOSTED_RUNNER_ONLINE_COUNT=$(jq '[.runners[] | select(.status == "online")] | length' <<<"$json")"
+          echo "SELF_HOSTED_RUNNER_OFFLINE_COUNT=$(jq '[.runners[] | select(.status == "offline")] | length' <<<"$json")"
+          echo "SELF_HOSTED_RUNNER_BUSY_COUNT=$(jq '[.runners[] | select(.busy == true)] | length' <<<"$json")"
