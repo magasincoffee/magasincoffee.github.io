@@ -31,7 +31,11 @@ test("each lane has Owner Brain URL and optional Owner-or-Robot Work URL", async
   assert.match(source, /Test-ChatConversationUrl/);
   assert.match(source, /brain_url/);
   assert.match(source, /work_url/);
+  assert.match(source, /brain_url_revision/);
   assert.match(source, /work_url_revision/);
+  assert.match(source, /LƯU BỘ NÃO/);
+  assert.match(source, /Save-BrainTarget/);
+  assert.match(source, /\$ui\.Brain\.Enabled = \$true/);
   assert.match(source, /\$ui\.Work\.Enabled = -not \$enabled/);
   assert.match(source, /LINK WORK không hợp lệ/);
   assert.doesNotMatch(source, /DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO/);
@@ -49,7 +53,8 @@ test("each lane has independent start and stop controls", async () => {
   assert.match(source, /Save-Lane \$id/);
   assert.match(source, /\$lane\.enabled = \$Enabled/);
   assert.match(source, /\$ui\.Project\.Enabled = -not \$enabled/);
-  assert.match(source, /\$ui\.Brain\.Enabled = -not \$enabled/);
+  assert.match(source, /\$ui\.Brain\.Enabled = \$true/);
+  assert.match(source, /\$ui\.SaveBrain\.Enabled = \$true/);
 });
 
 test("Owner opens explicit Brain or Work URLs in the dedicated Robot Chrome profile", async () => {
@@ -139,4 +144,17 @@ test("control panel provides one-click Robot Work reset while stopped", async ()
   assert.match(source, /Save-Lane \$id \$ui\.Project\.Text \$ui\.Brain\.Text '' \$false/);
   assert.match(source, /Đã chuyển sang chế độ Robot tự tạo Work/);
   assert.match(source, /\$ui\.ResetWork\.Enabled = -not \$enabled/);
+});
+
+test("Brain target can be saved independently while lane is active", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /function Save-BrainTarget/);
+  assert.match(source, /brain_url_revision/);
+  assert.match(source, /\$saveBrain\.Text = 'LƯU BỘ NÃO'/);
+  assert.match(source, /Save-BrainTarget \$id \$brainUrl/);
+  assert.match(source, /kể cả khi Work hiện tại vẫn đang chạy/);
 });

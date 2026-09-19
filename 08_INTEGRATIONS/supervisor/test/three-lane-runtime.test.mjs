@@ -12,7 +12,7 @@ test("active Three-Lane runtime contains no Brain auto-discovery path", async ()
   assert.doesNotMatch(source, /listRecentConversationUrls/);
   assert.doesNotMatch(source, /getVisibleChatGptPages/);
   assert.doesNotMatch(source, /BRAIN_REBIND/);
-  assert.match(source, /normalizeChatGptConversationUrl\(lane\.brain_url\)/);
+  assert.match(source, /normalizeChatGptConversationUrl\(registryLane\.brain_url\)/);
   assert.match(source, /openExactConversation\(adapter, brainUrl, \{ brain: true \}\)/);
 });
 
@@ -100,6 +100,34 @@ test("new Work URLs are stored through canonical target normalization", async ()
   assert.match(source, /internal \/c\/WEB:<uuid> route/);
 });
 
+
+
+test("v39 Owner Brain URL override is revisioned and can hot-swap during active Work", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /async function applyOwnerBrainTarget/);
+  assert.match(source, /brain_url_revision/);
+  assert.match(source, /applied_brain_url_revision/);
+  assert.match(source, /LANE_OWNER_BRAIN_TARGET_CHANGED/);
+  assert.match(source, /registryLane\.brain_request_sent = false/);
+  assert.match(source, /registryLane\.brain_request_inflight = null/);
+  assert.match(source, /registryLane\.relay_inflight = null/);
+  assert.doesNotMatch(source, /Không đổi Bộ não khi Work đang chạy/);
+  assert.match(source, /normalizeChatGptConversationUrl\(registryLane\.brain_url\)/);
+});
+
+test("v39 active Brain status comes from persisted registry target", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
+  assert.match(source, /2026-09-19\.39/);
+});
 
 test("Owner Work URL override is revisioned and resets stale pending Work state once", async () => {
   const source = await fs.readFile(

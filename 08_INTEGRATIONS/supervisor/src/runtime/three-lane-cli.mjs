@@ -34,7 +34,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.38";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.39";
 
 function parseArgs(argv) {
   const result = {
@@ -160,7 +160,7 @@ function laneStatus(configLane, registryLane, status, message, extra = {}) {
     enabled: Boolean(configLane.enabled),
     status,
     message,
-    brain_url: String(configLane.brain_url || ""),
+    brain_url: String(registryLane.brain_url || configLane.brain_url || ""),
     work_url: String(registryLane.work_url || ""),
     task_id: registryLane.task_id || null,
     awaiting_work: Boolean(registryLane.awaiting_work),
@@ -1030,6 +1030,56 @@ async function relayWorkResult({
   });
 }
 
+async function applyOwnerBrainTarget({
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  logPath
+}) {
+  const revision = Number(lane.brain_url_revision || 0);
+  if (revision <= Number(registryLane.applied_brain_url_revision || 0)) {
+    return false;
+  }
+
+  const raw = String(lane.brain_url || "").trim();
+  let configuredUrl = "";
+  if (raw) {
+    try {
+      configuredUrl = normalizeChatGptConversationUrl(raw);
+    } catch {
+      throw new Error("LINK BỘ NÃO không hợp lệ. Hãy dán link cuộc trò chuyện ChatGPT dùng làm Bộ não.");
+    }
+  }
+
+  const changed = configuredUrl !== String(registryLane.brain_url || "");
+  if (changed) {
+    if (registryLane.relay_inflight?.screenshot_path) {
+      await fs.unlink(registryLane.relay_inflight.screenshot_path).catch(() => {});
+    }
+
+    registryLane.brain_url = configuredUrl;
+    registryLane.brain_request_sent = false;
+    registryLane.brain_request_inflight = null;
+    registryLane.last_brain_directive_digest = null;
+
+    // A relay latch is target-specific. When Owner changes Brain, abandon only
+    // the old Brain delivery latch; keep the active Work task/result pending so
+    // it can be relayed to the newly selected Brain exactly once.
+    registryLane.relay_inflight = null;
+
+    await safeLog(logPath, {
+      type: "LANE_OWNER_BRAIN_TARGET_CHANGED",
+      laneId: lane.lane_id,
+      digest: configuredUrl ? sha256(configuredUrl) : "NONE"
+    });
+  }
+
+  registryLane.applied_brain_url_revision = revision;
+  await atomicJsonWrite(registryPath, registry);
+  return changed;
+}
+
 async function applyOwnerWorkTarget({
   lane,
   registryLane,
@@ -1095,9 +1145,17 @@ async function processLane({
     return laneStatus(lane, registryLane, "STOPPED", "Luồng đang dừng.");
   }
 
+  await applyOwnerBrainTarget({
+    lane,
+    registryLane,
+    registry,
+    registryPath,
+    logPath
+  });
+
   let brainUrl = null;
   try {
-    brainUrl = normalizeChatGptConversationUrl(lane.brain_url);
+    brainUrl = normalizeChatGptConversationUrl(registryLane.brain_url);
   } catch (error) {
     return laneStatus(lane, registryLane, "NEED_BRAIN_URL", error.message);
   }
@@ -1106,24 +1164,8 @@ async function processLane({
       lane,
       registryLane,
       "NEED_BRAIN_URL",
-      "Nhập URL cuộc trò chuyện Bộ não rồi bấm BẮT ĐẦU LUỒNG."
+      "Nhập URL cuộc trò chuyện Bộ não rồi bấm LƯU BỘ NÃO hoặc BẮT ĐẦU LUỒNG."
     );
-  }
-
-  if (registryLane.brain_url !== brainUrl) {
-    if (registryLane.awaiting_work && registryLane.brain_url) {
-      return laneStatus(
-        lane,
-        registryLane,
-        "WAIT_OWNER",
-        "Không đổi Bộ não khi Work đang chạy. Dừng luồng trước khi thay URL Bộ não."
-      );
-    }
-    registryLane.brain_url = brainUrl;
-    registryLane.brain_request_sent = false;
-    registryLane.brain_request_inflight = null;
-    registryLane.last_brain_directive_digest = null;
-    await atomicJsonWrite(registryPath, registry);
   }
 
   await applyOwnerWorkTarget({

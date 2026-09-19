@@ -131,6 +131,46 @@ test("Three-Lane normalizes transient WEB Work URLs from existing registry state
 });
 
 
+
+test("lane config carries revisioned Owner Brain URL", () => {
+  const config = normalizeLaneConfig({
+    lanes: [{
+      lane_id: "lane-1",
+      project_name: "Business OS",
+      brain_url: "https://chatgpt.com/c/brain-new",
+      brain_url_revision: 5,
+      work_url: "",
+      enabled: true
+    }]
+  });
+
+  assert.equal(config.lanes[0].brain_url, "https://chatgpt.com/c/brain-new");
+  assert.equal(config.lanes[0].brain_url_revision, 5);
+});
+
+test("legacy saved Brain URL is migrated to revision 1", () => {
+  const config = normalizeLaneConfig({
+    lanes: [{
+      lane_id: "lane-1",
+      brain_url: "https://chatgpt.com/c/legacy-brain"
+    }]
+  });
+  assert.equal(config.lanes[0].brain_url_revision, 1);
+});
+
+test("lane registry tracks the applied Owner Brain URL revision", () => {
+  const registry = normalizeLaneRegistry({
+    lanes: {
+      "lane-1": {
+        brain_url: "https://chatgpt.com/c/brain-new",
+        applied_brain_url_revision: 8
+      }
+    }
+  });
+  assert.equal(registry.lanes["lane-1"].brain_url, "https://chatgpt.com/c/brain-new");
+  assert.equal(registry.lanes["lane-1"].applied_brain_url_revision, 8);
+});
+
 test("lane config carries optional Owner Work URL revision", () => {
   const config = normalizeLaneConfig({
     lanes: [{
