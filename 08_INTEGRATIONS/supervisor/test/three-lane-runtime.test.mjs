@@ -146,3 +146,17 @@ test("exhausted transient CDP recovery exits 75 so Windows wrapper relaunches Ro
   assert.match(source, /process\.exitCode = 75/);
   assert.match(source, /bounded transient CDP reconnect budget exhausted/);
 });
+
+
+test("inaccessible Brain or Work conversations surface plain-language Owner guidance", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /function accessDeniedMessage/);
+  assert.match(source, /Work này không mở được trong Chrome Robot/);
+  assert.match(source, /Bộ não này không mở được trong Chrome Robot/);
+  assert.match(source, /conversationAccessDenied/);
+  assert.match(source, /TỰ TẠO WORK/);
+});
