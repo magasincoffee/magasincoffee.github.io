@@ -7,6 +7,7 @@ on:
       - '02_CORE/shared/financial-truth-v1.mjs'
       - '02_CORE/shared/monthly-revenue-baseline-v1.mjs'
       - '02_CORE/shared/cash-bridge-v1.mjs'
+      - '02_CORE/shared/procurement-financial-truth-v1.mjs'
       - '09_QA/business-os/**'
       - '.github/workflows/business-os-contract-tests.yml'
   pull_request:
@@ -38,6 +39,12 @@ jobs:
 
       - name: Run Cash Bridge calculator targeted tests
         run: node --test 09_QA/business-os/cash-bridge-calculator.test.mjs
+
+      - name: Check Procurement Financial Truth helper syntax
+        run: node --check 02_CORE/shared/procurement-financial-truth-v1.mjs
+
+      - name: Run Procurement Financial Truth targeted tests
+        run: node --test 09_QA/business-os/procurement-financial-truth.test.mjs
 
       - name: Run all Business OS contract tests
         shell: bash
