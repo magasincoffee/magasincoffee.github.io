@@ -413,8 +413,14 @@ test("missing observed proof blocks numeric observed balance", () => {
 });
 
 test("missing NaN and Infinity never become zero", () => {
-  for (const value of [undefined, Number.NaN, Number.POSITIVE_INFINITY]) {
-    const raw = observed({ value });
+  const missing = observed();
+  delete missing.truth.value;
+
+  for (const raw of [
+    missing,
+    observed({ value: Number.NaN }),
+    observed({ value: Number.POSITIVE_INFINITY })
+  ]) {
     const result = normalize(raw);
     assert.equal(result.truth.quality, "GAP");
     assert.equal(result.truth.value, null);
