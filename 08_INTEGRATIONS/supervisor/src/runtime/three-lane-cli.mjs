@@ -19,7 +19,11 @@ import {
   captureUserTurnTexts
 } from "../ui/message-capture.mjs";
 import { OBSERVATIONS } from "../decision.mjs";
-import { pageMatchesTarget, targetFromUrl } from "./recovery.mjs";
+import {
+  isPersistableConversationUrl,
+  pageMatchesTarget,
+  targetFromUrl
+} from "./recovery.mjs";
 import {
   THREE_LANE_MODE,
   LANE_IDS,
@@ -42,7 +46,7 @@ import {
   migrateLegacyBlockedRelayLatches
 } from "./relay-reconciliation.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.46";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.47";
 
 function parseArgs(argv) {
   const result = {
@@ -145,18 +149,15 @@ async function openExactConversation(adapter, url, { brain = false } = {}) {
 }
 
 async function waitForConversationUrl(page) {
-  await page.waitForURL((value) => {
-    try {
-      targetFromUrl(String(value));
-      return true;
-    } catch {
-      return false;
-    }
-  }, { timeout: 45_000 });
+  await page.waitForURL(
+    (value) => isPersistableConversationUrl(String(value)),
+    { timeout: 45_000 }
+  );
 
-  // ChatGPT may briefly expose an internal /c/WEB:<uuid> route immediately
-  // after a new conversation is created. Store only the canonical target so
-  // the next exact restore opens the same conversation successfully.
+  // ChatGPT may briefly expose an internal /c/WEB:<uuid> route while a new
+  // conversation is still being created. That route is not authoritative for
+  // future reopen. Persist only the final canonical conversation URL emitted
+  // by ChatGPT itself; never synthesize it from a transient WEB route.
   const target = targetFromUrl(page.url());
   return `${target.origin}${target.pathname}`;
 }
