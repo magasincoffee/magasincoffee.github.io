@@ -1,8 +1,8 @@
 # MAGASIN Business OS — Enterprise Architecture Five-Step / Profitability & Cash First
 
 **Date:** 2026-09-19  
-**Status:** OWNER DIRECTION / ARCHITECTURE DISCUSSION ACTIVE / ROBOT HOLD  
-**Purpose:** chốt kiến trúc hệ thống quản trị doanh nghiệp toàn diện trước khi giao implementation cho Supervisor/Brain/Work.
+**Status:** OWNER APPROVED / CANONICAL ARCHITECTURE / ROBOT HOLD UNTIL EXPLICIT RELEASE  
+**Purpose:** kiến trúc canonical của MAGASIN Business OS; mọi session, task, domain và thay đổi phải đọc và áp dụng tài liệu này trước khi thực hiện.
 
 ## 1. Owner handoff gate — bắt buộc
 
@@ -66,6 +66,74 @@ Thứ tự bắt buộc:
 ```text
 QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE
 ```
+
+
+### 3.1 Five-Step là operating system liên tục, không phải checklist một lần
+
+Five-Step phải được áp dụng **song song và liên tục ở mọi khía cạnh của MAGASIN Business OS**.
+
+Nguyên tắc:
+
+- mỗi domain/workstream có thể chạy Five-Step song song với domain khác;
+- nhưng bên trong mỗi requirement/decision/change, thứ tự **không được đảo**:
+  `QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE`;
+- khi có dữ liệu mới, lỗi mới, thay đổi nghiệp vụ hoặc phản hồi thực địa, vòng Five-Step phải chạy lại;
+- không có module nào được coi là “đã qua Five-Step vĩnh viễn”;
+- mọi automation cũ phải có thể bị QUESTION/DELETE lại nếu không còn tạo giá trị.
+
+Five-Step áp dụng bắt buộc cho:
+
+```text
+ENTERPRISE STRATEGY
+→ DOMAIN / CAPABILITY
+→ BUSINESS RULE
+→ SOP / WORKFLOW
+→ DATA / LEDGER / FIELD
+→ API / RPC / INTEGRATION
+→ UI / SCREEN / REPORT
+→ KPI / METRIC / ALERT
+→ AUTOMATION / ROBOT / AI
+→ TEST / QA / INCIDENT
+→ CHANGE REQUEST / RELEASE
+```
+
+Mỗi thay đổi phải tự trả lời 5 câu:
+
+1. **QUESTION** — Tại sao cần tồn tại? Ai dùng? Quyết định nào tốt hơn?
+2. **DELETE** — Có thể bỏ hẳn requirement, bước, field, report, integration hay automation này không?
+3. **SIMPLIFY** — Nếu phải giữ, cấu trúc tối thiểu đúng là gì? Có thể dùng chung canonical capability không?
+4. **ACCELERATE** — Làm sao giảm cycle time từ dữ liệu → phát hiện → quyết định → hành động → feedback?
+5. **AUTOMATE** — Phần nào đã đủ đúng, rõ, testable và reversible để tự động hóa an toàn?
+
+### 3.2 Five-Step chạy song song theo workstream
+
+Ví dụ trong cùng một thời điểm:
+
+- Profitability & Cash chạy Five-Step trên financial truth;
+- Inventory chạy Five-Step trên movement/consumption truth;
+- Workforce chạy Five-Step trên staffing/labor truth;
+- SOP/Task chạy Five-Step trên execution/control;
+- Owner Control Tower chạy Five-Step trên decision surfaces;
+- Supervisor/Brain/Work chạy Five-Step trên delivery automation.
+
+Các workstream được phép song song, nhưng **không workstream nào được dùng AUTOMATE để vượt qua QUESTION/DELETE/SIMPLIFY của chính nó**.
+
+### 3.3 Continuous improvement loop
+
+Sau mỗi field validation hoặc management decision:
+
+```text
+OBSERVE REALITY
+→ QUESTION current design
+→ DELETE waste
+→ SIMPLIFY truth/flow
+→ ACCELERATE feedback
+→ AUTOMATE stable parts
+→ MEASURE RESULT
+→ OBSERVE AGAIN
+```
+
+Đây là vòng lặp vận hành thường trực của Business OS.
 
 ### Step 1 — QUESTION every requirement
 
@@ -296,9 +364,9 @@ READ
 
 Không nhảy trực tiếp từ raw data sang autonomous action.
 
-## 9. Architecture discussion exit criteria
+## 9. Architecture lock and Robot release
 
-Chưa giao Robot implementation cho tới khi Owner chốt tối thiểu:
+Owner đã chốt kiến trúc nền trong tài liệu này. Robot vẫn chưa được release. Trước khi giao implementation, task queue cụ thể phải trace về kiến trúc này và xác định tối thiểu:
 
 1. enterprise capability map;
 2. financial truth spine;
@@ -319,7 +387,22 @@ Khi Owner chốt, update:
 
 sau đó mới chuyển `PAUSED → AUTO_CONTINUE`.
 
-## 10. Immediate rule
+## 10. New-session mandatory bootstrap
 
-**Hiện tại: thảo luận và chốt kiến trúc trước. Không giao implementation cho Robot.**
+Mọi ChatGPT/Brain/Work session mới của dự án phải đọc theo thứ tự:
+
+1. **`00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — READ FIRST / CANONICAL.**
+2. `00_CURRENT_STATE.md`.
+3. `00_PROJECT_STATE.json`.
+4. `00_TASK_QUEUE.md`.
+5. `00_MASTER_PLAN.md`.
+6. `06_DECISION_LOG.md`.
+7. tài liệu domain/task liên quan.
+8. repository/PR/CI hiện tại.
+
+Nếu bất kỳ tài liệu cũ nào mâu thuẫn với kiến trúc này, kiến trúc canonical + quyết định Owner mới hơn có ưu tiên cao hơn và phải được reconcile vào source-of-truth.
+
+## 11. Immediate rule
+
+**Kiến trúc đã được Owner chốt. Tiếp tục thảo luận/chi tiết hóa theo kiến trúc này và Five-Step liên tục. Không giao implementation cho Robot cho đến khi Owner ra lệnh release rõ ràng.**
 
