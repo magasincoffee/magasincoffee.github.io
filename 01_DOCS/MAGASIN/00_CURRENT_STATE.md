@@ -6,9 +6,9 @@ Last updated: 2026-09-19
 
 **MAGASIN Business OS V1 — Five-Step / Profitability & Cash first**
 
-The project is in **Owner architecture discussion mode**. The purpose is to lock a comprehensive enterprise management architecture before implementation is handed back to Supervisor/Brain/Work.
+The enterprise architecture is **OWNER APPROVED / CANONICAL**. Owner and ChatGPT continue detailing it while Supervisor/Brain/Work remains paused until explicit Robot release.
 
-Canonical architecture discussion:
+Canonical architecture — **READ FIRST in every new session:**
 
 - `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md`
 - `02_PROFITABILITY_CASH/README.md`
@@ -17,7 +17,7 @@ Canonical architecture discussion:
 
 ## Current phase
 
-**P1 — Architecture Review / Profitability & Cash**
+**P1 — Canonical Architecture Locked / Profitability & Cash**
 
 Current architecture priority is the financial truth spine:
 
@@ -36,14 +36,14 @@ Existing Schedule-first work remains a proven vertical-slice pattern, but it is 
 
 ## Current task
 
-**TASK-050 — Enterprise architecture lock — Profitability & Cash first — WAIT_USER / DISCUSSION_ACTIVE**
+**TASK-050 — Canonical enterprise architecture locked — Owner detailing continues — WAIT_USER / PAUSED**
 
 Robot handoff is explicitly locked.
 
 ```text
-Owner + ChatGPT discuss architecture
-→ Owner locks architecture
-→ task queue is rebuilt
+Owner + ChatGPT detail canonical architecture
+→ Five-Step runs continuously across every workstream
+→ implementation queue is derived from the locked architecture
 → Owner explicitly releases Robot
 → PROJECT_STATE = READY / AUTO_CONTINUE
 → Supervisor / Brain / Work may execute
@@ -53,18 +53,16 @@ Until then, `00_PROJECT_STATE.json` is authoritative as `WAIT_USER / PAUSED`.
 
 ## Current target
 
-Before any new implementation, lock:
+Continue detailing the locked architecture without releasing Robot. All work must preserve:
 
-1. enterprise capability map;
-2. financial truth spine;
-3. source-of-truth / ledger strategy;
-4. role boundaries Owner / Manager / Employee;
-5. integration boundary with Sapo / Sheets / FoodApp / bank / manual inputs;
-6. Profitability & Cash sequence PFC-01 → PFC-08;
-7. DELETE / defer map;
-8. V1 acceptance metrics;
-9. production/security boundaries;
-10. explicit Robot handoff rule.
+1. Profitability & Cash as priority #1;
+2. Financial Truth Spine as cross-domain backbone;
+3. one canonical source of truth per business fact;
+4. Owner / Manager / Employee as projections over shared capabilities;
+5. Five-Step applied continuously and in parallel across every workstream;
+6. ordered Five-Step inside every change: QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE;
+7. automation as the outermost layer, never the business core;
+8. explicit Owner release before autonomous implementation.
 
 ## Active scope
 
@@ -74,15 +72,17 @@ Before any new implementation, lock:
 
 **Automation:** held. Supervisor/Brain/Work is an outer execution layer, not the enterprise architecture core.
 
-**Deferred during architecture discussion:** new Robot features, broad dashboard expansion, speculative schemas, AI forecasting, KPI automation, payroll/recruitment expansion, cosmetic refactors, and non-critical module completion.
+**Deferred while Owner detailing continues:** new Robot features, broad dashboard expansion, speculative schemas, AI forecasting, KPI automation, payroll/recruitment expansion, cosmetic refactors, and non-critical module completion.
 
 ## Working method
 
-Every requirement:
+Every requirement, domain, workflow, field, report, integration, KPI, automation, incident and change request:
 
 ```text
 QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE
 ```
+
+Five-Step is continuous: re-run it whenever new evidence, field feedback, incidents or business changes appear. Workstreams may run Five-Step in parallel, but each individual change must preserve the order above.
 
 Every implementation micro-task:
 
@@ -123,7 +123,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**ACTIVE — TASK-050:** Owner is locking the enterprise architecture using Five-Step, with Profitability & Cash as priority #1. No new implementation is handed to Supervisor/Brain/Work until Owner explicitly locks architecture and releases Robot.
+**ACTIVE — TASK-050:** Canonical architecture is locked. Owner and ChatGPT continue detailing it under continuous Five-Step. No implementation is handed to Supervisor/Brain/Work until Owner explicitly releases Robot.
 
 Background night-run gate: **TASK-048 — NIGHT_WINDOW_COMPLETE**. The approved 09:15 +07 boundary closed the old night window and preserved the later Owner-selected active task/autonomy.
 
@@ -153,17 +153,19 @@ TASK-048 remains a background temporal safety gate while TASK-049 is active:
 
 ## Session handoff
 
-New chat must read:
+**Mandatory new-chat bootstrap — do not skip:**
 
-1. `00_CURRENT_STATE.md`
-2. `00_PROJECT_STATE.json`
-3. `00_TASK_QUEUE.md`
-4. `00_MASTER_PLAN.md`
-5. `00_BUSINESS_OS_BLUEPRINT.md`
-6. `06_DECISION_LOG.md`
-7. `07_CHANGE_LOG.md`
-8. current domain/task docs
-9. repository/PR/CI state
+1. **`00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — READ FIRST / CANONICAL.**
+2. `00_CURRENT_STATE.md`.
+3. `00_PROJECT_STATE.json`.
+4. `00_TASK_QUEUE.md`.
+5. `00_MASTER_PLAN.md`.
+6. `06_DECISION_LOG.md`.
+7. `00_CHATGPT_CONTEXT.md`.
+8. current domain/task docs.
+9. repository/PR/CI state.
+
+A new chat must apply the canonical architecture immediately. It must keep Profitability & Cash as priority #1 and apply Five-Step continuously at every level. If older documentation conflicts, reconcile it against the canonical architecture and newer Owner decisions before acting.
 
 Repository evidence overrides stale chat memory.
 
