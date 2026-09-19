@@ -7,6 +7,9 @@ const CONVERSATION_FULL_RE =
 
 const CONVERSATION_MISSING_RE =
   /conversation not found|unable to load conversation|couldn.t load conversation|conversation.{0,20}unavailable|chat not found|chat.{0,20}unavailable|không tìm thấy cuộc trò chuyện|không thể tải cuộc trò chuyện|cuộc trò chuyện.{0,20}không khả dụng|không tìm thấy đoạn chat|không thể tải đoạn chat|đoạn chat.{0,20}không khả dụng/i;
+const CONVERSATION_ACCESS_DENIED_RE =
+  /(?:you (?:do not|don't) have|no) access.{0,80}(?:conversation|chat)|not authorized.{0,80}(?:conversation|chat)|permission.{0,50}denied.{0,50}(?:conversation|chat)|không có quyền truy cập.{0,80}(?:cuộc trò chuyện|đoạn chat)|không được phép truy cập.{0,80}(?:cuộc trò chuyện|đoạn chat)|đăng nhập đúng tài khoản.{0,120}(?:liên kết chia sẻ|share link)/i;
+
 
 const MODEL_SWITCHING_RE =
   /switching.{0,30}model|switched.{0,30}model|using.{0,30}(?:different|another) model|continue.{0,30}another model|đang chuyển.{0,30}mô hình|chuyển sang.{0,30}mô hình|đang dùng.{0,30}mô hình khác/i;
@@ -23,6 +26,10 @@ export function matchesConversationFullText(value) {
 
 export function matchesConversationMissingText(value) {
   return CONVERSATION_MISSING_RE.test(String(value || ""));
+}
+
+export function matchesConversationAccessDeniedText(value) {
+  return CONVERSATION_ACCESS_DENIED_RE.test(String(value || ""));
 }
 
 export function matchesModelSwitchingText(value) {
@@ -53,6 +60,7 @@ export async function collectSafeUiSnapshot(page) {
       normalizeSource,
       conversationFullPattern,
       conversationMissingPattern,
+      conversationAccessDeniedPattern,
       modelSwitchingPattern,
       explicitRetryControlPattern,
       transientErrorAlertPattern
@@ -216,6 +224,9 @@ export async function collectSafeUiSnapshot(page) {
       const conversationMissing =
         new RegExp(conversationMissingPattern, "i").test(recoveryHaystack);
 
+      const conversationAccessDenied =
+        new RegExp(conversationAccessDeniedPattern, "i").test(recoveryHaystack);
+
       return {
         schemaVersion: "1.0",
         urlOrigin: location.origin,
@@ -249,13 +260,15 @@ export async function collectSafeUiSnapshot(page) {
           /continue generating|tiếp tục tạo|continue response/.test(haystack),
         hasRetryControl,
         conversationFull,
-        conversationMissing
+        conversationMissing,
+        conversationAccessDenied
       };
     },
     {
       normalizeSource: NORMALIZE,
       conversationFullPattern: CONVERSATION_FULL_RE.source,
       conversationMissingPattern: CONVERSATION_MISSING_RE.source,
+      conversationAccessDeniedPattern: CONVERSATION_ACCESS_DENIED_RE.source,
       modelSwitchingPattern: MODEL_SWITCHING_RE.source,
       explicitRetryControlPattern: EXPLICIT_RETRY_CONTROL_RE.source,
       transientErrorAlertPattern: TRANSIENT_ERROR_ALERT_RE.source
