@@ -201,6 +201,39 @@
       "enabled": true,
       "source_branch": "main",
       "self_hosted_install": true
+    },
+    "acceptance_evidence": {
+      "task_049_e2": {
+        "status": "ACCEPTED",
+        "scope": "OWNER_VISIBLE_UI_LIVE_STATUS",
+        "pull_request": 141,
+        "merge_commit": "f076779c4d1e3afd709385f0558a7185caeabf51",
+        "workflow_run_id": 35414750942,
+        "supervisor_tests_passed": 212,
+        "supervisor_tests_failed": 0,
+        "vietnamese_owner_surface": true,
+        "live_work_state_requires_runtime_registry_reconciliation": true,
+        "timezone_id": "SE Asia Standard Time",
+        "uses_to_local_time": false,
+        "recovery_controls_mutually_exclusive": true
+      },
+      "task_049_f": {
+        "status": "ACCEPTED",
+        "scope": "RUNTIME_SURVIVAL_TECHNICAL_RECOVERY",
+        "workflow_run_id": 35414750942,
+        "install_job_success": true,
+        "verify_survival_job_success": true,
+        "worker_retry_required": false,
+        "technical_recovery_stuck": false,
+        "supervisor_online": true,
+        "brain_worker_runtime_online": true,
+        "robot_chrome_online": true,
+        "robot_chrome_cdp_healthy": true,
+        "post_job_supervisor_alive": true,
+        "post_job_brain_worker_alive": true,
+        "post_job_robot_chrome_alive": true
+      },
+      "task_049_overall_status": "IN_PROGRESS"
     }
   }
 }
