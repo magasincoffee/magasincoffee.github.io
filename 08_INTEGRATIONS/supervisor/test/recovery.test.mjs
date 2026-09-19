@@ -7,7 +7,8 @@ import {
   canonicalConversationPathname,
   isConversationPathname,
   pageMatchesTarget,
-  targetFromUrl
+  targetFromUrl,
+  isPersistableConversationUrl
 } from "../src/runtime/recovery.mjs";
 
 test("recognizes supported ChatGPT conversation paths", () => {
@@ -236,4 +237,17 @@ test("canonicalizes transient ChatGPT WEB-prefixed conversation paths", () => {
     ),
     true
   );
+});
+
+
+test("transient WEB conversation routes are never persisted as canonical Work targets", () => {
+  assert.equal(
+    isPersistableConversationUrl("https://chatgpt.com/c/WEB:123e4567-e89b-12d3-a456-426614174000"),
+    false
+  );
+  assert.equal(
+    isPersistableConversationUrl("https://chatgpt.com/c/123e4567-e89b-12d3-a456-426614174000"),
+    true
+  );
+  assert.equal(isPersistableConversationUrl("https://chatgpt.com/"), false);
 });
