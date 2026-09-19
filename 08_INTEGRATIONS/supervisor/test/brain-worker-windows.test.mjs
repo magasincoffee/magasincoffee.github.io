@@ -56,7 +56,7 @@ test("auto-upgrade requires v45 Three-Lane runtime and three local lanes", async
     "utf8"
   );
 
-  assert.match(source, /2026-09-19\.45/);
+  assert.match(source, /2026-09-19\.46/);
   assert.match(source, /three-lane-cli\.mjs/);
   assert.match(source, /lane-status\.json/);
   assert.match(source, /lanes\.json/);
