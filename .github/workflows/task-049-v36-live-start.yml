@@ -1,4 +1,4 @@
-name: TASK-049 v36 One-Time Live Start
+name: TASK-049 Final Live Monitor
 
 on:
   push:
@@ -12,11 +12,11 @@ permissions:
   contents: read
 
 jobs:
-  live-start:
+  monitor:
     runs-on: self-hosted
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
-      - name: Start Lane 1 and prove live Work dispatch
+      - name: Prove Brain to Work to Brain live cycle
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
@@ -28,10 +28,18 @@ jobs:
           $runtimeFile = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
 
           if (-not (Test-Path $runtimeFile)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeFile -SimpleMatch "2026-09-19.36" -Quiet)) {
-            throw "Installed runtime is not v2026-09-19.36"
+          if (-not (Select-String -Path $runtimeFile -SimpleMatch "2026-09-19.37" -Quiet)) {
+            throw "Installed runtime is not v2026-09-19.37"
           }
           if (-not (Test-Path $configFile)) { throw "lanes.json is missing" }
+
+          $config = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
+          $lane1Config = @($config.lanes | Where-Object { $_.lane_id -eq "lane-1" }) | Select-Object -First 1
+          if (-not $lane1Config) { throw "lane-1 config is missing" }
+          if (-not [bool]$lane1Config.enabled) { throw "lane-1 is not enabled" }
+          if ([string]::IsNullOrWhiteSpace([string]$lane1Config.brain_url)) {
+            throw "lane-1 Brain URL is missing"
+          }
 
           $logStartCount = if (Test-Path $logFile) {
             @(Get-Content $logFile -ErrorAction SilentlyContinue).Count
@@ -39,28 +47,13 @@ jobs:
             0
           }
 
-          $config = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          $lane1 = @($config.lanes | Where-Object { $_.lane_id -eq "lane-1" }) | Select-Object -First 1
-          if (-not $lane1) { throw "lane-1 config is missing" }
-          if ([string]::IsNullOrWhiteSpace([string]$lane1.brain_url)) {
-            throw "lane-1 Brain URL is missing"
-          }
-          if ([string]$lane1.brain_url -notmatch '^https://chatgpt\.com/c/') {
-            throw "lane-1 Brain URL is invalid"
-          }
-
-          $lane1.enabled = $true
-          $temp = "$configFile.tmp"
-          $config | ConvertTo-Json -Depth 20 | Set-Content -Path $temp -Encoding UTF8
-          Move-Item -Path $temp -Destination $configFile -Force
-          Write-Host "OWNER_REQUESTED_LANE1_START=True"
-
-          $healthy = $false
+          $dispatchSeen = $false
+          $relaySeen = $false
           $lastStatus = $null
           $lastRegistryLane = $null
           $newLines = @()
 
-          for ($i = 0; $i -lt 75; $i++) {
+          for ($i = 0; $i -lt 180; $i++) {
             Start-Sleep -Seconds 2
 
             if (Test-Path $statusFile) {
@@ -90,55 +83,61 @@ jobs:
                 $_ -match '"lane_id":"lane-1"'
               }
             ).Count
-
             if ($reloadCount -gt 1) {
-              throw "v36 violated one-reload budget for lane-1"
+              throw "lane-1 exceeded the one-reload reconciliation budget"
             }
 
-            $dispatchEvidence = [bool](
-              $newLines -match '"type":"LANE_WORK_(DISPATCHED|CREATED|RESULT_RELAYED)"'
-            )
-
-            $dispatchInflight = [bool](
-              $lastRegistryLane -and $lastRegistryLane.dispatch_inflight
-            )
-            $blocked = [bool](
-              $lastRegistryLane -and
-              $lastRegistryLane.dispatch_inflight -and
-              [bool]$lastRegistryLane.dispatch_inflight.reconcile_blocked
-            )
-
-            if ($blocked) {
-              throw "lane-1 reconciliation became blocked during live acceptance"
+            if ($newLines -match '"type":"LANE_WORK_(DISPATCHED|CREATED)"') {
+              $dispatchSeen = $true
+            }
+            if ($newLines -match '"type":"LANE_WORK_RESULT_RELAYED"') {
+              $relaySeen = $true
+            }
+            if ($newLines -match '"type":"LANE_WORK_SEND_RECONCILE_BLOCKED"') {
+              throw "lane-1 reconciliation blocked during final live monitor"
+            }
+            if ($newLines -match '"type":"LANE_ERROR".*"Owner/security boundary detected"') {
+              throw "lane-1 hit an Owner/security boundary"
             }
 
-            if (
-              $dispatchEvidence -and
-              -not $dispatchInflight -and
-              $lastStatus -and
-              [string]$lastStatus.status -in @("WORKING","RELAYING_RESULT","WAITING_BRAIN","READY")
-            ) {
-              $healthy = $true
-              break
+            if ($dispatchSeen -and $relaySeen -and $lastRegistryLane) {
+              $dispatchInflight = [bool]$lastRegistryLane.dispatch_inflight
+              $relayInflight = [bool]$lastRegistryLane.relay_inflight
+              if (-not $dispatchInflight -and -not $relayInflight) {
+                break
+              }
             }
           }
 
-          Write-Host "LIVE_SAFE_LOG_BEGIN"
-          $newLines | Select-Object -Last 120 | ForEach-Object { Write-Host $_ }
-          Write-Host "LIVE_SAFE_LOG_END"
+          Write-Host "FINAL_LIVE_LOG_BEGIN"
+          $newLines | Select-Object -Last 160 | ForEach-Object { Write-Host $_ }
+          Write-Host "FINAL_LIVE_LOG_END"
 
           if ($lastStatus) {
-            Write-Host "LIVE_LANE1_STATUS=$($lastStatus.status)"
-            Write-Host "LIVE_LANE1_MESSAGE=$($lastStatus.message)"
-            Write-Host "LIVE_LANE1_TASK=$($lastStatus.task_id)"
+            Write-Host "FINAL_LANE1_STATUS=$($lastStatus.status)"
+            Write-Host "FINAL_LANE1_MESSAGE=$($lastStatus.message)"
+            Write-Host "FINAL_LANE1_TASK=$($lastStatus.task_id)"
           }
           if ($lastRegistryLane) {
-            Write-Host "LIVE_LANE1_AWAITING_WORK=$([bool]$lastRegistryLane.awaiting_work)"
-            Write-Host "LIVE_LANE1_DISPATCH_INFLIGHT=$([bool]$lastRegistryLane.dispatch_inflight)"
+            Write-Host "FINAL_LANE1_AWAITING_WORK=$([bool]$lastRegistryLane.awaiting_work)"
+            Write-Host "FINAL_LANE1_DISPATCH_INFLIGHT=$([bool]$lastRegistryLane.dispatch_inflight)"
+            Write-Host "FINAL_LANE1_RELAY_INFLIGHT=$([bool]$lastRegistryLane.relay_inflight)"
           }
 
-          if (-not $healthy) {
-            throw "lane-1 did not prove a live Work dispatch/result cycle within 150 seconds"
+          Write-Host "FINAL_DISPATCH_SEEN=$dispatchSeen"
+          Write-Host "FINAL_RELAY_SEEN=$relaySeen"
+
+          if (-not $dispatchSeen) {
+            throw "No live Brain-to-Work dispatch was observed"
+          }
+          if (-not $relaySeen) {
+            throw "No live Work-to-Brain result relay was observed"
+          }
+          if (-not $lastRegistryLane) {
+            throw "lane-1 registry is missing"
+          }
+          if ([bool]$lastRegistryLane.dispatch_inflight -or [bool]$lastRegistryLane.relay_inflight) {
+            throw "lane-1 still has an inflight exact-once latch after the live cycle"
           }
 
           $shortcut = Join-Path ([Environment]::GetFolderPath("Desktop")) "MAGASIN BUSINESS OS CONTROL.lnk"
@@ -146,6 +145,5 @@ jobs:
           Start-Process $shortcut
           Start-Sleep -Seconds 2
 
-          Write-Host "LIVE_WORK_DISPATCH=True"
           Write-Host "CONTROL_PANEL_OPENED=True"
-          Write-Host "ROBOT_LIVE_ACCEPTANCE=True"
+          Write-Host "ROBOT_FINAL_LIVE=True"
