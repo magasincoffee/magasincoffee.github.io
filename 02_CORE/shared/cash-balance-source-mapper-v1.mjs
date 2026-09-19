@@ -588,16 +588,103 @@ export function mapNonBalanceSourceFact(raw = {}, {
   });
 }
 
+function isMappedEnvelopeCompatible(sourceClass, classification, balance) {
+  if (!sourceClass || !classification || !balance) return false;
+
+  if (classification === "OBSERVED_BALANCE") {
+    return (
+      OBSERVED_SOURCE_CLASSES.has(sourceClass) &&
+      balance.balance_basis === "OBSERVED_BALANCE"
+    );
+  }
+
+  if (classification === "COMPUTED_BALANCE") {
+    return (
+      sourceClass === "INTERNAL_MONTHLY_CASH_WORKBOOK" &&
+      balance.balance_basis === "COMPUTED_BALANCE" &&
+      balance.balance_role === "OPENING"
+    );
+  }
+
+  if (classification === "MOVEMENT_ONLY") {
+    return (
+      MOVEMENT_SOURCE_CLASSES.has(sourceClass) &&
+      balance.balance_basis === "MOVEMENT_ONLY"
+    );
+  }
+
+  if (classification === "CONTEXT_ONLY") {
+    return (
+      CONTEXT_SOURCE_CLASSES.has(sourceClass) &&
+      balance.balance_basis === "CONTEXT_ONLY"
+    );
+  }
+
+  if (classification === "NOT_CONNECTED") {
+    return (
+      NOT_CONNECTED_SOURCE_CLASSES.has(sourceClass) &&
+      balance.balance_basis === "NOT_CONNECTED" &&
+      balance.truth?.quality === "NOT_CONNECTED" &&
+      balance.truth?.value === null
+    );
+  }
+
+  return false;
+}
+
+function rejectPreMappedEnvelope(raw = {}, options = {}) {
+  const balance = raw.balance && typeof raw.balance === "object"
+    ? raw.balance
+    : {};
+  const truth = balance.truth && typeof balance.truth === "object"
+    ? balance.truth
+    : {};
+
+  const rejected = mapNonBalanceSourceFact({
+    source_class: enumValue(raw.source_class, CASH_BALANCE_SOURCE_CLASSES),
+    classification: "CONTEXT_ONLY",
+    balance_role: balance.balance_role ?? "OPENING",
+    point: balance.point ?? {},
+    account: balance.account ?? {},
+    scope: truth.scope ?? {},
+    source: truth.source,
+    as_of: truth.as_of,
+    reconciliation_status: truth.reconciliation_status,
+    evidence: truth.evidence,
+    lineage: truth.lineage,
+    coverage_hint: raw.coverage_hint
+  }, options);
+
+  return canonicalResult({
+    sourceClass: enumValue(raw.source_class, CASH_BALANCE_SOURCE_CLASSES),
+    classification: "CONTEXT_ONLY",
+    balance: rejected.balance,
+    diagnostics: [
+      ...(Array.isArray(rejected.diagnostics) ? rejected.diagnostics : []),
+      "PREMAPPED_BALANCE_PROVENANCE_MISMATCH"
+    ],
+    coverageHint: raw.coverage_hint
+  });
+}
+
 export function mapCashBalanceSourceFact(raw = {}, options = {}) {
   if (
     raw?.mapper_version === CASH_BALANCE_SOURCE_MAPPER_VERSION &&
     raw?.balance &&
     typeof raw.balance === "object"
   ) {
+    const sourceClass = enumValue(raw.source_class, CASH_BALANCE_SOURCE_CLASSES);
+    const classification = enumValue(raw.classification, SOURCE_CLASSIFICATIONS);
+    const balance = normalizeCashBalanceTruth(raw.balance, options);
+
+    if (!isMappedEnvelopeCompatible(sourceClass, classification, balance)) {
+      return rejectPreMappedEnvelope(raw, options);
+    }
+
     return canonicalResult({
-      sourceClass: enumValue(raw.source_class, CASH_BALANCE_SOURCE_CLASSES),
-      classification: enumValue(raw.classification, SOURCE_CLASSIFICATIONS),
-      balance: raw.balance,
+      sourceClass,
+      classification,
+      balance,
       diagnostics: Array.isArray(raw.diagnostics) ? raw.diagnostics : [],
       coverageHint: raw.coverage_hint
     });
