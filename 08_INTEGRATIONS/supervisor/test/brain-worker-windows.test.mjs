@@ -102,3 +102,21 @@ test("Control Panel explicit AUTO Work reset always advances work revision", asy
   assert.match(source, /work_url -ne \$newWorkUrl -or \$ForceWorkRevision/);
   assert.match(source, /Save-Lane \$id \$ui\.Project\.Text \$ui\.Brain\.Text '' \$false \$true/);
 });
+
+
+test("production state maintenance resets Work state by revision without changing target URLs", async () => {
+  const source = await fs.readFile(
+    new URL("../../../.github/workflows/supervisor-state-maintenance.yml", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /reset-work-state/);
+  assert.match(source, /work_url_revision/);
+  assert.match(source, /TARGET_URLS_UNCHANGED=True/);
+  assert.match(source, /Brain URL changed during state reset/);
+  assert.match(source, /Work URL changed during state reset/);
+  assert.match(source, /applied_work_url_revision/);
+  assert.match(source, /2026-09-19\.46/);
+  assert.doesNotMatch(source, /brain_url\s*=/);
+  assert.doesNotMatch(source, /work_url\s*=/);
+});

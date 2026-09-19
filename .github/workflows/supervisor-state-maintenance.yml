@@ -1,0 +1,191 @@
+name: Supervisor State Maintenance
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Safe maintenance operation
+        required: true
+        type: choice
+        default: audit
+        options:
+          - audit
+          - reset-work-state
+      lane_id:
+        description: Lane to inspect or reset
+        required: true
+        type: choice
+        default: lane-1
+        options:
+          - lane-1
+          - lane-2
+          - lane-3
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/supervisor-state-maintenance.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supervisor-state-maintenance
+  cancel-in-progress: false
+
+jobs:
+  maintenance:
+    runs-on: self-hosted
+    timeout-minutes: 7
+    env:
+      HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+      INPUT_OPERATION: ${{ inputs.operation }}
+      INPUT_LANE: ${{ inputs.lane_id }}
+    steps:
+      - name: Apply authorized Supervisor state maintenance
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtime = Join-Path $root "runtime"
+          $configFile = Join-Path $root "lanes.json"
+          $registryFile = Join-Path $root "lane-registry.json"
+          $statusFile = Join-Path $root "lane-status.json"
+          $stopScript = Join-Path $runtime "windows\stop-supervisor.ps1"
+          $startScript = Join-Path $runtime "windows\start-supervisor.ps1"
+          $expectedVersion = "2026-09-19.46"
+
+          $operation = if ([string]$env:INPUT_OPERATION) {
+            [string]$env:INPUT_OPERATION
+          } else {
+            "audit"
+          }
+          $laneId = if ([string]$env:INPUT_LANE) {
+            [string]$env:INPUT_LANE
+          } else {
+            "lane-1"
+          }
+
+          if ([string]$env:GITHUB_EVENT_NAME -eq "push") {
+            $match = [regex]::Match(
+              [string]$env:HEAD_MESSAGE,
+              '\[supervisor-reset-work-state:(lane-[123])\]'
+            )
+            if ($match.Success) {
+              $operation = "reset-work-state"
+              $laneId = $match.Groups[1].Value
+            } else {
+              $operation = "audit"
+            }
+          }
+
+          if ($laneId -notin @("lane-1","lane-2","lane-3")) {
+            throw "Unsupported lane id"
+          }
+          if ($operation -notin @("audit","reset-work-state")) {
+            throw "Unsupported maintenance operation"
+          }
+          if (-not (Test-Path $configFile)) { throw "lanes.json is missing" }
+          if (-not (Test-Path $registryFile)) { throw "lane-registry.json is missing" }
+
+          if ($operation -eq "audit") {
+            if (-not (Test-Path $statusFile)) { throw "lane-status.json is missing" }
+            $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            $registry = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            $lane = $registry.lanes.$laneId
+            if (-not $lane) { throw "Lane registry entry is missing" }
+            if ([string]$status.supervisor_runtime_version -ne $expectedVersion) {
+              throw "Installed runtime version does not match production source"
+            }
+            if ($lane.relay_inflight -and [bool]$lane.relay_inflight.reconcile_blocked) {
+              throw "Relay latch is reconcile_blocked"
+            }
+            if ($lane.dispatch_inflight -and [bool]$lane.dispatch_inflight.reconcile_blocked) {
+              throw "Dispatch latch is reconcile_blocked"
+            }
+            Write-Host "MAINTENANCE_OPERATION=AUDIT"
+            Write-Host "SUPERVISOR_RUNTIME_VERSION_MATCH=True"
+            Write-Host "RELAY_RECONCILE_BLOCKED=False"
+            Write-Host "DISPATCH_RECONCILE_BLOCKED=False"
+            exit 0
+          }
+
+          if (-not (Test-Path $stopScript)) { throw "Supervisor stop script is missing" }
+          if (-not (Test-Path $startScript)) { throw "Supervisor start script is missing" }
+
+          $config = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
+          $lane = @($config.lanes | Where-Object { [string]$_.lane_id -eq $laneId }) |
+            Select-Object -First 1
+          if (-not $lane) { throw "Lane config entry is missing" }
+
+          $brainBefore = [string]$lane.brain_url
+          $workBefore = [string]$lane.work_url
+          if (-not $lane.PSObject.Properties["work_url_revision"]) {
+            $lane | Add-Member -NotePropertyName "work_url_revision" -NotePropertyValue 0
+          }
+          $newRevision = [int]$lane.work_url_revision + 1
+
+          & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $stopScript
+          if ($LASTEXITCODE -ne 0) { throw "Supervisor stop failed" }
+
+          $lane.work_url_revision = $newRevision
+          $tmp = "$configFile.maintenance.tmp"
+          $json = $config | ConvertTo-Json -Depth 12
+          [System.IO.File]::WriteAllText(
+            $tmp,
+            $json + [Environment]::NewLine,
+            (New-Object System.Text.UTF8Encoding($false))
+          )
+          Move-Item -Path $tmp -Destination $configFile -Force
+
+          $check = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
+          $checkLane = @($check.lanes | Where-Object { [string]$_.lane_id -eq $laneId }) |
+            Select-Object -First 1
+          if ([string]$checkLane.brain_url -ne $brainBefore) {
+            throw "Brain URL changed during state reset"
+          }
+          if ([string]$checkLane.work_url -ne $workBefore) {
+            throw "Work URL changed during state reset"
+          }
+
+          $env:RUNNER_TRACKING_ID = "MAGASIN_SUPERVISOR_STATE_MAINTENANCE"
+          & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $startScript -Hidden
+          if ($LASTEXITCODE -ne 0) { throw "Supervisor start failed" }
+
+          $applied = $false
+          for ($i = 0; $i -lt 60; $i++) {
+            Start-Sleep -Seconds 1
+            try {
+              if ((Test-Path $registryFile) -and (Test-Path $statusFile)) {
+                $registry = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                $registryLane = $registry.lanes.$laneId
+                if (
+                  $registryLane -and
+                  [int]$registryLane.applied_work_url_revision -ge $newRevision -and
+                  [string]$status.supervisor_runtime_version -eq $expectedVersion
+                ) {
+                  $applied = $true
+                  break
+                }
+              }
+            } catch {}
+          }
+          if (-not $applied) {
+            throw "Runtime did not apply the new Owner Work revision"
+          }
+
+          if ($registryLane.relay_inflight -and [bool]$registryLane.relay_inflight.reconcile_blocked) {
+            throw "Relay latch remains reconcile_blocked after reset"
+          }
+          if ($registryLane.dispatch_inflight -and [bool]$registryLane.dispatch_inflight.reconcile_blocked) {
+            throw "Dispatch latch remains reconcile_blocked after reset"
+          }
+
+          Write-Host "MAINTENANCE_OPERATION=RESET_WORK_STATE"
+          Write-Host "TARGET_URLS_UNCHANGED=True"
+          Write-Host "WORK_REVISION_APPLIED=True"
+          Write-Host "SUPERVISOR_RUNTIME_VERSION_MATCH=True"
+          Write-Host "RELAY_RECONCILE_BLOCKED=False"
+          Write-Host "DISPATCH_RECONCILE_BLOCKED=False"

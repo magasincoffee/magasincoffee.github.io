@@ -100,6 +100,7 @@ Sensitive runtime/profile state, authenticated browser data, target conversation
 - `supervisor-autostart-install.yml` — install/deploy and survival verification on the self-hosted machine.
 - `supervisor-integrity.yml` — task-independent static audit plus self-hosted runtime integrity audit.
 - `supervisor-open-control-panel.yml` — generic production Robot/control-panel opener.
+- `supervisor-state-maintenance.yml` — Owner-authorized state audit/reset by revision; preserves Brain and Work target URLs.
 
 Historical TASK-049 diagnostic/live-monitor workflows are not part of production.
 
