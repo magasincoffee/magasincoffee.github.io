@@ -3,11 +3,16 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as delay } from "node:timers/promises";
 
-import { ChatGptUiAdapter } from "../ui/playwright-adapter.mjs";
+import {
+  ChatGptUiAdapter,
+  isTransientNavigationError
+} from "../ui/playwright-adapter.mjs";
 import { sendComposerInstruction } from "../ui/actions.mjs";
 import {
   captureAssistantTurnDigests,
   captureCompletedAssistantTurn,
+  captureRecentAssistantTurns,
+  captureRecentConversationTurns,
   captureUserTurnDigests
 } from "../ui/message-capture.mjs";
 import { OBSERVATIONS } from "../decision.mjs";
@@ -30,7 +35,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.25";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.26";
 
 function parseArgs(argv) {
   const result = {
@@ -185,6 +190,28 @@ async function createConversationWithMessage(adapter, message, { execute }) {
   return { page, target, execution };
 }
 
+async function captureLatestValidBrainDirective(page, config) {
+  const turns = await captureRecentConversationTurns(page, { limit: 40 });
+  let latestUserIndex = -1;
+  for (let index = 0; index < turns.length; index += 1) {
+    if (turns[index].role === "user") latestUserIndex = index;
+  }
+
+  for (let index = turns.length - 1; index > latestUserIndex; index -= 1) {
+    const captured = turns[index];
+    if (captured.role !== "assistant") continue;
+    try {
+      const directive = parseBrainDirective(captured.text, {
+        maxWorkers: workerCapacity(config)
+      });
+      return { captured, directive };
+    } catch {
+      // Progress/status assistant turns are not Brain directives.
+    }
+  }
+  return null;
+}
+
 async function findBrainByContinuity(adapter, registry) {
   const expectedDigest = registry?.brain?.last_processed_digest || null;
   if (!expectedDigest) return null;
@@ -230,16 +257,9 @@ async function findBrainByDirectiveSignature(adapter, config) {
       continue;
     }
 
-    const captured = await captureCompletedAssistantTurn(page).catch(() => null);
-    if (!captured?.text) continue;
-
-    try {
-      parseBrainDirective(captured.text, {
-        maxWorkers: workerCapacity(config)
-      });
+    const valid = await captureLatestValidBrainDirective(page, config).catch(() => null);
+    if (valid) {
       candidates.push({ page, target, method: "DIRECTIVE_SIGNATURE" });
-    } catch {
-      // Not a Brain response.
     }
   }
 
@@ -277,17 +297,8 @@ async function applyOwnerBrainRebind({
     if (!probe || hardStopObservation(probe.classification.observation)) continue;
     if (probe.snapshot.conversationMissing || probe.snapshot.conversationFull) continue;
 
-    const captured = await captureCompletedAssistantTurn(page).catch(() => null);
-    if (!captured?.text) continue;
-
-    try {
-      parseBrainDirective(captured.text, {
-        maxWorkers: workerCapacity(config)
-      });
-      candidates.push({ page, target });
-    } catch {
-      // Visible page is not a valid Brain conversation.
-    }
+    const valid = await captureLatestValidBrainDirective(page, config).catch(() => null);
+    if (valid) candidates.push({ page, target });
   }
 
   await fs.unlink(requestPath).catch(() => {});
@@ -359,20 +370,11 @@ async function findBrainFromRecentSidebar(adapter, config) {
       continue;
     }
 
-    const captured = await captureCompletedAssistantTurn(page).catch(() => null);
-    if (!captured?.text) continue;
-
-    try {
-      parseBrainDirective(captured.text, {
-        maxWorkers: workerCapacity(config)
-      });
+    const valid = await captureLatestValidBrainDirective(page, config).catch(() => null);
+    if (valid) {
       candidateTargets.push(target);
       if (candidateTargets.length > 1) {
         throw new Error("multiple recent ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied");
-      }
-    } catch (error) {
-      if (/multiple recent ChatGPT conversations/.test(String(error?.message || error))) {
-        throw error;
       }
     }
   }
@@ -741,7 +743,32 @@ async function dispatchWorker({
   await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
 
   if (isNewConversation) {
-    page = await adapter.newChatPage("https://chatgpt.com/");
+    try {
+      page = await adapter.newChatPage("https://chatgpt.com/");
+    } catch (error) {
+      // newChatPage returns only after page creation/navigation completes.
+      // If it failed before returning, no Worker instruction was sent, so the
+      // one-shot latches can be cleared safely and the same Brain directive can
+      // retry after CDP/browser recovery without risking a duplicate send.
+      if (isTransientNavigationError(error)) {
+        worker.status = "IDLE";
+        worker.awaiting_result = false;
+        worker.creation_latch = null;
+        worker.dispatch_latch = null;
+        registry.workers[worker.worker_id] = worker;
+        await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
+        await safeLog(logPath, {
+          type: "WORKER_CREATE_PRE_SEND_RECOVERABLE",
+          role: "worker",
+          workerId: worker.worker_id,
+          taskId: worker.task_id,
+          digest: worker.instruction_digest,
+          generation: worker.generation,
+          reason: "browser/context closed before Worker instruction send; safe retry allowed"
+        });
+      }
+      throw error;
+    }
   }
 
   const execution = await sendComposerInstruction(page, action.instruction, {
@@ -794,16 +821,19 @@ async function processBrainResponse({
     return false;
   }
 
-  const captured = await captureCompletedAssistantTurn(page);
-  if (!captured) return false;
+  const valid = await captureLatestValidBrainDirective(page, config);
+  if (!valid) {
+    // ChatGPT may emit normal assistant progress/status turns while the Brain is
+    // working. Those turns are intentionally ignored instead of being treated
+    // as malformed Brain directives.
+    return false;
+  }
+
+  const { captured, directive } = valid;
   if (captured.digest === registry.brain.last_processed_digest) {
     registry.brain.awaiting_response = false;
     return true;
   }
-
-  const directive = parseBrainDirective(captured.text, {
-    maxWorkers: workerCapacity(config)
-  });
 
   for (const action of directive.actions) {
     await dispatchWorker({

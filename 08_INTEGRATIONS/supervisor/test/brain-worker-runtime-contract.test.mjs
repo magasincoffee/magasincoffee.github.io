@@ -170,3 +170,36 @@ test("uncertain Worker send is reconciled only by matching instruction digest or
   assert.match(runtime, /Owner retry was already used for this instruction/);
   assert.match(runtime, /automatic retry is denied/);
 });
+
+
+test("Brain ignores progress turns and accepts only a valid directive after the latest Owner turn", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(runtime, /captureLatestValidBrainDirective/);
+  assert.match(runtime, /captureRecentConversationTurns\(page, \{ limit: 40 \}\)/);
+  assert.match(runtime, /latestUserIndex/);
+  assert.match(runtime, /captured\.role !== "assistant"/);
+  assert.match(runtime, /Progress\/status assistant turns are not Brain directives/);
+  assert.match(runtime, /intentionally ignored instead of being treated/);
+});
+
+test("Worker creation clears one-shot latches only when browser loss occurs before instruction send", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  const pageCreate = runtime.indexOf('page = await adapter.newChatPage("https://chatgpt.com/")');
+  const composerSend = runtime.indexOf("sendComposerInstruction(page, action.instruction", pageCreate);
+  const recoverable = runtime.indexOf("WORKER_CREATE_PRE_SEND_RECOVERABLE", pageCreate);
+
+  assert.ok(pageCreate >= 0);
+  assert.ok(recoverable > pageCreate);
+  assert.ok(composerSend > recoverable);
+  assert.match(runtime, /worker\.creation_latch = null/);
+  assert.match(runtime, /worker\.dispatch_latch = null/);
+  assert.match(runtime, /browser\/context closed before Worker instruction send; safe retry allowed/);
+});

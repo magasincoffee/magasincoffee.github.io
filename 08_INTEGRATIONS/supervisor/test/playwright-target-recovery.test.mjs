@@ -70,3 +70,15 @@ test("closed recovery tab may be recreated once on the next bounded recovery", a
   assert.notEqual(first, second);
   assert.equal(creates, 2);
 });
+
+
+test("CDP adapter contains bounded reconnect logic for a replaced browser context", async () => {
+  const source = await import("node:fs/promises").then((fs) =>
+    fs.readFile(new URL("../src/ui/playwright-adapter.mjs", import.meta.url), "utf8")
+  );
+
+  assert.match(source, /async reconnectOverCdp\(\)/);
+  assert.match(source, /isTransientNavigationError\(error\)/);
+  assert.match(source, /await this\.reconnectOverCdp\(\)/);
+  assert.match(source, /page = await this\.context\.newPage\(\)/);
+});

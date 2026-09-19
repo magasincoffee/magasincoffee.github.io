@@ -270,3 +270,18 @@ test("control panel offers one plain-language bounded retry for an uncertain Wor
   assert.match(source, /uncertain prior create\/send outcome/);
   assert.match(source, /thử lại đúng một lần/);
 });
+
+
+test("control panel keeps automatic technical recovery visible instead of showing an irrelevant Owner button", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /ROBOT ĐANG TỰ KHÔI PHỤC/);
+  assert.match(source, /missing MAGASIN_BRAIN_DIRECTIVE_V1 block/);
+  assert.match(source, /Target page, context or browser has been closed/);
+  assert.match(source, /\$autoRecoveryButton\.Visible = \$autoRecoveryActive/);
+  assert.match(source, /\$ownerResolvedButton\.Visible = -not \(\$targetMismatchActive -or \$uncertainWorkerActive -or \$autoRecoveryActive\)/);
+  assert.match(source, /Không cần bấm ĐÃ XỬ LÝ/);
+});

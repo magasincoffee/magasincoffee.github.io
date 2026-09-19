@@ -28,11 +28,11 @@ test("auto-upgrade workflow installs runtime source changes and verifies a Brain
   assert.doesNotMatch(source, /raw\.githubusercontent\.com\/magasincoffee\/magasincoffee\.github\.io\/main\/01_DOCS\/MAGASIN\/00_PROJECT_STATE\.json/);
   assert.match(source, /brain-worker-cli\.mjs/);
   assert.match(source, /BRAIN_TARGET_REGISTERED=True/);
-  assert.match(source, /2026-09-19\.25/);
+  assert.match(source, /2026-09-19\.26/);
 });
 
 
-test("auto-upgrade exposes explicit Owner Brain rebind when live v25 still has target mismatch", async () => {
+test("auto-upgrade exposes explicit Owner Brain rebind when live v26 still has target mismatch", async () => {
   const source = await fs.readFile(
     new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
     "utf8"
@@ -57,4 +57,17 @@ test("auto-upgrade verifies the bounded Owner recovery path for an uncertain Wor
   assert.match(source, /WORKER_RETRY\.request\.json/);
   assert.match(source, /WORKER_OWNER_RETRY_ARMED/);
   assert.match(source, /uncertain prior create\/send outcome/);
+});
+
+
+test("auto-upgrade rejects a v26 runtime still stuck on progress-turn or closed-context technical recovery", async () => {
+  const source = await fs.readFile(
+    new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /TECHNICAL_RECOVERY_STUCK=False/);
+  assert.match(source, /missing MAGASIN_BRAIN_DIRECTIVE_V1 block/);
+  assert.match(source, /Target page, context or browser has been closed/);
+  assert.match(source, /automatically recoverable Brain\/CDP condition/);
 });

@@ -145,8 +145,8 @@ jobs:
 
           $runtimeBrain = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
           if (-not (Test-Path $runtimeBrain)) { throw "Installed Brain/Worker runtime is missing" }
-          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.25" -Quiet)) {
-            throw "Installed Brain/Worker runtime is not v2026-09-19.25"
+          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.26" -Quiet)) {
+            throw "Installed Brain/Worker runtime is not v2026-09-19.26"
           }
 
           $runtimeStatusFile = Join-Path $root "runtime-status.json"
@@ -156,7 +156,7 @@ jobs:
               try {
                 $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
                 if (
-                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.25" -and
+                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.26" -and
                   -not (
                     $runtimeStatus.status -eq "WAIT_USER" -and
                     [string]$runtimeStatus.decision_reason -match "target mismatch"
@@ -178,7 +178,7 @@ jobs:
               -not (Test-Path $brainRuntime) -or
               -not (Select-String -Path $brainRuntime -SimpleMatch "BRAIN_TARGET_REBOUND_OWNER" -Quiet)
             ) {
-              throw "v2026-09-19.25 target mismatch remains but the Owner Brain rebind recovery path is unavailable"
+              throw "v2026-09-19.26 target mismatch remains but the Owner Brain rebind recovery path is unavailable"
             }
             Write-Host "BRAIN_REBIND_REQUIRED=True"
           } else {
@@ -190,7 +190,7 @@ jobs:
             try {
               $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
               $workerRetryRequired = [bool](
-                $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.25" -and
+                $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.26" -and
                 $runtimeStatus.status -eq "WAIT_USER" -and
                 [string]$runtimeStatus.decision_reason -match "uncertain prior create/send outcome"
               )
@@ -206,12 +206,28 @@ jobs:
               -not (Test-Path $brainRuntime) -or
               -not (Select-String -Path $brainRuntime -SimpleMatch "WORKER_OWNER_RETRY_ARMED" -Quiet)
             ) {
-              throw "v2026-09-19.25 uncertain Worker send remains but the bounded Owner retry path is unavailable"
+              throw "v2026-09-19.26 uncertain Worker send remains but the bounded Owner retry path is unavailable"
             }
             Write-Host "WORKER_RETRY_REQUIRED=True"
           } else {
             Write-Host "WORKER_RETRY_REQUIRED=False"
           }
+
+          $technicalRecoveryStuck = $false
+          if (Test-Path $runtimeStatusFile) {
+            try {
+              $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+              $technicalRecoveryStuck = [bool](
+                $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.26" -and
+                $runtimeStatus.status -eq "WAIT_USER" -and
+                [string]$runtimeStatus.decision_reason -match "missing MAGASIN_BRAIN_DIRECTIVE_V1 block|Target page, context or browser has been closed"
+              )
+            } catch {}
+          }
+          if ($technicalRecoveryStuck) {
+            throw "v2026-09-19.26 is still stuck on an automatically recoverable Brain/CDP condition"
+          }
+          Write-Host "TECHNICAL_RECOVERY_STUCK=False"
 
           Write-Host "AUTOSTART_REGISTERED=True"
           Write-Host "RUNNER_ONLINE=True"
