@@ -5,6 +5,7 @@ on:
     paths:
       - '02_CORE/contracts/**'
       - '02_CORE/shared/financial-truth-v1.mjs'
+      - '02_CORE/shared/monthly-revenue-baseline-v1.mjs'
       - '09_QA/business-os/**'
       - '.github/workflows/business-os-contract-tests.yml'
   pull_request:
