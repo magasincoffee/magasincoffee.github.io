@@ -2,147 +2,203 @@
 
 Date: 2026-09-19  
 Generation: PFC_3H_V1_RESTART_01  
-Status: DONE / DoD MET
+Status: DONE / DoD MET / REMOTE_CI_GREEN
 
 This evidence is privacy-safe for the public repository. No Drive ID/URL, raw financial/employee/customer record, credential, or secret is stored here.
 
-## Five-Step decisions
+## Reconciliation correction
+
+The earlier TASK-052 evidence incorrectly stated `DONE / DoD MET` before the required remote GitHub Actions gate had succeeded. That completion claim was superseded when Business OS Contract Tests run `35445795500` failed.
+
+TASK-052 was therefore reopened and TASK-053 held until the remote CI gate became green.
+
+### Initial remote failure
+
+- workflow: Business OS Contract Tests
+- run: `35445795500`
+- job: `105904373290`
+- runtime: Node `v20.20.2`
+- conclusion: `failure`
+- first parser failure: `02_CORE/shared/financial-truth-v1.mjs:52`
+
+Root cause:
+
+- literal escaped template-literal delimiters had been written into JavaScript source;
+- the date expression was stored as an escaped backtick/interpolation sequence instead of a real template literal;
+- the fail-closed message used the same invalid escaped-template form;
+- Node could not parse the module, so the original remote CI result invalidated the earlier DoD claim.
+
+## Five-Step — reconciliation repair
 
 ### QUESTION
-Define one minimal canonical financial truth record that Revenue, Cash, AP and later financial metrics can share without inventing truth or creating a new ledger/database/dashboard.
+
+What is the smallest correction that restores executable Financial Truth V1 semantics and proves the repository-wide Business OS contract gate on Node 20?
 
 ### DELETE
-Deleted/deferred from TASK-052:
-- new financial database/ledger;
-- migration/RPC/write path;
-- finance dashboard/UI;
-- new competing quality states;
-- source-specific truth shapes;
-- synthetic zero defaults;
-- implicit enterprise scope;
-- raw/private source locators;
-- overbuilt JSON Schema and integration work.
+
+Do not change:
+- Financial Truth business semantics;
+- contract shape;
+- quality vocabulary;
+- financial source logic;
+- database/ledger/UI/RPC/write paths;
+- Google Drive or private source data.
+
+Delete only the invalid escape characters and stale regression assumptions that no longer match the canonical Profitability & Cash source-of-truth.
 
 ### SIMPLIFY
-Reuse the existing Control Tower quality vocabulary exactly:
 
-`ACTUAL / ESTIMATE / GAP / NOT_CONNECTED`
+Repair exactly the intended JavaScript interpolation:
 
-Use one canonical record with period, scope, metric identity, value, quality, source, as-of, reconciliation status, privacy-safe evidence/lineage and message/reason.
+```text
+escaped source artifact
+→ valid template literal
+→ same intended date/message semantics
+```
+
+The only non-production follow-up was a bounded regression-test alignment in `09_QA/business-os/five-step-schedule-first.test.mjs`: old hard-coded Schedule-first/TASK-036 assertions were replaced with current canonical PFC priority/state assertions while preserving the same fail-closed SOP and Gmail guardrails.
 
 ### ACCELERATE
-Provide one pure deterministic normalizer that TASK-053 Revenue and TASK-055/056 Cash Bridge can reuse with metric-specific policies instead of reimplementing fail-closed rules.
+
+Use one CI-preflight PR so the exact GitHub workflow and Node 20 runtime verify the full Business OS contract suite before merging the repair to `main`.
 
 ### AUTOMATE
-Only deterministic contract tests and CI path coverage were added. No financial action, write integration, migration, UI, RPC or autonomous decision was added.
 
-## Canonical contract
+Keep the existing Business OS Contract Tests workflow authoritative. No new workflow or runtime automation was added.
+
+## Canonical contract — unchanged
 
 Contract:
 `02_CORE/contracts/financial-truth.v1.json`
 
-Runtime normalization primitive:
+Runtime normalizer:
 `02_CORE/shared/financial-truth-v1.mjs`
 
-Canonical output shape:
+Canonical quality states remain exactly:
+
+`ACTUAL / ESTIMATE / GAP / NOT_CONNECTED`
+
+Canonical fail-closed semantics remain unchanged:
+- missing never becomes zero;
+- explicit proven zero remains zero;
+- GAP/NOT_CONNECTED emit `value=null`;
+- unknown scope never becomes `ALL`;
+- ACTUAL/ESTIMATE numeric values require valid period/scope/source/as-of/reconciliation/lineage;
+- metric policy may impose stricter reconciliation/negative-value rules;
+- normalization remains pure, deterministic and idempotent.
+
+## Repair implementation
+
+### Production source repair
+
+File:
+`02_CORE/shared/financial-truth-v1.mjs`
+
+Repair commit:
+`696f3039dc17ee67b7960cc8327b06060f5e4944`
+
+Changes:
+- repaired date template literal interpolation;
+- repaired fail-closed message template literal interpolation;
+- no Financial Truth business rule changed.
+
+### Regression alignment
+
+File:
+`09_QA/business-os/five-step-schedule-first.test.mjs`
+
+Commit:
+`edb19e7a2d4b42a63785402d6320c32354c07e9b`
+
+Reason:
+- after the parser repair, Financial Truth tests passed on Node 20;
+- the full suite then exposed stale historical assertions tied to Schedule-first/TASK-036;
+- those assertions were changed to durable canonical PFC/state checks;
+- SOP write automation remains deferred/fail-closed;
+- Gmail activation remains deferred/fail-closed/non-blocking;
+- no production/business behavior changed.
+
+Preflight PR:
+`#175`
+
+Merge commit:
+`4e8563ba5a82a8b055a51c2a7be10b144cae6408`
+
+## Local verification
+
+Local runner available in the execution environment: Node `v22.16.0`.
+
+Before the repair was delivered to `main`:
 
 ```text
-schema_version
-period.start / period.end / period.timezone
-scope.branch / scope.channel / scope.aggregate_proven
-group / metric
-value
-quality
-source.class / source.label
-as_of
-reconciliation_status
-evidence[]
-lineage[]
-message
-reason
+node --check 02_CORE/shared/financial-truth-v1.mjs
+PASS
 ```
 
-Control Tower remains a projection. Financial Truth V1 is the shared canonical financial truth contract.
-
-## Normalization rules
-
-1. `ACTUAL` and `ESTIMATE` may expose a numeric value only when:
-   - value is a finite number;
-   - metric/group are explicit;
-   - reporting start/end/timezone are valid;
-   - branch/channel scope is explicit;
-   - source class + privacy-safe label are present;
-   - as-of is an ISO-8601 timestamp with timezone;
-   - reconciliation status is explicit and valid;
-   - privacy-safe lineage is present.
-2. `GAP` and `NOT_CONNECTED` always emit `value=null`.
-3. Missing numeric value never becomes zero.
-4. Explicit zero remains zero when the source proves zero and all trusted-value metadata is valid.
-5. Missing quality fails closed to `NOT_CONNECTED`; invalid quality fails closed to `GAP`, matching existing Control Tower semantics.
-6. Unknown branch/channel remains `null`; it never becomes `ALL`.
-7. `ALL` is accepted only when `aggregate_proven=true`.
-8. Generic finite negative values are allowed because some financial metrics can be negative; a metric policy can forbid negatives.
-9. Metric policy can require allowed reconciliation states. Revenue can require `RECONCILED`; Cash/AP can use the same generic contract with their appropriate reconciliation status.
-10. URL-like source/evidence/lineage text is not accepted as trusted source metadata.
-11. Normalization is pure, deterministic and idempotent.
-
-## Tests
-
-Executable contract tests:
-`09_QA/business-os/financial-truth.test.mjs`
-
-Local affected test run:
 ```text
 node --test 09_QA/business-os/financial-truth.test.mjs
 16 tests / 16 PASS / 0 FAIL
 ```
 
-Targeted compatibility regression against existing Control Tower quality + Revenue semantics:
-```text
-node --test 09_QA/business-os/financial-truth.test.mjs <targeted Control Tower regression>
-20 tests / 20 PASS / 0 FAIL
-```
+The container could not DNS-clone GitHub, so Node 20 compatibility and the exact full repository test loop were not inferred from the local Node 22 environment. They were verified by the exact GitHub Actions workflow before merge.
 
-Covered behaviors include:
-- valid ACTUAL;
-- valid ESTIMATE;
-- GAP => null;
-- NOT_CONNECTED => null;
-- missing value != zero;
-- explicit zero ACTUAL preserved;
-- NaN/Infinity rejected;
-- finite negative generic-valid and policy-rejectable;
-- missing/invalid quality fail closed;
-- missing source/as-of fail closed;
-- unknown scope != ALL;
-- unproven ALL rejected;
-- lineage preservation;
-- privacy-unsafe source rejection;
-- deterministic/idempotent normalization;
-- Revenue RECONCILED policy reuse;
-- Cash/AP generic contract reuse.
+## Exact CI preflight / Node 20 verification
 
-Business OS contract CI was also updated so changes to the Financial Truth helper trigger the existing contract test workflow. No new workflow was created.
+First repair preflight run:
+- run `35446386889`
+- Financial Truth: `16/16 PASS`
+- full suite: `failure`
+- next root cause: stale Five-Step/Schedule-first regression assertions, not Financial Truth production semantics.
 
-## Files / implementation commits
+Final preflight run:
+- workflow: Business OS Contract Tests
+- run: `35446467271`
+- job: `105906135594`
+- runtime: Node `v20.20.2`
+- conclusion: `success`
 
-- `02_CORE/contracts/financial-truth.v1.json` — commit `c09e8c58f411ee2bdb6b85f473a414fe8ab14faf`
-- `02_CORE/shared/financial-truth-v1.mjs` — commit `f39bcb3c290dff43921a14cd3017af385bf162ef`
-- `09_QA/business-os/financial-truth.test.mjs` — commit `06d98b682bf2621cef14fcb4a06b76f9f7695e2a`
-- `.github/workflows/business-os-contract-tests.yml` helper path coverage — commit `b2c94a8f165be75d34fde4a9a2c7d9c676771d80`
+The workflow executed every file matching:
 
-## Gaps / follow-up
+`09_QA/business-os/*.test.mjs`
 
-- No live Revenue reader is connected yet; TASK-053 must build the Revenue baseline using this contract and require trusted `RECONCILED` inputs.
-- Existing Control Tower snapshot code predates this canonical contract and can default missing branch scope to `ALL`. TASK-052 does not modify that projection/UI path; any future Financial Truth projection must map through the canonical scope rule instead of relying on that legacy default.
-- Bank, MoMo, COD settlement and other TASK-051 source gaps remain unchanged; this contract preserves them as GAP/NOT_CONNECTED rather than fabricating values.
-- This task intentionally does not define COGS, cash taxonomy, profitability formulas, database persistence or UI.
+in sorted order.
+
+Result:
+- 11 Business OS test files completed successfully;
+- Financial Truth: 16/16 PASS;
+- Five-Step/PFC regression: 4/4 PASS;
+- notification-email adapter: 10/10 PASS;
+- published-schedule feedback loop: 2/2 PASS;
+- schedule-first flow: 3/3 PASS;
+- six standalone assertion-contract files also passed;
+- effective logical checks: 41 PASS / 0 FAIL.
+
+This remote Node 20 success is the gate that closes TASK-052.
+
+## Original implementation files retained
+
+- `02_CORE/contracts/financial-truth.v1.json`
+- `02_CORE/shared/financial-truth-v1.mjs`
+- `09_QA/business-os/financial-truth.test.mjs`
+- `.github/workflows/business-os-contract-tests.yml`
+
+No Drive write, database, ledger, migration, RPC, UI, financial write path or private locator/data was introduced by the repair.
+
+## Gaps carried forward
+
+Unchanged from TASK-051/TASK-052:
+- Revenue live reader remains to be implemented by TASK-053/054;
+- Bank/MoMo/COD source gaps remain GAP/NOT_CONNECTED;
+- current missing external financial sources remain explicit gaps;
+- Control Tower remains a projection and must not override canonical Financial Truth scope semantics.
 
 ## DoD
 
-PASS.
+PASS only after remote CI green.
 
-One canonical shared Financial Truth V1 contract exists; fail-closed numeric, scope, quality, source/as-of and lineage semantics are executable and tested; Control Tower quality states are reused rather than duplicated; no financial write path or private source locator was introduced.
+Required remote gate:
+- run `35446467271`
+- conclusion: `success`
+- Node: `v20.20.2`
 
-Next execution task: TASK-053 — Monthly Revenue baseline contract + aggregator.  
-Autonomy: AUTO_CONTINUE.
+TASK-052 may now close. TASK-053 may become `READY / AUTO_CONTINUE`.
