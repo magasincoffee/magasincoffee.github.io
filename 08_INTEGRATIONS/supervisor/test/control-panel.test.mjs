@@ -256,3 +256,17 @@ test("control panel exposes a plain-language Brain rebind control only for targe
   assert.match(source, /target mismatch/);
   assert.match(source, /Mở đúng cuộc trò chuyện Bộ não trong Chrome Robot/);
 });
+
+
+test("control panel offers one plain-language bounded retry for an uncertain Worker send", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /WORKER_RETRY\.request\.json/);
+  assert.match(source, /TIẾP TỤC CÔNG VIỆC BỊ KẸT/);
+  assert.match(source, /OWNER_RETRY_UNCERTAIN_WORKER_ONCE/);
+  assert.match(source, /uncertain prior create\/send outcome/);
+  assert.match(source, /thử lại đúng một lần/);
+});
