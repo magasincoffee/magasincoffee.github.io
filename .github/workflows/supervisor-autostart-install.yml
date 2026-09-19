@@ -145,8 +145,8 @@ jobs:
 
           $runtimeBrain = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
           if (-not (Test-Path $runtimeBrain)) { throw "Installed Brain/Worker runtime is missing" }
-          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.26" -Quiet)) {
-            throw "Installed Brain/Worker runtime is not v2026-09-19.26"
+          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.27" -Quiet)) {
+            throw "Installed Brain/Worker runtime is not v2026-09-19.27"
           }
 
           $runtimeStatusFile = Join-Path $root "runtime-status.json"
@@ -156,7 +156,7 @@ jobs:
               try {
                 $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
                 if (
-                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.26" -and
+                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.27" -and
                   -not (
                     $runtimeStatus.status -eq "WAIT_USER" -and
                     [string]$runtimeStatus.decision_reason -match "target mismatch"
@@ -178,7 +178,7 @@ jobs:
               -not (Test-Path $brainRuntime) -or
               -not (Select-String -Path $brainRuntime -SimpleMatch "BRAIN_TARGET_REBOUND_OWNER" -Quiet)
             ) {
-              throw "v2026-09-19.26 target mismatch remains but the Owner Brain rebind recovery path is unavailable"
+              throw "v2026-09-19.27 target mismatch remains but the Owner Brain rebind recovery path is unavailable"
             }
             Write-Host "BRAIN_REBIND_REQUIRED=True"
           } else {
@@ -190,7 +190,7 @@ jobs:
             try {
               $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
               $workerRetryRequired = [bool](
-                $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.26" -and
+                $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.27" -and
                 $runtimeStatus.status -eq "WAIT_USER" -and
                 [string]$runtimeStatus.decision_reason -match "uncertain prior create/send outcome"
               )
@@ -206,7 +206,7 @@ jobs:
               -not (Test-Path $brainRuntime) -or
               -not (Select-String -Path $brainRuntime -SimpleMatch "WORKER_OWNER_RETRY_ARMED" -Quiet)
             ) {
-              throw "v2026-09-19.26 uncertain Worker send remains but the bounded Owner retry path is unavailable"
+              throw "v2026-09-19.27 uncertain Worker send remains but the bounded Owner retry path is unavailable"
             }
             Write-Host "WORKER_RETRY_REQUIRED=True"
           } else {
@@ -218,14 +218,14 @@ jobs:
             try {
               $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
               $technicalRecoveryStuck = [bool](
-                $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.26" -and
+                $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.27" -and
                 $runtimeStatus.status -eq "WAIT_USER" -and
                 [string]$runtimeStatus.decision_reason -match "missing MAGASIN_BRAIN_DIRECTIVE_V1 block|Target page, context or browser has been closed"
               )
             } catch {}
           }
           if ($technicalRecoveryStuck) {
-            throw "v2026-09-19.26 is still stuck on an automatically recoverable Brain/CDP condition"
+            throw "v2026-09-19.27 is still stuck on an automatically recoverable Brain/CDP condition"
           }
           Write-Host "TECHNICAL_RECOVERY_STUCK=False"
 
@@ -238,3 +238,58 @@ jobs:
           Write-Host "BUSINESS_CHROME_CDP_HEALTHY=True"
           Write-Host "OWNER_STOP_LATCH=False"
           Write-Host "WINDOWS_LOGIN_BYPASS=False"
+
+  verify-survival:
+    name: verify-survival
+    needs: install
+    runs-on: self-hosted
+    timeout-minutes: 5
+    steps:
+      - name: Verify Supervisor survived previous job cleanup
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          Start-Sleep -Seconds 15
+
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $wrapper = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.CommandLine -and
+              $_.CommandLine -like "*run-supervisor.ps1*" -and
+              $_.CommandLine -like "*MAGASIN\BusinessOS\supervisor*"
+            } |
+            Select-Object -First 1
+          if (-not $wrapper) { throw "Supervisor wrapper did not survive the previous self-hosted job" }
+
+          $brainWorker = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -and $_.CommandLine -like "*brain-worker-cli.mjs*" } |
+            Select-Object -First 1
+          if (-not $brainWorker) { throw "Brain/Worker runtime did not survive the previous self-hosted job" }
+
+          $profile = Join-Path $root "browser_profile"
+          $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.CommandLine -and
+              $_.CommandLine -like "*$profile*" -and
+              $_.CommandLine -match "--remote-debugging-port=(\d+)"
+            } |
+            Select-Object -First 1
+          if (-not $chrome) { throw "Dedicated Robot Chrome did not survive the previous self-hosted job" }
+
+          $statusFile = Join-Path $root "runtime-status.json"
+          if (-not (Test-Path $statusFile)) { throw "Runtime status is missing after previous job cleanup" }
+          $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($status.supervisor_runtime_version -ne "2026-09-19.27") {
+            throw "Post-job Supervisor runtime is not v2026-09-19.27"
+          }
+          if (
+            $status.status -eq "WAIT_USER" -and
+            [string]$status.decision_reason -match "fetch failed|project state fetch"
+          ) {
+            throw "Transient project-state fetch failure still escalated to WAIT_USER"
+          }
+
+          Write-Host "POST_JOB_SUPERVISOR_ALIVE=True"
+          Write-Host "POST_JOB_BRAIN_WORKER_ALIVE=True"
+          Write-Host "POST_JOB_ROBOT_CHROME_ALIVE=True"
+          Write-Host "FETCH_FAILURE_ESCALATED_TO_OWNER=False"
