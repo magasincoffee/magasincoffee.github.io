@@ -149,7 +149,7 @@ test("Owner Brain rebind accepts only one visible ChatGPT conversation with a va
   assert.match(runtime, /applyOwnerBrainRebind/);
   assert.match(runtime, /getVisibleChatGptPages/);
   assert.match(runtime, /parseBrainDirective\(captured\.text/);
-  assert.match(runtime, /candidates\.length !== 1/);
+  assert.match(runtime, /resolveBrainCandidate/);
   assert.match(runtime, /BRAIN_TARGET_REBOUND_OWNER/);
   assert.match(adapter, /document\.visibilityState === "visible"/);
 });
@@ -241,4 +241,37 @@ test("WAIT_USER and recovery statuses never publish stale worker_running entries
 
   assert.match(runtime, /new Set\(\["RUNNING", "READY"\]\)\.has\(status\)/);
   assert.match(runtime, /worker\.awaiting_result && worker\.status === "RUNNING"/);
+});
+
+
+test("Brain ambiguity resolves only from exact registry task evidence or one focused valid conversation", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+  const adapter = await fs.readFile(
+    new URL("../src/ui/playwright-adapter.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(runtime, /function candidateRegistryScore/);
+  assert.match(runtime, /worker\.task_id === action\.task_id/);
+  assert.match(runtime, /worker\.awaiting_result \? 10 : 6/);
+  assert.match(runtime, /async function resolveBrainCandidate/);
+  assert.match(runtime, /getFocusedChatGptPages/);
+  assert.match(runtime, /focusedCandidates\.length === 1/);
+  assert.match(runtime, /throw new Error\(multipleError\)/);
+  assert.match(adapter, /async getFocusedChatGptPages/);
+  assert.match(adapter, /document\.hasFocus\(\)/);
+});
+
+test("directive-signature Brain recovery passes registry evidence into ambiguity resolution", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(runtime, /findBrainByDirectiveSignature\(adapter, config, registry\)/);
+  assert.match(runtime, /candidates\.push\(\{ page, target, method: "DIRECTIVE_SIGNATURE", valid \}\)/);
+  assert.match(runtime, /resolveBrainCandidate\(\s*adapter,\s*candidates,\s*registry/);
 });
