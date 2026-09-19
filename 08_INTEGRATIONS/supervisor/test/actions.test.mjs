@@ -262,7 +262,7 @@ test("live composer send uses bounded editable readiness instead of a 60s implic
   assert.match(source, /async function waitForReadyComposer/);
   assert.match(source, /timeoutMs = 8_000/);
   assert.match(source, /isEditable/);
-  assert.match(source, /composer\.fill\(instruction, \{ timeout: 10_000 \}\)/);
+  assert.match(source, /async function setComposerText/);\n  assert.match(source, /composer\\.fill\\(instruction, \\{ timeout: 2_500 \\}\\)/);\n  assert.match(source, /page\\.keyboard\\.insertText\\(instruction\\)/);
   assert.match(source, /did not become editable before bounded timeout/);
 });
 
