@@ -6,12 +6,15 @@ on:
       - '02_CORE/contracts/**'
       - '02_CORE/shared/financial-truth-v1.mjs'
       - '02_CORE/shared/monthly-revenue-baseline-v1.mjs'
+      - '02_CORE/shared/cash-bridge-v1.mjs'
       - '09_QA/business-os/**'
       - '.github/workflows/business-os-contract-tests.yml'
   pull_request:
     paths:
       - '02_CORE/contracts/**'
       - '02_CORE/shared/financial-truth-v1.mjs'
+      - '02_CORE/shared/monthly-revenue-baseline-v1.mjs'
+      - '02_CORE/shared/cash-bridge-v1.mjs'
       - '09_QA/business-os/**'
       - '.github/workflows/business-os-contract-tests.yml'
 
@@ -27,6 +30,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Check Cash Bridge helper syntax
+        run: node --check 02_CORE/shared/cash-bridge-v1.mjs
+
       - name: Run all Business OS contract tests
         shell: bash
         run: |
