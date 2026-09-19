@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
   "current_phase": "P2_PFC_3H_EXECUTION_RESTART",
-  "current_task": "TASK-053",
-  "current_task_title": "Monthly Revenue baseline contract + aggregator",
+  "current_task": "TASK-052",
+  "current_task_title": "Financial Truth contract v1 — CI repair/reverification",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-054",
+  "next_task": "TASK-053",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -341,7 +341,14 @@
     "started_task": "TASK-051",
     "execution_policy": "AUTO_CONTINUE_UNTIL_TRUE_OWNER_BOUNDARY_OR_QUEUE_COMPLETE",
     "execution_generation": "PFC_3H_V1_RESTART_01",
-    "restart_from_task": "TASK-051"
+    "restart_from_task": "TASK-051",
+    "reconciliation_override": {
+      "reason": "TASK_052_GITHUB_ACTIONS_CONTRACT_TEST_FAILED",
+      "failed_run_id": 35445795500,
+      "failed_job_id": 105904373290,
+      "failure": "SyntaxError in 02_CORE/shared/financial-truth-v1.mjs caused by escaped template-literal delimiters",
+      "action": "REOPEN_TASK_052_BEFORE_TASK_053"
+    }
   },
   "data_evidence_policy": {
     "google_drive": {
