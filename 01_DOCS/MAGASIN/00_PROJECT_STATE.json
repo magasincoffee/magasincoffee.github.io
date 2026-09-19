@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
   "current_phase": "P2_PFC_3H_EXECUTION_RESTART",
-  "current_task": "TASK-057",
-  "current_task_title": "Procurement payment/AP → financial truth read mapping",
+  "current_task": "TASK-058",
+  "current_task_title": "Partial Financial Baseline snapshot v1",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-058",
+  "next_task": "TASK-059",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -435,6 +435,24 @@
         "conclusion": "success",
         "business_semantics_changed": false
       }
+    },
+    "task_057": {
+      "status": "DONE",
+      "helper": "02_CORE/shared/procurement-financial-truth-v1.mjs",
+      "tests": "09_QA/business-os/procurement-financial-truth.test.mjs",
+      "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_057_PROCUREMENT_FINANCIAL_TRUTH_MAPPING_V1_EVIDENCE.md",
+      "pull_request": 181,
+      "merge_commit": "26679a126a327aef25397462cf78ea4fb8130d77",
+      "pr_head_run_id": 35451826117,
+      "pr_head_job_id": 105920208166,
+      "pr_head_runtime": "Node v20.20.2",
+      "pr_head_conclusion": "success",
+      "merge_push_run_id": 35451862102,
+      "merge_push_job_id": 105920297244,
+      "merge_push_runtime": "Node v20.20.2",
+      "merge_push_conclusion": "success",
+      "owner_control_tower_ci": "NOT_APPLICABLE_NO_CONTROL_TOWER_PATH_CHANGE",
+      "procurement_qa": "NOT_APPLICABLE_NO_PROCUREMENT_PRODUCTION_PATH_CHANGE"
     }
   },
   "data_evidence_policy": {
