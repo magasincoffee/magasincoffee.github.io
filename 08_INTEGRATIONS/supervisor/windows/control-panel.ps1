@@ -7,6 +7,7 @@ $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $runtime = Join-Path $root 'runtime'
 $pidFile = Join-Path $root 'supervisor.pid'
 $statusFile = Join-Path $root 'runtime-status.json'
+$registryFile = Join-Path $root 'orchestration.json'
 $logFile = Join-Path $root 'supervisor.log'
 $ownerResolvedFile = Join-Path $root 'OWNER_RESOLVED.request.json'
 $brainRebindFile = Join-Path $root 'BRAIN_REBIND.request.json'
@@ -90,14 +91,49 @@ function Read-ProjectState {
     }
 }
 
+$vietnamTimeZone = [TimeZoneInfo]::FindSystemTimeZoneById('SE Asia Standard Time')
+
+function Convert-ToVietnamTime([DateTimeOffset]$Value) {
+    return [TimeZoneInfo]::ConvertTime($Value, $vietnamTimeZone)
+}
+
 function Format-Time([string]$Value) {
     if (-not $Value) { return '—' }
     try {
         $dt = [DateTimeOffset]::Parse($Value)
         $age = [math]::Max(0, [int]([DateTimeOffset]::UtcNow - $dt.ToUniversalTime()).TotalSeconds)
-        return "$($dt.ToLocalTime().ToString('yyyy-MM-dd HH:mm:ss'))  •  $age giây trước"
+        $vn = Convert-ToVietnamTime $dt
+        return "$($vn.ToString('dd/MM/yyyy HH:mm:ss')) giờ Việt Nam  •  $age giây trước"
     } catch {
         return $Value
+    }
+}
+
+function Format-VietnamClock([DateTimeOffset]$Value) {
+    return (Convert-ToVietnamTime $Value).ToString('dd/MM/yyyy HH:mm')
+}
+
+function Get-FriendlyReason([string]$Reason) {
+    if (-not $Reason) { return 'Robot đang theo dõi công việc và sẽ tự tiếp tục khi đủ điều kiện.' }
+    if ($Reason -match 'target mismatch') { return 'Robot mất liên kết với cuộc trò chuyện Bộ não và đang chờ gắn lại đúng cuộc trò chuyện.' }
+    if ($Reason -match 'conflicting uncertain prior send outcome|uncertain prior create/send outcome') { return 'Một công việc bị gián đoạn lúc gửi lệnh. Robot đang giữ an toàn để không gửi trùng.' }
+    if ($Reason -match 'fetch failed|project state fetch|temporarily unavailable') { return 'Robot đang thử kết nối lại dữ liệu dự án.' }
+    if ($Reason -match 'missing MAGASIN_BRAIN_DIRECTIVE_V1 block') { return 'Robot đang chờ phản hồi Bộ não hoàn chỉnh.' }
+    if ($Reason -match 'Target page, context or browser has been closed') { return 'Robot đang nối lại trình duyệt làm việc.' }
+    return 'Robot đang xử lý theo quy trình an toàn.'
+}
+
+function Get-TaskDisplayText($State) {
+    if (-not $State -or -not $State.current_task) { return '—' }
+    switch ([string]$State.current_task) {
+        'TASK-049' { return 'TASK-049 — Nâng cấp Robot điều phối nhiều cuộc trò chuyện' }
+        'TASK-048' { return 'TASK-048 — Hoàn tất kiểm tra tự động ban đêm' }
+        default {
+            if ($State.current_task_title) {
+                return "$($State.current_task) — $($State.current_task_title)"
+            }
+            return [string]$State.current_task
+        }
     }
 }
 
@@ -183,7 +219,7 @@ function Add-KeyValueRow($Parent, [int]$Y, [string]$Key) {
 }
 
 $form = New-Object Windows.Forms.Form
-$form.Text = 'MAGASIN BUSINESS OS — SUPERVISOR'
+$form.Text = 'MAGASIN BUSINESS OS — BẢNG ĐIỀU KHIỂN ROBOT'
 $form.Size = New-Object Drawing.Size(1040, 820)
 $form.MinimumSize = New-Object Drawing.Size(900, 700)
 $form.StartPosition = 'CenterScreen'
@@ -199,7 +235,7 @@ $title.ForeColor = [Drawing.Color]::FromArgb(15,23,42)
 $form.Controls.Add($title)
 
 $subtitle = New-Object Windows.Forms.Label
-$subtitle.Text = 'SUPERVISOR ROBOT  •  Owner ↔ ChatGPT ↔ Repository'
+$subtitle.Text = 'ROBOT ĐIỀU PHỐI  •  Chủ hệ thống ↔ ChatGPT ↔ Dự án'
 $subtitle.Location = New-Object Drawing.Point(590, 32)
 $subtitle.Size = New-Object Drawing.Size(410, 28)
 $subtitle.TextAlign = 'MiddleRight'
@@ -214,34 +250,34 @@ $controls.BorderStyle = 'FixedSingle'
 $form.Controls.Add($controls)
 
 $startButton = New-Object Windows.Forms.Button
-$startButton.Text = '▶  START ROBOT'
+$startButton.Text = '▶  BẮT ĐẦU ROBOT'
 $startButton.Location = New-Object Drawing.Point(18, 18)
 $startButton.Size = New-Object Drawing.Size(230, 50)
 $startButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 13)
 $controls.Controls.Add($startButton)
 
 $stopButton = New-Object Windows.Forms.Button
-$stopButton.Text = '■  STOP'
+$stopButton.Text = '■  DỪNG ROBOT'
 $stopButton.Location = New-Object Drawing.Point(260, 18)
 $stopButton.Size = New-Object Drawing.Size(150, 50)
 $stopButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 11)
 $controls.Controls.Add($stopButton)
 
 $runnerButton = New-Object Windows.Forms.Button
-$runnerButton.Text = '▶  GITHUB RUNNER'
+$runnerButton.Text = '▶  KẾT NỐI GITHUB'
 $runnerButton.Location = New-Object Drawing.Point(420, 18)
 $runnerButton.Size = New-Object Drawing.Size(170, 50)
 $runnerButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9.5)
 $controls.Controls.Add($runnerButton)
 
 $chatButton = New-Object Windows.Forms.Button
-$chatButton.Text = 'ChatGPT Robot'
+$chatButton.Text = 'MỞ CỬA SỔ ROBOT'
 $chatButton.Location = New-Object Drawing.Point(602, 21)
 $chatButton.Size = New-Object Drawing.Size(145, 42)
 $controls.Controls.Add($chatButton)
 
 $repoButton = New-Object Windows.Forms.Button
-$repoButton.Text = 'Mở dự án GitHub'
+$repoButton.Text = 'MỞ DỰ ÁN'
 $repoButton.Location = New-Object Drawing.Point(758, 21)
 $repoButton.Size = New-Object Drawing.Size(178, 42)
 $controls.Controls.Add($repoButton)
@@ -253,7 +289,7 @@ $robotCard.BorderStyle = 'FixedSingle'
 $form.Controls.Add($robotCard)
 
 $robotCaption = New-Object Windows.Forms.Label
-$robotCaption.Text = 'SUPERVISOR ROBOT'
+$robotCaption.Text = 'TRẠNG THÁI ROBOT'
 $robotCaption.Location = New-Object Drawing.Point(18, 14)
 $robotCaption.Size = New-Object Drawing.Size(200, 22)
 $robotCaption.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
@@ -273,7 +309,7 @@ $projectCard.BorderStyle = 'FixedSingle'
 $form.Controls.Add($projectCard)
 
 $projectCaption = New-Object Windows.Forms.Label
-$projectCaption.Text = 'PROJECT STATE'
+$projectCaption.Text = 'TRẠNG THÁI DỰ ÁN'
 $projectCaption.Location = New-Object Drawing.Point(18, 14)
 $projectCaption.Size = New-Object Drawing.Size(200, 22)
 $projectCaption.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
@@ -293,12 +329,12 @@ $details.BackColor = [Drawing.Color]::White
 $details.BorderStyle = 'FixedSingle'
 $form.Controls.Add($details)
 
-$currentTaskValue = Add-KeyValueRow $details 18 'ĐANG LÀM'
-$nextTaskValue = Add-KeyValueRow $details 65 'CHUẨN BỊ LÀM'
-$currentActionValue = Add-KeyValueRow $details 112 'ROBOT ĐANG LÀM'
-$nextActionValue = Add-KeyValueRow $details 159 'HÀNH ĐỘNG KẾ'
-$heartbeatValue = Add-KeyValueRow $details 206 'CẬP NHẬT'
-$autonomyValue = Add-KeyValueRow $details 247 'CHẾ ĐỘ'
+$currentTaskValue = Add-KeyValueRow $details 18 'CÔNG VIỆC HIỆN TẠI'
+$nextTaskValue = Add-KeyValueRow $details 65 'CÔNG VIỆC TIẾP THEO'
+$currentActionValue = Add-KeyValueRow $details 112 'HOẠT ĐỘNG HIỆN TẠI'
+$nextActionValue = Add-KeyValueRow $details 159 'BƯỚC TIẾP THEO'
+$heartbeatValue = Add-KeyValueRow $details 206 'CẬP NHẬT GẦN NHẤT'
+$autonomyValue = Add-KeyValueRow $details 247 'CHẾ ĐỘ TỰ ĐỘNG'
 
 $errorPanel = New-Object Windows.Forms.Panel
 $errorPanel.Location = New-Object Drawing.Point(28, 594)
@@ -308,7 +344,7 @@ $errorPanel.BorderStyle = 'FixedSingle'
 $form.Controls.Add($errorPanel)
 
 $errorCaption = New-Object Windows.Forms.Label
-$errorCaption.Text = 'LỖI / CẦN OWNER XỬ LÝ'
+$errorCaption.Text = 'THÔNG BÁO / CẦN BẠN XỬ LÝ'
 $errorCaption.Location = New-Object Drawing.Point(16, 10)
 $errorCaption.Size = New-Object Drawing.Size(220, 20)
 $errorCaption.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
@@ -364,7 +400,7 @@ $autoRecoveryButton.Visible = $false
 $errorPanel.Controls.Add($autoRecoveryButton)
 
 $diagnosticsButton = New-Object Windows.Forms.Button
-$diagnosticsButton.Text = 'MỞ LOG LỖI'
+$diagnosticsButton.Text = 'MỞ NHẬT KÝ LỖI'
 $diagnosticsButton.Location = New-Object Drawing.Point(780, 18)
 $diagnosticsButton.Size = New-Object Drawing.Size(165, 40)
 $diagnosticsButton.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
@@ -388,13 +424,28 @@ function Refresh-ControlPanel {
     $process = Get-SupervisorProcess
     $runnerProcess = Get-GitHubRunnerProcess
     $runtimeStatus = Read-JsonFile $statusFile
+    $registry = Read-JsonFile $registryFile
+
+    $runtimeRunningIds = @()
+    if ($runtimeStatus -and $runtimeStatus.worker_running) {
+        $runtimeRunningIds = @($runtimeStatus.worker_running | ForEach-Object { [string]$_ })
+    }
+    $runningWorkers = @()
+    if ($registry -and $registry.workers -and $runtimeRunningIds.Count -gt 0) {
+        foreach ($property in $registry.workers.PSObject.Properties) {
+            $worker = $property.Value
+            if ($runtimeRunningIds -contains [string]$worker.worker_id) {
+                $runningWorkers += $worker
+            }
+        }
+    }
 
     if ($runnerProcess) {
-        $runnerButton.Text = '✓  RUNNER ONLINE'
+        $runnerButton.Text = '✓  KẾT NỐI GITHUB: ĐANG HOẠT ĐỘNG'
         $runnerButton.BackColor = [Drawing.Color]::FromArgb(220,252,231)
         $runnerButton.ForeColor = [Drawing.Color]::FromArgb(22,101,52)
     } else {
-        $runnerButton.Text = '▶  START RUNNER'
+        $runnerButton.Text = '▶  KẾT NỐI GITHUB'
         $runnerButton.BackColor = [Drawing.Color]::FromArgb(255,247,237)
         $runnerButton.ForeColor = [Drawing.Color]::FromArgb(154,52,18)
     }
@@ -435,12 +486,12 @@ function Refresh-ControlPanel {
     $pauseLabel = if ($pauseResumeAt) {
         try {
             $pauseAt = [DateTimeOffset]::Parse($pauseResumeAt)
-            "PAUSED • CHỜ $($pauseAt.ToLocalTime().ToString('HH:mm'))"
+            "TẠM DỪNG • CHỜ ĐẾN $(Format-VietnamClock $pauseAt)"
         } catch {
-            'PAUSED • CHỜ MỐC ĐÃ DUYỆT'
+            'TẠM DỪNG • CHỜ MỐC ĐÃ DUYỆT'
         }
     } else {
-        'PAUSED • CHỜ MỐC ĐÃ DUYỆT'
+        'TẠM DỪNG • CHỜ MỐC ĐÃ DUYỆT'
     }
 
     if ($process) {
@@ -458,21 +509,31 @@ function Refresh-ControlPanel {
             $ownerPending = @($projectState.owner_boundary.pending)
         }
 
-        $robotText = switch ($state) {
-            'PAUSED' { $pauseLabel }
-            'READY' { 'ONLINE • CHỜ CHATGPT' }
-            'RUNNING' { 'RUNNING • ĐANG LÀM VIỆC' }
-            'RETRYING' { 'RETRYING • ĐANG THỬ LẠI' }
-            'RECOVERING' { 'RECOVERING • TỰ KHÔI PHỤC' }
-            'ROLLOVER' { 'ROLLOVER • CHUYỂN CHAT MỚI' }
-            'WAIT_USER' {
-                if ($ownerPending.Count -gt 0) { 'WAIT_USER • CẦN QUYẾT ĐỊNH' }
-                elseif ($activationPending.Count -gt 0) { 'WAIT_USER • CẦN CẤU HÌNH' }
-                else { 'WAIT_USER • CẦN OWNER' }
-            }
-            'ERROR' { 'ERROR' }
-            'DONE' { 'DONE' }
-            default { "ONLINE • $state" }
+        $robotText = if ($state -eq 'PAUSED') {
+            $pauseLabel
+        } elseif ($state -eq 'RECOVERING' -or $state -eq 'RETRYING' -or $state -eq 'ROLLOVER') {
+            'ĐANG TỰ KHÔI PHỤC'
+        } elseif ($runningWorkers.Count -gt 0) {
+            $firstWorker = $runningWorkers | Select-Object -First 1
+            $moreWorkers = [math]::Max(0, $runningWorkers.Count - 1)
+            $suffix = if ($moreWorkers -gt 0) { "  •  +$moreWorkers Worker" } else { '' }
+            "ĐANG LÀM VIỆC  •  $($firstWorker.worker_id)  •  $($firstWorker.task_id)$suffix"
+        } elseif ($state -eq 'WAIT_USER') {
+            if ($ownerPending.Count -gt 0) { 'ĐANG CHỜ BẠN • CẦN QUYẾT ĐỊNH' }
+            elseif ($activationPending.Count -gt 0) { 'ĐANG CHỜ BẠN • CẦN CẤU HÌNH' }
+            else { 'ĐANG CHỜ BẠN' }
+        } elseif ($state -eq 'READY') {
+            'SẴN SÀNG'
+        } elseif ($state -eq 'RUNNING') {
+            'ĐANG ĐIỀU PHỐI'
+        } elseif ($state -eq 'STARTING') {
+            'ĐANG KHỞI ĐỘNG'
+        } elseif ($state -eq 'ERROR') {
+            'CÓ LỖI'
+        } elseif ($state -eq 'DONE') {
+            'HOÀN TẤT'
+        } else {
+            'ĐANG HOẠT ĐỘNG'
         }
         Set-StatusCard $robotCard $robotValue $state $robotText
         $startButton.Enabled = $false
@@ -482,7 +543,7 @@ function Refresh-ControlPanel {
             Set-StatusCard $robotCard $robotValue 'PAUSED' $pauseLabel
             $startButton.Enabled = $false
         } else {
-            Set-StatusCard $robotCard $robotValue 'OFFLINE' 'OFFLINE'
+            Set-StatusCard $robotCard $robotValue 'OFFLINE' 'ĐANG TẮT'
             $startButton.Enabled = $true
         }
         $stopButton.Enabled = $false
@@ -500,9 +561,13 @@ function Refresh-ControlPanel {
     $projectText = if ($projectAutonomy -eq 'PAUSED') {
         $pauseLabel
     } elseif ($projectStatus -eq 'READY') {
-        'READY • AUTO CONTINUE'
+        'SẴN SÀNG • TỰ ĐỘNG TIẾP TỤC'
+    } elseif ($projectStatus -eq 'WAIT_USER') {
+        'ĐANG CHỜ BẠN'
+    } elseif ($projectStatus -eq 'BLOCKED') {
+        'ĐANG BỊ CHẶN'
     } else {
-        $projectStatus
+        'ĐANG HOẠT ĐỘNG'
     }
     $projectCardState = if ($projectAutonomy -eq 'PAUSED') {
         'PAUSED'
@@ -550,41 +615,53 @@ function Refresh-ControlPanel {
         $errorValue.Text = 'Robot mất liên kết với cuộc trò chuyện Bộ não. Mở đúng cuộc trò chuyện Bộ não trong Chrome Robot rồi bấm DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO.'
     }
 
-    $currentTask = if ($projectState.current_task) {
-        "$($projectState.current_task) — $($projectState.current_task_title)"
-    } else { '—' }
+    $currentTask = Get-TaskDisplayText $projectState
     $nextTask = if ($projectState.next_task) { [string]$projectState.next_task } else { '—' }
-
-    $decision = if ($runtimeStatus.decision_action) { [string]$runtimeStatus.decision_action } else { 'WAIT' }
-    $observation = if ($runtimeStatus.observation) { [string]$runtimeStatus.observation } else { '—' }
-    $uiState = if ($runtimeStatus.ui_state) { [string]$runtimeStatus.ui_state } else { '—' }
-    $executed = if ($runtimeStatus.execution_executed) { 'đã thực thi' } else { 'chưa thực thi' }
-    $recoveryAction = if ($runtimeStatus.recovery_action) { [string]$runtimeStatus.recovery_action } else { 'NONE' }
 
     $currentTaskValue.Text = $currentTask
     $nextTaskValue.Text = $nextTask
-    if ($recoveryAction -ne 'NONE') {
-        $currentActionValue.Text = "$recoveryAction  •  UI=$uiState  •  OBS=$observation"
+
+    if ($runningWorkers.Count -gt 0) {
+        $workerDescriptions = @($runningWorkers | ForEach-Object {
+            "$($_.worker_id) đang xử lý $($_.task_id)"
+        })
+        $currentActionValue.Text = $workerDescriptions -join '  •  '
+    } elseif ($runtimeStatus.status -in @('RECOVERING','RETRYING','ROLLOVER')) {
+        $currentActionValue.Text = 'Robot đang tự khôi phục để tiếp tục công việc.'
+    } elseif ($runtimeStatus.status -eq 'WAIT_USER') {
+        $currentActionValue.Text = 'Robot đang chờ bạn xử lý một điều kiện an toàn.'
+    } elseif ($process) {
+        $currentActionValue.Text = 'Robot đang theo dõi Bộ não và điều phối công việc.'
     } else {
-        $currentActionValue.Text = "$decision  •  UI=$uiState  •  OBS=$observation  •  $executed"
+        $currentActionValue.Text = 'Robot đang tắt.'
     }
-    $nextActionValue.Text = if ($runtimeStatus.recovery_reason) {
+
+    $reasonText = if ($runtimeStatus.recovery_reason) {
         [string]$runtimeStatus.recovery_reason
     } elseif ($runtimeStatus.decision_reason) {
         [string]$runtimeStatus.decision_reason
     } else {
-        'Theo dõi ChatGPT; tự Continue khi source-of-truth cho phép.'
+        ''
     }
+    $nextActionValue.Text = Get-FriendlyReason $reasonText
     $heartbeatValue.Text = if ($process -and $runtimeStatus.updated_at) {
         Format-Time ([string]$runtimeStatus.updated_at)
     } elseif ($projectState.last_updated) {
-        "Repository source-of-truth • $($projectState.last_updated)"
+        "Dữ liệu dự án • $($projectState.last_updated)"
     } elseif ($runtimeStatus.updated_at) {
-        "Runtime cũ • $(Format-Time ([string]$runtimeStatus.updated_at))"
+        "Dữ liệu Robot cũ • $(Format-Time ([string]$runtimeStatus.updated_at))"
     } else {
-        'Chưa có runtime status.'
+        'Chưa có trạng thái Robot.'
     }
-    $autonomyValue.Text = if ($projectAutonomy) { "$projectAutonomy  •  phase=$($projectState.current_phase)" } else { '—' }
+    $autonomyValue.Text = if ($projectAutonomy -eq 'AUTO_CONTINUE') {
+        'TỰ ĐỘNG TIẾP TỤC'
+    } elseif ($projectAutonomy -eq 'PAUSED') {
+        'TẠM DỪNG'
+    } elseif ($projectAutonomy) {
+        'ĐANG ÁP DỤNG CHẾ ĐỘ AN TOÀN'
+    } else {
+        '—'
+    }
 
     if ($targetMismatchActive) {
         $errorValue.Text = 'Robot mất liên kết với cuộc trò chuyện Bộ não. Mở đúng cuộc trò chuyện Bộ não trong Chrome Robot rồi bấm DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO.'
@@ -593,20 +670,20 @@ function Refresh-ControlPanel {
     } elseif ($autoRecoveryActive) {
         $errorValue.Text = 'Robot đang tự khôi phục kết nối hoặc đang chờ lệnh Brain hoàn chỉnh. Không cần bấm ĐÃ XỬ LÝ.'
     } elseif ($projectAutonomy -eq 'PAUSED') {
-        $currentActionValue.Text = 'PAUSED  •  không mở/điều khiển ChatGPT'
+        $currentActionValue.Text = 'TẠM DỪNG • không mở hoặc điều khiển ChatGPT'
         $nextActionValue.Text = if ($pauseResumeAt) {
             "Không có công việc được phép trước mốc $pauseLabel."
         } else {
-            'Không có công việc được phép cho đến khi source-of-truth bỏ PAUSED.'
+            'Không có công việc được phép cho đến khi trạng thái dự án cho phép tiếp tục.'
         }
-        $errorValue.Text = 'Không có lỗi. Robot đang tạm dừng có chủ đích theo source-of-truth.'
+        $errorValue.Text = 'Không có lỗi. Robot đang tạm dừng theo trạng thái dự án.'
     } elseif (-not $runnerProcess -and $process) {
-        $errorValue.Text = 'GitHub Runner đang OFFLINE. Local-machine GitHub jobs sẽ không chạy; bấm START RUNNER.'
+        $errorValue.Text = 'Kết nối GitHub đang tắt. Các công việc chạy trên máy này sẽ chưa nhận được lệnh; bấm KẾT NỐI GITHUB.'
     } elseif (-not $process) {
         $errorValue.Text = if ($runnerProcess) {
-            'Robot đang OFFLINE. Bấm START ROBOT.'
+            'Robot đang tắt. Bấm BẮT ĐẦU ROBOT.'
         } else {
-            'Robot và GitHub Runner đang OFFLINE. START ROBOT sẽ khởi động Runner trước.'
+            'Robot và kết nối GitHub đang tắt. BẮT ĐẦU ROBOT sẽ kết nối GitHub trước.'
         }
     } elseif ($projectState.requires_user -or $projectState.blocked -or $projectStatus -in @('WAIT_USER','BLOCKED')) {
         $activationPending = @()
@@ -623,23 +700,23 @@ function Refresh-ControlPanel {
         }
 
         if ($projectState.blocked -or $projectStatus -eq 'BLOCKED') {
-            $errorValue.Text = 'Project đang BLOCKED. Robot không tự vượt security/approval boundary.'
+            $errorValue.Text = 'Dự án đang bị chặn bởi điều kiện an toàn. Robot sẽ không tự vượt qua.'
         } elseif ($ownerPending.Count -gt 0) {
-            $errorValue.Text = 'Cần Owner chốt quyết định: ' + ($ownerPending -join ', ')
+            $errorValue.Text = 'Cần bạn chốt quyết định: ' + ($ownerPending -join ', ')
         } elseif ($activationPending.Count -gt 0) {
             $errorValue.Text = 'Cần cấu hình kỹ thuật trước khi tiếp tục: ' + ($activationPending -join ', ')
         } else {
-            $errorValue.Text = 'Project state yêu cầu Owner xử lý. Robot sẽ không tự vượt approval/security boundary.'
+            $errorValue.Text = 'Trạng thái dự án cần bạn xử lý. Robot sẽ giữ nguyên giới hạn an toàn.'
         }
     } elseif ($runtimeStatus.recovery_blocked) {
-        $errorValue.Text = 'Tự khôi phục đã dùng hết giới hạn an toàn. Cần Owner kiểm tra ChatGPT rồi START lại.'
+        $errorValue.Text = 'Tự khôi phục đã dùng hết giới hạn an toàn. Cần bạn kiểm tra ChatGPT rồi bắt đầu lại Robot.'
     } elseif ($runtimeStatus.status -eq 'ERROR') {
-        $errorValue.Text = "Supervisor lỗi: $($runtimeStatus.error_name). Xem nhật ký trước khi khởi động lại."
+        $errorValue.Text = "Robot gặp lỗi. Mở nhật ký lỗi trước khi khởi động lại."
     } elseif ($runtimeStatus.status -eq 'WAIT_USER') {
         $waitReason = if ($runtimeStatus.recovery_reason) { $runtimeStatus.recovery_reason } else { $runtimeStatus.decision_reason }
         $errorValue.Text = "Robot đang chờ Owner. Lý do: $waitReason"
     } elseif ($runtimeStatus.status -in @('RECOVERING','ROLLOVER')) {
-        $errorValue.Text = 'Robot đang tự khôi phục ChatGPT; chưa cần Owner thao tác.'
+        $errorValue.Text = 'Robot đang tự khôi phục; bạn chưa cần thao tác.'
     } else {
         $errorValue.Text = 'Không có lỗi.'
     }
@@ -657,7 +734,7 @@ $startButton.Add_Click({
         ) {
             try {
                 $resumeAt = [DateTimeOffset]::Parse([string]$remoteBeforeStart.night_run.temporal_gate.resume_at)
-                $resumeAt.ToLocalTime().ToString('yyyy-MM-dd HH:mm')
+                Format-VietnamClock $resumeAt
             } catch {
                 [string]$remoteBeforeStart.night_run.temporal_gate.resume_at
             }
@@ -666,7 +743,7 @@ $startButton.Add_Click({
         }
 
         [Windows.Forms.MessageBox]::Show(
-            "Robot đang PAUSED có chủ đích đến $resumeText. START sẽ không mở ChatGPT hoặc gửi lệnh.",
+            "Robot đang tạm dừng đến $resumeText. BẮT ĐẦU ROBOT sẽ không mở ChatGPT hoặc gửi lệnh.",
             'MAGASIN Business OS',
             'OK',
             'Information'
@@ -692,14 +769,14 @@ $startButton.Add_Click({
         Start-Sleep -Milliseconds 800
         Refresh-ControlPanel
     } catch {
-        [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Không thể START', 'OK', 'Error') | Out-Null
+        [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Không thể bắt đầu Robot', 'OK', 'Error') | Out-Null
     }
 })
 
 $stopButton.Add_Click({
     if (-not (Test-Path $stopScript)) { return }
     $answer = [Windows.Forms.MessageBox]::Show(
-        'Dừng Supervisor Robot? Robot sẽ ngừng tự làm việc với ChatGPT.',
+        'Dừng Robot? Robot sẽ ngừng tự làm việc với ChatGPT.',
         'MAGASIN Business OS',
         'YesNo',
         'Warning'
@@ -823,14 +900,14 @@ $runnerButton.Add_Click({
         [void](Ensure-GitHubRunner -Interactive)
         Refresh-ControlPanel
     } catch {
-        [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Không thể START RUNNER', 'OK', 'Error') | Out-Null
+        [Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Không thể kết nối GitHub', 'OK', 'Error') | Out-Null
     }
 })
 
 $chatButton.Add_Click({
     if (-not (Test-Path $openChatScript)) {
         [Windows.Forms.MessageBox]::Show(
-            "Không tìm thấy shared ChatGPT launcher: $openChatScript",
+            "Không tìm thấy trình mở cửa sổ Robot: $openChatScript",
             'MAGASIN Business OS',
             'OK',
             'Error'
