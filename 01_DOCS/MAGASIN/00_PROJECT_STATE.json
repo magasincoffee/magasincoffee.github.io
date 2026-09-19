@@ -3,14 +3,14 @@
   "repository": "magasincoffee/magasincoffee.github.io",
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
-  "current_phase": "P2_PFC_3H_EXECUTION_RESTART",
+  "current_phase": "P3_PFC_8H_V2_EXECUTION",
   "current_task": "TASK-060",
   "current_task_title": "Actual Cash Opening/Ending Source Truth V1",
-  "status": "WAIT_USER",
-  "autonomy": "PAUSED",
+  "status": "READY",
+  "autonomy": "AUTO_CONTINUE",
   "blocked": false,
-  "requires_user": true,
-  "next_task": null,
+  "requires_user": false,
+  "next_task": "TASK-061",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -29,7 +29,8 @@
       "OWNER_APPROVED_CONTINUOUS_FIVE_STEP_ALL_ASPECTS",
       "OWNER_APPROVED_PROFITABILITY_CASH_FINANCIAL_TRUTH_SPINE",
       "OWNER_EXPLICIT_ROBOT_RELEASE",
-      "OWNER_EXPLICIT_RESTART_AND_RELEASE"
+      "OWNER_EXPLICIT_RESTART_AND_RELEASE",
+      "OWNER_EXPLICIT_RELEASE_PFC_8H_V2"
     ],
     "pending": []
   },
@@ -247,14 +248,14 @@
     "local_json_compatibility": "UTF8_BOM_TOLERANT",
     "owner_handoff_gate": {
       "policy": "PROJECT_STATE_AUTHORITY",
-      "required_autonomy": "PAUSED",
-      "current_autonomy": "PAUSED",
-      "robot_may_execute": false,
-      "reason": "PFC_8H_V2_APPROVED_STAGED_WAIT_OWNER_RELEASE"
+      "required_autonomy": "AUTO_CONTINUE",
+      "current_autonomy": "AUTO_CONTINUE",
+      "robot_may_execute": true,
+      "reason": "OWNER_EXPLICIT_RELEASE_PFC_8H_V2"
     }
   },
   "architecture_handoff": {
-    "state": "PFC_8H_V2_APPROVED_STAGED_WAIT_OWNER_RELEASE",
+    "state": "PFC_8H_V2_RELEASED_ACTIVE",
     "canonical_architecture_ref": "01_DOCS/MAGASIN/00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md",
     "read_first_on_new_session": true,
     "primary_priority": "PROFITABILITY_CASH",
@@ -279,7 +280,7 @@
         "RELEASE"
       ]
     },
-    "robot_may_execute": false,
+    "robot_may_execute": true,
     "robot_release_policy": "OWNER_EXPLICIT_RELEASE_ONLY",
     "silence_is_approval": false,
     "implementation_queue_locked": false,
@@ -289,9 +290,9 @@
       "PROJECT_STATE_CHANGED_TO_READY_AUTO_CONTINUE"
     ],
     "prepared_queue": "PFC_8H_V2",
-    "queue_status": "STAGED",
+    "queue_status": "ACTIVE",
     "next_planned_task": "TASK-060",
-    "next_task_release_required": true
+    "next_task_release_required": false
   },
   "session_bootstrap": {
     "read_order": [
@@ -307,7 +308,7 @@
   },
   "prepared_execution_queue": {
     "id": "PFC_8H_V2",
-    "status": "READY_ON_OWNER_RELEASE",
+    "status": "ACTIVE",
     "runbook": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/PFC_8H_V2_EXECUTION_PLAN.md",
     "estimated_active_minutes": 480,
     "owner_dependency_during_run": "NONE_UNLESS_TRUE_BOUNDARY",
@@ -359,15 +360,17 @@
       "AUTOMATE"
     ],
     "google_drive_evidence": "AUTHORIZED_READ_ONLY",
-    "execution_policy": "AUTO_CONTINUE_AFTER_EXPLICIT_OWNER_RELEASE",
-    "robot_may_execute": false,
+    "execution_policy": "AUTO_CONTINUE_UNTIL_TRUE_OWNER_BOUNDARY_OR_QUEUE_COMPLETE",
+    "robot_may_execute": true,
     "stop_only_for": [
       "AUTH_MFA_CAPTCHA",
       "SECRET_REQUIREMENT",
       "DESTRUCTIVE_PRODUCTION_ACTION",
       "UNRESOLVED_BUSINESS_RULE",
       "CONTRADICTORY_CANONICAL_EVIDENCE"
-    ]
+    ],
+    "execution_generation": "PFC_8H_V2_RUN_01",
+    "started_task": "TASK-060"
   },
   "data_evidence_policy": {
     "google_drive": {
