@@ -71,10 +71,11 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 | TASK-050 | Canonical enterprise architecture locked — Profitability & Cash first | Owner detailing | Apply Five-Step continuously across every aspect; derive implementation queue from canonical architecture; Robot release requires explicit Owner approval | WAIT_USER / ARCHITECTURE_LOCKED / ROBOT_PAUSED |
 
 | TASK-051 | PFC source inventory + delete/defer map | 20m | verified existing financial sources + trust/quality classification + explicit non-goals | DONE |
-| TASK-052 | Financial Truth contract v1 | 20m | canonical period/scope/quality/source/as-of/lineage contract; no synthetic zero | READY / AUTO_CONTINUE |
+| TASK-052 | Financial Truth contract v1 | 20m | canonical period/scope/quality/source/as-of/lineage contract; no synthetic zero | DONE |
 
 TASK-051 restart completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_051_PFC_SOURCE_INVENTORY_EVIDENCE_V1.md`. Missing external sources remain explicit GAP/NOT_CONNECTED and do not block AUTO_CONTINUE.
-| TASK-053 | Monthly Revenue baseline contract + aggregator | 20m | trusted RECONCILED revenue aggregation with quality/lineage propagation | QUEUED / AUTO_CONTINUE |
+TASK-052 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_052_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`. One shared fail-closed Financial Truth V1 contract is canonical; TASK-053 may reuse it.
+| TASK-053 | Monthly Revenue baseline contract + aggregator | 20m | trusted RECONCILED revenue aggregation with quality/lineage propagation | READY / AUTO_CONTINUE |
 | TASK-054 | Revenue baseline adapter tests/integration | 20m | fail-closed ACTUAL/GAP/NOT_CONNECTED + partial-source regression | QUEUED / AUTO_CONTINUE |
 | TASK-055 | Cash event taxonomy + Cash Bridge contract v1 | 20m | opening/inflow/outflow/ending/variance categories; missing stays GAP | QUEUED / AUTO_CONTINUE |
 | TASK-056 | Cash Bridge pure calculator + fixtures/tests | 20m | deterministic evidence-aware calculator; no bank/MoMo assumptions | QUEUED / AUTO_CONTINUE |
