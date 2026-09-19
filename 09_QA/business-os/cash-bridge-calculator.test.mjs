@@ -717,3 +717,200 @@ test("negative balances remain valid generic Financial Truth inputs", () => {
 test("identical stable event_id is de-duplicated exactly once", () => {
   const event = cashEvent(
     "INFLOW",
+    "SALES_COLLECTION",
+    "2026-09-02",
+    100,
+    { event_id: "STABLE-EVENT-001" }
+  );
+  const result = calculate({
+    events: [event, clone(event)],
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      1100
+    )
+  });
+
+  assert.equal(result.total_known_inflows.value, 100);
+  assert.equal(
+    result.categorized_known_inflows[0].event_count,
+    1
+  );
+  assert.equal(result.computed_ending_balance.value, 1100);
+});
+
+test("same stable event_id with conflicting payload fails closed and never double-counts", () => {
+  const first = cashEvent(
+    "INFLOW",
+    "SALES_COLLECTION",
+    "2026-09-02",
+    100,
+    { event_id: "STABLE-EVENT-CONFLICT" }
+  );
+  const second = cashEvent(
+    "INFLOW",
+    "SALES_COLLECTION",
+    "2026-09-02",
+    200,
+    { event_id: "STABLE-EVENT-CONFLICT" }
+  );
+  const result = calculate({ events: [first, second] });
+
+  assert.equal(result.total_known_inflows.value, null);
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(result.diagnostics.includes("DUPLICATE_EVENT_ID_CONFLICT"));
+});
+
+test("identical-looking no-ID events are not guessed to be duplicates", () => {
+  const first = cashEvent(
+    "INFLOW",
+    "SALES_COLLECTION",
+    "2026-09-02",
+    100,
+    { event_id: undefined }
+  );
+  const second = clone(first);
+  const result = calculate({
+    events: [first, second],
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      1200
+    )
+  });
+
+  assert.equal(result.total_known_inflows.value, 200);
+  assert.equal(result.categorized_known_inflows[0].event_count, 2);
+  assert.equal(result.computed_ending_balance.value, 1200);
+});
+
+test("normalized cash events can be passed directly without reclassifying source semantics", () => {
+  const raw = cashEvent(
+    "INFLOW",
+    "SALES_COLLECTION",
+    "2026-09-02",
+    100,
+    { event_id: "NORMALIZED-EVENT-001" }
+  );
+  const normalized = normalizeCashEvent(raw);
+  const result = calculate({
+    events: [normalized],
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      1100
+    )
+  });
+
+  assert.equal(result.total_known_inflows.value, 100);
+  assert.equal(result.computed_ending_balance.value, 1100);
+});
+
+test("calculator is deterministic and input-order independent", () => {
+  const events = [
+    cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-03", 50),
+    cashEvent("OUTFLOW", "MARKETING", "2026-09-01", 10),
+    cashEvent("INFLOW", "FINANCING_INFLOW", "2026-09-02", 25)
+  ];
+
+  const first = calculate({ events });
+  const second = calculate({ events: [...events].reverse() });
+
+  assert.deepEqual(second, first);
+});
+
+test("output lineage remains privacy-safe and deterministic", () => {
+  const result = calculate({
+    events: [
+      cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-02", 100, {
+        lineage: [
+          "SAFE_EVENT_LINEAGE",
+          "https://drive.google.com/private"
+        ]
+      })
+    ]
+  });
+
+  const serialized = JSON.stringify(result.lineage);
+  assert.doesNotMatch(serialized, /https?:\/\//i);
+  assert.deepEqual([...result.lineage].sort(), result.lineage);
+});
+
+test("payment method metadata never creates an opening or ending balance", () => {
+  const result = calculate({
+    openingBalance: undefined,
+    observedEndingBalance: undefined,
+    events: [
+      cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-02", 100, {
+        payment_method: "BANK"
+      })
+    ]
+  });
+
+  assert.equal(result.opening_balance.value, null);
+  assert.equal(result.observed_ending_balance.value, null);
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.equal(Object.hasOwn(result, "account_balance"), false);
+});
+
+test("raw purchase Revenue recognition and FoodApp gross facts are not converted by calculator", () => {
+  for (const proof_basis of [
+    "PURCHASE",
+    "REVENUE_RECOGNITION",
+    "FOODAPP_GROSS"
+  ]) {
+    const result = calculate({
+      events: [
+        {
+          amount: 999,
+          proof_basis,
+          quality: "ACTUAL"
+        }
+      ]
+    });
+    assert.equal(result.computed_ending_balance.value, null);
+    assert.equal(result.computed_ending_balance.quality, "GAP");
+  }
+});
+
+test("bridge overall quality may be GAP while valid computed ending remains ACTUAL", () => {
+  const result = calculate({ observedEndingBalance: undefined });
+
+  assert.equal(result.computed_ending_balance.quality, "ACTUAL");
+  assert.equal(result.computed_ending_balance.value, 1150);
+  assert.equal(result.cash_variance.quality, "GAP");
+  assert.equal(result.quality, "GAP");
+});
+
+test("ESTIMATE observed ending only downgrades variance, not computed ending", () => {
+  const result = calculate({
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      1150,
+      { quality: "ESTIMATE" }
+    )
+  });
+
+  assert.equal(result.computed_ending_balance.quality, "ACTUAL");
+  assert.equal(result.cash_variance.quality, "ESTIMATE");
+  assert.equal(result.cash_variance.value, 0);
+});
+
+test("coverage source metadata is privacy-safe and does not infer COMPLETE from sparse data", () => {
+  const result = calculate({
+    coverage: {
+      source_coverage: [
+        {
+          source: "RECORDED_CASH_SOURCE",
+          status: "COMPLETE",
+          required: true
+        }
+      ]
+    }
+  });
+
+  assert.equal(result.coverage.status, "MISSING");
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(result.diagnostics.includes("MISSING_EVENT_SOURCE_COVERAGE"));
+});
