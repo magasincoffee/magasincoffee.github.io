@@ -85,6 +85,11 @@ function safeText(value) {
   return normalized;
 }
 
+function safeList(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.map(safeText).filter(Boolean))].sort();
+}
+
 function normalizeEnum(value, allowed) {
   const normalized = text(value)?.toUpperCase() || null;
   return allowed.includes(normalized) ? normalized : null;
