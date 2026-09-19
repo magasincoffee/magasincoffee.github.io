@@ -129,3 +129,32 @@ test("Three-Lane normalizes transient WEB Work URLs from existing registry state
     `https://chatgpt.com/c/${uuid}`
   );
 });
+
+
+test("lane config carries optional Owner Work URL revision", () => {
+  const config = normalizeLaneConfig({
+    lanes: [{
+      lane_id: "lane-1",
+      project_name: "Business OS",
+      brain_url: "https://chatgpt.com/c/brain",
+      work_url: "https://chatgpt.com/c/work",
+      work_url_revision: 4,
+      enabled: false
+    }]
+  });
+
+  assert.equal(config.lanes[0].work_url, "https://chatgpt.com/c/work");
+  assert.equal(config.lanes[0].work_url_revision, 4);
+});
+
+test("lane registry tracks the applied Owner Work URL revision", () => {
+  const registry = normalizeLaneRegistry({
+    lanes: {
+      "lane-1": {
+        work_url: "https://chatgpt.com/c/work",
+        applied_work_url_revision: 7
+      }
+    }
+  });
+  assert.equal(registry.lanes["lane-1"].applied_work_url_revision, 7);
+});
