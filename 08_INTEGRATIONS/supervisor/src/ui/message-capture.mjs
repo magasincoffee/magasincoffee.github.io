@@ -90,3 +90,34 @@ export async function captureRecentAssistantTurns(page, { limit = 12 } = {}) {
     digest: digestCapturedResponse(item.text)
   }));
 }
+
+
+export async function captureRecentConversationTurns(page, { limit = 30 } = {}) {
+  if (!page) throw new TypeError("page is required");
+
+  const turns = await page.evaluate((maxItems) => {
+    const nodes = Array.from(
+      document.querySelectorAll("[data-message-author-role]")
+    ).slice(-Math.max(1, Math.min(80, Number(maxItems) || 30)));
+
+    return nodes.map((node) => {
+      const role = String(node.getAttribute("data-message-author-role") || "").trim();
+      const text = String(node.innerText || node.textContent || "").trim();
+      let turn = 0;
+      const turnNode = node.closest("[data-testid^='conversation-turn-']") ||
+        node.querySelector("[data-testid^='conversation-turn-']");
+      if (turnNode) {
+        const match = /^conversation-turn-(\d+)$/.exec(
+          String(turnNode.getAttribute("data-testid") || "")
+        );
+        if (match) turn = Number(match[1]);
+      }
+      return { role, text, turn, chars: text.length };
+    }).filter((item) => item.role && item.text);
+  }, limit);
+
+  return turns.map((item) => ({
+    ...item,
+    digest: digestCapturedResponse(item.text)
+  }));
+}
