@@ -145,8 +145,8 @@ jobs:
 
           $runtimeBrain = Join-Path $root "runtime\src\runtime\brain-worker-cli.mjs"
           if (-not (Test-Path $runtimeBrain)) { throw "Installed Brain/Worker runtime is missing" }
-          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.23" -Quiet)) {
-            throw "Installed Brain/Worker runtime is not v2026-09-19.23"
+          if (-not (Select-String -Path $runtimeBrain -SimpleMatch "2026-09-19.24" -Quiet)) {
+            throw "Installed Brain/Worker runtime is not v2026-09-19.24"
           }
 
           $runtimeStatusFile = Join-Path $root "runtime-status.json"
@@ -156,7 +156,7 @@ jobs:
               try {
                 $runtimeStatus = Get-Content $runtimeStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
                 if (
-                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.23" -and
+                  $runtimeStatus.supervisor_runtime_version -eq "2026-09-19.24" -and
                   -not (
                     $runtimeStatus.status -eq "WAIT_USER" -and
                     [string]$runtimeStatus.decision_reason -match "target mismatch"
@@ -178,7 +178,7 @@ jobs:
               -not (Test-Path $brainRuntime) -or
               -not (Select-String -Path $brainRuntime -SimpleMatch "BRAIN_TARGET_REBOUND_OWNER" -Quiet)
             ) {
-              throw "v2026-09-19.23 target mismatch remains but the Owner Brain rebind recovery path is unavailable"
+              throw "v2026-09-19.24 target mismatch remains but the Owner Brain rebind recovery path is unavailable"
             }
             Write-Host "BRAIN_REBIND_REQUIRED=True"
           } else {
