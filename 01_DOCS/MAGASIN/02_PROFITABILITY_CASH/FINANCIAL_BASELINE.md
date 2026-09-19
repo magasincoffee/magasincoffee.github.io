@@ -242,3 +242,54 @@ Unknown facts remain:
 - or `ESTIMATE` only where there is an explicit estimated source.
 
 The repository is public. Raw private financial rows and source locators remain outside Git.
+
+
+## Cash balance source discovery — TASK-060
+
+Status:
+
+`SOURCE_TRUTH_DISCOVERY_COMPLETE / CASH BRIDGE STILL PARTIAL`
+
+TASK-060 verified the current balance-source landscape without creating a connector or synthetic balance.
+
+### What exists now
+
+- Internal monthly cash reporting contains dated movement rows and formula-based carry-forward/remaining balances.
+- Those carry-forward/remaining values are **COMPUTED_BALANCE**, not observed physical/account balances.
+- Current bounded September movement evidence was verified through **2026-09-16**.
+- FoodApp settlement exports can support exact covered settlement movement, not account balance.
+- Operating/finance/P&L sheets provide movement or context, not point-in-time liquidity balance.
+
+### What was not verified
+
+No structured `OBSERVED_BALANCE` source was verified for:
+
+- physical till/safe by branch;
+- business bank accounts;
+- MoMo/wallet;
+- COD/delivery-held cash;
+- Owner-held company cash;
+- provider payout/account balance.
+
+These remain `NOT_CONNECTED` for point-balance truth and must not become zero.
+
+### Important Cash Bridge consequence
+
+Cash Bridge is **not COMPLETE** merely because the internal cash workbook has a calculated `Còn Lại`.
+
+To prove opening/observed ending cash, future tasks must preserve:
+
+```text
+OBSERVED_BALANCE != COMPUTED_BALANCE
+MOVEMENT_ONLY != BALANCE
+payment method != account balance
+multi-branch workbook != proven enterprise ALL
+```
+
+Detailed source map and field-check plan:
+
+`TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`
+
+Next canonical task:
+
+`TASK-061 — Cash Balance Financial Truth Contract`
