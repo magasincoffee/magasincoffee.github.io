@@ -1,0 +1,108 @@
+{
+  "schema_version": "cash-source-coverage.v1",
+  "status": "CANONICAL_CONTRACT",
+  "task": "TASK-063",
+  "purpose": "Represent explicit source/account/period coverage for Cash opening balance, movement events and observed ending balance without changing source provenance or Financial Truth quality.",
+  "coverage_roles": [
+    "OPENING_BALANCE",
+    "MOVEMENT_EVENTS",
+    "OBSERVED_ENDING_BALANCE"
+  ],
+  "aggregate_statuses": [
+    "COMPLETE",
+    "PARTIAL",
+    "MISSING"
+  ],
+  "source_statuses": [
+    "COMPLETE",
+    "PARTIAL",
+    "MISSING",
+    "NOT_CONNECTED"
+  ],
+  "shape": {
+    "schema_version": "cash-source-coverage.v1",
+    "coverage_role": "OPENING_BALANCE | MOVEMENT_EVENTS | OBSERVED_ENDING_BALANCE",
+    "target_period": {
+      "start": "YYYY-MM-DD",
+      "end": "YYYY-MM-DD",
+      "timezone": "explicit IANA timezone"
+    },
+    "scope": {
+      "branch": "explicit branch or ALL only when aggregate_proven=true",
+      "channel": "explicit channel or ALL only when aggregate_proven=true",
+      "aggregate_proven": "boolean"
+    },
+    "account_universe": {
+      "universe_proven": "boolean",
+      "aggregate_proven": "boolean",
+      "empty_universe_proven": "boolean",
+      "accounts": "privacy-safe required account/source members"
+    },
+    "source_coverage": "deterministically normalized per-source entries",
+    "status": "COMPLETE | PARTIAL | MISSING",
+    "required_not_connected": "boolean",
+    "universe_proven": "boolean",
+    "as_of": "max valid privacy-safe upstream as-of supplied by caller",
+    "lineage": "privacy-safe deterministic lineage",
+    "diagnostics": "deterministic diagnostic list"
+  },
+  "complete_rules": [
+    "Aggregate COMPLETE is impossible unless account_universe.universe_proven=true.",
+    "Known source presence, row presence or mapper coverage_hint cannot prove COMPLETE.",
+    "An empty required universe is MISSING unless empty_universe_proven=true with privacy-safe lineage and compatible target scope/period.",
+    "Every required source/account universe member must be explicitly covered or explicitly represented by a proven aggregate source.",
+    "A required NOT_CONNECTED source blocks COMPLETE and sets required_not_connected=true.",
+    "Coverage COMPLETE never upgrades Financial Truth quality, balance basis, mapper classification or cash-event quality."
+  ],
+  "movement_rules": [
+    "MOVEMENT_EVENTS COMPLETE requires every required source to have coverage_proven=true and interval union covering the full target period.",
+    "Multiple intervals for one source may be merged only when overlapping or contiguous.",
+    "Any gap in required-source interval coverage prevents COMPLETE.",
+    "Intervals outside the target period do not count.",
+    "Sparse transaction rows do not imply missing dates are covered.",
+    "Unknown universe can be PARTIAL when useful bounded evidence exists, otherwise MISSING."
+  ],
+  "point_rules": [
+    "OPENING_BALANCE coverage is a target-start point rule, not interval coverage.",
+    "OBSERVED_ENDING_BALANCE coverage is a target-end point rule, not interval coverage.",
+    "OPENING_BALANCE may accept a valid canonical COMPUTED_BALANCE opening while preserving computed provenance and Financial Truth quality.",
+    "OBSERVED_ENDING_BALANCE requires a valid canonical OBSERVED_BALANCE wrapper.",
+    "Computed remainder can never satisfy observed ending coverage.",
+    "Current point evidence cannot satisfy a historical target point."
+  ],
+  "account_rules": [
+    "A source/account entry covers only its explicit account and branch/channel scope.",
+    "Financial Truth ALL requires scope.aggregate_proven=true.",
+    "Account label ALL requires separate account aggregate proof.",
+    "Enterprise COMPLETE requires a proven account/source universe and proven aggregate scope; one branch/account never silently proves ALL.",
+    "Identical stable coverage entries may dedupe; conflicting duplicates fail closed."
+  ],
+  "privacy_rules": [
+    "Source class, logical account label and lineage must be privacy-safe.",
+    "Account numbers, wallet IDs, Drive URLs/IDs, tokens and raw private notes are forbidden.",
+    "Public outputs contain no raw financial amount."
+  ],
+  "cash_bridge_compatibility": [
+    "Only MOVEMENT_EVENTS coverage can be converted to Cash Bridge event coverage.",
+    "Adapter output shape is exactly status, source_coverage, as_of and lineage.",
+    "OPENING_BALANCE and OBSERVED_ENDING_BALANCE coverage remain separate from event coverage.",
+    "Cash Bridge arithmetic is unchanged by TASK-063."
+  ],
+  "non_goals": [
+    "source_reader",
+    "drive_mapper",
+    "bank_connector",
+    "momo_connector",
+    "cod_connector",
+    "database",
+    "migration",
+    "rpc",
+    "write_path",
+    "ui",
+    "dashboard",
+    "balance_arithmetic",
+    "cash_event_arithmetic",
+    "source_provenance_upgrade",
+    "financial_truth_quality_upgrade"
+  ]
+}
