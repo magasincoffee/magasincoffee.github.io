@@ -97,7 +97,7 @@ test("stale Brain target recovery uses prior processed digest and refuses ambigu
   assert.match(source, /findBrainByContinuity/);
   assert.match(source, /last_processed_digest/);
   assert.match(source, /captureAssistantTurnDigests/);
-  assert.match(source, /multiple ChatGPT conversations match Brain continuity; automatic target rebind denied/);
+  assert.match(source, /multiple distinct ChatGPT conversations match Brain continuity; automatic target rebind denied/);
   assert.match(source, /BRAIN_TARGET_REBOUND_CONTINUITY/);
 });
 
@@ -111,7 +111,7 @@ test("stale Brain target may fall back only to one open conversation with a vali
   assert.match(source, /findBrainByDirectiveSignature/);
   assert.match(source, /parseBrainDirective\(captured\.text/);
   assert.match(source, /DIRECTIVE_SIGNATURE/);
-  assert.match(source, /multiple open ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied/);
+  assert.match(source, /multiple distinct open ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied/);
   assert.match(source, /BRAIN_TARGET_REBOUND_SIGNATURE/);
 });
 
@@ -128,7 +128,7 @@ test("stale Brain recovery scans only a bounded recent sidebar and still fails c
 
   assert.match(runtime, /findBrainFromRecentSidebar/);
   assert.match(runtime, /listRecentConversationUrls\(discoveryPage, \{ limit: 20 \}\)/);
-  assert.match(runtime, /multiple recent ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied/);
+  assert.match(runtime, /multiple distinct recent ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied/);
   assert.match(runtime, /BRAIN_TARGET_REBOUND_SIDEBAR/);
   assert.match(adapter, /async listRecentConversationUrls/);
   assert.match(adapter, /Math\.max\(1, Math\.min\(50, Number\(limit\) \|\| 20\)\)/);
@@ -216,4 +216,29 @@ test("project-state network failures recover automatically instead of escalating
   assert.match(runtime, /status: "RECOVERING"/);
   assert.match(runtime, /project state temporarily unavailable; retrying automatically/);
   assert.match(runtime, /Math\.min\(\s*30_000/);
+});
+
+
+test("Brain recovery deduplicates multiple pages that point to the same conversation target", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(runtime, /function uniqueCandidatesByTarget/);
+  assert.match(runtime, /const key = targetUrl\(candidate\.target\)/);
+  assert.match(runtime, /const uniqueCandidates = uniqueCandidatesByTarget\(candidates\)/);
+  assert.match(runtime, /more than one distinct visible ChatGPT conversation looks like Brain/);
+  assert.match(runtime, /candidateTargets = new Map\(\)/);
+  assert.match(runtime, /candidateTargets\.set\(targetUrl\(target\), target\)/);
+});
+
+test("WAIT_USER and recovery statuses never publish stale worker_running entries", async () => {
+  const runtime = await fs.readFile(
+    new URL("../src/runtime/brain-worker-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(runtime, /new Set\(\["RUNNING", "READY"\]\)\.has\(status\)/);
+  assert.match(runtime, /worker\.awaiting_result && worker\.status === "RUNNING"/);
 });

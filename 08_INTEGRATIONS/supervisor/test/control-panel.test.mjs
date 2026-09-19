@@ -367,3 +367,16 @@ test("recovery action controls remain mutually exclusive and readable", async ()
   assert.match(source, /TIẾP TỤC CÔNG VIỆC BỊ KẸT/);
   assert.match(source, /ROBOT ĐANG TỰ KHÔI PHỤC/);
 });
+
+
+test("control panel suppresses stale worker activity whenever runtime is blocked", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /\$runtimeAllowsWorkerDisplay/);
+  assert.match(source, /\[string\]\$runtimeStatus\.status -in @\('RUNNING','READY'\)/);
+  assert.match(source, /if \(\$runtimeAllowsWorkerDisplay -and \$registry/);
+  assert.match(source, /ĐANG LÀM VIỆC/);
+});
