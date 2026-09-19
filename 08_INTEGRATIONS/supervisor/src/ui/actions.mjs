@@ -308,6 +308,13 @@ export async function sendComposerWithAttachment(
   filePath,
   { dryRun = true } = {}
 ) {
+  // Relay normally follows a Work-page capture. Bring the Brain page to the
+  // foreground before probing/filling because ChatGPT may temporarily stop
+  // rendering the editable composer in a background tab.
+  if (!dryRun && typeof page.bringToFront === "function") {
+    await page.bringToFront().catch(() => {});
+    await page.waitForTimeout(250);
+  }
   if (!page) throw new TypeError("page is required");
   if (typeof instruction !== "string" || !instruction.trim()) {
     throw new Error("composer instruction is required");
