@@ -12,7 +12,8 @@ Canonical architecture:
 - `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`;
 - `02_PROFITABILITY_CASH/PFC_8H_V2_EXECUTION_PLAN.md`;
 - `02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`;
-- `02_PROFITABILITY_CASH/TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`.
+- `02_PROFITABILITY_CASH/TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`;
+- `02_PROFITABILITY_CASH/TASK_062_CASH_BALANCE_SOURCE_MAPPER_V1_EVIDENCE.md`.
 
 ## PFC execution handoff
 
@@ -26,11 +27,11 @@ Current state:
 
 ```text
 PFC_3H_V1_RESTART_01 = COMPLETE
-TASK-051 → TASK-061   = DONE
+TASK-051 → TASK-062   = DONE
 
-current_task          = TASK-062
-TASK-062              = READY / AUTO_CONTINUE
-next_task             = TASK-063
+current_task          = TASK-063
+TASK-063              = READY / AUTO_CONTINUE
+next_task             = TASK-064
 status                = READY
 autonomy              = AUTO_CONTINUE
 requires_user         = false
@@ -53,7 +54,7 @@ Current verified balance landscape:
 
 Missing balance sources remain gaps; they do not pause PFC_8H_V2.
 
-TASK-061 contract is complete. TASK-062 is now the active canonical task.
+TASK-062 source mapper is complete. TASK-063 is now the active canonical task.
 
 ## Financial baseline state
 
@@ -117,7 +118,7 @@ These remain mandatory:
 
 ## Current PFC V2 priority
 
-### TASK-062 — Cash Balance Source Mapper
+### TASK-063 — Cash Source Coverage V1
 
 Status:
 
@@ -125,7 +126,7 @@ Status:
 
 Goal:
 
-Map available read-only source evidence into the canonical Cash Balance Financial Truth contract while keeping:
+Define source/account/period Cash coverage explicitly without upgrading source provenance, while keeping:
 
 ```text
 OBSERVED_BALANCE != COMPUTED_BALANCE
@@ -135,11 +136,11 @@ unknown scope != ALL
 missing != zero
 ```
 
-TASK-060 evidence + TASK-061 contract are the canonical inputs for this mapper.
+TASK-060 source truth + TASK-061 contract + TASK-062 mapper are the canonical inputs for coverage.
 
-Next queued task after TASK-062:
+Next queued task after TASK-063:
 
-`TASK-063 — Cash Source Coverage V1`
+`TASK-064 — Cash Bridge Source Integration`
 
 ## Remaining major gaps
 
