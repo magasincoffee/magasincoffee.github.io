@@ -11,9 +11,15 @@ function composerLocator(page) {
 }
 
 async function composerReadyState(composer) {
-  const visible = await composer.isVisible().catch(() => false);
-  const enabled = await composer.isEnabled().catch(() => false);
-  const editable = await composer.isEditable().catch(() => false);
+  const visible = typeof composer?.isVisible === "function"
+    ? await composer.isVisible().catch(() => false)
+    : false;
+  const enabled = typeof composer?.isEnabled === "function"
+    ? await composer.isEnabled().catch(() => false)
+    : visible;
+  const editable = typeof composer?.isEditable === "function"
+    ? await composer.isEditable().catch(() => false)
+    : enabled;
   return { visible, enabled, editable, ready: visible && enabled && editable };
 }
 
@@ -134,7 +140,7 @@ export async function sendComposerInstruction(
       executed: false,
       dryRun: false,
       action: ACTIONS.CONTINUE,
-      reason: "composer did not become editable before bounded timeout"
+      reason: "composer is not ready; did not become editable before bounded timeout"
     };
   }
   await composer.fill(instruction, { timeout: 10_000 });
@@ -297,7 +303,7 @@ export async function sendComposerWithAttachment(
       executed: false,
       dryRun: false,
       action: ACTIONS.CONTINUE,
-      reason: "composer did not become editable before bounded timeout"
+      reason: "composer is not ready; did not become editable before bounded timeout"
     };
   }
 
