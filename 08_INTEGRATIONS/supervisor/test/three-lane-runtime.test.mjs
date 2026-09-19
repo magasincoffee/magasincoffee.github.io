@@ -217,3 +217,15 @@ test("legacy v34-v35 latch can self-heal after one hard reload", async () => {
   assert.match(source, /return "NOT_CONFIRMED"/);
   assert.doesNotMatch(source, /Work chat đã thay đổi trong lúc xác minh lần gửi/);
 });
+
+
+test("v37 strips a UTF-8 BOM before parsing local JSON state", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /function parseJsonText/);
+  assert.match(source, /replace\(\/\^\\uFEFF\//);
+  assert.match(source, /parseJsonText\(await fs\.readFile\(filePath, "utf8"\)\)/);
+});
