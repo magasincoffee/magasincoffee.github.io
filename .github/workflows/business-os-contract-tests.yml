@@ -36,6 +36,9 @@ jobs:
       - name: Run Cash Bridge targeted tests
         run: node --test 09_QA/business-os/cash-bridge.test.mjs
 
+      - name: Run Cash Bridge calculator targeted tests
+        run: node --test 09_QA/business-os/cash-bridge-calculator.test.mjs
+
       - name: Run all Business OS contract tests
         shell: bash
         run: |

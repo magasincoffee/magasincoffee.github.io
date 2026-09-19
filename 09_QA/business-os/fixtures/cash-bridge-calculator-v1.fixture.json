@@ -1,0 +1,96 @@
+{
+  "target_period": {
+    "start": "2026-09-01",
+    "end": "2026-09-03",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "scope": {
+    "branch": "CN1",
+    "channel": "DIRECT",
+    "aggregate_proven": false
+  },
+  "coverage": {
+    "status": "COMPLETE",
+    "as_of": "2026-09-03T23:00:00+07:00",
+    "lineage": ["CASH_COVERAGE:CN1:2026-09-01..2026-09-03"],
+    "source_coverage": [
+      {
+        "source": "RECORDED_CASH_SOURCE",
+        "status": "COMPLETE",
+        "required": true,
+        "as_of": "2026-09-03T23:00:00+07:00",
+        "lineage": ["RECORDED_CASH:COVERAGE"]
+      }
+    ]
+  },
+  "opening_balance": {
+    "period": {"start":"2026-09-01","end":"2026-09-01","timezone":"Asia/Ho_Chi_Minh"},
+    "scope": {"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+    "group": "CASH",
+    "metric": "cash_opening_balance",
+    "value": 1000,
+    "quality": "ACTUAL",
+    "source": {"class":"RECORDED_CASH_SOURCE","label":"SANITIZED_OPENING_BALANCE"},
+    "as_of": "2026-09-01T06:00:00+07:00",
+    "reconciliation_status": "RECONCILED",
+    "evidence": ["OPENING_BALANCE_EVIDENCED"],
+    "lineage": ["OPENING_BALANCE:CN1:2026-09-01"]
+  },
+  "observed_ending_balance": {
+    "period": {"start":"2026-09-03","end":"2026-09-03","timezone":"Asia/Ho_Chi_Minh"},
+    "scope": {"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+    "group": "CASH",
+    "metric": "cash_observed_ending_balance",
+    "value": 1150,
+    "quality": "ACTUAL",
+    "source": {"class":"RECORDED_CASH_SOURCE","label":"SANITIZED_OBSERVED_ENDING"},
+    "as_of": "2026-09-03T22:00:00+07:00",
+    "reconciliation_status": "RECONCILED",
+    "evidence": ["ENDING_BALANCE_EVIDENCED"],
+    "lineage": ["ENDING_BALANCE:CN1:2026-09-03"]
+  },
+  "events": [
+    {
+      "event_id": "CASH-EVENT-001",
+      "direction": "INFLOW",
+      "category": "SALES_COLLECTION",
+      "event_date": "2026-09-02",
+      "timezone": "Asia/Ho_Chi_Minh",
+      "scope": {"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+      "amount": 300,
+      "quality": "ACTUAL",
+      "source": {"class":"RECORDED_CASH_SOURCE","label":"SANITIZED_CASH_EVENT"},
+      "as_of": "2026-09-02T22:00:00+07:00",
+      "reconciliation_status": "RECONCILED",
+      "evidence": ["CASH_EVENT_EVIDENCED"],
+      "lineage": ["CASH_EVENT:001"],
+      "cash_movement_proven": true,
+      "proof_basis": "DIRECT_CASH_EVENT",
+      "status": "ACTIVE"
+    },
+    {
+      "event_id": "CASH-EVENT-002",
+      "direction": "OUTFLOW",
+      "category": "OTHER_OPEX",
+      "event_date": "2026-09-02",
+      "timezone": "Asia/Ho_Chi_Minh",
+      "scope": {"branch":"CN1","channel":"DIRECT","aggregate_proven":false},
+      "amount": 150,
+      "quality": "ACTUAL",
+      "source": {"class":"RECORDED_CASH_SOURCE","label":"SANITIZED_CASH_EVENT"},
+      "as_of": "2026-09-02T22:05:00+07:00",
+      "reconciliation_status": "RECONCILED",
+      "evidence": ["CASH_EVENT_EVIDENCED"],
+      "lineage": ["CASH_EVENT:002"],
+      "cash_movement_proven": true,
+      "proof_basis": "DIRECT_CASH_EVENT",
+      "status": "ACTIVE"
+    }
+  ],
+  "expected": {
+    "total_known_inflows": 300,
+    "total_known_outflows": 150,
+    "computed_ending_balance": 1150,
+    "cash_variance": 0
+  }
+}
