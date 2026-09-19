@@ -206,7 +206,8 @@ export function sanitizeRegistry(registry = {}) {
       last_result_digest: worker.last_result_digest || null,
       relay_inflight_id: worker.relay_inflight_id || null,
       creation_latch: worker.creation_latch || null,
-      dispatch_latch: worker.dispatch_latch || null
+      dispatch_latch: worker.dispatch_latch || null,
+      owner_retry_instruction_digest: worker.owner_retry_instruction_digest || null
     };
   }
   return safe;
