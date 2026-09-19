@@ -35,7 +35,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.27";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.28";
 
 function parseArgs(argv) {
   const result = {
@@ -143,15 +143,27 @@ async function writeStatus(filePath, projectState, {
     orchestration_mode: BRAIN_WORKER_MODE,
     brain_status: brainStatus,
     worker_count: workerList.length,
-    worker_running: workerList
-      .filter((worker) => worker.awaiting_result)
-      .map((worker) => worker.worker_id)
+    worker_running: new Set(["RUNNING", "READY"]).has(status)
+      ? workerList
+        .filter((worker) => worker.awaiting_result && worker.status === "RUNNING")
+        .map((worker) => worker.worker_id)
+      : []
   };
   await atomicJsonWrite(filePath, payload);
 }
 
 function targetUrl(target) {
   return `${target.origin}${target.pathname}`;
+}
+
+function uniqueCandidatesByTarget(candidates = []) {
+  const unique = new Map();
+  for (const candidate of candidates) {
+    if (!candidate?.target) continue;
+    const key = targetUrl(candidate.target);
+    if (!unique.has(key)) unique.set(key, candidate);
+  }
+  return [...unique.values()];
 }
 
 function hardStopObservation(observation) {
@@ -248,9 +260,10 @@ async function findBrainByContinuity(adapter, registry) {
     }
   }
 
-  if (candidates.length === 1) return candidates[0];
-  if (candidates.length > 1) {
-    throw new Error("multiple ChatGPT conversations match Brain continuity; automatic target rebind denied");
+  const uniqueCandidates = uniqueCandidatesByTarget(candidates);
+  if (uniqueCandidates.length === 1) return uniqueCandidates[0];
+  if (uniqueCandidates.length > 1) {
+    throw new Error("multiple distinct ChatGPT conversations match Brain continuity; automatic target rebind denied");
   }
   return null;
 }
@@ -280,9 +293,10 @@ async function findBrainByDirectiveSignature(adapter, config) {
     }
   }
 
-  if (candidates.length === 1) return candidates[0];
-  if (candidates.length > 1) {
-    throw new Error("multiple open ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied");
+  const uniqueCandidates = uniqueCandidatesByTarget(candidates);
+  if (uniqueCandidates.length === 1) return uniqueCandidates[0];
+  if (uniqueCandidates.length > 1) {
+    throw new Error("multiple distinct open ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied");
   }
   return null;
 }
@@ -320,17 +334,18 @@ async function applyOwnerBrainRebind({
 
   await fs.unlink(requestPath).catch(() => {});
 
-  if (candidates.length !== 1) {
+  const uniqueCandidates = uniqueCandidatesByTarget(candidates);
+  if (uniqueCandidates.length !== 1) {
     throw new Error(
-      candidates.length > 1
-        ? "more than one visible ChatGPT conversation looks like Brain; owner rebind denied"
+      uniqueCandidates.length > 1
+        ? "more than one distinct visible ChatGPT conversation looks like Brain; owner rebind denied"
         : "open the intended Brain conversation in Robot Chrome, keep that tab visible, then press the Brain rebind button again"
     );
   }
 
-  if (!execute) return candidates[0].page;
+  if (!execute) return uniqueCandidates[0].page;
 
-  registry.brain.target = candidates[0].target;
+  registry.brain.target = uniqueCandidates[0].target;
   registry.brain.awaiting_response = true;
   await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
   await safeLog(logPath, {
@@ -338,7 +353,7 @@ async function applyOwnerBrainRebind({
     role: "brain",
     generation: registry.brain.generation
   });
-  return candidates[0].page;
+  return uniqueCandidates[0].page;
 }
 
 async function findBrainFromRecentSidebar(adapter, config) {
@@ -357,7 +372,7 @@ async function findBrainFromRecentSidebar(adapter, config) {
   if (!recentUrls.length) return null;
 
   const scout = discoveryPage;
-  const candidateTargets = [];
+  const candidateTargets = new Map();
 
   for (const url of recentUrls) {
     let target = null;
@@ -389,15 +404,15 @@ async function findBrainFromRecentSidebar(adapter, config) {
 
     const valid = await captureLatestValidBrainDirective(page, config).catch(() => null);
     if (valid) {
-      candidateTargets.push(target);
-      if (candidateTargets.length > 1) {
-        throw new Error("multiple recent ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied");
-      }
+      candidateTargets.set(targetUrl(target), target);
     }
   }
 
-  if (candidateTargets.length !== 1) return null;
-  const target = candidateTargets[0];
+  if (candidateTargets.size > 1) {
+    throw new Error("multiple distinct recent ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied");
+  }
+  if (candidateTargets.size !== 1) return null;
+  const target = [...candidateTargets.values()][0];
   const existing = adapter.findPageForTarget(target);
   if (existing) return { page: existing, target, method: "SIDEBAR_SIGNATURE" };
 
