@@ -7,6 +7,7 @@ on:
       - '02_CORE/shared/financial-truth-v1.mjs'
       - '02_CORE/shared/monthly-revenue-baseline-v1.mjs'
       - '02_CORE/shared/cash-bridge-v1.mjs'
+      - '02_CORE/shared/cash-balance-truth-v1.mjs'
       - '02_CORE/shared/procurement-financial-truth-v1.mjs'
       - '02_CORE/shared/partial-financial-baseline-v1.mjs'
       - '09_QA/business-os/**'
@@ -17,6 +18,7 @@ on:
       - '02_CORE/shared/financial-truth-v1.mjs'
       - '02_CORE/shared/monthly-revenue-baseline-v1.mjs'
       - '02_CORE/shared/cash-bridge-v1.mjs'
+      - '02_CORE/shared/cash-balance-truth-v1.mjs'
       - '02_CORE/shared/procurement-financial-truth-v1.mjs'
       - '02_CORE/shared/partial-financial-baseline-v1.mjs'
       - '09_QA/business-os/**'
@@ -34,6 +36,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Check Cash Balance Truth helper syntax
+        run: node --check 02_CORE/shared/cash-balance-truth-v1.mjs
+
+      - name: Run Cash Balance Truth targeted tests
+        run: node --test 09_QA/business-os/cash-balance-truth.test.mjs
+
+      - name: Run Financial Truth targeted tests
+        run: node --test 09_QA/business-os/financial-truth.test.mjs
+
       - name: Check Cash Bridge helper syntax
         run: node --check 02_CORE/shared/cash-bridge-v1.mjs
 
