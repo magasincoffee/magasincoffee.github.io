@@ -41,9 +41,9 @@ function New-DefaultConfig {
         schema_version = 'three-lane-config.v1'
         mode = 'THREE_LANE_V1'
         lanes = @(
-            [ordered]@{ lane_id='lane-1'; project_name='Dự án 1'; brain_url=''; enabled=$false },
-            [ordered]@{ lane_id='lane-2'; project_name='Dự án 2'; brain_url=''; enabled=$false },
-            [ordered]@{ lane_id='lane-3'; project_name='Dự án 3'; brain_url=''; enabled=$false }
+            [ordered]@{ lane_id='lane-1'; project_name='Dự án 1'; brain_url=''; work_url=''; work_url_revision=0; enabled=$false },
+            [ordered]@{ lane_id='lane-2'; project_name='Dự án 2'; brain_url=''; work_url=''; work_url_revision=0; enabled=$false },
+            [ordered]@{ lane_id='lane-3'; project_name='Dự án 3'; brain_url=''; work_url=''; work_url_revision=0; enabled=$false }
         )
     }
 }
@@ -190,13 +190,32 @@ function Get-StatusBackColor([string]$Status) {
     }
 }
 
-function Save-Lane([string]$LaneId, [string]$ProjectName, [string]$BrainUrl, [bool]$Enabled) {
+function Save-Lane(
+    [string]$LaneId,
+    [string]$ProjectName,
+    [string]$BrainUrl,
+    [string]$WorkUrl,
+    [bool]$Enabled
+) {
     $config = Ensure-Config
     $lane = Get-LaneConfig $config $LaneId
     if (-not $lane) { throw "Không tìm thấy $LaneId" }
 
+    if (-not $lane.PSObject.Properties['work_url']) {
+        $lane | Add-Member -NotePropertyName 'work_url' -NotePropertyValue ''
+    }
+    if (-not $lane.PSObject.Properties['work_url_revision']) {
+        $lane | Add-Member -NotePropertyName 'work_url_revision' -NotePropertyValue 0
+    }
+
+    $newWorkUrl = if ($WorkUrl) { $WorkUrl.Trim() } else { '' }
+    if ([string]$lane.work_url -ne $newWorkUrl) {
+        $lane.work_url_revision = [int]$lane.work_url_revision + 1
+    }
+
     $lane.project_name = if ($ProjectName) { $ProjectName.Trim() } else { $LaneId }
     $lane.brain_url = $BrainUrl.Trim()
+    $lane.work_url = $newWorkUrl
     $lane.enabled = $Enabled
     Write-JsonAtomic $configFile $config
 }
@@ -219,7 +238,7 @@ $title.Font = New-Object Drawing.Font('Segoe UI Semibold', 23)
 $form.Controls.Add($title)
 
 $subtitle = New-Object Windows.Forms.Label
-$subtitle.Text = '3 LUỒNG ĐỘC LẬP  •  BỘ NÃO DO BẠN CHỌN  •  WORK DO ROBOT QUẢN LÝ'
+$subtitle.Text = '3 LUỒNG ĐỘC LẬP  •  BỘ NÃO DO BẠN CHỌN  •  WORK: BẠN CHỌN HOẶC ROBOT TỰ TẠO'
 $subtitle.Location = New-Object Drawing.Point(520, 34)
 $subtitle.Size = New-Object Drawing.Size(665, 26)
 $subtitle.TextAlign = 'MiddleRight'
@@ -310,7 +329,7 @@ for ($i = 0; $i -lt 3; $i++) {
     $panel.Controls.Add($openBrain)
 
     $workLabel = New-Object Windows.Forms.Label
-    $workLabel.Text = 'LINK WORK'
+    $workLabel.Text = 'LINK WORK (TÙY CHỌN)'
     $workLabel.Location = New-Object Drawing.Point(18, 100)
     $workLabel.Size = New-Object Drawing.Size(105, 24)
     $panel.Controls.Add($workLabel)
@@ -318,8 +337,8 @@ for ($i = 0; $i -lt 3; $i++) {
     $workBox = New-Object Windows.Forms.TextBox
     $workBox.Location = New-Object Drawing.Point(125, 97)
     $workBox.Size = New-Object Drawing.Size(760, 27)
-    $workBox.ReadOnly = $true
-    $workBox.BackColor = [Drawing.Color]::FromArgb(248,250,252)
+    $workBox.ReadOnly = $false
+    $workBox.BackColor = [Drawing.Color]::White
     $panel.Controls.Add($workBox)
 
     $openWork = New-Object Windows.Forms.Button
@@ -377,6 +396,7 @@ for ($i = 0; $i -lt 3; $i++) {
         $id = $this.Tag
         $ui = $laneUi[$id]
         $brainUrl = $ui.Brain.Text.Trim()
+        $workUrl = $ui.Work.Text.Trim()
         if (-not (Test-ChatConversationUrl $brainUrl)) {
             [Windows.Forms.MessageBox]::Show(
                 'Hãy dán đúng link cuộc trò chuyện ChatGPT dùng làm BỘ NÃO cho luồng này.',
@@ -386,7 +406,16 @@ for ($i = 0; $i -lt 3; $i++) {
             ) | Out-Null
             return
         }
-        Save-Lane $id $ui.Project.Text $brainUrl $true
+        if ($workUrl -and -not (Test-ChatConversationUrl $workUrl)) {
+            [Windows.Forms.MessageBox]::Show(
+                'LINK WORK không hợp lệ. Dán link cuộc trò chuyện ChatGPT hoặc để trống để Robot tự tạo.',
+                'MAGASIN BUSINESS OS',
+                'OK',
+                'Warning'
+            ) | Out-Null
+            return
+        }
+        Save-Lane $id $ui.Project.Text $brainUrl $workUrl $true
         if (-not (Ensure-Supervisor)) {
             [Windows.Forms.MessageBox]::Show(
                 'Không thể khởi động Supervisor runtime.',
@@ -401,7 +430,7 @@ for ($i = 0; $i -lt 3; $i++) {
     $stopButton.Add_Click({
         $id = $this.Tag
         $ui = $laneUi[$id]
-        Save-Lane $id $ui.Project.Text $ui.Brain.Text $false
+        Save-Lane $id $ui.Project.Text $ui.Brain.Text $ui.Work.Text $false
     })
     $stopButton.Tag = $currentLaneId
 
@@ -455,17 +484,25 @@ function Refresh-Ui {
 
         if (-not $ui.Project.Focused) { $ui.Project.Text = [string]$cfg.project_name }
         if (-not $ui.Brain.Focused) { $ui.Brain.Text = [string]$cfg.brain_url }
-        $ui.Work.Text = if ($st -and $st.work_url) {
-            [string]$st.work_url
-        } elseif ($reg -and $reg.work_url) {
-            [string]$reg.work_url
-        } else {
-            ''
-        }
 
         $enabled = [bool]$cfg.enabled
+        if (-not $ui.Work.Focused) {
+            if ($enabled -and $st -and $st.work_url) {
+                $ui.Work.Text = [string]$st.work_url
+            } elseif ($enabled -and $reg -and $reg.work_url) {
+                $ui.Work.Text = [string]$reg.work_url
+            } elseif ($cfg -and $cfg.work_url) {
+                $ui.Work.Text = [string]$cfg.work_url
+            } elseif ($reg -and $reg.work_url) {
+                $ui.Work.Text = [string]$reg.work_url
+            } else {
+                $ui.Work.Text = ''
+            }
+        }
+
         $ui.Project.Enabled = -not $enabled
         $ui.Brain.Enabled = -not $enabled
+        $ui.Work.Enabled = -not $enabled
         $ui.Start.Enabled = -not $enabled
         $ui.Stop.Enabled = $enabled
 

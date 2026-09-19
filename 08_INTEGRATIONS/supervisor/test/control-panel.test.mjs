@@ -19,7 +19,7 @@ test("control panel is a three-lane Owner-facing surface", async () => {
   assert.match(source, /lane-status\.json/);
 });
 
-test("each lane has Owner Brain URL and Robot-managed read-only Work URL", async () => {
+test("each lane has Owner Brain URL and optional Owner-or-Robot Work URL", async () => {
   const source = await fs.readFile(
     new URL("../windows/control-panel.ps1", import.meta.url),
     "utf8"
@@ -27,10 +27,13 @@ test("each lane has Owner Brain URL and Robot-managed read-only Work URL", async
 
   assert.match(source, /LINK BỘ NÃO/);
   assert.match(source, /LINK WORK/);
-  assert.match(source, /\$workBox\.ReadOnly = \$true/);
+  assert.match(source, /\$workBox\.ReadOnly = \$false/);
   assert.match(source, /Test-ChatConversationUrl/);
   assert.match(source, /brain_url/);
   assert.match(source, /work_url/);
+  assert.match(source, /work_url_revision/);
+  assert.match(source, /\$ui\.Work\.Enabled = -not \$enabled/);
+  assert.match(source, /LINK WORK không hợp lệ/);
   assert.doesNotMatch(source, /DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO/);
   assert.doesNotMatch(source, /BRAIN_REBIND\.request\.json/);
 });

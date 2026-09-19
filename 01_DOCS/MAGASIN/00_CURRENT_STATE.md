@@ -186,10 +186,11 @@ Canonical contract: `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md`.
 
 - exactly three isolated project lanes;
 - Brain identity is Owner-bound by explicit URL only; no active Brain auto-discovery;
-- each lane has its own project name, Brain URL, Robot-managed Work URL, status, message, START and STOP;
-- Work chat is reused until positive `conversationFull` evidence, then Robot may create and auto-fill a replacement Work URL;
+- each lane has its own project name, Owner Brain URL, optional Owner Work URL / Robot-managed Work URL, status, message, START and STOP;
+- Owner may paste/replace Work URL while a lane is stopped; if blank, Robot auto-creates it; automatic Work rollover still requires positive `conversationFull` evidence;
 - each completed Work result is relayed exactly once to the same lane Brain with both screenshot and full captured text;
 - Brain chat is never auto-rolled; if Brain is full/missing, that lane waits for Owner to replace its Brain URL;
+- transient fetch/CDP/network failures auto-retry in `RECOVERING` and do not ask Owner unless the condition is non-transient/security-related;
 - local lane config/status/evidence remain outside Git.
 
 ## TASK-049 acceptance checkpoint — E2/F

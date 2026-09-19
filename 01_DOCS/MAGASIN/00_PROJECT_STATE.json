@@ -1,7 +1,7 @@
 {
   "project": "MAGASIN Business OS",
   "repository": "magasincoffee/magasincoffee.github.io",
-  "plan_version": "BOS-V1-5STEP-THREE-LANE-2026-09-19",
+  "plan_version": "BOS-V1-5STEP-THREE-LANE-MANUAL-WORK-2026-09-19",
   "target_days": 21,
   "current_phase": "P1_AUTONOMY_THREE_LANE_UPGRADE",
   "current_task": "TASK-049",
@@ -181,13 +181,14 @@
     "mode": "THREE_LANE_V1",
     "lane_count": 3,
     "brain_target_policy": "OWNER_EXPLICIT_URL_ONLY",
-    "work_target_policy": "ROBOT_MANAGED",
+    "work_target_policy": "OWNER_OR_ROBOT_MANAGED",
     "lane_controls": "INDEPENDENT_START_STOP",
     "lane_isolation": true,
     "brain_autodiscovery": false,
     "work_rollover": {
-      "policy": "FULL_CONFIRMED_ONLY",
-      "evidence": "CHATGPT_UI_CONVERSATION_FULL"
+      "policy": "AUTO_FULL_CONFIRMED_OR_OWNER_EXPLICIT_REPLACEMENT",
+      "auto_evidence": "CHATGPT_UI_CONVERSATION_FULL",
+      "owner_override": "EXPLICIT_WORK_URL_CHANGE_WHILE_STOPPED"
     },
     "result_relay": {
       "screenshot": true,
@@ -207,7 +208,7 @@
       "brain_url_missing": "WAIT_OWNER",
       "brain_url_invalid": "WAIT_OWNER",
       "work_missing": "CREATE_ONLY_FROM_ACTIVE_LANE",
-      "network": "RETRY_BOUNDED"
+      "network": "AUTO_RETRY_BOUNDED_NO_OWNER_ESCALATION_FOR_TRANSIENT_FETCH_CDP"
     },
     "auto_upgrade": {
       "enabled": true,
@@ -216,7 +217,9 @@
     },
     "acceptance_evidence": {
       "status": "PENDING",
-      "note": "Legacy BRAIN_WORKER_V1 acceptance remains historical; THREE_LANE_V1 requires new E2E acceptance."
-    }
+      "note": "THREE_LANE_V1 manual Work URL override and transient network recovery require E2E acceptance."
+    },
+    "work_target_edit_policy": "OWNER_EDITABLE_WHEN_LANE_STOPPED",
+    "work_target_blank_policy": "ROBOT_AUTO_CREATE"
   }
 }
