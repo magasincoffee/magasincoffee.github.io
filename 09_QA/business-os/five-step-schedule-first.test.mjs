@@ -37,7 +37,7 @@ test("Five-Step architecture reset remains canonical under Profitability & Cash 
   assert.equal(state.night_run?.id, "NIGHT_RUN_2026-09-18");
 
   assert.match(current, /Profitability & Cash first/);
-  assert.match(current, /financial truth spine/i);
+  assert.match(current, /FINANCIAL_BASELINE\.md/);
   assert.match(queue, /TASK-026[^\n]*DEFERRED/);
   assert.match(queue, /TASK-051[^\n]*DONE/);
   assert.match(queue, /TASK-052[^\n]*DONE/);
