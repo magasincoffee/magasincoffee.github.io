@@ -843,3 +843,232 @@ function knownSum({
   events,
   coverage,
   targetPeriod,
+  targetScope,
+  fallbackAsOf,
+  directionFailureQualities
+}) {
+  const selected = events.filter((event) => event.direction === direction);
+  const metric = direction === "INFLOW"
+    ? "known_evidenced_cash_inflows"
+    : "known_evidenced_cash_outflows";
+
+  if (selected.length > 0) {
+    const quality = worstQuality(selected.map((event) => event.amount_truth.quality));
+    const value = selected.reduce((sum, event) => sum + event.amount_truth.value, 0);
+    return derivedNumericTruth({
+      metric,
+      period: targetPeriod,
+      scope: targetScope,
+      value,
+      quality,
+      asOf: maxAsOf([
+        ...selected.map((event) => event.amount_truth.as_of),
+        coverage.as_of,
+        fallbackAsOf
+      ]),
+      lineage: [...eventLineage(selected), ...coverage.lineage],
+      evidence: [
+        "KNOWN_EVIDENCED_CASH_EVENTS",
+        `EVENT_COVERAGE:${coverage.status}`
+      ],
+      reason: coverage.status === "COMPLETE"
+        ? "KNOWN_EVIDENCED_SUM_COMPLETE_COVERAGE"
+        : "KNOWN_EVIDENCED_SUM_INCOMPLETE_COVERAGE",
+      message: "Exact sum of evidenced cash events; period completeness is represented separately by coverage."
+    });
+  }
+
+  if (
+    coverage.status === "COMPLETE" &&
+    directionFailureQualities.length === 0
+  ) {
+    return derivedNumericTruth({
+      metric,
+      period: targetPeriod,
+      scope: targetScope,
+      value: 0,
+      quality: "ACTUAL",
+      asOf: maxAsOf([coverage.as_of, fallbackAsOf]),
+      lineage: [...coverage.lineage, "EVENT_COVERAGE:COMPLETE"],
+      evidence: ["EVENT_COVERAGE:COMPLETE", "NO_EVIDENCED_EVENTS_FOR_DIRECTION"],
+      reason: "COMPLETE_COVERAGE_PROVES_ZERO_KNOWN_MOVEMENT",
+      message: "Complete event coverage proves no cash movement for this direction."
+    });
+  }
+
+  const failureQuality = directionFailureQualities.length
+    ? worstQuality(directionFailureQualities)
+    : coverage.required_not_connected
+      ? "NOT_CONNECTED"
+      : "GAP";
+
+  return bridgeFailureTruth({
+    metric,
+    targetPeriod,
+    targetScope,
+    quality: failureQuality,
+    reason: coverage.status === "COMPLETE"
+      ? "NO_VALID_EVIDENCED_EVENTS"
+      : "INCOMPLETE_EVENT_COVERAGE"
+  });
+}
+
+function categorizedKnown(events, direction, targetPeriod, targetScope, coverage) {
+  const categories = CASH_EVENT_CATEGORIES[direction];
+  const result = [];
+  for (const category of categories) {
+    const selected = events.filter(
+      (event) => event.direction === direction && event.category === category
+    );
+    if (selected.length === 0) continue;
+    const quality = worstQuality(selected.map((event) => event.amount_truth.quality));
+    const amount = selected.reduce((sum, event) => sum + event.amount_truth.value, 0);
+    const metric = `known_evidenced_${direction.toLowerCase()}_${category.toLowerCase()}`;
+    result.push({
+      category,
+      event_count: selected.length,
+      amount_truth: derivedNumericTruth({
+        metric,
+        period: targetPeriod,
+        scope: targetScope,
+        value: amount,
+        quality,
+        asOf: maxAsOf([
+          ...selected.map((event) => event.amount_truth.as_of),
+          coverage.as_of
+        ]),
+        lineage: [...eventLineage(selected), ...coverage.lineage],
+        evidence: ["KNOWN_EVIDENCED_CASH_EVENTS"],
+        reason: "CATEGORY_KNOWN_EVIDENCED_SUM",
+        message: "Exact sum of evidenced events in this cash category."
+      })
+    });
+  }
+  return result;
+}
+
+function transferSummary(
+  events,
+  targetPeriod,
+  targetScope,
+  coverage,
+  fallbackAsOf,
+  accountScoped = false
+) {
+  const transfers = events.filter(
+    (event) =>
+      event.direction === "TRANSFER" &&
+      event.category === "INTERNAL_TRANSFER"
+  );
+  const numericTransfers = transfers.filter((event) => {
+    const truth = event.amount_truth || {};
+    return (
+      (truth.quality === "ACTUAL" || truth.quality === "ESTIMATE") &&
+      typeof truth.value === "number" &&
+      Number.isFinite(truth.value) &&
+      truth.value > 0
+    );
+  });
+  const consolidatedNeutral = isConsolidatedTarget(targetScope, accountScoped);
+
+  if (numericTransfers.length === 0) {
+    const failedQuality = transfers.some(
+      (event) => event.amount_truth?.quality === "NOT_CONNECTED"
+    )
+      ? "NOT_CONNECTED"
+      : transfers.length > 0
+        ? "GAP"
+        : null;
+
+    return {
+      event_count: transfers.length,
+      consolidated_neutral: consolidatedNeutral,
+      known_evidenced_amount: failedQuality
+        ? bridgeFailureTruth({
+            metric: "known_evidenced_internal_transfer",
+            targetPeriod,
+            targetScope,
+            quality: failedQuality,
+            reason: consolidatedNeutral
+              ? "INTERNAL_TRANSFER_AMOUNT_NOT_EVIDENCED"
+              : "TRANSFER_SCOPE_AMBIGUOUS_UNSUPPORTED_V1"
+          })
+        : coverage.status === "COMPLETE"
+          ? derivedNumericTruth({
+              metric: "known_evidenced_internal_transfer",
+              period: targetPeriod,
+              scope: targetScope,
+              value: 0,
+              quality: "ACTUAL",
+              asOf: maxAsOf([coverage.as_of, fallbackAsOf]),
+              lineage: [...coverage.lineage, "EVENT_COVERAGE:COMPLETE"],
+              evidence: ["EVENT_COVERAGE:COMPLETE"],
+              reason: "NO_EVIDENCED_INTERNAL_TRANSFER",
+              message: "No evidenced internal transfer under complete coverage."
+            })
+          : bridgeFailureTruth({
+              metric: "known_evidenced_internal_transfer",
+              targetPeriod,
+              targetScope,
+              reason: "INCOMPLETE_EVENT_COVERAGE"
+            }),
+      events: transfers
+    };
+  }
+
+  const amount = numericTransfers.reduce(
+    (sum, event) => sum + event.amount_truth.value,
+    0
+  );
+  const quality = worstQuality(
+    numericTransfers.map((event) => event.amount_truth.quality)
+  );
+  return {
+    event_count: transfers.length,
+    consolidated_neutral: consolidatedNeutral,
+    known_evidenced_amount: derivedNumericTruth({
+      metric: "known_evidenced_internal_transfer",
+      period: targetPeriod,
+      scope: targetScope,
+      value: amount,
+      quality,
+      asOf: maxAsOf([
+        ...numericTransfers.map((event) => event.amount_truth.as_of),
+        coverage.as_of,
+        fallbackAsOf
+      ]),
+      lineage: [...eventLineage(numericTransfers), ...coverage.lineage],
+      evidence: ["KNOWN_EVIDENCED_INTERNAL_TRANSFER"],
+      reason: consolidatedNeutral
+        ? "INTERNAL_TRANSFER_NEUTRAL_FOR_CONSOLIDATED_BRIDGE"
+        : "INTERNAL_TRANSFER_SCOPE_UNSUPPORTED_FOR_ARITHMETIC",
+      message: consolidatedNeutral
+        ? "Internal transfer amount is reported but excluded from consolidated inflow/outflow totals."
+        : "Internal transfer amount is evidenced but V1 does not infer its net effect for scoped arithmetic."
+    }),
+    events: transfers
+  };
+}
+
+function componentFailureQuality(truth) {
+  return truth?.quality === "NOT_CONNECTED"
+    ? "NOT_CONNECTED"
+    : truth?.quality === "GAP"
+      ? "GAP"
+      : null;
+}
+
+export function calculateCashBridge({
+  targetPeriod: rawTargetPeriod,
+  target_period: rawTargetPeriodSnake,
+  scope: rawScope,
+  openingBalance,
+  opening_balance: openingBalanceSnake,
+  observedEndingBalance,
+  observed_ending_balance: observedEndingBalanceSnake,
+  events,
+  coverage: rawCoverage
+} = {}) {
+  const targetPeriodState = normalizeTargetPeriod(rawTargetPeriod ?? rawTargetPeriodSnake ?? {});
+  const targetScopeState = normalizeTargetScope(rawScope ?? {});
+  const targetPeriod = {
