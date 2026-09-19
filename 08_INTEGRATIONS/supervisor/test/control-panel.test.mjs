@@ -178,7 +178,7 @@ test("control panel exposes the persistent diagnostics folder", async () => {
   );
 
   assert.match(source, /diagnosticsRoot/);
-  assert.match(source, /MỞ LOG LỖI/);
+  assert.match(source, /MỞ NHẬT KÝ LỖI/);
   assert.match(source, /Start-Process explorer\.exe/);
 });
 
@@ -217,8 +217,8 @@ test("control panel represents PAUSED autonomy as a first-class non-error state"
   assert.match(source, /'PAUSED' = @\(/);
   assert.match(source, /\$projectAutonomy -eq 'PAUSED'/);
   assert.match(source, /TẠM DỪNG • CHỜ/);
-  assert.match(source, /không mở\/điều khiển ChatGPT/);
-  assert.match(source, /Không có lỗi\. Robot đang tạm dừng có chủ đích/);
+  assert.match(source, /không mở hoặc điều khiển ChatGPT/);
+  assert.match(source, /Không có lỗi\. Robot đang tạm dừng theo trạng thái dự án/);
 });
 
 test("START ROBOT does not launch runner or ChatGPT while repository autonomy is PAUSED", async () => {
