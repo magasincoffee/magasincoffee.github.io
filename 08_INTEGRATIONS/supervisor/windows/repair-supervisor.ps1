@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 $sourceRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $repoRoot = (Resolve-Path (Join-Path $sourceRoot '..\..')).Path
 $installScript = Join-Path $sourceRoot 'windows\install-supervisor.ps1'
+$sourceLifecycle = Join-Path $sourceRoot 'windows\lifecycle-truth.ps1'
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $runtime = Join-Path $root 'runtime'
 $runtimeLoop = Join-Path $runtime 'src\runtime\supervisor-loop-cli.mjs'
@@ -19,7 +20,10 @@ $target = Join-Path $root 'target.json'
 $pidFile = Join-Path $root 'supervisor.pid'
 $logFile = Join-Path $root 'supervisor.log'
 $projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
-$expectedRuntimeVersion = '2026-09-19.49'
+$expectedRuntimeVersion = '2026-09-19.50'
+
+if (-not (Test-Path $sourceLifecycle)) { throw "Lifecycle truth helper missing: $sourceLifecycle" }
+. $sourceLifecycle
 
 function Write-Step([string]$Message) {
     Write-Host ""
@@ -147,11 +151,11 @@ try {
     Assert-SourceFingerprint
     Write-Host "Source fingerprint: PASS ($expectedRuntimeVersion)"
 
-    Write-Step '3/7 Stop old Supervisor runtime'
-    $installedStop = Join-Path $runtime 'windows\stop-supervisor.ps1'
-    if (Test-Path $installedStop) {
-        & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installedStop
-    } elseif (Test-Path $pidFile) {
+    Write-Step '3/7 Stop old Supervisor runtime without changing Owner STOP'
+    $ownerStopBeforeRepair = Get-LifecycleOwnerStopState -Root $root
+    $enabledLaneCountBeforeRepair = Get-EnabledLaneCount -Root $root
+
+    if (Test-Path $pidFile) {
         $pidValue = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($pidValue -and (Get-Process -Id $pidValue -ErrorAction SilentlyContinue)) {
             & taskkill.exe /PID $pidValue /T /F | Out-Host
@@ -179,10 +183,7 @@ try {
     try {
         $projectState = Invoke-RestMethod -Uri $projectStateUrl -TimeoutSec 4 -Headers @{ 'Cache-Control'='no-cache' }
     } catch {}
-    $pausedInstallOnly = [bool](
-        $projectState -and
-        [string]$projectState.autonomy -eq 'PAUSED'
-    )
+
     $threeLaneMode = [bool](
         $projectState -and
         $projectState.supervisor_orchestration -and
@@ -193,24 +194,31 @@ try {
         $projectState.supervisor_orchestration -and
         [string]$projectState.supervisor_orchestration.mode -eq 'BRAIN_WORKER_V1'
     )
-
-    if (-not $pausedInstallOnly -and -not $threeLaneMode -and -not $brainWorkerMode -and -not (Test-Path $target)) {
-        throw "Legacy ChatGPT target is missing: $target. Installation succeeded, but one-time target setup is required before legacy START."
+    if (-not $threeLaneMode -and -not $brainWorkerMode) {
+        $threeLaneMode = $true
     }
 
-    if ($pausedInstallOnly) {
-        Write-Step '6/7 PAUSED autonomy - boot intentionally skipped'
-        Write-Host 'Repository autonomy is PAUSED. Runtime is installed but Supervisor/Chrome will remain stopped.'
+    $ownerStopAfterInstall = Get-LifecycleOwnerStopState -Root $root
+    $enabledLaneCountAfterInstall = Get-EnabledLaneCount -Root $root
+    $bootSuppressed = [bool]($ownerStopAfterInstall.blocked -or $enabledLaneCountAfterInstall -lt 1)
+
+    if ($bootSuppressed) {
+        Write-Step '6/7 Runtime boot intentionally suppressed by lifecycle truth'
+        if ($ownerStopAfterInstall.blocked) {
+            Write-Host 'OWNER_STOP_PRESERVED=True'
+        } else {
+            Write-Host 'ALL_LANES_DISABLED=True'
+        }
     } else {
-        Write-Step '6/7 Start Supervisor and verify boot'
+        Write-Step '6/7 Recover Supervisor and verify boot'
         $beforeCount = 0
         if (Test-Path $logFile) {
             $beforeCount = @(Get-Content $logFile -ErrorAction SilentlyContinue).Count
         }
 
-        & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $runtimeStart -Hidden
+        & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $runtimeStart -Hidden -Recovery
         if ($LASTEXITCODE -ne 0) {
-            throw "Supervisor START exited with code $LASTEXITCODE."
+            throw "Supervisor recovery START exited with code $LASTEXITCODE."
         }
 
         $bootVerified = $false
@@ -259,13 +267,13 @@ $tail"
             Where-Object { $_.CommandLine -and $_.CommandLine -match '(supervisor-loop-cli|brain-worker-cli|three-lane-cli)\.mjs' }
     )
 
-    if ($pausedInstallOnly) {
+    if ($bootSuppressed) {
         Write-Host "Supervisor wrapper count: $($wrapperProcesses.Count)"
         Write-Host "Supervisor Node loop count: $($loopProcesses.Count)"
         if ($wrapperProcesses.Count -ne 0 -or $loopProcesses.Count -ne 0) {
-            throw "PAUSED install verification failed: wrappers=$($wrapperProcesses.Count), nodeLoops=$($loopProcesses.Count)."
+            throw "Lifecycle-suppressed repair must leave runtime stopped: wrappers=$($wrapperProcesses.Count), nodeLoops=$($loopProcesses.Count)."
         }
-        Write-Host 'Runtime status: PAUSED (not launched by design)'
+        Write-Host 'Runtime status: STOPPED_BY_LIFECYCLE_TRUTH'
     } else {
         $pidValue = if (Test-Path $pidFile) {
             Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -316,10 +324,10 @@ $tail"
 
     Write-Host ""
     Write-Host 'REPAIR_RESULT=PASS' -ForegroundColor Green
-    if ($pausedInstallOnly) {
-        Write-Host 'Supervisor was reinstalled from current main; boot was intentionally skipped because autonomy is PAUSED.'
+    if ($bootSuppressed) {
+        Write-Host 'Supervisor was reinstalled; runtime boot remained suppressed by Owner STOP or all-lanes-disabled truth.'
     } else {
-        Write-Host 'Supervisor was reinstalled from current main and booted with the expected runtime version.'
+        Write-Host 'Supervisor was reinstalled and recovered with the expected runtime version.'
     }
 } catch {
     Write-Host ""

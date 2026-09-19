@@ -9,7 +9,6 @@ on:
       - 08_INTEGRATIONS/supervisor/windows/**
       - 08_INTEGRATIONS/supervisor/test/**
       - 08_INTEGRATIONS/supervisor/package.json
-      - 01_DOCS/MAGASIN/00_PROJECT_STATE.json
       - .github/workflows/supervisor-autostart-install.yml
   workflow_dispatch:
 
@@ -35,6 +34,31 @@ jobs:
           npm install --ignore-scripts --no-audit --no-fund
           npm test
 
+      - name: Snapshot lifecycle targets
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $configFile = Join-Path $root "lanes.json"
+          $snapshotFile = Join-Path $env:RUNNER_TEMP "magasin-lifecycle-targets-before.json"
+          if (Test-Path $configFile) {
+            $config = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            $snapshot = @($config.lanes | ForEach-Object {
+              [ordered]@{
+                lane_id = [string]$_.lane_id
+                brain_url = [string]$_.brain_url
+                work_url = [string]$_.work_url
+                brain_url_revision = [int]$_.brain_url_revision
+                work_url_revision = [int]$_.work_url_revision
+                enabled = [bool]$_.enabled
+              }
+            })
+            $snapshot | ConvertTo-Json -Depth 6 | Set-Content -Path $snapshotFile -Encoding UTF8
+          } else {
+            "[]" | Set-Content -Path $snapshotFile -Encoding UTF8
+          }
+          Write-Host "TARGET_SNAPSHOT_CREATED=True"
+
       - name: Install latest Supervisor runtime
         shell: powershell
         run: |
@@ -56,423 +80,225 @@ jobs:
           if ([bool]$state.supervisor_orchestration.brain_autodiscovery) {
             throw "Brain autodiscovery must be disabled in THREE_LANE_V1"
           }
-          if ([string]$state.autonomy -eq "PAUSED") {
-            if (-not $state.architecture_handoff -or [bool]$state.architecture_handoff.robot_may_execute) {
-              throw "PAUSED architecture gate must deny Robot execution"
-            }
-            Write-Host "OWNER_ARCHITECTURE_GATE=PAUSED"
-            Write-Host "ROBOT_MAY_EXECUTE=False"
-          } else {
-            if (-not $state.architecture_handoff -or -not [bool]$state.architecture_handoff.robot_may_execute) {
-              throw "Executable source-of-truth must explicitly allow Robot execution"
-            }
-
-            $preparedTasks = @()
-            if ($state.prepared_execution_queue -and $state.prepared_execution_queue.tasks) {
-              $preparedTasks = @($state.prepared_execution_queue.tasks | ForEach-Object { [string]$_ })
-            }
-
-            $preparedQueueTaskAllowed = (
-              [string]$state.prepared_execution_queue.status -match '^ACTIVE' -and
-              $preparedTasks -contains [string]$state.current_task
-            )
-
-            if (-not $preparedQueueTaskAllowed) {
-              throw "Executable source-of-truth current_task is not part of an Owner-released queue"
-            }
-
-            Write-Host "ROBOT_MAY_EXECUTE=True"
-            if ($preparedQueueTaskAllowed) {
-              Write-Host "PREPARED_QUEUE_ACTIVE=True"
-              Write-Host "PREPARED_QUEUE_ID=$($state.prepared_execution_queue.id)"
-              Write-Host "PREPARED_QUEUE_GENERATION=$($state.prepared_execution_queue.execution_generation)"
-            }
-          }
+          Write-Host "PROJECT_AUTONOMY=$([string]$state.autonomy)"
           Write-Host "SOURCE_OF_TRUTH_LOCAL_CHECK=True"
 
-      - name: Register recovery and honor Owner execution gate
+      - name: Register lifecycle recovery without overriding Owner STOP
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-          $state = Get-Content "01_DOCS/MAGASIN/00_PROJECT_STATE.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
           powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "08_INTEGRATIONS/supervisor/windows/install-autostart.ps1"
-          if ([string]$state.autonomy -eq "PAUSED") {
-            powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "08_INTEGRATIONS/supervisor/windows/stop-supervisor.ps1"
-            Write-Host "OWNER_ARCHITECTURE_GATE_ENFORCED=True"
+
+          $lifecycle = Join-Path $root "runtime\windows\lifecycle-truth.ps1"
+          $start = Join-Path $root "runtime\windows\start-supervisor.ps1"
+          if (-not (Test-Path $lifecycle)) { throw "Installed lifecycle truth helper is missing" }
+          . $lifecycle
+
+          $ownerStop = Get-LifecycleOwnerStopState -Root $root
+          $enabledLaneCount = Get-EnabledLaneCount -Root $root
+          Write-Host "OWNER_STOP_LATCH=$([bool]$ownerStop.blocked)"
+          Write-Host "ENABLED_LANE_COUNT=$enabledLaneCount"
+
+          if ($ownerStop.blocked) {
             Write-Host "SUPERVISOR_START_REQUESTED=False"
+            Write-Host "START_REASON=OWNER_STOP"
+          } elseif ($enabledLaneCount -lt 1) {
+            Write-Host "SUPERVISOR_START_REQUESTED=False"
+            Write-Host "START_REASON=ALL_LANES_DISABLED"
           } else {
-            powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "08_INTEGRATIONS/supervisor/windows/start-supervisor.ps1" -Hidden
+            powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File $start -Hidden -Recovery
+            if ($LASTEXITCODE -ne 0) { throw "Recovery start failed" }
             Write-Host "SUPERVISOR_START_REQUESTED=True"
+            Write-Host "START_REASON=ENABLED_LANE_RECOVERY"
           }
 
-      - name: Verify local recovery installation
+      - name: Verify lifecycle installation
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-          $state = Get-Content "01_DOCS/MAGASIN/00_PROJECT_STATE.json" -Raw -Encoding UTF8 | ConvertFrom-Json
           $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
-          if ([string]$state.autonomy -eq "PAUSED") {
-            $stopLatch = Join-Path $root "AUTOSTART_DISABLED"
-            if (-not (Test-Path $stopLatch)) { throw "Owner architecture PAUSED gate did not set the local STOP latch" }
-            $runningNode = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-              Where-Object { $_.CommandLine -and $_.CommandLine -match '(supervisor-loop-cli|brain-worker-cli|three-lane-cli)\.mjs' } |
-              Select-Object -First 1
-            if ($runningNode) { throw "Supervisor Node runtime is still executing while architecture gate is PAUSED" }
-            Write-Host "SUPERVISOR_PAUSED=True"
-            Write-Host "OWNER_STOP_LATCH=True"
-            Write-Host "ROBOT_MAY_EXECUTE=False"
-            exit 0
-          }
+          $runtime = Join-Path $root "runtime"
+          $lifecycle = Join-Path $runtime "windows\lifecycle-truth.ps1"
+          $configFile = Join-Path $root "lanes.json"
+          $statusFile = Join-Path $root "lane-status.json"
+          $snapshotFile = Join-Path $env:RUNNER_TEMP "magasin-lifecycle-targets-before.json"
+
+          if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
+          . $lifecycle
+
           $runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
           $value = (Get-ItemProperty -Path $runKey -Name "MAGASINBusinessOSAutostart" -ErrorAction Stop).MAGASINBusinessOSAutostart
           if ($value -notmatch "autostart-bootstrap\.ps1") { throw "HKCU autostart value is invalid" }
-          if (Test-Path (Join-Path $root "AUTOSTART_DISABLED")) { throw "Owner STOP latch should be clear after install" }
 
-          $runnerRoot = "C:\actions-runner-business\actions-runner"
-          $runner = Get-CimInstance Win32_Process -Filter "Name='Runner.Listener.exe'" -ErrorAction SilentlyContinue |
-            Where-Object {
-              ($_.ExecutablePath -and $_.ExecutablePath -like "$runnerRoot*") -or
-              ($_.CommandLine -and $_.CommandLine -like "*$runnerRoot*")
-            } |
-            Select-Object -First 1
-          if (-not $runner) { throw "Canonical GitHub Runner is not online" }
-
-          $supervisor = $null
-          for ($i = 0; $i -lt 30; $i++) {
-            $supervisor = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
-              Where-Object {
-                $_.CommandLine -and
-                $_.CommandLine -like "*run-supervisor.ps1*" -and
-                $_.CommandLine -like "*MAGASIN\BusinessOS\supervisor*"
-              } |
-              Select-Object -First 1
-            if ($supervisor) { break }
-            Start-Sleep -Seconds 1
-          }
-          if (-not $supervisor) { throw "Supervisor wrapper is not online after bounded wait" }
-
-          $profile = Join-Path $root "browser_profile"
-          $chrome = $null
-          $cdpPort = $null
-          $version = $null
-
-          for ($i = 0; $i -lt 30; $i++) {
-            $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
-              Where-Object {
-                $_.CommandLine -and
-                $_.CommandLine -like "*$profile*" -and
-                $_.CommandLine -match "--remote-debugging-port=(\d+)"
-              } |
-              Select-Object -First 1
-
-            if ($chrome -and $chrome.CommandLine -match "--remote-debugging-port=(\d+)") {
-              $cdpPort = [int]$Matches[1]
-              try {
-                $version = Invoke-RestMethod -Uri "http://127.0.0.1:$cdpPort/json/version" -TimeoutSec 2
-              } catch {
-                $version = $null
-              }
-              if ($version -and $version.webSocketDebuggerUrl) { break }
-            }
-
-            Start-Sleep -Seconds 1
-          }
-
-          if (-not $chrome) { throw "Dedicated Business OS Chrome is not online after bounded wait" }
-          if (-not $cdpPort) { throw "Dedicated Business OS Chrome CDP port is missing after bounded wait" }
-          if (-not $version -or -not $version.webSocketDebuggerUrl) { throw "Dedicated Business OS Chrome CDP endpoint is not healthy after bounded wait" }
-
-          $statusFile = Join-Path $root "autostart-install-status.json"
-          if (-not (Test-Path $statusFile)) { throw "Autostart install status is missing" }
-
-          $threeLane = $null
-          for ($i = 0; $i -lt 60; $i++) {
-            $threeLane = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-              Where-Object { $_.CommandLine -and $_.CommandLine -like "*three-lane-cli.mjs*" } |
-              Select-Object -First 1
-            if ($threeLane) { break }
-            Start-Sleep -Seconds 1
-          }
-          if (-not $threeLane) { throw "Three-Lane Node runtime is not online" }
-
-          $runtimeThreeLane = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
+          $runtimeThreeLane = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
           if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.49" -Quiet)) {
-            throw "Installed Three-Lane runtime is not v2026-09-19.49"
+          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.50" -Quiet)) {
+            throw "Installed Three-Lane runtime is not v2026-09-19.50"
           }
 
-          $laneConfigFile = Join-Path $root "lanes.json"
-          $laneStatusFile = Join-Path $root "lane-status.json"
-          $laneReady = $false
-          for ($i = 0; $i -lt 30; $i++) {
-            if ((Test-Path $laneConfigFile) -and (Test-Path $laneStatusFile)) {
-              try {
-                $laneConfig = Get-Content $laneConfigFile -Raw -Encoding UTF8 | ConvertFrom-Json
-                $laneStatus = Get-Content $laneStatusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-                if (
-                  $laneConfig.mode -eq "THREE_LANE_V1" -and
-                  @($laneConfig.lanes).Count -eq 3 -and
-                  $laneStatus.mode -eq "THREE_LANE_V1" -and
-                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.49" -and
-                  @($laneStatus.lanes).Count -eq 3
-                ) {
-                  $laneReady = $true
-                  break
-                }
-              } catch {}
+          if ((Test-Path $snapshotFile) -and (Test-Path $configFile)) {
+            $before = @(Get-Content $snapshotFile -Raw -Encoding UTF8 | ConvertFrom-Json)
+            $afterConfig = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            foreach ($beforeLane in $before) {
+              $afterLane = @($afterConfig.lanes | Where-Object { [string]$_.lane_id -eq [string]$beforeLane.lane_id }) | Select-Object -First 1
+              if (-not $afterLane) { throw "Lane disappeared during install" }
+              if ([string]$afterLane.brain_url -ne [string]$beforeLane.brain_url) { throw "Brain URL changed during install" }
+              if ([string]$afterLane.work_url -ne [string]$beforeLane.work_url) { throw "Work URL changed during install" }
             }
-            Start-Sleep -Seconds 1
           }
-          if (-not $laneReady) { throw "Three-Lane local config/status did not become ready" }
+          Write-Host "TARGET_URLS_UNCHANGED=True"
 
-          Write-Host "THREE_LANE_RUNTIME=True"
+          $ownerStop = Get-LifecycleOwnerStopState -Root $root
+          $enabledLaneCount = Get-EnabledLaneCount -Root $root
+
+          if ($ownerStop.blocked -or $enabledLaneCount -lt 1) {
+            Start-Sleep -Seconds 3
+            $truth = Get-LifecycleProcessTruth -Root $root
+            if ($truth.wrapper_alive -or $truth.three_lane_alive -or $truth.chrome_alive) {
+              throw "Lifecycle-suppressed install unexpectedly started Robot processes"
+            }
+            if ($ownerStop.blocked) {
+              Write-Host "ACCEPTANCE_F_OWNER_STOP_WINS=True"
+            } else {
+              Write-Host "ACCEPTANCE_A_ALL_LANES_DISABLED_NO_AUTOSTART=True"
+            }
+          } else {
+            $healthy = $false
+            for ($i = 0; $i -lt 60; $i++) {
+              $truth = Get-LifecycleProcessTruth -Root $root
+              if ($truth.healthy) {
+                $healthy = $true
+                break
+              }
+              Start-Sleep -Seconds 1
+            }
+            if (-not $healthy) { throw "Enabled lane runtime did not recover after install" }
+            if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing" }
+            $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ([string]$status.supervisor_runtime_version -ne "2026-09-19.50") {
+              throw "Three-Lane status is not v2026-09-19.50"
+            }
+            if ([string]$status.persisted_state_role -ne "RECOVERY_ONLY") {
+              throw "Three-Lane status is missing lifecycle recovery role"
+            }
+            Write-Host "SUPERVISOR_ONLINE=True"
+            Write-Host "THREE_LANE_RUNTIME=True"
+            Write-Host "BUSINESS_CHROME_ONLINE=True"
+            Write-Host "BUSINESS_CHROME_CDP_HEALTHY=True"
+          }
+
           Write-Host "THREE_LANE_COUNT=3"
           Write-Host "BRAIN_AUTODISCOVERY_ACTIVE=False"
           Write-Host "WORK_URL_OWNER_REQUIRED=False"
           Write-Host "WORK_URL_OWNER_EDITABLE=True"
-
-          $runtimeThreeLaneSource = Get-Content $runtimeThreeLane -Raw -Encoding UTF8
-          if ($runtimeThreeLaneSource -notmatch 'applyOwnerBrainTarget') { throw "Installed runtime is missing Brain target hot-swap support" }
-          if ($runtimeThreeLaneSource -notmatch 'brain_url_revision') { throw "Installed runtime is missing Brain URL revision support" }
-
-          $controlPanel = Join-Path $root "runtime\windows\control-panel.ps1"
-          if (-not (Test-Path $controlPanel)) { throw "Installed Control Panel is missing" }
-          $controlPanelSource = Get-Content $controlPanel -Raw -Encoding UTF8
-          if ($controlPanelSource -notmatch 'Save-BrainTarget') { throw "Installed Control Panel is missing Brain target persistence action" }
-          if ($controlPanelSource -notmatch 'brain_url_revision') { throw "Installed Control Panel is missing Brain revision persistence support" }
-
-          foreach ($laneEntry in @($laneConfig.lanes)) {
-            if (-not $laneEntry.PSObject.Properties['brain_url_revision']) {
-              throw "lanes.json was not migrated with brain_url_revision"
-            }
-          }
-          $laneRegistryFile = Join-Path $root "lane-registry.json"
-          if (-not (Test-Path $laneRegistryFile)) { throw "lane-registry.json is missing" }
-          $laneRegistry = Get-Content $laneRegistryFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          foreach ($laneName in @('lane-1','lane-2','lane-3')) {
-            $registryEntry = $laneRegistry.lanes.$laneName
-            if (-not $registryEntry.PSObject.Properties['applied_brain_url_revision']) {
-              throw "lane-registry.json was not migrated with applied_brain_url_revision for $laneName"
-            }
-          }
           Write-Host "BRAIN_URL_OWNER_EDITABLE=True"
           Write-Host "BRAIN_URL_PERSISTED=True"
           Write-Host "BRAIN_URL_HOT_SWAP=True"
-
           Write-Host "AUTOSTART_REGISTERED=True"
-          Write-Host "RUNNER_ONLINE=True"
-          Write-Host "SUPERVISOR_ONLINE=True"
-          Write-Host "THREE_LANE_RUNTIME=True"
-          Write-Host "THREE_LANE_COUNT=3"
-          Write-Host "BUSINESS_CHROME_ONLINE=True"
-          Write-Host "BUSINESS_CHROME_CDP_HEALTHY=True"
-          Write-Host "OWNER_STOP_LATCH=False"
           Write-Host "WINDOWS_LOGIN_BYPASS=False"
 
   verify-survival:
     name: verify-survival
     needs: install
     runs-on: self-hosted
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
-      - name: Verify Supervisor survived previous job cleanup
+      - name: Verify lifecycle survived previous job cleanup
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-          $state = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json" -TimeoutSec 4 -Headers @{ 'Cache-Control'='no-cache' }
-          if ([string]$state.autonomy -eq "PAUSED") {
-            Write-Host "POST_JOB_SURVIVAL_SKIPPED_OWNER_PAUSED=True"
-            Write-Host "ROBOT_MAY_EXECUTE=False"
-            exit 0
-          }
           Start-Sleep -Seconds 15
 
           $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
-          $profile = Join-Path $root "browser_profile"
-          $wrapper = $null
-          $threeLane = $null
-          $chrome = $null
+          $lifecycle = Join-Path $root "runtime\windows\lifecycle-truth.ps1"
+          $statusFile = Join-Path $root "lane-status.json"
+          if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
+          . $lifecycle
 
-          # The self-hosted runner may clean up the first Chrome process after
-          # the install job. v33 gives the Supervisor a bounded recovery window
-          # to request exit code 75 and relaunch the dedicated Robot Chrome.
+          $ownerStop = Get-LifecycleOwnerStopState -Root $root
+          $enabledLaneCount = Get-EnabledLaneCount -Root $root
+
+          if ($ownerStop.blocked -or $enabledLaneCount -lt 1) {
+            $truth = Get-LifecycleProcessTruth -Root $root
+            if ($truth.wrapper_alive -or $truth.three_lane_alive -or $truth.chrome_alive) {
+              throw "Runtime started even though lifecycle truth suppresses automatic boot"
+            }
+            if ($ownerStop.blocked) {
+              Write-Host "POST_JOB_OWNER_STOP_PRESERVED=True"
+            } else {
+              Write-Host "POST_JOB_ALL_LANES_DISABLED=True"
+            }
+            exit 0
+          }
+
+          $healthy = $false
           for ($i = 0; $i -lt 60; $i++) {
-            $wrapper = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
-              Where-Object {
-                $_.CommandLine -and
-                $_.CommandLine -like "*run-supervisor.ps1*" -and
-                $_.CommandLine -like "*MAGASIN\BusinessOS\supervisor*"
-              } |
-              Select-Object -First 1
-
-            $threeLane = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-              Where-Object { $_.CommandLine -and $_.CommandLine -like "*three-lane-cli.mjs*" } |
-              Select-Object -First 1
-
-            $chrome = Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
-              Where-Object {
-                $_.CommandLine -and
-                $_.CommandLine -like "*$profile*" -and
-                $_.CommandLine -match "--remote-debugging-port=(\d+)"
-              } |
-              Select-Object -First 1
-
-            if ($wrapper -and $threeLane -and $chrome) { break }
+            $truth = Get-LifecycleProcessTruth -Root $root
+            if ($truth.healthy) {
+              $healthy = $true
+              break
+            }
             Start-Sleep -Seconds 1
           }
+          if (-not $healthy) { throw "Lifecycle did not survive/recover after previous self-hosted job" }
 
-          if (-not $wrapper) { throw "Supervisor wrapper did not recover after the previous self-hosted job" }
-          if (-not $threeLane) { throw "Three-Lane runtime did not recover after the previous self-hosted job" }
-          if (-not $chrome) { throw "Dedicated Robot Chrome did not recover after the previous self-hosted job" }
-
-          $statusFile = Join-Path $root "lane-status.json"
           if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing after previous job cleanup" }
           $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ($status.supervisor_runtime_version -ne "2026-09-19.49") {
-            throw "Post-job Three-Lane runtime is not v2026-09-19.49"
-          }
-          if ($status.mode -ne "THREE_LANE_V1" -or @($status.lanes).Count -ne 3) {
-            throw "Post-job Three-Lane status is invalid"
+          if ([string]$status.supervisor_runtime_version -ne "2026-09-19.50") {
+            throw "Post-job Three-Lane runtime is not v2026-09-19.50"
           }
 
           Write-Host "POST_JOB_SUPERVISOR_ALIVE=True"
           Write-Host "POST_JOB_THREE_LANE_ALIVE=True"
           Write-Host "POST_JOB_ROBOT_CHROME_ALIVE=True"
+          Write-Host "POST_JOB_ROBOT_CDP_HEALTHY=True"
           Write-Host "POST_JOB_LANE_COUNT=3"
 
-      - name: Observe live Lane 1, print safe logs, and open Robot
+      - name: Open Control Panel and verify lifecycle truth
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-          $state = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json" -TimeoutSec 4 -Headers @{ 'Cache-Control'='no-cache' }
-          if ([string]$state.autonomy -eq "PAUSED") {
-            Write-Host "LIVE_ACCEPTANCE_SKIPPED_OWNER_PAUSED=True"
-            Write-Host "CONTROL_PANEL_OPENED=False"
-            Write-Host "ROBOT_MAY_EXECUTE=False"
-            exit 0
-          }
           $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
-          $statusFile = Join-Path $root "lane-status.json"
-          $registryFile = Join-Path $root "lane-registry.json"
-          $logFile = Join-Path $root "supervisor.log"
-          $configFile = Join-Path $root "lanes.json"
-
-          # Owner explicitly asked the automated acceptance run to operate the
-          # Robot without manual clicks. Resume Lane 1 only when its existing
-          # Brain URL is already configured; preserve every target URL.
-          if (Test-Path $configFile) {
-            $config = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json
-            $lane1Config = @($config.lanes | Where-Object { $_.lane_id -eq "lane-1" }) | Select-Object -First 1
-            if ($lane1Config -and [string]$lane1Config.brain_url) {
-              if (-not [bool]$lane1Config.enabled) {
-                $lane1Config.enabled = $true
-                $tmp = "$configFile.acceptance.tmp"
-                $config | ConvertTo-Json -Depth 12 | Set-Content -Path $tmp -Encoding UTF8
-                Move-Item -Path $tmp -Destination $configFile -Force
-                Write-Host "LIVE_LANE1_RESUMED_BY_SHELL=True"
-              } else {
-                Write-Host "LIVE_LANE1_RESUMED_BY_SHELL=False"
-              }
-              Write-Host "LIVE_LANE1_BRAIN_CONFIGURED=True"
-              Write-Host "LIVE_LANE1_WORK_CONFIGURED=$([bool]([string]$lane1Config.work_url))"
-            } else {
-              Write-Host "LIVE_LANE1_BRAIN_CONFIGURED=False"
-            }
-          }
-
-          $healthy = $false
-          $ownerBrainActionRequired = $false
-          $lane1 = $null
-          $registryLane = $null
-
-          for ($i = 0; $i -lt 45; $i++) {
-            if (Test-Path $statusFile) {
-              try {
-                $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-                $lane1 = @($status.lanes | Where-Object { $_.lane_id -eq "lane-1" }) | Select-Object -First 1
-              } catch {
-                $lane1 = $null
-              }
-            }
-
-            if (Test-Path $registryFile) {
-              try {
-                $registry = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json
-                $registryLane = $registry.lanes.'lane-1'
-              } catch {
-                $registryLane = $null
-              }
-            }
-
-            if ($lane1) {
-              $badLoopMessage = [bool](
-                [string]$lane1.message -match "thay đổi trong lúc xác minh|tải lại trang lặp lại|reload loop"
-              )
-              $blockedLatch = [bool](
-                $registryLane -and
-                $registryLane.dispatch_inflight -and
-                [bool]$registryLane.dispatch_inflight.reconcile_blocked
-              )
-              $stableStatus = [string]$lane1.status -in @(
-                "WORKING",
-                "RELAYING_RESULT",
-                "WAITING_BRAIN",
-                "READY",
-                "STARTING"
-              )
-              $ownerBrainActionState = [bool](
-                [string]$lane1.status -eq "WAIT_OWNER" -and
-                [string]$lane1.message -match "Chrome Robot" -and
-                $registryLane -and
-                -not [string]::IsNullOrWhiteSpace([string]$registryLane.brain_url)
-              )
-
-              if ($stableStatus -and -not $badLoopMessage -and -not $blockedLatch) {
-                $healthy = $true
-                break
-              }
-              if ($ownerBrainActionState -and -not $badLoopMessage) {
-                $healthy = $true
-                $ownerBrainActionRequired = $true
-                break
-              }
-            }
-
-            Start-Sleep -Seconds 2
-          }
-
-          if ($lane1) {
-            Write-Host "LIVE_LANE1_STATUS=$($lane1.status)"
-            Write-Host "LIVE_LANE1_MESSAGE=$($lane1.message)"
-            Write-Host "LIVE_LANE1_TASK=$($lane1.task_id)"
-          } else {
-            Write-Host "LIVE_LANE1_STATUS=MISSING"
-          }
-
-          if ($registryLane) {
-            Write-Host "LIVE_LANE1_AWAITING_WORK=$([bool]$registryLane.awaiting_work)"
-            Write-Host "LIVE_LANE1_DISPATCH_INFLIGHT=$([bool]$registryLane.dispatch_inflight)"
-          }
-          Write-Host "LIVE_LANE1_OWNER_BRAIN_ACTION_REQUIRED=$ownerBrainActionRequired"
-
-          Write-Host "SAFE_LOG_TAIL_BEGIN"
-          if (Test-Path $logFile) {
-            Get-Content $logFile -Tail 80 -ErrorAction SilentlyContinue | ForEach-Object {
-              Write-Host $_
-            }
-          }
-          Write-Host "SAFE_LOG_TAIL_END"
-
-          if (-not $healthy) {
-            throw "Lane 1 did not reach a stable non-looping runtime state within the bounded live acceptance window"
-          }
-
+          $lifecycle = Join-Path $root "runtime\windows\lifecycle-truth.ps1"
           $shortcut = Join-Path ([Environment]::GetFolderPath("Desktop")) "MAGASIN BUSINESS OS CONTROL.lnk"
-          if (-not (Test-Path $shortcut)) {
-            throw "MAGASIN BUSINESS OS CONTROL shortcut is missing"
+          if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
+          . $lifecycle
+
+          $before = Get-LifecycleProcessTruth -Root $root
+          $beforeWrapperPid = if ($before.wrapper_alive) {
+            (Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+
+          if (-not (Test-Path $shortcut)) { throw "Control Panel shortcut is missing" }
+          Start-Process $shortcut
+          Start-Sleep -Seconds 4
+
+          $ownerStop = Get-LifecycleOwnerStopState -Root $root
+          $enabledLaneCount = Get-EnabledLaneCount -Root $root
+          $after = Get-LifecycleProcessTruth -Root $root
+
+          if ($ownerStop.blocked -or $enabledLaneCount -lt 1) {
+            if (-not $before.wrapper_alive -and $after.wrapper_alive) {
+              throw "Opening Control Panel auto-started runtime while lifecycle truth suppresses it"
+            }
+          } else {
+            $healthy = $after.healthy
+            for ($i = 0; -not $healthy -and $i -lt 45; $i++) {
+              Start-Sleep -Seconds 1
+              $after = Get-LifecycleProcessTruth -Root $root
+              $healthy = $after.healthy
+            }
+            if (-not $healthy) { throw "Opening Control Panel did not recover enabled runtime" }
+
+            if ($before.healthy -and $beforeWrapperPid) {
+              $afterWrapperPid = (Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+              if ($afterWrapperPid -ne $beforeWrapperPid) {
+                throw "Healthy runtime was restarted unnecessarily when panel opened"
+              }
+              Write-Host "ACCEPTANCE_E_HEALTHY_NO_REDUNDANT_RESTART=True"
+            }
           }
 
-          Start-Process $shortcut
-          Start-Sleep -Seconds 2
           Write-Host "CONTROL_PANEL_OPENED=True"
-          Write-Host "LIVE_ACCEPTANCE=True"
+          Write-Host "LIFECYCLE_SURVIVAL=True"

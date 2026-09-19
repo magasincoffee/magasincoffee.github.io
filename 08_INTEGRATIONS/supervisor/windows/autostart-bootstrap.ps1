@@ -7,12 +7,19 @@ $ErrorActionPreference = 'Stop'
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $runtime = Join-Path $root 'runtime'
 $disabled = Join-Path $root 'AUTOSTART_DISABLED'
+$stop = Join-Path $root 'STOP'
+$lifecycleScript = Join-Path $runtime 'windows\lifecycle-truth.ps1'
 $bootstrapLog = Join-Path $root 'autostart.log'
 $startSupervisor = Join-Path $runtime 'windows\start-supervisor.ps1'
 $runnerRoot = 'C:\actions-runner-business\actions-runner'
 $runnerCmd = Join-Path $runnerRoot 'run.cmd'
 
 New-Item -ItemType Directory -Force -Path $root | Out-Null
+
+if (-not (Test-Path $lifecycleScript)) {
+    throw "Lifecycle truth helper is missing: $lifecycleScript"
+}
+. $lifecycleScript
 
 function Write-BootstrapLog([string]$Type, [string]$Message) {
     $record = [ordered]@{
@@ -44,8 +51,15 @@ function Get-SupervisorWrapper {
 
 Write-BootstrapLog 'AUTOSTART_BOOT' 'Business OS autostart bootstrap invoked.'
 
-if (Test-Path $disabled) {
-    Write-BootstrapLog 'AUTOSTART_DISABLED' 'Owner STOP latch is present; automatic restart is suppressed.'
+$ownerStop = Get-LifecycleOwnerStopState -Root $root
+if ($ownerStop.blocked) {
+    Write-BootstrapLog 'AUTOSTART_DISABLED' 'Owner STOP/AUTOSTART_DISABLED is present; automatic restart is suppressed.'
+    exit 0
+}
+
+$enabledLaneCount = Get-EnabledLaneCount -Root $root
+if ($enabledLaneCount -lt 1) {
+    Write-BootstrapLog 'AUTOSTART_ALL_LANES_DISABLED' 'No enabled lane exists; automatic Supervisor startup is not required.'
     exit 0
 }
 
@@ -92,7 +106,7 @@ if (-not (Test-Path $startSupervisor)) {
 }
 
 $env:RUNNER_TRACKING_ID = 'MAGASIN_SUPERVISOR_PERSISTENT'
-& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $startSupervisor -Hidden
+& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $startSupervisor -Hidden -Recovery
 if ($LASTEXITCODE -ne 0) {
     Write-BootstrapLog 'SUPERVISOR_START_FAILED' "start-supervisor exited with code $LASTEXITCODE."
     exit 3

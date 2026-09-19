@@ -9,6 +9,7 @@ $runtime = Join-Path $root 'runtime'
 $profile = Join-Path $root 'browser_profile'
 $target = Join-Path $root 'target.json'
 $stop = Join-Path $root 'STOP'
+$autostartDisabled = Join-Path $root 'AUTOSTART_DISABLED'
 $pidFile = Join-Path $root 'supervisor.pid'
 $registryFile = Join-Path $root 'orchestration.json'
 $runtimeStatusFile = Join-Path $root 'runtime-status.json'
@@ -90,7 +91,10 @@ function Test-DedicatedCdpEndpoint([int]$Port) {
     }
 }
 
-Remove-Item $stop -Force -ErrorAction SilentlyContinue
+if ((Test-Path $stop) -or (Test-Path $autostartDisabled)) {
+    Write-Host 'Supervisor launch blocked by Owner STOP/AUTOSTART_DISABLED.'
+    exit 0
+}
 Set-Content -Path $pidFile -Value $PID -Encoding ascii
 
 try {
@@ -102,7 +106,7 @@ try {
     $chrome = $chromeCandidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
     if (-not $chrome) { throw 'Installed Google Chrome not found.' }
 
-    while (-not (Test-Path $stop)) {
+    while (-not (Test-Path $stop) -and -not (Test-Path $autostartDisabled)) {
         $cdpPort = Get-ExistingDedicatedCdpPort
         if (-not $cdpPort) { $cdpPort = Get-FreeCdpPort }
         $cdpBaseUrl = "http://127.0.0.1:$cdpPort"
@@ -223,7 +227,7 @@ try {
             Pop-Location
         }
 
-        if (-not (Test-Path $stop) -and $nodeExitCode -eq 75) {
+        if (-not (Test-Path $stop) -and -not (Test-Path $autostartDisabled) -and $nodeExitCode -eq 75) {
             # Exit code 75 is the Supervisor's explicit request for a clean CDP
             # recovery. Kill only the dedicated Supervisor Chrome profile even
             # when /json/version still answers, then let the outer gate relaunch it.
@@ -233,7 +237,7 @@ try {
             continue
         }
 
-        if (-not (Test-Path $stop) -and $nodeExitCode -eq 76) {
+        if (-not (Test-Path $stop) -and -not (Test-Path $autostartDisabled) -and $nodeExitCode -eq 76) {
             # Exit code 76 is an intentional autonomy pause. Do not keep an
             # automation browser open when source-of-truth says there is no
             # authorized work to execute.
@@ -242,7 +246,7 @@ try {
             break
         }
 
-        if (-not (Test-Path $stop)) {
+        if (-not (Test-Path $stop) -and -not (Test-Path $autostartDisabled)) {
             Start-Sleep -Seconds 3
         }
     }
