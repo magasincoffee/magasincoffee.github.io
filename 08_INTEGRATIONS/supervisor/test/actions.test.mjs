@@ -227,7 +227,7 @@ test("attachment relay fills text before upload and waits for explicit enabled S
   );
 
   assert.equal(result.executed, true);
-  assert.deepEqual(events, ["fill", "attach", "send"]);
+  assert.deepEqual(events, ["fill", "fill", "attach", "send"]);
 });
 
 test("disabled Send control is never selected as an attachment send target", async () => {
@@ -253,4 +253,19 @@ test("live composer send uses bounded editable readiness instead of a 60s implic
   assert.match(source, /isEditable/);
   assert.match(source, /composer\.fill\(instruction, \{ timeout: 10_000 \}\)/);
   assert.match(source, /did not become editable before bounded timeout/);
+});
+
+
+test("attachment relay retry resets stale draft and attachments with bounded waits", async () => {
+  const source = await import("node:fs/promises").then((fs) =>
+    fs.readFile(new URL("../src/ui/actions.mjs", import.meta.url), "utf8")
+  );
+
+  assert.match(source, /async function resetAttachmentDraft/);
+  assert.match(source, /clearExistingAttachments/);
+  assert.match(source, /maxRemovals = 8/);
+  assert.match(source, /composer\.fill\("", \{ timeout: 3_000 \}\)/);
+  assert.match(source, /setInputFiles\(filePath, \{ timeout: 10_000 \}\)/);
+  assert.match(source, /timeoutMs = 20_000/);
+  assert.match(source, /await resetAttachmentDraft\(page, \{ timeoutMs: 2_000 \}\)/);
 });

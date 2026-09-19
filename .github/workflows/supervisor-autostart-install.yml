@@ -57,9 +57,6 @@ jobs:
             throw "Brain autodiscovery must be disabled in THREE_LANE_V1"
           }
           if ([string]$state.autonomy -eq "PAUSED") {
-            if ($state.current_task -ne "TASK-050") {
-              throw "PAUSED architecture gate must point to TASK-050"
-            }
             if (-not $state.architecture_handoff -or [bool]$state.architecture_handoff.robot_may_execute) {
               throw "PAUSED architecture gate must deny Robot execution"
             }
@@ -75,13 +72,12 @@ jobs:
               $preparedTasks = @($state.prepared_execution_queue.tasks | ForEach-Object { [string]$_ })
             }
 
-            $legacyTaskAllowed = ([string]$state.current_task -eq "TASK-049")
             $preparedQueueTaskAllowed = (
               [string]$state.prepared_execution_queue.status -match '^ACTIVE' -and
               $preparedTasks -contains [string]$state.current_task
             )
 
-            if (-not $legacyTaskAllowed -and -not $preparedQueueTaskAllowed) {
+            if (-not $preparedQueueTaskAllowed) {
               throw "Executable source-of-truth current_task is not part of an Owner-released queue"
             }
 
@@ -201,8 +197,8 @@ jobs:
 
           $runtimeThreeLane = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
           if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.43" -Quiet)) {
-            throw "Installed Three-Lane runtime is not v2026-09-19.43"
+          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.44" -Quiet)) {
+            throw "Installed Three-Lane runtime is not v2026-09-19.44"
           }
 
           $laneConfigFile = Join-Path $root "lanes.json"
@@ -217,7 +213,7 @@ jobs:
                   $laneConfig.mode -eq "THREE_LANE_V1" -and
                   @($laneConfig.lanes).Count -eq 3 -and
                   $laneStatus.mode -eq "THREE_LANE_V1" -and
-                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.43" -and
+                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.44" -and
                   @($laneStatus.lanes).Count -eq 3
                 ) {
                   $laneReady = $true
@@ -332,8 +328,8 @@ jobs:
           $statusFile = Join-Path $root "lane-status.json"
           if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing after previous job cleanup" }
           $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ($status.supervisor_runtime_version -ne "2026-09-19.43") {
-            throw "Post-job Three-Lane runtime is not v2026-09-19.43"
+          if ($status.supervisor_runtime_version -ne "2026-09-19.44") {
+            throw "Post-job Three-Lane runtime is not v2026-09-19.44"
           }
           if ($status.mode -ne "THREE_LANE_V1" -or @($status.lanes).Count -ne 3) {
             throw "Post-job Three-Lane status is invalid"

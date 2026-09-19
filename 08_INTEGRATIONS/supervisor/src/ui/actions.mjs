@@ -226,6 +226,44 @@ export async function executeDecision({
 
 const ATTACHMENT_BUTTON_RE =
   /attach|upload|add files|add photos|đính kèm|tải lên|thêm tệp|thêm ảnh/i;
+const REMOVE_ATTACHMENT_SELECTOR = [
+  "button[aria-label*='Remove file' i]",
+  "button[aria-label*='Remove attachment' i]",
+  "button[aria-label*='Remove image' i]",
+  "button[title*='Remove file' i]",
+  "button[title*='Remove attachment' i]",
+  "button[aria-label*='Xóa tệp' i]",
+  "button[aria-label*='Xóa ảnh' i]"
+].join(",");
+
+async function clearExistingAttachments(
+  page,
+  { maxRemovals = 8 } = {}
+) {
+  let removed = 0;
+  while (removed < maxRemovals) {
+    const button = page.locator(REMOVE_ATTACHMENT_SELECTOR).first();
+    const visible = await button.isVisible().catch(() => false);
+    if (!visible) break;
+    await button.click({ timeout: 2_000 }).catch(() => {});
+    removed += 1;
+    await page.waitForTimeout(120);
+  }
+  return removed;
+}
+
+async function resetAttachmentDraft(
+  page,
+  { timeoutMs = 3_000 } = {}
+) {
+  const composer = await waitForReadyComposer(page, { timeoutMs });
+  if (!composer) {
+    return { ready: false, reason: "composer did not become editable for draft reset" };
+  }
+  await composer.fill("", { timeout: 3_000 }).catch(() => {});
+  await clearExistingAttachments(page);
+  return { ready: true };
+}
 
 async function resolveFileInput(page) {
   let input = page.locator("input[type='file']").first();
@@ -233,7 +271,7 @@ async function resolveFileInput(page) {
 
   const attachButton = page.getByRole("button", { name: ATTACHMENT_BUTTON_RE }).first();
   if (await attachButton.isVisible().catch(() => false)) {
-    await attachButton.click();
+    await attachButton.click({ timeout: 3_000 });
     await page.waitForTimeout(250);
     input = page.locator("input[type='file']").first();
     if (await input.count().catch(() => 0)) return input;
@@ -243,7 +281,7 @@ async function resolveFileInput(page) {
 
 async function waitForAttachmentReady(
   page,
-  { timeoutMs = 45_000, intervalMs = 250 } = {}
+  { timeoutMs = 20_000, intervalMs = 250 } = {}
 ) {
   const deadline = Date.now() + timeoutMs;
 
@@ -297,6 +335,19 @@ export async function sendComposerWithAttachment(
     };
   }
 
+  // Every retry starts from a clean local draft. This prevents a prior
+  // uncertain attempt from stacking text or attachments before exact-once
+  // relay reconciliation decides whether another send is safe.
+  const reset = await resetAttachmentDraft(page);
+  if (!reset.ready) {
+    return {
+      executed: false,
+      dryRun: false,
+      action: ACTIONS.CONTINUE,
+      reason: reset.reason
+    };
+  }
+
   const composer = await waitForReadyComposer(page);
   if (!composer) {
     return {
@@ -307,13 +358,11 @@ export async function sendComposerWithAttachment(
     };
   }
 
-  // ChatGPT disables the composer while an uploaded image is being processed.
-  // Fill the relay text first, then attach the screenshot, then wait until both
-  // the composer and the explicit Send control are enabled again.
   await composer.fill(instruction, { timeout: 10_000 });
 
   const input = await resolveFileInput(page);
   if (!input) {
+    await resetAttachmentDraft(page, { timeoutMs: 1_500 });
     return {
       executed: false,
       dryRun: false,
@@ -322,10 +371,16 @@ export async function sendComposerWithAttachment(
     };
   }
 
-  await input.setInputFiles(filePath);
+  try {
+    await input.setInputFiles(filePath, { timeout: 10_000 });
+  } catch (error) {
+    await resetAttachmentDraft(page, { timeoutMs: 1_500 });
+    throw error;
+  }
 
   const ready = await waitForAttachmentReady(page);
   if (!ready.ready) {
+    await resetAttachmentDraft(page, { timeoutMs: 2_000 });
     return {
       executed: false,
       dryRun: false,
@@ -334,7 +389,12 @@ export async function sendComposerWithAttachment(
     };
   }
 
-  await clickControlBySemantic(page, ready.sendControl);
+  try {
+    await clickControlBySemantic(page, ready.sendControl);
+  } catch (error) {
+    await resetAttachmentDraft(page, { timeoutMs: 2_000 });
+    throw error;
+  }
 
   return {
     executed: true,
@@ -343,3 +403,4 @@ export async function sendComposerWithAttachment(
     target: "COMPOSER_ATTACHMENT_SEND"
   };
 }
+

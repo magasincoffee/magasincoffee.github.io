@@ -119,14 +119,14 @@ test("v43 Owner Brain URL override is revisioned and can hot-swap during active 
   assert.match(source, /normalizeChatGptConversationUrl\(registryLane\.brain_url\)/);
 });
 
-test("v43 active Brain status comes from persisted registry target", async () => {
+test("v44 active Brain status comes from persisted registry target", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-19\.43/);
+  assert.match(source, /2026-09-19\.44/);
 });
 
 test("v43 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
@@ -254,7 +254,7 @@ test("v36 waits for a stable ChatGPT surface before deciding send outcome", asyn
   assert.match(source, /if \(!observed\.stable \|\| !observed\.probe\) return "PENDING"/);
 });
 
-test("v36 keeps exact-once semantics across Brain, Work and result relay", async () => {
+test("v44 keeps bounded exact-once semantics across Brain, Work and result relay", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -262,11 +262,14 @@ test("v36 keeps exact-once semantics across Brain, Work and result relay", async
 
   assert.match(source, /LANE_BRAIN_SEND_RECONCILE_RELOAD/);
   assert.match(source, /LANE_WORK_SEND_RECONCILE_RELOAD/);
-  assert.match(source, /LANE_RESULT_RELAY_RECONCILE_RELOAD/);
   assert.match(source, /LANE_BRAIN_SEND_NOT_CONFIRMED_RETRY/);
   assert.match(source, /LANE_WORK_SEND_NOT_CONFIRMED_RETRY/);
   assert.match(source, /LANE_RESULT_RELAY_NOT_CONFIRMED_RETRY/);
-  assert.match(source, /reconcile_blocked/);
+  assert.match(source, /LANE_RESULT_RELAY_RECONCILE_CONFIRMED/);
+  assert.match(source, /LANE_RESULT_RELAY_RECONCILE_PENDING/);
+  assert.match(source, /classifyRelayMarkerState/);
+  assert.doesNotMatch(source, /LANE_RESULT_RELAY_RECONCILE_RELOAD/);
+  assert.doesNotMatch(source, /LANE_RESULT_RELAY_RECONCILE_BLOCKED/);
 });
 
 test("legacy v34-v35 latch can self-heal after one hard reload", async () => {
