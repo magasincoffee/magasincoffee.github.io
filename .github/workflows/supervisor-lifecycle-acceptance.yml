@@ -22,6 +22,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Run Supervisor tests before lifecycle acceptance
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm test
+
+      - name: Install checked-out Supervisor runtime before lifecycle acceptance
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File "08_INTEGRATIONS/supervisor/windows/install-supervisor.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "Lifecycle acceptance install failed" }
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtimeThreeLane = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
+          $lifecycle = Join-Path $root "runtime\windows\lifecycle-truth.ps1"
+          if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
+          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.50" -Quiet)) {
+            throw "Lifecycle acceptance did not install v2026-09-19.50"
+          }
+          if (-not (Test-Path $lifecycle)) { throw "Installed lifecycle truth helper is missing after install" }
+          Write-Host "LIFECYCLE_ACCEPTANCE_INSTALL_READY=True"
+
       - name: Run lifecycle acceptance A-L on installed production runtime
         shell: powershell
         run: |

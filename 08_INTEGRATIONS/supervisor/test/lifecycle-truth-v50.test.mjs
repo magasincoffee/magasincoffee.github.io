@@ -140,3 +140,30 @@ test("lifecycle architecture document locks Five-Step and truth order before imp
   assert.match(doc, /ACCELERATE/);
   assert.match(doc, /AUTOMATE/);
 });
+
+
+test("production lifecycle acceptance installs its checked-out runtime before A-L", async () => {
+  const workflow = await read("../../../.github/workflows/supervisor-lifecycle-acceptance.yml");
+  const installIndex = workflow.indexOf("Install checked-out Supervisor runtime before lifecycle acceptance");
+  const acceptanceIndex = workflow.indexOf("Run lifecycle acceptance A-L on installed production runtime");
+
+  assert.ok(installIndex >= 0);
+  assert.ok(acceptanceIndex > installIndex);
+  assert.match(workflow.slice(installIndex, acceptanceIndex), /install-supervisor\.ps1/);
+  assert.match(workflow.slice(installIndex, acceptanceIndex), /2026-09-19\.50/);
+  assert.match(workflow.slice(installIndex, acceptanceIndex), /LIFECYCLE_ACCEPTANCE_INSTALL_READY=True/);
+});
+
+
+test("explicit Owner START maintenance is marker-authorized and preserves targets", async () => {
+  const workflow = await read("../../../.github/workflows/supervisor-state-maintenance.yml");
+
+  assert.match(workflow, /owner-start/);
+  assert.match(workflow, /\\\[supervisor-owner-start\\\]/);
+  assert.match(workflow, /MAINTENANCE_OPERATION=OWNER_START/);
+  assert.match(workflow, /OWNER_START_EXPLICIT=True/);
+  assert.match(workflow, /TARGET_URLS_UNCHANGED=True/);
+  assert.match(workflow, /SUPERVISOR_PROCESS_TRUTH_HEALTHY=True/);
+  assert.match(workflow, /-File \$startScript -Hidden/);
+  assert.doesNotMatch(workflow, /-File \$startScript -Hidden -Recovery/);
+});
