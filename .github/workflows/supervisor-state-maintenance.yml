@@ -1,6 +1,6 @@
 name: Supervisor State Maintenance
 
-# Commit-message reset markers are reserved for explicit Owner-authorized maintenance pushes.
+# Owner-authorized reset commits use the production state-maintenance path.
 
 on:
   workflow_dispatch:
