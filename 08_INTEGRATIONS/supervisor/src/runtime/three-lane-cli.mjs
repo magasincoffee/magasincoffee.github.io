@@ -334,14 +334,30 @@ async function reconcileBrainRequest({
   const latch = registryLane.brain_request_inflight;
   if (!latch) return "NONE";
 
+  if (latch.reconcile_blocked) return "BLOCKED";
+  const reload = !latch.reconcile_reloaded;
+  if (reload) {
+    latch.reconcile_reloaded = true;
+    latch.reconcile_started_at = new Date().toISOString();
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_BRAIN_SEND_RECONCILE_RELOAD",
+      laneId: lane.lane_id,
+      digest: latch.digest
+    });
+  }
+
   const outcome = await inspectKnownTargetSendOutcome({
     adapter,
     page,
     digest: latch.digest,
     preUserCount: latch.pre_user_count,
     preMaxTurnOrdinal: latch.pre_max_turn_ordinal,
-    brain: true
+    brain: true,
+    reload
   });
+
+  if (outcome === "PENDING") return "PENDING";
 
   if (outcome === "CONFIRMED") {
     registryLane.brain_request_sent = true;
@@ -361,9 +377,15 @@ async function reconcileBrainRequest({
     return "NOT_CONFIRMED";
   }
 
-  throw new Error(
-    "Không thể xác định lệnh khởi tạo Brain đã gửi hay chưa; Robot giữ an toàn để tránh gửi trùng."
-  );
+  latch.reconcile_blocked = true;
+  await atomicJsonWrite(registryPath, registry);
+  await safeLog(logPath, {
+    type: "LANE_BRAIN_SEND_RECONCILE_BLOCKED",
+    laneId: lane.lane_id,
+    digest: latch.digest,
+    reason: "stable target changed without matching digest"
+  });
+  return "BLOCKED";
 }
 
 async function ensureBrainRequest({
@@ -388,6 +410,7 @@ async function ensureBrainRequest({
       logPath
     });
     if (outcome === "CONFIRMED") return true;
+    if (outcome === "PENDING" || outcome === "BLOCKED") return false;
   }
 
   const probe = await assertConversationSafe(adapter, page, { brain: true });
@@ -504,14 +527,39 @@ async function reconcileDispatchInflight({
     registryLane.work_url,
     { brain: false }
   );
+  if (latch.reconcile_blocked) return "BLOCKED";
+  const reload = !latch.reconcile_reloaded;
+  if (reload) {
+    latch.reconcile_reloaded = true;
+    latch.reconcile_started_at = new Date().toISOString();
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_WORK_SEND_RECONCILE_RELOAD",
+      laneId: lane.lane_id,
+      taskId: latch.task_id,
+      digest: latch.instruction_digest
+    });
+  }
+
   const outcome = await inspectKnownTargetSendOutcome({
     adapter,
     page,
     digest: latch.instruction_digest,
     preUserCount: latch.pre_user_count,
     preMaxTurnOrdinal: latch.pre_max_turn_ordinal,
-    brain: false
+    brain: false,
+    reload
   });
+
+  if (outcome === "PENDING") {
+    await safeLog(logPath, {
+      type: "LANE_WORK_SEND_RECONCILE_PENDING",
+      laneId: lane.lane_id,
+      taskId: latch.task_id,
+      digest: latch.instruction_digest
+    });
+    return "PENDING";
+  }
 
   if (outcome === "CONFIRMED") {
     await finalizeConfirmedDispatch({
@@ -536,9 +584,16 @@ async function reconcileDispatchInflight({
     return "NOT_CONFIRMED";
   }
 
-  throw new Error(
-    "Work chat đã thay đổi trong lúc xác minh lần gửi; Robot giữ an toàn để tránh gửi trùng."
-  );
+  latch.reconcile_blocked = true;
+  await atomicJsonWrite(registryPath, registry);
+  await safeLog(logPath, {
+    type: "LANE_WORK_SEND_RECONCILE_BLOCKED",
+    laneId: lane.lane_id,
+    taskId: latch.task_id,
+    digest: latch.instruction_digest,
+    reason: "stable target changed without matching digest"
+  });
+  return "BLOCKED";
 }
 
 async function createWorkConversation(adapter, instruction) {
@@ -580,7 +635,7 @@ async function dispatchWork({
       registryPath,
       logPath
     });
-    if (outcome === "CONFIRMED") return;
+    if (outcome === "CONFIRMED" || outcome === "PENDING" || outcome === "BLOCKED") return;
   }
 
   let page = null;
@@ -703,14 +758,32 @@ async function reconcileRelayInflight({
   const latch = registryLane.relay_inflight;
   if (!latch) return "NONE";
 
+  if (latch.reconcile_blocked) return "BLOCKED";
+  const reload = !latch.reconcile_reloaded;
+  if (reload) {
+    latch.reconcile_reloaded = true;
+    latch.reconcile_started_at = new Date().toISOString();
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_RESULT_RELAY_RECONCILE_RELOAD",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: latch.relay_id,
+      digest: latch.response_digest
+    });
+  }
+
   const outcome = await inspectKnownTargetSendOutcome({
     adapter,
     page: brainPage,
     digest: latch.text_digest,
     preUserCount: latch.pre_user_count,
     preMaxTurnOrdinal: latch.pre_max_turn_ordinal,
-    brain: true
+    brain: true,
+    reload
   });
+
+  if (outcome === "PENDING") return "PENDING";
 
   if (outcome === "CONFIRMED") {
     registryLane.last_result_relay_id = latch.relay_id;
@@ -736,9 +809,17 @@ async function reconcileRelayInflight({
     return "NOT_CONFIRMED";
   }
 
-  throw new Error(
-    "Không thể xác định kết quả Work đã gửi về Brain hay chưa; Robot giữ an toàn để tránh gửi trùng."
-  );
+  latch.reconcile_blocked = true;
+  await atomicJsonWrite(registryPath, registry);
+  await safeLog(logPath, {
+    type: "LANE_RESULT_RELAY_RECONCILE_BLOCKED",
+    laneId: lane.lane_id,
+    taskId: registryLane.task_id,
+    relayId: latch.relay_id,
+    digest: latch.response_digest,
+    reason: "stable Brain target changed without matching relay digest"
+  });
+  return "BLOCKED";
 }
 
 async function relayWorkResult({
@@ -778,7 +859,7 @@ async function relayWorkResult({
       registryPath,
       logPath
     });
-    if (outcome === "CONFIRMED") return;
+    if (outcome === "CONFIRMED" || outcome === "PENDING" || outcome === "BLOCKED") return;
   }
 
   const brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
@@ -964,7 +1045,7 @@ async function processLane({
   const brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
 
   if (registryLane.relay_inflight) {
-    await reconcileRelayInflight({
+    const relayOutcome = await reconcileRelayInflight({
       adapter,
       lane,
       brainPage,
@@ -973,9 +1054,25 @@ async function processLane({
       registryPath,
       logPath
     });
+    if (relayOutcome === "PENDING") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "RECOVERING",
+        "Đang tự xác minh lần gửi kết quả trước; Robot không tải lại trang lặp lại."
+      );
+    }
+    if (relayOutcome === "BLOCKED") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WAIT_OWNER",
+        "Kết quả gửi về Bộ não có thay đổi ngoài dự kiến; Robot đã dừng tự gửi lại để tránh trùng."
+      );
+    }
   }
   if (registryLane.dispatch_inflight) {
-    await reconcileDispatchInflight({
+    const dispatchOutcome = await reconcileDispatchInflight({
       adapter,
       lane,
       registryLane,
@@ -983,6 +1080,22 @@ async function processLane({
       registryPath,
       logPath
     });
+    if (dispatchOutcome === "PENDING") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "RECOVERING",
+        "Đang tự xác minh lần gửi Work trước; chỉ quan sát, không tải lại trang lặp lại."
+      );
+    }
+    if (dispatchOutcome === "BLOCKED") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WAIT_OWNER",
+        "Work chat có thay đổi ngoài dự kiến; Robot đã dừng tự gửi lại để tránh trùng."
+      );
+    }
   }
 
   if (registryLane.awaiting_work) {
