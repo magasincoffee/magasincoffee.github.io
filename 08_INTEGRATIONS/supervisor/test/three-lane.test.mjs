@@ -10,6 +10,8 @@ import {
   normalizeLaneConfig,
   defaultLaneRegistry,
   normalizeLaneRegistry,
+  buildWorkDispatchInstruction,
+  workDispatchMarker,
   buildLaneResultRelay
 } from "../src/runtime/three-lane.mjs";
 
@@ -197,4 +199,20 @@ test("lane registry tracks the applied Owner Work URL revision", () => {
     }
   });
   assert.equal(registry.lanes["lane-1"].applied_work_url_revision, 7);
+});
+
+
+test("Work dispatch envelope carries deterministic machine marker without changing task body", () => {
+  const dispatchId = "abc123";
+  const text = buildWorkDispatchInstruction({
+    taskId: "TASK-049/TEST",
+    dispatchId,
+    instruction: "Do one safe thing."
+  });
+
+  assert.match(text, /MAGASIN_WORK_DISPATCH_V1/);
+  assert.match(text, /task_id=TASK-049\/TEST/);
+  assert.match(text, /dispatch_id=abc123/);
+  assert.match(text, /Do one safe thing\./);
+  assert.equal(workDispatchMarker(dispatchId), "dispatch_id=abc123");
 });
