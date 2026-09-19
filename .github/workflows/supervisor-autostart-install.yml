@@ -141,14 +141,19 @@ jobs:
             Select-Object -First 1
           if (-not $runner) { throw "Canonical GitHub Runner is not online" }
 
-          $supervisor = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
-            Where-Object {
-              $_.CommandLine -and
-              $_.CommandLine -like "*run-supervisor.ps1*" -and
-              $_.CommandLine -like "*MAGASIN\BusinessOS\supervisor*"
-            } |
-            Select-Object -First 1
-          if (-not $supervisor) { throw "Supervisor wrapper is not online" }
+          $supervisor = $null
+          for ($i = 0; $i -lt 30; $i++) {
+            $supervisor = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+              Where-Object {
+                $_.CommandLine -and
+                $_.CommandLine -like "*run-supervisor.ps1*" -and
+                $_.CommandLine -like "*MAGASIN\BusinessOS\supervisor*"
+              } |
+              Select-Object -First 1
+            if ($supervisor) { break }
+            Start-Sleep -Seconds 1
+          }
+          if (-not $supervisor) { throw "Supervisor wrapper is not online after bounded wait" }
 
           $profile = Join-Path $root "browser_profile"
           $chrome = $null
