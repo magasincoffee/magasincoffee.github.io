@@ -184,10 +184,10 @@ The Owner-released generation `PFC_8H_V2_RUN_01` is ACTIVE.
 Current authoritative state:
 
 ```text
-TASK-051..TASK-060 = DONE
-current_task        = TASK-061
-TASK-061            = READY / AUTO_CONTINUE
-next_task           = TASK-062
+TASK-051..TASK-061 = DONE
+current_task        = TASK-062
+TASK-062            = READY / AUTO_CONTINUE
+next_task           = TASK-063
 status              = READY
 autonomy            = AUTO_CONTINUE
 requires_user       = false
@@ -255,15 +255,16 @@ The repository is public. Never commit secrets, credentials, tokens, cookies, pr
 
 ## 12. Current task
 
-**TASK-061 — Cash Balance Financial Truth Contract — READY / AUTO_CONTINUE.**
+**TASK-062 — Cash Balance Source Mapper — READY / AUTO_CONTINUE.**
 
 Immediate behavior for a new Work session:
 
 1. read the canonical enterprise architecture;
 2. read `PFC_8H_V2_EXECUTION_PLAN.md`;
 3. read `TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`;
-4. preserve the distinction `OBSERVED_BALANCE != COMPUTED_BALANCE`;
-5. do not treat movement rows or payment method as balance evidence;
-6. keep missing balances GAP / NOT_CONNECTED, never zero;
-7. continue automatically to TASK-062 after TASK-061 DoD unless a true Owner/security boundary occurs.
+4. read `TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`;
+5. map only source evidence whose provenance is proven by TASK-060;
+6. preserve `OBSERVED_BALANCE != COMPUTED_BALANCE` and never infer balance from payment method/movement rows;
+7. keep missing external balances GAP / NOT_CONNECTED, never zero;
+8. continue automatically to TASK-063 after TASK-062 DoD unless a true Owner/security boundary occurs.
 
