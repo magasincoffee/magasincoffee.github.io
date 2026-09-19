@@ -33,7 +33,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.31";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.32";
 
 function parseArgs(argv) {
   const result = {
@@ -496,6 +496,57 @@ async function relayWorkResult({
   });
 }
 
+async function applyOwnerWorkTarget({
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  logPath
+}) {
+  const revision = Number(lane.work_url_revision || 0);
+  if (revision <= Number(registryLane.applied_work_url_revision || 0)) {
+    return false;
+  }
+
+  const raw = String(lane.work_url || "").trim();
+  let configuredUrl = "";
+  if (raw) {
+    try {
+      configuredUrl = normalizeChatGptConversationUrl(raw);
+    } catch {
+      throw new Error("LINK WORK không hợp lệ. Hãy dán link cuộc trò chuyện ChatGPT hoặc để trống để Robot tự tạo.");
+    }
+  }
+
+  const changed = configuredUrl !== String(registryLane.work_url || "");
+  if (changed) {
+    if (registryLane.relay_inflight?.screenshot_path) {
+      await fs.unlink(registryLane.relay_inflight.screenshot_path).catch(() => {});
+    }
+
+    registryLane.work_url = configuredUrl;
+    registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
+    registryLane.task_id = null;
+    registryLane.instruction_digest = null;
+    registryLane.last_brain_directive_digest = null;
+    registryLane.last_work_result_digest = null;
+    registryLane.last_result_relay_id = null;
+    registryLane.dispatch_inflight = null;
+    registryLane.relay_inflight = null;
+    registryLane.awaiting_work = false;
+
+    await safeLog(logPath, {
+      type: "LANE_OWNER_WORK_TARGET_CHANGED",
+      laneId: lane.lane_id,
+      digest: configuredUrl ? sha256(configuredUrl) : "AUTO"
+    });
+  }
+
+  registryLane.applied_work_url_revision = revision;
+  await atomicJsonWrite(registryPath, registry);
+  return changed;
+}
+
 async function processLane({
   adapter,
   lane,
@@ -540,6 +591,14 @@ async function processLane({
     registryLane.last_brain_directive_digest = null;
     await atomicJsonWrite(registryPath, registry);
   }
+
+  await applyOwnerWorkTarget({
+    lane,
+    registryLane,
+    registry,
+    registryPath,
+    logPath
+  });
 
   const brainPage = await openExactConversation(adapter, brainUrl);
   const brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
@@ -803,12 +862,15 @@ try {
         });
       } catch (error) {
         const transient = isTransientNavigationError(error);
+        if (transient) {
+          await adapter.reconnectOverCdp().catch(() => {});
+        }
         statuses[lane.lane_id] = laneStatus(
           lane,
           registryLane,
           transient ? "RECOVERING" : "WAIT_OWNER",
           transient
-            ? "Mất kết nối trình duyệt tạm thời; Robot sẽ tự thử lại."
+            ? "Mất kết nối tạm thời; Robot đang tự kết nối lại và sẽ thử tiếp."
             : String(error?.message || error).slice(0, 220),
           { error_name: error?.name || "Error" }
         );
