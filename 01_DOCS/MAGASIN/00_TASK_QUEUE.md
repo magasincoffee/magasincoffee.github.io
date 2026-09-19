@@ -67,3 +67,9 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 | TASK-047 | Night docs / evidence / PR prep | 20m | changelog/test logs/reviewable PRs | DONE |
 | TASK-048 | Night final checkpoint | 10m | background hard-stop only; preserve later Owner task | TIME_GATED |
 | TASK-049 | Supervisor Brain/Worker multi-conversation orchestration | 120m | one Brain + bounded Worker pool + full-result relay + full-only rollover + auto-upgrade | IN_PROGRESS |
+
+TASK-049 partial acceptance checkpoint (does not close the task):
+- **E2 ACCEPTED** — PR #141 / merge `f076779c4d1e3afd709385f0558a7185caeabf51`; Vietnamese Owner UI, evidence-backed live Worker status, fixed UTC+7 display, mutually exclusive recovery controls.
+- **F ACCEPTED** — Supervisor Autostart Install run `35414750942`: **212/212 PASS**, install + verify-survival success; no `WORKER_RETRY_REQUIRED` or `TECHNICAL_RECOVERY_STUCK`; Supervisor / Brain-Worker / Robot Chrome survived post-job verification.
+- Overall TASK-049 remains **IN_PROGRESS** until the other acceptance items are independently reconciled.
+
