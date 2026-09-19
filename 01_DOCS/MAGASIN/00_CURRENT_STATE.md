@@ -143,13 +143,13 @@ Final-checkpoint evidence:
 - Media Robot QA: **83/83 PASS** runs `35370775036` and `35371002442`;
 - no bounded hard-stop regression remains after reconciliation, boundary-time guard, idempotence, post-review one-shot and canonical-evidence surface fixes; pre-boundary Supervisor busy-loop prevention now uses the existing `PAUSED` autonomy mode.
 
-TASK-048 remains a background temporal safety gate while TASK-049 is active:
+TASK-048/TASK-049 notes below are historical safety evidence only; they do not override current TASK-050 or the PAUSED Owner gate:
 
 1. preserve the verified reports/state;
 2. do not merge either PR;
 3. do not execute live Saydi Generate/Download;
 4. do not reactivate TASK-035 Gmail production email;
-5. at **2026-09-19 09:15 +07**, the GitHub-hosted hard-stop may close `NIGHT_WINDOW_COMPLETE`, but because Owner has activated TASK-049 it must not overwrite TASK-049/status/autonomy.
+5. completed hard-stop history must not overwrite current TASK-050, the canonical architecture, or `WAIT_USER / PAUSED`.
 
 ## Session handoff
 
