@@ -70,7 +70,7 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 
 | TASK-050 | Canonical enterprise architecture locked — Profitability & Cash first | Owner detailing | Apply Five-Step continuously across every aspect; derive implementation queue from canonical architecture; Robot release requires explicit Owner approval | WAIT_USER / ARCHITECTURE_LOCKED / ROBOT_PAUSED |
 
-| TASK-051 | PFC source inventory + delete/defer map | 20m | verified existing financial sources + trust/quality classification + explicit non-goals | IN_PROGRESS / AUTO_CONTINUE |
+| TASK-051 | PFC source inventory + delete/defer map | 20m | verified existing financial sources + trust/quality classification + explicit non-goals | RESTARTED / IN_PROGRESS / AUTO_CONTINUE |
 | TASK-052 | Financial Truth contract v1 | 20m | canonical period/scope/quality/source/as-of/lineage contract; no synthetic zero | QUEUED / AUTO_CONTINUE |
 | TASK-053 | Monthly Revenue baseline contract + aggregator | 20m | trusted RECONCILED revenue aggregation with quality/lineage propagation | QUEUED / AUTO_CONTINUE |
 | TASK-054 | Revenue baseline adapter tests/integration | 20m | fail-closed ACTUAL/GAP/NOT_CONNECTED + partial-source regression | QUEUED / AUTO_CONTINUE |
@@ -105,3 +105,6 @@ Canonical architecture: `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — m
 Canonical runbook: `02_PROFITABILITY_CASH/THREE_HOUR_EXECUTION_QUEUE_V1.md`.
 
 TASK-051 → TASK-059 are deliberately restricted to work that does not require Owner business decisions, secrets, private production exports or destructive actions. The queue must stop at a true Owner/security boundary only. Owner explicitly released Robot on 2026-09-19. Project autonomy is AUTO_CONTINUE for PFC_3H_V1 until a true Owner/security boundary or queue completion.
+
+
+Execution generation: `PFC_3H_V1_RESTART_01` — Owner officially restarted and released the queue from TASK-051 on 2026-09-19. Previous partial execution evidence is historical only and must not advance the cursor.
