@@ -71,11 +71,11 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 | TASK-050 | Canonical enterprise architecture locked — Profitability & Cash first | Owner detailing | Apply Five-Step continuously across every aspect; derive implementation queue from canonical architecture; Robot release requires explicit Owner approval | WAIT_USER / ARCHITECTURE_LOCKED / ROBOT_PAUSED |
 
 | TASK-051 | PFC source inventory + delete/defer map | 20m | verified existing financial sources + trust/quality classification + explicit non-goals | DONE |
-| TASK-052 | Financial Truth contract v1 | 20m | canonical period/scope/quality/source/as-of/lineage contract; no synthetic zero | REOPENED / CI_REPAIR / AUTO_CONTINUE |
+| TASK-052 | Financial Truth contract v1 | 20m | canonical period/scope/quality/source/as-of/lineage contract; no synthetic zero | DONE |
 
 TASK-051 restart completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_051_PFC_SOURCE_INVENTORY_EVIDENCE_V1.md`. Missing external sources remain explicit GAP/NOT_CONNECTED and do not block AUTO_CONTINUE.
-TASK-052 evidence exists at `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_052_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`, but completion is reopened because GitHub Actions Business OS Contract Tests failed with a syntax error in `02_CORE/shared/financial-truth-v1.mjs`. TASK-053 must not start until TASK-052 CI is green.
-| TASK-053 | Monthly Revenue baseline contract + aggregator | 20m | trusted RECONCILED revenue aggregation with quality/lineage propagation | QUEUED / WAIT_TASK_052_CI_GREEN |
+TASK-052 reconciliation repair is closed. Canonical evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_052_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`. Business OS Contract Tests run `35446467271` completed successfully on Node v20.20.2; TASK-053 is released.
+| TASK-053 | Monthly Revenue baseline contract + aggregator | 20m | trusted RECONCILED revenue aggregation with quality/lineage propagation | READY / AUTO_CONTINUE |
 | TASK-054 | Revenue baseline adapter tests/integration | 20m | fail-closed ACTUAL/GAP/NOT_CONNECTED + partial-source regression | QUEUED / AUTO_CONTINUE |
 | TASK-055 | Cash event taxonomy + Cash Bridge contract v1 | 20m | opening/inflow/outflow/ending/variance categories; missing stays GAP | QUEUED / AUTO_CONTINUE |
 | TASK-056 | Cash Bridge pure calculator + fixtures/tests | 20m | deterministic evidence-aware calculator; no bank/MoMo assumptions | QUEUED / AUTO_CONTINUE |
