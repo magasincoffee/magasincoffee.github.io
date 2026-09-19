@@ -33,7 +33,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.35";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.36";
 
 function parseArgs(argv) {
   const result = {
@@ -227,56 +227,84 @@ async function waitForUserTurnDigest(
   return false;
 }
 
+async function waitForStableSendSurface(
+  adapter,
+  page,
+  { brain = false, timeoutMs = 15_000, intervalMs = 400 } = {}
+) {
+  const deadline = Date.now() + timeoutMs;
+  let lastProbe = null;
+  let lastDigests = [];
+
+  while (Date.now() <= deadline) {
+    lastDigests = await captureUserTurnDigests(page).catch(() => []);
+    lastProbe = await assertConversationSafe(adapter, page, {
+      brain,
+      allowFull: !brain
+    }).catch(() => null);
+
+    if (lastProbe) {
+      const stable = Boolean(
+        lastProbe.snapshot.composerReady &&
+        !lastProbe.snapshot.responseRunning &&
+        lastProbe.snapshot.lastMessageRole !== "user" &&
+        lastProbe.classification.observation === OBSERVATIONS.RESPONSE_COMPLETE
+      );
+      if (stable) return { stable: true, probe: lastProbe, digests: lastDigests };
+    }
+
+    await delay(intervalMs);
+  }
+
+  return { stable: false, probe: lastProbe, digests: lastDigests };
+}
+
 async function inspectKnownTargetSendOutcome({
   adapter,
   page,
   digest,
   preUserCount,
   preMaxTurnOrdinal,
-  brain = false
+  brain = false,
+  reload = false
 }) {
   if (await waitForUserTurnDigest(page, digest, { timeoutMs: 1200 })) {
     return "CONFIRMED";
   }
 
-  await page.reload({
-    waitUntil: "domcontentloaded",
-    timeout: 30_000
-  });
-  await delay(750);
+  if (reload) {
+    await page.reload({
+      waitUntil: "domcontentloaded",
+      timeout: 30_000
+    });
+  }
 
-  const reloadedDigests = await captureUserTurnDigests(page).catch(() => []);
-  if (reloadedDigests.includes(digest)) return "CONFIRMED";
-
-  const probe = await assertConversationSafe(adapter, page, {
+  const observed = await waitForStableSendSurface(adapter, page, {
     brain,
-    allowFull: !brain
+    timeoutMs: reload ? 15_000 : 4_000
   });
-  const stable = Boolean(
-    probe.snapshot.composerReady &&
-    !probe.snapshot.responseRunning &&
-    probe.snapshot.lastMessageRole !== "user" &&
-    probe.classification.observation === OBSERVATIONS.RESPONSE_COMPLETE
-  );
+  const digests = observed.digests || [];
+  if (digests.includes(digest)) return "CONFIRMED";
+  if (!observed.stable || !observed.probe) return "PENDING";
 
+  const probe = observed.probe;
   const baselineKnown =
     Number.isFinite(Number(preUserCount)) &&
     Number.isFinite(Number(preMaxTurnOrdinal));
+
   if (baselineKnown) {
     const noNewUserTurn =
-      reloadedDigests.length <= Number(preUserCount) &&
+      digests.length <= Number(preUserCount) &&
       Number(probe.snapshot.maxConversationTurnOrdinal || 0) <=
         Number(preMaxTurnOrdinal);
-    if (stable && noNewUserTurn) return "NOT_CONFIRMED";
+    if (noNewUserTurn) return "NOT_CONFIRMED";
+    return "UNCERTAIN";
   }
 
-  // v34 and older latches did not persist a pre-send baseline. A hard reload
-  // followed by a stable assistant-complete surface with no matching user
-  // digest is sufficient migration evidence that the attempted send was not
-  // persisted server-side.
-  if (!baselineKnown && stable) return "NOT_CONFIRMED";
-
-  return "UNCERTAIN";
+  // Legacy v34/v35 latches may lack a baseline. Once the exact conversation
+  // has been hard-reloaded and reaches a stable assistant-complete surface,
+  // absence of the exact digest proves the attempted send was not persisted.
+  return "NOT_CONFIRMED";
 }
 
 async function finalizeConfirmedDispatch({
