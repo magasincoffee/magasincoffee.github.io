@@ -10,6 +10,7 @@ function fakeLocator({
   onFill = () => {},
   onPress = () => {},
   onSetFiles = () => {},
+  fillError = null,
   enabled = true,
   editable = true,
   count = 1
@@ -21,7 +22,10 @@ function fakeLocator({
     async isEditable() { return editable; },
     async count() { return count; },
     async click() { onClick(); },
-    async fill(value) { onFill(value); },
+    async fill(value) {
+      if (fillError) throw fillError;
+      onFill(value);
+    },
     async press(key) { onPress(key); },
     async setInputFiles(value) { onSetFiles(value); }
   };
@@ -34,6 +38,8 @@ function fakePage({
   onFill = () => {},
   onPress = () => {},
   onSetFiles = () => {},
+  onInsertText = () => {},
+  fillError = null,
   fileInputPresent = true
 } = {}) {
   return {
@@ -44,7 +50,8 @@ function fakePage({
           visible: composerVisible,
           enabled: true,
           onFill,
-          onPress
+          onPress,
+          fillError
         });
       }
       if (selector.includes("input[type='file']")) {
@@ -61,6 +68,10 @@ function fakePage({
       return fakeLocator({ visible: false, enabled: false, count: 0 });
     },
     async waitForTimeout() {},
+    async bringToFront() {},
+    keyboard: {
+      async insertText(value) { onInsertText(value); }
+    },
     getByRole() {
       return fakeLocator({ visible: true, onClick });
     }
@@ -268,4 +279,66 @@ test("attachment relay retry resets stale draft and attachments with bounded wai
   assert.match(source, /setInputFiles\(filePath, \{ timeout: 10_000 \}\)/);
   assert.match(source, /timeoutMs = 20_000/);
   assert.match(source, /await resetAttachmentDraft\(page, \{ timeoutMs: 2_000 \}\)/);
+});
+
+
+test("v49 composer transaction falls back to keyboard after detached fill timeout", async () => {
+  const events = [];
+  const timeout = new Error("locator.fill: Timeout 2500ms exceeded");
+  timeout.name = "TimeoutError";
+  const controls = [{
+    text: "",
+    ariaLabel: "Send prompt",
+    testId: "send-button",
+    disabled: false
+  }];
+
+  const result = await sendComposerInstruction(
+    fakePage({
+      controls,
+      fillError: timeout,
+      onPress: (key) => { events.push(`press:${key}`); },
+      onInsertText: (text) => { events.push(`insert:${text}`); },
+      onClick: () => { events.push("send"); }
+    }),
+    "transactional fallback text",
+    { dryRun: false }
+  );
+
+  assert.equal(result.executed, true);
+  assert.ok(events.includes("press:Control+A") || events.includes("press:Meta+A"));
+  assert.ok(events.includes("press:Backspace"));
+  assert.ok(events.includes("insert:transactional fallback text"));
+  assert.equal(events.at(-1), "send");
+});
+
+test("v49 attachment relay uses keyboard fallback without duplicating attachment send", async () => {
+  const events = [];
+  let fillCalls = 0;
+  const timeout = new Error("locator.fill: Timeout 2500ms exceeded");
+  timeout.name = "TimeoutError";
+  const controls = [{
+    text: "",
+    ariaLabel: "Send prompt",
+    testId: "send-button",
+    disabled: false
+  }];
+
+  const result = await sendComposerWithAttachment(
+    fakePage({
+      controls,
+      fillError: timeout,
+      onFill: () => { fillCalls += 1; },
+      onInsertText: () => { events.push("insert"); },
+      onSetFiles: () => { events.push("attach"); },
+      onClick: () => { events.push("send"); }
+    }),
+    "relay with fallback",
+    "C:\\temp\\relay.png",
+    { dryRun: false }
+  );
+
+  assert.equal(result.executed, true);
+  assert.equal(fillCalls, 0);
+  assert.deepEqual(events, ["insert", "attach", "send"]);
 });
