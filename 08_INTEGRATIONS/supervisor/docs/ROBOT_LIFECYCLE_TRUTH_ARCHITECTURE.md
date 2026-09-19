@@ -165,4 +165,33 @@ L. reopen panel after crash automatically recovers enabled runtime without requi
 
 ## 13. AFTER inventory
 
-To be completed in this document after implementation and production verification.
+Production implementation after TASK-060:
+
+- `windows/lifecycle-truth.ps1` — new shared source of live PROCESS TRUTH, enabled-lane truth, Owner STOP truth and bounded recovery start.
+- `windows/control-panel.ps1` — process banner and lane business state are composed separately; stale persisted WORKING is suppressed until process truth is healthy; panel auto-recovers enabled lanes; per-lane START only enables lane intent.
+- `windows/start-supervisor.ps1` — explicit Owner START is the only path that clears STOP/AUTOSTART_DISABLED; `-Recovery` is fail-closed.
+- `windows/run-supervisor.ps1` — wrapper refuses launch/continuation under STOP/AUTOSTART_DISABLED and retains bounded Three-Lane/Chrome/CDP self-healing.
+- `windows/stop-supervisor.ps1` — remains the authoritative Owner STOP writer.
+- `windows/install-supervisor.ps1` — technical runtime replacement preserves Owner STOP.
+- `windows/install-autostart.ps1` — registers recovery without clearing Owner STOP.
+- `windows/autostart-bootstrap.ps1` — auto-start requires >=1 enabled lane and no Owner STOP.
+- `windows/repair-supervisor.ps1` — technical repair preserves Owner STOP and only recovers when lifecycle truth allows.
+- `src/runtime/three-lane-cli.mjs` — runtime v2026-09-19.50 publishes truth-order metadata while preserving exact Brain/Work/latch reconciliation.
+- `.github/workflows/supervisor-autostart-install.yml` — lifecycle-driven deploy/survival; no longer force-enables lane-1 or converts business PAUSED state into local Owner STOP.
+- `.github/workflows/supervisor-integrity.yml` — static and self-hosted process-truth integrity audit.
+- `.github/workflows/supervisor-open-control-panel.yml` — opener verifies all-disabled, Owner STOP, recovery and healthy-no-restart behavior.
+- `.github/workflows/supervisor-lifecycle-acceptance.yml` — production self-hosted acceptance A→L with target-preservation guard.
+- `test/lifecycle-truth-v50.test.mjs` and aligned Windows/runtime tests — regression coverage for lifecycle truth and legacy semantic separation.
+- No Brain autodiscovery path was added.
+- No Brain/Work URL migration or replacement path was added.
+- No production diagnostic workflow from TASK-049 was restored.
+
+Root cause removed:
+
+1. lane-status JSON can no longer outrank live process health in the Control Panel;
+2. process recovery no longer depends on pressing per-lane START again;
+3. technical install/autostart/repair no longer clears or manufactures Owner STOP state;
+4. enabled-lane recovery and all-disabled suppression use one shared lifecycle contract;
+5. business execution state and process lifecycle are no longer conflated.
+
+Final release acceptance is recorded only after PR merge, self-hosted install/survival, lifecycle A→L and production integrity all pass.
