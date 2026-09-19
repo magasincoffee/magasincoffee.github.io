@@ -20,6 +20,39 @@ function Get-DedicatedChromeProcesses {
         Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" })
 }
 
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class MagasinSupervisorChromeWindow {
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetForegroundWindow(IntPtr hWnd);
+}
+'@
+
+function Show-DedicatedChromeWindow {
+    # This launcher is Owner-initiated. Restore/focus only a top-level window
+    # belonging to the dedicated Supervisor profile; never target personal Chrome.
+    for ($attempt = 0; $attempt -lt 30; $attempt++) {
+        foreach ($candidate in (Get-DedicatedChromeProcesses)) {
+            $process = Get-Process -Id $candidate.ProcessId -ErrorAction SilentlyContinue
+            if ($process -and $process.MainWindowHandle -ne [IntPtr]::Zero) {
+                [MagasinSupervisorChromeWindow]::ShowWindowAsync($process.MainWindowHandle, 9) | Out-Null
+                Start-Sleep -Milliseconds 100
+                [MagasinSupervisorChromeWindow]::SetForegroundWindow($process.MainWindowHandle) | Out-Null
+                return $true
+            }
+        }
+        Start-Sleep -Milliseconds 100
+    }
+    return $false
+}
+
 function Get-FreeCdpPort {
     foreach ($candidate in 9222..9232) {
         $listener = Get-NetTCPConnection -State Listen -LocalPort $candidate -ErrorAction SilentlyContinue |
@@ -71,6 +104,7 @@ if ($existing) {
         ('--user-data-dir="' + $profile + '"'),
         $url
     )
+    Show-DedicatedChromeWindow | Out-Null
     exit 0
 }
 
@@ -83,3 +117,5 @@ Start-Process -FilePath $chrome -ArgumentList @(
     '--no-default-browser-check',
     $url
 )
+
+Show-DedicatedChromeWindow | Out-Null
