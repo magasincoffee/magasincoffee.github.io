@@ -12,7 +12,7 @@ test("Windows wrapper selects Brain/Worker runtime only from source-of-truth mod
   assert.match(source, /BRAIN_WORKER_V1/);
   assert.match(source, /brain-worker-cli\.mjs/);
   assert.match(source, /supervisor-loop-cli\.mjs/);
-  assert.match(source, /Legacy Supervisor target is missing/);
+  assert.match(source, /Legacy mode was explicitly selected but no legacy target exists/);
 });
 
 test("auto-upgrade workflow installs runtime source changes and verifies a Brain target", async () => {
