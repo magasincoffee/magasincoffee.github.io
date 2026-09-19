@@ -13,6 +13,32 @@ Chuỗi mục tiêu:
 
 Tài liệu này là **bảng kế hoạch điều hành** để theo dõi tiến độ. Kết quả đã chốt được lưu trong chính thư mục `01_DOCS/MAGASIN/`.
 
+## 1A. Owner architecture discussion gate — 2026-09-19
+
+Owner has reprioritized the current work to **enterprise architecture lock with Profitability & Cash first**.
+
+While architecture discussion is active:
+
+- `00_PROJECT_STATE.json` remains `WAIT_USER / PAUSED`;
+- no new implementation is delegated to Supervisor/Brain/Work;
+- Schedule-first remains a proven slice, not the current enterprise priority;
+- Profitability & Cash is the current architecture spine;
+- Robot resumes only after explicit Owner architecture lock + handoff.
+
+Canonical discussion document: `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md`.
+
+Current Five-Step emphasis is:
+
+```text
+QUESTION → DELETE → SIMPLIFY
+```
+
+Only after architecture lock do we proceed to:
+
+```text
+ACCELERATE → AUTOMATE
+```
+
 ## 2. Luồng chuẩn
 
 ```text
