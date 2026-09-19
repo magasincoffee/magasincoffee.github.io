@@ -249,3 +249,17 @@ test("v38 result relay uses relay_id marker rather than full DOM text digest for
   assert.match(capture, /export async function captureUserTurnTexts/);
   assert.doesNotMatch(runtime, /const relayConfirmed = await waitForUserTurnDigest\(\s*brainPage,\s*sha256\(relay\.text\)/);
 });
+
+
+test("v38 result relay validates screenshot and logs attachment lifecycle", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /LANE_RESULT_SCREENSHOT_CAPTURED/);
+  assert.match(source, /LANE_RESULT_RELAY_NOT_EXECUTED/);
+  assert.match(source, /LANE_RESULT_RELAY_SEND_CLICKED/);
+  assert.match(source, /screenshotStat\.size <= 0/);
+  assert.match(source, /reconcile_runtime_version/);
+});
