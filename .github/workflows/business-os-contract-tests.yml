@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - '02_CORE/contracts/**'
+      - '02_CORE/shared/financial-truth-v1.mjs'
       - '09_QA/business-os/**'
       - '.github/workflows/business-os-contract-tests.yml'
   pull_request:
     paths:
       - '02_CORE/contracts/**'
+      - '02_CORE/shared/financial-truth-v1.mjs'
       - '09_QA/business-os/**'
       - '.github/workflows/business-os-contract-tests.yml'
 
