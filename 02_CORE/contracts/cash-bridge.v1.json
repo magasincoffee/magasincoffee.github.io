@@ -1,0 +1,101 @@
+{
+  "schema_version": "cash-bridge.v1",
+  "status": "ACCEPTANCE_DEFINED",
+  "task": "TASK-055",
+  "canonical_truth_contract": "financial-truth.v1",
+  "purpose": "Define cash-movement taxonomy and Cash Bridge semantics without mixing liquidity movement with Revenue, COGS or expense recognition.",
+  "directions": ["INFLOW", "OUTFLOW", "TRANSFER"],
+  "categories": {
+    "INFLOW": [
+      "SALES_COLLECTION",
+      "OTHER_OPERATING_INFLOW",
+      "OWNER_CONTRIBUTION",
+      "FINANCING_INFLOW",
+      "OTHER_EVIDENCED_INFLOW"
+    ],
+    "OUTFLOW": [
+      "SUPPLIER_PAYMENT",
+      "PAYROLL",
+      "RENT_UTILITIES",
+      "PLATFORM_DELIVERY",
+      "MARKETING",
+      "OTHER_OPEX",
+      "DEBT_REPAYMENT",
+      "CAPEX_INVESTMENT",
+      "OWNER_WITHDRAWAL",
+      "OTHER_EVIDENCED_OUTFLOW"
+    ],
+    "TRANSFER": ["INTERNAL_TRANSFER"]
+  },
+  "event_shape": {
+    "event_id": "optional privacy-safe stable identity|null",
+    "direction": "INFLOW|OUTFLOW|TRANSFER",
+    "category": "compatible category from this contract",
+    "event_date": "YYYY-MM-DD",
+    "scope": {
+      "branch": "specific branch|ALL|null",
+      "channel": "specific channel|ALL|null",
+      "aggregate_proven": "boolean"
+    },
+    "payment_method": "CASH|BANK|MOMO|OTHER|null; metadata only",
+    "cash_location": {
+      "class": "privacy-safe account/location class|null",
+      "label": "privacy-safe label|null"
+    },
+    "status": "ACTIVE|VOID|null",
+    "cash_movement_proven": "boolean evidence gate",
+    "proof_basis": "privacy-safe evidence semantics label|null",
+    "amount_truth": "financial-truth.v1 record with group=CASH and metric=cash_movement_amount",
+    "consolidated_role": "INFLOW|OUTFLOW|NEUTRAL_TRANSFER",
+    "diagnostics": ["privacy-safe diagnostic"]
+  },
+  "bridge_shape": {
+    "target_period": {
+      "start": "YYYY-MM-DD",
+      "end": "YYYY-MM-DD",
+      "timezone": "IANA timezone"
+    },
+    "scope": "financial-truth compatible explicit scope",
+    "opening_balance": "financial-truth.v1 metric cash_opening_balance",
+    "events": "normalized cash event collection",
+    "categorized_inflows": "TASK-056 derived collection/summary",
+    "categorized_outflows": "TASK-056 derived collection/summary",
+    "transfers": "TASK-056 derived collection/summary; neutral for consolidated liquidity",
+    "computed_ending_balance": "financial-truth.v1 metric cash_computed_ending_balance; TASK-056 only",
+    "observed_ending_balance": "financial-truth.v1 metric cash_observed_ending_balance",
+    "cash_variance": "financial-truth.v1 metric cash_variance; TASK-056 only",
+    "quality": "ACTUAL|ESTIMATE|GAP|NOT_CONNECTED",
+    "coverage": "explicit period/source/account coverage metadata",
+    "diagnostics": ["privacy-safe diagnostic"]
+  },
+  "rules": [
+    "Cash Bridge is liquidity truth, not Profit and Loss recognition.",
+    "TASK-055 defines taxonomy and normalization only; TASK-056 performs bridge arithmetic.",
+    "Cash movement event amounts must use Financial Truth V1 semantics and finite non-negative values. Missing never becomes zero.",
+    "Zero-value cash movement is not an event and fails closed; opening/ending balance metrics may later prove an explicit zero under Financial Truth rules.",
+    "ACTUAL cash movement requires explicit valid Financial Truth period, scope, source, as_of, reconciliation status and lineage plus cash_movement_proven=true.",
+    "GAP and NOT_CONNECTED preserve value=null.",
+    "Payment method CASH/BANK/MOMO/OTHER is metadata and never proves an account/location balance.",
+    "INTERNAL_TRANSFER is neutral for consolidated enterprise liquidity. Account-level treatment may later use two evidenced legs without double-counting consolidated liquidity.",
+    "Revenue recognition is not cash collection. FoodApp gross is not settlement cash. Provider settlement may become SALES_COLLECTION only for evidenced covered provider/date scope.",
+    "Purchase/AP is not cash outflow. Only evidenced ACTIVE supplier payment movement can support SUPPLIER_PAYMENT. VOID payment is excluded.",
+    "Expense recognition is not payment timing. Supplier payment is not COGS.",
+    "Debt draw and repayment are financing cash movements, not operating Revenue/OPEX.",
+    "Owner contribution/withdrawal requires structured evidenced movement. Free-text Owner note is insufficient.",
+    "Capex cash movement is an outflow but is not automatically operating expense.",
+    "Unknown classification fails closed. OTHER_EVIDENCED_INFLOW/OUTFLOW is valid only when direction and actual cash movement are already proven.",
+    "Unknown branch/channel never becomes ALL. ALL requires aggregate_proven=true.",
+    "Opening balance and observed ending balance are separate Financial Truth metrics and are never derived from payment-method rows.",
+    "Computed ending and cash variance remain non-numeric/GAP until TASK-056 has all required evidenced inputs. Missing opening or observed ending is never synthetic zero.",
+    "Source/evidence/lineage/event identity must be privacy-safe and must not contain Drive IDs/URLs, raw private records, credentials or secrets."
+  ],
+  "task_051_source_status": {
+    "recorded_operating_cash": "usable only in verified scope/coverage",
+    "bank_balance_truth": "NOT_CONNECTED",
+    "momo_balance_truth": "NOT_CONNECTED",
+    "cod_settlement_truth": "NOT_CONNECTED",
+    "foodapp_settlement": "PARTIAL",
+    "debt_schedule": "ESTIMATE context only",
+    "owner_movements": "GAP"
+  }
+}
