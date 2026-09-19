@@ -1,0 +1,62 @@
+{
+  "schema_version": "financial-truth.v1",
+  "status": "CANONICAL",
+  "task": "TASK-052",
+  "purpose": "One shared fail-closed financial truth record for Revenue, Cash, AP and later financial metrics.",
+  "quality_states": [
+    "ACTUAL",
+    "ESTIMATE",
+    "GAP",
+    "NOT_CONNECTED"
+  ],
+  "reconciliation_states": [
+    "RECONCILED",
+    "PARTIAL",
+    "UNRECONCILED",
+    "NOT_APPLICABLE",
+    "UNKNOWN"
+  ],
+  "record_shape": {
+    "schema_version": "financial-truth.v1",
+    "period": {
+      "start": "YYYY-MM-DD|null",
+      "end": "YYYY-MM-DD|null",
+      "timezone": "IANA timezone|null"
+    },
+    "scope": {
+      "branch": "specific branch|ALL|null",
+      "channel": "specific channel|ALL|null",
+      "aggregate_proven": "boolean"
+    },
+    "group": "string|null",
+    "metric": "string|null",
+    "value": "finite number|null",
+    "quality": "ACTUAL|ESTIMATE|GAP|NOT_CONNECTED",
+    "source": {
+      "class": "privacy-safe string|null",
+      "label": "privacy-safe string|null"
+    },
+    "as_of": "ISO-8601 timestamp with timezone|null",
+    "reconciliation_status": "RECONCILED|PARTIAL|UNRECONCILED|NOT_APPLICABLE|UNKNOWN",
+    "evidence": [
+      "privacy-safe label"
+    ],
+    "lineage": [
+      "privacy-safe label"
+    ],
+    "message": "privacy-safe string|null",
+    "reason": "privacy-safe string|null"
+  },
+  "rules": [
+    "Control Tower is a projection; this contract is the shared canonical financial truth shape.",
+    "ACTUAL and ESTIMATE may expose a numeric value only when the value is finite and period, scope, source, as_of, reconciliation_status and lineage are explicit and valid.",
+    "GAP and NOT_CONNECTED always expose value=null even if an upstream source supplies a number.",
+    "Missing numeric values never normalize to zero. Explicit zero is valid only when a trusted ACTUAL or ESTIMATE record proves zero under the same metadata rules.",
+    "Unknown branch or channel remains null. ALL is accepted only when aggregate_proven=true.",
+    "ACTUAL is true only for the exact period, scope and lineage represented by the record.",
+    "Negative finite values are generically allowed because some financial metrics can be negative; metric policy may forbid them.",
+    "Metric policy may require specific reconciliation states, for example RECONCILED Revenue.",
+    "Source, evidence, lineage, message and reason must be privacy-safe labels only: no Drive IDs, Drive URLs, raw private records or secrets.",
+    "Normalization is pure, deterministic and idempotent; it creates no write path, ledger, RPC, migration, integration or UI."
+  ]
+}
