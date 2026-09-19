@@ -205,5 +205,34 @@ test("current runtime performs blocked relay migration before lane processing", 
   assert.match(source, /startupRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
   assert.match(source, /RUNTIME_RELAY_BLOCKED_LATCHES_MIGRATED/);
   assert.match(source, /loopRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
-  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-19\.47"/);
+  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-19\.48"/);
+});
+
+
+test("v48 relay retries reuse one screenshot and stop after a bounded budget", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+  const start = source.indexOf("async function relayWorkResult");
+  const end = source.indexOf("async function applyOwnerBrainTarget", start);
+  const relay = source.slice(start, end);
+
+  assert.match(relay, /beginRelaySendAttempt\(latch\)/);
+  assert.match(relay, /scheduleRelayRetry\(latch\)/);
+  assert.match(relay, /return "EXHAUSTED"/);
+  assert.match(relay, /if \(!latch\) \{[\s\S]*?captureCompletedAssistantTurnScreenshot/);
+  assert.doesNotMatch(
+    relay,
+    /if \(latch\)[\s\S]*?captureCompletedAssistantTurnScreenshot/
+  );
+});
+
+test("v48 attachment relay foregrounds Brain before composer probing", async () => {
+  const actions = await fs.readFile(
+    new URL("../src/ui/actions.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.match(actions, /page\.bringToFront/);
+  assert.match(actions, /COMPOSER_ATTACHMENT_SEND/);
 });
