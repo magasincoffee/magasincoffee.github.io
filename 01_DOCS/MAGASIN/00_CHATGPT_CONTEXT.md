@@ -179,25 +179,29 @@ Reuse the pattern. Do not keep expanding Workforce merely to complete a module.
 
 ## 9. Current Owner / Robot boundary
 
-The Owner-released generation `PFC_3H_V1_RESTART_01` is **COMPLETE**.
+The Owner-released generation `PFC_8H_V2_RUN_01` is ACTIVE.
 
 Current authoritative state:
 
 ```text
-TASK-051..TASK-059 = DONE
-current_task        = TASK-060
-TASK-060            = PLANNED / WAIT_OWNER_RELEASE
-status              = WAIT_USER
-autonomy            = PAUSED
-requires_user       = true
-robot_may_execute   = false
+TASK-051..TASK-060 = DONE
+current_task        = TASK-061
+TASK-061            = READY / AUTO_CONTINUE
+next_task           = TASK-062
+status              = READY
+autonomy            = AUTO_CONTINUE
+requires_user       = false
+robot_may_execute   = true
 ```
 
-This is a completed execution-scope boundary, not a business-rule blocker.
+Owner explicitly released PFC_8H_V2 on 2026-09-20.
 
-TASK-060 must not be dispatched or implemented until the Owner explicitly releases it. Silence is not approval.
+TASK-060 source discovery found:
+- no verified direct OBSERVED_BALANCE source in bounded Drive evidence;
+- internal monthly cash reporting is COMPUTED_BALANCE + MOVEMENT_ONLY;
+- physical till, Bank, MoMo, COD, Owner-held cash and provider account balance remain NOT_CONNECTED.
 
-The completed PFC slice now contains Financial Truth V1, Monthly Revenue, Revenue projection, Cash taxonomy/calculator, Procurement payment/AP mapping and Partial Financial Baseline V1.
+Missing sources become GAP / NOT_CONNECTED and do not wake Owner during the released queue.
 
 ## 10. Working method
 
@@ -251,14 +255,15 @@ The repository is public. Never commit secrets, credentials, tokens, cookies, pr
 
 ## 12. Current task
 
-**TASK-060 — Actual Cash Opening/Ending Source Truth V1 — PLANNED / WAIT_OWNER_RELEASE.**
+**TASK-061 — Cash Balance Financial Truth Contract — READY / AUTO_CONTINUE.**
 
-Immediate behavior for a new chat:
+Immediate behavior for a new Work session:
 
-1. read the canonical architecture and TASK-059 final handoff first;
-2. recognize `PFC_3H_V1_RESTART_01 = COMPLETE`;
-3. keep Profitability & Cash as priority #1;
-4. preserve PARTIAL Financial Baseline semantics and all component-level quality/gaps;
-5. do not execute TASK-060 without explicit Owner release;
-6. keep Robot `PAUSED` and `robot_may_execute=false` until that release.
+1. read the canonical enterprise architecture;
+2. read `PFC_8H_V2_EXECUTION_PLAN.md`;
+3. read `TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`;
+4. preserve the distinction `OBSERVED_BALANCE != COMPUTED_BALANCE`;
+5. do not treat movement rows or payment method as balance evidence;
+6. keep missing balances GAP / NOT_CONNECTED, never zero;
+7. continue automatically to TASK-062 after TASK-061 DoD unless a true Owner/security boundary occurs.
 
