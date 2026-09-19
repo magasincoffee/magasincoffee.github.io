@@ -16,7 +16,7 @@ The active critical path is weekly workforce scheduling: employee availability �
 
 ## Current task
 
-**TASK-049 — Supervisor Brain/Worker multi-conversation orchestration — IN_PROGRESS / AUTO_CONTINUE**
+**TASK-049 — Supervisor Three-Lane owner-bound Brain/Work orchestration — IN_PROGRESS / AUTO_CONTINUE**
 
 Canonical task/state files:
 
@@ -101,7 +101,7 @@ Owner does not need to sit at the computer and repeatedly ask ChatGPT to continu
 
 ## Next action
 
-**ACTIVE — TASK-049:** Owner explicitly reprioritized Supervisor architecture to one Brain conversation plus a bounded multi-Worker pool. Worker instructions must come dynamically from Brain; full Worker results are relayed once; new-chat rollover requires positive `conversationFull` evidence.
+**ACTIVE — TASK-049:** Owner replaced Brain auto-discovery with three fixed, isolated project lanes. Each lane has an Owner-entered Brain URL, a Robot-managed Work URL, independent START/STOP, per-lane status/message, exact-once Work result relay with screenshot + full text, and Work rollover only on positive `conversationFull` evidence.
 
 Background night-run gate: **TASK-048 — TIME_GATED** until the approved 09:15 +07 hard stop. It may close the old night window but must preserve TASK-049 and its autonomy.
 
@@ -166,7 +166,7 @@ Windows reboot/logon recovery is installed and verified on the self-hosted machi
 The GitHub-hosted hard-stop guard will close the old night window at 09:15 +07 even if the PC is offline; an Owner-reprioritized task remains authoritative.
 
 
-## Brain/Worker V17 active architecture
+## Superseded Brain/Worker architecture
 
 Canonical contract: `00_SUPERVISOR_BRAIN_WORKER_ARCHITECTURE.md`.
 
@@ -179,6 +179,18 @@ Canonical contract: `00_SUPERVISOR_BRAIN_WORKER_ARCHITECTURE.md`.
 - only explicit ChatGPT `conversationFull` evidence authorizes rollover of an existing logical conversation;
 - a new Worker slot requires a validated Brain directive plus free capacity;
 - runtime auto-upgrade from `main` is part of TASK-049 acceptance.
+
+## Three-Lane V1 active architecture
+
+Canonical contract: `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md`.
+
+- exactly three isolated project lanes;
+- Brain identity is Owner-bound by explicit URL only; no active Brain auto-discovery;
+- each lane has its own project name, Brain URL, Robot-managed Work URL, status, message, START and STOP;
+- Work chat is reused until positive `conversationFull` evidence, then Robot may create and auto-fill a replacement Work URL;
+- each completed Work result is relayed exactly once to the same lane Brain with both screenshot and full captured text;
+- Brain chat is never auto-rolled; if Brain is full/missing, that lane waits for Owner to replace its Brain URL;
+- local lane config/status/evidence remain outside Git.
 
 ## TASK-049 acceptance checkpoint — E2/F
 
