@@ -477,3 +477,243 @@ test("branch-scoped INTERNAL_TRANSFER fails closed rather than guessing net effe
       cashEvent("TRANSFER", "INTERNAL_TRANSFER", "2026-09-02", 500, {
         proof_basis: "INTERNAL_TRANSFER"
       })
+    ]
+  });
+
+  assert.equal(result.transfers.event_count, 1);
+  assert.equal(result.transfers.consolidated_neutral, false);
+  assert.equal(result.computed_ending_balance.quality, "GAP");
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(
+    result.diagnostics.includes("TRANSFER_SCOPE_AMBIGUOUS_UNSUPPORTED_V1")
+  );
+});
+
+test("account-qualified consolidated scope with transfer is unsupported in V1", () => {
+  const scope = {
+    branch: "ALL",
+    channel: "ALL",
+    aggregate_proven: true,
+    account: "BANK_OPERATING"
+  };
+  const result = calculate({
+    scope,
+    openingBalance: balance(
+      "cash_opening_balance",
+      "2026-09-01",
+      1000,
+      { scope }
+    ),
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      1000,
+      { scope }
+    ),
+    events: [
+      cashEvent("TRANSFER", "INTERNAL_TRANSFER", "2026-09-02", 500, {
+        scope,
+        proof_basis: "INTERNAL_TRANSFER"
+      })
+    ]
+  });
+
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(
+    result.diagnostics.includes("TRANSFER_SCOPE_AMBIGUOUS_UNSUPPORTED_V1")
+  );
+});
+
+test("category breakdown preserves exact known amounts and event counts", () => {
+  const result = calculate({
+    events: [
+      cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-01", 100),
+      cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-02", 50),
+      cashEvent("INFLOW", "FINANCING_INFLOW", "2026-09-03", 25),
+      cashEvent("OUTFLOW", "MARKETING", "2026-09-02", 10)
+    ],
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      1165
+    )
+  });
+
+  const sales = result.categorized_known_inflows.find(
+    (entry) => entry.category === "SALES_COLLECTION"
+  );
+  const financing = result.categorized_known_inflows.find(
+    (entry) => entry.category === "FINANCING_INFLOW"
+  );
+  const marketing = result.categorized_known_outflows.find(
+    (entry) => entry.category === "MARKETING"
+  );
+
+  assert.equal(sales.event_count, 2);
+  assert.equal(sales.amount_truth.value, 150);
+  assert.equal(financing.amount_truth.value, 25);
+  assert.equal(marketing.amount_truth.value, 10);
+  assert.equal(result.total_known_inflows.value, 175);
+  assert.equal(result.total_known_outflows.value, 10);
+});
+
+test("negative outflow is rejected; calculator never flips sign to make it usable", () => {
+  const result = calculate({
+    events: [
+      cashEvent("OUTFLOW", "OTHER_OPEX", "2026-09-02", -100)
+    ]
+  });
+
+  assert.equal(result.total_known_outflows.value, null);
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(result.diagnostics.includes("NEGATIVE_VALUE_NOT_ALLOWED"));
+});
+
+test("missing NaN and Infinity event amounts fail closed", () => {
+  for (const amount of [undefined, Number.NaN, Number.POSITIVE_INFINITY]) {
+    const result = calculate({
+      events: [
+        cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-02", amount)
+      ]
+    });
+    assert.equal(result.computed_ending_balance.value, null);
+    assert.equal(result.computed_ending_balance.quality, "GAP");
+  }
+});
+
+test("VOID event is excluded and blocks a complete-period computation", () => {
+  const result = calculate({
+    events: [
+      cashEvent("OUTFLOW", "OTHER_OPEX", "2026-09-02", 100, {
+        status: "VOID"
+      })
+    ]
+  });
+
+  assert.equal(result.total_known_outflows.value, null);
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(result.diagnostics.includes("VOID_CASH_EVENT_EXCLUDED"));
+});
+
+test("event scope mismatch fails closed", () => {
+  const result = calculate({
+    events: [
+      cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-02", 100, {
+        scope: { branch: "CN2" }
+      })
+    ]
+  });
+
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(result.diagnostics.includes("EVENT_SCOPE_MISMATCH"));
+});
+
+test("event timezone mismatch fails closed", () => {
+  const result = calculate({
+    events: [
+      cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-02", 100, {
+        timezone: "UTC"
+      })
+    ]
+  });
+
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(result.diagnostics.includes("EVENT_TIMEZONE_MISMATCH"));
+});
+
+test("event outside target period fails closed", () => {
+  const result = calculate({
+    events: [
+      cashEvent("INFLOW", "SALES_COLLECTION", "2026-09-04", 100)
+    ]
+  });
+
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(result.diagnostics.includes("EVENT_PERIOD_OUTSIDE_TARGET"));
+});
+
+test("unproven ALL target scope never becomes consolidated truth", () => {
+  const scope = {
+    branch: "ALL",
+    channel: "ALL",
+    aggregate_proven: false
+  };
+  const result = calculate({
+    scope,
+    openingBalance: balance(
+      "cash_opening_balance",
+      "2026-09-01",
+      1000,
+      { scope }
+    ),
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      1000,
+      { scope }
+    ),
+    events: []
+  });
+
+  assert.equal(result.scope.branch, null);
+  assert.equal(result.scope.channel, null);
+  assert.equal(result.computed_ending_balance.value, null);
+  assert.ok(result.diagnostics.includes("INVALID_TARGET_SCOPE"));
+});
+
+test("opening balance period and timezone must match target-start semantics", () => {
+  const wrongDate = calculate({
+    openingBalance: balance(
+      "cash_opening_balance",
+      "2026-09-02",
+      1000
+    )
+  });
+  assert.equal(wrongDate.computed_ending_balance.value, null);
+  assert.equal(wrongDate.opening_balance.reason, "BALANCE_PERIOD_MISMATCH");
+
+  const wrongTimezone = calculate({
+    openingBalance: balance(
+      "cash_opening_balance",
+      "2026-09-01",
+      1000,
+      { period: { timezone: "UTC" } }
+    )
+  });
+  assert.equal(wrongTimezone.computed_ending_balance.value, null);
+  assert.equal(wrongTimezone.opening_balance.reason, "BALANCE_PERIOD_MISMATCH");
+});
+
+test("observed ending mismatch affects variance but not a valid computed ending", () => {
+  const result = calculate({
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-02",
+      1150
+    )
+  });
+
+  assert.equal(result.computed_ending_balance.value, 1150);
+  assert.equal(result.computed_ending_balance.quality, "ACTUAL");
+  assert.equal(result.cash_variance.value, null);
+  assert.equal(result.cash_variance.quality, "GAP");
+});
+
+test("negative balances remain valid generic Financial Truth inputs", () => {
+  const result = calculate({
+    openingBalance: balance("cash_opening_balance", "2026-09-01", -100),
+    observedEndingBalance: balance(
+      "cash_observed_ending_balance",
+      "2026-09-03",
+      -100
+    ),
+    events: []
+  });
+
+  assert.equal(result.computed_ending_balance.value, -100);
+  assert.equal(result.cash_variance.value, 0);
+});
+
+test("identical stable event_id is de-duplicated exactly once", () => {
+  const event = cashEvent(
+    "INFLOW",
