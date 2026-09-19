@@ -35,7 +35,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.28";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.29";
 
 function parseArgs(argv) {
   const result = {
@@ -166,6 +166,63 @@ function uniqueCandidatesByTarget(candidates = []) {
   return [...unique.values()];
 }
 
+
+function candidateRegistryScore(candidate, registry) {
+  const actions = candidate?.valid?.directive?.actions || [];
+  let score = 0;
+  for (const action of actions) {
+    if (action?.type !== "DISPATCH") continue;
+    const worker = registry?.workers?.[action.worker_id];
+    if (!worker) continue;
+    if (worker.task_id === action.task_id) {
+      score += worker.awaiting_result ? 10 : 6;
+    }
+    if (
+      worker.instruction_digest &&
+      action.instruction_digest &&
+      worker.instruction_digest === action.instruction_digest
+    ) {
+      score += 4;
+    }
+  }
+  return score;
+}
+
+async function resolveBrainCandidate(adapter, candidates, registry, multipleError) {
+  const uniqueCandidates = uniqueCandidatesByTarget(candidates);
+  if (uniqueCandidates.length <= 1) return uniqueCandidates[0] || null;
+
+  const scored = uniqueCandidates
+    .map((candidate) => ({
+      candidate,
+      score: candidateRegistryScore(candidate, registry)
+    }))
+    .sort((left, right) => right.score - left.score);
+
+  if (
+    scored[0]?.score > 0 &&
+    scored[0].score > Number(scored[1]?.score || 0)
+  ) {
+    return scored[0].candidate;
+  }
+
+  const focusedPages = await adapter.getFocusedChatGptPages().catch(() => []);
+  const focusedTargets = new Set();
+  for (const page of focusedPages) {
+    try {
+      focusedTargets.add(targetUrl(targetFromUrl(page.url())));
+    } catch {
+      // Non-conversation pages are not Brain candidates.
+    }
+  }
+  const focusedCandidates = uniqueCandidates.filter(
+    (candidate) => focusedTargets.has(targetUrl(candidate.target))
+  );
+  if (focusedCandidates.length === 1) return focusedCandidates[0];
+
+  throw new Error(multipleError);
+}
+
 function hardStopObservation(observation) {
   return new Set([
     OBSERVATIONS.AUTH_REQUIRED,
@@ -260,15 +317,15 @@ async function findBrainByContinuity(adapter, registry) {
     }
   }
 
-  const uniqueCandidates = uniqueCandidatesByTarget(candidates);
-  if (uniqueCandidates.length === 1) return uniqueCandidates[0];
-  if (uniqueCandidates.length > 1) {
-    throw new Error("multiple distinct ChatGPT conversations match Brain continuity; automatic target rebind denied");
-  }
-  return null;
+  return resolveBrainCandidate(
+    adapter,
+    candidates,
+    registry,
+    "multiple distinct ChatGPT conversations match Brain continuity; automatic target rebind denied"
+  );
 }
 
-async function findBrainByDirectiveSignature(adapter, config) {
+async function findBrainByDirectiveSignature(adapter, config, registry) {
   const candidates = [];
 
   for (const page of adapter.getChatGptPages()) {
@@ -289,16 +346,16 @@ async function findBrainByDirectiveSignature(adapter, config) {
 
     const valid = await captureLatestValidBrainDirective(page, config).catch(() => null);
     if (valid) {
-      candidates.push({ page, target, method: "DIRECTIVE_SIGNATURE" });
+      candidates.push({ page, target, method: "DIRECTIVE_SIGNATURE", valid });
     }
   }
 
-  const uniqueCandidates = uniqueCandidatesByTarget(candidates);
-  if (uniqueCandidates.length === 1) return uniqueCandidates[0];
-  if (uniqueCandidates.length > 1) {
-    throw new Error("multiple distinct open ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied");
-  }
-  return null;
+  return resolveBrainCandidate(
+    adapter,
+    candidates,
+    registry,
+    "multiple distinct open ChatGPT conversations have a valid Brain directive signature; automatic target rebind denied"
+  );
 }
 
 async function applyOwnerBrainRebind({
@@ -329,23 +386,26 @@ async function applyOwnerBrainRebind({
     if (probe.snapshot.conversationMissing || probe.snapshot.conversationFull) continue;
 
     const valid = await captureLatestValidBrainDirective(page, config).catch(() => null);
-    if (valid) candidates.push({ page, target });
+    if (valid) candidates.push({ page, target, valid });
   }
 
   await fs.unlink(requestPath).catch(() => {});
 
-  const uniqueCandidates = uniqueCandidatesByTarget(candidates);
-  if (uniqueCandidates.length !== 1) {
+  const selected = await resolveBrainCandidate(
+    adapter,
+    candidates,
+    registry,
+    "more than one distinct visible ChatGPT conversation looks like Brain; owner rebind denied"
+  );
+  if (!selected) {
     throw new Error(
-      uniqueCandidates.length > 1
-        ? "more than one distinct visible ChatGPT conversation looks like Brain; owner rebind denied"
-        : "open the intended Brain conversation in Robot Chrome, keep that tab visible, then press the Brain rebind button again"
+      "open the intended Brain conversation in Robot Chrome, keep that tab visible, then press the Brain rebind button again"
     );
   }
 
-  if (!execute) return uniqueCandidates[0].page;
+  if (!execute) return selected.page;
 
-  registry.brain.target = uniqueCandidates[0].target;
+  registry.brain.target = selected.target;
   registry.brain.awaiting_response = true;
   await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
   await safeLog(logPath, {
@@ -353,7 +413,7 @@ async function applyOwnerBrainRebind({
     role: "brain",
     generation: registry.brain.generation
   });
-  return uniqueCandidates[0].page;
+  return selected.page;
 }
 
 async function findBrainFromRecentSidebar(adapter, config) {
@@ -434,7 +494,7 @@ async function ensureBrain({ adapter, registry, projectState, config, execute, r
 
       const recovered =
         await findBrainByContinuity(adapter, registry) ||
-        await findBrainByDirectiveSignature(adapter, config) ||
+        await findBrainByDirectiveSignature(adapter, config, registry) ||
         await findBrainFromRecentSidebar(adapter, config);
       if (!recovered) throw error;
       if (!execute) return recovered.page;
