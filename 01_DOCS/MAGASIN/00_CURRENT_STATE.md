@@ -10,34 +10,49 @@ Canonical architecture:
 
 - `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — READ FIRST;
 - `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`;
-- `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
+- `02_PROFITABILITY_CASH/PFC_8H_V2_EXECUTION_PLAN.md`;
+- `02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`.
 
 ## PFC execution handoff
 
 Execution generation:
 
-`PFC_3H_V1_RESTART_01`
+`PFC_8H_V2_RUN_01`
 
-Final state:
+Owner released PFC_8H_V2 on 2026-09-20.
+
+Current state:
 
 ```text
-TASK-051 → TASK-059 = DONE
-PFC_3H_V1          = COMPLETE
+PFC_3H_V1_RESTART_01 = COMPLETE
+TASK-051 → TASK-060   = DONE
 
-current_task       = TASK-060
-TASK-060           = PLANNED / WAIT_OWNER_RELEASE
-status             = WAIT_USER
-autonomy           = PAUSED
-requires_user      = true
-blocked            = false
-next_task          = null
+current_task          = TASK-061
+TASK-061              = READY / AUTO_CONTINUE
+next_task             = TASK-062
+status                = READY
+autonomy              = AUTO_CONTINUE
+requires_user         = false
+blocked               = false
 
-Robot may execute  = false
+Robot may execute     = true
 ```
 
-The 3-hour Owner-released implementation scope is complete. This is an execution-scope boundary, not a business-rule blocker.
+TASK-060 source discovery is complete. It found no verified direct `OBSERVED_BALANCE` source in the bounded Drive evidence.
 
-**Do not dispatch or implement TASK-060 without a new explicit Owner release. Silence is not approval.**
+Current verified balance landscape:
+
+- internal monthly cash reporting = `COMPUTED_BALANCE + MOVEMENT_ONLY`;
+- physical till/safe = `NOT_CONNECTED`;
+- business Bank balance/statement = `NOT_CONNECTED`;
+- MoMo/wallet balance = `NOT_CONNECTED`;
+- COD-held cash = `NOT_CONNECTED`;
+- Owner-held company cash = `NOT_CONNECTED`;
+- provider payout/account balance = `NOT_CONNECTED`.
+
+Missing balance sources remain gaps; they do not pause PFC_8H_V2.
+
+TASK-061 is now the active canonical task.
 
 ## Financial baseline state
 
@@ -99,21 +114,31 @@ These remain mandatory:
 - unknown scope != ALL;
 - ALL requires explicit aggregate proof.
 
-## Next planned priority
+## Current PFC V2 priority
 
-### TASK-060 — Actual Cash Opening/Ending Source Truth V1
+### TASK-061 — Cash Balance Financial Truth Contract
 
 Status:
 
-`PLANNED / WAIT_OWNER_RELEASE`
+`READY / AUTO_CONTINUE`
 
 Goal:
 
-Normalize evidenced opening cash, observed ending cash and explicit source/account coverage so Cash Bridge can progress toward COMPLETE.
+Define canonical point-balance Financial Truth semantics by account/scope/time while keeping:
 
-Do not infer balance from CASH/BANK/MOMO payment-method rows.
+```text
+OBSERVED_BALANCE != COMPUTED_BALANCE
+MOVEMENT_ONLY != BALANCE
+payment method != account balance
+unknown scope != ALL
+missing != zero
+```
 
-TASK-060 is not released by completion of TASK-059.
+TASK-060 evidence is the discovery input for this contract.
+
+Next queued task after TASK-061:
+
+`TASK-062 — Cash Balance Source Mapper`
 
 ## Remaining major gaps
 
