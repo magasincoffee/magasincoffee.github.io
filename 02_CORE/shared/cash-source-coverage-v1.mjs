@@ -130,6 +130,17 @@ function sameScope(left = {}, right = {}) {
   );
 }
 
+function scopeWithinTarget(entryScope = {}, targetScope = {}) {
+  if (!entryScope?.valid || !targetScope?.valid) return false;
+  const dimensionMatches = (entryValue, targetValue) => (
+    targetValue === "ALL" || entryValue === targetValue
+  );
+  return (
+    dimensionMatches(entryScope.branch, targetScope.branch) &&
+    dimensionMatches(entryScope.channel, targetScope.channel)
+  );
+}
+
 function normalizeAccount(raw = {}) {
   const accountClass = enumValue(
     raw?.class ?? raw?.account_class ?? raw?.accountClass,
@@ -426,7 +437,11 @@ function pointProofStatus(entry, {
   const normalizedBalance = normalizeMappedBalance(
     entry.balance,
     targetPeriod,
-    targetScope,
+    {
+      branch: entry.scope.branch,
+      channel: entry.scope.channel,
+      aggregate_proven: entry.scope.aggregate_proven
+    },
     coverageRole
   );
 
@@ -535,6 +550,9 @@ function normalizeSourceEntry(raw = {}, {
   if (!account.valid) diagnostics.push("INVALID_OR_PRIVACY_UNSAFE_COVERAGE_ACCOUNT");
   if (!scope.valid) diagnostics.push("INVALID_COVERAGE_SCOPE");
   if (!coverageId) diagnostics.push("INVALID_COVERAGE_IDENTITY");
+  if (scope.valid && targetScope.valid && !scopeWithinTarget(scope, targetScope)) {
+    diagnostics.push("COVERAGE_SCOPE_OUTSIDE_TARGET");
+  }
   if (!declaredStatus) diagnostics.push("MISSING_SOURCE_COVERAGE_STATUS");
   if (!asOf) diagnostics.push("INVALID_COVERAGE_AS_OF");
   if (!lineage.valid || !lineage.values.length) diagnostics.push("INVALID_OR_PRIVACY_UNSAFE_COVERAGE_LINEAGE");
@@ -670,6 +688,7 @@ function sourceEntryPublic(entry) {
     coverage_proven: entry.coverage_proven,
     covered_intervals: entry.covered_intervals,
     covered_point: entry.covered_point,
+    balance: entry.balance ?? null,
     balance_basis: entry.balance?.balance_basis ?? null,
     balance_quality: entry.balance?.truth?.quality ?? null,
     as_of: entry.as_of,
@@ -700,6 +719,19 @@ function aggregateUniverseGuard({
   }
 
   const requiredMembers = universe.accounts.filter((member) => member.required);
+
+  for (const member of requiredMembers) {
+    const memberScope = {
+      ...member.scope,
+      valid: Boolean(member.scope?.branch && member.scope?.channel)
+    };
+    if (!scopeWithinTarget(memberScope, targetScope)) {
+      diagnostics.push("ACCOUNT_UNIVERSE_MEMBER_OUTSIDE_TARGET_SCOPE");
+    }
+  }
+  if (diagnostics.length) {
+    return { completeEligible: false, diagnostics: [...new Set(diagnostics)].sort() };
+  }
 
   if (requiredMembers.length === 0) {
     if (!universe.empty_universe_proven) {
