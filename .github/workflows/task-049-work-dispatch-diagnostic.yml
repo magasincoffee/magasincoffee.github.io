@@ -134,6 +134,37 @@ jobs:
             output.work_observation = probe.classification.observation;
             output.expected_instruction_digest_prefix = expected ? expected.slice(0, 12) : null;
             output.expected_instruction_found = Boolean(expected && userDigests.includes(expected));
+
+            const brainUrl = normalizeChatGptConversationUrl(reg.brain_url || lane.brain_url);
+            const brainTarget = targetFromUrl(brainUrl);
+            let brainPage = adapter.findPageForTarget(brainTarget);
+            if (!brainPage) brainPage = await adapter.reopenTargetPage(brainUrl);
+            const brainTurns = await captureRecentConversationTurns(brainPage, { limit: 16 });
+            let activeDirective = null;
+            for (let i = brainTurns.length - 1; i >= 0; i -= 1) {
+              if (brainTurns[i].role !== "assistant") continue;
+              try {
+                const { parseLaneDirective } = await import(
+                  pathToFileURL(path.join(runtime, "runtime", "three-lane.mjs")).href
+                );
+                const parsed = parseLaneDirective(brainTurns[i].text);
+                if (!reg.dispatch_inflight?.directive_digest || parsed.digest === reg.dispatch_inflight.directive_digest) {
+                  activeDirective = parsed;
+                  break;
+                }
+              } catch {}
+            }
+            const normalizeText = (value) => String(value || "").replace(/\s+/g, " ").trim();
+            output.brain_directive_found_for_latch = Boolean(activeDirective);
+            output.brain_directive_task = activeDirective?.task_id || null;
+            output.normalized_instruction_found = Boolean(
+              activeDirective &&
+              turns.some((turn) =>
+                turn.role === "user" &&
+                normalizeText(turn.text) === normalizeText(activeDirective.instruction)
+              )
+            );
+
             output.recent_turns = turns.map((turn) => ({
               role: turn.role,
               turn: turn.turn,
