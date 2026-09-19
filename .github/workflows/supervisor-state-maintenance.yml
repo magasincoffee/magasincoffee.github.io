@@ -54,7 +54,7 @@ jobs:
           $statusFile = Join-Path $root "lane-status.json"
           $stopScript = Join-Path $runtime "windows\stop-supervisor.ps1"
           $startScript = Join-Path $runtime "windows\start-supervisor.ps1"
-          $expectedVersion = "2026-09-19.46"
+          $expectedVersion = "2026-09-19.47"
 
           $operation = if ([string]$env:INPUT_OPERATION) {
             [string]$env:INPUT_OPERATION
