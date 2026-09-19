@@ -140,8 +140,8 @@ jobs:
 
           $runtimeThreeLane = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
           if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.38" -Quiet)) {
-            throw "Installed Three-Lane runtime is not v2026-09-19.38"
+          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.39" -Quiet)) {
+            throw "Installed Three-Lane runtime is not v2026-09-19.39"
           }
 
           $laneConfigFile = Join-Path $root "lanes.json"
@@ -156,7 +156,7 @@ jobs:
                   $laneConfig.mode -eq "THREE_LANE_V1" -and
                   @($laneConfig.lanes).Count -eq 3 -and
                   $laneStatus.mode -eq "THREE_LANE_V1" -and
-                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.38" -and
+                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.39" -and
                   @($laneStatus.lanes).Count -eq 3
                 ) {
                   $laneReady = $true
@@ -173,6 +173,37 @@ jobs:
           Write-Host "BRAIN_AUTODISCOVERY_ACTIVE=False"
           Write-Host "WORK_URL_OWNER_REQUIRED=False"
           Write-Host "WORK_URL_OWNER_EDITABLE=True"
+
+          $runtimeThreeLaneSource = Get-Content $runtimeThreeLane -Raw -Encoding UTF8
+          if ($runtimeThreeLaneSource -notmatch 'applyOwnerBrainTarget') { throw "Installed runtime is missing Brain target hot-swap support" }
+          if ($runtimeThreeLaneSource -notmatch 'brain_url_revision') { throw "Installed runtime is missing Brain URL revision support" }
+
+          $controlPanel = Join-Path $root "runtime\windows\control-panel.ps1"
+          if (-not (Test-Path $controlPanel)) { throw "Installed Control Panel is missing" }
+          $controlPanelSource = Get-Content $controlPanel -Raw -Encoding UTF8
+          if ($controlPanelSource -notmatch 'LƯU BỘ NÃO') { throw "Installed Control Panel is missing LƯU BỘ NÃO" }
+          if ($controlPanelSource -notmatch 'Save-BrainTarget') { throw "Installed Control Panel is missing Brain target persistence action" }
+
+          foreach ($laneEntry in @($laneConfig.lanes)) {
+            if (-not $laneEntry.PSObject.Properties['brain_url_revision']) {
+              throw "lanes.json was not migrated with brain_url_revision"
+            }
+          }
+          foreach ($laneName in @('lane-1','lane-2','lane-3')) {
+            $registryEntry = $registry = $null
+          }
+          $laneRegistryFile = Join-Path $root "lane-registry.json"
+          if (-not (Test-Path $laneRegistryFile)) { throw "lane-registry.json is missing" }
+          $laneRegistry = Get-Content $laneRegistryFile -Raw -Encoding UTF8 | ConvertFrom-Json
+          foreach ($laneName in @('lane-1','lane-2','lane-3')) {
+            $registryEntry = $laneRegistry.lanes.$laneName
+            if (-not $registryEntry.PSObject.Properties['applied_brain_url_revision']) {
+              throw "lane-registry.json was not migrated with applied_brain_url_revision for $laneName"
+            }
+          }
+          Write-Host "BRAIN_URL_OWNER_EDITABLE=True"
+          Write-Host "BRAIN_URL_PERSISTED=True"
+          Write-Host "BRAIN_URL_HOT_SWAP=True"
 
           Write-Host "AUTOSTART_REGISTERED=True"
           Write-Host "RUNNER_ONLINE=True"
@@ -237,8 +268,8 @@ jobs:
           $statusFile = Join-Path $root "lane-status.json"
           if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing after previous job cleanup" }
           $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ($status.supervisor_runtime_version -ne "2026-09-19.38") {
-            throw "Post-job Three-Lane runtime is not v2026-09-19.38"
+          if ($status.supervisor_runtime_version -ne "2026-09-19.39") {
+            throw "Post-job Three-Lane runtime is not v2026-09-19.39"
           }
           if ($status.mode -ne "THREE_LANE_V1" -or @($status.lanes).Count -ne 3) {
             throw "Post-job Three-Lane status is invalid"
