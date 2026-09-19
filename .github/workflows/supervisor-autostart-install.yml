@@ -140,8 +140,8 @@ jobs:
 
           $runtimeThreeLane = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
           if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.35" -Quiet)) {
-            throw "Installed Three-Lane runtime is not v2026-09-19.35"
+          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.36" -Quiet)) {
+            throw "Installed Three-Lane runtime is not v2026-09-19.36"
           }
 
           $laneConfigFile = Join-Path $root "lanes.json"
@@ -156,7 +156,7 @@ jobs:
                   $laneConfig.mode -eq "THREE_LANE_V1" -and
                   @($laneConfig.lanes).Count -eq 3 -and
                   $laneStatus.mode -eq "THREE_LANE_V1" -and
-                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.35" -and
+                  $laneStatus.supervisor_runtime_version -eq "2026-09-19.36" -and
                   @($laneStatus.lanes).Count -eq 3
                 ) {
                   $laneReady = $true
@@ -237,8 +237,8 @@ jobs:
           $statusFile = Join-Path $root "lane-status.json"
           if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing after previous job cleanup" }
           $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ($status.supervisor_runtime_version -ne "2026-09-19.35") {
-            throw "Post-job Three-Lane runtime is not v2026-09-19.35"
+          if ($status.supervisor_runtime_version -ne "2026-09-19.36") {
+            throw "Post-job Three-Lane runtime is not v2026-09-19.36"
           }
           if ($status.mode -ne "THREE_LANE_V1" -or @($status.lanes).Count -ne 3) {
             throw "Post-job Three-Lane status is invalid"
@@ -248,3 +248,96 @@ jobs:
           Write-Host "POST_JOB_THREE_LANE_ALIVE=True"
           Write-Host "POST_JOB_ROBOT_CHROME_ALIVE=True"
           Write-Host "POST_JOB_LANE_COUNT=3"
+
+      - name: Observe live Lane 1, print safe logs, and open Robot
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $statusFile = Join-Path $root "lane-status.json"
+          $registryFile = Join-Path $root "lane-registry.json"
+          $logFile = Join-Path $root "supervisor.log"
+
+          $healthy = $false
+          $lane1 = $null
+          $registryLane = $null
+
+          for ($i = 0; $i -lt 45; $i++) {
+            if (Test-Path $statusFile) {
+              try {
+                $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                $lane1 = @($status.lanes | Where-Object { $_.lane_id -eq "lane-1" }) | Select-Object -First 1
+              } catch {
+                $lane1 = $null
+              }
+            }
+
+            if (Test-Path $registryFile) {
+              try {
+                $registry = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                $registryLane = $registry.lanes.'lane-1'
+              } catch {
+                $registryLane = $null
+              }
+            }
+
+            if ($lane1) {
+              $badLoopMessage = [bool](
+                [string]$lane1.message -match "thay đổi trong lúc xác minh|tải lại trang lặp lại|reload loop"
+              )
+              $blockedLatch = [bool](
+                $registryLane -and
+                $registryLane.dispatch_inflight -and
+                [bool]$registryLane.dispatch_inflight.reconcile_blocked
+              )
+              $stableStatus = [string]$lane1.status -in @(
+                "WORKING",
+                "RELAYING_RESULT",
+                "WAITING_BRAIN",
+                "READY",
+                "STARTING"
+              )
+
+              if ($stableStatus -and -not $badLoopMessage -and -not $blockedLatch) {
+                $healthy = $true
+                break
+              }
+            }
+
+            Start-Sleep -Seconds 2
+          }
+
+          if ($lane1) {
+            Write-Host "LIVE_LANE1_STATUS=$($lane1.status)"
+            Write-Host "LIVE_LANE1_MESSAGE=$($lane1.message)"
+            Write-Host "LIVE_LANE1_TASK=$($lane1.task_id)"
+          } else {
+            Write-Host "LIVE_LANE1_STATUS=MISSING"
+          }
+
+          if ($registryLane) {
+            Write-Host "LIVE_LANE1_AWAITING_WORK=$([bool]$registryLane.awaiting_work)"
+            Write-Host "LIVE_LANE1_DISPATCH_INFLIGHT=$([bool]$registryLane.dispatch_inflight)"
+          }
+
+          Write-Host "SAFE_LOG_TAIL_BEGIN"
+          if (Test-Path $logFile) {
+            Get-Content $logFile -Tail 80 -ErrorAction SilentlyContinue | ForEach-Object {
+              Write-Host $_
+            }
+          }
+          Write-Host "SAFE_LOG_TAIL_END"
+
+          if (-not $healthy) {
+            throw "Lane 1 did not reach a stable non-looping runtime state within the bounded live acceptance window"
+          }
+
+          $shortcut = Join-Path ([Environment]::GetFolderPath("Desktop")) "MAGASIN BUSINESS OS CONTROL.lnk"
+          if (-not (Test-Path $shortcut)) {
+            throw "MAGASIN BUSINESS OS CONTROL shortcut is missing"
+          }
+
+          Start-Process $shortcut
+          Start-Sleep -Seconds 2
+          Write-Host "CONTROL_PANEL_OPENED=True"
+          Write-Host "LIVE_ACCEPTANCE=True"

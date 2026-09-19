@@ -163,82 +163,57 @@ test("inaccessible Brain or Work conversations surface plain-language Owner guid
 });
 
 
-test("unconfirmed existing-Work send reloads exact target and auto-retries only when server state proves no send", async () => {
+test("v36 reloads each unconfirmed Work send at most once and then only observes", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /async function inspectKnownTargetSendOutcome/);
-  assert.match(source, /page\.reload\(/);
-  assert.match(source, /waitForUserTurnDigest/);
-  assert.match(source, /pre_user_count/);
-  assert.match(source, /pre_max_turn_ordinal/);
-  assert.match(source, /return "NOT_CONFIRMED"/);
-  assert.match(source, /LANE_WORK_SEND_NOT_CONFIRMED_RETRY/);
-  assert.match(source, /if \(outcome === "CONFIRMED"\) return/);
-  assert.doesNotMatch(source, /Work instruction send outcome is uncertain; automatic resend is denied/);
+  assert.match(source, /reconcile_reloaded/);
+  assert.match(source, /const reload = !latch\.reconcile_reloaded/);
+  assert.match(source, /LANE_WORK_SEND_RECONCILE_RELOAD/);
+  assert.match(source, /LANE_WORK_SEND_RECONCILE_PENDING/);
+  assert.match(source, /LANE_WORK_SEND_RECONCILE_PENDING/);
+  assert.match(source, /return "PENDING"/);
+  assert.match(source, /chỉ quan sát, không tải lại trang lặp lại/);
 });
 
-test("legacy v34 inflight latch can self-heal after hard reload on a stable completed Work chat", async () => {
+test("v36 waits for a stable ChatGPT surface before deciding send outcome", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /v34 and older latches did not persist a pre-send baseline/);
-  assert.match(source, /if \(!baselineKnown && stable\) return "NOT_CONFIRMED"/);
+  assert.match(source, /async function waitForStableSendSurface/);
+  assert.match(source, /timeoutMs = 15_000/);
+  assert.match(source, /composerReady/);
+  assert.match(source, /responseRunning/);
+  assert.match(source, /RESPONSE_COMPLETE/);
+  assert.match(source, /if \(!observed\.stable \|\| !observed\.probe\) return "PENDING"/);
 });
 
-test("Brain request and result relay use the same safe send reconciliation", async () => {
+test("v36 keeps exact-once semantics across Brain, Work and result relay", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
 
+  assert.match(source, /LANE_BRAIN_SEND_RECONCILE_RELOAD/);
+  assert.match(source, /LANE_WORK_SEND_RECONCILE_RELOAD/);
+  assert.match(source, /LANE_RESULT_RELAY_RECONCILE_RELOAD/);
   assert.match(source, /LANE_BRAIN_SEND_NOT_CONFIRMED_RETRY/);
-  assert.match(source, /LANE_RESULT_RELAY_NOT_CONFIRMED_RETRY/);
-  assert.match(source, /LANE_BRAIN_SEND_PENDING_CONFIRMATION/);
-  assert.match(source, /LANE_RESULT_RELAY_PENDING_CONFIRMATION/);
-  assert.match(source, /captureSendBaseline/);
-});
-
-
-test("unconfirmed existing-Work send hard-reloads and auto-retries only when server state proves no send", async () => {
-  const source = await fs.readFile(
-    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /async function inspectKnownTargetSendOutcome/);
-  assert.match(source, /page\.reload\(/);
-  assert.match(source, /waitForUserTurnDigest/);
-  assert.match(source, /pre_user_count/);
-  assert.match(source, /pre_max_turn_ordinal/);
-  assert.match(source, /return "NOT_CONFIRMED"/);
   assert.match(source, /LANE_WORK_SEND_NOT_CONFIRMED_RETRY/);
-  assert.doesNotMatch(source, /Work instruction send outcome is uncertain; automatic resend is denied/);
-});
-
-test("legacy v34 inflight latch self-heals after hard reload on a stable completed Work chat", async () => {
-  const source = await fs.readFile(
-    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /v34 and older latches did not persist a pre-send baseline/);
-  assert.match(source, /if \(!baselineKnown && stable\) return "NOT_CONFIRMED"/);
-});
-
-test("Brain request and result relay use the same safe send reconciliation", async () => {
-  const source = await fs.readFile(
-    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
-    "utf8"
-  );
-
-  assert.match(source, /LANE_BRAIN_SEND_NOT_CONFIRMED_RETRY/);
   assert.match(source, /LANE_RESULT_RELAY_NOT_CONFIRMED_RETRY/);
-  assert.match(source, /LANE_BRAIN_SEND_PENDING_CONFIRMATION/);
-  assert.match(source, /LANE_RESULT_RELAY_PENDING_CONFIRMATION/);
-  assert.match(source, /captureSendBaseline/);
+  assert.match(source, /reconcile_blocked/);
+});
+
+test("legacy v34-v35 latch can self-heal after one hard reload", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /Legacy v34\/v35 latches may lack a baseline/);
+  assert.match(source, /return "NOT_CONFIRMED"/);
+  assert.doesNotMatch(source, /Work chat đã thay đổi trong lúc xác minh lần gửi/);
 });
