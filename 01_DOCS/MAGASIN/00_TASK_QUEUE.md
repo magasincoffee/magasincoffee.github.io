@@ -89,8 +89,8 @@ TASK-059 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_059_PF
 | TASK-057 | Procurement payment/AP → financial truth mapping | 20m | supplier payment cash-outflow + AP mapping; purchase != COGS | DONE |
 | TASK-058 | Partial Financial Baseline snapshot v1 | 20m | Revenue + known Cash/AP + explicit missing sources in one normalized truth object | DONE |
 | TASK-059 | PFC 3-hour regression + docs/state handoff | 20m | affected tests + evidence + state/docs reconciliation + next non-owner task | DONE |
-| TASK-060 | Actual Cash Opening/Ending Source Truth V1 | planned | evidenced opening/observed ending balances + explicit source/account coverage; no payment-method inference | IN_PROGRESS / AUTO_CONTINUE |
-| TASK-061 | Cash Balance Financial Truth Contract | 20m | canonical point-balance truth by account/scope/time | QUEUED / AUTO_CONTINUE |
+| TASK-060 | Actual Cash Opening/Ending Source Truth V1 | planned | evidenced opening/observed ending balances + explicit source/account coverage; no payment-method inference | DONE |
+| TASK-061 | Cash Balance Financial Truth Contract | 20m | canonical point-balance truth by account/scope/time | READY / AUTO_CONTINUE |
 | TASK-062 | Cash Balance Source Mapper | 20m | read-only evidence → canonical balance truth | QUEUED / AUTO_CONTINUE |
 | TASK-063 | Cash Source Coverage V1 | 20m | COMPLETE/PARTIAL/NOT_CONNECTED by source/account/period | QUEUED / AUTO_CONTINUE |
 | TASK-064 | Cash Bridge Source Integration | 20m | proven balances + coverage → Cash Bridge | QUEUED / AUTO_CONTINUE |
@@ -156,3 +156,4 @@ Owner approved plan is staged at `02_PROFITABILITY_CASH/PFC_8H_V2_EXECUTION_PLAN
 
 
 Execution generation: `PFC_8H_V2_RUN_01` — Owner explicitly released PFC_8H_V2 on 2026-09-20. Stop only at a true Owner/security boundary or queue completion.
+TASK-060 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`. Source discovery found no verified OBSERVED_BALANCE source in bounded Drive evidence; internal monthly cash reporting is COMPUTED_BALANCE + MOVEMENT_ONLY, while physical till, Bank, MoMo, COD, Owner-held cash and provider account balances remain NOT_CONNECTED. Google Drive remained READ-ONLY. TASK-061 is released.
