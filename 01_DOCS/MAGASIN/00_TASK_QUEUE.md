@@ -92,8 +92,8 @@ TASK-059 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_059_PF
 | TASK-060 | Actual Cash Opening/Ending Source Truth V1 | planned | evidenced opening/observed ending balances + explicit source/account coverage; no payment-method inference | DONE |
 | TASK-061 | Cash Balance Financial Truth Contract | 20m | canonical point-balance truth by account/scope/time | DONE |
 | TASK-062 | Cash Balance Source Mapper | 20m | read-only evidence → canonical balance truth | DONE |
-| TASK-063 | Cash Source Coverage V1 | 20m | COMPLETE/PARTIAL/NOT_CONNECTED by source/account/period | READY / AUTO_CONTINUE |
-| TASK-064 | Cash Bridge Source Integration | 20m | proven balances + coverage → Cash Bridge | QUEUED / AUTO_CONTINUE |
+| TASK-063 | Cash Source Coverage V1 | 20m | COMPLETE/PARTIAL/NOT_CONNECTED by source/account/period | DONE |
+| TASK-064 | Cash Bridge Source Integration | 20m | proven balances + coverage → Cash Bridge | READY / AUTO_CONTINUE |
 | TASK-065 | Cash Truth Regression & Evidence | 20m | cash truth regression + fail-closed proof | QUEUED / AUTO_CONTINUE |
 | TASK-066 | OPEX Source Inventory V1 | 20m | payroll/rent/utilities/platform/marketing/OPEX source map | QUEUED / AUTO_CONTINUE |
 | TASK-067 | Operating Cost Truth Contract | 20m | recognized cost != cash paid | QUEUED / AUTO_CONTINUE |
@@ -159,3 +159,4 @@ Execution generation: `PFC_8H_V2_RUN_01` — Owner explicitly released PFC_8H_V2
 TASK-060 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`. Source discovery found no verified OBSERVED_BALANCE source in bounded Drive evidence; internal monthly cash reporting is COMPUTED_BALANCE + MOVEMENT_ONLY, while physical till, Bank, MoMo, COD, Owner-held cash and provider account balances remain NOT_CONNECTED. Google Drive remained READ-ONLY. TASK-061 is released.
 TASK-061 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`. Cash Balance Truth contract/helper merged in PR #186 as `a9313eadc4492f144ca3c08b1021d1aa51f31a0b`; required PR-head run `35467911185` and exact post-merge run `35467940997` succeeded on Node v20.20.2 with TASK-061 40/40 and full Business OS 254 logical checks / 0 fail. TASK-062 is released.
 TASK-062 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_062_CASH_BALANCE_SOURCE_MAPPER_V1_EVIDENCE.md`. Source mapper merged in PR #187 as `cf8b24715c3f6b3ed2368f5d6f568bd331130a0d`; final PR-head run `35472567129` and exact post-merge run `35472597015` succeeded on Node v20.20.2 with mapper 47/47 and full Business OS 301 logical checks / 0 fail. TASK-063 is released.
+TASK-063 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_063_CASH_SOURCE_COVERAGE_V1_EVIDENCE.md`. Coverage contract/helper merged in PR #188 as `bc30eafa6305a9350bebd9658395f408f9f59299`; required PR-head run `35474386474` and exact post-merge run `35474418160` succeeded on Node v20.20.2 with TASK-063 35/35 and full Business OS 330 logical checks / 0 fail. TASK-064 is released.
