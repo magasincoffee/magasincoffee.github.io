@@ -185,6 +185,7 @@ Canonical contract: `00_SUPERVISOR_BRAIN_WORKER_ARCHITECTURE.md`.
 Canonical contract: `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md`.
 
 - exactly three isolated project lanes;
+- Brain is control-plane only: Owner collaboration, architecture, reconciliation and directive emission; all repository/shell/test/PR/deploy execution must be delegated to Work;
 - Brain identity is Owner-bound by explicit URL only; no active Brain auto-discovery;
 - each lane has its own project name, Owner Brain URL, optional Owner Work URL / Robot-managed Work URL, status, message, START and STOP;
 - Owner may paste/replace Work URL while a lane is stopped; if blank, Robot auto-creates it; automatic Work rollover still requires positive `conversationFull` evidence;
