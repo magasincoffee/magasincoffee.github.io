@@ -1,15 +1,15 @@
 {
   "project": "MAGASIN Business OS",
   "repository": "magasincoffee/magasincoffee.github.io",
-  "plan_version": "BOS-V1-5STEP-THREE-LANE-RELAY-MARKER-2026-09-19",
+  "plan_version": "BOS-V1-5STEP-PROFIT-CASH-OWNER-GATE-2026-09-19",
   "target_days": 21,
-  "current_phase": "P1_AUTONOMY_THREE_LANE_UPGRADE",
-  "current_task": "TASK-049",
-  "current_task_title": "Supervisor three-lane owner-bound Brain/Work orchestration",
-  "status": "READY",
-  "autonomy": "AUTO_CONTINUE",
+  "current_phase": "P1_ARCHITECTURE_REVIEW_PROFITABILITY_CASH",
+  "current_task": "TASK-050",
+  "current_task_title": "Enterprise architecture lock — Profitability & Cash first",
+  "status": "WAIT_USER",
+  "autonomy": "PAUSED",
   "blocked": false,
-  "requires_user": false,
+  "requires_user": true,
   "next_task": null,
   "safety": {
     "repository_visibility": "public",
@@ -19,12 +19,17 @@
   },
   "last_updated": "2026-09-19",
   "owner_boundary": {
-    "task": "TASK-049",
+    "task": "TASK-050",
     "resolved": [
       "OWNER_APPROVED_BRAIN_WORKER_ARCHITECTURE",
-      "OWNER_APPROVED_THREE_LANE_ARCHITECTURE"
+      "OWNER_APPROVED_THREE_LANE_ARCHITECTURE",
+      "OWNER_CONFIRMED_PROFITABILITY_CASH_TOP_PRIORITY",
+      "OWNER_REQUIRES_DISCUSSION_BEFORE_ROBOT_HANDOFF"
     ],
-    "pending": []
+    "pending": [
+      "OWNER_ARCHITECTURE_LOCK",
+      "OWNER_EXPLICIT_ROBOT_RELEASE"
+    ]
   },
   "deferred_activation": {
     "task": "TASK-035",
@@ -237,6 +242,29 @@
       "proven_not_sent": "CLEAR_LATCH_AND_RETRY",
       "ambiguous_stable_change": "BLOCK_WITHOUT_RELOAD_LOOP"
     },
-    "local_json_compatibility": "UTF8_BOM_TOLERANT"
+    "local_json_compatibility": "UTF8_BOM_TOLERANT",
+    "owner_handoff_gate": {
+      "policy": "PROJECT_STATE_AUTHORITY",
+      "required_autonomy": "AUTO_CONTINUE",
+      "current_autonomy": "PAUSED",
+      "robot_may_execute": false,
+      "reason": "OWNER_ARCHITECTURE_DISCUSSION_ACTIVE"
+    }
+  },
+  "architecture_handoff": {
+    "state": "DISCUSSION_ACTIVE",
+    "canonical_architecture_ref": "01_DOCS/MAGASIN/00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md",
+    "primary_priority": "PROFITABILITY_CASH",
+    "five_step_gate": "QUESTION_DELETE_SIMPLIFY",
+    "robot_may_execute": false,
+    "robot_release_policy": "OWNER_EXPLICIT_RELEASE_AFTER_ARCHITECTURE_LOCK",
+    "silence_is_approval": false,
+    "implementation_queue_locked": true,
+    "release_conditions": [
+      "ARCHITECTURE_LOCKED_BY_OWNER",
+      "TASK_QUEUE_REBUILT_FROM_LOCKED_ARCHITECTURE",
+      "PROJECT_STATE_CHANGED_TO_READY_AUTO_CONTINUE",
+      "OWNER_EXPLICIT_ROBOT_RELEASE"
+    ]
   }
 }
