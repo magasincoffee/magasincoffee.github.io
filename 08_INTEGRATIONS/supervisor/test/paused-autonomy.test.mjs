@@ -59,3 +59,18 @@ test("deployment workflow enforces Owner architecture pause without live Lane ex
   assert.match(source, /LIVE_ACCEPTANCE_SKIPPED_OWNER_PAUSED=True/);
   assert.match(source, /CONTROL_PANEL_OPENED=False/);
 });
+
+test("deployment workflow accepts only explicitly released prepared queue tasks when executable", async () => {
+  const source = await fs.readFile(
+    new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /architecture_handoff\.robot_may_execute/);
+  assert.match(source, /prepared_execution_queue\.tasks/);
+  assert.match(source, /prepared_execution_queue\.status -match '\^ACTIVE'/);
+  assert.match(source, /current_task/);
+  assert.match(source, /PREPARED_QUEUE_ACTIVE=True/);
+  assert.match(source, /current_task is not part of an Owner-released queue/);
+});
+
