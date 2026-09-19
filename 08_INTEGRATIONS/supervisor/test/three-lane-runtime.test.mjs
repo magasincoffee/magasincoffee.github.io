@@ -371,3 +371,22 @@ test("v43 a reconciled Work dispatch records the Brain directive digest to preve
   assert.match(source, /registryLane\.last_brain_directive_digest =\s*latch\.directive_digest/);
   assert.match(source, /registryLane\.instruction_digest =\s*latch\.directive_instruction_digest/);
 });
+
+
+test("v46 Owner Work revision resets stale task state even when Work URL is unchanged", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+  const start = source.indexOf("async function applyOwnerWorkTarget");
+  const end = source.indexOf("async function processLane", start);
+  const applyWork = source.slice(start, end);
+
+  assert.match(applyWork, /revision <= Number\(registryLane\.applied_work_url_revision/);
+  assert.match(applyWork, /await clearRelayInflight\(registryLane\)/);
+  assert.match(applyWork, /registryLane\.task_id = null/);
+  assert.match(applyWork, /registryLane\.dispatch_inflight = null/);
+  assert.match(applyWork, /registryLane\.brain_request_inflight = null/);
+  assert.match(applyWork, /registryLane\.awaiting_work = false/);
+  assert.match(applyWork, /LANE_OWNER_WORK_TARGET_RESET/);
+});
