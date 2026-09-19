@@ -102,7 +102,7 @@ test("new Work URLs are stored through canonical target normalization", async ()
 
 
 
-test("v40 Owner Brain URL override is revisioned and can hot-swap during active Work", async () => {
+test("v41 Owner Brain URL override is revisioned and can hot-swap during active Work", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -119,17 +119,36 @@ test("v40 Owner Brain URL override is revisioned and can hot-swap during active 
   assert.match(source, /normalizeChatGptConversationUrl\(registryLane\.brain_url\)/);
 });
 
-test("v40 active Brain status comes from persisted registry target", async () => {
+test("v41 active Brain status comes from persisted registry target", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-19\.40/);
+  assert.match(source, /2026-09-19\.41/);
 });
 
-test("v40 explicit Brain rebind clears only a blocked old-Brain dispatch when no Work result is pending", async () => {
+test("v41 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
+  const source = await fs.readFile(
+    new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /async function adoptExistingBrainDirective/);
+  assert.match(source, /LANE_BRAIN_DIRECTIVE_ADOPTED_AS_HANDSHAKE/);
+  assert.match(source, /directive = parseLaneDirective\(captured\.text\)/);
+  assert.match(source, /registryLane\.brain_request_sent = true/);
+  assert.match(source, /registryLane\.brain_request_inflight = null/);
+  assert.match(source, /const existingDirective = await adoptExistingBrainDirective/);
+  assert.match(source, /const directiveAfterReconcile = await adoptExistingBrainDirective/);
+  assert.match(source, /const directiveAfterSend = await adoptExistingBrainDirective/);
+  assert.match(source, /directive = await ensureBrainRequest/);
+  assert.match(source, /if \(!directive\) \{\s*return laneStatus\(/);
+});
+
+
+test("v41 explicit Brain rebind clears only a blocked old-Brain dispatch when no Work result is pending", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"

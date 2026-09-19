@@ -34,7 +34,7 @@ import {
   buildLaneResultRelay
 } from "./three-lane.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.40";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.41";
 
 function parseArgs(argv) {
   const result = {
@@ -416,6 +416,46 @@ async function reconcileBrainRequest({
   return "BLOCKED";
 }
 
+async function adoptExistingBrainDirective({
+  adapter,
+  page,
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  logPath
+}) {
+  const probe = await assertConversationSafe(adapter, page, { brain: true })
+    .catch(() => null);
+  if (
+    !probe ||
+    probe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE
+  ) {
+    return null;
+  }
+
+  const captured = await captureCompletedAssistantTurn(page).catch(() => null);
+  if (!captured) return null;
+
+  let directive = null;
+  try {
+    directive = parseLaneDirective(captured.text);
+  } catch {
+    return null;
+  }
+
+  registryLane.brain_request_sent = true;
+  registryLane.brain_request_inflight = null;
+  await atomicJsonWrite(registryPath, registry);
+  await safeLog(logPath, {
+    type: "LANE_BRAIN_DIRECTIVE_ADOPTED_AS_HANDSHAKE",
+    laneId: lane.lane_id,
+    taskId: directive.action === "WORK" ? directive.task_id : undefined,
+    digest: directive.digest
+  });
+  return directive;
+}
+
 async function ensureBrainRequest({
   adapter,
   page,
@@ -426,7 +466,19 @@ async function ensureBrainRequest({
   registryPath,
   logPath
 }) {
-  if (registryLane.brain_request_sent) return false;
+  if (registryLane.brain_request_sent) return null;
+
+  const existingDirective = await adoptExistingBrainDirective({
+    adapter,
+    page,
+    lane,
+    registryLane,
+    registry,
+    registryPath,
+    logPath
+  });
+  if (existingDirective) return existingDirective;
+
   if (registryLane.brain_request_inflight) {
     const outcome = await reconcileBrainRequest({
       adapter,
@@ -437,13 +489,24 @@ async function ensureBrainRequest({
       registryPath,
       logPath
     });
-    if (outcome === "CONFIRMED") return true;
-    if (outcome === "PENDING" || outcome === "BLOCKED") return false;
+    if (outcome === "CONFIRMED") return null;
+    if (outcome === "PENDING" || outcome === "BLOCKED") {
+      const directiveAfterReconcile = await adoptExistingBrainDirective({
+        adapter,
+        page,
+        lane,
+        registryLane,
+        registry,
+        registryPath,
+        logPath
+      });
+      return directiveAfterReconcile;
+    }
   }
 
   const probe = await assertConversationSafe(adapter, page, { brain: true });
   if (probe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
-    return false;
+    return null;
   }
 
   const request = buildBrainStartRequest({
@@ -458,7 +521,7 @@ async function ensureBrainRequest({
   };
   await atomicJsonWrite(registryPath, registry);
 
-  if (!execute) return false;
+  if (!execute) return null;
   let sent = null;
   try {
     sent = await sendComposerInstruction(page, request, { dryRun: false });
@@ -470,9 +533,9 @@ async function ensureBrainRequest({
       errorName: error?.name || "Error",
       reason: String(error?.message || error).slice(0, 220)
     });
-    return false;
+    return null;
   }
-  if (!sent.executed) return false;
+  if (!sent.executed) return null;
 
   const confirmed = await waitForUserTurnDigest(page, digest);
   if (!confirmed) {
@@ -481,7 +544,16 @@ async function ensureBrainRequest({
       laneId: lane.lane_id,
       digest
     });
-    return false;
+    const directiveAfterSend = await adoptExistingBrainDirective({
+      adapter,
+      page,
+      lane,
+      registryLane,
+      registry,
+      registryPath,
+      logPath
+    });
+    return directiveAfterSend;
   }
 
   registryLane.brain_request_sent = true;
@@ -492,7 +564,7 @@ async function ensureBrainRequest({
     laneId: lane.lane_id,
     digest
   });
-  return true;
+  return null;
 }
 
 async function findWorkConversationByInstruction(adapter, instructionDigest) {
@@ -1327,8 +1399,9 @@ async function processLane({
     );
   }
 
+  let directive = null;
   if (!registryLane.brain_request_sent) {
-    await ensureBrainRequest({
+    directive = await ensureBrainRequest({
       adapter,
       page: brainPage,
       lane,
@@ -1338,15 +1411,17 @@ async function processLane({
       registryPath,
       logPath
     });
-    return laneStatus(
-      lane,
-      registryLane,
-      "WAITING_BRAIN",
-      "Đang chờ Bộ não giao công việc đầu tiên."
-    );
+    if (!directive) {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WAITING_BRAIN",
+        "Đang chờ Bộ não giao công việc đầu tiên."
+      );
+    }
   }
 
-  if (brainProbe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
+  if (!directive && brainProbe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
     return laneStatus(
       lane,
       registryLane,
@@ -1355,26 +1430,27 @@ async function processLane({
     );
   }
 
-  const captured = await captureCompletedAssistantTurn(brainPage);
-  if (!captured) {
-    return laneStatus(
-      lane,
-      registryLane,
-      "WAITING_BRAIN",
-      "Đang chờ Bộ não trả lệnh."
-    );
-  }
+  if (!directive) {
+    const captured = await captureCompletedAssistantTurn(brainPage);
+    if (!captured) {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WAITING_BRAIN",
+        "Đang chờ Bộ não trả lệnh."
+      );
+    }
 
-  let directive = null;
-  try {
-    directive = parseLaneDirective(captured.text);
-  } catch {
-    return laneStatus(
-      lane,
-      registryLane,
-      "WAITING_BRAIN",
-      "Bộ não chưa trả block MAGASIN_LANE_DIRECTIVE_V1 hợp lệ."
-    );
+    try {
+      directive = parseLaneDirective(captured.text);
+    } catch {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WAITING_BRAIN",
+        "Bộ não chưa trả block MAGASIN_LANE_DIRECTIVE_V1 hợp lệ."
+      );
+    }
   }
 
   if (directive.digest === registryLane.last_brain_directive_digest) {
