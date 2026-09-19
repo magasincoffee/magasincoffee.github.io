@@ -1293,3 +1293,96 @@ export function calculateCashBridge({
         ...(totalKnownOutflows.lineage || []),
         ...coverage.lineage
       ],
+      evidence: [
+        "FORMULA:OPENING+KNOWN_INFLOW-KNOWN_OUTFLOW",
+        "EVENT_COVERAGE:COMPLETE"
+      ],
+      reason: "COMPUTED_ENDING_FROM_COMPLETE_EVIDENCED_CASH",
+      message: "Computed ending cash from opening balance and complete evidenced event coverage."
+    });
+  }
+
+  const varianceFailureQualities = [];
+  const computedFailure = componentFailureQuality(computedEnding);
+  const observedFailure = componentFailureQuality(observedEnding);
+  if (computedFailure) varianceFailureQualities.push(computedFailure);
+  if (observedFailure) varianceFailureQualities.push(observedFailure);
+
+  let cashVariance;
+  if (varianceFailureQualities.length > 0) {
+    cashVariance = bridgeFailureTruth({
+      metric: "cash_variance",
+      targetPeriod,
+      targetScope,
+      pointDate: targetPeriod.end,
+      quality: worstQuality(varianceFailureQualities),
+      reason: "CASH_VARIANCE_DEPENDENCY_INCOMPLETE",
+      lineage: [
+        ...(computedEnding.lineage || []),
+        ...(observedEnding.lineage || [])
+      ]
+    });
+  } else {
+    const quality = worstQuality([
+      computedEnding.quality,
+      observedEnding.quality
+    ]);
+    cashVariance = derivedNumericTruth({
+      metric: "cash_variance",
+      period: {
+        start: targetPeriod.end,
+        end: targetPeriod.end,
+        timezone: targetPeriod.timezone
+      },
+      scope: targetScope,
+      value: observedEnding.value - computedEnding.value,
+      quality,
+      asOf: maxAsOf([
+        computedEnding.as_of,
+        observedEnding.as_of
+      ]),
+      lineage: [
+        ...(computedEnding.lineage || []),
+        ...(observedEnding.lineage || [])
+      ],
+      evidence: ["FORMULA:OBSERVED_ENDING-COMPUTED_ENDING"],
+      reason: "CASH_VARIANCE_FROM_OBSERVED_MINUS_COMPUTED",
+      message: "Cash variance equals observed ending cash minus computed ending cash."
+    });
+  }
+
+  const bridgeQuality = worstQuality([
+    computedEnding.quality,
+    cashVariance.quality
+  ]);
+
+  const lineage = [
+    ...new Set([
+      "CASH_BRIDGE_V1",
+      ...(opening.lineage || []),
+      ...eventLineage(eventResult.numeric_events),
+      ...(observedEnding.lineage || []),
+      ...coverage.lineage
+    ])
+  ].sort();
+
+  return {
+    schema_version: CASH_BRIDGE_SCHEMA_VERSION,
+    target_period: targetPeriod,
+    scope: targetScope,
+    opening_balance: opening,
+    events: eventResult.events,
+    categorized_known_inflows: categorizedInflows,
+    categorized_known_outflows: categorizedOutflows,
+    transfers,
+    total_known_inflows: totalKnownInflows,
+    total_known_outflows: totalKnownOutflows,
+    computed_ending_balance: computedEnding,
+    observed_ending_balance: observedEnding,
+    cash_variance: cashVariance,
+    coverage,
+    quality: bridgeQuality,
+    diagnostics: [...new Set(diagnostics)].sort(),
+    lineage
+  };
+}
