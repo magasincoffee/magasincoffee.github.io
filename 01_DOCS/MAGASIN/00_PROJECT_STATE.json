@@ -336,6 +336,20 @@
       "DESTRUCTIVE_PRODUCTION_ACTION",
       "SECRET_PRIVATE_DATA_REQUIREMENT",
       "CONTRADICTORY_CANONICAL_SOURCES"
-    ]
+    ],
+    "google_drive_evidence": "AUTHORIZED_READ_ONLY"
+  },
+  "data_evidence_policy": {
+    "google_drive": {
+      "authorized": true,
+      "mode": "READ_ONLY_EVIDENCE",
+      "may_search": true,
+      "may_read": true,
+      "may_reconcile": true,
+      "may_modify": false,
+      "public_git_raw_private_data": false,
+      "public_git_drive_locators": false,
+      "real_operating_evidence_priority": true
+    }
   }
 }
