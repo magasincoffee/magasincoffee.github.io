@@ -1,217 +1,255 @@
 # MAGASIN — ChatGPT Project Context
 
+## 0. READ FIRST — mandatory
+
+Before doing any work in a new chat, read:
+
+1. **`00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — canonical architecture / first read.**
+2. `00_CURRENT_STATE.md`.
+3. `00_PROJECT_STATE.json`.
+4. `00_TASK_QUEUE.md`.
+5. `00_MASTER_PLAN.md`.
+6. `06_DECISION_LOG.md`.
+7. current domain/task docs.
+8. repository/PR/CI state.
+
+Do not continue from stale chat memory when repository evidence is newer.
+
 ## 1. Project identity
 
-- Project: MAGASIN Coffee Digital Transformation
-- Business: MAGASIN COFFEE — Cần Thơ, Việt Nam
+- Project: MAGASIN Business OS / Digital Transformation
+- Business: MAGASIN COFFEE
 - Repository: `magasincoffee/magasincoffee.github.io`
 - Primary branch: `main`
 
-## 2. Primary objective
+## 2. Canonical objective
 
-Xây dựng hệ thống vận hành số cho MAGASIN theo chuỗi:
+Build a comprehensive enterprise management operating system that turns real operations into trustworthy management decisions and continuous improvement.
 
-`ENTERPRISE DISCOVERY → BUSINESS RULES → SOP → DATA MODEL → SYSTEM → WEBAPP`
-
-Đây là nguyên tắc bắt buộc xuyên suốt dự án.
-
-## 3. Source of truth
-
-**Doanh nghiệp thực tế là nguồn sự thật.**
-
-Không mặc định rằng UI, code hoặc database hiện tại phản ánh đúng nghiệp vụ. Khi phát hiện sai lệch, phải truy ngược từ:
-
-`UI → System → Data → SOP → Business Rule → Discovery`
-
-xác định tầng sai trước khi sửa.
-
-## 4. Information status
-
-- `FACT`: đã xác nhận MAGASIN đang vận hành như vậy.
-- `ASSUMPTION`: giả định, chưa xác nhận.
-- `RULE`: quy định doanh nghiệp đã được chốt.
-- `DECISION`: quyết định quản trị đã được chốt.
-- `EXCEPTION`: trường hợp ngoại lệ cần ghi nhận riêng.
-
-Không biến ASSUMPTION thành FACT/RULE nếu chưa được xác nhận.
-
-## 5. Master documentation area
-
-Tất cả kế hoạch, Discovery và dữ liệu nghiệp vụ đã chốt thuộc:
-
-`01_DOCS/MAGASIN/`
-
-Cấu trúc:
+North Star:
 
 ```text
-01_DOCS/MAGASIN/
-├── README.md
-├── 00_CURRENT_STATE.md
-├── 00_MASTER_PLAN.md
-├── 00_CHATGPT_CONTEXT.md
-├── 01_DISCOVERY/
-├── 02_BUSINESS_RULES/
-├── 03_SOP/
-├── 04_DATA_MODEL/
-├── 05_SYSTEM/
-├── 06_DECISION_LOG.md
-└── 07_CHANGE_LOG.md
+VẬN HÀNH THẬT
+→ DỮ LIỆU ĐÚNG
+→ FINANCIAL TRUTH
+→ QUYẾT ĐỊNH ĐÚNG
+→ THỰC THI
+→ KIỂM SOÁT
+→ CẢI TIẾN
+→ PROFIT ↑ / CASH ↑
 ```
 
-## 6. Master plan
+**Profitability & Cash is critical business priority #1.**
 
-Đọc `00_MASTER_PLAN.md` để biết phase, domain, điều kiện hoàn thành và tiến độ.
+## 3. Canonical architecture
 
-Current program:
+The enterprise architecture is defined by:
 
-`MAGASIN Business OS V1 — 21-day accelerated execution`
+`00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md`
 
-Current phase:
-
-`P1 — Accelerated Enterprise Discovery + Foundation`
-
-Current task:
-
-`TASK-009 — Store/product canonical model review`
-
-Machine-readable execution state: `00_PROJECT_STATE.json`.
-
-Task queue: `00_TASK_QUEUE.md`.
-
-Canonical V1 architecture: `00_BUSINESS_OS_BLUEPRINT.md`.
-
-## 7. Current repository architecture
-
-Root canonical structure:
+Core shape:
 
 ```text
-.github/
-.nojekyll
-index.html
-01_DOCS/
-02_CORE/
-03_PLATFORM/
-04_OWNER/
-05_MANAGER/
-06_EMPLOYEE/
-07_DATABASE/
-08_INTEGRATIONS/
-99_LEGACY/
+OPERATING EVENTS / DATA SOURCES
+        ↓
+CANONICAL DATA + EVENT / LEDGER LAYER
+        ↓
+BUSINESS CORE DOMAINS
+        ↓
+FINANCIAL TRUTH SPINE
+Revenue → COGS/Cost → Cash → Contribution → Profitability → Break-even
+        ↓
+OWNER / MANAGER / EMPLOYEE DECISION & EXECUTION
+        ↓
+AUTOMATION — LAST
 ```
 
-Không tạo lại các root folder cũ như `core/`, `docs/`, `employee/`, `manager/`, `owner/`, `supabase/`, `legacy/`.
+Supervisor/Brain/Work is an outer execution layer, not the business architecture core.
 
-Không tạo patch-chain kiểu `v2`, `v3`, `v4`, `fix`, `final`, `cleanup` cho implementation canonical.
+## 4. Five-Step — continuous operating method
 
-## 8. Current portals
+Every aspect of the system must continuously apply:
 
-- Owner: `04_OWNER/`
-- Owner Workforce: `04_OWNER/Workforce/`
-- Manager: `05_MANAGER/` — hiện còn compatibility layer trong `05_MANAGER/runtime/compat/`, chưa được coi là refactor hoàn chỉnh.
-- Employee: `06_EMPLOYEE/`
+```text
+QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE
+```
 
-## 9. Shared Core
+This is not a one-time architecture exercise.
 
-Canonical shared core:
+It applies to:
 
-`02_CORE/shared/shared-core-v1.js`
+- enterprise strategy;
+- domain/capability;
+- business rule;
+- SOP/workflow;
+- data/ledger/field;
+- API/RPC/integration;
+- UI/report/dashboard;
+- KPI/metric/alert;
+- automation/AI/Robot;
+- QA/incident;
+- change request/release.
 
-Shared Core chỉ chứa cross-system concerns như Auth/Session, Authorization/Role, Supabase, Store, Date/Week, Time, Router và UI primitives. Không đưa business logic riêng của Workforce vào Shared Core.
+Workstreams may run Five-Step **in parallel**, but within each requirement/change the order must remain:
 
-## 10. Workforce context already discussed
+1. QUESTION;
+2. DELETE;
+3. SIMPLIFY;
+4. ACCELERATE;
+5. AUTOMATE.
 
-Workforce intent:
+Re-run Five-Step whenever new evidence, field feedback, incidents, business-rule changes or releases occur.
 
-- `Demand`: xác định số nhân sự cần theo nhu cầu thực tế.
-- `Review`: review employee registrations và xử lý branch transfer.
-- `Publish`: tạo official schedule theo từng store.
+## 5. Source of truth
 
-Employee workflow:
+**Real MAGASIN operations are the root source of truth.**
 
-`Register availability → scheduling/review → resolve conflicts → manual adjustment → official schedule`
+Do not assume current UI, code or database is correct business truth.
 
-Các chi tiết Workforce hiện có trong code chỉ là implementation hiện hữu và phải được đối chiếu lại với Enterprise Discovery trước khi được nâng thành business truth.
+Trace problems backward:
 
-## 11. Existing important Workforce decisions discussed earlier
+```text
+UI
+↑
+SYSTEM
+↑
+DATA
+↑
+SOP
+↑
+BUSINESS RULE
+↑
+DISCOVERY / REALITY
+```
 
-- Demand nhập số lượng cần; khi lưu `4` thì mapping hiện tại là `minimum_headcount=4`, `target_headcount=4`, `maximum_headcount=4`.
-- Review theo từng chi nhánh.
-- Dropdown chuyển chi nhánh không được chứa chi nhánh hiện tại.
-- Chuyển chi nhánh chỉ có hiệu lực sau khi yêu cầu được duyệt; khi duyệt thì cập nhật `employee_availability.preferred_store_id`.
-- Màu ca dựa theo thời gian, không dựa theo status:
-  - 05:00–11:59: Sáng
-  - 12:00–16:59: Trưa/Chiều
-  - 17:00–22:00: Tối
+Information status:
 
-Các điểm trên là **context của implementation hiện tại**, không phải mặc nhiên là Enterprise Rules cuối cùng nếu Discovery sau này xác định khác.
+- FACT
+- ASSUMPTION
+- RULE
+- DECISION
+- EXCEPTION
+- GAP / ESTIMATE when financial data is incomplete
 
-## 12. Discovery method
+Never promote an assumption or estimate into actual truth without evidence.
 
-Mỗi Discovery phải khảo sát theo:
+## 6. Financial Truth Spine
 
-`WHO → WHEN → TRIGGER → WHAT → HOW → DATA → DECISION → EXCEPTION → OUTPUT`
+Priority sequence:
 
-Mỗi record cần tối thiểu:
+1. PFC-01 — Revenue truth
+2. PFC-02 — Cash truth
+3. PFC-03 — Cost structure / AP / debt
+4. PFC-04 — COGS reliability
+5. PFC-05 — Unit economics
+6. PFC-06 — Profit ↔ Cash reconciliation
+7. PFC-07 — Break-even / branch economics
+8. PFC-08 — Pricing diagnosis
 
-`ID, Domain, Statement, Type, Actor, Trigger, Process, Data, Decision, Exception, Evidence, Status`
+Do not assume low cash means price is too low.
 
-## 13. Discovery domains
+## 7. Business domains
 
-- D01 — Enterprise Baseline
-- D02 — Organization
-- D03 — Store Operation
-- D04 — Workforce
-- D05 — Schedule
-- D06 — Attendance
-- D07 — Inventory
-- D08 — Sales
-- D09 — Finance
-- D10 — Customer & Marketing
-- D11 — Management
-- D12 — Technology
+Shared domain capabilities feed the Financial Truth Spine:
 
-## 14. Working method for ChatGPT
+- Commercial / Sales
+- Procurement / AP
+- Inventory / Consumption
+- People / Workforce
+- SOP / Task / Control
+- Organization / Access
 
-Mọi requirement phải đi qua:
+Owner / Manager / Employee are role projections over shared capabilities, not separate sources of business truth.
 
-`QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE`.
+## 8. Schedule-first legacy status
 
-Mỗi implementation micro-task theo:
+TASK-029 → TASK-036 proved the vertical-slice delivery pattern:
 
-`Estimate → Implement → Unit → Fix → Regression → Integration → E2E → Docs/State → Commit → Next`.
+- canonical capability ownership;
+- server/RPC boundary;
+- role projections;
+- explicit approval;
+- deterministic tests;
+- browser E2E;
+- automation after canonical flow.
 
-Normal implementation task target: khoảng <=20 phút active work; lớn hơn phải chia nhỏ.
+Reuse the pattern. Do not keep expanding Workforce merely to complete a module.
 
-Khi bắt đầu một session mới:
+## 9. Current Owner / Robot boundary
 
-1. Đọc `00_CURRENT_STATE.md`.
-2. Đọc `00_PROJECT_STATE.json`.
-3. Đọc `00_TASK_QUEUE.md`.
-4. Đọc `00_MASTER_PLAN.md`.
-5. Đọc `00_BUSINESS_OS_BLUEPRINT.md`.
-6. Đọc `06_DECISION_LOG.md`.
-7. Đọc `07_CHANGE_LOG.md`.
-8. Đọc `00_CHATGPT_CONTEXT.md`.
-9. Đọc tài liệu của phase/domain/task hiện tại.
-10. Kiểm tra repository/PR/CI thực tế.
-11. Tiếp tục đúng task hiện tại; không khởi động lại dự án.
+Canonical architecture is **OWNER APPROVED / LOCKED**.
 
-Trước khi thay đổi code/database/UI, phải kiểm tra tài liệu nghiệp vụ hiện hành và repository thực tế.
+Current state remains:
 
-## 15. GitHub working rules
+```text
+WAIT_USER / PAUSED
+robot_may_execute = false
+```
 
-- Làm việc trên `main` hiện tại.
-- Không force reset `main`.
-- Trước khi sửa file: inspect source hiện tại, xác định canonical path và dependency.
-- Sửa implementation canonical.
-- Kiểm tra các đường dẫn/dependency bị ảnh hưởng.
-- Commit thay đổi có message rõ nghĩa.
-- Ghi lại thay đổi quan trọng trong Change Log và Decision Log khi có quyết định nghiệp vụ.
+Owner and ChatGPT may continue detailing architecture.
 
-## 16. First task now
+Supervisor/Brain/Work must not start implementation until Owner explicitly releases Robot and `00_PROJECT_STATE.json` is changed to `READY / AUTO_CONTINUE`.
 
-**TASK-009 — Store/product canonical model review**
+Silence is not approval.
 
-Supervisor Robot V1 đã được cài đặt và xác minh trên máy local. Nó có thể tự tiếp tục khi state cho phép, retry lỗi UI/network an toàn, và dừng ở approval/security boundary.
+## 10. Working method
 
-Nhiệm vụ hiện tại là rà soát canonical Store/Product model để chuẩn bị Data Foundation. Tiếp tục theo task queue; chỉ yêu cầu Owner khi state chuyển sang WAIT_USER hoặc có quyết định nghiệp vụ thật sự cần chốt.
+Before implementation:
+
+```text
+DISCOVERY / EVIDENCE
+→ BUSINESS RULE
+→ SOP / FLOW
+→ DATA / CONTRACT
+→ SYSTEM
+→ UI / AUTOMATION
+→ FIELD VALIDATION
+```
+
+For each bounded implementation task after Robot release:
+
+```text
+Estimate
+→ Implement
+→ Unit
+→ Fix
+→ Regression
+→ Integration
+→ E2E
+→ Docs / State
+→ Commit
+→ Next
+```
+
+Always apply Five-Step around this implementation loop.
+
+## 11. Repository rules
+
+Canonical root structure:
+
+- `01_DOCS/`
+- `02_CORE/`
+- `03_PLATFORM/`
+- `04_OWNER/`
+- `05_MANAGER/`
+- `06_EMPLOYEE/`
+- `07_DATABASE/`
+- `08_INTEGRATIONS/`
+- `09_QA/`
+- `99_LEGACY/`
+
+Do not create parallel root architectures or duplicate business truth.
+
+The repository is public. Never commit secrets, credentials, tokens, cookies, private employee/customer/financial data, browser profiles or private production exports.
+
+## 12. Current task
+
+**TASK-050 — Canonical enterprise architecture locked — Owner detailing continues.**
+
+Immediate behavior for a new chat:
+
+1. read the canonical architecture first;
+2. apply Five-Step continuously;
+3. keep Profitability & Cash as priority #1;
+4. continue from current repository state;
+5. do not release or dispatch Robot without explicit Owner instruction.
