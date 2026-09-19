@@ -38,10 +38,11 @@ import {
 } from "./three-lane.mjs";
 import {
   classifyRelayMarkerState,
-  activeRelayScreenshotPaths
+  activeRelayScreenshotPaths,
+  migrateLegacyBlockedRelayLatches
 } from "./relay-reconciliation.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.44";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.45";
 
 function parseArgs(argv) {
   const result = {
@@ -1735,8 +1736,15 @@ let config = normalizeLaneConfig(
 let registry = normalizeLaneRegistry(
   await readJson(registryPath, defaultLaneRegistry())
 );
+const startupRelayMigrations = migrateLegacyBlockedRelayLatches(registry);
 await atomicJsonWrite(configPath, config);
 await atomicJsonWrite(registryPath, registry);
+if (startupRelayMigrations > 0) {
+  await safeLog(logPath, {
+    type: "RUNTIME_RELAY_BLOCKED_LATCHES_MIGRATED",
+    reason: `count=${startupRelayMigrations}`
+  });
+}
 await cleanupOrphanRelayEvidence({
   evidenceDir,
   registry,
@@ -1779,6 +1787,14 @@ try {
     registry = normalizeLaneRegistry(
       await readJson(registryPath, defaultLaneRegistry())
     );
+    const loopRelayMigrations = migrateLegacyBlockedRelayLatches(registry);
+    if (loopRelayMigrations > 0) {
+      await atomicJsonWrite(registryPath, registry);
+      await safeLog(logPath, {
+        type: "RUNTIME_RELAY_BLOCKED_LATCHES_MIGRATED",
+        reason: `count=${loopRelayMigrations}`
+      });
+    }
 
     evidenceCleanupTicks += 1;
     if (evidenceCleanupTicks >= 12) {
