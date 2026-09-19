@@ -7,7 +7,8 @@ import { ChatGptUiAdapter } from "../ui/playwright-adapter.mjs";
 import { sendComposerInstruction } from "../ui/actions.mjs";
 import {
   captureAssistantTurnDigests,
-  captureCompletedAssistantTurn
+  captureCompletedAssistantTurn,
+  captureUserTurnDigests
 } from "../ui/message-capture.mjs";
 import { OBSERVATIONS } from "../decision.mjs";
 import { pageMatchesTarget, targetFromUrl } from "./recovery.mjs";
@@ -29,7 +30,7 @@ import {
 
 const DEFAULT_STATE_URL =
   "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json";
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.24";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.25";
 
 function parseArgs(argv) {
   const result = {
@@ -494,6 +495,141 @@ function workerCapacity(config) {
   return value;
 }
 
+async function reconcileUncertainWorkerDispatch({
+  adapter,
+  registry,
+  worker,
+  action,
+  registryPath,
+  logPath
+}) {
+  const latch = worker.dispatch_latch || worker.creation_latch || null;
+  if (!latch) return false;
+
+  if (
+    latch.task_id && latch.task_id !== action.task_id ||
+    latch.instruction_digest && latch.instruction_digest !== action.instruction_digest
+  ) {
+    throw new Error(`worker ${worker.worker_id} has a conflicting uncertain prior send outcome; automatic retry is denied`);
+  }
+
+  const candidates = [];
+  for (const page of adapter.getChatGptPages()) {
+    let target = null;
+    try {
+      target = targetFromUrl(page.url());
+    } catch {
+      continue;
+    }
+
+    const instructionDigests = await captureUserTurnDigests(page).catch(() => []);
+    if (!instructionDigests.includes(action.instruction_digest)) continue;
+
+    const probe = await adapter.probePage(page).catch(() => null);
+    if (!probe || hardStopObservation(probe.classification.observation)) continue;
+    if (probe.snapshot.conversationMissing || probe.snapshot.conversationFull) continue;
+
+    const latestAssistant = await captureCompletedAssistantTurn(page).catch(() => null);
+    if (
+      latestAssistant?.digest &&
+      worker.last_result_digest &&
+      latestAssistant.digest === worker.last_result_digest
+    ) {
+      continue;
+    }
+
+    candidates.push({ page, target });
+  }
+
+  if (candidates.length > 1) {
+    throw new Error(`worker ${worker.worker_id} has multiple chats matching the uncertain instruction; automatic retry is denied`);
+  }
+  if (candidates.length !== 1) return false;
+
+  const generation = Number(
+    worker.dispatch_latch?.generation ||
+    worker.creation_latch?.generation ||
+    worker.generation ||
+    0
+  );
+
+  worker.target = candidates[0].target;
+  worker.generation = Math.max(Number(worker.generation || 0), generation);
+  worker.task_id = action.task_id;
+  worker.instruction_digest = action.instruction_digest;
+  worker.status = "RUNNING";
+  worker.awaiting_result = true;
+  worker.creation_latch = null;
+  worker.dispatch_latch = null;
+  registry.workers[worker.worker_id] = worker;
+  await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
+  await safeLog(logPath, {
+    type: "WORKER_DISPATCH_RECONCILED",
+    role: "worker",
+    workerId: worker.worker_id,
+    taskId: worker.task_id,
+    digest: worker.instruction_digest,
+    generation: worker.generation,
+    reason: "existing ChatGPT user-turn digest proves the uncertain Worker instruction was already sent"
+  });
+  return true;
+}
+
+async function applyOwnerWorkerRetry({
+  registry,
+  requestPath,
+  registryPath,
+  logPath
+}) {
+  const requested = await fs.access(requestPath).then(() => true).catch(() => false);
+  if (!requested) return false;
+
+  const uncertain = Object.values(registry.workers || {}).filter(
+    (worker) => worker.creation_latch || worker.dispatch_latch
+  );
+  await fs.unlink(requestPath).catch(() => {});
+
+  if (uncertain.length !== 1) {
+    throw new Error(
+      uncertain.length > 1
+        ? "more than one Worker has an uncertain prior send outcome; Owner retry denied"
+        : "no Worker has an uncertain prior send outcome"
+    );
+  }
+
+  const worker = uncertain[0];
+  const digest =
+    worker.dispatch_latch?.instruction_digest ||
+    worker.creation_latch?.instruction_digest ||
+    worker.instruction_digest ||
+    null;
+
+  if (!digest) {
+    throw new Error(`worker ${worker.worker_id} uncertain retry is missing an instruction digest`);
+  }
+  if (worker.owner_retry_instruction_digest === digest) {
+    throw new Error(`worker ${worker.worker_id} Owner retry was already used for this instruction`);
+  }
+
+  worker.owner_retry_instruction_digest = digest;
+  worker.creation_latch = null;
+  worker.dispatch_latch = null;
+  worker.awaiting_result = false;
+  worker.status = "IDLE";
+  registry.workers[worker.worker_id] = worker;
+  await atomicJsonWrite(registryPath, sanitizeRegistry(registry));
+  await safeLog(logPath, {
+    type: "WORKER_OWNER_RETRY_ARMED",
+    role: "worker",
+    workerId: worker.worker_id,
+    taskId: worker.task_id,
+    digest,
+    generation: worker.generation,
+    reason: "Owner explicitly authorized one bounded retry after an uncertain prior Worker send outcome"
+  });
+  return true;
+}
+
 async function dispatchWorker({
   adapter,
   registry,
@@ -526,10 +662,20 @@ async function dispatchWorker({
     last_result_digest: null,
     relay_inflight_id: null,
     creation_latch: null,
-    dispatch_latch: null
+    dispatch_latch: null,
+    owner_retry_instruction_digest: null
   };
 
   if (worker.creation_latch || worker.dispatch_latch) {
+    const reconciled = await reconcileUncertainWorkerDispatch({
+      adapter,
+      registry,
+      worker,
+      action,
+      registryPath,
+      logPath
+    });
+    if (reconciled) return;
     throw new Error(`worker ${worker.worker_id} has an uncertain prior create/send outcome; automatic retry is denied`);
   }
   if (
@@ -806,6 +952,7 @@ const stopPath = path.join(root, "STOP");
 const registryPath = path.join(root, "orchestration.json");
 const logPath = path.join(root, "supervisor.log");
 const ownerBrainRebindPath = path.join(root, "BRAIN_REBIND.request.json");
+const ownerWorkerRetryPath = path.join(root, "WORKER_RETRY.request.json");
 const runtimeStatusPath = defaultRuntimeStatusPath();
 
 let registry = await loadRegistry(registryPath);
@@ -911,6 +1058,13 @@ try {
         await delay(args.pollMs);
         continue;
       }
+
+      await applyOwnerWorkerRetry({
+        registry,
+        requestPath: ownerWorkerRetryPath,
+        registryPath,
+        logPath
+      });
 
       // Always reconcile the latest completed Brain turn by digest. This is
       // required after a Supervisor/browser restart because Owner may have
