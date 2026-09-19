@@ -162,7 +162,7 @@ TASK-026 remains preserved as an Owner decision pack but no longer blocks the wh
 - **TASK-046 — Night full QA:** both-project regression evidence verified; no bounded fix remains. DONE.
 - **TASK-047 — Night docs / evidence / PR prep:** changelog, canonical evidence report and reviewable PR descriptions reconciled. DONE.
 - **TASK-048 — Night final checkpoint:** final report prepared; retained only as a background 09:15 +07 hard-stop gate. It must preserve any later Owner-reprioritized active task. TIME_GATED.
-- **TASK-049 — Supervisor Brain/Worker multi-conversation orchestration:** one Brain coordinates a bounded Worker pool; dynamic directives, full-result relay, strict `conversationFull` rollover, local-only registry and automatic runtime upgrade. IN_PROGRESS.
+- **TASK-049 — Supervisor Three-Lane owner-bound Brain/Work orchestration:** one Brain coordinates a bounded Worker pool; dynamic directives, full-result relay, strict `conversationFull` rollover, local-only registry and automatic runtime upgrade. IN_PROGRESS.
 
 ## 8. Definition of success
 
@@ -185,3 +185,11 @@ Owner works in ChatGPT Robot browser
 ```
 
 This deletes the old behavior of blindly sending the same generic continuation prompt at startup. The Supervisor must preserve work already in progress and must not treat a stale repository task as more recent than an explicit live Owner redirect without first reconciling that redirect back into source-of-truth.
+
+### TASK-049 Three-Lane Five-Step reset
+
+- QUESTION: Brain identity must not be inferred by automation.
+- DELETE: active Brain auto-discovery/rebind candidate scanning.
+- SIMPLIFY: three fixed lanes; Owner supplies Brain URL, Robot owns Work URL.
+- ACCELERATE: reuse Work conversation until positive full evidence.
+- AUTOMATE: create/roll Work chat and relay screenshot + full text back to same-lane Brain.
