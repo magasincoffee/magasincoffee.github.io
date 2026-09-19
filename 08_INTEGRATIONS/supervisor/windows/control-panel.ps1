@@ -431,7 +431,11 @@ function Refresh-ControlPanel {
         $runtimeRunningIds = @($runtimeStatus.worker_running | ForEach-Object { [string]$_ })
     }
     $runningWorkers = @()
-    if ($registry -and $registry.workers -and $runtimeRunningIds.Count -gt 0) {
+    $runtimeAllowsWorkerDisplay = [bool](
+        $runtimeStatus -and
+        [string]$runtimeStatus.status -in @('RUNNING','READY')
+    )
+    if ($runtimeAllowsWorkerDisplay -and $registry -and $registry.workers -and $runtimeRunningIds.Count -gt 0) {
         foreach ($property in $registry.workers.PSObject.Properties) {
             $worker = $property.Value
             if ($runtimeRunningIds -contains [string]$worker.worker_id) {
@@ -587,7 +591,7 @@ function Refresh-ControlPanel {
     $targetMismatchActive = [bool](
         $runtimeStatus -and
         [string]$runtimeStatus.status -eq 'WAIT_USER' -and
-        [string]$runtimeStatus.decision_reason -match 'target mismatch'
+        [string]$runtimeStatus.decision_reason -match 'target mismatch|distinct visible ChatGPT conversation.*Brain|distinct .*ChatGPT conversation.*Brain'
     )
     $uncertainWorkerActive = [bool](
         $runtimeStatus -and
