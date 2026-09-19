@@ -14,6 +14,29 @@ The Robot never auto-discovers or auto-replaces an Owner-selected Brain. Brain a
 
 The Windows wrapper still retains the legacy `BRAIN_WORKER_V1` entry point as a compatibility fallback because `run-supervisor.ps1` can select that mode from previously persisted authoritative state. It is not the current Three-Lane production path.
 
+## Lifecycle truth
+
+Runtime lifecycle in v2026-09-19.50 follows one mandatory truth order:
+
+```text
+PROCESS TRUTH > LANE TRUTH > PERSISTED RECOVERY STATE
+```
+
+`lanes.json`, `lane-registry.json` and `lane-status.json` are recovery memory. They never prove that the Robot is alive.
+
+The Control Panel derives PROCESS TRUTH from the live Supervisor wrapper, Three-Lane node process, dedicated Robot Chrome process and its healthy CDP endpoint. An enabled lane cannot render stale `WORKING` or `RELAYING_RESULT` while those process requirements are absent; it renders `STARTING` or `RECOVERING` until live health returns.
+
+When the panel opens:
+
+- all lanes disabled: no automatic Robot startup;
+- one or more lanes enabled + no Owner STOP: bounded automatic recovery;
+- healthy runtime: no redundant restart;
+- `STOP` or `AUTOSTART_DISABLED`: fail closed until explicit Owner START.
+
+The per-lane **BẮT ĐẦU LUỒNG** button changes only lane intent from disabled to enabled. It does not clear Owner STOP. Explicit process restart after Owner STOP is a separate Owner action.
+
+Install, autostart and repair preserve Owner STOP. Only `start-supervisor.ps1` without `-Recovery` is the explicit Owner START path allowed to clear STOP/AUTOSTART_DISABLED.
+
 ## Three-Lane delivery contracts
 
 ### Brain -> Work
@@ -53,11 +76,11 @@ No relay reconciliation path performs an unbounded reload loop.
 
 Relay screenshots live under the local-only `lane-evidence` directory.
 
-A screenshot remains only while referenced by an active `relay_inflight` latch. It is deleted on:
+A screenshot remains only while referenced by an active `relay_inflight` latch. Bounded retries reuse the same evidence instead of recapturing it. It is deleted on:
 
 - marker-confirmed relay;
 - relay dedupe;
-- stable marker-absent retry;
+- confirmed/deduped completion;
 - Brain rebind;
 - Work rebind/reset;
 - invalid screenshot capture.
@@ -74,6 +97,7 @@ Every loop iteration resolves state as `registry.lanes[lane.lane_id]`. A lane's 
 
 ## Windows production entry points
 
+- `windows/lifecycle-truth.ps1` — shared PROCESS TRUTH / Owner STOP / enabled-lane recovery helpers.
 - `windows/run-supervisor.ps1` — persistent wrapper and mode selection.
 - `windows/start-supervisor.ps1` / `stop-supervisor.ps1` — bounded start/stop.
 - `windows/repair-supervisor.ps1` — verified repair/install path.
@@ -101,6 +125,7 @@ Sensitive runtime/profile state, authenticated browser data, target conversation
 - `supervisor-integrity.yml` — task-independent static audit plus self-hosted runtime integrity audit.
 - `supervisor-open-control-panel.yml` — generic production Robot/control-panel opener.
 - `supervisor-state-maintenance.yml` — Owner-authorized state audit/reset by revision; preserves Brain and Work target URLs.
+- `supervisor-lifecycle-acceptance.yml` — self-hosted production acceptance A→L for process/lane lifecycle truth.
 
 Historical TASK-049 diagnostic/live-monitor workflows are not part of production.
 
