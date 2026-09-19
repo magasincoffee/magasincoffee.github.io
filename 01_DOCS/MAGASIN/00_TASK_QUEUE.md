@@ -81,13 +81,15 @@ TASK-055 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_055_CA
 TASK-056 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_056_CASH_BRIDGE_CALCULATOR_V1_EVIDENCE.md`. Calculator PR #179 final-head run `35450713132` and merge run `35450750950` succeeded on Node v20.20.2. Recovery corrected one stale TASK-055 contract assertion without changing calculator semantics; same-branch final PR #180 run `35450826348` and exact post-merge run `35450894238` also succeeded on Node v20.20.2. TASK-057 remains released.
 TASK-057 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_057_PROCUREMENT_FINANCIAL_TRUTH_MAPPING_V1_EVIDENCE.md`. Final PR-head Business OS Contract Tests run `35451826117` and exact post-merge run `35451862102` both succeeded on Node v20.20.2; TASK-058 is released.
 TASK-058 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_058_PARTIAL_FINANCIAL_BASELINE_V1_EVIDENCE.md`. Final PR-head Business OS Contract Tests run `35453217344` and exact post-merge run `35453257400` both succeeded on Node v20.20.2; TASK-059 is released.
+TASK-059 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`. Fresh regression reused executable-equivalent workflows without code churn: Business OS run `35453257400` attempt 2 = 214/214 logical checks green on Node v20.20.2; Owner Control Tower run `35448195046` attempt 2 = 74/74 + browser E2E green. PFC_3H_V1_RESTART_01 is COMPLETE. TASK-060 is planned only and requires a new explicit Owner release.
 | TASK-053 | Monthly Revenue baseline contract + aggregator | 20m | trusted RECONCILED revenue aggregation with quality/lineage propagation | DONE |
 | TASK-054 | Revenue baseline adapter tests/integration | 20m | fail-closed ACTUAL/GAP/NOT_CONNECTED + partial-source regression | DONE |
 | TASK-055 | Cash event taxonomy + Cash Bridge contract v1 | 20m | opening/inflow/outflow/ending/variance categories; missing stays GAP | DONE |
 | TASK-056 | Cash Bridge pure calculator + fixtures/tests | 20m | deterministic evidence-aware calculator; no bank/MoMo assumptions | DONE |
 | TASK-057 | Procurement payment/AP → financial truth mapping | 20m | supplier payment cash-outflow + AP mapping; purchase != COGS | DONE |
 | TASK-058 | Partial Financial Baseline snapshot v1 | 20m | Revenue + known Cash/AP + explicit missing sources in one normalized truth object | DONE |
-| TASK-059 | PFC 3-hour regression + docs/state handoff | 20m | affected tests + evidence + state/docs reconciliation + next non-owner task | READY / AUTO_CONTINUE |
+| TASK-059 | PFC 3-hour regression + docs/state handoff | 20m | affected tests + evidence + state/docs reconciliation + next non-owner task | DONE |
+| TASK-060 | Actual Cash Opening/Ending Source Truth V1 | planned | evidenced opening/observed ending balances + explicit source/account coverage; no payment-method inference | PLANNED / WAIT_OWNER_RELEASE |
 
 TASK-049 partial acceptance checkpoint (does not close the task):
 - **E2 ACCEPTED** — PR #141 / merge `f076779c4d1e3afd709385f0558a7185caeabf51`; Vietnamese Owner UI, evidence-backed live Worker status, fixed UTC+7 display, mutually exclusive recovery controls.
@@ -113,7 +115,7 @@ Canonical architecture: `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — m
 
 Canonical runbook: `02_PROFITABILITY_CASH/THREE_HOUR_EXECUTION_QUEUE_V1.md`.
 
-TASK-051 → TASK-059 are deliberately restricted to work that does not require Owner business decisions, secrets, private production exports or destructive actions. The queue must stop at a true Owner/security boundary only. Owner explicitly released Robot on 2026-09-19. Project autonomy is AUTO_CONTINUE for PFC_3H_V1 until a true Owner/security boundary or queue completion.
+TASK-051 → TASK-059 are deliberately restricted to work that does not require Owner business decisions, secrets, private production exports or destructive actions. The queue must stop at a true Owner/security boundary only. Owner explicitly released Robot on 2026-09-19. That released execution scope is now COMPLETE. TASK-060 is outside the completed release and remains `PLANNED / WAIT_OWNER_RELEASE`; Robot must stay PAUSED until a new explicit Owner release.
 
 
 Execution generation: `PFC_3H_V1_RESTART_01` — Owner officially restarted and released the queue from TASK-051 on 2026-09-19. Previous partial execution evidence is historical only and must not advance the cursor.
