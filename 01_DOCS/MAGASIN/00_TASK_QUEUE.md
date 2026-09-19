@@ -89,7 +89,36 @@ TASK-059 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_059_PF
 | TASK-057 | Procurement payment/AP → financial truth mapping | 20m | supplier payment cash-outflow + AP mapping; purchase != COGS | DONE |
 | TASK-058 | Partial Financial Baseline snapshot v1 | 20m | Revenue + known Cash/AP + explicit missing sources in one normalized truth object | DONE |
 | TASK-059 | PFC 3-hour regression + docs/state handoff | 20m | affected tests + evidence + state/docs reconciliation + next non-owner task | DONE |
-| TASK-060 | Actual Cash Opening/Ending Source Truth V1 | planned | evidenced opening/observed ending balances + explicit source/account coverage; no payment-method inference | PLANNED / WAIT_OWNER_RELEASE |
+| TASK-060 | Actual Cash Opening/Ending Source Truth V1 | planned | evidenced opening/observed ending balances + explicit source/account coverage; no payment-method inference | READY_ON_OWNER_RELEASE |
+| TASK-061 | Cash Balance Financial Truth Contract | 20m | canonical point-balance truth by account/scope/time | QUEUED / WAIT_RELEASE |
+| TASK-062 | Cash Balance Source Mapper | 20m | read-only evidence → canonical balance truth | QUEUED / WAIT_RELEASE |
+| TASK-063 | Cash Source Coverage V1 | 20m | COMPLETE/PARTIAL/NOT_CONNECTED by source/account/period | QUEUED / WAIT_RELEASE |
+| TASK-064 | Cash Bridge Source Integration | 20m | proven balances + coverage → Cash Bridge | QUEUED / WAIT_RELEASE |
+| TASK-065 | Cash Truth Regression & Evidence | 20m | cash truth regression + fail-closed proof | QUEUED / WAIT_RELEASE |
+| TASK-066 | OPEX Source Inventory V1 | 20m | payroll/rent/utilities/platform/marketing/OPEX source map | QUEUED / WAIT_RELEASE |
+| TASK-067 | Operating Cost Truth Contract | 20m | recognized cost != cash paid | QUEUED / WAIT_RELEASE |
+| TASK-068 | Payroll Cost Mapper | 20m | period labor-cost truth behind actuality gate | QUEUED / WAIT_RELEASE |
+| TASK-069 | Rent / Utilities / Other OPEX Mapper | 20m | fixed/shared OPEX truth without invented allocation | QUEUED / WAIT_RELEASE |
+| TASK-070 | FoodApp Settlement & Fee Truth | 20m | gross vs fee/promo/net settlement separation | QUEUED / WAIT_RELEASE |
+| TASK-071 | Operating Cost Baseline V1 | 20m | canonical period operating-cost truth | QUEUED / WAIT_RELEASE |
+| TASK-072 | Consumption/COGS Source Coverage Map | 20m | inventory/recipe/purchase/waste evidence map | QUEUED / WAIT_RELEASE |
+| TASK-073 | Canonical COGS Input Contract | 20m | quantity/unit conversion/unit cost/packaging/topping truth | QUEUED / WAIT_RELEASE |
+| TASK-074 | Inventory Consumption Mapper | 20m | opening + inbound - ending in proven scope | QUEUED / WAIT_RELEASE |
+| TASK-075 | Recipe / Standard Cost Mapper | 20m | standard cost remains standard | QUEUED / WAIT_RELEASE |
+| TASK-076 | Consumption-based COGS Calculator V1 | 20m | COGS only with proven quantity/cost/coverage | QUEUED / WAIT_RELEASE |
+| TASK-077 | COGS Baseline Integration | 20m | canonical COGS → Partial Financial Baseline | QUEUED / WAIT_RELEASE |
+| TASK-078 | Owner Movement Truth V1 | 20m | structured contribution/withdrawal truth | QUEUED / WAIT_RELEASE |
+| TASK-079 | Debt / Capex / Working-Capital Classification | 20m | financing/capex/WC separated from Profit | QUEUED / WAIT_RELEASE |
+| TASK-080 | Profit ↔ Cash Reconciliation Contract | 20m | canonical reconciliation semantics | QUEUED / WAIT_RELEASE |
+| TASK-081 | Profit ↔ Cash Reconciliation Calculator | 20m | explain ΔCash from Profit + non-P&L movements | QUEUED / WAIT_RELEASE |
+| TASK-082 | Monthly Financial Baseline V2 | 20m | Revenue + COGS + OPEX + Profit + Cash + AP + reconciliation | QUEUED / WAIT_RELEASE |
+| TASK-083 | 8-hour Final Regression & Handoff | 20m | full QA + state/docs handoff | QUEUED / WAIT_RELEASE |
+| TASK-084 | Live Reconciled Revenue Reader Readiness | overflow | live/read-only readiness if evidence boundary exists | OVERFLOW / WAIT_RELEASE |
+| TASK-085 | Financial Data Freshness & Coverage Contract | overflow | stale/missing/current financial data truth | OVERFLOW / WAIT_RELEASE |
+| TASK-086 | Owner Daily Financial Brief V1 | overflow | READ → SUMMARIZE → ALERT only | OVERFLOW / WAIT_RELEASE |
+| TASK-087 | Cash Leakage / Exception Rules V1 | overflow | detection/alert only | OVERFLOW / WAIT_RELEASE |
+| TASK-088 | Profitability Readiness by Branch/Channel | overflow | readiness without synthetic contribution | OVERFLOW / WAIT_RELEASE |
+| TASK-089 | Extended Regression + Next-Priority Handoff | overflow | close overflow scope safely | OVERFLOW / WAIT_RELEASE |
 
 TASK-049 partial acceptance checkpoint (does not close the task):
 - **E2 ACCEPTED** — PR #141 / merge `f076779c4d1e3afd709385f0558a7185caeabf51`; Vietnamese Owner UI, evidence-backed live Worker status, fixed UTC+7 display, mutually exclusive recovery controls.
@@ -119,3 +148,8 @@ TASK-051 → TASK-059 are deliberately restricted to work that does not require 
 
 
 Execution generation: `PFC_3H_V1_RESTART_01` — Owner officially restarted and released the queue from TASK-051 on 2026-09-19. Previous partial execution evidence is historical only and must not advance the cursor.
+
+
+## PFC 8-hour V2 staged queue
+
+Owner approved plan is staged at `02_PROFITABILITY_CASH/PFC_8H_V2_EXECUTION_PLAN.md`. TASK-060 → TASK-083 are the primary 8-hour queue; TASK-084 → TASK-089 are overflow only if time remains. Robot remains PAUSED until explicit Owner release. Five-Step is mandatory on every task with special emphasis on SIMPLIFY → ACCELERATE → AUTOMATE.
