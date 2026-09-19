@@ -77,10 +77,11 @@ TASK-051 restart completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TAS
 TASK-052 reconciliation repair is closed. Canonical evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_052_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`. Business OS Contract Tests run `35446467271` completed successfully on Node v20.20.2; TASK-053 is released.
 TASK-053 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_053_MONTHLY_REVENUE_BASELINE_V1_EVIDENCE.md`. Remote Business OS Contract Tests run `35447380002` succeeded on Node v20.20.2; TASK-054 is released.
 TASK-054 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_054_REVENUE_BASELINE_INTEGRATION_EVIDENCE.md`. Final-head Owner Control Tower Tests run `35448195046` and collateral People Shift Day-10 run `35448195053` both succeeded on Node v20.20.2; Business OS remote workflow was NOT_APPLICABLE because no Core/business-os trigger path changed. TASK-055 is released.
+TASK-055 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_055_CASH_BRIDGE_CONTRACT_V1_EVIDENCE.md`. Final PR-head Business OS Contract Tests run `35449121493` and post-merge run `35449153835` both succeeded on Node v20.20.2; TASK-056 is released.
 | TASK-053 | Monthly Revenue baseline contract + aggregator | 20m | trusted RECONCILED revenue aggregation with quality/lineage propagation | DONE |
 | TASK-054 | Revenue baseline adapter tests/integration | 20m | fail-closed ACTUAL/GAP/NOT_CONNECTED + partial-source regression | DONE |
-| TASK-055 | Cash event taxonomy + Cash Bridge contract v1 | 20m | opening/inflow/outflow/ending/variance categories; missing stays GAP | READY / AUTO_CONTINUE |
-| TASK-056 | Cash Bridge pure calculator + fixtures/tests | 20m | deterministic evidence-aware calculator; no bank/MoMo assumptions | QUEUED / AUTO_CONTINUE |
+| TASK-055 | Cash event taxonomy + Cash Bridge contract v1 | 20m | opening/inflow/outflow/ending/variance categories; missing stays GAP | DONE |
+| TASK-056 | Cash Bridge pure calculator + fixtures/tests | 20m | deterministic evidence-aware calculator; no bank/MoMo assumptions | READY / AUTO_CONTINUE |
 | TASK-057 | Procurement payment/AP → financial truth mapping | 20m | supplier payment cash-outflow + AP mapping; purchase != COGS | QUEUED / AUTO_CONTINUE |
 | TASK-058 | Partial Financial Baseline snapshot v1 | 20m | Revenue + known Cash/AP + explicit missing sources in one normalized truth object | QUEUED / AUTO_CONTINUE |
 | TASK-059 | PFC 3-hour regression + docs/state handoff | 20m | affected tests + evidence + state/docs reconciliation + next non-owner task | QUEUED / AUTO_CONTINUE |
