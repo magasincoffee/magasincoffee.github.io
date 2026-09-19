@@ -1,0 +1,94 @@
+{
+  "schema_version": "partial-financial-baseline.v1",
+  "status": "CANONICAL_COMPOSER",
+  "task": "TASK-058",
+  "canonical_truth_contract": "financial-truth.v1",
+  "purpose": "Compose period Revenue, canonical Cash Bridge, current point-in-time AP, explicit COGS/Operating Cost truth, and gated management profit without inventing missing financial facts.",
+  "shape": {
+    "schema_version": "partial-financial-baseline.v1",
+    "target_period": "explicit start/end/timezone",
+    "scope": "explicit Financial Truth compatible scope",
+    "as_of": "caller snapshot as-of or deterministic maximum valid upstream as-of",
+    "revenue": "canonical Monthly Revenue truth plus coverage",
+    "cash_bridge": "canonical Cash Bridge output",
+    "ap": "current point-in-time Procurement AP component",
+    "cogs": "canonical period COGS Financial Truth or GAP/null",
+    "operating_costs": "canonical period Operating Costs Financial Truth or GAP/null",
+    "profit": "derived management_operating_profit_baseline Financial Truth",
+    "data_quality": "component states plus non-exclusive summary",
+    "missing_sources": "deterministic privacy-safe explicit gap list",
+    "diagnostics": "deterministic privacy-safe diagnostics",
+    "lineage": "deterministic privacy-safe lineage"
+  },
+  "profit": {
+    "metric": "management_operating_profit_baseline",
+    "formula": "revenue - cogs - operating_costs",
+    "required_dependencies": ["revenue", "cogs", "operating_costs"],
+    "quality_precedence": ["NOT_CONNECTED", "GAP", "ESTIMATE", "ACTUAL"],
+    "rules": [
+      "Profit is numeric only when Revenue, COGS and Operating Costs are numeric compatible Financial Truth for the exact target period and scope.",
+      "Any required NOT_CONNECTED dependency makes Profit NOT_CONNECTED/null.",
+      "Otherwise any required GAP dependency makes Profit GAP/null.",
+      "Otherwise any ESTIMATE dependency caps derived Profit at ESTIMATE.",
+      "Cash Bridge and AP are not Profit dependencies.",
+      "Cash movement is not expense recognition and AP is not cash or expense recognition.",
+      "The metric is management baseline profit only; it is not statutory/net profit."
+    ]
+  },
+  "component_rules": [
+    "Revenue preserves canonical Monthly Revenue coverage; incomplete/gross/raw Revenue is never used as fallback.",
+    "Cash Bridge is preserved rather than re-calculated when a canonical bridge is supplied. Raw cash inputs may call calculateCashBridge exactly once.",
+    "Known evidenced cash sums may remain numeric under partial coverage, but are not period totals.",
+    "Computed ending and cash variance retain independent upstream qualities.",
+    "AP is point-in-time current-state truth and never participates in period Profit arithmetic.",
+    "Current AP is never backdated to target period end; historical snapshot gaps remain gaps.",
+    "COGS defaults to GAP/null with COGS_CONSUMPTION_TRUTH_NOT_AVAILABLE unless canonical COGS truth is supplied.",
+    "Operating Costs default to GAP/null with OPERATING_COST_TRUTH_NOT_AVAILABLE unless canonical Operating Cost truth is supplied.",
+    "Purchases, inventory counts, recipes, AP and cash movement are never used to synthesize COGS or Profit.",
+    "Unknown scope never becomes ALL; ALL requires aggregate_proven=true.",
+    "Component failure is isolated and cannot erase valid truth from another component.",
+    "PARTIAL_FINANCIAL_BASELINE is a completeness status, not a Financial Truth quality."
+  ],
+  "acceptance_examples": [
+    {
+      "case": "Revenue ACTUAL + Cash partial + AP ACTUAL + COGS GAP + OPEX GAP",
+      "expected": "PARTIAL_FINANCIAL_BASELINE; Revenue/AP preserved; known evidenced Cash preserved; Profit GAP/null"
+    },
+    {
+      "case": "Revenue ACTUAL + COGS ACTUAL + OPEX ACTUAL with exact period/scope",
+      "expected": "management_operating_profit_baseline is numeric ACTUAL"
+    },
+    {
+      "case": "One required Profit dependency is ESTIMATE and none are missing",
+      "expected": "Profit is numeric ESTIMATE, never ACTUAL"
+    },
+    {
+      "case": "Current AP is newer/different from historical target end",
+      "expected": "AP remains explicitly current point-in-time or upstream HISTORICAL_AP_SNAPSHOT_NOT_AVAILABLE remains GAP; no backdating"
+    },
+    {
+      "case": "Missing financial source",
+      "expected": "GAP/NOT_CONNECTED null; never synthetic zero"
+    }
+  ],
+  "non_goals": [
+    "dashboard",
+    "ui",
+    "database",
+    "migration",
+    "rpc",
+    "write_path",
+    "pricing",
+    "kpi",
+    "forecast",
+    "live_bank_connector",
+    "live_momo_connector",
+    "full_accounting_erp",
+    "synthetic_month_end_close",
+    "statutory_profit",
+    "purchase_to_cogs",
+    "ap_to_cash",
+    "revenue_to_cash",
+    "foodapp_gross_to_settlement"
+  ]
+}
