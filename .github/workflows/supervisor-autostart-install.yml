@@ -339,10 +339,12 @@ jobs:
             "BROWSER_SCHEDULER_FIXTURE_THREE_LANE_FAIR=True",
             "BROWSER_SCHEDULER_FIXTURE_MUTATION_SINGLETON=True",
             "BROWSER_SCHEDULER_FIXTURE_PAGE_BUDGET_HARD_BOUND=True",
+            "BROWSER_SCHEDULER_FIXTURE_LRU_EVICTION=True",
             "BROWSER_SCHEDULER_FIXTURE_ACTIVE_MUTATION_NOT_EVICTED=True",
             "BROWSER_SCHEDULER_FIXTURE_UNPERSISTED_ARTIFACT_GUARDED=True",
             "BROWSER_SCHEDULER_FIXTURE_REOPEN_NO_RESEND=True",
             "BROWSER_SCHEDULER_FIXTURE_DURABLE_TRUTH_UNCHANGED=True",
+            "BROWSER_SCHEDULER_FIXTURE_LATCHES_SURVIVE_REOPEN=True",
             "BROWSER_SCHEDULER_FIXTURE_PENDING_WORK_PRESERVED=True"
           )) {
             if ($output -notcontains $marker) { throw "Missing browser scheduler fixture marker: $marker" }
@@ -385,6 +387,10 @@ jobs:
             Write-Host "BROWSER_SCHEDULER_LIVE_PAGE_BUDGET_OK=True"
             Write-Host "BROWSER_SCHEDULER_LIVE_PAGE_BUDGET=3"
             Write-Host "BROWSER_SCHEDULER_LIVE_PAGE_COUNT=$([int]$status.scheduler.resident_chatgpt_pages)"
+            Write-Host "BROWSER_SCHEDULER_LIVE_ENABLED_LANES=$enabledLaneCount"
+            if ($enabledLaneCount -eq 1) {
+              Write-Host "BROWSER_SCHEDULER_LIVE_ONE_LANE_MODE=True"
+            }
           } else {
             Write-Host "BROWSER_SCHEDULER_LIVE_PAGE_BUDGET_SUPPRESSED_BY_LIFECYCLE=True"
           }
