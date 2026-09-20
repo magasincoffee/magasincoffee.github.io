@@ -16,7 +16,7 @@ The Windows wrapper still retains the legacy `BRAIN_WORKER_V1` entry point as a 
 
 ### Current production baseline
 
-Runtime lifecycle in production is v2026-09-20.56.
+Runtime lifecycle in production is v2026-09-20.57.
 
 TASK-RBT-001 adds a **docs-only target architecture** for browser scheduling, long-running Work recovery, Work hot-swap and operational observability. Those target features are not considered released by TASK-RBT-001 itself.
 
@@ -38,11 +38,12 @@ Implementation roadmap:
 - TASK-RBT-005 — Long-Running Work + 30m Watchdog — IMPLEMENTED in v2026-09-20.54
 - TASK-RBT-005A — Relay Retry Exhaustion Recovery — IMPLEMENTED in v2026-09-20.55
 - TASK-RBT-006 — Multi-Signal Work Full Detection + Rollover — IMPLEMENTED in v2026-09-20.56
+- TASK-RBT-006A — Stale/Missing Exact-Target Navigation Storm Circuit Breaker — IMPLEMENTED in v2026-09-20.57
 - TASK-RBT-007 — Control Panel Timeline & Resource UX
 - TASK-RBT-008 — Brain Planning Contract Runtime Hooks
 - TASK-RBT-009 — Integration / Overnight Soak / Cleanup
 
-v2026-09-20.56 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery and TASK-RBT-006 multi-signal Work-full rollover. TASK-RBT-007+ remain separate until their own implementation and acceptance tasks pass.
+v2026-09-20.57 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, and TASK-RBT-006A durable stale/missing target quarantine. TASK-RBT-007+ remain separate until their own implementation and acceptance tasks pass.
 
 ## Lifecycle truth
 
@@ -220,6 +221,23 @@ The released detector uses one canonical `work-capacity.mjs` evaluator. Strong s
 Rollover uses durable `work-rollover.v1` stages: FULL_CONFIRMED → INTENT_PERSISTED → BLANK_TARGET_CREATING → TARGET_PERSISTED → DISPATCH_LATCH_PERSISTED → DISPATCH_CONFIRMED. The new Work is blank at creation; canonical URL + exactly-one generation increment are persisted before dispatch latch and before task send. Exact `dispatch_id` marker reconciliation remains authoritative after crash/restart. Owner pending Work target applies before automatic rollover at a safe boundary; relay/watchdog state remains separate.
 
 TASK-RBT-006 does not implement Control Panel timeline/resource UX. That remains TASK-RBT-007+.
+
+## Released stale/missing exact-target quarantine
+
+Runtime v2026-09-20.57 implements TASK-RBT-006A:
+
+- deterministic missing, conversation-specific access-denied, or stable redirect-away exact targets enter durable per-role quarantine;
+- target-health stores metadata only: state/reason, SHA-256 target digest, applied revision, Work generation and detection timestamps;
+- the lane returns WAIT_OWNER before browser acquisition on subsequent turns, so the same quarantined target performs zero reopen/reload/new-page mutations;
+- restart, Chrome/CDP reconnect, scheduler reconstruction, eviction and STOP/START do not clear a same-canonical-target quarantine;
+- saving a different canonical Brain/Work target clears only that role's old quarantine; re-saving the same stale URL does not;
+- active task, dispatch/relay/result evidence, pending Work target and generation/history are preserved;
+- watchdog cannot reload quarantined Work; relay/rearm cannot reopen quarantined Brain;
+- dead recovery-cache/page leases are invalidated and safely closed when no non-persisted composer artifact or ACTIVE_MUTATION guard blocks cleanup;
+- missing remains a Work-capacity guard and can never become FULL_CONFIRMED;
+- the installed acceptance fixture is synthetic and never navigates Owner production conversations.
+
+TASK-RBT-006A does not implement TASK-RBT-007 Control Panel timeline/resource UX.
 
 ## Brain Planning Contract
 

@@ -408,7 +408,7 @@ Owner may inspect, STOP, hot-save a future Work target, or explicitly intervene.
 
 ## 11. Automatic Work-full detection
 
-**Implementation status:** TASK-RBT-006 releases this contract in runtime v2026-09-20.56 using canonical `work-capacity.mjs` + restart-safe `work-rollover.mjs`. The current `conversationFull` signal remains compatibility/supporting evidence and is not a sole authority.
+**Implementation status:** TASK-RBT-006 releases this contract in runtime v2026-09-20.56 using canonical `work-capacity.mjs` + restart-safe `work-rollover.mjs`. TASK-RBT-006A in runtime v2026-09-20.57 adds durable exact-target quarantine so `conversationMissing`, conversation-specific access denial, or stable redirect-away cannot turn scheduler reopen into a navigation storm. The current `conversationFull` signal remains compatibility/supporting evidence and is not a sole authority.
 
 Future detector must combine independent signal families. Recommended normalized evidence:
 

@@ -612,6 +612,59 @@ jobs:
           Write-Host "WORK_FULL_PRODUCTION_TRUTH_UNCHANGED=True"
           Write-Host "WORK_FULL_RUNTIME_PID_UNCHANGED=True"
 
+          $staleTargetOutput = & node $runtimeCli --stale-target-fixture
+          if ($LASTEXITCODE -ne 0) { throw "Installed stale-target quarantine fixture acceptance failed" }
+          $staleTargetOutput | ForEach-Object { Write-Host $_ }
+
+          foreach ($marker in @(
+            "STALE_TARGET_FIXTURE_BEFORE_NAVIGATION_COUNT=100",
+            "STALE_TARGET_FIXTURE_MISSING_DETECTED=True",
+            "STALE_TARGET_FIXTURE_QUARANTINED=True",
+            "STALE_TARGET_FIXTURE_100_TURNS_ZERO_REOPEN=True",
+            "STALE_TARGET_FIXTURE_RESTART_ZERO_REOPEN=True",
+            "STALE_TARGET_FIXTURE_RECONNECT_ZERO_REOPEN=True",
+            "STALE_TARGET_FIXTURE_EVICTION_ZERO_REOPEN=True",
+            "STALE_TARGET_FIXTURE_STOP_START_PRESERVES=True",
+            "STALE_TARGET_FIXTURE_BRAIN_MISSING_BLOCKED=True",
+            "STALE_TARGET_FIXTURE_OWNER_NEW_TARGET_CLEARS=True",
+            "STALE_TARGET_FIXTURE_ACTIVE_STATE_PRESERVED=True",
+            "STALE_TARGET_FIXTURE_WATCHDOG_BLOCKED=True",
+            "STALE_TARGET_FIXTURE_RELAY_REOPEN_BLOCKED=True",
+            "STALE_TARGET_FIXTURE_MISSING_NOT_FULL=True",
+            "STALE_TARGET_FIXTURE_DEAD_PAGE_CLEANED=True",
+            "STALE_TARGET_FIXTURE_PAGE_BUDGET_THREE=True",
+            "STALE_TARGET_FIXTURE_EVENT_SPAM_BOUNDED=True",
+            "STALE_TARGET_FIXTURE_OTHER_LANES_PROGRESS=True",
+            "STALE_TARGET_FIXTURE_PRIVACY=True"
+          )) {
+            if ($staleTargetOutput -notcontains $marker) {
+              throw "Missing stale-target fixture marker: $marker"
+            }
+          }
+
+          $targetAfterStaleTarget = Get-TargetFingerprint $configFile
+          $registryAfterStaleTarget = Get-RegistryTruthFingerprint $registryFile
+          if ($targetAfterStaleTarget -ne $targetAfterWorkFull) {
+            throw "Production Brain/Work target fingerprint changed during stale-target fixture"
+          }
+          if ($registryAfterStaleTarget -ne $registryAfterWorkFull) {
+            throw "Production task/latch/pending Work truth changed during stale-target fixture"
+          }
+
+          $truthAfterStaleTarget = Get-LifecycleProcessTruth -Root $root
+          $wrapperAfterStaleTarget = if ($truthAfterStaleTarget.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+          if ($wrapperAfterStaleTarget -ne $wrapperAfterWorkFull) {
+            throw "Stale-target fixture restarted or stopped the Supervisor wrapper"
+          }
+
+          Write-Host "STALE_TARGET_RUNTIME_ARTIFACT_FIXTURE=True"
+          Write-Host "STALE_TARGET_PRODUCTION_CONFIG_UNCHANGED=True"
+          Write-Host "STALE_TARGET_PRODUCTION_TARGETS_UNCHANGED=True"
+          Write-Host "STALE_TARGET_PRODUCTION_TRUTH_UNCHANGED=True"
+          Write-Host "STALE_TARGET_RUNTIME_PID_UNCHANGED=True"
+
       - name: Verify event timing foundation privacy
         shell: powershell
         run: |
@@ -646,7 +699,8 @@ jobs:
             [string[]]@(
               "schema_version","timestamp","lane_id","actor","event_type",
               "task_id","phase","reason_code","work_generation","work_url_revision","elapsed_ms",
-              "queue_time_ms","execution_time_ms","dispatch_id","relay_id"
+              "queue_time_ms","execution_time_ms","dispatch_id","relay_id",
+              "target_role","target_digest","target_revision"
             )
           )
           $recent = @(Get-Content $eventFile -Tail 200 -Encoding UTF8)

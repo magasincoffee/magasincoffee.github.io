@@ -64,7 +64,7 @@ For each lane the Control Panel target UX shows:
 12. LƯU WORK.
 13. TỰ TẠO WORK.
 
-Current production contract: LƯU WORK hot-swap is released by TASK-RBT-003, finite global browser scheduling by TASK-RBT-004, inactivity-based long-running recovery by TASK-RBT-005, relay exhaustion recovery by TASK-RBT-005A, and multi-signal Work-full rollover by TASK-RBT-006 (runtime v2026-09-20.56).
+Current production contract: LƯU WORK hot-swap is released by TASK-RBT-003, finite global browser scheduling by TASK-RBT-004, inactivity-based long-running recovery by TASK-RBT-005, relay exhaustion recovery by TASK-RBT-005A, multi-signal Work-full rollover by TASK-RBT-006, and durable stale/missing exact-target quarantine by TASK-RBT-006A (runtime v2026-09-20.57).
 
 ## Non-negotiable invariants
 
@@ -239,6 +239,12 @@ preserve state
 → confirm dispatch marker
 
 Robot may auto-create Work under this contract. It may never auto-create/find Brain.
+
+## Exact-target health and navigation-storm circuit breaker
+
+Each lane persists independent Brain and Work target-health metadata. A positively verified missing/access-denied/stable redirect-away exact target becomes QUARANTINED. The same target digest short-circuits to WAIT_OWNER before any page acquisition, reopen, goto or watchdog reload on later scheduler turns. Quarantine survives runtime/Chrome restart and STOP/START.
+
+A different canonical Owner target clears only the corresponding role quarantine. Re-saving the same stale canonical URL does not clear it. Active task/latches/result evidence and pending Work stay intact; quarantine is not permission to reset state, resend, abandon an exact-once transaction, or auto-create a Brain.
 
 ## Work lifecycle
 
