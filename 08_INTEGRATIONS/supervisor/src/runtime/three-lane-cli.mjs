@@ -929,7 +929,8 @@ async function reconcileDispatchInflight({
   registryPath,
   logPath,
   brainPage = null,
-  directive = null
+  directive = null,
+  scheduler = null
 }) {
   const latch = registryLane.dispatch_inflight;
   if (!latch) return "NONE";
@@ -955,7 +956,13 @@ async function reconcileDispatchInflight({
   const page = await openExactConversation(
     adapter,
     registryLane.work_url,
-    { brain: false }
+    {
+      brain: false,
+      scheduler,
+      laneId: lane.lane_id,
+      targetRevision: Number(registryLane.applied_work_url_revision || 0),
+      generation: Number(registryLane.work_generation || 0)
+    }
   );
 
   // v42 and older could permanently block when unrelated Work activity
@@ -1028,7 +1035,7 @@ async function reconcileDispatchInflight({
     });
   }
 
-  const outcome = await inspectKnownTargetSendOutcome({
+  const inspect = () => inspectKnownTargetSendOutcome({
     adapter,
     page,
     digest: latch.instruction_digest,
@@ -1038,6 +1045,13 @@ async function reconcileDispatchInflight({
     brain: false,
     reload
   });
+  const outcome = reload
+    ? await runBrowserMutation(
+        scheduler,
+        { laneId: lane.lane_id, role: "WORK", page, reason: "WORK_RECONCILE_RELOAD" },
+        inspect
+      )
+    : await inspect();
 
   if (outcome === "PENDING") {
     await safeLog(logPath, {
