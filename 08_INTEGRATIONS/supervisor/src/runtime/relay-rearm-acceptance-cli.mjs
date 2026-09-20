@@ -152,8 +152,8 @@ assert.ok(applySource.indexOf("hasRelayMarker") < applySource.indexOf("rearmRela
 assert.match(applySource, /finalizeConfirmedRelay/);
 assert.match(applySource, /EVIDENCE_MISSING/);
 assert.doesNotMatch(applySource, /clearRelayInflight/);
-assert.match(runtimeSource, /if (relayOutcome === "EVIDENCE_MISSING")/);
-assert.match(runtimeSource, /if (args.relayRearmFixture)/);
+assert.match(runtimeSource, /if \(relayOutcome === "EVIDENCE_MISSING"\)/);
+assert.match(runtimeSource, /if \(args\.relayRearmFixture\)/);
 
 console.log("RELAY_REARM_FIXTURE_EXHAUSTED_OWNER_REARMED=True");
 console.log("RELAY_REARM_FIXTURE_SAME_RELAY_ID=True");
