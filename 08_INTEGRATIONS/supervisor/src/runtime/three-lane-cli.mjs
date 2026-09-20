@@ -1732,6 +1732,7 @@ async function dispatchWork({
     registryLane.work_url = canonicalUrl;
     registryLane.work_generation = expectedGeneration;
     registryLane.work_watchdog = normalizeWorkWatchdog(null);
+    adoptCurrentTargetHealth(registryLane, { brain: false });
     registryLane.work_rollover = markRolloverTargetPersisted(
       registryLane.work_rollover,
       {
@@ -3529,6 +3530,29 @@ async function processLaneTurn({
       pendingOutcome.status === "APPLIED"
         ? "Pending Work target đã áp dụng đúng safe boundary."
         : "Pending Work target stale đã được normalize an toàn."
+    );
+  }
+
+  if (currentTargetIsQuarantined(registryLane, { brain: true })) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAIT_OWNER",
+      quarantinedTargetMessage({ brain: true, registryLane }),
+      { target_quarantined_role: "BRAIN" }
+    );
+  }
+
+  if (
+    registryLane.work_url &&
+    currentTargetIsQuarantined(registryLane, { brain: false })
+  ) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAIT_OWNER",
+      quarantinedTargetMessage({ brain: false, registryLane }),
+      { target_quarantined_role: "WORK" }
     );
   }
 
