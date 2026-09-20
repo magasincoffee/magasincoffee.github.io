@@ -44,9 +44,7 @@ jobs:
         run: npm test
       - name: Run TASK-RBT-002B state maintenance gate regressions
         run: |
-          & "$env:GITHUB_WORKSPACE\.github\scripts\supervisor-state-maintenance-regression.ps1" \
-            -WorkflowPath "$env:GITHUB_WORKSPACE\.github\workflows\supervisor-state-maintenance.yml" \
-            -HelperPath "$env:GITHUB_WORKSPACE\.github\scripts\supervisor-integrity-registry.ps1"
+          & "$env:GITHUB_WORKSPACE\.github\scripts\supervisor-state-maintenance-regression.ps1" -WorkflowPath "$env:GITHUB_WORKSPACE\.github\workflows\supervisor-state-maintenance.yml" -HelperPath "$env:GITHUB_WORKSPACE\.github\scripts\supervisor-integrity-registry.ps1"
       - name: Verify no browser/live side effects in foundation
         run: |
           if (Test-Path node_modules) {
