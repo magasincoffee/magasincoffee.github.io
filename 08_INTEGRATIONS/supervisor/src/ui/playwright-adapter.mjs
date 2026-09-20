@@ -202,6 +202,39 @@ export class ChatGptUiAdapter {
     return true;
   }
 
+  async invalidateTargetRecoveryPage(url, {
+    page = null,
+    close = false
+  } = {}) {
+    let key = null;
+    try {
+      const parsed = new URL(String(url || ""));
+      key = `${parsed.origin}${parsed.pathname}`;
+    } catch {
+      return false;
+    }
+
+    const cached = this.targetRecoveryPages.get(key) || null;
+    this.targetRecoveryPages.delete(key);
+    if (page) {
+      for (const [candidateKey, candidatePage] of this.targetRecoveryPages) {
+        if (candidatePage === page) {
+          this.targetRecoveryPages.delete(candidateKey);
+        }
+      }
+    }
+
+    const targetPage = page || cached;
+    if (close && targetPage && !targetPage.isClosed()) {
+      const guarded = await this.hasNonPersistedComposerArtifact(targetPage)
+        .catch(() => true);
+      if (!guarded) {
+        await this.closePage(targetPage);
+      }
+    }
+    return true;
+  }
+
   async getVisibleChatGptPages() {
     const visible = [];
     for (const page of this.getChatGptPages()) {
