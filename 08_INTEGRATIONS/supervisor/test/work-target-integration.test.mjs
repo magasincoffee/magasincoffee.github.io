@@ -77,7 +77,10 @@ test("Work target save preserves deterministic dispatch and relay exact-once con
 
   assert.match(runtime, /const dispatchId = sha256\(\[/);
   assert.match(runtime, /workDispatchMarker\(dispatchId\)/);
-  assert.match(runtime, /registryLane\.dispatch_inflight = \{/);
+  assert.match(runtime, /registryLane\.dispatch_inflight = latch/);
+  assert.match(runtime, /const dispatchId = sha256\(\[/);
+  assert.match(runtime, /work_target_digest: targetDigest/);
+  assert.match(runtime, /work_generation: Number\(registryLane\.work_generation/);
   assert.match(runtime, /finalizeConfirmedDispatch/);
   assert.match(runtime, /relayMarker\(relayId\)/);
   assert.match(runtime, /registryLane\.last_result_relay_id = latch\.relay_id/);
