@@ -1471,7 +1471,8 @@ async function relayWorkResult({
   registry,
   registryPath,
   evidenceDir,
-  logPath
+  logPath,
+  scheduler = null
 }) {
   const relay = buildLaneResultRelay({
     laneId: lane.lane_id,
@@ -1594,11 +1595,15 @@ async function relayWorkResult({
 
   let sent = null;
   try {
-    sent = await sendComposerWithAttachment(
-      brainPage,
-      relay.text,
-      screenshotPath,
-      { dryRun: false }
+    sent = await runBrowserMutation(
+      scheduler,
+      { laneId: lane.lane_id, role: "BRAIN", page: brainPage, reason: "RESULT_RELAY_SEND" },
+      () => sendComposerWithAttachment(
+        brainPage,
+        relay.text,
+        screenshotPath,
+        { dryRun: false }
+      )
     );
   } catch (error) {
     latch.last_attempt_state = "PRE_SEND_FAILED";
