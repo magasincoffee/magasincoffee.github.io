@@ -140,17 +140,17 @@ jobs:
           if (-not (Test-Path $configFile)) { throw "lanes.json is missing" }
           . $lifecycle
 
-          # Wait for the v50 install workflow when both workflows were triggered by the same merge.
-          $v50 = $false
+          # Wait for the v51 install workflow when both workflows were triggered by the same merge.
+          $v51 = $false
           for ($i = 0; $i -lt 180; $i++) {
             $runtimeThreeLane = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
             if ((Test-Path $runtimeThreeLane) -and (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.51" -Quiet)) {
-              $v50 = $true
+              $v51 = $true
               break
             }
             Start-Sleep -Seconds 1
           }
-          if (-not $v50) { throw "Installed runtime did not reach v2026-09-19.51" }
+          if (-not $v51) { throw "Installed runtime did not reach v2026-09-19.51" }
 
           $initialOwnerStop = Get-LifecycleOwnerStopState -Root $root
           if ($initialOwnerStop.blocked) {
