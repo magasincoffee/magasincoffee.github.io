@@ -13,6 +13,7 @@ on:
       - '02_CORE/shared/cash-bridge-source-integration-v1.mjs'
       - '02_CORE/shared/procurement-financial-truth-v1.mjs'
       - '02_CORE/shared/partial-financial-baseline-v1.mjs'
+      - '02_CORE/shared/operating-cost-truth-v1.mjs'
       - '09_QA/business-os/**'
       - '.github/workflows/business-os-contract-tests.yml'
   pull_request:
@@ -27,6 +28,7 @@ on:
       - '02_CORE/shared/cash-bridge-source-integration-v1.mjs'
       - '02_CORE/shared/procurement-financial-truth-v1.mjs'
       - '02_CORE/shared/partial-financial-baseline-v1.mjs'
+      - '02_CORE/shared/operating-cost-truth-v1.mjs'
       - '09_QA/business-os/**'
       - '.github/workflows/business-os-contract-tests.yml'
 
@@ -65,6 +67,12 @@ jobs:
 
       - name: Run Cash Balance Truth targeted tests
         run: node --test 09_QA/business-os/cash-balance-truth.test.mjs
+
+      - name: Check Operating Cost Truth helper syntax
+        run: node --check 02_CORE/shared/operating-cost-truth-v1.mjs
+
+      - name: Run Operating Cost Truth targeted tests
+        run: node --test 09_QA/business-os/operating-cost-truth.test.mjs
 
       - name: Run Financial Truth targeted tests
         run: node --test 09_QA/business-os/financial-truth.test.mjs

@@ -1,0 +1,101 @@
+{
+  "schema_version": "operating-cost-truth.v1",
+  "status": "CANONICAL",
+  "task": "TASK-067",
+  "purpose": "Source-agnostic Operating Cost truth wrapper that reuses Financial Truth V1 while separating recognized cost from payment, settlement proceeds, allocation context and budget context.",
+  "cost_families": [
+    "PAYROLL_LABOR",
+    "RENT",
+    "UTILITIES",
+    "PLATFORM_FEES_PROMOTIONS",
+    "DELIVERY_COST",
+    "MARKETING_ADVERTISING",
+    "OTHER_BRANCH_OPEX",
+    "SHARED_COMPANY_OPEX",
+    "BANK_PAYMENT_FEES"
+  ],
+  "claim_types": [
+    "EXACT_ITEM",
+    "PERIOD_AGGREGATE"
+  ],
+  "source_roles": [
+    "RECOGNITION_SOURCE",
+    "PAYMENT_SOURCE",
+    "SETTLEMENT_SOURCE",
+    "ALLOCATION_CONTEXT",
+    "BUDGET_CONTEXT",
+    "NOT_CONNECTED"
+  ],
+  "amount_semantics": [
+    "RECOGNIZED_COST",
+    "ESTIMATED_COST",
+    "PAYMENT_AMOUNT",
+    "SETTLEMENT_GROSS",
+    "SETTLEMENT_NET_PAYOUT",
+    "BUDGET_AMOUNT",
+    "ALLOCATION_WEIGHT",
+    "UNKNOWN"
+  ],
+  "coverage_states": [
+    "COMPLETE",
+    "PARTIAL",
+    "MISSING",
+    "NOT_CONNECTED"
+  ],
+  "record_shape": {
+    "schema_version": "operating-cost-truth.v1",
+    "cost_family": "enum",
+    "claim_type": "EXACT_ITEM|PERIOD_AGGREGATE",
+    "source_role": "enum",
+    "amount_semantics": "enum",
+    "source_period": {
+      "start": "YYYY-MM-DD|null",
+      "end": "YYYY-MM-DD|null",
+      "timezone": "IANA timezone|null"
+    },
+    "source_scope": {
+      "branch": "specific branch|ALL|null",
+      "channel": "specific channel|ALL|null",
+      "aggregate_proven": "boolean"
+    },
+    "coverage": {
+      "status": "COMPLETE|PARTIAL|MISSING|NOT_CONNECTED",
+      "coverage_proven": "boolean"
+    },
+    "proof": {
+      "actuality_proven": "boolean",
+      "recognition_period_proven": "boolean",
+      "amount_semantics_proven": "boolean",
+      "scope_proven": "boolean",
+      "estimate_proven": "boolean"
+    },
+    "allocation": {
+      "is_shared": "boolean",
+      "applied": "boolean",
+      "approved": "boolean",
+      "rule_label": "privacy-safe string|null"
+    },
+    "truth": "financial-truth.v1 OPEX record",
+    "diagnostics": [
+      "privacy-safe code"
+    ]
+  },
+  "rules": [
+    "Financial quality and canonical numeric truth are delegated to financial-truth.v1; TASK-067 does not create a second ACTUAL/ESTIMATE/GAP/NOT_CONNECTED system.",
+    "Recognized cost is not Cash paid. PAYMENT_SOURCE cannot produce recognized numeric Operating Cost truth.",
+    "SETTLEMENT_GROSS and SETTLEMENT_NET_PAYOUT are not platform-fee recognition. A SETTLEMENT_SOURCE can support ACTUAL only when the amount semantics are explicitly RECOGNIZED_COST and recognition proof passes.",
+    "Budget, plan, quote and allocation context cannot become ACTUAL recognition. They may produce ESTIMATE only when amount_semantics=ESTIMATED_COST and estimate_proven=true.",
+    "ACTUAL requires recognized-cost semantics plus proven actuality, recognition period, amount semantics and scope.",
+    "ACTUAL source_period and source_scope must exactly match the Financial Truth period and scope; historical evidence therefore cannot silently become current-period ACTUAL.",
+    "EXACT_ITEM may remain ACTUAL while wider period coverage is PARTIAL or missing, provided the exact item recognition gates pass.",
+    "PERIOD_AGGREGATE ACTUAL requires coverage.status=COMPLETE and coverage_proven=true.",
+    "GAP and NOT_CONNECTED always expose value=null. Missing numeric input never becomes zero; explicit proven zero is valid.",
+    "Operating-cost amounts are non-negative in V1. Negative or non-finite values fail closed; credits/rebates require later explicit mapper semantics rather than implicit sign inversion.",
+    "Unknown scope never becomes ALL; ALL is accepted only when Financial Truth aggregate_proven=true.",
+    "Shared/company OPEX cannot be represented as branch-specific recognized cost unless an allocation is explicitly applied and approved. Allocation context alone never creates ACTUAL recognition.",
+    "Purchase, supplier payment, payroll payment, FoodApp gross, net payout and customer delivery charge cannot become OPEX recognition merely by source presence.",
+    "Privacy-unsafe source/evidence/lineage/allocation labels fail closed; no Drive URLs/IDs, private rows, payment/account identifiers or secrets belong in public evidence.",
+    "Normalization is pure, deterministic and idempotent. The contract performs no source reading, aggregation, Profit calculation, Cash calculation, DB/RPC/write/UI action or connector call.",
+    "operatingCostTruthForBaseline accepts only PERIOD_AGGREGATE wrapper truth; exact items must be aggregated later by TASK-071 before entering Partial Financial Baseline."
+  ]
+}
