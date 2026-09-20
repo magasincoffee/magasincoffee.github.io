@@ -193,6 +193,18 @@ test("lane config carries optional Owner Work URL revision", () => {
   assert.equal(config.lanes[0].work_mode, "OWNER");
 });
 
+test("lane config and registry normalize dedicated maintenance reset revision", () => {
+  const config = normalizeLaneConfig({
+    lanes: [{ lane_id: "lane-1", work_state_reset_revision: 6 }]
+  });
+  const registry = normalizeLaneRegistry({
+    lanes: { "lane-1": { applied_work_state_reset_revision: 5 } }
+  });
+
+  assert.equal(config.lanes[0].work_state_reset_revision, 6);
+  assert.equal(registry.lanes["lane-1"].applied_work_state_reset_revision, 5);
+});
+
 test("lane registry tracks the applied Owner Work URL revision", () => {
   const registry = normalizeLaneRegistry({
     lanes: {
