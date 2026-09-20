@@ -216,7 +216,7 @@ Production implementation after TASK-060:
 - `windows/install-autostart.ps1` — registers recovery without clearing Owner STOP.
 - `windows/autostart-bootstrap.ps1` — auto-start requires >=1 enabled lane and no Owner STOP.
 - `windows/repair-supervisor.ps1` — technical repair preserves Owner STOP and only recovers when lifecycle truth allows.
-- `src/runtime/three-lane-cli.mjs` — runtime v2026-09-19.50 publishes truth-order metadata while preserving exact Brain/Work/latch reconciliation.
+- `src/runtime/three-lane-cli.mjs` — runtime v2026-09-19.51 preserves truth-order and exact Brain/Work/latch reconciliation while adding TASK-RBT-002 privacy-safe event/timing foundation.
 - `.github/workflows/supervisor-autostart-install.yml` — lifecycle-driven deploy/survival; no longer force-enables lane-1 or converts business PAUSED state into local Owner STOP.
 - `.github/workflows/supervisor-integrity.yml` — static and self-hosted process-truth integrity audit.
 - `.github/workflows/supervisor-open-control-panel.yml` — opener verifies all-disabled, Owner STOP, recovery and healthy-no-restart behavior.
