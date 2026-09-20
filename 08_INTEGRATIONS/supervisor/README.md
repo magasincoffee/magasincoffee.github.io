@@ -24,6 +24,12 @@ Canonical target design:
 
 `docs/ROBOT_BROWSER_SCHEDULER_OBSERVABILITY_ARCHITECTURE.md`
 
+Canonical Brain → Robot directive serialization for every MAGASIN project Brain:
+
+`../../01_DOCS/MAGASIN/00_MAGASIN_LANE_DIRECTIVE_V1_PROTOCOL.md`
+
+All Brain conversations controlled by Supervisor must emit byte-exact `MAGASIN_LANE_DIRECTIVE_V1` markers with valid JSON according to that protocol. Markdown-escaped markers such as `<<\\<MAGASIN_LANE_DIRECTIVE_V1>>>` are invalid and fail closed.
+
 Implementation roadmap:
 
 - TASK-RBT-002 — Event & Timing Foundation — IMPLEMENTED in v2026-09-19.51
