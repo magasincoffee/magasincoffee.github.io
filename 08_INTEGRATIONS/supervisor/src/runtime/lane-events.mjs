@@ -83,7 +83,7 @@ function nonNegativeInteger(value, name) {
 
 function safeIdentifier(value, name) {
   const raw = String(value || "").trim();
-  if (!SAFE_IDENTIFIER_RE.test(raw) || raw.includes("..") || raw.includes("//")) {
+  if (\n    !SAFE_IDENTIFIER_RE.test(raw) ||\n    raw.includes("..") ||\n    raw.includes("//") ||\n    raw.includes("://")\n  ) {
     throw new TypeError(`${name} is not a safe operational identifier`);
   }
   return raw;
