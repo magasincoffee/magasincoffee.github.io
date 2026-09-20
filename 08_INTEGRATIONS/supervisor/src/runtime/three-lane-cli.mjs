@@ -100,8 +100,18 @@ import {
   normalizeWorkRollover,
   rolloverMatchesDirective
 } from "./work-rollover.mjs";
+import {
+  TARGET_AVAILABILITY,
+  TARGET_HEALTH_REASONS,
+  adoptTargetHealthIdentity,
+  evaluateTargetAvailability,
+  isTargetQuarantined,
+  markTargetHealthy,
+  quarantineTarget,
+  targetHealthIdentity
+} from "./target-health.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.56";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.57";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;
@@ -116,6 +126,7 @@ function parseArgs(argv) {
     workWatchdogFixture: false,
     relayRearmFixture: false,
     workFullFixture: false,
+    staleTargetFixture: false,
     pageBudget: DEFAULT_CHATGPT_PAGE_BUDGET
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -128,6 +139,7 @@ function parseArgs(argv) {
     else if (key === "--work-watchdog-fixture") result.workWatchdogFixture = true;
     else if (key === "--relay-rearm-fixture") result.relayRearmFixture = true;
     else if (key === "--work-full-fixture") result.workFullFixture = true;
+    else if (key === "--stale-target-fixture") result.staleTargetFixture = true;
     else if (key === "--page-budget") result.pageBudget = Number(argv[++i]);
     else throw new Error(`unknown argument: ${key}`);
   }
