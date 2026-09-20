@@ -99,7 +99,7 @@ test("v44 runtime migrates pre-existing blocked relay and never terminal-blocks 
   assert.doesNotMatch(reconcile, /LANE_RESULT_RELAY_RECONCILE_RELOAD/);
 });
 
-test("relay confirmation, dedupe and Owner target changes clear screenshot evidence while retries retain it", async () => {
+test("relay confirmation, Brain change and explicit maintenance reset clear evidence while Work hot-save preserves it", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
@@ -111,7 +111,16 @@ test("relay confirmation, dedupe and Owner target changes clear screenshot evide
   assert.match(source, /await clearRelayInflight\(registryLane\)/);
   assert.match(source, /async function finalizeConfirmedRelay/);
   assert.match(source, /applyOwnerBrainTarget[\s\S]*?await clearRelayInflight\(registryLane\)/);
-  assert.match(source, /applyOwnerWorkTarget[\s\S]*?await clearRelayInflight\(registryLane\)/);
+
+  const workSaveStart = source.indexOf("async function applyOwnerWorkTarget");
+  const workSaveEnd = source.indexOf("async function applyPendingWorkTargetAtSafeBoundary", workSaveStart);
+  const workSave = source.slice(workSaveStart, workSaveEnd);
+  assert.doesNotMatch(workSave, /clearRelayInflight\(registryLane\)/);
+
+  const resetStart = source.indexOf("async function applyOwnerWorkStateReset");
+  const resetEnd = source.indexOf("async function applyOwnerWorkTarget", resetStart);
+  const maintenanceReset = source.slice(resetStart, resetEnd);
+  assert.match(maintenanceReset, /await clearRelayInflight\(registryLane\)/);
 });
 
 test("v44 orphan screenshot GC is bounded and preserves every active lane reference", async () => {
@@ -205,7 +214,7 @@ test("current runtime performs blocked relay migration before lane processing", 
   assert.match(source, /startupRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
   assert.match(source, /RUNTIME_RELAY_BLOCKED_LATCHES_MIGRATED/);
   assert.match(source, /loopRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
-  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-19\.51"/);
+  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.52"/);
 });
 
 
