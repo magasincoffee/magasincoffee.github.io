@@ -322,6 +322,9 @@ Repeated identical probes do not move `last_activity_at`.
 
 ## 9. Long-running states
 
+**Implementation status:** TASK-RBT-005 releases this contract in runtime v2026-09-20.54. The implementation uses one canonical `work-watchdog.mjs`, fake-clock tests, additive restart-safe watchdog state, RBT-004 global mutation lease/page budget, and preserves RBT-003 current-vs-pending Work semantics. TASK-RBT-006 Work-full detection/rollover remains separate.
+
+
 Canonical execution interpretation:
 
 ### < 25 minutes

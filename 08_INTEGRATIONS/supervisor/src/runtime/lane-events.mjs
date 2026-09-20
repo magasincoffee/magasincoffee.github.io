@@ -15,6 +15,11 @@ export const LANE_EVENT_TYPES = Object.freeze({
   WORK_TARGET_SAVED: "WORK_TARGET_SAVED",
   WORK_TARGET_PENDING: "WORK_TARGET_PENDING",
   WORK_TARGET_APPLIED: "WORK_TARGET_APPLIED",
+  WORK_LONG_RUNNING: "WORK_LONG_RUNNING",
+  WATCHDOG_STALL_CHECK: "WATCHDOG_STALL_CHECK",
+  PAGE_RECOVERY_RELOAD: "PAGE_RECOVERY_RELOAD",
+  WATCHDOG_PROGRESS_REARMED: "WATCHDOG_PROGRESS_REARMED",
+  POSSIBLY_STALLED: "POSSIBLY_STALLED",
   RECOVERY: "RECOVERY",
   ERROR: "ERROR"
 });
@@ -47,6 +52,9 @@ const PHASES = new Set([
   "SAVED",
   "PENDING",
   "APPLIED",
+  "WORKING_LONG",
+  "STALL_CHECK",
+  "POSSIBLY_STALLED",
   "RECOVERY",
   "ERROR"
 ]);
@@ -65,7 +73,29 @@ const REASON_CODES = new Set([
   "OWNER_WORK_REVISION",
   "ACTIVE_WORK_PRESERVED",
   "SAFE_BOUNDARY",
-  "SAME_TARGET_NO_CHURN"
+  "SAME_TARGET_NO_CHURN",
+  "CONTINUE_CONTROL_CHANGED",
+  "RETRY_CONTROL_CHANGED",
+  "WATCHDOG_BELOW_LONG_THRESHOLD",
+  "WATCHDOG_OBSERVATION_BAND",
+  "WATCHDOG_RESPONSE_RUNNING",
+  "WATCHDOG_SAFE_PROGRESS",
+  "WATCHDOG_RECENT_ACTIVITY",
+  "WATCHDOG_ACTIVITY_UNKNOWN",
+  "WATCHDOG_STALL_ELIGIBLE",
+  "WATCHDOG_RELOAD_ELIGIBLE",
+  "WATCHDOG_RELOAD_COOLDOWN",
+  "WATCHDOG_RELOAD_INTENT_PERSISTED",
+  "WATCHDOG_POST_RELOAD_WINDOW",
+  "WATCHDOG_NO_PROGRESS_AFTER_RELOAD",
+  "WATCHDOG_RELOAD_OUTCOME_UNCERTAIN",
+  "WATCHDOG_PROGRESS_REARMED",
+  "WATCHDOG_OWNER_STOP",
+  "WATCHDOG_SECURITY_BOUNDARY",
+  "WATCHDOG_IDENTITY_MISMATCH",
+  "WATCHDOG_STARTED_AT_UNKNOWN",
+  "WATCHDOG_NOT_EXECUTING",
+  "WATCHDOG_DISPATCH_MARKER_MISSING"
 ]);
 const EVENT_TYPE_VALUES = new Set(Object.values(LANE_EVENT_TYPES));
 const LANE_IDS = new Set(["lane-1", "lane-2", "lane-3"]);
@@ -281,6 +311,8 @@ function normalizeSafeObservation(value) {
     max_turn_ordinal: Math.max(0, Number(value.max_turn_ordinal || 0)),
     response_running: Boolean(value.response_running),
     response_complete: Boolean(value.response_complete),
+    continue_control: Boolean(value.continue_control),
+    retry_control: Boolean(value.retry_control),
     last_assistant_char_count: Math.max(
       0,
       Number(value.last_assistant_char_count || 0)
@@ -375,6 +407,8 @@ export function buildSafeWorkObservation(snapshot = {}, responseComplete = false
     ),
     response_running: Boolean(snapshot.responseRunning),
     response_complete: Boolean(responseComplete),
+    continue_control: Boolean(snapshot.hasContinueControl),
+    retry_control: Boolean(snapshot.hasRetryControl),
     last_assistant_char_count: Math.max(
       0,
       Number(snapshot.lastAssistantCharCount || 0)
@@ -398,6 +432,12 @@ function activitySignals(previous, next) {
   }
   if (!previous.response_complete && next.response_complete) {
     signals.push("COMPLETION_STATE_CHANGED");
+  }
+  if (next.continue_control !== previous.continue_control) {
+    signals.push("CONTINUE_CONTROL_CHANGED");
+  }
+  if (next.retry_control !== previous.retry_control) {
+    signals.push("RETRY_CONTROL_CHANGED");
   }
   if (
     next.last_assistant_char_count >

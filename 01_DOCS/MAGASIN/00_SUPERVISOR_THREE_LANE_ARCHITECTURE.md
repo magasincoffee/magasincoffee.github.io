@@ -6,6 +6,9 @@ Original task: TASK-049
 Lifecycle baseline: runtime v2026-09-19.50  
 Scheduler/observability extension: TASK-RBT-001
 Event/timing implementation: TASK-RBT-002 — runtime v2026-09-19.51
+Work hot-swap implementation: TASK-RBT-003 — runtime v2026-09-20.52
+Browser scheduler implementation: TASK-RBT-004 — runtime v2026-09-20.53
+Long-running Work watchdog implementation: TASK-RBT-005 — runtime v2026-09-20.54
 
 Canonical scheduler/observability design:
 
@@ -61,7 +64,7 @@ For each lane the Control Panel target UX shows:
 12. LƯU WORK.
 13. TỰ TẠO WORK.
 
-Current v50 note: LƯU WORK while enabled and safe hot-swap are **not yet released**. TASK-RBT-003 implements the target semantics below.
+Current production contract: LƯU WORK hot-swap is released by TASK-RBT-003, finite global browser scheduling by TASK-RBT-004, and inactivity-based long-running recovery by TASK-RBT-005. Work-full multi-signal rollover remains TASK-RBT-006+.
 
 ## Non-negotiable invariants
 
