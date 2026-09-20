@@ -327,3 +327,39 @@ Therefore the Partial Financial Baseline may preserve known-evidenced Cash movem
 Cash remains separate from Profit recognition. Revenue, purchases, AP, FoodApp gross, COGS or OPEX recognition never create a point Cash balance by implication.
 
 Canonical Wave-A closure evidence: TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md.
+
+## Wave B source discovery — TASK-066 OPEX Source Inventory V1
+
+Status:
+
+**OPEX SOURCE LANDSCAPE INVENTORIED / OPERATING COST TRUTH STILL INCOMPLETE**
+
+TASK-066 completed a bounded Google Drive READ-ONLY source inventory without calculating an OPEX total.
+
+Current evidence state:
+
+- PAYROLL_LABOR: PARTIAL recognition candidate from attendance/worked-time + rate/calculation semantics; cross-tab freshness/completeness remains unresolved, so full-period labor cost stays GAP until TASK-068.
+- RENT: current applicable recognition source not verified; finance models/derived P&L remain BUDGET/ALLOCATION context; current truth GAP/NOT_CONNECTED.
+- UTILITIES: historical meter/utility evidence exists, but current September-2026 bill/service-period evidence was not verified; current truth GAP/NOT_CONNECTED.
+- PLATFORM_FEES_PROMOTIONS: exact ShopeeFood settlement fields can support covered provider/date/store fee/promo/tax semantics, but latest identified exact export is outside current September; current coverage remains GAP/PARTIAL.
+- DELIVERY_COST: bounded current payment evidence exists, but service/provider recognition linkage and complete coverage are not proven.
+- MARKETING_ADVERTISING: plans/quotes/provider-service context exists, but current ad-platform spend/invoice or proven current service-period evidence was not verified.
+- OTHER_BRANCH_OPEX: exact cash/operating rows may support payment and row-level recognition candidates only when category, business nature and period are proven; complete category universe is not proven.
+- SHARED_COMPANY_OPEX: current complete recognition source and approved branch-allocation rule remain missing.
+- BANK_PAYMENT_FEES: no actual bank-fee source was verified; remains NOT_CONNECTED.
+- ingredients/packaging/inventory purchases remain outside OPEX by default and continue toward the COGS/consumption path.
+
+Canonical boundary:
+
+~~~text
+recognized operating cost != cash paid
+purchase != operating cost
+FoodApp gross != provider fee
+budget/model != ACTUAL
+shared cost != branch cost without approved allocation
+~~~
+
+The existing Partial Financial Baseline must continue to keep operating_costs and management Profit GAP/null whenever the required compatible OPEX recognition sources are incomplete.
+
+Canonical source inventory evidence: TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md.
+

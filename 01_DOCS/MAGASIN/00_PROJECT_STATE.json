@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
   "current_phase": "P3_PFC_8H_V2_EXECUTION",
-  "current_task": "TASK-066",
-  "current_task_title": "OPEX Source Inventory V1",
+  "current_task": "TASK-067",
+  "current_task_title": "Operating Cost Truth Contract",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-067",
+  "next_task": "TASK-068",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -291,7 +291,7 @@
     ],
     "prepared_queue": "PFC_8H_V2",
     "queue_status": "ACTIVE",
-    "next_planned_task": "TASK-066",
+    "next_planned_task": "TASK-067",
     "next_task_release_required": false
   },
   "session_bootstrap": {
@@ -371,8 +371,8 @@
     ],
     "execution_generation": "PFC_8H_V2_RUN_01",
     "started_task": "TASK-060",
-    "current_task": "TASK-066",
-    "next_task": "TASK-067",
+    "current_task": "TASK-067",
+    "next_task": "TASK-068",
     "task_060": {
       "status": "DONE",
       "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md",
@@ -501,6 +501,31 @@
       "current_profile": "FAIL_CLOSED_LIVE_BALANCE_EVIDENCE_INCOMPLETE",
       "wave_a": "CLOSED",
       "conclusion": "REMOTE_REGRESSION_GREEN"
+    },
+    "task_066": {
+      "status": "DONE",
+      "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md",
+      "implementation": "DOCS_ONLY_SOURCE_INVENTORY",
+      "google_drive": "READ_ONLY_BOUNDED_SCHEMA_FIRST",
+      "taxonomy": [
+        "RECOGNITION_SOURCE",
+        "PAYMENT_SOURCE",
+        "SETTLEMENT_SOURCE",
+        "ALLOCATION_CONTEXT",
+        "BUDGET_CONTEXT",
+        "NOT_CONNECTED"
+      ],
+      "payroll": "PARTIAL_RECOGNITION_CANDIDATE",
+      "rent": "GAP_NOT_CONNECTED_CURRENT",
+      "utilities": "GAP_NOT_CONNECTED_CURRENT",
+      "platform_fees": "PARTIAL_HISTORICAL_SETTLEMENT_CURRENT_GAP",
+      "delivery": "PARTIAL_PAYMENT_RECOGNITION_GAP",
+      "marketing": "GAP_NOT_CONNECTED_CURRENT",
+      "other_branch_opex": "PARTIAL_ROW_LEVEL",
+      "shared_company_opex": "GAP_NO_APPROVED_ALLOCATION",
+      "bank_payment_fees": "NOT_CONNECTED",
+      "executable_changes": false,
+      "conclusion": "SOURCE_INVENTORY_COMPLETE"
     }
   },
   "data_evidence_policy": {
@@ -533,5 +558,17 @@
     "current_movement_coverage": "PARTIAL_BOUNDED_THROUGH_2026-09-16",
     "next_wave": "WAVE_B_OPERATING_COST_TRUTH",
     "next_task": "TASK-066"
+  },
+  "wave_b_operating_cost_truth": {
+    "status": "ACTIVE",
+    "completed_tasks": [
+      "TASK-066"
+    ],
+    "current_task": "TASK-067",
+    "next_task": "TASK-068",
+    "operating_cost_truth": "INCOMPLETE",
+    "recognized_cost_not_cash_paid": true,
+    "source_inventory": "COMPLETE",
+    "missing_sources_do_not_block": true
   }
 }

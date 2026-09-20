@@ -184,11 +184,12 @@ The Owner-released generation `PFC_8H_V2_RUN_01` is ACTIVE.
 Current authoritative state:
 
 ```text
-TASK-051..TASK-065 = DONE
+TASK-051..TASK-066 = DONE
 WAVE_A_CASH_TRUTH   = CLOSED
-current_task        = TASK-066
-TASK-066            = READY / AUTO_CONTINUE
-next_task           = TASK-067
+WAVE_B_OPEX_TRUTH   = ACTIVE
+current_task        = TASK-067
+TASK-067            = READY / AUTO_CONTINUE
+next_task           = TASK-068
 status              = READY
 autonomy            = AUTO_CONTINUE
 requires_user       = false
@@ -208,7 +209,17 @@ TASK-065 closes Wave A — Cash Truth:
 Canonical Wave-A closure evidence:
 `02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`.
 
-Missing sources become GAP / NOT_CONNECTED and do not wake Owner during the released queue. TASK-066 begins Wave B — Operating Cost Truth.
+Missing sources become GAP / NOT_CONNECTED and do not wake Owner during the released queue.
+
+TASK-066 OPEX source inventory is complete:
+- payroll has bounded recognition candidates but current aggregate coverage is PARTIAL and actuality/completeness must be resolved in TASK-068;
+- current rent/utilities/marketing/bank-fee recognition remains GAP/NOT_CONNECTED;
+- exact provider settlement fields may support fee/promo/tax recognition only for covered provider/date/store;
+- cash/Thu-Chi/supplier-payment evidence remains payment/reconciliation truth, not Operating Cost recognition;
+- shared OPEX has no approved branch-allocation rule;
+- canonical evidence: `02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`.
+
+TASK-067 now owns the source-agnostic Operating Cost Truth Contract.
 
 ## 10. Working method
 
@@ -262,15 +273,17 @@ The repository is public. Never commit secrets, credentials, tokens, cookies, pr
 
 ## 12. Current task
 
-**TASK-066 — OPEX Source Inventory V1 — READY / AUTO_CONTINUE.**
+**TASK-067 — Operating Cost Truth Contract — READY / AUTO_CONTINUE.**
 
 Immediate behavior for a new Work session:
 
-1. read the canonical enterprise architecture;
-2. read `PFC_8H_V2_EXECUTION_PLAN.md`;
-3. read `TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md` for Wave-A closure and remaining Cash evidence gaps;
-4. keep Cash Truth Stack V1 semantics unchanged: missing/NOT_CONNECTED remains fail-closed and Cash remains distinct from Profit;
-5. begin Wave B with OPEX source discovery only: payroll, rent, utilities, platform, marketing and other operating-cost evidence;
-6. do not infer recognized OPEX from Cash paid, purchase/AP, budget, or unsupported allocation;
-7. Google Drive remains READ_ONLY evidence;
-8. continue autonomously under PFC_8H_V2 Owner release unless a true Owner/security/business-rule boundary appears.
+1. read the canonical enterprise architecture and PFC_8H_V2 plan;
+2. read `TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`;
+3. reuse Financial Truth V1 and the existing Partial Financial Baseline OPEX component; do not create a duplicate financial truth spine;
+4. define source-agnostic recognized Operating Cost semantics by period/scope/family;
+5. keep recognition separate from PAYMENT_SOURCE, SETTLEMENT_SOURCE payout, ALLOCATION_CONTEXT and BUDGET_CONTEXT;
+6. missing recognition source must remain GAP/NOT_CONNECTED/null, never zero;
+7. purchase/AP/supplier payment/FoodApp gross must not become OPEX by implication;
+8. preserve component/family isolation so one missing cost family does not fabricate or erase another;
+9. build only the minimum contract/helper/tests needed for TASK-068/069/070 mappers;
+10. continue autonomously under PFC_8H_V2 Owner release unless a true Owner/security/business-rule boundary appears.
