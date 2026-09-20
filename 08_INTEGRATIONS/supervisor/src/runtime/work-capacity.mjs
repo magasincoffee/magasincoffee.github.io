@@ -176,6 +176,25 @@ export function evaluateWorkCapacity({
     };
   }
 
+  const unstableCapacityEvidence = Boolean(
+    a.explicit_full_limit_ui ||
+    b.explicit_full_limit_ui ||
+    a.composer_capacity_blocked ||
+    b.composer_capacity_blocked ||
+    a.send_rejection_capacity ||
+    b.send_rejection_capacity ||
+    a.legacy_conversation_full ||
+    b.legacy_conversation_full
+  );
+  if (unstableCapacityEvidence) {
+    return {
+      state: WORK_CAPACITY_STATES.AMBIGUOUS,
+      evidence_codes: [WORK_CAPACITY_EVIDENCE.STABLE_PROBE_REQUIRED],
+      supporting_count: 0,
+      strong: false
+    };
+  }
+
   return {
     state: WORK_CAPACITY_STATES.NOT_FULL,
     evidence_codes: [],
