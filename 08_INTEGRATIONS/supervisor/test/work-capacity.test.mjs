@@ -169,7 +169,11 @@ test("strong signal observed in only one probe remains ambiguous", () => {
     base({ explicit_full_limit_ui: true }),
     base()
   );
-  assert.equal(result.state, WORK_CAPACITY_STATES.NOT_FULL);
+  assert.equal(result.state, WORK_CAPACITY_STATES.AMBIGUOUS);
+  assert.equal(
+    result.evidence_codes[0],
+    WORK_CAPACITY_EVIDENCE.STABLE_PROBE_REQUIRED
+  );
 });
 
 test("stable exact conversation identity is mandatory", () => {
