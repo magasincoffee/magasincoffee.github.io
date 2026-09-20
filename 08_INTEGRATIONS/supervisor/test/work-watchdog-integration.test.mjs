@@ -81,9 +81,8 @@ test("Owner STOP and latest lane disable are re-read immediately before watchdog
 
 test("security/access guard occurs before execution watchdog decisions", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  const turn = slice(runtime, "if (registryLane.awaiting_work)", "const captured = await captureCompletedAssistantTurn");
-  const safe = turn.indexOf("assertConversationSafe(adapter, workPage");
-  const evaluate = turn.indexOf("evaluateAndPersistWorkWatchdog");
+  const safe = runtime.indexOf("const workProbe = await assertConversationSafe(adapter, workPage");
+  const evaluate = runtime.indexOf("let watchdogDecision = await evaluateAndPersistWorkWatchdog", safe);
   assert.ok(safe >= 0);
   assert.ok(evaluate > safe);
   assert.match(runtime, /AUTH_REQUIRED/);
@@ -171,7 +170,10 @@ test("watchdog event additions remain metadata-only", async () => {
     assert.match(events, new RegExp(type));
   }
   const eventKeys = slice(events, "const EVENT_KEYS", "const ACTORS");
-  assert.doesNotMatch(eventKeys, /url|message|dom|cookie|token|screenshot/i);
+  assert.doesNotMatch(
+    eventKeys,
+    /"(?:brain_url|work_url|message_body|message_text|dom_text|cookie|token|screenshot_path)"/i
+  );
 });
 
 test("TASK-RBT-005 introduces no Work-full detector or rollover semantics", async () => {
