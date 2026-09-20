@@ -77,7 +77,7 @@ export async function collectSafeUiSnapshot(page) {
       };
 
       const controls = Array.from(
-        document.querySelectorAll("button,a,[role='button'],[role='alert']")
+        document.querySelectorAll("button,a,[role='button'],[role='alert'],[role='status']")
       )
         .filter(visible)
         .slice(0, 160)
@@ -86,7 +86,11 @@ export async function collectSafeUiSnapshot(page) {
           role: el.getAttribute("role"),
           text: normalize(el.innerText || el.textContent).slice(0, 120),
           ariaLabel: normalize(el.getAttribute("aria-label")).slice(0, 120),
-          testId: el.getAttribute("data-testid") || null
+          title: normalize(el.getAttribute("title")).slice(0, 120),
+          testId: el.getAttribute("data-testid") || null,
+          disabled:
+            Boolean(el.disabled) ||
+            el.getAttribute("aria-disabled") === "true"
         }));
 
       const haystack = controls
@@ -112,6 +116,15 @@ export async function collectSafeUiSnapshot(page) {
         document.querySelector("#prompt-textarea"),
         ...document.querySelectorAll("textarea,[contenteditable='true']")
       ].find(visible);
+
+      const composerDisabled = Boolean(
+        composer && (
+          Boolean(composer.disabled) ||
+          composer.getAttribute("aria-disabled") === "true" ||
+          composer.getAttribute("contenteditable") === "false"
+        )
+      );
+      const composerEnabled = Boolean(composer && !composerDisabled);
 
       const frames = Array.from(document.querySelectorAll("iframe"))
         .map((el) => String(el.src || "").toLowerCase());
@@ -218,8 +231,44 @@ export async function collectSafeUiSnapshot(page) {
           transientAlertRe.test(`${control.text} ${control.ariaLabel}`)
         );
 
-      const conversationFull =
-        new RegExp(conversationFullPattern, "i").test(recoveryHaystack);
+      const fullRe = new RegExp(conversationFullPattern, "i");
+      const conversationFull = fullRe.test(recoveryHaystack);
+
+      const explicitFullLimitUi = controls.some((control) => {
+        const semanticSurface = [
+          control.text,
+          control.ariaLabel,
+          control.title,
+          control.testId || ""
+        ].filter(Boolean).join(" ");
+        const structuredRole =
+          control.role === "alert" ||
+          control.role === "status";
+        const capacityTestId =
+          /(?:conversation|chat).{0,24}(?:full|limit|capacity|maximum)|(?:full|limit|capacity).{0,24}(?:conversation|chat)/i
+            .test(String(control.testId || ""));
+        return (structuredRole && fullRe.test(semanticSurface)) || capacityTestId;
+      });
+
+      const sendControl = controls.find((control) => {
+        const testId = String(control.testId || "").toLowerCase();
+        const semantic = `${control.text} ${control.ariaLabel}`;
+        return testId === "send-button" ||
+          /^(?:send|send prompt|gửi|gửi tin nhắn)$/i.test(semantic.trim());
+      }) || null;
+      const sendCapacityReason = sendControl
+        ? [sendControl.ariaLabel, sendControl.title, sendControl.testId || ""]
+            .filter(Boolean)
+            .join(" ")
+        : "";
+      const composerCapacityBlocked = Boolean(
+        sendControl?.disabled &&
+        fullRe.test(sendCapacityReason)
+      );
+      const composerGenericBlocked = Boolean(
+        composer &&
+        (!composerEnabled || Boolean(sendControl?.disabled))
+      );
 
       const conversationMissing =
         new RegExp(conversationMissingPattern, "i").test(recoveryHaystack);
@@ -233,6 +282,11 @@ export async function collectSafeUiSnapshot(page) {
         pathKind: conversationPath ? "conversation" : (path === "/" ? "home" : "other"),
         conversationPath,
         composerReady: Boolean(composer),
+        composerPresent: Boolean(composer),
+        composerEnabled,
+        composerCapacityBlocked,
+        composerGenericBlocked,
+        capacityExplicitFullUi: explicitFullLimitUi,
         assistantMessageCount: assistantMessages.length,
         lastAssistantCharCount,
         userMessageCount: userMessages.length,
