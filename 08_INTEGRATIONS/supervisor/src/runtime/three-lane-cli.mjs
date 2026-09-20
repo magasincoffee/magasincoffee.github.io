@@ -51,8 +51,23 @@ import {
   relayRetryState,
   scheduleRelayRetry
 } from "./relay-retry.mjs";
+import {
+  LANE_EVENT_TYPES,
+  beginTaskAssignment,
+  buildSafeWorkObservation,
+  createLaneEventSink,
+  markRelayConfirmed,
+  markTaskCompleted,
+  markTaskStarted,
+  normalizeTaskTiming,
+  observeWorkActivity,
+  taskTimingMetrics
+} from "./lane-events.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.50";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.51";
+
+let laneEventSink = null;
+let laneEventErrorLogPath = null;
 
 function parseArgs(argv) {
   const result = {
@@ -108,6 +123,44 @@ async function safeLog(filePath, event = {}) {
   };
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.appendFile(filePath, JSON.stringify(safe) + "\n", "utf8");
+}
+
+function ensureLaneTaskTiming(registryLane, taskId = null) {
+  registryLane.task_timing = normalizeTaskTiming(registryLane.task_timing);
+  const timing = registryLane.task_timing;
+  if (!timing.task_id && taskId) timing.task_id = String(taskId);
+  if (timing.task_id && taskId && timing.task_id !== String(taskId)) {
+    registryLane.task_timing = normalizeTaskTiming({ task_id: String(taskId) });
+  }
+  return registryLane.task_timing;
+}
+
+function timingEventFields(timing, at = new Date().toISOString()) {
+  const metrics = taskTimingMetrics(timing, { now: at });
+  return {
+    ...(Number.isInteger(metrics.total_elapsed_ms)
+      ? { elapsed_ms: metrics.total_elapsed_ms }
+      : {}),
+    ...(Number.isInteger(metrics.queue_time_ms)
+      ? { queue_time_ms: metrics.queue_time_ms }
+      : {}),
+    ...(Number.isInteger(metrics.execution_time_ms)
+      ? { execution_time_ms: metrics.execution_time_ms }
+      : {})
+  };
+}
+
+async function emitLaneEvent(event) {
+  if (!laneEventSink) return false;
+  const result = await laneEventSink.emit(event);
+  if (!result.ok && laneEventErrorLogPath) {
+    await safeLog(laneEventErrorLogPath, {
+      type: "LANE_EVENT_SINK_ERROR",
+      laneId: event.lane_id,
+      reason: "EVENT_SINK_WRITE_FAILED"
+    }).catch(() => {});
+  }
+  return result.ok;
 }
 
 function hardStopObservation(observation) {
@@ -298,11 +351,32 @@ async function finalizeConfirmedRelay({
   registryPath,
   latch
 }) {
+  const confirmedAt = new Date().toISOString();
+  const timing = ensureLaneTaskTiming(registryLane, registryLane.task_id);
+  const confirmed = markRelayConfirmed(timing, {
+    taskId: registryLane.task_id,
+    at: confirmedAt
+  });
+
   registryLane.last_result_relay_id = latch.relay_id;
   registryLane.last_work_result_digest = latch.response_digest;
   registryLane.awaiting_work = false;
   await clearRelayInflight(registryLane);
   await atomicJsonWrite(registryPath, registry);
+
+  if (confirmed.changed) {
+    await emitLaneEvent({
+      timestamp: confirmedAt,
+      lane_id: registryLane.lane_id,
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.RESULT_RELAY_CONFIRMED,
+      task_id: registryLane.task_id,
+      phase: "RELAYED",
+      work_generation: Number(registryLane.work_generation || 0),
+      relay_id: latch.relay_id,
+      ...timingEventFields(timing, confirmedAt)
+    });
+  }
 }
 
 async function cleanupOrphanRelayEvidence({
@@ -451,6 +525,14 @@ async function finalizeConfirmedDispatch({
   registry,
   registryPath
 }) {
+  const startedAt = new Date().toISOString();
+  const timing = ensureLaneTaskTiming(registryLane, latch.task_id);
+  const started = markTaskStarted(timing, {
+    taskId: latch.task_id,
+    directiveDigest: latch.directive_digest,
+    at: startedAt
+  });
+
   if (foundUrl) registryLane.work_url = foundUrl;
   registryLane.task_id = latch.task_id;
   registryLane.instruction_digest =
@@ -460,6 +542,32 @@ async function finalizeConfirmedDispatch({
   registryLane.awaiting_work = true;
   registryLane.dispatch_inflight = null;
   await atomicJsonWrite(registryPath, registry);
+
+  if (started.changed) {
+    const correlation = latch.dispatch_id
+      ? { dispatch_id: latch.dispatch_id }
+      : {};
+    const common = {
+      timestamp: startedAt,
+      lane_id: registryLane.lane_id,
+      task_id: latch.task_id,
+      work_generation: Number(registryLane.work_generation || 0),
+      ...correlation,
+      ...timingEventFields(timing, startedAt)
+    };
+    await emitLaneEvent({
+      ...common,
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.WORK_DISPATCH_CONFIRMED,
+      phase: "STARTED"
+    });
+    await emitLaneEvent({
+      ...common,
+      actor: "WORK",
+      event_type: LANE_EVENT_TYPES.WORK_STARTED,
+      phase: "STARTED"
+    });
+  }
 }
 
 async function reconcileBrainRequest({
@@ -1004,6 +1112,14 @@ async function dispatchWork({
   const baseline = page
     ? await captureSendBaseline(adapter, page)
     : { pre_user_count: 0, pre_max_turn_ordinal: 0 };
+  const assignedAt = new Date().toISOString();
+  const timing = ensureLaneTaskTiming(registryLane, directive.task_id);
+  const assigned = beginTaskAssignment(timing, {
+    taskId: directive.task_id,
+    directiveDigest: directive.digest,
+    at: assignedAt
+  });
+
   registryLane.dispatch_inflight = {
     task_id: directive.task_id,
     dispatch_id: dispatchId,
@@ -1014,6 +1130,18 @@ async function dispatchWork({
     ...baseline
   };
   await atomicJsonWrite(registryPath, registry);
+
+  if (assigned.changed) {
+    await emitLaneEvent({
+      timestamp: assignedAt,
+      lane_id: lane.lane_id,
+      actor: "BRAIN",
+      event_type: LANE_EVENT_TYPES.BRAIN_TASK_ASSIGNED,
+      task_id: directive.task_id,
+      phase: "ASSIGNED",
+      work_generation: Number(registryLane.work_generation || 0)
+    });
+  }
 
   if (!execute) return;
 
@@ -1072,13 +1200,13 @@ async function dispatchWork({
     return;
   }
 
-  registryLane.work_url = workUrl;
-  registryLane.task_id = directive.task_id;
-  registryLane.instruction_digest = directive.instruction_digest;
-  registryLane.last_brain_directive_digest = directive.digest;
-  registryLane.awaiting_work = true;
-  registryLane.dispatch_inflight = null;
-  await atomicJsonWrite(registryPath, registry);
+  await finalizeConfirmedDispatch({
+    foundUrl: workUrl,
+    registryLane,
+    latch: registryLane.dispatch_inflight,
+    registry,
+    registryPath
+  });
   await safeLog(logPath, {
     type: createNew ? "LANE_WORK_CREATED" : "LANE_WORK_DISPATCHED",
     laneId: lane.lane_id,
@@ -1237,11 +1365,15 @@ async function relayWorkResult({
     registryLane.last_result_relay_id === relay.relay_id ||
     await hasRelayMarker(brainPage, relay.relay_id)
   ) {
-    registryLane.last_result_relay_id = relay.relay_id;
-    registryLane.last_work_result_digest = relay.response_digest;
-    registryLane.awaiting_work = false;
-    await clearRelayInflight(registryLane);
-    await atomicJsonWrite(registryPath, registry);
+    await finalizeConfirmedRelay({
+      registryLane,
+      registry,
+      registryPath,
+      latch: {
+        relay_id: relay.relay_id,
+        response_digest: relay.response_digest
+      }
+    });
     await safeLog(logPath, {
       type: "LANE_RESULT_RELAY_DEDUPED_BY_MARKER",
       laneId: lane.lane_id,
@@ -1427,11 +1559,15 @@ async function relayWorkResult({
     return "PENDING";
   }
 
-  registryLane.last_result_relay_id = relay.relay_id;
-  registryLane.last_work_result_digest = relay.response_digest;
-  registryLane.awaiting_work = false;
-  await clearRelayInflight(registryLane);
-  await atomicJsonWrite(registryPath, registry);
+  await finalizeConfirmedRelay({
+    registryLane,
+    registry,
+    registryPath,
+    latch: {
+      relay_id: relay.relay_id,
+      response_digest: relay.response_digest
+    }
+  });
   await safeLog(logPath, {
     type: "LANE_WORK_RESULT_RELAYED",
     laneId: lane.lane_id,
@@ -1489,6 +1625,7 @@ async function applyOwnerBrainTarget({
       registryLane.dispatch_inflight = null;
       registryLane.task_id = null;
       registryLane.instruction_digest = null;
+      registryLane.task_timing = normalizeTaskTiming(null);
     }
 
     // A relay latch is target-specific. When Owner changes Brain, its evidence
@@ -1547,6 +1684,7 @@ async function applyOwnerWorkTarget({
   registryLane.dispatch_inflight = null;
   registryLane.brain_request_inflight = null;
   registryLane.awaiting_work = false;
+  registryLane.task_timing = normalizeTaskTiming(null);
 
   await safeLog(logPath, {
     type: changed
@@ -1674,6 +1812,33 @@ async function processLane({
       allowFull: true
     });
 
+    const activityAt = new Date().toISOString();
+    const timing = ensureLaneTaskTiming(registryLane, registryLane.task_id);
+    const activity = observeWorkActivity(
+      timing,
+      buildSafeWorkObservation(
+        workProbe.snapshot,
+        workProbe.classification.observation === OBSERVATIONS.RESPONSE_COMPLETE
+      ),
+      { at: activityAt }
+    );
+    if (activity.baseline_initialized || activity.changed) {
+      await atomicJsonWrite(registryPath, registry);
+      if (activity.event_due) {
+        await emitLaneEvent({
+          timestamp: activityAt,
+          lane_id: lane.lane_id,
+          actor: "WORK",
+          event_type: LANE_EVENT_TYPES.WORK_ACTIVITY,
+          task_id: registryLane.task_id,
+          phase: "WORKING",
+          reason_code: activity.reason_code,
+          work_generation: Number(registryLane.work_generation || 0),
+          ...timingEventFields(timing, activityAt)
+        });
+      }
+    }
+
     if (hardStopObservation(workProbe.classification.observation)) {
       return laneStatus(
         lane,
@@ -1709,6 +1874,29 @@ async function processLane({
       registryLane.awaiting_work = false;
       await atomicJsonWrite(registryPath, registry);
     } else {
+      const completedAt = new Date().toISOString();
+      const completionTiming = ensureLaneTaskTiming(
+        registryLane,
+        registryLane.task_id
+      );
+      const completed = markTaskCompleted(completionTiming, {
+        taskId: registryLane.task_id,
+        at: completedAt
+      });
+      if (completed.changed) {
+        await atomicJsonWrite(registryPath, registry);
+        await emitLaneEvent({
+          timestamp: completedAt,
+          lane_id: lane.lane_id,
+          actor: "WORK",
+          event_type: LANE_EVENT_TYPES.WORK_COMPLETED,
+          task_id: registryLane.task_id,
+          phase: "COMPLETED",
+          work_generation: Number(registryLane.work_generation || 0),
+          ...timingEventFields(completionTiming, completedAt)
+        });
+      }
+
       const relayOutcome = await relayWorkResult({
         adapter,
         lane,
@@ -1866,7 +2054,11 @@ const registryPath = path.join(root, "lane-registry.json");
 const statusPath = path.join(root, "lane-status.json");
 const evidenceDir = path.join(root, "lane-evidence");
 const logPath = path.join(root, "supervisor.log");
+const eventPath = path.join(root, "lane-events.ndjson");
 const stopPath = path.join(root, "STOP");
+
+laneEventErrorLogPath = logPath;
+laneEventSink = createLaneEventSink({ filePath: eventPath });
 
 let config = normalizeLaneConfig(
   await readJson(configPath, defaultLaneConfig())
@@ -1898,6 +2090,12 @@ let restartRequested = false;
 await safeLog(logPath, {
   type: "RUNTIME_BOOT",
   reason: `version=${SUPERVISOR_RUNTIME_VERSION};mode=${THREE_LANE_MODE}`
+});
+await emitLaneEvent({
+  actor: "SUPERVISOR",
+  event_type: LANE_EVENT_TYPES.RECOVERY,
+  phase: "RECOVERY",
+  reason_code: "RUNTIME_BOOT"
 });
 
 try {
