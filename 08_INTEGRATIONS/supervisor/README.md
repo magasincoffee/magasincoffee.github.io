@@ -16,7 +16,7 @@ The Windows wrapper still retains the legacy `BRAIN_WORKER_V1` entry point as a 
 
 ### Current production baseline
 
-Runtime lifecycle in production is v2026-09-20.55.
+Runtime lifecycle in production is v2026-09-20.56.
 
 TASK-RBT-001 adds a **docs-only target architecture** for browser scheduling, long-running Work recovery, Work hot-swap and operational observability. Those target features are not considered released by TASK-RBT-001 itself.
 
@@ -37,12 +37,12 @@ Implementation roadmap:
 - TASK-RBT-004 — Browser Scheduler + Tab Budget — IMPLEMENTED in v2026-09-20.53
 - TASK-RBT-005 — Long-Running Work + 30m Watchdog — IMPLEMENTED in v2026-09-20.54
 - TASK-RBT-005A — Relay Retry Exhaustion Recovery — IMPLEMENTED in v2026-09-20.55
-- TASK-RBT-006 — Multi-Signal Work Full Detection + Rollover
+- TASK-RBT-006 — Multi-Signal Work Full Detection + Rollover — IMPLEMENTED in v2026-09-20.56
 - TASK-RBT-007 — Control Panel Timeline & Resource UX
 - TASK-RBT-008 — Brain Planning Contract Runtime Hooks
 - TASK-RBT-009 — Integration / Overnight Soak / Cleanup
 
-v2026-09-20.55 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog and TASK-RBT-005A Owner-authorized relay retry recovery. TASK-RBT-006+ remain separate until their own implementation and acceptance tasks pass.
+v2026-09-20.56 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery and TASK-RBT-006 multi-signal Work-full rollover. TASK-RBT-007+ remain separate until their own implementation and acceptance tasks pass.
 
 ## Lifecycle truth
 
@@ -124,7 +124,7 @@ Runtime v2026-09-20.53 implements TASK-RBT-004 Browser Scheduler + Tab Budget:
 
 One lane enabled continues to work normally. Two or three enabled lanes share the same Chrome/CDP fairly without sharing task/latch state.
 
-Remaining TASK-RBT work after the browser scheduler is intentionally separate: multi-signal Work-full rollover and later timeline/resource UX remain TASK-RBT-006+.
+Remaining TASK-RBT work after the browser scheduler is intentionally separate; multi-signal Work-full rollover is released by TASK-RBT-006 and later timeline/resource UX remains TASK-RBT-007+.
 
 ## Released long-running Work watchdog
 
@@ -196,9 +196,9 @@ Safe apply:
 
 `TỰ TẠO WORK` is an explicit Owner request for Robot-managed Work mode. When active it is staged until the same safe boundary; it never abandons the current task and never creates/finds Brain.
 
-## Target Work-full rollover
+## Released Work-full detection and rollover
 
-After TASK-RBT-006 implementation, Work-full must be confirmed from multiple verified signals, not one regex.
+Runtime v2026-09-20.56 implements TASK-RBT-006. Work-full is confirmed from multiple verified signals, never one regex.
 
 Possible evidence families include:
 
@@ -214,6 +214,12 @@ When safe full is confirmed for the next dispatch:
 preserve state → create blank Work → get canonical URL → increment generation → persist target → persist exact dispatch latch → send once → confirm marker
 
 Brain target is never auto-created/replaced.
+
+The released detector uses one canonical `work-capacity.mjs` evaluator. Strong structured full/limit UI must be stable across probes, or at least two independent supporting signal families must agree. Legacy `conversationFull` remains supporting evidence only. Response-running, incomplete-turn, network, auth/MFA/CAPTCHA, transient/model-switching/retry, missing/access-denied and generic composer-disabled states fail closed.
+
+Rollover uses durable `work-rollover.v1` stages: FULL_CONFIRMED → INTENT_PERSISTED → BLANK_TARGET_CREATING → TARGET_PERSISTED → DISPATCH_LATCH_PERSISTED → DISPATCH_CONFIRMED. The new Work is blank at creation; canonical URL + exactly-one generation increment are persisted before dispatch latch and before task send. Exact `dispatch_id` marker reconciliation remains authoritative after crash/restart. Owner pending Work target applies before automatic rollover at a safe boundary; relay/watchdog state remains separate.
+
+TASK-RBT-006 does not implement Control Panel timeline/resource UX. That remains TASK-RBT-007+.
 
 ## Brain Planning Contract
 
