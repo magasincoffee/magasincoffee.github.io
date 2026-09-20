@@ -18,15 +18,17 @@ test("active Three-Lane runtime contains no Brain auto-discovery path", async ()
   assert.match(source, /scheduler/);
 });
 
-test("Work URL is Robot-managed and rollover requires positive conversationFull", async () => {
+test("Work URL is Robot-managed and rollover requires FULL_CONFIRMED rather than one regex", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
 
   assert.match(source, /registryLane\.work_url/);
-  assert.match(source, /probe\.snapshot\.conversationFull/);
-  assert.match(source, /createNew = true/);
+  assert.match(source, /probeStableWorkCapacity/);
+  assert.match(source, /WORK_CAPACITY_STATES\.FULL_CONFIRMED/);
+  assert.doesNotMatch(source, /if \(probe\.snapshot\.conversationFull\)/);
+  assert.doesNotMatch(source, /createNew = true/);
   assert.match(source, /buildWorkRolloverInstruction/);
   assert.match(source, /Work conversation is missing; automatic replacement is denied/);
 });
