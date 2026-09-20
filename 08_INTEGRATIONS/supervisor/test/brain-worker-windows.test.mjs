@@ -127,7 +127,10 @@ test("production state maintenance resets Work state by revision without changin
   assert.match(source, /Brain URL changed during state reset/);
   assert.match(source, /Work URL changed during state reset/);
   assert.match(source, /applied_work_url_revision/);
-  assert.match(source, /2026-09-19\.51/);
+  assert.match(source, /Get-SupervisorRuntimeVersion -Path \$sourceRuntime/);
+  assert.match(source, /Get-SupervisorRuntimeVersion -Path \$installedRuntimeSource/);
+  assert.match(source, /Installed runtime version does not match checked-out production source/);
+  assert.doesNotMatch(source, /2026-09-19\.51/);
   assert.doesNotMatch(source, /brain_url\s*=/);
   assert.doesNotMatch(source, /work_url\s*=/);
 });
