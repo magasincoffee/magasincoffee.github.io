@@ -119,6 +119,10 @@ test("serialized event lines cannot carry private URL/token/body/path raw values
     () => serializeLaneEvent(baseEvent({ task_id: "https://chatgpt.com/c/private" })),
     /safe operational identifier/
   );
+  assert.throws(
+    () => serializeLaneEvent(baseEvent({ task_id: "C:/private/capture.png" })),
+    /safe operational identifier/
+  );
 });
 
 test("fresh task timing computes queue, execution and total duration", () => {
