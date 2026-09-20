@@ -72,8 +72,16 @@ import {
   BrowserScheduler,
   DEFAULT_CHATGPT_PAGE_BUDGET
 } from "./browser-scheduler.mjs";
+import {
+  WORK_WATCHDOG_DECISIONS,
+  beginWatchdogReloadIntent,
+  evaluateWorkWatchdog,
+  markWatchdogPostReloadProbe,
+  markWatchdogReloaded,
+  normalizeWorkWatchdog
+} from "./work-watchdog.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.53";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.54";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;
@@ -85,6 +93,7 @@ function parseArgs(argv) {
     pollMs: 4000,
     workTargetFixture: false,
     browserSchedulerFixture: false,
+    workWatchdogFixture: false,
     pageBudget: DEFAULT_CHATGPT_PAGE_BUDGET
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -94,6 +103,7 @@ function parseArgs(argv) {
     else if (key === "--poll-ms") result.pollMs = Number(argv[++i]);
     else if (key === "--work-target-fixture") result.workTargetFixture = true;
     else if (key === "--browser-scheduler-fixture") result.browserSchedulerFixture = true;
+    else if (key === "--work-watchdog-fixture") result.workWatchdogFixture = true;
     else if (key === "--page-budget") result.pageBudget = Number(argv[++i]);
     else throw new Error(`unknown argument: ${key}`);
   }
@@ -2422,6 +2432,10 @@ if (args.workTargetFixture) {
 }
 if (args.browserSchedulerFixture) {
   await import("./browser-scheduler-acceptance-cli.mjs");
+  process.exit(0);
+}
+if (args.workWatchdogFixture) {
+  await import("./work-watchdog-acceptance-cli.mjs");
   process.exit(0);
 }
 if (!Number.isFinite(args.pollMs) || args.pollMs < 1000) {
