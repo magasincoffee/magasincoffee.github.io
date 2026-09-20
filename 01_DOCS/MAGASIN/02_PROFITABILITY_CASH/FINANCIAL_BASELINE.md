@@ -363,3 +363,41 @@ The existing Partial Financial Baseline must continue to keep operating_costs an
 
 Canonical source inventory evidence: TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md.
 
+
+
+## Wave B contract — TASK-067 Operating Cost Truth V1
+
+Status:
+
+**OPERATING COST TRUTH CONTRACT V1 IMPLEMENTED / SOURCE MAPPING AND FULL-PERIOD OPEX STILL INCOMPLETE**
+
+TASK-067 adds one source-agnostic Operating Cost wrapper that reuses Financial Truth V1.
+
+Canonical semantics:
+
+- recognized cost != cash paid;
+- PAYMENT_SOURCE cannot create recognized OPEX;
+- FoodApp/provider gross and net payout are not platform-fee recognition;
+- budget/allocation context cannot become ACTUAL;
+- exact recognized items may be ACTUAL behind explicit actuality/period/amount/scope proof even when wider period coverage is PARTIAL;
+- a PERIOD_AGGREGATE Operating Cost ACTUAL requires COMPLETE proven coverage;
+- historical source periods cannot become current-period ACTUAL;
+- unknown scope does not become ALL; ALL requires aggregate_proven=true;
+- shared/company OPEX cannot be allocated to a branch without an explicitly approved allocation rule;
+- GAP/NOT_CONNECTED remain null;
+- explicit proven zero remains valid;
+- negative Operating Cost is rejected in V1 pending explicit future contra-expense semantics.
+
+Canonical artifacts:
+
+- `02_CORE/contracts/operating-cost-truth.v1.json`
+- `02_CORE/shared/operating-cost-truth-v1.mjs`
+- `09_QA/business-os/operating-cost-truth.test.mjs`
+
+TASK-067 targeted tests: **31/31 PASS**. Exact post-merge Business OS run `35515946855` / job `106091793584` succeeded on Node v20.20.2 with **385/385 logical checks / 0 fail**.
+
+The existing Partial Financial Baseline accepts only a canonical PERIOD_AGGREGATE Operating Cost truth from this wrapper; exact item rows must be aggregated later by TASK-071. The existing management Profit formula is unchanged.
+
+Current Operating Cost source evidence remains incomplete exactly as TASK-066 recorded. Therefore the Partial Financial Baseline must continue to keep complete-period Operating Costs and management Profit GAP/null until compatible source mappers and complete coverage exist.
+
+Canonical evidence: `TASK_067_OPERATING_COST_TRUTH_CONTRACT_V1_EVIDENCE.md`.
