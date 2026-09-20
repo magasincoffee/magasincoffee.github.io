@@ -85,7 +85,7 @@ let rollover = beginWorkRollover({
   directiveInstructionDigest: instructionDigest,
   oldWorkGeneration: 11,
   oldWorkUrlRevision: 5,
-  oldWorkTargetDigest,
+  oldTargetDigest,
   capacityEvidenceCodes: multiSignal.evidence_codes,
   at
 });
@@ -153,7 +153,7 @@ const pendingLane = {
     directiveDigest,
     oldWorkGeneration: 11,
     oldWorkUrlRevision: 4,
-    oldWorkTargetDigest,
+    oldTargetDigest,
     capacityEvidenceCodes: ["LEGACY_FULL_TEXT", "COMPOSER_CAPACITY_BLOCKED"],
     at
   })
