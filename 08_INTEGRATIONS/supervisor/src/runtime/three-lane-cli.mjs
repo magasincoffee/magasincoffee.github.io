@@ -241,16 +241,162 @@ function accessDeniedMessage({ brain = false } = {}) {
     : "Work này không mở được trong Chrome Robot. Dừng luồng rồi dán LINK WORK khác hoặc bấm TỰ TẠO WORK để Robot tạo chat mới.";
 }
 
+function targetRole(brain) {
+  return brain ? "BRAIN" : "WORK";
+}
+
+function targetHealthField(brain) {
+  return brain ? "brain_target_health" : "work_target_health";
+}
+
+function targetReasonCode(reason) {
+  if (reason === TARGET_HEALTH_REASONS.CONVERSATION_MISSING) {
+    return "TARGET_CONVERSATION_MISSING";
+  }
+  if (reason === TARGET_HEALTH_REASONS.CONVERSATION_ACCESS_DENIED) {
+    return "TARGET_CONVERSATION_ACCESS_DENIED";
+  }
+  if (reason === TARGET_HEALTH_REASONS.STABLE_REDIRECT_AWAY) {
+    return "TARGET_STABLE_REDIRECT_AWAY";
+  }
+  return "TARGET_QUARANTINED";
+}
+
+function exactTargetHealthIdentity({
+  brain,
+  normalizedUrl,
+  targetRevision,
+  generation
+}) {
+  return targetHealthIdentity({
+    role: targetRole(brain),
+    targetDigest: sha256(normalizedUrl),
+    targetRevision,
+    workGeneration: brain ? 0 : generation
+  });
+}
+
+function quarantinedTargetMessage({ brain = false, registryLane = null } = {}) {
+  if (brain) {
+    return "BỘ NÃO KHÔNG CÒN TỒN TẠI/ĐƯỢC TRUY CẬP — Robot đã ngừng mở lại link này. Hãy dán Brain URL mới và LƯU BỘ NÃO.";
+  }
+  const pending = Number(registryLane?.pending_work_url_revision || 0) > 0
+    ? " Pending Work mới vẫn được giữ nguyên nhưng chưa thể thay thế active exact-once transaction cũ."
+    : "";
+  const active = Boolean(
+    registryLane?.awaiting_work ||
+    registryLane?.dispatch_inflight ||
+    registryLane?.relay_inflight
+  )
+    ? " Task/latch/result hiện tại được giữ nguyên; Robot không tự chuyển task sang Work khác."
+    : "";
+  return "WORK KHÔNG CÒN TỒN TẠI/ĐƯỢC TRUY CẬP — Robot đã ngừng mở lại link này. Hãy LƯU WORK mới hoặc dùng TỰ TẠO WORK khi safe boundary cho phép." + active + pending;
+}
+
+function targetQuarantineError({ brain = false, registryLane = null } = {}) {
+  const error = new Error(quarantinedTargetMessage({ brain, registryLane }));
+  error.name = "TargetQuarantinedError";
+  error.code = "TARGET_QUARANTINED";
+  return error;
+}
+
+async function persistTargetQuarantine({
+  laneId,
+  brain,
+  identity,
+  reasonCode,
+  registryLane,
+  registry,
+  registryPath,
+  scheduler,
+  adapter,
+  page,
+  normalizedUrl
+}) {
+  const field = targetHealthField(brain);
+  const outcome = quarantineTarget(registryLane[field], identity, {
+    reasonCode,
+    at: new Date().toISOString()
+  });
+  registryLane[field] = outcome.health;
+  if (outcome.changed) {
+    await atomicJsonWrite(registryPath, registry);
+    await emitLaneEvent({
+      lane_id: laneId,
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.TARGET_QUARANTINED,
+      task_id: registryLane.task_id || undefined,
+      phase: "ERROR",
+      reason_code: targetReasonCode(reasonCode),
+      work_generation: Number(registryLane.work_generation || 0),
+      target_role: identity.role,
+      target_digest: identity.target_digest,
+      target_revision: identity.target_revision
+    });
+  }
+
+  if (scheduler?.invalidateExactPage) {
+    await scheduler.invalidateExactPage({
+      page,
+      url: normalizedUrl
+    }).catch(() => false);
+  } else if (adapter?.invalidateTargetRecoveryPage) {
+    await adapter.invalidateTargetRecoveryPage(normalizedUrl, {
+      page,
+      close: true
+    }).catch(() => false);
+  }
+  return outcome;
+}
+
+async function markExactTargetHealthyOnce({
+  brain,
+  identity,
+  registryLane,
+  registry,
+  registryPath
+}) {
+  const field = targetHealthField(brain);
+  const before = registryLane[field];
+  if (before?.state === "HEALTHY" && before?.target_digest === identity.target_digest) {
+    return false;
+  }
+  registryLane[field] = markTargetHealthy(before, identity, {
+    at: new Date().toISOString()
+  });
+  await atomicJsonWrite(registryPath, registry);
+  return true;
+}
+
 async function openExactConversation(adapter, url, {
   brain = false,
   scheduler = null,
   laneId = null,
   targetRevision = 0,
-  generation = 0
+  generation = 0,
+  registryLane,
+  registry,
+  registryPath
 } = {}) {
+  if (!registryLane || !registry || !registryPath) {
+    throw new Error("exact target acquisition requires durable target-health context");
+  }
+
   const normalized = normalizeChatGptConversationUrl(url);
   const target = targetFromUrl(normalized);
-  const role = brain ? "BRAIN" : "WORK";
+  const role = targetRole(brain);
+  const identity = exactTargetHealthIdentity({
+    brain,
+    normalizedUrl: normalized,
+    targetRevision,
+    generation
+  });
+  const field = targetHealthField(brain);
+
+  if (isTargetQuarantined(registryLane[field], identity)) {
+    throw targetQuarantineError({ brain, registryLane });
+  }
+
   const page = scheduler
     ? await scheduler.acquireExactPage({
         laneId,
@@ -262,10 +408,39 @@ async function openExactConversation(adapter, url, {
       })
     : adapter.findPageForTarget(target) || await adapter.reopenTargetPage(normalized);
 
-  const probe = await adapter.probePage(page).catch(() => null);
-  if (probe?.snapshot?.conversationAccessDenied) {
-    throw new Error(accessDeniedMessage({ brain }));
+  const firstUrl = page.url();
+  const firstProbe = await adapter.probePage(page);
+  if (typeof page.waitForTimeout === "function") {
+    await page.waitForTimeout(160);
   }
+  const secondUrl = page.url();
+  const secondProbe = await adapter.probePage(page);
+
+  const availability = evaluateTargetAvailability({
+    firstSnapshot: firstProbe.snapshot,
+    secondSnapshot: secondProbe.snapshot,
+    firstExact: pageMatchesTarget(firstUrl, target),
+    secondExact: pageMatchesTarget(secondUrl, target),
+    stableRedirectLocation: firstUrl === secondUrl
+  });
+
+  if (availability.state === TARGET_AVAILABILITY.DETERMINISTIC_UNAVAILABLE) {
+    await persistTargetQuarantine({
+      laneId,
+      brain,
+      identity,
+      reasonCode: availability.reason_code,
+      registryLane,
+      registry,
+      registryPath,
+      scheduler,
+      adapter,
+      page,
+      normalizedUrl: normalized
+    });
+    throw targetQuarantineError({ brain, registryLane });
+  }
+
   if (!pageMatchesTarget(page.url(), target)) {
     throw new Error(
       brain
@@ -273,6 +448,15 @@ async function openExactConversation(adapter, url, {
         : "Không thể mở đúng cuộc trò chuyện Work trong Chrome Robot. Dừng luồng rồi dán LINK WORK khác hoặc bấm TỰ TẠO WORK."
     );
   }
+
+  await markExactTargetHealthyOnce({
+    brain,
+    identity,
+    registryLane,
+    registry,
+    registryPath
+  });
+
   return page;
 }
 
