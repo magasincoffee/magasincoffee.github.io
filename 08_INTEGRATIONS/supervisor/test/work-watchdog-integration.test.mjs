@@ -14,9 +14,9 @@ function slice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("TASK-RBT-005 watchdog remains canonical after v56 Work-full rollover bump", async () => {
+test("TASK-RBT-005 watchdog remains canonical after v57 stale-target quarantine bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.56"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.57"/);
   assert.match(runtime, /from "\.\/work-watchdog\.mjs"/);
   assert.equal((runtime.match(/evaluateWorkWatchdog\(/g) || []).length, 1);
 });
