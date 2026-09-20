@@ -1222,7 +1222,7 @@ async function reconcileDispatchInflight({
         digest: latch.instruction_digest,
         reason: "same_latch_retry_ready"
       });
-      return "RETRY_READY";
+      return "NOT_CONFIRMED";
     }
 
     registryLane.dispatch_inflight = null;
@@ -3779,7 +3779,9 @@ async function processLaneTurn({
     registry,
     registryPath,
     logPath,
-    scheduler
+    scheduler,
+    stopPath,
+    configPath
   });
 
   return laneStatus(
