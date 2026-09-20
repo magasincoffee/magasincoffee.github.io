@@ -1470,6 +1470,9 @@ async function reconcileRelayInflight({
     digest: latch.response_digest,
     reason: `attempts=${Number(latch.attempt_count || 0)}`
   });
+  if (scheduled === RELAY_RETRY_STATES.EXHAUSTED) {
+    await emitRelayRearmExhaustedIfRelevant({ lane, registryLane, latch });
+  }
   return scheduled === RELAY_RETRY_STATES.EXHAUSTED
     ? "EXHAUSTED"
     : "PENDING";
@@ -1645,6 +1648,7 @@ async function relayWorkResult({
         digest: relay.response_digest,
         reason: `attempts=${latch.attempt_count}`
       });
+      await emitRelayRearmExhaustedIfRelevant({ lane, registryLane, latch });
       return "EXHAUSTED";
     }
     return "PENDING";
@@ -1671,6 +1675,7 @@ async function relayWorkResult({
         digest: relay.response_digest,
         reason: `attempts=${latch.attempt_count}`
       });
+      await emitRelayRearmExhaustedIfRelevant({ lane, registryLane, latch });
       return "EXHAUSTED";
     }
     return "PENDING";
@@ -1870,7 +1875,25 @@ async function emitRelayRearmLifecycleEvent({
   });
 }
 
+async function emitRelayRearmExhaustedIfRelevant({
+  lane,
+  registryLane,
+  latch
+}) {
+  if (!Number(latch?.owner_rearm_revision || 0)) return false;
+  await emitRelayRearmLifecycleEvent({
+    lane,
+    registryLane,
+    latch,
+    eventType: LANE_EVENT_TYPES.RELAY_REARM_EXHAUSTED,
+    reasonCode: "OWNER_RELAY_REARM_EXHAUSTED",
+    phase: "ERROR"
+  });
+  return true;
+}
+
 async function applyOwnerRelayRetryRearm({
+  adapter,
   lane,
   brainPage = null,
   registryLane,
@@ -1908,11 +1931,7 @@ async function applyOwnerRelayRetryRearm({
     throw new Error("Exact Brain page is required before applying relay rearm");
   }
 
-  await assertConversationSafe(null, brainPage, { brain: true }).catch(() => {
-    // The exact Brain page has already been probed by ensureBrainPage.
-    // This branch intentionally does not mutate relay retry state.
-    throw new Error("Owner/security boundary detected");
-  });
+  await assertConversationSafe(adapter, brainPage, { brain: true });
 
   if (await hasRelayMarker(brainPage, latch.relay_id)) {
     registryLane.applied_relay_retry_rearm_revision = revision;
@@ -2522,6 +2541,7 @@ async function processLaneTurn({
       await ensureBrainPage();
     }
     const rearmOutcome = await applyOwnerRelayRetryRearm({
+      adapter,
       lane,
       brainPage,
       registryLane,
