@@ -609,6 +609,18 @@ async function finalizeConfirmedDispatch({
   });
 
   if (foundUrl) registryLane.work_url = foundUrl;
+  let rolloverConfirmed = false;
+  const rollover = normalizeWorkRollover(registryLane.work_rollover);
+  if (
+    rollover?.stage === WORK_ROLLOVER_STAGES.DISPATCH_LATCH_PERSISTED &&
+    rollover.dispatch_id === latch.dispatch_id
+  ) {
+    registryLane.work_rollover = markRolloverDispatchConfirmed(rollover, {
+      dispatchId: latch.dispatch_id,
+      at: startedAt
+    });
+    rolloverConfirmed = true;
+  }
   registryLane.task_id = latch.task_id;
   registryLane.instruction_digest =
     latch.directive_instruction_digest || latch.instruction_digest;
@@ -642,6 +654,20 @@ async function finalizeConfirmedDispatch({
       actor: "WORK",
       event_type: LANE_EVENT_TYPES.WORK_STARTED,
       phase: "STARTED"
+    });
+  }
+
+  if (rolloverConfirmed) {
+    await emitLaneEvent({
+      timestamp: startedAt,
+      lane_id: registryLane.lane_id,
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.WORK_ROLLOVER_DISPATCH_CONFIRMED,
+      task_id: latch.task_id,
+      phase: "ROLLOVER",
+      reason_code: "ROLLOVER_DISPATCH_CONFIRMED",
+      work_generation: Number(registryLane.work_generation || 0),
+      dispatch_id: latch.dispatch_id
     });
   }
 }
@@ -911,9 +937,16 @@ async function findWorkConversationForLatch(adapter, latch) {
     if (!matched) continue;
     try {
       const target = targetFromUrl(page.url());
+      const candidateUrl = `${target.origin}${target.pathname}`;
+      if (
+        latch.work_target_digest &&
+        sha256(candidateUrl) !== latch.work_target_digest
+      ) {
+        continue;
+      }
       candidates.push({
         page,
-        url: `${target.origin}${target.pathname}`
+        url: candidateUrl
       });
     } catch {
       // Ignore non-conversation pages.
