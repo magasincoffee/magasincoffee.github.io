@@ -3091,7 +3091,9 @@ try {
         registryPath,
         evidenceDir,
         logPath,
-        scheduler
+        scheduler,
+        stopPath,
+        configPath
       });
       cdpRecoveryFailures = 0;
     } catch (error) {
