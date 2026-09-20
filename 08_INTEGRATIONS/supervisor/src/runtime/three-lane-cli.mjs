@@ -230,6 +230,18 @@ async function openExactConversation(adapter, url, {
   return page;
 }
 
+async function runBrowserMutation(
+  scheduler,
+  { laneId = null, role = "UNKNOWN", page = null, reason = "UI_MUTATION" } = {},
+  operation
+) {
+  if (!scheduler) return operation();
+  return scheduler.withMutationLease(
+    { laneId, role, page, reason },
+    operation
+  );
+}
+
 async function waitForConversationUrl(page) {
   await page.waitForURL(
     (value) => isPersistableConversationUrl(String(value)),
