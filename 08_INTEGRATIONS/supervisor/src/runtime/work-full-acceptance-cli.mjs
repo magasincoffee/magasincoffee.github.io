@@ -103,13 +103,13 @@ assert.equal(crashBeforeTarget.new_work_generation, 0);
 
 rollover = markRolloverTargetPersisted(rollover, {
   newWorkGeneration: 12,
-  newWorkTargetDigest,
+  newWorkTargetDigest: newTargetDigest,
   at
 });
 assert.equal(rollover.new_work_generation, 12);
 assert.throws(() => markRolloverTargetPersisted(rollover, {
   newWorkGeneration: 12,
-  newWorkTargetDigest,
+  newWorkTargetDigest: newTargetDigest,
   at
 }));
 
@@ -153,7 +153,7 @@ const pendingLane = {
     directiveDigest,
     oldWorkGeneration: 11,
     oldWorkUrlRevision: 4,
-    oldTargetDigest,
+    oldWorkTargetDigest: oldTargetDigest,
     capacityEvidenceCodes: ["LEGACY_FULL_TEXT", "COMPOSER_CAPACITY_BLOCKED"],
     at
   })
