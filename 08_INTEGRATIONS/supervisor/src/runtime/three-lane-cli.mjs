@@ -1948,7 +1948,7 @@ async function applyPendingWorkTargetAtSafeBoundary({
   return outcome;
 }
 
-async function processLane({
+async function processLaneTurn({
   adapter,
   lane,
   registryLane,
@@ -1956,19 +1956,27 @@ async function processLane({
   registry,
   registryPath,
   evidenceDir,
-  logPath
+  logPath,
+  scheduler = null
 }) {
   if (!lane.enabled) {
     return laneStatus(lane, registryLane, "STOPPED", "Luồng đang dừng.");
   }
 
-  await applyOwnerBrainTarget({
+  if (await applyOwnerBrainTarget({
     lane,
     registryLane,
     registry,
     registryPath,
     logPath
-  });
+  })) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAITING_BRAIN",
+      "Đã áp dụng Brain target mới; turn kế tiếp sẽ mở exact target."
+    );
+  }
 
   let brainUrl = null;
   try {
@@ -1985,34 +1993,78 @@ async function processLane({
     );
   }
 
-  await applyOwnerWorkStateReset({
+  if (await applyOwnerWorkStateReset({
+    lane,
+    registryLane,
+    registry,
+    registryPath,
+    logPath
+  })) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "READY",
+      "Đã áp dụng Owner-authorized Work state reset."
+    );
+  }
+
+  if (await applyOwnerWorkTarget({
+    lane,
+    registryLane,
+    registry,
+    registryPath,
+    logPath
+  })) {
+    return laneStatus(
+      lane,
+      registryLane,
+      registryLane.pending_work_url_revision ? "WORKING" : "READY",
+      registryLane.pending_work_url_revision
+        ? "Đã lưu Work target mới; task hiện tại tiếp tục exact Work cũ đến safe boundary."
+        : "Đã áp dụng Work target mới."
+    );
+  }
+
+  const pendingBefore = Number(registryLane.pending_work_url_revision || 0);
+  const pendingOutcome = await applyPendingWorkTargetAtSafeBoundary({
     lane,
     registryLane,
     registry,
     registryPath,
     logPath
   });
+  if (
+    pendingBefore > 0 &&
+    (pendingOutcome.status === "APPLIED" || pendingOutcome.status === "NOOP")
+  ) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "READY",
+      pendingOutcome.status === "APPLIED"
+        ? "Pending Work target đã áp dụng đúng safe boundary."
+        : "Pending Work target stale đã được normalize an toàn."
+    );
+  }
 
-  await applyOwnerWorkTarget({
-    lane,
-    registryLane,
-    registry,
-    registryPath,
-    logPath
-  });
-
-  await applyPendingWorkTargetAtSafeBoundary({
-    lane,
-    registryLane,
-    registry,
-    registryPath,
-    logPath
-  });
-
-  const brainPage = await openExactConversation(adapter, brainUrl, { brain: true });
-  const brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
+  let brainPage = null;
+  let brainProbe = null;
+  const ensureBrainPage = async () => {
+    if (!brainPage) {
+      brainPage = await openExactConversation(adapter, brainUrl, {
+        brain: true,
+        scheduler,
+        laneId: lane.lane_id,
+        targetRevision: Number(registryLane.applied_brain_url_revision || 0),
+        generation: 0
+      });
+      brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
+    }
+    return brainPage;
+  };
 
   if (registryLane.relay_inflight) {
+    await ensureBrainPage();
     const relayOutcome = await reconcileRelayInflight({
       adapter,
       lane,
@@ -2035,11 +2087,27 @@ async function processLane({
         lane,
         registryLane,
         "RECOVERING",
-        "Đang chờ xác minh/backoff lần gửi kết quả trước; Robot không tải lại hoặc gửi lặp liên tục."
+        "Đang chờ xác minh/backoff lần gửi kết quả trước; lane đã yield scheduler."
       );
     }
+    if (relayOutcome === "RETRY_READY") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "RELAYING_RESULT",
+        "Relay retry đã đủ điều kiện; mutation sẽ chạy ở bounded turn kế tiếp."
+      );
+    }
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAITING_BRAIN",
+      "Relay marker đã reconcile; lane yield trước bước tiếp theo."
+    );
   }
+
   if (registryLane.dispatch_inflight) {
+    await ensureBrainPage();
     const dispatchOutcome = await reconcileDispatchInflight({
       adapter,
       lane,
@@ -2047,14 +2115,15 @@ async function processLane({
       registry,
       registryPath,
       logPath,
-      brainPage
+      brainPage,
+      scheduler
     });
     if (dispatchOutcome === "PENDING") {
       return laneStatus(
         lane,
         registryLane,
         "RECOVERING",
-        "Đang tự xác minh lần gửi Work trước; chỉ quan sát, không tải lại trang lặp lại."
+        "Đang tự xác minh lần gửi Work trước; chỉ quan sát exact target rồi yield."
       );
     }
     if (dispatchOutcome === "BLOCKED") {
@@ -2065,21 +2134,34 @@ async function processLane({
         "Work chat có thay đổi ngoài dự kiến; Robot đã dừng tự gửi lại để tránh trùng."
       );
     }
+    if (dispatchOutcome === "CONFIRMED") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WORKING",
+        "Dispatch marker đã xác nhận; Work chạy độc lập, lane đã yield scheduler."
+      );
+    }
+    return laneStatus(
+      lane,
+      registryLane,
+      "STARTING",
+      "Lần gửi trước được chứng minh chưa persist; retry chỉ được xét ở turn kế tiếp."
+    );
   }
-
-  await applyPendingWorkTargetAtSafeBoundary({
-    lane,
-    registryLane,
-    registry,
-    registryPath,
-    logPath
-  });
 
   if (registryLane.awaiting_work) {
     if (!registryLane.work_url) {
       throw new Error("Work URL is missing while a result is pending");
     }
-    const workPage = await openExactConversation(adapter, registryLane.work_url, { brain: false });
+
+    const workPage = await openExactConversation(adapter, registryLane.work_url, {
+      brain: false,
+      scheduler,
+      laneId: lane.lane_id,
+      targetRevision: Number(registryLane.applied_work_url_revision || 0),
+      generation: Number(registryLane.work_generation || 0)
+    });
     const workProbe = await assertConversationSafe(adapter, workPage, {
       brain: false,
       allowFull: true
@@ -2126,7 +2208,7 @@ async function processLane({
         lane,
         registryLane,
         "WORKING",
-        `Đang thực hiện ${registryLane.task_id || "công việc hiện tại"}.`
+        `Đang thực hiện ${registryLane.task_id || "công việc hiện tại"}; observation xong và lane đã yield.`
       );
     }
 
@@ -2146,88 +2228,90 @@ async function processLane({
     ) {
       registryLane.awaiting_work = false;
       await atomicJsonWrite(registryPath, registry);
-    } else {
-      const completedAt = new Date().toISOString();
-      const completionTiming = ensureLaneTaskTiming(
-        registryLane,
-        registryLane.task_id
-      );
-      const completed = markTaskCompleted(completionTiming, {
-        taskId: registryLane.task_id,
-        at: completedAt
-      });
-      if (completed.changed) {
-        await atomicJsonWrite(registryPath, registry);
-        await emitLaneEvent({
-          timestamp: completedAt,
-          lane_id: lane.lane_id,
-          actor: "WORK",
-          event_type: LANE_EVENT_TYPES.WORK_COMPLETED,
-          task_id: registryLane.task_id,
-          phase: "COMPLETED",
-          work_generation: Number(registryLane.work_generation || 0),
-          ...timingEventFields(completionTiming, completedAt)
-        });
-      }
-
-      const relayOutcome = await relayWorkResult({
-        adapter,
+      return laneStatus(
         lane,
-        brainPage,
-        workPage,
         registryLane,
-        captured,
-        execute,
-        registry,
-        registryPath,
-        evidenceDir,
-        logPath
+        "WAITING_BRAIN",
+        "Result đã được relay trước đó; exact-once state đã reconcile."
+      );
+    }
+
+    const completedAt = new Date().toISOString();
+    const completionTiming = ensureLaneTaskTiming(
+      registryLane,
+      registryLane.task_id
+    );
+    const completed = markTaskCompleted(completionTiming, {
+      taskId: registryLane.task_id,
+      at: completedAt
+    });
+    if (completed.changed) {
+      await atomicJsonWrite(registryPath, registry);
+      await emitLaneEvent({
+        timestamp: completedAt,
+        lane_id: lane.lane_id,
+        actor: "WORK",
+        event_type: LANE_EVENT_TYPES.WORK_COMPLETED,
+        task_id: registryLane.task_id,
+        phase: "COMPLETED",
+        work_generation: Number(registryLane.work_generation || 0),
+        ...timingEventFields(completionTiming, completedAt)
       });
-      if (registryLane.awaiting_work) {
-        if (relayOutcome === "EXHAUSTED") {
-          return laneStatus(
-            lane,
-            registryLane,
-            "WAIT_OWNER",
-            "Robot đã thử gửi kết quả 3 lần nhưng ô nhập Bộ não vẫn không sẵn sàng. Đã dừng retry để tránh vòng lặp; không có gửi trùng."
-          );
-        }
-        if (relayOutcome === "PENDING") {
-          return laneStatus(
-            lane,
-            registryLane,
-            "RECOVERING",
-            "Kết quả Work đã sẵn sàng; Robot đang backoff/xác minh lần gửi trước."
-          );
-        }
+      return laneStatus(
+        lane,
+        registryLane,
+        "RELAYING_RESULT",
+        "Đã capture completed result; relay mutation được tách sang bounded turn kế tiếp."
+      );
+    }
+
+    await ensureBrainPage();
+    const relayOutcome = await relayWorkResult({
+      adapter,
+      lane,
+      brainPage,
+      workPage,
+      registryLane,
+      captured,
+      execute,
+      registry,
+      registryPath,
+      evidenceDir,
+      logPath,
+      scheduler
+    });
+
+    if (registryLane.awaiting_work) {
+      if (relayOutcome === "EXHAUSTED") {
         return laneStatus(
           lane,
           registryLane,
-          "RELAYING_RESULT",
-          "Đã nhận kết quả Work; đang gửi ảnh và toàn bộ nội dung về Bộ não."
+          "WAIT_OWNER",
+          "Robot đã thử gửi kết quả 3 lần nhưng ô nhập Bộ não vẫn không sẵn sàng. Đã dừng retry để tránh vòng lặp; không có gửi trùng."
         );
       }
+      return laneStatus(
+        lane,
+        registryLane,
+        relayOutcome === "PENDING" ? "RECOVERING" : "RELAYING_RESULT",
+        relayOutcome === "PENDING"
+          ? "Kết quả Work đã sẵn sàng; Robot đang backoff/xác minh lần gửi trước."
+          : "Đã thực hiện một relay attempt; lane yield scheduler."
+      );
     }
-
-    await applyPendingWorkTargetAtSafeBoundary({
-      lane,
-      registryLane,
-      registry,
-      registryPath,
-      logPath
-    });
 
     return laneStatus(
       lane,
       registryLane,
       "WAITING_BRAIN",
-      "Đã gửi kết quả về Bộ não; đang chờ lệnh tiếp theo."
+      "Đã gửi kết quả về Bộ não; pending Work target sẽ được xét ở turn kế tiếp."
     );
   }
 
-  let directive = null;
+  await ensureBrainPage();
+
   if (!registryLane.brain_request_sent) {
-    directive = await ensureBrainRequest({
+    const directive = await ensureBrainRequest({
       adapter,
       page: brainPage,
       lane,
@@ -2235,19 +2319,20 @@ async function processLane({
       execute,
       registry,
       registryPath,
-      logPath
+      logPath,
+      scheduler
     });
-    if (!directive) {
-      return laneStatus(
-        lane,
-        registryLane,
-        "WAITING_BRAIN",
-        "Đang chờ Bộ não giao công việc đầu tiên."
-      );
-    }
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAITING_BRAIN",
+      directive
+        ? "Đã nhận Brain directive; dispatch được tách sang bounded turn kế tiếp."
+        : "Đang chờ Bộ não giao công việc đầu tiên."
+    );
   }
 
-  if (!directive && brainProbe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
+  if (brainProbe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
     return laneStatus(
       lane,
       registryLane,
@@ -2256,27 +2341,26 @@ async function processLane({
     );
   }
 
-  if (!directive) {
-    const captured = await captureCompletedAssistantTurn(brainPage);
-    if (!captured) {
-      return laneStatus(
-        lane,
-        registryLane,
-        "WAITING_BRAIN",
-        "Đang chờ Bộ não trả lệnh."
-      );
-    }
+  const captured = await captureCompletedAssistantTurn(brainPage);
+  if (!captured) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAITING_BRAIN",
+      "Đang chờ Bộ não trả lệnh."
+    );
+  }
 
-    try {
-      directive = parseLaneDirective(captured.text);
-    } catch {
-      return laneStatus(
-        lane,
-        registryLane,
-        "WAITING_BRAIN",
-        "Bộ não chưa trả block MAGASIN_LANE_DIRECTIVE_V1 hợp lệ."
-      );
-    }
+  let directive = null;
+  try {
+    directive = parseLaneDirective(captured.text);
+  } catch {
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAITING_BRAIN",
+      "Bộ não chưa trả block MAGASIN_LANE_DIRECTIVE_V1 hợp lệ."
+    );
   }
 
   if (directive.digest === registryLane.last_brain_directive_digest) {
@@ -2311,7 +2395,8 @@ async function processLane({
     execute,
     registry,
     registryPath,
-    logPath
+    logPath,
+    scheduler
   });
 
   return laneStatus(
@@ -2319,9 +2404,18 @@ async function processLane({
     registryLane,
     registryLane.awaiting_work ? "WORKING" : "STARTING",
     registryLane.awaiting_work
-      ? `Đang thực hiện ${registryLane.task_id}.`
-      : "Đang tạo hoặc gửi lệnh cho Work chat."
+      ? `Đang thực hiện ${registryLane.task_id}; mutation lease đã release tại durable boundary.`
+      : "Đã thực hiện một dispatch attempt; lane yield scheduler."
   );
+}
+
+async function processLane(args) {
+  const scheduler = args.scheduler || null;
+  try {
+    return await processLaneTurn(args);
+  } finally {
+    scheduler?.releaseLaneObservations(args.lane?.lane_id);
+  }
 }
 
 const args = parseArgs(process.argv.slice(2));
