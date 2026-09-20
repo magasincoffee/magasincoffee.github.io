@@ -31,13 +31,13 @@ Current state:
 
 ```text
 PFC_3H_V1_RESTART_01 = COMPLETE
-TASK-051 → TASK-066   = DONE
+TASK-051 → TASK-067   = DONE
 WAVE A — CASH TRUTH   = CLOSED
 WAVE B — OPEX TRUTH   = ACTIVE
 
-current_task          = TASK-067
-TASK-067              = READY / AUTO_CONTINUE
-next_task             = TASK-068
+current_task          = TASK-068
+TASK-068              = READY / AUTO_CONTINUE
+next_task             = TASK-069
 status                = READY
 autonomy              = AUTO_CONTINUE
 requires_user         = false
@@ -60,7 +60,7 @@ Current verified balance landscape:
 
 Missing balance sources remain gaps; they do not pause PFC_8H_V2.
 
-TASK-066 OPEX Source Inventory V1 is complete. Wave B now has a source-role/freshness map that separates recognized cost from payment, settlement, allocation and budget context. Operating Cost truth is still incomplete; missing sources remain GAP/NOT_CONNECTED. TASK-067 is now the active canonical task.
+TASK-067 Operating Cost Truth Contract V1 is complete. Wave B now has a source-agnostic contract that reuses Financial Truth, keeps recognized cost separate from payment/settlement/context, requires COMPLETE proven coverage for ACTUAL period aggregates, and blocks unapproved shared-cost branch allocation. Source mapping/full-period OPEX remains incomplete. TASK-068 is now the active canonical task.
 
 ## Financial baseline state
 
@@ -77,7 +77,8 @@ Implemented:
 7. current Procurement AP point-in-time truth;
 8. Partial Financial Baseline V1 composer;
 9. Cash Truth Stack V1: point-balance contract + source mapper + source/account/period coverage + point-gated Cash Bridge source integration;
-10. OPEX Source Inventory V1: recognition/payment/settlement/allocation/budget/not-connected source map.
+10. OPEX Source Inventory V1: recognition/payment/settlement/allocation/budget/not-connected source map;
+11. Operating Cost Truth Contract V1: source-agnostic recognized-cost wrapper reusing Financial Truth.
 
 The system does **not** claim:
 - full P&L;
@@ -123,7 +124,7 @@ These remain mandatory:
 
 ## Current PFC V2 priority
 
-### TASK-067 — Operating Cost Truth Contract
+### TASK-068 — Payroll Cost Mapper
 
 Status:
 
@@ -131,22 +132,24 @@ Status:
 
 Goal:
 
-Define one source-agnostic Operating Cost Financial Truth contract where recognized cost remains distinct from Cash paid, settlement proceeds, allocation context and budget context.
+Map bounded payroll/attendance evidence into the canonical TASK-067 Operating Cost Truth V1 without treating payroll calculation or payment as worked labor recognition.
 
-TASK-066 source inventory is complete:
+TASK-067 is complete:
 
-- payroll/labor = PARTIAL bounded recognition candidate behind actuality/rate/period gates;
-- current rent/utilities/marketing/bank-fee recognition sources remain GAP/NOT_CONNECTED;
-- provider settlement fields can support exact covered fee/promo/tax semantics, but current September provider coverage is incomplete;
-- branch cash/operating ledgers remain payment/reconciliation evidence unless category + business nature + recognition period are proven;
-- Procurement purchases and supplier payments do not become OPEX by implication;
-- shared/company OPEX cannot be allocated to branches without an approved rule;
-- Google Drive remained READ_ONLY;
-- evidence: `02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`.
+- contract: `02_CORE/contracts/operating-cost-truth.v1.json`;
+- helper: `02_CORE/shared/operating-cost-truth-v1.mjs`;
+- targeted tests: 31/31 PASS;
+- PR #204 merge: `6233fc587921ba44a0b61a662b6b316ade8292c2`;
+- exact post-merge Business OS run `35515946855`: Node v20.20.2, full 385/385 / 0 fail;
+- exact-item ACTUAL remains possible with proven item semantics even if wider period coverage is PARTIAL;
+- ACTUAL PERIOD_AGGREGATE requires COMPLETE proven coverage;
+- PAYMENT_SOURCE / gross settlement / payout / budget / allocation context cannot become ACTUAL recognition by implication;
+- shared-company branch allocation requires explicit approved rule;
+- evidence: `02_PROFITABILITY_CASH/TASK_067_OPERATING_COST_TRUTH_CONTRACT_V1_EVIDENCE.md`.
 
-Next queued task after TASK-067:
+Next queued task after TASK-068:
 
-`TASK-068 — Payroll Cost Mapper`
+`TASK-069 — Rent / Utilities / Other OPEX Mapper`
 
 ## Remaining major gaps
 
@@ -268,7 +271,7 @@ Canonical contract: `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md`.
 Owner explicitly released `PFC_8H_V2` on 2026-09-20.
 
 - generation: `PFC_8H_V2_RUN_01`
-- current task: `TASK-067 — Operating Cost Truth Contract`
+- current task: `TASK-068 — Payroll Cost Mapper`
 - state: `READY / AUTO_CONTINUE`
 - Wave A Cash Truth: `CLOSED / CASH TRUTH STACK V1 IMPLEMENTED / LIVE BALANCE EVIDENCE INCOMPLETE`
 - Robot may execute: `true`
