@@ -117,23 +117,32 @@ Runtime v2026-09-20.53 implements TASK-RBT-004 Browser Scheduler + Tab Budget:
 
 One lane enabled continues to work normally. Two or three enabled lanes share the same Chrome/CDP fairly without sharing task/latch state.
 
-Remaining TASK-RBT work is intentionally outside TASK-RBT-004: the 30-minute watchdog / long-running state model, multi-signal Work-full rollover, and timeline/resource UX remain TASK-RBT-005+.
+Remaining TASK-RBT work after the browser scheduler is intentionally separate: multi-signal Work-full rollover and later timeline/resource UX remain TASK-RBT-006+.
 
-## Target long-running / watchdog contract
+## Released long-running Work watchdog
 
-After TASK-RBT-005 implementation:
+Runtime v2026-09-20.54 implements TASK-RBT-005:
 
 - <25m: normal WORKING;
-- 25–30m: WORKING_LONG observation;
-- >=30m with current response/progress/recent activity: continue WORKING_LONG;
-- >=30m plus >=5m inactivity and no response/progress: STALL_CHECK;
-- one exact-target recovery reload per no-progress recovery epoch;
-- marker/latch reconciliation after reload;
-- no resend of confirmed dispatch;
-- no reload loop;
-- if no progress after recovery: POSSIBLY_STALLED + Owner warning while preserving exact-once state.
+- 25–30m: WORKING_LONG observation only;
+- >=30m with current `responseRunning`, changed safe progress, or activity <5m old: continue WORKING_LONG;
+- >=30m plus >=5m inactivity and no running/progress evidence: enter STALL_CHECK first and yield;
+- execution elapsed is measured from trusted `started_at`, never from `assigned_at`;
+- legacy missing timing remains null and cannot authorize a recovery reload;
+- one exact active-target recovery reload maximum per recovery epoch;
+- reload intent is persisted before mutation so crash/restart cannot replay the same reload automatically;
+- watchdog reload acquires the global RBT-004 mutation lease and rechecks Owner STOP/lane enable, task ID, active Work target, applied Work revision and generation;
+- confirmed `dispatch_id` correlation is retained for post-reload marker reconciliation;
+- confirmed dispatch is never resent merely because Work is old/slow;
+- fresh progress may re-arm a later epoch only after >=10m reload cooldown;
+- no progress after the post-reload inactivity window becomes POSSIBLY_STALLED with Owner warning;
+- task ID, awaiting state, dispatch/relay latches, result dedupe and RBT-003 pending Work target are preserved;
+- auth/MFA/CAPTCHA/security boundaries remain fail-closed;
+- long-running and stalled lanes still yield the global scheduler.
 
-The 30-minute threshold is an inactivity watchdog, not a task timeout.
+The 30-minute threshold is an inactivity watchdog, **not** a task timeout. Send-confirmation reconciliation reloads and execution-watchdog reloads are separate budgets and state machines.
+
+TASK-RBT-005 does not implement Work-full detection or rollover. Those remain TASK-RBT-006+.
 
 ## Released Work URL save/hot-swap
 
