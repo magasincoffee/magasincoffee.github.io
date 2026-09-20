@@ -55,7 +55,7 @@ const REASON_CODES = new Set([
 ]);
 const EVENT_TYPE_VALUES = new Set(Object.values(LANE_EVENT_TYPES));
 const LANE_IDS = new Set(["lane-1", "lane-2", "lane-3"]);
-const SAFE_IDENTIFIER_RE = /^[A-Za-z0-9][A-Za-z0-9._\/-]{0,191}$/;
+const SAFE_IDENTIFIER_RE = /^[A-Za-z0-9][A-Za-z0-9._:\\/-]{0,191}$/;
 const HEX_CORRELATION_RE = /^[a-f0-9]{16,128}$/i;
 
 function asIsoOrNull(value) {
