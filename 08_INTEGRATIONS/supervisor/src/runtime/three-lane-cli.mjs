@@ -1645,6 +1645,7 @@ async function dispatchWork({
     }
 
     if (
+      capacity.first.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE ||
       capacity.second.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE
     ) {
       throw new Error("Work conversation is not safely idle for dispatch");
