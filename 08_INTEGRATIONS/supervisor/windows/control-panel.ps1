@@ -630,7 +630,6 @@ for ($i = 0; $i -lt 3; $i++) {
         $id = $this.Tag
         $ui = $laneUi[$id]
         $brainUrl = $ui.Brain.Text.Trim()
-        $workUrl = $ui.Work.Text.Trim()
         if (-not (Test-ChatConversationUrl $brainUrl)) {
             [Windows.Forms.MessageBox]::Show(
                 'Hãy dán đúng link cuộc trò chuyện ChatGPT dùng làm BỘ NÃO cho luồng này.',
@@ -639,18 +638,6 @@ for ($i = 0; $i -lt 3; $i++) {
                 'Warning'
             ) | Out-Null
             return
-        }
-        if ($workUrl -and -not (Test-ChatConversationUrl $workUrl)) {
-            [Windows.Forms.MessageBox]::Show(
-                'LINK WORK không hợp lệ. Dán link cuộc trò chuyện ChatGPT hoặc để trống để Robot tự tạo.',
-                'MAGASIN BUSINESS OS',
-                'OK',
-                'Warning'
-            ) | Out-Null
-            return
-        }
-        if ($workUrl) {
-            Save-WorkTarget $id $workUrl | Out-Null
         }
         # Lane START changes only Owner lane intent: disabled -> enabled.
         # Process recovery is a separate lifecycle concern handled by Refresh-Ui.
