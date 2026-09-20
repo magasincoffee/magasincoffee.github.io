@@ -184,10 +184,10 @@ The Owner-released generation `PFC_8H_V2_RUN_01` is ACTIVE.
 Current authoritative state:
 
 ```text
-TASK-051..TASK-063 = DONE
-current_task        = TASK-064
-TASK-064            = READY / AUTO_CONTINUE
-next_task           = TASK-065
+TASK-051..TASK-064 = DONE
+current_task        = TASK-065
+TASK-065            = READY / AUTO_CONTINUE
+next_task           = TASK-066
 status              = READY
 autonomy            = AUTO_CONTINUE
 requires_user       = false
@@ -255,17 +255,17 @@ The repository is public. Never commit secrets, credentials, tokens, cookies, pr
 
 ## 12. Current task
 
-**TASK-064 — Cash Bridge Source Integration — READY / AUTO_CONTINUE.**
+**TASK-065 — Cash Truth Regression & Evidence — READY / AUTO_CONTINUE.**
 
 Immediate behavior for a new Work session:
 
 1. read the canonical enterprise architecture;
 2. read `PFC_8H_V2_EXECUTION_PLAN.md`;
-3. read `TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`;
-4. read `TASK_062_CASH_BALANCE_SOURCE_MAPPER_V1_EVIDENCE.md`;
-5. read `TASK_063_CASH_SOURCE_COVERAGE_V1_EVIDENCE.md`;
-6. integrate only canonical balance wrappers and canonical MOVEMENT_EVENTS coverage into existing Cash Bridge;
-7. keep OPENING / MOVEMENT_EVENTS / OBSERVED_ENDING coverage separate and preserve all source qualities;
-8. current real profile must remain fail-closed while opening/ending/coverage dependencies are incomplete;
-9. continue automatically to TASK-065 after TASK-064 DoD unless a true Owner/security boundary occurs.
+3. read TASK-060→064 evidence in order;
+4. use TASK-061 balance truth, TASK-062 mapper, TASK-063 coverage and TASK-064 source integration as canonical executable surfaces;
+5. run regression/evidence closure only; do not add new source readers, connectors, balance arithmetic or Cash Bridge formulas unless a verified regression requires a minimal repair;
+6. prove the current bounded September source profile remains fail-closed while known-evidenced movements stay preserved;
+7. prove future fully-proven point + movement inputs still produce the existing Cash Bridge behavior without semantic upgrade;
+8. keep missing observed sources as GAP / NOT_CONNECTED and do not pause the released run;
+9. continue automatically to TASK-066 after TASK-065 DoD unless a true Owner/security boundary occurs.
 
