@@ -28,7 +28,10 @@ test("main loop schedules one enabled lane turn at a time instead of processing 
   assert.match(loop, /const turn = scheduler\.nextEnabledTurn\(config\.lanes\)/);
   assert.match(loop, /const lane = config\.lanes\.find\(\(item\) => item\.lane_id === turn\.lane_id\)/);
   assert.match(loop, /statuses\[lane\.lane_id\] = await processLane\(/);
-  assert.doesNotMatch(loop, /for \(const lane of config\.lanes\) \{[\s\S]*?await processLane\(/);
+  assert.equal((loop.match(/await processLane\(/g) || []).length, 1);
+  const selectedLane = loop.indexOf("const lane = config.lanes.find((item) => item.lane_id === turn.lane_id)");
+  const selectedProcess = loop.indexOf("statuses[lane.lane_id] = await processLane(", selectedLane);
+  assert.ok(selectedLane >= 0 && selectedProcess > selectedLane);
   assert.match(loop, /if \(turn\.round_complete\) \{[\s\S]*?await delay\(args\.pollMs\)/);
 });
 
