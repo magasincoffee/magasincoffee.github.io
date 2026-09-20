@@ -2698,7 +2698,18 @@ async function applyOwnerBrainTarget({
   }
 
   registryLane.applied_brain_url_revision = revision;
+  const brainHealth = adoptCurrentTargetHealth(registryLane, {
+    brain: true
+  });
   await atomicJsonWrite(registryPath, registry);
+  if (brainHealth.cleared) {
+    await emitTargetQuarantineCleared({
+      lane,
+      registryLane,
+      brain: true,
+      identity: brainHealth.identity
+    });
+  }
   return changed;
 }
 
@@ -3006,7 +3017,19 @@ async function applyOwnerWorkTarget({
     registryLane.work_rollover = null;
   }
 
+  const workHealth = outcome.status === "PENDING"
+    ? { cleared: false, identity: null }
+    : adoptCurrentTargetHealth(registryLane, { brain: false });
+
   await atomicJsonWrite(registryPath, registry);
+  if (workHealth.cleared) {
+    await emitTargetQuarantineCleared({
+      lane,
+      registryLane,
+      brain: false,
+      identity: workHealth.identity
+    });
+  }
   await safeLog(logPath, {
     type: "LANE_OWNER_WORK_TARGET_REVISION",
     laneId: lane.lane_id,
@@ -3069,7 +3092,18 @@ async function applyPendingWorkTargetAtSafeBoundary({
   ) {
     registryLane.work_rollover = null;
   }
+  const workHealth = outcome.status === "APPLIED"
+    ? adoptCurrentTargetHealth(registryLane, { brain: false })
+    : { cleared: false, identity: null };
   await atomicJsonWrite(registryPath, registry);
+  if (workHealth.cleared) {
+    await emitTargetQuarantineCleared({
+      lane,
+      registryLane,
+      brain: false,
+      identity: workHealth.identity
+    });
+  }
 
   if (outcome.status === "APPLIED") {
     await safeLog(logPath, {
