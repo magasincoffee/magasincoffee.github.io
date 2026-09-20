@@ -68,8 +68,12 @@ import {
   acceptOwnerWorkTargetRevision,
   applyPendingWorkTargetIfSafe
 } from "./work-target-state.mjs";
+import {
+  BrowserScheduler,
+  DEFAULT_CHATGPT_PAGE_BUDGET
+} from "./browser-scheduler.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.52";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.53";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;
@@ -79,7 +83,9 @@ function parseArgs(argv) {
     cdpUrl: "http://127.0.0.1:9222",
     execute: false,
     pollMs: 4000,
-    workTargetFixture: false
+    workTargetFixture: false,
+    browserSchedulerFixture: false,
+    pageBudget: DEFAULT_CHATGPT_PAGE_BUDGET
   };
   for (let i = 0; i < argv.length; i += 1) {
     const key = argv[i];
@@ -87,6 +93,8 @@ function parseArgs(argv) {
     else if (key === "--execute") result.execute = true;
     else if (key === "--poll-ms") result.pollMs = Number(argv[++i]);
     else if (key === "--work-target-fixture") result.workTargetFixture = true;
+    else if (key === "--browser-scheduler-fixture") result.browserSchedulerFixture = true;
+    else if (key === "--page-budget") result.pageBudget = Number(argv[++i]);
     else throw new Error(`unknown argument: ${key}`);
   }
   return result;
