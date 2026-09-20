@@ -105,3 +105,28 @@ test("TASK-RBT-004 does not add watchdog or multi-signal Work-full implementatio
   const scheduler = await read("../src/runtime/browser-scheduler.mjs");
   assert.doesNotMatch(scheduler, /STALL_CHECK|WORKING_LONG|FULL_CONFIRMED|30[_ -]?minute/i);
 });
+
+
+test("Owner STOP is checked before scheduler selects or mutates any lane", async () => {
+  const runtime = await read("../src/runtime/three-lane-cli.mjs");
+  const loop = functionSlice(runtime, "while (true) {", "} finally {");
+  const stopCheck = loop.indexOf("await fs.access(stopPath)");
+  const turn = loop.indexOf("scheduler.nextEnabledTurn(config.lanes)");
+  assert.ok(stopCheck >= 0);
+  assert.ok(turn > stopCheck);
+  assert.match(loop.slice(stopCheck, turn), /"STOPPED"/);
+});
+
+test("retry and long-running observation paths return before another lane unit can run", async () => {
+  const runtime = await read("../src/runtime/three-lane-cli.mjs");
+  const turn = functionSlice(runtime, "async function processLaneTurn", "async function processLane(args)");
+  const relayPending = turn.indexOf('if (relayOutcome === "PENDING")');
+  const dispatchPending = turn.indexOf('if (dispatchOutcome === "PENDING")');
+  const workIncomplete = turn.indexOf('workProbe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE');
+  assert.ok(relayPending >= 0);
+  assert.ok(dispatchPending > relayPending);
+  assert.ok(workIncomplete > dispatchPending);
+  assert.match(turn.slice(relayPending, dispatchPending), /return laneStatus/);
+  assert.match(turn.slice(dispatchPending, workIncomplete), /return laneStatus/);
+  assert.match(turn.slice(workIncomplete, turn.indexOf("const captured", workIncomplete)), /return laneStatus/);
+});
