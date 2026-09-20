@@ -36,6 +36,13 @@ jobs:
           npm install --ignore-scripts --no-audit --no-fund
           npm test
 
+      - name: Run state maintenance gate regressions
+        shell: pwsh
+        run: |
+          & ".github/scripts/supervisor-state-maintenance-regression.ps1" \
+            -WorkflowPath ".github/workflows/supervisor-state-maintenance.yml" \
+            -HelperPath ".github/scripts/supervisor-integrity-registry.ps1"
+
       - name: Enforce production cleanup invariants
         shell: bash
         run: |
