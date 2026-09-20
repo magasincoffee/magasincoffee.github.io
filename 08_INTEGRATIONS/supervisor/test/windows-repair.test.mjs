@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
-test("repair installs and verifies Three-Lane v45", async () => {
+test("repair derives and verifies the current Three-Lane runtime version", async () => {
   const source = await fs.readFile(
     new URL("../windows/repair-supervisor.ps1", import.meta.url),
     "utf8"
@@ -10,7 +10,10 @@ test("repair installs and verifies Three-Lane v45", async () => {
 
   assert.match(source, /git -C \$repoRoot pull --ff-only origin main/);
   assert.match(source, /Node\.js 20\+/);
-  assert.match(source, /2026-09-19\.51/);
+  assert.match(source, /Get-SupervisorRuntimeVersion/);
+  assert.match(source, /SUPERVISOR_RUNTIME_VERSION\\s\*=\\s\*/);
+  assert.match(source, /\$expectedRuntimeVersion = Get-SupervisorRuntimeVersion -Path \$sourceThreeLane/);
+  assert.doesNotMatch(source, /\$expectedRuntimeVersion = '2026-/);
   assert.match(source, /three-lane-cli\.mjs/);
   assert.match(source, /THREE_LANE_V1/);
   assert.match(source, /Stop-OrphanedSupervisorLoops/);
