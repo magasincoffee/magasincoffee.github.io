@@ -160,6 +160,8 @@ test("runtime reconciles exact relay marker before rearm and preserves evidence 
   const apply = runtime.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.ok(apply.indexOf("hasRelayMarker") < apply.indexOf("rearmRelayRetry"));
+  assert.ok(apply.indexOf("waitForStableSendSurface") < apply.indexOf("rearmRelayRetry"));
+  assert.match(apply, /BRAIN_NOT_READY/);
   assert.match(apply, /finalizeConfirmedRelay/);
   assert.match(apply, /EVIDENCE_MISSING/);
   assert.doesNotMatch(apply, /clearRelayInflight/);
@@ -175,6 +177,9 @@ test("runtime reconciles exact relay marker before rearm and preserves evidence 
   assert.match(evidenceBranch, /FAIL_CLOSED_LATCH_PRESERVED/);
   assert.doesNotMatch(evidenceBranch, /clearRelayInflight/);
   assert.match(runtime, /if \(relayOutcome === "EVIDENCE_MISSING"\)/);
+  assert.match(runtime, /RESULT_IDENTITY_MISMATCH/);
+  assert.match(runtime, /FAIL_CLOSED_RECONSTRUCTED_RESULT_MISMATCH/);
+  assert.match(runtime, /return "EVIDENCE_MISMATCH"/);
 });
 
 test("runtime opens exact persisted Brain through scheduler before exhausted rearm apply", async () => {
