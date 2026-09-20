@@ -2185,6 +2185,19 @@ try {
           errorName: error?.name || "Error",
           reason: String(error?.message || error).slice(0, 240)
         });
+        await emitLaneEvent({
+          lane_id: lane.lane_id,
+          actor: "SUPERVISOR",
+          event_type: transient
+            ? LANE_EVENT_TYPES.RECOVERY
+            : LANE_EVENT_TYPES.ERROR,
+          task_id: registryLane.task_id,
+          phase: transient ? "RECOVERY" : "ERROR",
+          reason_code: transient
+            ? "TRANSIENT_NAVIGATION_ERROR"
+            : "LANE_PROCESSING_ERROR",
+          work_generation: Number(registryLane.work_generation || 0)
+        });
 
         if (transient && !reconnected && cdpRecoveryFailures >= 3) {
           restartRequested = true;
@@ -2193,6 +2206,15 @@ try {
             laneId: lane.lane_id,
             taskId: registryLane.task_id,
             reason: "bounded transient CDP reconnect budget exhausted"
+          });
+          await emitLaneEvent({
+            lane_id: lane.lane_id,
+            actor: "SUPERVISOR",
+            event_type: LANE_EVENT_TYPES.RECOVERY,
+            task_id: registryLane.task_id,
+            phase: "RECOVERY",
+            reason_code: "CDP_RESTART_REQUESTED",
+            work_generation: Number(registryLane.work_generation || 0)
           });
           break;
         }
