@@ -207,16 +207,16 @@ jobs:
 
           $brainBefore = [string](Get-OptionalPropertyValue -InputObject $lane -Name "brain_url" -DefaultValue "")
           $workBefore = [string](Get-OptionalPropertyValue -InputObject $lane -Name "work_url" -DefaultValue "")
-          $currentRevision = [int](Get-OptionalPropertyValue -InputObject $lane -Name "work_url_revision" -DefaultValue 0)
-          if (-not $lane.PSObject.Properties["work_url_revision"]) {
-            $lane | Add-Member -NotePropertyName "work_url_revision" -NotePropertyValue $currentRevision
+          $currentResetRevision = [int](Get-OptionalPropertyValue -InputObject $lane -Name "work_state_reset_revision" -DefaultValue 0)
+          if (-not $lane.PSObject.Properties["work_state_reset_revision"]) {
+            $lane | Add-Member -NotePropertyName "work_state_reset_revision" -NotePropertyValue $currentResetRevision
           }
-          $newRevision = $currentRevision + 1
+          $newResetRevision = $currentResetRevision + 1
 
           & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $stopScript
           if ($LASTEXITCODE -ne 0) { throw "Supervisor stop failed" }
 
-          $lane.work_url_revision = $newRevision
+          $lane.work_state_reset_revision = $newResetRevision
           $tmp = "$configFile.maintenance.tmp"
           $json = $config | ConvertTo-Json -Depth 12
           [System.IO.File]::WriteAllText(
@@ -249,11 +249,11 @@ jobs:
               $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
               $registryLanes = Get-OptionalPropertyValue -InputObject $registry -Name "lanes"
               $registryLane = Get-OptionalPropertyValue -InputObject $registryLanes -Name $laneId
-              $appliedRevision = [int](Get-OptionalPropertyValue -InputObject $registryLane -Name "applied_work_url_revision" -DefaultValue 0)
+              $appliedResetRevision = [int](Get-OptionalPropertyValue -InputObject $registryLane -Name "applied_work_state_reset_revision" -DefaultValue 0)
               $statusVersion = [string](Get-OptionalPropertyValue -InputObject $status -Name "supervisor_runtime_version" -DefaultValue "")
               if (
                 $null -ne $registryLane -and
-                $appliedRevision -ge $newRevision -and
+                $appliedResetRevision -ge $newResetRevision -and
                 $statusVersion -eq $expectedVersion
               ) {
                 $applied = $true
@@ -262,7 +262,7 @@ jobs:
             }
           }
           if (-not $applied) {
-            throw "Runtime did not apply the new Owner Work revision"
+            throw "Runtime did not apply the new Owner Work state reset revision"
           }
 
           $relayInflight = Get-OptionalPropertyValue -InputObject $registryLane -Name "relay_inflight"
@@ -279,7 +279,7 @@ jobs:
 
           Write-Host "MAINTENANCE_OPERATION=RESET_WORK_STATE"
           Write-Host "TARGET_URLS_UNCHANGED=True"
-          Write-Host "WORK_REVISION_APPLIED=True"
+          Write-Host "WORK_STATE_RESET_REVISION_APPLIED=True"
           Write-Host "SUPERVISOR_RUNTIME_VERSION_MATCH=True"
           Write-Host "RELAY_RECONCILE_BLOCKED=False"
           Write-Host "DISPATCH_RECONCILE_BLOCKED=False"
