@@ -104,6 +104,7 @@ import {
   TARGET_AVAILABILITY,
   TARGET_HEALTH_REASONS,
   adoptTargetHealthIdentity,
+  defaultTargetHealth,
   evaluateTargetAvailability,
   isTargetQuarantined,
   markTargetHealthy,
@@ -2551,6 +2552,86 @@ async function relayWorkResult({
     digest: relay.response_digest
   });
   return "CONFIRMED";
+}
+
+function currentTargetHealthIdentity(registryLane, { brain = false } = {}) {
+  const raw = String(brain ? registryLane.brain_url : registryLane.work_url || "").trim();
+  if (!raw) return null;
+  let normalized = null;
+  try {
+    normalized = normalizeChatGptConversationUrl(raw);
+  } catch {
+    return null;
+  }
+  return exactTargetHealthIdentity({
+    brain,
+    normalizedUrl: normalized,
+    targetRevision: Number(
+      brain
+        ? registryLane.applied_brain_url_revision
+        : registryLane.applied_work_url_revision
+      || 0
+    ),
+    generation: brain ? 0 : Number(registryLane.work_generation || 0)
+  });
+}
+
+function currentTargetIsQuarantined(registryLane, { brain = false } = {}) {
+  const identity = currentTargetHealthIdentity(registryLane, { brain });
+  if (!identity) return false;
+  return isTargetQuarantined(
+    registryLane[targetHealthField(brain)],
+    identity
+  );
+}
+
+function adoptCurrentTargetHealth(
+  registryLane,
+  {
+    brain = false,
+    at = new Date().toISOString()
+  } = {}
+) {
+  const field = targetHealthField(brain);
+  const identity = currentTargetHealthIdentity(registryLane, { brain });
+  if (!identity) {
+    const wasQuarantined = registryLane[field]?.state === "QUARANTINED";
+    registryLane[field] = defaultTargetHealth();
+    return { cleared: wasQuarantined, identity: null };
+  }
+
+  const before = registryLane[field];
+  const wasQuarantined = before?.state === "QUARANTINED";
+  const changedCanonical = Boolean(
+    before?.target_digest &&
+    before.target_digest !== identity.target_digest
+  );
+  registryLane[field] = adoptTargetHealthIdentity(before, identity, { at });
+  return {
+    cleared: Boolean(wasQuarantined && changedCanonical),
+    identity
+  };
+}
+
+async function emitTargetQuarantineCleared({
+  lane,
+  registryLane,
+  brain,
+  identity
+}) {
+  if (!identity) return;
+  await emitLaneEvent({
+    lane_id: lane.lane_id,
+    actor: "SUPERVISOR",
+    event_type: LANE_EVENT_TYPES.TARGET_QUARANTINE_CLEARED,
+    task_id: registryLane.task_id || undefined,
+    phase: "APPLIED",
+    reason_code: "TARGET_NEW_CANONICAL_IDENTITY",
+    work_generation: Number(registryLane.work_generation || 0),
+    target_role: identity.role,
+    target_digest: identity.target_digest,
+    target_revision: identity.target_revision
+  });
 }
 
 async function applyOwnerBrainTarget({
