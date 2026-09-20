@@ -37,12 +37,24 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Lifecycle acceptance install failed" }
           $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
           $runtimeThreeLane = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
+          $sourceThreeLane = Join-Path $env:GITHUB_WORKSPACE "08_INTEGRATIONS\supervisor\src\runtime\three-lane-cli.mjs"
           $lifecycle = Join-Path $root "runtime\windows\lifecycle-truth.ps1"
-          if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.51" -Quiet)) {
-            throw "Lifecycle acceptance did not install v2026-09-19.51"
+
+          function Get-SupervisorRuntimeVersion([string]$Path) {
+            if (-not (Test-Path $Path)) { throw "Supervisor runtime source is missing" }
+            $source = Get-Content $Path -Raw -Encoding UTF8
+            $match = [regex]::Match($source, 'SUPERVISOR_RUNTIME_VERSION\s*=\s*"([^"]+)"')
+            if (-not $match.Success) { throw "Supervisor runtime version marker is missing" }
+            return [string]$match.Groups[1].Value
+          }
+
+          $expectedVersion = Get-SupervisorRuntimeVersion -Path $sourceThreeLane
+          $installedVersion = Get-SupervisorRuntimeVersion -Path $runtimeThreeLane
+          if ($installedVersion -ne $expectedVersion) {
+            throw "Lifecycle acceptance installed runtime does not match checked-out source"
           }
           if (-not (Test-Path $lifecycle)) { throw "Installed lifecycle truth helper is missing after install" }
+          Write-Host "LIFECYCLE_ACCEPTANCE_RUNTIME_VERSION_MATCH=True"
           Write-Host "LIFECYCLE_ACCEPTANCE_INSTALL_READY=True"
 
       - name: Run lifecycle acceptance A-L on installed production runtime
@@ -143,17 +155,33 @@ jobs:
           . $lifecycle
           . $integrityHelper
 
-          # Wait for the v51 install workflow when both workflows were triggered by the same merge.
-          $v51 = $false
+          function Get-SupervisorRuntimeVersion([string]$Path) {
+            if (-not (Test-Path $Path)) { return $null }
+            $source = Get-Content $Path -Raw -Encoding UTF8
+            $match = [regex]::Match($source, 'SUPERVISOR_RUNTIME_VERSION\s*=\s*"([^"]+)"')
+            if (-not $match.Success) { return $null }
+            return [string]$match.Groups[1].Value
+          }
+
+          # Wait for the exact checked-out release when install and lifecycle
+          # workflows are triggered concurrently by the same merge.
+          $sourceThreeLane = Join-Path $env:GITHUB_WORKSPACE "08_INTEGRATIONS\supervisor\src\runtime\three-lane-cli.mjs"
+          $expectedVersion = Get-SupervisorRuntimeVersion -Path $sourceThreeLane
+          if (-not $expectedVersion) { throw "Checked-out runtime version marker is missing" }
+          $runtimeReady = $false
           for ($i = 0; $i -lt 180; $i++) {
             $runtimeThreeLane = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
-            if ((Test-Path $runtimeThreeLane) -and (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.51" -Quiet)) {
-              $v51 = $true
+            $installedVersion = Get-SupervisorRuntimeVersion -Path $runtimeThreeLane
+            if ($installedVersion -eq $expectedVersion) {
+              $runtimeReady = $true
               break
             }
             Start-Sleep -Seconds 1
           }
-          if (-not $v51) { throw "Installed runtime did not reach v2026-09-19.51" }
+          if (-not $runtimeReady) {
+            throw "Installed runtime did not reach the checked-out Supervisor version"
+          }
+          Write-Host "LIFECYCLE_ACCEPTANCE_RUNTIME_VERSION_MATCH=True"
 
           $initialOwnerStop = Get-LifecycleOwnerStopState -Root $root
           if ($initialOwnerStop.blocked) {
