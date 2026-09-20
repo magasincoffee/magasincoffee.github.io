@@ -2423,8 +2423,15 @@ if (args.workTargetFixture) {
   await import("./work-target-acceptance-cli.mjs");
   process.exit(0);
 }
+if (args.browserSchedulerFixture) {
+  await import("./browser-scheduler-acceptance-cli.mjs");
+  process.exit(0);
+}
 if (!Number.isFinite(args.pollMs) || args.pollMs < 1000) {
   throw new TypeError("poll-ms must be at least 1000");
+}
+if (!Number.isInteger(args.pageBudget) || args.pageBudget < 1) {
+  throw new TypeError("page-budget must be a positive integer");
 }
 
 const root = localRoot();
@@ -2463,12 +2470,13 @@ await cleanupOrphanRelayEvidence({
 const statuses = {};
 let evidenceCleanupTicks = 0;
 let adapter = null;
+let scheduler = null;
 let cdpRecoveryFailures = 0;
 let restartRequested = false;
 
 await safeLog(logPath, {
   type: "RUNTIME_BOOT",
-  reason: `version=${SUPERVISOR_RUNTIME_VERSION};mode=${THREE_LANE_MODE}`
+  reason: `version=${SUPERVISOR_RUNTIME_VERSION};mode=${THREE_LANE_MODE};page_budget=${args.pageBudget}`
 });
 await emitLaneEvent({
   actor: "SUPERVISOR",
@@ -2480,6 +2488,12 @@ await emitLaneEvent({
 try {
   adapter = new ChatGptUiAdapter({ cdpUrl: args.cdpUrl });
   await adapter.open();
+  scheduler = new BrowserScheduler({
+    adapter,
+    pageBudget: args.pageBudget,
+    laneOrder: LANE_IDS
+  });
+  await scheduler.reconstructFromBrowser();
 
   while (true) {
     try {
@@ -2492,7 +2506,7 @@ try {
           "Supervisor đã dừng."
         );
       }
-      await writeLaneStatus(statusPath, statuses);
+      await writeLaneStatus(statusPath, statuses, scheduler);
       break;
     } catch {}
 
@@ -2502,6 +2516,18 @@ try {
     registry = normalizeLaneRegistry(
       await readJson(registryPath, defaultLaneRegistry())
     );
+
+    for (const lane of config.lanes) {
+      if (!lane.enabled) {
+        statuses[lane.lane_id] = laneStatus(
+          lane,
+          registry.lanes[lane.lane_id],
+          "STOPPED",
+          "Luồng đang dừng."
+        );
+      }
+    }
+
     const loopRelayMigrations = migrateLegacyBlockedRelayLatches(registry);
     if (loopRelayMigrations > 0) {
       await atomicJsonWrite(registryPath, registry);
@@ -2521,91 +2547,107 @@ try {
       evidenceCleanupTicks = 0;
     }
 
-    for (const lane of config.lanes) {
-      const registryLane = registry.lanes[lane.lane_id];
-      try {
-        statuses[lane.lane_id] = await processLane({
-          adapter,
-          lane,
-          registryLane,
-          execute: args.execute,
-          registry,
-          registryPath,
-          evidenceDir,
-          logPath
-        });
-        if (lane.enabled) cdpRecoveryFailures = 0;
-      } catch (error) {
-        const transient = isTransientNavigationError(error);
-        let reconnected = false;
-        if (transient) {
-          reconnected = await adapter.reconnectOverCdp()
-            .then(() => true)
-            .catch(() => false);
-          if (reconnected) {
-            cdpRecoveryFailures = 0;
-          } else {
-            cdpRecoveryFailures += 1;
-          }
+    const turn = scheduler.nextEnabledTurn(config.lanes);
+    if (!turn.lane_id) {
+      await scheduler.trimToBudget();
+      await writeLaneStatus(statusPath, statuses, scheduler);
+      await delay(args.pollMs);
+      continue;
+    }
+
+    const lane = config.lanes.find((item) => item.lane_id === turn.lane_id);
+    const registryLane = registry.lanes[turn.lane_id];
+
+    try {
+      statuses[lane.lane_id] = await processLane({
+        adapter,
+        lane,
+        registryLane,
+        execute: args.execute,
+        registry,
+        registryPath,
+        evidenceDir,
+        logPath,
+        scheduler
+      });
+      cdpRecoveryFailures = 0;
+    } catch (error) {
+      const transient = isTransientNavigationError(error);
+      let reconnected = false;
+      if (transient) {
+        reconnected = await adapter.reconnectOverCdp()
+          .then(async () => {
+            await scheduler.reconstructFromBrowser();
+            return true;
+          })
+          .catch(() => false);
+        if (reconnected) {
+          cdpRecoveryFailures = 0;
+        } else {
+          cdpRecoveryFailures += 1;
         }
-        statuses[lane.lane_id] = laneStatus(
-          lane,
-          registryLane,
-          transient ? "RECOVERING" : "WAIT_OWNER",
-          transient
-            ? "Mất kết nối tạm thời; Robot đang tự kết nối lại và sẽ thử tiếp."
-            : String(error?.message || error).slice(0, 220),
-          { error_name: error?.name || "Error" }
-        );
+      }
+      statuses[lane.lane_id] = laneStatus(
+        lane,
+        registryLane,
+        transient ? "RECOVERING" : "WAIT_OWNER",
+        transient
+          ? "Mất kết nối tạm thời; scheduler đã bỏ page leases cũ và sẽ reconstruct từ durable lane truth."
+          : String(error?.message || error).slice(0, 220),
+        { error_name: error?.name || "Error" }
+      );
+      await safeLog(logPath, {
+        type: "LANE_ERROR",
+        laneId: lane.lane_id,
+        taskId: registryLane.task_id,
+        errorName: error?.name || "Error",
+        reason: String(error?.message || error).slice(0, 240)
+      });
+      await emitLaneEvent({
+        lane_id: lane.lane_id,
+        actor: "SUPERVISOR",
+        event_type: transient
+          ? LANE_EVENT_TYPES.RECOVERY
+          : LANE_EVENT_TYPES.ERROR,
+        task_id: registryLane.task_id,
+        phase: transient ? "RECOVERY" : "ERROR",
+        reason_code: transient
+          ? "TRANSIENT_NAVIGATION_ERROR"
+          : "LANE_PROCESSING_ERROR",
+        work_generation: Number(registryLane.work_generation || 0)
+      });
+
+      if (transient && !reconnected && cdpRecoveryFailures >= 3) {
+        restartRequested = true;
         await safeLog(logPath, {
-          type: "LANE_ERROR",
+          type: "RUNTIME_CDP_RESTART_REQUESTED",
           laneId: lane.lane_id,
           taskId: registryLane.task_id,
-          errorName: error?.name || "Error",
-          reason: String(error?.message || error).slice(0, 240)
+          reason: "bounded transient CDP reconnect budget exhausted"
         });
         await emitLaneEvent({
           lane_id: lane.lane_id,
           actor: "SUPERVISOR",
-          event_type: transient
-            ? LANE_EVENT_TYPES.RECOVERY
-            : LANE_EVENT_TYPES.ERROR,
+          event_type: LANE_EVENT_TYPES.RECOVERY,
           task_id: registryLane.task_id,
-          phase: transient ? "RECOVERY" : "ERROR",
-          reason_code: transient
-            ? "TRANSIENT_NAVIGATION_ERROR"
-            : "LANE_PROCESSING_ERROR",
+          phase: "RECOVERY",
+          reason_code: "CDP_RESTART_REQUESTED",
           work_generation: Number(registryLane.work_generation || 0)
         });
-
-        if (transient && !reconnected && cdpRecoveryFailures >= 3) {
-          restartRequested = true;
-          await safeLog(logPath, {
-            type: "RUNTIME_CDP_RESTART_REQUESTED",
-            laneId: lane.lane_id,
-            taskId: registryLane.task_id,
-            reason: "bounded transient CDP reconnect budget exhausted"
-          });
-          await emitLaneEvent({
-            lane_id: lane.lane_id,
-            actor: "SUPERVISOR",
-            event_type: LANE_EVENT_TYPES.RECOVERY,
-            task_id: registryLane.task_id,
-            phase: "RECOVERY",
-            reason_code: "CDP_RESTART_REQUESTED",
-            work_generation: Number(registryLane.work_generation || 0)
-          });
-          break;
-        }
       }
     }
 
-    await writeLaneStatus(statusPath, statuses);
+    await scheduler.trimToBudget();
+    await writeLaneStatus(statusPath, statuses, scheduler);
+
     if (restartRequested) {
       process.exitCode = 75;
       break;
     }
-    await delay(args.pollMs);
+
+    if (turn.round_complete) {
+      await delay(args.pollMs);
+    }
   }
 } finally {
   await adapter?.close().catch(() => {});
