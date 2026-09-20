@@ -33,12 +33,12 @@ function exhaustedLatch() {
   };
 }
 
-test("TASK-RBT-005A relay rearm remains canonical after v56 Work-full rollover bump", async () => {
+test("TASK-RBT-005A relay rearm remains canonical after v57 stale-target quarantine bump", async () => {
   const runtime = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.56"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.57"/);
   assert.match(runtime, /--relay-rearm-fixture/);
   assert.match(runtime, /relay-rearm-acceptance-cli\.mjs/);
 });
