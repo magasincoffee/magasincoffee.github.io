@@ -5,6 +5,7 @@ Status: OWNER APPROVED / ACTIVE PRODUCTION BASELINE + TASK-RBT TARGET EXTENSION
 Original task: TASK-049  
 Lifecycle baseline: runtime v2026-09-19.50  
 Scheduler/observability extension: TASK-RBT-001
+Event/timing implementation: TASK-RBT-002 — runtime v2026-09-19.51
 
 Canonical scheduler/observability design:
 
