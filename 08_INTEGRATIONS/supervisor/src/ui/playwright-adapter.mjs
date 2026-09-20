@@ -171,6 +171,37 @@ export class ChatGptUiAdapter {
       .filter((page) => !page.isClosed() && isChatGptUrl(page.url()));
   }
 
+  getChatGptPageCount() {
+    return this.getChatGptPages().length;
+  }
+
+  async hasNonPersistedComposerArtifact(page) {
+    if (!page || page.isClosed()) return false;
+    return page.evaluate(() => {
+      const editable = document.querySelector(
+        '#prompt-textarea, div[contenteditable="true"][data-lexical-editor="true"], textarea'
+      );
+      const draft = editable
+        ? String(editable.innerText || editable.textContent || editable.value || "").trim()
+        : "";
+      const fileInputs = [...document.querySelectorAll('input[type="file"]')];
+      const hasAttachedFile = fileInputs.some((input) =>
+        input.files && input.files.length > 0
+      );
+      return Boolean(draft || hasAttachedFile);
+    }).catch(() => true);
+  }
+
+  async closePage(page) {
+    if (!page || page.isClosed()) return false;
+    if (this.page === page) this.page = null;
+    await page.close();
+    if (!this.page || this.page.isClosed()) {
+      this.page = this.getActivePage();
+    }
+    return true;
+  }
+
   async getVisibleChatGptPages() {
     const visible = [];
     for (const page of this.getChatGptPages()) {
