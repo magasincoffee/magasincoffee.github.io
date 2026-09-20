@@ -590,6 +590,7 @@ async function finalizeConfirmedDispatch({
     latch.directive_instruction_digest || latch.instruction_digest;
   registryLane.last_brain_directive_digest =
     latch.directive_digest || registryLane.last_brain_directive_digest;
+  registryLane.last_dispatch_id = latch.dispatch_id || registryLane.last_dispatch_id || null;
   registryLane.awaiting_work = true;
   registryLane.dispatch_inflight = null;
   await atomicJsonWrite(registryPath, registry);
@@ -1761,6 +1762,7 @@ async function applyOwnerBrainTarget({
       registryLane.task_id = null;
       registryLane.instruction_digest = null;
       registryLane.task_timing = normalizeTaskTiming(null);
+      registryLane.work_watchdog = normalizeWorkWatchdog(null);
     }
 
     // A relay latch is target-specific. When Owner changes Brain, its evidence
@@ -1819,10 +1821,12 @@ async function applyOwnerWorkStateReset({
   registryLane.last_brain_directive_digest = null;
   registryLane.last_work_result_digest = null;
   registryLane.last_result_relay_id = null;
+  registryLane.last_dispatch_id = null;
   registryLane.dispatch_inflight = null;
   registryLane.brain_request_inflight = null;
   registryLane.awaiting_work = false;
   registryLane.task_timing = normalizeTaskTiming(null);
+  registryLane.work_watchdog = normalizeWorkWatchdog(null);
   registryLane.pending_work_url = "";
   registryLane.pending_work_url_revision = 0;
   registryLane.pending_work_saved_at = null;
