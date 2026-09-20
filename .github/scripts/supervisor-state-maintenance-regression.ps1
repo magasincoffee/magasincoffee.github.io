@@ -77,7 +77,7 @@ foreach ($forbiddenMutation in @(
 Assert-Match $workflow 'supervisor-integrity-registry\.ps1' 'canonical integrity helper must be reused'
 Assert-Match $workflow 'Get-OptionalPropertyValue -InputObject \$relayInflight -Name "reconcile_blocked" -DefaultValue \$false' 'relay optional latch access must be safe'
 Assert-Match $workflow 'Get-OptionalPropertyValue -InputObject \$dispatchInflight -Name "reconcile_blocked" -DefaultValue \$false' 'dispatch optional latch access must be safe'
-Assert-Match $workflow 'Get-OptionalPropertyValue -InputObject \$registryLane -Name "applied_work_url_revision" -DefaultValue 0' 'applied revision must be safe for legacy registry state'
+Assert-Match $workflow 'Get-OptionalPropertyValue -InputObject \$registryLane -Name "applied_work_state_reset_revision" -DefaultValue 0' 'applied reset revision must be safe for legacy registry state'
 Assert-True (-not ($workflow -match 'relay_inflight\.reconcile_blocked')) 'direct relay reconcile_blocked dereference must not exist'
 Assert-True (-not ($workflow -match 'dispatch_inflight\.reconcile_blocked')) 'direct dispatch reconcile_blocked dereference must not exist'
 
