@@ -63,8 +63,13 @@ import {
   observeWorkActivity,
   taskTimingMetrics
 } from "./lane-events.mjs";
+import {
+  WORK_TARGET_MODES,
+  acceptOwnerWorkTargetRevision,
+  applyPendingWorkTargetIfSafe
+} from "./work-target-state.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-19.51";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.52";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;
@@ -230,6 +235,11 @@ function laneStatus(configLane, registryLane, status, message, extra = {}) {
     message,
     brain_url: String(registryLane.brain_url || configLane.brain_url || ""),
     work_url: String(registryLane.work_url || ""),
+    work_mode: String(registryLane.applied_work_mode || lane.work_mode || "AUTO"),
+    work_url_revision: Number(lane.work_url_revision || 0),
+    applied_work_url_revision: Number(registryLane.applied_work_url_revision || 0),
+    pending_work_url_revision: Number(registryLane.pending_work_url_revision || 0),
+    work_url_saved_at: lane.work_url_saved_at || null,
     task_id: registryLane.task_id || null,
     awaiting_work: Boolean(registryLane.awaiting_work),
     updated_at: new Date().toISOString(),
@@ -1644,6 +1654,26 @@ async function applyOwnerBrainTarget({
   return changed;
 }
 
+async function emitWorkTargetTransition({
+  lane,
+  registryLane,
+  eventType,
+  phase,
+  reasonCode,
+  revision
+}) {
+  await emitLaneEvent({
+    lane_id: lane.lane_id,
+    actor: "SUPERVISOR",
+    event_type: eventType,
+    task_id: registryLane.task_id || undefined,
+    phase,
+    reason_code: reasonCode,
+    work_generation: Number(registryLane.work_generation || 0),
+    work_url_revision: Number(revision || 0)
+  });
+}
+
 async function applyOwnerWorkTarget({
   lane,
   registryLane,
@@ -1652,51 +1682,115 @@ async function applyOwnerWorkTarget({
   logPath
 }) {
   const revision = Number(lane.work_url_revision || 0);
-  if (revision <= Number(registryLane.applied_work_url_revision || 0)) {
+  const latestSeenRevision = Math.max(
+    Number(registryLane.applied_work_url_revision || 0),
+    Number(registryLane.pending_work_url_revision || 0)
+  );
+  if (revision <= latestSeenRevision) {
     return false;
   }
 
+  const mode = String(lane.work_mode || "").toUpperCase() === WORK_TARGET_MODES.AUTO
+    ? WORK_TARGET_MODES.AUTO
+    : WORK_TARGET_MODES.OWNER;
   const raw = String(lane.work_url || "").trim();
   let configuredUrl = "";
-  if (raw) {
+
+  if (mode === WORK_TARGET_MODES.OWNER) {
+    if (!raw) {
+      throw new Error("LINK WORK không hợp lệ. LƯU WORK cần một cuộc trò chuyện ChatGPT cụ thể.");
+    }
     try {
       configuredUrl = normalizeChatGptConversationUrl(raw);
     } catch {
-      throw new Error("LINK WORK không hợp lệ. Hãy dán link cuộc trò chuyện ChatGPT hoặc để trống để Robot tự tạo.");
+      throw new Error("LINK WORK không hợp lệ. Hãy dán link cuộc trò chuyện ChatGPT hoặc dùng TỰ TẠO WORK.");
     }
   }
 
-  const changed = configuredUrl !== String(registryLane.work_url || "");
-
-  // A newer Owner Work revision is authoritative even when the normalized URL
-  // is unchanged (for example AUTO -> AUTO). This is the explicit reset
-  // signal used to abandon stale completed task/latch state without changing
-  // the Owner-selected Brain or guessing another Work target.
-  await clearRelayInflight(registryLane);
-
-  registryLane.work_url = configuredUrl;
-  registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
-  registryLane.task_id = null;
-  registryLane.instruction_digest = null;
-  registryLane.last_brain_directive_digest = null;
-  registryLane.last_work_result_digest = null;
-  registryLane.last_result_relay_id = null;
-  registryLane.dispatch_inflight = null;
-  registryLane.brain_request_inflight = null;
-  registryLane.awaiting_work = false;
-  registryLane.task_timing = normalizeTaskTiming(null);
-
-  await safeLog(logPath, {
-    type: changed
-      ? "LANE_OWNER_WORK_TARGET_CHANGED"
-      : "LANE_OWNER_WORK_TARGET_RESET",
-    laneId: lane.lane_id,
-    digest: configuredUrl ? sha256(configuredUrl) : "AUTO"
+  const outcome = acceptOwnerWorkTargetRevision(registryLane, {
+    url: configuredUrl,
+    mode,
+    revision,
+    saved_at: lane.work_url_saved_at || null
   });
 
-  registryLane.applied_work_url_revision = revision;
+  if (outcome.status === "NOOP") return false;
+
   await atomicJsonWrite(registryPath, registry);
+  await safeLog(logPath, {
+    type: "LANE_OWNER_WORK_TARGET_REVISION",
+    laneId: lane.lane_id,
+    taskId: registryLane.task_id,
+    reason: `revision=${revision};state=${outcome.status};mode=${mode}`
+  });
+
+  await emitWorkTargetTransition({
+    lane,
+    registryLane,
+    eventType: LANE_EVENT_TYPES.WORK_TARGET_SAVED,
+    phase: "SAVED",
+    reasonCode: "OWNER_WORK_REVISION",
+    revision
+  });
+
+  if (outcome.status === "PENDING") {
+    await emitWorkTargetTransition({
+      lane,
+      registryLane,
+      eventType: LANE_EVENT_TYPES.WORK_TARGET_PENDING,
+      phase: "PENDING",
+      reasonCode: "ACTIVE_WORK_PRESERVED",
+      revision
+    });
+  } else {
+    await emitWorkTargetTransition({
+      lane,
+      registryLane,
+      eventType: LANE_EVENT_TYPES.WORK_TARGET_APPLIED,
+      phase: "APPLIED",
+      reasonCode: outcome.status === "ACKNOWLEDGED"
+        ? "SAME_TARGET_NO_CHURN"
+        : "OWNER_WORK_REVISION",
+      revision
+    });
+  }
+
   return true;
+}
+
+async function applyPendingWorkTargetAtSafeBoundary({
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  logPath
+}) {
+  const outcome = applyPendingWorkTargetIfSafe(registryLane);
+  if (outcome.status === "NONE" || outcome.status === "PENDING") {
+    return outcome;
+  }
+
+  // NOOP may clear a stale pending revision; persist that normalization.
+  await atomicJsonWrite(registryPath, registry);
+
+  if (outcome.status === "APPLIED") {
+    await safeLog(logPath, {
+      type: "LANE_OWNER_WORK_TARGET_APPLIED",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      reason: `revision=${outcome.revision};mode=${outcome.mode};safe_boundary=true`
+    });
+    await emitWorkTargetTransition({
+      lane,
+      registryLane,
+      eventType: LANE_EVENT_TYPES.WORK_TARGET_APPLIED,
+      phase: "APPLIED",
+      reasonCode: "SAFE_BOUNDARY",
+      revision: outcome.revision
+    });
+  }
+
+  return outcome;
 }
 
 async function processLane({
@@ -1737,6 +1831,14 @@ async function processLane({
   }
 
   await applyOwnerWorkTarget({
+    lane,
+    registryLane,
+    registry,
+    registryPath,
+    logPath
+  });
+
+  await applyPendingWorkTargetAtSafeBoundary({
     lane,
     registryLane,
     registry,
@@ -1801,6 +1903,14 @@ async function processLane({
       );
     }
   }
+
+  await applyPendingWorkTargetAtSafeBoundary({
+    lane,
+    registryLane,
+    registry,
+    registryPath,
+    logPath
+  });
 
   if (registryLane.awaiting_work) {
     if (!registryLane.work_url) {
@@ -1935,6 +2045,14 @@ async function processLane({
         );
       }
     }
+
+    await applyPendingWorkTargetAtSafeBoundary({
+      lane,
+      registryLane,
+      registry,
+      registryPath,
+      logPath
+    });
 
     return laneStatus(
       lane,
