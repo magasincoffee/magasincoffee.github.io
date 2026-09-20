@@ -3069,6 +3069,21 @@ async function processLaneTurn({
     return laneStatus(lane, registryLane, "STOPPED", "Luồng đang dừng.");
   }
 
+  const completedRollover = normalizeWorkRollover(registryLane.work_rollover);
+  if (
+    completedRollover?.stage === WORK_ROLLOVER_STAGES.DISPATCH_CONFIRMED &&
+    !registryLane.dispatch_inflight
+  ) {
+    registryLane.work_rollover = null;
+    await atomicJsonWrite(registryPath, registry);
+    return laneStatus(
+      lane,
+      registryLane,
+      registryLane.awaiting_work ? "WORKING" : "READY",
+      "Work rollover đã qua durable dispatch confirmation boundary; recovery intent được finalize."
+    );
+  }
+
   if (await applyOwnerBrainTarget({
     lane,
     registryLane,
