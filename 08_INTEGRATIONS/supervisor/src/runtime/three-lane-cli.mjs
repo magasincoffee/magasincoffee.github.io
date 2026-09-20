@@ -1291,7 +1291,10 @@ async function reconcileDispatchInflight({
       scheduler,
       laneId: lane.lane_id,
       targetRevision: Number(registryLane.applied_work_url_revision || 0),
-      generation: Number(registryLane.work_generation || 0)
+      generation: Number(registryLane.work_generation || 0),
+      registryLane,
+      registry,
+      registryPath
     }
   );
 
@@ -1805,7 +1808,10 @@ async function dispatchWork({
       scheduler,
       laneId: lane.lane_id,
       targetRevision: Number(registryLane.applied_work_url_revision || 0),
-      generation: Number(registryLane.work_generation || 0)
+      generation: Number(registryLane.work_generation || 0),
+      registryLane,
+      registry,
+      registryPath
     });
     if (!pageMatchesTarget(page.url(), targetBeforeOpen)) {
       throw new Error("Work target changed during capacity probe");
@@ -1867,7 +1873,10 @@ async function dispatchWork({
       scheduler,
       laneId: lane.lane_id,
       targetRevision: Number(registryLane.applied_work_url_revision || 0),
-      generation: Number(registryLane.work_generation || 0)
+      generation: Number(registryLane.work_generation || 0),
+      registryLane,
+      registry,
+      registryPath
     });
     await assertConversationSafe(adapter, page, {
       brain: false,
@@ -3417,7 +3426,10 @@ async function processLaneTurn({
         scheduler,
         laneId: lane.lane_id,
         targetRevision: Number(registryLane.applied_brain_url_revision || 0),
-        generation: 0
+        generation: 0,
+        registryLane,
+        registry,
+        registryPath
       });
       brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
     }
@@ -3574,7 +3586,10 @@ async function processLaneTurn({
       scheduler,
       laneId: lane.lane_id,
       targetRevision: Number(registryLane.applied_work_url_revision || 0),
-      generation: Number(registryLane.work_generation || 0)
+      generation: Number(registryLane.work_generation || 0),
+      registryLane,
+      registry,
+      registryPath
     });
     const workProbe = await assertConversationSafe(adapter, workPage, {
       brain: false,
