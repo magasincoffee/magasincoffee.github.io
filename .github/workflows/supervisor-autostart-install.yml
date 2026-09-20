@@ -230,11 +230,11 @@ jobs:
           $ErrorActionPreference = "Stop"
           $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
           $runtime = Join-Path $root "runtime"
-          $fixture = Join-Path $runtime "src\runtime\work-target-acceptance-cli.mjs"
+          $runtimeCli = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
           $configFile = Join-Path $root "lanes.json"
           $lifecycle = Join-Path $runtime "windows\lifecycle-truth.ps1"
 
-          if (-not (Test-Path $fixture)) { throw "Installed Work target fixture acceptance is missing" }
+          if (-not (Test-Path $runtimeCli)) { throw "Installed Three-Lane runtime CLI is missing" }
           if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
           . $lifecycle
 
@@ -259,7 +259,7 @@ jobs:
             [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
           } else { 0 }
 
-          $output = & node $fixture
+          $output = & node $runtimeCli --work-target-fixture
           if ($LASTEXITCODE -ne 0) { throw "Installed Work target fixture acceptance failed" }
           $output | ForEach-Object { Write-Host $_ }
 
@@ -287,6 +287,7 @@ jobs:
             throw "Fixture acceptance restarted or stopped the Supervisor wrapper"
           }
 
+          Write-Host "WORK_TARGET_RUNTIME_ARTIFACT_FIXTURE=True"
           Write-Host "WORK_TARGET_FIXTURE_ACCEPTANCE=True"
           Write-Host "WORK_TARGET_PRODUCTION_CONFIG_UNCHANGED=True"
           Write-Host "WORK_TARGET_RUNTIME_PID_UNCHANGED=True"
