@@ -171,10 +171,10 @@ export class BrowserScheduler {
   }
 
   registerPage(page, {
-    laneId = null,
-    role = "UNKNOWN",
-    targetRevision = 0,
-    generation = 0,
+    laneId = undefined,
+    role = undefined,
+    targetRevision = undefined,
+    generation = undefined,
     state = PAGE_LEASE_STATES.PARKED,
     nonPersistedArtifact = false
   } = {}) {
@@ -183,10 +183,18 @@ export class BrowserScheduler {
     const lease = {
       ...current,
       page,
-      lane_id: laneId ? laneIdOf(laneId) : null,
-      role: roleOf(role),
-      target_revision: Number(targetRevision || 0),
-      generation: Number(generation || 0),
+      lane_id: laneId === undefined
+        ? (current.lane_id ?? null)
+        : (laneId ? laneIdOf(laneId) : null),
+      role: role === undefined
+        ? (current.role || "UNKNOWN")
+        : roleOf(role),
+      target_revision: targetRevision === undefined
+        ? Number(current.target_revision || 0)
+        : Number(targetRevision || 0),
+      generation: generation === undefined
+        ? Number(current.generation || 0)
+        : Number(generation || 0),
       state,
       non_persisted_artifact: Boolean(nonPersistedArtifact),
       last_used: ++this.sequence
