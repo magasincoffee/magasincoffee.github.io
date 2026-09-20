@@ -1912,6 +1912,7 @@ async function applyOwnerBrainTarget({
     registryLane.brain_request_sent = false;
     registryLane.brain_request_inflight = null;
     registryLane.last_brain_directive_digest = null;
+    registryLane.work_rollover = null;
 
     // A blocked Work-dispatch latch belongs to the old Brain directive. An
     // explicit Owner Brain change is the authority to abandon that blocked
@@ -1995,6 +1996,7 @@ async function applyOwnerWorkStateReset({
   registryLane.awaiting_work = false;
   registryLane.task_timing = normalizeTaskTiming(null);
   registryLane.work_watchdog = normalizeWorkWatchdog(null);
+  registryLane.work_rollover = null;
   registryLane.pending_work_url = "";
   registryLane.pending_work_url_revision = 0;
   registryLane.pending_work_saved_at = null;
@@ -2243,6 +2245,15 @@ async function applyOwnerWorkTarget({
 
   if (outcome.status === "NOOP") return false;
 
+  if (
+    outcome.status !== "PENDING" &&
+    !registryLane.awaiting_work &&
+    !registryLane.dispatch_inflight &&
+    !registryLane.relay_inflight
+  ) {
+    registryLane.work_rollover = null;
+  }
+
   await atomicJsonWrite(registryPath, registry);
   await safeLog(logPath, {
     type: "LANE_OWNER_WORK_TARGET_REVISION",
@@ -2298,6 +2309,14 @@ async function applyPendingWorkTargetAtSafeBoundary({
   }
 
   // NOOP may clear a stale pending revision; persist that normalization.
+  if (
+    outcome.status === "APPLIED" &&
+    !registryLane.awaiting_work &&
+    !registryLane.dispatch_inflight &&
+    !registryLane.relay_inflight
+  ) {
+    registryLane.work_rollover = null;
+  }
   await atomicJsonWrite(registryPath, registry);
 
   if (outcome.status === "APPLIED") {
@@ -2330,7 +2349,7 @@ async function isOwnerStopRequested(stopPath) {
   }
 }
 
-async function isWatchdogRecoveryAllowed({
+async function isLaneMutationAllowed({
   stopPath,
   configPath,
   laneId
@@ -2342,6 +2361,10 @@ async function isWatchdogRecoveryAllowed({
   );
   const lane = latest.lanes.find((item) => item.lane_id === laneId);
   return Boolean(lane?.enabled);
+}
+
+async function isWatchdogRecoveryAllowed(args) {
+  return isLaneMutationAllowed(args);
 }
 
 function watchdogIdentity(registryLane) {
