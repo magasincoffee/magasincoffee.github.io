@@ -1,7 +1,67 @@
+param(
+    [switch]$ViewportProbe,
+    [int]$ProbeWidth = 0,
+    [int]$ProbeHeight = 0
+)
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 $ErrorActionPreference = 'Stop'
+
+function Get-ControlPanelViewportLayout([Drawing.Rectangle]$WorkingArea) {
+    $desiredWindow = New-Object Drawing.Size(1240, 930)
+    $logicalCanvas = New-Object Drawing.Size(1215, 890)
+
+    $initialWidth = [Math]::Min($desiredWindow.Width, [Math]::Max(320, $WorkingArea.Width))
+    $initialHeight = [Math]::Min($desiredWindow.Height, [Math]::Max(320, $WorkingArea.Height))
+
+    # Keep a useful resize floor on normal displays without ever forcing the
+    # window beyond the monitor WorkingArea on smaller/scaled displays.
+    $minimumWidth = [Math]::Min(900, [Math]::Max(640, $WorkingArea.Width - 24))
+    $minimumHeight = [Math]::Min(600, [Math]::Max(420, $WorkingArea.Height - 24))
+    $minimumWidth = [Math]::Min($minimumWidth, $initialWidth)
+    $minimumHeight = [Math]::Min($minimumHeight, $initialHeight)
+
+    $left = $WorkingArea.Left + [Math]::Max(
+        0,
+        [int](($WorkingArea.Width - $initialWidth) / 2)
+    )
+    $top = $WorkingArea.Top + [Math]::Max(
+        0,
+        [int](($WorkingArea.Height - $initialHeight) / 2)
+    )
+
+    return [pscustomobject]@{
+        InitialSize = New-Object Drawing.Size($initialWidth, $initialHeight)
+        MinimumSize = New-Object Drawing.Size($minimumWidth, $minimumHeight)
+        Location = New-Object Drawing.Point($left, $top)
+        LogicalCanvasSize = $logicalCanvas
+    }
+}
+
+if ($ViewportProbe) {
+    $probeWorkingArea = if ($ProbeWidth -gt 0 -and $ProbeHeight -gt 0) {
+        New-Object Drawing.Rectangle(0, 0, $ProbeWidth, $ProbeHeight)
+    } else {
+        [Windows.Forms.Screen]::FromPoint([Windows.Forms.Cursor]::Position).WorkingArea
+    }
+    $probeLayout = Get-ControlPanelViewportLayout -WorkingArea $probeWorkingArea
+    [pscustomobject]@{
+        working_width = $probeWorkingArea.Width
+        working_height = $probeWorkingArea.Height
+        initial_width = $probeLayout.InitialSize.Width
+        initial_height = $probeLayout.InitialSize.Height
+        minimum_width = $probeLayout.MinimumSize.Width
+        minimum_height = $probeLayout.MinimumSize.Height
+        logical_width = $probeLayout.LogicalCanvasSize.Width
+        logical_height = $probeLayout.LogicalCanvasSize.Height
+        vertical_scroll_required = [bool]($probeLayout.InitialSize.Height -lt $probeLayout.LogicalCanvasSize.Height)
+        lane3_stop_bottom = 851
+        lane3_stop_in_canvas = [bool]($probeLayout.LogicalCanvasSize.Height -ge 851)
+    } | ConvertTo-Json -Compress
+    exit 0
+}
 
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $runtime = Join-Path $root 'runtime'
@@ -249,37 +309,6 @@ function Save-BrainTarget(
     }
 
     return $false
-}
-
-function Get-ControlPanelViewportLayout([Drawing.Rectangle]$WorkingArea) {
-    $desiredWindow = New-Object Drawing.Size(1240, 930)
-    $logicalCanvas = New-Object Drawing.Size(1215, 890)
-
-    $initialWidth = [Math]::Min($desiredWindow.Width, [Math]::Max(320, $WorkingArea.Width))
-    $initialHeight = [Math]::Min($desiredWindow.Height, [Math]::Max(320, $WorkingArea.Height))
-
-    # Keep a useful resize floor on normal displays without ever forcing the
-    # window beyond the monitor WorkingArea on smaller/scaled displays.
-    $minimumWidth = [Math]::Min(900, [Math]::Max(640, $WorkingArea.Width - 24))
-    $minimumHeight = [Math]::Min(600, [Math]::Max(420, $WorkingArea.Height - 24))
-    $minimumWidth = [Math]::Min($minimumWidth, $initialWidth)
-    $minimumHeight = [Math]::Min($minimumHeight, $initialHeight)
-
-    $left = $WorkingArea.Left + [Math]::Max(
-        0,
-        [int](($WorkingArea.Width - $initialWidth) / 2)
-    )
-    $top = $WorkingArea.Top + [Math]::Max(
-        0,
-        [int](($WorkingArea.Height - $initialHeight) / 2)
-    )
-
-    return [pscustomobject]@{
-        InitialSize = New-Object Drawing.Size($initialWidth, $initialHeight)
-        MinimumSize = New-Object Drawing.Size($minimumWidth, $minimumHeight)
-        Location = New-Object Drawing.Point($left, $top)
-        LogicalCanvasSize = $logicalCanvas
-    }
 }
 
 [Windows.Forms.Application]::EnableVisualStyles()
