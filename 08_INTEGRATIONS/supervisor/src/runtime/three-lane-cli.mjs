@@ -1800,13 +1800,56 @@ async function dispatchWork({
       )
     );
   } catch (error) {
+    if (await hasUserTurnMarker(page, workDispatchMarker(dispatchId))) {
+      await finalizeConfirmedDispatch({
+        foundUrl: registryLane.work_url,
+        registryLane,
+        latch,
+        registry,
+        registryPath
+      });
+      return;
+    }
+
+    const rejectionProbe = await adapter.probePage(page).catch(() => null);
+    const rejectionClass = classifyComposerSendRejection(
+      rejectionProbe?.snapshot || {}
+    );
+    latch.last_send_rejection = rejectionClass;
+
+    if (
+      !rollover &&
+      rejectionClass === SEND_REJECTION_CLASSES.CAPACITY_REJECTED
+    ) {
+      const capacity = await probeStableWorkCapacity({
+        adapter,
+        page,
+        expectedUrl: registryLane.work_url,
+        sendRejectionCapacity: true
+      });
+      if (capacity.decision.state === WORK_CAPACITY_STATES.FULL_CONFIRMED) {
+        registryLane.dispatch_inflight = null;
+        await beginFullRollover({
+          lane,
+          registryLane,
+          directive,
+          decision: capacity.decision,
+          registry,
+          registryPath,
+          logPath
+        });
+        return;
+      }
+    }
+
+    await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
       type: "LANE_WORK_SEND_ATTEMPT_ERROR",
       laneId: lane.lane_id,
       taskId: directive.task_id,
       digest: instructionDigest,
       errorName: error?.name || "Error",
-      reason: String(error?.message || error).slice(0, 180)
+      reason: rejectionClass
     });
     return;
   }
