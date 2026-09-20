@@ -91,6 +91,12 @@ Current production contract: LƯU WORK hot-swap is released by TASK-RBT-003, fin
 
 ## Brain directive contract
 
+Canonical serialization authority for every MAGASIN Brain project:
+
+`01_DOCS/MAGASIN/00_MAGASIN_LANE_DIRECTIVE_V1_PROTOCOL.md`
+
+A Brain must follow that file before emitting a Robot-controlled directive. In particular, markers are byte-exact, JSON must parse without repair, raw URLs are preferred to Markdown links, and escaped markers such as `<<\\<MAGASIN_LANE_DIRECTIVE_V1>>>` are invalid.
+
 The Brain of a lane returns one machine-readable block:
 
 <<<MAGASIN_LANE_DIRECTIVE_V1>>>
