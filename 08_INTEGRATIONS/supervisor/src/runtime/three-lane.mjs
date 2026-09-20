@@ -82,6 +82,7 @@ export function defaultLaneConfig() {
       work_url_revision: 0,
       work_url_saved_at: null,
       work_mode: "AUTO",
+      work_state_reset_revision: 0,
       enabled: false
     }))
   };
@@ -109,6 +110,7 @@ export function normalizeLaneConfig(value = {}) {
           lane.work_mode,
           String(lane.work_url || "").trim()
         ),
+        work_state_reset_revision: Number(lane.work_state_reset_revision || 0),
         enabled: Boolean(lane.enabled)
       };
     })
@@ -141,6 +143,7 @@ export function defaultLaneRegistry() {
       pending_work_url_revision: 0,
       pending_work_saved_at: null,
       pending_work_mode: null,
+      applied_work_state_reset_revision: 0,
       task_id: null,
       instruction_digest: null,
       last_brain_directive_digest: null,
@@ -180,6 +183,8 @@ export function normalizeLaneRegistry(value = {}) {
       pending_work_mode: Number(lane.pending_work_url_revision || 0) > 0
         ? normalizeWorkTargetMode(lane.pending_work_mode, lane.pending_work_url)
         : null,
+      applied_work_state_reset_revision:
+        Number(lane.applied_work_state_reset_revision || 0),
       task_id: lane.task_id || null,
       instruction_digest: lane.instruction_digest || null,
       last_brain_directive_digest: lane.last_brain_directive_digest || null,
