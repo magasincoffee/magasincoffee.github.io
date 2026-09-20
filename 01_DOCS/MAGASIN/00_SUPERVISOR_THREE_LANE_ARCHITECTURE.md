@@ -157,7 +157,7 @@ This explicitly replaces the current v50 revision-reset behavior that can clear 
 
 Canonical details are in `ROBOT_BROWSER_SCHEDULER_OBSERVABILITY_ARCHITECTURE.md`.
 
-Target contract:
+Implemented by TASK-RBT-004 in runtime v2026-09-20.53:
 
 - one dedicated Chrome profile;
 - default global ChatGPT page budget = 3;
