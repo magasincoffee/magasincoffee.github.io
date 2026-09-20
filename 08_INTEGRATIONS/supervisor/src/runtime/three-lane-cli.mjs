@@ -1003,6 +1003,27 @@ async function reconcileDispatchInflight({
   const latch = registryLane.dispatch_inflight;
   if (!latch) return "NONE";
 
+  if (
+    latch.work_generation !== undefined &&
+    Number(latch.work_generation) !== Number(registryLane.work_generation || 0)
+  ) {
+    return "BLOCKED";
+  }
+  if (
+    latch.work_target_digest &&
+    registryLane.work_url &&
+    sha256(registryLane.work_url) !== latch.work_target_digest
+  ) {
+    return "BLOCKED";
+  }
+  if (
+    latch.rollover_generation &&
+    !latch.send_attempted_at &&
+    (latch.send_state === "PERSISTED_NOT_SENT" || latch.send_state === "NOT_CONFIRMED")
+  ) {
+    return "RETRY_READY";
+  }
+
   const found = await findWorkConversationForLatch(adapter, latch);
   if (found) {
     await finalizeConfirmedDispatch({
@@ -1143,6 +1164,22 @@ async function reconcileDispatchInflight({
   }
 
   if (outcome === "NOT_CONFIRMED") {
+    if (latch.rollover_generation) {
+      latch.send_attempted_at = null;
+      latch.send_state = "NOT_CONFIRMED";
+      latch.reconcile_reloaded = false;
+      delete latch.reconcile_started_at;
+      await atomicJsonWrite(registryPath, registry);
+      await safeLog(logPath, {
+        type: "LANE_WORK_ROLLOVER_SEND_NOT_CONFIRMED",
+        laneId: lane.lane_id,
+        taskId: latch.task_id,
+        digest: latch.instruction_digest,
+        reason: "same_latch_retry_ready"
+      });
+      return "RETRY_READY";
+    }
+
     registryLane.dispatch_inflight = null;
     await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
@@ -2769,12 +2806,17 @@ async function processLaneTurn({
         "Dispatch marker đã xác nhận; Work chạy độc lập, lane đã yield scheduler."
       );
     }
-    return laneStatus(
-      lane,
-      registryLane,
-      "STARTING",
-      "Lần gửi trước được chứng minh chưa persist; retry chỉ được xét ở turn kế tiếp."
-    );
+    if (dispatchOutcome !== "RETRY_READY") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "STARTING",
+        "Lần gửi trước được chứng minh chưa persist; retry chỉ được xét ở turn kế tiếp."
+      );
+    }
+    // Rollover latch is durably persisted and marker absence was proven (or
+    // no send was attempted yet). Continue this bounded turn only to recover
+    // the exact Brain directive and perform at most one send mutation.
   }
 
   if (registryLane.awaiting_work) {
