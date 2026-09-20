@@ -159,9 +159,10 @@ test("runtime reconciles exact relay marker before rearm and preserves evidence 
   const end = runtime.indexOf("async function applyOwnerWorkTarget", start);
   const apply = runtime.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.ok(apply.indexOf("hasRelayMarker") < apply.indexOf("rearmRelayRetry"));
-  assert.ok(apply.indexOf("waitForStableSendSurface") < apply.indexOf("rearmRelayRetry"));
-  assert.match(apply, /BRAIN_NOT_READY/);
+  const exhaustedPath = apply.slice(apply.indexOf("if (!brainPage)"));
+  assert.ok(exhaustedPath.indexOf("hasRelayMarker") < exhaustedPath.indexOf("rearmRelayRetry"));
+  assert.ok(exhaustedPath.indexOf("waitForStableSendSurface") < exhaustedPath.indexOf("rearmRelayRetry"));
+  assert.match(exhaustedPath, /BRAIN_NOT_READY/);
   assert.match(apply, /finalizeConfirmedRelay/);
   assert.match(apply, /EVIDENCE_MISSING/);
   assert.doesNotMatch(apply, /clearRelayInflight/);
