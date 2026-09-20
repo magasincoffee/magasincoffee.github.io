@@ -947,9 +947,9 @@ async function reconcileDispatchInflight({
     return "CONFIRMED";
   }
 
-  if (!registryLane.work_url || latch.create_new) {
+  if (!registryLane.work_url) {
     throw new Error(
-      "Robot chưa thể xác minh lần gửi vào Work mới; giữ an toàn để không tạo/gửi trùng."
+      "Robot chưa có exact Work target để xác minh lần gửi mới; giữ an toàn để không tạo/gửi trùng."
     );
   }
 
@@ -2090,20 +2090,17 @@ async function processLaneTurn({
         "Đang chờ xác minh/backoff lần gửi kết quả trước; lane đã yield scheduler."
       );
     }
-    if (relayOutcome === "RETRY_READY") {
+    if (relayOutcome !== "RETRY_READY") {
       return laneStatus(
         lane,
         registryLane,
-        "RELAYING_RESULT",
-        "Relay retry đã đủ điều kiện; mutation sẽ chạy ở bounded turn kế tiếp."
+        "WAITING_BRAIN",
+        "Relay marker đã reconcile; lane yield trước bước tiếp theo."
       );
     }
-    return laneStatus(
-      lane,
-      registryLane,
-      "WAITING_BRAIN",
-      "Relay marker đã reconcile; lane yield trước bước tiếp theo."
-    );
+    // RETRY_READY is the precondition for one bounded relay attempt. Continue
+    // this turn only far enough to reconstruct the persisted Work result and
+    // execute that one mutation; retry/backoff WAIT already yielded above.
   }
 
   if (registryLane.dispatch_inflight) {
