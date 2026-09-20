@@ -85,7 +85,7 @@ let rollover = beginWorkRollover({
   directiveInstructionDigest: instructionDigest,
   oldWorkGeneration: 11,
   oldWorkUrlRevision: 5,
-  oldTargetDigest,
+  oldWorkTargetDigest: oldTargetDigest,
   capacityEvidenceCodes: multiSignal.evidence_codes,
   at
 });
