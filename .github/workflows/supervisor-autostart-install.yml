@@ -132,11 +132,22 @@ jobs:
           $value = (Get-ItemProperty -Path $runKey -Name "MAGASINBusinessOSAutostart" -ErrorAction Stop).MAGASINBusinessOSAutostart
           if ($value -notmatch "autostart-bootstrap\.ps1") { throw "HKCU autostart value is invalid" }
 
-          $runtimeThreeLane = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
-          if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.51" -Quiet)) {
-            throw "Installed Three-Lane runtime is not v2026-09-19.51"
+          function Get-SupervisorRuntimeVersion([string]$Path) {
+            if (-not (Test-Path $Path)) { throw "Supervisor runtime source is missing" }
+            $source = Get-Content $Path -Raw -Encoding UTF8
+            $match = [regex]::Match($source, 'SUPERVISOR_RUNTIME_VERSION\s*=\s*"([^"]+)"')
+            if (-not $match.Success) { throw "Supervisor runtime version marker is missing" }
+            return [string]$match.Groups[1].Value
           }
+
+          $sourceThreeLane = Join-Path $env:GITHUB_WORKSPACE "08_INTEGRATIONS\supervisor\src\runtime\three-lane-cli.mjs"
+          $runtimeThreeLane = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
+          $expectedVersion = Get-SupervisorRuntimeVersion -Path $sourceThreeLane
+          $installedVersion = Get-SupervisorRuntimeVersion -Path $runtimeThreeLane
+          if ($installedVersion -ne $expectedVersion) {
+            throw "Installed Three-Lane runtime version does not match checked-out source"
+          }
+          Write-Host "SUPERVISOR_RUNTIME_VERSION_MATCH=True"
 
           function Get-TargetFingerprint([string]$Path) {
             if (-not (Test-Path $Path)) { return "NO_CONFIG" }
@@ -191,8 +202,8 @@ jobs:
             if (-not $healthy) { throw "Enabled lane runtime did not recover after install" }
             if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing" }
             $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ([string]$status.supervisor_runtime_version -ne "2026-09-19.51") {
-              throw "Three-Lane status is not v2026-09-19.51"
+            if ([string]$status.supervisor_runtime_version -ne $expectedVersion) {
+              throw "Three-Lane status version does not match checked-out source"
             }
             if ([string]$status.persisted_state_role -ne "RECOVERY_ONLY") {
               throw "Three-Lane status is missing lifecycle recovery role"
@@ -212,6 +223,73 @@ jobs:
           Write-Host "BRAIN_URL_HOT_SWAP=True"
           Write-Host "AUTOSTART_REGISTERED=True"
           Write-Host "WINDOWS_LOGIN_BYPASS=False"
+
+      - name: Verify Work target hot-swap fixture without production mutation
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtime = Join-Path $root "runtime"
+          $fixture = Join-Path $runtime "src\runtime\work-target-acceptance-cli.mjs"
+          $configFile = Join-Path $root "lanes.json"
+          $lifecycle = Join-Path $runtime "windows\lifecycle-truth.ps1"
+
+          if (-not (Test-Path $fixture)) { throw "Installed Work target fixture acceptance is missing" }
+          if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
+          . $lifecycle
+
+          function Get-TargetFingerprint([string]$Path) {
+            if (-not (Test-Path $Path)) { return "NO_CONFIG" }
+            $config = Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+            $canonical = @($config.lanes | Sort-Object lane_id | ForEach-Object {
+              "$([string]$_.lane_id)|$([string]$_.brain_url)|$([int]$_.brain_url_revision)|$([string]$_.work_url)|$([int]$_.work_url_revision)"
+            }) -join "`n"
+            $bytes = [Text.Encoding]::UTF8.GetBytes($canonical)
+            $hasher = [Security.Cryptography.SHA256]::Create()
+            try {
+              return ([BitConverter]::ToString($hasher.ComputeHash($bytes))).Replace("-","").ToLowerInvariant()
+            } finally {
+              $hasher.Dispose()
+            }
+          }
+
+          $targetBefore = Get-TargetFingerprint $configFile
+          $truthBefore = Get-LifecycleProcessTruth -Root $root
+          $wrapperBefore = if ($truthBefore.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+
+          $output = & node $fixture
+          if ($LASTEXITCODE -ne 0) { throw "Installed Work target fixture acceptance failed" }
+          $output | ForEach-Object { Write-Host $_ }
+
+          foreach ($marker in @(
+            "WORK_TARGET_FIXTURE_ACTIVE_PENDING=True",
+            "WORK_TARGET_FIXTURE_RESTART_PENDING=True",
+            "WORK_TARGET_FIXTURE_SAFE_BOUNDARY_APPLY_ONCE=True",
+            "WORK_TARGET_FIXTURE_TASK_LATCH_PRESERVED=True",
+            "WORK_TARGET_FIXTURE_SAME_TARGET_NO_GENERATION_CHURN=True",
+            "WORK_TARGET_FIXTURE_BRAIN_DIRECTIVE_PRESERVED=True"
+          )) {
+            if ($output -notcontains $marker) { throw "Missing fixture marker: $marker" }
+          }
+
+          $targetAfter = Get-TargetFingerprint $configFile
+          if ($targetBefore -ne $targetAfter) {
+            throw "Production Brain/Work target fingerprint changed during fixture acceptance"
+          }
+
+          $truthAfter = Get-LifecycleProcessTruth -Root $root
+          $wrapperAfter = if ($truthAfter.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+          if ($wrapperBefore -ne $wrapperAfter) {
+            throw "Fixture acceptance restarted or stopped the Supervisor wrapper"
+          }
+
+          Write-Host "WORK_TARGET_FIXTURE_ACCEPTANCE=True"
+          Write-Host "WORK_TARGET_PRODUCTION_CONFIG_UNCHANGED=True"
+          Write-Host "WORK_TARGET_RUNTIME_PID_UNCHANGED=True"
 
       - name: Verify event timing foundation privacy
         shell: powershell
@@ -300,6 +378,9 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 7
     steps:
+      - name: Checkout canonical Supervisor source
+        uses: actions/checkout@v4
+
       - name: Verify lifecycle survived previous job cleanup
         shell: powershell
         run: |
@@ -339,11 +420,22 @@ jobs:
           }
           if (-not $healthy) { throw "Lifecycle did not survive/recover after previous self-hosted job" }
 
-          if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing after previous job cleanup" }
-          $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ([string]$status.supervisor_runtime_version -ne "2026-09-19.51") {
-            throw "Post-job Three-Lane runtime is not v2026-09-19.51"
+          function Get-SupervisorRuntimeVersion([string]$Path) {
+            if (-not (Test-Path $Path)) { throw "Supervisor runtime source is missing" }
+            $source = Get-Content $Path -Raw -Encoding UTF8
+            $match = [regex]::Match($source, 'SUPERVISOR_RUNTIME_VERSION\s*=\s*"([^"]+)"')
+            if (-not $match.Success) { throw "Supervisor runtime version marker is missing" }
+            return [string]$match.Groups[1].Value
           }
+
+          if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing after previous job cleanup" }
+          $sourceThreeLane = Join-Path $env:GITHUB_WORKSPACE "08_INTEGRATIONS\supervisor\src\runtime\three-lane-cli.mjs"
+          $expectedVersion = Get-SupervisorRuntimeVersion -Path $sourceThreeLane
+          $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ([string]$status.supervisor_runtime_version -ne $expectedVersion) {
+            throw "Post-job Three-Lane runtime version does not match checked-out source"
+          }
+          Write-Host "POST_JOB_RUNTIME_VERSION_MATCH=True"
 
           Write-Host "POST_JOB_SUPERVISOR_ALIVE=True"
           Write-Host "POST_JOB_THREE_LANE_ALIVE=True"
