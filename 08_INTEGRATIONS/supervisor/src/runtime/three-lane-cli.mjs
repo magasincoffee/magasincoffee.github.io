@@ -1676,6 +1676,46 @@ async function emitWorkTargetTransition({
   });
 }
 
+async function applyOwnerWorkStateReset({
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  logPath
+}) {
+  const revision = Number(lane.work_state_reset_revision || 0);
+  if (revision <= Number(registryLane.applied_work_state_reset_revision || 0)) {
+    return false;
+  }
+
+  // Destructive state reset is reserved for the explicit Owner-authorized
+  // maintenance workflow. Work target save/hot-swap never enters this path.
+  await clearRelayInflight(registryLane);
+  registryLane.task_id = null;
+  registryLane.instruction_digest = null;
+  registryLane.last_brain_directive_digest = null;
+  registryLane.last_work_result_digest = null;
+  registryLane.last_result_relay_id = null;
+  registryLane.dispatch_inflight = null;
+  registryLane.brain_request_inflight = null;
+  registryLane.awaiting_work = false;
+  registryLane.task_timing = normalizeTaskTiming(null);
+  registryLane.pending_work_url = "";
+  registryLane.pending_work_url_revision = 0;
+  registryLane.pending_work_saved_at = null;
+  registryLane.pending_work_mode = null;
+  registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
+  registryLane.applied_work_state_reset_revision = revision;
+
+  await atomicJsonWrite(registryPath, registry);
+  await safeLog(logPath, {
+    type: "LANE_OWNER_MAINTENANCE_WORK_STATE_RESET",
+    laneId: lane.lane_id,
+    reason: `reset_revision=${revision}`
+  });
+  return true;
+}
+
 async function applyOwnerWorkTarget({
   lane,
   registryLane,
@@ -1831,6 +1871,14 @@ async function processLane({
       "Nhập URL cuộc trò chuyện Bộ não rồi bấm LƯU BỘ NÃO hoặc BẮT ĐẦU LUỒNG."
     );
   }
+
+  await applyOwnerWorkStateReset({
+    lane,
+    registryLane,
+    registry,
+    registryPath,
+    logPath
+  });
 
   await applyOwnerWorkTarget({
     lane,
