@@ -149,10 +149,14 @@ const applyEnd = runtimeSource.indexOf("async function applyOwnerWorkTarget", ap
 const applySource = runtimeSource.slice(applyStart, applyEnd);
 assert.ok(applyStart >= 0 && applyEnd > applyStart);
 assert.ok(applySource.indexOf("hasRelayMarker") < applySource.indexOf("rearmRelayRetry"));
+assert.ok(applySource.indexOf("waitForStableSendSurface") < applySource.indexOf("rearmRelayRetry"));
+assert.match(applySource, /BRAIN_NOT_READY/);
 assert.match(applySource, /finalizeConfirmedRelay/);
 assert.match(applySource, /EVIDENCE_MISSING/);
 assert.doesNotMatch(applySource, /clearRelayInflight/);
 assert.match(runtimeSource, /if \(relayOutcome === "EVIDENCE_MISSING"\)/);
+assert.match(runtimeSource, /RESULT_IDENTITY_MISMATCH/);
+assert.match(runtimeSource, /FAIL_CLOSED_RECONSTRUCTED_RESULT_MISMATCH/);
 assert.match(runtimeSource, /if \(args\.relayRearmFixture\)/);
 
 console.log("RELAY_REARM_FIXTURE_EXHAUSTED_OWNER_REARMED=True");
@@ -162,6 +166,8 @@ console.log("RELAY_REARM_FIXTURE_NO_AUTO_REARM=True");
 console.log("RELAY_REARM_FIXTURE_SAME_REVISION_APPLIES_ONCE=True");
 console.log("RELAY_REARM_FIXTURE_NEW_REVISION_OPENS_ONE_EPOCH=True");
 console.log("RELAY_REARM_FIXTURE_MARKER_RECONCILE_BEFORE_REARM=True");
+console.log("RELAY_REARM_FIXTURE_STABLE_BRAIN_GATE=True");
+console.log("RELAY_REARM_FIXTURE_RESULT_IDENTITY_FAIL_CLOSED=True");
 console.log("RELAY_REARM_FIXTURE_EVIDENCE_FAIL_CLOSED=True");
 console.log("RELAY_REARM_FIXTURE_TASK_RESULT_TARGETS_PRESERVED=True");
 console.log("RELAY_REARM_FIXTURE_NO_WORK_DISPATCH_RESET=True");
