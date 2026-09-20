@@ -181,12 +181,28 @@ test("lane config carries optional Owner Work URL revision", () => {
       brain_url: "https://chatgpt.com/c/brain",
       work_url: "https://chatgpt.com/c/work",
       work_url_revision: 4,
+      work_url_saved_at: "2026-09-20T01:02:03.000Z",
+      work_mode: "OWNER",
       enabled: false
     }]
   });
 
   assert.equal(config.lanes[0].work_url, "https://chatgpt.com/c/work");
   assert.equal(config.lanes[0].work_url_revision, 4);
+  assert.equal(config.lanes[0].work_url_saved_at, "2026-09-20T01:02:03.000Z");
+  assert.equal(config.lanes[0].work_mode, "OWNER");
+});
+
+test("lane config and registry normalize dedicated maintenance reset revision", () => {
+  const config = normalizeLaneConfig({
+    lanes: [{ lane_id: "lane-1", work_state_reset_revision: 6 }]
+  });
+  const registry = normalizeLaneRegistry({
+    lanes: { "lane-1": { applied_work_state_reset_revision: 5 } }
+  });
+
+  assert.equal(config.lanes[0].work_state_reset_revision, 6);
+  assert.equal(registry.lanes["lane-1"].applied_work_state_reset_revision, 5);
 });
 
 test("lane registry tracks the applied Owner Work URL revision", () => {
@@ -194,11 +210,34 @@ test("lane registry tracks the applied Owner Work URL revision", () => {
     lanes: {
       "lane-1": {
         work_url: "https://chatgpt.com/c/work",
-        applied_work_url_revision: 7
+        applied_work_url_revision: 7,
+        applied_work_mode: "OWNER",
+        pending_work_url: "https://chatgpt.com/c/next",
+        pending_work_url_revision: 8,
+        pending_work_saved_at: "2026-09-20T01:03:00.000Z",
+        pending_work_mode: "OWNER"
       }
     }
   });
   assert.equal(registry.lanes["lane-1"].applied_work_url_revision, 7);
+  assert.equal(registry.lanes["lane-1"].applied_work_mode, "OWNER");
+  assert.equal(registry.lanes["lane-1"].pending_work_url, "https://chatgpt.com/c/next");
+  assert.equal(registry.lanes["lane-1"].pending_work_url_revision, 8);
+  assert.equal(registry.lanes["lane-1"].pending_work_mode, "OWNER");
+});
+
+test("legacy Work target state infers mode without fabricating a pending revision", () => {
+  const registry = normalizeLaneRegistry({
+    lanes: {
+      "lane-1": {
+        work_url: "https://chatgpt.com/c/legacy",
+        work_generation: 3
+      }
+    }
+  });
+  assert.equal(registry.lanes["lane-1"].applied_work_mode, "OWNER");
+  assert.equal(registry.lanes["lane-1"].pending_work_url_revision, 0);
+  assert.equal(registry.lanes["lane-1"].pending_work_mode, null);
 });
 
 

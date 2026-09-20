@@ -56,13 +56,16 @@ test("auto-upgrade validates THREE_LANE_V1 and lifecycle truth", async () => {
   assert.match(source, /TARGET_URLS_UNCHANGED=True/);
 });
 
-test("auto-upgrade requires v51 Three-Lane runtime and three local lanes", async () => {
+test("auto-upgrade derives Three-Lane runtime version and requires three local lanes", async () => {
   const source = await fs.readFile(
     new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /2026-09-19\.51/);
+  assert.match(source, /Get-SupervisorRuntimeVersion/);
+  assert.match(source, /SUPERVISOR_RUNTIME_VERSION_MATCH=True/);
+  assert.match(source, /POST_JOB_RUNTIME_VERSION_MATCH=True/);
+  assert.doesNotMatch(source, /2026-09-19\.51/);
   assert.match(source, /three-lane-cli\.mjs/);
   assert.match(source, /lane-status\.json/);
   assert.match(source, /lanes\.json/);
@@ -93,15 +96,17 @@ test("post-job survival verifies lifecycle truth without mutating lane enable st
   assert.doesNotMatch(source, /lane1Config\.enabled = \$true/);
 });
 
-test("Control Panel explicit AUTO Work reset always advances work revision", async () => {
+test("Control Panel explicit AUTO Work request advances only Work target revision", async () => {
   const source = await fs.readFile(
     new URL("../windows/control-panel.ps1", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /\[bool\]\$ForceWorkRevision = \$false/);
-  assert.match(source, /work_url -ne \$newWorkUrl -or \$ForceWorkRevision/);
-  assert.match(source, /Save-Lane \$id \$ui\.Project\.Text \$ui\.Brain\.Text '' \$false \$true/);
+  assert.match(source, /function Save-WorkTarget/);
+  assert.match(source, /\[bool\]\$ForceRevision = \$false/);
+  assert.match(source, /Save-WorkTarget \$id '' \$true \$true/);
+  assert.match(source, /work_url_revision = \[int\]\$lane\.work_url_revision \+ 1/);
+  assert.doesNotMatch(source, /Save-Lane \$id[^\n]*''[^\n]*\$true/);
 });
 
 test("Control Panel keeps Brain target Owner-editable without autodiscovery", async () => {
@@ -122,11 +127,12 @@ test("production state maintenance resets Work state by revision without changin
   );
 
   assert.match(source, /reset-work-state/);
-  assert.match(source, /work_url_revision/);
+  assert.match(source, /work_state_reset_revision/);
+  assert.match(source, /applied_work_state_reset_revision/);
   assert.match(source, /TARGET_URLS_UNCHANGED=True/);
   assert.match(source, /Brain URL changed during state reset/);
   assert.match(source, /Work URL changed during state reset/);
-  assert.match(source, /applied_work_url_revision/);
+  assert.match(source, /WORK_STATE_RESET_REVISION_APPLIED=True/);
   assert.match(source, /Get-SupervisorRuntimeVersion -Path \$sourceRuntime/);
   assert.match(source, /Get-SupervisorRuntimeVersion -Path \$installedRuntimeSource/);
   assert.match(source, /Installed runtime version does not match checked-out production source/);

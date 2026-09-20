@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { canonicalConversationPathname } from "./recovery.mjs";
 import { defaultTaskTiming, normalizeTaskTiming } from "./lane-events.mjs";
+import { normalizeWorkTargetMode } from "./work-target-state.mjs";
 
 export const THREE_LANE_MODE = "THREE_LANE_V1";
 export const LANE_DIRECTIVE_START = "<<<MAGASIN_LANE_DIRECTIVE_V1>>>";
@@ -79,6 +80,9 @@ export function defaultLaneConfig() {
       brain_url_revision: 0,
       work_url: "",
       work_url_revision: 0,
+      work_url_saved_at: null,
+      work_mode: "AUTO",
+      work_state_reset_revision: 0,
       enabled: false
     }))
   };
@@ -101,6 +105,12 @@ export function normalizeLaneConfig(value = {}) {
         ),
         work_url: String(lane.work_url || "").trim(),
         work_url_revision: Number(lane.work_url_revision || 0),
+        work_url_saved_at: String(lane.work_url_saved_at || "").trim() || null,
+        work_mode: normalizeWorkTargetMode(
+          lane.work_mode,
+          String(lane.work_url || "").trim()
+        ),
+        work_state_reset_revision: Number(lane.work_state_reset_revision || 0),
         enabled: Boolean(lane.enabled)
       };
     })
@@ -127,6 +137,13 @@ export function defaultLaneRegistry() {
       applied_brain_url_revision: 0,
       work_url: "",
       work_generation: 0,
+      applied_work_mode: "AUTO",
+      applied_work_saved_at: null,
+      pending_work_url: "",
+      pending_work_url_revision: 0,
+      pending_work_saved_at: null,
+      pending_work_mode: null,
+      applied_work_state_reset_revision: 0,
       task_id: null,
       instruction_digest: null,
       last_brain_directive_digest: null,
@@ -153,6 +170,21 @@ export function normalizeLaneRegistry(value = {}) {
       applied_brain_url_revision: Number(lane.applied_brain_url_revision || 0),
       work_url: normalizeStoredConversationUrl(lane.work_url),
       work_generation: Number(lane.work_generation || 0),
+      applied_work_mode: normalizeWorkTargetMode(
+        lane.applied_work_mode,
+        lane.work_url
+      ),
+      applied_work_saved_at:
+        String(lane.applied_work_saved_at || "").trim() || null,
+      pending_work_url: normalizeStoredConversationUrl(lane.pending_work_url),
+      pending_work_url_revision: Number(lane.pending_work_url_revision || 0),
+      pending_work_saved_at:
+        String(lane.pending_work_saved_at || "").trim() || null,
+      pending_work_mode: Number(lane.pending_work_url_revision || 0) > 0
+        ? normalizeWorkTargetMode(lane.pending_work_mode, lane.pending_work_url)
+        : null,
+      applied_work_state_reset_revision:
+        Number(lane.applied_work_state_reset_revision || 0),
       task_id: lane.task_id || null,
       instruction_digest: lane.instruction_digest || null,
       last_brain_directive_digest: lane.last_brain_directive_digest || null,

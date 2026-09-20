@@ -20,7 +20,17 @@ $target = Join-Path $root 'target.json'
 $pidFile = Join-Path $root 'supervisor.pid'
 $logFile = Join-Path $root 'supervisor.log'
 $projectStateUrl = 'https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/main/01_DOCS/MAGASIN/00_PROJECT_STATE.json'
-$expectedRuntimeVersion = '2026-09-19.51'
+$sourceThreeLane = Join-Path $sourceRoot 'src\runtime\three-lane-cli.mjs'
+
+function Get-SupervisorRuntimeVersion([string]$Path) {
+    if (-not (Test-Path $Path)) { throw "Supervisor runtime source missing: $Path" }
+    $source = Get-Content $Path -Raw -Encoding UTF8
+    $match = [regex]::Match($source, 'SUPERVISOR_RUNTIME_VERSION\s*=\s*"([^"]+)"')
+    if (-not $match.Success) { throw "Supervisor runtime version marker missing: $Path" }
+    return [string]$match.Groups[1].Value
+}
+
+$expectedRuntimeVersion = Get-SupervisorRuntimeVersion -Path $sourceThreeLane
 
 if (-not (Test-Path $sourceLifecycle)) { throw "Lifecycle truth helper missing: $sourceLifecycle" }
 . $sourceLifecycle
@@ -72,8 +82,9 @@ function Assert-SourceFingerprint {
     if (-not (Test-Path $threeLaneSource)) {
         throw 'Source is missing three-lane-cli.mjs.'
     }
-    if (-not (Select-String -Path $threeLaneSource -SimpleMatch $expectedRuntimeVersion -Quiet)) {
-        throw "Three-Lane source does not contain runtime version $expectedRuntimeVersion."
+    $sourceVersion = Get-SupervisorRuntimeVersion -Path $threeLaneSource
+    if ($sourceVersion -ne $expectedRuntimeVersion) {
+        throw "Three-Lane source runtime version changed during repair."
     }
     if (-not (Select-String -Path $runSource -SimpleMatch 'THREE_LANE_V1' -Quiet)) {
         throw 'Source launcher is missing THREE_LANE_V1 mode.'

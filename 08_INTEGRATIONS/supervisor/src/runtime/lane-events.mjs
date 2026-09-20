@@ -12,6 +12,9 @@ export const LANE_EVENT_TYPES = Object.freeze({
   WORK_ACTIVITY: "WORK_ACTIVITY",
   WORK_COMPLETED: "WORK_COMPLETED",
   RESULT_RELAY_CONFIRMED: "RESULT_RELAY_CONFIRMED",
+  WORK_TARGET_SAVED: "WORK_TARGET_SAVED",
+  WORK_TARGET_PENDING: "WORK_TARGET_PENDING",
+  WORK_TARGET_APPLIED: "WORK_TARGET_APPLIED",
   RECOVERY: "RECOVERY",
   ERROR: "ERROR"
 });
@@ -26,6 +29,7 @@ const EVENT_KEYS = new Set([
   "phase",
   "reason_code",
   "work_generation",
+  "work_url_revision",
   "elapsed_ms",
   "queue_time_ms",
   "execution_time_ms",
@@ -40,6 +44,9 @@ const PHASES = new Set([
   "WORKING",
   "COMPLETED",
   "RELAYED",
+  "SAVED",
+  "PENDING",
+  "APPLIED",
   "RECOVERY",
   "ERROR"
 ]);
@@ -54,7 +61,11 @@ const REASON_CODES = new Set([
   "TRANSIENT_NAVIGATION_ERROR",
   "LANE_PROCESSING_ERROR",
   "CDP_RESTART_REQUESTED",
-  "EVENT_SINK_WRITE_FAILED"
+  "EVENT_SINK_WRITE_FAILED",
+  "OWNER_WORK_REVISION",
+  "ACTIVE_WORK_PRESERVED",
+  "SAFE_BOUNDARY",
+  "SAME_TARGET_NO_CHURN"
 ]);
 const EVENT_TYPE_VALUES = new Set(Object.values(LANE_EVENT_TYPES));
 const LANE_IDS = new Set(["lane-1", "lane-2", "lane-3"]);
@@ -172,6 +183,13 @@ export function serializeLaneEvent(input = {}, { now = () => new Date() } = {}) 
     output.work_generation = nonNegativeInteger(
       input.work_generation,
       "work_generation"
+    );
+  }
+
+  if (input.work_url_revision !== undefined && input.work_url_revision !== null) {
+    output.work_url_revision = nonNegativeInteger(
+      input.work_url_revision,
+      "work_url_revision"
     );
   }
 

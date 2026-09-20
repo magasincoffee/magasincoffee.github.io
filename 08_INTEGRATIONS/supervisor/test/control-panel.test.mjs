@@ -36,7 +36,11 @@ test("each lane has Owner Brain URL and optional Owner-or-Robot Work URL", async
   assert.match(source, /LƯU BỘ NÃO/);
   assert.match(source, /Save-BrainTarget/);
   assert.match(source, /\$ui\.Brain\.Enabled = \$true/);
-  assert.match(source, /\$ui\.Work\.Enabled = -not \$enabled/);
+  assert.match(source, /\$ui\.Work\.Enabled = \$true/);
+  assert.match(source, /LƯU WORK/);
+  assert.match(source, /Save-WorkTarget/);
+  assert.match(source, /work_url_saved_at/);
+  assert.match(source, /work_mode/);
   assert.match(source, /LINK WORK không hợp lệ/);
   assert.doesNotMatch(source, /DÙNG CHAT ĐANG MỞ LÀM BỘ NÃO/);
   assert.doesNotMatch(source, /BRAIN_REBIND\.request\.json/);
@@ -134,16 +138,38 @@ test("installer normalizes Vietnamese panel to UTF-8 BOM and syntax-checks it", 
 });
 
 
-test("control panel provides one-click Robot Work reset while stopped", async () => {
+test("control panel hot-saves Work and stages AUTO without requiring lane stop", async () => {
   const source = await fs.readFile(
     new URL("../windows/control-panel.ps1", import.meta.url),
     "utf8"
   );
 
+  assert.match(source, /MỞ WORK/);
+  assert.match(source, /LƯU WORK/);
   assert.match(source, /TỰ TẠO WORK/);
-  assert.match(source, /Save-Lane \$id \$ui\.Project\.Text \$ui\.Brain\.Text '' \$false/);
-  assert.match(source, /Đã chuyển sang chế độ Robot tự tạo Work/);
-  assert.match(source, /\$ui\.ResetWork\.Enabled = -not \$enabled/);
+  assert.match(source, /Save-WorkTarget \$id \$workUrl/);
+  assert.match(source, /Save-WorkTarget \$id '' \$true \$true/);
+  assert.match(source, /ĐÃ LƯU WORK · revision/);
+  assert.match(source, /ĐANG CHỜ ÁP DỤNG/);
+  assert.match(source, /\$ui\.ResetWork\.Enabled = \$true/);
+  assert.match(source, /\$ui\.SaveWork\.Enabled = \$true/);
+  assert.match(source, /Không tăng revision/);
+});
+
+test("invalid Work URL is rejected before config mutation and save does not start runtime", async () => {
+  const source = await fs.readFile(
+    new URL("../windows/control-panel.ps1", import.meta.url),
+    "utf8"
+  );
+  const start = source.indexOf("function Save-WorkTarget");
+  const end = source.indexOf("function Save-BrainTarget", start);
+  const saveWork = source.slice(start, end);
+
+  assert.match(source, /ConvertTo-CanonicalChatConversationUrl/);
+  assert.match(source, /LINK WORK không hợp lệ/);
+  assert.match(saveWork, /Write-JsonAtomic \$configFile \$config/);
+  assert.doesNotMatch(saveWork, /Start-Process/);
+  assert.doesNotMatch(saveWork, /Request-LifecycleRecovery/);
 });
 
 test("Brain target can be saved independently while lane is active", async () => {

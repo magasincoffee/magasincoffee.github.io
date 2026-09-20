@@ -74,6 +74,40 @@ test("append-only lane events are valid NDJSON and preserve append order", async
   }
 });
 
+test("Work target events expose revision metadata only and reject private targets", () => {
+  for (const [eventType, phase, reasonCode] of [
+    [LANE_EVENT_TYPES.WORK_TARGET_SAVED, "SAVED", "OWNER_WORK_REVISION"],
+    [LANE_EVENT_TYPES.WORK_TARGET_PENDING, "PENDING", "ACTIVE_WORK_PRESERVED"],
+    [LANE_EVENT_TYPES.WORK_TARGET_APPLIED, "APPLIED", "SAFE_BOUNDARY"]
+  ]) {
+    const event = serializeLaneEvent(baseEvent({
+      actor: "SUPERVISOR",
+      event_type: eventType,
+      phase,
+      reason_code: reasonCode,
+      work_url_revision: 9
+    }));
+    assert.equal(event.work_url_revision, 9);
+    const line = JSON.stringify(event);
+    assert.equal(line.includes("chatgpt.com"), false);
+    assert.equal(line.includes("work_url"), true);
+    assert.equal(line.includes("work_url_revision"), true);
+  }
+
+  assert.throws(
+    () => serializeLaneEvent({
+      ...baseEvent(),
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.WORK_TARGET_SAVED,
+      phase: "SAVED",
+      reason_code: "OWNER_WORK_REVISION",
+      work_url_revision: 9,
+      work_url: "https://chatgpt.com/c/private"
+    }),
+    /not allowlisted/
+  );
+});
+
 test("strict event allowlist rejects forbidden fields instead of serializing them", () => {
   const forbidden = [
     "url",
@@ -416,7 +450,7 @@ test("runtime source integrates events only at durable exact-once boundaries", a
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
-  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-19\.51"/);
+  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.52"/);
   assert.match(source, /beginTaskAssignment/);
   assert.match(source, /finalizeConfirmedDispatch/);
   assert.match(source, /WORK_DISPATCH_CONFIRMED/);
