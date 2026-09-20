@@ -45,6 +45,7 @@ export function hasActiveWorkTransaction(lane = {}) {
     lane?.awaiting_work ||
     lane?.dispatch_inflight ||
     lane?.relay_inflight ||
+    lane?.work_rollover ||
     completedResultNotRelayed
   );
 }
