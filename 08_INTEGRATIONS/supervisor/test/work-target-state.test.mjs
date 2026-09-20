@@ -186,6 +186,16 @@ test("three lane objects stay isolated", () => {
   assert.equal(JSON.stringify(lanes["lane-3"]), before3);
 });
 
+test("legacy deterministic relay id is also a safe confirmed-result boundary", () => {
+  assert.equal(hasActiveWorkTransaction(lane({
+    last_result_relay_id: "relay-confirmed",
+    task_timing: {
+      completed_at: "2026-09-20T01:00:00.000Z",
+      relay_confirmed_at: null
+    }
+  })), false);
+});
+
 test("active predicate includes unresolved completed result but not fully relayed history", () => {
   assert.equal(hasActiveWorkTransaction(lane({ awaiting_work: true })), true);
   assert.equal(hasActiveWorkTransaction(lane({
