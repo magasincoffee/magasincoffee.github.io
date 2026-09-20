@@ -621,7 +621,12 @@ test("explicit observed zero and valid negative generic bank opening are preserv
 
 test("missing blank and NaN never become synthetic zero; source failures stay isolated", () => {
   for (const value of [undefined, "", Number.NaN]) {
-    const opening = observed({ role: "OPENING", value });
+    const opening = observed({ role: "OPENING", value: 1 });
+    if (value === undefined) {
+      delete opening.value;
+    } else {
+      opening.value = value;
+    }
     const result = integrateCashBridgeSources(scenario({
       openingSource: opening,
       openingCoverage: pointCoverage({
