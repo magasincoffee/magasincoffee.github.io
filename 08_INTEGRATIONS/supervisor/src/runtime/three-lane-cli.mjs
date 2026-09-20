@@ -265,7 +265,7 @@ function laneStatus(configLane, registryLane, status, message, extra = {}) {
   };
 }
 
-async function writeLaneStatus(statusPath, statuses) {
+async function writeLaneStatus(statusPath, statuses, scheduler = null) {
   await atomicJsonWrite(statusPath, {
     schema_version: "three-lane-status.v1",
     mode: THREE_LANE_MODE,
@@ -273,6 +273,7 @@ async function writeLaneStatus(statusPath, statuses) {
     truth_order: ["PROCESS_TRUTH", "LANE_TRUTH", "PERSISTED_RECOVERY_STATE"],
     persisted_state_role: "RECOVERY_ONLY",
     process_truth_required: true,
+    scheduler: scheduler ? scheduler.snapshot() : null,
     updated_at: new Date().toISOString(),
     lanes: LANE_IDS.map((laneId) => statuses[laneId] || {
       lane_id: laneId,
