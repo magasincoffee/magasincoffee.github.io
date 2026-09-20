@@ -7,6 +7,10 @@ import {
   normalizeWorkWatchdog
 } from "./work-watchdog.mjs";
 import { normalizeWorkRollover } from "./work-rollover.mjs";
+import {
+  defaultTargetHealth,
+  normalizeTargetHealth
+} from "./target-health.mjs";
 
 export const THREE_LANE_MODE = "THREE_LANE_V1";
 export const LANE_DIRECTIVE_START = "<<<MAGASIN_LANE_DIRECTIVE_V1>>>";
@@ -169,6 +173,8 @@ export function defaultLaneRegistry() {
       task_timing: defaultTaskTiming(),
       work_watchdog: defaultWorkWatchdog(),
       work_rollover: null,
+      brain_target_health: defaultTargetHealth(),
+      work_target_health: defaultTargetHealth(),
       applied_work_url_revision: 0
     }]))
   };
@@ -215,6 +221,8 @@ export function normalizeLaneRegistry(value = {}) {
       task_timing: normalizeTaskTiming(lane.task_timing),
       work_watchdog: normalizeWorkWatchdog(lane.work_watchdog),
       work_rollover: normalizeWorkRollover(lane.work_rollover),
+      brain_target_health: normalizeTargetHealth(lane.brain_target_health),
+      work_target_health: normalizeTargetHealth(lane.work_target_health),
       applied_work_url_revision: Number(lane.applied_work_url_revision || 0)
     };
   }
