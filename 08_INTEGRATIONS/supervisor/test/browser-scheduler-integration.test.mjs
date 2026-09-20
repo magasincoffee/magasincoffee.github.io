@@ -16,7 +16,7 @@ function functionSlice(source, startNeedle, endNeedle) {
 
 test("RBT-004 runtime is v53 and imports exactly one canonical scheduler", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.53"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.54"/);
   assert.match(runtime, /from "\.\/browser-scheduler\.mjs"/);
   assert.equal((runtime.match(/new BrowserScheduler\(/g) || []).length, 1);
   assert.match(runtime, /pageBudget: args\.pageBudget/);
