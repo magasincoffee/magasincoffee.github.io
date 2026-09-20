@@ -161,16 +161,21 @@ test("ACTIVE_MUTATION page is never evicted", async () => {
   const adapter = new FakeAdapter();
   const scheduler = new BrowserScheduler({ adapter });
   const active = await acquire(scheduler,"lane-1","WORK",1);
-  const releaseMutation = scheduler.acquireMutationLease({
-    laneId:"lane-1", role:"WORK", page:active, reason:"send"
-  });
+  scheduler.releaseObservation(active);
   const p2 = await acquire(scheduler,"lane-2","BRAIN",2);
   scheduler.releaseObservation(p2);
   const p3 = await acquire(scheduler,"lane-3","BRAIN",3);
   scheduler.releaseObservation(p3);
-  await scheduler.evictOneSafe();
+
+  const releaseMutation = scheduler.acquireMutationLease({
+    laneId:"lane-1", role:"WORK", page:active, reason:"send"
+  });
+  const evicted = await scheduler.evictOneSafe();
+
   assert.equal(active.isClosed(), false);
   assert.equal(scheduler.leaseFor(active).state, PAGE_LEASE_STATES.ACTIVE_MUTATION);
+  assert.ok(evicted);
+  assert.ok(p2.isClosed() || p3.isClosed());
   releaseMutation();
 });
 
