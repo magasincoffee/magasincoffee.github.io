@@ -148,9 +148,10 @@ const applyStart = runtimeSource.indexOf("async function applyOwnerRelayRetryRea
 const applyEnd = runtimeSource.indexOf("async function applyOwnerWorkTarget", applyStart);
 const applySource = runtimeSource.slice(applyStart, applyEnd);
 assert.ok(applyStart >= 0 && applyEnd > applyStart);
-assert.ok(applySource.indexOf("hasRelayMarker") < applySource.indexOf("rearmRelayRetry"));
-assert.ok(applySource.indexOf("waitForStableSendSurface") < applySource.indexOf("rearmRelayRetry"));
-assert.match(applySource, /BRAIN_NOT_READY/);
+const exhaustedApplySource = applySource.slice(applySource.indexOf("if (!brainPage)"));
+assert.ok(exhaustedApplySource.indexOf("hasRelayMarker") < exhaustedApplySource.indexOf("rearmRelayRetry"));
+assert.ok(exhaustedApplySource.indexOf("waitForStableSendSurface") < exhaustedApplySource.indexOf("rearmRelayRetry"));
+assert.match(exhaustedApplySource, /BRAIN_NOT_READY/);
 assert.match(applySource, /finalizeConfirmedRelay/);
 assert.match(applySource, /EVIDENCE_MISSING/);
 assert.doesNotMatch(applySource, /clearRelayInflight/);
