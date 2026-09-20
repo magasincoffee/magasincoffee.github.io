@@ -320,12 +320,12 @@ jobs:
             }
             Start-Sleep -Seconds 1
           }
-          if (-not $ready) { throw "lane-events.ndjson was not created/appended by active v51 runtime" }
+          if (-not $ready) { throw "lane-events.ndjson was not created/appended by active Supervisor runtime" }
 
           $allowed = [System.Collections.Generic.HashSet[string]]::new(
             [string[]]@(
               "schema_version","timestamp","lane_id","actor","event_type",
-              "task_id","phase","reason_code","work_generation","elapsed_ms",
+              "task_id","phase","reason_code","work_generation","work_url_revision","elapsed_ms",
               "queue_time_ms","execution_time_ms","dispatch_id","relay_id"
             )
           )
