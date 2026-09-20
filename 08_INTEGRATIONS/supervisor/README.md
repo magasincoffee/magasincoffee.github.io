@@ -16,7 +16,7 @@ The Windows wrapper still retains the legacy `BRAIN_WORKER_V1` entry point as a 
 
 ### Current production baseline
 
-Runtime lifecycle in production is v2026-09-19.50.
+Runtime lifecycle in production is v2026-09-19.51.
 
 TASK-RBT-001 adds a **docs-only target architecture** for browser scheduling, long-running Work recovery, Work hot-swap and operational observability. Those target features are not considered released by TASK-RBT-001 itself.
 
@@ -26,7 +26,7 @@ Canonical target design:
 
 Implementation roadmap:
 
-- TASK-RBT-002 — Event & Timing Foundation
+- TASK-RBT-002 — Event & Timing Foundation — IMPLEMENTED in v2026-09-19.51
 - TASK-RBT-003 — Work URL Hot-Swap + LƯU WORK
 - TASK-RBT-004 — Browser Scheduler + Tab Budget
 - TASK-RBT-005 — Long-Running Work + 30m Watchdog
@@ -35,11 +35,11 @@ Implementation roadmap:
 - TASK-RBT-008 — Brain Planning Contract Runtime Hooks
 - TASK-RBT-009 — Integration / Overnight Soak / Cleanup
 
-Until those implementation tasks are merged and accepted, v50 runtime behavior remains production truth.
+v2026-09-19.51 production truth includes TASK-RBT-002 event/timing foundation only. TASK-RBT-003 through TASK-RBT-009 remain unreleased until their own implementation and acceptance tasks pass.
 
 ## Lifecycle truth
 
-Runtime lifecycle in v2026-09-19.50 follows one mandatory truth order:
+Runtime lifecycle in v2026-09-19.51 follows one mandatory truth order:
 
 PROCESS TRUTH > LANE TRUTH > PERSISTED RECOVERY STATE
 

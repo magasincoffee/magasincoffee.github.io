@@ -56,13 +56,13 @@ test("auto-upgrade validates THREE_LANE_V1 and lifecycle truth", async () => {
   assert.match(source, /TARGET_URLS_UNCHANGED=True/);
 });
 
-test("auto-upgrade requires v50 Three-Lane runtime and three local lanes", async () => {
+test("auto-upgrade requires v51 Three-Lane runtime and three local lanes", async () => {
   const source = await fs.readFile(
     new URL("../../../.github/workflows/supervisor-autostart-install.yml", import.meta.url),
     "utf8"
   );
 
-  assert.match(source, /2026-09-19\.50/);
+  assert.match(source, /2026-09-19\.51/);
   assert.match(source, /three-lane-cli\.mjs/);
   assert.match(source, /lane-status\.json/);
   assert.match(source, /lanes\.json/);
@@ -127,7 +127,7 @@ test("production state maintenance resets Work state by revision without changin
   assert.match(source, /Brain URL changed during state reset/);
   assert.match(source, /Work URL changed during state reset/);
   assert.match(source, /applied_work_url_revision/);
-  assert.match(source, /2026-09-19\.50/);
+  assert.match(source, /2026-09-19\.51/);
   assert.doesNotMatch(source, /brain_url\s*=/);
   assert.doesNotMatch(source, /work_url\s*=/);
 });

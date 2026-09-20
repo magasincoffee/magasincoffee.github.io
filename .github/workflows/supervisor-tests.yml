@@ -34,6 +34,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Run TASK-RBT-002 event timing targeted tests
+        run: node --test test/lane-events.test.mjs
       - name: Run Supervisor unit tests
         run: npm test
       - name: Verify no browser/live side effects in foundation

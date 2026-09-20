@@ -39,8 +39,8 @@ jobs:
           $runtimeThreeLane = Join-Path $root "runtime\src\runtime\three-lane-cli.mjs"
           $lifecycle = Join-Path $root "runtime\windows\lifecycle-truth.ps1"
           if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.50" -Quiet)) {
-            throw "Lifecycle acceptance did not install v2026-09-19.50"
+          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.51" -Quiet)) {
+            throw "Lifecycle acceptance did not install v2026-09-19.51"
           }
           if (-not (Test-Path $lifecycle)) { throw "Installed lifecycle truth helper is missing after install" }
           Write-Host "LIFECYCLE_ACCEPTANCE_INSTALL_READY=True"
@@ -140,17 +140,17 @@ jobs:
           if (-not (Test-Path $configFile)) { throw "lanes.json is missing" }
           . $lifecycle
 
-          # Wait for the v50 install workflow when both workflows were triggered by the same merge.
-          $v50 = $false
+          # Wait for the v51 install workflow when both workflows were triggered by the same merge.
+          $v51 = $false
           for ($i = 0; $i -lt 180; $i++) {
             $runtimeThreeLane = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
-            if ((Test-Path $runtimeThreeLane) -and (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.50" -Quiet)) {
-              $v50 = $true
+            if ((Test-Path $runtimeThreeLane) -and (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.51" -Quiet)) {
+              $v51 = $true
               break
             }
             Start-Sleep -Seconds 1
           }
-          if (-not $v50) { throw "Installed runtime did not reach v2026-09-19.50" }
+          if (-not $v51) { throw "Installed runtime did not reach v2026-09-19.51" }
 
           $initialOwnerStop = Get-LifecycleOwnerStopState -Root $root
           if ($initialOwnerStop.blocked) {

@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { canonicalConversationPathname } from "./recovery.mjs";
+import { defaultTaskTiming, normalizeTaskTiming } from "./lane-events.mjs";
 
 export const THREE_LANE_MODE = "THREE_LANE_V1";
 export const LANE_DIRECTIVE_START = "<<<MAGASIN_LANE_DIRECTIVE_V1>>>";
@@ -136,6 +137,7 @@ export function defaultLaneRegistry() {
       brain_request_inflight: null,
       brain_request_sent: false,
       awaiting_work: false,
+      task_timing: defaultTaskTiming(),
       applied_work_url_revision: 0
     }]))
   };
@@ -161,6 +163,7 @@ export function normalizeLaneRegistry(value = {}) {
       brain_request_inflight: lane.brain_request_inflight || null,
       brain_request_sent: Boolean(lane.brain_request_sent),
       awaiting_work: Boolean(lane.awaiting_work),
+      task_timing: normalizeTaskTiming(lane.task_timing),
       applied_work_url_revision: Number(lane.applied_work_url_revision || 0)
     };
   }
