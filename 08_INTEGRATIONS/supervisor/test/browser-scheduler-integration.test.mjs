@@ -65,7 +65,9 @@ test("all destructive sends and reconcile reloads are guarded by global mutation
   assert.match(runtime, /reason: "BRAIN_REQUEST_SEND"/);
   assert.match(runtime, /reason: "BRAIN_RECONCILE_RELOAD"/);
   assert.match(runtime, /reason: "WORK_RECONCILE_RELOAD"/);
-  assert.match(runtime, /reason: "WORK_DISPATCH_SEND"/);
+  assert.match(runtime, /"WORK_DISPATCH_SEND"/);
+  assert.match(runtime, /"WORK_ROLLOVER_DISPATCH_SEND"/);
+  assert.match(runtime, /runBrowserMutation\([\s\S]*?WORK_ROLLOVER_DISPATCH_SEND[\s\S]*?sendComposerInstruction/);
   assert.match(runtime, /reason: "RESULT_RELAY_SEND"/);
   assert.match(runtime, /scheduler\.createPageUnderMutation/);
 });
