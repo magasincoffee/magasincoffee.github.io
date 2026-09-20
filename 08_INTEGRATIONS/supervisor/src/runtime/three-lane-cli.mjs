@@ -2469,12 +2469,13 @@ async function processLaneTurn({
 
     const activityAt = new Date().toISOString();
     const timing = ensureLaneTaskTiming(registryLane, registryLane.task_id);
+    const safeObservation = buildSafeWorkObservation(
+      workProbe.snapshot,
+      workProbe.classification.observation === OBSERVATIONS.RESPONSE_COMPLETE
+    );
     const activity = observeWorkActivity(
       timing,
-      buildSafeWorkObservation(
-        workProbe.snapshot,
-        workProbe.classification.observation === OBSERVATIONS.RESPONSE_COMPLETE
-      ),
+      safeObservation,
       { at: activityAt }
     );
     if (activity.baseline_initialized || activity.changed) {
@@ -2503,12 +2504,230 @@ async function processLaneTurn({
       );
     }
 
-    if (workProbe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
+    const recoveryAllowed = await isWatchdogRecoveryAllowed({
+      stopPath,
+      configPath,
+      laneId: lane.lane_id
+    });
+    let watchdogDecision = await evaluateAndPersistWorkWatchdog({
+      lane,
+      registryLane,
+      registry,
+      registryPath,
+      timing,
+      observation: safeObservation,
+      activityChanged: activity.changed,
+      ownerStopped: !recoveryAllowed,
+      securityBlocked: false,
+      at: activityAt
+    });
+
+    if (watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.BLOCKED_OWNER_STOP) {
       return laneStatus(
         lane,
         registryLane,
-        "WORKING",
-        `Đang thực hiện ${registryLane.task_id || "công việc hiện tại"}; observation xong và lane đã yield.`
+        "STOPPED",
+        "Owner STOP/lane disable đã chặn watchdog recovery.",
+        {
+          watchdog_phase: registryLane.work_watchdog.phase,
+          task_elapsed_ms: watchdogDecision.elapsed_ms
+        }
+      );
+    }
+
+    if (watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.IDENTITY_MISMATCH) {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WAIT_OWNER",
+        "Watchdog từ chối recovery vì task/Work revision/generation không còn khớp exact execution target.",
+        {
+          watchdog_phase: registryLane.work_watchdog.phase,
+          task_elapsed_ms: watchdogDecision.elapsed_ms
+        }
+      );
+    }
+
+    if (watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.STALL_CHECK) {
+      return laneStatus(
+        lane,
+        registryLane,
+        "STALL_CHECK",
+        "Work đã >=30 phút và không có safe activity >=5 phút; watchdog chỉ đánh dấu STALL_CHECK ở turn này.",
+        {
+          watchdog_phase: registryLane.work_watchdog.phase,
+          task_elapsed_ms: watchdogDecision.elapsed_ms,
+          last_activity_at: timing.last_activity_at
+        }
+      );
+    }
+
+    if (
+      watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.STALL_CHECK_COOLDOWN ||
+      watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.RECOVERY_UNCERTAIN
+    ) {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WORKING_LONG",
+        watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.RECOVERY_UNCERTAIN
+          ? "Watchdog recovery intent đã persist; không tự replay reload sau restart/crash."
+          : "Work vẫn long-running; watchdog đang trong reload cooldown, không reload.",
+        {
+          watchdog_phase: registryLane.work_watchdog.phase,
+          task_elapsed_ms: watchdogDecision.elapsed_ms,
+          last_activity_at: timing.last_activity_at
+        }
+      );
+    }
+
+    if (watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.POSSIBLY_STALLED) {
+      return laneStatus(
+        lane,
+        registryLane,
+        "POSSIBLY_STALLED",
+        "Work có thể đã stalled sau bounded recovery. Robot giữ nguyên task/target/latches và không reload lần hai.",
+        {
+          watchdog_phase: registryLane.work_watchdog.phase,
+          task_elapsed_ms: watchdogDecision.elapsed_ms,
+          last_activity_at: timing.last_activity_at
+        }
+      );
+    }
+
+    if (watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.RELOAD_ELIGIBLE) {
+      if (!execute) {
+        return laneStatus(
+          lane,
+          registryLane,
+          "STALL_CHECK",
+          "Watchdog đủ điều kiện reload nhưng runtime đang dry-run; không mutation.",
+          {
+            watchdog_phase: registryLane.work_watchdog.phase,
+            task_elapsed_ms: watchdogDecision.elapsed_ms
+          }
+        );
+      }
+
+      const expectedIdentity = watchdogIdentity(registryLane);
+      const recovery = await executeWatchdogReload({
+        adapter,
+        lane,
+        registryLane,
+        registry,
+        registryPath,
+        logPath,
+        scheduler,
+        stopPath,
+        configPath,
+        workPage,
+        expectedIdentity
+      });
+
+      if (recovery.status === "OWNER_STOP") {
+        return laneStatus(
+          lane,
+          registryLane,
+          "STOPPED",
+          "Owner STOP/lane disable đã thắng race trước watchdog reload; không mutation."
+        );
+      }
+      if (recovery.status === "MUTATION_BUSY") {
+        return laneStatus(
+          lane,
+          registryLane,
+          "STALL_CHECK",
+          "Global mutation lease đang bận; watchdog yield và thử lại ở turn sau, không spin."
+        );
+      }
+      if (recovery.status === "IDENTITY_MISMATCH") {
+        return laneStatus(
+          lane,
+          registryLane,
+          "WAIT_OWNER",
+          "Watchdog huỷ recovery vì exact task/Work/generation thay đổi trước mutation."
+        );
+      }
+      if (recovery.status === "MARKER_MISSING") {
+        return laneStatus(
+          lane,
+          registryLane,
+          "POSSIBLY_STALLED",
+          "Sau reload exact Work, dispatch marker không được xác minh. Robot fail-closed, không resend."
+        );
+      }
+
+      const postObservation = buildSafeWorkObservation(
+        recovery.probe.snapshot,
+        recovery.probe.classification.observation === OBSERVATIONS.RESPONSE_COMPLETE
+      );
+      const postActivity = observeWorkActivity(
+        timing,
+        postObservation,
+        { at: recovery.at }
+      );
+      if (postActivity.baseline_initialized || postActivity.changed) {
+        await atomicJsonWrite(registryPath, registry);
+        if (postActivity.event_due) {
+          await emitLaneEvent({
+            timestamp: recovery.at,
+            lane_id: lane.lane_id,
+            actor: "WORK",
+            event_type: LANE_EVENT_TYPES.WORK_ACTIVITY,
+            task_id: registryLane.task_id,
+            phase: "WORKING_LONG",
+            reason_code: postActivity.reason_code,
+            work_generation: Number(registryLane.work_generation || 0),
+            ...timingEventFields(timing, recovery.at)
+          });
+        }
+      }
+
+      watchdogDecision = await evaluateAndPersistWorkWatchdog({
+        lane,
+        registryLane,
+        registry,
+        registryPath,
+        timing,
+        observation: postObservation,
+        activityChanged: postActivity.changed,
+        ownerStopped: false,
+        securityBlocked: false,
+        at: recovery.at
+      });
+
+      return laneStatus(
+        lane,
+        registryLane,
+        watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.POSSIBLY_STALLED
+          ? "POSSIBLY_STALLED"
+          : "WORKING_LONG",
+        watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.WORKING_LONG
+          ? "Watchdog reload bounded hoàn tất; có fresh progress/running evidence. Không resend task."
+          : "Watchdog reload bounded hoàn tất; đang observation post-reload, không reload lần hai.",
+        {
+          watchdog_phase: registryLane.work_watchdog.phase,
+          task_elapsed_ms: watchdogDecision.elapsed_ms,
+          last_activity_at: timing.last_activity_at
+        }
+      );
+    }
+
+    if (workProbe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
+      const longRunning =
+        watchdogDecision.decision === WORK_WATCHDOG_DECISIONS.WORKING_LONG;
+      return laneStatus(
+        lane,
+        registryLane,
+        longRunning ? "WORKING_LONG" : "WORKING",
+        longRunning
+          ? `Work đang chạy lâu hợp lệ cho ${registryLane.task_id || "task hiện tại"}; chỉ bounded observation rồi yield.`
+          : `Đang thực hiện ${registryLane.task_id || "công việc hiện tại"}; observation xong và lane đã yield.`,
+        {
+          watchdog_phase: registryLane.work_watchdog.phase,
+          task_elapsed_ms: watchdogDecision.elapsed_ms,
+          last_activity_at: timing.last_activity_at
+        }
       );
     }
 
