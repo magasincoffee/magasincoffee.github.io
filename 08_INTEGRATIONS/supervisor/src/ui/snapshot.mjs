@@ -252,9 +252,13 @@ export async function collectSafeUiSnapshot(page) {
 
       const sendControl = controls.find((control) => {
         const testId = String(control.testId || "").toLowerCase();
-        const semantic = `${control.text} ${control.ariaLabel}`;
+        const candidates = [control.text, control.ariaLabel]
+          .map((value) => String(value || "").trim())
+          .filter(Boolean);
         return testId === "send-button" ||
-          /^(?:send|send prompt|gửi|gửi tin nhắn)$/i.test(semantic.trim());
+          candidates.some((value) =>
+            /^(?:send|send prompt|gửi|gửi tin nhắn)$/i.test(value)
+          );
       }) || null;
       const sendCapacityReason = sendControl
         ? [sendControl.ariaLabel, sendControl.title, sendControl.testId || ""]
