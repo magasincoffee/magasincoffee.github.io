@@ -1542,6 +1542,27 @@ async function relayWorkResult({
       return outcome;
     }
     latch = registryLane.relay_inflight;
+    if (latch) {
+      const reconstructedTextDigest = sha256(relay.text);
+      if (
+        relay.relay_id !== latch.relay_id ||
+        relay.response_digest !== latch.response_digest ||
+        reconstructedTextDigest !== latch.text_digest
+      ) {
+        latch.retry_exhausted = true;
+        latch.retry_not_before = null;
+        latch.last_attempt_state = "RESULT_IDENTITY_MISMATCH";
+        await atomicJsonWrite(registryPath, registry);
+        await safeLog(logPath, {
+          type: "LANE_RESULT_RELAY_IDENTITY_MISMATCH",
+          laneId: lane.lane_id,
+          taskId: registryLane.task_id,
+          relayId: latch.relay_id,
+          reason: "FAIL_CLOSED_RECONSTRUCTED_RESULT_MISMATCH"
+        });
+        return "EVIDENCE_MISMATCH";
+      }
+    }
   }
 
   const brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
@@ -1954,6 +1975,42 @@ async function applyOwnerRelayRetryRearm({
       taskId: registryLane.task_id,
       relayId: latch.relay_id,
       reason: `revision=${revision}`
+    });
+    return { status: "DEDUPED", revision };
+  }
+
+  const stableBrain = await waitForStableSendSurface(adapter, brainPage, {
+    brain: true,
+    timeoutMs: 4_000
+  });
+  if (!stableBrain.stable || !stableBrain.probe) {
+    await safeLog(logPath, {
+      type: "LANE_OWNER_RELAY_REARM_BRAIN_NOT_READY",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: latch.relay_id,
+      reason: `revision=${revision};intent_pending=true`
+    });
+    return { status: "BRAIN_NOT_READY", revision };
+  }
+
+  // Brain may have persisted the previous send while the stable-surface probe
+  // was running. Reconcile the deterministic marker again before opening a
+  // fresh retry epoch.
+  if (await hasRelayMarker(brainPage, latch.relay_id)) {
+    registryLane.applied_relay_retry_rearm_revision = revision;
+    await finalizeConfirmedRelay({
+      registryLane,
+      registry,
+      registryPath,
+      latch
+    });
+    await emitRelayRearmLifecycleEvent({
+      lane,
+      registryLane,
+      latch,
+      eventType: LANE_EVENT_TYPES.RELAY_REARM_DEDUPED,
+      reasonCode: "OWNER_RELAY_REARM_DEDUPED"
     });
     return { status: "DEDUPED", revision };
   }
@@ -2565,6 +2622,14 @@ async function processLaneTurn({
         `ĐÃ YÊU CẦU THỬ LẠI RELAY — revision ${rearmOutcome.revision}; giữ nguyên relay_id và task, lane yield trước retry.`
       );
     }
+    if (rearmOutcome.status === "BRAIN_NOT_READY") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "RECOVERING",
+        `ĐÃ YÊU CẦU THỬ LẠI RELAY — revision ${rearmOutcome.revision}; Brain chưa ổn định nên chưa mở retry epoch, intent vẫn pending.`
+      );
+    }
     if (rearmOutcome.status === "EVIDENCE_MISSING") {
       return laneStatus(
         lane,
@@ -3018,12 +3083,17 @@ async function processLaneTurn({
           "RELAY HẾT LƯỢT THỬ — kiểm tra Brain rồi bấm THỬ LẠI RELAY. Robot không tự retry thêm và không gửi trùng."
         );
       }
-      if (relayOutcome === "EVIDENCE_MISSING") {
+      if (
+        relayOutcome === "EVIDENCE_MISSING" ||
+        relayOutcome === "EVIDENCE_MISMATCH"
+      ) {
         return laneStatus(
           lane,
           registryLane,
           "WAIT_OWNER",
-          "Relay evidence bị thiếu/hỏng. Robot giữ nguyên relay latch và task; không destructive reset."
+          relayOutcome === "EVIDENCE_MISMATCH"
+            ? "Kết quả Work hiện tại không còn khớp relay latch đã persist. Robot fail-closed, giữ nguyên task/evidence và không gửi."
+            : "Relay evidence bị thiếu/hỏng. Robot giữ nguyên relay latch và task; không destructive reset."
         );
       }
       return laneStatus(
