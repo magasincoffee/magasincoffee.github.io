@@ -1972,6 +1972,20 @@ async function isOwnerStopRequested(stopPath) {
   }
 }
 
+async function isWatchdogRecoveryAllowed({
+  stopPath,
+  configPath,
+  laneId
+}) {
+  if (await isOwnerStopRequested(stopPath)) return false;
+  if (!configPath) return true;
+  const latest = normalizeLaneConfig(
+    await readJson(configPath, defaultLaneConfig())
+  );
+  const lane = latest.lanes.find((item) => item.lane_id === laneId);
+  return Boolean(lane?.enabled);
+}
+
 function watchdogIdentity(registryLane) {
   return {
     task_id: registryLane.task_id || null,
@@ -2097,10 +2111,15 @@ async function executeWatchdogReload({
   logPath,
   scheduler,
   stopPath,
+  configPath,
   workPage,
   expectedIdentity
 }) {
-  if (await isOwnerStopRequested(stopPath) || !lane.enabled) {
+  if (!(await isWatchdogRecoveryAllowed({
+    stopPath,
+    configPath,
+    laneId: lane.lane_id
+  }))) {
     return { status: "OWNER_STOP" };
   }
   if (!watchdogIdentityMatches(registryLane, expectedIdentity)) {
@@ -2125,7 +2144,11 @@ async function executeWatchdogReload({
   }
 
   try {
-    if (await isOwnerStopRequested(stopPath) || !lane.enabled) {
+    if (!(await isWatchdogRecoveryAllowed({
+    stopPath,
+    configPath,
+    laneId: lane.lane_id
+  }))) {
       return { status: "OWNER_STOP" };
     }
     if (!watchdogIdentityMatches(registryLane, expectedIdentity)) {
@@ -2236,7 +2259,8 @@ async function processLaneTurn({
   evidenceDir,
   logPath,
   scheduler = null,
-  stopPath = null
+  stopPath = null,
+  configPath = null
 }) {
   if (!lane.enabled) {
     return laneStatus(lane, registryLane, "STOPPED", "Luồng đang dừng.");
