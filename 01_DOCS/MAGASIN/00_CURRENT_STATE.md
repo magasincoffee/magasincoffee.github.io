@@ -16,7 +16,8 @@ Canonical architecture:
 - `02_PROFITABILITY_CASH/TASK_062_CASH_BALANCE_SOURCE_MAPPER_V1_EVIDENCE.md`;
 - `02_PROFITABILITY_CASH/TASK_063_CASH_SOURCE_COVERAGE_V1_EVIDENCE.md`;
 - `02_PROFITABILITY_CASH/TASK_064_CASH_BRIDGE_SOURCE_INTEGRATION_V1_EVIDENCE.md`;
-- `02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`.
+- `02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`;
+- `02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`.
 
 ## PFC execution handoff
 
@@ -30,12 +31,13 @@ Current state:
 
 ```text
 PFC_3H_V1_RESTART_01 = COMPLETE
-TASK-051 → TASK-065   = DONE
+TASK-051 → TASK-066   = DONE
 WAVE A — CASH TRUTH   = CLOSED
+WAVE B — OPEX TRUTH   = ACTIVE
 
-current_task          = TASK-066
-TASK-066              = READY / AUTO_CONTINUE
-next_task             = TASK-067
+current_task          = TASK-067
+TASK-067              = READY / AUTO_CONTINUE
+next_task             = TASK-068
 status                = READY
 autonomy              = AUTO_CONTINUE
 requires_user         = false
@@ -58,7 +60,7 @@ Current verified balance landscape:
 
 Missing balance sources remain gaps; they do not pause PFC_8H_V2.
 
-TASK-065 Wave-A Cash Truth regression/evidence closure is complete. Cash Truth Stack V1 is implemented, while current live observed opening/ending and complete enterprise source/account coverage remain incomplete. TASK-066 is now the active canonical task.
+TASK-066 OPEX Source Inventory V1 is complete. Wave B now has a source-role/freshness map that separates recognized cost from payment, settlement, allocation and budget context. Operating Cost truth is still incomplete; missing sources remain GAP/NOT_CONNECTED. TASK-067 is now the active canonical task.
 
 ## Financial baseline state
 
@@ -74,7 +76,8 @@ Implemented:
 6. Procurement supplier-payment → Cash mapping;
 7. current Procurement AP point-in-time truth;
 8. Partial Financial Baseline V1 composer;
-9. Cash Truth Stack V1: point-balance contract + source mapper + source/account/period coverage + point-gated Cash Bridge source integration.
+9. Cash Truth Stack V1: point-balance contract + source mapper + source/account/period coverage + point-gated Cash Bridge source integration;
+10. OPEX Source Inventory V1: recognition/payment/settlement/allocation/budget/not-connected source map.
 
 The system does **not** claim:
 - full P&L;
@@ -120,7 +123,7 @@ These remain mandatory:
 
 ## Current PFC V2 priority
 
-### TASK-066 — OPEX Source Inventory V1
+### TASK-067 — Operating Cost Truth Contract
 
 Status:
 
@@ -128,19 +131,22 @@ Status:
 
 Goal:
 
-Start Wave B — Operating Cost Truth by inventorying current payroll, rent, utilities, platform, marketing and other OPEX evidence without confusing expense recognition with Cash paid.
+Define one source-agnostic Operating Cost Financial Truth contract where recognized cost remains distinct from Cash paid, settlement proceeds, allocation context and budget context.
 
-Wave A closure:
+TASK-066 source inventory is complete:
 
-- TASK-060→065 = DONE;
-- Cash Truth Stack V1 mechanism = IMPLEMENTED;
-- live direct observed opening/ending and full enterprise Cash source/account universe = INCOMPLETE;
-- missing source evidence remains GAP / NOT_CONNECTED and does not pause PFC_8H_V2;
-- canonical closure evidence: `02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`.
+- payroll/labor = PARTIAL bounded recognition candidate behind actuality/rate/period gates;
+- current rent/utilities/marketing/bank-fee recognition sources remain GAP/NOT_CONNECTED;
+- provider settlement fields can support exact covered fee/promo/tax semantics, but current September provider coverage is incomplete;
+- branch cash/operating ledgers remain payment/reconciliation evidence unless category + business nature + recognition period are proven;
+- Procurement purchases and supplier payments do not become OPEX by implication;
+- shared/company OPEX cannot be allocated to branches without an approved rule;
+- Google Drive remained READ_ONLY;
+- evidence: `02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`.
 
-Next queued task after TASK-066:
+Next queued task after TASK-067:
 
-`TASK-067 — Operating Cost Truth Contract`
+`TASK-068 — Payroll Cost Mapper`
 
 ## Remaining major gaps
 
@@ -189,8 +195,9 @@ Mandatory new-chat bootstrap:
 3. `00_PROJECT_STATE.json`.
 4. `00_TASK_QUEUE.md`.
 5. `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`.
-6. `02_PROFITABILITY_CASH/TASK_064_CASH_BRIDGE_SOURCE_INTEGRATION_V1_EVIDENCE.md`.
-7. `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
+6. `02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`.
+7. `02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`.
+8. `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
 8. `00_MASTER_PLAN.md`.
 9. `06_DECISION_LOG.md`.
 10. `00_CHATGPT_CONTEXT.md`.
@@ -261,7 +268,7 @@ Canonical contract: `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md`.
 Owner explicitly released `PFC_8H_V2` on 2026-09-20.
 
 - generation: `PFC_8H_V2_RUN_01`
-- current task: `TASK-066 — OPEX Source Inventory V1`
+- current task: `TASK-067 — Operating Cost Truth Contract`
 - state: `READY / AUTO_CONTINUE`
 - Wave A Cash Truth: `CLOSED / CASH TRUTH STACK V1 IMPLEMENTED / LIVE BALANCE EVIDENCE INCOMPLETE`
 - Robot may execute: `true`
