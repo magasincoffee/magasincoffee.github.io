@@ -62,6 +62,7 @@ jobs:
           $startScript = Join-Path $runtime "windows\start-supervisor.ps1"
           $stopScript = Join-Path $runtime "windows\stop-supervisor.ps1"
           $panelScript = Join-Path $runtime "windows\control-panel.ps1"
+          $integrityHelper = Join-Path $env:GITHUB_WORKSPACE ".github\scripts\supervisor-integrity-registry.ps1"
 
           function Close-ControlPanels {
             Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
@@ -137,8 +138,10 @@ jobs:
 
           if (-not (Test-Path $lifecycle)) { throw "Installed lifecycle truth helper is missing" }
           if (-not (Test-Path $panelScript)) { throw "Installed Control Panel is missing" }
+          if (-not (Test-Path $integrityHelper)) { throw "Supervisor integrity registry helper is missing" }
           if (-not (Test-Path $configFile)) { throw "lanes.json is missing" }
           . $lifecycle
+          . $integrityHelper
 
           # Wait for the v51 install workflow when both workflows were triggered by the same merge.
           $v51 = $false
@@ -231,12 +234,20 @@ jobs:
             # D/J — recovery files/latches survive lifecycle restarts; lane registries stay isolated.
             if (-not (Test-Path $registryFile)) { throw "D/J failed: lane-registry.json missing" }
             $registry = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            $registryLanes = Get-OptionalPropertyValue -InputObject $registry -Name "lanes"
             foreach ($laneId in @("lane-1","lane-2","lane-3")) {
-              if (-not $registry.lanes.$laneId) { throw "J failed: missing registry lane $laneId" }
-              if ($registry.lanes.$laneId.dispatch_inflight -and [bool]$registry.lanes.$laneId.dispatch_inflight.reconcile_blocked) {
+              $laneState = Get-OptionalPropertyValue -InputObject $registryLanes -Name $laneId
+              if ($null -eq $laneState) { throw "J failed: missing registry lane $laneId" }
+
+              $dispatchInflight = Get-OptionalPropertyValue -InputObject $laneState -Name "dispatch_inflight"
+              $dispatchBlocked = [bool](Get-OptionalPropertyValue -InputObject $dispatchInflight -Name "reconcile_blocked" -DefaultValue $false)
+              if ($dispatchBlocked) {
                 throw "D failed: blocked dispatch latch remains"
               }
-              if ($registry.lanes.$laneId.relay_inflight -and [bool]$registry.lanes.$laneId.relay_inflight.reconcile_blocked) {
+
+              $relayInflight = Get-OptionalPropertyValue -InputObject $laneState -Name "relay_inflight"
+              $relayBlocked = [bool](Get-OptionalPropertyValue -InputObject $relayInflight -Name "reconcile_blocked" -DefaultValue $false)
+              if ($relayBlocked) {
                 throw "D failed: blocked relay latch remains"
               }
             }
