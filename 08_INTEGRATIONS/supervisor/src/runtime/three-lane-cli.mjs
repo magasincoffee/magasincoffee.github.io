@@ -78,13 +78,15 @@ function parseArgs(argv) {
   const result = {
     cdpUrl: "http://127.0.0.1:9222",
     execute: false,
-    pollMs: 4000
+    pollMs: 4000,
+    workTargetFixture: false
   };
   for (let i = 0; i < argv.length; i += 1) {
     const key = argv[i];
     if (key === "--cdp-url") result.cdpUrl = argv[++i];
     else if (key === "--execute") result.execute = true;
     else if (key === "--poll-ms") result.pollMs = Number(argv[++i]);
+    else if (key === "--work-target-fixture") result.workTargetFixture = true;
     else throw new Error(`unknown argument: ${key}`);
   }
   return result;
@@ -2162,6 +2164,10 @@ async function processLane({
 }
 
 const args = parseArgs(process.argv.slice(2));
+if (args.workTargetFixture) {
+  await import("./work-target-acceptance-cli.mjs");
+  process.exit(0);
+}
 if (!Number.isFinite(args.pollMs) || args.pollMs < 1000) {
   throw new TypeError("poll-ms must be at least 1000");
 }
