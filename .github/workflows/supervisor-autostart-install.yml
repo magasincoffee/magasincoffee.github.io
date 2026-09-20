@@ -523,6 +523,51 @@ jobs:
           Write-Host "WORK_WATCHDOG_PRODUCTION_TRUTH_UNCHANGED=True"
           Write-Host "WORK_WATCHDOG_RUNTIME_PID_UNCHANGED=True"
 
+          $relayRearmOutput = & node $runtimeCli --relay-rearm-fixture
+          if ($LASTEXITCODE -ne 0) { throw "Installed relay rearm fixture acceptance failed" }
+          $relayRearmOutput | ForEach-Object { Write-Host $_ }
+
+          foreach ($marker in @(
+            "RELAY_REARM_FIXTURE_EXHAUSTED_OWNER_REARMED=True",
+            "RELAY_REARM_FIXTURE_SAME_RELAY_ID=True",
+            "RELAY_REARM_FIXTURE_BOUNDED_THREE_ATTEMPTS=True",
+            "RELAY_REARM_FIXTURE_NO_AUTO_REARM=True",
+            "RELAY_REARM_FIXTURE_SAME_REVISION_APPLIES_ONCE=True",
+            "RELAY_REARM_FIXTURE_NEW_REVISION_OPENS_ONE_EPOCH=True",
+            "RELAY_REARM_FIXTURE_MARKER_RECONCILE_BEFORE_REARM=True",
+            "RELAY_REARM_FIXTURE_STABLE_BRAIN_GATE=True",
+            "RELAY_REARM_FIXTURE_RESULT_IDENTITY_FAIL_CLOSED=True",
+            "RELAY_REARM_FIXTURE_EVIDENCE_FAIL_CLOSED=True",
+            "RELAY_REARM_FIXTURE_TASK_RESULT_TARGETS_PRESERVED=True",
+            "RELAY_REARM_FIXTURE_NO_WORK_DISPATCH_RESET=True"
+          )) {
+            if ($relayRearmOutput -notcontains $marker) {
+              throw "Missing relay rearm fixture marker: $marker"
+            }
+          }
+
+          $targetAfterRelayRearm = Get-TargetFingerprint $configFile
+          $registryAfterRelayRearm = Get-RegistryTruthFingerprint $registryFile
+          if ($targetAfterRelayRearm -ne $targetAfter) {
+            throw "Production Brain/Work target fingerprint changed during relay rearm fixture"
+          }
+          if ($registryAfterRelayRearm -ne $registryAfter) {
+            throw "Production task/latch/pending Work truth changed during relay rearm fixture"
+          }
+
+          $truthAfterRelayRearm = Get-LifecycleProcessTruth -Root $root
+          $wrapperAfterRelayRearm = if ($truthAfterRelayRearm.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+          if ($wrapperAfterRelayRearm -ne $wrapperAfter) {
+            throw "Relay rearm fixture restarted or stopped the Supervisor wrapper"
+          }
+
+          Write-Host "RELAY_REARM_RUNTIME_ARTIFACT_FIXTURE=True"
+          Write-Host "RELAY_REARM_PRODUCTION_TARGETS_UNCHANGED=True"
+          Write-Host "RELAY_REARM_PRODUCTION_TRUTH_UNCHANGED=True"
+          Write-Host "RELAY_REARM_RUNTIME_PID_UNCHANGED=True"
+
       - name: Verify event timing foundation privacy
         shell: powershell
         run: |

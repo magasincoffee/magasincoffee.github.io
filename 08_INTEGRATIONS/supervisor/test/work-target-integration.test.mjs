@@ -14,7 +14,7 @@ function functionSlice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("RBT-003 Work-target invariants remain intact on v53", async () => {
+test("RBT-003 Work-target invariants remain intact after v55 relay recovery bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
   const applyWork = functionSlice(
     runtime,
@@ -22,7 +22,7 @@ test("RBT-003 Work-target invariants remain intact on v53", async () => {
     "async function applyPendingWorkTargetAtSafeBoundary"
   );
 
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.54"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.55"/);
   assert.match(applyWork, /acceptOwnerWorkTargetRevision/);
   assert.match(applyWork, /WORK_TARGET_PENDING/);
   for (const forbidden of [

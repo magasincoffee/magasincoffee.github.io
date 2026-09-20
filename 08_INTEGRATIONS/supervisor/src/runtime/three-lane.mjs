@@ -87,6 +87,8 @@ export function defaultLaneConfig() {
       work_url_saved_at: null,
       work_mode: "AUTO",
       work_state_reset_revision: 0,
+      relay_retry_rearm_revision: 0,
+      relay_retry_rearm_requested_at: null,
       enabled: false
     }))
   };
@@ -115,6 +117,9 @@ export function normalizeLaneConfig(value = {}) {
           String(lane.work_url || "").trim()
         ),
         work_state_reset_revision: Number(lane.work_state_reset_revision || 0),
+        relay_retry_rearm_revision: Number(lane.relay_retry_rearm_revision || 0),
+        relay_retry_rearm_requested_at:
+          String(lane.relay_retry_rearm_requested_at || "").trim() || null,
         enabled: Boolean(lane.enabled)
       };
     })
@@ -156,6 +161,7 @@ export function defaultLaneRegistry() {
       last_dispatch_id: null,
       dispatch_inflight: null,
       relay_inflight: null,
+      applied_relay_retry_rearm_revision: 0,
       brain_request_inflight: null,
       brain_request_sent: false,
       awaiting_work: false,
@@ -199,6 +205,8 @@ export function normalizeLaneRegistry(value = {}) {
       last_dispatch_id: lane.last_dispatch_id || null,
       dispatch_inflight: lane.dispatch_inflight || null,
       relay_inflight: lane.relay_inflight || null,
+      applied_relay_retry_rearm_revision:
+        Number(lane.applied_relay_retry_rearm_revision || 0),
       brain_request_inflight: lane.brain_request_inflight || null,
       brain_request_sent: Boolean(lane.brain_request_sent),
       awaiting_work: Boolean(lane.awaiting_work),

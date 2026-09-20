@@ -14,9 +14,9 @@ function functionSlice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("RBT-004 runtime is v53 and imports exactly one canonical scheduler", async () => {
+test("RBT-004 scheduler remains canonical after v55 relay recovery bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.54"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.55"/);
   assert.match(runtime, /from "\.\/browser-scheduler\.mjs"/);
   assert.equal((runtime.match(/new BrowserScheduler\(/g) || []).length, 1);
   assert.match(runtime, /pageBudget: args\.pageBudget/);

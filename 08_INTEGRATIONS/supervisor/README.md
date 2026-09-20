@@ -16,7 +16,7 @@ The Windows wrapper still retains the legacy `BRAIN_WORKER_V1` entry point as a 
 
 ### Current production baseline
 
-Runtime lifecycle in production is v2026-09-20.52.
+Runtime lifecycle in production is v2026-09-20.55.
 
 TASK-RBT-001 adds a **docs-only target architecture** for browser scheduling, long-running Work recovery, Work hot-swap and operational observability. Those target features are not considered released by TASK-RBT-001 itself.
 
@@ -34,14 +34,15 @@ Implementation roadmap:
 
 - TASK-RBT-002 — Event & Timing Foundation — IMPLEMENTED in v2026-09-19.51
 - TASK-RBT-003 — Work URL Hot-Swap + LƯU WORK — IMPLEMENTED in v2026-09-20.52
-- TASK-RBT-004 — Browser Scheduler + Tab Budget
-- TASK-RBT-005 — Long-Running Work + 30m Watchdog
+- TASK-RBT-004 — Browser Scheduler + Tab Budget — IMPLEMENTED in v2026-09-20.53
+- TASK-RBT-005 — Long-Running Work + 30m Watchdog — IMPLEMENTED in v2026-09-20.54
+- TASK-RBT-005A — Relay Retry Exhaustion Recovery — IMPLEMENTED in v2026-09-20.55
 - TASK-RBT-006 — Multi-Signal Work Full Detection + Rollover
 - TASK-RBT-007 — Control Panel Timeline & Resource UX
 - TASK-RBT-008 — Brain Planning Contract Runtime Hooks
 - TASK-RBT-009 — Integration / Overnight Soak / Cleanup
 
-v2026-09-20.52 production truth includes TASK-RBT-002 event/timing foundation plus TASK-RBT-003 Work target hot-swap/save. TASK-RBT-004 through TASK-RBT-009 remain unreleased until their own implementation and acceptance tasks pass.
+v2026-09-20.55 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog and TASK-RBT-005A Owner-authorized relay retry recovery. TASK-RBT-006+ remain separate until their own implementation and acceptance tasks pass.
 
 ## Lifecycle truth
 
@@ -149,6 +150,23 @@ Runtime v2026-09-20.54 implements TASK-RBT-005:
 The 30-minute threshold is an inactivity watchdog, **not** a task timeout. Send-confirmation reconciliation reloads and execution-watchdog reloads are separate budgets and state machines.
 
 TASK-RBT-005 does not implement Work-full detection or rollover. Those remain TASK-RBT-006+.
+
+## Released relay retry exhaustion recovery
+
+Runtime v2026-09-20.55 implements TASK-RBT-005A:
+
+- relay retry still exhausts after three bounded attempts per epoch;
+- an exhausted relay never auto-rearms;
+- the Control Panel exposes **THỬ LẠI RELAY** only for an exhausted relay latch;
+- each Owner click persists a monotonic relay rearm revision; runtime applies a revision at most once;
+- runtime reopens the exact persisted Brain through the browser scheduler and reconciles the deterministic relay marker before changing retry state;
+- marker already present means canonical confirmation/dedupe with zero resend;
+- marker absent keeps the same relay ID, task, result digests, screenshot evidence, Brain/Work targets and pending Work state while opening one new three-attempt epoch;
+- missing/corrupt evidence fails closed without clearing the relay latch or destructively resetting the task;
+- Owner STOP/AUTOSTART_DISABLED remains authoritative: a saved intent can wait, but no send/reload/UI mutation occurs while stopped;
+- a later exhausted epoch requires a new Owner revision; there is no retry loop and no Brain/Work URL change requirement.
+
+TASK-RBT-005A does not implement Work-full detection or rollover. Those remain TASK-RBT-006+.
 
 ## Released Work URL save/hot-swap
 

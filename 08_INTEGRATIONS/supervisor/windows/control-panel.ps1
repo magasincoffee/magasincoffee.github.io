@@ -108,9 +108,9 @@ function New-DefaultConfig {
         schema_version = 'three-lane-config.v1'
         mode = 'THREE_LANE_V1'
         lanes = @(
-            [ordered]@{ lane_id='lane-1'; project_name='Dự án 1'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; work_url_saved_at=$null; work_mode='AUTO'; enabled=$false },
-            [ordered]@{ lane_id='lane-2'; project_name='Dự án 2'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; work_url_saved_at=$null; work_mode='AUTO'; enabled=$false },
-            [ordered]@{ lane_id='lane-3'; project_name='Dự án 3'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; work_url_saved_at=$null; work_mode='AUTO'; enabled=$false }
+            [ordered]@{ lane_id='lane-1'; project_name='Dự án 1'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; work_url_saved_at=$null; work_mode='AUTO'; relay_retry_rearm_revision=0; relay_retry_rearm_requested_at=$null; enabled=$false },
+            [ordered]@{ lane_id='lane-2'; project_name='Dự án 2'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; work_url_saved_at=$null; work_mode='AUTO'; relay_retry_rearm_revision=0; relay_retry_rearm_requested_at=$null; enabled=$false },
+            [ordered]@{ lane_id='lane-3'; project_name='Dự án 3'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; work_url_saved_at=$null; work_mode='AUTO'; relay_retry_rearm_revision=0; relay_retry_rearm_requested_at=$null; enabled=$false }
         )
     }
 }
@@ -357,6 +357,28 @@ function Save-WorkTarget(
     }
 }
 
+function Request-RelayRetryRearm([string]$LaneId) {
+    $config = Ensure-Config
+    $lane = Get-LaneConfig $config $LaneId
+    if (-not $lane) { throw "Không tìm thấy $LaneId" }
+
+    if (-not $lane.PSObject.Properties['relay_retry_rearm_revision']) {
+        $lane | Add-Member -NotePropertyName 'relay_retry_rearm_revision' -NotePropertyValue 0
+    }
+    if (-not $lane.PSObject.Properties['relay_retry_rearm_requested_at']) {
+        $lane | Add-Member -NotePropertyName 'relay_retry_rearm_requested_at' -NotePropertyValue $null
+    }
+
+    $lane.relay_retry_rearm_revision = [int]$lane.relay_retry_rearm_revision + 1
+    $lane.relay_retry_rearm_requested_at = [DateTimeOffset]::UtcNow.ToString('o')
+    Write-JsonAtomic $configFile $config
+
+    return [pscustomobject]@{
+        Revision = [int]$lane.relay_retry_rearm_revision
+        RequestedAt = [string]$lane.relay_retry_rearm_requested_at
+    }
+}
+
 function Save-BrainTarget(
     [string]$LaneId,
     [string]$BrainUrl
@@ -586,15 +608,23 @@ for ($i = 0; $i -lt 3; $i++) {
 
     $messageValue = New-Object Windows.Forms.Label
     $messageValue.Location = New-Object Drawing.Point(125, 138)
-    $messageValue.Size = New-Object Drawing.Size(760, 48)
+    $messageValue.Size = New-Object Drawing.Size(635, 48)
     $messageValue.AutoEllipsis = $true
     $panel.Controls.Add($messageValue)
 
     $updatedValue = New-Object Windows.Forms.Label
     $updatedValue.Location = New-Object Drawing.Point(125, 190)
-    $updatedValue.Size = New-Object Drawing.Size(760, 22)
+    $updatedValue.Size = New-Object Drawing.Size(635, 22)
     $updatedValue.ForeColor = [Drawing.Color]::FromArgb(100,116,139)
     $panel.Controls.Add($updatedValue)
+
+    $retryRelayButton = New-Object Windows.Forms.Button
+    $retryRelayButton.Text = 'THỬ LẠI RELAY'
+    $retryRelayButton.Location = New-Object Drawing.Point(775, 145)
+    $retryRelayButton.Size = New-Object Drawing.Size(110, 71)
+    $retryRelayButton.Enabled = $false
+    $retryRelayButton.Visible = $false
+    $panel.Controls.Add($retryRelayButton)
 
     $startButton = New-Object Windows.Forms.Button
     $startButton.Text = '▶  BẮT ĐẦU LUỒNG'
@@ -623,6 +653,7 @@ for ($i = 0; $i -lt 3; $i++) {
         OpenWork = $openWork
         SaveWork = $saveWork
         ResetWork = $resetWork
+        RetryRelay = $retryRelayButton
     }
 
     $currentLaneId = $laneId
@@ -734,6 +765,19 @@ for ($i = 0; $i -lt 3; $i++) {
         ) | Out-Null
     })
     $resetWork.Tag = $currentLaneId
+
+    $retryRelayButton.Add_Click({
+        $id = $this.Tag
+        $requested = Request-RelayRetryRearm $id
+        [Windows.Forms.MessageBox]::Show(
+            ('ĐÃ YÊU CẦU THỬ LẠI RELAY — revision ' + $requested.Revision + '. Robot sẽ reconcile marker trước; không đổi Brain/Work và không reset task.'),
+            'MAGASIN BUSINESS OS',
+            'OK',
+            'Information'
+        ) | Out-Null
+        $this.Enabled = $false
+    })
+    $retryRelayButton.Tag = $currentLaneId
 }
 
 function Refresh-Ui {
@@ -855,6 +899,21 @@ function Refresh-Ui {
         $ui.SaveBrain.Enabled = $true
         $ui.SaveWork.Enabled = $true
 
+        $relayExhausted = [bool](
+            $reg -and
+            $reg.relay_inflight -and
+            $reg.relay_inflight.retry_exhausted
+        )
+        $relayRearmRevision = if ($cfg -and $cfg.relay_retry_rearm_revision) {
+            [int]$cfg.relay_retry_rearm_revision
+        } else { 0 }
+        $appliedRelayRearmRevision = if ($reg -and $reg.applied_relay_retry_rearm_revision) {
+            [int]$reg.applied_relay_retry_rearm_revision
+        } else { 0 }
+        $relayRearmPending = [bool]($relayRearmRevision -gt $appliedRelayRearmRevision)
+        $ui.RetryRelay.Visible = $relayExhausted
+        $ui.RetryRelay.Enabled = [bool]($relayExhausted -and -not $relayRearmPending)
+
         $state = 'STOPPED'
         $message = 'Luồng đang dừng. Nhập link Bộ não rồi bấm BẮT ĐẦU LUỒNG.'
 
@@ -876,6 +935,18 @@ function Refresh-Ui {
             } else {
                 $state = 'STARTING'
                 $message = 'Runtime đã sống; đang chờ lane status mới.'
+            }
+        }
+
+        if ($relayExhausted) {
+            $state = 'WAIT_OWNER'
+            if ($relayRearmPending) {
+                $message = 'ĐÃ YÊU CẦU THỬ LẠI RELAY — revision ' + $relayRearmRevision + '. Đang chờ Robot reconcile marker và apply đúng một lần.'
+            } else {
+                $message = 'RELAY HẾT LƯỢT THỬ — kiểm tra Brain rồi bấm THỬ LẠI RELAY.'
+            }
+            if ($ownerStop.blocked) {
+                $message += ' Robot đang Owner STOP; intent được lưu nhưng chỉ apply sau khi bạn START lại.'
             }
         }
 
