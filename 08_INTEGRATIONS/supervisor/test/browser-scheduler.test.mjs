@@ -5,6 +5,9 @@ import {
   DEFAULT_CHATGPT_PAGE_BUDGET,
   PAGE_LEASE_STATES
 } from "../src/runtime/browser-scheduler.mjs";
+import {
+  applyPendingWorkTargetIfSafe
+} from "../src/runtime/work-target-state.mjs";
 
 class FakePage {
   constructor(url, id) {
@@ -239,4 +242,105 @@ test("scheduler snapshot is metadata-only and exposes no target URL", async () =
   assert.equal(json.includes("/c/"),false);
   assert.equal(json.includes("token"),false);
   assert.equal(json.includes("cookie"),false);
+});
+
+
+test("dispatch and relay latches survive page eviction and exact reopen unchanged", async () => {
+  const adapter = new FakeAdapter();
+  const scheduler = new BrowserScheduler({ adapter });
+  const durable = {
+    task_id: "TASK-LATCH",
+    awaiting_work: true,
+    dispatch_inflight: { dispatch_id: "dispatch-1", task_id: "TASK-LATCH" },
+    relay_inflight: { relay_id: "relay-1" }
+  };
+  const before = JSON.stringify(durable);
+
+  const page = await acquire(scheduler, "lane-1", "WORK", 11);
+  scheduler.releaseObservation(page);
+  await adapter.closePage(page);
+  const reopened = await scheduler.acquireExactPage({
+    laneId: "lane-1",
+    role: "WORK",
+    url: "https://chatgpt.com/c/lane-1-work-11",
+    target: t("https://chatgpt.com/c/lane-1-work-11"),
+    targetRevision: 5,
+    generation: 3
+  });
+
+  assert.equal(reopened.isClosed(), false);
+  assert.equal(JSON.stringify(durable), before);
+});
+
+test("RBT-003 pending Work remains pinned through eviction then applies only at safe boundary", async () => {
+  const adapter = new FakeAdapter();
+  const scheduler = new BrowserScheduler({ adapter });
+  const laneState = {
+    work_url: "https://chatgpt.com/c/old",
+    work_generation: 4,
+    applied_work_mode: "OWNER",
+    applied_work_url_revision: 7,
+    pending_work_url: "https://chatgpt.com/c/new",
+    pending_work_url_revision: 8,
+    pending_work_saved_at: "2026-09-20T00:00:00.000Z",
+    pending_work_mode: "OWNER",
+    task_id: "TASK-PENDING",
+    awaiting_work: true,
+    dispatch_inflight: null,
+    relay_inflight: null,
+    last_result_relay_id: null,
+    task_timing: {
+      completed_at: null,
+      relay_confirmed_at: null
+    }
+  };
+
+  const oldPage = await scheduler.acquireExactPage({
+    laneId: "lane-1",
+    role: "WORK",
+    url: laneState.work_url,
+    target: t(laneState.work_url),
+    targetRevision: 7,
+    generation: 4
+  });
+  scheduler.releaseObservation(oldPage);
+  await adapter.closePage(oldPage);
+
+  assert.equal(applyPendingWorkTargetIfSafe(laneState).status, "PENDING");
+  assert.equal(laneState.work_url, "https://chatgpt.com/c/old");
+
+  laneState.awaiting_work = false;
+  laneState.task_timing.completed_at = "2026-09-20T00:01:00.000Z";
+  laneState.task_timing.relay_confirmed_at = "2026-09-20T00:02:00.000Z";
+  const applied = applyPendingWorkTargetIfSafe(laneState);
+
+  assert.equal(applied.status, "APPLIED");
+  assert.equal(laneState.work_url, "https://chatgpt.com/c/new");
+  assert.equal(laneState.applied_work_url_revision, 8);
+  assert.equal(laneState.pending_work_url_revision, 0);
+});
+
+test("scheduler resource operations never mutate another lane durable state", async () => {
+  const adapter = new FakeAdapter();
+  const scheduler = new BrowserScheduler({ adapter });
+  const lane2 = {
+    task_id: "TASK-L2",
+    work_url: "https://chatgpt.com/c/l2",
+    awaiting_work: true,
+    pending_work_url_revision: 12
+  };
+  const lane3 = {
+    task_id: "TASK-L3",
+    work_url: "https://chatgpt.com/c/l3",
+    relay_inflight: { relay_id: "r3" }
+  };
+  const before2 = JSON.stringify(lane2);
+  const before3 = JSON.stringify(lane3);
+
+  const page = await acquire(scheduler, "lane-1", "BRAIN", 12);
+  scheduler.releaseObservation(page);
+  await scheduler.reconstructFromBrowser();
+
+  assert.equal(JSON.stringify(lane2), before2);
+  assert.equal(JSON.stringify(lane3), before3);
 });
