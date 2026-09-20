@@ -14,9 +14,9 @@ function slice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("TASK-RBT-005 bumps active runtime to v54 and uses one canonical watchdog module", async () => {
+test("TASK-RBT-005 watchdog remains canonical after v55 relay recovery bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.54"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.55"/);
   assert.match(runtime, /from "\.\/work-watchdog\.mjs"/);
   assert.equal((runtime.match(/evaluateWorkWatchdog\(/g) || []).length, 1);
 });
