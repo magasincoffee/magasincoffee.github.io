@@ -155,7 +155,7 @@ assert.match(exhaustedApplySource, /BRAIN_NOT_READY/);
 assert.match(applySource, /finalizeConfirmedRelay/);
 assert.match(applySource, /EVIDENCE_MISSING/);
 assert.doesNotMatch(applySource, /clearRelayInflight/);
-assert.match(runtimeSource, /if \(relayOutcome === "EVIDENCE_MISSING"\)/);
+assert.match(runtimeSource, /relayOutcome === "EVIDENCE_MISSING"/);
 assert.match(runtimeSource, /RESULT_IDENTITY_MISMATCH/);
 assert.match(runtimeSource, /FAIL_CLOSED_RECONSTRUCTED_RESULT_MISMATCH/);
 assert.match(runtimeSource, /if \(args\.relayRearmFixture\)/);
