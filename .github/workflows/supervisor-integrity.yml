@@ -5,12 +5,14 @@ on:
     paths:
       - "08_INTEGRATIONS/supervisor/**"
       - ".github/workflows/supervisor-*.yml"
+      - ".github/scripts/supervisor-integrity-*.ps1"
   push:
     branches:
       - main
     paths:
       - "08_INTEGRATIONS/supervisor/**"
       - ".github/workflows/supervisor-*.yml"
+      - ".github/scripts/supervisor-integrity-*.ps1"
   workflow_dispatch:
 
 permissions:
@@ -43,6 +45,7 @@ jobs:
           test -e 08_INTEGRATIONS/supervisor/docs/ROBOT_LIFECYCLE_TRUTH_ARCHITECTURE.md
           test -e .github/workflows/supervisor-open-control-panel.yml
           test -e .github/workflows/supervisor-integrity.yml
+          test -e .github/scripts/supervisor-integrity-registry.ps1
 
           if grep -R -nE 'LANE_RESULT_RELAY_RECONCILE_BLOCKED|stable Brain target changed without matching relay digest'             08_INTEGRATIONS/supervisor/src/runtime; then
             echo "Terminal relay blocking path remains"
@@ -87,9 +90,12 @@ jobs:
           $statusFile = Join-Path $root "lane-status.json"
           $registryFile = Join-Path $root "lane-registry.json"
           $evidenceDir = Join-Path $root "lane-evidence"
+          $integrityHelper = Join-Path $env:GITHUB_WORKSPACE ".github\scripts\supervisor-integrity-registry.ps1"
 
           if (-not (Test-Path $lifecycle)) { throw "Installed lifecycle truth helper is missing" }
+          if (-not (Test-Path $integrityHelper)) { throw "Supervisor integrity registry helper is missing" }
           . $lifecycle
+          . $integrityHelper
 
           $ownerStop = Get-LifecycleOwnerStopState -Root $root
           $enabledLaneCount = Get-EnabledLaneCount -Root $root
@@ -127,44 +133,12 @@ jobs:
             }
           }
 
-          $blockedRelayCount = 0
-          $blockedDispatchCount = 0
-          $activeEvidence = New-Object System.Collections.Generic.HashSet[string]
           $registry = $null
           if (Test-Path $registryFile) {
             $registry = Get-Content $registryFile -Raw -Encoding UTF8 | ConvertFrom-Json
           }
 
-          if ($registry -and $registry.lanes) {
-            foreach ($laneId in @("lane-1","lane-2","lane-3")) {
-              $lane = $registry.lanes.$laneId
-              if ($lane -and $lane.relay_inflight) {
-                if ([bool]$lane.relay_inflight.reconcile_blocked) { $blockedRelayCount += 1 }
-                $p = [string]$lane.relay_inflight.screenshot_path
-                if (-not [string]::IsNullOrWhiteSpace($p)) {
-                  [void]$activeEvidence.Add([IO.Path]::GetFullPath($p))
-                }
-              }
-              if ($lane -and $lane.dispatch_inflight -and [bool]$lane.dispatch_inflight.reconcile_blocked) {
-                $blockedDispatchCount += 1
-              }
-            }
-          }
-
-          if ($blockedRelayCount -gt 0) { throw "A relay_inflight latch remains reconcile_blocked" }
-          if ($blockedDispatchCount -gt 0) { throw "A dispatch_inflight latch remains reconcile_blocked" }
-
-          $orphanEvidenceCount = 0
-          if (Test-Path $evidenceDir) {
-            foreach ($file in @(Get-ChildItem $evidenceDir -File -Filter "*.png" -ErrorAction SilentlyContinue)) {
-              if (-not $activeEvidence.Contains([IO.Path]::GetFullPath($file.FullName))) {
-                $orphanEvidenceCount += 1
-              }
-            }
-          }
-          if ($orphanEvidenceCount -gt 0) {
-            throw "Orphan relay evidence remains after runtime startup cleanup"
-          }
+          $latchAudit = Assert-SupervisorLatchIntegrity -Registry $registry -EvidenceDir $evidenceDir
 
           Write-Host "SUPERVISOR_RUNTIME_VERSION_MATCH=True"
           Write-Host "ENABLED_LANE_COUNT=$enabledLaneCount"
@@ -173,7 +147,7 @@ jobs:
           Write-Host "THREE_LANE_HEALTHY=$([bool]$truth.three_lane_alive)"
           Write-Host "ROBOT_CHROME_HEALTHY=$([bool]$truth.chrome_alive)"
           Write-Host "ROBOT_CDP_HEALTHY=$([bool]$truth.cdp_healthy)"
-          Write-Host "RELAY_BLOCKED_LATCH_COUNT=0"
-          Write-Host "DISPATCH_BLOCKED_LATCH_COUNT=0"
-          Write-Host "ORPHAN_RELAY_EVIDENCE_COUNT=0"
+          Write-Host "RELAY_BLOCKED_LATCH_COUNT=$([int]$latchAudit.blocked_relay_count)"
+          Write-Host "DISPATCH_BLOCKED_LATCH_COUNT=$([int]$latchAudit.blocked_dispatch_count)"
+          Write-Host "ORPHAN_RELAY_EVIDENCE_COUNT=$([int]$latchAudit.orphan_evidence_count)"
           Write-Host "RUNTIME_SUPERVISOR_INTEGRITY=True"
