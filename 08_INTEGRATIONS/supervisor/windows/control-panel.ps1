@@ -1,7 +1,67 @@
+param(
+    [switch]$ViewportProbe,
+    [int]$ProbeWidth = 0,
+    [int]$ProbeHeight = 0
+)
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 $ErrorActionPreference = 'Stop'
+
+function Get-ControlPanelViewportLayout([Drawing.Rectangle]$WorkingArea) {
+    $desiredWindow = New-Object Drawing.Size(1240, 930)
+    $logicalCanvas = New-Object Drawing.Size(1215, 890)
+
+    $initialWidth = [Math]::Min($desiredWindow.Width, [Math]::Max(320, $WorkingArea.Width))
+    $initialHeight = [Math]::Min($desiredWindow.Height, [Math]::Max(320, $WorkingArea.Height))
+
+    # Keep a useful resize floor on normal displays without ever forcing the
+    # window beyond the monitor WorkingArea on smaller/scaled displays.
+    $minimumWidth = [Math]::Min(900, [Math]::Max(640, $WorkingArea.Width - 24))
+    $minimumHeight = [Math]::Min(600, [Math]::Max(420, $WorkingArea.Height - 24))
+    $minimumWidth = [Math]::Min($minimumWidth, $initialWidth)
+    $minimumHeight = [Math]::Min($minimumHeight, $initialHeight)
+
+    $left = $WorkingArea.Left + [Math]::Max(
+        0,
+        [int](($WorkingArea.Width - $initialWidth) / 2)
+    )
+    $top = $WorkingArea.Top + [Math]::Max(
+        0,
+        [int](($WorkingArea.Height - $initialHeight) / 2)
+    )
+
+    return [pscustomobject]@{
+        InitialSize = New-Object Drawing.Size($initialWidth, $initialHeight)
+        MinimumSize = New-Object Drawing.Size($minimumWidth, $minimumHeight)
+        Location = New-Object Drawing.Point($left, $top)
+        LogicalCanvasSize = $logicalCanvas
+    }
+}
+
+if ($ViewportProbe) {
+    $probeWorkingArea = if ($ProbeWidth -gt 0 -and $ProbeHeight -gt 0) {
+        New-Object Drawing.Rectangle(0, 0, $ProbeWidth, $ProbeHeight)
+    } else {
+        [Windows.Forms.Screen]::FromPoint([Windows.Forms.Cursor]::Position).WorkingArea
+    }
+    $probeLayout = Get-ControlPanelViewportLayout -WorkingArea $probeWorkingArea
+    [pscustomobject]@{
+        working_width = $probeWorkingArea.Width
+        working_height = $probeWorkingArea.Height
+        initial_width = $probeLayout.InitialSize.Width
+        initial_height = $probeLayout.InitialSize.Height
+        minimum_width = $probeLayout.MinimumSize.Width
+        minimum_height = $probeLayout.MinimumSize.Height
+        logical_width = $probeLayout.LogicalCanvasSize.Width
+        logical_height = $probeLayout.LogicalCanvasSize.Height
+        vertical_scroll_required = [bool]($probeLayout.InitialSize.Height -lt $probeLayout.LogicalCanvasSize.Height)
+        lane3_stop_bottom = 851
+        lane3_stop_in_canvas = [bool]($probeLayout.LogicalCanvasSize.Height -ge 851)
+    } | ConvertTo-Json -Compress
+    exit 0
+}
 
 $root = Join-Path $env:LOCALAPPDATA 'MAGASIN\BusinessOS\supervisor'
 $runtime = Join-Path $root 'runtime'
@@ -255,18 +315,37 @@ function Save-BrainTarget(
 
 $form = New-Object Windows.Forms.Form
 $form.Text = 'MAGASIN BUSINESS OS — 3 LUỒNG LÀM VIỆC'
-$form.StartPosition = 'CenterScreen'
-$form.Size = New-Object Drawing.Size(1240, 930)
-$form.MinimumSize = New-Object Drawing.Size(1240, 930)
+$form.StartPosition = 'Manual'
+$form.AutoScaleMode = [Windows.Forms.AutoScaleMode]::Dpi
+$form.AutoScaleDimensions = New-Object Drawing.SizeF(96, 96)
+
+$currentScreen = [Windows.Forms.Screen]::FromPoint([Windows.Forms.Cursor]::Position)
+$viewportLayout = Get-ControlPanelViewportLayout -WorkingArea $currentScreen.WorkingArea
+$form.Size = $viewportLayout.InitialSize
+$form.MinimumSize = $viewportLayout.MinimumSize
+$form.Location = $viewportLayout.Location
 $form.BackColor = [Drawing.Color]::FromArgb(248,250,252)
 $form.Font = New-Object Drawing.Font('Segoe UI', 9)
+
+$scrollHost = New-Object Windows.Forms.Panel
+$scrollHost.Dock = [Windows.Forms.DockStyle]::Fill
+$scrollHost.AutoScroll = $true
+$scrollHost.BackColor = $form.BackColor
+$form.Controls.Add($scrollHost)
+
+$content = New-Object Windows.Forms.Panel
+$content.Location = New-Object Drawing.Point(0, 0)
+$content.Size = $viewportLayout.LogicalCanvasSize
+$content.BackColor = $form.BackColor
+$scrollHost.Controls.Add($content)
+$scrollHost.AutoScrollMinSize = $viewportLayout.LogicalCanvasSize
 
 $title = New-Object Windows.Forms.Label
 $title.Text = 'MAGASIN BUSINESS OS'
 $title.Location = New-Object Drawing.Point(28, 22)
 $title.Size = New-Object Drawing.Size(430, 42)
 $title.Font = New-Object Drawing.Font('Segoe UI Semibold', 23)
-$form.Controls.Add($title)
+$content.Controls.Add($title)
 
 $subtitle = New-Object Windows.Forms.Label
 $subtitle.Text = '3 LUỒNG ĐỘC LẬP  •  BỘ NÃO DO BẠN CHỌN  •  WORK: BẠN CHỌN HOẶC ROBOT TỰ TẠO'
@@ -274,7 +353,7 @@ $subtitle.Location = New-Object Drawing.Point(520, 34)
 $subtitle.Size = New-Object Drawing.Size(665, 26)
 $subtitle.TextAlign = 'MiddleRight'
 $subtitle.ForeColor = [Drawing.Color]::FromArgb(71,85,105)
-$form.Controls.Add($subtitle)
+$content.Controls.Add($subtitle)
 
 $runnerButton = New-Object Windows.Forms.Button
 $runnerButton.Location = New-Object Drawing.Point(28, 76)
@@ -290,13 +369,13 @@ $runnerButton.Add_Click({
         ) | Out-Null
     }
 })
-$form.Controls.Add($runnerButton)
+$content.Controls.Add($runnerButton)
 
 $runtimeLabel = New-Object Windows.Forms.Label
 $runtimeLabel.Location = New-Object Drawing.Point(310, 82)
 $runtimeLabel.Size = New-Object Drawing.Size(500, 32)
 $runtimeLabel.Font = New-Object Drawing.Font('Segoe UI Semibold', 10)
-$form.Controls.Add($runtimeLabel)
+$content.Controls.Add($runtimeLabel)
 
 $runtimeStartButton = New-Object Windows.Forms.Button
 $runtimeStartButton.Location = New-Object Drawing.Point(820, 76)
@@ -329,14 +408,14 @@ $runtimeStartButton.Add_Click({
         '-File',('"' + $startScript + '"'),'-Hidden'
     )
 })
-$form.Controls.Add($runtimeStartButton)
+$content.Controls.Add($runtimeStartButton)
 
 $repoButton = New-Object Windows.Forms.Button
 $repoButton.Location = New-Object Drawing.Point(1015, 76)
 $repoButton.Size = New-Object Drawing.Size(170, 42)
 $repoButton.Text = 'MỞ DỰ ÁN'
 $repoButton.Add_Click({ Start-Process $repoUrl })
-$form.Controls.Add($repoButton)
+$content.Controls.Add($repoButton)
 
 $laneUi = @{}
 $cardY = @(135, 385, 635)
@@ -348,7 +427,7 @@ for ($i = 0; $i -lt 3; $i++) {
     $panel.Size = New-Object Drawing.Size(1157, 228)
     $panel.BorderStyle = 'FixedSingle'
     $panel.BackColor = [Drawing.Color]::White
-    $form.Controls.Add($panel)
+    $content.Controls.Add($panel)
 
     $laneTitle = New-Object Windows.Forms.Label
     $laneTitle.Text = "LUỒNG $($i + 1)"
