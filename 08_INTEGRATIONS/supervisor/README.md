@@ -39,7 +39,7 @@ v2026-09-19.51 production truth includes TASK-RBT-002 event/timing foundation on
 
 ## Lifecycle truth
 
-Runtime lifecycle in v2026-09-19.50 follows one mandatory truth order:
+Runtime lifecycle in v2026-09-19.51 follows one mandatory truth order:
 
 PROCESS TRUTH > LANE TRUTH > PERSISTED RECOVERY STATE
 
