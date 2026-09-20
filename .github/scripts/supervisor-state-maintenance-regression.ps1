@@ -50,7 +50,7 @@ $versionGuard = $workflow.IndexOf('if ($installedVersion -ne $expectedVersion)')
 $ownerStartBranch = $workflow.IndexOf('if ($operation -eq "owner-start")')
 $ownerStartMutation = $workflow.IndexOf('& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $startScript -Hidden')
 $resetMutation = $workflow.IndexOf('& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $stopScript')
-$configMutation = $workflow.IndexOf('$lane.work_url_revision = $newRevision')
+$configMutation = $workflow.IndexOf('$lane.work_state_reset_revision = $newResetRevision')
 Assert-True ($versionGuard -ge 0) 'version mismatch guard is missing'
 Assert-True ($ownerStartBranch -gt $versionGuard) 'version guard must precede owner-start branch'
 Assert-True ($ownerStartMutation -gt $versionGuard) 'version guard must precede owner-start mutation'
@@ -119,7 +119,9 @@ Assert-True (-not ($workflow -match '-File \$startScript -Hidden -Recovery')) 'O
 
 # Reset remains lane-scoped and preserves Brain/Work target URLs.
 Assert-Match $workflow 'Where-Object \{ \[string\]\$_.lane_id -eq \$laneId \}' 'reset must select exactly the requested lane'
-Assert-Match $workflow '\$lane\.work_url_revision = \$newRevision' 'reset must only advance selected Work revision'
+Assert-Match $workflow '\$lane\.work_state_reset_revision = \$newResetRevision' 'reset must only advance selected Work state reset revision'
+Assert-Match $workflow 'applied_work_state_reset_revision' 'reset must wait for dedicated runtime reset acknowledgement'
+Assert-True (-not ($workflow -match '\$lane\.work_url_revision\s*=\s*\$newRevision')) 'maintenance reset must not overload Work target revision'
 Assert-True (-not ($workflow -match '(?m)\.brain_url\s*=')) 'reset must never assign Brain URL'
 Assert-True (-not ($workflow -match '(?m)\.work_url\s*=')) 'reset must never assign Work URL'
 Assert-Match $workflow 'Brain URL changed during state reset' 'Brain target preservation assertion is missing'
