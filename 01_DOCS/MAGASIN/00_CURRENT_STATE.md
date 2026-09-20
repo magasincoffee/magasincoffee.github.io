@@ -1,6 +1,6 @@
 # MAGASIN — Current State
 
-Last updated: 2026-09-19
+Last updated: 2026-09-20
 
 ## Current program
 
@@ -14,7 +14,8 @@ Canonical architecture:
 - `02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md`;
 - `02_PROFITABILITY_CASH/TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`;
 - `02_PROFITABILITY_CASH/TASK_062_CASH_BALANCE_SOURCE_MAPPER_V1_EVIDENCE.md`;
-- `02_PROFITABILITY_CASH/TASK_063_CASH_SOURCE_COVERAGE_V1_EVIDENCE.md`.
+- `02_PROFITABILITY_CASH/TASK_063_CASH_SOURCE_COVERAGE_V1_EVIDENCE.md`;
+- `02_PROFITABILITY_CASH/TASK_064_CASH_BRIDGE_SOURCE_INTEGRATION_V1_EVIDENCE.md`.
 
 ## PFC execution handoff
 
@@ -28,11 +29,11 @@ Current state:
 
 ```text
 PFC_3H_V1_RESTART_01 = COMPLETE
-TASK-051 → TASK-063   = DONE
+TASK-051 → TASK-064   = DONE
 
-current_task          = TASK-064
-TASK-064              = READY / AUTO_CONTINUE
-next_task             = TASK-065
+current_task          = TASK-065
+TASK-065              = READY / AUTO_CONTINUE
+next_task             = TASK-066
 status                = READY
 autonomy              = AUTO_CONTINUE
 requires_user         = false
@@ -55,7 +56,7 @@ Current verified balance landscape:
 
 Missing balance sources remain gaps; they do not pause PFC_8H_V2.
 
-TASK-063 source coverage engine is complete. TASK-064 is now the active canonical task.
+TASK-064 Cash Bridge source integration is complete. TASK-065 is now the active canonical task.
 
 ## Financial baseline state
 
@@ -119,7 +120,7 @@ These remain mandatory:
 
 ## Current PFC V2 priority
 
-### TASK-064 — Cash Bridge Source Integration
+### TASK-065 — Cash Truth Regression & Evidence
 
 Status:
 
@@ -127,21 +128,18 @@ Status:
 
 Goal:
 
-Integrate proven balance truth + explicit MOVEMENT_EVENTS coverage into existing Cash Bridge without changing source provenance, while keeping:
+Run the Wave-A cash-truth regression/evidence closure across TASK-060→064, proving source mapping, point/event coverage, point-gated integration and existing Cash Bridge behavior remain coherent and fail-closed without adding new financial semantics.
 
-```text
-OBSERVED_BALANCE != COMPUTED_BALANCE
-MOVEMENT_ONLY != BALANCE
-payment method != account balance
-unknown scope != ALL
-missing != zero
-```
+TASK-064 is complete:
+- helper: `02_CORE/shared/cash-bridge-source-integration-v1.mjs`;
+- PR #189 merge: `f00279e99ed3d1bdc4e4b0ed9c7f26a3e6f3f177`;
+- PR-head run `35480729934`: 24/24 TASK-064, full Business OS 354 / 0 fail;
+- exact post-merge run `35480761123`: Node v20.20.2, all regression steps success;
+- current TASK-060→063 source profile remains fail-closed with incomplete opening/movement/observed-ending evidence.
 
-TASK-061 balance truth + TASK-062 mapper + TASK-063 coverage are the canonical inputs for Cash Bridge source integration.
+Next queued task after TASK-065:
 
-Next queued task after TASK-064:
-
-`TASK-065 — Cash Truth Regression & Evidence`
+`TASK-066 — OPEX Source Inventory V1`
 
 ## Remaining major gaps
 
@@ -190,11 +188,12 @@ Mandatory new-chat bootstrap:
 3. `00_PROJECT_STATE.json`.
 4. `00_TASK_QUEUE.md`.
 5. `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`.
-6. `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
-7. `00_MASTER_PLAN.md`.
-8. `06_DECISION_LOG.md`.
-9. `00_CHATGPT_CONTEXT.md`.
-10. repository/PR/CI state.
+6. `02_PROFITABILITY_CASH/TASK_064_CASH_BRIDGE_SOURCE_INTEGRATION_V1_EVIDENCE.md`.
+7. `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
+8. `00_MASTER_PLAN.md`.
+9. `06_DECISION_LOG.md`.
+10. `00_CHATGPT_CONTEXT.md`.
+11. repository/PR/CI state.
 
 Repository evidence overrides stale chat memory.
 
@@ -261,7 +260,7 @@ Canonical contract: `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md`.
 Owner explicitly released `PFC_8H_V2` on 2026-09-20.
 
 - generation: `PFC_8H_V2_RUN_01`
-- current task: `TASK-060 — Actual Cash Opening/Ending Source Truth V1`
+- current task: `TASK-065 — Cash Truth Regression & Evidence`
 - state: `READY / AUTO_CONTINUE`
 - Robot may execute: `true`
 - Google Drive: `AUTHORIZED_READ_ONLY`
