@@ -29,6 +29,9 @@ export const LANE_EVENT_TYPES = Object.freeze({
   WORK_ROLLOVER_INTENT: "WORK_ROLLOVER_INTENT",
   WORK_ROLLOVER_TARGET_PERSISTED: "WORK_ROLLOVER_TARGET_PERSISTED",
   WORK_ROLLOVER_DISPATCH_CONFIRMED: "WORK_ROLLOVER_DISPATCH_CONFIRMED",
+  TARGET_QUARANTINED: "TARGET_QUARANTINED",
+  TARGET_QUARANTINE_CLEARED: "TARGET_QUARANTINE_CLEARED",
+  TARGET_REOPEN_SUPPRESSED: "TARGET_REOPEN_SUPPRESSED",
   RECOVERY: "RECOVERY",
   ERROR: "ERROR"
 });
@@ -48,7 +51,10 @@ const EVENT_KEYS = new Set([
   "queue_time_ms",
   "execution_time_ms",
   "dispatch_id",
-  "relay_id"
+  "relay_id",
+  "target_role",
+  "target_digest",
+  "target_revision"
 ]);
 
 const ACTORS = new Set(["BRAIN", "WORK", "SUPERVISOR"]);
@@ -127,7 +133,12 @@ const REASON_CODES = new Set([
   "ROLLOVER_INTENT_PERSISTED",
   "ROLLOVER_TARGET_PERSISTED",
   "ROLLOVER_DISPATCH_LATCH_PERSISTED",
-  "ROLLOVER_DISPATCH_CONFIRMED"
+  "ROLLOVER_DISPATCH_CONFIRMED",
+  "TARGET_CONVERSATION_MISSING",
+  "TARGET_CONVERSATION_ACCESS_DENIED",
+  "TARGET_STABLE_REDIRECT_AWAY",
+  "TARGET_NEW_CANONICAL_IDENTITY",
+  "TARGET_QUARANTINED"
 ]);
 const EVENT_TYPE_VALUES = new Set(Object.values(LANE_EVENT_TYPES));
 const LANE_IDS = new Set(["lane-1", "lane-2", "lane-3"]);
@@ -274,6 +285,28 @@ export function serializeLaneEvent(input = {}, { now = () => new Date() } = {}) 
 
   if (input.relay_id !== undefined && input.relay_id !== null) {
     output.relay_id = correlationIdentifier(input.relay_id, "relay_id");
+  }
+
+  if (input.target_role !== undefined && input.target_role !== null) {
+    const role = String(input.target_role || "").trim().toUpperCase();
+    if (role !== "BRAIN" && role !== "WORK") {
+      throw new TypeError("target_role must be BRAIN or WORK");
+    }
+    output.target_role = role;
+  }
+
+  if (input.target_digest !== undefined && input.target_digest !== null) {
+    output.target_digest = correlationIdentifier(
+      input.target_digest,
+      "target_digest"
+    );
+  }
+
+  if (input.target_revision !== undefined && input.target_revision !== null) {
+    output.target_revision = nonNegativeInteger(
+      input.target_revision,
+      "target_revision"
+    );
   }
 
   return output;
