@@ -420,7 +420,7 @@ test("v48 relay exhaustion is a stable Owner stop rather than an infinite retry 
     "utf8"
   );
   assert.match(source, /LANE_RESULT_RELAY_RETRY_EXHAUSTED/);
-  assert.match(source, /Robot đã thử gửi kết quả 3 lần/);
+  assert.match(source, /RELAY HẾT LƯỢT THỬ/);
   assert.match(source, /relayRetryState/);
   assert.match(source, /retry_not_before/);
 });
