@@ -1,8 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const panelUrl = new URL("../windows/control-panel.ps1", import.meta.url);
+const panelPath = fileURLToPath(panelUrl);
 
 async function panelSource() {
   return fs.readFile(panelUrl, "utf8");
@@ -113,4 +116,78 @@ test("viewport patch preserves lifecycle truth, Owner STOP and refresh timer sem
   assert.match(source, /\$timer\.Add_Tick\(\{ Refresh-Ui \}\)/);
   assert.match(source, /\$timer\.Start\(\)/);
   assert.match(source, /\[void\]\$form\.ShowDialog\(\)/);
+});
+
+
+test("Windows viewport probe executes the production layout helper without local runtime state", {
+  skip: process.platform !== "win32"
+}, () => {
+  function probe(width, height) {
+    const result = spawnSync(
+      "powershell.exe",
+      [
+        "-NoLogo",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        panelPath,
+        "-ViewportProbe",
+        "-ProbeWidth",
+        String(width),
+        "-ProbeHeight",
+        String(height)
+      ],
+      { encoding: "utf8", timeout: 30_000 }
+    );
+    assert.equal(result.status, 0, result.stderr);
+    return JSON.parse(result.stdout.trim());
+  }
+
+  const large = probe(1920, 1040);
+  assert.equal(large.initial_width, 1240);
+  assert.equal(large.initial_height, 930);
+  assert.equal(large.vertical_scroll_required, false);
+  assert.equal(large.lane3_stop_in_canvas, true);
+
+  const medium = probe(1600, 860);
+  assert.equal(medium.initial_height, 860);
+  assert.equal(medium.vertical_scroll_required, true);
+  assert.equal(medium.lane3_stop_in_canvas, true);
+
+  const low = probe(1366, 728);
+  assert.equal(low.initial_width, 1240);
+  assert.equal(low.initial_height, 728);
+  assert.equal(low.minimum_width, 900);
+  assert.equal(low.minimum_height, 600);
+  assert.equal(low.vertical_scroll_required, true);
+  assert.equal(low.lane3_stop_bottom, 851);
+  assert.equal(low.lane3_stop_in_canvas, true);
+});
+
+test("Windows actual WorkingArea probe stays inside the current monitor", {
+  skip: process.platform !== "win32"
+}, () => {
+  const result = spawnSync(
+    "powershell.exe",
+    [
+      "-NoLogo",
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      panelPath,
+      "-ViewportProbe"
+    ],
+    { encoding: "utf8", timeout: 30_000 }
+  );
+  assert.equal(result.status, 0, result.stderr);
+  const actual = JSON.parse(result.stdout.trim());
+  assert.ok(actual.working_width > 0);
+  assert.ok(actual.working_height > 0);
+  assert.ok(actual.initial_width <= actual.working_width);
+  assert.ok(actual.initial_height <= actual.working_height);
+  assert.ok(actual.minimum_width <= actual.initial_width);
+  assert.ok(actual.minimum_height <= actual.initial_height);
+  assert.equal(actual.lane3_stop_in_canvas, true);
 });
