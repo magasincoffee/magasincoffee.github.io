@@ -1098,14 +1098,46 @@ async function reconcileDispatchInflight({
   return "BLOCKED";
 }
 
-async function createWorkConversation(adapter, instruction) {
-  const page = await adapter.newChatPage("https://chatgpt.com/");
-  const sent = await sendComposerInstruction(page, instruction, { dryRun: false });
-  if (!sent.executed) {
-    throw new Error(`new Work conversation send failed: ${sent.reason || "unknown"}`);
+async function createWorkConversation({
+  adapter,
+  scheduler,
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  instruction
+}) {
+  if (!scheduler) {
+    const page = await adapter.newChatPage("https://chatgpt.com/");
+    const sent = await sendComposerInstruction(page, instruction, { dryRun: false });
+    if (!sent.executed) {
+      throw new Error(`new Work conversation send failed: ${sent.reason || "unknown"}`);
+    }
+    const url = await waitForConversationUrl(page);
+    registryLane.work_url = url;
+    registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
+    await atomicJsonWrite(registryPath, registry);
+    return { page, url };
   }
-  const url = await waitForConversationUrl(page);
-  return { page, url };
+
+  const created = await scheduler.createPageUnderMutation({
+    laneId: lane.lane_id,
+    role: "WORK",
+    url: "https://chatgpt.com/",
+    targetRevision: Number(registryLane.applied_work_url_revision || 0),
+    generation: Number(registryLane.work_generation || 0) + 1
+  }, async (page) => {
+    const sent = await sendComposerInstruction(page, instruction, { dryRun: false });
+    if (!sent.executed) {
+      throw new Error(`new Work conversation send failed: ${sent.reason || "unknown"}`);
+    }
+    const url = await waitForConversationUrl(page);
+    registryLane.work_url = url;
+    registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
+    await atomicJsonWrite(registryPath, registry);
+    return url;
+  });
+  return { page: created.page, url: created.result };
 }
 
 async function dispatchWork({
@@ -1116,7 +1148,8 @@ async function dispatchWork({
   execute,
   registry,
   registryPath,
-  logPath
+  logPath,
+  scheduler = null
 }) {
   if (registryLane.awaiting_work) {
     if (
@@ -1136,7 +1169,8 @@ async function dispatchWork({
       registry,
       registryPath,
       logPath,
-      directive
+      directive,
+      scheduler
     });
     if (outcome === "CONFIRMED" || outcome === "PENDING" || outcome === "BLOCKED") return;
   }
@@ -1146,7 +1180,13 @@ async function dispatchWork({
   let workBody = directive.instruction;
 
   if (registryLane.work_url) {
-    page = await openExactConversation(adapter, registryLane.work_url, { brain: false });
+    page = await openExactConversation(adapter, registryLane.work_url, {
+      brain: false,
+      scheduler,
+      laneId: lane.lane_id,
+      targetRevision: Number(registryLane.applied_work_url_revision || 0),
+      generation: Number(registryLane.work_generation || 0)
+    });
     const probe = await assertConversationSafe(adapter, page, {
       brain: false,
       allowFull: true
@@ -1217,15 +1257,26 @@ async function dispatchWork({
   let workUrl = registryLane.work_url;
   try {
     if (createNew) {
-      const created = await createWorkConversation(adapter, outgoingInstruction);
+      const created = await createWorkConversation({
+        adapter,
+        scheduler,
+        lane,
+        registryLane,
+        registry,
+        registryPath,
+        instruction: outgoingInstruction
+      });
       page = created.page;
       workUrl = created.url;
-      registryLane.work_generation += 1;
     } else {
-      const sent = await sendComposerInstruction(
-        page,
-        outgoingInstruction,
-        { dryRun: false }
+      const sent = await runBrowserMutation(
+        scheduler,
+        { laneId: lane.lane_id, role: "WORK", page, reason: "WORK_DISPATCH_SEND" },
+        () => sendComposerInstruction(
+          page,
+          outgoingInstruction,
+          { dryRun: false }
+        )
       );
       if (!sent.executed) {
         await safeLog(logPath, {
