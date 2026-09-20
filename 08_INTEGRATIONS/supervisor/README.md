@@ -16,7 +16,7 @@ The Windows wrapper still retains the legacy `BRAIN_WORKER_V1` entry point as a 
 
 ### Current production baseline
 
-Runtime lifecycle in production is v2026-09-19.51.
+Runtime lifecycle in production is v2026-09-20.52.
 
 TASK-RBT-001 adds a **docs-only target architecture** for browser scheduling, long-running Work recovery, Work hot-swap and operational observability. Those target features are not considered released by TASK-RBT-001 itself.
 
@@ -27,7 +27,7 @@ Canonical target design:
 Implementation roadmap:
 
 - TASK-RBT-002 — Event & Timing Foundation — IMPLEMENTED in v2026-09-19.51
-- TASK-RBT-003 — Work URL Hot-Swap + LƯU WORK
+- TASK-RBT-003 — Work URL Hot-Swap + LƯU WORK — IMPLEMENTED in v2026-09-20.52
 - TASK-RBT-004 — Browser Scheduler + Tab Budget
 - TASK-RBT-005 — Long-Running Work + 30m Watchdog
 - TASK-RBT-006 — Multi-Signal Work Full Detection + Rollover
@@ -35,11 +35,11 @@ Implementation roadmap:
 - TASK-RBT-008 — Brain Planning Contract Runtime Hooks
 - TASK-RBT-009 — Integration / Overnight Soak / Cleanup
 
-v2026-09-19.51 production truth includes TASK-RBT-002 event/timing foundation only. TASK-RBT-003 through TASK-RBT-009 remain unreleased until their own implementation and acceptance tasks pass.
+v2026-09-20.52 production truth includes TASK-RBT-002 event/timing foundation plus TASK-RBT-003 Work target hot-swap/save. TASK-RBT-004 through TASK-RBT-009 remain unreleased until their own implementation and acceptance tasks pass.
 
 ## Lifecycle truth
 
-Runtime lifecycle in v2026-09-19.51 follows one mandatory truth order:
+Runtime lifecycle in v2026-09-20.52 follows one mandatory truth order:
 
 PROCESS TRUTH > LANE TRUTH > PERSISTED RECOVERY STATE
 
@@ -106,8 +106,6 @@ The docs-only TASK-RBT-001 architecture records these known gaps for later imple
 - no round-robin page scheduler with a formal fairness contract;
 - no distinct `WORKING_LONG` / `POSSIBLY_STALLED` task states;
 - no canonical 30-minute inactivity watchdog;
-- current Work URL revision apply can reset task/latch state;
-- no LƯU WORK action that safely hot-applies while Robot is running;
 - automatic Work rollover relies on the current `conversationFull` signal rather than a multi-signal capacity detector;
 - no append-only task timeline with assigned/start/activity/complete durations;
 - Control Panel does not show browser page budget, task elapsed/last activity, or recent event history.
@@ -145,9 +143,9 @@ After TASK-RBT-005 implementation:
 
 The 30-minute threshold is an inactivity watchdog, not a task timeout.
 
-## Target Work URL save/hot-swap
+## Released Work URL save/hot-swap
 
-After TASK-RBT-003 implementation, each lane exposes:
+Runtime v2026-09-20.52 exposes:
 
 - MỞ WORK
 - LƯU WORK
@@ -165,11 +163,13 @@ Owner Work save:
 Safe apply:
 
 - idle lane: apply immediately;
-- active `awaiting_work`, dispatch latch or relay latch: save as pending-next-target;
-- current task remains on old Work;
-- apply pending target only after a safe boundary.
+- active `awaiting_work`, dispatch latch, relay latch, or unreconciled completed result: save as pending-next-target;
+- current task remains on the old execution Work target and exact-once latches remain intact;
+- pending target survives restart and applies exactly once after a safe boundary;
+- same canonical OWNER Work save does not churn revision/generation;
+- inaccessible Owner Work fails closed when execution later tries to open it; Robot does not auto-replace it.
 
-`TỰ TẠO WORK` is explicit Owner reset to Robot-managed Work mode. It never creates/finds Brain.
+`TỰ TẠO WORK` is an explicit Owner request for Robot-managed Work mode. When active it is staged until the same safe boundary; it never abandons the current task and never creates/finds Brain.
 
 ## Target Work-full rollover
 
