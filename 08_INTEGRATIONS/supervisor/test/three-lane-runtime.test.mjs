@@ -126,7 +126,7 @@ test("v45 active Brain status comes from persisted registry target", async () =>
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-19\.51/);
+  assert.match(source, /2026-09-20\\.52/);
 });
 
 test("v43 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
@@ -163,19 +163,24 @@ test("v43 explicit Brain rebind clears only a blocked old-Brain dispatch when no
 });
 
 
-test("Owner Work URL override is revisioned and resets stale pending Work state once", async () => {
+test("Owner Work URL revision stages active target without clearing task or exact-once latches", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
+  const start = source.indexOf("async function applyOwnerWorkTarget");
+  const end = source.indexOf("async function applyPendingWorkTargetAtSafeBoundary", start);
+  const applyWork = source.slice(start, end);
 
-  assert.match(source, /async function applyOwnerWorkTarget/);
-  assert.match(source, /work_url_revision/);
-  assert.match(source, /applied_work_url_revision/);
-  assert.match(source, /LANE_OWNER_WORK_TARGET_CHANGED/);
-  assert.match(source, /registryLane\.dispatch_inflight = null/);
-  assert.match(source, /registryLane\.relay_inflight = null/);
-  assert.match(source, /registryLane\.awaiting_work = false/);
+  assert.match(applyWork, /acceptOwnerWorkTargetRevision/);
+  assert.match(applyWork, /pending_work_url_revision/);
+  assert.match(applyWork, /WORK_TARGET_SAVED/);
+  assert.match(applyWork, /WORK_TARGET_PENDING/);
+  assert.doesNotMatch(applyWork, /clearRelayInflight\(registryLane\)/);
+  assert.doesNotMatch(applyWork, /registryLane\.task_id = null/);
+  assert.doesNotMatch(applyWork, /registryLane\.dispatch_inflight = null/);
+  assert.doesNotMatch(applyWork, /registryLane\.relay_inflight = null/);
+  assert.doesNotMatch(applyWork, /registryLane\.awaiting_work = false/);
 });
 
 test("transient fetch and CDP failures recover instead of escalating to Owner", async () => {
@@ -373,22 +378,25 @@ test("v43 a reconciled Work dispatch records the Brain directive digest to preve
 });
 
 
-test("v46 Owner Work revision resets stale task state even when Work URL is unchanged", async () => {
+test("RBT-003 same canonical Work revision is acknowledged without reset or generation churn", async () => {
   const source = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
-  const start = source.indexOf("async function applyOwnerWorkTarget");
-  const end = source.indexOf("async function processLane", start);
-  const applyWork = source.slice(start, end);
+  const state = await fs.readFile(
+    new URL("../src/runtime/work-target-state.mjs", import.meta.url),
+    "utf8"
+  );
 
-  assert.match(applyWork, /revision <= Number\(registryLane\.applied_work_url_revision/);
-  assert.match(applyWork, /await clearRelayInflight\(registryLane\)/);
-  assert.match(applyWork, /registryLane\.task_id = null/);
-  assert.match(applyWork, /registryLane\.dispatch_inflight = null/);
-  assert.match(applyWork, /registryLane\.brain_request_inflight = null/);
-  assert.match(applyWork, /registryLane\.awaiting_work = false/);
-  assert.match(applyWork, /LANE_OWNER_WORK_TARGET_RESET/);
+  assert.match(source, /applyPendingWorkTargetAtSafeBoundary/);
+  assert.match(source, /SAME_TARGET_NO_CHURN/);
+  assert.match(state, /status: "ACKNOWLEDGED"/);
+  assert.match(state, /sameAsCurrent/);
+  assert.match(state, /clearPending\(lane\)/);
+  assert.doesNotMatch(state, /task_id\s*=/);
+  assert.doesNotMatch(state, /dispatch_inflight\s*=/);
+  assert.doesNotMatch(state, /relay_inflight\s*=/);
+  assert.doesNotMatch(state, /awaiting_work\s*=/);
 });
 
 
