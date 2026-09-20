@@ -2,6 +2,10 @@ import crypto from "node:crypto";
 import { canonicalConversationPathname } from "./recovery.mjs";
 import { defaultTaskTiming, normalizeTaskTiming } from "./lane-events.mjs";
 import { normalizeWorkTargetMode } from "./work-target-state.mjs";
+import {
+  defaultWorkWatchdog,
+  normalizeWorkWatchdog
+} from "./work-watchdog.mjs";
 
 export const THREE_LANE_MODE = "THREE_LANE_V1";
 export const LANE_DIRECTIVE_START = "<<<MAGASIN_LANE_DIRECTIVE_V1>>>";
@@ -149,12 +153,14 @@ export function defaultLaneRegistry() {
       last_brain_directive_digest: null,
       last_work_result_digest: null,
       last_result_relay_id: null,
+      last_dispatch_id: null,
       dispatch_inflight: null,
       relay_inflight: null,
       brain_request_inflight: null,
       brain_request_sent: false,
       awaiting_work: false,
       task_timing: defaultTaskTiming(),
+      work_watchdog: defaultWorkWatchdog(),
       applied_work_url_revision: 0
     }]))
   };
@@ -190,12 +196,14 @@ export function normalizeLaneRegistry(value = {}) {
       last_brain_directive_digest: lane.last_brain_directive_digest || null,
       last_work_result_digest: lane.last_work_result_digest || null,
       last_result_relay_id: lane.last_result_relay_id || null,
+      last_dispatch_id: lane.last_dispatch_id || null,
       dispatch_inflight: lane.dispatch_inflight || null,
       relay_inflight: lane.relay_inflight || null,
       brain_request_inflight: lane.brain_request_inflight || null,
       brain_request_sent: Boolean(lane.brain_request_sent),
       awaiting_work: Boolean(lane.awaiting_work),
       task_timing: normalizeTaskTiming(lane.task_timing),
+      work_watchdog: normalizeWorkWatchdog(lane.work_watchdog),
       applied_work_url_revision: Number(lane.applied_work_url_revision || 0)
     };
   }
