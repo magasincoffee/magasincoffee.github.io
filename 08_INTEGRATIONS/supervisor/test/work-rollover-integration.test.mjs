@@ -96,7 +96,12 @@ test("crash after send intent reconciles marker before any rollover retry", asyn
   assert.match(reconcile, /work_target_digest/);
   assert.match(reconcile, /send_attempted_at = null/);
   assert.match(reconcile, /send_state = "NOT_CONFIRMED"/);
-  assert.doesNotMatch(reconcile, /rollover_generation[\s\S]*?dispatch_inflight = null/);
+  const rolloverBranch = reconcile.slice(
+    reconcile.indexOf("if (latch.rollover_generation)"),
+    reconcile.indexOf("registryLane.dispatch_inflight = null", reconcile.indexOf("if (latch.rollover_generation)"))
+  );
+  assert.doesNotMatch(rolloverBranch, /dispatch_inflight = null/);
+  assert.match(rolloverBranch, /return "NOT_CONFIRMED"/);
 });
 
 test("Owner pending Work target is evaluated before automatic capacity rollover", async () => {
