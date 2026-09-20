@@ -4247,6 +4247,10 @@ if (args.workFullFixture) {
   await import("./work-full-acceptance-cli.mjs");
   process.exit(0);
 }
+if (args.staleTargetFixture) {
+  await import("./stale-target-acceptance-cli.mjs");
+  process.exit(0);
+}
 if (!Number.isFinite(args.pollMs) || args.pollMs < 1000) {
   throw new TypeError("poll-ms must be at least 1000");
 }
