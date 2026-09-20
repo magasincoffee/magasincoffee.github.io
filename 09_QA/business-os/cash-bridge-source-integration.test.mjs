@@ -683,8 +683,15 @@ test("target scope mismatch fails point gate closed", () => {
 });
 
 test("missing blank and NaN balances never become synthetic zero", () => {
-  for (const value of [undefined, "", Number.NaN]) {
-    const source = observedFact({ value });
+  const missing = observedFact();
+  delete missing.value;
+  const sources = [
+    missing,
+    observedFact({ value: "" }),
+    observedFact({ value: Number.NaN })
+  ];
+
+  for (const source of sources) {
     const result = integration({
       openingSource: source,
       openingCoverage: completePointCoverage(source, "OPENING_BALANCE")
