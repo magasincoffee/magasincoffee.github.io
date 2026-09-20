@@ -870,7 +870,7 @@ TASK-RBT-001 is this docs/plan lock. Runtime implementation begins only after it
 
 ### TASK-RBT-002 — Event & Timing Foundation
 
-Implementation status: **RELEASED in runtime v2026-09-19.51**. This release adds only the privacy-safe append-only event sink, additive per-task timing state, and exact-boundary transition integration. TASK-RBT-003+ behavior remains unreleased.
+Implementation status: **RELEASED in runtime v2026-09-19.51**. This release adds the privacy-safe append-only event sink, additive per-task timing state, and exact-boundary transition integration. TASK-RBT-003 builds on this substrate; TASK-RBT-004+ behavior remains unreleased.
 
 Purpose: create the durable privacy-safe event/timing substrate before scheduler/watchdog/UI logic depends on it.
 
@@ -906,6 +906,8 @@ Rollback/risk:
 - risk is log volume/privacy leakage; mitigate via allowlist + rate limiting.
 
 ### TASK-RBT-003 — Work URL Hot-Swap + LƯU WORK
+
+Implementation status: **RELEASED in runtime v2026-09-20.52**.
 
 Purpose: replace destructive revision reset semantics with immediate-idle / pending-active apply.
 
