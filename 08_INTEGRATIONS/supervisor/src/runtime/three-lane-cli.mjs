@@ -195,19 +195,27 @@ function accessDeniedMessage({ brain = false } = {}) {
     : "Work này không mở được trong Chrome Robot. Dừng luồng rồi dán LINK WORK khác hoặc bấm TỰ TẠO WORK để Robot tạo chat mới.";
 }
 
-async function openExactConversation(adapter, url, { brain = false } = {}) {
+async function openExactConversation(adapter, url, {
+  brain = false,
+  scheduler = null,
+  laneId = null,
+  targetRevision = 0,
+  generation = 0
+} = {}) {
   const normalized = normalizeChatGptConversationUrl(url);
   const target = targetFromUrl(normalized);
-  const existing = adapter.findPageForTarget(target);
-  if (existing) {
-    const probe = await adapter.probePage(existing).catch(() => null);
-    if (probe?.snapshot?.conversationAccessDenied) {
-      throw new Error(accessDeniedMessage({ brain }));
-    }
-    return existing;
-  }
+  const role = brain ? "BRAIN" : "WORK";
+  const page = scheduler
+    ? await scheduler.acquireExactPage({
+        laneId,
+        role,
+        url: normalized,
+        target,
+        targetRevision,
+        generation
+      })
+    : adapter.findPageForTarget(target) || await adapter.reopenTargetPage(normalized);
 
-  const page = await adapter.reopenTargetPage(normalized);
   const probe = await adapter.probePage(page).catch(() => null);
   if (probe?.snapshot?.conversationAccessDenied) {
     throw new Error(accessDeniedMessage({ brain }));
