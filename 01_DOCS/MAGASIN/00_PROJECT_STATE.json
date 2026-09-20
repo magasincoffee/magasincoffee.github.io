@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
   "current_phase": "P3_PFC_8H_V2_EXECUTION",
-  "current_task": "TASK-067",
-  "current_task_title": "Operating Cost Truth Contract",
+  "current_task": "TASK-068",
+  "current_task_title": "Payroll Cost Mapper",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-068",
+  "next_task": "TASK-069",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -291,7 +291,7 @@
     ],
     "prepared_queue": "PFC_8H_V2",
     "queue_status": "ACTIVE",
-    "next_planned_task": "TASK-067",
+    "next_planned_task": "TASK-068",
     "next_task_release_required": false
   },
   "session_bootstrap": {
@@ -371,8 +371,8 @@
     ],
     "execution_generation": "PFC_8H_V2_RUN_01",
     "started_task": "TASK-060",
-    "current_task": "TASK-067",
-    "next_task": "TASK-068",
+    "current_task": "TASK-068",
+    "next_task": "TASK-069",
     "task_060": {
       "status": "DONE",
       "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md",
@@ -526,6 +526,30 @@
       "bank_payment_fees": "NOT_CONNECTED",
       "executable_changes": false,
       "conclusion": "SOURCE_INVENTORY_COMPLETE"
+    },
+    "task_067": {
+      "status": "DONE",
+      "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_067_OPERATING_COST_TRUTH_CONTRACT_V1_EVIDENCE.md",
+      "implementation": "OPERATING_COST_TRUTH_CONTRACT_V1",
+      "contract": "02_CORE/contracts/operating-cost-truth.v1.json",
+      "helper": "02_CORE/shared/operating-cost-truth-v1.mjs",
+      "tests": "09_QA/business-os/operating-cost-truth.test.mjs",
+      "pr": 204,
+      "final_head": "4c9bbc2b99dd272a6f707ce2ebd422988cef9223",
+      "merge": "6233fc587921ba44a0b61a662b6b316ade8292c2",
+      "pr_head_run_id": 35515915305,
+      "pr_head_job_id": 106091708566,
+      "post_merge_run_id": 35515946855,
+      "post_merge_job_id": 106091793584,
+      "runtime": "Node v20.20.2",
+      "targeted_tests": 31,
+      "full_business_os_logical_checks": 385,
+      "failures": 0,
+      "financial_truth_reused": true,
+      "profit_formula_changed": false,
+      "source_specific_mapping": false,
+      "google_drive": "NOT_RESCANNED_TASK_066_CANONICAL",
+      "conclusion": "REMOTE_CI_GREEN"
     }
   },
   "data_evidence_policy": {
@@ -562,13 +586,15 @@
   "wave_b_operating_cost_truth": {
     "status": "ACTIVE",
     "completed_tasks": [
-      "TASK-066"
+      "TASK-066",
+      "TASK-067"
     ],
-    "current_task": "TASK-067",
-    "next_task": "TASK-068",
-    "operating_cost_truth": "INCOMPLETE",
+    "current_task": "TASK-068",
+    "next_task": "TASK-069",
+    "operating_cost_truth": "CONTRACT_IMPLEMENTED_SOURCE_MAPPING_INCOMPLETE",
     "recognized_cost_not_cash_paid": true,
     "source_inventory": "COMPLETE",
-    "missing_sources_do_not_block": true
+    "missing_sources_do_not_block": true,
+    "contract": "OPERATING_COST_TRUTH_V1"
   }
 }
