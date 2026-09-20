@@ -409,13 +409,13 @@ async function openExactConversation(adapter, url, {
       })
     : adapter.findPageForTarget(target) || await adapter.reopenTargetPage(normalized);
 
-  const firstUrl = page.url();
   const firstProbe = await adapter.probePage(page);
+  const firstUrl = page.url();
   if (typeof page.waitForTimeout === "function") {
     await page.waitForTimeout(160);
   }
-  const secondUrl = page.url();
   const secondProbe = await adapter.probePage(page);
+  const secondUrl = page.url();
 
   const availability = evaluateTargetAvailability({
     firstSnapshot: firstProbe.snapshot,
@@ -450,13 +450,15 @@ async function openExactConversation(adapter, url, {
     );
   }
 
-  await markExactTargetHealthyOnce({
-    brain,
-    identity,
-    registryLane,
-    registry,
-    registryPath
-  });
+  if (availability.state === TARGET_AVAILABILITY.AVAILABLE) {
+    await markExactTargetHealthyOnce({
+      brain,
+      identity,
+      registryLane,
+      registry,
+      registryPath
+    });
+  }
 
   return page;
 }
@@ -3283,6 +3285,10 @@ async function executeWatchdogReload({
   workPage,
   expectedIdentity
 }) {
+  if (currentTargetIsQuarantined(registryLane, { brain: false })) {
+    return { status: "TARGET_QUARANTINED" };
+  }
+
   if (!(await isWatchdogRecoveryAllowed({
     stopPath,
     configPath,
