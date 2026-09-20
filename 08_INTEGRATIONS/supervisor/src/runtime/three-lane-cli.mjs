@@ -8,6 +8,8 @@ import {
   isTransientNavigationError
 } from "../ui/playwright-adapter.mjs";
 import {
+  SEND_REJECTION_CLASSES,
+  classifyComposerSendRejection,
   sendComposerInstruction,
   sendComposerWithAttachment
 } from "../ui/actions.mjs";
@@ -82,8 +84,24 @@ import {
   markWatchdogReloaded,
   normalizeWorkWatchdog
 } from "./work-watchdog.mjs";
+import {
+  WORK_CAPACITY_STATES,
+  evaluateWorkCapacity,
+  workCapacitySignalsFromSnapshot
+} from "./work-capacity.mjs";
+import {
+  WORK_ROLLOVER_STAGES,
+  beginWorkRollover,
+  markBlankTargetCreating,
+  markRolloverDispatchConfirmed,
+  markRolloverDispatchLatchPersisted,
+  markRolloverIntentPersisted,
+  markRolloverTargetPersisted,
+  normalizeWorkRollover,
+  rolloverMatchesDirective
+} from "./work-rollover.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.55";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.56";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;
@@ -97,6 +115,7 @@ function parseArgs(argv) {
     browserSchedulerFixture: false,
     workWatchdogFixture: false,
     relayRearmFixture: false,
+    workFullFixture: false,
     pageBudget: DEFAULT_CHATGPT_PAGE_BUDGET
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -108,6 +127,7 @@ function parseArgs(argv) {
     else if (key === "--browser-scheduler-fixture") result.browserSchedulerFixture = true;
     else if (key === "--work-watchdog-fixture") result.workWatchdogFixture = true;
     else if (key === "--relay-rearm-fixture") result.relayRearmFixture = true;
+    else if (key === "--work-full-fixture") result.workFullFixture = true;
     else if (key === "--page-budget") result.pageBudget = Number(argv[++i]);
     else throw new Error(`unknown argument: ${key}`);
   }
