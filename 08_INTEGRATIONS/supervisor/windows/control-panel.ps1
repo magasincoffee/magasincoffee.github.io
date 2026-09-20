@@ -108,9 +108,9 @@ function New-DefaultConfig {
         schema_version = 'three-lane-config.v1'
         mode = 'THREE_LANE_V1'
         lanes = @(
-            [ordered]@{ lane_id='lane-1'; project_name='Dự án 1'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; enabled=$false },
-            [ordered]@{ lane_id='lane-2'; project_name='Dự án 2'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; enabled=$false },
-            [ordered]@{ lane_id='lane-3'; project_name='Dự án 3'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; enabled=$false }
+            [ordered]@{ lane_id='lane-1'; project_name='Dự án 1'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; work_url_saved_at=$null; work_mode='AUTO'; enabled=$false },
+            [ordered]@{ lane_id='lane-2'; project_name='Dự án 2'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; work_url_saved_at=$null; work_mode='AUTO'; enabled=$false },
+            [ordered]@{ lane_id='lane-3'; project_name='Dự án 3'; brain_url=''; brain_url_revision=0; work_url=''; work_url_revision=0; work_url_saved_at=$null; work_mode='AUTO'; enabled=$false }
         )
     }
 }
@@ -128,20 +128,32 @@ function Get-LaneConfig($Config, [string]$LaneId) {
     return @($Config.lanes | Where-Object { [string]$_.lane_id -eq $LaneId } | Select-Object -First 1)[0]
 }
 
+function ConvertTo-CanonicalChatConversationUrl([string]$Url) {
+    if (-not $Url) { throw 'URL trống' }
+    $uri = [Uri]$Url
+    if (
+        $uri.Scheme -ne 'https' -or
+        $uri.Host -notmatch '(^|\.)chatgpt\.com$' -or
+        $uri.AbsolutePath -notmatch '^/(c|g|project)/'
+    ) {
+        throw 'URL phải là cuộc trò chuyện ChatGPT cụ thể'
+    }
+
+    $path = $uri.AbsolutePath
+    if ($path -match '^/c/WEB:([0-9a-fA-F-]{36})$') {
+        $path = '/c/' + $Matches[1]
+    }
+    return 'https://chatgpt.com' + $path
+}
+
 function Test-ChatConversationUrl([string]$Url) {
-    if (-not $Url) { return $false }
     try {
-        $uri = [Uri]$Url
-        return (
-            $uri.Scheme -eq 'https' -and
-            $uri.Host -match '(^|\.)chatgpt\.com$' -and
-            $uri.AbsolutePath -match '^/(c|g|project)/'
-        )
+        [void](ConvertTo-CanonicalChatConversationUrl $Url)
+        return $true
     } catch {
         return $false
     }
 }
-
 function Get-SupervisorProcess {
     return Get-LifecycleSupervisorWrapper -Root $root
 }
@@ -252,9 +264,7 @@ function Save-Lane(
     [string]$LaneId,
     [string]$ProjectName,
     [string]$BrainUrl,
-    [string]$WorkUrl,
-    [bool]$Enabled,
-    [bool]$ForceWorkRevision = $false
+    [bool]$Enabled
 ) {
     $config = Ensure-Config
     $lane = Get-LaneConfig $config $LaneId
@@ -264,27 +274,87 @@ function Save-Lane(
         $initialBrainRevision = if ([string]$lane.brain_url) { 1 } else { 0 }
         $lane | Add-Member -NotePropertyName 'brain_url_revision' -NotePropertyValue $initialBrainRevision
     }
+
+    $newBrainUrl = if ($BrainUrl) { $BrainUrl.Trim() } else { '' }
+    if ([string]$lane.brain_url -ne $newBrainUrl) {
+        $lane.brain_url_revision = [int]$lane.brain_url_revision + 1
+    }
+
+    $lane.project_name = if ($ProjectName) { $ProjectName.Trim() } else { $LaneId }
+    $lane.brain_url = $newBrainUrl
+    $lane.enabled = $Enabled
+    Write-JsonAtomic $configFile $config
+}
+
+function Save-WorkTarget(
+    [string]$LaneId,
+    [string]$WorkUrl = '',
+    [bool]$RobotManaged = $false,
+    [bool]$ForceRevision = $false
+) {
+    $config = Ensure-Config
+    $lane = Get-LaneConfig $config $LaneId
+    if (-not $lane) { throw "Không tìm thấy $LaneId" }
+
     if (-not $lane.PSObject.Properties['work_url']) {
         $lane | Add-Member -NotePropertyName 'work_url' -NotePropertyValue ''
     }
     if (-not $lane.PSObject.Properties['work_url_revision']) {
         $lane | Add-Member -NotePropertyName 'work_url_revision' -NotePropertyValue 0
     }
-
-    $newBrainUrl = if ($BrainUrl) { $BrainUrl.Trim() } else { '' }
-    $newWorkUrl = if ($WorkUrl) { $WorkUrl.Trim() } else { '' }
-    if ([string]$lane.brain_url -ne $newBrainUrl) {
-        $lane.brain_url_revision = [int]$lane.brain_url_revision + 1
+    if (-not $lane.PSObject.Properties['work_url_saved_at']) {
+        $lane | Add-Member -NotePropertyName 'work_url_saved_at' -NotePropertyValue $null
     }
-    if ([string]$lane.work_url -ne $newWorkUrl -or $ForceWorkRevision) {
-        $lane.work_url_revision = [int]$lane.work_url_revision + 1
+    if (-not $lane.PSObject.Properties['work_mode']) {
+        $legacyMode = if ([string]$lane.work_url) { 'OWNER' } else { 'AUTO' }
+        $lane | Add-Member -NotePropertyName 'work_mode' -NotePropertyValue $legacyMode
     }
 
-    $lane.project_name = if ($ProjectName) { $ProjectName.Trim() } else { $LaneId }
-    $lane.brain_url = $newBrainUrl
+    $newMode = if ($RobotManaged) { 'AUTO' } else { 'OWNER' }
+    $newWorkUrl = if ($RobotManaged) {
+        ''
+    } else {
+        ConvertTo-CanonicalChatConversationUrl $WorkUrl
+    }
+
+    $currentMode = ([string]$lane.work_mode).ToUpperInvariant()
+    if ($currentMode -notin @('OWNER','AUTO')) {
+        $currentMode = if ([string]$lane.work_url) { 'OWNER' } else { 'AUTO' }
+    }
+    $currentWorkUrl = ''
+    if ($currentMode -eq 'OWNER' -and [string]$lane.work_url) {
+        try {
+            $currentWorkUrl = ConvertTo-CanonicalChatConversationUrl ([string]$lane.work_url)
+        } catch {
+            $currentWorkUrl = ([string]$lane.work_url).Trim()
+        }
+    }
+
+    if (
+        -not $ForceRevision -and
+        $currentMode -eq $newMode -and
+        $currentWorkUrl -eq $newWorkUrl
+    ) {
+        return [pscustomobject]@{
+            Changed = $false
+            Revision = [int]$lane.work_url_revision
+            SavedAt = $lane.work_url_saved_at
+            Mode = $currentMode
+        }
+    }
+
     $lane.work_url = $newWorkUrl
-    $lane.enabled = $Enabled
+    $lane.work_mode = $newMode
+    $lane.work_url_revision = [int]$lane.work_url_revision + 1
+    $lane.work_url_saved_at = [DateTimeOffset]::UtcNow.ToString('o')
     Write-JsonAtomic $configFile $config
+
+    return [pscustomobject]@{
+        Changed = $true
+        Revision = [int]$lane.work_url_revision
+        SavedAt = [string]$lane.work_url_saved_at
+        Mode = $newMode
+    }
 }
 
 function Save-BrainTarget(
@@ -485,21 +555,27 @@ for ($i = 0; $i -lt 3; $i++) {
 
     $workBox = New-Object Windows.Forms.TextBox
     $workBox.Location = New-Object Drawing.Point(125, 97)
-    $workBox.Size = New-Object Drawing.Size(760, 27)
+    $workBox.Size = New-Object Drawing.Size(635, 27)
     $workBox.ReadOnly = $false
     $workBox.BackColor = [Drawing.Color]::White
     $panel.Controls.Add($workBox)
 
     $openWork = New-Object Windows.Forms.Button
     $openWork.Text = 'MỞ WORK'
-    $openWork.Location = New-Object Drawing.Point(900, 94)
+    $openWork.Location = New-Object Drawing.Point(775, 94)
     $openWork.Size = New-Object Drawing.Size(108, 34)
     $panel.Controls.Add($openWork)
 
+    $saveWork = New-Object Windows.Forms.Button
+    $saveWork.Text = 'LƯU WORK'
+    $saveWork.Location = New-Object Drawing.Point(892, 94)
+    $saveWork.Size = New-Object Drawing.Size(108, 34)
+    $panel.Controls.Add($saveWork)
+
     $resetWork = New-Object Windows.Forms.Button
     $resetWork.Text = 'TỰ TẠO WORK'
-    $resetWork.Location = New-Object Drawing.Point(1017, 94)
-    $resetWork.Size = New-Object Drawing.Size(108, 34)
+    $resetWork.Location = New-Object Drawing.Point(1009, 94)
+    $resetWork.Size = New-Object Drawing.Size(116, 34)
     $panel.Controls.Add($resetWork)
 
     $messageLabel = New-Object Windows.Forms.Label
@@ -516,7 +592,7 @@ for ($i = 0; $i -lt 3; $i++) {
 
     $updatedValue = New-Object Windows.Forms.Label
     $updatedValue.Location = New-Object Drawing.Point(125, 190)
-    $updatedValue.Size = New-Object Drawing.Size(500, 22)
+    $updatedValue.Size = New-Object Drawing.Size(760, 22)
     $updatedValue.ForeColor = [Drawing.Color]::FromArgb(100,116,139)
     $panel.Controls.Add($updatedValue)
 
@@ -545,6 +621,7 @@ for ($i = 0; $i -lt 3; $i++) {
         OpenBrain = $openBrain
         SaveBrain = $saveBrain
         OpenWork = $openWork
+        SaveWork = $saveWork
         ResetWork = $resetWork
     }
 
@@ -572,16 +649,19 @@ for ($i = 0; $i -lt 3; $i++) {
             ) | Out-Null
             return
         }
+        if ($workUrl) {
+            Save-WorkTarget $id $workUrl | Out-Null
+        }
         # Lane START changes only Owner lane intent: disabled -> enabled.
         # Process recovery is a separate lifecycle concern handled by Refresh-Ui.
-        Save-Lane $id $ui.Project.Text $brainUrl $workUrl $true
+        Save-Lane $id $ui.Project.Text $brainUrl $true
     })
     $startButton.Tag = $currentLaneId
 
     $stopButton.Add_Click({
         $id = $this.Tag
         $ui = $laneUi[$id]
-        Save-Lane $id $ui.Project.Text $ui.Brain.Text $ui.Work.Text $false
+        Save-Lane $id $ui.Project.Text $ui.Brain.Text $false
     })
     $stopButton.Tag = $currentLaneId
 
@@ -623,25 +703,44 @@ for ($i = 0; $i -lt 3; $i++) {
     })
     $openWork.Tag = $currentLaneId
 
-    $resetWork.Add_Click({
+    $saveWork.Add_Click({
         $id = $this.Tag
         $ui = $laneUi[$id]
-        $config = Ensure-Config
-        $lane = Get-LaneConfig $config $id
-        if ($lane -and [bool]$lane.enabled) {
+        $workUrl = $ui.Work.Text.Trim()
+        if (-not (Test-ChatConversationUrl $workUrl)) {
             [Windows.Forms.MessageBox]::Show(
-                'Hãy DỪNG LUỒNG trước khi đổi Work.',
+                'LINK WORK không hợp lệ. Hãy dán đúng link cuộc trò chuyện ChatGPT.',
                 'MAGASIN BUSINESS OS',
                 'OK',
-                'Information'
+                'Warning'
             ) | Out-Null
             return
         }
 
-        Save-Lane $id $ui.Project.Text $ui.Brain.Text '' $false $true
-        $ui.Work.Text = ''
+        $saved = Save-WorkTarget $id $workUrl
+        if ($saved.Changed) {
+            [Windows.Forms.MessageBox]::Show(
+                ('ĐÃ LƯU WORK · revision ' + $saved.Revision + ' · ' + (Format-VietnamTime $saved.SavedAt) + '. Robot sẽ nhận revision ở vòng xử lý kế tiếp; task đang chạy không bị bỏ.'),
+                'MAGASIN BUSINESS OS',
+                'OK',
+                'Information'
+            ) | Out-Null
+        } else {
+            [Windows.Forms.MessageBox]::Show(
+                ('WORK không đổi · revision ' + $saved.Revision + '. Không tăng revision.'),
+                'MAGASIN BUSINESS OS',
+                'OK',
+                'Information'
+            ) | Out-Null
+        }
+    })
+    $saveWork.Tag = $currentLaneId
+
+    $resetWork.Add_Click({
+        $id = $this.Tag
+        $saved = Save-WorkTarget $id '' $true $true
         [Windows.Forms.MessageBox]::Show(
-            'Đã chuyển sang chế độ Robot tự tạo Work. Bấm BẮT ĐẦU LUỒNG để tiếp tục.',
+            ('ĐÃ LƯU TỰ TẠO WORK · revision ' + $saved.Revision + ' · ' + (Format-VietnamTime $saved.SavedAt) + '. Nếu có task đang chạy, Work hiện tại được giữ đến safe boundary; Robot không bỏ task.'),
             'MAGASIN BUSINESS OS',
             'OK',
             'Information'
@@ -739,12 +838,21 @@ function Refresh-Ui {
             }
         }
         if (-not $ui.Work.Focused) {
-            if ($enabled -and $st -and $st.work_url) {
-                $ui.Work.Text = [string]$st.work_url
-            } elseif ($enabled -and $reg -and $reg.work_url) {
-                $ui.Work.Text = [string]$reg.work_url
+            $configuredMode = if ($cfg -and $cfg.work_mode) {
+                ([string]$cfg.work_mode).ToUpperInvariant()
             } elseif ($cfg -and $cfg.work_url) {
+                'OWNER'
+            } else {
+                'AUTO'
+            }
+
+            if ($configuredMode -eq 'OWNER' -and $cfg -and $cfg.work_url) {
+                # The textbox represents the latest Owner intent. During an
+                # active task the runtime may still execute the old Work until
+                # the pending revision reaches a safe boundary.
                 $ui.Work.Text = [string]$cfg.work_url
+            } elseif ($enabled -and $st -and $st.work_url) {
+                $ui.Work.Text = [string]$st.work_url
             } elseif ($reg -and $reg.work_url) {
                 $ui.Work.Text = [string]$reg.work_url
             } else {
@@ -754,10 +862,11 @@ function Refresh-Ui {
 
         $ui.Project.Enabled = -not $enabled
         $ui.Brain.Enabled = $true
-        $ui.Work.Enabled = -not $enabled
+        $ui.Work.Enabled = $true
         $ui.Start.Enabled = -not $enabled
         $ui.Stop.Enabled = $enabled
         $ui.SaveBrain.Enabled = $true
+        $ui.SaveWork.Enabled = $true
 
         $state = 'STOPPED'
         $message = 'Luồng đang dừng. Nhập link Bộ não rồi bấm BẮT ĐẦU LUỒNG.'
@@ -786,17 +895,41 @@ function Refresh-Ui {
         $ui.Status.Text = Get-FriendlyStatus $state
         $ui.Panel.BackColor = Get-StatusBackColor $state
         $ui.Message.Text = $message
-        $ui.Updated.Text = if ($processTruth.healthy -and $st -and $st.updated_at) {
-            'Cập nhật: ' + (Format-VietnamTime ([string]$st.updated_at))
-        } elseif ($enabled -and -not $processTruth.healthy) {
-            'Cập nhật: đang xác minh PROCESS TRUTH'
+        $configuredRevision = if ($cfg -and $cfg.work_url_revision) {
+            [int]$cfg.work_url_revision
+        } else { 0 }
+        $appliedRevision = if ($reg -and $reg.applied_work_url_revision) {
+            [int]$reg.applied_work_url_revision
+        } else { 0 }
+        $pendingRevision = if ($reg -and $reg.pending_work_url_revision) {
+            [int]$reg.pending_work_url_revision
+        } else { 0 }
+        $configuredMode = if ($cfg -and $cfg.work_mode) {
+            ([string]$cfg.work_mode).ToUpperInvariant()
+        } elseif ($cfg -and $cfg.work_url) {
+            'OWNER'
         } else {
-            'Cập nhật: —'
+            'AUTO'
         }
+        $workApplyState = if ($configuredRevision -gt 0 -and $pendingRevision -ge $configuredRevision) {
+            'ĐANG CHỜ ÁP DỤNG'
+        } elseif ($configuredRevision -gt 0 -and $appliedRevision -ge $configuredRevision) {
+            'ĐÃ ÁP DỤNG'
+        } elseif ($configuredRevision -gt 0) {
+            'ĐÃ LƯU'
+        } else {
+            'CHƯA CÓ REVISION'
+        }
+        $savedAt = if ($cfg -and $cfg.work_url_saved_at) {
+            Format-VietnamTime ([string]$cfg.work_url_saved_at)
+        } else {
+            '—'
+        }
+        $ui.Updated.Text = 'WORK ' + $configuredMode + ' · revision ' + $configuredRevision + ' · ' + $workApplyState + ' · ' + $savedAt
 
         $ui.OpenBrain.Enabled = Test-ChatConversationUrl $ui.Brain.Text
         $ui.OpenWork.Enabled = Test-ChatConversationUrl $ui.Work.Text
-        $ui.ResetWork.Enabled = -not $enabled
+        $ui.ResetWork.Enabled = $true
     }
 }
 
