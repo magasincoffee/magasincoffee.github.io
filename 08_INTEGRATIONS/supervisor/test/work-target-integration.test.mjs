@@ -22,7 +22,7 @@ test("RBT-003 Work-target invariants remain intact on v53", async () => {
     "async function applyPendingWorkTargetAtSafeBoundary"
   );
 
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.53"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.54"/);
   assert.match(applyWork, /acceptOwnerWorkTargetRevision/);
   assert.match(applyWork, /WORK_TARGET_PENDING/);
   for (const forbidden of [
