@@ -37,7 +37,9 @@ export function normalizeWorkTargetIntent(value = {}) {
 export function hasActiveWorkTransaction(lane = {}) {
   const timing = lane?.task_timing || {};
   const completedResultNotRelayed = Boolean(
-    timing.completed_at && !timing.relay_confirmed_at
+    timing.completed_at &&
+    !timing.relay_confirmed_at &&
+    !lane?.last_result_relay_id
   );
   return Boolean(
     lane?.awaiting_work ||
