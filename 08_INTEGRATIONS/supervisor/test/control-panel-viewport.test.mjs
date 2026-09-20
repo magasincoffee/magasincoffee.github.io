@@ -97,11 +97,11 @@ test("all lane START and STOP controls remain reachable content and preserve han
 
   assert.match(
     source,
-    /\$startButton\.Add_Click\(\{[\s\S]*?Save-Lane \$id \$ui\.Project\.Text \$brainUrl \$workUrl \$true[\s\S]*?\}\)/
+    /\$startButton\.Add_Click\(\{[\s\S]*?Save-Lane \$id \$ui\.Project\.Text \$brainUrl \$true[\s\S]*?\}\)/
   );
   assert.match(
     source,
-    /\$stopButton\.Add_Click\(\{[\s\S]*?Save-Lane \$id \$ui\.Project\.Text \$ui\.Brain\.Text \$ui\.Work\.Text \$false[\s\S]*?\}\)/
+    /\$stopButton\.Add_Click\(\{[\s\S]*?Save-Lane \$id \$ui\.Project\.Text \$ui\.Brain\.Text \$false[\s\S]*?\}\)/
   );
 });
 
