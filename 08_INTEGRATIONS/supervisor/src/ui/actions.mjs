@@ -3,6 +3,46 @@ import { ACTIONS } from "../decision.mjs";
 const SAFE_RETRY_RE = /^(try again|retry|thử lại)$/i;
 const SAFE_CONTINUE_RE = /^(continue generating|continue response|tiếp tục tạo|tiếp tục)$/i;
 const SAFE_SEND_RE = /^(send|send prompt|gửi|gửi tin nhắn)$/i;
+export const SEND_REJECTION_CLASSES = Object.freeze({
+  NONE: "NONE",
+  CAPACITY_REJECTED: "CAPACITY_REJECTED",
+  NETWORK_TRANSIENT: "NETWORK_TRANSIENT",
+  AUTH_SECURITY: "AUTH_SECURITY",
+  TRANSIENT: "TRANSIENT",
+  COMPOSER_NOT_READY: "COMPOSER_NOT_READY",
+  UNKNOWN: "UNKNOWN"
+});
+
+export function classifyComposerSendRejection(snapshot = {}) {
+  if (
+    snapshot.loginRequired ||
+    snapshot.hasCaptcha ||
+    snapshot.conversationAccessDenied
+  ) {
+    return SEND_REJECTION_CLASSES.AUTH_SECURITY;
+  }
+  if (snapshot.hasNetworkError) {
+    return SEND_REJECTION_CLASSES.NETWORK_TRANSIENT;
+  }
+  if (
+    snapshot.hasTransientError ||
+    snapshot.hasRetryControl ||
+    snapshot.modelSwitching
+  ) {
+    return SEND_REJECTION_CLASSES.TRANSIENT;
+  }
+  if (
+    snapshot.capacityExplicitFullUi ||
+    snapshot.composerCapacityBlocked
+  ) {
+    return SEND_REJECTION_CLASSES.CAPACITY_REJECTED;
+  }
+  if (!snapshot.composerReady || snapshot.composerGenericBlocked) {
+    return SEND_REJECTION_CLASSES.COMPOSER_NOT_READY;
+  }
+  return SEND_REJECTION_CLASSES.UNKNOWN;
+}
+
 const COMPOSER_SELECTORS = Object.freeze([
   "#prompt-textarea:visible",
   "[contenteditable='true'][role='textbox']:visible",
@@ -202,7 +242,8 @@ export async function sendComposerInstruction(
       executed: false,
       dryRun,
       action: ACTIONS.CONTINUE,
-      reason: "composer is not ready"
+      reason: "composer is not ready",
+      rejection_class: SEND_REJECTION_CLASSES.COMPOSER_NOT_READY
     };
   }
 
@@ -221,7 +262,8 @@ export async function sendComposerInstruction(
       executed: false,
       dryRun: false,
       action: ACTIONS.CONTINUE,
-      reason: textSet.reason
+      reason: textSet.reason,
+      rejection_class: SEND_REJECTION_CLASSES.COMPOSER_NOT_READY
     };
   }
 
