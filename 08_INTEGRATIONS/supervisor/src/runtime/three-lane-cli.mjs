@@ -46,8 +46,10 @@ import {
   migrateLegacyBlockedRelayLatches
 } from "./relay-reconciliation.mjs";
 import {
+  RELAY_REARM_STATES,
   RELAY_RETRY_STATES,
   beginRelaySendAttempt,
+  rearmRelayRetry,
   relayRetryState,
   scheduleRelayRetry
 } from "./relay-retry.mjs";
@@ -81,7 +83,7 @@ import {
   normalizeWorkWatchdog
 } from "./work-watchdog.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.54";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.55";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;
@@ -94,6 +96,7 @@ function parseArgs(argv) {
     workTargetFixture: false,
     browserSchedulerFixture: false,
     workWatchdogFixture: false,
+    relayRearmFixture: false,
     pageBudget: DEFAULT_CHATGPT_PAGE_BUDGET
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -104,6 +107,7 @@ function parseArgs(argv) {
     else if (key === "--work-target-fixture") result.workTargetFixture = true;
     else if (key === "--browser-scheduler-fixture") result.browserSchedulerFixture = true;
     else if (key === "--work-watchdog-fixture") result.workWatchdogFixture = true;
+    else if (key === "--relay-rearm-fixture") result.relayRearmFixture = true;
     else if (key === "--page-budget") result.pageBudget = Number(argv[++i]);
     else throw new Error(`unknown argument: ${key}`);
   }
@@ -1587,16 +1591,19 @@ async function relayWorkResult({
     ? await fs.stat(screenshotPath).catch(() => null)
     : null;
   if (!screenshotStat?.isFile() || screenshotStat.size <= 0) {
-    await clearRelayInflight(registryLane);
+    latch.retry_exhausted = true;
+    latch.retry_not_before = null;
+    latch.last_attempt_state = "EVIDENCE_MISSING";
     await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
       type: "LANE_RESULT_RELAY_EVIDENCE_MISSING",
       laneId: lane.lane_id,
       taskId: registryLane.task_id,
       relayId: relay.relay_id,
-      digest: relay.response_digest
+      digest: relay.response_digest,
+      reason: "FAIL_CLOSED_LATCH_PRESERVED"
     });
-    return "PENDING";
+    return "EVIDENCE_MISSING";
   }
 
   if (!execute) return "PENDING";
@@ -1841,6 +1848,146 @@ async function applyOwnerWorkStateReset({
     reason: `reset_revision=${revision}`
   });
   return true;
+}
+
+async function emitRelayRearmLifecycleEvent({
+  lane,
+  registryLane,
+  latch,
+  eventType,
+  reasonCode,
+  phase = "RECOVERY"
+}) {
+  await emitLaneEvent({
+    lane_id: lane.lane_id,
+    actor: "SUPERVISOR",
+    event_type: eventType,
+    task_id: registryLane.task_id || undefined,
+    phase,
+    reason_code: reasonCode,
+    work_generation: Number(registryLane.work_generation || 0),
+    relay_id: latch?.relay_id || undefined
+  });
+}
+
+async function applyOwnerRelayRetryRearm({
+  lane,
+  brainPage = null,
+  registryLane,
+  registry,
+  registryPath,
+  logPath
+}) {
+  const revision = Number(lane.relay_retry_rearm_revision || 0);
+  const appliedRevision = Number(
+    registryLane.applied_relay_retry_rearm_revision || 0
+  );
+  if (revision <= appliedRevision) {
+    return { status: "NONE", revision: appliedRevision };
+  }
+
+  const latch = registryLane.relay_inflight;
+  if (!latch || !latch.retry_exhausted) {
+    const outcome = rearmRelayRetry(latch, {
+      revision,
+      appliedRevision
+    });
+    registryLane.applied_relay_retry_rearm_revision = outcome.applied_revision;
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_OWNER_RELAY_REARM_NOOP",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: latch?.relay_id,
+      reason: outcome.status
+    });
+    return { status: "NOOP", revision: outcome.applied_revision };
+  }
+
+  if (!brainPage) {
+    throw new Error("Exact Brain page is required before applying relay rearm");
+  }
+
+  await assertConversationSafe(null, brainPage, { brain: true }).catch(() => {
+    // The exact Brain page has already been probed by ensureBrainPage.
+    // This branch intentionally does not mutate relay retry state.
+    throw new Error("Owner/security boundary detected");
+  });
+
+  if (await hasRelayMarker(brainPage, latch.relay_id)) {
+    registryLane.applied_relay_retry_rearm_revision = revision;
+    await finalizeConfirmedRelay({
+      registryLane,
+      registry,
+      registryPath,
+      latch
+    });
+    await emitRelayRearmLifecycleEvent({
+      lane,
+      registryLane,
+      latch,
+      eventType: LANE_EVENT_TYPES.RELAY_REARM_DEDUPED,
+      reasonCode: "OWNER_RELAY_REARM_DEDUPED"
+    });
+    await safeLog(logPath, {
+      type: "LANE_OWNER_RELAY_REARM_DEDUPED",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: latch.relay_id,
+      reason: `revision=${revision}`
+    });
+    return { status: "DEDUPED", revision };
+  }
+
+  const screenshotPath = String(latch.screenshot_path || "").trim();
+  const screenshotStat = screenshotPath
+    ? await fs.stat(screenshotPath).catch(() => null)
+    : null;
+  if (!screenshotStat?.isFile() || screenshotStat.size <= 0) {
+    registryLane.applied_relay_retry_rearm_revision = revision;
+    latch.retry_exhausted = true;
+    latch.retry_not_before = null;
+    latch.last_attempt_state = "EVIDENCE_MISSING";
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_OWNER_RELAY_REARM_EVIDENCE_MISSING",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      relayId: latch.relay_id,
+      reason: `revision=${revision};fail_closed=true`
+    });
+    return { status: "EVIDENCE_MISSING", revision };
+  }
+
+  const outcome = rearmRelayRetry(latch, {
+    revision,
+    appliedRevision
+  });
+  if (outcome.status !== RELAY_REARM_STATES.REARMED) {
+    throw new Error(`Unexpected relay rearm transition: ${outcome.status}`);
+  }
+
+  registryLane.applied_relay_retry_rearm_revision = outcome.applied_revision;
+  await atomicJsonWrite(registryPath, registry);
+  await emitRelayRearmLifecycleEvent({
+    lane,
+    registryLane,
+    latch,
+    eventType: LANE_EVENT_TYPES.RELAY_REARM_APPLIED,
+    reasonCode: "OWNER_RELAY_REARM"
+  });
+  await safeLog(logPath, {
+    type: "LANE_OWNER_RELAY_REARM_APPLIED",
+    laneId: lane.lane_id,
+    taskId: registryLane.task_id,
+    relayId: latch.relay_id,
+    reason: `revision=${revision};epoch=${outcome.retry_epoch}`
+  });
+  return {
+    status: "REARMED",
+    revision: outcome.applied_revision,
+    retry_epoch: outcome.retry_epoch
+  };
 }
 
 async function applyOwnerWorkTarget({
@@ -2366,6 +2513,48 @@ async function processLaneTurn({
     return brainPage;
   };
 
+  const relayRearmRevision = Number(lane.relay_retry_rearm_revision || 0);
+  const appliedRelayRearmRevision = Number(
+    registryLane.applied_relay_retry_rearm_revision || 0
+  );
+  if (relayRearmRevision > appliedRelayRearmRevision) {
+    if (registryLane.relay_inflight?.retry_exhausted) {
+      await ensureBrainPage();
+    }
+    const rearmOutcome = await applyOwnerRelayRetryRearm({
+      lane,
+      brainPage,
+      registryLane,
+      registry,
+      registryPath,
+      logPath
+    });
+    if (rearmOutcome.status === "DEDUPED") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WAITING_BRAIN",
+        "KẾT QUẢ ĐÃ ĐƯỢC XÁC NHẬN — marker relay đã tồn tại; Robot không gửi lại."
+      );
+    }
+    if (rearmOutcome.status === "REARMED") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "RECOVERING",
+        `ĐÃ YÊU CẦU THỬ LẠI RELAY — revision ${rearmOutcome.revision}; giữ nguyên relay_id và task, lane yield trước retry.`
+      );
+    }
+    if (rearmOutcome.status === "EVIDENCE_MISSING") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WAIT_OWNER",
+        "Relay evidence hiện tại bị thiếu/hỏng. Robot giữ nguyên task và relay latch, không reset và không gửi lại."
+      );
+    }
+  }
+
   if (registryLane.relay_inflight) {
     await ensureBrainPage();
     const relayOutcome = await reconcileRelayInflight({
@@ -2382,7 +2571,7 @@ async function processLaneTurn({
         lane,
         registryLane,
         "WAIT_OWNER",
-        "Robot đã thử gửi kết quả 3 lần nhưng ô nhập Bộ não vẫn không sẵn sàng. Đã dừng retry để tránh vòng lặp; không có gửi trùng."
+        "RELAY HẾT LƯỢT THỬ — kiểm tra Brain rồi bấm THỬ LẠI RELAY. Robot không tự retry thêm và không gửi trùng."
       );
     }
     if (relayOutcome === "PENDING") {
@@ -2806,7 +2995,15 @@ async function processLaneTurn({
           lane,
           registryLane,
           "WAIT_OWNER",
-          "Robot đã thử gửi kết quả 3 lần nhưng ô nhập Bộ não vẫn không sẵn sàng. Đã dừng retry để tránh vòng lặp; không có gửi trùng."
+          "RELAY HẾT LƯỢT THỬ — kiểm tra Brain rồi bấm THỬ LẠI RELAY. Robot không tự retry thêm và không gửi trùng."
+        );
+      }
+      if (relayOutcome === "EVIDENCE_MISSING") {
+        return laneStatus(
+          lane,
+          registryLane,
+          "WAIT_OWNER",
+          "Relay evidence bị thiếu/hỏng. Robot giữ nguyên relay latch và task; không destructive reset."
         );
       }
       return laneStatus(
@@ -2948,6 +3145,10 @@ if (args.browserSchedulerFixture) {
 }
 if (args.workWatchdogFixture) {
   await import("./work-watchdog-acceptance-cli.mjs");
+  process.exit(0);
+}
+if (args.relayRearmFixture) {
+  await import("./relay-rearm-acceptance-cli.mjs");
   process.exit(0);
 }
 if (!Number.isFinite(args.pollMs) || args.pollMs < 1000) {
