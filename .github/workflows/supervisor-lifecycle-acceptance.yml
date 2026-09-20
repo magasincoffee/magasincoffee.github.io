@@ -7,6 +7,10 @@ on:
       - main
     paths:
       - .github/workflows/supervisor-lifecycle-acceptance.yml
+      - 08_INTEGRATIONS/supervisor/src/**
+      - 08_INTEGRATIONS/supervisor/windows/**
+      - 08_INTEGRATIONS/supervisor/package.json
+      - 08_INTEGRATIONS/supervisor/package-lock.json
 
 permissions:
   contents: read
