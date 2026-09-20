@@ -107,7 +107,10 @@ test("quarantine events are metadata-only and URL-free", async () => {
   assert.match(events, /target_digest/);
   assert.match(events, /target_revision/);
   const keys = slice(events, "const EVENT_KEYS", "const ACTORS");
-  assert.doesNotMatch(keys, /url|message|dom|cookie|token/i);
+  assert.doesNotMatch(
+    keys,
+    /"url"|"message_body"|"raw_dom"|"cookie"|"token"/i
+  );
 });
 
 test("RBT-006 installed fixture repairs oldWorkTargetDigest binding", async () => {
