@@ -618,7 +618,8 @@ async function reconcileBrainRequest({
   registryLane,
   registry,
   registryPath,
-  logPath
+  logPath,
+  scheduler = null
 }) {
   const latch = registryLane.brain_request_inflight;
   if (!latch) return "NONE";
@@ -636,7 +637,7 @@ async function reconcileBrainRequest({
     });
   }
 
-  const outcome = await inspectKnownTargetSendOutcome({
+  const inspect = () => inspectKnownTargetSendOutcome({
     adapter,
     page,
     digest: latch.digest,
@@ -645,6 +646,13 @@ async function reconcileBrainRequest({
     brain: true,
     reload
   });
+  const outcome = reload
+    ? await runBrowserMutation(
+        scheduler,
+        { laneId: lane.lane_id, role: "BRAIN", page, reason: "BRAIN_RECONCILE_RELOAD" },
+        inspect
+      )
+    : await inspect();
 
   if (outcome === "PENDING") return "PENDING";
 
@@ -745,7 +753,8 @@ async function ensureBrainRequest({
   execute,
   registry,
   registryPath,
-  logPath
+  logPath,
+  scheduler = null
 }) {
   if (registryLane.brain_request_sent) return null;
 
@@ -768,7 +777,8 @@ async function ensureBrainRequest({
       registryLane,
       registry,
       registryPath,
-      logPath
+      logPath,
+      scheduler
     });
     if (outcome === "CONFIRMED") return null;
     if (outcome === "PENDING" || outcome === "BLOCKED") {
@@ -805,7 +815,11 @@ async function ensureBrainRequest({
   if (!execute) return null;
   let sent = null;
   try {
-    sent = await sendComposerInstruction(page, request, { dryRun: false });
+    sent = await runBrowserMutation(
+      scheduler,
+      { laneId: lane.lane_id, role: "BRAIN", page, reason: "BRAIN_REQUEST_SEND" },
+      () => sendComposerInstruction(page, request, { dryRun: false })
+    );
   } catch (error) {
     await safeLog(logPath, {
       type: "LANE_BRAIN_SEND_ATTEMPT_ERROR",
