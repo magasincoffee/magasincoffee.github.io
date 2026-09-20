@@ -353,6 +353,51 @@ async function assertConversationSafe(adapter, page, {
   return probe;
 }
 
+async function probeStableWorkCapacity({
+  adapter,
+  page,
+  expectedUrl,
+  sendRejectionCapacity = false
+}) {
+  const expectedTarget = targetFromUrl(expectedUrl);
+  const first = await assertConversationSafe(adapter, page, {
+    brain: false,
+    allowFull: true
+  });
+  const firstTargetStable = pageMatchesTarget(page.url(), expectedTarget);
+
+  // Two bounded probes are enough to reject one-frame/transient UI states.
+  // This is not a retry loop and performs no UI mutation.
+  if (typeof page.waitForTimeout === "function") {
+    await page.waitForTimeout(160);
+  }
+  const second = await assertConversationSafe(adapter, page, {
+    brain: false,
+    allowFull: true
+  });
+  const secondTargetStable = pageMatchesTarget(page.url(), expectedTarget);
+
+  const firstSignals = workCapacitySignalsFromSnapshot(first.snapshot, {
+    sendRejectionCapacity
+  });
+  const secondSignals = workCapacitySignalsFromSnapshot(second.snapshot, {
+    sendRejectionCapacity
+  });
+  const decision = evaluateWorkCapacity({
+    first: firstSignals,
+    second: secondSignals,
+    stableIdentity: firstTargetStable && secondTargetStable,
+    stableProbeCount: 2
+  });
+
+  return {
+    decision,
+    first,
+    second,
+    stable_identity: firstTargetStable && secondTargetStable
+  };
+}
+
 async function captureSendBaseline(adapter, page) {
   const digests = await captureUserTurnDigests(page).catch(() => []);
   const probe = await adapter.probePage(page).catch(() => null);
