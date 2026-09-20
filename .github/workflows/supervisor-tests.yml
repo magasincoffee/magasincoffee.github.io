@@ -10,11 +10,15 @@ on:
       - '08_INTEGRATIONS/supervisor/**'
       - '01_DOCS/MAGASIN/00_PROJECT_STATE.json'
       - '.github/workflows/supervisor-tests.yml'
+      - '.github/workflows/supervisor-state-maintenance.yml'
+      - '.github/scripts/supervisor-state-maintenance-regression.ps1'
   pull_request:
     paths:
       - '08_INTEGRATIONS/supervisor/**'
       - '01_DOCS/MAGASIN/00_PROJECT_STATE.json'
       - '.github/workflows/supervisor-tests.yml'
+      - '.github/workflows/supervisor-state-maintenance.yml'
+      - '.github/scripts/supervisor-state-maintenance-regression.ps1'
   workflow_dispatch:
 
 permissions:
@@ -38,6 +42,9 @@ jobs:
         run: node --test test/lane-events.test.mjs
       - name: Run Supervisor unit tests
         run: npm test
+      - name: Run TASK-RBT-002B state maintenance gate regressions
+        run: |
+          & "$env:GITHUB_WORKSPACE\.github\scripts\supervisor-state-maintenance-regression.ps1" -WorkflowPath "$env:GITHUB_WORKSPACE\.github\workflows\supervisor-state-maintenance.yml" -HelperPath "$env:GITHUB_WORKSPACE\.github\scripts\supervisor-integrity-registry.ps1"
       - name: Verify no browser/live side effects in foundation
         run: |
           if (Test-Path node_modules) {

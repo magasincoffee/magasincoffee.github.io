@@ -155,11 +155,14 @@ test("production lifecycle acceptance installs its checked-out runtime before A-
 });
 
 
-test("explicit Owner START maintenance is marker-authorized and preserves targets", async () => {
+test("explicit Owner START maintenance is manual-only and preserves targets", async () => {
   const workflow = await read("../../../.github/workflows/supervisor-state-maintenance.yml");
 
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /^\s{2}push:/m);
+  assert.doesNotMatch(workflow, /supervisor-owner-start/);
+  assert.doesNotMatch(workflow, /supervisor-reset-work-state/);
   assert.match(workflow, /owner-start/);
-  assert.match(workflow, /\\\[supervisor-owner-start\\\]/);
   assert.match(workflow, /MAINTENANCE_OPERATION=OWNER_START/);
   assert.match(workflow, /OWNER_START_EXPLICIT=True/);
   assert.match(workflow, /TARGET_URLS_UNCHANGED=True/);
