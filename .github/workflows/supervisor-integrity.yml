@@ -6,6 +6,7 @@ on:
       - "08_INTEGRATIONS/supervisor/**"
       - ".github/workflows/supervisor-*.yml"
       - ".github/scripts/supervisor-integrity-*.ps1"
+      - ".github/scripts/supervisor-state-maintenance-regression.ps1"
   push:
     branches:
       - main
@@ -39,9 +40,7 @@ jobs:
       - name: Run state maintenance gate regressions
         shell: pwsh
         run: |
-          & ".github/scripts/supervisor-state-maintenance-regression.ps1" \
-            -WorkflowPath ".github/workflows/supervisor-state-maintenance.yml" \
-            -HelperPath ".github/scripts/supervisor-integrity-registry.ps1"
+          & ".github/scripts/supervisor-state-maintenance-regression.ps1" -WorkflowPath ".github/workflows/supervisor-state-maintenance.yml" -HelperPath ".github/scripts/supervisor-integrity-registry.ps1"
 
       - name: Enforce production cleanup invariants
         shell: bash
