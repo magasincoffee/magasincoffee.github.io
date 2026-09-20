@@ -123,22 +123,18 @@ test("Windows viewport probe executes the production layout helper without local
   skip: process.platform !== "win32"
 }, () => {
   function probe(width, height) {
+    const command = [
+      "$source = Get-Content -LiteralPath $env:MAGASIN_PANEL_PATH -Raw -Encoding UTF8",
+      "& ([ScriptBlock]::Create($source)) -ViewportProbe -ProbeWidth " + String(width) + " -ProbeHeight " + String(height)
+    ].join("; ");
     const result = spawnSync(
       "powershell.exe",
-      [
-        "-NoLogo",
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        panelPath,
-        "-ViewportProbe",
-        "-ProbeWidth",
-        String(width),
-        "-ProbeHeight",
-        String(height)
-      ],
-      { encoding: "utf8", timeout: 30_000 }
+      ["-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+      {
+        encoding: "utf8",
+        timeout: 30_000,
+        env: { ...process.env, MAGASIN_PANEL_PATH: panelPath }
+      }
     );
     assert.equal(result.status, 0, result.stderr);
     return JSON.parse(result.stdout.trim());
@@ -168,18 +164,18 @@ test("Windows viewport probe executes the production layout helper without local
 test("Windows actual WorkingArea probe stays inside the current monitor", {
   skip: process.platform !== "win32"
 }, () => {
+  const command = [
+    "$source = Get-Content -LiteralPath $env:MAGASIN_PANEL_PATH -Raw -Encoding UTF8",
+    "& ([ScriptBlock]::Create($source)) -ViewportProbe"
+  ].join("; ");
   const result = spawnSync(
     "powershell.exe",
-    [
-      "-NoLogo",
-      "-NoProfile",
-      "-ExecutionPolicy",
-      "Bypass",
-      "-File",
-      panelPath,
-      "-ViewportProbe"
-    ],
-    { encoding: "utf8", timeout: 30_000 }
+    ["-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+    {
+      encoding: "utf8",
+      timeout: 30_000,
+      env: { ...process.env, MAGASIN_PANEL_PATH: panelPath }
+    }
   );
   assert.equal(result.status, 0, result.stderr);
   const actual = JSON.parse(result.stdout.trim());
