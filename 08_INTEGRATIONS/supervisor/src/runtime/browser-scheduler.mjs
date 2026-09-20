@@ -428,6 +428,54 @@ export class BrowserScheduler {
     }
   }
 
+  async invalidateExactPage({ page, url } = {}) {
+    if (!page || pageClosed(page)) {
+      if (typeof this.adapter.invalidateTargetRecoveryPage === "function") {
+        await this.adapter.invalidateTargetRecoveryPage(url, {
+          page,
+          close: false
+        }).catch(() => false);
+      }
+      return true;
+    }
+
+    const lease = this.leaseFor(page);
+    if (lease?.state === PAGE_LEASE_STATES.ACTIVE_MUTATION) {
+      return false;
+    }
+
+    const guarded = typeof this.adapter.hasNonPersistedComposerArtifact === "function"
+      ? await this.adapter.hasNonPersistedComposerArtifact(page).catch(() => true)
+      : true;
+    if (guarded) {
+      if (lease) {
+        lease.non_persisted_artifact = true;
+        lease.state = PAGE_LEASE_STATES.PARKED;
+        lease.last_used = ++this.sequence;
+      }
+      return false;
+    }
+
+    if (typeof this.adapter.invalidateTargetRecoveryPage === "function") {
+      await this.adapter.invalidateTargetRecoveryPage(url, {
+        page,
+        close: false
+      }).catch(() => false);
+    }
+
+    if (typeof this.adapter.closePage === "function") {
+      await this.adapter.closePage(page);
+    } else {
+      await page.close();
+    }
+    if (lease) {
+      lease.state = PAGE_LEASE_STATES.CLOSED;
+      lease.non_persisted_artifact = false;
+      lease.last_used = ++this.sequence;
+    }
+    return true;
+  }
+
   releaseObservation(page, {
     evictable = true,
     nonPersistedArtifact = false
