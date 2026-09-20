@@ -261,8 +261,9 @@ Canonical contract: `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md`.
 Owner explicitly released `PFC_8H_V2` on 2026-09-20.
 
 - generation: `PFC_8H_V2_RUN_01`
-- current task: `TASK-065 — Cash Truth Regression & Evidence`
+- current task: `TASK-066 — OPEX Source Inventory V1`
 - state: `READY / AUTO_CONTINUE`
+- Wave A Cash Truth: `CLOSED / CASH TRUTH STACK V1 IMPLEMENTED / LIVE BALANCE EVIDENCE INCOMPLETE`
 - Robot may execute: `true`
 - Google Drive: `AUTHORIZED_READ_ONLY`
 - primary queue: `TASK-060 → TASK-083`
