@@ -292,6 +292,108 @@ jobs:
           Write-Host "WORK_TARGET_PRODUCTION_CONFIG_UNCHANGED=True"
           Write-Host "WORK_TARGET_RUNTIME_PID_UNCHANGED=True"
 
+      - name: Verify browser scheduler fixture and live page budget without production mutation
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtime = Join-Path $root "runtime"
+          $runtimeCli = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
+          $configFile = Join-Path $root "lanes.json"
+          $statusFile = Join-Path $root "lane-status.json"
+          $lifecycle = Join-Path $runtime "windows\lifecycle-truth.ps1"
+
+          if (-not (Test-Path $runtimeCli)) { throw "Installed Three-Lane runtime CLI is missing" }
+          if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
+          . $lifecycle
+
+          function Get-TargetFingerprint([string]$Path) {
+            if (-not (Test-Path $Path)) { return "NO_CONFIG" }
+            $config = Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+            $canonical = @($config.lanes | Sort-Object lane_id | ForEach-Object {
+              "$([string]$_.lane_id)|$([string]$_.brain_url)|$([int]$_.brain_url_revision)|$([string]$_.work_url)|$([int]$_.work_url_revision)"
+            }) -join "`n"
+            $bytes = [Text.Encoding]::UTF8.GetBytes($canonical)
+            $hasher = [Security.Cryptography.SHA256]::Create()
+            try {
+              return ([BitConverter]::ToString($hasher.ComputeHash($bytes))).Replace("-","").ToLowerInvariant()
+            } finally {
+              $hasher.Dispose()
+            }
+          }
+
+          $targetBefore = Get-TargetFingerprint $configFile
+          $truthBefore = Get-LifecycleProcessTruth -Root $root
+          $wrapperBefore = if ($truthBefore.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+
+          $output = & node $runtimeCli --browser-scheduler-fixture
+          if ($LASTEXITCODE -ne 0) { throw "Installed browser scheduler fixture acceptance failed" }
+          $output | ForEach-Object { Write-Host $_ }
+
+          foreach ($marker in @(
+            "BROWSER_SCHEDULER_FIXTURE_DEFAULT_BUDGET_3=True",
+            "BROWSER_SCHEDULER_FIXTURE_ONE_LANE=True",
+            "BROWSER_SCHEDULER_FIXTURE_TWO_LANE_FAIR=True",
+            "BROWSER_SCHEDULER_FIXTURE_THREE_LANE_FAIR=True",
+            "BROWSER_SCHEDULER_FIXTURE_MUTATION_SINGLETON=True",
+            "BROWSER_SCHEDULER_FIXTURE_PAGE_BUDGET_HARD_BOUND=True",
+            "BROWSER_SCHEDULER_FIXTURE_ACTIVE_MUTATION_NOT_EVICTED=True",
+            "BROWSER_SCHEDULER_FIXTURE_UNPERSISTED_ARTIFACT_GUARDED=True",
+            "BROWSER_SCHEDULER_FIXTURE_REOPEN_NO_RESEND=True",
+            "BROWSER_SCHEDULER_FIXTURE_DURABLE_TRUTH_UNCHANGED=True",
+            "BROWSER_SCHEDULER_FIXTURE_PENDING_WORK_PRESERVED=True"
+          )) {
+            if ($output -notcontains $marker) { throw "Missing browser scheduler fixture marker: $marker" }
+          }
+
+          $targetAfter = Get-TargetFingerprint $configFile
+          if ($targetBefore -ne $targetAfter) {
+            throw "Production Brain/Work target fingerprint changed during scheduler fixture acceptance"
+          }
+
+          $truthAfter = Get-LifecycleProcessTruth -Root $root
+          $wrapperAfter = if ($truthAfter.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+          if ($wrapperBefore -ne $wrapperAfter) {
+            throw "Scheduler fixture acceptance restarted or stopped the Supervisor wrapper"
+          }
+
+          $ownerStop = Get-LifecycleOwnerStopState -Root $root
+          $enabledLaneCount = Get-EnabledLaneCount -Root $root
+          if (-not $ownerStop.blocked -and $enabledLaneCount -gt 0) {
+            $schedulerReady = $false
+            for ($i = 0; $i -lt 30; $i++) {
+              if (Test-Path $statusFile) {
+                $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
+                if (
+                  $status.scheduler -and
+                  [int]$status.scheduler.page_budget -eq 3 -and
+                  [int]$status.scheduler.resident_chatgpt_pages -le 3
+                ) {
+                  $schedulerReady = $true
+                  break
+                }
+              }
+              Start-Sleep -Seconds 1
+            }
+            if (-not $schedulerReady) {
+              throw "Live production scheduler did not report page budget <= 3"
+            }
+            Write-Host "BROWSER_SCHEDULER_LIVE_PAGE_BUDGET_OK=True"
+            Write-Host "BROWSER_SCHEDULER_LIVE_PAGE_BUDGET=3"
+            Write-Host "BROWSER_SCHEDULER_LIVE_PAGE_COUNT=$([int]$status.scheduler.resident_chatgpt_pages)"
+          } else {
+            Write-Host "BROWSER_SCHEDULER_LIVE_PAGE_BUDGET_SUPPRESSED_BY_LIFECYCLE=True"
+          }
+
+          Write-Host "BROWSER_SCHEDULER_RUNTIME_ARTIFACT_FIXTURE=True"
+          Write-Host "BROWSER_SCHEDULER_FIXTURE_ACCEPTANCE=True"
+          Write-Host "BROWSER_SCHEDULER_PRODUCTION_CONFIG_UNCHANGED=True"
+          Write-Host "BROWSER_SCHEDULER_RUNTIME_PID_UNCHANGED=True"
+
       - name: Verify event timing foundation privacy
         shell: powershell
         run: |
