@@ -156,6 +156,26 @@ brainHealth = quarantineTarget(brainHealth, brainIdentity, {
 for (let turn = 0; turn < 100; turn += 1) guardedBrain();
 assert.equal(brainNavigation, 1);
 
+let missingBrainHealth = defaultTargetHealth();
+let missingBrainNavigation = 0;
+function guardedMissingBrain() {
+  if (isTargetQuarantined(missingBrainHealth, brainIdentity)) return false;
+  missingBrainNavigation += 1;
+  return true;
+}
+assert.equal(guardedMissingBrain(), true);
+missingBrainHealth = quarantineTarget(missingBrainHealth, brainIdentity, {
+  reasonCode: TARGET_HEALTH_REASONS.CONVERSATION_MISSING,
+  at: T0
+}).health;
+for (let turn = 0; turn < 100; turn += 1) guardedMissingBrain();
+assert.equal(missingBrainNavigation, 1);
+
+const stopStartHealth = normalizeTargetHealth(
+  JSON.parse(JSON.stringify(workHealth))
+);
+assert.equal(isTargetQuarantined(stopStartHealth, workIdentity), true);
+
 const active = {
   task_id: "TASK-ACTIVE",
   awaiting_work: true,
@@ -239,6 +259,7 @@ const fakeAdapter = {
   }
 };
 const scheduler = new BrowserScheduler({ adapter: fakeAdapter });
+assert.equal(scheduler.pageBudget, 3);
 scheduler.registerPage(page, {
   laneId: "lane-1",
   role: "WORK",
@@ -251,6 +272,17 @@ assert.equal(await scheduler.invalidateExactPage({
 assert.equal(pageClosed, true);
 assert.equal(invalidated, 1);
 assert.equal(scheduler.residentPageCount(), 0);
+const beforeEvictionTurns = navigationCount;
+for (let turn = 0; turn < 100; turn += 1) {
+  guardedNavigation(workIdentity, workHealth);
+}
+assert.equal(navigationCount - beforeEvictionTurns, 0);
+
+const repeatedQuarantine = quarantineTarget(workHealth, workIdentity, {
+  reasonCode: TARGET_HEALTH_REASONS.CONVERSATION_MISSING,
+  at: "2026-09-20T16:11:00.000Z"
+});
+assert.equal(repeatedQuarantine.changed, false);
 
 const fair = new BrowserScheduler({ adapter: {} });
 const lanes = [
@@ -299,11 +331,16 @@ console.log("STALE_TARGET_FIXTURE_QUARANTINED=True");
 console.log("STALE_TARGET_FIXTURE_100_TURNS_ZERO_REOPEN=True");
 console.log("STALE_TARGET_FIXTURE_RESTART_ZERO_REOPEN=True");
 console.log("STALE_TARGET_FIXTURE_RECONNECT_ZERO_REOPEN=True");
+console.log("STALE_TARGET_FIXTURE_EVICTION_ZERO_REOPEN=True");
+console.log("STALE_TARGET_FIXTURE_STOP_START_PRESERVES=True");
+console.log("STALE_TARGET_FIXTURE_BRAIN_MISSING_BLOCKED=True");
 console.log("STALE_TARGET_FIXTURE_OWNER_NEW_TARGET_CLEARS=True");
 console.log("STALE_TARGET_FIXTURE_ACTIVE_STATE_PRESERVED=True");
 console.log("STALE_TARGET_FIXTURE_WATCHDOG_BLOCKED=True");
 console.log("STALE_TARGET_FIXTURE_RELAY_REOPEN_BLOCKED=True");
 console.log("STALE_TARGET_FIXTURE_MISSING_NOT_FULL=True");
 console.log("STALE_TARGET_FIXTURE_DEAD_PAGE_CLEANED=True");
+console.log("STALE_TARGET_FIXTURE_PAGE_BUDGET_THREE=True");
+console.log("STALE_TARGET_FIXTURE_EVENT_SPAM_BOUNDED=True");
 console.log("STALE_TARGET_FIXTURE_OTHER_LANES_PROGRESS=True");
 console.log("STALE_TARGET_FIXTURE_PRIVACY=True");
