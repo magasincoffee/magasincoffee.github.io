@@ -15,7 +15,8 @@ Canonical architecture:
 - `02_PROFITABILITY_CASH/TASK_061_CASH_BALANCE_FINANCIAL_TRUTH_CONTRACT_V1_EVIDENCE.md`;
 - `02_PROFITABILITY_CASH/TASK_062_CASH_BALANCE_SOURCE_MAPPER_V1_EVIDENCE.md`;
 - `02_PROFITABILITY_CASH/TASK_063_CASH_SOURCE_COVERAGE_V1_EVIDENCE.md`;
-- `02_PROFITABILITY_CASH/TASK_064_CASH_BRIDGE_SOURCE_INTEGRATION_V1_EVIDENCE.md`.
+- `02_PROFITABILITY_CASH/TASK_064_CASH_BRIDGE_SOURCE_INTEGRATION_V1_EVIDENCE.md`;
+- `02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`.
 
 ## PFC execution handoff
 
@@ -29,11 +30,12 @@ Current state:
 
 ```text
 PFC_3H_V1_RESTART_01 = COMPLETE
-TASK-051 → TASK-064   = DONE
+TASK-051 → TASK-065   = DONE
+WAVE A — CASH TRUTH   = CLOSED
 
-current_task          = TASK-065
-TASK-065              = READY / AUTO_CONTINUE
-next_task             = TASK-066
+current_task          = TASK-066
+TASK-066              = READY / AUTO_CONTINUE
+next_task             = TASK-067
 status                = READY
 autonomy              = AUTO_CONTINUE
 requires_user         = false
@@ -56,7 +58,7 @@ Current verified balance landscape:
 
 Missing balance sources remain gaps; they do not pause PFC_8H_V2.
 
-TASK-064 Cash Bridge source integration is complete. TASK-065 is now the active canonical task.
+TASK-065 Wave-A Cash Truth regression/evidence closure is complete. Cash Truth Stack V1 is implemented, while current live observed opening/ending and complete enterprise source/account coverage remain incomplete. TASK-066 is now the active canonical task.
 
 ## Financial baseline state
 
@@ -71,7 +73,8 @@ Implemented:
 5. deterministic Cash Bridge calculator;
 6. Procurement supplier-payment → Cash mapping;
 7. current Procurement AP point-in-time truth;
-8. Partial Financial Baseline V1 composer.
+8. Partial Financial Baseline V1 composer;
+9. Cash Truth Stack V1: point-balance contract + source mapper + source/account/period coverage + point-gated Cash Bridge source integration.
 
 The system does **not** claim:
 - full P&L;
@@ -84,21 +87,18 @@ Missing evidence remains GAP / NOT_CONNECTED / ESTIMATE as appropriate and never
 
 ## Final regression checkpoint
 
-Fresh no-code-churn regression after TASK-058:
+Wave-A Cash Truth closure (TASK-065):
 
-- Business OS run `35453257400`, attempt 2, job `105926272352`:
+- executable-drift compare from TASK-064 merge `f00279e99ed3d1bdc4e4b0ed9c7f26a3e6f3f177` to pre-closure current main: **NO EXECUTABLE DRIFT** in `02_CORE/**`, `09_QA/business-os/**` or Business OS workflow;
+- fresh Business OS run `35480761123`, attempt 2, job `106005068731`:
   - Node v20.20.2;
-  - **214 logical checks / 0 fail**;
-  - conclusion `success`.
-- Owner Control Tower run `35448195046`, attempt 2, job `105926275823`:
-  - Node v20.20.2;
-  - **74/74 PASS / 0 fail**;
-  - `CONTROL_TOWER_BROWSER_E2E=PASS`;
-  - conclusion `success`.
-- Static scan of the five PFC Core helpers: **0 financial write primitive matches**.
-- Procurement production QA: `NOT_APPLICABLE` because TASK-059 changes no Procurement production/migration path.
+  - Cash/Financial targeted regressions **237/237 PASS**;
+  - full Business OS **354 logical checks / 0 fail**;
+  - conclusion `success`;
+- static scan of six Cash/PFC helpers: **0 operational DB write / RPC / external API / Drive call matches**;
+- current real Cash profile remains fail-closed: known movements may remain visible, but current computed ending / observed ending / variance stay null where opening, full movement coverage or observed-ending evidence is incomplete.
 
-Current executable main is equivalent to those tested executable trees; subsequent TASK-059 changes are documentation/state only.
+Earlier TASK-059 no-code-churn checkpoint remains historical evidence; TASK-065 is the current Wave-A regression authority.
 
 ## Core invariants
 
@@ -120,7 +120,7 @@ These remain mandatory:
 
 ## Current PFC V2 priority
 
-### TASK-065 — Cash Truth Regression & Evidence
+### TASK-066 — OPEX Source Inventory V1
 
 Status:
 
@@ -128,18 +128,19 @@ Status:
 
 Goal:
 
-Run the Wave-A cash-truth regression/evidence closure across TASK-060→064, proving source mapping, point/event coverage, point-gated integration and existing Cash Bridge behavior remain coherent and fail-closed without adding new financial semantics.
+Start Wave B — Operating Cost Truth by inventorying current payroll, rent, utilities, platform, marketing and other OPEX evidence without confusing expense recognition with Cash paid.
 
-TASK-064 is complete:
-- helper: `02_CORE/shared/cash-bridge-source-integration-v1.mjs`;
-- PR #189 merge: `f00279e99ed3d1bdc4e4b0ed9c7f26a3e6f3f177`;
-- PR-head run `35480729934`: 24/24 TASK-064, full Business OS 354 / 0 fail;
-- exact post-merge run `35480761123`: Node v20.20.2, all regression steps success;
-- current TASK-060→063 source profile remains fail-closed with incomplete opening/movement/observed-ending evidence.
+Wave A closure:
 
-Next queued task after TASK-065:
+- TASK-060→065 = DONE;
+- Cash Truth Stack V1 mechanism = IMPLEMENTED;
+- live direct observed opening/ending and full enterprise Cash source/account universe = INCOMPLETE;
+- missing source evidence remains GAP / NOT_CONNECTED and does not pause PFC_8H_V2;
+- canonical closure evidence: `02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`.
 
-`TASK-066 — OPEX Source Inventory V1`
+Next queued task after TASK-066:
+
+`TASK-067 — Operating Cost Truth Contract`
 
 ## Remaining major gaps
 
@@ -260,8 +261,9 @@ Canonical contract: `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md`.
 Owner explicitly released `PFC_8H_V2` on 2026-09-20.
 
 - generation: `PFC_8H_V2_RUN_01`
-- current task: `TASK-065 — Cash Truth Regression & Evidence`
+- current task: `TASK-066 — OPEX Source Inventory V1`
 - state: `READY / AUTO_CONTINUE`
+- Wave A Cash Truth: `CLOSED / CASH TRUTH STACK V1 IMPLEMENTED / LIVE BALANCE EVIDENCE INCOMPLETE`
 - Robot may execute: `true`
 - Google Drive: `AUTHORIZED_READ_ONLY`
 - primary queue: `TASK-060 → TASK-083`

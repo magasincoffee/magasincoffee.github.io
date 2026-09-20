@@ -184,10 +184,11 @@ The Owner-released generation `PFC_8H_V2_RUN_01` is ACTIVE.
 Current authoritative state:
 
 ```text
-TASK-051..TASK-064 = DONE
-current_task        = TASK-065
-TASK-065            = READY / AUTO_CONTINUE
-next_task           = TASK-066
+TASK-051..TASK-065 = DONE
+WAVE_A_CASH_TRUTH   = CLOSED
+current_task        = TASK-066
+TASK-066            = READY / AUTO_CONTINUE
+next_task           = TASK-067
 status              = READY
 autonomy            = AUTO_CONTINUE
 requires_user       = false
@@ -196,12 +197,18 @@ robot_may_execute   = true
 
 Owner explicitly released PFC_8H_V2 on 2026-09-20.
 
-TASK-060 source discovery found:
-- no verified direct OBSERVED_BALANCE source in bounded Drive evidence;
-- internal monthly cash reporting is COMPUTED_BALANCE + MOVEMENT_ONLY;
-- physical till, Bank, MoMo, COD, Owner-held cash and provider account balance remain NOT_CONNECTED.
+TASK-065 closes Wave A — Cash Truth:
+- Cash Truth Stack V1 mechanism is IMPLEMENTED;
+- fresh Business OS regression run 35480761123 attempt 2 / job 106005068731 is green on Node v20.20.2 with 354/354 logical checks;
+- executable drift after TASK-064 is NONE for Cash/PFC Core, Business OS QA and canonical workflow;
+- current live direct observed opening/ending and complete enterprise source/account universe remain INCOMPLETE;
+- internal monthly cash reporting remains COMPUTED_BALANCE + MOVEMENT_ONLY with bounded September movement evidence through 2026-09-16;
+- physical till, Bank, MoMo, COD, Owner-held cash and provider account balance remain NOT_CONNECTED where applicable under current evidence.
 
-Missing sources become GAP / NOT_CONNECTED and do not wake Owner during the released queue.
+Canonical Wave-A closure evidence:
+`02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`.
+
+Missing sources become GAP / NOT_CONNECTED and do not wake Owner during the released queue. TASK-066 begins Wave B — Operating Cost Truth.
 
 ## 10. Working method
 
@@ -255,17 +262,15 @@ The repository is public. Never commit secrets, credentials, tokens, cookies, pr
 
 ## 12. Current task
 
-**TASK-065 — Cash Truth Regression & Evidence — READY / AUTO_CONTINUE.**
+**TASK-066 — OPEX Source Inventory V1 — READY / AUTO_CONTINUE.**
 
 Immediate behavior for a new Work session:
 
 1. read the canonical enterprise architecture;
 2. read `PFC_8H_V2_EXECUTION_PLAN.md`;
-3. read TASK-060→064 evidence in order;
-4. use TASK-061 balance truth, TASK-062 mapper, TASK-063 coverage and TASK-064 source integration as canonical executable surfaces;
-5. run regression/evidence closure only; do not add new source readers, connectors, balance arithmetic or Cash Bridge formulas unless a verified regression requires a minimal repair;
-6. prove the current bounded September source profile remains fail-closed while known-evidenced movements stay preserved;
-7. prove future fully-proven point + movement inputs still produce the existing Cash Bridge behavior without semantic upgrade;
-8. keep missing observed sources as GAP / NOT_CONNECTED and do not pause the released run;
-9. continue automatically to TASK-066 after TASK-065 DoD unless a true Owner/security boundary occurs.
-
+3. read `TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md` for Wave-A closure and remaining Cash evidence gaps;
+4. keep Cash Truth Stack V1 semantics unchanged: missing/NOT_CONNECTED remains fail-closed and Cash remains distinct from Profit;
+5. begin Wave B with OPEX source discovery only: payroll, rent, utilities, platform, marketing and other operating-cost evidence;
+6. do not infer recognized OPEX from Cash paid, purchase/AP, budget, or unsupported allocation;
+7. Google Drive remains READ_ONLY evidence;
+8. continue autonomously under PFC_8H_V2 Owner release unless a true Owner/security/business-rule boundary appears.

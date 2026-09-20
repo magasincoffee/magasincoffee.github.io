@@ -293,3 +293,37 @@ Detailed source map and field-check plan:
 Next canonical task:
 
 `TASK-061 — Cash Balance Financial Truth Contract`
+
+
+## Wave A closure — Cash Truth Stack V1
+
+Status as of TASK-065:
+
+**CASH TRUTH STACK V1 IMPLEMENTED / LIVE BALANCE EVIDENCE INCOMPLETE**
+
+Implemented mechanism now includes:
+
+- canonical Financial Truth quality/provenance;
+- Cash event taxonomy + deterministic Cash Bridge calculator;
+- canonical opening/observed-ending point-balance truth;
+- source mapper with provenance revalidation;
+- source/account/period coverage with distinct opening point, movement interval and observed-ending point roles;
+- required-universe and enterprise-ALL gates;
+- pure source integration that gates point truth before existing Cash Bridge arithmetic;
+- fail-closed regression on Business OS CI.
+
+TASK-065 fresh executable-equivalent regression: Financial Truth 16/16; Cash Bridge taxonomy 29/29; calculator 46/46; Cash Balance Truth 40/40; source mapper 47/47; coverage 35/35; source integration 24/24; full Business OS 354/354, 0 fail. Remote run 35480761123 attempt 2 / job 106005068731 succeeded on Node v20.20.2.
+
+Current evidence remains incomplete:
+
+- no verified direct observed opening for current enterprise Cash scope;
+- no verified direct observed ending;
+- September internal movement evidence remains bounded through 2026-09-16 rather than proven complete for a later target;
+- complete enterprise account/source universe is not proven;
+- physical till/safe, Bank, MoMo, COD-held cash, Owner-held company cash and provider-account point balances remain GAP/NOT_CONNECTED where applicable.
+
+Therefore the Partial Financial Baseline may preserve known-evidenced Cash movements, but must **not** claim current reconciled ending Cash, observed enterprise ending Cash, Cash variance, or COMPLETE Cash Bridge coverage until their dependencies are evidenced.
+
+Cash remains separate from Profit recognition. Revenue, purchases, AP, FoodApp gross, COGS or OPEX recognition never create a point Cash balance by implication.
+
+Canonical Wave-A closure evidence: TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md.

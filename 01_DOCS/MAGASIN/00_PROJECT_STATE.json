@@ -4,13 +4,13 @@
   "plan_version": "BOS-V1-CANONICAL-5STEP-PROFIT-CASH-2026-09-19",
   "target_days": 21,
   "current_phase": "P3_PFC_8H_V2_EXECUTION",
-  "current_task": "TASK-065",
-  "current_task_title": "Cash Truth Regression & Evidence",
+  "current_task": "TASK-066",
+  "current_task_title": "OPEX Source Inventory V1",
   "status": "READY",
   "autonomy": "AUTO_CONTINUE",
   "blocked": false,
   "requires_user": false,
-  "next_task": "TASK-066",
+  "next_task": "TASK-067",
   "safety": {
     "repository_visibility": "public",
     "secrets_in_git": false,
@@ -291,7 +291,7 @@
     ],
     "prepared_queue": "PFC_8H_V2",
     "queue_status": "ACTIVE",
-    "next_planned_task": "TASK-065",
+    "next_planned_task": "TASK-066",
     "next_task_release_required": false
   },
   "session_bootstrap": {
@@ -371,8 +371,8 @@
     ],
     "execution_generation": "PFC_8H_V2_RUN_01",
     "started_task": "TASK-060",
-    "current_task": "TASK-065",
-    "next_task": "TASK-066",
+    "current_task": "TASK-066",
+    "next_task": "TASK-067",
     "task_060": {
       "status": "DONE",
       "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_060_ACTUAL_CASH_BALANCE_SOURCE_TRUTH_V1_EVIDENCE.md",
@@ -482,6 +482,25 @@
       "google_drive": "READ_ONLY_NOT_RESCANNED",
       "current_profile": "FAIL_CLOSED_NON_COMPLETE",
       "conclusion": "REMOTE_CI_GREEN"
+    },
+    "task_065": {
+      "status": "DONE",
+      "evidence": "01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md",
+      "implementation": "REGRESSION_EVIDENCE_CLOSURE",
+      "executable_drift": "NONE",
+      "executable_equivalent_commit": "f00279e99ed3d1bdc4e4b0ed9c7f26a3e6f3f177",
+      "remote_run_id": 35480761123,
+      "remote_run_attempt": 2,
+      "remote_job_id": 106005068731,
+      "runtime": "Node v20.20.2",
+      "targeted_cash_financial_tests": 237,
+      "full_business_os_logical_checks": 354,
+      "failures": 0,
+      "static_write_api_scan": "ZERO_HITS_SIX_CASH_HELPERS",
+      "google_drive": "READ_ONLY_NOT_RESCANNED",
+      "current_profile": "FAIL_CLOSED_LIVE_BALANCE_EVIDENCE_INCOMPLETE",
+      "wave_a": "CLOSED",
+      "conclusion": "REMOTE_REGRESSION_GREEN"
     }
   },
   "data_evidence_policy": {
@@ -496,5 +515,23 @@
       "public_git_drive_locators": false,
       "real_operating_evidence_priority": true
     }
+  },
+  "wave_a_cash_truth": {
+    "status": "CLOSED",
+    "tasks": [
+      "TASK-060",
+      "TASK-061",
+      "TASK-062",
+      "TASK-063",
+      "TASK-064",
+      "TASK-065"
+    ],
+    "stack": "CASH_TRUTH_STACK_V1_IMPLEMENTED",
+    "live_balance_evidence": "INCOMPLETE",
+    "direct_observed_opening": "NOT_VERIFIED_CURRENT_ENTERPRISE_SCOPE",
+    "direct_observed_ending": "NOT_VERIFIED_CURRENT_ENTERPRISE_SCOPE",
+    "current_movement_coverage": "PARTIAL_BOUNDED_THROUGH_2026-09-16",
+    "next_wave": "WAVE_B_OPERATING_COST_TRUTH",
+    "next_task": "TASK-066"
   }
 }
