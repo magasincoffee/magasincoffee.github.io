@@ -97,35 +97,27 @@ Relay reconciliation in v2026-09-19.50 is marker-authoritative on the exact pers
 
 No relay reconciliation path performs an unbounded reload loop.
 
-## Current v50 browser/Work limitations addressed by TASK-RBT
+## Released browser scheduler / remaining TASK-RBT gaps
 
-The docs-only TASK-RBT-001 architecture records these known gaps for later implementation:
+Runtime v2026-09-20.53 implements TASK-RBT-004 Browser Scheduler + Tab Budget:
 
-- no explicit global ChatGPT page budget;
-- Brain/Work pages can accumulate and remain open;
-- no round-robin page scheduler with a formal fairness contract;
-- no distinct `WORKING_LONG` / `POSSIBLY_STALLED` task states;
-- no canonical 30-minute inactivity watchdog;
-- automatic Work rollover relies on the current `conversationFull` signal rather than a multi-signal capacity detector;
-- no append-only task timeline with assigned/start/activity/complete durations;
-- Control Panel does not show browser page budget, task elapsed/last activity, or recent event history.
-
-The target design deliberately does **not** solve page pressure by opening a second Chrome profile first. It keeps one dedicated MAGASIN Chrome profile and targets a default global budget of three active ChatGPT pages.
-
-## Target browser scheduler contract
-
-After TASK-RBT-004 implementation:
-
-- browser tabs are transient execution resources;
+- one dedicated MAGASIN Chrome/CDP process/profile remains authoritative;
+- browser tabs are transient execution resources rather than permanent per-lane Brain+Work ownership;
 - registry/local state remains task/target/latch truth;
-- default ChatGPT page budget = 3 globally;
-- enabled lanes are scheduled round-robin;
-- a long-running Work does not own the browser indefinitely;
-- max concurrent destructive UI mutations = 1;
-- pages may be parked/closed/reopened only after durable state is safe;
-- reopening an exact target always reconciles markers/state before mutation.
+- default ChatGPT page budget = 3 globally across all lanes;
+- enabled lanes are scheduled round-robin and disabled lanes consume no turn;
+- each lane turn performs one bounded orchestration unit and yields;
+- long-running Work is observed briefly and does not hold the scheduler while generating;
+- max concurrent destructive UI mutations = 1 globally;
+- page lease states are ACTIVE_MUTATION / ACTIVE_OBSERVATION / PARKED / EVICTABLE / CLOSED;
+- safe LRU evicts EVICTABLE before PARKED and never evicts ACTIVE_MUTATION or a guarded non-persisted composer artifact;
+- exact Brain/Work reopen verifies the persisted execution target and reconciles marker/latch state before a later mutation;
+- RBT-003 active Work versus pending-next-target semantics remain registry-authoritative across eviction/reopen;
+- scheduler/page-handle/LRU state is transient and rebuilt after CDP/runtime restart.
 
 One lane enabled continues to work normally. Two or three enabled lanes share the same Chrome/CDP fairly without sharing task/latch state.
+
+Remaining TASK-RBT work is intentionally outside TASK-RBT-004: the 30-minute watchdog / long-running state model, multi-signal Work-full rollover, and timeline/resource UX remain TASK-RBT-005+.
 
 ## Target long-running / watchdog contract
 

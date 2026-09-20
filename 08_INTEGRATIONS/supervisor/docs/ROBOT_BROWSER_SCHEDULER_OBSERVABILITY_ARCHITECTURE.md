@@ -946,6 +946,8 @@ Rollback/risk:
 
 ### TASK-RBT-004 — Browser Scheduler + Tab Budget
 
+Status: **IMPLEMENTED in runtime v2026-09-20.53**. Production acceptance remains the release gate for the merge that introduces v53.
+
 Purpose: make browser pages transient and fair across lanes.
 
 Expected scope/files:

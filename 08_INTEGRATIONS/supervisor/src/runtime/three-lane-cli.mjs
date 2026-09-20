@@ -68,8 +68,12 @@ import {
   acceptOwnerWorkTargetRevision,
   applyPendingWorkTargetIfSafe
 } from "./work-target-state.mjs";
+import {
+  BrowserScheduler,
+  DEFAULT_CHATGPT_PAGE_BUDGET
+} from "./browser-scheduler.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.52";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.53";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;
@@ -79,7 +83,9 @@ function parseArgs(argv) {
     cdpUrl: "http://127.0.0.1:9222",
     execute: false,
     pollMs: 4000,
-    workTargetFixture: false
+    workTargetFixture: false,
+    browserSchedulerFixture: false,
+    pageBudget: DEFAULT_CHATGPT_PAGE_BUDGET
   };
   for (let i = 0; i < argv.length; i += 1) {
     const key = argv[i];
@@ -87,6 +93,8 @@ function parseArgs(argv) {
     else if (key === "--execute") result.execute = true;
     else if (key === "--poll-ms") result.pollMs = Number(argv[++i]);
     else if (key === "--work-target-fixture") result.workTargetFixture = true;
+    else if (key === "--browser-scheduler-fixture") result.browserSchedulerFixture = true;
+    else if (key === "--page-budget") result.pageBudget = Number(argv[++i]);
     else throw new Error(`unknown argument: ${key}`);
   }
   return result;
@@ -187,19 +195,27 @@ function accessDeniedMessage({ brain = false } = {}) {
     : "Work này không mở được trong Chrome Robot. Dừng luồng rồi dán LINK WORK khác hoặc bấm TỰ TẠO WORK để Robot tạo chat mới.";
 }
 
-async function openExactConversation(adapter, url, { brain = false } = {}) {
+async function openExactConversation(adapter, url, {
+  brain = false,
+  scheduler = null,
+  laneId = null,
+  targetRevision = 0,
+  generation = 0
+} = {}) {
   const normalized = normalizeChatGptConversationUrl(url);
   const target = targetFromUrl(normalized);
-  const existing = adapter.findPageForTarget(target);
-  if (existing) {
-    const probe = await adapter.probePage(existing).catch(() => null);
-    if (probe?.snapshot?.conversationAccessDenied) {
-      throw new Error(accessDeniedMessage({ brain }));
-    }
-    return existing;
-  }
+  const role = brain ? "BRAIN" : "WORK";
+  const page = scheduler
+    ? await scheduler.acquireExactPage({
+        laneId,
+        role,
+        url: normalized,
+        target,
+        targetRevision,
+        generation
+      })
+    : adapter.findPageForTarget(target) || await adapter.reopenTargetPage(normalized);
 
-  const page = await adapter.reopenTargetPage(normalized);
   const probe = await adapter.probePage(page).catch(() => null);
   if (probe?.snapshot?.conversationAccessDenied) {
     throw new Error(accessDeniedMessage({ brain }));
@@ -212,6 +228,18 @@ async function openExactConversation(adapter, url, { brain = false } = {}) {
     );
   }
   return page;
+}
+
+async function runBrowserMutation(
+  scheduler,
+  { laneId = null, role = "UNKNOWN", page = null, reason = "UI_MUTATION" } = {},
+  operation
+) {
+  if (!scheduler) return operation();
+  return scheduler.withMutationLease(
+    { laneId, role, page, reason },
+    operation
+  );
 }
 
 async function waitForConversationUrl(page) {
@@ -249,7 +277,7 @@ function laneStatus(configLane, registryLane, status, message, extra = {}) {
   };
 }
 
-async function writeLaneStatus(statusPath, statuses) {
+async function writeLaneStatus(statusPath, statuses, scheduler = null) {
   await atomicJsonWrite(statusPath, {
     schema_version: "three-lane-status.v1",
     mode: THREE_LANE_MODE,
@@ -257,6 +285,7 @@ async function writeLaneStatus(statusPath, statuses) {
     truth_order: ["PROCESS_TRUTH", "LANE_TRUTH", "PERSISTED_RECOVERY_STATE"],
     persisted_state_role: "RECOVERY_ONLY",
     process_truth_required: true,
+    scheduler: scheduler ? scheduler.snapshot() : null,
     updated_at: new Date().toISOString(),
     lanes: LANE_IDS.map((laneId) => statuses[laneId] || {
       lane_id: laneId,
@@ -589,7 +618,8 @@ async function reconcileBrainRequest({
   registryLane,
   registry,
   registryPath,
-  logPath
+  logPath,
+  scheduler = null
 }) {
   const latch = registryLane.brain_request_inflight;
   if (!latch) return "NONE";
@@ -607,7 +637,7 @@ async function reconcileBrainRequest({
     });
   }
 
-  const outcome = await inspectKnownTargetSendOutcome({
+  const inspect = () => inspectKnownTargetSendOutcome({
     adapter,
     page,
     digest: latch.digest,
@@ -616,6 +646,13 @@ async function reconcileBrainRequest({
     brain: true,
     reload
   });
+  const outcome = reload
+    ? await runBrowserMutation(
+        scheduler,
+        { laneId: lane.lane_id, role: "BRAIN", page, reason: "BRAIN_RECONCILE_RELOAD" },
+        inspect
+      )
+    : await inspect();
 
   if (outcome === "PENDING") return "PENDING";
 
@@ -716,7 +753,8 @@ async function ensureBrainRequest({
   execute,
   registry,
   registryPath,
-  logPath
+  logPath,
+  scheduler = null
 }) {
   if (registryLane.brain_request_sent) return null;
 
@@ -739,7 +777,8 @@ async function ensureBrainRequest({
       registryLane,
       registry,
       registryPath,
-      logPath
+      logPath,
+      scheduler
     });
     if (outcome === "CONFIRMED") return null;
     if (outcome === "PENDING" || outcome === "BLOCKED") {
@@ -776,7 +815,11 @@ async function ensureBrainRequest({
   if (!execute) return null;
   let sent = null;
   try {
-    sent = await sendComposerInstruction(page, request, { dryRun: false });
+    sent = await runBrowserMutation(
+      scheduler,
+      { laneId: lane.lane_id, role: "BRAIN", page, reason: "BRAIN_REQUEST_SEND" },
+      () => sendComposerInstruction(page, request, { dryRun: false })
+    );
   } catch (error) {
     await safeLog(logPath, {
       type: "LANE_BRAIN_SEND_ATTEMPT_ERROR",
@@ -886,7 +929,8 @@ async function reconcileDispatchInflight({
   registryPath,
   logPath,
   brainPage = null,
-  directive = null
+  directive = null,
+  scheduler = null
 }) {
   const latch = registryLane.dispatch_inflight;
   if (!latch) return "NONE";
@@ -903,16 +947,22 @@ async function reconcileDispatchInflight({
     return "CONFIRMED";
   }
 
-  if (!registryLane.work_url || latch.create_new) {
+  if (!registryLane.work_url) {
     throw new Error(
-      "Robot chưa thể xác minh lần gửi vào Work mới; giữ an toàn để không tạo/gửi trùng."
+      "Robot chưa có exact Work target để xác minh lần gửi mới; giữ an toàn để không tạo/gửi trùng."
     );
   }
 
   const page = await openExactConversation(
     adapter,
     registryLane.work_url,
-    { brain: false }
+    {
+      brain: false,
+      scheduler,
+      laneId: lane.lane_id,
+      targetRevision: Number(registryLane.applied_work_url_revision || 0),
+      generation: Number(registryLane.work_generation || 0)
+    }
   );
 
   // v42 and older could permanently block when unrelated Work activity
@@ -985,7 +1035,7 @@ async function reconcileDispatchInflight({
     });
   }
 
-  const outcome = await inspectKnownTargetSendOutcome({
+  const inspect = () => inspectKnownTargetSendOutcome({
     adapter,
     page,
     digest: latch.instruction_digest,
@@ -995,6 +1045,13 @@ async function reconcileDispatchInflight({
     brain: false,
     reload
   });
+  const outcome = reload
+    ? await runBrowserMutation(
+        scheduler,
+        { laneId: lane.lane_id, role: "WORK", page, reason: "WORK_RECONCILE_RELOAD" },
+        inspect
+      )
+    : await inspect();
 
   if (outcome === "PENDING") {
     await safeLog(logPath, {
@@ -1041,14 +1098,46 @@ async function reconcileDispatchInflight({
   return "BLOCKED";
 }
 
-async function createWorkConversation(adapter, instruction) {
-  const page = await adapter.newChatPage("https://chatgpt.com/");
-  const sent = await sendComposerInstruction(page, instruction, { dryRun: false });
-  if (!sent.executed) {
-    throw new Error(`new Work conversation send failed: ${sent.reason || "unknown"}`);
+async function createWorkConversation({
+  adapter,
+  scheduler,
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  instruction
+}) {
+  if (!scheduler) {
+    const page = await adapter.newChatPage("https://chatgpt.com/");
+    const sent = await sendComposerInstruction(page, instruction, { dryRun: false });
+    if (!sent.executed) {
+      throw new Error(`new Work conversation send failed: ${sent.reason || "unknown"}`);
+    }
+    const url = await waitForConversationUrl(page);
+    registryLane.work_url = url;
+    registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
+    await atomicJsonWrite(registryPath, registry);
+    return { page, url };
   }
-  const url = await waitForConversationUrl(page);
-  return { page, url };
+
+  const created = await scheduler.createPageUnderMutation({
+    laneId: lane.lane_id,
+    role: "WORK",
+    url: "https://chatgpt.com/",
+    targetRevision: Number(registryLane.applied_work_url_revision || 0),
+    generation: Number(registryLane.work_generation || 0) + 1
+  }, async (page) => {
+    const sent = await sendComposerInstruction(page, instruction, { dryRun: false });
+    if (!sent.executed) {
+      throw new Error(`new Work conversation send failed: ${sent.reason || "unknown"}`);
+    }
+    const url = await waitForConversationUrl(page);
+    registryLane.work_url = url;
+    registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
+    await atomicJsonWrite(registryPath, registry);
+    return url;
+  });
+  return { page: created.page, url: created.result };
 }
 
 async function dispatchWork({
@@ -1059,7 +1148,8 @@ async function dispatchWork({
   execute,
   registry,
   registryPath,
-  logPath
+  logPath,
+  scheduler = null
 }) {
   if (registryLane.awaiting_work) {
     if (
@@ -1079,7 +1169,8 @@ async function dispatchWork({
       registry,
       registryPath,
       logPath,
-      directive
+      directive,
+      scheduler
     });
     if (outcome === "CONFIRMED" || outcome === "PENDING" || outcome === "BLOCKED") return;
   }
@@ -1089,7 +1180,13 @@ async function dispatchWork({
   let workBody = directive.instruction;
 
   if (registryLane.work_url) {
-    page = await openExactConversation(adapter, registryLane.work_url, { brain: false });
+    page = await openExactConversation(adapter, registryLane.work_url, {
+      brain: false,
+      scheduler,
+      laneId: lane.lane_id,
+      targetRevision: Number(registryLane.applied_work_url_revision || 0),
+      generation: Number(registryLane.work_generation || 0)
+    });
     const probe = await assertConversationSafe(adapter, page, {
       brain: false,
       allowFull: true
@@ -1160,15 +1257,26 @@ async function dispatchWork({
   let workUrl = registryLane.work_url;
   try {
     if (createNew) {
-      const created = await createWorkConversation(adapter, outgoingInstruction);
+      const created = await createWorkConversation({
+        adapter,
+        scheduler,
+        lane,
+        registryLane,
+        registry,
+        registryPath,
+        instruction: outgoingInstruction
+      });
       page = created.page;
       workUrl = created.url;
-      registryLane.work_generation += 1;
     } else {
-      const sent = await sendComposerInstruction(
-        page,
-        outgoingInstruction,
-        { dryRun: false }
+      const sent = await runBrowserMutation(
+        scheduler,
+        { laneId: lane.lane_id, role: "WORK", page, reason: "WORK_DISPATCH_SEND" },
+        () => sendComposerInstruction(
+          page,
+          outgoingInstruction,
+          { dryRun: false }
+        )
       );
       if (!sent.executed) {
         await safeLog(logPath, {
@@ -1363,7 +1471,8 @@ async function relayWorkResult({
   registry,
   registryPath,
   evidenceDir,
-  logPath
+  logPath,
+  scheduler = null
 }) {
   const relay = buildLaneResultRelay({
     laneId: lane.lane_id,
@@ -1486,11 +1595,15 @@ async function relayWorkResult({
 
   let sent = null;
   try {
-    sent = await sendComposerWithAttachment(
-      brainPage,
-      relay.text,
-      screenshotPath,
-      { dryRun: false }
+    sent = await runBrowserMutation(
+      scheduler,
+      { laneId: lane.lane_id, role: "BRAIN", page: brainPage, reason: "RESULT_RELAY_SEND" },
+      () => sendComposerWithAttachment(
+        brainPage,
+        relay.text,
+        screenshotPath,
+        { dryRun: false }
+      )
     );
   } catch (error) {
     latch.last_attempt_state = "PRE_SEND_FAILED";
@@ -1835,7 +1948,7 @@ async function applyPendingWorkTargetAtSafeBoundary({
   return outcome;
 }
 
-async function processLane({
+async function processLaneTurn({
   adapter,
   lane,
   registryLane,
@@ -1843,19 +1956,27 @@ async function processLane({
   registry,
   registryPath,
   evidenceDir,
-  logPath
+  logPath,
+  scheduler = null
 }) {
   if (!lane.enabled) {
     return laneStatus(lane, registryLane, "STOPPED", "Luồng đang dừng.");
   }
 
-  await applyOwnerBrainTarget({
+  if (await applyOwnerBrainTarget({
     lane,
     registryLane,
     registry,
     registryPath,
     logPath
-  });
+  })) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAITING_BRAIN",
+      "Đã áp dụng Brain target mới; turn kế tiếp sẽ mở exact target."
+    );
+  }
 
   let brainUrl = null;
   try {
@@ -1872,34 +1993,78 @@ async function processLane({
     );
   }
 
-  await applyOwnerWorkStateReset({
+  if (await applyOwnerWorkStateReset({
+    lane,
+    registryLane,
+    registry,
+    registryPath,
+    logPath
+  })) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "READY",
+      "Đã áp dụng Owner-authorized Work state reset."
+    );
+  }
+
+  if (await applyOwnerWorkTarget({
+    lane,
+    registryLane,
+    registry,
+    registryPath,
+    logPath
+  })) {
+    return laneStatus(
+      lane,
+      registryLane,
+      registryLane.pending_work_url_revision ? "WORKING" : "READY",
+      registryLane.pending_work_url_revision
+        ? "Đã lưu Work target mới; task hiện tại tiếp tục exact Work cũ đến safe boundary."
+        : "Đã áp dụng Work target mới."
+    );
+  }
+
+  const pendingBefore = Number(registryLane.pending_work_url_revision || 0);
+  const pendingOutcome = await applyPendingWorkTargetAtSafeBoundary({
     lane,
     registryLane,
     registry,
     registryPath,
     logPath
   });
+  if (
+    pendingBefore > 0 &&
+    (pendingOutcome.status === "APPLIED" || pendingOutcome.status === "NOOP")
+  ) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "READY",
+      pendingOutcome.status === "APPLIED"
+        ? "Pending Work target đã áp dụng đúng safe boundary."
+        : "Pending Work target stale đã được normalize an toàn."
+    );
+  }
 
-  await applyOwnerWorkTarget({
-    lane,
-    registryLane,
-    registry,
-    registryPath,
-    logPath
-  });
-
-  await applyPendingWorkTargetAtSafeBoundary({
-    lane,
-    registryLane,
-    registry,
-    registryPath,
-    logPath
-  });
-
-  const brainPage = await openExactConversation(adapter, brainUrl, { brain: true });
-  const brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
+  let brainPage = null;
+  let brainProbe = null;
+  const ensureBrainPage = async () => {
+    if (!brainPage) {
+      brainPage = await openExactConversation(adapter, brainUrl, {
+        brain: true,
+        scheduler,
+        laneId: lane.lane_id,
+        targetRevision: Number(registryLane.applied_brain_url_revision || 0),
+        generation: 0
+      });
+      brainProbe = await assertConversationSafe(adapter, brainPage, { brain: true });
+    }
+    return brainPage;
+  };
 
   if (registryLane.relay_inflight) {
+    await ensureBrainPage();
     const relayOutcome = await reconcileRelayInflight({
       adapter,
       lane,
@@ -1922,11 +2087,24 @@ async function processLane({
         lane,
         registryLane,
         "RECOVERING",
-        "Đang chờ xác minh/backoff lần gửi kết quả trước; Robot không tải lại hoặc gửi lặp liên tục."
+        "Đang chờ xác minh/backoff lần gửi kết quả trước; lane đã yield scheduler."
       );
     }
+    if (relayOutcome !== "RETRY_READY") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WAITING_BRAIN",
+        "Relay marker đã reconcile; lane yield trước bước tiếp theo."
+      );
+    }
+    // RETRY_READY is the precondition for one bounded relay attempt. Continue
+    // this turn only far enough to reconstruct the persisted Work result and
+    // execute that one mutation; retry/backoff WAIT already yielded above.
   }
+
   if (registryLane.dispatch_inflight) {
+    await ensureBrainPage();
     const dispatchOutcome = await reconcileDispatchInflight({
       adapter,
       lane,
@@ -1934,14 +2112,15 @@ async function processLane({
       registry,
       registryPath,
       logPath,
-      brainPage
+      brainPage,
+      scheduler
     });
     if (dispatchOutcome === "PENDING") {
       return laneStatus(
         lane,
         registryLane,
         "RECOVERING",
-        "Đang tự xác minh lần gửi Work trước; chỉ quan sát, không tải lại trang lặp lại."
+        "Đang tự xác minh lần gửi Work trước; chỉ quan sát, không tải lại trang lặp lại; lane yield scheduler."
       );
     }
     if (dispatchOutcome === "BLOCKED") {
@@ -1952,21 +2131,34 @@ async function processLane({
         "Work chat có thay đổi ngoài dự kiến; Robot đã dừng tự gửi lại để tránh trùng."
       );
     }
+    if (dispatchOutcome === "CONFIRMED") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "WORKING",
+        "Dispatch marker đã xác nhận; Work chạy độc lập, lane đã yield scheduler."
+      );
+    }
+    return laneStatus(
+      lane,
+      registryLane,
+      "STARTING",
+      "Lần gửi trước được chứng minh chưa persist; retry chỉ được xét ở turn kế tiếp."
+    );
   }
-
-  await applyPendingWorkTargetAtSafeBoundary({
-    lane,
-    registryLane,
-    registry,
-    registryPath,
-    logPath
-  });
 
   if (registryLane.awaiting_work) {
     if (!registryLane.work_url) {
       throw new Error("Work URL is missing while a result is pending");
     }
-    const workPage = await openExactConversation(adapter, registryLane.work_url, { brain: false });
+
+    const workPage = await openExactConversation(adapter, registryLane.work_url, {
+      brain: false,
+      scheduler,
+      laneId: lane.lane_id,
+      targetRevision: Number(registryLane.applied_work_url_revision || 0),
+      generation: Number(registryLane.work_generation || 0)
+    });
     const workProbe = await assertConversationSafe(adapter, workPage, {
       brain: false,
       allowFull: true
@@ -2013,7 +2205,7 @@ async function processLane({
         lane,
         registryLane,
         "WORKING",
-        `Đang thực hiện ${registryLane.task_id || "công việc hiện tại"}.`
+        `Đang thực hiện ${registryLane.task_id || "công việc hiện tại"}; observation xong và lane đã yield.`
       );
     }
 
@@ -2033,88 +2225,90 @@ async function processLane({
     ) {
       registryLane.awaiting_work = false;
       await atomicJsonWrite(registryPath, registry);
-    } else {
-      const completedAt = new Date().toISOString();
-      const completionTiming = ensureLaneTaskTiming(
-        registryLane,
-        registryLane.task_id
-      );
-      const completed = markTaskCompleted(completionTiming, {
-        taskId: registryLane.task_id,
-        at: completedAt
-      });
-      if (completed.changed) {
-        await atomicJsonWrite(registryPath, registry);
-        await emitLaneEvent({
-          timestamp: completedAt,
-          lane_id: lane.lane_id,
-          actor: "WORK",
-          event_type: LANE_EVENT_TYPES.WORK_COMPLETED,
-          task_id: registryLane.task_id,
-          phase: "COMPLETED",
-          work_generation: Number(registryLane.work_generation || 0),
-          ...timingEventFields(completionTiming, completedAt)
-        });
-      }
-
-      const relayOutcome = await relayWorkResult({
-        adapter,
+      return laneStatus(
         lane,
-        brainPage,
-        workPage,
         registryLane,
-        captured,
-        execute,
-        registry,
-        registryPath,
-        evidenceDir,
-        logPath
+        "WAITING_BRAIN",
+        "Result đã được relay trước đó; exact-once state đã reconcile."
+      );
+    }
+
+    const completedAt = new Date().toISOString();
+    const completionTiming = ensureLaneTaskTiming(
+      registryLane,
+      registryLane.task_id
+    );
+    const completed = markTaskCompleted(completionTiming, {
+      taskId: registryLane.task_id,
+      at: completedAt
+    });
+    if (completed.changed) {
+      await atomicJsonWrite(registryPath, registry);
+      await emitLaneEvent({
+        timestamp: completedAt,
+        lane_id: lane.lane_id,
+        actor: "WORK",
+        event_type: LANE_EVENT_TYPES.WORK_COMPLETED,
+        task_id: registryLane.task_id,
+        phase: "COMPLETED",
+        work_generation: Number(registryLane.work_generation || 0),
+        ...timingEventFields(completionTiming, completedAt)
       });
-      if (registryLane.awaiting_work) {
-        if (relayOutcome === "EXHAUSTED") {
-          return laneStatus(
-            lane,
-            registryLane,
-            "WAIT_OWNER",
-            "Robot đã thử gửi kết quả 3 lần nhưng ô nhập Bộ não vẫn không sẵn sàng. Đã dừng retry để tránh vòng lặp; không có gửi trùng."
-          );
-        }
-        if (relayOutcome === "PENDING") {
-          return laneStatus(
-            lane,
-            registryLane,
-            "RECOVERING",
-            "Kết quả Work đã sẵn sàng; Robot đang backoff/xác minh lần gửi trước."
-          );
-        }
+      return laneStatus(
+        lane,
+        registryLane,
+        "RELAYING_RESULT",
+        "Đã capture completed result; relay mutation được tách sang bounded turn kế tiếp."
+      );
+    }
+
+    await ensureBrainPage();
+    const relayOutcome = await relayWorkResult({
+      adapter,
+      lane,
+      brainPage,
+      workPage,
+      registryLane,
+      captured,
+      execute,
+      registry,
+      registryPath,
+      evidenceDir,
+      logPath,
+      scheduler
+    });
+
+    if (registryLane.awaiting_work) {
+      if (relayOutcome === "EXHAUSTED") {
         return laneStatus(
           lane,
           registryLane,
-          "RELAYING_RESULT",
-          "Đã nhận kết quả Work; đang gửi ảnh và toàn bộ nội dung về Bộ não."
+          "WAIT_OWNER",
+          "Robot đã thử gửi kết quả 3 lần nhưng ô nhập Bộ não vẫn không sẵn sàng. Đã dừng retry để tránh vòng lặp; không có gửi trùng."
         );
       }
+      return laneStatus(
+        lane,
+        registryLane,
+        relayOutcome === "PENDING" ? "RECOVERING" : "RELAYING_RESULT",
+        relayOutcome === "PENDING"
+          ? "Kết quả Work đã sẵn sàng; Robot đang backoff/xác minh lần gửi trước."
+          : "Đã thực hiện một relay attempt; lane yield scheduler."
+      );
     }
-
-    await applyPendingWorkTargetAtSafeBoundary({
-      lane,
-      registryLane,
-      registry,
-      registryPath,
-      logPath
-    });
 
     return laneStatus(
       lane,
       registryLane,
       "WAITING_BRAIN",
-      "Đã gửi kết quả về Bộ não; đang chờ lệnh tiếp theo."
+      "Đã gửi kết quả về Bộ não; pending Work target sẽ được xét ở turn kế tiếp."
     );
   }
 
-  let directive = null;
+  await ensureBrainPage();
+
   if (!registryLane.brain_request_sent) {
-    directive = await ensureBrainRequest({
+    const directive = await ensureBrainRequest({
       adapter,
       page: brainPage,
       lane,
@@ -2122,19 +2316,20 @@ async function processLane({
       execute,
       registry,
       registryPath,
-      logPath
+      logPath,
+      scheduler
     });
-    if (!directive) {
-      return laneStatus(
-        lane,
-        registryLane,
-        "WAITING_BRAIN",
-        "Đang chờ Bộ não giao công việc đầu tiên."
-      );
-    }
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAITING_BRAIN",
+      directive
+        ? "Đã nhận Brain directive; dispatch được tách sang bounded turn kế tiếp."
+        : "Đang chờ Bộ não giao công việc đầu tiên."
+    );
   }
 
-  if (!directive && brainProbe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
+  if (brainProbe.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE) {
     return laneStatus(
       lane,
       registryLane,
@@ -2143,27 +2338,26 @@ async function processLane({
     );
   }
 
-  if (!directive) {
-    const captured = await captureCompletedAssistantTurn(brainPage);
-    if (!captured) {
-      return laneStatus(
-        lane,
-        registryLane,
-        "WAITING_BRAIN",
-        "Đang chờ Bộ não trả lệnh."
-      );
-    }
+  const captured = await captureCompletedAssistantTurn(brainPage);
+  if (!captured) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAITING_BRAIN",
+      "Đang chờ Bộ não trả lệnh."
+    );
+  }
 
-    try {
-      directive = parseLaneDirective(captured.text);
-    } catch {
-      return laneStatus(
-        lane,
-        registryLane,
-        "WAITING_BRAIN",
-        "Bộ não chưa trả block MAGASIN_LANE_DIRECTIVE_V1 hợp lệ."
-      );
-    }
+  let directive = null;
+  try {
+    directive = parseLaneDirective(captured.text);
+  } catch {
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAITING_BRAIN",
+      "Bộ não chưa trả block MAGASIN_LANE_DIRECTIVE_V1 hợp lệ."
+    );
   }
 
   if (directive.digest === registryLane.last_brain_directive_digest) {
@@ -2198,7 +2392,8 @@ async function processLane({
     execute,
     registry,
     registryPath,
-    logPath
+    logPath,
+    scheduler
   });
 
   return laneStatus(
@@ -2206,9 +2401,18 @@ async function processLane({
     registryLane,
     registryLane.awaiting_work ? "WORKING" : "STARTING",
     registryLane.awaiting_work
-      ? `Đang thực hiện ${registryLane.task_id}.`
-      : "Đang tạo hoặc gửi lệnh cho Work chat."
+      ? `Đang thực hiện ${registryLane.task_id}; mutation lease đã release tại durable boundary.`
+      : "Đã thực hiện một dispatch attempt; lane yield scheduler."
   );
+}
+
+async function processLane(args) {
+  const scheduler = args.scheduler || null;
+  try {
+    return await processLaneTurn(args);
+  } finally {
+    scheduler?.releaseLaneObservations(args.lane?.lane_id);
+  }
 }
 
 const args = parseArgs(process.argv.slice(2));
@@ -2216,8 +2420,15 @@ if (args.workTargetFixture) {
   await import("./work-target-acceptance-cli.mjs");
   process.exit(0);
 }
+if (args.browserSchedulerFixture) {
+  await import("./browser-scheduler-acceptance-cli.mjs");
+  process.exit(0);
+}
 if (!Number.isFinite(args.pollMs) || args.pollMs < 1000) {
   throw new TypeError("poll-ms must be at least 1000");
+}
+if (!Number.isInteger(args.pageBudget) || args.pageBudget < 1) {
+  throw new TypeError("page-budget must be a positive integer");
 }
 
 const root = localRoot();
@@ -2256,12 +2467,13 @@ await cleanupOrphanRelayEvidence({
 const statuses = {};
 let evidenceCleanupTicks = 0;
 let adapter = null;
+let scheduler = null;
 let cdpRecoveryFailures = 0;
 let restartRequested = false;
 
 await safeLog(logPath, {
   type: "RUNTIME_BOOT",
-  reason: `version=${SUPERVISOR_RUNTIME_VERSION};mode=${THREE_LANE_MODE}`
+  reason: `version=${SUPERVISOR_RUNTIME_VERSION};mode=${THREE_LANE_MODE};page_budget=${args.pageBudget}`
 });
 await emitLaneEvent({
   actor: "SUPERVISOR",
@@ -2273,6 +2485,12 @@ await emitLaneEvent({
 try {
   adapter = new ChatGptUiAdapter({ cdpUrl: args.cdpUrl });
   await adapter.open();
+  scheduler = new BrowserScheduler({
+    adapter,
+    pageBudget: args.pageBudget,
+    laneOrder: LANE_IDS
+  });
+  await scheduler.reconstructFromBrowser();
 
   while (true) {
     try {
@@ -2285,7 +2503,7 @@ try {
           "Supervisor đã dừng."
         );
       }
-      await writeLaneStatus(statusPath, statuses);
+      await writeLaneStatus(statusPath, statuses, scheduler);
       break;
     } catch {}
 
@@ -2295,6 +2513,18 @@ try {
     registry = normalizeLaneRegistry(
       await readJson(registryPath, defaultLaneRegistry())
     );
+
+    for (const lane of config.lanes) {
+      if (!lane.enabled) {
+        statuses[lane.lane_id] = laneStatus(
+          lane,
+          registry.lanes[lane.lane_id],
+          "STOPPED",
+          "Luồng đang dừng."
+        );
+      }
+    }
+
     const loopRelayMigrations = migrateLegacyBlockedRelayLatches(registry);
     if (loopRelayMigrations > 0) {
       await atomicJsonWrite(registryPath, registry);
@@ -2314,91 +2544,107 @@ try {
       evidenceCleanupTicks = 0;
     }
 
-    for (const lane of config.lanes) {
-      const registryLane = registry.lanes[lane.lane_id];
-      try {
-        statuses[lane.lane_id] = await processLane({
-          adapter,
-          lane,
-          registryLane,
-          execute: args.execute,
-          registry,
-          registryPath,
-          evidenceDir,
-          logPath
-        });
-        if (lane.enabled) cdpRecoveryFailures = 0;
-      } catch (error) {
-        const transient = isTransientNavigationError(error);
-        let reconnected = false;
-        if (transient) {
-          reconnected = await adapter.reconnectOverCdp()
-            .then(() => true)
-            .catch(() => false);
-          if (reconnected) {
-            cdpRecoveryFailures = 0;
-          } else {
-            cdpRecoveryFailures += 1;
-          }
+    const turn = scheduler.nextEnabledTurn(config.lanes);
+    if (!turn.lane_id) {
+      await scheduler.trimToBudget();
+      await writeLaneStatus(statusPath, statuses, scheduler);
+      await delay(args.pollMs);
+      continue;
+    }
+
+    const lane = config.lanes.find((item) => item.lane_id === turn.lane_id);
+    const registryLane = registry.lanes[turn.lane_id];
+
+    try {
+      statuses[lane.lane_id] = await processLane({
+        adapter,
+        lane,
+        registryLane,
+        execute: args.execute,
+        registry,
+        registryPath,
+        evidenceDir,
+        logPath,
+        scheduler
+      });
+      cdpRecoveryFailures = 0;
+    } catch (error) {
+      const transient = isTransientNavigationError(error);
+      let reconnected = false;
+      if (transient) {
+        reconnected = await adapter.reconnectOverCdp()
+          .then(async () => {
+            await scheduler.reconstructFromBrowser();
+            return true;
+          })
+          .catch(() => false);
+        if (reconnected) {
+          cdpRecoveryFailures = 0;
+        } else {
+          cdpRecoveryFailures += 1;
         }
-        statuses[lane.lane_id] = laneStatus(
-          lane,
-          registryLane,
-          transient ? "RECOVERING" : "WAIT_OWNER",
-          transient
-            ? "Mất kết nối tạm thời; Robot đang tự kết nối lại và sẽ thử tiếp."
-            : String(error?.message || error).slice(0, 220),
-          { error_name: error?.name || "Error" }
-        );
+      }
+      statuses[lane.lane_id] = laneStatus(
+        lane,
+        registryLane,
+        transient ? "RECOVERING" : "WAIT_OWNER",
+        transient
+          ? "Mất kết nối tạm thời; Robot đang tự kết nối lại và sẽ thử tiếp; scheduler rebuild page leases từ durable lane truth."
+          : String(error?.message || error).slice(0, 220),
+        { error_name: error?.name || "Error" }
+      );
+      await safeLog(logPath, {
+        type: "LANE_ERROR",
+        laneId: lane.lane_id,
+        taskId: registryLane.task_id,
+        errorName: error?.name || "Error",
+        reason: String(error?.message || error).slice(0, 240)
+      });
+      await emitLaneEvent({
+        lane_id: lane.lane_id,
+        actor: "SUPERVISOR",
+        event_type: transient
+          ? LANE_EVENT_TYPES.RECOVERY
+          : LANE_EVENT_TYPES.ERROR,
+        task_id: registryLane.task_id,
+        phase: transient ? "RECOVERY" : "ERROR",
+        reason_code: transient
+          ? "TRANSIENT_NAVIGATION_ERROR"
+          : "LANE_PROCESSING_ERROR",
+        work_generation: Number(registryLane.work_generation || 0)
+      });
+
+      if (transient && !reconnected && cdpRecoveryFailures >= 3) {
+        restartRequested = true;
         await safeLog(logPath, {
-          type: "LANE_ERROR",
+          type: "RUNTIME_CDP_RESTART_REQUESTED",
           laneId: lane.lane_id,
           taskId: registryLane.task_id,
-          errorName: error?.name || "Error",
-          reason: String(error?.message || error).slice(0, 240)
+          reason: "bounded transient CDP reconnect budget exhausted"
         });
         await emitLaneEvent({
           lane_id: lane.lane_id,
           actor: "SUPERVISOR",
-          event_type: transient
-            ? LANE_EVENT_TYPES.RECOVERY
-            : LANE_EVENT_TYPES.ERROR,
+          event_type: LANE_EVENT_TYPES.RECOVERY,
           task_id: registryLane.task_id,
-          phase: transient ? "RECOVERY" : "ERROR",
-          reason_code: transient
-            ? "TRANSIENT_NAVIGATION_ERROR"
-            : "LANE_PROCESSING_ERROR",
+          phase: "RECOVERY",
+          reason_code: "CDP_RESTART_REQUESTED",
           work_generation: Number(registryLane.work_generation || 0)
         });
-
-        if (transient && !reconnected && cdpRecoveryFailures >= 3) {
-          restartRequested = true;
-          await safeLog(logPath, {
-            type: "RUNTIME_CDP_RESTART_REQUESTED",
-            laneId: lane.lane_id,
-            taskId: registryLane.task_id,
-            reason: "bounded transient CDP reconnect budget exhausted"
-          });
-          await emitLaneEvent({
-            lane_id: lane.lane_id,
-            actor: "SUPERVISOR",
-            event_type: LANE_EVENT_TYPES.RECOVERY,
-            task_id: registryLane.task_id,
-            phase: "RECOVERY",
-            reason_code: "CDP_RESTART_REQUESTED",
-            work_generation: Number(registryLane.work_generation || 0)
-          });
-          break;
-        }
       }
     }
 
-    await writeLaneStatus(statusPath, statuses);
+    await scheduler.trimToBudget();
+    await writeLaneStatus(statusPath, statuses, scheduler);
+
     if (restartRequested) {
       process.exitCode = 75;
       break;
     }
-    await delay(args.pollMs);
+
+    if (turn.round_complete) {
+      await delay(args.pollMs);
+    }
   }
 } finally {
   await adapter?.close().catch(() => {});
