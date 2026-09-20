@@ -14,7 +14,7 @@ function functionSlice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("RBT-003 runtime is v52 and Work target save cannot clear active exact-once state", async () => {
+test("RBT-003 Work-target invariants remain intact on v53", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
   const applyWork = functionSlice(
     runtime,
@@ -37,35 +37,39 @@ test("RBT-003 runtime is v52 and Work target save cannot clear active exact-once
   }
 });
 
-test("pending Work target is reconsidered after old dispatch/relay reconciliation and after result relay", async () => {
+test("pending Work target is re-evaluated at the next bounded turn after old latch or relay reconciliation", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  const processLane = functionSlice(
+  const processLaneTurn = functionSlice(
     runtime,
-    "async function processLane",
-    "const args = parseArgs"
+    "async function processLaneTurn",
+    "async function processLane(args)"
   );
 
-  const reconcileRelay = processLane.indexOf("reconcileRelayInflight");
-  const reconcileDispatch = processLane.indexOf("reconcileDispatchInflight");
-  const safeAfterReconcile = processLane.indexOf(
-    "applyPendingWorkTargetAtSafeBoundary",
-    reconcileDispatch
-  );
-  const awaiting = processLane.indexOf("if (registryLane.awaiting_work)", safeAfterReconcile);
-  assert.ok(reconcileRelay >= 0);
-  assert.ok(reconcileDispatch > reconcileRelay);
-  assert.ok(safeAfterReconcile > reconcileDispatch);
-  assert.ok(awaiting > safeAfterReconcile);
+  const safeBoundary = processLaneTurn.indexOf("applyPendingWorkTargetAtSafeBoundary");
+  const relayBranch = processLaneTurn.indexOf("if (registryLane.relay_inflight)");
+  const dispatchBranch = processLaneTurn.indexOf("if (registryLane.dispatch_inflight)");
+  const awaitingBranch = processLaneTurn.indexOf("if (registryLane.awaiting_work)");
+  assert.ok(safeBoundary >= 0);
+  assert.ok(relayBranch > safeBoundary);
+  assert.ok(dispatchBranch > relayBranch);
+  assert.ok(awaitingBranch > dispatchBranch);
 
-  const relayCall = processLane.indexOf("relayWorkResult");
-  const safeAfterRelay = processLane.indexOf(
-    "applyPendingWorkTargetAtSafeBoundary",
-    relayCall
+  // Each latch reconciliation returns/yields. The next round re-enters the
+  // safe-boundary guard, where RBT-003 active predicates decide whether the
+  // pending target may apply.
+  const relaySlice = processLaneTurn.slice(relayBranch, dispatchBranch);
+  const dispatchSlice = processLaneTurn.slice(dispatchBranch, awaitingBranch);
+  assert.match(relaySlice, /return laneStatus/);
+  assert.match(dispatchSlice, /return laneStatus/);
+
+  const relayCall = processLaneTurn.indexOf("relayWorkResult", awaitingBranch);
+  assert.ok(relayCall > awaitingBranch);
+  const tailAfterRelay = processLaneTurn.slice(relayCall);
+  assert.match(tailAfterRelay, /return laneStatus/);
+  assert.doesNotMatch(
+    tailAfterRelay.slice(0, tailAfterRelay.indexOf("return laneStatus") + 200),
+    /applyPendingWorkTargetAtSafeBoundary/
   );
-  const waitingBrain = processLane.indexOf('"WAITING_BRAIN"', safeAfterRelay);
-  assert.ok(relayCall >= 0);
-  assert.ok(safeAfterRelay > relayCall);
-  assert.ok(waitingBrain > safeAfterRelay);
 });
 
 test("Work target save preserves deterministic dispatch and relay exact-once contracts", async () => {
@@ -85,7 +89,9 @@ test("inaccessible Owner Work remains fail-closed instead of being auto-replaced
 
   assert.match(runtime, /Work này không mở được trong Chrome Robot/);
   assert.match(runtime, /Work conversation is missing; automatic replacement is denied/);
-  assert.match(runtime, /openExactConversation\(adapter, registryLane\.work_url, \{ brain: false \}\)/);
+  assert.match(runtime, /openExactConversation\(adapter, registryLane\.work_url/);
+  assert.match(runtime, /brain: false/);
+  assert.match(runtime, /targetRevision: Number\(registryLane\.applied_work_url_revision/);
   assert.doesNotMatch(
     functionSlice(runtime, "async function applyOwnerWorkTarget", "async function applyPendingWorkTargetAtSafeBoundary"),
     /createWorkConversation/
