@@ -50,6 +50,10 @@ jobs:
         run: node --test test/work-capacity.test.mjs test/work-rollover.test.mjs test/work-rollover-integration.test.mjs
       - name: Run TASK-RBT-006A stale-target quarantine targeted tests
         run: node --test test/target-health.test.mjs test/stale-target-quarantine-integration.test.mjs
+      - name: Run installed-runtime synthetic acceptance fixtures directly
+        run: |
+          node src/runtime/three-lane-cli.mjs --work-full-fixture
+          node src/runtime/three-lane-cli.mjs --stale-target-fixture
       - name: Run Supervisor unit tests
         run: npm test
       - name: Run TASK-RBT-002B state maintenance gate regressions
