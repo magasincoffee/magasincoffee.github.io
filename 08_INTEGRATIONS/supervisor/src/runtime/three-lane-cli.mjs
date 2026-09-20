@@ -1962,6 +1962,270 @@ async function applyPendingWorkTargetAtSafeBoundary({
   return outcome;
 }
 
+async function isOwnerStopRequested(stopPath) {
+  if (!stopPath) return false;
+  try {
+    await fs.access(stopPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function watchdogIdentity(registryLane) {
+  return {
+    task_id: registryLane.task_id || null,
+    work_url: String(registryLane.work_url || ""),
+    work_generation: Number(registryLane.work_generation || 0),
+    work_url_revision: Number(registryLane.applied_work_url_revision || 0)
+  };
+}
+
+function watchdogIdentityMatches(registryLane, expected) {
+  const current = watchdogIdentity(registryLane);
+  return (
+    current.task_id === expected.task_id &&
+    current.work_url === expected.work_url &&
+    current.work_generation === expected.work_generation &&
+    current.work_url_revision === expected.work_url_revision
+  );
+}
+
+async function emitWatchdogDecisionEvents({
+  lane,
+  registryLane,
+  timing,
+  decision,
+  at
+}) {
+  const common = {
+    timestamp: at,
+    lane_id: lane.lane_id,
+    actor: "SUPERVISOR",
+    task_id: registryLane.task_id,
+    work_generation: Number(registryLane.work_generation || 0),
+    work_url_revision: Number(registryLane.applied_work_url_revision || 0),
+    ...timingEventFields(timing, at)
+  };
+
+  if (decision.emit_long_running) {
+    await emitLaneEvent({
+      ...common,
+      event_type: LANE_EVENT_TYPES.WORK_LONG_RUNNING,
+      phase: "WORKING_LONG",
+      reason_code: "WATCHDOG_OBSERVATION_BAND"
+    });
+  }
+  if (decision.emit_stall_check) {
+    await emitLaneEvent({
+      ...common,
+      event_type: LANE_EVENT_TYPES.WATCHDOG_STALL_CHECK,
+      phase: "STALL_CHECK",
+      reason_code: "WATCHDOG_STALL_ELIGIBLE"
+    });
+  }
+  if (decision.emit_rearmed) {
+    await emitLaneEvent({
+      ...common,
+      event_type: LANE_EVENT_TYPES.WATCHDOG_PROGRESS_REARMED,
+      phase: "WORKING_LONG",
+      reason_code: "WATCHDOG_PROGRESS_REARMED"
+    });
+  }
+  if (decision.emit_possibly_stalled) {
+    await emitLaneEvent({
+      ...common,
+      event_type: LANE_EVENT_TYPES.POSSIBLY_STALLED,
+      phase: "POSSIBLY_STALLED",
+      reason_code: decision.reason_code
+    });
+  }
+}
+
+async function evaluateAndPersistWorkWatchdog({
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  timing,
+  observation,
+  activityChanged,
+  ownerStopped = false,
+  securityBlocked = false,
+  at = new Date().toISOString()
+}) {
+  const before = JSON.stringify(normalizeWorkWatchdog(registryLane.work_watchdog));
+  const decision = evaluateWorkWatchdog({
+    now: at,
+    awaitingWork: Boolean(registryLane.awaiting_work),
+    dispatchConfirmed: Boolean(
+      registryLane.awaiting_work &&
+      !registryLane.dispatch_inflight &&
+      timing?.started_at
+    ),
+    taskId: registryLane.task_id,
+    workGeneration: Number(registryLane.work_generation || 0),
+    workUrlRevision: Number(registryLane.applied_work_url_revision || 0),
+    timing,
+    observation,
+    activityChanged,
+    ownerStopped,
+    securityBlocked,
+    watchdog: registryLane.work_watchdog
+  });
+  registryLane.work_watchdog = decision.state;
+  const after = JSON.stringify(decision.state);
+  if (before !== after) {
+    await atomicJsonWrite(registryPath, registry);
+  }
+  await emitWatchdogDecisionEvents({
+    lane,
+    registryLane,
+    timing,
+    decision,
+    at
+  });
+  return decision;
+}
+
+async function executeWatchdogReload({
+  adapter,
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  logPath,
+  scheduler,
+  stopPath,
+  workPage,
+  expectedIdentity
+}) {
+  if (await isOwnerStopRequested(stopPath) || !lane.enabled) {
+    return { status: "OWNER_STOP" };
+  }
+  if (!watchdogIdentityMatches(registryLane, expectedIdentity)) {
+    return { status: "IDENTITY_MISMATCH" };
+  }
+
+  let releaseMutation = null;
+  try {
+    releaseMutation = scheduler
+      ? scheduler.acquireMutationLease({
+          laneId: lane.lane_id,
+          role: "WORK",
+          page: workPage,
+          reason: "WATCHDOG_RECOVERY_RELOAD"
+        })
+      : () => {};
+  } catch (error) {
+    if (error?.code === "MUTATION_LEASE_BUSY") {
+      return { status: "MUTATION_BUSY" };
+    }
+    throw error;
+  }
+
+  try {
+    if (await isOwnerStopRequested(stopPath) || !lane.enabled) {
+      return { status: "OWNER_STOP" };
+    }
+    if (!watchdogIdentityMatches(registryLane, expectedIdentity)) {
+      return { status: "IDENTITY_MISMATCH" };
+    }
+
+    const intentAt = new Date().toISOString();
+    registryLane.work_watchdog = beginWatchdogReloadIntent(
+      registryLane.work_watchdog,
+      { now: intentAt }
+    );
+    await atomicJsonWrite(registryPath, registry);
+
+    await emitLaneEvent({
+      timestamp: intentAt,
+      lane_id: lane.lane_id,
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.PAGE_RECOVERY_RELOAD,
+      task_id: registryLane.task_id,
+      phase: "RECOVERY",
+      reason_code: "WATCHDOG_RELOAD_ELIGIBLE",
+      work_generation: Number(registryLane.work_generation || 0),
+      work_url_revision: Number(registryLane.applied_work_url_revision || 0),
+      ...timingEventFields(registryLane.task_timing, intentAt)
+    });
+
+    await safeLog(logPath, {
+      type: "WORK_WATCHDOG_RECOVERY_RELOAD",
+      laneId: lane.lane_id,
+      taskId: registryLane.task_id,
+      reason: `epoch=${registryLane.work_watchdog.recovery_epoch};reload=1`
+    });
+
+    await workPage.reload({
+      waitUntil: "domcontentloaded",
+      timeout: 30_000
+    });
+
+    const reloadedAt = new Date().toISOString();
+    registryLane.work_watchdog = markWatchdogReloaded(
+      registryLane.work_watchdog,
+      { now: reloadedAt }
+    );
+    await atomicJsonWrite(registryPath, registry);
+  } finally {
+    releaseMutation?.({ durable: true });
+  }
+
+  if (!watchdogIdentityMatches(registryLane, expectedIdentity)) {
+    return { status: "IDENTITY_MISMATCH" };
+  }
+
+  const exactTarget = targetFromUrl(expectedIdentity.work_url);
+  if (!pageMatchesTarget(workPage.url(), exactTarget)) {
+    return { status: "IDENTITY_MISMATCH" };
+  }
+
+  const probe = await assertConversationSafe(adapter, workPage, {
+    brain: false,
+    allowFull: true
+  });
+
+  if (registryLane.last_dispatch_id) {
+    const markerPresent = await waitForUserTurnMarker(
+      workPage,
+      workDispatchMarker(registryLane.last_dispatch_id),
+      { timeoutMs: 4000, intervalMs: 250 }
+    );
+    if (!markerPresent) {
+      const stalledAt = new Date().toISOString();
+      const state = normalizeWorkWatchdog(registryLane.work_watchdog);
+      state.phase = "POSSIBLY_STALLED";
+      if (!state.possibly_stalled_at) state.possibly_stalled_at = stalledAt;
+      registryLane.work_watchdog = state;
+      await atomicJsonWrite(registryPath, registry);
+      await emitLaneEvent({
+        timestamp: stalledAt,
+        lane_id: lane.lane_id,
+        actor: "SUPERVISOR",
+        event_type: LANE_EVENT_TYPES.POSSIBLY_STALLED,
+        task_id: registryLane.task_id,
+        phase: "POSSIBLY_STALLED",
+        reason_code: "WATCHDOG_DISPATCH_MARKER_MISSING",
+        work_generation: Number(registryLane.work_generation || 0),
+        work_url_revision: Number(registryLane.applied_work_url_revision || 0),
+        ...timingEventFields(registryLane.task_timing, stalledAt)
+      });
+      return { status: "MARKER_MISSING", probe };
+    }
+  }
+
+  const postProbeAt = new Date().toISOString();
+  registryLane.work_watchdog = markWatchdogPostReloadProbe(
+    registryLane.work_watchdog,
+    { now: postProbeAt }
+  );
+  await atomicJsonWrite(registryPath, registry);
+  return { status: "RELOADED", probe, at: postProbeAt };
+}
+
 async function processLaneTurn({
   adapter,
   lane,
@@ -1971,7 +2235,8 @@ async function processLaneTurn({
   registryPath,
   evidenceDir,
   logPath,
-  scheduler = null
+  scheduler = null,
+  stopPath = null
 }) {
   if (!lane.enabled) {
     return laneStatus(lane, registryLane, "STOPPED", "Luồng đang dừng.");
