@@ -1,10 +1,10 @@
-$ErrorActionPreference = 'Stop'
-Set-StrictMode -Version Latest
-
 param(
     [Parameter(Mandatory = $true)][string]$WorkflowPath,
     [Parameter(Mandatory = $true)][string]$HelperPath
 )
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
 
 function Assert-True {
     param(
