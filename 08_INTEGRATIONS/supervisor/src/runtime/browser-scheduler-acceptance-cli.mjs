@@ -133,6 +133,37 @@ for (let i = 1; i <= 6; i += 1) {
 assert.equal(scheduler.snapshot().page_budget, 3);
 assert.ok(scheduler.snapshot().resident_chatgpt_pages <= 3);
 
+scheduler.resetTransientState();
+const lru1 = await scheduler.acquireExactPage({
+  laneId: "lane-1",
+  role: "BRAIN",
+  url: "https://chatgpt.com/c/lru-1",
+  target: target("https://chatgpt.com/c/lru-1")
+});
+scheduler.releaseObservation(lru1);
+const lru2 = await scheduler.acquireExactPage({
+  laneId: "lane-2",
+  role: "BRAIN",
+  url: "https://chatgpt.com/c/lru-2",
+  target: target("https://chatgpt.com/c/lru-2")
+});
+scheduler.parkPage(lru2);
+const lru3 = await scheduler.acquireExactPage({
+  laneId: "lane-3",
+  role: "BRAIN",
+  url: "https://chatgpt.com/c/lru-3",
+  target: target("https://chatgpt.com/c/lru-3")
+});
+scheduler.releaseObservation(lru3);
+await scheduler.acquireExactPage({
+  laneId: "lane-1",
+  role: "WORK",
+  url: "https://chatgpt.com/c/lru-4",
+  target: target("https://chatgpt.com/c/lru-4")
+});
+assert.equal(lru1.isClosed(), true);
+assert.equal(lru2.isClosed(), false);
+
 const beforeReopen = adapter.reopenCount;
 const reopenUrl = "https://chatgpt.com/c/reopen-proof";
 const reopenPage = await scheduler.acquireExactPage({
@@ -208,6 +239,25 @@ const durableLaneTruth = {
   pending_work_mode: "OWNER"
 };
 const durableBefore = JSON.stringify(durableLaneTruth);
+const latchPage = await scheduler.acquireExactPage({
+  laneId: "lane-1",
+  role: "WORK",
+  url: durableLaneTruth.work_url,
+  target: target(durableLaneTruth.work_url),
+  targetRevision: 7,
+  generation: durableLaneTruth.work_generation
+});
+scheduler.releaseObservation(latchPage);
+await adapter.closePage(latchPage);
+await scheduler.acquireExactPage({
+  laneId: "lane-1",
+  role: "WORK",
+  url: durableLaneTruth.work_url,
+  target: target(durableLaneTruth.work_url),
+  targetRevision: 7,
+  generation: durableLaneTruth.work_generation
+});
+assert.equal(JSON.stringify(durableLaneTruth), durableBefore);
 await scheduler.reconstructFromBrowser();
 assert.equal(JSON.stringify(durableLaneTruth), durableBefore);
 
@@ -217,8 +267,10 @@ console.log("BROWSER_SCHEDULER_FIXTURE_TWO_LANE_FAIR=True");
 console.log("BROWSER_SCHEDULER_FIXTURE_THREE_LANE_FAIR=True");
 console.log("BROWSER_SCHEDULER_FIXTURE_MUTATION_SINGLETON=True");
 console.log("BROWSER_SCHEDULER_FIXTURE_PAGE_BUDGET_HARD_BOUND=True");
+console.log("BROWSER_SCHEDULER_FIXTURE_LRU_EVICTION=True");
 console.log("BROWSER_SCHEDULER_FIXTURE_ACTIVE_MUTATION_NOT_EVICTED=True");
 console.log("BROWSER_SCHEDULER_FIXTURE_UNPERSISTED_ARTIFACT_GUARDED=True");
 console.log("BROWSER_SCHEDULER_FIXTURE_REOPEN_NO_RESEND=True");
 console.log("BROWSER_SCHEDULER_FIXTURE_DURABLE_TRUTH_UNCHANGED=True");
+console.log("BROWSER_SCHEDULER_FIXTURE_LATCHES_SURVIVE_REOPEN=True");
 console.log("BROWSER_SCHEDULER_FIXTURE_PENDING_WORK_PRESERVED=True");
