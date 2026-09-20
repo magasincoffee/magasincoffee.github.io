@@ -126,7 +126,7 @@ test("v45 active Brain status comes from persisted registry target", async () =>
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-20\.52/);
+  assert.match(source, /2026-09-20\.53/);
 });
 
 test("v43 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
