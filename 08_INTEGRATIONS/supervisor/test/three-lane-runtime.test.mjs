@@ -13,7 +13,9 @@ test("active Three-Lane runtime contains no Brain auto-discovery path", async ()
   assert.doesNotMatch(source, /getVisibleChatGptPages/);
   assert.doesNotMatch(source, /BRAIN_REBIND/);
   assert.match(source, /normalizeChatGptConversationUrl\(registryLane\.brain_url\)/);
-  assert.match(source, /openExactConversation\(adapter, brainUrl, \{ brain: true \}\)/);
+  assert.match(source, /openExactConversation\(adapter, brainUrl/);
+  assert.match(source, /brain: true/);
+  assert.match(source, /scheduler/);
 });
 
 test("Work URL is Robot-managed and rollover requires positive conversationFull", async () => {
@@ -72,7 +74,8 @@ test("one lane error is caught without terminating the other lane loop", async (
     "utf8"
   );
 
-  assert.match(source, /for \(const lane of config\.lanes\)/);
+  assert.match(source, /scheduler\.nextEnabledTurn\(config\.lanes\)/);
+  assert.match(source, /const lane = config\.lanes\.find\(\(item\) => item\.lane_id === turn\.lane_id\)/);
   assert.match(source, /statuses\[lane\.lane_id\] = await processLane/);
   assert.match(source, /type: "LANE_ERROR"/);
 });
@@ -143,8 +146,8 @@ test("v43 valid completed Brain directive can complete a stuck first-handshake w
   assert.match(source, /const existingDirective = await adoptExistingBrainDirective/);
   assert.match(source, /const directiveAfterReconcile = await adoptExistingBrainDirective/);
   assert.match(source, /const directiveAfterSend = await adoptExistingBrainDirective/);
-  assert.match(source, /directive = await ensureBrainRequest/);
-  assert.match(source, /if \(!directive\) \{\s*return laneStatus\(/);
+  assert.match(source, /const directive = await ensureBrainRequest/);
+  assert.match(source, /Đã nhận Brain directive; dispatch được tách sang bounded turn kế tiếp/);
 });
 
 
