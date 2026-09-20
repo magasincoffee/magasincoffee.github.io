@@ -2123,7 +2123,7 @@ async function processLaneTurn({
         lane,
         registryLane,
         "RECOVERING",
-        "Đang tự xác minh lần gửi Work trước; chỉ quan sát exact target rồi yield."
+        "Đang tự xác minh lần gửi Work trước; chỉ quan sát, không tải lại trang lặp lại; lane yield scheduler."
       );
     }
     if (dispatchOutcome === "BLOCKED") {
@@ -2592,7 +2592,7 @@ try {
         registryLane,
         transient ? "RECOVERING" : "WAIT_OWNER",
         transient
-          ? "Mất kết nối tạm thời; scheduler đã bỏ page leases cũ và sẽ reconstruct từ durable lane truth."
+          ? "Mất kết nối tạm thời; Robot đang tự kết nối lại và sẽ thử tiếp; scheduler rebuild page leases từ durable lane truth."
           : String(error?.message || error).slice(0, 220),
         { error_name: error?.name || "Error" }
       );
