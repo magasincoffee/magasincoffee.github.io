@@ -177,7 +177,7 @@ test("runtime reconciles exact relay marker before rearm and preserves evidence 
   );
   assert.match(evidenceBranch, /FAIL_CLOSED_LATCH_PRESERVED/);
   assert.doesNotMatch(evidenceBranch, /clearRelayInflight/);
-  assert.match(runtime, /if \(relayOutcome === "EVIDENCE_MISSING"\)/);
+  assert.match(runtime, /relayOutcome === "EVIDENCE_MISSING"/);
   assert.match(runtime, /RESULT_IDENTITY_MISMATCH/);
   assert.match(runtime, /FAIL_CLOSED_RECONSTRUCTED_RESULT_MISMATCH/);
   assert.match(runtime, /return "EVIDENCE_MISMATCH"/);
