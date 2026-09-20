@@ -1594,6 +1594,14 @@ async function dispatchWork({
 
   rollover = normalizeWorkRollover(registryLane.work_rollover);
 
+  if (!await isLaneMutationAllowed({
+    stopPath,
+    configPath,
+    laneId: lane.lane_id
+  })) {
+    return;
+  }
+
   if (!rollover) {
     const targetBeforeOpen = targetFromUrl(registryLane.work_url);
     page = await openExactConversation(adapter, registryLane.work_url, {
