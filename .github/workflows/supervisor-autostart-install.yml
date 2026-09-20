@@ -134,8 +134,8 @@ jobs:
 
           $runtimeThreeLane = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
           if (-not (Test-Path $runtimeThreeLane)) { throw "Installed Three-Lane runtime is missing" }
-          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.50" -Quiet)) {
-            throw "Installed Three-Lane runtime is not v2026-09-19.50"
+          if (-not (Select-String -Path $runtimeThreeLane -SimpleMatch "2026-09-19.51" -Quiet)) {
+            throw "Installed Three-Lane runtime is not v2026-09-19.51"
           }
 
           function Get-TargetFingerprint([string]$Path) {
@@ -191,8 +191,8 @@ jobs:
             if (-not $healthy) { throw "Enabled lane runtime did not recover after install" }
             if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing" }
             $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ([string]$status.supervisor_runtime_version -ne "2026-09-19.50") {
-              throw "Three-Lane status is not v2026-09-19.50"
+            if ([string]$status.supervisor_runtime_version -ne "2026-09-19.51") {
+              throw "Three-Lane status is not v2026-09-19.51"
             }
             if ([string]$status.persisted_state_role -ne "RECOVERY_ONLY") {
               throw "Three-Lane status is missing lifecycle recovery role"
@@ -260,8 +260,8 @@ jobs:
 
           if (-not (Test-Path $statusFile)) { throw "Three-Lane status is missing after previous job cleanup" }
           $status = Get-Content $statusFile -Raw -Encoding UTF8 | ConvertFrom-Json
-          if ([string]$status.supervisor_runtime_version -ne "2026-09-19.50") {
-            throw "Post-job Three-Lane runtime is not v2026-09-19.50"
+          if ([string]$status.supervisor_runtime_version -ne "2026-09-19.51") {
+            throw "Post-job Three-Lane runtime is not v2026-09-19.51"
           }
 
           Write-Host "POST_JOB_SUPERVISOR_ALIVE=True"
