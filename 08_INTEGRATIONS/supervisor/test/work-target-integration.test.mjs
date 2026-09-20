@@ -14,7 +14,7 @@ function functionSlice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("RBT-003 Work-target invariants remain intact after v55 relay recovery bump", async () => {
+test("RBT-003 Work-target invariants remain intact after v56 Work-full rollover bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
   const applyWork = functionSlice(
     runtime,
@@ -22,7 +22,7 @@ test("RBT-003 Work-target invariants remain intact after v55 relay recovery bump
     "async function applyPendingWorkTargetAtSafeBoundary"
   );
 
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.55"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.56"/);
   assert.match(applyWork, /acceptOwnerWorkTargetRevision/);
   assert.match(applyWork, /WORK_TARGET_PENDING/);
   for (const forbidden of [
@@ -77,7 +77,10 @@ test("Work target save preserves deterministic dispatch and relay exact-once con
 
   assert.match(runtime, /const dispatchId = sha256\(\[/);
   assert.match(runtime, /workDispatchMarker\(dispatchId\)/);
-  assert.match(runtime, /registryLane\.dispatch_inflight = \{/);
+  assert.match(runtime, /registryLane\.dispatch_inflight = latch/);
+  assert.match(runtime, /const dispatchId = sha256\(\[/);
+  assert.match(runtime, /work_target_digest: targetDigest/);
+  assert.match(runtime, /work_generation: Number\(registryLane\.work_generation/);
   assert.match(runtime, /finalizeConfirmedDispatch/);
   assert.match(runtime, /relayMarker\(relayId\)/);
   assert.match(runtime, /registryLane\.last_result_relay_id = latch\.relay_id/);

@@ -64,7 +64,7 @@ For each lane the Control Panel target UX shows:
 12. LƯU WORK.
 13. TỰ TẠO WORK.
 
-Current production contract: LƯU WORK hot-swap is released by TASK-RBT-003, finite global browser scheduling by TASK-RBT-004, and inactivity-based long-running recovery by TASK-RBT-005. Work-full multi-signal rollover remains TASK-RBT-006+.
+Current production contract: LƯU WORK hot-swap is released by TASK-RBT-003, finite global browser scheduling by TASK-RBT-004, inactivity-based long-running recovery by TASK-RBT-005, relay exhaustion recovery by TASK-RBT-005A, and multi-signal Work-full rollover by TASK-RBT-006 (runtime v2026-09-20.56).
 
 ## Non-negotiable invariants
 
@@ -214,7 +214,7 @@ Target execution states:
 
 ## Automatic Work-full detection and rollover
 
-Current v50 uses `conversationFull` as the rollover gate. Target architecture strengthens this.
+Runtime v2026-09-20.56 replaces the legacy single `conversationFull` rollover authority with the released multi-signal detector and durable rollover state machine.
 
 Full confirmation must combine verified signals such as:
 

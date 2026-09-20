@@ -8,6 +8,8 @@ import {
   isTransientNavigationError
 } from "../ui/playwright-adapter.mjs";
 import {
+  SEND_REJECTION_CLASSES,
+  classifyComposerSendRejection,
   sendComposerInstruction,
   sendComposerWithAttachment
 } from "../ui/actions.mjs";
@@ -82,8 +84,24 @@ import {
   markWatchdogReloaded,
   normalizeWorkWatchdog
 } from "./work-watchdog.mjs";
+import {
+  WORK_CAPACITY_STATES,
+  evaluateWorkCapacity,
+  workCapacitySignalsFromSnapshot
+} from "./work-capacity.mjs";
+import {
+  WORK_ROLLOVER_STAGES,
+  beginWorkRollover,
+  markBlankTargetCreating,
+  markRolloverDispatchConfirmed,
+  markRolloverDispatchLatchPersisted,
+  markRolloverIntentPersisted,
+  markRolloverTargetPersisted,
+  normalizeWorkRollover,
+  rolloverMatchesDirective
+} from "./work-rollover.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.55";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.56";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;
@@ -97,6 +115,7 @@ function parseArgs(argv) {
     browserSchedulerFixture: false,
     workWatchdogFixture: false,
     relayRearmFixture: false,
+    workFullFixture: false,
     pageBudget: DEFAULT_CHATGPT_PAGE_BUDGET
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -108,6 +127,7 @@ function parseArgs(argv) {
     else if (key === "--browser-scheduler-fixture") result.browserSchedulerFixture = true;
     else if (key === "--work-watchdog-fixture") result.workWatchdogFixture = true;
     else if (key === "--relay-rearm-fixture") result.relayRearmFixture = true;
+    else if (key === "--work-full-fixture") result.workFullFixture = true;
     else if (key === "--page-budget") result.pageBudget = Number(argv[++i]);
     else throw new Error(`unknown argument: ${key}`);
   }
@@ -331,6 +351,51 @@ async function assertConversationSafe(adapter, page, {
       : "Work conversation is full");
   }
   return probe;
+}
+
+async function probeStableWorkCapacity({
+  adapter,
+  page,
+  expectedUrl,
+  sendRejectionCapacity = false
+}) {
+  const expectedTarget = targetFromUrl(expectedUrl);
+  const first = await assertConversationSafe(adapter, page, {
+    brain: false,
+    allowFull: true
+  });
+  const firstTargetStable = pageMatchesTarget(page.url(), expectedTarget);
+
+  // Two bounded probes are enough to reject one-frame/transient UI states.
+  // This is not a retry loop and performs no UI mutation.
+  if (typeof page.waitForTimeout === "function") {
+    await page.waitForTimeout(160);
+  }
+  const second = await assertConversationSafe(adapter, page, {
+    brain: false,
+    allowFull: true
+  });
+  const secondTargetStable = pageMatchesTarget(page.url(), expectedTarget);
+
+  const firstSignals = workCapacitySignalsFromSnapshot(first.snapshot, {
+    sendRejectionCapacity
+  });
+  const secondSignals = workCapacitySignalsFromSnapshot(second.snapshot, {
+    sendRejectionCapacity
+  });
+  const decision = evaluateWorkCapacity({
+    first: firstSignals,
+    second: secondSignals,
+    stableIdentity: firstTargetStable && secondTargetStable,
+    stableProbeCount: 2
+  });
+
+  return {
+    decision,
+    first,
+    second,
+    stable_identity: firstTargetStable && secondTargetStable
+  };
 }
 
 async function captureSendBaseline(adapter, page) {
@@ -589,6 +654,18 @@ async function finalizeConfirmedDispatch({
   });
 
   if (foundUrl) registryLane.work_url = foundUrl;
+  let rolloverConfirmed = false;
+  const rollover = normalizeWorkRollover(registryLane.work_rollover);
+  if (
+    rollover?.stage === WORK_ROLLOVER_STAGES.DISPATCH_LATCH_PERSISTED &&
+    rollover.dispatch_id === latch.dispatch_id
+  ) {
+    registryLane.work_rollover = markRolloverDispatchConfirmed(rollover, {
+      dispatchId: latch.dispatch_id,
+      at: startedAt
+    });
+    rolloverConfirmed = true;
+  }
   registryLane.task_id = latch.task_id;
   registryLane.instruction_digest =
     latch.directive_instruction_digest || latch.instruction_digest;
@@ -622,6 +699,20 @@ async function finalizeConfirmedDispatch({
       actor: "WORK",
       event_type: LANE_EVENT_TYPES.WORK_STARTED,
       phase: "STARTED"
+    });
+  }
+
+  if (rolloverConfirmed) {
+    await emitLaneEvent({
+      timestamp: startedAt,
+      lane_id: registryLane.lane_id,
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.WORK_ROLLOVER_DISPATCH_CONFIRMED,
+      task_id: latch.task_id,
+      phase: "ROLLOVER",
+      reason_code: "ROLLOVER_DISPATCH_CONFIRMED",
+      work_generation: Number(registryLane.work_generation || 0),
+      dispatch_id: latch.dispatch_id
     });
   }
 }
@@ -891,9 +982,16 @@ async function findWorkConversationForLatch(adapter, latch) {
     if (!matched) continue;
     try {
       const target = targetFromUrl(page.url());
+      const candidateUrl = `${target.origin}${target.pathname}`;
+      if (
+        latch.work_target_digest &&
+        sha256(candidateUrl) !== latch.work_target_digest
+      ) {
+        continue;
+      }
       candidates.push({
         page,
-        url: `${target.origin}${target.pathname}`
+        url: candidateUrl
       });
     } catch {
       // Ignore non-conversation pages.
@@ -949,6 +1047,27 @@ async function reconcileDispatchInflight({
 }) {
   const latch = registryLane.dispatch_inflight;
   if (!latch) return "NONE";
+
+  if (
+    latch.work_generation !== undefined &&
+    Number(latch.work_generation) !== Number(registryLane.work_generation || 0)
+  ) {
+    return "BLOCKED";
+  }
+  if (
+    latch.work_target_digest &&
+    registryLane.work_url &&
+    sha256(registryLane.work_url) !== latch.work_target_digest
+  ) {
+    return "BLOCKED";
+  }
+  if (
+    latch.rollover_generation &&
+    !latch.send_attempted_at &&
+    (latch.send_state === "PERSISTED_NOT_SENT" || latch.send_state === "NOT_CONFIRMED")
+  ) {
+    return "RETRY_READY";
+  }
 
   const found = await findWorkConversationForLatch(adapter, latch);
   if (found) {
@@ -1090,6 +1209,22 @@ async function reconcileDispatchInflight({
   }
 
   if (outcome === "NOT_CONFIRMED") {
+    if (latch.rollover_generation) {
+      latch.send_attempted_at = null;
+      latch.send_state = "NOT_CONFIRMED";
+      latch.reconcile_reloaded = false;
+      delete latch.reconcile_started_at;
+      await atomicJsonWrite(registryPath, registry);
+      await safeLog(logPath, {
+        type: "LANE_WORK_ROLLOVER_SEND_NOT_CONFIRMED",
+        laneId: lane.lane_id,
+        taskId: latch.task_id,
+        digest: latch.instruction_digest,
+        reason: "same_latch_retry_ready"
+      });
+      return "NOT_CONFIRMED";
+    }
+
     registryLane.dispatch_inflight = null;
     await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
@@ -1113,26 +1248,116 @@ async function reconcileDispatchInflight({
   return "BLOCKED";
 }
 
-async function createWorkConversation({
+async function emitWorkCapacityDecision({
+  lane,
+  registryLane,
+  taskId,
+  decision
+}) {
+  if (!decision || decision.state === WORK_CAPACITY_STATES.NOT_FULL) return;
+
+  for (const reasonCode of decision.evidence_codes || []) {
+    await emitLaneEvent({
+      lane_id: lane.lane_id,
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.WORK_FULL_EVIDENCE,
+      task_id: taskId,
+      phase: decision.state === WORK_CAPACITY_STATES.FULL_CONFIRMED
+        ? "FULL_CONFIRMED"
+        : "RECOVERY",
+      reason_code: reasonCode,
+      work_generation: Number(registryLane.work_generation || 0),
+      work_url_revision: Number(registryLane.applied_work_url_revision || 0)
+    });
+  }
+
+  await emitLaneEvent({
+    lane_id: lane.lane_id,
+    actor: "SUPERVISOR",
+    event_type: decision.state === WORK_CAPACITY_STATES.FULL_CONFIRMED
+      ? LANE_EVENT_TYPES.WORK_FULL_CONFIRMED
+      : LANE_EVENT_TYPES.WORK_FULL_AMBIGUOUS,
+    task_id: taskId,
+    phase: decision.state === WORK_CAPACITY_STATES.FULL_CONFIRMED
+      ? "FULL_CONFIRMED"
+      : "RECOVERY",
+    reason_code: decision.state === WORK_CAPACITY_STATES.FULL_CONFIRMED
+      ? (
+          decision.strong
+            ? "EXPLICIT_FULL_LIMIT_UI"
+            : "CAPACITY_MULTI_SIGNAL"
+        )
+      : "CAPACITY_AMBIGUOUS",
+    work_generation: Number(registryLane.work_generation || 0),
+    work_url_revision: Number(registryLane.applied_work_url_revision || 0)
+  });
+}
+
+async function beginFullRollover({
+  lane,
+  registryLane,
+  directive,
+  decision,
+  registry,
+  registryPath,
+  logPath
+}) {
+  const at = new Date().toISOString();
+  registryLane.work_rollover = beginWorkRollover({
+    reason: "FULL_CONFIRMED",
+    taskId: directive.task_id,
+    directiveDigest: directive.digest,
+    directiveInstructionDigest: directive.instruction_digest,
+    oldWorkGeneration: Number(registryLane.work_generation || 0),
+    oldWorkUrlRevision: Number(registryLane.applied_work_url_revision || 0),
+    oldWorkTargetDigest: registryLane.work_url
+      ? sha256(registryLane.work_url)
+      : null,
+    capacityEvidenceCodes: decision.evidence_codes,
+    at
+  });
+  await atomicJsonWrite(registryPath, registry);
+  await emitWorkCapacityDecision({
+    lane,
+    registryLane,
+    taskId: directive.task_id,
+    decision
+  });
+  await safeLog(logPath, {
+    type: "LANE_WORK_FULL_CONFIRMED",
+    laneId: lane.lane_id,
+    taskId: directive.task_id,
+    digest: directive.digest,
+    reason: decision.strong ? "strong_structured_ui" : "multi_signal"
+  });
+}
+
+function rolloverOldTargetMatches(registryLane, rollover) {
+  if (!rollover) return false;
+  if (
+    Number(registryLane.work_generation || 0) !==
+    Number(rollover.old_work_generation || 0)
+  ) {
+    return false;
+  }
+  if (rollover.reason === "NO_WORK_TARGET") {
+    return !String(registryLane.work_url || "").trim();
+  }
+  if (!registryLane.work_url || !rollover.old_work_target_digest) return false;
+  return sha256(registryLane.work_url) === rollover.old_work_target_digest;
+}
+
+async function createBlankWorkTarget({
   adapter,
   scheduler,
   lane,
   registryLane,
-  registry,
-  registryPath,
-  instruction
+  expectedGeneration
 }) {
   if (!scheduler) {
     const page = await adapter.newChatPage("https://chatgpt.com/");
-    const sent = await sendComposerInstruction(page, instruction, { dryRun: false });
-    if (!sent.executed) {
-      throw new Error(`new Work conversation send failed: ${sent.reason || "unknown"}`);
-    }
     const url = await waitForConversationUrl(page);
-    registryLane.work_url = url;
-    registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
-    await atomicJsonWrite(registryPath, registry);
-    return { page, url };
+    return { page, url, generation: expectedGeneration };
   }
 
   const created = await scheduler.createPageUnderMutation({
@@ -1140,19 +1365,16 @@ async function createWorkConversation({
     role: "WORK",
     url: "https://chatgpt.com/",
     targetRevision: Number(registryLane.applied_work_url_revision || 0),
-    generation: Number(registryLane.work_generation || 0) + 1
+    generation: expectedGeneration
   }, async (page) => {
-    const sent = await sendComposerInstruction(page, instruction, { dryRun: false });
-    if (!sent.executed) {
-      throw new Error(`new Work conversation send failed: ${sent.reason || "unknown"}`);
-    }
-    const url = await waitForConversationUrl(page);
-    registryLane.work_url = url;
-    registryLane.work_generation = Number(registryLane.work_generation || 0) + 1;
-    await atomicJsonWrite(registryPath, registry);
-    return url;
+    // TASK-RBT-006 invariant: blank target creation performs no task send.
+    return waitForConversationUrl(page);
   });
-  return { page: created.page, url: created.result };
+  return {
+    page: created.page,
+    url: created.result,
+    generation: expectedGeneration
+  };
 }
 
 async function dispatchWork({
@@ -1164,37 +1386,224 @@ async function dispatchWork({
   registry,
   registryPath,
   logPath,
-  scheduler = null
+  scheduler = null,
+  stopPath = null,
+  configPath = null
 }) {
-  if (registryLane.awaiting_work) {
+  if (registryLane.awaiting_work || registryLane.relay_inflight) {
     if (
+      registryLane.awaiting_work &&
       registryLane.task_id === directive.task_id &&
       registryLane.instruction_digest === directive.instruction_digest
     ) {
       return;
     }
-    throw new Error("Brain issued a new task while the previous Work task is still running");
+    throw new Error("Brain issued a new task while the previous Work result is unresolved");
+  }
+
+  let rollover = normalizeWorkRollover(registryLane.work_rollover);
+  if (rollover && !rolloverMatchesDirective(rollover, directive)) {
+    throw new Error("Work rollover directive identity mismatch; fail-closed");
   }
 
   if (registryLane.dispatch_inflight) {
-    const outcome = await reconcileDispatchInflight({
-      adapter,
-      lane,
-      registryLane,
-      registry,
-      registryPath,
-      logPath,
-      directive,
-      scheduler
+    const existing = registryLane.dispatch_inflight;
+    const reusableRolloverLatch = Boolean(
+      existing.rollover_generation &&
+      !existing.send_attempted_at &&
+      (existing.send_state === "PERSISTED_NOT_SENT" || existing.send_state === "NOT_CONFIRMED")
+    );
+    if (!reusableRolloverLatch) {
+      const outcome = await reconcileDispatchInflight({
+        adapter,
+        lane,
+        registryLane,
+        registry,
+        registryPath,
+        logPath,
+        directive,
+        scheduler
+      });
+      if (
+        outcome === "CONFIRMED" ||
+        outcome === "PENDING" ||
+        outcome === "BLOCKED"
+      ) {
+        return;
+      }
+    }
+  }
+
+  const assignedAt = new Date().toISOString();
+  const timing = ensureLaneTaskTiming(registryLane, directive.task_id);
+  const assigned = beginTaskAssignment(timing, {
+    taskId: directive.task_id,
+    directiveDigest: directive.digest,
+    at: assignedAt
+  });
+
+  const emitAssigned = async () => {
+    if (!assigned.changed) return;
+    await emitLaneEvent({
+      timestamp: assignedAt,
+      lane_id: lane.lane_id,
+      actor: "BRAIN",
+      event_type: LANE_EVENT_TYPES.BRAIN_TASK_ASSIGNED,
+      task_id: directive.task_id,
+      phase: "ASSIGNED",
+      work_generation: Number(registryLane.work_generation || 0)
     });
-    if (outcome === "CONFIRMED" || outcome === "PENDING" || outcome === "BLOCKED") return;
+  };
+
+  rollover = normalizeWorkRollover(registryLane.work_rollover);
+
+  if (rollover?.stage === WORK_ROLLOVER_STAGES.FULL_CONFIRMED) {
+    registryLane.work_rollover = markRolloverIntentPersisted(rollover, {
+      at: new Date().toISOString()
+    });
+    await atomicJsonWrite(registryPath, registry);
+    await emitAssigned();
+    await emitLaneEvent({
+      lane_id: lane.lane_id,
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.WORK_ROLLOVER_INTENT,
+      task_id: directive.task_id,
+      phase: "ROLLOVER",
+      reason_code: "ROLLOVER_INTENT_PERSISTED",
+      work_generation: Number(registryLane.work_generation || 0),
+      work_url_revision: Number(registryLane.applied_work_url_revision || 0)
+    });
+    return;
+  }
+
+  rollover = normalizeWorkRollover(registryLane.work_rollover);
+  if (
+    rollover &&
+    (
+      rollover.stage === WORK_ROLLOVER_STAGES.INTENT_PERSISTED ||
+      rollover.stage === WORK_ROLLOVER_STAGES.BLANK_TARGET_CREATING
+    )
+  ) {
+    if (!rolloverOldTargetMatches(registryLane, rollover)) {
+      throw new Error("Work rollover old target/generation identity mismatch");
+    }
+
+    if (rollover.stage === WORK_ROLLOVER_STAGES.INTENT_PERSISTED) {
+      registryLane.work_rollover = markBlankTargetCreating(rollover, {
+        at: new Date().toISOString()
+      });
+      await atomicJsonWrite(registryPath, registry);
+      await emitAssigned();
+      rollover = normalizeWorkRollover(registryLane.work_rollover);
+    }
+
+    if (!execute) return;
+    if (!await isLaneMutationAllowed({
+      stopPath,
+      configPath,
+      laneId: lane.lane_id
+    })) {
+      return;
+    }
+
+    const expectedGeneration = Number(rollover.old_work_generation || 0) + 1;
+    let created = null;
+    try {
+      created = await createBlankWorkTarget({
+        adapter,
+        scheduler,
+        lane,
+        registryLane,
+        expectedGeneration
+      });
+    } catch (error) {
+      await safeLog(logPath, {
+        type: "LANE_WORK_ROLLOVER_BLANK_CREATE_ERROR",
+        laneId: lane.lane_id,
+        taskId: directive.task_id,
+        digest: directive.digest,
+        errorName: error?.name || "Error",
+        reason: String(error?.code || error?.message || error).slice(0, 120)
+      });
+      return;
+    }
+
+    const canonicalUrl = normalizeChatGptConversationUrl(created.url);
+    registryLane.work_url = canonicalUrl;
+    registryLane.work_generation = expectedGeneration;
+    registryLane.work_watchdog = normalizeWorkWatchdog(null);
+    registryLane.work_rollover = markRolloverTargetPersisted(
+      registryLane.work_rollover,
+      {
+        newWorkGeneration: expectedGeneration,
+        newWorkTargetDigest: sha256(canonicalUrl),
+        at: new Date().toISOString()
+      }
+    );
+    await atomicJsonWrite(registryPath, registry);
+    await emitLaneEvent({
+      lane_id: lane.lane_id,
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.WORK_ROLLOVER_TARGET_PERSISTED,
+      task_id: directive.task_id,
+      phase: "ROLLOVER",
+      reason_code: "ROLLOVER_TARGET_PERSISTED",
+      work_generation: expectedGeneration,
+      work_url_revision: Number(registryLane.applied_work_url_revision || 0)
+    });
+    await safeLog(logPath, {
+      type: "LANE_WORK_ROLLOVER_TARGET_PERSISTED",
+      laneId: lane.lane_id,
+      taskId: directive.task_id,
+      digest: sha256(canonicalUrl),
+      reason: `generation=${expectedGeneration}`
+    });
+    return;
+  }
+
+  rollover = normalizeWorkRollover(registryLane.work_rollover);
+  if (rollover?.stage === WORK_ROLLOVER_STAGES.DISPATCH_CONFIRMED) {
+    return;
   }
 
   let page = null;
-  let createNew = !registryLane.work_url;
-  let workBody = directive.instruction;
+  if (!rollover && !registryLane.work_url) {
+    registryLane.work_rollover = beginWorkRollover({
+      reason: "NO_WORK_TARGET",
+      taskId: directive.task_id,
+      directiveDigest: directive.digest,
+      directiveInstructionDigest: directive.instruction_digest,
+      oldWorkGeneration: Number(registryLane.work_generation || 0),
+      oldWorkUrlRevision: Number(registryLane.applied_work_url_revision || 0),
+      at: new Date().toISOString()
+    });
+    await atomicJsonWrite(registryPath, registry);
+    await emitAssigned();
+    await emitLaneEvent({
+      lane_id: lane.lane_id,
+      actor: "SUPERVISOR",
+      event_type: LANE_EVENT_TYPES.WORK_ROLLOVER_INTENT,
+      task_id: directive.task_id,
+      phase: "ROLLOVER",
+      reason_code: "ROLLOVER_INTENT_PERSISTED",
+      work_generation: Number(registryLane.work_generation || 0),
+      work_url_revision: Number(registryLane.applied_work_url_revision || 0)
+    });
+    return;
+  }
 
-  if (registryLane.work_url) {
+  rollover = normalizeWorkRollover(registryLane.work_rollover);
+
+  if (!await isLaneMutationAllowed({
+    stopPath,
+    configPath,
+    laneId: lane.lane_id
+  })) {
+    return;
+  }
+
+  if (!rollover) {
+    const targetBeforeOpen = targetFromUrl(registryLane.work_url);
     page = await openExactConversation(adapter, registryLane.work_url, {
       brain: false,
       scheduler,
@@ -1202,25 +1611,81 @@ async function dispatchWork({
       targetRevision: Number(registryLane.applied_work_url_revision || 0),
       generation: Number(registryLane.work_generation || 0)
     });
-    const probe = await assertConversationSafe(adapter, page, {
+    if (!pageMatchesTarget(page.url(), targetBeforeOpen)) {
+      throw new Error("Work target changed during capacity probe");
+    }
+
+    const capacity = await probeStableWorkCapacity({
+      adapter,
+      page,
+      expectedUrl: registryLane.work_url
+    });
+
+    if (capacity.decision.state === WORK_CAPACITY_STATES.FULL_CONFIRMED) {
+      await beginFullRollover({
+        lane,
+        registryLane,
+        directive,
+        decision: capacity.decision,
+        registry,
+        registryPath,
+        logPath
+      });
+      await emitAssigned();
+      return;
+    }
+
+    if (capacity.decision.state === WORK_CAPACITY_STATES.AMBIGUOUS) {
+      await emitWorkCapacityDecision({
+        lane,
+        registryLane,
+        taskId: directive.task_id,
+        decision: capacity.decision
+      });
+    }
+
+    if (
+      capacity.first.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE ||
+      capacity.second.classification.observation !== OBSERVATIONS.RESPONSE_COMPLETE
+    ) {
+      throw new Error("Work conversation is not safely idle for dispatch");
+    }
+  } else {
+    if (
+      rollover.stage !== WORK_ROLLOVER_STAGES.TARGET_PERSISTED &&
+      rollover.stage !== WORK_ROLLOVER_STAGES.DISPATCH_LATCH_PERSISTED
+    ) {
+      throw new Error(`unsupported Work rollover stage: ${rollover.stage}`);
+    }
+    if (
+      Number(registryLane.work_generation || 0) !==
+        Number(rollover.new_work_generation || 0) ||
+      !registryLane.work_url ||
+      sha256(registryLane.work_url) !== rollover.new_work_target_digest
+    ) {
+      throw new Error("persisted rollover target identity mismatch");
+    }
+
+    page = await openExactConversation(adapter, registryLane.work_url, {
+      brain: false,
+      scheduler,
+      laneId: lane.lane_id,
+      targetRevision: Number(registryLane.applied_work_url_revision || 0),
+      generation: Number(registryLane.work_generation || 0)
+    });
+    await assertConversationSafe(adapter, page, {
       brain: false,
       allowFull: true
     });
+  }
 
-    if (probe.snapshot.conversationFull) {
-      createNew = true;
-      workBody = buildWorkRolloverInstruction({
+  const workBody = rollover?.reason === "FULL_CONFIRMED"
+    ? buildWorkRolloverInstruction({
         projectName: lane.project_name,
         taskId: directive.task_id,
         instruction: directive.instruction
-      });
-    } else if (
-      probe.classification.observation === OBSERVATIONS.ASSISTANT_RUNNING ||
-      probe.classification.observation === OBSERVATIONS.USER_PENDING
-    ) {
-      throw new Error("Work conversation is not idle");
-    }
-  }
+      })
+    : directive.instruction;
 
   const dispatchId = sha256([
     lane.lane_id,
@@ -1233,99 +1698,233 @@ async function dispatchWork({
     instruction: workBody
   });
   const instructionDigest = sha256(outgoingInstruction);
-  const baseline = page
-    ? await captureSendBaseline(adapter, page)
-    : { pre_user_count: 0, pre_max_turn_ordinal: 0 };
-  const assignedAt = new Date().toISOString();
-  const timing = ensureLaneTaskTiming(registryLane, directive.task_id);
-  const assigned = beginTaskAssignment(timing, {
-    taskId: directive.task_id,
-    directiveDigest: directive.digest,
-    at: assignedAt
-  });
+  const targetDigest = sha256(registryLane.work_url);
 
-  registryLane.dispatch_inflight = {
-    task_id: directive.task_id,
-    dispatch_id: dispatchId,
-    instruction_digest: instructionDigest,
-    directive_instruction_digest: directive.instruction_digest,
-    directive_digest: directive.digest,
-    create_new: createNew,
-    ...baseline
-  };
-  await atomicJsonWrite(registryPath, registry);
-
-  if (assigned.changed) {
-    await emitLaneEvent({
-      timestamp: assignedAt,
-      lane_id: lane.lane_id,
-      actor: "BRAIN",
-      event_type: LANE_EVENT_TYPES.BRAIN_TASK_ASSIGNED,
+  let latch = registryLane.dispatch_inflight;
+  if (latch) {
+    if (
+      latch.dispatch_id !== dispatchId ||
+      latch.instruction_digest !== instructionDigest ||
+      Number(latch.work_generation || 0) !==
+        Number(registryLane.work_generation || 0) ||
+      latch.work_target_digest !== targetDigest
+    ) {
+      throw new Error("persisted Work dispatch latch identity mismatch");
+    }
+  } else {
+    const baseline = await captureSendBaseline(adapter, page);
+    latch = {
       task_id: directive.task_id,
-      phase: "ASSIGNED",
-      work_generation: Number(registryLane.work_generation || 0)
-    });
+      dispatch_id: dispatchId,
+      instruction_digest: instructionDigest,
+      directive_instruction_digest: directive.instruction_digest,
+      directive_digest: directive.digest,
+      create_new: Boolean(rollover),
+      work_generation: Number(registryLane.work_generation || 0),
+      work_url_revision: Number(registryLane.applied_work_url_revision || 0),
+      work_target_digest: targetDigest,
+      rollover_generation: rollover
+        ? Number(registryLane.work_generation || 0)
+        : null,
+      send_state: "PERSISTED_NOT_SENT",
+      send_attempted_at: null,
+      ...baseline
+    };
+    registryLane.dispatch_inflight = latch;
+
+    if (rollover?.stage === WORK_ROLLOVER_STAGES.TARGET_PERSISTED) {
+      registryLane.work_rollover = markRolloverDispatchLatchPersisted(
+        rollover,
+        {
+          dispatchId,
+          instructionDigest,
+          at: new Date().toISOString()
+        }
+      );
+    }
+    await atomicJsonWrite(registryPath, registry);
+    await emitAssigned();
+
+    if (rollover) {
+      await emitLaneEvent({
+        lane_id: lane.lane_id,
+        actor: "SUPERVISOR",
+        event_type: LANE_EVENT_TYPES.WORK_ROLLOVER_INTENT,
+        task_id: directive.task_id,
+        phase: "ROLLOVER",
+        reason_code: "ROLLOVER_DISPATCH_LATCH_PERSISTED",
+        work_generation: Number(registryLane.work_generation || 0),
+        dispatch_id: dispatchId
+      });
+    }
   }
 
   if (!execute) return;
+  if (!await isLaneMutationAllowed({
+    stopPath,
+    configPath,
+    laneId: lane.lane_id
+  })) {
+    return;
+  }
 
-  let workUrl = registryLane.work_url;
+  if (await hasUserTurnMarker(page, workDispatchMarker(dispatchId))) {
+    await finalizeConfirmedDispatch({
+      foundUrl: registryLane.work_url,
+      registryLane,
+      latch,
+      registry,
+      registryPath
+    });
+    return;
+  }
+
+  latch.send_attempted_at = new Date().toISOString();
+  latch.send_state = "SEND_INTENT_PERSISTED";
+  await atomicJsonWrite(registryPath, registry);
+
+  let sent = null;
   try {
-    if (createNew) {
-      const created = await createWorkConversation({
-        adapter,
-        scheduler,
-        lane,
+    sent = await runBrowserMutation(
+      scheduler,
+      {
+        laneId: lane.lane_id,
+        role: "WORK",
+        page,
+        reason: rollover ? "WORK_ROLLOVER_DISPATCH_SEND" : "WORK_DISPATCH_SEND"
+      },
+      () => sendComposerInstruction(
+        page,
+        outgoingInstruction,
+        { dryRun: false }
+      )
+    );
+  } catch (error) {
+    if (await hasUserTurnMarker(page, workDispatchMarker(dispatchId))) {
+      await finalizeConfirmedDispatch({
+        foundUrl: registryLane.work_url,
         registryLane,
+        latch,
         registry,
-        registryPath,
-        instruction: outgoingInstruction
+        registryPath
       });
-      page = created.page;
-      workUrl = created.url;
-    } else {
-      const sent = await runBrowserMutation(
-        scheduler,
-        { laneId: lane.lane_id, role: "WORK", page, reason: "WORK_DISPATCH_SEND" },
-        () => sendComposerInstruction(
-          page,
-          outgoingInstruction,
-          { dryRun: false }
-        )
-      );
-      if (!sent.executed) {
-        await safeLog(logPath, {
-          type: "LANE_WORK_SEND_NOT_EXECUTED",
-          laneId: lane.lane_id,
-          taskId: directive.task_id,
-          digest: instructionDigest,
-          reason: sent.reason || "unknown"
+      return;
+    }
+
+    const rejectionProbe = await adapter.probePage(page).catch(() => null);
+    const rejectionClass = classifyComposerSendRejection(
+      rejectionProbe?.snapshot || {}
+    );
+    latch.last_send_rejection = rejectionClass;
+
+    if (
+      !rollover &&
+      rejectionClass === SEND_REJECTION_CLASSES.CAPACITY_REJECTED
+    ) {
+      const capacity = await probeStableWorkCapacity({
+        adapter,
+        page,
+        expectedUrl: registryLane.work_url,
+        sendRejectionCapacity: true
+      });
+      if (capacity.decision.state === WORK_CAPACITY_STATES.FULL_CONFIRMED) {
+        registryLane.dispatch_inflight = null;
+        await beginFullRollover({
+          lane,
+          registryLane,
+          directive,
+          decision: capacity.decision,
+          registry,
+          registryPath,
+          logPath
         });
         return;
       }
     }
-  } catch (error) {
+
+    await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
       type: "LANE_WORK_SEND_ATTEMPT_ERROR",
       laneId: lane.lane_id,
       taskId: directive.task_id,
       digest: instructionDigest,
       errorName: error?.name || "Error",
-      reason: String(error?.message || error).slice(0, 220)
+      reason: rejectionClass
     });
     return;
   }
+
+  if (!sent.executed) {
+    const rejectionProbe = await adapter.probePage(page).catch(() => null);
+    const rejectionClass = classifyComposerSendRejection(
+      rejectionProbe?.snapshot || {}
+    );
+    latch.last_send_rejection = rejectionClass;
+
+    if (rejectionClass === SEND_REJECTION_CLASSES.CAPACITY_REJECTED) {
+      const capacity = await probeStableWorkCapacity({
+        adapter,
+        page,
+        expectedUrl: registryLane.work_url,
+        sendRejectionCapacity: true
+      });
+
+      if (
+        !rollover &&
+        capacity.decision.state === WORK_CAPACITY_STATES.FULL_CONFIRMED
+      ) {
+        registryLane.dispatch_inflight = null;
+        await beginFullRollover({
+          lane,
+          registryLane,
+          directive,
+          decision: capacity.decision,
+          registry,
+          registryPath,
+          logPath
+        });
+        return;
+      }
+
+      latch.reconcile_blocked = true;
+      latch.send_state = "CAPACITY_AMBIGUOUS";
+      latch.send_attempted_at = null;
+      await atomicJsonWrite(registryPath, registry);
+      await emitWorkCapacityDecision({
+        lane,
+        registryLane,
+        taskId: directive.task_id,
+        decision: capacity.decision
+      });
+      return;
+    }
+
+    if (rejectionClass === SEND_REJECTION_CLASSES.AUTH_SECURITY) {
+      latch.reconcile_blocked = true;
+      latch.send_state = "SECURITY_BLOCKED";
+    } else {
+      latch.send_attempted_at = null;
+      latch.send_state = "NOT_CONFIRMED";
+    }
+    await atomicJsonWrite(registryPath, registry);
+    await safeLog(logPath, {
+      type: "LANE_WORK_SEND_NOT_EXECUTED",
+      laneId: lane.lane_id,
+      taskId: directive.task_id,
+      digest: instructionDigest,
+      reason: rejectionClass
+    });
+    return;
+  }
+
+  latch.send_state = "SEND_CLICKED";
+  await atomicJsonWrite(registryPath, registry);
 
   const confirmed = await waitForUserTurnMarker(
     page,
     workDispatchMarker(dispatchId)
   );
   if (!confirmed) {
-    // Persist a discovered conversation URL even while the send itself still
-    // needs reconciliation. This lets the next loop hard-reload the exact
-    // Work target and prove whether the instruction reached the server.
-    if (workUrl) registryLane.work_url = workUrl;
-    await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
       type: "LANE_WORK_SEND_PENDING_CONFIRMATION",
       laneId: lane.lane_id,
@@ -1336,14 +1935,16 @@ async function dispatchWork({
   }
 
   await finalizeConfirmedDispatch({
-    foundUrl: workUrl,
+    foundUrl: registryLane.work_url,
     registryLane,
-    latch: registryLane.dispatch_inflight,
+    latch,
     registry,
     registryPath
   });
   await safeLog(logPath, {
-    type: createNew ? "LANE_WORK_CREATED" : "LANE_WORK_DISPATCHED",
+    type: rollover
+      ? "LANE_WORK_ROLLOVER_DISPATCHED"
+      : "LANE_WORK_DISPATCHED",
     laneId: lane.lane_id,
     taskId: directive.task_id,
     digest: instructionDigest
@@ -1777,6 +2378,7 @@ async function applyOwnerBrainTarget({
     registryLane.brain_request_sent = false;
     registryLane.brain_request_inflight = null;
     registryLane.last_brain_directive_digest = null;
+    registryLane.work_rollover = null;
 
     // A blocked Work-dispatch latch belongs to the old Brain directive. An
     // explicit Owner Brain change is the authority to abandon that blocked
@@ -1860,6 +2462,7 @@ async function applyOwnerWorkStateReset({
   registryLane.awaiting_work = false;
   registryLane.task_timing = normalizeTaskTiming(null);
   registryLane.work_watchdog = normalizeWorkWatchdog(null);
+  registryLane.work_rollover = null;
   registryLane.pending_work_url = "";
   registryLane.pending_work_url_revision = 0;
   registryLane.pending_work_saved_at = null;
@@ -2108,6 +2711,15 @@ async function applyOwnerWorkTarget({
 
   if (outcome.status === "NOOP") return false;
 
+  if (
+    outcome.status !== "PENDING" &&
+    !registryLane.awaiting_work &&
+    !registryLane.dispatch_inflight &&
+    !registryLane.relay_inflight
+  ) {
+    registryLane.work_rollover = null;
+  }
+
   await atomicJsonWrite(registryPath, registry);
   await safeLog(logPath, {
     type: "LANE_OWNER_WORK_TARGET_REVISION",
@@ -2163,6 +2775,14 @@ async function applyPendingWorkTargetAtSafeBoundary({
   }
 
   // NOOP may clear a stale pending revision; persist that normalization.
+  if (
+    outcome.status === "APPLIED" &&
+    !registryLane.awaiting_work &&
+    !registryLane.dispatch_inflight &&
+    !registryLane.relay_inflight
+  ) {
+    registryLane.work_rollover = null;
+  }
   await atomicJsonWrite(registryPath, registry);
 
   if (outcome.status === "APPLIED") {
@@ -2195,7 +2815,7 @@ async function isOwnerStopRequested(stopPath) {
   }
 }
 
-async function isWatchdogRecoveryAllowed({
+async function isLaneMutationAllowed({
   stopPath,
   configPath,
   laneId
@@ -2207,6 +2827,10 @@ async function isWatchdogRecoveryAllowed({
   );
   const lane = latest.lanes.find((item) => item.lane_id === laneId);
   return Boolean(lane?.enabled);
+}
+
+async function isWatchdogRecoveryAllowed(args) {
+  return isLaneMutationAllowed(args);
 }
 
 function watchdogIdentity(registryLane) {
@@ -2489,6 +3113,21 @@ async function processLaneTurn({
     return laneStatus(lane, registryLane, "STOPPED", "Luồng đang dừng.");
   }
 
+  const completedRollover = normalizeWorkRollover(registryLane.work_rollover);
+  if (
+    completedRollover?.stage === WORK_ROLLOVER_STAGES.DISPATCH_CONFIRMED &&
+    !registryLane.dispatch_inflight
+  ) {
+    registryLane.work_rollover = null;
+    await atomicJsonWrite(registryPath, registry);
+    return laneStatus(
+      lane,
+      registryLane,
+      registryLane.awaiting_work ? "WORKING" : "READY",
+      "Work rollover đã qua durable dispatch confirmation boundary; recovery intent được finalize."
+    );
+  }
+
   if (await applyOwnerBrainTarget({
     lane,
     registryLane,
@@ -2716,12 +3355,17 @@ async function processLaneTurn({
         "Dispatch marker đã xác nhận; Work chạy độc lập, lane đã yield scheduler."
       );
     }
-    return laneStatus(
-      lane,
-      registryLane,
-      "STARTING",
-      "Lần gửi trước được chứng minh chưa persist; retry chỉ được xét ở turn kế tiếp."
-    );
+    if (dispatchOutcome !== "RETRY_READY") {
+      return laneStatus(
+        lane,
+        registryLane,
+        "STARTING",
+        "Lần gửi trước được chứng minh chưa persist; retry chỉ được xét ở turn kế tiếp."
+      );
+    }
+    // Rollover latch is durably persisted and marker absence was proven (or
+    // no send was attempted yet). Continue this bounded turn only to recover
+    // the exact Brain directive and perform at most one send mutation.
   }
 
   if (registryLane.awaiting_work) {
@@ -3202,7 +3846,9 @@ async function processLaneTurn({
     registry,
     registryPath,
     logPath,
-    scheduler
+    scheduler,
+    stopPath,
+    configPath
   });
 
   return laneStatus(
@@ -3239,6 +3885,10 @@ if (args.workWatchdogFixture) {
 }
 if (args.relayRearmFixture) {
   await import("./relay-rearm-acceptance-cli.mjs");
+  process.exit(0);
+}
+if (args.workFullFixture) {
+  await import("./work-full-acceptance-cli.mjs");
   process.exit(0);
 }
 if (!Number.isFinite(args.pollMs) || args.pollMs < 1000) {

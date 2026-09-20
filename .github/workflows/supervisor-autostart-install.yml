@@ -568,6 +568,50 @@ jobs:
           Write-Host "RELAY_REARM_PRODUCTION_TRUTH_UNCHANGED=True"
           Write-Host "RELAY_REARM_RUNTIME_PID_UNCHANGED=True"
 
+          $workFullOutput = & node $runtimeCli --work-full-fixture
+          if ($LASTEXITCODE -ne 0) { throw "Installed Work-full rollover fixture acceptance failed" }
+          $workFullOutput | ForEach-Object { Write-Host $_ }
+
+          foreach ($marker in @(
+            "WORK_FULL_FIXTURE_SINGLE_REGEX_NO_ROLLOVER=True",
+            "WORK_FULL_FIXTURE_MULTI_SIGNAL_CONFIRMED=True",
+            "WORK_FULL_FIXTURE_RUNNING_RESPONSE_GUARDED=True",
+            "WORK_FULL_FIXTURE_BLANK_TARGET_BEFORE_SEND=True",
+            "WORK_FULL_FIXTURE_TARGET_PERSISTED_BEFORE_DISPATCH=True",
+            "WORK_FULL_FIXTURE_GENERATION_ONCE=True",
+            "WORK_FULL_FIXTURE_CRASH_RESUME=True",
+            "WORK_FULL_FIXTURE_DISPATCH_EXACT_ONCE=True",
+            "WORK_FULL_FIXTURE_PENDING_OWNER_TARGET_PRECEDENCE=True",
+            "WORK_FULL_FIXTURE_NO_BRAIN_CHANGE=True"
+          )) {
+            if ($workFullOutput -notcontains $marker) {
+              throw "Missing Work-full rollover fixture marker: $marker"
+            }
+          }
+
+          $targetAfterWorkFull = Get-TargetFingerprint $configFile
+          $registryAfterWorkFull = Get-RegistryTruthFingerprint $registryFile
+          if ($targetAfterWorkFull -ne $targetAfterRelayRearm) {
+            throw "Production Brain/Work target fingerprint changed during Work-full fixture"
+          }
+          if ($registryAfterWorkFull -ne $registryAfterRelayRearm) {
+            throw "Production task/latch/pending Work truth changed during Work-full fixture"
+          }
+
+          $truthAfterWorkFull = Get-LifecycleProcessTruth -Root $root
+          $wrapperAfterWorkFull = if ($truthAfterWorkFull.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+          if ($wrapperAfterWorkFull -ne $wrapperAfterRelayRearm) {
+            throw "Work-full fixture restarted or stopped the Supervisor wrapper"
+          }
+
+          Write-Host "WORK_FULL_RUNTIME_ARTIFACT_FIXTURE=True"
+          Write-Host "WORK_FULL_PRODUCTION_CONFIG_UNCHANGED=True"
+          Write-Host "WORK_FULL_PRODUCTION_TARGETS_UNCHANGED=True"
+          Write-Host "WORK_FULL_PRODUCTION_TRUTH_UNCHANGED=True"
+          Write-Host "WORK_FULL_RUNTIME_PID_UNCHANGED=True"
+
       - name: Verify event timing foundation privacy
         shell: powershell
         run: |

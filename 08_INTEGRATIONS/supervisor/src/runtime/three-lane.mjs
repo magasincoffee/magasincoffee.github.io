@@ -6,6 +6,7 @@ import {
   defaultWorkWatchdog,
   normalizeWorkWatchdog
 } from "./work-watchdog.mjs";
+import { normalizeWorkRollover } from "./work-rollover.mjs";
 
 export const THREE_LANE_MODE = "THREE_LANE_V1";
 export const LANE_DIRECTIVE_START = "<<<MAGASIN_LANE_DIRECTIVE_V1>>>";
@@ -167,6 +168,7 @@ export function defaultLaneRegistry() {
       awaiting_work: false,
       task_timing: defaultTaskTiming(),
       work_watchdog: defaultWorkWatchdog(),
+      work_rollover: null,
       applied_work_url_revision: 0
     }]))
   };
@@ -212,6 +214,7 @@ export function normalizeLaneRegistry(value = {}) {
       awaiting_work: Boolean(lane.awaiting_work),
       task_timing: normalizeTaskTiming(lane.task_timing),
       work_watchdog: normalizeWorkWatchdog(lane.work_watchdog),
+      work_rollover: normalizeWorkRollover(lane.work_rollover),
       applied_work_url_revision: Number(lane.applied_work_url_revision || 0)
     };
   }

@@ -14,9 +14,9 @@ function functionSlice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("RBT-004 scheduler remains canonical after v55 relay recovery bump", async () => {
+test("RBT-004 scheduler remains canonical after v56 Work-full rollover bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.55"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.56"/);
   assert.match(runtime, /from "\.\/browser-scheduler\.mjs"/);
   assert.equal((runtime.match(/new BrowserScheduler\(/g) || []).length, 1);
   assert.match(runtime, /pageBudget: args\.pageBudget/);
@@ -65,7 +65,9 @@ test("all destructive sends and reconcile reloads are guarded by global mutation
   assert.match(runtime, /reason: "BRAIN_REQUEST_SEND"/);
   assert.match(runtime, /reason: "BRAIN_RECONCILE_RELOAD"/);
   assert.match(runtime, /reason: "WORK_RECONCILE_RELOAD"/);
-  assert.match(runtime, /reason: "WORK_DISPATCH_SEND"/);
+  assert.match(runtime, /"WORK_DISPATCH_SEND"/);
+  assert.match(runtime, /"WORK_ROLLOVER_DISPATCH_SEND"/);
+  assert.match(runtime, /runBrowserMutation\([\s\S]*?WORK_ROLLOVER_DISPATCH_SEND[\s\S]*?sendComposerInstruction/);
   assert.match(runtime, /reason: "RESULT_RELAY_SEND"/);
   assert.match(runtime, /scheduler\.createPageUnderMutation/);
 });
