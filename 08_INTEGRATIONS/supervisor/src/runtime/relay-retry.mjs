@@ -106,7 +106,7 @@ export function scheduleRelayRetry(
   }
 
   const delayIndex = Math.min(
-    Math.max(0, attempts - 1), 
+    Math.max(0, attempts - 1),
     RETRY_DELAYS_MS.length - 1
   );
   latch.retry_not_before = new Date(now + RETRY_DELAYS_MS[delayIndex]).toISOString();
