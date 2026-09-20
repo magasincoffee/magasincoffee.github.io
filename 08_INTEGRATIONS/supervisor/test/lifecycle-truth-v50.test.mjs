@@ -150,7 +150,7 @@ test("production lifecycle acceptance installs its checked-out runtime before A-
   assert.ok(installIndex >= 0);
   assert.ok(acceptanceIndex > installIndex);
   assert.match(workflow.slice(installIndex, acceptanceIndex), /install-supervisor\.ps1/);
-  assert.match(workflow.slice(installIndex, acceptanceIndex), /2026-09-19\.50/);
+  assert.match(workflow.slice(installIndex, acceptanceIndex), /2026-09-19\.51/);
   assert.match(workflow.slice(installIndex, acceptanceIndex), /LIFECYCLE_ACCEPTANCE_INSTALL_READY=True/);
 });
 
