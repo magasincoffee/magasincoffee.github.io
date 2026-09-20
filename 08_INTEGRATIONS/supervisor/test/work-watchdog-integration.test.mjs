@@ -70,10 +70,12 @@ test("watchdog re-verifies exact active task, target, applied revision and gener
 
 test("Owner STOP and latest lane disable are re-read immediately before watchdog mutation", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  const guard = slice(runtime, "async function isWatchdogRecoveryAllowed", "function watchdogIdentity");
-  assert.match(guard, /isOwnerStopRequested\(stopPath\)/);
-  assert.match(guard, /readJson\(configPath, defaultLaneConfig\(\)\)/);
-  assert.match(guard, /Boolean\(lane\?\.enabled\)/);
+  const sharedGuard = slice(runtime, "async function isLaneMutationAllowed", "async function isWatchdogRecoveryAllowed");
+  const watchdogGuard = slice(runtime, "async function isWatchdogRecoveryAllowed", "function watchdogIdentity");
+  assert.match(sharedGuard, /isOwnerStopRequested\(stopPath\)/);
+  assert.match(sharedGuard, /readJson\(configPath, defaultLaneConfig\(\)\)/);
+  assert.match(sharedGuard, /Boolean\(lane\?\.enabled\)/);
+  assert.match(watchdogGuard, /return isLaneMutationAllowed\(args\)/);
 
   const executor = slice(runtime, "async function executeWatchdogReload", "async function processLaneTurn");
   assert.ok((executor.match(/isWatchdogRecoveryAllowed/g) || []).length >= 2);
