@@ -235,6 +235,8 @@ jobs:
           $lifecycle = Join-Path $runtime "windows\lifecycle-truth.ps1"
 
           if (-not (Test-Path $runtimeCli)) { throw "Installed Three-Lane runtime CLI is missing" }
+          if (-not (Test-Path $panelScript)) { throw "Installed Control Panel is missing" }
+          if (-not (Test-Path $panelFixture)) { throw "Installed Control Panel observability fixture is missing" }
           if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
           . $lifecycle
 
@@ -407,6 +409,8 @@ jobs:
           $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
           $runtime = Join-Path $root "runtime"
           $runtimeCli = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
+          $panelScript = Join-Path $runtime "windows\control-panel.ps1"
+          $panelFixture = Join-Path $runtime "windows\control-panel-observability-fixture.ps1"
           $configFile = Join-Path $root "lanes.json"
           $statusFile = Join-Path $root "lane-status.json"
           $registryFile = Join-Path $root "lane-registry.json"
