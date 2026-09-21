@@ -1,0 +1,39 @@
+name: New PC Runner Inventory
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-runner-inventory.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 10
+    steps:
+      - name: Inventory repository runners using Owner GitHub CLI auth
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $gh = "C:\Program Files\GitHub CLI\gh.exe"
+          if (-not (Test-Path $gh)) { throw "GitHub CLI missing." }
+
+          $json = & $gh api "repos/magasincoffee/magasincoffee.github.io/actions/runners"
+          if ($LASTEXITCODE -ne 0) { throw "Runner inventory API failed." }
+
+          $data = $json | ConvertFrom-Json
+          foreach ($r in @($data.runners)) {
+            $labels = @($r.labels | ForEach-Object { [string]$_.name }) -join ","
+            Write-Host ("RUNNER_NAME=" + $r.name)
+            Write-Host ("RUNNER_STATUS=" + $r.status)
+            Write-Host ("RUNNER_BUSY=" + $r.busy)
+            Write-Host ("RUNNER_LABELS=" + $labels)
+            Write-Host "---"
+          }
+          Write-Host ("RUNNER_COUNT=" + @($data.runners).Count)
+          Write-Host "RUNNER_INVENTORY_COMPLETE=True"
