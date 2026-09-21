@@ -45,6 +45,15 @@ jobs:
       - name: Verify People Shift acceptance contract
         run: node 09_QA/business-os/people-shift-gap-plan.test.mjs
 
+      - name: Run TASK-091 Workforce canonical contract regression
+        run: node --test 09_QA/business-os/workforce-operations-v1.test.mjs
+
+      - name: Run Schedule-first compatibility regression
+        run: |
+          node --test \
+            09_QA/business-os/five-step-schedule-first.test.mjs \
+            09_QA/business-os/schedule-first-flow.test.mjs
+
       - name: Run People Shift regression tests
         run: node --test 09_QA/people-shift/*.test.mjs
 

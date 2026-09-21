@@ -6,13 +6,16 @@
 <script>
 (() => {
   const calls=[];
-  const toDate=s=>new Date(s+"T00:00:00Z");
-  const addDays=(s,n)=>{const d=toDate(s);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+  const toDate=s=>new Date(String(s).slice(0,10)+"T00:00:00Z");
+  const iso=d=>d.toISOString().slice(0,10);
+  const addDays=(s,n)=>{const d=toDate(s);d.setUTCDate(d.getUTCDate()+Number(n||0));return iso(d)};
+  const monday=(s)=>{const d=toDate(s);const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()-(day-1));return iso(d)};
   const weekDays=s=>Array.from({length:7},(_,i)=>addDays(s,i));
   const rows=[];
   let seq=0;
-  const stores=[{id:"store-a",code:"CN1",name:"Chi nhánh QA"}];
-  window.__EMPLOYEE_AVAILABILITY_QA={calls,rows,stores};
+  const stores=[{id:"store-a",code:"CN1",name:"Chi nhánh QA",status:"ACTIVE"}];
+  const qa={calls,rows,stores,today:"2026-09-21",frameLoads:0};
+  window.__EMPLOYEE_AVAILABILITY_QA=qa;
   window.MAGASIN_CORE={
     security:{escapeHtml:v=>String(v??"")},
     time:{
@@ -20,7 +23,8 @@
       minutes:v=>{const s=String(v||"00:00").slice(0,5);return Number(s.slice(0,2))*60+Number(s.slice(3,5))}
     },
     date:{
-      monday:()=> "2026-09-14",
+      dateKey:()=>qa.today,
+      monday,
       addDays,
       weekDays,
       formatDate:v=>String(v).slice(0,10).split("-").reverse().join("/")
@@ -44,7 +48,7 @@
             preferred_store_id:args.p_preferred_store_id,
             availability_type:args.p_availability_type,
             note:args.p_note,
-            updated_at:"2026-09-18T00:00:00Z"
+            updated_at:"2026-09-21T00:00:00+07:00"
           });
           return {data:id,error:null};
         }
@@ -63,8 +67,7 @@
     }
   };
 
-  const frame=document.getElementById("employeeApp");
-  frame.srcdoc=`<!doctype html><html lang="vi"><body>
+  const srcdoc=`<!doctype html><html lang="vi"><body>
     <button id="openReg" onclick="openWeeklyRegistration()">Đăng ký lịch làm</button>
     <div id="weeklyRegistrationPanel">
       <button id="closeReg" onclick="closeWeeklyRegistration()">Đóng</button>
@@ -78,6 +81,10 @@
       <button id="finishReg" onclick="finishQuickRegistration()">Hoàn thành đăng ký lịch làm</button>
     </div>
   </body></html>`;
+  qa.frameSrcdoc=srcdoc;
+  const frame=document.getElementById("employeeApp");
+  frame.addEventListener("load",()=>{qa.frameLoads++});
+  frame.srcdoc=srcdoc;
 })();
 </script>
 <script src="/06_EMPLOYEE/availability/engine-v1.js"></script>
