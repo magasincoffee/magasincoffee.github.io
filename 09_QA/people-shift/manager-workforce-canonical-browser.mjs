@@ -115,8 +115,11 @@ await check("availability_tab_handoff_opens_same_direct_board",async()=>{
   await page.locator("#panel-review .mwr3-card").waitFor();
   const availabilityText=await page.locator("#panel-review").innerText();
   if(!availabilityText.includes("Employee sở hữu availability")||!availabilityText.includes("Nhân viên QA 1"))throw new Error(availabilityText);
+  const beforeLists=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==="list_schedule_generations").length);
   await page.locator("#mwr3OpenSchedule").click();
-  await page.locator("#panel-publish.msd, #panel-publish .msd").first().waitFor();
+  await page.waitForFunction(before=>globalThis.__MW31_QA.calls.filter(x=>x.name==="list_schedule_generations").length>before,beforeLists);
+  await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false);
+  await page.locator("#panel-publish .msd").waitFor();
   const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
   if(st.generationId!=="gen-1"||st.week!=="2026-09-28"||st.storeId!=="store-a")throw new Error(JSON.stringify(st));
   return "availability -> same gen-1";
