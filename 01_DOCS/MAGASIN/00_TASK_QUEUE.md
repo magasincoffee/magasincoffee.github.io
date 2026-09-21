@@ -174,12 +174,12 @@ Canonical architecture: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md`
 Execution plan: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md`  
 E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 
-> Architecture is Owner-approved. TASK-090→108 are staged only and must not execute until explicit Owner release. Current PFC queue remains authoritative.
+> Architecture is Owner-approved. Owner has released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090 is READY / MANUAL_WORK; TASK-091→108 remain queued until Brain accepts each prior result. Current PFC queue remains independently authoritative.
 
 | ID | Task | Est. | Gate | Status |
 |---|---|---:|---|---|
-| TASK-090 | Workforce V1 Current-System Reconciliation | 20m | reuse/delete map + no duplicate path | STAGED / WAIT_OWNER_RELEASE |
-| TASK-091 | Workforce V1 Canonical State + Rule Contract | 20m | state/role/rule contract | STAGED / WAIT_OWNER_RELEASE |
+| TASK-090 | Workforce V1 Current-System Reconciliation | 20m | reuse/delete map + no duplicate path | READY / MANUAL_WORK |
+| TASK-091 | Workforce V1 Canonical State + Rule Contract | 20m | state/role/rule contract | QUEUED / MANUAL_WORK |
 | TASK-092 | Availability Weekly Cycle Hardening | 20m | next-week registration tests | STAGED / WAIT_OWNER_RELEASE |
 | TASK-093 | Manager Sunday Schedule Board V1 | 20m | Manager scheduling browser gate | STAGED / WAIT_OWNER_RELEASE |
 | TASK-094 | Schedule Validation + Publish Gate | 20m | overlap/max-2/scope/publish regression | STAGED / WAIT_OWNER_RELEASE |
