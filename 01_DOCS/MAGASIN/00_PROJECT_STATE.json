@@ -645,8 +645,8 @@
     "note": "Staged parallel operational-relief track. Does not alter active PFC cursor until explicit Owner release/reprioritization.",
     "execution_mode": "OWNER_DIRECT_TO_WORK",
     "manual_work_may_execute": true,
-    "current_task": "TASK-092",
-    "next_task": "TASK-093",
+    "current_task": "TASK-093",
+    "next_task": "TASK-094",
     "task_090": {
       "status": "DONE",
       "evidence": "01_DOCS/MAGASIN/05_SYSTEM/TASK_090_WORKFORCE_V1_CURRENT_SYSTEM_RECONCILIATION.md",
@@ -676,6 +676,30 @@
       "full_business_os_checks": 446,
       "failures": 0,
       "conclusion": "CANONICAL_CONTRACT_LOCKED_POST_MERGE_GREEN"
+    },
+    "task_092": {
+      "status": "DONE",
+      "evidence": "01_DOCS/MAGASIN/05_SYSTEM/TASK_092_AVAILABILITY_WEEKLY_CYCLE_HARDENING.md",
+      "engine": "06_EMPLOYEE/availability/engine-v1.js",
+      "tests": "09_QA/people-shift/employee-availability-canonical.test.mjs",
+      "browser_test": "09_QA/people-shift/employee-availability-canonical-browser.mjs",
+      "pull_request": 230,
+      "final_head": "bb6b757becd721d45ef7a33fba0494e4be901084",
+      "merge": "d7519be95e334060d25dd3265a13b6eafc849606",
+      "pr_head_run_id": 35622155972,
+      "pr_head_job_id": 106407578465,
+      "post_merge_run_id": 35622556059,
+      "post_merge_job_id": 106408928654,
+      "pages_validation_run_id": 35622556056,
+      "runtime": "Node v20.20.2",
+      "deterministic_checks": 165,
+      "availability_browser_checks": 11,
+      "browser_suites": 8,
+      "failures": 0,
+      "live_rpc_audit": "KNOWN_LIVE_DEPENDENCY_READ_ONLY_SAVE_DELETE_WEEK_POLICY_NOT_SERVER_ENFORCED",
+      "production_data_mutation": false,
+      "production_schema_mutation": false,
+      "conclusion": "E2E_01_STRONG_POST_MERGE_GREEN"
     }
   },
   "supervisor_repository_migration": {
