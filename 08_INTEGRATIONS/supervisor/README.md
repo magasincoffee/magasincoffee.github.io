@@ -42,9 +42,9 @@ Implementation roadmap:
 - TASK-RBT-006B — Owner START Latch Recovery / Lifecycle Acceptance Closure — IMPLEMENTED in v2026-09-20.58
 - TASK-RBT-007 — Control Panel Timeline & Resource UX — IMPLEMENTED in v2026-09-20.59
 - TASK-RBT-008 — Brain Planning Contract Runtime Hooks — IMPLEMENTED in v2026-09-20.60
-- TASK-RBT-009 — Integration / Overnight Soak / Cleanup
+- TASK-RBT-009 — Integration / Overnight Soak / Cleanup — IMPLEMENTATION CANDIDATE; FINAL 8H SOAK PENDING
 
-v2026-09-20.60 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, TASK-RBT-006A durable stale/missing target quarantine, TASK-RBT-006B deterministic explicit Owner START latch authority, TASK-RBT-007 Control Panel timeline/resource observability, and TASK-RBT-008 backward-compatible Brain planning/result-verdict runtime hooks. TASK-RBT-009 remains separate until its own implementation and acceptance pass.
+v2026-09-20.60 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, TASK-RBT-006A durable stale/missing target quarantine, TASK-RBT-006B deterministic explicit Owner START latch authority, TASK-RBT-007 Control Panel timeline/resource observability, and TASK-RBT-008 backward-compatible Brain planning/result-verdict runtime hooks. TASK-RBT-009 release tooling is staged without changing runtime semantics, but Three-Lane V1 is NOT RELEASED until the uninterrupted 8-hour production soak and docs closure pass.
 
 ## Lifecycle truth
 
