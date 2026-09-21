@@ -680,13 +680,13 @@
   },
   "supervisor_repository_migration": {
     "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
-    "state": "OWNER_APPROVED_EXECUTION_RELEASED",
+    "state": "MIG_001_DONE_MIG_002_READY",
     "source_repository": "magasincoffee/magasincoffee.github.io",
     "target_repository": "magasincoffee/magasin-supervisor",
     "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
-    "current_task": "MIG-001",
-    "current_task_title": "Freeze Baseline + Migration Bootstrap",
-    "next_task": "MIG-002",
+    "current_task": "MIG-002",
+    "current_task_title": "Extract Supervisor Platform to Independent Repository",
+    "next_task": "MIG-003",
     "production_cutover": false,
     "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
     "compatibility_window": "REQUIRED_UNTIL_NEW_REPO_PARITY_AND_ROLLBACK_GATES_PASS",
@@ -710,6 +710,28 @@
       "OWNER_STOP_REMAINS_AUTHORITATIVE",
       "AUTH_MFA_CAPTCHA_AND_DESTRUCTIVE_ADMIN_REMAIN_FAIL_CLOSED"
     ],
-    "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md"
+    "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md",
+    "last_completed_task": "MIG-001",
+    "current_task_status": "READY_NOT_STARTED",
+    "mig_001": {
+      "status": "DONE",
+      "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
+      "source_baseline_tree_sha": "b0947bac1847dd34cae2f14fdc46a3c70ee6de57",
+      "evidence": "01_DOCS/MAGASIN/08_AUTONOMY/MIG_001_SUPERVISOR_MIGRATION_BOOTSTRAP_EVIDENCE.md",
+      "file_map": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_MIGRATION_V1_FILE_MAP.json",
+      "managed_file_count": 137,
+      "classification_counts": {
+        "MOVE": 90,
+        "REWRITE": 47,
+        "RETAIN": 5,
+        "DEPRECATE": 0
+      },
+      "zero_production_mutation": true,
+      "runtime_semantics_changed": false
+    },
+    "mig_002": {
+      "status": "READY_NOT_STARTED",
+      "scope": "EXTRACT_FROZEN_PLATFORM_FILES_TO_MAGASIN_SUPERVISOR_WITH_PROVENANCE_AND_NO_PRODUCTION_CUTOVER"
+    }
   }
 }
