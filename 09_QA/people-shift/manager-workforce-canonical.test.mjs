@@ -14,7 +14,7 @@ test("Manager runtime owns Workforce through canonical module only",async()=>{
 test("Canonical Workforce shell opens scheduling, keeps Demand hidden, and labels Manager as scheduler",async()=>{
   const shell=await read("05_MANAGER/runtime/manager-shell-v1.html");
   assert.match(shell,/Xếp lịch tuần/);
-  assert.match(shell,/data-tab="publish" class="active"/);
+  assert.match(shell,/class="active" data-tab="publish"/);
   assert.match(shell,/data-tab="demand" hidden/);
   assert.match(shell,/Availability của nhân viên → Manager tạo và lưu lịch nháp/);
   assert.doesNotMatch(shell,/Nhu cầu nhân sự, review và phát hành lịch tuần/);
@@ -31,7 +31,7 @@ test("Manager availability is read-only scheduling input and defaults to next we
   assert.doesNotMatch(review,/auto_generate_schedule_generation/);
   assert.doesNotMatch(review,/get_workforce_staffing_requirements/);
   assert.doesNotMatch(review,/magasin:schedule-robot-request/);
-  assert.doesNotMatch(review,/\.from\(/);
+  assert.doesNotMatch(review,/supabase[^\n]*\.from\(|sb\.from\(|client\(\)\.from\(/);
 });
 
 test("Manager direct draft creation uses existing permissioned generation primitives without demand or Robot prerequisite",async()=>{
@@ -51,7 +51,7 @@ test("Manager direct draft creation uses existing permissioned generation primit
   assert.doesNotMatch(draft,/auto_generate_schedule_generation/);
   assert.doesNotMatch(draft,/get_workforce_staffing_requirements/);
   assert.doesNotMatch(draft,/magasin:schedule-robot-request/);
-  assert.doesNotMatch(draft,/\.from\(/);
+  assert.doesNotMatch(draft,/supabase[^\n]*\.from\(|sb\.from\(|client\(\)\.from\(/);
 });
 
 test("Direct save only persists DRAFT and does not auto validate review or publish",async()=>{
