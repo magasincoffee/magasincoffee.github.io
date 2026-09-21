@@ -165,3 +165,173 @@ function Get-Rbt009SafeEventStats {
   $result.max_identical_error_recovery_tail = $maxRun
   return [pscustomobject]$result
 }
+
+
+function Read-Rbt009BoundedTextDelta {
+  param(
+    [Parameter(Mandatory=$true)][string]$Path,
+    [int64]$StartOffset = 0,
+    [int]$MaxBytes = 262144
+  )
+
+  if ($StartOffset -lt 0) { $StartOffset = 0 }
+  if ($MaxBytes -lt 4096) { throw "MaxBytes must be >= 4096" }
+
+  $result = [ordered]@{
+    file_length_bytes = 0L
+    start_offset = [int64]$StartOffset
+    next_offset = [int64]$StartOffset
+    bytes_read = 0
+    rotated_or_truncated = $false
+    lines = @()
+  }
+
+  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+    return [pscustomobject]$result
+  }
+
+  $stream = $null
+  try {
+    $share = [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete
+    $stream = [System.IO.FileStream]::new(
+      $Path,
+      [System.IO.FileMode]::Open,
+      [System.IO.FileAccess]::Read,
+      $share
+    )
+
+    $length = [int64]$stream.Length
+    $result.file_length_bytes = $length
+    $offset = [int64]$StartOffset
+    if ($offset -gt $length) {
+      $offset = 0L
+      $result.start_offset = 0L
+      $result.next_offset = 0L
+      $result.rotated_or_truncated = $true
+    }
+    if ($offset -ge $length) {
+      return [pscustomobject]$result
+    }
+
+    [void]$stream.Seek($offset, [System.IO.SeekOrigin]::Begin)
+    $requested = [int][Math]::Min([int64]$MaxBytes, $length - $offset)
+    $buffer = New-Object byte[] $requested
+    $readTotal = 0
+    while ($readTotal -lt $requested) {
+      $read = $stream.Read($buffer, $readTotal, $requested - $readTotal)
+      if ($read -le 0) { break }
+      $readTotal += $read
+    }
+    $result.bytes_read = $readTotal
+    if ($readTotal -le 0) {
+      return [pscustomobject]$result
+    }
+
+    $lastNewline = -1
+    for ($i = $readTotal - 1; $i -ge 0; $i--) {
+      if ($buffer[$i] -eq 10) {
+        $lastNewline = $i
+        break
+      }
+    }
+
+    if ($lastNewline -lt 0) {
+      # No complete line yet. Keep the offset so the partial record is retried.
+      return [pscustomobject]$result
+    }
+
+    $completeBytes = $lastNewline + 1
+    $text = [System.Text.Encoding]::UTF8.GetString($buffer, 0, $completeBytes)
+    $parts = @($text -split "`n", -1)
+    if ($parts.Count -gt 0 -and $parts[$parts.Count - 1] -eq "") {
+      if ($parts.Count -eq 1) {
+        $parts = @()
+      } else {
+        $parts = @($parts[0..($parts.Count - 2)])
+      }
+    }
+
+    $clean = @()
+    foreach ($line in $parts) {
+      $clean += [string]$line.TrimEnd("`r")
+    }
+
+    $result.lines = $clean
+    $result.next_offset = $offset + [int64]$completeBytes
+    return [pscustomobject]$result
+  } catch {
+    # Concurrent rotate/delete/truncate is tolerated. Raw exceptions are not emitted.
+    return [pscustomobject]$result
+  } finally {
+    if ($null -ne $stream) { $stream.Dispose() }
+  }
+}
+
+function Get-Rbt009IncrementalFloodState {
+  param(
+    [Parameter(Mandatory=$true)][string]$Path,
+    [int64]$StartOffset = 0,
+    [string]$PreviousSignature = "",
+    [int]$PreviousRun = 0,
+    [int]$MaxBytes = 262144
+  )
+
+  $delta = Read-Rbt009BoundedTextDelta -Path $Path -StartOffset $StartOffset -MaxBytes $MaxBytes
+  $signature = [string]$PreviousSignature
+  $run = [int]$PreviousRun
+  $maxRun = $run
+  $eventCount = 0
+
+  if ([bool]$delta.rotated_or_truncated) {
+    $signature = ""
+    $run = 0
+    $maxRun = 0
+  }
+
+  foreach ($line in @($delta.lines)) {
+    if ([string]::IsNullOrWhiteSpace([string]$line)) { continue }
+
+    $event = $null
+    try {
+      $event = $line | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+      continue
+    }
+
+    $type = [string](Get-Rbt009OptionalProperty -Object $event -Name "event_type" -DefaultValue "")
+    if ([string]::IsNullOrWhiteSpace($type)) { continue }
+
+    if ($type -ne "ERROR" -and $type -ne "RECOVERY") {
+      $signature = ""
+      $run = 0
+      continue
+    }
+
+    $reason = [string](Get-Rbt009OptionalProperty -Object $event -Name "reason_code" -DefaultValue "NONE")
+    $lane = [string](Get-Rbt009OptionalProperty -Object $event -Name "lane_id" -DefaultValue "GLOBAL")
+    if ([string]::IsNullOrWhiteSpace($reason)) { $reason = "NONE" }
+    if ([string]::IsNullOrWhiteSpace($lane)) { $lane = "GLOBAL" }
+
+    $current = "$type|$reason|$lane"
+    $eventCount++
+    if ($current -eq $signature) {
+      $run++
+    } else {
+      $signature = $current
+      $run = 1
+    }
+    if ($run -gt $maxRun) { $maxRun = $run }
+  }
+
+  return [pscustomobject][ordered]@{
+    file_length_bytes = [int64]$delta.file_length_bytes
+    start_offset = [int64]$delta.start_offset
+    next_offset = [int64]$delta.next_offset
+    bytes_read = [int]$delta.bytes_read
+    rotated_or_truncated = [bool]$delta.rotated_or_truncated
+    error_recovery_events = [int]$eventCount
+    last_signature = $signature
+    current_identical_run = [int]$run
+    max_identical_run = [int]$maxRun
+  }
+}
