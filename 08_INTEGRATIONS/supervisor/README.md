@@ -41,10 +41,10 @@ Implementation roadmap:
 - TASK-RBT-006A — Stale/Missing Exact-Target Navigation Storm Circuit Breaker — IMPLEMENTED in v2026-09-20.57
 - TASK-RBT-006B — Owner START Latch Recovery / Lifecycle Acceptance Closure — IMPLEMENTED in v2026-09-20.58
 - TASK-RBT-007 — Control Panel Timeline & Resource UX — IMPLEMENTED in v2026-09-20.59
-- TASK-RBT-008 — Brain Planning Contract Runtime Hooks
+- TASK-RBT-008 — Brain Planning Contract Runtime Hooks — IMPLEMENTED in v2026-09-20.60
 - TASK-RBT-009 — Integration / Overnight Soak / Cleanup
 
-v2026-09-20.59 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, TASK-RBT-006A durable stale/missing target quarantine, TASK-RBT-006B deterministic explicit Owner START latch authority, and TASK-RBT-007 Control Panel timeline/resource observability. TASK-RBT-008+ remain separate until their own implementation and acceptance tasks pass.
+v2026-09-20.60 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, TASK-RBT-006A durable stale/missing target quarantine, TASK-RBT-006B deterministic explicit Owner START latch authority, TASK-RBT-007 Control Panel timeline/resource observability, and TASK-RBT-008 backward-compatible Brain planning/verdict runtime hooks. TASK-RBT-009+ remain separate until their own implementation and acceptance tasks pass.
 
 ## Lifecycle truth
 
@@ -126,7 +126,7 @@ Runtime v2026-09-20.53 implements TASK-RBT-004 Browser Scheduler + Tab Budget:
 
 One lane enabled continues to work normally. Two or three enabled lanes share the same Chrome/CDP fairly without sharing task/latch state.
 
-Remaining TASK-RBT work after the browser scheduler is intentionally separate; Work-full rollover is released by TASK-RBT-006 and Control Panel timeline/resource UX is released by TASK-RBT-007. Planning protocol/runtime hooks remain TASK-RBT-008+.
+Remaining TASK-RBT work after the browser scheduler is intentionally separate; Work-full rollover is released by TASK-RBT-006, Control Panel timeline/resource UX by TASK-RBT-007, and Brain planning protocol/runtime hooks by TASK-RBT-008. TASK-RBT-009+ remain separate.
 
 ## Released long-running Work watchdog
 
