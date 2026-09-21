@@ -15,6 +15,7 @@ on:
       - ".github/workflows/supervisor-tests.yml"
       - ".github/workflows/supervisor-autostart-install.yml"
       - ".github/workflows/supervisor-lifecycle-acceptance.yml"
+      - ".github/workflows/supervisor-integrity.yml"
   workflow_dispatch:
 
 permissions:

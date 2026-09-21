@@ -6,7 +6,15 @@ on:
       - "08_INTEGRATIONS/supervisor/**"
       - ".github/workflows/supervisor-*.yml"
       - ".github/scripts/supervisor-integrity-*.ps1"
+      - ".github/scripts/supervisor-rbt009-soak.ps1"
+      - ".github/scripts/supervisor-rbt009-soak-lib.ps1"
+      - ".github/scripts/supervisor-rbt009-soak-strictmode-tests.ps1"
+      - ".github/scripts/supervisor-release-event-validator.mjs"
       - ".github/scripts/supervisor-state-maintenance-regression.ps1"
+      - ".github/scripts/supervisor-rbt009-soak.ps1"
+      - ".github/scripts/supervisor-rbt009-soak-lib.ps1"
+      - ".github/scripts/supervisor-rbt009-soak-strictmode-tests.ps1"
+      - ".github/scripts/supervisor-release-event-validator.mjs"
   push:
     branches:
       - main
