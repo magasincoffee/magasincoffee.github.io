@@ -1,0 +1,133 @@
+name: Host Disk Space Inventory
+
+on:
+  push:
+    branches:
+      - diagnostics/host-health-20260921
+    paths:
+      - ".github/workflows/host-disk-space-inventory.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: self-hosted
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect privacy-safe disk usage inventory
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Continue"
+
+          function Section([string]$name) {
+            Write-Host ""
+            Write-Host "===== $name ====="
+          }
+
+          function Get-DirSizeBytes([string]$Path) {
+            if (-not (Test-Path -LiteralPath $Path)) { return 0L }
+            try {
+              $sum = (Get-ChildItem -LiteralPath $Path -File -Recurse -Force -ErrorAction SilentlyContinue |
+                Where-Object { -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) } |
+                Measure-Object -Property Length -Sum).Sum
+              if ($null -eq $sum) { return 0L }
+              return [int64]$sum
+            } catch {
+              return 0L
+            }
+          }
+
+          function Show-Size([string]$Label,[string]$Path) {
+            $bytes = Get-DirSizeBytes $Path
+            [pscustomobject]@{
+              Category = $Label
+              SizeGB = [math]::Round($bytes / 1GB, 2)
+            }
+          }
+
+          Section "VOLUME SUMMARY"
+          Get-Volume -DriveLetter C,D -ErrorAction SilentlyContinue |
+            Select-Object DriveLetter,
+              @{N='SizeGB';E={[math]::Round($_.Size/1GB,2)}},
+              @{N='FreeGB';E={[math]::Round($_.SizeRemaining/1GB,2)}},
+              @{N='FreePct';E={if ($_.Size) {[math]::Round(100*$_.SizeRemaining/$_.Size,2)} else {0}}},
+              HealthStatus,OperationalStatus |
+            Format-Table -AutoSize
+
+          Section "TOP-LEVEL C DRIVE FOLDERS"
+          $top = @()
+          Get-ChildItem C:\ -Directory -Force -ErrorAction SilentlyContinue |
+            Where-Object { -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) } |
+            ForEach-Object {
+              $top += [pscustomobject]@{
+                Folder = $_.FullName
+                SizeGB = [math]::Round((Get-DirSizeBytes $_.FullName)/1GB,2)
+              }
+            }
+          $top | Sort-Object SizeGB -Descending | Format-Table -AutoSize
+
+          Section "USER PROFILE CATEGORIES"
+          $profile = $env:USERPROFILE
+          @(
+            Show-Size "Downloads" (Join-Path $profile "Downloads")
+            Show-Size "Desktop" (Join-Path $profile "Desktop")
+            Show-Size "Documents" (Join-Path $profile "Documents")
+            Show-Size "Pictures" (Join-Path $profile "Pictures")
+            Show-Size "Videos" (Join-Path $profile "Videos")
+            Show-Size "Music" (Join-Path $profile "Music")
+            Show-Size "User Local Temp" (Join-Path $profile "AppData\Local\Temp")
+            Show-Size "Chrome Cache" (Join-Path $profile "AppData\Local\Google\Chrome\User Data\Default\Cache")
+            Show-Size "Chrome Code Cache" (Join-Path $profile "AppData\Local\Google\Chrome\User Data\Default\Code Cache")
+            Show-Size "Chrome GPU Cache" (Join-Path $profile "AppData\Local\Google\Chrome\User Data\Default\GPUCache")
+            Show-Size "Edge Cache" (Join-Path $profile "AppData\Local\Microsoft\Edge\User Data\Default\Cache")
+          ) | Sort-Object SizeGB -Descending | Format-Table -AutoSize
+
+          Section "APPDATA LOCAL TOP FOLDERS"
+          $local = Join-Path $profile "AppData\Local"
+          $localRows = @()
+          Get-ChildItem $local -Directory -Force -ErrorAction SilentlyContinue |
+            Where-Object { -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) } |
+            ForEach-Object {
+              $localRows += [pscustomobject]@{
+                AppFolder = $_.Name
+                SizeGB = [math]::Round((Get-DirSizeBytes $_.FullName)/1GB,2)
+              }
+            }
+          $localRows | Sort-Object SizeGB -Descending | Select-Object -First 20 | Format-Table -AutoSize
+
+          Section "KNOWN SYSTEM / TOOL CACHES"
+          @(
+            Show-Size "Windows Temp" "C:\Windows\Temp"
+            Show-Size "Windows Update Download Cache" "C:\Windows\SoftwareDistribution\Download"
+            Show-Size "ProgramData Package Cache" "C:\ProgramData\Package Cache"
+            Show-Size "GitHub Runner Work" "C:\actions-runner-business\actions-runner\_work"
+            Show-Size "GitHub Runner Temp" "C:\actions-runner-business\actions-runner\_work\_temp"
+            Show-Size "MAGASIN Supervisor Local State" (Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor")
+          ) | Sort-Object SizeGB -Descending | Format-Table -AutoSize
+
+          Section "LARGE FILE TYPE TOTALS IN USER PROFILE"
+          $extGroups = Get-ChildItem $profile -File -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object { -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) } |
+            Group-Object Extension |
+            ForEach-Object {
+              $sum = ($_.Group | Measure-Object Length -Sum).Sum
+              [pscustomobject]@{
+                Extension = if ([string]::IsNullOrWhiteSpace($_.Name)) { "<no-ext>" } else { $_.Name.ToLowerInvariant() }
+                Count = $_.Count
+                SizeGB = [math]::Round($sum/1GB,2)
+              }
+            }
+          $extGroups | Sort-Object SizeGB -Descending | Select-Object -First 20 | Format-Table -AutoSize
+
+          Section "CLEANUP CANDIDATE SUMMARY"
+          $c = Get-Volume -DriveLetter C -ErrorAction SilentlyContinue
+          if ($c) {
+            Write-Host ("C_FREE_GB=" + [math]::Round($c.SizeRemaining/1GB,2))
+            Write-Host ("C_FREE_PCT=" + [math]::Round(100*$c.SizeRemaining/$c.Size,2))
+          }
+          Write-Host "INVENTORY_ONLY=True"
+          Write-Host "NO_FILES_DELETED=True"
