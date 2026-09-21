@@ -103,14 +103,16 @@ async function register(event){
   if(!day||!isTargetDate(day)){if(msg)msg.textContent='Ngày đăng ký phải thuộc đúng tuần kế tiếp.';return}
   if(!TIME_RE.test(String(start||''))||!TIME_RE.test(String(end||''))){if(msg)msg.textContent='Giờ đăng ký không hợp lệ.';return}
   if(C.time.minutes(end)<=C.time.minutes(start)){if(msg)msg.textContent='Giờ kết thúc phải sau giờ bắt đầu.';return}
-  state.stores=await C.stores.active().catch(()=>[]);
-  state.stores=state.stores.filter(s=>s&&s.id&&s.code&&(!s.status||String(s.status).toUpperCase()==='ACTIVE'));
-  renderStoreOptions(x);
-  const target=state.stores.find(s=>String(s.code)===String(store));
-  if(!target){if(msg)msg.textContent='Không tìm thấy chi nhánh đang hoạt động.';applyRegistrationState(x);return}
   const button=event?.currentTarget||x.getElementById('saveReg');
   state.savePending=true;if(button)button.disabled=true;
   try{
+    if(!state.stores.length){
+      state.stores=await C.stores.active().catch(()=>[]);
+      state.stores=state.stores.filter(s=>s&&s.id&&s.code&&(!s.status||String(s.status).toUpperCase()==='ACTIVE'));
+      renderStoreOptions(x);
+    }
+    const target=state.stores.find(s=>String(s.code)===String(store));
+    if(!target){if(msg)msg.textContent='Không tìm thấy chi nhánh đang hoạt động.';return}
     const q=await C.supabase.rpc('save_my_availability',{p_availability_id:null,p_work_date:day,p_start_time:start,p_end_time:end,p_availability_type:'AVAILABLE',p_preferred_store_id:target.id,p_note:null});
     if(q.error)throw q.error;
     if(msg)msg.textContent='Đã đăng ký lịch làm.';
