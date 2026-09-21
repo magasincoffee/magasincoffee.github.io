@@ -14,9 +14,9 @@ function functionSlice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("RBT-004 scheduler remains canonical after v59 Control Panel observability bump", async () => {
+test("RBT-004 scheduler remains canonical after v60 Brain planning contract bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.59"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.60"/);
   assert.match(runtime, /from "\.\/browser-scheduler\.mjs"/);
   assert.equal((runtime.match(/new BrowserScheduler\(/g) || []).length, 1);
   assert.match(runtime, /pageBudget: args\.pageBudget/);
