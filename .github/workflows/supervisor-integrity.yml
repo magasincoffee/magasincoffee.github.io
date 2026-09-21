@@ -6,8 +6,6 @@ on:
       - "08_INTEGRATIONS/supervisor/**"
       - ".github/workflows/supervisor-*.yml"
       - ".github/scripts/supervisor-integrity-*.ps1"
-      - ".github/scripts/supervisor-release-*.ps1"
-      - ".github/scripts/supervisor-release-*.mjs"
       - ".github/scripts/supervisor-state-maintenance-regression.ps1"
       - ".github/scripts/supervisor-release-*.ps1"
       - ".github/scripts/supervisor-release-*.mjs"
@@ -18,6 +16,8 @@ on:
       - "08_INTEGRATIONS/supervisor/**"
       - ".github/workflows/supervisor-*.yml"
       - ".github/scripts/supervisor-integrity-*.ps1"
+      - ".github/scripts/supervisor-release-*.ps1"
+      - ".github/scripts/supervisor-release-*.mjs"
   workflow_dispatch:
 
 permissions:
