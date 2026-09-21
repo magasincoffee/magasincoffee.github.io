@@ -348,7 +348,9 @@ test("v43 can recover the latest valid directive when only duplicate Robot hands
   assert.match(source, /captureRecentConversationTurns/);
   assert.match(source, /expectedStartDigest = sha256\(buildBrainStartRequest/);
   assert.match(source, /onlyRobotHandshakeAfterDirective/);
-  assert.match(source, /turn\.role === "user" && turn\.digest === expectedStartDigest/);
+  assert.match(source, /knownStartDigests = knownBrainStartRequestDigests/);
+  assert.match(source, /turn\.digest === expectedStartDigest/);
+  assert.match(source, /knownStartDigests\.has\(turn\.digest\)/);
   assert.match(source, /LANE_BRAIN_DIRECTIVE_RECOVERED_BEFORE_DUPLICATE_HANDSHAKE/);
   assert.match(source, /if \(laterTurns\.length && !onlyRobotHandshakeAfterDirective\) return null/);
 });
