@@ -86,6 +86,30 @@ test("Existing validation review publish hooks remain explicit downstream contro
   assert.match(draft,/Review \/ Publish hiện hữu — downstream, không phải prerequisite/);
 });
 
+test("TASK-094 Manager board delegates create/resume and validation idempotency to server primitives",async()=>{
+  const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
+  const createStart=draft.indexOf("async function startOrResume()");
+  const createEnd=draft.indexOf("function sourceHtml()",createStart);
+  const create=draft.slice(createStart,createEnd);
+  assert.match(create,/create_schedule_generation/);
+  assert.match(create,/Server đã tạo hoặc resume đúng một DRAFT canonical/);
+  assert.doesNotMatch(create,/if\(drafts\.length\)\{/);
+
+  const resumeStart=draft.indexOf("async function resumeOnly()");
+  const resumeEnd=draft.indexOf("async function startOrResume()",resumeStart);
+  const resume=draft.slice(resumeStart,resumeEnd);
+  assert.match(resume,/drafts\.length>1/);
+  assert.match(resume,/generationStatus='CONFLICT'/);
+  assert.match(resume,/fail-closed/);
+
+  assert.match(draft,/MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY/);
+  assert.match(draft,/AVAILABILITY_MISMATCH/);
+  assert.match(draft,/GENERATION_VERSION_CONFLICT/);
+  assert.match(draft,/already_reviewed/);
+  assert.match(draft,/already_published/);
+  assert.match(draft,/Canonical validation/);
+});
+
 test("Legacy demand stays isolated from canonical direct scheduling path",async()=>{
   const [demand,engine]=await Promise.all([
     read("05_MANAGER/Workforce/demand-v1.js"),
