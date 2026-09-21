@@ -1,0 +1,86 @@
+name: New PC Find Monetization Brain
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-find-monetization-brain.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  find:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 15
+    steps:
+      - name: Find only the named Brain conversation
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $runtime = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor\runtime"
+          Push-Location $runtime
+          try {
+            @'
+          import { chromium } from "playwright-core";
+
+          const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+          const contexts = browser.contexts();
+          if (!contexts.length) throw new Error("No Chrome context.");
+          let page = contexts.flatMap(c => c.pages()).find(p => p.url().includes("chatgpt.com"));
+          if (!page) throw new Error("No ChatGPT page.");
+
+          await page.bringToFront();
+          await page.keyboard.press("Control+K");
+          await page.waitForTimeout(1200);
+
+          const visibleInputs = page.locator('input:visible');
+          let input = null;
+          for (let i = 0; i < await visibleInputs.count(); i++) {
+            const candidate = visibleInputs.nth(i);
+            const ph = (await candidate.getAttribute("placeholder").catch(() => "")) || "";
+            const aria = (await candidate.getAttribute("aria-label").catch(() => "")) || "";
+            if (/search|tìm/i.test(ph + " " + aria)) {
+              input = candidate;
+              break;
+            }
+          }
+
+          if (!input) {
+            const textboxes = page.getByRole("textbox");
+            if (await textboxes.count()) input = textboxes.last();
+          }
+          if (!input) throw new Error("Chat search input not found.");
+
+          await input.fill("NÃO KIẾM TIỀN");
+          await page.waitForTimeout(2500);
+
+          const matches = await page.locator('a[href*="/c/"]').evaluateAll((els) =>
+            els.map(a => ({
+              title: (a.textContent || "").replace(/\s+/g, " ").trim(),
+              url: a.href
+            })).filter(x => /NÃO KIẾM TIỀN/i.test(x.title))
+          );
+
+          const unique = [...new Map(matches.map(x => [x.url, x])).values()];
+          for (const item of unique) {
+            console.log("MONETIZATION_BRAIN_MATCH=" + JSON.stringify(item));
+          }
+          console.log("MONETIZATION_BRAIN_MATCH_COUNT=" + unique.length);
+
+          if (unique.length !== 1) {
+            throw new Error("Expected exactly one NÃO KIẾM TIỀN conversation match.");
+          }
+
+          await page.keyboard.press("Escape").catch(() => {});
+          await browser.close();
+          '@ | Set-Content -LiteralPath ".\tmp-find-monetization-brain.mjs" -Encoding UTF8
+
+            node ".\tmp-find-monetization-brain.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "Named Brain search failed." }
+          } finally {
+            Remove-Item ".\tmp-find-monetization-brain.mjs" -Force -ErrorAction SilentlyContinue
+            Pop-Location
+          }
