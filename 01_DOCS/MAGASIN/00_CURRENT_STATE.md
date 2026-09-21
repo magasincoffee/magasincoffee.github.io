@@ -322,6 +322,6 @@ Locked decisions:
 - Employee can self-check own payroll;
 - final stability requires full E2E, exact post-merge E2E recheck and cold/reload E2E recheck.
 
-Owner released this track for **DIRECT MANUAL WORK only**; Robot remains disabled. TASK-090 reconciliation is **DONE**. TASK-091 canonical state/rule contract is **DONE**. TASK-092 Availability Weekly Cycle Hardening is **DONE** with evidence at `05_SYSTEM/TASK_092_AVAILABILITY_WEEKLY_CYCLE_HARDENING.md`. TASK-093 is **READY / MANUAL_WORK** and must wait for Brain acceptance/dispatch; TASK-094→108 remain staged behind the sequential gate.
+Owner released this track for **DIRECT MANUAL WORK only**; Robot remains disabled. TASK-090→TASK-092 are **DONE**. TASK-093 Manager Sunday Schedule Board V1 is **DONE** with evidence at `05_SYSTEM/TASK_093_MANAGER_SUNDAY_SCHEDULE_BOARD_V1.md`. TASK-094 is **READY / MANUAL_WORK** and must wait for Brain acceptance/dispatch; TASK-095→108 remain staged behind the sequential gate.
 
 The currently active PFC cursor is unchanged and remains independently authoritative.
