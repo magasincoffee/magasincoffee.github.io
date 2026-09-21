@@ -40,6 +40,65 @@ export function normalizeChatGptConversationUrl(value) {
   return `${url.origin}${canonicalConversationPathname(url.pathname)}`;
 }
 
+const DIRECTIVE_TASK_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._:\/-]{0,79}$/;
+const DIRECTIVE_RELAY_ID_RE = /^[a-f0-9]{16,128}$/i;
+const PREVIOUS_RESULT_REASON_CODES = new Set([
+  "ACCEPT_DOD_MET",
+  "ACCEPT_EVIDENCE_VERIFIED",
+  "REJECT_DOD_NOT_MET",
+  "REJECT_EVIDENCE_INCOMPLETE",
+  "REJECT_CORRECTION_REQUIRED",
+  "OWNER_INTERVENTION_REQUIRED"
+]);
+
+function assertNarrowObject(value, allowed, label) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${label} must be an object`);
+  }
+  for (const key of Object.keys(value)) {
+    if (!allowed.has(key)) throw new Error(`unsupported ${label} field: ${key}`);
+  }
+}
+
+function parsePreviousResult(value) {
+  if (value === undefined) return null;
+  assertNarrowObject(
+    value,
+    new Set(["task_id", "relay_id", "verdict", "reason_code"]),
+    "previous_result"
+  );
+  const taskId = String(value.task_id || "").trim();
+  const relayId = String(value.relay_id || "").trim();
+  const verdict = String(value.verdict || "").trim().toUpperCase();
+  if (!DIRECTIVE_TASK_ID_RE.test(taskId)) throw new Error("invalid previous_result task_id");
+  if (!DIRECTIVE_RELAY_ID_RE.test(relayId)) throw new Error("invalid previous_result relay_id");
+  if (verdict !== "ACCEPT" && verdict !== "REJECT") {
+    throw new Error("previous_result verdict must be ACCEPT or REJECT");
+  }
+  const reasonCode = value.reason_code === undefined
+    ? null
+    : String(value.reason_code || "").trim().toUpperCase();
+  if (reasonCode && !PREVIOUS_RESULT_REASON_CODES.has(reasonCode)) {
+    throw new Error("previous_result reason_code is not allowlisted");
+  }
+  return {
+    task_id: taskId,
+    relay_id: relayId,
+    verdict,
+    reason_code: reasonCode
+  };
+}
+
+function parseCorrectionOf(value) {
+  if (value === undefined) return null;
+  assertNarrowObject(value, new Set(["task_id", "relay_id"]), "correction_of");
+  const taskId = String(value.task_id || "").trim();
+  const relayId = String(value.relay_id || "").trim();
+  if (!DIRECTIVE_TASK_ID_RE.test(taskId)) throw new Error("invalid correction_of task_id");
+  if (!DIRECTIVE_RELAY_ID_RE.test(relayId)) throw new Error("invalid correction_of relay_id");
+  return { task_id: taskId, relay_id: relayId };
+}
+
 export function parseLaneDirective(text) {
   const raw = String(text || "");
   const start = raw.lastIndexOf(LANE_DIRECTIVE_START);
@@ -53,20 +112,39 @@ export function parseLaneDirective(text) {
   const action = String(payload?.action || "").toUpperCase();
 
   if (action === "IDLE") {
+    assertNarrowObject(payload, new Set(["action", "previous_result"]), "directive");
     return {
       schema_version: "lane-directive.v1",
       action: "IDLE",
+      previous_result: parsePreviousResult(payload.previous_result),
       digest: sha256(jsonText)
     };
   }
   if (action !== "WORK") throw new Error("unsupported lane directive action");
+  assertNarrowObject(
+    payload,
+    new Set(["action", "task_id", "instruction", "previous_result", "correction_of"]),
+    "directive"
+  );
 
   const taskId = String(payload.task_id || "").trim();
   const instruction = String(payload.instruction || "").trim();
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9._:\/-]{0,79}$/.test(taskId)) {
+  if (!DIRECTIVE_TASK_ID_RE.test(taskId)) {
     throw new Error("invalid lane task_id");
   }
   if (!instruction) throw new Error("lane WORK instruction is empty");
+
+  const previousResult = parsePreviousResult(payload.previous_result);
+  const correctionOf = parseCorrectionOf(payload.correction_of);
+  if (correctionOf && !previousResult) {
+    throw new Error("correction_of requires previous_result");
+  }
+
+  const dispatchIdentity = JSON.stringify({
+    action: "WORK",
+    task_id: taskId,
+    instruction
+  });
 
   return {
     schema_version: "lane-directive.v1",
@@ -74,6 +152,9 @@ export function parseLaneDirective(text) {
     task_id: taskId,
     instruction,
     instruction_digest: sha256(instruction),
+    dispatch_digest: sha256(dispatchIdentity),
+    previous_result: previousResult,
+    correction_of: correctionOf,
     digest: sha256(jsonText)
   };
 }
@@ -229,7 +310,7 @@ export function normalizeLaneRegistry(value = {}) {
   return safe;
 }
 
-export function buildBrainStartRequest({ laneId, projectName }) {
+export function buildLegacyBrainStartRequestV59({ laneId, projectName }) {
   return [
     `Bạn là BỘ NÃO của ${laneId} — ${projectName} trong MAGASIN Supervisor Three-Lane V1.`,
     "Robot chỉ làm việc theo lệnh trong cuộc trò chuyện Brain URL mà Owner đã chọn cho đúng luồng này.",
@@ -237,6 +318,27 @@ export function buildBrainStartRequest({ laneId, projectName }) {
     LANE_DIRECTIVE_START,
     '{"action":"WORK","task_id":"TASK-ID","instruction":"Chỉ thị đầy đủ, tự đủ ngữ cảnh cho Work chat."}',
     LANE_DIRECTIVE_END,
+    "Nếu chưa có việc an toàn để làm, trả:",
+    LANE_DIRECTIVE_START,
+    '{"action":"IDLE"}',
+    LANE_DIRECTIVE_END,
+    "Không yêu cầu Robot tự tìm Brain khác. Không yêu cầu Robot tự tạo Brain mới."
+  ].join("\n");
+}
+
+export function buildBrainStartRequest({ laneId, projectName }) {
+  return [
+    `Bạn là BỘ NÃO của ${laneId} — ${projectName} trong MAGASIN Supervisor Three-Lane V1.`,
+    "Robot chỉ làm việc theo lệnh trong cuộc trò chuyện Brain URL mà Owner đã chọn cho đúng luồng này.",
+    "Contract: PLAN → DISPATCH → VERIFY → ACCEPT/REJECT → NEXT PLAN. Không cần lộ chain-of-thought; chỉ trả contract/output máy đọc được.",
+    "Trước WORK: chọn đúng một primary outcome, dependency đã thỏa hoặc nêu rõ, scope bounded, Definition of Done rõ, evidence phải trả rõ và stop boundary rõ trong instruction.",
+    "Target planning: khoảng <=20 phút active implementation nếu chia được; nếu >30 phút và chia an toàn được thì chia nhỏ trước dispatch. Đây KHÔNG phải runtime timeout; long-running hợp lệ vẫn do watchdog activity contract xử lý.",
+    "Work phải làm đúng một task rồi trả evidence/result và DỪNG; Work không tự chọn roadmap hoặc tự bắt đầu task tiếp theo.",
+    "Hãy giao đúng một việc tiếp theo bằng block:",
+    LANE_DIRECTIVE_START,
+    '{"action":"WORK","task_id":"TASK-ID","instruction":"Một outcome; dependency; scope; DoD; evidence; safety/stop boundary."}',
+    LANE_DIRECTIVE_END,
+    "Sau khi Robot relay result, Brain nên VERIFY rồi thêm optional previous_result tương quan task_id + relay_id với verdict ACCEPT hoặc REJECT. REJECT chỉ được dispatch correction cùng task hoặc WORK có correction_of trỏ đúng previous result; nếu cần Owner thì dùng IDLE.",
     "Nếu chưa có việc an toàn để làm, trả:",
     LANE_DIRECTIVE_START,
     '{"action":"IDLE"}',
@@ -264,14 +366,26 @@ export function workDispatchMarker(dispatchId) {
 export function buildWorkDispatchInstruction({
   taskId,
   dispatchId,
-  instruction
+  instruction,
+  planningContract = true
 }) {
   const body = String(instruction || "").trim();
   if (!body) throw new Error("Work instruction is required");
-  return [
+  const header = [
     "MAGASIN_WORK_DISPATCH_V1",
     `task_id=${String(taskId || "").trim()}`,
-    workDispatchMarker(dispatchId),
+    workDispatchMarker(dispatchId)
+  ];
+  if (!planningContract) {
+    return [...header, "", body].join("\n");
+  }
+  return [
+    ...header,
+    "",
+    "WORK_EXECUTION_CONTRACT_V1",
+    "Chỉ thực hiện đúng task_id được giao trong envelope này.",
+    "Không tự quyết định roadmap, không tự mở rộng sang task khác và không tự bắt đầu task tiếp theo.",
+    "Hoàn tất đúng DoD/evidence trong instruction, trả result/evidence rồi DỪNG để Brain VERIFY/ACCEPT/REJECT.",
     "",
     body
   ].join("\n");
@@ -307,7 +421,9 @@ export function buildLaneResultRelay({
       "",
       body,
       "",
-      "Hãy reconcile kết quả này và trả MAGASIN_LANE_DIRECTIVE_V1 tiếp theo cho đúng luồng."
+      "VERIFY kết quả này theo DoD/evidence trước khi lập NEXT PLAN. RESULT_RELAY_CONFIRMED chỉ là transport fact, không tự động là ACCEPT.",
+      `Nếu hỗ trợ planning contract, directive tiếp theo thêm previous_result={"task_id":"${taskId}","relay_id":"${relayId}","verdict":"ACCEPT|REJECT","reason_code":"ALLOWLISTED_CODE"}.`,
+      "Sau ACCEPT có thể trả dependency-correct WORK hoặc IDLE. Sau REJECT chỉ trả correction cùng task_id, hoặc WORK có correction_of={task_id,relay_id} trỏ đúng result bị reject; nếu cần Owner thì IDLE. Không gửi prose ngoài directive khi Robot polling."
     ].join("\n")
   };
 }
