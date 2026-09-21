@@ -33,12 +33,12 @@ function exhaustedLatch() {
   };
 }
 
-test("TASK-RBT-005A relay rearm remains canonical after v59 Control Panel observability bump", async () => {
+test("TASK-RBT-005A relay rearm remains canonical after v60 Brain planning contract bump", async () => {
   const runtime = await fs.readFile(
     new URL("../src/runtime/three-lane-cli.mjs", import.meta.url),
     "utf8"
   );
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.59"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.60"/);
   assert.match(runtime, /--relay-rearm-fixture/);
   assert.match(runtime, /relay-rearm-acceptance-cli\.mjs/);
 });
