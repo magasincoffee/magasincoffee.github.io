@@ -5,6 +5,33 @@ $stop = Join-Path $root 'STOP'
 $pidFile = Join-Path $root 'supervisor.pid'
 $autostartDisabled = Join-Path $root 'AUTOSTART_DISABLED'
 
+function Test-ProcessAlive([int]$ProcessId) {
+    return [bool](Get-Process -Id $ProcessId -ErrorAction SilentlyContinue)
+}
+
+function Stop-DedicatedProcessTree([int]$ProcessId, [string]$Label) {
+    if (-not (Test-ProcessAlive $ProcessId)) {
+        return
+    }
+
+    & taskkill.exe /PID $ProcessId /T /F | Out-Host
+    $taskkillExit = $LASTEXITCODE
+
+    # taskkill may report a child-exit race even though the root tree is gone.
+    # Root process truth is authoritative; only a surviving root is fatal.
+    for ($i = 0; $i -lt 10; $i++) {
+        if (-not (Test-ProcessAlive $ProcessId)) {
+            if ($taskkillExit -ne 0) {
+                Write-Host "STOP_TASKKILL_RACE_RESOLVED=True label=$Label"
+            }
+            return
+        }
+        Start-Sleep -Milliseconds 200
+    }
+
+    throw "$Label PID $ProcessId is still alive after bounded force-stop."
+}
+
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 Set-Content -Path $stop -Value 'STOP' -Encoding ascii
 Set-Content -Path $autostartDisabled -Value 'OWNER_STOP' -Encoding ascii
@@ -26,7 +53,7 @@ if ($pidValue) {
 
     if (Get-Process -Id $pidValue -ErrorAction SilentlyContinue) {
         Write-Host "Grace period expired; forcing dedicated Supervisor process tree to stop."
-        & taskkill.exe /PID $pidValue /T /F | Out-Host
+        Stop-DedicatedProcessTree -ProcessId ([int]$pidValue) -Label 'Supervisor wrapper'
     }
 }
 
@@ -40,7 +67,7 @@ Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction Silen
     } |
     ForEach-Object {
         Write-Host "Stopping orphaned Supervisor wrapper PID $($_.ProcessId)."
-        & taskkill.exe /PID $_.ProcessId /T /F | Out-Host
+        Stop-DedicatedProcessTree -ProcessId ([int]$_.ProcessId) -Label 'Orphaned Supervisor wrapper'
     }
 
 Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
@@ -49,6 +76,18 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyCon
         Write-Host "Stopping orphaned Supervisor Node PID $($_.ProcessId)."
         Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
     }
+
+$remainingWrapper = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+    Where-Object {
+        $_.CommandLine -and
+        $_.CommandLine -like '*run-supervisor.ps1*' -and
+        $_.CommandLine -like $rootPattern
+    } |
+    Select-Object -First 1
+
+if ($remainingWrapper) {
+    throw "Supervisor STOP refused success because wrapper PID $($remainingWrapper.ProcessId) is still alive."
+}
 
 Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
 Write-Host 'MAGASIN Supervisor stopped. Owner STOP latch disables automatic reboot/logon restart until next explicit START.'

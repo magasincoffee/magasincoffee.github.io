@@ -10,7 +10,10 @@ test("Windows STOP uses cooperative sentinel then bounded forced process-tree ki
 
   assert.match(source, /Set-Content -Path \$stop/);
   assert.match(source, /for \(\$i = 0; \$i -lt 5; \$i\+\+\)/);
-  assert.match(source, /taskkill\.exe \/PID \$pidValue \/T \/F/);
+  assert.match(source, /function Stop-DedicatedProcessTree/);
+  assert.match(source, /taskkill\.exe \/PID \$ProcessId \/T \/F/);
+  assert.match(source, /STOP_TASKKILL_RACE_RESOLVED=True/);
+  assert.match(source, /still alive after bounded force-stop/);
   assert.match(source, /Remove-Item \$pidFile/);
 });
 

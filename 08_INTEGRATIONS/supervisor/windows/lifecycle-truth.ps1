@@ -31,6 +31,24 @@ function Get-LifecycleOwnerStopState([string]$Root = (Get-MagasinSupervisorRoot)
     }
 }
 
+function Clear-LifecycleOwnerStopLatches([string]$Root = (Get-MagasinSupervisorRoot)) {
+    $stopPath = Join-Path $Root 'STOP'
+    $autostartDisabledPath = Join-Path $Root 'AUTOSTART_DISABLED'
+
+    foreach ($path in @($stopPath, $autostartDisabledPath)) {
+        if (Test-Path $path) {
+            Remove-Item $path -Force -ErrorAction Stop
+        }
+    }
+
+    $state = Get-LifecycleOwnerStopState -Root $Root
+    if ($state.blocked) {
+        throw 'Explicit Owner START could not clear STOP/AUTOSTART_DISABLED.'
+    }
+
+    return $state
+}
+
 function Get-LifecycleSupervisorWrapper([string]$Root = (Get-MagasinSupervisorRoot)) {
     return Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
         Where-Object {

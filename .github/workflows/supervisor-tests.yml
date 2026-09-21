@@ -50,6 +50,8 @@ jobs:
         run: node --test test/work-capacity.test.mjs test/work-rollover.test.mjs test/work-rollover-integration.test.mjs
       - name: Run TASK-RBT-006A stale-target quarantine targeted tests
         run: node --test test/target-health.test.mjs test/stale-target-quarantine-integration.test.mjs
+      - name: Run TASK-RBT-006B Owner START latch targeted tests
+        run: node --test test/owner-start-latch-recovery.test.mjs test/lifecycle-truth-v50.test.mjs test/windows-kill-switch.test.mjs
       - name: Run installed-runtime synthetic acceptance fixtures directly
         run: |
           node src/runtime/three-lane-cli.mjs --work-full-fixture

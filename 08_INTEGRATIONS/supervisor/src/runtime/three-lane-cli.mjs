@@ -112,7 +112,7 @@ import {
   targetHealthIdentity
 } from "./target-health.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.57";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.58";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;

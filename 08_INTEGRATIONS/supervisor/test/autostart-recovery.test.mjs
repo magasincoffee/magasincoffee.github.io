@@ -31,7 +31,7 @@ test("manual STOP disables reboot resume while START re-enables it", async () =>
   ]);
 
   assert.match(stop, /Set-Content -Path \$autostartDisabled -Value 'OWNER_STOP'/);
-  assert.match(start, /Remove-Item \$autostartDisabled -Force/);
+  assert.match(start, /Clear-LifecycleOwnerStopLatches -Root \$root/);
 });
 
 test("power-loss recovery keeps the dedicated browser boundary", async () => {

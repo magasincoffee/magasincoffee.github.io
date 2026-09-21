@@ -11,7 +11,8 @@ test("Three-Lane recovery start fail-closes on local Owner STOP instead of repos
   assert.match(source, /\[switch\]\$Recovery/);
   assert.match(source, /Get-LifecycleOwnerStopState/);
   assert.match(source, /RECOVERY_START_BLOCKED_OWNER_STOP=True/);
-  assert.match(source, /Only an explicit Owner START may clear the Owner STOP latches/);
+  assert.match(source, /Explicit Owner START is the sole normal authority/);
+  assert.match(source, /Clear-LifecycleOwnerStopLatches -Root \$root/);
   assert.doesNotMatch(source, /\$projectState\.autonomy -eq 'PAUSED'/);
 });
 
