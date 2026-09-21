@@ -131,18 +131,144 @@ await check("direct_path_still_has_zero_demand_robot_calls",async()=>{
   return [...new Set(names)].join(" → ");
 });
 
-await check("explicit_downstream_review_and_publish_remain_manual",async()=>{
+await check("e2e03_valid_schedule_passes_without_staffing_demand",async()=>{
+  const r=await page.evaluate(()=>globalThis.__MW31_QA.rpc("validate_schedule_generation_v1",{p_generation_id:"gen-1"}));
+  const names=await page.evaluate(()=>globalThis.__MW31_QA.calls.map(x=>x.name).filter(Boolean));
+  if(r.error||!r.data?.valid||names.includes("get_workforce_staffing_requirements"))throw new Error(JSON.stringify({r,names}));
+  return JSON.stringify({valid:r.data.valid,violations:r.data.violation_count,staffingDemandCalls:0});
+});
+
+await check("e2e03_overlap_is_rejected_server_side_without_official_write",async()=>{
+  const r=await page.evaluate(()=>globalThis.__MW31_QA.rpc("replace_schedule_generation_assignments",{p_generation_id:"gen-1",p_assignments:[
+    {user_id:"u-1",store_id:"store-a",work_date:"2026-09-28",start_time:"06:00",end_time:"10:00",status:"DRAFT"},
+    {user_id:"u-1",store_id:"store-a",work_date:"2026-09-28",start_time:"09:00",end_time:"12:00",status:"DRAFT"}
+  ]}));
+  const s=await page.evaluate(()=>({official:globalThis.__MW31_QA.state.official.length,assignments:globalThis.__MW31_QA.state.assignments.length}));
+  if(!r.error?.message.includes("ASSIGNMENT_OVERLAP")||s.official!==0||s.assignments!==2)throw new Error(JSON.stringify({r,s}));
+  return "ASSIGNMENT_OVERLAP · atomic rollback";
+});
+
+await check("e2e03_more_than_two_assignments_per_day_is_rejected",async()=>{
+  const r=await page.evaluate(()=>globalThis.__MW31_QA.rpc("replace_schedule_generation_assignments",{p_generation_id:"gen-1",p_assignments:[
+    {user_id:"u-1",store_id:"store-a",work_date:"2026-09-28",start_time:"06:00",end_time:"08:00",status:"DRAFT"},
+    {user_id:"u-1",store_id:"store-a",work_date:"2026-09-28",start_time:"08:00",end_time:"10:00",status:"DRAFT"},
+    {user_id:"u-1",store_id:"store-a",work_date:"2026-09-28",start_time:"10:00",end_time:"12:00",status:"DRAFT"}
+  ]}));
+  if(!r.error?.message.includes("MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY"))throw new Error(JSON.stringify(r));
+  return "MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY";
+});
+
+await check("e2e03_inactive_and_non_staff_employee_are_rejected",async()=>{
+  const inactive=await page.evaluate(async()=>{
+    globalThis.__MW31_QA.setPersonStatus("u-3","INACTIVE");
+    const r=await globalThis.__MW31_QA.rpc("replace_schedule_generation_assignments",{p_generation_id:"gen-1",p_assignments:[
+      {user_id:"u-3",store_id:"store-a",work_date:"2026-09-29",start_time:"17:00",end_time:"22:00",status:"DRAFT"}
+    ]});
+    globalThis.__MW31_QA.setPersonStatus("u-3","ACTIVE");
+    return r;
+  });
+  const nonStaff=await page.evaluate(async()=>{
+    globalThis.__MW31_QA.setPersonRole("u-3","STORE_MANAGER");
+    const r=await globalThis.__MW31_QA.rpc("replace_schedule_generation_assignments",{p_generation_id:"gen-1",p_assignments:[
+      {user_id:"u-3",store_id:"store-a",work_date:"2026-09-29",start_time:"17:00",end_time:"22:00",status:"DRAFT"}
+    ]});
+    globalThis.__MW31_QA.setPersonRole("u-3","STAFF");
+    return r;
+  });
+  if(!inactive.error?.message.includes("EMPLOYEE_INACTIVE")||!nonStaff.error?.message.includes("EMPLOYEE_NOT_STAFF"))throw new Error(JSON.stringify({inactive,nonStaff}));
+  return "EMPLOYEE_INACTIVE + EMPLOYEE_NOT_STAFF";
+});
+
+await check("e2e03_out_of_week_wrong_store_and_availability_mismatch_fail_closed",async()=>{
+  const results=await page.evaluate(async()=>({
+    out:await globalThis.__MW31_QA.rpc("replace_schedule_generation_assignments",{p_generation_id:"gen-1",p_assignments:[
+      {user_id:"u-1",store_id:"store-a",work_date:"2026-10-05",start_time:"06:00",end_time:"08:00",status:"DRAFT"}
+    ]}),
+    store:await globalThis.__MW31_QA.rpc("replace_schedule_generation_assignments",{p_generation_id:"gen-1",p_assignments:[
+      {user_id:"u-1",store_id:"store-b",work_date:"2026-09-28",start_time:"06:00",end_time:"08:00",status:"DRAFT"}
+    ]}),
+    availability:await globalThis.__MW31_QA.rpc("replace_schedule_generation_assignments",{p_generation_id:"gen-1",p_assignments:[
+      {user_id:"u-1",store_id:"store-a",work_date:"2026-09-28",start_time:"12:00",end_time:"13:00",status:"DRAFT"}
+    ]}),
+    scope:await globalThis.__MW31_QA.rpc("create_schedule_generation",{p_store_id:"store-b",p_week_start:"2026-09-28",p_algorithm_version:"MANAGER_DIRECT_V1"})
+  }));
+  if(!results.out.error?.message.includes("ASSIGNMENT_OUTSIDE_GENERATION_WEEK")||
+     !results.store.error?.message.includes("ASSIGNMENT_STORE_MISMATCH")||
+     !results.availability.error?.message.includes("AVAILABILITY_MISMATCH")||
+     !results.scope.error?.message.includes("STORE_NOT_ALLOWED"))throw new Error(JSON.stringify(results));
+  return "week/store/scope/availability fail closed";
+});
+
+await check("e2e03_malformed_payload_is_rejected_and_manager_gets_diagnostic",async()=>{
+  const malformed=await page.evaluate(()=>globalThis.__MW31_QA.rpc("replace_schedule_generation_assignments",{p_generation_id:"gen-1",p_assignments:[
+    {user_id:"",store_id:"store-a",work_date:"2026-09-28",start_time:"06:00",end_time:"08:00",status:"DRAFT"}
+  ]}));
+  if(!malformed.error?.message.includes("ASSIGNMENT_REQUIRED_FIELDS_MISSING"))throw new Error(JSON.stringify(malformed));
+  await page.evaluate(()=>{
+    globalThis.__MW31_QA.__saved=structuredClone(globalThis.__MW31_QA.state.assignments);
+    globalThis.__MW31_QA.state.assignments=[
+      {id:"bad-1",generation_id:"gen-1",user_id:"u-1",store_id:"store-a",work_date:"2026-09-28",start_time:"06:00",end_time:"10:00",status:"DRAFT"},
+      {id:"bad-2",generation_id:"gen-1",user_id:"u-1",store_id:"store-a",work_date:"2026-09-28",start_time:"09:00",end_time:"12:00",status:"DRAFT"}
+    ];
+  });
+  await page.evaluate(async()=>{await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.validate()});
+  const text=await page.locator("#msdStatus").innerText();
+  await page.evaluate(()=>{globalThis.__MW31_QA.state.assignments=globalThis.__MW31_QA.__saved;delete globalThis.__MW31_QA.__saved});
+  if(!text.includes("ASSIGNMENT_OVERLAP"))throw new Error(text);
+  const official=await page.evaluate(()=>globalThis.__MW31_QA.state.official.length);
+  if(official!==0)throw new Error("official writes="+official);
+  return "server malformed rejection + visible ASSIGNMENT_OVERLAP diagnostic";
+});
+
+await check("e2e05_create_retry_and_legacy_duplicate_draft_fail_closed",async()=>{
+  const r=await page.evaluate(async()=>{
+    const a=await globalThis.__MW31_QA.rpc("create_schedule_generation",{p_store_id:"store-a",p_week_start:"2026-09-28",p_algorithm_version:"MANAGER_DIRECT_V1"});
+    const b=await globalThis.__MW31_QA.rpc("create_schedule_generation",{p_store_id:"store-a",p_week_start:"2026-09-28",p_algorithm_version:"MANAGER_DIRECT_V1"});
+    globalThis.__MW31_QA.setCompeting([{id:"gen-legacy-duplicate",status:"DRAFT",store_id:"store-a",week_start:"2026-09-28",week_end:"2026-10-04",algorithm_version:"RULE_V1"}]);
+    const conflict=await globalThis.__MW31_QA.rpc("create_schedule_generation",{p_store_id:"store-a",p_week_start:"2026-09-28",p_algorithm_version:"MANAGER_DIRECT_V1"});
+    globalThis.__MW31_QA.setCompeting([]);
+    return {a,b,conflict,createCount:globalThis.__MW31_QA.state.createCount};
+  });
+  if(r.a.data!=="gen-1"||r.b.data!=="gen-1"||r.createCount!==1||!r.conflict.error?.message.includes("GENERATION_VERSION_CONFLICT"))throw new Error(JSON.stringify(r));
+  return "retry resumes gen-1; duplicate legacy group -> GENERATION_VERSION_CONFLICT";
+});
+
+await check("e2e05_review_publish_revalidation_and_idempotency",async()=>{
   const pre=await page.evaluate(()=>globalThis.__MW31_QA.calls.length);
   await page.evaluate(async()=>{await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.review()});
   await page.waitForFunction(()=>globalThis.__MW31_QA.state.generation?.status==="REVIEWED");
-  const afterReview=await page.evaluate((pre)=>globalThis.__MW31_QA.calls.slice(pre).map(x=>x.name).filter(Boolean),pre);
-  if(afterReview.filter(x=>x==="review_schedule_generation").length!==1||afterReview.includes("publish_schedule_generation"))throw new Error(JSON.stringify(afterReview));
+  await page.evaluate(async()=>{await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.review()});
+  const reviewed=await page.evaluate(()=>({status:globalThis.__MW31_QA.state.generation.status,transitions:globalThis.__MW31_QA.state.reviewTransitions,official:globalThis.__MW31_QA.state.official.length}));
+  if(reviewed.status!=="REVIEWED"||reviewed.transitions!==1||reviewed.official!==0)throw new Error(JSON.stringify(reviewed));
+
+  await page.evaluate(()=>globalThis.__MW31_QA.setPersonStatus("u-1","INACTIVE"));
+  page.once("dialog",d=>d.accept());
+  await page.evaluate(async()=>{await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.publish()});
+  await page.waitForFunction(()=>globalThis.__MW31_QA.state.generation?.status==="DRAFT");
+  const failed=await page.evaluate(()=>({official:globalThis.__MW31_QA.state.official.length,publishFailures:globalThis.__MW31_QA.state.publishFailures,status:globalThis.__MW31_QA.state.generation.status}));
+  if(failed.official!==0||failed.publishFailures!==1||failed.status!=="DRAFT")throw new Error(JSON.stringify(failed));
+
+  await page.evaluate(()=>globalThis.__MW31_QA.setPersonStatus("u-1","ACTIVE"));
+  await page.evaluate(async()=>{await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.review()});
+  await page.waitForFunction(()=>globalThis.__MW31_QA.state.generation?.status==="REVIEWED");
   page.once("dialog",d=>d.accept());
   await page.evaluate(async()=>{await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.publish()});
   await page.waitForFunction(()=>globalThis.__MW31_QA.state.generation?.status==="PUBLISHED");
-  const state=await page.evaluate(()=>({status:globalThis.__MW31_QA.state.generation.status,official:globalThis.__MW31_QA.state.official.length}));
-  if(state.status!=="PUBLISHED"||state.official!==2)throw new Error(JSON.stringify(state));
-  return JSON.stringify(state);
+  const first=await page.evaluate(()=>({official:globalThis.__MW31_QA.state.official.length,inserts:globalThis.__MW31_QA.state.officialInsertCount,publishTransitions:globalThis.__MW31_QA.state.publishTransitions}));
+  await page.evaluate(async()=>{await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.publish()});
+  const retry=await page.evaluate(()=>({
+    status:globalThis.__MW31_QA.state.generation.status,
+    official:globalThis.__MW31_QA.state.official.length,
+    inserts:globalThis.__MW31_QA.state.officialInsertCount,
+    publishTransitions:globalThis.__MW31_QA.state.publishTransitions,
+    lastPublish:globalThis.__MW31_QA.calls.filter(x=>x.name==="publish_schedule_generation").at(-1)
+  }));
+  const competing=await page.evaluate(()=>globalThis.__MW31_QA.rpc("create_schedule_generation",{p_store_id:"store-a",p_week_start:"2026-09-28",p_algorithm_version:"OTHER_V1"}));
+  const afterReview=await page.evaluate((pre)=>globalThis.__MW31_QA.calls.slice(pre).map(x=>x.name).filter(Boolean),pre);
+  if(first.official!==2||first.inserts!==2||first.publishTransitions!==1||
+     retry.status!=="PUBLISHED"||retry.official!==2||retry.inserts!==2||retry.publishTransitions!==1||
+     !competing.error?.message.includes("GENERATION_ALREADY_PUBLISHED"))throw new Error(JSON.stringify({first,retry,competing,afterReview}));
+  return JSON.stringify({reviewRetryTransitions:1,failedPublish:failed,published:first,idempotentRetry:retry.official,competing:competing.error.message});
 });
 
 await check("official_workspace_reads_published_schedule",async()=>{

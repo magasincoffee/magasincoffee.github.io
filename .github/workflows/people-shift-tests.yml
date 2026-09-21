@@ -8,6 +8,7 @@ on:
       - '05_MANAGER/runtime/**'
       - '05_MANAGER/Lich-lam/**'
       - '06_EMPLOYEE/**'
+      - '07_DATABASE/migrations/**'
       - '02_CORE/contracts/people-shift-gap-plan.v1.json'
       - '09_QA/business-os/people-shift-gap-plan.test.mjs'
       - '09_QA/people-shift/**'
@@ -21,6 +22,7 @@ on:
       - '05_MANAGER/runtime/**'
       - '05_MANAGER/Lich-lam/**'
       - '06_EMPLOYEE/**'
+      - '07_DATABASE/migrations/**'
       - '02_CORE/contracts/people-shift-gap-plan.v1.json'
       - '09_QA/business-os/people-shift-gap-plan.test.mjs'
       - '09_QA/people-shift/**'
@@ -52,7 +54,8 @@ jobs:
         run: |
           node --test \
             09_QA/business-os/five-step-schedule-first.test.mjs \
-            09_QA/business-os/schedule-first-flow.test.mjs
+            09_QA/business-os/schedule-first-flow.test.mjs \
+            09_QA/business-os/published-schedule-feedback-loop.test.mjs
 
       - name: Run People Shift regression tests
         run: node --test 09_QA/people-shift/*.test.mjs

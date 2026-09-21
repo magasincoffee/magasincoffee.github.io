@@ -22,6 +22,34 @@ let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignment
 const panel=()=>document.querySelector('#panel-publish');
 function client(){if(sb)return sb;if(!window.supabase?.createClient)throw new Error('SUPABASE_CLIENT_NOT_READY');sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});return sb}
 function status(text,type=''){const e=panel()?.querySelector('#msdStatus');if(!e)return;e.className='msd-status'+(type?' '+type:'');e.textContent=text||''}
+function errorText(e){
+ const raw=String(e?.message||e?.code||e||'UNKNOWN');
+ const known=[
+  ['GENERATION_VERSION_CONFLICT','Có nhiều lịch nháp đang tồn tại cho cùng cửa hàng/tuần. Hệ thống đã khóa thao tác để tránh ghi đè.'],
+  ['GENERATION_ALREADY_REVIEWED','Tuần này đã có lịch ở trạng thái REVIEWED. Không tạo thêm lịch nháp mới.'],
+  ['GENERATION_ALREADY_PUBLISHED','Tuần này đã được Publish. Không tạo thêm lịch cạnh tranh.'],
+  ['COMPETING_GENERATION_EXISTS','Có lịch cạnh tranh cho cùng cửa hàng/tuần. Cần xử lý phiên bản trước khi tiếp tục.'],
+  ['OFFICIAL_STORE_WEEK_ALREADY_EXISTS','Cửa hàng/tuần này đã có lịch chính thức; không được append lịch mới im lặng.'],
+  ['ASSIGNMENT_OVERLAP','Một nhân viên đang bị xếp ca trùng giờ.'],
+  ['MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY','Một nhân viên vượt quá tối đa 2 ca trong ngày.'],
+  ['EMPLOYEE_INACTIVE','Nhân viên không còn ACTIVE.'],
+  ['EMPLOYEE_NOT_STAFF','Người được chọn không thuộc vai trò STAFF đủ điều kiện xếp ca.'],
+  ['ASSIGNMENT_OUTSIDE_GENERATION_WEEK','Ca nằm ngoài tuần Monday→Sunday đang xếp.'],
+  ['ASSIGNMENT_STORE_MISMATCH','Ca không thuộc cửa hàng của lịch nháp.'],
+  ['STORE_NOT_ALLOWED','Tài khoản không có quyền trên cửa hàng này.'],
+  ['STORE_NOT_ACTIVE','Cửa hàng không còn ACTIVE.'],
+  ['AVAILABILITY_MISMATCH','Ca không nằm trọn trong availability AVAILABLE/PREFERRED của nhân viên.'],
+  ['OFFICIAL_SCHEDULE_OVERLAP','Ca bị trùng với lịch PENDING/APPROVED hiện hữu.'],
+  ['ASSIGNMENT_PAYLOAD_MALFORMED','Dữ liệu ca gửi lên server không hợp lệ.'],
+  ['ASSIGNMENT_REQUIRED_FIELDS_MISSING','Dữ liệu ca còn thiếu trường bắt buộc.'],
+  ['ASSIGNMENT_EMPLOYEE_NOT_FOUND','Không tìm thấy nhân viên hợp lệ.'],
+  ['GENERATION_NOT_DRAFT','Lịch không còn ở DRAFT nên không thể sửa.'],
+  ['GENERATION_MUST_BE_REVIEWED','Lịch phải ở REVIEWED trước khi Publish.'],
+  ['GENERATION_VALIDATION_FAILED','Lịch chưa đạt validation nên chưa thể duyệt.']
+ ];
+ const hit=known.find(([code])=>raw.includes(code));
+ return hit?hit[1]+' ('+hit[0]+')':raw;
+}
 function activate(){const view=document.querySelector('#view-workforce');if(!view)return;view.querySelectorAll('.tabs button[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab==='publish'));view.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-publish'))}
 const availTypeOk=r=>['AVAILABLE','PREFERRED'].includes(String(r.availability_type||'').toUpperCase());
 const availCovers=(r,a)=>String(r.work_date).slice(0,10)===String(a.work_date).slice(0,10)&&mins(r.start_time)<=mins(a.start_time)&&mins(r.end_time)>=mins(a.end_time)&&availTypeOk(r);
@@ -79,34 +107,38 @@ async function resumeOnly(){
   await loadAvailability();
   const drafts=await listDrafts();
   state.duplicateDrafts=Math.max(0,drafts.length-1);
-  if(drafts.length){
+  if(drafts.length>1){
+   state.generationId=null;state.generationStatus='CONFLICT';state.generationOrigin=null;state.assignments=[];
+   render();status('Có '+drafts.length+' DRAFT cùng store/week. Hệ thống fail-closed; không tự chọn hoặc ghi đè bản nào.','error');return;
+  }
+  if(drafts.length===1){
    const d=drafts[0];state.generationId=d.id;state.generationStatus='DRAFT';state.generationOrigin=d.algorithm_version||'UNKNOWN';
    await loadDraftAssignments();
   }else{
    state.generationId=null;state.generationStatus='NONE';state.generationOrigin=null;state.assignments=[];
   }
   render();
- }catch(e){render();status('Không tải được bảng xếp lịch: '+(e.message||e.code||e),'error')}
+ }catch(e){render();status('Không tải được bảng xếp lịch: '+errorText(e),'error')}
  finally{state.busy=false}
 }
 async function startOrResume(){
  if(state.busy||!state.storeId||!state.week)return;
- state.busy=true;status('Đang mở lịch nháp…');
+ state.busy=true;status('Đang tạo/resume lịch nháp qua server gate…');
  try{
-  const drafts=await listDrafts();
-  state.duplicateDrafts=Math.max(0,drafts.length-1);
-  if(drafts.length){
-   state.generationId=drafts[0].id;state.generationStatus='DRAFT';state.generationOrigin=drafts[0].algorithm_version||'UNKNOWN';
-  }else{
-   const q=await client().rpc('create_schedule_generation',{p_store_id:state.storeId,p_week_start:state.week,p_algorithm_version:'MANAGER_DIRECT_V1'});
-   if(q.error)throw q.error;
-   if(!q.data)throw new Error('DIRECT_DRAFT_ID_MISSING');
-   state.generationId=q.data;state.generationStatus='DRAFT';state.generationOrigin='MANAGER_DIRECT_V1';
-  }
+  const q=await client().rpc('create_schedule_generation',{p_store_id:state.storeId,p_week_start:state.week,p_algorithm_version:'MANAGER_DIRECT_V1'});
+  if(q.error)throw q.error;
+  if(!q.data)throw new Error('DIRECT_DRAFT_ID_MISSING');
+  state.generationId=q.data;state.generationStatus='DRAFT';state.duplicateDrafts=0;
+  const listed=await client().rpc('list_schedule_generations',{p_store_id:state.storeId,p_week_start:state.week});
+  if(listed.error)throw listed.error;
+  const run=(Array.isArray(listed.data)?listed.data:[]).find(x=>String(x.id)===String(state.generationId));
+  state.generationOrigin=run?.algorithm_version||'MANAGER_DIRECT_V1';
   await Promise.all([loadAvailability(),loadDraftAssignments()]);
-  render();status(drafts.length?'Đã tiếp tục lịch nháp hiện có.':'Đã tạo lịch nháp trực tiếp cho Manager.','ok');
- }catch(e){status('Không thể tạo/mở lịch nháp: '+(e.message||e.code||e),'error')}
- finally{state.busy=false}
+  render();status('Server đã tạo hoặc resume đúng một DRAFT canonical.','ok');
+ }catch(e){
+  state.generationId=null;state.generationStatus='CONFLICT';state.assignments=[];
+  render();status('Không thể tạo/resume lịch nháp: '+errorText(e),'error');
+ } finally{state.busy=false}
 }
 function sourceHtml(){
  if(!state.availability.length)return '<div class="msd-empty">Không có availability cho cửa hàng/tuần này.</div>';
@@ -122,7 +154,7 @@ function render(){
  if(!document.getElementById('manager-schedule-draft-editor-css'))document.head.insertAdjacentHTML('beforeend',css);
  activate();
  const store=selectedStore(),stage=String(state.generationStatus||'NONE').toUpperCase();
- p.innerHTML=`<section class="card msd"><div class="msd-head"><div><h2 style="margin:0">Xếp lịch tuần · Manager Direct</h2><div class="muted" style="margin-top:5px">Availability → lịch nháp · không cần staffing demand hoặc Robot để bắt đầu.</div></div><div class="msd-actions"><select class="btn" id="msdStore">${state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId)?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}</select><button class="btn" data-msd-week="prev">←</button><button class="btn" data-msd-week="target">Tuần sau</button><button class="btn" data-msd-week="next">→</button><span class="badge blue">${esc(state.week||'—')}</span><button class="btn" id="msdStart">${state.generationId?'Mở lại draft':'Tạo lịch nháp'}</button><button class="btn" id="msdReload">Tải lại</button><button class="btn primary" id="msdSave"${stage==='DRAFT'?'':' disabled'}>Lưu draft</button></div></div><div class="msd-summary"><span class="msd-pill">${esc(store?.code||'—')}</span><span class="msd-pill">${state.availability.length} availability</span><span class="msd-pill">${state.assignments.length} assignment</span><span class="msd-pill ${stage==='DRAFT'?'msd-ok':''}">${esc(stage)}</span><span class="msd-pill">Manager direct</span>${state.duplicateDrafts?`<span class="msd-pill msd-warning">Có ${state.duplicateDrafts+1} DRAFT cùng store/week · đang resume bản mới nhất</span>`:''}</div><div class="msd-layout"><div class="msd-source"><b>Employee Availability</b><div class="muted" style="margin-top:4px">Nguồn đăng ký của nhân viên · bấm Thêm để tạo assignment trong draft.</div>${sourceHtml()}</div><div class="msd-board-wrap"><b>Monday → Sunday Schedule Board</b><div class="muted" style="margin:4px 0 10px">Generation ${esc(state.generationId||'chưa tạo')} · origin ${esc(state.generationOrigin||'—')}</div>${boardHtml()}</div></div><details class="msd-downstream"><summary>Review / Publish hiện hữu — downstream, không phải prerequisite để tạo/lưu draft</summary><div class="msd-actions" style="margin-top:9px"><button class="btn" id="msdValidate"${state.generationId?'':' disabled'}>Kiểm tra hiện tại</button><button class="btn" id="msdReview"${stage==='DRAFT'?'':' disabled'}>Duyệt lịch</button><button class="btn" id="msdPublish"${stage==='REVIEWED'?'':' disabled'}>Publish lịch</button></div></details><div id="msdStatus" class="msd-status">${state.generationId?'Draft đã sẵn sàng chỉnh sửa.':'Chọn cửa hàng/tuần rồi tạo hoặc resume lịch nháp.'}</div></section>`;
+ p.innerHTML=`<section class="card msd"><div class="msd-head"><div><h2 style="margin:0">Xếp lịch tuần · Manager Direct</h2><div class="muted" style="margin-top:5px">Availability → lịch nháp · không cần staffing demand hoặc Robot để bắt đầu.</div></div><div class="msd-actions"><select class="btn" id="msdStore">${state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId)?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}</select><button class="btn" data-msd-week="prev">←</button><button class="btn" data-msd-week="target">Tuần sau</button><button class="btn" data-msd-week="next">→</button><span class="badge blue">${esc(state.week||'—')}</span><button class="btn" id="msdStart">${state.generationId?'Mở lại draft':'Tạo lịch nháp'}</button><button class="btn" id="msdReload">Tải lại</button><button class="btn primary" id="msdSave"${stage==='DRAFT'?'':' disabled'}>Lưu draft</button></div></div><div class="msd-summary"><span class="msd-pill">${esc(store?.code||'—')}</span><span class="msd-pill">${state.availability.length} availability</span><span class="msd-pill">${state.assignments.length} assignment</span><span class="msd-pill ${stage==='DRAFT'?'msd-ok':''}">${esc(stage)}</span><span class="msd-pill">Manager direct</span>${state.duplicateDrafts?`<span class="msd-pill msd-warning">Có ${state.duplicateDrafts+1} DRAFT cùng store/week · FAIL-CLOSED</span>`:''}</div><div class="msd-layout"><div class="msd-source"><b>Employee Availability</b><div class="muted" style="margin-top:4px">Nguồn đăng ký của nhân viên · bấm Thêm để tạo assignment trong draft.</div>${sourceHtml()}</div><div class="msd-board-wrap"><b>Monday → Sunday Schedule Board</b><div class="muted" style="margin:4px 0 10px">Generation ${esc(state.generationId||'chưa tạo')} · origin ${esc(state.generationOrigin||'—')}</div>${boardHtml()}</div></div><details class="msd-downstream"><summary>Review / Publish hiện hữu — downstream, không phải prerequisite để tạo/lưu draft</summary><div class="msd-actions" style="margin-top:9px"><button class="btn" id="msdValidate"${state.generationId?'':' disabled'}>Kiểm tra hiện tại</button><button class="btn" id="msdReview"${stage==='DRAFT'?'':' disabled'}>Duyệt lịch</button><button class="btn" id="msdPublish"${stage==='REVIEWED'?'':' disabled'}>Publish lịch</button></div></details><div id="msdStatus" class="msd-status">${state.generationId?'Draft đã sẵn sàng chỉnh sửa.':'Chọn cửa hàng/tuần rồi tạo hoặc resume lịch nháp.'}</div></section>`;
  bind();
 }
 function syncRowsFromDom(){
@@ -146,27 +178,51 @@ async function save(){
   const q=await client().rpc('replace_schedule_generation_assignments',{p_generation_id:state.generationId,p_assignments:payload});
   if(q.error)throw q.error;
   await loadDraftAssignments();render();status(`Đã lưu ${Number(q.data??payload.length)} assignment. Không auto-review, không auto-publish.`,'ok');
- }catch(e){status('Lưu draft thất bại: '+(e.message||e.code||e),'error')}
+ }catch(e){status('Lưu draft thất bại: '+errorText(e),'error')}
  finally{state.busy=false}
 }
 async function validate(){
  if(!state.generationId)return;
- status('Đang chạy validation hiện hữu…');
+ status('Đang chạy canonical server validation…');
  const q=await client().rpc('validate_schedule_generation_v1',{p_generation_id:state.generationId});
- if(q.error){status('Validation thất bại: '+(q.error.message||q.error.code||'UNKNOWN'),'error');return q}
+ if(q.error){status('Validation thất bại: '+errorText(q.error),'error');return q}
  const violations=Array.isArray(q.data?.violations)?q.data.violations:[],warnings=Array.isArray(q.data?.warnings)?q.data.warnings:[];
- status(`${q.data?.valid?'✓':'✗'} validation hiện hữu · ${violations.length} lỗi · ${warnings.length} cảnh báo`,q.data?.valid?'ok':'error');return q
+ const lines=[(q.data?.valid?'✓':'✗')+' Canonical validation · '+violations.length+' lỗi · '+warnings.length+' cảnh báo'];
+ if(violations.length)lines.push(...violations.slice(0,8).map(x=>'• '+String(x?.code||'UNKNOWN_VIOLATION')));
+ if(warnings.length)lines.push(...warnings.slice(0,5).map(x=>'⚠ '+String(x?.code||'UNKNOWN_WARNING')));
+ status(lines.join('\n'),q.data?.valid?'ok':'error');return q
 }
 async function review(){
- if(state.busy||!state.generationId||state.generationStatus!=='DRAFT')return;
- state.busy=true;status('Đang duyệt lịch qua RPC hiện hữu…');
- try{const q=await client().rpc('review_schedule_generation',{p_generation_id:state.generationId,p_decision:'APPROVED'});if(q.error)throw q.error;state.generationStatus=q.data?.status||'REVIEWED';render();status('Đã chuyển sang REVIEWED.','ok')}catch(e){status('Duyệt lịch thất bại: '+(e.message||e.code||e),'error')}finally{state.busy=false}
+ if(state.busy||!state.generationId||!['DRAFT','REVIEWED'].includes(state.generationStatus))return;
+ state.busy=true;status('Đang revalidate và duyệt lịch trên server…');
+ try{
+  const q=await client().rpc('review_schedule_generation',{p_generation_id:state.generationId,p_decision:'APPROVED'});
+  if(q.error)throw q.error;
+  state.generationStatus=q.data?.status||'REVIEWED';
+  render();status(q.data?.already_reviewed?'Lịch đã ở REVIEWED; retry không tạo side effect mới.':'Đã revalidate và chuyển sang REVIEWED.','ok');
+ }catch(e){status('Duyệt lịch thất bại: '+errorText(e),'error')}finally{state.busy=false}
 }
 async function publish(){
- if(state.busy||!state.generationId||state.generationStatus!=='REVIEWED')return;
- if(!confirm('Phát hành lịch REVIEWED thành lịch chính thức APPROVED?'))return;
- state.busy=true;status('Đang phát hành lịch chính thức…');
- try{const q=await client().rpc('publish_schedule_generation',{p_generation_id:state.generationId});if(q.error)throw q.error;if(!q.data?.published)throw new Error(q.data?.error_code||'PUBLISH_NOT_COMPLETED');state.generationStatus='PUBLISHED';const detail={generationId:state.generationId,storeId:state.storeId,weekStart:state.week,insertedScheduleCount:Number(q.data.inserted_schedule_count||0)};document.dispatchEvent(new CustomEvent('magasin:schedule-published',{detail}));render();status('Đã phát hành '+detail.insertedScheduleCount+' ca chính thức.','ok')}catch(e){status('Publish thất bại: '+(e.message||e.code||e),'error')}finally{state.busy=false}
+ if(state.busy||!state.generationId||!['REVIEWED','PUBLISHED'].includes(state.generationStatus))return;
+ if(state.generationStatus==='REVIEWED'&&!confirm('Phát hành lịch REVIEWED thành lịch chính thức APPROVED?'))return;
+ state.busy=true;status(state.generationStatus==='PUBLISHED'?'Đang kiểm tra retry Publish idempotent…':'Đang revalidate và phát hành lịch chính thức…');
+ try{
+  const q=await client().rpc('publish_schedule_generation',{p_generation_id:state.generationId});
+  if(q.error)throw q.error;
+  if(!q.data?.published){
+   state.generationStatus=q.data?.status||'DRAFT';
+   render();
+   const violations=Array.isArray(q.data?.validation?.violations)?q.data.validation.violations:[];
+   status('Publish bị chặn sau revalidation: '+(violations.map(x=>x.code).join(', ')||q.data?.error_code||'PUBLISH_NOT_COMPLETED'),'error');
+   return q;
+  }
+  state.generationStatus='PUBLISHED';
+  const detail={generationId:state.generationId,storeId:state.storeId,weekStart:state.week,insertedScheduleCount:Number(q.data.inserted_schedule_count||0)};
+  if(!q.data?.already_published)document.dispatchEvent(new CustomEvent('magasin:schedule-published',{detail}));
+  render();
+  status(q.data?.already_published?'Lịch đã được Publish trước đó; retry idempotent, không tạo ca trùng.':'Đã phát hành '+detail.insertedScheduleCount+' ca chính thức.','ok');
+  return q;
+ }catch(e){status('Publish thất bại: '+errorText(e),'error')}finally{state.busy=false}
 }
 function bind(){
  const p=panel();if(!p)return;
