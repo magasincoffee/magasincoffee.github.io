@@ -16,6 +16,8 @@ on:
       - '.github/workflows/supervisor-autostart-install.yml'
       - '.github/workflows/supervisor-lifecycle-acceptance.yml'
       - '.github/scripts/supervisor-rbt009-soak.ps1'
+      - '.github/scripts/supervisor-rbt009-soak-lib.ps1'
+      - '.github/scripts/supervisor-rbt009-soak-strictmode-tests.ps1'
       - '.github/scripts/supervisor-release-event-validator.mjs'
   pull_request:
     paths:
@@ -24,6 +26,11 @@ on:
       - '.github/workflows/supervisor-tests.yml'
       - '.github/workflows/supervisor-state-maintenance.yml'
       - '.github/scripts/supervisor-state-maintenance-regression.ps1'
+      - '.github/scripts/supervisor-rbt009-soak.ps1'
+      - '.github/scripts/supervisor-rbt009-soak-lib.ps1'
+      - '.github/scripts/supervisor-rbt009-soak-strictmode-tests.ps1'
+      - '.github/scripts/supervisor-release-event-validator.mjs'
+      - '.github/workflows/supervisor-rbt009-soak.yml'
   workflow_dispatch:
 
 permissions:
@@ -72,6 +79,8 @@ jobs:
           node src/runtime/brain-planning-acceptance-cli.mjs
       - name: Run TASK-RBT-009 deterministic release matrix
         run: node --test test/release-integration-matrix.test.mjs
+      - name: Run TASK-RBT-009A StrictMode soak monitor matrix in Windows PowerShell 5.1
+        run: powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "$env:GITHUB_WORKSPACE\.github\scripts\supervisor-rbt009-soak-strictmode-tests.ps1"
       - name: Run Supervisor unit tests
         run: npm test
       - name: Run TASK-RBT-002B state maintenance gate regressions
