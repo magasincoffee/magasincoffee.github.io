@@ -1,0 +1,149 @@
+name: New PC Runtime Regression V2
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-runtime-regression-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 18e6d5025429cb1aaee986a8033d8b47169a54c3
+          fetch-depth: 1
+
+      - name: Capture production target fingerprint
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $config = Join-Path $root "lanes.json"
+
+          if (-not (Test-Path (Join-Path $root "STOP"))) { throw "STOP latch missing." }
+          if (-not (Test-Path (Join-Path $root "AUTOSTART_DISABLED"))) { throw "AUTOSTART_DISABLED latch missing." }
+          if (-not (Test-Path $config)) { throw "lanes.json missing." }
+
+          $cfg = Get-Content $config -Raw -Encoding UTF8 | ConvertFrom-Json
+          if (@($cfg.lanes | Where-Object { $_.enabled }).Count -ne 0) {
+            throw "Regression requires all lanes disabled."
+          }
+
+          $canonical = @($cfg.lanes | Sort-Object lane_id | ForEach-Object {
+            "$([string]$_.lane_id)|$([string]$_.brain_url)|$([int]$_.brain_url_revision)|$([string]$_.work_url)|$([int]$_.work_url_revision)"
+          }) -join [Environment]::NewLine
+
+          $bytes = [Text.Encoding]::UTF8.GetBytes($canonical)
+          $sha = [Security.Cryptography.SHA256]::Create()
+          try {
+            $fp = ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace("-","").ToLowerInvariant()
+          } finally {
+            $sha.Dispose()
+          }
+
+          "TARGET_FP=$fp" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "REGRESSION_PRECONDITION_STOPPED=True"
+          Write-Host "REGRESSION_PRECONDITION_ALL_LANES_DISABLED=True"
+
+      - name: Install source dependencies
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { throw "npm install failed." }
+
+      - name: Run targeted release regression matrix
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          node --test test/lane-events.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "lane-events tests failed." }
+
+          node --test test/browser-scheduler.test.mjs test/browser-scheduler-integration.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "browser scheduler tests failed." }
+
+          node --test test/work-watchdog.test.mjs test/work-watchdog-integration.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "work watchdog tests failed." }
+
+          node --test test/relay-retry-v48.test.mjs test/relay-rearm-recovery.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "relay retry tests failed." }
+
+          node --test test/work-capacity.test.mjs test/work-rollover.test.mjs test/work-rollover-integration.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "work rollover tests failed." }
+
+          node --test test/target-health.test.mjs test/stale-target-quarantine-integration.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "target health tests failed." }
+
+          node --test test/owner-start-latch-recovery.test.mjs test/lifecycle-truth-v50.test.mjs test/windows-kill-switch.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "lifecycle tests failed." }
+
+          node --test test/control-panel-status-projection.test.mjs test/control-panel-observability-integration.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "control panel tests failed." }
+
+          node --test test/brain-planning-contract.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "brain planning tests failed." }
+
+          node --test test/release-integration-matrix.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "release integration matrix failed." }
+
+          Write-Host "NEW_PC_TARGETED_RELEASE_REGRESSION=True"
+
+      - name: Run complete Supervisor unit suite
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          npm test
+          if ($LASTEXITCODE -ne 0) { throw "Complete Supervisor test suite failed." }
+          Write-Host "NEW_PC_COMPLETE_UNIT_SUITE=True"
+
+      - name: Run installed-style synthetic fixture CLIs
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          node src/runtime/three-lane-cli.mjs --work-full-fixture
+          if ($LASTEXITCODE -ne 0) { throw "Work-full fixture failed." }
+
+          node src/runtime/three-lane-cli.mjs --stale-target-fixture
+          if ($LASTEXITCODE -ne 0) { throw "Stale-target fixture failed." }
+
+          node src/runtime/brain-planning-acceptance-cli.mjs
+          if ($LASTEXITCODE -ne 0) { throw "Brain planning acceptance failed." }
+
+          Write-Host "NEW_PC_SYNTHETIC_FIXTURES=True"
+
+      - name: Verify production state unchanged
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $config = Join-Path $root "lanes.json"
+          $cfg = Get-Content $config -Raw -Encoding UTF8 | ConvertFrom-Json
+
+          $canonical = @($cfg.lanes | Sort-Object lane_id | ForEach-Object {
+            "$([string]$_.lane_id)|$([string]$_.brain_url)|$([int]$_.brain_url_revision)|$([string]$_.work_url)|$([int]$_.work_url_revision)"
+          }) -join [Environment]::NewLine
+
+          $bytes = [Text.Encoding]::UTF8.GetBytes($canonical)
+          $sha = [Security.Cryptography.SHA256]::Create()
+          try {
+            $after = ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace("-","").ToLowerInvariant()
+          } finally {
+            $sha.Dispose()
+          }
+
+          if ($after -ne $env:TARGET_FP) { throw "Production target fingerprint changed during regression." }
+          if (@($cfg.lanes | Where-Object { $_.enabled }).Count -ne 0) { throw "Lane enable state changed during regression." }
+          if (-not (Test-Path (Join-Path $root "STOP"))) { throw "STOP latch changed during regression." }
+          if (-not (Test-Path (Join-Path $root "AUTOSTART_DISABLED"))) { throw "AUTOSTART_DISABLED latch changed during regression." }
+
+          Write-Host "NEW_PC_PRODUCTION_TARGETS_UNCHANGED=True"
+          Write-Host "NEW_PC_OWNER_STOP_PRESERVED=True"
+          Write-Host "NEW_PC_RUNTIME_REGRESSION_COMPLETE=True"
