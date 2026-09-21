@@ -174,13 +174,13 @@ Canonical architecture: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md`
 Execution plan: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md`  
 E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 
-> Architecture is Owner-approved. Owner released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090 reconciliation is DONE with evidence at 05_SYSTEM/TASK_090_WORKFORCE_V1_CURRENT_SYSTEM_RECONCILIATION.md. TASK-091 is READY / MANUAL_WORK but MUST NOT auto-run; TASK-092→108 remain staged until Brain accepts each prior result. Current PFC queue remains independently authoritative.
+> Architecture is Owner-approved. Owner released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090 is DONE. TASK-091 canonical state/rule contract is DONE with evidence at 05_SYSTEM/TASK_091_WORKFORCE_V1_CANONICAL_STATE_RULE_CONTRACT.md. TASK-092 is READY / MANUAL_WORK but MUST NOT auto-run; TASK-093→108 remain staged until Brain accepts each prior result. Current PFC queue remains independently authoritative.
 
 | ID | Task | Est. | Gate | Status |
 |---|---|---:|---|---|
 | TASK-090 | Workforce V1 Current-System Reconciliation | 20m | reuse/delete map + no duplicate path | DONE |
-| TASK-091 | Workforce V1 Canonical State + Rule Contract | 20m | state/role/rule contract | READY / MANUAL_WORK |
-| TASK-092 | Availability Weekly Cycle Hardening | 20m | next-week registration tests | STAGED / WAIT_OWNER_RELEASE |
+| TASK-091 | Workforce V1 Canonical State + Rule Contract | 20m | state/role/rule contract | DONE |
+| TASK-092 | Availability Weekly Cycle Hardening | 20m | next-week registration tests | READY / MANUAL_WORK |
 | TASK-093 | Manager Sunday Schedule Board V1 | 20m | Manager scheduling browser gate | STAGED / WAIT_OWNER_RELEASE |
 | TASK-094 | Schedule Validation + Publish Gate | 20m | overlap/max-2/scope/publish regression | STAGED / WAIT_OWNER_RELEASE |
 | TASK-095 | Employee Published Weekly Schedule V1 | 20m | publish→employee visibility E2E | STAGED / WAIT_OWNER_RELEASE |
