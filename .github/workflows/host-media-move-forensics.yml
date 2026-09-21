@@ -1,0 +1,94 @@
+name: Host Media Move Forensics
+
+on:
+  push:
+    branches:
+      - diagnostics/host-health-20260921
+    paths:
+      - ".github/workflows/host-media-move-forensics.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  forensic:
+    runs-on: self-hosted
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect Desktop and archive state read-only
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Continue"
+          $desktop = Join-Path $env:USERPROFILE "Desktop"
+          $archive = "D:\MAGASIN_ARCHIVE"
+
+          Write-Host "===== DESKTOP EXTENSION TOTALS ====="
+          Get-ChildItem -LiteralPath $desktop -File -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object { -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) } |
+            Group-Object Extension |
+            ForEach-Object {
+              $sum = ($_.Group | Measure-Object Length -Sum).Sum
+              [pscustomobject]@{
+                Extension = if ([string]::IsNullOrWhiteSpace($_.Name)) { "<no-ext>" } else { $_.Name.ToLowerInvariant() }
+                Count = $_.Count
+                SizeGB = [math]::Round($sum/1GB,2)
+              }
+            } |
+            Sort-Object SizeGB -Descending |
+            Select-Object -First 30 |
+            Format-Table -AutoSize
+
+          Write-Host "===== ARCHIVE TREE SUMMARY ====="
+          if (Test-Path -LiteralPath $archive) {
+            Get-ChildItem -LiteralPath $archive -Directory -Force -ErrorAction SilentlyContinue |
+              ForEach-Object {
+                $files = @(Get-ChildItem -LiteralPath $_.FullName -File -Recurse -Force -ErrorAction SilentlyContinue)
+                $sum = ($files | Measure-Object Length -Sum).Sum
+                if ($null -eq $sum) { $sum = 0 }
+                [pscustomobject]@{
+                  Folder = $_.Name
+                  FileCount = $files.Count
+                  SizeGB = [math]::Round($sum/1GB,2)
+                }
+              } |
+              Format-Table -AutoSize
+          } else {
+            Write-Host "ARCHIVE_ROOT_EXISTS=False"
+          }
+
+          Write-Host "===== D ROOT LARGE DIRECTORIES ====="
+          Get-ChildItem D:\ -Directory -Force -ErrorAction SilentlyContinue |
+            ForEach-Object {
+              $sum = (Get-ChildItem -LiteralPath $_.FullName -File -Recurse -Force -ErrorAction SilentlyContinue |
+                Measure-Object Length -Sum).Sum
+              if ($null -eq $sum) { $sum = 0 }
+              [pscustomobject]@{
+                Folder = $_.FullName
+                SizeGB = [math]::Round($sum/1GB,2)
+              }
+            } |
+            Sort-Object SizeGB -Descending |
+            Select-Object -First 20 |
+            Format-Table -AutoSize
+
+          Write-Host "===== RECENT SYSTEM EVENTS 2H ====="
+          Get-WinEvent -FilterHashtable @{
+            LogName='System'
+            StartTime=(Get-Date).AddHours(-2)
+          } -ErrorAction SilentlyContinue |
+          Where-Object {
+            $_.LevelDisplayName -in @('Critical','Error') -or
+            $_.Id -in 41,6008,7,51,129,153,157,161
+          } |
+          Sort-Object TimeCreated |
+          Select-Object TimeCreated,Id,ProviderName,LevelDisplayName,
+            @{N='Message';E={([string]$_.Message -replace 'C:\\Users\\[^\\\s]+','C:\Users\<redacted>' -replace 'https?://\S+','<url-redacted>') -replace '[\r\n]+',' '}} |
+          Format-List
+
+          $c = Get-Volume -DriveLetter C -ErrorAction SilentlyContinue
+          $d = Get-Volume -DriveLetter D -ErrorAction SilentlyContinue
+          if ($c) { Write-Host ("C_FREE_GB=" + [math]::Round($c.SizeRemaining/1GB,2)) }
+          if ($d) { Write-Host ("D_FREE_GB=" + [math]::Round($d.SizeRemaining/1GB,2)) }
+          Write-Host "READ_ONLY_FORENSICS=True"
