@@ -961,27 +961,14 @@ function Refresh-Ui {
     $chromeFlag = Format-ProcessFlag ([bool]$processTruth.chrome_alive)
     $cdpFlag = Format-ProcessFlag ([bool]$processTruth.cdp_healthy)
 
-    $resourceLine2 = 'TRANG CHATGPT: — / — · MUTATION: —'
-    if ($null -ne $schedulerSnapshot) {
-        $pageCount = Get-OptionalPropertyValue $schedulerSnapshot 'resident_chatgpt_pages' $null
-        $pageBudget = Get-OptionalPropertyValue $schedulerSnapshot 'page_budget' $null
-        $mutationBusy = [bool](Get-OptionalPropertyValue $schedulerSnapshot 'mutation_lease_active' $false)
-        $leaseStates = Get-OptionalPropertyValue $schedulerSnapshot 'lease_states' $null
-        $obsCount = Get-OptionalPropertyValue $leaseStates 'ACTIVE_OBSERVATION' 0
-        $parkCount = Get-OptionalPropertyValue $leaseStates 'PARKED' 0
-        $evictCount = Get-OptionalPropertyValue $leaseStates 'EVICTABLE' 0
-        $mutationText = if ($mutationBusy) { 'BUSY' } else { 'FREE' }
-        $pageText = if ($null -ne $pageCount -and $null -ne $pageBudget) {
-            [string]$pageCount + ' / ' + [string]$pageBudget
-        } else {
-            '— / —'
-        }
-        $resourceLine2 = 'TRANG CHATGPT: ' + $pageText +
-            ' · MUTATION: ' + $mutationText +
-            ' · OBS ' + [string]$obsCount +
-            ' · PARK ' + [string]$parkCount +
-            ' · EVICT ' + [string]$evictCount
-    }
+    $resourceSummary = Get-ControlPanelResourceSummary $schedulerSnapshot
+    $resourceLine2 =
+        'TRANG CHATGPT: ' + [string]$resourceSummary.page_text +
+        ' · MUTATION: ' + [string]$resourceSummary.mutation_text +
+        ' · MUT ' + [string]$resourceSummary.active_mutation +
+        ' · OBS ' + [string]$resourceSummary.active_observation +
+        ' · PARK ' + [string]$resourceSummary.parked +
+        ' · EVICT ' + [string]$resourceSummary.evictable
 
     $resourceLabel.Text =
         'WRAPPER ' + $wrapperFlag +
