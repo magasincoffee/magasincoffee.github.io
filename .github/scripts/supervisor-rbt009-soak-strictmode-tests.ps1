@@ -144,6 +144,61 @@ try {
   $event = '{"event_type":"ERROR"}' | ConvertFrom-Json
   Assert-Equal (Get-Rbt009OptionalProperty -Object $event -Name "reason_code" -DefaultValue "NONE") "NONE" "O strict optional getter"
 
+  # Soak-start baseline — historical flood is not counted as new soak activity.
+  Write-Lines $file $identical
+  $baselineOffset = [int64](Get-Item $file).Length
+  $delta = Get-Rbt009SafeEventDelta -Path $file -Offset $baselineOffset
+  Assert-Equal $delta.max_identical_error_recovery_run 0 "Historical 20-event run ignored at soak baseline"
+  Assert-Equal $delta.next_offset $baselineOffset "Baseline cursor remains at EOF"
+
+  # New flood is counted across bounded sampling turns.
+  $appendTen = @()
+  for ($i = 0; $i -lt 10; $i++) {
+    $appendTen += '{"event_type":"ERROR","reason_code":"LIVE_LOOP","lane_id":"lane-1"}'
+  }
+  [System.IO.File]::AppendAllText($file, ([string]::Join("`n", $appendTen) + "`n"), $utf8)
+  $delta1 = Get-Rbt009SafeEventDelta -Path $file -Offset $baselineOffset
+  Assert-Equal $delta1.max_identical_error_recovery_run 10 "First live flood sample counted"
+
+  [System.IO.File]::AppendAllText($file, ([string]::Join("`n", $appendTen) + "`n"), $utf8)
+  $delta2 = Get-Rbt009SafeEventDelta -Path $file -Offset $delta1.next_offset -PreviousSignature $delta1.trailing_signature -PreviousRun $delta1.trailing_run
+  Assert-Equal $delta2.max_identical_error_recovery_run 20 "Live flood streak continues across samples"
+
+  # Partial append remains unread until a complete newline arrives.
+  [System.IO.File]::WriteAllText($file, "", $utf8)
+  $baselineOffset = 0L
+  [System.IO.File]::AppendAllText($file, '{"event_type":"ERROR","reason_code":"PART', $utf8)
+  $partialDelta = Get-Rbt009SafeEventDelta -Path $file -Offset $baselineOffset
+  Assert-Equal $partialDelta.next_offset 0 "Partial line does not advance cursor"
+  Assert-Equal $partialDelta.event_count 0 "Partial line not parsed"
+  [System.IO.File]::AppendAllText($file, 'IAL","lane_id":"lane-2"}' + "`n", $utf8)
+  $completeDelta = Get-Rbt009SafeEventDelta -Path $file -Offset $partialDelta.next_offset
+  Assert-Equal $completeDelta.event_count 1 "Completed concurrent append parsed once"
+
+  # Per-sample growth beyond bounded capacity is surfaced fail-closed.
+  $writer = [System.IO.StreamWriter]::new($file, $false, $utf8)
+  try {
+    for ($i = 0; $i -lt 10000; $i++) {
+      $writer.WriteLine('{"event_type":"WORK_ACTIVITY","task_id":"SAFE"}')
+    }
+  } finally {
+    $writer.Dispose()
+  }
+  $overflowDelta = Get-Rbt009SafeEventDelta -Path $file -Offset 0 -MaxBytes 65536
+  Assert-True ([bool]$overflowDelta.overflow) "Large per-sample event growth reports overflow"
+  Assert-True ($overflowDelta.bytes_read -le 65536) "Delta reader remains bounded"
+
+  # Delta output never carries arbitrary raw private event fields.
+  [System.IO.File]::WriteAllText($file, '{"event_type":"ERROR","message_body":"SECRET https://chatgpt.com/c/private"}' + "`n", $utf8)
+  $deltaJson = (Get-Rbt009SafeEventDelta -Path $file -Offset 0 | ConvertTo-Json -Compress)
+  Assert-True (-not $deltaJson.Contains("SECRET")) "Delta metadata excludes private content"
+  Assert-True (-not $deltaJson.Contains("chatgpt.com")) "Delta metadata excludes URL content"
+
+  Write-Host "RBT009A_SOAK_START_BASELINE=True"
+  Write-Host "RBT009A_LIVE_FLOOD_ACROSS_SAMPLES=True"
+  Write-Host "RBT009A_DELTA_PARTIAL_LINE_SAFE=True"
+  Write-Host "RBT009A_DELTA_OVERFLOW_FAIL_CLOSED=True"
+  Write-Host "RBT009A_DELTA_PRIVACY_METADATA_ONLY=True"
   Write-Host "RBT009A_STRICTMODE_V2=True"
   Write-Host "RBT009A_OPTIONAL_EVENT_FIELDS=True"
   Write-Host "RBT009A_MALFORMED_PARTIAL_SKIP=True"

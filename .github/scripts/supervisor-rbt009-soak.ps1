@@ -81,7 +81,11 @@ $sampleCount = 0
 $chromeRecoveryCount = 0
 $previousHealthy = $true
 $eventStart = Get-Rbt009SafeEventStats -Path $eventFile
+$eventCursor = [int64]$eventStart.file_length_bytes
+$eventFloodSignature = ""
+$eventFloodRun = 0
 $maxEventTailBytesRead = [int]$eventStart.tail_bytes_read
+$maxEventDeltaBytesRead = 0
 
 while ([DateTimeOffset]::UtcNow -lt $deadline) {
   $ownerStopNow = Get-LifecycleOwnerStopState -Root $root
@@ -122,10 +126,16 @@ while ([DateTimeOffset]::UtcNow -lt $deadline) {
     throw "Enabled runtime has no lane-status.json"
   }
 
-  $eventStats = Get-Rbt009SafeEventStats -Path $eventFile
-  if ([int]$eventStats.tail_bytes_read -gt $maxEventTailBytesRead) { $maxEventTailBytesRead = [int]$eventStats.tail_bytes_read }
-  if ($eventStats.max_identical_error_recovery_tail -ge 20) {
-    throw "Repeated identical ERROR/RECOVERY event flood detected"
+  $eventDelta = Get-Rbt009SafeEventDelta -Path $eventFile -Offset $eventCursor -PreviousSignature $eventFloodSignature -PreviousRun $eventFloodRun
+  $eventCursor = [int64]$eventDelta.next_offset
+  $eventFloodSignature = [string]$eventDelta.trailing_signature
+  $eventFloodRun = [int]$eventDelta.trailing_run
+  if ([int]$eventDelta.bytes_read -gt $maxEventDeltaBytesRead) { $maxEventDeltaBytesRead = [int]$eventDelta.bytes_read }
+  if ([bool]$eventDelta.overflow) {
+    throw "Event stream growth exceeded bounded per-sample monitor capacity"
+  }
+  if ([int]$eventDelta.max_identical_error_recovery_run -ge 20) {
+    throw "Repeated identical ERROR/RECOVERY event flood detected during soak"
   }
 
   $sampleCount++
@@ -164,6 +174,7 @@ $summary = [ordered]@{
   event_file_bytes_end = [int64]$eventEnd.file_length_bytes
   event_file_growth_bytes = [int64]$eventGrowthBytes
   event_tail_bytes_read_max = [int]$maxEventTailBytesRead
+  event_delta_bytes_read_max = [int]$maxEventDeltaBytesRead
   target_fingerprint = $targetStart
   registry_target_fingerprint_start = $registryTargetStart
   registry_target_fingerprint_end = $registryTargetEnd
