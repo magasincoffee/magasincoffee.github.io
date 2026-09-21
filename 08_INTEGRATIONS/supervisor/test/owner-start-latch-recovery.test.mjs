@@ -164,6 +164,22 @@ test("Control Panel runtime-start button invokes explicit Owner START, not Recov
   assert.doesNotMatch(startButton, /-Recovery/);
 });
 
+test("Lifecycle technical cleanup classifies taskkill race from root process truth", async () => {
+  const workflow = await read("../../../.github/workflows/supervisor-lifecycle-acceptance.yml");
+  const start = workflow.indexOf("function Stop-TechnicalProcessTree");
+  const end = workflow.indexOf("function Stop-RuntimeTechnical", start);
+  assert.ok(start >= 0 && end > start);
+  const helper = workflow.slice(start, end);
+  assert.match(helper, /taskkill\.exe \/PID \$ProcessId \/T \/F/);
+  assert.match(helper, /Get-Process -Id \$ProcessId/);
+  assert.match(helper, /LIFECYCLE_TECHNICAL_TASKKILL_RACE_RESOLVED=True/);
+  assert.match(helper, /\$global:LASTEXITCODE = 0/);
+  const proofIndex = helper.indexOf("if (-not (Get-Process -Id $ProcessId");
+  const resetIndex = helper.indexOf("$global:LASTEXITCODE = 0");
+  assert.ok(proofIndex >= 0 && resetIndex > proofIndex);
+  assert.match(helper, /still alive/);
+});
+
 test("Lifecycle acceptance keeps final Owner STOP assertion and verifies clear before healthy wait", async () => {
   const workflow = await read("../../../.github/workflows/supervisor-lifecycle-acceptance.yml");
   const explicitStart = workflow.indexOf("-File $startScript -Hidden");
