@@ -38,6 +38,14 @@ function Ensure-WingetPackage([string]$Id,[string]$CommandName) {
     }
 }
 
+function Get-PowerShellHost {
+    $winps = Get-Command powershell.exe -ErrorAction SilentlyContinue
+    if ($winps) { return $winps.Source }
+    $pwsh = Get-Command pwsh.exe -ErrorAction SilentlyContinue
+    if ($pwsh) { return $pwsh.Source }
+    throw "No PowerShell host is available."
+}
+
 function Get-ChromePath {
     $candidates = @(
         "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
@@ -120,10 +128,11 @@ $autostartInstaller = Join-Path $sourceSupervisor "windows\install-autostart.ps1
 if (-not (Test-Path $installer)) { throw "Supervisor installer missing." }
 if (-not (Test-Path $autostartInstaller)) { throw "Autostart installer missing." }
 
-& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installer -SourceRoot $sourceSupervisor
+$psExe = Get-PowerShellHost
+& $psExe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installer -SourceRoot $sourceSupervisor
 if ($LASTEXITCODE -ne 0) { throw "Supervisor install failed with exit code $LASTEXITCODE." }
 
-& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $autostartInstaller
+& $psExe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $autostartInstaller
 if ($LASTEXITCODE -ne 0) { throw "Autostart install failed with exit code $LASTEXITCODE." }
 
 Write-Step "OPTIONAL LANE CONFIG IMPORT"
