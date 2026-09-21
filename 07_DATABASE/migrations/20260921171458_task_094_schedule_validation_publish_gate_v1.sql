@@ -396,6 +396,7 @@ declare
   v_role text := public.current_user_role();
   v_result jsonb;
   v_decision text := upper(trim(coalesce(p_decision,'')));
+  v_status text;
 begin
   if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
   if v_role not in ('OWNER','STORE_MANAGER') then raise exception 'ROLE_NOT_ALLOWED'; end if;
