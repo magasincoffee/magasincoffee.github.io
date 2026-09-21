@@ -237,7 +237,10 @@ function Read-BoundedLaneEventTail(
             }
         }
 
-        $ordered = @($items)
+        # Generic.List must be materialized before reversing. Wrapping the
+        # list directly in @() can preserve it as one collection object under
+        # Windows PowerShell 5.1 instead of yielding individual events.
+        [object[]]$ordered = $items.ToArray()
         [Array]::Reverse($ordered)
         $result.events = $ordered
         return $result
