@@ -42,9 +42,9 @@ Implementation roadmap:
 - TASK-RBT-006B — Owner START Latch Recovery / Lifecycle Acceptance Closure — IMPLEMENTED in v2026-09-20.58
 - TASK-RBT-007 — Control Panel Timeline & Resource UX — IMPLEMENTED in v2026-09-20.59
 - TASK-RBT-008 — Brain Planning Contract Runtime Hooks — IMPLEMENTED in v2026-09-20.60
-- TASK-RBT-009 — Integration / Overnight Soak / Cleanup
+- TASK-RBT-009 — Integration / Overnight Soak / Cleanup — IMPLEMENTATION FRAMEWORK READY; FINAL CONTINUOUS 8H SOAK PENDING
 
-v2026-09-20.60 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, TASK-RBT-006A durable stale/missing target quarantine, TASK-RBT-006B deterministic explicit Owner START latch authority, TASK-RBT-007 Control Panel timeline/resource observability, and TASK-RBT-008 backward-compatible Brain planning/result-verdict runtime hooks. TASK-RBT-009 remains separate until its own implementation and acceptance pass.
+v2026-09-20.60 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, TASK-RBT-006A durable stale/missing target quarantine, TASK-RBT-006B deterministic explicit Owner START latch authority, TASK-RBT-007 Control Panel timeline/resource observability, and TASK-RBT-008 backward-compatible Brain planning/result-verdict runtime hooks. TASK-RBT-009 adds release-only Tier A integration, privacy-safe event validation and an 8h read-only self-hosted soak without changing installed runtime semantics; Three-Lane V1 is not RELEASED until the final uninterrupted soak and evidence closure pass.
 
 ## Lifecycle truth
 
@@ -126,7 +126,7 @@ Runtime v2026-09-20.53 implements TASK-RBT-004 Browser Scheduler + Tab Budget:
 
 One lane enabled continues to work normally. Two or three enabled lanes share the same Chrome/CDP fairly without sharing task/latch state.
 
-Remaining TASK-RBT work after the browser scheduler is intentionally separate; Work-full rollover is released by TASK-RBT-006 and Control Panel timeline/resource UX is released by TASK-RBT-007. Planning protocol/runtime hooks are released by TASK-RBT-008; TASK-RBT-009 remains separate.
+Remaining TASK-RBT work after the browser scheduler is intentionally separate; Work-full rollover is released by TASK-RBT-006 and Control Panel timeline/resource UX is released by TASK-RBT-007. Planning protocol/runtime hooks are released by TASK-RBT-008. TASK-RBT-009 is the final release-validation task and remains PENDING until its continuous 8h production soak is green.
 
 ## Released long-running Work watchdog
 
@@ -346,7 +346,7 @@ Sensitive runtime/profile state, authenticated browser data, target conversation
 
 Historical TASK-049 diagnostic/live-monitor workflows are not part of production.
 
-TASK-RBT-009 is responsible for the later integration/overnight scheduler soak and cleanup workflow(s). TASK-RBT-001 does not add or deploy those workflows.
+TASK-RBT-009 owns the deterministic Tier A release matrix, metadata-only event validator, read-only 8h production soak and final cleanup/evidence closure. Its reusable fixtures are regression assets; no acceptance fixture is deleted merely because it was introduced by an earlier TASK-RBT.
 
 ## Safety stops
 
