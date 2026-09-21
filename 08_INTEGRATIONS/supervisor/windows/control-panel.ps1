@@ -814,6 +814,75 @@ for ($i = 0; $i -lt 3; $i++) {
     $retryRelayButton.Tag = $currentLaneId
 }
 
+$timelineGroup = New-Object Windows.Forms.GroupBox
+$timelineGroup.Text = 'DÒNG SỰ KIỆN GẦN NHẤT'
+$timelineGroup.Location = New-Object Drawing.Point(28, 1070)
+$timelineGroup.Size = New-Object Drawing.Size(1157, 415)
+$content.Controls.Add($timelineGroup)
+
+$timelineList = New-Object Windows.Forms.ListView
+$timelineList.Location = New-Object Drawing.Point(14, 24)
+$timelineList.Size = New-Object Drawing.Size(1128, 372)
+$timelineList.View = [Windows.Forms.View]::Details
+$timelineList.FullRowSelect = $true
+$timelineList.GridLines = $true
+$timelineList.HideSelection = $false
+$timelineList.MultiSelect = $false
+$timelineList.HeaderStyle = [Windows.Forms.ColumnHeaderStyle]::Nonclickable
+[void]$timelineList.Columns.Add('Giờ', 82)
+[void]$timelineList.Columns.Add('Luồng', 72)
+[void]$timelineList.Columns.Add('Sự kiện', 335)
+[void]$timelineList.Columns.Add('Task', 315)
+[void]$timelineList.Columns.Add('Chi tiết', 300)
+$timelineGroup.Controls.Add($timelineList)
+
+function Format-ProcessFlag([bool]$Value) {
+    if ($Value) { return '✓' }
+    return '✕'
+}
+
+function Refresh-Timeline {
+    $tail = Read-BoundedLaneEventTail -Path $eventFile -MaxEvents 30 -MaxBytes 262144
+
+    $timelineList.BeginUpdate()
+    try {
+        $timelineList.Items.Clear()
+        foreach ($event in @($tail.events)) {
+            $clock = '—'
+            try {
+                $dt = [DateTimeOffset]::Parse([string]$event.timestamp)
+                $vn = [TimeZoneInfo]::ConvertTime($dt, $vietnamTimeZone)
+                $clock = $vn.ToString('HH:mm:ss')
+            } catch {}
+
+            $laneText = switch ([string]$event.lane_id) {
+                'lane-1' { 'Lane 1' }
+                'lane-2' { 'Lane 2' }
+                'lane-3' { 'Lane 3' }
+                default { 'Robot' }
+            }
+
+            $detailParts = New-Object Collections.Generic.List[string]
+            if ([string]$event.phase) {
+                $detailParts.Add([string]$event.phase)
+            }
+            if ([string]$event.reason_label) {
+                $detailParts.Add([string]$event.reason_label)
+            }
+
+            $item = New-Object Windows.Forms.ListViewItem($clock)
+            [void]$item.SubItems.Add($laneText)
+            [void]$item.SubItems.Add([string]$event.label)
+            [void]$item.SubItems.Add([string]$event.task_id)
+            [void]$item.SubItems.Add(($detailParts -join ' · '))
+            [void]$timelineList.Items.Add($item)
+        }
+        $timelineGroup.Text = 'DÒNG SỰ KIỆN GẦN NHẤT · ' + @($tail.events).Count + ' / 30'
+    } finally {
+        $timelineList.EndUpdate()
+    }
+}
+
 function Refresh-Ui {
     $config = Ensure-Config
     $registry = Read-JsonFile $registryFile
