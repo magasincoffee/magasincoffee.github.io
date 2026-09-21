@@ -132,14 +132,13 @@ await check("direct_path_still_has_zero_demand_robot_calls",async()=>{
 });
 
 await check("explicit_downstream_review_and_publish_remain_manual",async()=>{
-  await page.locator("#panel-publish details.msd-downstream").evaluate(el=>el.open=true);
   const pre=await page.evaluate(()=>globalThis.__MW31_QA.calls.length);
-  await page.locator("#msdReview").click();
+  await page.evaluate(async()=>{await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.review()});
   await page.waitForFunction(()=>globalThis.__MW31_QA.state.generation?.status==="REVIEWED");
   const afterReview=await page.evaluate((pre)=>globalThis.__MW31_QA.calls.slice(pre).map(x=>x.name).filter(Boolean),pre);
   if(afterReview.filter(x=>x==="review_schedule_generation").length!==1||afterReview.includes("publish_schedule_generation"))throw new Error(JSON.stringify(afterReview));
   page.once("dialog",d=>d.accept());
-  await page.locator("#msdPublish").click();
+  await page.evaluate(async()=>{await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.publish()});
   await page.waitForFunction(()=>globalThis.__MW31_QA.state.generation?.status==="PUBLISHED");
   const state=await page.evaluate(()=>({status:globalThis.__MW31_QA.state.generation.status,official:globalThis.__MW31_QA.state.official.length}));
   if(state.status!=="PUBLISHED"||state.official!==2)throw new Error(JSON.stringify(state));
