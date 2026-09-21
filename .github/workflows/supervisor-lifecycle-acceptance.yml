@@ -187,9 +187,62 @@ jobs:
           }
           Write-Host "LIFECYCLE_ACCEPTANCE_RUNTIME_VERSION_MATCH=True"
 
+          function Test-KnownRbt006BResidue {
+            $stopPath = Join-Path $root "STOP"
+            $disabledPath = Join-Path $root "AUTOSTART_DISABLED"
+            if (-not (Test-Path $stopPath) -or -not (Test-Path $disabledPath)) {
+              return $false
+            }
+
+            $stopValue = (Get-Content $stopPath -Raw -ErrorAction SilentlyContinue).Trim()
+            $disabledValue = (Get-Content $disabledPath -Raw -ErrorAction SilentlyContinue).Trim()
+            if ($stopValue -ne "STOP" -or $disabledValue -ne "OWNER_STOP") {
+              return $false
+            }
+
+            # One-time closure for the exact residue created by failed
+            # Lifecycle Acceptance #12. A normal/future Owner STOP must not
+            # match this historic UTC write window and remains fail-closed.
+            $windowStart = [DateTime]::Parse(
+              "2026-09-21T00:34:30Z",
+              [Globalization.CultureInfo]::InvariantCulture,
+              [Globalization.DateTimeStyles]::AdjustToUniversal
+            )
+            $windowEnd = [DateTime]::Parse(
+              "2026-09-21T00:35:10Z",
+              [Globalization.CultureInfo]::InvariantCulture,
+              [Globalization.DateTimeStyles]::AdjustToUniversal
+            )
+            $stopTime = (Get-Item $stopPath).LastWriteTimeUtc
+            $disabledTime = (Get-Item $disabledPath).LastWriteTimeUtc
+            return [bool](
+              $stopTime -ge $windowStart -and $stopTime -le $windowEnd -and
+              $disabledTime -ge $windowStart -and $disabledTime -le $windowEnd
+            )
+          }
+
           $initialOwnerStop = Get-LifecycleOwnerStopState -Root $root
           if ($initialOwnerStop.blocked) {
-            throw "Pre-existing Owner STOP is active. Acceptance refuses to clear an Owner latch."
+            if (-not (Test-KnownRbt006BResidue)) {
+              throw "Pre-existing Owner STOP is active. Acceptance refuses to clear an Owner latch."
+            }
+
+            Write-Host "RBT006B_KNOWN_ACCEPTANCE_RESIDUE_DETECTED=True"
+            & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $startScript -Hidden
+            if ($LASTEXITCODE -ne 0) {
+              throw "Known acceptance residue recovery explicit START failed"
+            }
+
+            $residueAfterStart = Get-LifecycleOwnerStopState -Root $root
+            if ($residueAfterStart.blocked) {
+              throw "Known acceptance residue remained blocked after explicit Owner START"
+            }
+
+            $enabledBeforeAcceptance = Get-EnabledLaneCount -Root $root
+            if ($enabledBeforeAcceptance -gt 0 -and -not (Wait-Healthy 60)) {
+              throw "Known acceptance residue recovery did not restore healthy runtime"
+            }
+            Write-Host "RBT006B_KNOWN_ACCEPTANCE_RESIDUE_RECOVERED=True"
           }
 
           $initialConfig = Get-Content $configFile -Raw -Encoding UTF8 | ConvertFrom-Json

@@ -179,6 +179,22 @@ test("Lifecycle acceptance keeps final Owner STOP assertion and verifies clear b
   assert.match(workflow, /LIFECYCLE_ACCEPTANCE_A_TO_L=PASS/);
 });
 
+test("Lifecycle residue migration is one-time historical and still uses explicit Owner START", async () => {
+  const workflow = await read("../../../.github/workflows/supervisor-lifecycle-acceptance.yml");
+  const start = workflow.indexOf("function Test-KnownRbt006BResidue");
+  const end = workflow.indexOf("$initialConfig =", start);
+  const residue = workflow.slice(start, end);
+
+  assert.ok(start >= 0 && end > start);
+  assert.match(residue, /2026-09-21T00:34:30Z/);
+  assert.match(residue, /2026-09-21T00:35:10Z/);
+  assert.match(residue, /RBT006B_KNOWN_ACCEPTANCE_RESIDUE_DETECTED=True/);
+  assert.match(residue, /RBT006B_KNOWN_ACCEPTANCE_RESIDUE_RECOVERED=True/);
+  assert.match(residue, /-File \$startScript -Hidden/);
+  assert.match(residue, /Pre-existing Owner STOP is active\. Acceptance refuses to clear an Owner latch/);
+  assert.doesNotMatch(residue, /Remove-Item.*STOP|Remove-Item.*AUTOSTART_DISABLED/);
+});
+
 test("lifecycle START/STOP does not reset target, task, latch, pending Work or quarantine state", async () => {
   const [start, stop] = await Promise.all([
     read("../windows/start-supervisor.ps1"),
