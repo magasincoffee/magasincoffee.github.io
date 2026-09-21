@@ -1137,12 +1137,14 @@ Rollback/risk:
 
 ### TASK-RBT-009 — Integration / Overnight Soak / Cleanup
 
+**Implementation status:** RELEASE VALIDATION FRAMEWORK READY on top of runtime v2026-09-20.60; final continuous 8h production soak and docs/evidence closure remain PENDING. This task does not change installed runtime semantics unless a soak-discovered correction requires a separately reviewed runtime bump and a fresh 8h soak.
+
 Purpose: prove the combined system under real 1/2/3-lane pressure before declaring release.
 
 Expected scope/files:
 
 - integration tests;
-- self-hosted acceptance/soak workflow(s);
+- self-hosted acceptance/soak workflow(s), with deterministic Tier A synthetic integration plus Tier B read-only 8h production monitoring;
 - cleanup of temporary instrumentation;
 - final README/release evidence.
 
@@ -1161,7 +1163,7 @@ DoD:
 - Chrome/CDP healthy;
 - privacy-safe timeline;
 - Owner STOP authoritative;
-- remove temporary diagnostics not needed in production.
+- remove only temporary diagnostics proven redundant; keep acceptance fixtures, backward-compatibility migrations, event validators and release diagnostics that provide ongoing regression value.
 
 Tests/evidence:
 

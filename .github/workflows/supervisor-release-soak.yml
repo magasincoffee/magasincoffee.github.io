@@ -1,0 +1,131 @@
+name: Supervisor Release Soak
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/supervisor-release-soak.yml'
+      - '.github/scripts/supervisor-release-*.ps1'
+      - '.github/scripts/supervisor-release-*.mjs'
+      - '08_INTEGRATIONS/supervisor/test/release-integration-matrix.test.mjs'
+      - '08_INTEGRATIONS/supervisor/docs/THREE_LANE_V1_RELEASE_EVIDENCE.md'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: supervisor-production-release-soak
+  cancel-in-progress: false
+
+jobs:
+  tier-a:
+    name: tier-a-synthetic-integration
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install test dependencies
+        working-directory: 08_INTEGRATIONS/supervisor
+        shell: powershell
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Run deterministic 1/2/3-lane release matrix
+        shell: powershell
+        run: |
+          & '.github/scripts/supervisor-release-tier-a.ps1'
+
+  normal-release-gates:
+    name: normal-release-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Wait for same-SHA normal Supervisor gates
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const required = new Set([
+              'Supervisor Tests',
+              'Supervisor Integrity',
+              'Supervisor Autostart Install',
+              'Supervisor Lifecycle Acceptance'
+            ]);
+            const deadline = Date.now() + 40 * 60 * 1000;
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+            while (Date.now() < deadline) {
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head_sha: context.sha,
+                per_page: 100
+              });
+              const latest = new Map();
+              for (const run of data.workflow_runs) {
+                if (!required.has(run.name)) continue;
+                const prior = latest.get(run.name);
+                if (!prior || new Date(run.created_at) > new Date(prior.created_at)) latest.set(run.name, run);
+              }
+              const rows = [...required].map(name => {
+                const run = latest.get(name);
+                return { name, id: run?.id || null, status: run?.status || 'missing', conclusion: run?.conclusion || null };
+              });
+              core.info(JSON.stringify(rows));
+              const failed = rows.find(row => row.status === 'completed' && row.conclusion !== 'success');
+              if (failed) throw new Error(`Required gate failed: ${failed.name} run ${failed.id} conclusion=${failed.conclusion}`);
+              if (rows.every(row => row.status === 'completed' && row.conclusion === 'success')) {
+                for (const row of rows) core.info(`NORMAL_GATE_${row.name.replace(/[^A-Za-z0-9]+/g,'_').toUpperCase()}_RUN_ID=${row.id}`);
+                core.info('SOAK_NORMAL_RELEASE_GATES_GREEN=True');
+                core.info('SOAK_LIFECYCLE_A_TO_L=True');
+                return;
+              }
+              await sleep(30000);
+            }
+            throw new Error('Timed out waiting for same-SHA normal Supervisor release gates');
+
+  production-soak:
+    name: production-read-only-8h-soak
+    needs:
+      - tier-a
+      - normal-release-gates
+    runs-on: self-hosted
+    timeout-minutes: 510
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run continuous read-only production soak
+        shell: powershell
+        run: |
+          & '.github/scripts/supervisor-release-soak.ps1' -DurationSeconds 28800 -SampleSeconds 120
+      - name: Scan generated artifacts before upload
+        if: always()
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(
+            (Join-Path $env:RUNNER_TEMP 'supervisor-release-soak.ndjson'),
+            (Join-Path $env:RUNNER_TEMP 'supervisor-release-soak-summary.json'),
+            (Join-Path $env:RUNNER_TEMP 'supervisor-release-event-summary.json')
+          ) | Where-Object { Test-Path $_ }
+          $forbidden = 'https?://|chatgpt\.com|brain_url|work_url|cookie|token|authorization|message_body|screenshot|browser_profile|\\Users\\|/home/|@gmail|@outlook'
+          foreach ($file in $files) {
+            $content = Get-Content $file -Raw -Encoding UTF8
+            if ($content -match $forbidden) { throw 'Generated release artifact failed privacy scan' }
+          }
+          Write-Host 'SOAK_ARTIFACT_PRIVACY_SAFE=True'
+      - name: Upload sanitized release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supervisor-release-soak-${{ github.sha }}-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/supervisor-release-soak.ndjson
+            ${{ runner.temp }}/supervisor-release-soak-summary.json
+            ${{ runner.temp }}/supervisor-release-event-summary.json

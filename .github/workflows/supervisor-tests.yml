@@ -12,6 +12,9 @@ on:
       - '.github/workflows/supervisor-tests.yml'
       - '.github/workflows/supervisor-state-maintenance.yml'
       - '.github/scripts/supervisor-state-maintenance-regression.ps1'
+      - '.github/workflows/supervisor-release-soak.yml'
+      - '.github/scripts/supervisor-release-*.ps1'
+      - '.github/scripts/supervisor-release-*.mjs'
   pull_request:
     paths:
       - '08_INTEGRATIONS/supervisor/**'
@@ -19,6 +22,9 @@ on:
       - '.github/workflows/supervisor-tests.yml'
       - '.github/workflows/supervisor-state-maintenance.yml'
       - '.github/scripts/supervisor-state-maintenance-regression.ps1'
+      - '.github/workflows/supervisor-release-soak.yml'
+      - '.github/scripts/supervisor-release-*.ps1'
+      - '.github/scripts/supervisor-release-*.mjs'
   workflow_dispatch:
 
 permissions:
@@ -60,6 +66,10 @@ jobs:
         run: |
           node --test test/brain-planning-contract.test.mjs
           node src/runtime/brain-planning-acceptance-cli.mjs
+      - name: Run TASK-RBT-009 deterministic Tier A integration matrix
+        run: |
+          & "$env:GITHUB_WORKSPACE\.github\scripts\supervisor-release-tier-a.ps1"
+
       - name: Run installed-runtime synthetic acceptance fixtures directly
         run: |
           node src/runtime/three-lane-cli.mjs --work-full-fixture
