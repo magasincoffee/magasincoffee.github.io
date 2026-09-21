@@ -1,6 +1,6 @@
 # MAGASIN — Current State
 
-Last updated: 2026-09-20
+Last updated: 2026-09-21
 
 ## Current program
 
@@ -322,6 +322,6 @@ Locked decisions:
 - Employee can self-check own payroll;
 - final stability requires full E2E, exact post-merge E2E recheck and cold/reload E2E recheck.
 
-Owner released this track for **DIRECT MANUAL WORK only**; Robot remains disabled. TASK-090 reconciliation is **DONE**. TASK-091 canonical state/rule contract is **DONE** with evidence at `05_SYSTEM/TASK_091_WORKFORCE_V1_CANONICAL_STATE_RULE_CONTRACT.md`. TASK-092 is **READY / MANUAL_WORK** and must wait for Brain acceptance/dispatch; TASK-093→108 remain staged behind the sequential gate.
+Owner released this track for **DIRECT MANUAL WORK only**; Robot remains disabled. TASK-090 reconciliation is **DONE**. TASK-091 canonical state/rule contract is **DONE**. TASK-092 Availability Weekly Cycle Hardening is **DONE** with evidence at `05_SYSTEM/TASK_092_AVAILABILITY_WEEKLY_CYCLE_HARDENING.md`. TASK-093 is **READY / MANUAL_WORK** and must wait for Brain acceptance/dispatch; TASK-094→108 remain staged behind the sequential gate.
 
 The currently active PFC cursor is unchanged and remains independently authoritative.
