@@ -28,8 +28,10 @@ test("Control Panel uses a scrollable logical canvas that contains all three lan
   assert.match(source, /\$scrollHost\.Dock = \[Windows\.Forms\.DockStyle\]::Fill/);
   assert.match(source, /\$scrollHost\.AutoScroll = \$true/);
   assert.match(source, /\$scrollHost\.AutoScrollMinSize = \$viewportLayout\.LogicalCanvasSize/);
-  assert.match(source, /New-Object Drawing\.Size\(1215, 890\)/);
-  assert.match(source, /\$cardY = @\(135, 385, 635\)/);
+  assert.match(source, /New-Object Drawing\.Size\(1215, 1510\)/);
+  assert.match(source, /\$cardY = @\(135, 445, 755\)/);
+  assert.match(source, /timeline_bottom = 1485/);
+  assert.match(source, /critical_controls_scroll_reachable/);
   assert.match(source, /for \(\$i = 0; \$i -lt 3; \$i\+\+\)/);
   assert.match(source, /\$content\.Controls\.Add\(\$panel\)/);
 });
