@@ -281,3 +281,43 @@ Owner explicitly released `PFC_8H_V2` on 2026-09-20.
 - overflow if time remains: `TASK-084 → TASK-089`
 - method: `QUESTION → DELETE → SIMPLIFY → ACCELERATE → AUTOMATE`
 - emphasis: `SIMPLIFY → ACCELERATE → AUTOMATE`
+
+
+## Workforce Operations V1 — architecture locked
+
+Owner approved and locked a parallel operational-relief architecture on 2026-09-21.
+
+Canonical files:
+
+- `05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md`
+- `05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md`
+- `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
+
+Canonical scope:
+
+```text
+Employee next-week availability
+→ Manager Sunday scheduling + publish
+→ Monday active schedule
+→ Swap / Give
+→ Employee-selected actual attendance time
+→ Manager exception review
+→ Confirmed work time
+→ Payroll
+→ Employee self-check
+```
+
+Locked decisions:
+
+- no staffing-gap / “thiếu ca - đủ ca” as Workforce V1 core;
+- no realtime check-in/check-out;
+- Employee chooses actual start/end time on app;
+- Manager owns final schedule decision;
+- Swap and Give remain in V1;
+- payroll consumes confirmed work time, not raw attendance;
+- Employee can self-check own payroll;
+- final stability requires full E2E, exact post-merge E2E recheck and cold/reload E2E recheck.
+
+TASK-090→108 are **STAGED / WAIT_OWNER_RELEASE**. They are not authorized to run yet.
+
+The currently active PFC cursor is unchanged. Workforce execution starts only after explicit Owner release/reprioritization.
