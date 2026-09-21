@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$HelperPath = (Join-Path $PSScriptRoot 'control-panel-observability.ps1'),
     [string]$PanelPath = (Join-Path $PSScriptRoot 'control-panel.ps1')
 )
