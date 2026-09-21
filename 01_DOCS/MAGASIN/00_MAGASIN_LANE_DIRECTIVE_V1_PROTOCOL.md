@@ -88,6 +88,89 @@ If there is no dependency-correct work to dispatch:
 
 Do not invent placeholder tasks merely to avoid IDLE.
 
+## 4A. Optional previous-result verdict extension (RBT-008)
+
+The protocol name and byte-exact markers remain **MAGASIN_LANE_DIRECTIVE_V1**. Old WORK/IDLE directives remain valid without any new field.
+
+After the Robot has confirmed a Work-result relay, a Brain may add:
+
+~~~json
+"previous_result":{
+  "task_id":"TASK-PREVIOUS",
+  "relay_id":"32_HEX_CHARACTERS",
+  "verdict":"ACCEPT",
+  "reason_code":"DOD_MET"
+}
+~~~
+
+Required fields when `previous_result` is present:
+
+- `task_id`: the exact previous task;
+- `relay_id`: the exact deterministic relay ID confirmed by the Robot;
+- `verdict`: `ACCEPT` or `REJECT`.
+
+Optional `reason_code` is enum-only:
+
+- `DOD_MET`
+- `EVIDENCE_VERIFIED`
+- `CORRECTION_REQUIRED`
+- `EVIDENCE_INCOMPLETE`
+- `OWNER_INTERVENTION_REQUIRED`
+- `DEPENDENCY_BLOCKED`
+
+No free-form rationale, review prose, chain-of-thought, URL or private evidence belongs in this metadata.
+
+### ACCEPT
+
+ACCEPT records the semantic Brain decision separately from transport fact `RESULT_RELAY_CONFIRMED`.
+
+Example ACCEPT + next task:
+
+~~~text
+<<<MAGASIN_LANE_DIRECTIVE_V1>>>
+{"action":"WORK","task_id":"TASK-NEXT","instruction":"One dependency-correct bounded task with DoD, evidence and stop boundary.","previous_result":{"task_id":"TASK-PREVIOUS","relay_id":"0123456789abcdef0123456789abcdef","verdict":"ACCEPT","reason_code":"DOD_MET"}}
+<<<END_MAGASIN_LANE_DIRECTIVE_V1>>>
+~~~
+
+ACCEPT + IDLE is also valid.
+
+### REJECT
+
+REJECT + WORK must be an explicitly correlated correction. Add:
+
+~~~json
+"correction_of":{
+  "task_id":"TASK-PREVIOUS",
+  "relay_id":"0123456789abcdef0123456789abcdef"
+}
+~~~
+
+The `correction_of` values must exactly match `previous_result`. A REJECT directive may not jump to unrelated roadmap work.
+
+If Owner intervention is required, Brain may return IDLE with REJECT and `OWNER_INTERVENTION_REQUIRED`.
+
+Malformed known optional metadata fails closed. Unknown future top-level fields are ignored and never become a control surface.
+
+## 4B. Brain planning contract
+
+Brain owns:
+
+**PLAN → DISPATCH → VERIFY → ACCEPT/REJECT → NEXT PLAN**
+
+Before each WORK directive Brain should establish:
+
+- one primary outcome;
+- dependencies satisfied or explicitly blocked;
+- bounded scope;
+- explicit Definition of Done;
+- explicit evidence expected from Work;
+- explicit stop boundary;
+- no self-start of the next task by Work.
+
+Planning target is roughly <=20 minutes of active implementation when safely decomposable. If a task is expected to exceed 30 minutes and can be split safely, split it before dispatch. This is planning guidance, not a runtime timeout; RBT-005 watchdog remains activity-based and inherently long-running operations remain valid.
+
+The Brain must not expose chain-of-thought/private reasoning. Only machine contract/output needed by the Robot is required.
+
 ## 5. JSON serialization rules
 
 The content between the markers must be valid JSON.
@@ -238,4 +321,4 @@ To configure another Brain project, tell that Brain:
 
 > Read and permanently follow the canonical MAGASIN Supervisor directive protocol in `01_DOCS/MAGASIN/00_MAGASIN_LANE_DIRECTIVE_V1_PROTOCOL.md`. When the Robot polls you, output only a valid directive according to that file.
 
-The protocol defines serialization only. Project-specific planning, dependency checks, DoD, safety rules, and Work instructions remain the responsibility of each project's Brain architecture.
+The protocol defines serialization plus the optional RBT-008 verdict/correction contract. Project-specific planning, dependency checks, DoD, safety rules, and Work instructions remain the responsibility of each project's Brain architecture.
