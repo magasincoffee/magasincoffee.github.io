@@ -20,6 +20,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Parse PowerShell migration scripts
         shell: powershell
         run: |
@@ -53,7 +55,7 @@ jobs:
         run: |
           $bootstrap = Get-Content ".\08_INTEGRATIONS\supervisor\windows\bootstrap-new-pc.ps1" -Raw
           $export = Get-Content ".\08_INTEGRATIONS\supervisor\windows\export-migration-state.ps1" -Raw
-          foreach ($needle in @('AUTOSTART_DISABLED','STOP','enabled = $false','browser_profile_migrated = $false','auth_tokens_migrated = $false')) {
+          foreach ($needle in @('AUTOSTART_DISABLED','STOP','lane.enabled = $false','browser_profile_migrated = $false','auth_tokens_migrated = $false')) {
             if ($bootstrap -notmatch [regex]::Escape($needle)) { throw "Missing bootstrap safety marker: $needle" }
           }
           foreach ($needle in @('lanes_forced_disabled','browser_profile_included = $false','auth_tokens_included = $false','runtime_registry_included = $false')) {
