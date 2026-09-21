@@ -131,7 +131,7 @@ test("v45 active Brain status comes from persisted registry target", async () =>
   );
 
   assert.match(source, /brain_url: String\(registryLane\.brain_url \|\| configLane\.brain_url \|\| ""\)/);
-  assert.match(source, /2026-09-20\.59/);
+  assert.match(source, /2026-09-20\.60/);
 });
 
 test("v43 valid completed Brain directive can complete a stuck first-handshake without duplicate Brain send", async () => {
@@ -346,9 +346,11 @@ test("v43 can recover the latest valid directive when only duplicate Robot hands
   );
 
   assert.match(source, /captureRecentConversationTurns/);
-  assert.match(source, /expectedStartDigest = sha256\(buildBrainStartRequest/);
+  assert.match(source, /expectedStartDigests = new Set/);
+  assert.match(source, /buildBrainStartRequest/);
+  assert.match(source, /buildLegacyBrainStartRequestV59/);
   assert.match(source, /onlyRobotHandshakeAfterDirective/);
-  assert.match(source, /turn\.role === "user" && turn\.digest === expectedStartDigest/);
+  assert.match(source, /turn\.role === "user" && expectedStartDigests\.has\(turn\.digest\)/);
   assert.match(source, /LANE_BRAIN_DIRECTIVE_RECOVERED_BEFORE_DUPLICATE_HANDSHAKE/);
   assert.match(source, /if \(laterTurns\.length && !onlyRobotHandshakeAfterDirective\) return null/);
 });
