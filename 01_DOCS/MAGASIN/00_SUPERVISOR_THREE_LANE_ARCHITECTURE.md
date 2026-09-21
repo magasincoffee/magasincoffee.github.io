@@ -64,7 +64,7 @@ For each lane the Control Panel target UX shows:
 12. LƯU WORK.
 13. TỰ TẠO WORK.
 
-Current production contract: LƯU WORK hot-swap is released by TASK-RBT-003, finite global browser scheduling by TASK-RBT-004, inactivity-based long-running recovery by TASK-RBT-005, relay exhaustion recovery by TASK-RBT-005A, multi-signal Work-full rollover by TASK-RBT-006, and durable stale/missing exact-target quarantine by TASK-RBT-006A (runtime v2026-09-20.57).
+Current production contract: LƯU WORK hot-swap is released by TASK-RBT-003, finite global browser scheduling by TASK-RBT-004, inactivity-based long-running recovery by TASK-RBT-005, relay exhaustion recovery by TASK-RBT-005A, multi-signal Work-full rollover by TASK-RBT-006, durable stale/missing exact-target quarantine by TASK-RBT-006A, and deterministic explicit Owner START latch recovery by TASK-RBT-006B (runtime v2026-09-20.58).
 
 ## Non-negotiable invariants
 
