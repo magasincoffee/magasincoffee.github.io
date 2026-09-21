@@ -1,0 +1,35 @@
+name: New PC Migration Export
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-migration-export.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-config:
+    runs-on: self-hosted
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export configuration-only migration bundle locally
+        shell: powershell
+        run: |
+          & ".\08_INTEGRATIONS\supervisor\windows\export-migration-state.ps1" -DestinationRoot "D:\MAGASIN_MIGRATION\supervisor-state"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Migration export failed with exit code $LASTEXITCODE"
+          }
+      - name: Verify local bundle
+        shell: powershell
+        run: |
+          $root = "D:\MAGASIN_MIGRATION\supervisor-state"
+          if (-not (Test-Path "$root\lanes.json")) { throw "lanes.json missing" }
+          if (-not (Test-Path "$root\migration-meta.json")) { throw "migration-meta.json missing" }
+          if (-not (Test-Path "$root\SHA256SUMS.csv")) { throw "SHA256SUMS.csv missing" }
+          Write-Host "MIGRATION_BUNDLE_LOCAL_READY=True"
+          Write-Host "MIGRATION_BUNDLE_UPLOAD_TO_GITHUB=False"
