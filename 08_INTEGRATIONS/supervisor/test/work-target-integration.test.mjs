@@ -14,7 +14,7 @@ function functionSlice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("RBT-003 Work-target invariants remain intact after v59 Control Panel observability bump", async () => {
+test("RBT-003 Work-target invariants remain intact after v60 Brain planning bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
   const applyWork = functionSlice(
     runtime,
@@ -22,7 +22,7 @@ test("RBT-003 Work-target invariants remain intact after v59 Control Panel obser
     "async function applyPendingWorkTargetAtSafeBoundary"
   );
 
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.59"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.60"/);
   assert.match(applyWork, /acceptOwnerWorkTargetRevision/);
   assert.match(applyWork, /WORK_TARGET_PENDING/);
   for (const forbidden of [
@@ -75,10 +75,12 @@ test("pending Work target is re-evaluated at the next bounded turn after old lat
 test("Work target save preserves deterministic dispatch and relay exact-once contracts", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
 
-  assert.match(runtime, /const dispatchId = sha256\(\[/);
+  assert.match(runtime, /const coreDispatchDigest = sha256\(JSON\.stringify/);
+  assert.match(runtime, /const dispatchId = existingDispatchLatch\?\.dispatch_id \|\| sha256\(\[/);
   assert.match(runtime, /workDispatchMarker\(dispatchId\)/);
   assert.match(runtime, /registryLane\.dispatch_inflight = latch/);
-  assert.match(runtime, /const dispatchId = sha256\(\[/);
+  assert.match(runtime, /dispatch_identity_digest: dispatchIdentityDigest/);
+  assert.match(runtime, /planning_contract_version: 1/);
   assert.match(runtime, /work_target_digest: targetDigest/);
   assert.match(runtime, /work_generation: Number\(registryLane\.work_generation/);
   assert.match(runtime, /finalizeConfirmedDispatch/);
