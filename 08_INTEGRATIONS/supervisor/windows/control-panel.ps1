@@ -11,7 +11,7 @@ $ErrorActionPreference = 'Stop'
 
 function Get-ControlPanelViewportLayout([Drawing.Rectangle]$WorkingArea) {
     $desiredWindow = New-Object Drawing.Size(1240, 930)
-    $logicalCanvas = New-Object Drawing.Size(1215, 890)
+    $logicalCanvas = New-Object Drawing.Size(1215, 1510)
 
     $initialWidth = [Math]::Min($desiredWindow.Width, [Math]::Max(320, $WorkingArea.Width))
     $initialHeight = [Math]::Min($desiredWindow.Height, [Math]::Max(320, $WorkingArea.Height))
@@ -57,8 +57,13 @@ if ($ViewportProbe) {
         logical_width = $probeLayout.LogicalCanvasSize.Width
         logical_height = $probeLayout.LogicalCanvasSize.Height
         vertical_scroll_required = [bool]($probeLayout.InitialSize.Height -lt $probeLayout.LogicalCanvasSize.Height)
-        lane3_stop_bottom = 851
-        lane3_stop_in_canvas = [bool]($probeLayout.LogicalCanvasSize.Height -ge 851)
+        lane3_stop_bottom = 1047
+        lane3_stop_in_canvas = [bool]($probeLayout.LogicalCanvasSize.Height -ge 1047)
+        timeline_bottom = 1485
+        critical_controls_scroll_reachable = [bool](
+            $probeLayout.InitialSize.Height -gt 0 -and
+            $probeLayout.LogicalCanvasSize.Height -ge 1047
+        )
     } | ConvertTo-Json -Compress
     exit 0
 }
@@ -68,8 +73,10 @@ $runtime = Join-Path $root 'runtime'
 $configFile = Join-Path $root 'lanes.json'
 $registryFile = Join-Path $root 'lane-registry.json'
 $statusFile = Join-Path $root 'lane-status.json'
+$eventFile = Join-Path $root 'lane-events.ndjson'
 $startScript = Join-Path $runtime 'windows\start-supervisor.ps1'
 $lifecycleScript = Join-Path $runtime 'windows\lifecycle-truth.ps1'
+$observabilityScript = Join-Path $runtime 'windows\control-panel-observability.ps1'
 $openChatScript = Join-Path $runtime 'windows\open-supervisor-chat.ps1'
 $runnerRoot = 'C:\actions-runner-business\actions-runner'
 $repoUrl = 'https://github.com/magasincoffee/magasincoffee.github.io'
@@ -79,7 +86,11 @@ $script:lastRecoveryRequestAt = [DateTimeOffset]::MinValue
 if (-not (Test-Path $lifecycleScript)) {
     throw "Không tìm thấy lifecycle truth helper: $lifecycleScript"
 }
+if (-not (Test-Path $observabilityScript)) {
+    throw "Không tìm thấy Control Panel observability helper: $observabilityScript"
+}
 . $lifecycleScript
+. $observabilityScript
 
 function Read-JsonFile([string]$Path) {
     if (-not (Test-Path $Path)) { return $null }
@@ -237,6 +248,9 @@ function Get-FriendlyStatus([string]$Status) {
         'STARTING' { return 'ĐANG KHỞI ĐỘNG' }
         'WAITING_BRAIN' { return 'ĐANG CHỜ BỘ NÃO' }
         'WORKING' { return 'ĐANG LÀM VIỆC' }
+        'WORKING_LONG' { return 'WORK ĐANG CHẠY LÂU' }
+        'STALL_CHECK' { return 'ĐANG KIỂM TRA STALL' }
+        'POSSIBLY_STALLED' { return 'WORK CÓ THỂ ĐÃ STALL' }
         'RELAYING_RESULT' { return 'ĐANG GỬI KẾT QUẢ' }
         'READY' { return 'SẴN SÀNG' }
         'RECOVERING' { return 'ĐANG TỰ KHÔI PHỤC' }
@@ -249,6 +263,9 @@ function Get-FriendlyStatus([string]$Status) {
 function Get-StatusBackColor([string]$Status) {
     switch ($Status) {
         'WORKING' { return [Drawing.Color]::FromArgb(219,234,254) }
+        'WORKING_LONG' { return [Drawing.Color]::FromArgb(224,242,254) }
+        'STALL_CHECK' { return [Drawing.Color]::FromArgb(254,249,195) }
+        'POSSIBLY_STALLED' { return [Drawing.Color]::FromArgb(255,237,213) }
         'RELAYING_RESULT' { return [Drawing.Color]::FromArgb(224,242,254) }
         'READY' { return [Drawing.Color]::FromArgb(220,252,231) }
         'WAITING_BRAIN' { return [Drawing.Color]::FromArgb(254,249,195) }
