@@ -113,12 +113,14 @@ export function parseLaneDirective(text) {
 
   if (action === "IDLE") {
     assertNarrowObject(payload, new Set(["action", "previous_result"]), "directive");
-    return {
+    const previousResult = parsePreviousResult(payload.previous_result);
+    const result = {
       schema_version: "lane-directive.v1",
       action: "IDLE",
-      previous_result: parsePreviousResult(payload.previous_result),
       digest: sha256(jsonText)
     };
+    if (previousResult) result.previous_result = previousResult;
+    return result;
   }
   if (action !== "WORK") throw new Error("unsupported lane directive action");
   assertNarrowObject(
@@ -140,23 +142,17 @@ export function parseLaneDirective(text) {
     throw new Error("correction_of requires previous_result");
   }
 
-  const dispatchIdentity = JSON.stringify({
-    action: "WORK",
-    task_id: taskId,
-    instruction
-  });
-
-  return {
+  const result = {
     schema_version: "lane-directive.v1",
     action: "WORK",
     task_id: taskId,
     instruction,
     instruction_digest: sha256(instruction),
-    dispatch_digest: sha256(dispatchIdentity),
-    previous_result: previousResult,
-    correction_of: correctionOf,
     digest: sha256(jsonText)
   };
+  if (previousResult) result.previous_result = previousResult;
+  if (correctionOf) result.correction_of = correctionOf;
+  return result;
 }
 
 export function defaultLaneConfig() {
