@@ -367,8 +367,8 @@ test("payroll rates allowances bonuses and deductions remain configurable gaps",
 
 test("helper has no database Supabase browser or external API write path", async () => {
   const source = await fs.readFile(new URL("02_CORE/shared/workforce-operations-v1.mjs", root), "utf8");
-  assert.doesNotMatch(source, /supabase|\\.rpc\\(|\\.from\\(|fetch\\(|XMLHttpRequest|localStorage|sessionStorage|document\\.|window\\./i);
-  assert.doesNotMatch(source, /insert|update|delete\\s+from|create\\s+table|alter\\s+table/i);
+  assert.doesNotMatch(source, /supabase|\.rpc\(|\.from\(|fetch\(|XMLHttpRequest|localStorage|sessionStorage|document\.|window\./i);
+  assert.doesNotMatch(source, /insert|update|delete\s+from|create\s+table|alter\s+table/i);
 });
 
 test("TASK-091 safety forbids production mutation and preserves PFC", async () => {
