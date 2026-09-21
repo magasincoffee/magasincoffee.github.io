@@ -208,8 +208,8 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 | ID | Task | Gate | Status |
 |---|---|---|---|
 | MIG-001 | Freeze Baseline + Migration Bootstrap | exact baseline inventory + migration contract + target repo bootstrap plan; zero production cutover | DONE |
-| MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | READY / RESUME AFTER OWNER REPO CREATE |
-| MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | QUEUED |
+| MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | DONE |
+| MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | READY / NOT STARTED |
 | MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | QUEUED |
 | MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | QUEUED / OWNER-SAFE-GATE |
 | MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | QUEUED |
@@ -218,9 +218,22 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 Migration invariant: the existing production Supervisor remains authoritative until MIG-005 explicitly proves cutover. RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING and may not be relabeled RELEASED during repository migration.
 
 
-### MIG-002 owner/auth boundary
+### MIG-002 completion
 
-MIG-002 extraction has **not started**. Target repository `magasincoffee/magasin-supervisor` is not present. Repository creation requires an Owner-authenticated GitHub session or repository-create capability; current GitHub connector does not expose repository creation. Do not substitute another repository name and do not bypass login/MFA/CAPTCHA. Resume MIG-002 from the existing frozen baseline/map after the exact empty target repository exists. No re-freeze is required.
+MIG-002 extraction is complete in `magasincoffee/magasin-supervisor`.
+
+- target bootstrap main: `815fc10bbc1814ed46f73b63391b9e67e29aa446`
+- extraction PR #1 merge: `e67ae8101c391fc0a77b41ae6190bb615356be99`
+- extraction-safe CI PR #2 merge: `07160cfab6943d647661f732590a0ce45e2f92a5`
+- docs-only closure PR #3 merge: `64371bedc7b9c976047224152dba820c12a0674c`
+- parity: 137/137 represented, missing=0, duplicate=0
+- MOVE byte-equivalent: 90/90
+- REWRITE provenance: 47/47
+- production cutover: false
+- production authority: UNCHANGED_EXISTING_SUPERVISOR
+- RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING
+
+Next task is MIG-003 READY / NOT STARTED. Do not self-start MIG-003 from MIG-002 closure.
 
 `ZERO_PRODUCTION_MUTATION=true`
 
