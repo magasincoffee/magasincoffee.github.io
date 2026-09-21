@@ -52,7 +52,10 @@ $bootstrapUrl = "https://raw.githubusercontent.com/magasincoffee/magasincoffee.g
 Invoke-WebRequest -Uri $bootstrapUrl -OutFile $bootstrap -UseBasicParsing
 if (-not (Test-Path $bootstrap)) { throw "Failed to download bootstrap-new-pc.ps1." }
 
-& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $bootstrap
+$psHost = Get-Command powershell.exe -ErrorAction SilentlyContinue
+if (-not $psHost) { $psHost = Get-Command pwsh.exe -ErrorAction SilentlyContinue }
+if (-not $psHost) { throw "No PowerShell host is available for bootstrap." }
+& $psHost.Source -NoLogo -NoProfile -ExecutionPolicy Bypass -File $bootstrap
 if ($LASTEXITCODE -ne 0) { throw "MAGASIN bootstrap failed with exit code $LASTEXITCODE." }
 
 Write-Step "REGISTER CLEAN SELF-HOSTED GITHUB RUNNER"
