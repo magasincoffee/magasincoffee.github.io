@@ -10,6 +10,7 @@ const scripts = [
   "../windows/run-supervisor.ps1",
   "../windows/start-supervisor.ps1",
   "../windows/stop-supervisor.ps1",
+  "../windows/lifecycle-truth.ps1",
   "../windows/install-supervisor.ps1",
   "../windows/repair-supervisor.ps1",
   "../windows/control-panel.ps1",
