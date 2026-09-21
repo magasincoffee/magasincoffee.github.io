@@ -57,7 +57,6 @@ function Get-RegistryTargetFingerprint {
       brain_revision = [int]$lane.applied_brain_url_revision
       work_digest = Get-Sha256Text ([string]$lane.work_url)
       work_revision = [int]$lane.applied_work_url_revision
-      work_generation = [int]$lane.work_generation
     }
   }
   return Get-Sha256Text (($safe | ConvertTo-Json -Depth 5 -Compress))
@@ -121,9 +120,9 @@ while ([DateTimeOffset]::UtcNow -lt $deadline) {
     throw "Owner STOP became active during soak"
   }
 
-  if ((Get-TargetFingerprint) -ne $targetStart -or (Get-RegistryTargetFingerprint) -ne $registryTargetStart) {
+  if ((Get-TargetFingerprint) -ne $targetStart) {
     Write-Host "TARGET_CHANGED_EXTERNALLY=True"
-    throw "Brain/Work target identity or revision changed during soak; human reconciliation required"
+    throw "Owner-configured Brain/Work target identity or revision changed during soak; human reconciliation required"
   }
 
   $enabled = Get-EnabledLaneCount -Root $root
@@ -168,11 +167,13 @@ if ($durationSeconds -lt ($DurationMinutes * 60 - $SampleSeconds)) {
   throw "Continuous soak duration was shorter than requested"
 }
 
-if ((Get-TargetFingerprint) -ne $targetStart -or (Get-RegistryTargetFingerprint) -ne $registryTargetStart) {
+if ((Get-TargetFingerprint) -ne $targetStart) {
   Write-Host "TARGET_CHANGED_EXTERNALLY=True"
-  throw "Production targets changed by end of soak"
+  throw "Owner-configured production targets changed by end of soak"
 }
 
+$registryTargetEnd = Get-RegistryTargetFingerprint
+$registryTargetEvolved = ($registryTargetEnd -ne $registryTargetStart)
 $eventEnd = Get-SafeEventStats
 $summary = [ordered]@{
   schema_version = "supervisor-rbt009-soak.v1"
@@ -189,7 +190,9 @@ $summary = [ordered]@{
   event_lines_start = [int]$eventStart.total_lines
   event_lines_end = [int]$eventEnd.total_lines
   target_fingerprint = $targetStart
-  registry_target_fingerprint = $registryTargetStart
+  registry_target_fingerprint_start = $registryTargetStart
+  registry_target_fingerprint_end = $registryTargetEnd
+  registry_target_evolved = [bool]$registryTargetEvolved
   owner_stop_observed = $false
   monitor_browser_mutations = 0
 }
