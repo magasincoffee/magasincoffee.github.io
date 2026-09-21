@@ -23,22 +23,9 @@ if (-not (Test-Path $lifecycleScript)) {
 
 . $lifecycleScript
 
-$existingWrapper = Get-LifecycleSupervisorWrapper -Root $root
-if ($existingWrapper) {
-    Set-Content -Path $pidFile -Value $existingWrapper.ProcessId -Encoding ascii
-    Write-Host "Supervisor wrapper already running (PID $($existingWrapper.ProcessId))."
-    exit 0
-}
-
-if (Test-Path $pidFile) {
-    $existing = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($existing -and (Get-Process -Id $existing -ErrorAction SilentlyContinue)) {
-        Write-Host "Supervisor already running (PID $existing)."
-        exit 0
-    }
-}
-
 if ($Recovery) {
+    # Recovery is never Owner authority. It must fail closed before any
+    # "already running" shortcut and must never clear STOP/AUTOSTART_DISABLED.
     $ownerStop = Get-LifecycleOwnerStopState -Root $root
     if ($ownerStop.blocked) {
         Write-Host 'RECOVERY_START_BLOCKED_OWNER_STOP=True'
@@ -51,10 +38,69 @@ if ($Recovery) {
         exit 0
     }
 } else {
-    # Only an explicit Owner START may clear the Owner STOP latches.
-    Remove-Item $stop -Force -ErrorAction SilentlyContinue
-    Remove-Item $autostartDisabled -Force -ErrorAction SilentlyContinue
+    # Explicit Owner START is the sole normal authority that clears lifecycle
+    # STOP latches. This happens BEFORE any wrapper/PID early return.
+    foreach ($latchPath in @($stop, $autostartDisabled)) {
+        if (Test-Path $latchPath) {
+            Remove-Item $latchPath -Force -ErrorAction Stop
+        }
+    }
+
+    $ownerStopAfterClear = Get-LifecycleOwnerStopState -Root $root
+    if ($ownerStopAfterClear.blocked) {
+        throw 'Explicit Owner START could not clear STOP/AUTOSTART_DISABLED.'
+    }
     Write-Host 'OWNER_START_LATCH_CLEAR=True'
+}
+
+$existingWrapper = Get-LifecycleSupervisorWrapper -Root $root
+if ($existingWrapper) {
+    Set-Content -Path $pidFile -Value $existingWrapper.ProcessId -Encoding ascii
+    if (-not $Recovery) {
+        $ownerStopBeforeReturn = Get-LifecycleOwnerStopState -Root $root
+        if ($ownerStopBeforeReturn.blocked) {
+            throw 'Explicit Owner START refused success because Owner STOP remains active.'
+        }
+        Write-Host 'OWNER_START_EXISTING_WRAPPER_REUSED=True'
+    }
+    Write-Host "Supervisor wrapper already running (PID $($existingWrapper.ProcessId))."
+    exit 0
+}
+
+if (Test-Path $pidFile) {
+    $existing = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
+    $existingProcess = $null
+    if ($existing -and [int]::TryParse([string]$existing, [ref]([int]$null))) {
+        $existingProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$existing" -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+    }
+
+    if ($existingProcess) {
+        $looksLikeWrapper = [bool](
+            $existingProcess.Name -eq 'powershell.exe' -and
+            $existingProcess.CommandLine -and
+            $existingProcess.CommandLine -like '*run-supervisor.ps1*' -and
+            $existingProcess.CommandLine -like "*$root*"
+        )
+        if ($looksLikeWrapper) {
+            if (-not $Recovery) {
+                $ownerStopBeforeReturn = Get-LifecycleOwnerStopState -Root $root
+                if ($ownerStopBeforeReturn.blocked) {
+                    throw 'Explicit Owner START refused success because Owner STOP remains active.'
+                }
+                Write-Host 'OWNER_START_EXISTING_WRAPPER_REUSED=True'
+            }
+            Write-Host "Supervisor wrapper already running (PID $existing)."
+            exit 0
+        }
+
+        # PID reuse/stale pid file is not proof that Supervisor is running.
+        # Never kill an unrelated process; discard only the stale pid record.
+        Remove-Item $pidFile -Force -ErrorAction Stop
+        Write-Host 'STALE_SUPERVISOR_PID_IGNORED=True'
+    } else {
+        Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+    }
 }
 
 # Prevent GitHub Actions orphan-process cleanup from claiming the persistent Supervisor shell.
