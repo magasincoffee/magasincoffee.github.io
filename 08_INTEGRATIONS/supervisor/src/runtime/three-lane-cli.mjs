@@ -37,7 +37,13 @@ import {
   defaultLaneRegistry,
   normalizeLaneRegistry,
   buildBrainStartRequest,
+  knownBrainStartRequestDigests,
+  directiveDispatchDigest,
+  applyBrainResultVerdict,
+  validateRejectCorrection,
+  BRAIN_RESULT_VERDICTS,
   buildWorkRolloverInstruction,
+  buildLegacyWorkDispatchInstructionV59,
   buildWorkDispatchInstruction,
   workDispatchMarker,
   buildLaneResultRelay
@@ -113,7 +119,7 @@ import {
   targetHealthIdentity
 } from "./target-health.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.59";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.60";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;
@@ -129,6 +135,7 @@ function parseArgs(argv) {
     relayRearmFixture: false,
     workFullFixture: false,
     staleTargetFixture: false,
+    brainPlanningFixture: false,
     pageBudget: DEFAULT_CHATGPT_PAGE_BUDGET
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -142,6 +149,7 @@ function parseArgs(argv) {
     else if (key === "--relay-rearm-fixture") result.relayRearmFixture = true;
     else if (key === "--work-full-fixture") result.workFullFixture = true;
     else if (key === "--stale-target-fixture") result.staleTargetFixture = true;
+    else if (key === "--brain-planning-fixture") result.brainPlanningFixture = true;
     else if (key === "--page-budget") result.pageBudget = Number(argv[++i]);
     else throw new Error(`unknown argument: ${key}`);
   }
@@ -533,6 +541,72 @@ async function writeLaneStatus(statusPath, statuses, scheduler = null) {
   });
 }
 
+async function applyDirectivePreviousResult({
+  lane,
+  registryLane,
+  directive,
+  registry,
+  registryPath,
+  logPath
+}) {
+  if (!directive.previous_result) {
+    return { blocked: false, legacy: true, verdict: null };
+  }
+
+  let correction = null;
+  let outcome = null;
+  try {
+    correction = validateRejectCorrection(directive);
+    outcome = applyBrainResultVerdict(
+      registryLane,
+      directive.previous_result,
+      { at: new Date().toISOString() }
+    );
+  } catch (error) {
+    const code = String(error?.code || "BRAIN_VERDICT_INVALID");
+    await safeLog(logPath, {
+      type: "LANE_BRAIN_RESULT_VERDICT_BLOCKED",
+      laneId: lane.lane_id,
+      taskId: directive.previous_result?.task_id,
+      relayId: directive.previous_result?.relay_id,
+      reason: code
+    });
+    return { blocked: true, legacy: false, code, verdict: null };
+  }
+
+  if (outcome.changed) {
+    await atomicJsonWrite(registryPath, registry);
+    await emitLaneEvent({
+      timestamp: outcome.record.recorded_at,
+      lane_id: lane.lane_id,
+      actor: "BRAIN",
+      event_type: outcome.record.verdict === BRAIN_RESULT_VERDICTS.ACCEPT
+        ? LANE_EVENT_TYPES.BRAIN_RESULT_ACCEPTED
+        : LANE_EVENT_TYPES.BRAIN_RESULT_REJECTED,
+      task_id: outcome.record.task_id,
+      phase: outcome.record.verdict === BRAIN_RESULT_VERDICTS.ACCEPT
+        ? "ACCEPTED"
+        : "REJECTED",
+      reason_code: outcome.record.reason_code || (
+        outcome.record.verdict === BRAIN_RESULT_VERDICTS.ACCEPT
+          ? "BRAIN_RESULT_ACCEPTED"
+          : "BRAIN_RESULT_REJECTED"
+      ),
+      work_generation: Number(registryLane.work_generation || 0),
+      relay_id: outcome.record.relay_id
+    });
+  }
+
+  return {
+    blocked: false,
+    legacy: false,
+    verdict: outcome.record,
+    idempotent: Boolean(outcome.idempotent),
+    correction: Boolean(correction?.correction),
+    owner_path: Boolean(correction?.owner_path)
+  };
+}
+
 async function assertConversationSafe(adapter, page, {
   brain = false,
   allowFull = false
@@ -684,6 +758,12 @@ async function finalizeConfirmedRelay({
 
   registryLane.last_result_relay_id = latch.relay_id;
   registryLane.last_work_result_digest = latch.response_digest;
+  if (
+    !registryLane.last_result_verdict ||
+    registryLane.last_result_verdict.relay_id !== latch.relay_id
+  ) {
+    registryLane.last_result_verdict = null;
+  }
   registryLane.awaiting_work = false;
   await clearRelayInflight(registryLane);
   await atomicJsonWrite(registryPath, registry);
@@ -1035,9 +1115,16 @@ async function adoptExistingBrainDirective({
     laneId: lane.lane_id,
     projectName: lane.project_name
   }));
+  const knownStartDigests = knownBrainStartRequestDigests({
+    laneId: lane.lane_id,
+    projectName: lane.project_name
+  });
   const laterTurns = turns.slice(candidateIndex + 1);
   const onlyRobotHandshakeAfterDirective = laterTurns.every((turn) =>
-    turn.role === "user" && turn.digest === expectedStartDigest
+    turn.role === "user" && (
+      turn.digest === expectedStartDigest ||
+      knownStartDigests.has(turn.digest)
+    )
   );
   if (laterTurns.length && !onlyRobotHandshakeAfterDirective) return null;
 
@@ -1053,6 +1140,36 @@ async function adoptExistingBrainDirective({
     digest: candidate.digest
   });
   return candidate;
+}
+
+async function recoverKnownBrainHandshakeWithoutDirective({
+  page,
+  lane,
+  registryLane,
+  registry,
+  registryPath,
+  logPath
+}) {
+  const turns = await captureRecentConversationTurns(page, { limit: 20 })
+    .catch(() => []);
+  const knownDigests = knownBrainStartRequestDigests({
+    laneId: lane.lane_id,
+    projectName: lane.project_name
+  });
+  const present = turns.some((turn) =>
+    turn.role === "user" && knownDigests.has(turn.digest)
+  );
+  if (!present) return false;
+
+  registryLane.brain_request_sent = true;
+  registryLane.brain_request_inflight = null;
+  await atomicJsonWrite(registryPath, registry);
+  await safeLog(logPath, {
+    type: "LANE_BRAIN_LEGACY_HANDSHAKE_ADOPTED_NO_DUPLICATE",
+    laneId: lane.lane_id,
+    reason: "v59_or_v60_handshake_present"
+  });
+  return true;
 }
 
 async function ensureBrainRequest({
@@ -1078,6 +1195,20 @@ async function ensureBrainRequest({
     logPath
   });
   if (existingDirective) return existingDirective;
+
+  if (
+    !registryLane.brain_request_inflight &&
+    await recoverKnownBrainHandshakeWithoutDirective({
+      page,
+      lane,
+      registryLane,
+      registry,
+      registryPath,
+      logPath
+    })
+  ) {
+    return null;
+  }
 
   if (registryLane.brain_request_inflight) {
     const outcome = await reconcileBrainRequest({
@@ -1660,6 +1791,22 @@ async function dispatchWork({
       phase: "ASSIGNED",
       work_generation: Number(registryLane.work_generation || 0)
     });
+    if (
+      directive.previous_result?.verdict === BRAIN_RESULT_VERDICTS.REJECT &&
+      directive.correction_of
+    ) {
+      await emitLaneEvent({
+        timestamp: assignedAt,
+        lane_id: lane.lane_id,
+        actor: "BRAIN",
+        event_type: LANE_EVENT_TYPES.BRAIN_CORRECTION_DISPATCHED,
+        task_id: directive.task_id,
+        phase: "CORRECTION",
+        reason_code: "BRAIN_CORRECTION_DISPATCHED",
+        work_generation: Number(registryLane.work_generation || 0),
+        relay_id: directive.previous_result.relay_id
+      });
+    }
   };
 
   rollover = normalizeWorkRollover(registryLane.work_rollover);
@@ -1901,16 +2048,32 @@ async function dispatchWork({
       })
     : directive.instruction;
 
-  const dispatchId = sha256([
-    lane.lane_id,
-    directive.task_id,
-    directive.digest
-  ].join("|")).slice(0, 32);
-  const outgoingInstruction = buildWorkDispatchInstruction({
-    taskId: directive.task_id,
-    dispatchId,
-    instruction: workBody
-  });
+  const persistedDispatch = registryLane.dispatch_inflight;
+  const legacyPersistedEnvelope = Boolean(
+    persistedDispatch &&
+    persistedDispatch.dispatch_id &&
+    !persistedDispatch.dispatch_contract_version &&
+    persistedDispatch.task_id === directive.task_id &&
+    persistedDispatch.directive_digest === directive.digest
+  );
+  const dispatchId = legacyPersistedEnvelope
+    ? persistedDispatch.dispatch_id
+    : sha256([
+        lane.lane_id,
+        directive.task_id,
+        directiveDispatchDigest(directive)
+      ].join("|")).slice(0, 32);
+  const outgoingInstruction = legacyPersistedEnvelope
+    ? buildLegacyWorkDispatchInstructionV59({
+        taskId: directive.task_id,
+        dispatchId,
+        instruction: workBody
+      })
+    : buildWorkDispatchInstruction({
+        taskId: directive.task_id,
+        dispatchId,
+        instruction: workBody
+      });
   const instructionDigest = sha256(outgoingInstruction);
   const targetDigest = sha256(registryLane.work_url);
 
@@ -1933,6 +2096,8 @@ async function dispatchWork({
       instruction_digest: instructionDigest,
       directive_instruction_digest: directive.instruction_digest,
       directive_digest: directive.digest,
+      directive_dispatch_digest: directiveDispatchDigest(directive),
+      dispatch_contract_version: "BRAIN_PLANNING_V1_GUARDED",
       create_new: Boolean(rollover),
       work_generation: Number(registryLane.work_generation || 0),
       work_url_revision: Number(registryLane.applied_work_url_revision || 0),
@@ -2761,6 +2926,7 @@ async function applyOwnerWorkStateReset({
   registryLane.last_brain_directive_digest = null;
   registryLane.last_work_result_digest = null;
   registryLane.last_result_relay_id = null;
+  registryLane.last_result_verdict = null;
   registryLane.last_dispatch_id = null;
   registryLane.dispatch_inflight = null;
   registryLane.brain_request_inflight = null;
@@ -4174,6 +4340,39 @@ async function processLaneTurn({
     );
   }
 
+  const planning = await applyDirectivePreviousResult({
+    lane,
+    registryLane,
+    directive,
+    registry,
+    registryPath,
+    logPath
+  });
+  if (planning.blocked) {
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAIT_OWNER",
+      "Brain verdict/correction không khớp durable result truth; Robot fail-closed và không dispatch task mới.",
+      { planning_phase: "VERDICT_BLOCKED" }
+    );
+  }
+
+  if (
+    planning.verdict?.verdict === BRAIN_RESULT_VERDICTS.REJECT &&
+    directive.action === "IDLE"
+  ) {
+    registryLane.last_brain_directive_digest = directive.digest;
+    await atomicJsonWrite(registryPath, registry);
+    return laneStatus(
+      lane,
+      registryLane,
+      "WAIT_OWNER",
+      "Brain đã REJECT kết quả và chưa có correction tự động hợp lệ; chờ Owner hoặc directive correction tiếp theo.",
+      { planning_phase: "REJECTED_WAIT_OWNER" }
+    );
+  }
+
   if (directive.digest === registryLane.last_brain_directive_digest) {
     return laneStatus(
       lane,
@@ -4254,6 +4453,10 @@ if (args.workFullFixture) {
 }
 if (args.staleTargetFixture) {
   await import("./stale-target-acceptance-cli.mjs");
+  process.exit(0);
+}
+if (args.brainPlanningFixture) {
+  await import("./brain-planning-acceptance-cli.mjs");
   process.exit(0);
 }
 if (!Number.isFinite(args.pollMs) || args.pollMs < 1000) {
