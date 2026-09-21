@@ -11,6 +11,10 @@ on:
       - 08_INTEGRATIONS/supervisor/windows/**
       - 08_INTEGRATIONS/supervisor/package.json
       - 08_INTEGRATIONS/supervisor/package-lock.json
+      - 08_INTEGRATIONS/supervisor/test/release-integration-matrix.test.mjs
+      - .github/workflows/supervisor-rbt009-soak.yml
+      - .github/scripts/supervisor-rbt009-soak.ps1
+      - .github/scripts/supervisor-release-event-validator.mjs
 
 permissions:
   contents: read
