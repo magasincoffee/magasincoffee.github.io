@@ -61,9 +61,13 @@ test("F Owner STOP is fail-closed and only explicit Owner START clears latches",
   const autoInstall = await read("../windows/install-autostart.ps1");
 
   assert.match(start, /if \(\$Recovery\)[\s\S]*?RECOVERY_START_BLOCKED_OWNER_STOP=True/);
-  assert.match(start, /Only an explicit Owner START may clear/);
-  assert.match(start, /Remove-Item \$stop/);
-  assert.match(start, /Remove-Item \$autostartDisabled/);
+  assert.match(start, /Explicit Owner START is the sole normal authority/);
+  assert.match(start, /Clear-LifecycleOwnerStopLatches -Root \$root/);
+  assert.match(start, /OWNER_START_LATCH_CLEAR=True/);
+  const clearIndex = start.indexOf("Clear-LifecycleOwnerStopLatches -Root $root");
+  assert.ok(clearIndex >= 0);
+  assert.ok(start.indexOf("$existingWrapper = Get-LifecycleSupervisorWrapper") > clearIndex);
+  assert.ok(start.indexOf("if (Test-Path $pidFile)") > clearIndex);
   assert.match(run, /Supervisor launch blocked by Owner STOP\/AUTOSTART_DISABLED/);
   assert.doesNotMatch(install, /Remove-Item \$stopFile -Force/);
   assert.doesNotMatch(autoInstall, /Remove-Item \$disabled -Force/);
