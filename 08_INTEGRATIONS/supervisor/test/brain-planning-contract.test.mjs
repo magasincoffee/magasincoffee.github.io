@@ -354,6 +354,8 @@ test("runtime contains persisted verdict gate, legacy handshake migration and v5
   assert.match(runtime, /applyDirectivePreviousResult/);
   assert.match(runtime, /LANE_BRAIN_LEGACY_HANDSHAKE_ADOPTED_NO_DUPLICATE/);
   assert.match(runtime, /legacyPersistedEnvelope/);
+  assert.match(runtime, /LANE_WORK_V59_DISPATCH_RETRY_PRESERVED/);
+  assert.match(runtime, /return "RETRY_READY"/);
   assert.match(runtime, /buildLegacyWorkDispatchInstructionV59/);
   assert.match(runtime, /dispatch_contract_version: "BRAIN_PLANNING_V1_GUARDED"/);
   assert.match(runtime, /BRAIN_REJECT_CORRECTION_REQUIRED|VERDICT_BLOCKED/);
