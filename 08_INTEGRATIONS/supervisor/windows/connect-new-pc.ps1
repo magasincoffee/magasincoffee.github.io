@@ -36,8 +36,9 @@ if (-not (Get-Command gh.exe -ErrorAction SilentlyContinue)) {
 Write-Host ("GH=" + (& gh --version | Select-Object -First 1))
 
 Write-Step "AUTHORIZE THIS NEW PC"
-& gh auth status --hostname github.com *> $null
-if ($LASTEXITCODE -ne 0) {
+& cmd.exe /d /c "gh auth status --hostname github.com >nul 2>&1"
+$ghAuthReady = ($LASTEXITCODE -eq 0)
+if (-not $ghAuthReady) {
     Write-Host "GitHub will show a one-time browser/device authorization. Approve it with the Owner GitHub account."
     & gh auth login --hostname github.com --git-protocol https --web
     if ($LASTEXITCODE -ne 0) { throw "GitHub CLI web login failed." }
