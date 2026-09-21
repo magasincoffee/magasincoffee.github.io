@@ -22,29 +22,72 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
 }
 
 Write-Step "ENSURE GITHUB CLI"
-if (-not (Get-Command gh.exe -ErrorAction SilentlyContinue)) {
+Refresh-Path
+
+$ghCandidates = @(
+    (Join-Path $env:ProgramFiles "GitHub CLI\gh.exe"),
+    (Join-Path $env:LOCALAPPDATA "Programs\GitHub CLI\gh.exe")
+)
+
+$ghCmd = Get-Command gh.exe -ErrorAction SilentlyContinue
+$ghExe = if ($ghCmd) { $ghCmd.Source } else {
+    $ghCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+}
+
+if (-not $ghExe) {
     if (-not (Get-Command winget.exe -ErrorAction SilentlyContinue)) {
         throw "winget is unavailable. Install Microsoft App Installer, then rerun."
     }
+
+    $oldEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
     & winget.exe install --id GitHub.cli --exact --silent --accept-source-agreements --accept-package-agreements
-    if ($LASTEXITCODE -ne 0) { throw "GitHub CLI installation failed." }
+    $wingetExit = $LASTEXITCODE
+    $ErrorActionPreference = $oldEap
+
     Refresh-Path
+    $ghCmd = Get-Command gh.exe -ErrorAction SilentlyContinue
+    $ghExe = if ($ghCmd) { $ghCmd.Source } else {
+        $ghCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    }
+
+    if (-not $ghExe) {
+        throw "GitHub CLI is unavailable after winget attempt (exit code $wingetExit)."
+    }
 }
-if (-not (Get-Command gh.exe -ErrorAction SilentlyContinue)) {
-    throw "gh.exe is unavailable after installation."
-}
-Write-Host ("GH=" + (& gh --version | Select-Object -First 1))
+
+Write-Host ("GH_EXE=" + $ghExe)
+$oldEap = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+$ghVersion = & $ghExe --version 2>&1 | Select-Object -First 1
+$ghVersionExit = $LASTEXITCODE
+$ErrorActionPreference = $oldEap
+if ($ghVersionExit -ne 0) { throw "GitHub CLI version check failed." }
+Write-Host ("GH=" + $ghVersion)
 
 Write-Step "AUTHORIZE THIS NEW PC"
-& cmd.exe /d /c "gh auth status --hostname github.com >nul 2>&1"
-$ghAuthReady = ($LASTEXITCODE -eq 0)
-if (-not $ghAuthReady) {
+$oldEap = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+& $ghExe auth status --hostname github.com *> $null
+$ghAuthExit = $LASTEXITCODE
+$ErrorActionPreference = $oldEap
+
+if ($ghAuthExit -ne 0) {
     Write-Host "GitHub will show a one-time browser/device authorization. Approve it with the Owner GitHub account."
-    & gh auth login --hostname github.com --git-protocol https --web
-    if ($LASTEXITCODE -ne 0) { throw "GitHub CLI web login failed." }
+    $oldEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    & $ghExe auth login --hostname github.com --git-protocol https --web
+    $ghLoginExit = $LASTEXITCODE
+    $ErrorActionPreference = $oldEap
+    if ($ghLoginExit -ne 0) { throw "GitHub CLI web login failed." }
 }
-& gh auth setup-git
-if ($LASTEXITCODE -ne 0) { throw "gh auth setup-git failed." }
+
+$oldEap = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+& $ghExe auth setup-git
+$ghSetupExit = $LASTEXITCODE
+$ErrorActionPreference = $oldEap
+if ($ghSetupExit -ne 0) { throw "gh auth setup-git failed. Verify Git for Windows is installed and available in PATH." }
 Write-Host "GITHUB_OWNER_AUTH_READY=True"
 
 Write-Step "INSTALL MAGASIN SUPERVISOR"
@@ -94,8 +137,12 @@ if (Test-Path (Join-Path $RunnerRoot ".runner")) {
 
     Expand-Archive -LiteralPath $zip -DestinationPath $RunnerRoot -Force
 
-    $token = (& gh api --method POST "repos/$Repository/actions/runners/registration-token" --jq ".token")
-    if ($LASTEXITCODE -ne 0 -or -not $token) {
+    $oldEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $token = (& $ghExe api --method POST "repos/$Repository/actions/runners/registration-token" --jq ".token")
+    $ghApiExit = $LASTEXITCODE
+    $ErrorActionPreference = $oldEap
+    if ($ghApiExit -ne 0 -or -not $token) {
         throw "Could not obtain runner registration token. Owner account must have repository Actions administration permission."
     }
 
