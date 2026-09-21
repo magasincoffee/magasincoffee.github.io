@@ -1101,14 +1101,25 @@ Rollback/risk:
 
 ### TASK-RBT-008 — Brain Planning Contract Runtime Hooks
 
-Purpose: make PLAN → DISPATCH → VERIFY → ACCEPT/REJECT → NEXT PLAN observable/enforceable where safely possible.
+**Implementation status:** RELEASED in runtime v2026-09-20.60.
 
-Expected scope/files:
+Purpose: make PLAN → DISPATCH → VERIFY → ACCEPT/REJECT → NEXT PLAN machine-observable/enforceable at the minimum safe boundary while preserving old MAGASIN_LANE_DIRECTIVE_V1 directives and exact-once transport.
 
-- `src/runtime/three-lane.mjs` Brain prompts/directive parsing;
-- `src/runtime/three-lane-cli.mjs` events;
-- architecture/README refinement if protocol metadata is added;
-- contract tests.
+Released contract:
+
+- old WORK/IDLE v1 directives remain valid unchanged;
+- optional `previous_result` correlates semantic ACCEPT/REJECT to exact prior `task_id + relay_id`;
+- optional `correction_of` is required for REJECT+WORK and must match the rejected result;
+- malformed known verdict metadata fails closed; unknown future fields are inert;
+- semantic verdict is durable/idempotent and separate from `RESULT_RELAY_CONFIRMED`;
+- conflicting verdict for one relay fails closed;
+- runtime Work wrapper injects one-task/no-roadmap/return-evidence-and-STOP guard;
+- v59 Brain handshake digest remains recognized after upgrade, preventing duplicate handshake;
+- persisted v59 dispatch latch preserves exact old envelope identity until its transaction reaches a safe boundary;
+- planning metadata does not change logical dispatch identity;
+- <=20m is planning guidance when decomposable; >30m split when safe; RBT-005 watchdog timing is unchanged;
+- verdict/correction events are metadata-only and mapped into the RBT-007 timeline;
+- Owner STOP, quarantine, page budget, mutation singleton, hot-swap, relay rearm and Work-full contracts remain authoritative.
 
 Dependencies: TASK-RBT-002; scheduled after TASK-RBT-007 to avoid mixing protocol work with scheduler foundations.
 
