@@ -166,3 +166,34 @@ TASK-065 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_065_CA
 TASK-066 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`. Drive READ_ONLY bounded inventory separated RECOGNITION_SOURCE / PAYMENT_SOURCE / SETTLEMENT_SOURCE / ALLOCATION_CONTEXT / BUDGET_CONTEXT / NOT_CONNECTED. Payroll is a PARTIAL bounded recognition candidate behind actuality/rate gates; current rent/utilities/marketing/bank-fee recognition remains GAP/NOT_CONNECTED; exact historical ShopeeFood settlement fields are usable only for covered provider/date/store and current September remains incomplete; branch cash/operating ledgers remain payment/reconciliation evidence unless category + business nature + period prove recognition. Procurement purchases/payments remain outside OPEX recognition by default. No executable code/workflow was added. TASK-066 DONE; TASK-067 READY / AUTO_CONTINUE.
 
 TASK-067 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_067_OPERATING_COST_TRUTH_CONTRACT_V1_EVIDENCE.md`. Source-agnostic Operating Cost Truth V1 reuses Financial Truth and separates exact recognized cost from payment, settlement proceeds, allocation context and budget context. ACTUAL exact items require actuality/period/amount/scope proof; ACTUAL PERIOD_AGGREGATE requires COMPLETE proven coverage; shared-company branch allocation requires explicit approval; historical source periods cannot become current ACTUAL. Existing Partial Financial Baseline compatibility is proven without changing Profit formula. PR #204 final head `4c9bbc2b99dd272a6f707ce2ebd422988cef9223`, merge `6233fc587921ba44a0b61a662b6b316ade8292c2`; PR-head run `35515915305` and exact post-merge run `35515946855` succeeded on Node v20.20.2 with TASK-067 31/31 and full Business OS 385/385 / 0 fail. TASK-067 DONE; TASK-068 READY / AUTO_CONTINUE.
+
+
+## Workforce Operations V1 — STAGED / WAIT_OWNER_RELEASE
+
+Canonical architecture: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md`  
+Execution plan: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md`  
+E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
+
+> Architecture is Owner-approved. TASK-090→108 are staged only and must not execute until explicit Owner release. Current PFC queue remains authoritative.
+
+| ID | Task | Est. | Gate | Status |
+|---|---|---:|---|---|
+| TASK-090 | Workforce V1 Current-System Reconciliation | 20m | reuse/delete map + no duplicate path | STAGED / WAIT_OWNER_RELEASE |
+| TASK-091 | Workforce V1 Canonical State + Rule Contract | 20m | state/role/rule contract | STAGED / WAIT_OWNER_RELEASE |
+| TASK-092 | Availability Weekly Cycle Hardening | 20m | next-week registration tests | STAGED / WAIT_OWNER_RELEASE |
+| TASK-093 | Manager Sunday Schedule Board V1 | 20m | Manager scheduling browser gate | STAGED / WAIT_OWNER_RELEASE |
+| TASK-094 | Schedule Validation + Publish Gate | 20m | overlap/max-2/scope/publish regression | STAGED / WAIT_OWNER_RELEASE |
+| TASK-095 | Employee Published Weekly Schedule V1 | 20m | publish→employee visibility E2E | STAGED / WAIT_OWNER_RELEASE |
+| TASK-096 | Swap Lifecycle Reconciliation + Hardening | 20m | full swap lifecycle regression/E2E | STAGED / WAIT_OWNER_RELEASE |
+| TASK-097 | Give Lifecycle Reconciliation + Hardening | 20m | full give lifecycle regression/E2E | STAGED / WAIT_OWNER_RELEASE |
+| TASK-098 | Manual-Time Attendance Contract + Migration Path | 20m | no active realtime check-in/out semantics | STAGED / WAIT_OWNER_RELEASE |
+| TASK-099 | Employee Attendance Entry UI V1 | 20m | manual-time submit browser E2E | STAGED / WAIT_OWNER_RELEASE |
+| TASK-100 | Manager Attendance Exception Review V1 | 20m | review/adjust/confirmed-time E2E | STAGED / WAIT_OWNER_RELEASE |
+| TASK-101 | Employee Profile Projection V1 | 20m | role/scope/privacy tests | STAGED / WAIT_OWNER_RELEASE |
+| TASK-102 | Payroll Truth Contract V1 | 20m | estimated/finalized truth contract | STAGED / WAIT_OWNER_RELEASE |
+| TASK-103 | Payroll Calculation Integration V1 | 20m | confirmed-work-time only | STAGED / WAIT_OWNER_RELEASE |
+| TASK-104 | Employee Payroll Self-Check V1 | 20m | own-payroll authorization E2E | STAGED / WAIT_OWNER_RELEASE |
+| TASK-105 | Employee + Manager Workforce UI Consolidation | 20m | canonical routes only + regression | STAGED / WAIT_OWNER_RELEASE |
+| TASK-106 | Workforce Cross-Flow Browser E2E Pack | 20m | E2E-01→E2E-16 | STAGED / WAIT_OWNER_RELEASE |
+| TASK-107 | Workforce Failure / Recovery / Security E2E | 20m | retry/reload/idempotency/RBAC | STAGED / WAIT_OWNER_RELEASE |
+| TASK-108 | Workforce Final Regression + Post-Merge E2E Recheck | 20m | PR-head + exact-main + cold/reload E2E | STAGED / WAIT_OWNER_RELEASE |
