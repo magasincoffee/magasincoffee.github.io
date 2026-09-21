@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 
 import { BrowserScheduler } from "../src/runtime/browser-scheduler.mjs";
 import {
@@ -220,4 +223,36 @@ test("RBT-009 Tier A: metadata event validator enforces exact-once and transitio
   assert.equal(ok.relay_confirmed, 1);
   assert.throws(() => validateReleaseEvents([...events, events[1]]), /duplicate confirmed dispatch/);
   assert.throws(() => validateReleaseEvents([events[0], events[1], events[5]]), /before work completion/);
+});
+
+
+test("RBT-009 Tier A: rollback/install contract preserves local lane authority state", async () => {
+  const source = await fs.readFile(new URL("../windows/install-supervisor.ps1", import.meta.url), "utf8");
+  assert.match(source, /Remove-Item \$runtime -Recurse -Force/);
+  assert.match(source, /OWNER_STOP_PRESERVED_DURING_INSTALL=True/);
+  assert.doesNotMatch(source, /Remove-Item \$root\s+-Recurse/);
+  assert.doesNotMatch(source, /Remove-Item .*lanes\.json/i);
+  assert.doesNotMatch(source, /Remove-Item .*lane-registry\.json/i);
+
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "rbt009-rollback-"));
+  try {
+    const runtime = path.join(root, "runtime");
+    await fs.mkdir(runtime);
+    await fs.writeFile(path.join(runtime, "old-runtime.txt"), "old");
+    const lanes = JSON.stringify({ lanes: [{ lane_id: "lane-1", brain_url: "opaque-brain", work_url: "opaque-work" }] });
+    const registry = JSON.stringify({ lanes: { "lane-1": { pending_work_url: "opaque-next", work_target_health: { state: "QUARANTINED" } } } });
+    await fs.writeFile(path.join(root, "lanes.json"), lanes);
+    await fs.writeFile(path.join(root, "lane-registry.json"), registry);
+    await fs.writeFile(path.join(root, "STOP"), "owner-stop");
+
+    await fs.rm(runtime, { recursive: true, force: true });
+    await fs.mkdir(runtime);
+    await fs.writeFile(path.join(runtime, "previous-release-restored.txt"), "restored");
+
+    assert.equal(await fs.readFile(path.join(root, "lanes.json"), "utf8"), lanes);
+    assert.equal(await fs.readFile(path.join(root, "lane-registry.json"), "utf8"), registry);
+    assert.equal(await fs.readFile(path.join(root, "STOP"), "utf8"), "owner-stop");
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
 });
