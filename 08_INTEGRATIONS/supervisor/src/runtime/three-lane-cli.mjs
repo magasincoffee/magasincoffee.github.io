@@ -1940,9 +1940,13 @@ async function dispatchWork({
     : directive.instruction;
 
   const existingDispatchLatch = registryLane.dispatch_inflight || null;
+  const coreDispatchDigest = sha256(JSON.stringify({
+    action: "WORK",
+    task_id: directive.task_id,
+    instruction: directive.instruction
+  }));
   const dispatchIdentityDigest = existingDispatchLatch?.directive_digest
-    || directive.dispatch_digest
-    || directive.digest;
+    || coreDispatchDigest;
   const dispatchId = existingDispatchLatch?.dispatch_id || sha256([
     lane.lane_id,
     directive.task_id,
