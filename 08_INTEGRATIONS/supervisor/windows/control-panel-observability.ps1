@@ -300,6 +300,55 @@ function Get-ControlPanelEffectiveLaneState(
     return 'STARTING'
 }
 
+function Get-ControlPanelResourceSummary($Scheduler) {
+    if ($null -eq $Scheduler) {
+        return [pscustomobject]@{
+            page_text = '— / —'
+            mutation_text = '—'
+            active_mutation = 0
+            active_observation = 0
+            parked = 0
+            evictable = 0
+            closed = 0
+        }
+    }
+
+    $pageCount = if ($Scheduler.PSObject.Properties['resident_chatgpt_pages']) {
+        [int]$Scheduler.resident_chatgpt_pages
+    } else { $null }
+    $pageBudget = if ($Scheduler.PSObject.Properties['page_budget']) {
+        [int]$Scheduler.page_budget
+    } else { $null }
+    $leaseStates = if ($Scheduler.PSObject.Properties['lease_states']) {
+        $Scheduler.lease_states
+    } else { $null }
+
+    function Lease-Count([string]$Name) {
+        if ($null -eq $leaseStates) { return 0 }
+        $property = $leaseStates.PSObject.Properties[$Name]
+        if ($null -eq $property) { return 0 }
+        return [int]$property.Value
+    }
+
+    return [pscustomobject]@{
+        page_text = if ($null -ne $pageCount -and $null -ne $pageBudget) {
+            [string]$pageCount + ' / ' + [string]$pageBudget
+        } else {
+            '— / —'
+        }
+        mutation_text = if ($Scheduler.PSObject.Properties['mutation_lease_active']) {
+            if ([bool]$Scheduler.mutation_lease_active) { 'BUSY' } else { 'FREE' }
+        } else {
+            '—'
+        }
+        active_mutation = Lease-Count 'ACTIVE_MUTATION'
+        active_observation = Lease-Count 'ACTIVE_OBSERVATION'
+        parked = Lease-Count 'PARKED'
+        evictable = Lease-Count 'EVICTABLE'
+        closed = Lease-Count 'CLOSED'
+    }
+}
+
 function Get-ControlPanelTargetHealthText($Health, [string]$Role) {
     if ($null -eq $Health) { return "$Role: —" }
     $state = [string]$Health.state
