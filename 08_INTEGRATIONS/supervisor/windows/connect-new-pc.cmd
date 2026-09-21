@@ -4,12 +4,15 @@ title MAGASIN NEW PC CONNECTOR
 
 net session >nul 2>&1
 if not "%errorlevel%"=="0" (
-  echo.
-  echo [MAGASIN] Please run Command Prompt as Administrator.
-  echo.
-  pause
-  exit /b 1
+  echo [MAGASIN] Administrator access is required. Requesting Windows UAC approval...
+  set "MAGASIN_ELEVATE_VBS=%TEMP%\magasin-elevate-%RANDOM%.vbs"
+  > "%MAGASIN_ELEVATE_VBS%" echo Set UAC = CreateObject("Shell.Application")
+  >> "%MAGASIN_ELEVATE_VBS%" echo UAC.ShellExecute "%ComSpec%", "/c ""%~f0""", "", "runas", 1
+  cscript.exe //nologo "%MAGASIN_ELEVATE_VBS%" >nul 2>&1
+  del /q "%MAGASIN_ELEVATE_VBS%" >nul 2>&1
+  exit /b 0
 )
+echo [MAGASIN] ADMIN_ELEVATION_OK=True
 
 set "PSHOST="
 where powershell.exe >nul 2>&1
