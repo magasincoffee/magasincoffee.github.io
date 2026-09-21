@@ -14,9 +14,9 @@ function slice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("TASK-RBT-006 capacity/rollover remains canonical after v58 Owner START latch recovery bump", async () => {
+test("TASK-RBT-006 capacity/rollover remains canonical after v59 Control Panel observability bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.58"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.59"/);
   assert.equal((runtime.match(/from "\.\/work-capacity\.mjs"/g) || []).length, 1);
   assert.equal((runtime.match(/from "\.\/work-rollover\.mjs"/g) || []).length, 1);
 });
