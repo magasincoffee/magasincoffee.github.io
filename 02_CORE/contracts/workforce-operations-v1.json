@@ -1,0 +1,1398 @@
+{
+  "schema_version": "workforce-operations-v1",
+  "task": "TASK-091",
+  "status": "CANONICAL",
+  "purpose": "Executable semantic contract for Workforce Operations V1 from next-week availability through employee payroll self-check without inventing missing business configuration.",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "five_step": {
+    "question": "Lock one minimal state/rule model before TASK-092->108 so role UIs and later migrations cannot invent conflicting semantics.",
+    "delete": [
+      "STAFFING_GAP_AS_CORE_STATE",
+      "THIEU_CA_DU_CA_AS_CORE_STATE",
+      "REALTIME_CHECKED_IN_CHECKED_OUT_ATTENDANCE",
+      "GPS_GEOFENCE",
+      "AI_SCHEDULE_DECISION",
+      "AUTO_PAYROLL_FINALIZE",
+      "AUTO_DISCIPLINARY_ACTION",
+      "AUTO_DEDUCTION",
+      "OWNER_AS_DAILY_SCHEDULER",
+      "ATTENDANCE_AMOUNT_AS_PAYROLL_TRUTH",
+      "ROBOT_GENERATION_AS_MANAGER_SCHEDULING_PREREQUISITE"
+    ],
+    "simplify": "ONE_CANONICAL_STATE_RULE_CONTRACT_WITH_ROLE_PROJECTIONS",
+    "accelerate": "MAP_EXISTING_IMPLEMENTATION_TO_CANONICAL_SEMANTICS_BEFORE_MIGRATION",
+    "automate": "ONLY_DETERMINISTIC_VALIDATION_AFTER_RULES_ARE_CONFIGURED_AND_PROVEN"
+  },
+  "week_semantics": {
+    "timezone": "Asia/Ho_Chi_Minh",
+    "week_start": "MONDAY",
+    "week_end": "SUNDAY",
+    "employee_registration_days": [
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY"
+    ],
+    "employee_registration_target": "NEXT_WEEK",
+    "sunday_manager_target": "NEXT_WEEK",
+    "next_monday_activation": "PUBLISHED_SCHEDULE_BECOMES_ACTIVE",
+    "exact_sunday_cutoff": "CONFIGURABLE_UNRESOLVED",
+    "dst_rule": "USE_IANA_TIMEZONE_SEMANTICS_NOT_FOREIGN_FIXED_OFFSET_ASSUMPTION"
+  },
+  "roles": {
+    "EMPLOYEE": {
+      "authority": [
+        "OWN_PROFILE_READ",
+        "OWN_AVAILABILITY_WRITE",
+        "OWN_SCHEDULE_READ",
+        "OWN_SHIFT_CHANGE_REQUEST",
+        "OWN_ATTENDANCE_SUBMIT",
+        "OWN_PAYROLL_READ"
+      ]
+    },
+    "MANAGER": {
+      "authority": [
+        "SCOPED_PROFILE_READ",
+        "SCOPED_AVAILABILITY_READ",
+        "SCOPED_SCHEDULE_BUILD_REVIEW_PUBLISH",
+        "SCOPED_SHIFT_CHANGE_APPROVAL",
+        "SCOPED_ATTENDANCE_REVIEW"
+      ],
+      "payroll_review": "EXPLICIT_PERMISSION_REQUIRED_IN_LATER_TASK"
+    },
+    "OWNER": {
+      "authority": [
+        "ENTERPRISE_POLICY",
+        "ENTERPRISE_EXCEPTION",
+        "ENTERPRISE_AUTHORITY"
+      ],
+      "daily_schedule_owner": false
+    },
+    "SYSTEM": {
+      "authority": [
+        "DETERMINISTIC_VALIDATION",
+        "TIME_BASED_LIFECYCLE",
+        "ATOMIC_APPLY_AFTER_AUTHORIZED_APPROVAL"
+      ],
+      "may_invent_business_config": false
+    },
+    "ROBOT": {
+      "authority": [
+        "OPTIONAL_PROPOSAL_AFTER_STABLE_RULES"
+      ],
+      "scheduling_prerequisite": false,
+      "workforce_track_execution_enabled": false
+    }
+  },
+  "capabilities": [
+    "AVAILABILITY",
+    "WEEKLY_SCHEDULE",
+    "SCHEDULE_ASSIGNMENT",
+    "SWAP",
+    "GIVE",
+    "MANUAL_TIME_ATTENDANCE",
+    "CONFIRMED_WORK_TIME",
+    "EMPLOYEE_PROFILE",
+    "PAYROLL",
+    "NOTIFICATION_AUDIT"
+  ],
+  "state_machines": {
+    "AVAILABILITY": {
+      "states": [
+        "REGISTRATION_OPEN",
+        "SUBMITTED",
+        "REGISTRATION_CLOSED"
+      ],
+      "transitions": [
+        {
+          "from": "REGISTRATION_OPEN",
+          "to": "SUBMITTED",
+          "actors": [
+            "EMPLOYEE"
+          ]
+        },
+        {
+          "from": "SUBMITTED",
+          "to": "SUBMITTED",
+          "actors": [
+            "EMPLOYEE"
+          ]
+        },
+        {
+          "from": "REGISTRATION_OPEN",
+          "to": "REGISTRATION_CLOSED",
+          "actors": [
+            "SYSTEM"
+          ]
+        },
+        {
+          "from": "SUBMITTED",
+          "to": "REGISTRATION_CLOSED",
+          "actors": [
+            "SYSTEM"
+          ]
+        }
+      ]
+    },
+    "SCHEDULE": {
+      "states": [
+        "DRAFT",
+        "REVIEWED",
+        "PUBLISHED",
+        "ACTIVE",
+        "COMPLETED",
+        "SUPERSEDED"
+      ],
+      "transitions": [
+        {
+          "from": "DRAFT",
+          "to": "REVIEWED",
+          "actors": [
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "REVIEWED",
+          "to": "DRAFT",
+          "actors": [
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "REVIEWED",
+          "to": "PUBLISHED",
+          "actors": [
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "PUBLISHED",
+          "to": "ACTIVE",
+          "actors": [
+            "SYSTEM"
+          ]
+        },
+        {
+          "from": "ACTIVE",
+          "to": "COMPLETED",
+          "actors": [
+            "SYSTEM"
+          ]
+        },
+        {
+          "from": "PUBLISHED",
+          "to": "SUPERSEDED",
+          "actors": [
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "ACTIVE",
+          "to": "SUPERSEDED",
+          "actors": [
+            "MANAGER"
+          ]
+        }
+      ]
+    },
+    "SWAP": {
+      "states": [
+        "REQUESTED",
+        "PEER_ACCEPTED",
+        "MANAGER_APPROVED",
+        "APPLIED",
+        "REJECTED",
+        "CANCELLED",
+        "EXPIRED"
+      ],
+      "transitions": [
+        {
+          "from": "REQUESTED",
+          "to": "PEER_ACCEPTED",
+          "actors": [
+            "PEER_EMPLOYEE"
+          ]
+        },
+        {
+          "from": "REQUESTED",
+          "to": "REJECTED",
+          "actors": [
+            "PEER_EMPLOYEE"
+          ]
+        },
+        {
+          "from": "REQUESTED",
+          "to": "CANCELLED",
+          "actors": [
+            "REQUESTER_EMPLOYEE"
+          ]
+        },
+        {
+          "from": "REQUESTED",
+          "to": "EXPIRED",
+          "actors": [
+            "SYSTEM"
+          ]
+        },
+        {
+          "from": "PEER_ACCEPTED",
+          "to": "MANAGER_APPROVED",
+          "actors": [
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "PEER_ACCEPTED",
+          "to": "REJECTED",
+          "actors": [
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "PEER_ACCEPTED",
+          "to": "EXPIRED",
+          "actors": [
+            "SYSTEM"
+          ]
+        },
+        {
+          "from": "MANAGER_APPROVED",
+          "to": "APPLIED",
+          "actors": [
+            "SYSTEM"
+          ]
+        }
+      ]
+    },
+    "GIVE": {
+      "states": [
+        "OFFERED",
+        "RECIPIENT_ACCEPTED",
+        "MANAGER_APPROVED",
+        "APPLIED",
+        "REJECTED",
+        "CANCELLED",
+        "EXPIRED"
+      ],
+      "transitions": [
+        {
+          "from": "OFFERED",
+          "to": "RECIPIENT_ACCEPTED",
+          "actors": [
+            "RECIPIENT_EMPLOYEE"
+          ]
+        },
+        {
+          "from": "OFFERED",
+          "to": "REJECTED",
+          "actors": [
+            "RECIPIENT_EMPLOYEE"
+          ]
+        },
+        {
+          "from": "OFFERED",
+          "to": "CANCELLED",
+          "actors": [
+            "GIVER_EMPLOYEE"
+          ]
+        },
+        {
+          "from": "OFFERED",
+          "to": "EXPIRED",
+          "actors": [
+            "SYSTEM"
+          ]
+        },
+        {
+          "from": "RECIPIENT_ACCEPTED",
+          "to": "MANAGER_APPROVED",
+          "actors": [
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "RECIPIENT_ACCEPTED",
+          "to": "REJECTED",
+          "actors": [
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "RECIPIENT_ACCEPTED",
+          "to": "EXPIRED",
+          "actors": [
+            "SYSTEM"
+          ]
+        },
+        {
+          "from": "MANAGER_APPROVED",
+          "to": "APPLIED",
+          "actors": [
+            "SYSTEM"
+          ]
+        }
+      ]
+    },
+    "ATTENDANCE": {
+      "states": [
+        "DRAFT",
+        "SUBMITTED",
+        "NORMAL",
+        "NEEDS_REVIEW",
+        "APPROVED",
+        "ADJUSTED",
+        "REJECTED"
+      ],
+      "transitions": [
+        {
+          "from": "DRAFT",
+          "to": "SUBMITTED",
+          "actors": [
+            "EMPLOYEE"
+          ]
+        },
+        {
+          "from": "SUBMITTED",
+          "to": "NORMAL",
+          "actors": [
+            "SYSTEM_POLICY"
+          ]
+        },
+        {
+          "from": "SUBMITTED",
+          "to": "NEEDS_REVIEW",
+          "actors": [
+            "SYSTEM_POLICY"
+          ]
+        },
+        {
+          "from": "NORMAL",
+          "to": "APPROVED",
+          "actors": [
+            "MANAGER",
+            "SYSTEM_POLICY_IF_CONFIGURED"
+          ]
+        },
+        {
+          "from": "NORMAL",
+          "to": "NEEDS_REVIEW",
+          "actors": [
+            "SYSTEM_POLICY"
+          ]
+        },
+        {
+          "from": "NEEDS_REVIEW",
+          "to": "APPROVED",
+          "actors": [
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "NEEDS_REVIEW",
+          "to": "ADJUSTED",
+          "actors": [
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "NEEDS_REVIEW",
+          "to": "REJECTED",
+          "actors": [
+            "MANAGER"
+          ]
+        }
+      ],
+      "missing_review_policy_behavior": "FAIL_CLOSED_TO_NEEDS_REVIEW"
+    },
+    "CONFIRMED_WORK_TIME": {
+      "states": [
+        "ABSENT",
+        "CONFIRMED",
+        "REVISED"
+      ],
+      "transitions": [
+        {
+          "from": "ABSENT",
+          "to": "CONFIRMED",
+          "actors": [
+            "SYSTEM_FROM_AUTHORIZED_REVIEW",
+            "MANAGER"
+          ]
+        },
+        {
+          "from": "CONFIRMED",
+          "to": "REVISED",
+          "actors": [
+            "MANAGER",
+            "OWNER"
+          ]
+        }
+      ]
+    },
+    "PAYROLL": {
+      "states": [
+        "ESTIMATED",
+        "REVIEWED",
+        "FINALIZED",
+        "PAID"
+      ],
+      "transitions": [
+        {
+          "from": "ESTIMATED",
+          "to": "REVIEWED",
+          "actors": [
+            "PAYROLL_AUTHORIZED"
+          ]
+        },
+        {
+          "from": "REVIEWED",
+          "to": "FINALIZED",
+          "actors": [
+            "PAYROLL_AUTHORIZED"
+          ]
+        },
+        {
+          "from": "FINALIZED",
+          "to": "PAID",
+          "actors": [
+            "PAYROLL_AUTHORIZED"
+          ]
+        }
+      ]
+    }
+  },
+  "attendance_truth": {
+    "raw_submission_fields": [
+      "employee_id",
+      "schedule_assignment_id",
+      "work_date",
+      "scheduled_start",
+      "scheduled_end",
+      "actual_start",
+      "actual_end",
+      "submitted_at",
+      "submission_status",
+      "note"
+    ],
+    "review_fields": [
+      "reviewed_by",
+      "reviewed_at",
+      "review_decision"
+    ],
+    "confirmed_fields": [
+      "confirmed_start",
+      "confirmed_end",
+      "confirmed_minutes"
+    ],
+    "separation": [
+      "RAW_SUBMISSION_NE_CONFIRMED_WORK_TIME",
+      "CONFIRMED_WORK_TIME_NE_PAYROLL"
+    ],
+    "normal_auto_pay": false,
+    "numeric_deviation_threshold": "CONFIGURABLE_UNRESOLVED"
+  },
+  "confirmed_work_time": {
+    "minimum_fields": [
+      "assignment_id",
+      "employee_id",
+      "work_date",
+      "confirmed_start",
+      "confirmed_end",
+      "confirmed_minutes",
+      "confirmation_source",
+      "confirmed_by",
+      "confirmed_at",
+      "revision_identity"
+    ],
+    "invariants": [
+      "CONFIRMED_MINUTES_NON_NEGATIVE",
+      "SOURCE_IS_AUTHORIZED_REVIEW_OR_EXPLICIT_AUTHORIZED_ADJUSTMENT",
+      "NOT_FROM_PLANNED_SCHEDULE_ALONE",
+      "NOT_FROM_RAW_LEGACY_CLOCK_ALONE",
+      "NOT_FROM_RAW_SUBMITTED_ATTENDANCE_ALONE",
+      "NOT_FROM_ATTENDANCE_AMOUNT"
+    ]
+  },
+  "payroll_boundary": {
+    "required_inputs": [
+      "CONFIRMED_WORK_TIME",
+      "VALID_PAY_RULE",
+      "PAYROLL_PERIOD"
+    ],
+    "states": [
+      "ESTIMATED",
+      "REVIEWED",
+      "FINALIZED",
+      "PAID"
+    ],
+    "rules": [
+      "ESTIMATED_NE_FINALIZED",
+      "FINALIZED_IMMUTABLE_OR_REVISION_CONTROLLED",
+      "PAID_NOT_INFERRED_FROM_FINALIZED",
+      "ATTENDANCE_AMOUNT_NOT_FINAL_PAYROLL",
+      "RAW_SUBMITTED_ATTENDANCE_NOT_PAYROLL_INPUT",
+      "REJECTED_ATTENDANCE_NOT_PAYROLL_INPUT"
+    ],
+    "calculation_implementation_task": "TASK-103"
+  },
+  "invariants": [
+    {
+      "id": "WF-INV-001",
+      "rule": "AVAILABILITY_IS_CAPABILITY_NOT_OFFICIAL_ASSIGNMENT",
+      "closing_task": "TASK-092"
+    },
+    {
+      "id": "WF-INV-002",
+      "rule": "MANAGER_IS_OFFICIAL_SCHEDULE_DECISION_ACTOR",
+      "closing_task": "TASK-093"
+    },
+    {
+      "id": "WF-INV-003",
+      "rule": "STAFFING_GAP_NOT_CORE_STATE",
+      "closing_task": "TASK-093"
+    },
+    {
+      "id": "WF-INV-004",
+      "rule": "ROBOT_GENERATION_NOT_SCHEDULING_PREREQUISITE",
+      "closing_task": "TASK-093"
+    },
+    {
+      "id": "WF-INV-005",
+      "rule": "SCHEDULE_EMPLOYEE_MUST_BE_ACTIVE",
+      "closing_task": "TASK-094"
+    },
+    {
+      "id": "WF-INV-006",
+      "rule": "SCHEDULE_MANAGER_STORE_SCOPE_MUST_BE_VALID",
+      "closing_task": "TASK-094"
+    },
+    {
+      "id": "WF-INV-007",
+      "rule": "SCHEDULE_ASSIGNMENTS_MUST_NOT_OVERLAP_FOR_EMPLOYEE",
+      "closing_task": "TASK-094"
+    },
+    {
+      "id": "WF-INV-008",
+      "rule": "MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_PER_DAY",
+      "closing_task": "TASK-094"
+    },
+    {
+      "id": "WF-INV-009",
+      "rule": "AVAILABILITY_COMPATIBILITY_ENFORCED_WHEN_CANONICAL_POLICY_REQUIRES",
+      "closing_task": "TASK-094"
+    },
+    {
+      "id": "WF-INV-010",
+      "rule": "PUBLISHED_ASSIGNMENT_MUTATION_MUST_BE_EXPLICIT_VERSIONED_OR_AUDITED",
+      "closing_task": "TASK-094"
+    },
+    {
+      "id": "WF-INV-011",
+      "rule": "PUBLISH_RETRY_MUST_NOT_DUPLICATE_OFFICIAL_ASSIGNMENT",
+      "closing_task": "TASK-094"
+    },
+    {
+      "id": "WF-INV-012",
+      "rule": "OFFICIAL_ASSIGNMENT_HAS_DETERMINISTIC_LOGICAL_IDENTITY",
+      "closing_task": "TASK-094"
+    },
+    {
+      "id": "WF-INV-013",
+      "rule": "ONE_ACTIVE_OWNER_PER_ASSIGNMENT",
+      "closing_task": "TASK-094"
+    },
+    {
+      "id": "WF-INV-014",
+      "rule": "SWAP_REQUIRES_PEER_ACCEPTANCE_BEFORE_MANAGER_APPROVAL",
+      "closing_task": "TASK-096"
+    },
+    {
+      "id": "WF-INV-015",
+      "rule": "SWAP_SERVER_REVALIDATES_BEFORE_ATOMIC_APPLY",
+      "closing_task": "TASK-096"
+    },
+    {
+      "id": "WF-INV-016",
+      "rule": "GIVE_REQUIRES_RECIPIENT_ACCEPTANCE_BEFORE_MANAGER_APPROVAL",
+      "closing_task": "TASK-097"
+    },
+    {
+      "id": "WF-INV-017",
+      "rule": "GIVE_SERVER_REVALIDATES_BEFORE_ATOMIC_APPLY",
+      "closing_task": "TASK-097"
+    },
+    {
+      "id": "WF-INV-018",
+      "rule": "SHIFT_CHANGE_APPLY_IS_IDEMPOTENT_AND_NO_CONFLICTING_PENDING_GIVE_SWAP",
+      "closing_task": "TASK-096,TASK-097"
+    },
+    {
+      "id": "WF-INV-019",
+      "rule": "ATTENDANCE_AUTHORITY_FOLLOWS_FINAL_CURRENT_ASSIGNMENT_OWNER",
+      "closing_task": "TASK-098"
+    },
+    {
+      "id": "WF-INV-020",
+      "rule": "OLD_OWNER_LOSES_ATTENDANCE_AUTHORITY_AFTER_APPLY",
+      "closing_task": "TASK-098"
+    },
+    {
+      "id": "WF-INV-021",
+      "rule": "NEW_OWNER_GAINS_ATTENDANCE_AUTHORITY_AFTER_APPLY",
+      "closing_task": "TASK-098"
+    },
+    {
+      "id": "WF-INV-022",
+      "rule": "REALTIME_CHECK_IN_OUT_NOT_CANONICAL_ATTENDANCE_V1",
+      "closing_task": "TASK-098,TASK-099"
+    },
+    {
+      "id": "WF-INV-023",
+      "rule": "RAW_ATTENDANCE_SUBMISSION_NE_CONFIRMED_WORK_TIME",
+      "closing_task": "TASK-098,TASK-100"
+    },
+    {
+      "id": "WF-INV-024",
+      "rule": "MISSING_ATTENDANCE_REVIEW_POLICY_FAILS_CLOSED_TO_REVIEW",
+      "closing_task": "TASK-098,TASK-100"
+    },
+    {
+      "id": "WF-INV-025",
+      "rule": "NEEDS_REVIEW_NOT_PAYROLL_INPUT",
+      "closing_task": "TASK-100,TASK-103"
+    },
+    {
+      "id": "WF-INV-026",
+      "rule": "REJECTED_ATTENDANCE_NOT_PAYROLL_INPUT",
+      "closing_task": "TASK-100,TASK-103"
+    },
+    {
+      "id": "WF-INV-027",
+      "rule": "CONFIRMED_WORK_TIME_SEPARATE_CANONICAL_TRUTH",
+      "closing_task": "TASK-100"
+    },
+    {
+      "id": "WF-INV-028",
+      "rule": "PAYROLL_CONSUMES_CONFIRMED_WORK_TIME_AND_VALID_PAY_RULE_ONLY",
+      "closing_task": "TASK-102,TASK-103"
+    },
+    {
+      "id": "WF-INV-029",
+      "rule": "ATTENDANCE_AMOUNT_IS_LEGACY_NON_PAYROLL_TRUTH",
+      "closing_task": "TASK-102"
+    },
+    {
+      "id": "WF-INV-030",
+      "rule": "PAYROLL_ESTIMATED_NE_FINALIZED",
+      "closing_task": "TASK-102,TASK-104"
+    },
+    {
+      "id": "WF-INV-031",
+      "rule": "FINALIZED_PAYROLL_IMMUTABLE_OR_REVISION_CONTROLLED",
+      "closing_task": "TASK-102,TASK-103"
+    },
+    {
+      "id": "WF-INV-032",
+      "rule": "PAYROLL_PAID_NOT_INFERRED_FROM_FINALIZED",
+      "closing_task": "TASK-102,TASK-104"
+    },
+    {
+      "id": "WF-INV-033",
+      "rule": "EMPLOYEE_SELF_DATA_ONLY_FOR_PROFILE_AVAILABILITY_SCHEDULE_ATTENDANCE_PAYROLL",
+      "closing_task": "TASK-101,TASK-104"
+    },
+    {
+      "id": "WF-INV-034",
+      "rule": "MANAGER_ACCESS_IS_STORE_SCOPED_AND_PERMISSION_BOUNDED",
+      "closing_task": "TASK-101,TASK-104"
+    },
+    {
+      "id": "WF-INV-035",
+      "rule": "UNKNOWN_STATE_ACTOR_OR_CONFIG_FAILS_CLOSED",
+      "closing_task": "TASK-107"
+    },
+    {
+      "id": "WF-INV-036",
+      "rule": "NOTIFICATION_IS_PROJECTION_NOT_SOURCE_OF_TRUTH",
+      "closing_task": "TASK-105"
+    }
+  ],
+  "compatibility_rules": [
+    {
+      "domain": "AVAILABILITY",
+      "canonical_state": "REGISTRATION_OPEN",
+      "current_state_rpc_table": "UI next-week registration window; no dedicated stored lifecycle state",
+      "semantic_match": "PARTIAL",
+      "migration_required": "MAYBE",
+      "closing_task": "TASK-092"
+    },
+    {
+      "domain": "AVAILABILITY",
+      "canonical_state": "SUBMITTED",
+      "current_state_rpc_table": "employee_availability + save_my_availability/get_my_availability",
+      "semantic_match": "EXACT",
+      "migration_required": "NO",
+      "closing_task": "TASK-092"
+    },
+    {
+      "domain": "AVAILABILITY",
+      "canonical_state": "REGISTRATION_CLOSED",
+      "current_state_rpc_table": "No dedicated stored lifecycle state",
+      "semantic_match": "GAP",
+      "migration_required": "MAYBE",
+      "closing_task": "TASK-092"
+    },
+    {
+      "domain": "SCHEDULE_GENERATION",
+      "canonical_state": "DRAFT",
+      "current_state_rpc_table": "schedule_generation_runs.status=DRAFT",
+      "semantic_match": "EXACT",
+      "migration_required": "NO",
+      "closing_task": "TASK-093"
+    },
+    {
+      "domain": "SCHEDULE_GENERATION",
+      "canonical_state": "REVIEWED",
+      "current_state_rpc_table": "schedule_generation_runs.status=REVIEWED",
+      "semantic_match": "EXACT",
+      "migration_required": "NO",
+      "closing_task": "TASK-093"
+    },
+    {
+      "domain": "SCHEDULE_GENERATION",
+      "canonical_state": "PUBLISHED",
+      "current_state_rpc_table": "schedule_generation_runs.status=PUBLISHED",
+      "semantic_match": "EXACT",
+      "migration_required": "NO",
+      "closing_task": "TASK-094"
+    },
+    {
+      "domain": "OFFICIAL_SCHEDULE",
+      "canonical_state": "PUBLISHED_ACTIVE",
+      "current_state_rpc_table": "work_schedules.status=APPROVED + approved schedule reader RPCs",
+      "semantic_match": "COMPATIBLE",
+      "migration_required": "NO",
+      "closing_task": "TASK-094,TASK-095"
+    },
+    {
+      "domain": "OFFICIAL_SCHEDULE",
+      "canonical_state": "SUPERSEDED",
+      "current_state_rpc_table": "Existing cancel/replace semantics not fully source-controlled",
+      "semantic_match": "PARTIAL",
+      "migration_required": "MAYBE",
+      "closing_task": "TASK-094"
+    },
+    {
+      "domain": "SWAP",
+      "canonical_state": "REQUESTED",
+      "current_state_rpc_table": "shift_swaps.status=PENDING / submit_shift_swap_request",
+      "semantic_match": "PARTIAL",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-096"
+    },
+    {
+      "domain": "SWAP",
+      "canonical_state": "PEER_ACCEPTED",
+      "current_state_rpc_table": "No proven active peer-accept state",
+      "semantic_match": "GAP",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-096"
+    },
+    {
+      "domain": "SWAP",
+      "canonical_state": "MANAGER_APPROVED",
+      "current_state_rpc_table": "approve_shift_swap performs Manager approval and ownership exchange together",
+      "semantic_match": "PARTIAL",
+      "migration_required": "MAYBE",
+      "closing_task": "TASK-096"
+    },
+    {
+      "domain": "SWAP",
+      "canonical_state": "APPLIED",
+      "current_state_rpc_table": "approve_shift_swap atomic exchange result",
+      "semantic_match": "COMPATIBLE",
+      "migration_required": "MAYBE",
+      "closing_task": "TASK-096"
+    },
+    {
+      "domain": "GIVE",
+      "canonical_state": "OFFERED",
+      "current_state_rpc_table": "shift_gives.status=PENDING_RECIPIENT",
+      "semantic_match": "COMPATIBLE",
+      "migration_required": "NO",
+      "closing_task": "TASK-097"
+    },
+    {
+      "domain": "GIVE",
+      "canonical_state": "RECIPIENT_ACCEPTED",
+      "current_state_rpc_table": "shift_gives.status=PENDING_MANAGER after respond_shift_give_request(true)",
+      "semantic_match": "COMPATIBLE",
+      "migration_required": "NO",
+      "closing_task": "TASK-097"
+    },
+    {
+      "domain": "GIVE",
+      "canonical_state": "MANAGER_APPROVED",
+      "current_state_rpc_table": "approve_shift_give transaction",
+      "semantic_match": "COMPATIBLE",
+      "migration_required": "NO",
+      "closing_task": "TASK-097"
+    },
+    {
+      "domain": "GIVE",
+      "canonical_state": "APPLIED",
+      "current_state_rpc_table": "shift_gives.status=APPROVED in same transaction that transfers work_schedules.user_id",
+      "semantic_match": "EXACT",
+      "migration_required": "NO",
+      "closing_task": "TASK-097"
+    },
+    {
+      "domain": "ATTENDANCE",
+      "canonical_state": "DRAFT",
+      "current_state_rpc_table": "No canonical stored V1 draft; Employee UI has legacy entry surface",
+      "semantic_match": "PARTIAL",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-098"
+    },
+    {
+      "domain": "ATTENDANCE",
+      "canonical_state": "SUBMITTED",
+      "current_state_rpc_table": "manual_attendance_from_schedule immediately writes COMPLETED",
+      "semantic_match": "CONFLICT",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-098"
+    },
+    {
+      "domain": "ATTENDANCE",
+      "canonical_state": "NORMAL",
+      "current_state_rpc_table": "No canonical V1 state",
+      "semantic_match": "GAP",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-098,TASK-100"
+    },
+    {
+      "domain": "ATTENDANCE",
+      "canonical_state": "NEEDS_REVIEW",
+      "current_state_rpc_table": "No canonical V1 state",
+      "semantic_match": "GAP",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-098,TASK-100"
+    },
+    {
+      "domain": "ATTENDANCE",
+      "canonical_state": "APPROVED_ADJUSTED_REJECTED",
+      "current_state_rpc_table": "Legacy COMPLETED/check_in/check_out/hours_worked/amount do not prove reviewed state",
+      "semantic_match": "CONFLICT",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-098,TASK-100"
+    },
+    {
+      "domain": "CONFIRMED_WORK_TIME",
+      "canonical_state": "CONFIRMED_REVISED",
+      "current_state_rpc_table": "No canonical source-controlled object found",
+      "semantic_match": "GAP",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-098,TASK-100"
+    },
+    {
+      "domain": "PAYROLL",
+      "canonical_state": "ESTIMATED_REVIEWED_FINALIZED_PAID",
+      "current_state_rpc_table": "No Workforce payroll table/RPC/module found; attendance.amount is legacy only",
+      "semantic_match": "GAP",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-102,TASK-103,TASK-104"
+    },
+    {
+      "domain": "NOTIFICATION",
+      "canonical_state": "SCHEDULE_PUBLISHED",
+      "current_state_rpc_table": "notification_outbox SCHEDULE_PUBLISHED",
+      "semantic_match": "EXACT",
+      "migration_required": "NO",
+      "closing_task": "TASK-105"
+    },
+    {
+      "domain": "NOTIFICATION",
+      "canonical_state": "SWAP_PEER_ACCEPTED",
+      "current_state_rpc_table": "No outbox event because peer-accept state not implemented",
+      "semantic_match": "GAP",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-096,TASK-105"
+    },
+    {
+      "domain": "NOTIFICATION",
+      "canonical_state": "GIVE_ACCEPTED_APPLIED",
+      "current_state_rpc_table": "SHIFT_GIVE_RECIPIENT_ACCEPTED / SHIFT_GIVE_APPROVED",
+      "semantic_match": "COMPATIBLE",
+      "migration_required": "NO",
+      "closing_task": "TASK-097,TASK-105"
+    },
+    {
+      "domain": "NOTIFICATION",
+      "canonical_state": "ATTENDANCE_SUBMITTED_CONFIRMED",
+      "current_state_rpc_table": "ATTENDANCE_CLOCKED_IN / ATTENDANCE_CLOCKED_OUT + CLOCK_OUT_REMINDER",
+      "semantic_match": "CONFLICT",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-098,TASK-100,TASK-105"
+    },
+    {
+      "domain": "NOTIFICATION",
+      "canonical_state": "PAYROLL_FINALIZED",
+      "current_state_rpc_table": "No canonical Workforce payroll event",
+      "semantic_match": "GAP",
+      "migration_required": "YES_IN_LATER_TASK",
+      "closing_task": "TASK-104,TASK-105"
+    }
+  ],
+  "legacy_deprecations": [
+    {
+      "item": "clock_in_for_schedule",
+      "status": "LEGACY_DEPRECATE_FROM_ACTIVE_V1",
+      "closing_task": "TASK-098,TASK-099"
+    },
+    {
+      "item": "clock_out_attendance",
+      "status": "LEGACY_DEPRECATE_FROM_ACTIVE_V1",
+      "closing_task": "TASK-098,TASK-099"
+    },
+    {
+      "item": "ATTENDANCE_CLOCKED_IN",
+      "status": "LEGACY_DEPRECATE_FROM_ACTIVE_V1",
+      "closing_task": "TASK-105"
+    },
+    {
+      "item": "ATTENDANCE_CLOCKED_OUT",
+      "status": "LEGACY_DEPRECATE_FROM_ACTIVE_V1",
+      "closing_task": "TASK-105"
+    },
+    {
+      "item": "CLOCK_OUT_REMINDER",
+      "status": "LEGACY_DEPRECATE_FROM_ACTIVE_V1",
+      "closing_task": "TASK-105"
+    },
+    {
+      "item": "attendance.amount as payroll truth",
+      "status": "LEGACY_NON_PAYROLL_TRUTH",
+      "closing_task": "TASK-102,TASK-104"
+    },
+    {
+      "item": "staffing gap / shortage as core V1 state",
+      "status": "DEPRECATE_FROM_CORE_FLOW",
+      "closing_task": "TASK-093"
+    },
+    {
+      "item": "Robot schedule generation prerequisite",
+      "status": "DEPRECATE_FROM_CORE_FLOW",
+      "closing_task": "TASK-093"
+    },
+    {
+      "item": "Owner daily scheduler",
+      "status": "DEPRECATE_FROM_CORE_FLOW",
+      "closing_task": "TASK-105"
+    }
+  ],
+  "canonical_events": [
+    "AVAILABILITY_SUBMITTED",
+    "SCHEDULE_PUBLISHED",
+    "SWAP_REQUESTED",
+    "SWAP_PEER_ACCEPTED",
+    "SWAP_APPLIED",
+    "GIVE_OFFERED",
+    "GIVE_ACCEPTED",
+    "GIVE_APPLIED",
+    "ATTENDANCE_SUBMITTED",
+    "ATTENDANCE_NEEDS_REVIEW",
+    "ATTENDANCE_CONFIRMED",
+    "PAYROLL_FINALIZED"
+  ],
+  "idempotency_requirements": [
+    {
+      "family": "availability_save",
+      "logical_identity": "employee_id + target_week + work_date + interval identity",
+      "duplicate_retry": "same logical mutation must converge without duplicate active interval",
+      "actor": "EMPLOYEE"
+    },
+    {
+      "family": "schedule_publish",
+      "logical_identity": "schedule/version + official assignment logical identity",
+      "duplicate_retry": "retry/double-click/reload must not create duplicate assignments or competing published version",
+      "actor": "MANAGER"
+    },
+    {
+      "family": "swap_accept_approve_apply",
+      "logical_identity": "swap_request_id + transition",
+      "duplicate_retry": "accepted/approved/applied transition must be exactly-once logically; repeated apply cannot exchange twice",
+      "actor": "PEER_EMPLOYEE/MANAGER/SYSTEM"
+    },
+    {
+      "family": "give_accept_approve_apply",
+      "logical_identity": "give_request_id + transition",
+      "duplicate_retry": "repeated accept/approve/apply converges; assignment transfers at most once",
+      "actor": "RECIPIENT_EMPLOYEE/MANAGER/SYSTEM"
+    },
+    {
+      "family": "attendance_submit",
+      "logical_identity": "assignment_id + employee_id + active submission revision",
+      "duplicate_retry": "retry/double-submit/reload must not create duplicate active submission for the same logical revision",
+      "actor": "EMPLOYEE"
+    },
+    {
+      "family": "attendance_review",
+      "logical_identity": "attendance_submission_id + review revision",
+      "duplicate_retry": "repeated review command cannot produce competing confirmed work time revisions",
+      "actor": "MANAGER"
+    },
+    {
+      "family": "payroll_finalize",
+      "logical_identity": "payroll_period + employee_id + payroll_revision",
+      "duplicate_retry": "finalize retry cannot create a second final truth for the same revision",
+      "actor": "PAYROLL_AUTHORIZED"
+    }
+  ],
+  "audit_requirements": {
+    "required_fields": [
+      "logical_identity",
+      "actor",
+      "actor_role",
+      "occurred_at",
+      "previous_state",
+      "next_state",
+      "reason_or_note",
+      "source_revision"
+    ],
+    "published_mutation": "AUDIT_REQUIRED",
+    "shift_change_apply": "AUDIT_REQUIRED",
+    "attendance_review": "AUDIT_REQUIRED",
+    "payroll_finalize": "AUDIT_REQUIRED",
+    "new_ledger_in_task_091": false
+  },
+  "authorization_rules": {
+    "employee": "SELF_ONLY",
+    "manager": "STORE_SCOPE_REQUIRED; payroll review additionally requires explicit later permission",
+    "owner": "ENTERPRISE_AUTHORITY",
+    "unknown_actor": "DENY",
+    "cross_user_employee_access": "DENY"
+  },
+  "fail_closed_rules": [
+    "UNKNOWN_DOMAIN_DENY",
+    "UNKNOWN_STATE_DENY",
+    "UNKNOWN_TRANSITION_DENY",
+    "UNKNOWN_ACTOR_DENY",
+    "MISSING_ATTENDANCE_REVIEW_POLICY_TO_NEEDS_REVIEW",
+    "MISSING_PAY_RULE_NO_FINAL_PAYROLL",
+    "UNKNOWN_STORE_SCOPE_DENY",
+    "LEGACY_COMPLETED_ATTENDANCE_NOT_AUTO_CONFIRMED",
+    "LEGACY_ATTENDANCE_AMOUNT_NOT_FINAL_PAYROLL"
+  ],
+  "unresolved_business_configuration": [
+    {
+      "key": "SUNDAY_REGISTRATION_CUTOFF_TIME",
+      "status": "CONFIGURABLE_GAP",
+      "default": "NONE"
+    },
+    {
+      "key": "ATTENDANCE_DEVIATION_THRESHOLD",
+      "status": "CONFIGURABLE_GAP",
+      "default": "NONE"
+    },
+    {
+      "key": "ATTENDANCE_AUTO_NORMAL_AUTO_APPROVAL_THRESHOLD",
+      "status": "CONFIGURABLE_GAP",
+      "default": "NONE"
+    },
+    {
+      "key": "PAYROLL_PAY_RATES",
+      "status": "CONFIGURABLE_GAP",
+      "default": "NONE"
+    },
+    {
+      "key": "PAYROLL_ALLOWANCE_RULES",
+      "status": "CONFIGURABLE_GAP",
+      "default": "NONE"
+    },
+    {
+      "key": "PAYROLL_BONUS_RULES",
+      "status": "CONFIGURABLE_GAP",
+      "default": "NONE"
+    },
+    {
+      "key": "PAYROLL_DEDUCTION_RULES",
+      "status": "CONFIGURABLE_GAP",
+      "default": "NONE"
+    }
+  ],
+  "e2e_traceability": [
+    {
+      "id": "E2E-01",
+      "state_families": [
+        "AVAILABILITY"
+      ],
+      "invariants": [
+        "WF-INV-001"
+      ],
+      "closing_tasks": [
+        "TASK-092",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-02",
+      "state_families": [
+        "AVAILABILITY",
+        "SCHEDULE"
+      ],
+      "invariants": [
+        "WF-INV-002",
+        "WF-INV-003",
+        "WF-INV-004"
+      ],
+      "closing_tasks": [
+        "TASK-093",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-03",
+      "state_families": [
+        "SCHEDULE"
+      ],
+      "invariants": [
+        "WF-INV-005",
+        "WF-INV-006",
+        "WF-INV-007",
+        "WF-INV-008",
+        "WF-INV-009"
+      ],
+      "closing_tasks": [
+        "TASK-094",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-04",
+      "state_families": [
+        "SCHEDULE"
+      ],
+      "invariants": [
+        "WF-INV-010",
+        "WF-INV-013"
+      ],
+      "closing_tasks": [
+        "TASK-095",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-05",
+      "state_families": [
+        "SCHEDULE"
+      ],
+      "invariants": [
+        "WF-INV-011",
+        "WF-INV-012"
+      ],
+      "closing_tasks": [
+        "TASK-094",
+        "TASK-106",
+        "TASK-107"
+      ]
+    },
+    {
+      "id": "E2E-06",
+      "state_families": [
+        "SWAP",
+        "SCHEDULE"
+      ],
+      "invariants": [
+        "WF-INV-014",
+        "WF-INV-015",
+        "WF-INV-018"
+      ],
+      "closing_tasks": [
+        "TASK-096",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-07",
+      "state_families": [
+        "GIVE",
+        "SCHEDULE"
+      ],
+      "invariants": [
+        "WF-INV-016",
+        "WF-INV-017",
+        "WF-INV-018"
+      ],
+      "closing_tasks": [
+        "TASK-097",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-08",
+      "state_families": [
+        "SWAP",
+        "GIVE",
+        "ATTENDANCE"
+      ],
+      "invariants": [
+        "WF-INV-019",
+        "WF-INV-020",
+        "WF-INV-021"
+      ],
+      "closing_tasks": [
+        "TASK-096",
+        "TASK-097",
+        "TASK-098",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-09",
+      "state_families": [
+        "ATTENDANCE"
+      ],
+      "invariants": [
+        "WF-INV-022",
+        "WF-INV-023"
+      ],
+      "closing_tasks": [
+        "TASK-098",
+        "TASK-099",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-10",
+      "state_families": [
+        "ATTENDANCE",
+        "CONFIRMED_WORK_TIME"
+      ],
+      "invariants": [
+        "WF-INV-024",
+        "WF-INV-027"
+      ],
+      "closing_tasks": [
+        "TASK-100",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-11",
+      "state_families": [
+        "ATTENDANCE"
+      ],
+      "invariants": [
+        "WF-INV-035"
+      ],
+      "closing_tasks": [
+        "TASK-098",
+        "TASK-099",
+        "TASK-100",
+        "TASK-107"
+      ]
+    },
+    {
+      "id": "E2E-12",
+      "state_families": [
+        "CONFIRMED_WORK_TIME",
+        "PAYROLL"
+      ],
+      "invariants": [
+        "WF-INV-025",
+        "WF-INV-026",
+        "WF-INV-028",
+        "WF-INV-029"
+      ],
+      "closing_tasks": [
+        "TASK-102",
+        "TASK-103",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-13",
+      "state_families": [
+        "PAYROLL"
+      ],
+      "invariants": [
+        "WF-INV-030",
+        "WF-INV-031",
+        "WF-INV-032"
+      ],
+      "closing_tasks": [
+        "TASK-102",
+        "TASK-104",
+        "TASK-106"
+      ]
+    },
+    {
+      "id": "E2E-14",
+      "state_families": [
+        "EMPLOYEE_PROFILE",
+        "PAYROLL"
+      ],
+      "invariants": [
+        "WF-INV-033",
+        "WF-INV-034"
+      ],
+      "closing_tasks": [
+        "TASK-101",
+        "TASK-104",
+        "TASK-107"
+      ]
+    },
+    {
+      "id": "E2E-15",
+      "state_families": [
+        "AVAILABILITY",
+        "SCHEDULE"
+      ],
+      "invariants": [
+        "WF-INV-035"
+      ],
+      "closing_tasks": [
+        "TASK-092",
+        "TASK-093",
+        "TASK-094",
+        "TASK-095",
+        "TASK-107"
+      ]
+    },
+    {
+      "id": "E2E-16",
+      "state_families": [
+        "SCHEDULE",
+        "SWAP",
+        "GIVE",
+        "ATTENDANCE",
+        "CONFIRMED_WORK_TIME",
+        "PAYROLL"
+      ],
+      "invariants": [
+        "WF-INV-011",
+        "WF-INV-018",
+        "WF-INV-035"
+      ],
+      "closing_tasks": [
+        "TASK-107",
+        "TASK-108"
+      ]
+    }
+  ],
+  "safety": {
+    "production_mutation_in_task_091": false,
+    "db_migration_in_task_091": false,
+    "attendance_migration_in_task_091": false,
+    "payroll_table_creation_in_task_091": false,
+    "private_employee_data": false,
+    "raw_salary_data": false,
+    "secrets_tokens": false,
+    "drive_data": false,
+    "pfc_cursor_mutation": false,
+    "task_092_auto_start": false,
+    "workforce_robot_enabled": false
+  }
+}
