@@ -1,0 +1,57 @@
+name: New PC ChatGPT Control Inspect V2
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-chatgpt-control-inspect-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 10
+    steps:
+      - name: Inspect non-content ChatGPT controls
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $runtime = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor\runtime"
+          Push-Location $runtime
+          try {
+            @'
+          import { chromium } from "playwright-core";
+          const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+          const page = browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes("chatgpt.com"));
+          if (!page) throw new Error("No ChatGPT page.");
+          await page.bringToFront();
+          await page.waitForTimeout(700);
+
+          const controls = await page.locator('button, [role="button"], input').evaluateAll((els) =>
+            els.map((el, i) => ({
+              i,
+              tag: el.tagName,
+              aria: el.getAttribute("aria-label") || "",
+              title: el.getAttribute("title") || "",
+              testid: el.getAttribute("data-testid") || "",
+              placeholder: el.getAttribute("placeholder") || "",
+              type: el.getAttribute("type") || ""
+            })).filter(x => x.aria || x.title || x.testid || x.placeholder)
+          );
+
+          for (const x of controls.slice(0,120)) {
+            console.log("UI_CONTROL=" + JSON.stringify(x));
+          }
+          console.log("UI_CONTROL_COUNT=" + controls.length);
+          await browser.close();
+          '@ | Set-Content ".\tmp-control-inspect-v2.mjs" -Encoding UTF8
+            node ".\tmp-control-inspect-v2.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "Control inspection failed." }
+          } finally {
+            Remove-Item ".\tmp-control-inspect-v2.mjs" -Force -ErrorAction SilentlyContinue
+            Pop-Location
+          }
