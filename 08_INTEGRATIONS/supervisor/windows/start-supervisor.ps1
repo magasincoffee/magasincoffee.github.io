@@ -40,13 +40,7 @@ if ($Recovery) {
 } else {
     # Explicit Owner START is the sole normal authority that clears lifecycle
     # STOP latches. This happens BEFORE any wrapper/PID early return.
-    foreach ($latchPath in @($stop, $autostartDisabled)) {
-        if (Test-Path $latchPath) {
-            Remove-Item $latchPath -Force -ErrorAction Stop
-        }
-    }
-
-    $ownerStopAfterClear = Get-LifecycleOwnerStopState -Root $root
+    $ownerStopAfterClear = Clear-LifecycleOwnerStopLatches -Root $root
     if ($ownerStopAfterClear.blocked) {
         throw 'Explicit Owner START could not clear STOP/AUTOSTART_DISABLED.'
     }
