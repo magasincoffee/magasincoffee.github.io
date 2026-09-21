@@ -1,5 +1,6 @@
 param(
     [switch]$ViewportProbe,
+    [switch]$ObservabilityProbe,
     [int]$ProbeWidth = 0,
     [int]$ProbeHeight = 0
 )
@@ -110,6 +111,36 @@ function Get-OptionalPropertyValue(
     $property = $InputObject.PSObject.Properties[$Name]
     if ($null -eq $property) { return $DefaultValue }
     return $property.Value
+}
+
+if ($ObservabilityProbe) {
+    $configProbe = Read-JsonFile $configFile
+    $statusProbe = Read-JsonFile $statusFile
+    $ownerStopProbe = Get-LifecycleOwnerStopState -Root $root
+    $processTruthProbe = Get-LifecycleProcessTruth -Root $root
+    $enabledProbe = if ($configProbe -and $configProbe.lanes) {
+        @($configProbe.lanes | Where-Object { [bool]$_.enabled }).Count
+    } else { 0 }
+    $schedulerProbe = Get-OptionalPropertyValue $statusProbe 'scheduler' $null
+    $resourceProbe = Get-ControlPanelResourceSummary $schedulerProbe
+    $tailProbe = Read-BoundedLaneEventTail -Path $eventFile -MaxEvents 30 -MaxBytes 262144
+
+    [pscustomobject]@{
+        schema_version = 'control-panel-observability-probe.v1'
+        owner_stop = [bool]$ownerStopProbe.blocked
+        wrapper_alive = [bool]$processTruthProbe.wrapper_alive
+        three_lane_alive = [bool]$processTruthProbe.three_lane_alive
+        chrome_alive = [bool]$processTruthProbe.chrome_alive
+        cdp_healthy = [bool]$processTruthProbe.cdp_healthy
+        runtime_version = [string](Get-OptionalPropertyValue $statusProbe 'supervisor_runtime_version' '')
+        enabled_lane_count = [int]$enabledProbe
+        page_summary = [string]$resourceProbe.page_text
+        mutation_lease = [string]$resourceProbe.mutation_text
+        timeline_event_count = @($tailProbe.events).Count
+        timeline_bytes_read = [int]$tailProbe.bytes_read
+        timeline_file_length = [long]$tailProbe.file_length
+    } | ConvertTo-Json -Compress
+    exit 0
 }
 
 function Write-JsonAtomic([string]$Path, $Value) {
