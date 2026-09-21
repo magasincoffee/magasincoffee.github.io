@@ -70,8 +70,9 @@ if ($existingWrapper) {
 if (Test-Path $pidFile) {
     $existing = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
     $existingProcess = $null
-    if ($existing -and [int]::TryParse([string]$existing, [ref]([int]$null))) {
-        $existingProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$existing" -ErrorAction SilentlyContinue |
+    $parsedPid = 0
+    if ($existing -and [int]::TryParse([string]$existing, [ref]$parsedPid)) {
+        $existingProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$parsedPid" -ErrorAction SilentlyContinue |
             Select-Object -First 1
     }
 
@@ -90,7 +91,7 @@ if (Test-Path $pidFile) {
                 }
                 Write-Host 'OWNER_START_EXISTING_WRAPPER_REUSED=True'
             }
-            Write-Host "Supervisor wrapper already running (PID $existing)."
+            Write-Host "Supervisor wrapper already running (PID $parsedPid)."
             exit 0
         }
 
