@@ -208,7 +208,7 @@ test("lifecycle START/STOP does not reset target, task, latch, pending Work or q
   }
 });
 
-test("TASK-RBT-006B bumps Supervisor runtime to v58", async () => {
+test("TASK-RBT-006B remains canonical after Supervisor runtime v59 observability bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.58"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.59"/);
 });
