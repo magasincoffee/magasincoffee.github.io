@@ -113,10 +113,14 @@ jobs:
           await browser.close();
           if (!(chatgpt && gmail && github)) process.exit(2);
           '@
-          $tmp = Join-Path $env:RUNNER_TEMP "verify-sessions.mjs"
+          $tmp = Join-Path (Get-Location) ".verify-sessions.mjs"
           Set-Content -LiteralPath $tmp -Value $script -Encoding UTF8
-          node $tmp
-          if ($LASTEXITCODE -ne 0) { throw "One or more dedicated browser sessions are not authenticated." }
+          try {
+            node $tmp
+            if ($LASTEXITCODE -ne 0) { throw "One or more dedicated browser sessions are not authenticated." }
+          } finally {
+            Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+          }
 
       - name: Close temporary CDP Chrome and preserve Owner STOP
         if: always()
