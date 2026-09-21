@@ -32,7 +32,9 @@
       "OWNER_EXPLICIT_RESTART_AND_RELEASE",
       "OWNER_EXPLICIT_RELEASE_PFC_8H_V2",
       "OWNER_APPROVED_WORKFORCE_OPERATIONS_V1_ARCHITECTURE",
-      "OWNER_RELEASED_WORKFORCE_OPERATIONS_V1_FOR_MANUAL_WORK_ONLY"
+      "OWNER_RELEASED_WORKFORCE_OPERATIONS_V1_FOR_MANUAL_WORK_ONLY",
+      "OWNER_APPROVED_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
+      "OWNER_EXPLICIT_RELEASE_SUPERVISOR_REPOSITORY_MIGRATION_V1"
     ],
     "pending": []
   },
@@ -655,5 +657,39 @@
       "ci_triggered": false,
       "conclusion": "RECONCILIATION_COMPLETE"
     }
+  },
+  "supervisor_repository_migration": {
+    "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
+    "state": "OWNER_APPROVED_EXECUTION_RELEASED",
+    "source_repository": "magasincoffee/magasincoffee.github.io",
+    "target_repository": "magasincoffee/magasin-supervisor",
+    "source_baseline_sha": "4cc1eb3a25ed128eb13c0a543c6563a46d6329ab",
+    "current_task": "MIG-001",
+    "current_task_title": "Freeze Baseline + Migration Bootstrap",
+    "next_task": "MIG-002",
+    "production_cutover": false,
+    "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
+    "compatibility_window": "REQUIRED_UNTIL_NEW_REPO_PARITY_AND_ROLLBACK_GATES_PASS",
+    "two_device_policy": {
+      "development_test_may_use_both_devices": true,
+      "production_mutation_authority_instances": 1,
+      "split_brain_forbidden": true
+    },
+    "rbt009": {
+      "carry_forward": true,
+      "status": "IMPLEMENTATION_CANDIDATE_FINAL_8H_SOAK_PENDING",
+      "release_must_not_be_claimed": true,
+      "final_soak_required_on_new_repo_exact_sha": true
+    },
+    "guardrails": [
+      "DO_NOT_CUTOVER_PRODUCTION_DURING_MIG_001",
+      "DO_NOT_DELETE_OLD_SUPERVISOR_COPY_DURING_COMPATIBILITY_WINDOW",
+      "DO_NOT_RESET_BRAIN_OR_WORK_TARGETS",
+      "DO_NOT_RESET_DISPATCH_OR_RELAY_LATCHES_BLINDLY",
+      "DO_NOT_RUN_TWO_PRODUCTION_MUTATION_AUTHORITIES_FOR_SAME_LANE",
+      "OWNER_STOP_REMAINS_AUTHORITATIVE",
+      "AUTH_MFA_CAPTCHA_AND_DESTRUCTIVE_ADMIN_REMAIN_FAIL_CLOSED"
+    ],
+    "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md"
   }
 }
