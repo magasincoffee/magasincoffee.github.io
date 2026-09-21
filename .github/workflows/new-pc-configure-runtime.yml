@@ -1,0 +1,177 @@
+name: New PC Configure Runtime
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-configure-runtime.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  configure:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure MAGASIN runtime on new PC
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          function Section([string]$name) {
+            Write-Host ""
+            Write-Host ("===== " + $name + " =====")
+          }
+
+          function Refresh-Path {
+            $machine = [Environment]::GetEnvironmentVariable('Path','Machine')
+            $user = [Environment]::GetEnvironmentVariable('Path','User')
+            $env:Path = "$machine;$user"
+          }
+
+          function Find-Chrome {
+            $candidates = @(
+              "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+              "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+              "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
+            )
+            return ($candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1)
+          }
+
+          Section "PREREQUISITES"
+          Refresh-Path
+
+          foreach ($cmd in @("git.exe","node.exe","npm.cmd","powershell.exe")) {
+            if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
+              throw "Required prerequisite missing after bootstrap: $cmd"
+            }
+          }
+
+          $chrome = Find-Chrome
+          if (-not $chrome) {
+            $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
+            if (-not $winget) { throw "Chrome missing and winget unavailable." }
+
+            $old = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            & $winget.Source install --id Google.Chrome --exact --silent --accept-source-agreements --accept-package-agreements
+            $chromeExit = $LASTEXITCODE
+            $ErrorActionPreference = $old
+
+            Start-Sleep -Seconds 3
+            $chrome = Find-Chrome
+            if (-not $chrome) {
+              throw "Chrome unavailable after winget attempt (exit code $chromeExit)."
+            }
+          }
+          Write-Host ("CHROME_PATH=" + $chrome)
+
+          Section "CANONICAL SOURCE"
+          $repoPath = "C:\MAGASIN\magasincoffee.github.io"
+          $pinnedSha = "18e6d5025429cb1aaee986a8033d8b47169a54c3"
+
+          if (-not (Test-Path (Join-Path $repoPath ".git"))) {
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $repoPath) | Out-Null
+            git clone "https://github.com/magasincoffee/magasincoffee.github.io.git" $repoPath
+            if ($LASTEXITCODE -ne 0) { throw "Canonical repository clone failed." }
+          }
+
+          Push-Location $repoPath
+          try {
+            git fetch origin --prune
+            if ($LASTEXITCODE -ne 0) { throw "Canonical repository fetch failed." }
+            git cat-file -e "$pinnedSha^{commit}"
+            if ($LASTEXITCODE -ne 0) { throw "Pinned runtime SHA unavailable." }
+            git checkout --detach $pinnedSha
+            if ($LASTEXITCODE -ne 0) { throw "Pinned runtime checkout failed." }
+            $head = (git rev-parse HEAD).Trim()
+            if ($head -ne $pinnedSha) { throw "Canonical repo HEAD mismatch." }
+            Write-Host ("CANONICAL_REPO_HEAD=" + $head)
+          } finally {
+            Pop-Location
+          }
+
+          Section "REINSTALL / REPAIR SUPERVISOR"
+          $sourceSupervisor = Join-Path $repoPath "08_INTEGRATIONS\supervisor"
+          $installer = Join-Path $sourceSupervisor "windows\install-supervisor.ps1"
+          $autostartInstaller = Join-Path $sourceSupervisor "windows\install-autostart.ps1"
+
+          & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $installer -SourceRoot $sourceSupervisor
+          if ($LASTEXITCODE -ne 0) { throw "Supervisor installer failed." }
+
+          & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $autostartInstaller
+          if ($LASTEXITCODE -ne 0) { throw "Autostart installer failed." }
+
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtime = Join-Path $root "runtime"
+
+          # Migration must remain fail-closed until Owner explicitly starts a lane.
+          Set-Content -LiteralPath (Join-Path $root "STOP") -Value "NEW_PC_MIGRATION_OWNER_STOP" -Encoding ascii
+          Set-Content -LiteralPath (Join-Path $root "AUTOSTART_DISABLED") -Value "NEW_PC_MIGRATION_OWNER_STOP" -Encoding ascii
+
+          Section "INITIALIZE SAFE THREE-LANE CONFIG"
+          $lanePath = Join-Path $root "lanes.json"
+          if (-not (Test-Path $lanePath)) {
+            Push-Location $runtime
+            try {
+              $env:MAGASIN_LANE_CONFIG_PATH = $lanePath
+              node --input-type=module -e "import fs from 'node:fs'; import {defaultLaneConfig} from './src/runtime/three-lane.mjs'; fs.writeFileSync(process.env.MAGASIN_LANE_CONFIG_PATH, JSON.stringify(defaultLaneConfig(), null, 2), 'utf8');"
+              if ($LASTEXITCODE -ne 0) { throw "Default three-lane config creation failed." }
+            } finally {
+              Remove-Item Env:MAGASIN_LANE_CONFIG_PATH -ErrorAction SilentlyContinue
+              Pop-Location
+            }
+          }
+
+          $lanes = Get-Content -LiteralPath $lanePath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ([string]$lanes.mode -ne "THREE_LANE_V1") {
+            throw "Unexpected lane mode after initialization."
+          }
+          foreach ($lane in @($lanes.lanes)) {
+            $lane.enabled = $false
+          }
+          $lanes | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $lanePath -Encoding UTF8
+          Write-Host "ALL_LANES_FORCED_DISABLED=True"
+
+          Section "RUNTIME TESTS"
+          Push-Location $runtime
+          try {
+            npm test
+            if ($LASTEXITCODE -ne 0) { throw "Installed runtime npm test failed." }
+          } finally {
+            Pop-Location
+          }
+
+          Section "VERIFY CONTROL PLANE"
+          $control = Join-Path ([Environment]::GetFolderPath('Desktop')) "MAGASIN BUSINESS OS CONTROL.lnk"
+          if (-not (Test-Path $control)) { throw "Control Panel shortcut missing." }
+          if (-not (Test-Path (Join-Path $root "STOP"))) { throw "STOP latch missing." }
+          if (-not (Test-Path (Join-Path $root "AUTOSTART_DISABLED"))) { throw "AUTOSTART_DISABLED latch missing." }
+
+          $required = @(
+            (Join-Path $runtime "windows\control-panel.ps1"),
+            (Join-Path $runtime "windows\start-supervisor.ps1"),
+            (Join-Path $runtime "windows\run-supervisor.ps1"),
+            (Join-Path $runtime "src\runtime\three-lane-cli.mjs")
+          )
+          foreach ($p in $required) {
+            if (-not (Test-Path $p)) { throw "Installed runtime file missing: $p" }
+          }
+
+          Section "STAGE DEDICATED LOGIN"
+          $tools = "C:\MAGASIN\migration-tools"
+          New-Item -ItemType Directory -Force -Path $tools | Out-Null
+          $loginTool = Join-Path $tools "prepare-new-pc-login.ps1"
+          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE "08_INTEGRATIONS\supervisor\windows\prepare-new-pc-login.ps1") -Destination $loginTool -Force
+          Write-Host ("LOGIN_TOOL=" + $loginTool)
+
+          Section "RESULT"
+          Write-Host "NEW_PC_RUNTIME_CONFIGURED=True"
+          Write-Host "OWNER_STOP_ACTIVE=True"
+          Write-Host "ALL_LANES_DISABLED=True"
+          Write-Host "READY_FOR_DEDICATED_LOGIN=True"
