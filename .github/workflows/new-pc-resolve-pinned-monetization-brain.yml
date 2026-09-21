@@ -1,0 +1,69 @@
+name: New PC Resolve Pinned Monetization Brain
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-resolve-pinned-monetization-brain.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 10
+    steps:
+      - name: Resolve pinned Brain URL
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $runtime = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor\runtime"
+          Push-Location $runtime
+          try {
+            @'
+          import { chromium } from "playwright-core";
+
+          const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+          const page = browser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes("chatgpt.com"));
+          if (!page) throw new Error("No ChatGPT page.");
+          await page.bringToFront();
+          await page.keyboard.press("Escape").catch(()=>{});
+          await page.waitForTimeout(500);
+
+          const pin = page.getByRole("button", { name: "Gỡ ghim NÃO KIẾM TIỀN", exact: true });
+          if (await pin.count() !== 1) {
+            throw new Error("Pinned monetization Brain control not resolved uniquely.");
+          }
+
+          const result = await pin.evaluate((el) => {
+            let p = el;
+            for (let i = 0; i < 8 && p; i++, p = p.parentElement) {
+              if (p instanceof HTMLAnchorElement && p.href) {
+                return { href: p.href, text: (p.textContent || "").replace(/\s+/g, " ").trim() };
+              }
+              const a = p.querySelector?.('a[href*="/c/"]');
+              if (a?.href) {
+                return { href: a.href, text: (a.textContent || "").replace(/\s+/g, " ").trim() };
+              }
+            }
+            return null;
+          });
+
+          if (!result?.href || !/chatgpt\.com\/c\//.test(result.href)) {
+            throw new Error("Pinned monetization Brain URL not found.");
+          }
+
+          console.log("MONETIZATION_BRAIN_URL=" + result.href);
+          console.log("MONETIZATION_BRAIN_RESOLVED=True");
+          await browser.close();
+          '@ | Set-Content ".\tmp-resolve-pinned-brain.mjs" -Encoding UTF8
+
+            node ".\tmp-resolve-pinned-brain.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "Pinned Brain resolve failed." }
+          } finally {
+            Remove-Item ".\tmp-resolve-pinned-brain.mjs" -Force -ErrorAction SilentlyContinue
+            Pop-Location
+          }
