@@ -1,0 +1,159 @@
+name: Host Health Diagnostics
+
+on:
+  push:
+    branches:
+      - diagnostics/host-health-20260921
+    paths:
+      - ".github/workflows/host-health-diagnostics.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-health:
+    runs-on: self-hosted
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect non-destructive host health diagnostics
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Continue"
+
+          function Section([string]$name) {
+            Write-Host ""
+            Write-Host "===== $name ====="
+          }
+
+          function SafeMessage([string]$text) {
+            if (-not $text) { return "" }
+            $s = $text -replace 'C:\\Users\\[^\\\s]+', 'C:\Users\<redacted>'
+            $s = $s -replace 'https?://\S+', '<url-redacted>'
+            if ($s.Length -gt 700) { $s = $s.Substring(0,700) }
+            return $s
+          }
+
+          Section "HOST"
+          Get-CimInstance Win32_ComputerSystem |
+            Select-Object Manufacturer,Model,@{N='TotalPhysicalMemoryGB';E={[math]::Round($_.TotalPhysicalMemory/1GB,2)}} |
+            Format-List
+          Get-CimInstance Win32_BIOS |
+            Select-Object SMBIOSBIOSVersion,ReleaseDate |
+            Format-List
+          Get-CimInstance Win32_OperatingSystem |
+            Select-Object Caption,Version,BuildNumber,LastBootUpTime,
+              @{N='TotalRAM_GB';E={[math]::Round($_.TotalVisibleMemorySize/1MB,2)}},
+              @{N='FreeRAM_GB';E={[math]::Round($_.FreePhysicalMemory/1MB,2)}},
+              @{N='TotalVirtual_GB';E={[math]::Round($_.TotalVirtualMemorySize/1MB,2)}},
+              @{N='FreeVirtual_GB';E={[math]::Round($_.FreeVirtualMemory/1MB,2)}} |
+            Format-List
+
+          Section "VOLUMES"
+          Get-Volume -DriveLetter C,D -ErrorAction SilentlyContinue |
+            Select-Object DriveLetter,FileSystem,HealthStatus,OperationalStatus,
+              @{N='SizeGB';E={[math]::Round($_.Size/1GB,2)}},
+              @{N='FreeGB';E={[math]::Round($_.SizeRemaining/1GB,2)}},
+              @{N='FreePct';E={if ($_.Size) {[math]::Round(100*$_.SizeRemaining/$_.Size,2)} else {0}}} |
+            Format-Table -AutoSize
+
+          Section "DISK"
+          Get-Disk |
+            Select-Object Number,FriendlyName,BusType,HealthStatus,OperationalStatus,
+              @{N='SizeGB';E={[math]::Round($_.Size/1GB,2)}} |
+            Format-Table -AutoSize
+          Get-PhysicalDisk |
+            Select-Object FriendlyName,MediaType,BusType,HealthStatus,OperationalStatus,
+              @{N='SizeGB';E={[math]::Round($_.Size/1GB,2)}} |
+            Format-Table -AutoSize
+
+          Section "STORAGE RELIABILITY"
+          Get-PhysicalDisk | ForEach-Object {
+            Write-Host ("--- " + $_.FriendlyName + " ---")
+            try {
+              $_ | Get-StorageReliabilityCounter -ErrorAction Stop |
+                Select-Object Temperature,Wear,PowerOnHours,ReadErrorsTotal,WriteErrorsTotal,ReadLatencyMax,WriteLatencyMax |
+                Format-List
+            } catch {
+              Write-Host ("ReliabilityCounter unavailable: " + $_.Exception.GetType().Name)
+            }
+          }
+
+          Section "RAM MODULES"
+          Get-CimInstance Win32_PhysicalMemory |
+            Select-Object Manufacturer,PartNumber,
+              @{N='CapacityGB';E={[math]::Round($_.Capacity/1GB,2)}},
+              Speed,ConfiguredClockSpeed |
+            Format-Table -AutoSize
+
+          Section "PAGEFILE"
+          Get-CimInstance Win32_ComputerSystem |
+            Select-Object AutomaticManagedPagefile |
+            Format-List
+          Get-CimInstance Win32_PageFileUsage |
+            Select-Object Name,AllocatedBaseSize,CurrentUsage,PeakUsage |
+            Format-List
+          Get-CimInstance Win32_PageFileSetting -ErrorAction SilentlyContinue |
+            Select-Object Name,InitialSize,MaximumSize |
+            Format-List
+
+          Section "STORAGE CONTROLLER DRIVERS"
+          Get-CimInstance Win32_PnPSignedDriver |
+            Where-Object {
+              $_.DeviceClass -in @('SCSIAdapter','HDC') -or
+              $_.DeviceName -match 'NVMe|TOSHIBA|THNSF5256GPUK|Storage|Optane|RST'
+            } |
+            Select-Object DeviceName,DriverProviderName,DriverVersion,DriverDate,DeviceClass |
+            Sort-Object DeviceName |
+            Format-List
+
+          Section "CHKDSK ONLINE SCAN C"
+          cmd /c "chkdsk C: /scan"
+          Write-Host ("CHKDSK_EXIT_CODE=" + $LASTEXITCODE)
+
+          Section "RECENT STORAGE / BSOD EVENTS (24H)"
+          $events = Get-WinEvent -FilterHashtable @{
+              LogName='System'
+              StartTime=(Get-Date).AddHours(-24)
+            } -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.Id -in 7,11,41,51,55,98,129,153,157,161,6008,1001 -or
+              $_.ProviderName -match 'disk|storahci|stornvme|nvme|ntfs|volmgr|WHEA|Kernel-Power|BugCheck'
+            } |
+            Sort-Object TimeCreated
+
+          foreach ($e in $events) {
+            [pscustomobject]@{
+              TimeCreated = $e.TimeCreated
+              Id = $e.Id
+              Provider = $e.ProviderName
+              Level = $e.LevelDisplayName
+              Message = SafeMessage([string]$e.Message)
+            } | Format-List
+          }
+          Write-Host ("EVENT_COUNT=" + @($events).Count)
+
+          Section "MINIDUMP METADATA"
+          Get-ChildItem C:\Windows\Minidump -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 5 Name,Length,LastWriteTime |
+            Format-Table -AutoSize
+
+          Section "MEMORY DIAGNOSTIC RESULTS"
+          Get-WinEvent -FilterHashtable @{
+              LogName='System'
+              ProviderName='Microsoft-Windows-MemoryDiagnostics-Results'
+            } -MaxEvents 5 -ErrorAction SilentlyContinue |
+            ForEach-Object {
+              [pscustomobject]@{
+                TimeCreated = $_.TimeCreated
+                Id = $_.Id
+                Message = SafeMessage([string]$_.Message)
+              }
+            } |
+            Format-List
+
+          Section "DONE"
+          Write-Host "HOST_HEALTH_DIAGNOSTICS_COMPLETE=True"
