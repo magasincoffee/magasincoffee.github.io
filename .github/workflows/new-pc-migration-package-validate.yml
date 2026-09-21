@@ -65,7 +65,7 @@ jobs:
             if ($export -notmatch [regex]::Escape($needle)) { throw "Missing export safety marker: $needle" }
           }
           $cmd = Get-Content ".\08_INTEGRATIONS\supervisor\windows\connect-new-pc-v2.cmd" -Raw
-          foreach ($needle in @('ADMIN_ELEVATION_OK=True','migration/new-pc-bootstrap-v1','connect-new-pc.ps1')) {
+          foreach ($needle in @('ADMIN_ELEVATION_OK=True','85a9ba43ab911ba25175bb29c15d203d6dd91b73','connect-new-pc.ps1')) {
             if ($cmd -notmatch [regex]::Escape($needle)) { throw "Missing CMD connector marker: $needle" }
           }
           Write-Host "SAFETY_MARKERS_OK=True"
