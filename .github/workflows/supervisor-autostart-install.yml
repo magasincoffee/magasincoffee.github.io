@@ -798,6 +798,103 @@ jobs:
           Write-Host "CONTROL_PANEL_RUNTIME_PID_UNCHANGED=True"
           Write-Host "CONTROL_PANEL_NO_BROWSER_MUTATION=True"
 
+      - name: Verify Brain planning contract fixture without production mutation
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtime = Join-Path $root "runtime"
+          $runtimeCli = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
+          $configFile = Join-Path $root "lanes.json"
+          $registryFile = Join-Path $root "lane-registry.json"
+          $lifecycle = Join-Path $runtime "windows\lifecycle-truth.ps1"
+
+          if (-not (Test-Path $runtimeCli)) { throw "Installed Three-Lane runtime CLI is missing" }
+          if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
+          . $lifecycle
+
+          function Get-TargetFingerprint([string]$Path) {
+            if (-not (Test-Path $Path)) { return "NO_CONFIG" }
+            $config = Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+            $canonical = @($config.lanes | Sort-Object lane_id | ForEach-Object {
+              "$([string]$_.lane_id)|$([string]$_.brain_url)|$([int]$_.brain_url_revision)|$([string]$_.work_url)|$([int]$_.work_url_revision)"
+            }) -join "`n"
+            $bytes = [Text.Encoding]::UTF8.GetBytes($canonical)
+            $hasher = [Security.Cryptography.SHA256]::Create()
+            try {
+              return ([BitConverter]::ToString($hasher.ComputeHash($bytes))).Replace("-","").ToLowerInvariant()
+            } finally {
+              $hasher.Dispose()
+            }
+          }
+
+          function Get-PlanningTruthFingerprint([string]$Path) {
+            if (-not (Test-Path $Path)) { return "NO_REGISTRY" }
+            $registry = Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+            $canonical = @("lane-1","lane-2","lane-3" | ForEach-Object {
+              $lane = $registry.lanes.$_
+              $verdict = if ($lane.last_result_verdict) {
+                "$([string]$lane.last_result_verdict.task_id)|$([string]$lane.last_result_verdict.relay_id)|$([string]$lane.last_result_verdict.verdict)|$([string]$lane.last_result_verdict.reason_code)|$([string]$lane.last_result_verdict.recorded_at)"
+              } else { "" }
+              "$_|$([string]$lane.task_id)|$([bool]$lane.awaiting_work)|$([string]$lane.last_result_relay_id)|$([string]$lane.last_dispatch_id)|$([int]$lane.pending_work_url_revision)|$([string]$lane.dispatch_inflight)|$([string]$lane.relay_inflight)|$verdict"
+            }) -join "`n"
+            $bytes = [Text.Encoding]::UTF8.GetBytes($canonical)
+            $hasher = [Security.Cryptography.SHA256]::Create()
+            try {
+              return ([BitConverter]::ToString($hasher.ComputeHash($bytes))).Replace("-","").ToLowerInvariant()
+            } finally {
+              $hasher.Dispose()
+            }
+          }
+
+          $targetBefore = Get-TargetFingerprint $configFile
+          $truthBeforeFingerprint = Get-PlanningTruthFingerprint $registryFile
+          $truthBefore = Get-LifecycleProcessTruth -Root $root
+          $wrapperBefore = if ($truthBefore.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+
+          $output = & node $runtimeCli --brain-planning-fixture
+          if ($LASTEXITCODE -ne 0) { throw "Installed Brain planning fixture acceptance failed" }
+          $output | ForEach-Object { Write-Host $_ }
+
+          foreach ($marker in @(
+            "BRAIN_PLANNING_V1_BACKWARD_COMPATIBLE=True",
+            "BRAIN_PLANNING_ACCEPT_CORRELATED=True",
+            "BRAIN_PLANNING_REJECT_CORRELATED=True",
+            "BRAIN_PLANNING_REJECT_UNRELATED_BLOCKED=True",
+            "BRAIN_PLANNING_VERDICT_IDEMPOTENT=True",
+            "BRAIN_PLANNING_LEGACY_HANDSHAKE_NO_DUPLICATE=True",
+            "BRAIN_PLANNING_ACTIVE_DISPATCH_NO_RESEND=True",
+            "BRAIN_PLANNING_WORK_STOP_GUARD=True",
+            "BRAIN_PLANNING_EVENTS_PRIVACY_SAFE=True"
+          )) {
+            if ($output -notcontains $marker) { throw "Missing Brain planning fixture marker: $marker" }
+          }
+
+          $targetAfter = Get-TargetFingerprint $configFile
+          $truthAfterFingerprint = Get-PlanningTruthFingerprint $registryFile
+          if ($targetBefore -ne $targetAfter) {
+            throw "Production Brain/Work target fingerprint changed during planning fixture"
+          }
+          if ($truthBeforeFingerprint -ne $truthAfterFingerprint) {
+            throw "Production task/latch/verdict truth changed during planning fixture"
+          }
+
+          $truthAfter = Get-LifecycleProcessTruth -Root $root
+          $wrapperAfter = if ($truthAfter.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+          if ($wrapperBefore -ne $wrapperAfter) {
+            throw "Planning fixture restarted or stopped the Supervisor wrapper"
+          }
+
+          Write-Host "BRAIN_PLANNING_RUNTIME_ARTIFACT_FIXTURE=True"
+          Write-Host "BRAIN_PLANNING_PRODUCTION_TARGETS_UNCHANGED=True"
+          Write-Host "BRAIN_PLANNING_PRODUCTION_TRUTH_UNCHANGED=True"
+          Write-Host "BRAIN_PLANNING_RUNTIME_PID_UNCHANGED=True"
+          Write-Host "BRAIN_PLANNING_NO_BROWSER_MUTATION=True"
+
       - name: Verify event timing foundation privacy
         shell: powershell
         run: |
