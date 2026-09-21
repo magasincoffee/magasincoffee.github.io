@@ -12,6 +12,8 @@ on:
       - .github/workflows/supervisor-autostart-install.yml
       - .github/workflows/supervisor-rbt009-soak.yml
       - .github/scripts/supervisor-rbt009-soak.ps1
+      - .github/scripts/supervisor-rbt009-soak-lib.ps1
+      - .github/scripts/supervisor-rbt009-soak-strictmode-tests.ps1
       - .github/scripts/supervisor-release-event-validator.mjs
   workflow_dispatch:
 
