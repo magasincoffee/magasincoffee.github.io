@@ -79,7 +79,7 @@ try {
   Assert-Equal $stats.error_recovery_tail 0 "H empty event file safe"
 
   # I — very large file reads bounded bytes only.
-  $writer = New-Object System.IO.StreamWriter($file, $false, $utf8)
+  $writer = [System.IO.StreamWriter]::new($file, $false, $utf8)
   try {
     for ($i = 0; $i -lt 30000; $i++) {
       $writer.WriteLine('{"event_type":"WORK_ACTIVITY","task_id":"SAFE"}')
@@ -94,7 +94,7 @@ try {
   # J — concurrent writer handle does not block or crash bounded reader.
   Write-Lines $file @('{"event_type":"RECOVERY","reason_code":"START"}')
   $share = [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete
-  $writerStream = New-Object System.IO.FileStream(
+  $writerStream = [System.IO.FileStream]::new(
     $file,
     [System.IO.FileMode]::Append,
     [System.IO.FileAccess]::Write,
