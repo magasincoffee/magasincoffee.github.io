@@ -31,7 +31,8 @@
       "OWNER_EXPLICIT_ROBOT_RELEASE",
       "OWNER_EXPLICIT_RESTART_AND_RELEASE",
       "OWNER_EXPLICIT_RELEASE_PFC_8H_V2",
-      "OWNER_APPROVED_WORKFORCE_OPERATIONS_V1_ARCHITECTURE"
+      "OWNER_APPROVED_WORKFORCE_OPERATIONS_V1_ARCHITECTURE",
+      "OWNER_RELEASED_WORKFORCE_OPERATIONS_V1_FOR_MANUAL_WORK_ONLY"
     ],
     "pending": []
   },
@@ -600,12 +601,12 @@
   },
   "parallel_staged_queue": {
     "id": "WORKFORCE_OPERATIONS_V1",
-    "status": "STAGED_WAIT_OWNER_RELEASE",
+    "status": "MANUAL_WORK_RELEASED",
     "architecture_ref": "01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md",
     "runbook": "01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md",
     "e2e_acceptance_ref": "01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md",
     "owner_architecture_approved": true,
-    "owner_execution_released": false,
+    "owner_execution_released": true,
     "robot_may_execute": false,
     "tasks": [
       "TASK-090",
@@ -639,6 +640,10 @@
     ],
     "attendance_mode": "EMPLOYEE_SELECTS_ACTUAL_START_END_NO_REALTIME_CHECKIN_CHECKOUT",
     "final_gate": "PR_HEAD_E2E_PLUS_EXACT_POST_MERGE_E2E_PLUS_COLD_RELOAD_RECHECK",
-    "note": "Staged parallel operational-relief track. Does not alter active PFC cursor until explicit Owner release/reprioritization."
+    "note": "Staged parallel operational-relief track. Does not alter active PFC cursor until explicit Owner release/reprioritization.",
+    "execution_mode": "OWNER_DIRECT_TO_WORK",
+    "manual_work_may_execute": true,
+    "current_task": "TASK-090",
+    "next_task": "TASK-091"
   }
 }
