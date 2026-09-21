@@ -101,6 +101,17 @@ function Read-JsonFile([string]$Path) {
     }
 }
 
+function Get-OptionalPropertyValue(
+    $InputObject,
+    [string]$Name,
+    $DefaultValue = $null
+) {
+    if ($null -eq $InputObject) { return $DefaultValue }
+    $property = $InputObject.PSObject.Properties[$Name]
+    if ($null -eq $property) { return $DefaultValue }
+    return $property.Value
+}
+
 function Write-JsonAtomic([string]$Path, $Value) {
     $dir = Split-Path $Path -Parent
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
