@@ -5,7 +5,7 @@ export const WORKFORCE_TIMEZONE = "Asia/Ho_Chi_Minh";
 
 const contractUrl = new URL("../contracts/workforce-operations-v1.json", import.meta.url);
 const CONTRACT = Object.freeze(JSON.parse(readFileSync(contractUrl, "utf8")));
-const DATE_RE = /^\\d{4}-\\d{2}-\\d{2}$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function copy(value) {
   return JSON.parse(JSON.stringify(value));
