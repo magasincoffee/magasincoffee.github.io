@@ -94,7 +94,8 @@ test("Legacy demand stays isolated from canonical direct scheduling path",async(
   assert.match(demand,/get_workforce_staffing_requirements/);
   assert.match(demand,/OWNER_ONLY/);
   assert.doesNotMatch(demand,/replace_schedule_generation_assignments/);
-  for(const file of ["demand-v1.js","review-v1.js","draft-publish-v1.js","official-v1.js"])assert.equal(engine.includes(file),true,file);
+  assert.equal(engine.includes("demand-v1.js"),false,"legacy demand must not load in canonical Manager flow");
+  for(const file of ["review-v1.js","draft-publish-v1.js","official-v1.js"])assert.equal(engine.includes(file),true,file);
 });
 
 test("Official schedule remains server-read only",async()=>{
