@@ -1,0 +1,83 @@
+name: New PC Release Preflight
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-release-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install test dependency
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { throw "npm install failed." }
+
+      - name: Run deterministic Supervisor release matrix
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          node --test test/lane-events.test.mjs
+          node --test test/browser-scheduler.test.mjs test/browser-scheduler-integration.test.mjs
+          node --test test/work-watchdog.test.mjs test/work-watchdog-integration.test.mjs
+          node --test test/relay-retry-v48.test.mjs test/relay-rearm-recovery.test.mjs
+          node --test test/work-capacity.test.mjs test/work-rollover.test.mjs test/work-rollover-integration.test.mjs
+          node --test test/target-health.test.mjs test/stale-target-quarantine-integration.test.mjs
+          node --test test/owner-start-latch-recovery.test.mjs test/lifecycle-truth-v50.test.mjs test/windows-kill-switch.test.mjs
+          node --test test/control-panel-status-projection.test.mjs test/control-panel-observability-integration.test.mjs
+          node --test test/brain-planning-contract.test.mjs
+          node --test test/release-integration-matrix.test.mjs
+          npm test
+          if ($LASTEXITCODE -ne 0) { throw "Supervisor deterministic matrix failed." }
+
+      - name: Run Windows PowerShell StrictMode soak monitor matrix
+        shell: powershell
+        run: |
+          powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "$env:GITHUB_WORKSPACE\.github\scripts\supervisor-rbt009-soak-strictmode-tests.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "StrictMode soak monitor matrix failed." }
+
+      - name: Run installed runtime non-live fixtures
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtime = Join-Path $root "runtime"
+          $cli = Join-Path $runtime "src\runtime\three-lane-cli.mjs"
+          $brain = Join-Path $runtime "src\runtime\brain-planning-acceptance-cli.mjs"
+          if (-not (Test-Path $cli)) { throw "Installed runtime CLI missing." }
+
+          $outputs = @()
+          $outputs += (& node $cli --work-full-fixture)
+          if ($LASTEXITCODE -ne 0) { throw "work-full fixture failed." }
+          $outputs += (& node $cli --stale-target-fixture)
+          if ($LASTEXITCODE -ne 0) { throw "stale-target fixture failed." }
+          $outputs += (& node $cli --work-target-fixture)
+          if ($LASTEXITCODE -ne 0) { throw "work-target fixture failed." }
+          $outputs += (& node $cli --browser-scheduler-fixture)
+          if ($LASTEXITCODE -ne 0) { throw "browser-scheduler fixture failed." }
+          if (Test-Path $brain) {
+            $outputs += (& node $brain)
+            if ($LASTEXITCODE -ne 0) { throw "brain planning acceptance failed." }
+          }
+          $outputs | ForEach-Object { Write-Host $_ }
+
+          $stop = Test-Path (Join-Path $root "STOP")
+          $autostartDisabled = Test-Path (Join-Path $root "AUTOSTART_DISABLED")
+          if (-not $stop -or -not $autostartDisabled) {
+            throw "Owner STOP latches were not preserved."
+          }
+          Write-Host "NEW_PC_RELEASE_PREFLIGHT=True"
+          Write-Host "OWNER_STOP_PRESERVED=True"
+          Write-Host "NO_LIVE_ROBOT_MUTATION=True"
