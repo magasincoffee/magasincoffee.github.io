@@ -100,6 +100,7 @@ import {
   normalizeWorkRollover,
   rolloverMatchesDirective
 } from "./work-rollover.mjs";
+import { projectLaneOperationalStatus } from "./status-projection.mjs";
 import {
   TARGET_AVAILABILITY,
   TARGET_HEALTH_REASONS,
@@ -112,7 +113,7 @@ import {
   targetHealthIdentity
 } from "./target-health.mjs";
 
-const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.58";
+const SUPERVISOR_RUNTIME_VERSION = "2026-09-20.59";
 
 let laneEventSink = null;
 let laneEventErrorLogPath = null;
@@ -490,6 +491,14 @@ async function waitForConversationUrl(page) {
 }
 
 function laneStatus(configLane, registryLane, status, message, extra = {}) {
+  const updatedAt = new Date().toISOString();
+  const projection = projectLaneOperationalStatus(
+    configLane,
+    registryLane,
+    status,
+    extra,
+    { now: updatedAt }
+  );
   return {
     lane_id: configLane.lane_id,
     project_name: configLane.project_name,
@@ -498,15 +507,11 @@ function laneStatus(configLane, registryLane, status, message, extra = {}) {
     message,
     brain_url: String(registryLane.brain_url || configLane.brain_url || ""),
     work_url: String(registryLane.work_url || ""),
-    work_mode: String(registryLane.applied_work_mode || configLane.work_mode || "AUTO"),
     work_url_revision: Number(configLane.work_url_revision || 0),
-    applied_work_url_revision: Number(registryLane.applied_work_url_revision || 0),
-    pending_work_url_revision: Number(registryLane.pending_work_url_revision || 0),
-    work_url_saved_at: configLane.work_url_saved_at || null,
     task_id: registryLane.task_id || null,
     awaiting_work: Boolean(registryLane.awaiting_work),
-    updated_at: new Date().toISOString(),
-    ...extra
+    updated_at: updatedAt,
+    ...projection
   };
 }
 

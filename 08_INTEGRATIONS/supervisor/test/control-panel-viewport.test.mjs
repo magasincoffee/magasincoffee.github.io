@@ -28,8 +28,10 @@ test("Control Panel uses a scrollable logical canvas that contains all three lan
   assert.match(source, /\$scrollHost\.Dock = \[Windows\.Forms\.DockStyle\]::Fill/);
   assert.match(source, /\$scrollHost\.AutoScroll = \$true/);
   assert.match(source, /\$scrollHost\.AutoScrollMinSize = \$viewportLayout\.LogicalCanvasSize/);
-  assert.match(source, /New-Object Drawing\.Size\(1215, 890\)/);
-  assert.match(source, /\$cardY = @\(135, 385, 635\)/);
+  assert.match(source, /New-Object Drawing\.Size\(1215, 1510\)/);
+  assert.match(source, /\$cardY = @\(135, 445, 755\)/);
+  assert.match(source, /timeline_bottom = 1485/);
+  assert.match(source, /critical_controls_scroll_reachable/);
   assert.match(source, /for \(\$i = 0; \$i -lt 3; \$i\+\+\)/);
   assert.match(source, /\$content\.Controls\.Add\(\$panel\)/);
 });
@@ -143,7 +145,7 @@ test("Windows viewport probe executes the production layout helper without local
   const large = probe(1920, 1040);
   assert.equal(large.initial_width, 1240);
   assert.equal(large.initial_height, 930);
-  assert.equal(large.vertical_scroll_required, false);
+  assert.equal(large.vertical_scroll_required, true);
   assert.equal(large.lane3_stop_in_canvas, true);
 
   const medium = probe(1600, 860);
@@ -157,7 +159,7 @@ test("Windows viewport probe executes the production layout helper without local
   assert.equal(low.minimum_width, 900);
   assert.equal(low.minimum_height, 600);
   assert.equal(low.vertical_scroll_required, true);
-  assert.equal(low.lane3_stop_bottom, 851);
+  assert.equal(low.lane3_stop_bottom, 1047);
   assert.equal(low.lane3_stop_in_canvas, true);
 });
 

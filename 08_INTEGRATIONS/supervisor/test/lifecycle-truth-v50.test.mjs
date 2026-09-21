@@ -27,11 +27,22 @@ test("B enabled lane plus runtime OFF is recovered from Control Panel", async ()
 
 test("C stale persisted WORKING cannot outrank missing process truth", async () => {
   const panel = await read("../windows/control-panel.ps1");
+  const helper = await read("../windows/control-panel-observability.ps1");
 
-  const processGuard = panel.indexOf("elseif (-not $processTruth.healthy)");
-  const persistedStatus = panel.indexOf("elseif ($st -and $st.status)");
-  assert.ok(processGuard >= 0);
-  assert.ok(persistedStatus > processGuard);
+  assert.match(panel, /Get-LifecycleProcessTruth/);
+  assert.match(panel, /Get-ControlPanelEffectiveLaneState/);
+  assert.match(helper, /if \(-not \$ProcessHealthy\)[\s\S]*?return 'RECOVERING'/);
+  assert.match(helper, /if \(\$OwnerStopped\) \{ return 'WAIT_OWNER' \}/);
+
+  const refreshStart = panel.indexOf("function Refresh-Ui");
+  const refreshEnd = panel.indexOf("$timer = New-Object Windows.Forms.Timer", refreshStart);
+  const refresh = panel.slice(refreshStart, refreshEnd);
+  const processTruth = refresh.indexOf("Get-LifecycleProcessTruth");
+  const laneCompose = refresh.indexOf("Get-ControlPanelEffectiveLaneState");
+  const render = refresh.indexOf("$ui.Status.Text");
+  assert.ok(processTruth >= 0);
+  assert.ok(laneCompose > processTruth);
+  assert.ok(render > laneCompose);
   assert.match(panel, /ĐANG TỰ KHÔI PHỤC|ĐANG KHỞI ĐỘNG/);
 });
 
