@@ -44,6 +44,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Check Workforce Operations V1 helper syntax
+        run: node --check 02_CORE/shared/workforce-operations-v1.mjs
+
+      - name: Run TASK-091 Workforce Operations V1 targeted tests
+        run: node --test 09_QA/business-os/workforce-operations-v1.test.mjs
+
+      - name: Run Workforce schedule and shift compatibility regressions
+        run: |
+          node --test \
+            09_QA/business-os/five-step-schedule-first.test.mjs \
+            09_QA/business-os/schedule-first-flow.test.mjs \
+            09_QA/business-os/published-schedule-feedback-loop.test.mjs \
+            09_QA/people-shift/employee-swap-regression.test.mjs \
+            09_QA/people-shift/give-shift-v1.test.mjs \
+            09_QA/people-shift/notification-outbox-v1.test.mjs
+
       - name: Check Cash Bridge Source Integration helper syntax
         run: node --check 02_CORE/shared/cash-bridge-source-integration-v1.mjs
 
