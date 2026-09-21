@@ -15,4 +15,5 @@ test("Employee attendance executes published schedules through verified RPCs",as
   assert.match(source,/manual_attendance_from_schedule/);
   assert.doesNotMatch(source,/auto_attendance_from_approved_schedules/);
   assert.doesNotMatch(source,/employeeAutoAttendance/);
+  assert.match(source,/if\(!x\|\|!x\.body\|\|x\.body\.dataset\.employeeAttendanceEngine==='1'\)return/);
 });
