@@ -197,3 +197,22 @@ E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 | TASK-106 | Workforce Cross-Flow Browser E2E Pack | 20m | E2E-01→E2E-16 | STAGED / WAIT_OWNER_RELEASE |
 | TASK-107 | Workforce Failure / Recovery / Security E2E | 20m | retry/reload/idempotency/RBAC | STAGED / WAIT_OWNER_RELEASE |
 | TASK-108 | Workforce Final Regression + Post-Merge E2E Recheck | 20m | PR-head + exact-main + cold/reload E2E | STAGED / WAIT_OWNER_RELEASE |
+
+
+## Supervisor Independent Repository Migration V1
+
+Owner approved the independent Supervisor repository architecture and explicitly released migration execution on 2026-09-21.
+
+Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
+
+| ID | Task | Gate | Status |
+|---|---|---|---|
+| MIG-001 | Freeze Baseline + Migration Bootstrap | exact baseline inventory + migration contract + target repo bootstrap plan; zero production cutover | READY / WORK |
+| MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | QUEUED |
+| MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | QUEUED |
+| MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | QUEUED |
+| MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | QUEUED / OWNER-SAFE-GATE |
+| MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | QUEUED |
+| MIG-007 | Deprecate old embedded Supervisor copy | rollback window closed + pointer docs only | QUEUED |
+
+Migration invariant: the existing production Supervisor remains authoritative until MIG-005 explicitly proves cutover. RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING and may not be relabeled RELEASED during repository migration.
