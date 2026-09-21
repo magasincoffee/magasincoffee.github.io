@@ -406,3 +406,41 @@ Nếu bất kỳ tài liệu cũ nào mâu thuẫn với kiến trúc này, ki�
 
 **Kiến trúc đã được Owner chốt. Tiếp tục thảo luận/chi tiết hóa theo kiến trúc này và Five-Step liên tục. Không giao implementation cho Robot cho đến khi Owner ra lệnh release rõ ràng.**
 
+
+
+## 12. Parallel operational-relief track — Workforce Operations V1
+
+Owner locked `Workforce Operations V1` on 2026-09-21 as a parallel operational-relief track.
+
+This does not replace the Profitability & Cash financial spine. It targets a different North Star:
+
+```text
+REDUCE OWNER/MANAGER DAILY OPERATIONAL LOAD
+```
+
+Canonical domain architecture:
+
+`05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md`
+
+Execution plan:
+
+`05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md`
+
+Mandatory final E2E acceptance:
+
+`05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
+
+Locked Workforce V1 capabilities:
+
+```text
+WEEKLY SCHEDULING
++ SWAP
++ GIVE
++ MANUAL-TIME ATTENDANCE
++ EMPLOYEE PROFILE
++ PAYROLL SELF-CHECK
+```
+
+Attendance does not use realtime check-in/check-out. Employee selects actual start/end time and payroll uses confirmed work time only.
+
+The plan is staged at TASK-090→108 and requires explicit Owner execution release. Architecture approval alone is not Robot release.
