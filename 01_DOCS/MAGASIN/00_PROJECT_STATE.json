@@ -17,7 +17,7 @@
     "production_private_data_in_git": false,
     "red_actions_require_owner": true
   },
-  "last_updated": "2026-09-20",
+  "last_updated": "2026-09-21",
   "owner_boundary": {
     "task": "TASK-050",
     "resolved": [
@@ -30,7 +30,8 @@
       "OWNER_APPROVED_PROFITABILITY_CASH_FINANCIAL_TRUTH_SPINE",
       "OWNER_EXPLICIT_ROBOT_RELEASE",
       "OWNER_EXPLICIT_RESTART_AND_RELEASE",
-      "OWNER_EXPLICIT_RELEASE_PFC_8H_V2"
+      "OWNER_EXPLICIT_RELEASE_PFC_8H_V2",
+      "OWNER_APPROVED_WORKFORCE_OPERATIONS_V1_ARCHITECTURE"
     ],
     "pending": []
   },
@@ -596,5 +597,48 @@
     "source_inventory": "COMPLETE",
     "missing_sources_do_not_block": true,
     "contract": "OPERATING_COST_TRUTH_V1"
+  },
+  "parallel_staged_queue": {
+    "id": "WORKFORCE_OPERATIONS_V1",
+    "status": "STAGED_WAIT_OWNER_RELEASE",
+    "architecture_ref": "01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md",
+    "runbook": "01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md",
+    "e2e_acceptance_ref": "01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md",
+    "owner_architecture_approved": true,
+    "owner_execution_released": false,
+    "robot_may_execute": false,
+    "tasks": [
+      "TASK-090",
+      "TASK-091",
+      "TASK-092",
+      "TASK-093",
+      "TASK-094",
+      "TASK-095",
+      "TASK-096",
+      "TASK-097",
+      "TASK-098",
+      "TASK-099",
+      "TASK-100",
+      "TASK-101",
+      "TASK-102",
+      "TASK-103",
+      "TASK-104",
+      "TASK-105",
+      "TASK-106",
+      "TASK-107",
+      "TASK-108"
+    ],
+    "operational_north_star": "REDUCE_OWNER_MANAGER_DAILY_WORKLOAD",
+    "canonical_capabilities": [
+      "WEEKLY_SCHEDULING",
+      "SHIFT_SWAP",
+      "SHIFT_GIVE",
+      "MANUAL_TIME_ATTENDANCE",
+      "EMPLOYEE_PROFILE",
+      "PAYROLL_SELF_CHECK"
+    ],
+    "attendance_mode": "EMPLOYEE_SELECTS_ACTUAL_START_END_NO_REALTIME_CHECKIN_CHECKOUT",
+    "final_gate": "PR_HEAD_E2E_PLUS_EXACT_POST_MERGE_E2E_PLUS_COLD_RELOAD_RECHECK",
+    "note": "Staged parallel operational-relief track. Does not alter active PFC cursor until explicit Owner release/reprioritization."
   }
 }
