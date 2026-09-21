@@ -14,6 +14,9 @@ $script:ControlPanelEventLabels = @{
     WORK_ACTIVITY = 'Work có hoạt động'
     WORK_COMPLETED = 'Work đã thực hiện xong'
     RESULT_RELAY_CONFIRMED = 'Kết quả đã relay về Brain'
+    BRAIN_RESULT_ACCEPTED = 'Brain đã chấp nhận kết quả'
+    BRAIN_RESULT_REJECTED = 'Brain yêu cầu sửa lại'
+    BRAIN_CORRECTION_DISPATCHED = 'Brain đã giao correction'
     WORK_TARGET_SAVED = 'Work target đã lưu'
     WORK_TARGET_PENDING = 'Work target đang chờ áp dụng'
     WORK_TARGET_APPLIED = 'Work target đã áp dụng'
@@ -62,6 +65,15 @@ $script:ControlPanelReasonLabels = @{
     TARGET_STABLE_REDIRECT_AWAY = 'Target ổn định đã chuyển khỏi conversation'
     TARGET_NEW_CANONICAL_IDENTITY = 'Owner đã cung cấp target mới'
     TARGET_QUARANTINED = 'Target đang bị cách ly'
+    DOD_MET = 'Đã đạt Definition of Done'
+    EVIDENCE_VERIFIED = 'Evidence đã được xác minh'
+    CORRECTION_REQUIRED = 'Cần correction bounded'
+    EVIDENCE_INCOMPLETE = 'Evidence chưa đủ'
+    OWNER_INTERVENTION_REQUIRED = 'Cần Owner can thiệp'
+    DEPENDENCY_BLOCKED = 'Dependency đang bị chặn'
+    BRAIN_RESULT_ACCEPTED = 'Brain ACCEPT kết quả'
+    BRAIN_RESULT_REJECTED = 'Brain REJECT kết quả'
+    BRAIN_CORRECTION_DISPATCHED = 'Correction đã được giao'
 }
 
 function Test-ControlPanelSafeIdentifier([string]$Value) {
