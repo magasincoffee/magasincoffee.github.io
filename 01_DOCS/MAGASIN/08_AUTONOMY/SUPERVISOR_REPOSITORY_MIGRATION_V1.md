@@ -98,7 +98,7 @@ Final RBT-009 release evidence must be generated against the exact independent-r
 
 ## 8. MIG-001 Definition of Done
 
-Status: **DONE WHEN MIG-001 EVIDENCE PR IS MERGED; MIG-002 READY / NOT STARTED**
+Status: **MIG-001 DONE / MIG-002 READY / NOT STARTED**
 
 MIG-001 is complete only when Work returns evidence that:
 1. baseline SHA and complete Supervisor file inventory are recorded;
