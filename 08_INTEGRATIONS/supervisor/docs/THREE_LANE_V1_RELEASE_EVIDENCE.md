@@ -86,6 +86,32 @@ No existing RBT-003 through RBT-008 acceptance fixture is deleted. They remain p
 
 No temporary production instrumentation is added to the Supervisor runtime. The RBT-009 monitor and validator live under GitHub release tooling and can remain reusable for future release audits.
 
+
+## Historical interrupted Tier B evidence — source repository
+
+The source-repository RBT-009 workflow produced a useful but **non-qualifying** production soak attempt:
+
+- GitHub Actions run: `35569077688`
+- workflow: `Supervisor RBT-009 Overnight Soak`
+- source repository: `magasincoffee/magasincoffee.github.io`
+- candidate SHA: `18e6d5025429cb1aaee986a8033d8b47169a54c3`
+- run conclusion: `failure`
+- Tier A isolated integration: **PASS**
+- normal release-gates preflight: **PASS**
+- Tier B production read-only soak started: `2026-09-21T06:41:50Z`
+- workflow ended: `2026-09-21T09:20:22Z`
+- observed elapsed window: **2h 38m 32s**
+- required qualifying duration: **8h / 480 continuous minutes**
+- event-correlation validation: **NOT REACHED**
+- privacy artifact scan: **NOT REACHED**
+- artifact upload: **NOT REACHED**
+- final combined release markers: **NOT REACHED**
+- interruption root cause: **UNKNOWN / NOT PROVEN FROM RETAINED GITHUB EVIDENCE**
+
+This attempt is historical evidence only. It gives **zero cumulative credit** toward the required uninterrupted 8-hour Tier B qualification and must not be combined with another partial run.
+
+Following the Owner-approved independent-repository migration, the next qualifying RBT-009 Tier B soak must run from zero against the **exact candidate SHA of `magasincoffee/magasin-supervisor`** after migration parity/lifecycle gates and single-production-authority cutover are proven.
+
 ## Final closure fields — PENDING
 
 These fields must be filled only from completed GitHub evidence:

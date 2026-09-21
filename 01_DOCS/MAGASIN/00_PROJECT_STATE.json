@@ -699,7 +699,28 @@
       "carry_forward": true,
       "status": "IMPLEMENTATION_CANDIDATE_FINAL_8H_SOAK_PENDING",
       "release_must_not_be_claimed": true,
-      "final_soak_required_on_new_repo_exact_sha": true
+      "final_soak_required_on_new_repo_exact_sha": true,
+      "historical_source_repo_soak": {
+        "run_id": 35569077688,
+        "workflow": "Supervisor RBT-009 Overnight Soak",
+        "source_candidate_sha": "18e6d5025429cb1aaee986a8033d8b47169a54c3",
+        "conclusion": "FAILURE_INTERRUPTED_NON_QUALIFYING",
+        "tier_a": "PASS",
+        "normal_release_gates_preflight": "PASS",
+        "tier_b_started_utc": "2026-09-21T06:41:50Z",
+        "workflow_ended_utc": "2026-09-21T09:20:22Z",
+        "observed_elapsed_seconds": 9512,
+        "observed_elapsed_hms": "02:38:32",
+        "required_continuous_minutes": 480,
+        "event_validation": "NOT_REACHED",
+        "privacy_scan": "NOT_REACHED",
+        "artifact_upload": "NOT_REACHED",
+        "final_release_markers": "NOT_REACHED",
+        "interruption_root_cause": "UNKNOWN_NOT_PROVEN",
+        "cumulative_credit_allowed": false,
+        "release_effect": "NONE"
+      },
+      "qualification_policy": "RUN_FROM_ZERO_ON_EXACT_NEW_REPO_CANDIDATE_SHA_AFTER_PARITY_LIFECYCLE_AND_SINGLE_AUTHORITY_CUTOVER"
     },
     "guardrails": [
       "DO_NOT_CUTOVER_PRODUCTION_DURING_MIG_001",
