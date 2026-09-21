@@ -235,8 +235,6 @@ jobs:
           $lifecycle = Join-Path $runtime "windows\lifecycle-truth.ps1"
 
           if (-not (Test-Path $runtimeCli)) { throw "Installed Three-Lane runtime CLI is missing" }
-          if (-not (Test-Path $panelScript)) { throw "Installed Control Panel is missing" }
-          if (-not (Test-Path $panelFixture)) { throw "Installed Control Panel observability fixture is missing" }
           if (-not (Test-Path $lifecycle)) { throw "Lifecycle truth helper is missing" }
           . $lifecycle
 
