@@ -86,7 +86,7 @@ test("RBT-009 Tier A: active >30m does not false-reload and other lanes still re
     watchdog: state
   });
   assert.equal(out.decision, WORK_WATCHDOG_DECISIONS.WORKING_LONG);
-  assert.equal(out.watchdog.reload_count, 0);
+  assert.equal(out.state.reload_count, 0);
 
   const scheduler = new BrowserScheduler({ adapter: new FakeAdapter(), pageBudget: 3 });
   const lanes = ["lane-1","lane-2","lane-3"].map((lane_id) => ({ lane_id, enabled: true }));
@@ -107,22 +107,22 @@ test("RBT-009 Tier A: inactive >30m persists one reload intent per epoch and bec
   };
   let out = evaluateWorkWatchdog({ ...base, now: iso(36), watchdog });
   assert.equal(out.decision, WORK_WATCHDOG_DECISIONS.STALL_CHECK);
-  watchdog = out.watchdog;
+  watchdog = out.state;
 
   out = evaluateWorkWatchdog({ ...base, now: iso(36), watchdog });
   assert.equal(out.decision, WORK_WATCHDOG_DECISIONS.RELOAD_ELIGIBLE);
-  watchdog = beginWatchdogReloadIntent(out.watchdog, { now: iso(36) });
+  watchdog = beginWatchdogReloadIntent(out.state, { now: iso(36) });
   assert.equal(watchdog.reload_count, 1);
 
   const restarted = structuredClone(watchdog);
   out = evaluateWorkWatchdog({ ...base, now: iso(37), watchdog: restarted });
   assert.notEqual(out.decision, WORK_WATCHDOG_DECISIONS.RELOAD_ELIGIBLE);
-  assert.equal(out.watchdog.reload_count, 1);
+  assert.equal(out.state.reload_count, 1);
 
   watchdog = markWatchdogReloaded(watchdog, { now: iso(37) });
   out = evaluateWorkWatchdog({ ...base, now: iso(43), watchdog });
   assert.equal(out.decision, WORK_WATCHDOG_DECISIONS.POSSIBLY_STALLED);
-  assert.equal(out.watchdog.reload_count, 1);
+  assert.equal(out.state.reload_count, 1);
 });
 
 test("RBT-009 Tier A: active Owner Work hot-save remains pending until safe boundary", () => {
