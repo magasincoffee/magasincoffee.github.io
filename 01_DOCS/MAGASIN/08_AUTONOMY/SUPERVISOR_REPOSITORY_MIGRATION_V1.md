@@ -1,0 +1,106 @@
+# MAGASIN Supervisor — Independent Repository Migration V1
+
+Date: 2026-09-21  
+Status: OWNER APPROVED / EXECUTION RELEASED  
+Migration ID: MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1
+
+## 1. Objective
+
+Extract MAGASIN Supervisor from `magasincoffee/magasincoffee.github.io` into an independent platform repository:
+
+`magasincoffee/magasin-supervisor`
+
+The Supervisor becomes a project-agnostic orchestration platform. MAGASIN Business OS remains a consumer/project and keeps its own business PROJECT_STATE, TASK_QUEUE and domain architecture.
+
+## 2. Frozen migration baseline
+
+Source repository: `magasincoffee/magasincoffee.github.io`  
+Baseline main SHA: `4f76b929c5fedc44b451abd823f0f1f7fb3e50fe`
+
+Migration must preserve current Three-Lane semantics and local production state. The old embedded Supervisor copy remains a rollback source during the compatibility window.
+
+## 3. Move / retain boundary
+
+Move to the independent repository:
+- `08_INTEGRATIONS/supervisor/src/**` -> `src/**`
+- `08_INTEGRATIONS/supervisor/test/**` -> `test/**`
+- `08_INTEGRATIONS/supervisor/windows/**` -> `windows/**`
+- `08_INTEGRATIONS/supervisor/docs/**` -> `docs/**`
+- `08_INTEGRATIONS/supervisor/package.json` -> repository root
+- Supervisor-only `.github/workflows/supervisor-*.yml`
+- Supervisor-only `.github/scripts/supervisor-*`
+- canonical Three-Lane / lifecycle / scheduler / directive protocol documentation.
+
+Remain in Business OS:
+- `01_DOCS/MAGASIN/00_PROJECT_STATE.json`
+- `01_DOCS/MAGASIN/00_TASK_QUEUE.md`
+- PFC / Workforce / financial truth / business-domain source-of-truth.
+
+Local runtime state is never committed:
+- `lanes.json`
+- `lane-registry.json`
+- `lane-status.json`
+- Brain/Work URLs
+- message bodies/screenshots/cookies/tokens/browser profiles.
+
+## 4. Required architecture separation
+
+Brain/project decides WHAT to execute.
+
+Supervisor decides HOW to transport/observe/recover safely.
+
+Work executes bounded directives.
+
+The independent Supervisor repository must not depend on Business OS task IDs, Profitability & Cash semantics, Workforce semantics or the Business OS PROJECT_STATE for platform build/test/release correctness.
+
+## 5. Migration sequence
+
+MIG-001 — Freeze Baseline + Migration Bootstrap  
+MIG-002 — Extract platform files to target repository  
+MIG-003 — Decouple Business OS-specific paths/state  
+MIG-004 — CI/lifecycle parity on new repository  
+MIG-005 — Single-authority production cutover  
+MIG-006 — RBT-009 final exact-SHA 8h soak  
+MIG-007 — Deprecate embedded old copy after rollback window
+
+## 6. Production guardrails
+
+During MIG-001 through MIG-004:
+- no production cutover;
+- no deletion of the embedded Supervisor;
+- no replacement Brain creation;
+- no Brain/Work target reset;
+- no blind latch reset;
+- no dual production mutation authority;
+- Owner STOP remains authoritative;
+- auth/MFA/CAPTCHA/destructive/admin boundaries remain fail-closed.
+
+With two physical devices, both may develop/test, but exactly one Supervisor instance may hold production mutation authority for a given lane set.
+
+## 7. RBT-009 continuity
+
+Carry forward exactly:
+
+`RBT-001 -> RBT-008 = ACCEPTED`  
+`RBT-009 = IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING`
+
+Repository migration does not grant release certification.
+
+Final RBT-009 release evidence must be generated against the exact independent-repository candidate SHA after migration parity and lifecycle gates pass.
+
+## 8. MIG-001 Definition of Done
+
+MIG-001 is complete only when Work returns evidence that:
+1. baseline SHA and complete Supervisor file inventory are recorded;
+2. every Supervisor-only workflow/script is classified MOVE / REWRITE / RETAIN / DEPRECATE;
+3. all Business OS couplings are enumerated, especially hard-coded `08_INTEGRATIONS/supervisor/**` paths and reads of Business OS PROJECT_STATE;
+4. target repository bootstrap tree and cutover/rollback contract are written;
+5. no production lifecycle/install/start/stop mutation occurred;
+6. no existing lane target/latch/local state was changed;
+7. next task MIG-002 is dependency-correct and self-contained.
+
+## 9. Five-Step gate
+
+QUESTION -> DELETE -> SIMPLIFY -> ACCELERATE -> AUTOMATE
+
+Migration itself must not add a second orchestration truth source, duplicate business logic or permanent compatibility complexity.
