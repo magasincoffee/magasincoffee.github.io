@@ -1547,6 +1547,26 @@ async function reconcileDispatchInflight({
   }
 
   if (outcome === "NOT_CONFIRMED") {
+    // v59 -> v60 migration: if a pre-v60 exact-once latch already owns a
+    // dispatch_id, keep that latch and reconstruct the byte-identical v59
+    // envelope for the only permitted retry. Do not clear the latch and
+    // silently upgrade the instruction body mid-transaction.
+    if (latch.dispatch_id && !latch.dispatch_contract_version) {
+      latch.send_attempted_at = null;
+      latch.send_state = "NOT_CONFIRMED";
+      latch.reconcile_reloaded = false;
+      delete latch.reconcile_started_at;
+      await atomicJsonWrite(registryPath, registry);
+      await safeLog(logPath, {
+        type: "LANE_WORK_V59_DISPATCH_RETRY_PRESERVED",
+        laneId: lane.lane_id,
+        taskId: latch.task_id,
+        digest: latch.instruction_digest,
+        reason: "same_v59_latch_retry_ready"
+      });
+      return "RETRY_READY";
+    }
+
     if (latch.rollover_generation) {
       latch.send_attempted_at = null;
       latch.send_state = "NOT_CONFIRMED";
