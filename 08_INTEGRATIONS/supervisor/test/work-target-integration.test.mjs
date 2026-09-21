@@ -75,10 +75,11 @@ test("pending Work target is re-evaluated at the next bounded turn after old lat
 test("Work target save preserves deterministic dispatch and relay exact-once contracts", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
 
-  assert.match(runtime, /const dispatchId = sha256\(\[/);
+  assert.match(runtime, /directiveDispatchDigest\(directive\)/);
   assert.match(runtime, /workDispatchMarker\(dispatchId\)/);
   assert.match(runtime, /registryLane\.dispatch_inflight = latch/);
-  assert.match(runtime, /const dispatchId = sha256\(\[/);
+  assert.match(runtime, /legacyPersistedEnvelope/);
+  assert.match(runtime, /LANE_WORK_V59_DISPATCH_RETRY_PRESERVED/);
   assert.match(runtime, /work_target_digest: targetDigest/);
   assert.match(runtime, /work_generation: Number\(registryLane\.work_generation/);
   assert.match(runtime, /finalizeConfirmedDispatch/);
