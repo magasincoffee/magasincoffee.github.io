@@ -33,6 +33,11 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
     "u-2":"Nhân viên QA 2",
     "u-3":"Nhân viên QA 3"
   };
+  const peopleMeta={
+    "u-1":{status:"ACTIVE",role:"STAFF"},
+    "u-2":{status:"ACTIVE",role:"STAFF"},
+    "u-3":{status:"ACTIVE",role:"STAFF"}
+  };
   const availability=[
     {availability_id:"av-1",user_id:"u-1",employee_name:people["u-1"],username:"qa1",work_date:"2026-09-28",start_time:"06:00",end_time:"12:00",preferred_store_id:"store-a",preferred_store_code:"CN-QA-A",availability_type:"AVAILABLE"},
     {availability_id:"av-2",user_id:"u-2",employee_name:people["u-2"],username:"qa2",work_date:"2026-09-28",start_time:"12:00",end_time:"17:00",preferred_store_id:"store-a",preferred_store_code:"CN-QA-A",availability_type:"PREFERRED"},
@@ -40,11 +45,16 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
   ];
   const state={
     generation:null,
+    competing:[],
     assignments:[],
     official:[],
     swapPending:true,
     givePending:true,
-    createCount:0
+    createCount:0,
+    reviewTransitions:0,
+    publishTransitions:0,
+    officialInsertCount:0,
+    publishFailures:0
   };
   function mapAssignment(x,i){
     return {
@@ -55,6 +65,57 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
       full_name:people[x.user_id]||"Nhân viên QA",
       store_code:"CN-QA-A"
     };
+  }
+  const min=v=>Number(String(v||"00:00").slice(0,2))*60+Number(String(v||"00:00").slice(3,5));
+  const err=message=>({data:null,error:{message}});
+  function canonicalValidation(assignments=state.assignments){
+    const violations=[];
+    const gen=state.generation;
+    if(!gen)return {valid:false,violations:[{code:"GENERATION_NOT_FOUND"}],warnings:[],violation_count:1,warning_count:0,assignment_count:0};
+    if(!["DRAFT","REVIEWED"].includes(gen.status))violations.push({code:"GENERATION_STATUS_NOT_VALIDATABLE",status:gen.status});
+    if(gen.store_id!=="store-a")violations.push({code:"GENERATION_STORE_INVALID"});
+    if(gen.week_start!=="2026-09-28"||gen.week_end!=="2026-10-04")violations.push({code:"INVALID_GENERATION_WEEK"});
+    if(state.competing.some(x=>x.store_id===gen.store_id&&x.week_start===gen.week_start&&["DRAFT","REVIEWED","PUBLISHED"].includes(x.status)))violations.push({code:"COMPETING_GENERATION_EXISTS"});
+    if(state.official.some(x=>x.store_id===gen.store_id&&x.work_date>=gen.week_start&&x.work_date<=gen.week_end&&["PENDING","APPROVED"].includes(x.status)))violations.push({code:"OFFICIAL_STORE_WEEK_ALREADY_EXISTS"});
+    for(const a of assignments){
+      const meta=peopleMeta[a.user_id];
+      if(!meta)violations.push({code:"EMPLOYEE_NOT_FOUND",user_id:a.user_id});
+      else if(meta.status!=="ACTIVE")violations.push({code:"EMPLOYEE_INACTIVE",user_id:a.user_id,work_date:a.work_date});
+      else if(meta.role!=="STAFF")violations.push({code:"EMPLOYEE_NOT_STAFF",user_id:a.user_id,work_date:a.work_date});
+      if(a.store_id!==gen.store_id)violations.push({code:"ASSIGNMENT_STORE_MISMATCH",user_id:a.user_id,store_id:a.store_id});
+      if(!a.work_date||a.work_date<gen.week_start||a.work_date>gen.week_end)violations.push({code:"ASSIGNMENT_OUTSIDE_GENERATION_WEEK",user_id:a.user_id,work_date:a.work_date});
+      if(!a.start_time||!a.end_time||min(a.end_time)<=min(a.start_time))violations.push({code:"INVALID_ASSIGNMENT_INTERVAL",user_id:a.user_id,work_date:a.work_date});
+      const cover=availability.some(x=>x.user_id===a.user_id&&x.work_date===a.work_date&&["AVAILABLE","PREFERRED"].includes(x.availability_type)&&min(x.start_time)<=min(a.start_time)&&min(x.end_time)>=min(a.end_time));
+      if(!cover)violations.push({code:"AVAILABILITY_MISMATCH",user_id:a.user_id,work_date:a.work_date});
+      if(state.official.some(x=>x.user_id===a.user_id&&x.work_date===a.work_date&&["PENDING","APPROVED"].includes(x.status)&&min(x.start_time)<min(a.end_time)&&min(a.start_time)<min(x.end_time)))violations.push({code:"OFFICIAL_SCHEDULE_OVERLAP",user_id:a.user_id,work_date:a.work_date});
+    }
+    for(let i=0;i<assignments.length;i++)for(let j=i+1;j<assignments.length;j++){
+      const a=assignments[i],b=assignments[j];
+      if(a.user_id===b.user_id&&a.work_date===b.work_date&&min(a.start_time)<min(b.end_time)&&min(b.start_time)<min(a.end_time))violations.push({code:"ASSIGNMENT_OVERLAP",user_id:a.user_id,work_date:a.work_date});
+    }
+    const daily=new Map();
+    for(const a of assignments){
+      const k=a.user_id+"|"+a.work_date;
+      daily.set(k,(daily.get(k)||0)+1);
+    }
+    for(const [k,count] of daily){
+      const [user_id,work_date]=k.split("|");
+      const officialCount=state.official.filter(x=>x.user_id===user_id&&x.work_date===work_date&&["PENDING","APPROVED"].includes(x.status)).length;
+      if(count+officialCount>2)violations.push({code:"MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY",user_id,work_date,assignment_count:count+officialCount});
+    }
+    const unique=[...new Map(violations.map(x=>[JSON.stringify(x),x])).values()];
+    return {valid:unique.length===0,generation_id:gen.id,generation_status:gen.status,violations:unique,warnings:[],violation_count:unique.length,warning_count:0,assignment_count:assignments.length};
+  }
+  function candidateAssignments(payload){
+    if(!Array.isArray(payload))return {error:"ASSIGNMENTS_MUST_BE_ARRAY"};
+    const out=[];
+    for(let i=0;i<payload.length;i++){
+      const x=payload[i]||{};
+      if(!x.user_id||!x.store_id||!x.work_date||!x.start_time||!x.end_time)return {error:"ASSIGNMENT_REQUIRED_FIELDS_MISSING"};
+      if(min(x.end_time)<=min(x.start_time))return {error:"INVALID_ASSIGNMENT_INTERVAL"};
+      out.push(mapAssignment({...x,status:"DRAFT"},i));
+    }
+    return {data:out};
   }
   const api={
     async rpc(name,args={}){
