@@ -6,9 +6,9 @@ async function read(rel) {
   return fs.readFile(new URL(rel, import.meta.url), "utf8");
 }
 
-test("RBT-007 bumps runtime to v59 and status uses canonical projection", async () => {
+test("RBT-007 observability remains canonical after runtime v60 planning bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.59"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.60"/);
   assert.match(runtime, /projectLaneOperationalStatus/);
   const laneStatusStart = runtime.indexOf("function laneStatus");
   const laneStatusEnd = runtime.indexOf("async function writeLaneStatus", laneStatusStart);
