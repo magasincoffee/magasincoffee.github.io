@@ -165,7 +165,7 @@ test("Control Panel runtime-start button invokes explicit Owner START, not Recov
 });
 
 test("Lifecycle acceptance keeps final Owner STOP assertion and verifies clear before healthy wait", async () => {
-  const workflow = await read("../../.github/workflows/supervisor-lifecycle-acceptance.yml");
+  const workflow = await read("../../../.github/workflows/supervisor-lifecycle-acceptance.yml");
   const explicitStart = workflow.indexOf("-File $startScript -Hidden");
   const immediateTruth = workflow.indexOf("$ownerStartTruth = Get-LifecycleOwnerStopState", explicitStart);
   const healthy = workflow.indexOf("Wait-Healthy 60", immediateTruth);
