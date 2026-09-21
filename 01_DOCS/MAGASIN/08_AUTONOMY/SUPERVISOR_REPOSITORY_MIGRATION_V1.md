@@ -63,6 +63,14 @@ MIG-005 — Single-authority production cutover
 MIG-006 — RBT-009 final exact-SHA 8h soak  
 MIG-007 — Deprecate embedded old copy after rollback window
 
+MIG-001 canonical artifacts:
+- evidence: `01_DOCS/MAGASIN/08_AUTONOMY/MIG_001_SUPERVISOR_MIGRATION_BOOTSTRAP_EVIDENCE.md`
+- machine file map: `01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_MIGRATION_V1_FILE_MAP.json`
+- frozen inventory: 137 migration-managed files = 123 embedded Supervisor files + 8 Supervisor workflows + 6 Supervisor scripts
+- classification: 90 MOVE / 47 REWRITE / 5 Business OS canonical RETAIN refs / 0 DEPRECATE
+- MIG-001 production mutation: NONE
+- next task: MIG-002 READY / NOT STARTED
+
 ## 6. Production guardrails
 
 During MIG-001 through MIG-004:
@@ -89,6 +97,8 @@ Repository migration does not grant release certification.
 Final RBT-009 release evidence must be generated against the exact independent-repository candidate SHA after migration parity and lifecycle gates pass.
 
 ## 8. MIG-001 Definition of Done
+
+Status: **DONE WHEN MIG-001 EVIDENCE PR IS MERGED; MIG-002 READY / NOT STARTED**
 
 MIG-001 is complete only when Work returns evidence that:
 1. baseline SHA and complete Supervisor file inventory are recorded;
