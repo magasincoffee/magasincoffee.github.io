@@ -10,6 +10,8 @@ on:
       - ".github/scripts/supervisor-release-event-validator.mjs"
       - "08_INTEGRATIONS/supervisor/test/release-integration-matrix.test.mjs"
       - ".github/workflows/supervisor-tests.yml"
+      - ".github/workflows/supervisor-autostart-install.yml"
+      - ".github/workflows/supervisor-lifecycle-acceptance.yml"
   workflow_dispatch:
 
 permissions:
