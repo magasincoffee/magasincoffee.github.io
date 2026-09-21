@@ -113,8 +113,11 @@ test("quarantine events are metadata-only and URL-free", async () => {
   );
 });
 
-test("RBT-006 installed fixture repairs oldWorkTargetDigest binding", async () => {
+test("RBT-006 installed fixture binds every rollover target digest explicitly", async () => {
   const fixture = await read("../src/runtime/work-full-acceptance-cli.mjs");
-  assert.match(fixture, /oldWorkTargetDigest: oldTargetDigest/);
+  assert.ok((fixture.match(/oldWorkTargetDigest: oldTargetDigest/g) || []).length >= 2);
+  assert.ok((fixture.match(/newWorkTargetDigest: newTargetDigest/g) || []).length >= 2);
   assert.doesNotMatch(fixture, /\n\s*oldWorkTargetDigest,\n/);
+  assert.doesNotMatch(fixture, /\n\s*newWorkTargetDigest,\n/);
+  assert.doesNotMatch(fixture, /\n\s*oldTargetDigest,\n/);
 });
