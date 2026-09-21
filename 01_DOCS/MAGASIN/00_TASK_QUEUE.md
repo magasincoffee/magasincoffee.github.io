@@ -207,8 +207,8 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 
 | ID | Task | Gate | Status |
 |---|---|---|---|
-| MIG-001 | Freeze Baseline + Migration Bootstrap | exact baseline inventory + migration contract + target repo bootstrap plan; zero production cutover | READY / WORK |
-| MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | QUEUED |
+| MIG-001 | Freeze Baseline + Migration Bootstrap | exact baseline inventory + migration contract + target repo bootstrap plan; zero production cutover | DONE |
+| MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | READY / NOT STARTED |
 | MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | QUEUED |
 | MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | QUEUED |
 | MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | QUEUED / OWNER-SAFE-GATE |
