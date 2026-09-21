@@ -14,9 +14,9 @@ function functionSlice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("RBT-004 scheduler remains canonical after v57 stale-target quarantine bump", async () => {
+test("RBT-004 scheduler remains canonical after v58 Owner START latch recovery bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.57"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.58"/);
   assert.match(runtime, /from "\.\/browser-scheduler\.mjs"/);
   assert.equal((runtime.match(/new BrowserScheduler\(/g) || []).length, 1);
   assert.match(runtime, /pageBudget: args\.pageBudget/);
