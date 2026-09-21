@@ -82,6 +82,10 @@ $chromeRecoveryCount = 0
 $previousHealthy = $true
 $eventStart = Get-Rbt009SafeEventStats -Path $eventFile
 $maxEventTailBytesRead = [int]$eventStart.tail_bytes_read
+$eventWindowOffset = [int64]$eventStart.file_length_bytes
+$eventWindowSignature = ""
+$eventWindowRun = 0
+$eventWindowMaxRun = 0
 
 while ([DateTimeOffset]::UtcNow -lt $deadline) {
   $ownerStopNow = Get-LifecycleOwnerStopState -Root $root
@@ -122,10 +126,14 @@ while ([DateTimeOffset]::UtcNow -lt $deadline) {
     throw "Enabled runtime has no lane-status.json"
   }
 
-  $eventStats = Get-Rbt009SafeEventStats -Path $eventFile
-  if ([int]$eventStats.tail_bytes_read -gt $maxEventTailBytesRead) { $maxEventTailBytesRead = [int]$eventStats.tail_bytes_read }
-  if ($eventStats.max_identical_error_recovery_tail -ge 20) {
-    throw "Repeated identical ERROR/RECOVERY event flood detected"
+  $eventWindow = Get-Rbt009IncrementalFloodState -Path $eventFile -StartOffset $eventWindowOffset -PreviousSignature $eventWindowSignature -PreviousRun $eventWindowRun
+  if ([int]$eventWindow.bytes_read -gt $maxEventTailBytesRead) { $maxEventTailBytesRead = [int]$eventWindow.bytes_read }
+  $eventWindowOffset = [int64]$eventWindow.next_offset
+  $eventWindowSignature = [string]$eventWindow.last_signature
+  $eventWindowRun = [int]$eventWindow.current_identical_run
+  if ([int]$eventWindow.max_identical_run -gt $eventWindowMaxRun) { $eventWindowMaxRun = [int]$eventWindow.max_identical_run }
+  if ($eventWindowMaxRun -ge 20) {
+    throw "Repeated identical ERROR/RECOVERY event flood detected during soak window"
   }
 
   $sampleCount++
@@ -164,6 +172,7 @@ $summary = [ordered]@{
   event_file_bytes_end = [int64]$eventEnd.file_length_bytes
   event_file_growth_bytes = [int64]$eventGrowthBytes
   event_tail_bytes_read_max = [int]$maxEventTailBytesRead
+  event_window_max_identical_error_recovery_run = [int]$eventWindowMaxRun
   target_fingerprint = $targetStart
   registry_target_fingerprint_start = $registryTargetStart
   registry_target_fingerprint_end = $registryTargetEnd
