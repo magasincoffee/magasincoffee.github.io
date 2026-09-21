@@ -1,6 +1,6 @@
 # MIG-002 — Supervisor Independent Repository Extraction Closure
 
-Status: **DONE CANDIDATE / SOURCE PR-GATED**
+Status: **DONE / CANONICAL**
 Date: 2026-09-21
 Task: `MIG-002 — Extract Supervisor Platform to Independent Repository`
 
@@ -130,3 +130,20 @@ After this source PR merges:
 - MIG-002 = **DONE**
 - MIG-003 = **READY / NOT STARTED**
 - Work must **STOP** and return to Brain.
+
+
+## Source closure provenance
+
+- Business OS closure PR: #236
+- source closure PR head: `40da348dca080befe576b97a4d1b695358cde097`
+- source closure merge SHA: `867fb93039a467440f8e7c01422445d55c824ba8`
+- PR-head Supervisor Tests run: `35627962378` — **SUCCESS**
+- post-merge Supervisor Tests run: `35628089745`, job `106427306161` — **SUCCESS**
+- post-merge full Supervisor suite: **551 / 551 PASS, 0 FAIL**
+- state-maintenance version/read-only/optional-latch/fail-closed/target-preservation/privacy gates: **PASS**
+
+Canonical Business OS source-of-truth now records:
+- `MIG-002 = DONE`
+- `MIG-003 = READY / NOT STARTED`
+
+No MIG-003 implementation was started by this closure.
