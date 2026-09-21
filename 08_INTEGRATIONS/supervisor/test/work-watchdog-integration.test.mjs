@@ -16,7 +16,7 @@ function slice(source, startNeedle, endNeedle) {
 
 test("TASK-RBT-005 watchdog remains canonical after v59 Control Panel observability bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.59"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.60"/);
   assert.match(runtime, /from "\.\/work-watchdog\.mjs"/);
   assert.equal((runtime.match(/evaluateWorkWatchdog\(/g) || []).length, 1);
 });
