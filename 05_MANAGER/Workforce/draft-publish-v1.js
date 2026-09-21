@@ -123,22 +123,22 @@ async function resumeOnly(){
 }
 async function startOrResume(){
  if(state.busy||!state.storeId||!state.week)return;
- state.busy=true;status('Đang mở lịch nháp…');
+ state.busy=true;status('Đang tạo/resume lịch nháp qua server gate…');
  try{
-  const drafts=await listDrafts();
-  state.duplicateDrafts=Math.max(0,drafts.length-1);
-  if(drafts.length){
-   state.generationId=drafts[0].id;state.generationStatus='DRAFT';state.generationOrigin=drafts[0].algorithm_version||'UNKNOWN';
-  }else{
-   const q=await client().rpc('create_schedule_generation',{p_store_id:state.storeId,p_week_start:state.week,p_algorithm_version:'MANAGER_DIRECT_V1'});
-   if(q.error)throw q.error;
-   if(!q.data)throw new Error('DIRECT_DRAFT_ID_MISSING');
-   state.generationId=q.data;state.generationStatus='DRAFT';state.generationOrigin='MANAGER_DIRECT_V1';
-  }
+  const q=await client().rpc('create_schedule_generation',{p_store_id:state.storeId,p_week_start:state.week,p_algorithm_version:'MANAGER_DIRECT_V1'});
+  if(q.error)throw q.error;
+  if(!q.data)throw new Error('DIRECT_DRAFT_ID_MISSING');
+  state.generationId=q.data;state.generationStatus='DRAFT';state.duplicateDrafts=0;
+  const listed=await client().rpc('list_schedule_generations',{p_store_id:state.storeId,p_week_start:state.week});
+  if(listed.error)throw listed.error;
+  const run=(Array.isArray(listed.data)?listed.data:[]).find(x=>String(x.id)===String(state.generationId));
+  state.generationOrigin=run?.algorithm_version||'MANAGER_DIRECT_V1';
   await Promise.all([loadAvailability(),loadDraftAssignments()]);
-  render();status(drafts.length?'Đã tiếp tục lịch nháp hiện có.':'Đã tạo lịch nháp trực tiếp cho Manager.','ok');
- }catch(e){status('Không thể tạo/mở lịch nháp: '+(e.message||e.code||e),'error')}
- finally{state.busy=false}
+  render();status('Server đã tạo hoặc resume đúng một DRAFT canonical.','ok');
+ }catch(e){
+  state.generationId=null;state.generationStatus='CONFLICT';state.assignments=[];
+  render();status('Không thể tạo/resume lịch nháp: '+errorText(e),'error');
+ } finally{state.busy=false}
 }
 function sourceHtml(){
  if(!state.availability.length)return '<div class="msd-empty">Không có availability cho cửa hàng/tuần này.</div>';
