@@ -383,6 +383,8 @@ Browser PASS markers:
 
 The Manager Workforce browser includes the new E2E-03/E2E-05 assertions described above.
 
+Post-run branch verification proves every commit after tested executable head `7f902df95ab05dd19fe66d0a458999782ca29bb8` changes only this evidence Markdown file. No code, migration, workflow, fixture or test executable changed after run `35632221769`. Therefore the executable diff remains byte-identical to the green tested head; the required fresh PR-head event gate remains mandatory.
+
 ---
 
 ## 13. Source-control privacy/safety review
