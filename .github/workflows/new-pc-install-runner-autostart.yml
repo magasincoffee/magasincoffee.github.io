@@ -1,0 +1,73 @@
+name: New PC Install Runner Autostart
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-install-runner-autostart.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 15
+    steps:
+      - name: Install user-logon GitHub Runner autostart
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $runnerRoot = "C:\actions-runner-business\actions-runner"
+          $runnerCmd = Join-Path $runnerRoot "run.cmd"
+          if (-not (Test-Path -LiteralPath $runnerCmd)) {
+            throw "Runner run.cmd missing: $runnerCmd"
+          }
+
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\runner"
+          New-Item -ItemType Directory -Force -Path $root | Out-Null
+
+          $starter = Join-Path $root "start-actions-runner.ps1"
+          @'
+          $ErrorActionPreference = "SilentlyContinue"
+          $runnerRoot = "C:\actions-runner-business\actions-runner"
+          $runnerCmd = Join-Path $runnerRoot "run.cmd"
+          if (-not (Test-Path -LiteralPath $runnerCmd)) { exit 2 }
+
+          $existing = Get-CimInstance Win32_Process -Filter "Name='Runner.Listener.exe'" |
+            Where-Object {
+              ($_.ExecutablePath -and $_.ExecutablePath -like "$runnerRoot*") -or
+              ($_.CommandLine -and $_.CommandLine -like "*$runnerRoot*")
+            } |
+            Select-Object -First 1
+
+          if ($existing) { exit 0 }
+
+          $cmd = 'cd /d "' + $runnerRoot + '" && run.cmd'
+          Start-Process -FilePath "cmd.exe" -ArgumentList @("/c", $cmd) -WindowStyle Hidden
+          exit 0
+          '@ | Set-Content -LiteralPath $starter -Encoding UTF8
+
+          $runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+          New-Item -Path $runKey -Force | Out-Null
+
+          $command = 'powershell.exe -NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $starter + '"'
+          New-ItemProperty -Path $runKey -Name "MAGASINActionsRunner" -Value $command -PropertyType String -Force | Out-Null
+
+          $stored = (Get-ItemProperty -Path $runKey -Name "MAGASINActionsRunner").MAGASINActionsRunner
+          if ($stored -ne $command) { throw "Runner autostart registry verification failed." }
+
+          $listener = Get-CimInstance Win32_Process -Filter "Name='Runner.Listener.exe'" -ErrorAction SilentlyContinue |
+            Where-Object {
+              ($_.ExecutablePath -and $_.ExecutablePath -like "$runnerRoot*") -or
+              ($_.CommandLine -and $_.CommandLine -like "*$runnerRoot*")
+            } |
+            Select-Object -First 1
+
+          Write-Host ("RUNNER_AUTOSTART_SCRIPT=" + $starter)
+          Write-Host ("RUNNER_AUTOSTART_COMMAND=" + $stored)
+          Write-Host ("RUNNER_CURRENTLY_RUNNING=" + [bool]$listener)
+          Write-Host "RUNNER_AUTOSTART_INSTALLED=True"
