@@ -1118,22 +1118,70 @@ function Refresh-Ui {
         $ui.Status.Text = Get-FriendlyStatus $state
         $ui.Panel.BackColor = Get-StatusBackColor $state
         $ui.Message.Text = $message
-        $configuredRevision = if ($cfg -and $cfg.work_url_revision) {
-            [int]$cfg.work_url_revision
-        } else { 0 }
-        $appliedRevision = if ($reg -and $reg.applied_work_url_revision) {
-            [int]$reg.applied_work_url_revision
-        } else { 0 }
-        $pendingRevision = if ($reg -and $reg.pending_work_url_revision) {
-            [int]$reg.pending_work_url_revision
-        } else { 0 }
-        $configuredMode = if ($cfg -and $cfg.work_mode) {
-            ([string]$cfg.work_mode).ToUpperInvariant()
-        } elseif ($cfg -and $cfg.work_url) {
-            'OWNER'
-        } else {
-            'AUTO'
+
+        $taskId = [string](Get-OptionalPropertyValue $st 'task_id' (
+            Get-OptionalPropertyValue $reg 'task_id' '—'
+        ))
+        if (-not $taskId) { $taskId = '—' }
+
+        $phase = [string](Get-OptionalPropertyValue $st 'phase' $state)
+        if (-not $phase) { $phase = $state }
+
+        $elapsed = Format-ControlPanelDuration (
+            Get-OptionalPropertyValue $st 'task_elapsed_ms' $null
+        )
+        $lastActivityAge = Format-ControlPanelAge (
+            [string](Get-OptionalPropertyValue $st 'last_activity_at' '')
+        )
+        $workGeneration = [int](Get-OptionalPropertyValue $st 'work_generation' (
+            Get-OptionalPropertyValue $reg 'work_generation' 0
+        ))
+
+        $ui.Execution.Text =
+            'TASK: ' + $taskId +
+            ' · PHA: ' + $phase +
+            ' · THỜI GIAN: ' + $elapsed +
+            ' · HOẠT ĐỘNG CUỐI: ' + $lastActivityAge +
+            ' · GEN ' + [string]$workGeneration
+
+        $brainHealth = Get-OptionalPropertyValue $st 'brain_target_health' (
+            Get-OptionalPropertyValue $reg 'brain_target_health' $null
+        )
+        $workHealth = Get-OptionalPropertyValue $st 'work_target_health' (
+            Get-OptionalPropertyValue $reg 'work_target_health' $null
+        )
+        $watchdogPhase = [string](Get-OptionalPropertyValue $st 'watchdog_phase' '')
+        if (-not $watchdogPhase -or $watchdogPhase -eq 'IDLE') {
+            $watchdogPhase = '—'
         }
+        $rolloverStage = [string](Get-OptionalPropertyValue $st 'rollover_phase' '')
+        $rolloverText = Get-ControlPanelRolloverText $rolloverStage
+        $healthLine2 = 'WATCHDOG: ' + $watchdogPhase
+        if ($rolloverText) {
+            $healthLine2 += ' · ' + $rolloverText
+        }
+        $ui.Health.Text =
+            (Get-ControlPanelTargetHealthText $brainHealth 'BRAIN') +
+            ' · ' +
+            (Get-ControlPanelTargetHealthText $workHealth 'WORK') +
+            [Environment]::NewLine +
+            $healthLine2
+
+        $configuredRevision = [int](Get-OptionalPropertyValue $st 'configured_work_url_revision' (
+            Get-OptionalPropertyValue $cfg 'work_url_revision' 0
+        ))
+        $appliedRevision = [int](Get-OptionalPropertyValue $st 'applied_work_url_revision' (
+            Get-OptionalPropertyValue $reg 'applied_work_url_revision' 0
+        ))
+        $pendingRevision = [int](Get-OptionalPropertyValue $st 'pending_work_url_revision' (
+            Get-OptionalPropertyValue $reg 'pending_work_url_revision' 0
+        ))
+        $configuredMode = [string](Get-OptionalPropertyValue $st 'work_mode' (
+            Get-OptionalPropertyValue $cfg 'work_mode' 'AUTO'
+        ))
+        if (-not $configuredMode) { $configuredMode = 'AUTO' }
+        $configuredMode = $configuredMode.ToUpperInvariant()
+
         $workApplyState = if ($configuredRevision -gt 0 -and $pendingRevision -ge $configuredRevision) {
             'ĐANG CHỜ ÁP DỤNG'
         } elseif ($configuredRevision -gt 0 -and $appliedRevision -ge $configuredRevision) {
@@ -1143,17 +1191,29 @@ function Refresh-Ui {
         } else {
             'CHƯA CÓ REVISION'
         }
-        $savedAt = if ($cfg -and $cfg.work_url_saved_at) {
-            Format-VietnamTime ([string]$cfg.work_url_saved_at)
+
+        $savedAtRaw = [string](Get-OptionalPropertyValue $st 'work_url_saved_at' (
+            Get-OptionalPropertyValue $cfg 'work_url_saved_at' ''
+        ))
+        $savedAt = if ($savedAtRaw) {
+            Format-VietnamTime $savedAtRaw
         } else {
             '—'
         }
-        $ui.Updated.Text = 'WORK ' + $configuredMode + ' · revision ' + $configuredRevision + ' · ' + $workApplyState + ' · ' + $savedAt
+        $ui.Updated.Text =
+            'WORK ' + $configuredMode +
+            ' · cấu hình r' + [string]$configuredRevision +
+            ' · áp dụng r' + [string]$appliedRevision +
+            ' · pending r' + [string]$pendingRevision +
+            ' · ' + $workApplyState +
+            ' · lưu ' + $savedAt
 
         $ui.OpenBrain.Enabled = Test-ChatConversationUrl $ui.Brain.Text
         $ui.OpenWork.Enabled = Test-ChatConversationUrl $ui.Work.Text
         $ui.ResetWork.Enabled = $true
     }
+
+    Refresh-Timeline
 }
 
 $timer = New-Object Windows.Forms.Timer
