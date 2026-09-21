@@ -1,0 +1,53 @@
+name: New PC Open Dedicated Login
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-open-dedicated-login.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  open-login:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 10
+    steps:
+      - name: Open dedicated MAGASIN Chrome login profile
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $env:RUNNER_TRACKING_ID = "MAGASIN_LOGIN_PERSISTENT"
+
+          $tool = "C:\MAGASIN\migration-tools\prepare-new-pc-login.ps1"
+          if (-not (Test-Path -LiteralPath $tool)) {
+            throw "Dedicated login tool is missing: $tool"
+          }
+
+          & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $tool
+          if ($LASTEXITCODE -ne 0) {
+            throw "Dedicated login tool failed with exit code $LASTEXITCODE."
+          }
+
+          Start-Sleep -Seconds 3
+
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $profile = Join-Path $root "browser_profile"
+          $procs = @(Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" })
+
+          Write-Host ("DEDICATED_PROFILE=" + $profile)
+          Write-Host ("DEDICATED_PROFILE_EXISTS=" + (Test-Path -LiteralPath $profile))
+          Write-Host ("DEDICATED_CHROME_PROCESS_COUNT=" + $procs.Count)
+          Write-Host ("STOP_EXISTS=" + (Test-Path (Join-Path $root "STOP")))
+          Write-Host ("AUTOSTART_DISABLED_EXISTS=" + (Test-Path (Join-Path $root "AUTOSTART_DISABLED")))
+
+          if ($procs.Count -lt 1) {
+            throw "Dedicated Chrome did not remain visible after launch."
+          }
+
+          Write-Host "DEDICATED_LOGIN_WINDOW_OPEN=True"
+          Write-Host "ROBOT_REMAINS_STOPPED=True"
