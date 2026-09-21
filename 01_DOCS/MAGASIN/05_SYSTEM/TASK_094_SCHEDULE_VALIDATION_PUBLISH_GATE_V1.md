@@ -3,7 +3,7 @@
 **Track:** WORKFORCE_OPERATIONS_V1  
 **Execution mode:** OWNER_DIRECT_TO_WORK / MANUAL_WORK  
 **Date:** 2026-09-22  
-**Status:** PENDING_FINAL_GATE  
+**Status:** PENDING_FINAL_GATE / IMPLEMENTATION_MERGED / POST_MERGE_FIX_GATE_ACTIVE  
 **Production migration:** `20260921171458_task_094_schedule_validation_publish_gate_v1` — APPLIED  
 **Production employee/generation/assignment/work_schedule test mutation:** NONE  
 **Private employee data committed:** NONE  
@@ -457,16 +457,112 @@ This is a known configuration/product-policy gap, not an E2E-03/E2E-05 failure.
 
 ---
 
-## 16. Final-gate placeholders
+## 16. Implementation PR #239 and first exact post-merge attempt
+
+Implementation PR:
+
+**#239 — TASK-094: Schedule validation and publish gate V1**
+
+Final implementation PR head:
+
+`423a5712e71b93ce26cd1d27e66b06cc801d9dac`
+
+PR-head People Shift:
+
+- run: **35634925664**
+- job: **106449889441**
+- runtime: **Node v20.20.2**
+- TASK-091: **61/61 PASS**
+- Schedule-first + published feedback: **9/9 PASS**
+- People Shift deterministic: **38/38 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **182/182 PASS**
+- browser suites: **8/8 PASS**
+- E2E-03: **STRONG / PASS**
+- E2E-05: **STRONG / PASS**
+- failures: **0**
+
+Implementation merge SHA:
+
+`083606b268c0da4026c3637c150481ac422e6581`
+
+Collateral exact-merge workflows:
+
+- GitHub Pages source validation run **35635140452** — SUCCESS
+- Pages build/deployment run **35635138654** — SUCCESS
+
+### First exact post-merge People Shift attempt
+
+Exact merge-SHA People Shift run:
+
+- run: **35635140238**
+- job: **106450602564**
+- exact head: `083606b268c0da4026c3637c150481ac422e6581`
+- result: **FAILURE**
+- failing step: `Run Employee attendance schedule-linked browser regression`
+
+All attendance business checks passed, but browser diagnostics caught:
+
+`TypeError: Cannot read properties of null (reading 'dataset')`
+
+at:
+
+`06_EMPLOYEE/attendance/engine-v1.js → bind()`
+
+Root cause was a pre-existing iframe lifecycle race: `contentDocument` can exist transiently while `document.body` is still null. The old bind guard dereferenced `x.body.dataset` without first checking `x.body`.
+
+This was a real final-gate defect, not ignored and not blind-rerun.
+
+### Minimal final-gate repair on the same TASK-094 branch
+
+The same branch was fast-forwarded to the implementation merge SHA; no new branch was created.
+
+Minimal fix:
+
+```text
+if (!x || !x.body || x.body.dataset.employeeAttendanceEngine === '1') return;
+```
+
+A static regression assertion was added in:
+
+`09_QA/people-shift/employee-attendance-schedule-linked.test.mjs`
+
+No attendance business rule, RPC, schedule rule, permission or TASK-094 server semantic changed.
+
+Fix executable head:
+
+`cf3fb696458b2d0784ae5cb8e3333f99461b8cd3`
+
+Fresh branch People Shift gate:
+
+- run: **35635408693**
+- job: **106451498684**
+- runtime: **Node v20.20.2**
+- deterministic total: **182/182 PASS**
+- browser suites: **8/8 PASS**
+- Employee attendance schedule-linked browser: **PASS**
+- browser diagnostics: **0 page/console errors**
+- failures: **0**
+
+TASK-094 remains open until the repair PR, repair merge, fresh exact-main People Shift green, post-merge live reconciliation and canonical state closure complete.
+
+---
+
+## 17. Final-gate placeholders
 
 The following values are intentionally not invented before the required remote gates complete:
 
-- PR number: **PENDING_FINAL_GATE**
-- final PR head: **PENDING_FINAL_GATE**
-- PR-head People Shift run/job: **PENDING_FINAL_GATE**
-- collateral PR workflows: **PENDING_FINAL_GATE**
-- merge SHA: **PENDING_FINAL_GATE**
-- exact post-merge People Shift run/job: **PENDING_FINAL_GATE**
+- implementation PR: **#239**
+- implementation final head: `423a5712e71b93ce26cd1d27e66b06cc801d9dac`
+- implementation PR-head People Shift: **35634925664 / 106449889441 / GREEN**
+- implementation merge SHA: `083606b268c0da4026c3637c150481ac422e6581`
+- first exact post-merge People Shift: **35635140238 / 106450602564 / FAILURE — ROOT CAUSE FIXED**
+- repair branch gate: **35635408693 / 106451498684 / GREEN**
+- repair PR number: **PENDING_FINAL_GATE**
+- repair final head: **PENDING_FINAL_GATE**
+- repair PR-head People Shift run/job: **PENDING_FINAL_GATE**
+- repair merge SHA: **PENDING_FINAL_GATE**
+- final exact post-merge People Shift run/job: **PENDING_FINAL_GATE**
 - exact post-merge collateral workflows: **PENDING_FINAL_GATE**
 - post-merge live reconciliation timestamp: **PENDING_FINAL_GATE**
 - final source-of-truth handoff: **PENDING_FINAL_GATE**
