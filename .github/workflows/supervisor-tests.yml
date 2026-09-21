@@ -1,5 +1,5 @@
 name: Supervisor Tests
-# RBT-009A monitor corrections require this PR gate to run on helper-only changes.
+# RBT-009A monitor corrections require exact-head Supervisor Tests before merge.
 
 on:
   push:
