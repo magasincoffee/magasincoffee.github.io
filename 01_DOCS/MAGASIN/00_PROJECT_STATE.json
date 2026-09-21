@@ -735,7 +735,7 @@
   },
   "supervisor_repository_migration": {
     "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
-    "state": "MIG_002_DONE_MIG_003_READY",
+    "state": "MIG_003_ACTIVE",
     "source_repository": "magasincoffee/magasincoffee.github.io",
     "target_repository": "magasincoffee/magasin-supervisor",
     "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -788,7 +788,7 @@
     ],
     "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md",
     "last_completed_task": "MIG-002",
-    "current_task_status": "READY_NOT_STARTED",
+    "current_task_status": "ACTIVE_WORK_RELEASED",
     "mig_001": {
       "status": "DONE",
       "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -853,8 +853,18 @@
       "local_state_mutation": false
     },
     "mig_003": {
-      "status": "READY_NOT_STARTED",
-      "scope": "DECOUPLE_BUSINESS_OS_PROJECT_STATE_TASK_QUEUE_REPO_ROOT_LOCAL_STATE_AND_LEGACY_TASK_FIXTURES_WITHOUT_PRODUCTION_CUTOVER"
+      "status": "ACTIVE_WORK_RELEASED",
+      "scope": "DECOUPLE_BUSINESS_OS_PROJECT_STATE_TASK_QUEUE_REPO_ROOT_LOCAL_STATE_AND_LEGACY_TASK_FIXTURES_WITHOUT_PRODUCTION_CUTOVER",
+      "owner_released": true,
+      "target_repository": "magasincoffee/magasin-supervisor",
+      "target_base_sha": "64371bedc7b9c976047224152dba820c12a0674c",
+      "source_state_sha": "3597e181f6d29e09835f4dd262b1f8d9b9e32c38",
+      "production_cutover": false,
+      "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
+      "self_hosted_mutation_workflows_must_remain_inert": true,
+      "zero_production_mutation_required": true,
+      "stop_after_task": true,
+      "next_task": "MIG-004"
     }
   }
 }
