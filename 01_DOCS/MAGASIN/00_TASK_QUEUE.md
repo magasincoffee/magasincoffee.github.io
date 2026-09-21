@@ -174,7 +174,7 @@ Canonical architecture: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md`
 Execution plan: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md`  
 E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 
-> Architecture is Owner-approved. Owner released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090→TASK-093 are DONE. TASK-093 Manager Sunday Schedule Board V1 is DONE with evidence at 05_SYSTEM/TASK_093_MANAGER_SUNDAY_SCHEDULE_BOARD_V1.md. TASK-094 is READY / MANUAL_WORK but MUST NOT auto-run; TASK-095→108 remain staged until Brain accepts each prior result. Current PFC queue remains independently authoritative.
+> Architecture is Owner-approved. Owner released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090→TASK-094 are DONE. TASK-094 Schedule Validation + Publish Gate V1 is DONE with evidence at 05_SYSTEM/TASK_094_SCHEDULE_VALIDATION_PUBLISH_GATE_V1.md. TASK-095 is READY / MANUAL_WORK but MUST NOT auto-run; TASK-096→108 remain staged until Brain accepts each prior result. Current PFC queue remains independently authoritative.
 
 | ID | Task | Est. | Gate | Status |
 |---|---|---:|---|---|
@@ -182,8 +182,8 @@ E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 | TASK-091 | Workforce V1 Canonical State + Rule Contract | 20m | state/role/rule contract | DONE |
 | TASK-092 | Availability Weekly Cycle Hardening | 20m | next-week registration tests | DONE |
 | TASK-093 | Manager Sunday Schedule Board V1 | 20m | Manager scheduling browser gate | DONE |
-| TASK-094 | Schedule Validation + Publish Gate | 20m | overlap/max-2/scope/publish regression | READY / MANUAL_WORK |
-| TASK-095 | Employee Published Weekly Schedule V1 | 20m | publish→employee visibility E2E | STAGED / WAIT_OWNER_RELEASE |
+| TASK-094 | Schedule Validation + Publish Gate | 20m | overlap/max-2/scope/publish regression | DONE |
+| TASK-095 | Employee Published Weekly Schedule V1 | 20m | publish→employee visibility E2E | READY / MANUAL_WORK |
 | TASK-096 | Swap Lifecycle Reconciliation + Hardening | 20m | full swap lifecycle regression/E2E | STAGED / WAIT_OWNER_RELEASE |
 | TASK-097 | Give Lifecycle Reconciliation + Hardening | 20m | full give lifecycle regression/E2E | STAGED / WAIT_OWNER_RELEASE |
 | TASK-098 | Manual-Time Attendance Contract + Migration Path | 20m | no active realtime check-in/out semantics | STAGED / WAIT_OWNER_RELEASE |
@@ -197,6 +197,8 @@ E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 | TASK-106 | Workforce Cross-Flow Browser E2E Pack | 20m | E2E-01→E2E-16 | STAGED / WAIT_OWNER_RELEASE |
 | TASK-107 | Workforce Failure / Recovery / Security E2E | 20m | retry/reload/idempotency/RBAC | STAGED / WAIT_OWNER_RELEASE |
 | TASK-108 | Workforce Final Regression + Post-Merge E2E Recheck | 20m | PR-head + exact-main + cold/reload E2E | STAGED / WAIT_OWNER_RELEASE |
+
+TASK-094 completion evidence: `05_SYSTEM/TASK_094_SCHEDULE_VALIDATION_PUBLISH_GATE_V1.md`. Implementation PR #239 merged as `083606b268c0da4026c3637c150481ac422e6581`; exact post-merge gate exposed an attendance iframe lifecycle race, repaired on the same TASK-094 branch in PR #240 and merged as `2ed75c6e3237b91fb4cb403a237015541a39d956`. Final exact-main People Shift run `35635895604` / job `106453100188` succeeded on Node v20.20.2 with 182/182 deterministic checks, all 8 browser suites, E2E-03 STRONG, E2E-05 STRONG and 0 failures. Final live reconciliation retained the legacy duplicate DRAFT group fail-closed without cleanup. TASK-094 DONE; TASK-095 READY / MANUAL_WORK. Workforce Robot remains disabled; PFC remains TASK-068 → TASK-069.
 
 
 ## Supervisor Independent Repository Migration V1

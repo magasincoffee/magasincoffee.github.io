@@ -3,13 +3,13 @@
 **Track:** WORKFORCE_OPERATIONS_V1  
 **Execution mode:** OWNER_DIRECT_TO_WORK / MANUAL_WORK  
 **Date:** 2026-09-22  
-**Status:** PENDING_FINAL_GATE / IMPLEMENTATION_MERGED / POST_MERGE_FIX_GATE_ACTIVE  
+**Status:** DONE / E2E-03 STRONG / E2E-05 STRONG / POST-MERGE GREEN  
 **Production migration:** `20260921171458_task_094_schedule_validation_publish_gate_v1` — APPLIED  
 **Production employee/generation/assignment/work_schedule test mutation:** NONE  
 **Private employee data committed:** NONE  
 **PFC cursor mutation:** NONE  
 **Workforce Robot:** DISABLED  
-**Next task:** TASK-095 remains STAGED until TASK-094 final closure
+**Next task:** TASK-095 READY / MANUAL_WORK — DO NOT AUTO-RUN
 
 ## 1. Five-Step decisions
 
@@ -548,23 +548,153 @@ TASK-094 remains open until the repair PR, repair merge, fresh exact-main People
 
 ---
 
-## 17. Final-gate placeholders
+## 17. Repair PR #240 and final exact post-merge gate
 
-The following values are intentionally not invented before the required remote gates complete:
+Repair PR:
 
-- implementation PR: **#239**
-- implementation final head: `423a5712e71b93ce26cd1d27e66b06cc801d9dac`
-- implementation PR-head People Shift: **35634925664 / 106449889441 / GREEN**
-- implementation merge SHA: `083606b268c0da4026c3637c150481ac422e6581`
-- first exact post-merge People Shift: **35635140238 / 106450602564 / FAILURE — ROOT CAUSE FIXED**
-- repair branch gate: **35635408693 / 106451498684 / GREEN**
-- repair PR number: **PENDING_FINAL_GATE**
-- repair final head: **PENDING_FINAL_GATE**
-- repair PR-head People Shift run/job: **PENDING_FINAL_GATE**
-- repair merge SHA: **PENDING_FINAL_GATE**
-- final exact post-merge People Shift run/job: **PENDING_FINAL_GATE**
-- exact post-merge collateral workflows: **PENDING_FINAL_GATE**
-- post-merge live reconciliation timestamp: **PENDING_FINAL_GATE**
-- final source-of-truth handoff: **PENDING_FINAL_GATE**
+**#240 — TASK-094: Repair post-merge attendance iframe race**
 
-TASK-094 must not be marked DONE until all required PR-head, merge, exact post-merge and source-of-truth closure gates are green.
+Repair PR head:
+
+`104cfda45f1b5c2a3f2fad159f063018bb62eab0`
+
+Repair PR-head People Shift:
+
+- run: **35635705374**
+- job: **106452471174**
+- runtime: **Node v20.20.2**
+- TASK-091: **61/61 PASS**
+- Schedule-first + published feedback: **9/9 PASS**
+- People Shift deterministic: **38/38 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **182/182 PASS**
+- browser suites: **8/8 PASS**
+- Employee attendance schedule-linked browser: **PASS**
+- failures: **0**
+
+Repair merge SHA:
+
+`2ed75c6e3237b91fb4cb403a237015541a39d956`
+
+### Final exact post-merge People Shift
+
+- run: **35635895604**
+- job: **106453100188**
+- exact main SHA: `2ed75c6e3237b91fb4cb403a237015541a39d956`
+- runtime: **Node v20.20.2**
+- TASK-091: **61/61 PASS**
+- Schedule-first + published feedback: **9/9 PASS**
+- People Shift deterministic: **38/38 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **182/182 PASS**
+- browser suites: **8/8 PASS**
+- failures: **0**
+
+Exact-main collateral workflows:
+
+- Validate MAGASIN GitHub Pages source: run **35635895580** — SUCCESS
+- Pages build and deployment: run **35635893311** — SUCCESS
+
+The first exact post-merge failure was therefore resolved by a minimal lifecycle guard and re-proven on exact main. No TASK-094 server/business semantic was weakened.
+
+---
+
+## 18. Final post-merge live reconciliation
+
+Read-only observation:
+
+**2026-09-22 01:05:05 ICT**  
+(**2026-09-21 18:05:05 UTC**)
+
+Observed live production state:
+
+- DRAFT generation runs: **3**
+- distinct DRAFT store/week pairs: **2**
+- duplicate DRAFT groups: **1**
+- maximum DRAFTs in one store/week: **2**
+- `schedule_generation_assignments`: **0**
+- `work_schedules`: **0**
+- duplicate non-null lineage groups: **0**
+
+No cleanup or test mutation was performed.
+
+Migration `20260921171458_task_094_schedule_validation_publish_gate_v1` remains present.
+
+All required additive columns remain present:
+
+- `reviewed_by`
+- `reviewed_at`
+- `published_by`
+- `source_generation_id`
+- `source_generation_assignment_id`
+
+Both lineage indexes remain present, including unique non-null `source_generation_assignment_id`.
+
+The five live hardened RPC bodies remain **exact matches** to the canonical migration source on final executable main:
+
+- `create_schedule_generation`
+- `replace_schedule_generation_assignments`
+- `validate_schedule_generation_v1`
+- `review_schedule_generation`
+- `publish_schedule_generation`
+
+Final semantic checks remain true:
+
+- canonical validator has no `staffing_requirements` dependency;
+- create has advisory lock + `GENERATION_VERSION_CONFLICT`;
+- validator enforces overlap, max-two/day, availability, ACTIVE STAFF, store/week rules;
+- review revalidates;
+- publish revalidates;
+- publish exposes `already_published` idempotency;
+- lineage uniqueness is present;
+- no anonymous/public EXECUTE permission is present on the five hardened RPCs;
+- authenticated + postgres remain the intended executable roles.
+
+The existing duplicate legacy DRAFT group remains intentionally untouched. Its continued presence is **not** a failure: canonical create/validation now fails closed rather than selecting or mutating an arbitrary version.
+
+---
+
+## 19. Final source-of-truth handoff
+
+TASK-094 Definition of Done is satisfied:
+
+- server validation canonical and independent of staffing demand/Robot;
+- overlap enforced;
+- max two assignments/day enforced;
+- ACTIVE STAFF enforced;
+- scope/store/week enforced;
+- availability compatibility enforced;
+- authoritative create/resume concurrency-safe and fail-closed;
+- DRAFT-only mutation;
+- review revalidation;
+- publish TOCTOU revalidation;
+- same-generation republish idempotent;
+- official publication lineage + duplicate prevention;
+- E2E-03 STRONG;
+- E2E-05 STRONG;
+- final PR-head GREEN;
+- repair PR-head GREEN after exact-main race discovery;
+- final exact post-merge GREEN;
+- final post-merge live reconciliation complete.
+
+Known unresolved semantic gap:
+
+**Explicit supersede/version workflow remains Owner-undefined.**
+
+Until such policy is explicitly defined, competing active generation or existing official store/week remains fail-closed.
+
+Canonical handoff after this docs/state closure merges:
+
+- TASK-094 = **DONE**
+- TASK-095 = **READY / MANUAL_WORK**
+- Workforce current task = **TASK-095**
+- Workforce next task = **TASK-096**
+- Workforce Robot = **DISABLED**
+- PFC current task = **TASK-068**
+- PFC next task = **TASK-069**
+- PFC state = **UNCHANGED**
+- TASK-095 has **not** been started
+
+## TASK-094 result
+
+**DONE / E2E-03 STRONG / E2E-05 STRONG / POST-MERGE GREEN**
