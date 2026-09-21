@@ -88,6 +88,31 @@ Repository migration does not grant release certification.
 
 Final RBT-009 release evidence must be generated against the exact independent-repository candidate SHA after migration parity and lifecycle gates pass.
 
+
+### Historical old-repository soak
+
+Before repository migration, RBT-009 run `35569077688` on source SHA `18e6d5025429cb1aaee986a8033d8b47169a54c3` proved:
+
+- Tier A = PASS;
+- normal release-gates preflight = PASS;
+- Tier B started at `2026-09-21T06:41:50Z`;
+- workflow ended at `2026-09-21T09:20:22Z`;
+- observed duration = **2h38m32s**, therefore non-qualifying;
+- downstream event validation, privacy scan, artifact upload and final markers were not reached;
+- exact interruption root cause is not proven by retained evidence.
+
+This is historical diagnostic evidence only. The 8-hour requirement is continuous and cannot be accumulated across partial attempts.
+
+### Qualification after repository migration
+
+Do **not** spend another final-certification 8-hour soak on the embedded source-repository candidate merely to close the old release surface while the platform repository is being extracted.
+
+The qualifying sequence is:
+
+`MIG-001 -> MIG-002 -> MIG-003 -> MIG-004 -> MIG-005 -> MIG-006`
+
+At MIG-006, run RBT-009 Tier B from zero for 480 uninterrupted minutes against the exact `magasincoffee/magasin-supervisor` candidate SHA, after new-repository CI/lifecycle parity and single production mutation authority are proven.
+
 ## 8. MIG-001 Definition of Done
 
 MIG-001 is complete only when Work returns evidence that:
