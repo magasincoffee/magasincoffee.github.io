@@ -107,14 +107,18 @@ async function resumeOnly(){
   await loadAvailability();
   const drafts=await listDrafts();
   state.duplicateDrafts=Math.max(0,drafts.length-1);
-  if(drafts.length){
+  if(drafts.length>1){
+   state.generationId=null;state.generationStatus='CONFLICT';state.generationOrigin=null;state.assignments=[];
+   render();status('Có '+drafts.length+' DRAFT cùng store/week. Hệ thống fail-closed; không tự chọn hoặc ghi đè bản nào.','error');return;
+  }
+  if(drafts.length===1){
    const d=drafts[0];state.generationId=d.id;state.generationStatus='DRAFT';state.generationOrigin=d.algorithm_version||'UNKNOWN';
    await loadDraftAssignments();
   }else{
    state.generationId=null;state.generationStatus='NONE';state.generationOrigin=null;state.assignments=[];
   }
   render();
- }catch(e){render();status('Không tải được bảng xếp lịch: '+(e.message||e.code||e),'error')}
+ }catch(e){render();status('Không tải được bảng xếp lịch: '+errorText(e),'error')}
  finally{state.busy=false}
 }
 async function startOrResume(){
