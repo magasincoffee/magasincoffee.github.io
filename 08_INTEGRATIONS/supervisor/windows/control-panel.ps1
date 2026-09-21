@@ -1052,18 +1052,25 @@ function Refresh-Ui {
         $ui.SaveBrain.Enabled = $true
         $ui.SaveWork.Enabled = $true
 
-        $relayExhausted = [bool](
-            $reg -and
-            $reg.relay_inflight -and
-            $reg.relay_inflight.retry_exhausted
-        )
-        $relayRearmRevision = if ($cfg -and $cfg.relay_retry_rearm_revision) {
-            [int]$cfg.relay_retry_rearm_revision
-        } else { 0 }
-        $appliedRelayRearmRevision = if ($reg -and $reg.applied_relay_retry_rearm_revision) {
-            [int]$reg.applied_relay_retry_rearm_revision
-        } else { 0 }
-        $relayRearmPending = [bool]($relayRearmRevision -gt $appliedRelayRearmRevision)
+        $relayExhaustedStatus = Get-OptionalPropertyValue $st 'relay_retry_exhausted' $null
+        $relayInflight = Get-OptionalPropertyValue $reg 'relay_inflight' $null
+        $relayExhausted = if ($null -ne $relayExhaustedStatus) {
+            [bool]$relayExhaustedStatus
+        } else {
+            [bool](Get-OptionalPropertyValue $relayInflight 'retry_exhausted' $false)
+        }
+        $relayRearmRevision = [int](Get-OptionalPropertyValue $st 'relay_rearm_revision' (
+            Get-OptionalPropertyValue $cfg 'relay_retry_rearm_revision' 0
+        ))
+        $appliedRelayRearmRevision = [int](Get-OptionalPropertyValue $st 'applied_relay_rearm_revision' (
+            Get-OptionalPropertyValue $reg 'applied_relay_retry_rearm_revision' 0
+        ))
+        $relayRearmPendingValue = Get-OptionalPropertyValue $st 'relay_rearm_pending' $null
+        $relayRearmPending = if ($null -ne $relayRearmPendingValue) {
+            [bool]$relayRearmPendingValue
+        } else {
+            [bool]($relayRearmRevision -gt $appliedRelayRearmRevision)
+        }
         $ui.RetryRelay.Visible = $relayExhausted
         $ui.RetryRelay.Enabled = [bool]($relayExhausted -and -not $relayRearmPending)
 
