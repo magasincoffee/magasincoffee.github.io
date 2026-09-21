@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const DISPATCH = "WORK_DISPATCH_CONFIRMED";
 const RELAY = "RESULT_RELAY_CONFIRMED";
@@ -112,7 +113,7 @@ export function parseNdjson(text = "") {
     .map((line) => JSON.parse(line));
 }
 
-if (process.argv[1] && import.meta.url === new URL("file://" + process.argv[1].replace(/\\/g, "/")).href) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const file = process.argv[2];
   if (!file) throw new Error("usage: node supervisor-release-event-validator.mjs FILE");
   const events = parseNdjson(fs.readFileSync(file, "utf8"));
