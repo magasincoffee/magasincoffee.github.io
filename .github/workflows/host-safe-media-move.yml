@@ -1,0 +1,110 @@
+name: Host Safe Media Move
+
+on:
+  push:
+    branches:
+      - diagnostics/host-health-20260921
+    paths:
+      - ".github/workflows/host-safe-media-move.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  move-media:
+    runs-on: self-hosted
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Move Desktop MP4 files to D safely
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $sourceRoot = Join-Path $env:USERPROFILE "Desktop"
+          $destRoot   = "D:\MAGASIN_ARCHIVE\Videos"
+
+          if (-not (Test-Path -LiteralPath $sourceRoot)) {
+            throw "Desktop source not found."
+          }
+
+          $c = Get-Volume -DriveLetter C
+          $d = Get-Volume -DriveLetter D
+
+          Write-Host ("C_FREE_BEFORE_GB=" + [math]::Round($c.SizeRemaining/1GB,2))
+          Write-Host ("D_FREE_BEFORE_GB=" + [math]::Round($d.SizeRemaining/1GB,2))
+
+          $files = Get-ChildItem -LiteralPath $sourceRoot -File -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.Extension -ieq ".mp4" -and
+              -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint)
+            }
+
+          $totalBytes = ($files | Measure-Object Length -Sum).Sum
+          if ($null -eq $totalBytes) { $totalBytes = 0 }
+
+          Write-Host ("MP4_FILE_COUNT=" + @($files).Count)
+          Write-Host ("MP4_TOTAL_GB=" + [math]::Round($totalBytes/1GB,2))
+
+          if (@($files).Count -eq 0) {
+            Write-Host "NOTHING_TO_MOVE=True"
+            exit 0
+          }
+
+          # Leave at least 25 GB free on D after the operation.
+          $reserve = 25GB
+          if (($d.SizeRemaining - $totalBytes) -lt $reserve) {
+            throw ("Insufficient D: headroom. Need to preserve at least 25 GB free after move.")
+          }
+
+          New-Item -ItemType Directory -Path $destRoot -Force | Out-Null
+
+          $movedBytes = 0L
+          $movedCount = 0
+          $skippedCount = 0
+
+          foreach ($f in $files) {
+            $relative = $f.FullName.Substring($sourceRoot.Length).TrimStart('\')
+            $dest = Join-Path $destRoot $relative
+            $destDir = Split-Path -Parent $dest
+            New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+
+            if (Test-Path -LiteralPath $dest) {
+              $existing = Get-Item -LiteralPath $dest
+              if ($existing.Length -eq $f.Length) {
+                Write-Host ("SKIP_EXISTING_SAME_SIZE=" + $relative)
+                $skippedCount++
+                continue
+              }
+              throw ("Destination collision with different size: " + $relative)
+            }
+
+            Copy-Item -LiteralPath $f.FullName -Destination $dest -Force
+            $copied = Get-Item -LiteralPath $dest
+
+            if ($copied.Length -ne $f.Length) {
+              Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue
+              throw ("Copy verification failed: " + $relative)
+            }
+
+            Remove-Item -LiteralPath $f.FullName -Force
+            $movedBytes += $f.Length
+            $movedCount++
+
+            if (($movedCount % 5) -eq 0) {
+              Write-Host ("PROGRESS_MOVED_COUNT=" + $movedCount)
+              Write-Host ("PROGRESS_MOVED_GB=" + [math]::Round($movedBytes/1GB,2))
+            }
+          }
+
+          $c2 = Get-Volume -DriveLetter C
+          $d2 = Get-Volume -DriveLetter D
+
+          Write-Host ("MOVED_COUNT=" + $movedCount)
+          Write-Host ("SKIPPED_COUNT=" + $skippedCount)
+          Write-Host ("MOVED_GB=" + [math]::Round($movedBytes/1GB,2))
+          Write-Host ("C_FREE_AFTER_GB=" + [math]::Round($c2.SizeRemaining/1GB,2))
+          Write-Host ("D_FREE_AFTER_GB=" + [math]::Round($d2.SizeRemaining/1GB,2))
+          Write-Host "MOVE_COMPLETE=True"
