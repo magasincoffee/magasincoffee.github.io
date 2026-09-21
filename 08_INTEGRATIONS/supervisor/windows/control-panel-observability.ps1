@@ -1,4 +1,4 @@
-Set-StrictMode -Version 2.0
+﻿Set-StrictMode -Version 2.0
 
 $script:ControlPanelSafeEventFields = @(
     'schema_version','timestamp','lane_id','actor','event_type','task_id',
