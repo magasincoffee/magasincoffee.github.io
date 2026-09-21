@@ -14,9 +14,9 @@ function slice(source, startNeedle, endNeedle) {
   return source.slice(start, end);
 }
 
-test("TASK-RBT-006A bumps runtime to v57", async () => {
+test("TASK-RBT-006A quarantine remains canonical after v58 Owner START latch recovery bump", async () => {
   const runtime = await read("../src/runtime/three-lane-cli.mjs");
-  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.57"/);
+  assert.match(runtime, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.58"/);
 });
 
 test("quarantine is checked before scheduler acquire/reopen in exact-target helper", async () => {
