@@ -283,7 +283,7 @@ Owner explicitly released `PFC_8H_V2` on 2026-09-20.
 - emphasis: `SIMPLIFY → ACCELERATE → AUTOMATE`
 
 
-## Workforce Operations V1 — architecture locked
+## Workforce Operations V1 — architecture locked / MANUAL_WORK released
 
 Owner approved and locked a parallel operational-relief architecture on 2026-09-21.
 
@@ -318,6 +318,6 @@ Locked decisions:
 - Employee can self-check own payroll;
 - final stability requires full E2E, exact post-merge E2E recheck and cold/reload E2E recheck.
 
-TASK-090→108 are **STAGED / WAIT_OWNER_RELEASE**. They are not authorized to run yet.
+Owner released this track for **DIRECT MANUAL WORK only**; Robot remains disabled. TASK-090 current-system reconciliation is **DONE** with evidence at `05_SYSTEM/TASK_090_WORKFORCE_V1_CURRENT_SYSTEM_RECONCILIATION.md`. TASK-091 is **READY / MANUAL_WORK** and must wait for Brain acceptance/dispatch; TASK-092→108 remain staged behind the sequential gate.
 
-The currently active PFC cursor is unchanged. Workforce execution starts only after explicit Owner release/reprioritization.
+The currently active PFC cursor is unchanged and remains independently authoritative.
