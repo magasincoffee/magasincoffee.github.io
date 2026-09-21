@@ -208,7 +208,7 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 | ID | Task | Gate | Status |
 |---|---|---|---|
 | MIG-001 | Freeze Baseline + Migration Bootstrap | exact baseline inventory + migration contract + target repo bootstrap plan; zero production cutover | DONE |
-| MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | BLOCKED / OWNER_AUTH — create exact empty target repo |
+| MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | READY / RESUME AFTER OWNER REPO CREATE |
 | MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | QUEUED |
 | MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | QUEUED |
 | MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | QUEUED / OWNER-SAFE-GATE |
@@ -221,5 +221,12 @@ Migration invariant: the existing production Supervisor remains authoritative un
 ### MIG-002 owner/auth boundary
 
 MIG-002 extraction has **not started**. Target repository `magasincoffee/magasin-supervisor` is not present. Repository creation requires an Owner-authenticated GitHub session or repository-create capability; current GitHub connector does not expose repository creation. Do not substitute another repository name and do not bypass login/MFA/CAPTCHA. Resume MIG-002 from the existing frozen baseline/map after the exact empty target repository exists. No re-freeze is required.
+
+`ZERO_PRODUCTION_MUTATION=true`
+
+
+### MIG-002 owner/auth boundary resolved
+
+Owner created the exact target repository `magasincoffee/magasin-supervisor`. GitHub verification confirms it is public, size 0, and empty. Resume MIG-002 from frozen baseline `4f76b929c5fedc44b451abd823f0f1f7fb3e50fe` and the existing 137-record map. Do not re-freeze or substitute moving main.
 
 `ZERO_PRODUCTION_MUTATION=true`
