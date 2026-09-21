@@ -127,32 +127,65 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
         return {data:availability.filter(x=>(!args.p_store_id||x.preferred_store_id===args.p_store_id)&&x.work_date>=args.p_week_start&&x.work_date<=to).map(x=>({...x})),error:null};
       }
       if(name==="list_schedule_generations"){
-        const rows=state.generation&&state.generation.store_id===args.p_store_id&&state.generation.week_start===args.p_week_start?[{...state.generation}]:[];
+        const rows=[];
+        if(state.generation&&state.generation.store_id===args.p_store_id&&state.generation.week_start===args.p_week_start)rows.push({...state.generation});
+        rows.push(...state.competing.filter(x=>x.store_id===args.p_store_id&&x.week_start===args.p_week_start).map(x=>({...x})));
         return {data:rows,error:null};
       }
       if(name==="create_schedule_generation"){
+        if(args.p_store_id!=="store-a")return err("STORE_NOT_ALLOWED");
+        if(args.p_week_start!=="2026-09-28")return err("WEEK_START_MUST_BE_MONDAY");
+        const active=[state.generation,...state.competing].filter(Boolean).filter(x=>x.store_id===args.p_store_id&&x.week_start===args.p_week_start&&["DRAFT","REVIEWED","PUBLISHED"].includes(x.status));
+        if(active.length>1)return err("GENERATION_VERSION_CONFLICT");
+        if(active.length===1){
+          if(active[0].status==="DRAFT")return {data:active[0].id,error:null};
+          if(active[0].status==="REVIEWED")return err("GENERATION_ALREADY_REVIEWED");
+          return err("GENERATION_ALREADY_PUBLISHED");
+        }
         state.createCount++;
-        state.generation={id:"gen-"+state.createCount,status:"DRAFT",store_id:args.p_store_id,store_code:"CN-QA-A",store_name:"Cửa hàng QA A",week_start:args.p_week_start,week_end:"2026-10-04",algorithm_version:args.p_algorithm_version,created_at:"2026-09-27T12:00:00Z"};
+        state.generation={id:"gen-"+state.createCount,status:"DRAFT",store_id:args.p_store_id,store_code:"CN-QA-A",store_name:"Cửa hàng QA A",week_start:args.p_week_start,week_end:"2026-10-04",algorithm_version:args.p_algorithm_version,created_at:"2026-09-27T12:00:00Z",reviewed_by:null,reviewed_at:null,published_by:null,published_at:null};
         state.assignments=[];
         return {data:state.generation.id,error:null};
       }
       if(name==="get_schedule_generation_assignments")return {data:state.assignments.map(x=>({...x})),error:null};
       if(name==="replace_schedule_generation_assignments"){
-        if(!state.generation||state.generation.status!=="DRAFT")return {data:null,error:{message:"GENERATION_NOT_DRAFT"}};
-        state.assignments=(args.p_assignments||[]).map(mapAssignment);
+        if(!state.generation||state.generation.status!=="DRAFT")return err("GENERATION_NOT_DRAFT");
+        const candidate=candidateAssignments(args.p_assignments);
+        if(candidate.error)return err(candidate.error);
+        const validation=canonicalValidation(candidate.data);
+        if(!validation.valid)return err("ASSIGNMENT_VALIDATION_FAILED: "+JSON.stringify(validation.violations));
+        state.assignments=candidate.data;
         return {data:state.assignments.length,error:null};
       }
-      if(name==="validate_schedule_generation_v1")return {data:{valid:true,violations:[],warnings:[],assignment_count:state.assignments.length},error:null};
+      if(name==="validate_schedule_generation_v1")return {data:canonicalValidation(),error:null};
       if(name==="review_schedule_generation"){
-        if(state.generation?.status!=="DRAFT")return {data:null,error:{message:"GENERATION_NOT_DRAFT"}};
-        state.generation.status=args.p_decision==="APPROVED"?"REVIEWED":"CANCELLED";
-        return {data:{status:state.generation.status,validation:{valid:true,violations:[],warnings:[]}},error:null};
+        if(!state.generation)return err("GENERATION_NOT_FOUND");
+        if(args.p_decision!=="APPROVED"&&args.p_decision!=="REJECTED")return err("INVALID_REVIEW_DECISION");
+        if(args.p_decision==="APPROVED"&&state.generation.status==="REVIEWED")return {data:{generation_id:state.generation.id,status:"REVIEWED",already_reviewed:true},error:null};
+        if(args.p_decision==="REJECTED"&&state.generation.status==="CANCELLED")return {data:{generation_id:state.generation.id,status:"CANCELLED",already_cancelled:true},error:null};
+        if(state.generation.status!=="DRAFT")return err("GENERATION_NOT_DRAFT");
+        if(args.p_decision==="REJECTED"){state.generation.status="CANCELLED";return {data:{status:"CANCELLED",rejected:true},error:null};}
+        const validation=canonicalValidation();
+        if(!validation.valid)return err("GENERATION_VALIDATION_FAILED: "+JSON.stringify(validation.violations));
+        state.generation.status="REVIEWED";state.generation.reviewed_by="manager-qa";state.generation.reviewed_at="2026-09-27T12:30:00Z";state.reviewTransitions++;
+        return {data:{status:"REVIEWED",already_reviewed:false,validation},error:null};
       }
       if(name==="publish_schedule_generation"){
-        if(state.generation?.status!=="REVIEWED")return {data:{published:false,error_code:"NOT_REVIEWED"},error:null};
-        state.generation.status="PUBLISHED";
-        state.official=state.assignments.map((x,i)=>({schedule_id:"schedule-"+(i+1),work_date:x.work_date,start_time:x.start_time,end_time:x.end_time,store_id:x.store_id,store_code:"CN-QA-A",store_name:"Cửa hàng QA A",user_id:x.user_id,employee_name:people[x.user_id]||"Nhân viên QA",status:"APPROVED",origin:"SCHEDULE_GENERATION"}));
-        return {data:{published:true,inserted_schedule_count:state.official.length},error:null};
+        if(!state.generation)return err("GENERATION_NOT_FOUND");
+        if(state.generation.status==="PUBLISHED"){
+          return {data:{generation_id:state.generation.id,status:"PUBLISHED",published:true,already_published:true,inserted_schedule_count:0,official_schedule_count:state.official.filter(x=>x.source_generation_id===state.generation.id).length},error:null};
+        }
+        if(state.generation.status!=="REVIEWED")return err("GENERATION_MUST_BE_REVIEWED");
+        const validation=canonicalValidation();
+        if(!validation.valid){
+          state.generation.status="DRAFT";state.generation.reviewed_by=null;state.generation.reviewed_at=null;state.publishFailures++;
+          return {data:{generation_id:state.generation.id,status:"DRAFT",published:false,already_published:false,validation},error:null};
+        }
+        state.official=state.assignments.map((x,i)=>({schedule_id:"schedule-"+(i+1),work_date:x.work_date,start_time:x.start_time,end_time:x.end_time,store_id:x.store_id,store_code:"CN-QA-A",store_name:"Cửa hàng QA A",user_id:x.user_id,employee_name:people[x.user_id]||"Nhân viên QA",status:"APPROVED",origin:"MANAGER_ASSIGNED",source_generation_id:state.generation.id,source_generation_assignment_id:x.id}));
+        state.officialInsertCount+=state.official.length;
+        state.publishTransitions++;
+        state.generation.status="PUBLISHED";state.generation.published_by="manager-qa";state.generation.published_at="2026-09-27T12:45:00Z";
+        return {data:{generation_id:state.generation.id,status:"PUBLISHED",published:true,already_published:false,inserted_schedule_count:state.official.length,official_schedule_count:state.official.length,validation},error:null};
       }
       if(name==="get_manager_weekly_schedule"){
         const end=new Date(args.p_week_start+"T00:00:00Z");end.setUTCDate(end.getUTCDate()+6);const to=end.toISOString().slice(0,10);
@@ -180,7 +213,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
     },
     from(name){calls.push({kind:"from",name});throw new Error("Direct table access forbidden:"+name)}
   };
-  window.__MW31_QA={calls,state,store,availability,people};
+  window.__MW31_QA={calls,state,store,availability,people,peopleMeta,canonicalValidation,rpc:(name,args)=>api.rpc(name,args),setPersonStatus:(id,status)=>{if(peopleMeta[id])peopleMeta[id].status=status},setPersonRole:(id,role)=>{if(peopleMeta[id])peopleMeta[id].role=role},setCompeting:(rows)=>{state.competing=Array.isArray(rows)?rows:[]}};
   window.supabase={createClient(){return api}};
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
