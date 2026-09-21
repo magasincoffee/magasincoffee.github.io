@@ -175,6 +175,7 @@ const runtimeSource = await fs.readFile(
   "utf8"
 );
 assert.match(runtimeSource, /legacyPersistedEnvelope/);
+assert.match(runtimeSource, /LANE_WORK_V59_DISPATCH_RETRY_PRESERVED/);
 assert.match(runtimeSource, /buildLegacyWorkDispatchInstructionV59/);
 assert.match(runtimeSource, /LANE_BRAIN_LEGACY_HANDSHAKE_ADOPTED_NO_DUPLICATE/);
 assert.match(runtimeSource, /dispatch_contract_version: "BRAIN_PLANNING_V1_GUARDED"/);
