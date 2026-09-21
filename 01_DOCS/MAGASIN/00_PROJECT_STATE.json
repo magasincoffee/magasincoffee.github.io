@@ -643,8 +643,8 @@
     "note": "Staged parallel operational-relief track. Does not alter active PFC cursor until explicit Owner release/reprioritization.",
     "execution_mode": "OWNER_DIRECT_TO_WORK",
     "manual_work_may_execute": true,
-    "current_task": "TASK-091",
-    "next_task": "TASK-092",
+    "current_task": "TASK-092",
+    "next_task": "TASK-093",
     "task_090": {
       "status": "DONE",
       "evidence": "01_DOCS/MAGASIN/05_SYSTEM/TASK_090_WORKFORCE_V1_CURRENT_SYSTEM_RECONCILIATION.md",
@@ -654,6 +654,26 @@
       "executable_changes": false,
       "ci_triggered": false,
       "conclusion": "RECONCILIATION_COMPLETE"
+    },
+    "task_091": {
+      "status": "DONE",
+      "evidence": "01_DOCS/MAGASIN/05_SYSTEM/TASK_091_WORKFORCE_V1_CANONICAL_STATE_RULE_CONTRACT.md",
+      "contract": "02_CORE/contracts/workforce-operations-v1.json",
+      "helper": "02_CORE/shared/workforce-operations-v1.mjs",
+      "tests": "09_QA/business-os/workforce-operations-v1.test.mjs",
+      "pull_request": 227,
+      "final_head": "0d7fe543287e53fe0932957764471b378630ff66",
+      "merge": "4cc1eb3a25ed128eb13c0a543c6563a46d6329ab",
+      "pr_head_run_id": 35618980790,
+      "pr_head_job_id": 106396932234,
+      "post_merge_run_id": 35619092518,
+      "post_merge_job_id": 106397312930,
+      "runtime": "Node v20.20.2",
+      "targeted_tests": 61,
+      "compatibility_tests": 18,
+      "full_business_os_checks": 446,
+      "failures": 0,
+      "conclusion": "CANONICAL_CONTRACT_LOCKED_POST_MERGE_GREEN"
     }
   }
 }
