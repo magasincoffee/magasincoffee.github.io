@@ -131,3 +131,14 @@ VẬN HÀNH THẬT
 
 Tài liệu trong thư mục này là **index/bootstrap**, không thay thế các canonical source files gốc.  
 Nếu nội dung index này và source-of-truth gốc khác nhau, **source-of-truth gốc thắng**.
+
+
+## Workforce Operations V1 — operational relief track
+
+Khi Brain/Work xử lý Workforce, phải đọc thêm theo thứ tự:
+
+1. https://github.com/magasincoffee/magasincoffee.github.io/blob/main/01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md
+2. https://github.com/magasincoffee/magasincoffee.github.io/blob/main/01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md
+3. https://github.com/magasincoffee/magasincoffee.github.io/blob/main/01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md
+
+Important: architecture is locked, but TASK-090→108 are STAGED / WAIT_OWNER_RELEASE until Owner explicitly releases execution.
