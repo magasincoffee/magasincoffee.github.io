@@ -322,6 +322,8 @@ Locked decisions:
 - Employee can self-check own payroll;
 - final stability requires full E2E, exact post-merge E2E recheck and cold/reload E2E recheck.
 
-Owner released this track for **DIRECT MANUAL WORK only**; Robot remains disabled. TASK-090→TASK-092 are **DONE**. TASK-093 Manager Sunday Schedule Board V1 is **DONE** with evidence at `05_SYSTEM/TASK_093_MANAGER_SUNDAY_SCHEDULE_BOARD_V1.md`. TASK-094 is **READY / MANUAL_WORK** and must wait for Brain acceptance/dispatch; TASK-095→108 remain staged behind the sequential gate.
+Owner released this track for **DIRECT MANUAL WORK only**; Robot remains disabled. TASK-090→TASK-094 are **DONE**. TASK-094 Schedule Validation + Publish Gate V1 is **DONE / E2E-03 STRONG / E2E-05 STRONG / POST-MERGE GREEN** with evidence at `05_SYSTEM/TASK_094_SCHEDULE_VALIDATION_PUBLISH_GATE_V1.md`. Workforce cursor is now TASK-095 **READY / MANUAL_WORK** → TASK-096; TASK-095 must not auto-run and TASK-096→108 remain staged behind the sequential gate.
+
+TASK-094 final executable main is `2ed75c6e3237b91fb4cb403a237015541a39d956`. Final exact-main People Shift run `35635895604` / job `106453100188` is GREEN on Node v20.20.2 with 182/182 deterministic checks, all 8 browser suites and 0 failures. Production migration `20260921171458_task_094_schedule_validation_publish_gate_v1` remains live and exact-source matched; the legacy duplicate DRAFT group remains intentionally untouched and fails closed.
 
 The currently active PFC cursor is unchanged and remains independently authoritative.
