@@ -143,6 +143,15 @@ if (Test-Path $bundleLaneConfig) {
     Write-Host "No local state bundle found. Control Panel will initialize a fresh lane config."
 }
 
+Write-Step "STAGE MIGRATION LOGIN TOOL"
+$migrationTools = "C:\MAGASIN\migration-tools"
+New-Item -ItemType Directory -Force -Path $migrationTools | Out-Null
+$loginTool = Join-Path $migrationTools "prepare-new-pc-login.ps1"
+$loginToolUrl = "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/migration/new-pc-bootstrap-v1/08_INTEGRATIONS/supervisor/windows/prepare-new-pc-login.ps1"
+Invoke-WebRequest -Uri $loginToolUrl -OutFile $loginTool -UseBasicParsing
+if (-not (Test-Path $loginTool)) { throw "Failed to stage dedicated login tool." }
+Write-Host ("LOGIN_TOOL=" + $loginTool)
+
 Write-Step "VERIFY INSTALL"
 $runtime = Join-Path $supervisorRoot "runtime"
 $required = @(
@@ -178,4 +187,4 @@ $status | ConvertTo-Json -Depth 10 |
 Write-Host ""
 Write-Host "NEW_PC_BOOTSTRAP_COMPLETE=True"
 Write-Host "OWNER_STOP_ACTIVE=True"
-Write-Host "NEXT=Run prepare-new-pc-login.ps1 and sign into ChatGPT in the dedicated Robot Chrome profile."
+Write-Host "NEXT=Run C:\\MAGASIN\\migration-tools\\prepare-new-pc-login.ps1 and sign into ChatGPT/Gmail/GitHub in the dedicated Robot Chrome profile."
