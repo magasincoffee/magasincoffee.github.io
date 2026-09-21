@@ -154,7 +154,7 @@ function render(){
  if(!document.getElementById('manager-schedule-draft-editor-css'))document.head.insertAdjacentHTML('beforeend',css);
  activate();
  const store=selectedStore(),stage=String(state.generationStatus||'NONE').toUpperCase();
- p.innerHTML=`<section class="card msd"><div class="msd-head"><div><h2 style="margin:0">Xếp lịch tuần · Manager Direct</h2><div class="muted" style="margin-top:5px">Availability → lịch nháp · không cần staffing demand hoặc Robot để bắt đầu.</div></div><div class="msd-actions"><select class="btn" id="msdStore">${state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId)?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}</select><button class="btn" data-msd-week="prev">←</button><button class="btn" data-msd-week="target">Tuần sau</button><button class="btn" data-msd-week="next">→</button><span class="badge blue">${esc(state.week||'—')}</span><button class="btn" id="msdStart">${state.generationId?'Mở lại draft':'Tạo lịch nháp'}</button><button class="btn" id="msdReload">Tải lại</button><button class="btn primary" id="msdSave"${stage==='DRAFT'?'':' disabled'}>Lưu draft</button></div></div><div class="msd-summary"><span class="msd-pill">${esc(store?.code||'—')}</span><span class="msd-pill">${state.availability.length} availability</span><span class="msd-pill">${state.assignments.length} assignment</span><span class="msd-pill ${stage==='DRAFT'?'msd-ok':''}">${esc(stage)}</span><span class="msd-pill">Manager direct</span>${state.duplicateDrafts?`<span class="msd-pill msd-warning">Có ${state.duplicateDrafts+1} DRAFT cùng store/week · đang resume bản mới nhất</span>`:''}</div><div class="msd-layout"><div class="msd-source"><b>Employee Availability</b><div class="muted" style="margin-top:4px">Nguồn đăng ký của nhân viên · bấm Thêm để tạo assignment trong draft.</div>${sourceHtml()}</div><div class="msd-board-wrap"><b>Monday → Sunday Schedule Board</b><div class="muted" style="margin:4px 0 10px">Generation ${esc(state.generationId||'chưa tạo')} · origin ${esc(state.generationOrigin||'—')}</div>${boardHtml()}</div></div><details class="msd-downstream"><summary>Review / Publish hiện hữu — downstream, không phải prerequisite để tạo/lưu draft</summary><div class="msd-actions" style="margin-top:9px"><button class="btn" id="msdValidate"${state.generationId?'':' disabled'}>Kiểm tra hiện tại</button><button class="btn" id="msdReview"${stage==='DRAFT'?'':' disabled'}>Duyệt lịch</button><button class="btn" id="msdPublish"${stage==='REVIEWED'?'':' disabled'}>Publish lịch</button></div></details><div id="msdStatus" class="msd-status">${state.generationId?'Draft đã sẵn sàng chỉnh sửa.':'Chọn cửa hàng/tuần rồi tạo hoặc resume lịch nháp.'}</div></section>`;
+ p.innerHTML=`<section class="card msd"><div class="msd-head"><div><h2 style="margin:0">Xếp lịch tuần · Manager Direct</h2><div class="muted" style="margin-top:5px">Availability → lịch nháp · không cần staffing demand hoặc Robot để bắt đầu.</div></div><div class="msd-actions"><select class="btn" id="msdStore">${state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId)?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}</select><button class="btn" data-msd-week="prev">←</button><button class="btn" data-msd-week="target">Tuần sau</button><button class="btn" data-msd-week="next">→</button><span class="badge blue">${esc(state.week||'—')}</span><button class="btn" id="msdStart">${state.generationId?'Mở lại draft':'Tạo lịch nháp'}</button><button class="btn" id="msdReload">Tải lại</button><button class="btn primary" id="msdSave"${stage==='DRAFT'?'':' disabled'}>Lưu draft</button></div></div><div class="msd-summary"><span class="msd-pill">${esc(store?.code||'—')}</span><span class="msd-pill">${state.availability.length} availability</span><span class="msd-pill">${state.assignments.length} assignment</span><span class="msd-pill ${stage==='DRAFT'?'msd-ok':''}">${esc(stage)}</span><span class="msd-pill">Manager direct</span>${state.duplicateDrafts?`<span class="msd-pill msd-warning">Có ${state.duplicateDrafts+1} DRAFT cùng store/week · FAIL-CLOSED</span>`:''}</div><div class="msd-layout"><div class="msd-source"><b>Employee Availability</b><div class="muted" style="margin-top:4px">Nguồn đăng ký của nhân viên · bấm Thêm để tạo assignment trong draft.</div>${sourceHtml()}</div><div class="msd-board-wrap"><b>Monday → Sunday Schedule Board</b><div class="muted" style="margin:4px 0 10px">Generation ${esc(state.generationId||'chưa tạo')} · origin ${esc(state.generationOrigin||'—')}</div>${boardHtml()}</div></div><details class="msd-downstream"><summary>Review / Publish hiện hữu — downstream, không phải prerequisite để tạo/lưu draft</summary><div class="msd-actions" style="margin-top:9px"><button class="btn" id="msdValidate"${state.generationId?'':' disabled'}>Kiểm tra hiện tại</button><button class="btn" id="msdReview"${stage==='DRAFT'?'':' disabled'}>Duyệt lịch</button><button class="btn" id="msdPublish"${stage==='REVIEWED'?'':' disabled'}>Publish lịch</button></div></details><div id="msdStatus" class="msd-status">${state.generationId?'Draft đã sẵn sàng chỉnh sửa.':'Chọn cửa hàng/tuần rồi tạo hoặc resume lịch nháp.'}</div></section>`;
  bind();
 }
 function syncRowsFromDom(){
@@ -178,27 +178,51 @@ async function save(){
   const q=await client().rpc('replace_schedule_generation_assignments',{p_generation_id:state.generationId,p_assignments:payload});
   if(q.error)throw q.error;
   await loadDraftAssignments();render();status(`Đã lưu ${Number(q.data??payload.length)} assignment. Không auto-review, không auto-publish.`,'ok');
- }catch(e){status('Lưu draft thất bại: '+(e.message||e.code||e),'error')}
+ }catch(e){status('Lưu draft thất bại: '+errorText(e),'error')}
  finally{state.busy=false}
 }
 async function validate(){
  if(!state.generationId)return;
- status('Đang chạy validation hiện hữu…');
+ status('Đang chạy canonical server validation…');
  const q=await client().rpc('validate_schedule_generation_v1',{p_generation_id:state.generationId});
- if(q.error){status('Validation thất bại: '+(q.error.message||q.error.code||'UNKNOWN'),'error');return q}
+ if(q.error){status('Validation thất bại: '+errorText(q.error),'error');return q}
  const violations=Array.isArray(q.data?.violations)?q.data.violations:[],warnings=Array.isArray(q.data?.warnings)?q.data.warnings:[];
- status(`${q.data?.valid?'✓':'✗'} validation hiện hữu · ${violations.length} lỗi · ${warnings.length} cảnh báo`,q.data?.valid?'ok':'error');return q
+ const lines=[(q.data?.valid?'✓':'✗')+' Canonical validation · '+violations.length+' lỗi · '+warnings.length+' cảnh báo'];
+ if(violations.length)lines.push(...violations.slice(0,8).map(x=>'• '+String(x?.code||'UNKNOWN_VIOLATION')));
+ if(warnings.length)lines.push(...warnings.slice(0,5).map(x=>'⚠ '+String(x?.code||'UNKNOWN_WARNING')));
+ status(lines.join('\n'),q.data?.valid?'ok':'error');return q
 }
 async function review(){
- if(state.busy||!state.generationId||state.generationStatus!=='DRAFT')return;
- state.busy=true;status('Đang duyệt lịch qua RPC hiện hữu…');
- try{const q=await client().rpc('review_schedule_generation',{p_generation_id:state.generationId,p_decision:'APPROVED'});if(q.error)throw q.error;state.generationStatus=q.data?.status||'REVIEWED';render();status('Đã chuyển sang REVIEWED.','ok')}catch(e){status('Duyệt lịch thất bại: '+(e.message||e.code||e),'error')}finally{state.busy=false}
+ if(state.busy||!state.generationId||!['DRAFT','REVIEWED'].includes(state.generationStatus))return;
+ state.busy=true;status('Đang revalidate và duyệt lịch trên server…');
+ try{
+  const q=await client().rpc('review_schedule_generation',{p_generation_id:state.generationId,p_decision:'APPROVED'});
+  if(q.error)throw q.error;
+  state.generationStatus=q.data?.status||'REVIEWED';
+  render();status(q.data?.already_reviewed?'Lịch đã ở REVIEWED; retry không tạo side effect mới.':'Đã revalidate và chuyển sang REVIEWED.','ok');
+ }catch(e){status('Duyệt lịch thất bại: '+errorText(e),'error')}finally{state.busy=false}
 }
 async function publish(){
- if(state.busy||!state.generationId||state.generationStatus!=='REVIEWED')return;
- if(!confirm('Phát hành lịch REVIEWED thành lịch chính thức APPROVED?'))return;
- state.busy=true;status('Đang phát hành lịch chính thức…');
- try{const q=await client().rpc('publish_schedule_generation',{p_generation_id:state.generationId});if(q.error)throw q.error;if(!q.data?.published)throw new Error(q.data?.error_code||'PUBLISH_NOT_COMPLETED');state.generationStatus='PUBLISHED';const detail={generationId:state.generationId,storeId:state.storeId,weekStart:state.week,insertedScheduleCount:Number(q.data.inserted_schedule_count||0)};document.dispatchEvent(new CustomEvent('magasin:schedule-published',{detail}));render();status('Đã phát hành '+detail.insertedScheduleCount+' ca chính thức.','ok')}catch(e){status('Publish thất bại: '+(e.message||e.code||e),'error')}finally{state.busy=false}
+ if(state.busy||!state.generationId||!['REVIEWED','PUBLISHED'].includes(state.generationStatus))return;
+ if(state.generationStatus==='REVIEWED'&&!confirm('Phát hành lịch REVIEWED thành lịch chính thức APPROVED?'))return;
+ state.busy=true;status(state.generationStatus==='PUBLISHED'?'Đang kiểm tra retry Publish idempotent…':'Đang revalidate và phát hành lịch chính thức…');
+ try{
+  const q=await client().rpc('publish_schedule_generation',{p_generation_id:state.generationId});
+  if(q.error)throw q.error;
+  if(!q.data?.published){
+   state.generationStatus=q.data?.status||'DRAFT';
+   render();
+   const violations=Array.isArray(q.data?.validation?.violations)?q.data.validation.violations:[];
+   status('Publish bị chặn sau revalidation: '+(violations.map(x=>x.code).join(', ')||q.data?.error_code||'PUBLISH_NOT_COMPLETED'),'error');
+   return q;
+  }
+  state.generationStatus='PUBLISHED';
+  const detail={generationId:state.generationId,storeId:state.storeId,weekStart:state.week,insertedScheduleCount:Number(q.data.inserted_schedule_count||0)};
+  if(!q.data?.already_published)document.dispatchEvent(new CustomEvent('magasin:schedule-published',{detail}));
+  render();
+  status(q.data?.already_published?'Lịch đã được Publish trước đó; retry idempotent, không tạo ca trùng.':'Đã phát hành '+detail.insertedScheduleCount+' ca chính thức.','ok');
+  return q;
+ }catch(e){status('Publish thất bại: '+errorText(e),'error')}finally{state.busy=false}
 }
 function bind(){
  const p=panel();if(!p)return;
