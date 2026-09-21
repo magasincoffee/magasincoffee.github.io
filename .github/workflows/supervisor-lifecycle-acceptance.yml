@@ -312,7 +312,27 @@ jobs:
             # Restore normal operation through the explicit Owner START path only.
             & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $startScript -Hidden
             if ($LASTEXITCODE -ne 0) { throw "Acceptance restore explicit START failed" }
+
+            $ownerStartTruth = Get-LifecycleOwnerStopState -Root $root
+            if ($ownerStartTruth.blocked) {
+              throw "Explicit Owner START returned success while Owner STOP remained blocked"
+            }
+            Write-Host "OWNER_START_LATCHES_CLEARED=True"
+
             if (-not (Wait-Healthy 60)) { throw "Acceptance restore runtime did not recover" }
+
+            $wrapperCount = @(
+              Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" -ErrorAction SilentlyContinue |
+                Where-Object {
+                  $_.CommandLine -and
+                  $_.CommandLine -like "*run-supervisor.ps1*" -and
+                  $_.CommandLine -like "*$root*"
+                }
+            ).Count
+            if ($wrapperCount -ne 1) {
+              throw "Explicit Owner START process duplication check failed: wrapper_count=$wrapperCount"
+            }
+            Write-Host "OWNER_START_SINGLE_WRAPPER=True"
           } finally {
             Close-ControlPanels
 
