@@ -92,7 +92,7 @@ Write-Host "GITHUB_OWNER_AUTH_READY=True"
 
 Write-Step "INSTALL MAGASIN SUPERVISOR"
 $bootstrap = Join-Path $env:TEMP "magasin-bootstrap-new-pc.ps1"
-$bootstrapUrl = "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/refs/heads/migration/new-pc-bootstrap-v1/08_INTEGRATIONS/supervisor/windows/bootstrap-new-pc.ps1"
+$bootstrapUrl = "https://raw.githubusercontent.com/magasincoffee/magasincoffee.github.io/c68b12e2813877427f0dab7c7dbdfd2949068539/08_INTEGRATIONS/supervisor/windows/bootstrap-new-pc.ps1"
 Invoke-WebRequest -Uri $bootstrapUrl -OutFile $bootstrap -UseBasicParsing
 if (-not (Test-Path $bootstrap)) { throw "Failed to download bootstrap-new-pc.ps1." }
 
