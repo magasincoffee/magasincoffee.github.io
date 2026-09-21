@@ -71,6 +71,21 @@ MIG-001 canonical artifacts:
 - MIG-001 production mutation: NONE
 - next task: MIG-002 READY / NOT STARTED
 
+MIG-002 canonical artifacts:
+- target repository: `magasincoffee/magasin-supervisor`
+- target evidence: `docs/MIG_002_EXTRACTION_EVIDENCE.md`
+- parity manifest: `docs/MIG_002_PARITY_PROVENANCE.json`
+- bootstrap main: `815fc10bbc1814ed46f73b63391b9e67e29aa446`
+- extraction PR #1 merge: `e67ae8101c391fc0a77b41ae6190bb615356be99`
+- extraction-safe CI PR #2 merge: `07160cfab6943d647661f732590a0ce45e2f92a5`
+- docs-only closure PR #3 merge: `64371bedc7b9c976047224152dba820c12a0674c`
+- parity: 137/137 represented; 90/90 MOVE byte-equivalent; 47/47 REWRITE provenance; missing=0; duplicate=0
+- exact-main hosted gates: Supervisor Tests run `35627596398` SUCCESS; Supervisor Integrity run `35627596241` static SUCCESS / runtime SKIPPED fail-closed
+- production cutover: NONE
+- production authority: UNCHANGED_EXISTING_SUPERVISOR
+- RBT-009: IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING
+- next task: MIG-003 READY / NOT STARTED
+
 ## 6. Production guardrails
 
 During MIG-001 through MIG-004:
@@ -120,6 +135,24 @@ The qualifying sequence is:
 `MIG-001 -> MIG-002 -> MIG-003 -> MIG-004 -> MIG-005 -> MIG-006`
 
 At MIG-006, run RBT-009 Tier B from zero for 480 uninterrupted minutes against the exact `magasincoffee/magasin-supervisor` candidate SHA, after new-repository CI/lifecycle parity and single production mutation authority are proven.
+
+## 8A. MIG-002 Definition of Done
+
+Status: **MIG-002 DONE / MIG-003 READY / NOT STARTED**
+
+MIG-002 is complete because:
+1. target repository exists and is root-native;
+2. all 137 frozen map records are represented exactly once;
+3. 90/90 MOVE records are byte-equivalent;
+4. all 47 REWRITE records retain source-blob provenance;
+5. extraction-only rewrites are bounded to bootstrap/root-path/workflow fail-closed needs;
+6. platform architecture/protocol mirrors exist in the target while Business OS originals remain intact;
+7. self-hosted production workflows in the target are inert/fail-closed;
+8. exact-main hosted extraction-safe tests/static integrity are green;
+9. no production/local-state/Brain/Work/Owner STOP mutation occurred;
+10. RBT-009 remains pending and embedded source remains rollback material.
+
+MIG-003 is the first task allowed to perform deep Business OS decoupling. It is READY / NOT STARTED and must not be auto-run by MIG-002.
 
 ## 8. MIG-001 Definition of Done
 
