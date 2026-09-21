@@ -22,6 +22,34 @@ let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignment
 const panel=()=>document.querySelector('#panel-publish');
 function client(){if(sb)return sb;if(!window.supabase?.createClient)throw new Error('SUPABASE_CLIENT_NOT_READY');sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});return sb}
 function status(text,type=''){const e=panel()?.querySelector('#msdStatus');if(!e)return;e.className='msd-status'+(type?' '+type:'');e.textContent=text||''}
+function errorText(e){
+ const raw=String(e?.message||e?.code||e||'UNKNOWN');
+ const known=[
+  ['GENERATION_VERSION_CONFLICT','Có nhiều lịch nháp đang tồn tại cho cùng cửa hàng/tuần. Hệ thống đã khóa thao tác để tránh ghi đè.'],
+  ['GENERATION_ALREADY_REVIEWED','Tuần này đã có lịch ở trạng thái REVIEWED. Không tạo thêm lịch nháp mới.'],
+  ['GENERATION_ALREADY_PUBLISHED','Tuần này đã được Publish. Không tạo thêm lịch cạnh tranh.'],
+  ['COMPETING_GENERATION_EXISTS','Có lịch cạnh tranh cho cùng cửa hàng/tuần. Cần xử lý phiên bản trước khi tiếp tục.'],
+  ['OFFICIAL_STORE_WEEK_ALREADY_EXISTS','Cửa hàng/tuần này đã có lịch chính thức; không được append lịch mới im lặng.'],
+  ['ASSIGNMENT_OVERLAP','Một nhân viên đang bị xếp ca trùng giờ.'],
+  ['MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY','Một nhân viên vượt quá tối đa 2 ca trong ngày.'],
+  ['EMPLOYEE_INACTIVE','Nhân viên không còn ACTIVE.'],
+  ['EMPLOYEE_NOT_STAFF','Người được chọn không thuộc vai trò STAFF đủ điều kiện xếp ca.'],
+  ['ASSIGNMENT_OUTSIDE_GENERATION_WEEK','Ca nằm ngoài tuần Monday→Sunday đang xếp.'],
+  ['ASSIGNMENT_STORE_MISMATCH','Ca không thuộc cửa hàng của lịch nháp.'],
+  ['STORE_NOT_ALLOWED','Tài khoản không có quyền trên cửa hàng này.'],
+  ['STORE_NOT_ACTIVE','Cửa hàng không còn ACTIVE.'],
+  ['AVAILABILITY_MISMATCH','Ca không nằm trọn trong availability AVAILABLE/PREFERRED của nhân viên.'],
+  ['OFFICIAL_SCHEDULE_OVERLAP','Ca bị trùng với lịch PENDING/APPROVED hiện hữu.'],
+  ['ASSIGNMENT_PAYLOAD_MALFORMED','Dữ liệu ca gửi lên server không hợp lệ.'],
+  ['ASSIGNMENT_REQUIRED_FIELDS_MISSING','Dữ liệu ca còn thiếu trường bắt buộc.'],
+  ['ASSIGNMENT_EMPLOYEE_NOT_FOUND','Không tìm thấy nhân viên hợp lệ.'],
+  ['GENERATION_NOT_DRAFT','Lịch không còn ở DRAFT nên không thể sửa.'],
+  ['GENERATION_MUST_BE_REVIEWED','Lịch phải ở REVIEWED trước khi Publish.'],
+  ['GENERATION_VALIDATION_FAILED','Lịch chưa đạt validation nên chưa thể duyệt.']
+ ];
+ const hit=known.find(([code])=>raw.includes(code));
+ return hit?hit[1]+' ('+hit[0]+')':raw;
+}
 function activate(){const view=document.querySelector('#view-workforce');if(!view)return;view.querySelectorAll('.tabs button[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab==='publish'));view.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-publish'))}
 const availTypeOk=r=>['AVAILABLE','PREFERRED'].includes(String(r.availability_type||'').toUpperCase());
 const availCovers=(r,a)=>String(r.work_date).slice(0,10)===String(a.work_date).slice(0,10)&&mins(r.start_time)<=mins(a.start_time)&&mins(r.end_time)>=mins(a.end_time)&&availTypeOk(r);
