@@ -2,7 +2,7 @@ param(
     [string]$PinnedSha = "18e6d5025429cb1aaee986a8033d8b47169a54c3",
     [string]$RepoUrl = "https://github.com/magasincoffee/magasincoffee.github.io.git",
     [string]$InstallRoot = "C:\MAGASIN\magasincoffee.github.io",
-    [string]$StateBundle = "D:\MAGASIN_MIGRATION\supervisor-state"
+    [string]$StateBundle = "C:\MAGASIN_MIGRATION\supervisor-state"
 )
 
 $ErrorActionPreference = 'Stop'
@@ -136,8 +136,8 @@ if ($LASTEXITCODE -ne 0) { throw "Supervisor install failed with exit code $LAST
 if ($LASTEXITCODE -ne 0) { throw "Autostart install failed with exit code $LASTEXITCODE." }
 
 Write-Step "OPTIONAL LANE CONFIG IMPORT"
-$bundleLaneConfig = Join-Path $StateBundle "lanes.json"
-if (Test-Path $bundleLaneConfig) {
+$bundleLaneConfig = [System.IO.Path]::Combine($StateBundle, "lanes.json")
+if (Test-Path -LiteralPath $bundleLaneConfig) {
     $laneConfig = Get-Content -LiteralPath $bundleLaneConfig -Raw -Encoding UTF8 | ConvertFrom-Json
     if ([string]$laneConfig.mode -ne "THREE_LANE_V1") {
         throw "State bundle lanes.json is not THREE_LANE_V1."
@@ -149,7 +149,7 @@ if (Test-Path $bundleLaneConfig) {
         Set-Content -LiteralPath (Join-Path $supervisorRoot "lanes.json") -Encoding UTF8
     Write-Host "Imported lane names/Brain/Work targets with ALL lanes forced disabled."
 } else {
-    Write-Host "No local state bundle found. Control Panel will initialize a fresh lane config."
+    Write-Host ("No local state bundle found at " + $bundleLaneConfig + ". Continuing with fresh lane config.")
 }
 
 Write-Step "STAGE MIGRATION LOGIN TOOL"
