@@ -1074,27 +1074,32 @@ function Refresh-Ui {
         $ui.RetryRelay.Visible = $relayExhausted
         $ui.RetryRelay.Enabled = [bool]($relayExhausted -and -not $relayRearmPending)
 
-        $state = 'STOPPED'
-        $message = 'Luồng đang dừng. Nhập link Bộ não rồi bấm BẮT ĐẦU LUỒNG.'
+        $laneStatusValue = [string](Get-OptionalPropertyValue $st 'status' '')
+        $state = Get-ControlPanelEffectiveLaneState -Enabled $enabled -OwnerStopped ([bool]$ownerStop.blocked) -ProcessHealthy ([bool]$processTruth.healthy) -ProcessState $processState -LaneStatus $laneStatusValue
 
+        $message = 'Luồng đang dừng. Nhập link Bộ não rồi bấm BẮT ĐẦU LUỒNG.'
         if ($enabled) {
             if ($ownerStop.blocked) {
-                $state = 'WAIT_OWNER'
                 $message = 'Robot nền đang ở Owner STOP. Luồng vẫn được lưu; bấm KHỞI ĐỘNG ROBOT NỀN khi bạn muốn tiếp tục.'
             } elseif (-not $processTruth.healthy) {
-                if ($processState -eq 'STARTING') {
-                    $state = 'STARTING'
-                    $message = 'Đang khởi động Robot nền; trạng thái cũ chỉ được giữ để recovery.'
+                $message = if ($processState -eq 'STARTING') {
+                    'Đang khởi động Robot nền; lane status cũ chỉ là recovery state.'
                 } else {
-                    $state = 'RECOVERING'
-                    $message = 'Đang tự khôi phục Supervisor / Three-Lane / Chrome / CDP trước khi tiếp tục task.'
+                    'Đang tự khôi phục Supervisor / Three-Lane / Chrome / CDP trước khi tiếp tục task.'
                 }
-            } elseif ($st -and $st.status) {
-                $state = [string]$st.status
-                $message = if ($st.message) { [string]$st.message } else { 'Robot đang hoạt động.' }
             } else {
-                $state = 'STARTING'
-                $message = 'Runtime đã sống; đang chờ lane status mới.'
+                $message = [string](Get-OptionalPropertyValue $st 'message' 'Robot đang hoạt động.')
+            }
+        }
+
+        $structuredPhase = [string](Get-OptionalPropertyValue $st 'phase' $state)
+        if ($processTruth.healthy -and -not $ownerStop.blocked) {
+            if ($structuredPhase -eq 'WORK_TARGET_QUARANTINED') {
+                $state = 'WAIT_OWNER'
+                $message = 'WORK KHÔNG CÒN TỒN TẠI / ĐÃ NGỪNG MỞ LẠI — hãy LƯU WORK mới hoặc dùng TỰ TẠO WORK khi safe boundary cho phép.'
+            } elseif ($structuredPhase -eq 'BRAIN_TARGET_QUARANTINED') {
+                $state = 'WAIT_OWNER'
+                $message = 'BỘ NÃO KHÔNG CÒN TỒN TẠI / ĐƯỢC TRUY CẬP — hãy dán Brain URL mới và LƯU BỘ NÃO.'
             }
         }
 
