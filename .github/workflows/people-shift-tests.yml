@@ -54,7 +54,8 @@ jobs:
         run: |
           node --test \
             09_QA/business-os/five-step-schedule-first.test.mjs \
-            09_QA/business-os/schedule-first-flow.test.mjs
+            09_QA/business-os/schedule-first-flow.test.mjs \
+            09_QA/business-os/published-schedule-feedback-loop.test.mjs
 
       - name: Run People Shift regression tests
         run: node --test 09_QA/people-shift/*.test.mjs
