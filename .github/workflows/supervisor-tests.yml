@@ -12,6 +12,11 @@ on:
       - '.github/workflows/supervisor-tests.yml'
       - '.github/workflows/supervisor-state-maintenance.yml'
       - '.github/scripts/supervisor-state-maintenance-regression.ps1'
+      - '.github/workflows/supervisor-rbt009-soak.yml'
+      - '.github/workflows/supervisor-autostart-install.yml'
+      - '.github/workflows/supervisor-lifecycle-acceptance.yml'
+      - '.github/scripts/supervisor-rbt009-soak.ps1'
+      - '.github/scripts/supervisor-release-event-validator.mjs'
   pull_request:
     paths:
       - '08_INTEGRATIONS/supervisor/**'
