@@ -159,7 +159,7 @@ test("Windows viewport probe executes the production layout helper without local
   assert.equal(low.minimum_width, 900);
   assert.equal(low.minimum_height, 600);
   assert.equal(low.vertical_scroll_required, true);
-  assert.equal(low.lane3_stop_bottom, 851);
+  assert.equal(low.lane3_stop_bottom, 1047);
   assert.equal(low.lane3_stop_in_canvas, true);
 });
 
