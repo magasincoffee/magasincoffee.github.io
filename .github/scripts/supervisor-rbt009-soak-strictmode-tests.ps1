@@ -144,6 +144,55 @@ try {
   $event = '{"event_type":"ERROR"}' | ConvertFrom-Json
   Assert-Equal (Get-Rbt009OptionalProperty -Object $event -Name "reason_code" -DefaultValue "NONE") "NONE" "O strict optional getter"
 
+  # P — pre-soak historical flood is baseline only; newly appended flood is monitored.
+  $historical = @()
+  for ($i = 0; $i -lt 25; $i++) {
+    $historical += '{"event_type":"ERROR","reason_code":"OLD","lane_id":"lane-1"}'
+  }
+  Write-Lines $file $historical
+  $baseline = Get-Rbt009SafeEventStats -Path $file
+  Assert-True ($baseline.max_identical_error_recovery_tail -ge 20) "P historical fixture contains old flood"
+  $offset = [int64]$baseline.file_length_bytes
+  $window = Get-Rbt009IncrementalFloodState -Path $file -StartOffset $offset
+  Assert-Equal $window.error_recovery_events 0 "P historical flood excluded from soak window"
+  Assert-Equal $window.max_identical_run 0 "P no false positive from historical flood"
+
+  # Q — newly appended identical flood is detected across bounded samples.
+  $appendWriter = [System.IO.StreamWriter]::new($file, $true, $utf8)
+  try {
+    for ($i = 0; $i -lt 10; $i++) {
+      $appendWriter.WriteLine('{"event_type":"RECOVERY","reason_code":"NEW_LOOP","lane_id":"lane-2"}')
+    }
+  } finally {
+    $appendWriter.Dispose()
+  }
+  $window1 = Get-Rbt009IncrementalFloodState -Path $file -StartOffset $offset
+  Assert-Equal $window1.max_identical_run 10 "Q first half of new flood"
+  $appendWriter = [System.IO.StreamWriter]::new($file, $true, $utf8)
+  try {
+    for ($i = 0; $i -lt 10; $i++) {
+      $appendWriter.WriteLine('{"event_type":"RECOVERY","reason_code":"NEW_LOOP","lane_id":"lane-2"}')
+    }
+  } finally {
+    $appendWriter.Dispose()
+  }
+  $window2 = Get-Rbt009IncrementalFloodState -Path $file -StartOffset $window1.next_offset -PreviousSignature $window1.last_signature -PreviousRun $window1.current_identical_run
+  Assert-Equal $window2.max_identical_run 20 "Q flood carry across samples"
+
+  # R — incremental reader is bounded even when more data is appended than one sample cap.
+  $offset = [int64](Get-Item -LiteralPath $file).Length
+  $appendWriter = [System.IO.StreamWriter]::new($file, $true, $utf8)
+  try {
+    for ($i = 0; $i -lt 5000; $i++) {
+      $appendWriter.WriteLine('{"event_type":"WORK_ACTIVITY","task_id":"SAFE"}')
+    }
+  } finally {
+    $appendWriter.Dispose()
+  }
+  $window = Get-Rbt009IncrementalFloodState -Path $file -StartOffset $offset -MaxBytes 65536
+  Assert-True ($window.bytes_read -le 65536) "R incremental bytes bounded"
+  Assert-True ($window.next_offset -gt $offset) "R incremental cursor advances"
+
   Write-Host "RBT009A_STRICTMODE_V2=True"
   Write-Host "RBT009A_OPTIONAL_EVENT_FIELDS=True"
   Write-Host "RBT009A_MALFORMED_PARTIAL_SKIP=True"
