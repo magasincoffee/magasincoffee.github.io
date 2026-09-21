@@ -36,7 +36,7 @@ function Read-Rbt009BoundedTextTail {
   $stream = $null
   try {
     $share = [System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete
-    $stream = New-Object System.IO.FileStream(
+    $stream = [System.IO.FileStream]::new(
       $Path,
       [System.IO.FileMode]::Open,
       [System.IO.FileAccess]::Read,
