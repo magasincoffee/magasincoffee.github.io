@@ -1,0 +1,141 @@
+name: New PC ChatGPT Session Discovery
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-chatgpt-session-discovery.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Relaunch dedicated Robot Chrome with local CDP
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $env:RUNNER_TRACKING_ID = "MAGASIN_ROBOT_BROWSER_PERSISTENT"
+
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $profile = Join-Path $root "browser_profile"
+          $chrome = @(
+            "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+            "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+            "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
+          ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+          if (-not $chrome) { throw "Chrome not found." }
+
+          Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" } |
+            ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+
+          Start-Sleep -Seconds 2
+
+          Start-Process -FilePath $chrome -ArgumentList @(
+            ('--user-data-dir="' + $profile + '"'),
+            '--remote-debugging-address=127.0.0.1',
+            '--remote-debugging-port=9222',
+            '--no-first-run',
+            '--no-default-browser-check',
+            'https://chatgpt.com/'
+          )
+
+          for ($i=0; $i -lt 30; $i++) {
+            Start-Sleep -Seconds 1
+            try {
+              $v = Invoke-RestMethod -Uri "http://127.0.0.1:9222/json/version" -TimeoutSec 2
+              if ($v.webSocketDebuggerUrl) {
+                Write-Host "CDP_READY=True"
+                exit 0
+              }
+            } catch {}
+          }
+          throw "Dedicated Chrome CDP did not become ready."
+
+      - name: Verify ChatGPT session and discover project chat candidates
+        shell: powershell
+        run: |
+          $runtime = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor\runtime"
+          Push-Location $runtime
+          try {
+            @'
+          import { chromium } from "playwright-core";
+
+          const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+          const contexts = browser.contexts();
+          if (!contexts.length) throw new Error("No Chrome context via CDP.");
+
+          let page = contexts.flatMap(c => c.pages()).find(p => p.url().includes("chatgpt.com"));
+          if (!page) {
+            page = await contexts[0].newPage();
+            await page.goto("https://chatgpt.com/", { waitUntil: "domcontentloaded", timeout: 30000 });
+          }
+
+          await page.waitForTimeout(5000);
+          const url = page.url();
+          const title = await page.title();
+
+          const loginVisible =
+            (await page.locator('text=/Log in|Sign up/i').count().catch(() => 0)) > 0 &&
+            (await page.locator('a[href*="/auth/login"], button:has-text("Log in")').count().catch(() => 0)) > 0;
+
+          console.log("CHATGPT_URL=" + url);
+          console.log("CHATGPT_TITLE=" + title.replace(/[\r\n]+/g, " ").slice(0, 160));
+          console.log("CHATGPT_LOGIN_REQUIRED=" + String(loginVisible));
+
+          if (loginVisible) {
+            throw new Error("Dedicated ChatGPT profile is not authenticated.");
+          }
+
+          const links = await page.locator('a[href*="/c/"]').evaluateAll((els) =>
+            els.map((a) => ({
+              text: (a.textContent || "").replace(/\s+/g, " ").trim(),
+              href: a.href
+            }))
+          );
+
+          const re = /(NÃO|NAO|WORK|MAGASIN|KIẾM TIỀN|KIEM TIEN|ROBOT)/i;
+          const seen = new Set();
+          for (const item of links) {
+            if (!item.href || !item.text || !re.test(item.text)) continue;
+            const key = item.href;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            console.log("CHAT_CANDIDATE=" + JSON.stringify({
+              title: item.text.slice(0, 140),
+              url: item.href
+            }));
+          }
+
+          console.log("CHATGPT_AUTH_SESSION_OK=True");
+          console.log("CHAT_CANDIDATE_COUNT=" + seen.size);
+          await browser.close();
+          '@ | Set-Content -LiteralPath ".\tmp-new-pc-chatgpt-discovery.mjs" -Encoding UTF8
+
+            node ".\tmp-new-pc-chatgpt-discovery.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "ChatGPT session discovery failed." }
+          } finally {
+            Remove-Item ".\tmp-new-pc-chatgpt-discovery.mjs" -Force -ErrorAction SilentlyContinue
+            Pop-Location
+          }
+
+      - name: Confirm migration STOP remains active
+        shell: powershell
+        run: |
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $stop = Test-Path (Join-Path $root "STOP")
+          $disabled = Test-Path (Join-Path $root "AUTOSTART_DISABLED")
+          Write-Host ("STOP_EXISTS=" + $stop)
+          Write-Host ("AUTOSTART_DISABLED_EXISTS=" + $disabled)
+          if (-not $stop -or -not $disabled) {
+            throw "Migration STOP latches are not intact."
+          }
+          Write-Host "ROBOT_REMAINS_STOPPED=True"
