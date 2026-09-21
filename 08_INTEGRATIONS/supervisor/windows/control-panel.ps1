@@ -481,10 +481,17 @@ $runnerButton.Add_Click({
 $content.Controls.Add($runnerButton)
 
 $runtimeLabel = New-Object Windows.Forms.Label
-$runtimeLabel.Location = New-Object Drawing.Point(310, 82)
-$runtimeLabel.Size = New-Object Drawing.Size(500, 32)
+$runtimeLabel.Location = New-Object Drawing.Point(310, 77)
+$runtimeLabel.Size = New-Object Drawing.Size(500, 20)
 $runtimeLabel.Font = New-Object Drawing.Font('Segoe UI Semibold', 10)
 $content.Controls.Add($runtimeLabel)
+
+$resourceLabel = New-Object Windows.Forms.Label
+$resourceLabel.Location = New-Object Drawing.Point(310, 98)
+$resourceLabel.Size = New-Object Drawing.Size(500, 22)
+$resourceLabel.Font = New-Object Drawing.Font('Segoe UI', 8.5)
+$resourceLabel.ForeColor = [Drawing.Color]::FromArgb(71,85,105)
+$content.Controls.Add($resourceLabel)
 
 $runtimeStartButton = New-Object Windows.Forms.Button
 $runtimeStartButton.Location = New-Object Drawing.Point(820, 76)
@@ -527,13 +534,13 @@ $repoButton.Add_Click({ Start-Process $repoUrl })
 $content.Controls.Add($repoButton)
 
 $laneUi = @{}
-$cardY = @(135, 385, 635)
+$cardY = @(135, 445, 755)
 
 for ($i = 0; $i -lt 3; $i++) {
     $laneId = "lane-$($i + 1)"
     $panel = New-Object Windows.Forms.Panel
     $panel.Location = New-Object Drawing.Point(28, $cardY[$i])
-    $panel.Size = New-Object Drawing.Size(1157, 228)
+    $panel.Size = New-Object Drawing.Size(1157, 298)
     $panel.BorderStyle = 'FixedSingle'
     $panel.BackColor = [Drawing.Color]::White
     $content.Controls.Add($panel)
@@ -617,23 +624,31 @@ for ($i = 0; $i -lt 3; $i++) {
     $resetWork.Size = New-Object Drawing.Size(116, 34)
     $panel.Controls.Add($resetWork)
 
-    $messageLabel = New-Object Windows.Forms.Label
-    $messageLabel.Text = 'THÔNG BÁO'
-    $messageLabel.Location = New-Object Drawing.Point(18, 141)
-    $messageLabel.Size = New-Object Drawing.Size(105, 24)
-    $panel.Controls.Add($messageLabel)
+    $executionValue = New-Object Windows.Forms.Label
+    $executionValue.Location = New-Object Drawing.Point(18, 136)
+    $executionValue.Size = New-Object Drawing.Size(742, 24)
+    $executionValue.Font = New-Object Drawing.Font('Segoe UI Semibold', 9)
+    $executionValue.AutoEllipsis = $true
+    $panel.Controls.Add($executionValue)
 
-    $messageValue = New-Object Windows.Forms.Label
-    $messageValue.Location = New-Object Drawing.Point(125, 138)
-    $messageValue.Size = New-Object Drawing.Size(635, 48)
-    $messageValue.AutoEllipsis = $true
-    $panel.Controls.Add($messageValue)
+    $healthValue = New-Object Windows.Forms.Label
+    $healthValue.Location = New-Object Drawing.Point(18, 162)
+    $healthValue.Size = New-Object Drawing.Size(742, 42)
+    $healthValue.Font = New-Object Drawing.Font('Segoe UI', 8.5)
+    $healthValue.ForeColor = [Drawing.Color]::FromArgb(71,85,105)
+    $panel.Controls.Add($healthValue)
 
     $updatedValue = New-Object Windows.Forms.Label
-    $updatedValue.Location = New-Object Drawing.Point(125, 190)
-    $updatedValue.Size = New-Object Drawing.Size(635, 22)
+    $updatedValue.Location = New-Object Drawing.Point(18, 207)
+    $updatedValue.Size = New-Object Drawing.Size(742, 24)
     $updatedValue.ForeColor = [Drawing.Color]::FromArgb(100,116,139)
     $panel.Controls.Add($updatedValue)
+
+    $messageValue = New-Object Windows.Forms.Label
+    $messageValue.Location = New-Object Drawing.Point(18, 235)
+    $messageValue.Size = New-Object Drawing.Size(742, 50)
+    $messageValue.AutoEllipsis = $true
+    $panel.Controls.Add($messageValue)
 
     $retryRelayButton = New-Object Windows.Forms.Button
     $retryRelayButton.Text = 'THỬ LẠI RELAY'
@@ -645,13 +660,13 @@ for ($i = 0; $i -lt 3; $i++) {
 
     $startButton = New-Object Windows.Forms.Button
     $startButton.Text = '▶  BẮT ĐẦU LUỒNG'
-    $startButton.Location = New-Object Drawing.Point(900, 145)
+    $startButton.Location = New-Object Drawing.Point(900, 220)
     $startButton.Size = New-Object Drawing.Size(225, 34)
     $panel.Controls.Add($startButton)
 
     $stopButton = New-Object Windows.Forms.Button
     $stopButton.Text = '■  DỪNG LUỒNG'
-    $stopButton.Location = New-Object Drawing.Point(900, 184)
+    $stopButton.Location = New-Object Drawing.Point(900, 260)
     $stopButton.Size = New-Object Drawing.Size(225, 32)
     $panel.Controls.Add($stopButton)
 
@@ -661,6 +676,8 @@ for ($i = 0; $i -lt 3; $i++) {
         Brain = $brainBox
         Work = $workBox
         Status = $statusValue
+        Execution = $executionValue
+        Health = $healthValue
         Message = $messageValue
         Updated = $updatedValue
         Start = $startButton
