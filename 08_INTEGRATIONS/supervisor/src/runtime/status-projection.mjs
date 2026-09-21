@@ -94,6 +94,8 @@ export function projectLaneOperationalStatus(
     applied_relay_rearm_revision: appliedRearmRevision,
     relay_rearm_pending: requestedRearmRevision > appliedRearmRevision,
     rollover_phase: rollover?.stage || null,
+    last_result_verdict: registryLane.last_result_verdict?.verdict || null,
+    last_verdict_task_id: registryLane.last_result_verdict?.task_id || null,
     brain_target_health: brainHealth,
     work_target_health: workHealth,
     ...extra
