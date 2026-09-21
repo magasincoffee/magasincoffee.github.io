@@ -17,6 +17,7 @@ $statusFile = Join-Path $root "lane-status.json"
 $eventFile = Join-Path $root "lane-events.ndjson"
 if (-not (Test-Path $lifecycle)) { throw "Installed lifecycle truth helper is missing" }
 . $lifecycle
+. (Join-Path $PSScriptRoot "supervisor-rbt009-soak-lib.ps1")
 
 function Get-Sha256Text([string]$Text) {
   $sha = [System.Security.Cryptography.SHA256]::Create()
@@ -62,38 +63,6 @@ function Get-RegistryTargetFingerprint {
   return Get-Sha256Text (($safe | ConvertTo-Json -Depth 5 -Compress))
 }
 
-function Get-SafeEventStats {
-  $result = [ordered]@{
-    total_lines = 0
-    error_recovery_tail = 0
-    max_identical_error_recovery_tail = 0
-  }
-  if (-not (Test-Path $eventFile)) { return $result }
-
-  $all = @(Get-Content $eventFile -Encoding UTF8)
-  $result.total_lines = $all.Count
-  $tail = @($all | Select-Object -Last 200)
-  $last = ""
-  $run = 0
-  $maxRun = 0
-  foreach ($line in $tail) {
-    if (-not $line.Trim()) { continue }
-    try { $event = $line | ConvertFrom-Json } catch { continue }
-    $type = [string]$event.event_type
-    if ($type -ne "ERROR" -and $type -ne "RECOVERY") {
-      $last = ""
-      $run = 0
-      continue
-    }
-    $sig = "$type|$([string]$event.reason_code)|$([string]$event.lane_id)"
-    $result.error_recovery_tail++
-    if ($sig -eq $last) { $run++ } else { $last = $sig; $run = 1 }
-    if ($run -gt $maxRun) { $maxRun = $run }
-  }
-  $result.max_identical_error_recovery_tail = $maxRun
-  return $result
-}
-
 $ownerStop = Get-LifecycleOwnerStopState -Root $root
 if ($ownerStop.blocked) {
   Write-Host "SOAK_OWNER_STOP_AUTHORITATIVE=True"
@@ -111,7 +80,8 @@ $unhealthyStreak = 0
 $sampleCount = 0
 $chromeRecoveryCount = 0
 $previousHealthy = $true
-$eventStart = Get-SafeEventStats
+$eventStart = Get-Rbt009SafeEventStats -Path $eventFile
+$maxEventTailBytesRead = [int]$eventStart.tail_bytes_read
 
 while ([DateTimeOffset]::UtcNow -lt $deadline) {
   $ownerStopNow = Get-LifecycleOwnerStopState -Root $root
@@ -152,7 +122,8 @@ while ([DateTimeOffset]::UtcNow -lt $deadline) {
     throw "Enabled runtime has no lane-status.json"
   }
 
-  $eventStats = Get-SafeEventStats
+  $eventStats = Get-Rbt009SafeEventStats -Path $eventFile
+  if ([int]$eventStats.tail_bytes_read -gt $maxEventTailBytesRead) { $maxEventTailBytesRead = [int]$eventStats.tail_bytes_read }
   if ($eventStats.max_identical_error_recovery_tail -ge 20) {
     throw "Repeated identical ERROR/RECOVERY event flood detected"
   }
@@ -174,7 +145,9 @@ if ((Get-TargetFingerprint) -ne $targetStart) {
 
 $registryTargetEnd = Get-RegistryTargetFingerprint
 $registryTargetEvolved = ($registryTargetEnd -ne $registryTargetStart)
-$eventEnd = Get-SafeEventStats
+$eventEnd = Get-Rbt009SafeEventStats -Path $eventFile
+if ([int]$eventEnd.tail_bytes_read -gt $maxEventTailBytesRead) { $maxEventTailBytesRead = [int]$eventEnd.tail_bytes_read }
+$eventGrowthBytes = [int64]$eventEnd.file_length_bytes - [int64]$eventStart.file_length_bytes
 $summary = [ordered]@{
   schema_version = "supervisor-rbt009-soak.v1"
   release_sha = [string]$env:GITHUB_SHA
@@ -187,8 +160,10 @@ $summary = [ordered]@{
   max_page_count = $maxPages
   max_unhealthy_streak = $maxUnhealthyStreak
   chrome_cdp_recovery_episodes = $chromeRecoveryCount
-  event_lines_start = [int]$eventStart.total_lines
-  event_lines_end = [int]$eventEnd.total_lines
+  event_file_bytes_start = [int64]$eventStart.file_length_bytes
+  event_file_bytes_end = [int64]$eventEnd.file_length_bytes
+  event_file_growth_bytes = [int64]$eventGrowthBytes
+  event_tail_bytes_read_max = [int]$maxEventTailBytesRead
   target_fingerprint = $targetStart
   registry_target_fingerprint_start = $registryTargetStart
   registry_target_fingerprint_end = $registryTargetEnd
