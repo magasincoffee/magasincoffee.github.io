@@ -209,7 +209,7 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 |---|---|---|---|
 | MIG-001 | Freeze Baseline + Migration Bootstrap | exact baseline inventory + migration contract + target repo bootstrap plan; zero production cutover | DONE |
 | MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | DONE |
-| MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | READY / NOT STARTED |
+| MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | ACTIVE / WORK RELEASED |
 | MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | QUEUED |
 | MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | QUEUED / OWNER-SAFE-GATE |
 | MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | QUEUED |
@@ -243,3 +243,12 @@ Next task is MIG-003 READY / NOT STARTED. Do not self-start MIG-003 from MIG-002
 Owner created the exact target repository `magasincoffee/magasin-supervisor`. GitHub verification confirms it is public, size 0, and empty. Resume MIG-002 from frozen baseline `4f76b929c5fedc44b451abd823f0f1f7fb3e50fe` and the existing 137-record map. Do not re-freeze or substitute moving main.
 
 `ZERO_PRODUCTION_MUTATION=true`
+
+
+### MIG-003 Owner release
+
+Owner explicitly released MIG-003. Exact target base: `magasincoffee/magasin-supervisor@64371bedc7b9c976047224152dba820c12a0674c`.
+
+Scope is decoupling only. Production cutover remains forbidden; existing embedded Supervisor remains the sole production authority. Self-hosted mutation/install/lifecycle/soak jobs in the target repository must remain inert until later gates.
+
+MIG-003 must STOP after evidence/closure and must not self-start MIG-004.
