@@ -669,6 +669,137 @@ jobs:
           Write-Host "STALE_TARGET_PRODUCTION_TRUTH_UNCHANGED=True"
           Write-Host "STALE_TARGET_RUNTIME_PID_UNCHANGED=True"
 
+          function Get-ControlPanelTruthFingerprint([string]$Path) {
+            if (-not (Test-Path $Path)) { return "NO_REGISTRY" }
+            $registry = Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+            $canonical = @("lane-1","lane-2","lane-3" | ForEach-Object {
+              $lane = $registry.lanes.$_
+              [ordered]@{
+                lane_id = $_
+                task_id = $lane.task_id
+                awaiting_work = $lane.awaiting_work
+                work_url = $lane.work_url
+                work_generation = $lane.work_generation
+                pending_work_url_revision = $lane.pending_work_url_revision
+                dispatch_inflight = $lane.dispatch_inflight
+                relay_inflight = $lane.relay_inflight
+                task_timing = $lane.task_timing
+                work_watchdog = $lane.work_watchdog
+                work_rollover = $lane.work_rollover
+                brain_target_health = $lane.brain_target_health
+                work_target_health = $lane.work_target_health
+              } | ConvertTo-Json -Compress -Depth 20
+            }) -join "`n"
+            $bytes = [Text.Encoding]::UTF8.GetBytes($canonical)
+            $hasher = [Security.Cryptography.SHA256]::Create()
+            try {
+              return ([BitConverter]::ToString($hasher.ComputeHash($bytes))).Replace("-","").ToLowerInvariant()
+            } finally {
+              $hasher.Dispose()
+            }
+          }
+
+          function Get-RobotCdpPageCount {
+            $chrome = Get-LifecycleRobotChrome -Root $root
+            if (-not $chrome -or -not $chrome.CommandLine) { return $null }
+            if ($chrome.CommandLine -notmatch '--remote-debugging-port=(\d+)') { return $null }
+            $port = [int]$Matches[1]
+            try {
+              $pages = Invoke-RestMethod -Uri "http://127.0.0.1:$port/json/list" -TimeoutSec 2
+              return @($pages | Where-Object { [string]$_.type -eq "page" }).Count
+            } catch {
+              return $null
+            }
+          }
+
+          $controlTargetBefore = Get-TargetFingerprint $configFile
+          $controlTruthBefore = Get-ControlPanelTruthFingerprint $registryFile
+          $controlProcessBefore = Get-LifecycleProcessTruth -Root $root
+          $controlWrapperBefore = if ($controlProcessBefore.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+          $controlPageCountBefore = Get-RobotCdpPageCount
+
+          $controlOutput = & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $panelFixture
+          if ($LASTEXITCODE -ne 0) { throw "Installed Control Panel observability fixture failed" }
+          $controlOutput | ForEach-Object { Write-Host $_ }
+
+          foreach ($marker in @(
+            "CONTROL_PANEL_PROCESS_TRUTH_FIRST=True",
+            "CONTROL_PANEL_PAGE_BUDGET_VISIBLE=True",
+            "CONTROL_PANEL_LANE_TIMING_VISIBLE=True",
+            "CONTROL_PANEL_EVENT_TAIL_BOUNDED=True",
+            "CONTROL_PANEL_EVENT_CORRUPT_TAIL_TOLERATED=True",
+            "CONTROL_PANEL_EVENT_MALFORMED_SKIPPED=True",
+            "CONTROL_PANEL_EVENT_CONCURRENT_APPEND=True",
+            "CONTROL_PANEL_PRIVACY_SAFE=True",
+            "CONTROL_PANEL_NO_BROWSER_MUTATION=True",
+            "CONTROL_PANEL_UNKNOWN_EVENT_TOLERATED=True",
+            "CONTROL_PANEL_PROCESS_RESOURCE_DEGRADED_SAFE=True"
+          )) {
+            if ($controlOutput -notcontains $marker) {
+              throw "Missing Control Panel fixture marker: $marker"
+            }
+          }
+
+          $probeOutput = & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $panelScript -ObservabilityProbe
+          if ($LASTEXITCODE -ne 0) { throw "Installed Control Panel observability probe failed" }
+          $probeLine = @($probeOutput | Where-Object { [string]$_ -match '^\{' } | Select-Object -Last 1)
+          if ($probeLine.Count -ne 1) { throw "Control Panel observability probe did not emit one JSON payload" }
+          $probe = [string]$probeLine[0] | ConvertFrom-Json
+          if ([string]$probe.schema_version -ne "control-panel-observability-probe.v1") {
+            throw "Control Panel observability probe schema mismatch"
+          }
+          if ([int]$probe.timeline_event_count -gt 30) {
+            throw "Control Panel production timeline exceeded bounded event count"
+          }
+          if ([int]$probe.timeline_bytes_read -gt 262144) {
+            throw "Control Panel production timeline exceeded bounded byte read"
+          }
+
+          $sourceRuntime = Get-Content $runtimeCli -Raw -Encoding UTF8
+          $versionMatch = [regex]::Match($sourceRuntime, 'SUPERVISOR_RUNTIME_VERSION\s*=\s*"([^"]+)"')
+          if (-not $versionMatch.Success) { throw "Installed runtime version not found" }
+          if (
+            [string]$probe.runtime_version -and
+            [string]$probe.runtime_version -ne [string]$versionMatch.Groups[1].Value
+          ) {
+            throw "Control Panel probe runtime version does not match installed source"
+          }
+
+          $controlTargetAfter = Get-TargetFingerprint $configFile
+          $controlTruthAfter = Get-ControlPanelTruthFingerprint $registryFile
+          if ($controlTargetAfter -ne $controlTargetBefore) {
+            throw "Production Brain/Work targets changed during Control Panel observability acceptance"
+          }
+          if ($controlTruthAfter -ne $controlTruthBefore) {
+            throw "Production task/latch/pending/quarantine truth changed during Control Panel observability acceptance"
+          }
+
+          $controlProcessAfter = Get-LifecycleProcessTruth -Root $root
+          $controlWrapperAfter = if ($controlProcessAfter.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+          if ($controlWrapperAfter -ne $controlWrapperBefore) {
+            throw "Control Panel observability fixture/probe restarted or stopped the Supervisor wrapper"
+          }
+
+          $controlPageCountAfter = Get-RobotCdpPageCount
+          if (
+            $null -ne $controlPageCountBefore -and
+            $null -ne $controlPageCountAfter -and
+            [int]$controlPageCountAfter -ne [int]$controlPageCountBefore
+          ) {
+            throw "Control Panel observability probe changed dedicated Chrome page count"
+          }
+
+          Write-Host "CONTROL_PANEL_RUNTIME_ARTIFACT_FIXTURE=True"
+          Write-Host "CONTROL_PANEL_REAL_STATUS_EVENT_READ=True"
+          Write-Host "CONTROL_PANEL_PRODUCTION_TARGETS_UNCHANGED=True"
+          Write-Host "CONTROL_PANEL_PRODUCTION_TRUTH_UNCHANGED=True"
+          Write-Host "CONTROL_PANEL_RUNTIME_PID_UNCHANGED=True"
+          Write-Host "CONTROL_PANEL_NO_BROWSER_MUTATION=True"
+
       - name: Verify event timing foundation privacy
         shell: powershell
         run: |
