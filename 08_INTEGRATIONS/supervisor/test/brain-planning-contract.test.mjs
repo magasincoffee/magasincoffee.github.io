@@ -296,5 +296,6 @@ test("CLI contains dual handshake migration and active-latch legacy envelope gat
   assert.match(source, /planning_contract_version/);
   assert.match(source, /existingDispatchLatch\?\.directive_digest/);
   assert.match(source, /coreDispatchDigest/);
+  assert.match(source, /LANE_WORK_LEGACY_SEND_NOT_CONFIRMED_RETRY_SAME_IDENTITY/);
   assert.match(source, /applyBrainVerdictDirective/);
 });
