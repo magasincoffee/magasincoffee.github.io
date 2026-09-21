@@ -1101,6 +1101,8 @@ Rollback/risk:
 
 ### TASK-RBT-008 — Brain Planning Contract Runtime Hooks
 
+**Implementation status:** RELEASED in runtime v2026-09-20.60. The implementation keeps MAGASIN_LANE_DIRECTIVE_V1 backward-compatible, adds optional correlated previous-result ACCEPT/REJECT metadata, durable idempotent verdict state/events, a runtime-added Work stop guard, v59 handshake/active-dispatch migration compatibility, and preserves exact-once dispatch/relay.
+
 Purpose: make PLAN → DISPATCH → VERIFY → ACCEPT/REJECT → NEXT PLAN observable/enforceable where safely possible.
 
 Expected scope/files:

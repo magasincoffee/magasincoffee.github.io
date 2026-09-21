@@ -232,7 +232,60 @@ The parser intentionally fails closed when the exact block is absent, JSON is in
 
 Brain projects must conform to the protocol. They must not depend on the Robot guessing or rewriting malformed directives.
 
-## 12. Owner usage
+## 12. Optional Brain planning/result-verdict extension
+
+TASK-RBT-008 keeps the protocol name and byte-exact markers unchanged. The legacy payloads remain valid exactly as written:
+
+`{"action":"WORK","task_id":"TASK-ID","instruction":"..."}`
+
+`{"action":"IDLE"}`
+
+A Brain that has just received a Robot result relay may add one optional `previous_result` object:
+
+```json
+{
+  "action": "WORK",
+  "task_id": "TASK-NEXT",
+  "instruction": "One bounded outcome with dependency, DoD, evidence and stop boundary.",
+  "previous_result": {
+    "task_id": "TASK-PREV",
+    "relay_id": "0123456789abcdef0123456789abcdef",
+    "verdict": "ACCEPT",
+    "reason_code": "ACCEPT_DOD_MET"
+  }
+}
+```
+
+Allowed verdicts are only `ACCEPT` and `REJECT`. `relay_id` must be the deterministic relay ID supplied by the Robot for that exact result. Runtime correlation is against durable lane truth; a mismatched task or relay fails closed.
+
+For a REJECT correction that uses a different correction task ID, add:
+
+```json
+"correction_of": {
+  "task_id": "TASK-PREV",
+  "relay_id": "0123456789abcdef0123456789abcdef"
+}
+```
+
+A REJECT may also reuse the same `task_id` without `correction_of`. REJECT must not jump to an unrelated roadmap task. If correction cannot proceed without Owner intervention, REJECT + IDLE is the bounded stop path.
+
+Optional `reason_code` is metadata only and is restricted to the runtime allowlist. Free-form review prose, private reasoning and message content do not belong in verdict metadata.
+
+The parser is deliberately narrow. Unknown top-level directive fields and unknown fields inside known optional metadata are rejected rather than becoming covert control surfaces.
+
+Transport confirmation and semantic acceptance are different facts:
+
+- `RESULT_RELAY_CONFIRMED` means the result reached the exact Brain conversation.
+- `previous_result.verdict=ACCEPT` means Brain accepted that result against its DoD/evidence.
+- A relay is never automatically converted into ACCEPT.
+
+The Brain planning contract is:
+
+`PLAN → DISPATCH → VERIFY → ACCEPT/REJECT → NEXT PLAN`
+
+For decomposable work, Brain targets roughly <=20 minutes of active implementation per task and splits work expected to exceed 30 minutes when it can be split safely. These are planning targets only; they do not modify the RBT-005 inactivity watchdog or create a runtime task timeout.
+
+## 13. Owner usage
 
 To configure another Brain project, tell that Brain:
 

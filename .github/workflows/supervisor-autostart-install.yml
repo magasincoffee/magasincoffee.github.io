@@ -798,6 +798,58 @@ jobs:
           Write-Host "CONTROL_PANEL_RUNTIME_PID_UNCHANGED=True"
           Write-Host "CONTROL_PANEL_NO_BROWSER_MUTATION=True"
 
+          $planningFixture = Join-Path $runtime "src\runtime\brain-planning-acceptance-cli.mjs"
+          if (-not (Test-Path $planningFixture)) { throw "Installed Brain planning fixture is missing" }
+
+          $planningTargetBefore = Get-TargetFingerprint $configFile
+          $planningTruthBefore = Get-ControlPanelTruthFingerprint $registryFile
+          $planningProcessBefore = Get-LifecycleProcessTruth -Root $root
+          $planningWrapperBefore = if ($planningProcessBefore.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+
+          $planningOutput = & node.exe $planningFixture
+          if ($LASTEXITCODE -ne 0) { throw "Installed Brain planning contract fixture failed" }
+          $planningOutput | ForEach-Object { Write-Host $_ }
+
+          foreach ($marker in @(
+            "BRAIN_PLANNING_V1_BACKWARD_COMPATIBLE=True",
+            "BRAIN_PLANNING_ACCEPT_CORRELATED=True",
+            "BRAIN_PLANNING_REJECT_CORRELATED=True",
+            "BRAIN_PLANNING_REJECT_UNRELATED_BLOCKED=True",
+            "BRAIN_PLANNING_VERDICT_IDEMPOTENT=True",
+            "BRAIN_PLANNING_LEGACY_HANDSHAKE_NO_DUPLICATE=True",
+            "BRAIN_PLANNING_ACTIVE_DISPATCH_NO_RESEND=True",
+            "BRAIN_PLANNING_WORK_STOP_GUARD=True",
+            "BRAIN_PLANNING_EVENTS_PRIVACY_SAFE=True"
+          )) {
+            if ($planningOutput -notcontains $marker) {
+              throw "Missing Brain planning fixture marker: $marker"
+            }
+          }
+
+          $planningTargetAfter = Get-TargetFingerprint $configFile
+          $planningTruthAfter = Get-ControlPanelTruthFingerprint $registryFile
+          if ($planningTargetAfter -ne $planningTargetBefore) {
+            throw "Production Brain/Work targets changed during Brain planning acceptance"
+          }
+          if ($planningTruthAfter -ne $planningTruthBefore) {
+            throw "Production task/latch/pending/quarantine truth changed during Brain planning acceptance"
+          }
+
+          $planningProcessAfter = Get-LifecycleProcessTruth -Root $root
+          $planningWrapperAfter = if ($planningProcessAfter.wrapper_alive) {
+            [int](Get-LifecycleSupervisorWrapper -Root $root).ProcessId
+          } else { 0 }
+          if ($planningWrapperAfter -ne $planningWrapperBefore) {
+            throw "Brain planning fixture restarted or stopped the Supervisor wrapper"
+          }
+
+          Write-Host "BRAIN_PLANNING_RUNTIME_ARTIFACT_FIXTURE=True"
+          Write-Host "BRAIN_PLANNING_PRODUCTION_TARGETS_UNCHANGED=True"
+          Write-Host "BRAIN_PLANNING_PRODUCTION_TRUTH_UNCHANGED=True"
+          Write-Host "BRAIN_PLANNING_RUNTIME_PID_UNCHANGED=True"
+
       - name: Verify event timing foundation privacy
         shell: powershell
         run: |

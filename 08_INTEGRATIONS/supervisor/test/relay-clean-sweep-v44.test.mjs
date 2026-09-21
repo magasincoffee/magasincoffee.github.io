@@ -146,11 +146,12 @@ test("v44 preserves Owner Brain hot-swap contract while cleaning only relay evid
   assert.match(source, /await clearRelayInflight\(registryLane\)/);
 });
 
-test("v43 Work dispatch marker envelope remains unchanged in v44", () => {
+test("legacy Work dispatch marker envelope remains reconstructable under v60 migration", () => {
   const text = buildWorkDispatchInstruction({
     taskId: "TASK-049/WORK-DISPATCH-V43-E2E-04",
     dispatchId: "17bb5c7442e65d9f6350f61330c595dd",
-    instruction: "READ ONLY"
+    instruction: "READ ONLY",
+    planningContract: false
   });
   assert.equal(
     text,
@@ -214,7 +215,7 @@ test("current runtime performs blocked relay migration before lane processing", 
   assert.match(source, /startupRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
   assert.match(source, /RUNTIME_RELAY_BLOCKED_LATCHES_MIGRATED/);
   assert.match(source, /loopRelayMigrations = migrateLegacyBlockedRelayLatches\(registry\)/);
-  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.59"/);
+  assert.match(source, /SUPERVISOR_RUNTIME_VERSION = "2026-09-20\.60"/);
 });
 
 

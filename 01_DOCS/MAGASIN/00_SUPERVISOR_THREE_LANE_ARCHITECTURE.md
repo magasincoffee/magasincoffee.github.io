@@ -64,7 +64,7 @@ For each lane the Control Panel target UX shows:
 12. LƯU WORK.
 13. TỰ TẠO WORK.
 
-Current production contract: LƯU WORK hot-swap is released by TASK-RBT-003, finite global browser scheduling by TASK-RBT-004, inactivity-based long-running recovery by TASK-RBT-005, relay exhaustion recovery by TASK-RBT-005A, multi-signal Work-full rollover by TASK-RBT-006, durable stale/missing exact-target quarantine by TASK-RBT-006A, deterministic explicit Owner START latch recovery by TASK-RBT-006B, and process-first Control Panel timeline/resource observability by TASK-RBT-007 (runtime v2026-09-20.59).
+Current production contract: LƯU WORK hot-swap is released by TASK-RBT-003, finite global browser scheduling by TASK-RBT-004, inactivity-based long-running recovery by TASK-RBT-005, relay exhaustion recovery by TASK-RBT-005A, multi-signal Work-full rollover by TASK-RBT-006, durable stale/missing exact-target quarantine by TASK-RBT-006A, deterministic explicit Owner START latch recovery by TASK-RBT-006B, process-first Control Panel timeline/resource observability by TASK-RBT-007 (runtime v2026-09-20.59), and backward-compatible Brain planning/result-verdict runtime hooks by TASK-RBT-008 (runtime v2026-09-20.60).
 
 ## Non-negotiable invariants
 
@@ -111,7 +111,7 @@ No work available:
 
 The directive belongs only to the lane whose Brain URL produced it.
 
-Future TASK-RBT planning hooks may add backward-compatible optional metadata for previous-result ACCEPT/REJECT, but the action/task/instruction core remains authoritative unless a separately reviewed protocol change is approved.
+TASK-RBT-008 adds backward-compatible optional previous-result ACCEPT/REJECT metadata while preserving the action/task/instruction core and byte-exact MAGASIN_LANE_DIRECTIVE_V1 markers. Legacy WORK/IDLE directives remain valid unchanged.
 
 ## Brain Planning Contract
 
