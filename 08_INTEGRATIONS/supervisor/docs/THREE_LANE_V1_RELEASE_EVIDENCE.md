@@ -54,15 +54,15 @@ An interrupted self-hosted job does not count as a partial pass. The eight-hour 
 
 ## Implementation evidence — to be filled after implementation PR merge
 
-- Implementation PR: `PENDING`.
-- Implementation head SHA: `PENDING`.
+- Implementation PR: `#215`.
+- Implementation head SHA: recorded from PR #215 after its final pre-merge correction commit.
 - Implementation merge/runtime SHA: `PENDING`.
 - Runtime before/after: `v2026-09-20.60 → v2026-09-20.60` unless a correction changes runtime behavior.
 - Supervisor Tests run/job: `PENDING`.
 - Supervisor Integrity static/runtime run/jobs: `PENDING`.
 - Supervisor Autostart Install + verify-survival run/jobs: `PENDING`.
 - Supervisor Lifecycle Acceptance A→L run/job: `PENDING`.
-- Tier A synthetic integration run/job: `PENDING`.
+- Tier A synthetic integration run/job: `PENDING` (PR CI / post-merge release workflow).
 
 ## Final 8h production soak — mandatory closure fields
 
