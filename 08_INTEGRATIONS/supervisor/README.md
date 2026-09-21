@@ -16,7 +16,7 @@ The Windows wrapper still retains the legacy `BRAIN_WORKER_V1` entry point as a 
 
 ### Current production baseline
 
-Runtime lifecycle in production is v2026-09-20.58.
+Runtime lifecycle in production is v2026-09-20.59.
 
 TASK-RBT-001 adds a **docs-only target architecture** for browser scheduling, long-running Work recovery, Work hot-swap and operational observability. Those target features are not considered released by TASK-RBT-001 itself.
 
@@ -40,11 +40,11 @@ Implementation roadmap:
 - TASK-RBT-006 — Multi-Signal Work Full Detection + Rollover — IMPLEMENTED in v2026-09-20.56
 - TASK-RBT-006A — Stale/Missing Exact-Target Navigation Storm Circuit Breaker — IMPLEMENTED in v2026-09-20.57
 - TASK-RBT-006B — Owner START Latch Recovery / Lifecycle Acceptance Closure — IMPLEMENTED in v2026-09-20.58
-- TASK-RBT-007 — Control Panel Timeline & Resource UX
+- TASK-RBT-007 — Control Panel Timeline & Resource UX — IMPLEMENTED in v2026-09-20.59
 - TASK-RBT-008 — Brain Planning Contract Runtime Hooks
 - TASK-RBT-009 — Integration / Overnight Soak / Cleanup
 
-v2026-09-20.58 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, TASK-RBT-006A durable stale/missing target quarantine, and TASK-RBT-006B deterministic explicit Owner START latch authority. TASK-RBT-007+ remain separate until their own implementation and acceptance tasks pass.
+v2026-09-20.59 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, TASK-RBT-006A durable stale/missing target quarantine, TASK-RBT-006B deterministic explicit Owner START latch authority, and TASK-RBT-007 Control Panel timeline/resource observability. TASK-RBT-008+ remain separate until their own implementation and acceptance tasks pass.
 
 ## Lifecycle truth
 
@@ -126,7 +126,7 @@ Runtime v2026-09-20.53 implements TASK-RBT-004 Browser Scheduler + Tab Budget:
 
 One lane enabled continues to work normally. Two or three enabled lanes share the same Chrome/CDP fairly without sharing task/latch state.
 
-Remaining TASK-RBT work after the browser scheduler is intentionally separate; multi-signal Work-full rollover is released by TASK-RBT-006 and later timeline/resource UX remains TASK-RBT-007+.
+Remaining TASK-RBT work after the browser scheduler is intentionally separate; Work-full rollover is released by TASK-RBT-006 and Control Panel timeline/resource UX is released by TASK-RBT-007. Planning protocol/runtime hooks remain TASK-RBT-008+.
 
 ## Released long-running Work watchdog
 
@@ -257,7 +257,7 @@ Every task should have:
 
 Planning target remains roughly <=20 minutes active implementation work when a task is decomposable. If a task is expected to exceed 30 minutes and can be split safely, Brain should split it. Inherently long-running operations may remain long and are handled by activity-based watchdog semantics.
 
-## Operational timeline target
+## Released operational timeline and Control Panel observability
 
 TASK-RBT-002 introduces a privacy-safe append-only local event file:
 
@@ -285,7 +285,7 @@ Target task timing includes:
 - execution_time
 - total elapsed
 
-Control Panel reads only a bounded recent tail, not the full event history on every refresh.
+Runtime v2026-09-20.59 projects canonical task timing, watchdog/rollover/target-health/revision state into the additive `three-lane-status.v1` snapshot. Control Panel renders PROCESS TRUTH first, scheduler page-budget/mutation diagnostics, per-lane execution timing/state and a default 30-event bounded tail of `lane-events.ndjson`. The reader seeks from the end with a bounded byte window, tolerates partial/corrupt lines and concurrent appends, rejects events with fields outside the safe schema, and never renders URL/message/token/cookie/screenshot content. Control Panel reads only a bounded recent tail, not the full event history on every refresh.
 
 ## Temporary evidence lifecycle
 
