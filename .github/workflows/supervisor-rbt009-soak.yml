@@ -1,4 +1,5 @@
 name: Supervisor RBT-009 Overnight Soak
+# Final candidate refresh after release-gate concurrency drain.
 
 on:
   push:
