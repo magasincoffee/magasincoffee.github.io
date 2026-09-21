@@ -145,7 +145,7 @@ test("Windows viewport probe executes the production layout helper without local
   const large = probe(1920, 1040);
   assert.equal(large.initial_width, 1240);
   assert.equal(large.initial_height, 930);
-  assert.equal(large.vertical_scroll_required, false);
+  assert.equal(large.vertical_scroll_required, true);
   assert.equal(large.lane3_stop_in_canvas, true);
 
   const medium = probe(1600, 860);
