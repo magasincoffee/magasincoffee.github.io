@@ -1470,6 +1470,21 @@ async function reconcileDispatchInflight({
       return "NOT_CONFIRMED";
     }
 
+    if (!latch.planning_contract_version) {
+      latch.send_attempted_at = null;
+      latch.send_state = "NOT_CONFIRMED";
+      latch.reconcile_reloaded = false;
+      delete latch.reconcile_started_at;
+      await atomicJsonWrite(registryPath, registry);
+      await safeLog(logPath, {
+        type: "LANE_WORK_LEGACY_SEND_NOT_CONFIRMED_RETRY_SAME_IDENTITY",
+        laneId: lane.lane_id,
+        taskId: latch.task_id,
+        digest: latch.instruction_digest
+      });
+      return "NOT_CONFIRMED";
+    }
+
     registryLane.dispatch_inflight = null;
     await atomicJsonWrite(registryPath, registry);
     await safeLog(logPath, {
