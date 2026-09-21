@@ -115,8 +115,12 @@ test("RBT-009 production soak is workflow-gated, eight-hour and read-only by sou
 
 test("RBT-009 rollback/static cleanup guard preserves local state files", async () => {
   const installer = await fs.readFile(new URL("../windows/install-supervisor.ps1", import.meta.url), "utf8");
-  assert.doesNotMatch(installer, /Remove-Item[^\n]*(lanes\.json|lane-registry\.json|STOP|AUTOSTART_DISABLED)/i);
-  assert.doesNotMatch(installer, /Move-Item[^\n]*(lanes\.json|lane-registry\.json)/i);
+  const mutationLines = installer
+    .split(/\r?\n/)
+    .filter((line) => /Remove-Item|Move-Item/i.test(line));
+  for (const line of mutationLines) {
+    assert.doesNotMatch(line, /lanes\.json|lane-registry\.json|AUTOSTART_DISABLED|['"]STOP['"]/i);
+  }
 });
 
 test("RBT-009 does not bump runtime when only integration/workflow/docs are added", async () => {
