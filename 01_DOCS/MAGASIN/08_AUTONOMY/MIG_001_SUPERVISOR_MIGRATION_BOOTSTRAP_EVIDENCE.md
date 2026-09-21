@@ -1,6 +1,6 @@
 # MIG-001 — Supervisor Migration Bootstrap Evidence
 
-Status: **DONE CANDIDATE / PR-GATED**  
+Status: **DONE / ZERO-PRODUCTION-MUTATION**  
 Migration: `MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1`  
 Task: `MIG-001 — Freeze Baseline + Migration Bootstrap`  
 Date: 2026-09-21
