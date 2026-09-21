@@ -1064,6 +1064,8 @@ Rollback/risk:
 
 ### TASK-RBT-007 — Control Panel Timeline & Resource UX
 
+**Implementation status:** RELEASED in runtime v2026-09-20.59. The implementation adds an additive privacy-safe status projection, bounded local NDJSON tail reader, native WinForms resource/lane/timeline surfaces and read-only installed acceptance probe. PROCESS TRUTH remains first and no orchestration semantics change.
+
 Purpose: make execution understandable without reading private conversation content.
 
 Expected scope/files:
