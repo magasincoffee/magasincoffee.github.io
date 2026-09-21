@@ -168,18 +168,18 @@ TASK-066 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_066_OP
 TASK-067 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_067_OPERATING_COST_TRUTH_CONTRACT_V1_EVIDENCE.md`. Source-agnostic Operating Cost Truth V1 reuses Financial Truth and separates exact recognized cost from payment, settlement proceeds, allocation context and budget context. ACTUAL exact items require actuality/period/amount/scope proof; ACTUAL PERIOD_AGGREGATE requires COMPLETE proven coverage; shared-company branch allocation requires explicit approval; historical source periods cannot become current ACTUAL. Existing Partial Financial Baseline compatibility is proven without changing Profit formula. PR #204 final head `4c9bbc2b99dd272a6f707ce2ebd422988cef9223`, merge `6233fc587921ba44a0b61a662b6b316ade8292c2`; PR-head run `35515915305` and exact post-merge run `35515946855` succeeded on Node v20.20.2 with TASK-067 31/31 and full Business OS 385/385 / 0 fail. TASK-067 DONE; TASK-068 READY / AUTO_CONTINUE.
 
 
-## Workforce Operations V1 — STAGED / WAIT_OWNER_RELEASE
+## Workforce Operations V1 — MANUAL_WORK RELEASED / ROBOT DISABLED
 
 Canonical architecture: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md`  
 Execution plan: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md`  
 E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 
-> Architecture is Owner-approved. Owner has released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090 is READY / MANUAL_WORK; TASK-091→108 remain queued until Brain accepts each prior result. Current PFC queue remains independently authoritative.
+> Architecture is Owner-approved. Owner released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090 reconciliation is DONE with evidence at 05_SYSTEM/TASK_090_WORKFORCE_V1_CURRENT_SYSTEM_RECONCILIATION.md. TASK-091 is READY / MANUAL_WORK but MUST NOT auto-run; TASK-092→108 remain staged until Brain accepts each prior result. Current PFC queue remains independently authoritative.
 
 | ID | Task | Est. | Gate | Status |
 |---|---|---:|---|---|
-| TASK-090 | Workforce V1 Current-System Reconciliation | 20m | reuse/delete map + no duplicate path | READY / MANUAL_WORK |
-| TASK-091 | Workforce V1 Canonical State + Rule Contract | 20m | state/role/rule contract | QUEUED / MANUAL_WORK |
+| TASK-090 | Workforce V1 Current-System Reconciliation | 20m | reuse/delete map + no duplicate path | DONE |
+| TASK-091 | Workforce V1 Canonical State + Rule Contract | 20m | state/role/rule contract | READY / MANUAL_WORK |
 | TASK-092 | Availability Weekly Cycle Hardening | 20m | next-week registration tests | STAGED / WAIT_OWNER_RELEASE |
 | TASK-093 | Manager Sunday Schedule Board V1 | 20m | Manager scheduling browser gate | STAGED / WAIT_OWNER_RELEASE |
 | TASK-094 | Schedule Validation + Publish Gate | 20m | overlap/max-2/scope/publish regression | STAGED / WAIT_OWNER_RELEASE |
