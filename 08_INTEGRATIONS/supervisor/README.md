@@ -16,7 +16,7 @@ The Windows wrapper still retains the legacy `BRAIN_WORKER_V1` entry point as a 
 
 ### Current production baseline
 
-Runtime lifecycle in production is v2026-09-20.57.
+Runtime lifecycle in production is v2026-09-20.58.
 
 TASK-RBT-001 adds a **docs-only target architecture** for browser scheduling, long-running Work recovery, Work hot-swap and operational observability. Those target features are not considered released by TASK-RBT-001 itself.
 
@@ -39,11 +39,12 @@ Implementation roadmap:
 - TASK-RBT-005A — Relay Retry Exhaustion Recovery — IMPLEMENTED in v2026-09-20.55
 - TASK-RBT-006 — Multi-Signal Work Full Detection + Rollover — IMPLEMENTED in v2026-09-20.56
 - TASK-RBT-006A — Stale/Missing Exact-Target Navigation Storm Circuit Breaker — IMPLEMENTED in v2026-09-20.57
+- TASK-RBT-006B — Owner START Latch Recovery / Lifecycle Acceptance Closure — IMPLEMENTED in v2026-09-20.58
 - TASK-RBT-007 — Control Panel Timeline & Resource UX
 - TASK-RBT-008 — Brain Planning Contract Runtime Hooks
 - TASK-RBT-009 — Integration / Overnight Soak / Cleanup
 
-v2026-09-20.57 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, and TASK-RBT-006A durable stale/missing target quarantine. TASK-RBT-007+ remain separate until their own implementation and acceptance tasks pass.
+v2026-09-20.58 production truth includes TASK-RBT-002 event/timing foundation, TASK-RBT-003 Work target hot-swap/save, TASK-RBT-004 scheduler/tab budget, TASK-RBT-005 long-running Work watchdog, TASK-RBT-005A Owner-authorized relay retry recovery, TASK-RBT-006 multi-signal Work-full rollover, TASK-RBT-006A durable stale/missing target quarantine, and TASK-RBT-006B deterministic explicit Owner START latch authority. TASK-RBT-007+ remain separate until their own implementation and acceptance tasks pass.
 
 ## Lifecycle truth
 
