@@ -1,0 +1,71 @@
+name: Host Media Move Recovery Check
+
+on:
+  push:
+    branches:
+      - diagnostics/host-health-20260921
+    paths:
+      - ".github/workflows/host-media-move-recovery-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: self-hosted
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect move state without modifying files
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Continue"
+          $sourceRoot = Join-Path $env:USERPROFILE "Desktop"
+          $destRoot   = "D:\MAGASIN_ARCHIVE\Videos"
+
+          $c = Get-Volume -DriveLetter C -ErrorAction SilentlyContinue
+          $d = Get-Volume -DriveLetter D -ErrorAction SilentlyContinue
+          if ($c) {
+            Write-Host ("C_FREE_GB=" + [math]::Round($c.SizeRemaining/1GB,2))
+            Write-Host ("C_FREE_PCT=" + [math]::Round(100*$c.SizeRemaining/$c.Size,2))
+          }
+          if ($d) {
+            Write-Host ("D_FREE_GB=" + [math]::Round($d.SizeRemaining/1GB,2))
+            Write-Host ("D_FREE_PCT=" + [math]::Round(100*$d.SizeRemaining/$d.Size,2))
+          }
+
+          $source = @(Get-ChildItem -LiteralPath $sourceRoot -File -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -ieq ".mp4" -and -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) })
+          $srcBytes = ($source | Measure-Object Length -Sum).Sum
+          if ($null -eq $srcBytes) { $srcBytes = 0 }
+
+          $dest = @()
+          if (Test-Path -LiteralPath $destRoot) {
+            $dest = @(Get-ChildItem -LiteralPath $destRoot -File -Recurse -Force -ErrorAction SilentlyContinue |
+              Where-Object { $_.Extension -ieq ".mp4" -and -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) })
+          }
+          $dstBytes = ($dest | Measure-Object Length -Sum).Sum
+          if ($null -eq $dstBytes) { $dstBytes = 0 }
+
+          $dupCount = 0
+          $dupBytes = 0L
+          foreach ($f in $source) {
+            $relative = $f.FullName.Substring($sourceRoot.Length).TrimStart('\')
+            $target = Join-Path $destRoot $relative
+            if (Test-Path -LiteralPath $target) {
+              $t = Get-Item -LiteralPath $target -ErrorAction SilentlyContinue
+              if ($t -and $t.Length -eq $f.Length) {
+                $dupCount++
+                $dupBytes += $f.Length
+              }
+            }
+          }
+
+          Write-Host ("SOURCE_MP4_COUNT=" + $source.Count)
+          Write-Host ("SOURCE_MP4_GB=" + [math]::Round($srcBytes/1GB,2))
+          Write-Host ("DEST_MP4_COUNT=" + $dest.Count)
+          Write-Host ("DEST_MP4_GB=" + [math]::Round($dstBytes/1GB,2))
+          Write-Host ("DUPLICATE_SAME_RELATIVE_COUNT=" + $dupCount)
+          Write-Host ("DUPLICATE_SAME_RELATIVE_GB=" + [math]::Round($dupBytes/1GB,2))
+          Write-Host "READ_ONLY_CHECK=True"
