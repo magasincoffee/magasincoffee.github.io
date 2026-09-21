@@ -643,7 +643,17 @@
     "note": "Staged parallel operational-relief track. Does not alter active PFC cursor until explicit Owner release/reprioritization.",
     "execution_mode": "OWNER_DIRECT_TO_WORK",
     "manual_work_may_execute": true,
-    "current_task": "TASK-090",
-    "next_task": "TASK-091"
+    "current_task": "TASK-091",
+    "next_task": "TASK-092",
+    "task_090": {
+      "status": "DONE",
+      "evidence": "01_DOCS/MAGASIN/05_SYSTEM/TASK_090_WORKFORCE_V1_CURRENT_SYSTEM_RECONCILIATION.md",
+      "pull_request": 226,
+      "head": "ad837c1f79b2cd1af45e710fdb383dd8601caf75",
+      "merge": "ef1edd07906cca88117764e786226d5234f464b9",
+      "executable_changes": false,
+      "ci_triggered": false,
+      "conclusion": "RECONCILIATION_COMPLETE"
+    }
   }
 }
