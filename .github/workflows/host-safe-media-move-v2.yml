@@ -1,0 +1,217 @@
+name: Host Safe Media Move V2
+
+on:
+  push:
+    branches:
+      - diagnostics/host-health-20260921
+    paths:
+      - ".github/workflows/host-safe-media-move-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  copy-verify-delete:
+    runs-on: self-hosted
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy verify checksum then delete Desktop MP4 originals
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $sourceRoot = Join-Path $env:USERPROFILE "Desktop"
+          $destRoot = "D:\MAGASIN_ARCHIVE\Videos"
+          $manifestRoot = "D:\MAGASIN_ARCHIVE\_manifests"
+          $manifestPath = Join-Path $manifestRoot "desktop_mp4_20260921.csv"
+
+          function GB([Int64]$bytes) {
+            return [math]::Round($bytes / 1GB, 2)
+          }
+
+          if (-not (Test-Path -LiteralPath $sourceRoot)) {
+            throw "Desktop source root not found."
+          }
+
+          New-Item -ItemType Directory -Path $destRoot -Force | Out-Null
+          New-Item -ItemType Directory -Path $manifestRoot -Force | Out-Null
+
+          $c0 = Get-Volume -DriveLetter C
+          $d0 = Get-Volume -DriveLetter D
+          Write-Host ("C_FREE_BEFORE_GB=" + (GB $c0.SizeRemaining))
+          Write-Host ("D_FREE_BEFORE_GB=" + (GB $d0.SizeRemaining))
+
+          $sources = @(Get-ChildItem -LiteralPath $sourceRoot -File -Recurse -Force -ErrorAction Stop |
+            Where-Object {
+              $_.Extension -ieq ".mp4" -and
+              -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint)
+            })
+
+          $totalBytes = ($sources | Measure-Object Length -Sum).Sum
+          if ($null -eq $totalBytes) { $totalBytes = 0L }
+
+          Write-Host ("SOURCE_MP4_COUNT_BEFORE=" + $sources.Count)
+          Write-Host ("SOURCE_MP4_GB_BEFORE=" + (GB $totalBytes))
+
+          if ($sources.Count -eq 0) {
+            Write-Host "NOTHING_TO_MOVE=True"
+            exit 0
+          }
+
+          # Preserve at least 25 GB free on D after a complete copy.
+          $reserveBytes = 25GB
+          if (($d0.SizeRemaining - $totalBytes) -lt $reserveBytes) {
+            throw "Insufficient free space on D: to preserve 25 GB safety reserve."
+          }
+
+          # Phase 1: copy all source files. No source deletion is allowed in this phase.
+          $copyRows = New-Object System.Collections.Generic.List[object]
+          $copiedBytes = 0L
+          $copiedCount = 0
+
+          foreach ($src in $sources) {
+            $relative = $src.FullName.Substring($sourceRoot.Length).TrimStart('\')
+            $dst = Join-Path $destRoot $relative
+            $dstDir = Split-Path -Parent $dst
+            New-Item -ItemType Directory -Path $dstDir -Force | Out-Null
+
+            if (Test-Path -LiteralPath $dst) {
+              $existing = Get-Item -LiteralPath $dst -ErrorAction Stop
+              if ($existing.Length -ne $src.Length) {
+                throw ("Destination collision with different size: " + $relative)
+              }
+              Write-Host ("REUSE_EXISTING_SAME_SIZE=" + $relative)
+            } else {
+              Copy-Item -LiteralPath $src.FullName -Destination $dst -ErrorAction Stop
+              $existing = Get-Item -LiteralPath $dst -ErrorAction Stop
+              if ($existing.Length -ne $src.Length) {
+                throw ("Copy size verification failed: " + $relative)
+              }
+            }
+
+            $copyRows.Add([pscustomobject]@{
+              RelativePath = $relative
+              SourcePath = $src.FullName
+              DestinationPath = $dst
+              Length = [Int64]$src.Length
+              SourceHash = ""
+              DestinationHash = ""
+            })
+
+            $copiedBytes += $src.Length
+            $copiedCount++
+            if (($copiedCount % 3) -eq 0 -or $copiedCount -eq $sources.Count) {
+              Write-Host ("COPY_PROGRESS_COUNT=" + $copiedCount)
+              Write-Host ("COPY_PROGRESS_GB=" + (GB $copiedBytes))
+            }
+          }
+
+          Write-Host "PHASE_COPY_COMPLETE=True"
+
+          # Phase 2: full end-to-end verification. Still no deletion.
+          $verifiedBytes = 0L
+          $verifiedCount = 0
+
+          foreach ($row in $copyRows) {
+            if (-not (Test-Path -LiteralPath $row.SourcePath)) {
+              throw ("Source disappeared before verification: " + $row.RelativePath)
+            }
+            if (-not (Test-Path -LiteralPath $row.DestinationPath)) {
+              throw ("Destination missing before verification: " + $row.RelativePath)
+            }
+
+            $srcNow = Get-Item -LiteralPath $row.SourcePath -ErrorAction Stop
+            $dstNow = Get-Item -LiteralPath $row.DestinationPath -ErrorAction Stop
+
+            if ($srcNow.Length -ne $row.Length -or $dstNow.Length -ne $row.Length) {
+              throw ("Length changed before verification: " + $row.RelativePath)
+            }
+
+            $srcHash = (Get-FileHash -LiteralPath $row.SourcePath -Algorithm SHA256 -ErrorAction Stop).Hash
+            $dstHash = (Get-FileHash -LiteralPath $row.DestinationPath -Algorithm SHA256 -ErrorAction Stop).Hash
+
+            if ($srcHash -ne $dstHash) {
+              throw ("SHA256 mismatch: " + $row.RelativePath)
+            }
+
+            $row.SourceHash = $srcHash
+            $row.DestinationHash = $dstHash
+            $verifiedBytes += $row.Length
+            $verifiedCount++
+
+            Write-Host ("VERIFY_OK=" + $row.RelativePath)
+          }
+
+          if ($verifiedCount -ne $copyRows.Count -or $verifiedBytes -ne $totalBytes) {
+            throw "Full verification totals do not match source manifest."
+          }
+
+          $copyRows |
+            Select-Object RelativePath,Length,SourceHash,DestinationHash |
+            Export-Csv -LiteralPath $manifestPath -NoTypeInformation -Encoding UTF8
+
+          Write-Host ("MANIFEST_PATH=" + $manifestPath)
+          Write-Host ("VERIFIED_COUNT=" + $verifiedCount)
+          Write-Host ("VERIFIED_GB=" + (GB $verifiedBytes))
+          Write-Host "PHASE_VERIFY_COMPLETE=True"
+
+          # Phase 3: delete only source files that still exactly match the verified manifest.
+          $deletedBytes = 0L
+          $deletedCount = 0
+
+          foreach ($row in $copyRows) {
+            if (-not (Test-Path -LiteralPath $row.SourcePath)) {
+              Write-Host ("SOURCE_ALREADY_ABSENT=" + $row.RelativePath)
+              continue
+            }
+
+            $srcNow = Get-Item -LiteralPath $row.SourcePath -ErrorAction Stop
+            if ($srcNow.Length -ne $row.Length) {
+              throw ("Refusing deletion because source length changed: " + $row.RelativePath)
+            }
+
+            $srcHashNow = (Get-FileHash -LiteralPath $row.SourcePath -Algorithm SHA256 -ErrorAction Stop).Hash
+            if ($srcHashNow -ne $row.SourceHash) {
+              throw ("Refusing deletion because source hash changed: " + $row.RelativePath)
+            }
+
+            Remove-Item -LiteralPath $row.SourcePath -Force -ErrorAction Stop
+            $deletedBytes += $row.Length
+            $deletedCount++
+            Write-Host ("DELETE_VERIFIED_SOURCE=" + $row.RelativePath)
+          }
+
+          Write-Host ("DELETED_COUNT=" + $deletedCount)
+          Write-Host ("DELETED_GB=" + (GB $deletedBytes))
+          Write-Host "PHASE_DELETE_COMPLETE=True"
+
+          # Phase 4: final state proof.
+          $remaining = @(Get-ChildItem -LiteralPath $sourceRoot -File -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.Extension -ieq ".mp4" -and
+              -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint)
+            })
+          $remainingBytes = ($remaining | Measure-Object Length -Sum).Sum
+          if ($null -eq $remainingBytes) { $remainingBytes = 0L }
+
+          $destFiles = @(Get-ChildItem -LiteralPath $destRoot -File -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.Extension -ieq ".mp4" -and
+              -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint)
+            })
+          $destBytes = ($destFiles | Measure-Object Length -Sum).Sum
+          if ($null -eq $destBytes) { $destBytes = 0L }
+
+          $c1 = Get-Volume -DriveLetter C
+          $d1 = Get-Volume -DriveLetter D
+
+          Write-Host ("SOURCE_MP4_COUNT_AFTER=" + $remaining.Count)
+          Write-Host ("SOURCE_MP4_GB_AFTER=" + (GB $remainingBytes))
+          Write-Host ("DEST_MP4_COUNT_AFTER=" + $destFiles.Count)
+          Write-Host ("DEST_MP4_GB_AFTER=" + (GB $destBytes))
+          Write-Host ("C_FREE_AFTER_GB=" + (GB $c1.SizeRemaining))
+          Write-Host ("D_FREE_AFTER_GB=" + (GB $d1.SizeRemaining))
+          Write-Host "SAFE_MEDIA_MOVE_V2_COMPLETE=True"
