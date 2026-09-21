@@ -350,10 +350,10 @@ function Get-ControlPanelResourceSummary($Scheduler) {
 }
 
 function Get-ControlPanelTargetHealthText($Health, [string]$Role) {
-    if ($null -eq $Health) { return "$Role: —" }
+    if ($null -eq $Health) { return "${Role}: —" }
     $state = [string]$Health.state
-    if (-not $state) { return "$Role: —" }
-    if ($state -ne 'QUARANTINED') { return "$Role: $state" }
+    if (-not $state) { return "${Role}: —" }
+    if ($state -ne 'QUARANTINED') { return "${Role}: $state" }
 
     $reason = switch ([string]$Health.reason_code) {
         'CONVERSATION_MISSING' { 'không còn tồn tại' }
@@ -361,7 +361,7 @@ function Get-ControlPanelTargetHealthText($Health, [string]$Role) {
         'STABLE_REDIRECT_AWAY' { 'đã chuyển khỏi conversation' }
         default { 'đã bị cách ly' }
     }
-    return "$Role: QUARANTINED ($reason)"
+    return "${Role}: QUARANTINED ($reason)"
 }
 
 function Get-ControlPanelRolloverText([string]$Stage) {
