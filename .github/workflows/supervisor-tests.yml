@@ -65,6 +65,8 @@ jobs:
           node src/runtime/three-lane-cli.mjs --work-full-fixture
           node src/runtime/three-lane-cli.mjs --stale-target-fixture
           node src/runtime/brain-planning-acceptance-cli.mjs
+      - name: Run TASK-RBT-009 deterministic release matrix
+        run: node --test test/release-integration-matrix.test.mjs
       - name: Run Supervisor unit tests
         run: npm test
       - name: Run TASK-RBT-002B state maintenance gate regressions
