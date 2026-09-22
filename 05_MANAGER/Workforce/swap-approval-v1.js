@@ -7,14 +7,14 @@ const client=()=>sb||(sb=window.supabase.createClient(U,K,{auth:{persistSession:
 const view=()=>document.querySelector('#view-swap');
 
 function swapRows(rows){
- return rows.length?rows.map(r=>`<div class="item"><div class="row" style="justify-content:space-between;gap:12px;align-items:flex-start"><div><b>${esc(r.requester_name||'Nhân viên')} ↔ ${esc(r.target_user_name||'Nhân viên')}</b><span>${esc(String(r.requester_date||''))} · ${esc(hm(r.requester_start))}–${esc(hm(r.requester_end))} ↔ ${esc(hm(r.target_start))}–${esc(hm(r.target_end))}</span><span>${esc(r.store_code||'')} · ${esc(r.reason||'')}</span></div><div class="actions"><button class="btn js-swap-reject" data-id="${esc(r.id)}">Từ chối</button><button class="btn primary js-swap-approve" data-id="${esc(r.id)}">Duyệt</button></div></div></div>`).join(''):'<div class="muted">Không có yêu cầu đổi ca đang chờ.</div>';
+ return rows.length?rows.map(r=>`<div class="item"><div class="row" style="justify-content:space-between;gap:12px;align-items:flex-start"><div><b>${esc(r.requester_name||'Nhân viên')} ↔ ${esc(r.target_user_name||'Nhân viên')}</b><span>${esc(String(r.requester_date||''))} · ${esc(hm(r.requester_start))}–${esc(hm(r.requester_end))} ↔ ${esc(hm(r.target_start))}–${esc(hm(r.target_end))}</span><span>${esc(r.store_code||'')} · Người nhận đã đồng ý · ${esc(r.reason||'')}</span></div><div class="actions"><button class="btn js-swap-reject" data-id="${esc(r.id)}">Từ chối</button><button class="btn primary js-swap-approve" data-id="${esc(r.id)}">Duyệt đổi ca</button></div></div></div>`).join(''):'<div class="muted">Không có yêu cầu đổi ca đã được người nhận đồng ý.</div>';
 }
 function giveRows(rows){
  return rows.length?rows.map(r=>`<div class="item"><div class="row" style="justify-content:space-between;gap:12px;align-items:flex-start"><div><b>${esc(r.giver_name||'Nhân viên')} → ${esc(r.recipient_name||'Nhân viên')}</b><span>${esc(String(r.work_date||''))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</span><span>${esc(r.store_code||'')} · Người nhận đã đồng ý · ${esc(r.reason||'')}</span></div><div class="actions"><button class="btn js-give-reject" data-id="${esc(r.id)}">Từ chối</button><button class="btn primary js-give-approve" data-id="${esc(r.id)}">Duyệt cho ca</button></div></div></div>`).join(''):'<div class="muted">Không có yêu cầu cho ca chờ quản lý.</div>';
 }
 function render(swaps,gives,msg=''){
  const root=view();if(!root)return;
- root.innerHTML=`<div class="row" style="justify-content:space-between;gap:12px"><div><h2 style="margin:0">Yêu cầu đổi / cho ca</h2><div class="muted" style="margin-top:5px">Manager chỉ duyệt Give sau khi người nhận đã đồng ý.</div></div><span class="badge ${swaps.length+gives.length?'red':'green'}">${swaps.length+gives.length} chờ xử lý</span></div><div id="mSwapMsg" class="muted" style="margin-top:12px">${esc(msg)}</div><section class="card" style="margin-top:16px"><h3>Đổi ca</h3><div class="list">${swapRows(swaps)}</div></section><section class="card" style="margin-top:16px"><h3>Cho ca</h3><div class="list">${giveRows(gives)}</div></section>`;
+ root.innerHTML=`<div class="row" style="justify-content:space-between;gap:12px"><div><h2 style="margin:0">Yêu cầu đổi / cho ca</h2><div class="muted" style="margin-top:5px">Manager chỉ xử lý Swap/Give sau khi người nhận đã đồng ý.</div></div><span class="badge ${swaps.length+gives.length?'red':'green'}">${swaps.length+gives.length} chờ xử lý</span></div><div id="mSwapMsg" class="muted" style="margin-top:12px">${esc(msg)}</div><section class="card" style="margin-top:16px"><h3>Đổi ca</h3><div class="list">${swapRows(swaps)}</div></section><section class="card" style="margin-top:16px"><h3>Cho ca</h3><div class="list">${giveRows(gives)}</div></section>`;
  root.querySelectorAll('.js-swap-approve').forEach(b=>b.onclick=()=>actSwap('approve_shift_swap',b.dataset.id));
  root.querySelectorAll('.js-swap-reject').forEach(b=>b.onclick=()=>actSwap('reject_shift_swap',b.dataset.id));
  root.querySelectorAll('.js-give-approve').forEach(b=>b.onclick=()=>actGive('approve_shift_give',b.dataset.id));
@@ -23,7 +23,7 @@ function render(swaps,gives,msg=''){
 async function load(msg=''){
  if(!window.supabase?.createClient)return;
  const [swapQ,giveQ]=await Promise.all([
-   client().rpc('list_shift_swap_requests_v1',{p_store_id:null,p_status:'PENDING'}),
+   client().rpc('list_shift_swap_requests_v1',{p_store_id:null,p_status:'PEER_ACCEPTED'}),
    client().rpc('list_shift_give_requests_v1',{p_store_id:null,p_status:'PENDING_MANAGER'})
  ]);
  const errors=[swapQ.error,giveQ.error].filter(Boolean);

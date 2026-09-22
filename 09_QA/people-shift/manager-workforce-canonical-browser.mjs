@@ -297,10 +297,11 @@ await check("manager_swap_approval_updates_official_schedule_through_rpc",async(
   await page.locator("#view-swap .js-swap-approve").waitFor();
   await page.locator("#view-swap .js-swap-approve").click();
   await page.waitForFunction(()=>globalThis.__MW31_QA.calls.some(x=>x.name==="approve_shift_swap"));
-  await page.locator("#view-swap").filter({hasText:"Không có yêu cầu đổi ca đang chờ"}).waitFor();
+  await page.locator("#view-swap").filter({hasText:"Không có yêu cầu đổi ca đã được người nhận đồng ý"}).waitFor();
   const call=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==="approve_shift_swap").at(-1));
-  if(call.args.p_swap_id!=="swap-1")throw new Error(JSON.stringify(call));
-  return "approve_shift_swap";
+  const list=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==="list_shift_swap_requests_v1").at(-1));
+  if(call.args.p_swap_id!=="swap-1"||list.args.p_status!=="PEER_ACCEPTED")throw new Error(JSON.stringify({call,list}));
+  return "approve_shift_swap after PEER_ACCEPTED";
 });
 
 await check("manager_give_approval_transfers_schedule_after_recipient_acceptance",async()=>{
