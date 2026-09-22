@@ -96,11 +96,11 @@ try{
 
   await check("both_employee_schedule_sources_refresh_to_new_ownership",async()=>{
     await page.evaluate(()=>{globalThis.__SWAP96_QA.setUser("u-a");globalThis.__SWAP96_QA.refreshEmployee()});
-    await employee.locator("#employeeRequesterSchedule option[value='sch-b']").waitFor({timeout:10000});
+    await employee.locator("#employeeRequesterSchedule option[value='sch-b']").waitFor({state:"attached",timeout:10000});
     if(await employee.locator("#employeeRequesterSchedule option[value='sch-a']").count())throw new Error("A still owns sch-a");
 
     await page.evaluate(()=>{globalThis.__SWAP96_QA.setUser("u-b");globalThis.__SWAP96_QA.refreshEmployee()});
-    await employee.locator("#employeeRequesterSchedule option[value='sch-a']").waitFor({timeout:10000});
+    await employee.locator("#employeeRequesterSchedule option[value='sch-a']").waitFor({state:"attached",timeout:10000});
     if(await employee.locator("#employeeRequesterSchedule option[value='sch-b']").count())throw new Error("B still owns sch-b");
     return "A→sch-b; B→sch-a";
   });
@@ -124,7 +124,7 @@ try{
     const e=page.frameLocator("#employeeApp");
     await e.locator("#view-swap[data-employee-swap-engine='1']").waitFor({timeout:10000});
     await page.waitForFunction(()=>globalThis.__SWAP96_QA.swap?.status==="APPROVED"&&globalThis.__SWAP96_QA.schedules["sch-a"].user_id==="u-b");
-    await e.locator("#employeeRequesterSchedule option[value='sch-a']").waitFor({timeout:10000});
+    await e.locator("#employeeRequesterSchedule option[value='sch-a']").waitFor({state:"attached",timeout:10000});
     const state=await page.evaluate(()=>({swap:globalThis.__SWAP96_QA.swap,s:globalThis.__SWAP96_QA.schedules,applyCount:globalThis.__SWAP96_QA.applyCount}));
     if(state.applyCount!==1||state.s["sch-b"].user_id!=="u-a")throw new Error(JSON.stringify(state));
     return "reload kept APPROVED + swapped ownership";
