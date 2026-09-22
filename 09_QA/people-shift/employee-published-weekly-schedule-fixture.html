@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><title>TASK-095 Employee Published Weekly Schedule QA</title></head>
+<body>
+<iframe id="employeeApp" title="Employee Published Weekly Schedule QA"></iframe>
+<script>
+(() => {
+  const params=new URLSearchParams(location.search);
+  const calls=[],toasts=[];
+  const employee={id:"employee-a",full_name:"Nhân viên A",role:"STAFF",status:"ACTIVE"};
+  const other={id:"employee-b",full_name:"Nhân viên B",role:"STAFF",status:"ACTIVE"};
+  const stores={
+    "store-a":{id:"store-a",code:"CN-QA-A",name:"Cửa hàng QA A"},
+    "store-b":{id:"store-b",code:"CN-QA-B",name:"Cửa hàng QA B"}
+  };
+  const state={
+    now:params.get("now")||"2026-09-27T02:00:00.000Z",
+    official:[],
+    notifications:new Map(),
+    failWeek:null,
+    publishCalls:0
+  };
+  const pad=n=>String(n).padStart(2,"0");
+  const dateKey=(d=new Date(state.now))=>{const p={};new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d).forEach(x=>p[x.type]=x.value);return `${p.year}-${p.month}-${p.day}`};
+  const localDate=k=>new Date(`${String(k).slice(0,10)}T00:00:00+07:00`);
+  const dateOnlyUtc=k=>new Date(`${String(k).slice(0,10)}T00:00:00Z`);
+  const addDays=(k,n)=>{const d=dateOnlyUtc(k);d.setUTCDate(d.getUTCDate()+n);return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`};
+  const monday=k=>{const d=dateOnlyUtc(k||dateKey()),day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()-(day-1));return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`};
+  const weekDays=k=>Array.from({length:7},(_,i)=>addDays(k,i));
+  const formatDate=k=>{const p=String(k).slice(0,10).split("-");return `${p[2]}/${p[1]}`};
+  const time5=v=>String(v||"").slice(0,5);
+  const minutes=v=>{const x=time5(v);return Number(x.slice(0,2))*60+Number(x.slice(3,5))};
+  const shiftKind=start=>minutes(start)<720?"morning":minutes(start)<1020?"afternoon":"evening";
+  const escapeHtml=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  function schedule(id,user_id,work_date,start_time,end_time,store_id,status="APPROVED"){
+    const s=stores[store_id];
+    return {
+      schedule_id:id,id,user_id,work_date,start_time,end_time,store_id,
+      store_code:s.code,store_name:s.name,status,origin:"MANAGER_ASSIGNED",
+      source_generation_id:"generation-qa",
+      source_generation_assignment_id:"assignment-"+id
+    };
+  }
+  function upsertNotification(row){state.notifications.set(row.event_key,{...row});}
+  function seedPublished(){
+    state.publishCalls++;
+    if(!state.official.length){
+      state.official=[
+        schedule("sch-1",employee.id,"2026-09-28","06:00","12:00","store-a"),
+        schedule("sch-2",employee.id,"2026-10-02","17:00","22:00","store-b"),
+        schedule("sch-other",other.id,"2026-09-29","06:00","12:00","store-a"),
+        schedule("sch-pending",employee.id,"2026-09-30","12:00","17:00","store-a","PENDING"),
+        schedule("sch-cancelled",employee.id,"2026-10-01","12:00","17:00","store-a","CANCELLED"),
+        schedule("sch-outside",employee.id,"2026-10-05","06:00","12:00","store-a")
+      ];
+    }
+    for(const row of state.official.filter(x=>x.status==="APPROVED"&&x.work_date>="2026-09-28"&&x.work_date<="2026-10-04")){
+      upsertNotification({
+        id:"notification-"+row.schedule_id,
+        event_key:`schedule:${row.schedule_id}:published`,
+        event_type:"SCHEDULE_PUBLISHED",
+        audience_type:"USER",
+        recipient_user_id:row.user_id,
+        store_id:row.store_id,
+        title:"Lịch làm đã được phát hành",
+        message:`Ca ${row.work_date} · ${row.start_time}–${row.end_time} đã được phát hành.`,
+        payload:{work_date:row.work_date,start_time:row.start_time,end_time:row.end_time,store_id:row.store_id},
+        available_at:"2026-09-27T03:00:00.000Z",
+        created_at:"2026-09-27T03:00:00.000Z",
+        entity_type:"WORK_SCHEDULE",
+        entity_id:row.schedule_id,
+        related_schedule_id:row.schedule_id,
+        email_required:true,
+        email_status:"PENDING"
+      });
+    }
+    return {official:state.official.length,notifications:state.notifications.size,publishCalls:state.publishCalls};
+  }
+
+  const frameTemplate=()=>`<!doctype html><html lang="vi"><head><meta charset="utf-8"></head><body>
+    <section id="view-schedule" class="page-view active"><div class="panel schedule-main-panel"><div class="section-head"><h2>Lịch làm của tôi</h2><span class="pill">Đang tải…</span></div><div class="days"></div></div></section>
+    <section id="view-notice" class="page-view"><div class="timeline"></div></section>
+    <div class="header-user-text"><strong>Nhân viên</strong><span>Nhân viên</span></div><button class="header-avatar">N</button>
+  </body></html>`;
+
+  window.MAGASIN_CORE={
+    security:{escapeHtml},
+    time:{time5,minutes,shiftKind},
+    date:{dateKey,localDate,addDays,monday,weekDays,formatDate},
+    roles:{label:{STAFF:"Nhân viên",EMPLOYEE:"Nhân viên"}},
+    ui:{
+      toast:(message,type)=>toasts.push({message,type}),
+      setLoading:(el,on=true)=>{if(!el)return;el.toggleAttribute("aria-busy",on);el.dataset.qaLoading=on?"1":"0"}
+    },
+    supabase:{
+      async rpc(name,args={}){
+        calls.push({kind:"rpc",name,args:structuredClone(args||{})});
+        if(name==="list_my_approved_schedules_v2"){
+          if(state.failWeek===args.p_week_start)return {data:null,error:{message:"QA_WEEK_READ_FAILED"}};
+          const end=addDays(args.p_week_start,6);
+          return {
+            data:state.official.filter(row=>
+              row.user_id===employee.id &&
+              row.status==="APPROVED" &&
+              row.work_date>=args.p_week_start &&
+              row.work_date<=end
+            ).map(({user_id,...row})=>({...row})),
+            error:null
+          };
+        }
+        if(name==="list_my_notifications_v1"){
+          const rows=[...state.notifications.values()]
+            .filter(row=>row.audience_type==="USER"&&row.recipient_user_id===employee.id&&row.email_status!=="CANCELLED")
+            .sort((a,b)=>b.available_at.localeCompare(a.available_at)||b.id.localeCompare(a.id))
+            .slice(0,args.p_limit||50)
+            .map(({recipient_user_id,email_required,email_status,event_key,...row})=>({...row}));
+          return {data:rows,error:null};
+        }
+        return {data:null,error:{message:"UNEXPECTED_QA_RPC:"+name}};
+      }
+    }
+  };
+  window.MAGASIN_EMPLOYEE={
+    profile:employee,
+    events:{emit(name,detail){calls.push({kind:"event",name,detail:structuredClone(detail||{})})}}
+  };
+  const frame=document.getElementById("employeeApp");
+  function reloadFrame(){frame.srcdoc=frameTemplate()}
+  window.__TASK095_QA={
+    calls,toasts,state,employee,other,
+    publishTargetWeek:seedPublished,
+    reloadFrame,
+    setNow:v=>{state.now=v},
+    setFailWeek:v=>{state.failWeek=v},
+    getPublishedNotifications:()=>[...state.notifications.values()].map(x=>({...x}))
+  };
+  if(params.get("published")==="1")seedPublished();
+})();
+</script>
+<script src="/06_EMPLOYEE/schedule/engine-v1.js"></script>
+<script src="/06_EMPLOYEE/notification/engine-v1.js"></script>
+<script>globalThis.__TASK095_QA.reloadFrame();</script>
+</body>
+</html>
