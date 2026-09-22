@@ -24,6 +24,7 @@
  let give=saved?.give||null;
  let giveSeq=Number(saved?.giveSeq||0);
  let transferCount=Number(saved?.transferCount||0);
+ let attendance=saved?.attendance||null;
  const notifications=new Map(Array.isArray(saved?.notifications)?saved.notifications:[]);
  const calls=[];
  const managerCalls=[];
@@ -35,7 +36,7 @@
 
  function persist(){
   localStorage.setItem(storageKey,JSON.stringify({
-   currentUser,managerScope,schedule,give,giveSeq,transferCount,
+   currentUser,managerScope,schedule,give,giveSeq,transferCount,attendance,
    notifications:[...notifications.entries()]
   }));
  }
@@ -122,6 +123,32 @@
    notify("give:"+give.id+":manager_review","SHIFT_GIVE_MANAGER_REVIEW","STORE_MANAGERS",null);
    return {data:{id:give.id,status:give.status,accepted:true,already_accepted:false},error:null};
   }
+  if(name==="submit_manual_time_attendance_v1"){
+   if(args.p_schedule_id!==schedule.id)return err("ATTENDANCE_SCHEDULE_NOT_FOUND");
+   if(schedule.status!=="APPROVED")return err("ATTENDANCE_SCHEDULE_NOT_APPROVED");
+   if(schedule.user_id!==currentUser)return err("ATTENDANCE_NOT_CURRENT_OWNER");
+   if(profiles[currentUser]?.status!=="ACTIVE")return err("ATTENDANCE_EMPLOYEE_INACTIVE");
+   if(profiles[currentUser]?.role!=="STAFF")return err("ATTENDANCE_EMPLOYEE_NOT_STAFF");
+   if(!args.p_actual_start||!args.p_actual_end)return err("ATTENDANCE_FIELDS_REQUIRED");
+   if(String(args.p_actual_end)<=String(args.p_actual_start))return err("ATTENDANCE_ACTUAL_RANGE_INVALID");
+   if(attendance){
+    if(attendance.user_id===currentUser&&attendance.actual_start===args.p_actual_start&&attendance.actual_end===args.p_actual_end&&["SUBMITTED","NORMAL","NEEDS_REVIEW"].includes(attendance.status)){
+     return {data:{attendance_id:attendance.id,schedule_id:attendance.schedule_id,status:attendance.status,submission_status:attendance.submission_status,already_submitted:true},error:null};
+    }
+    return err("ATTENDANCE_ACTIVE_SUBMISSION_EXISTS");
+   }
+   attendance={
+    id:"att-1",schedule_id:schedule.id,user_id:currentUser,store_id:schedule.store_id,
+    work_date:schedule.work_date,planned_start:schedule.start_time,planned_end:schedule.end_time,
+    actual_start:String(args.p_actual_start),actual_end:String(args.p_actual_end),
+    submission_status:"SUBMITTED",status:"NEEDS_REVIEW",submitted_at:"2026-09-28T13:00:00Z",
+    confirmed_start:null,confirmed_end:null,confirmed_minutes:null,note:String(args.p_note||"")
+   };
+   persist();
+   notify("attendance:"+attendance.id+":submitted","ATTENDANCE_SUBMITTED","USER",currentUser);
+   notify("attendance:"+attendance.id+":needs_review","ATTENDANCE_NEEDS_REVIEW","STORE_MANAGERS",null);
+   return {data:{attendance_id:attendance.id,schedule_id:attendance.schedule_id,status:attendance.status,submission_status:attendance.submission_status,already_submitted:false},error:null};
+  }
   if(name==="list_my_shift_swaps_v2"||name==="list_my_incoming_shift_swaps_v1"||name==="list_shift_swap_candidates_v1")return {data:[],error:null};
   if(name==="submit_shift_swap_request"||name==="respond_shift_swap_request")return err("SWAP_NOT_USED_IN_TASK_097_FIXTURE");
   return {data:[],error:null};
@@ -171,7 +198,7 @@
  }
 
  function reset(){
-  currentUser="u-a";managerScope=true;schedule=baseSchedule();give=null;giveSeq=0;transferCount=0;
+  currentUser="u-a";managerScope=true;schedule=baseSchedule();give=null;giveSeq=0;transferCount=0;attendance=null;
   notifications.clear();calls.length=0;managerCalls.length=0;
   for(const k of Object.keys(faults))faults[k]=false;
   profiles["u-a"].status="ACTIVE";profiles["u-a"].role="STAFF";
@@ -182,6 +209,7 @@
   calls,managerCalls,notifications,profiles,faults,
   get currentUser(){return currentUser},get give(){return give?structuredClone(give):null},
   get schedule(){return structuredClone(schedule)},get transferCount(){return transferCount},
+  get attendance(){return attendance?structuredClone(attendance):null},
   switchUserPersist(id){currentUser=id;persist()},
   setManagerScope(v){managerScope=!!v;persist()},
   reset,
