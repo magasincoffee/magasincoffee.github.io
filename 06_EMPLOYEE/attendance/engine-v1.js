@@ -73,7 +73,7 @@ function render(){
       '<div class="attendance-form-grid"><div class="field wide"><label>Ca làm</label><select id="employeeAttendanceSchedule">'+options+'</select></div>'+
       '<div class="field"><label>Giờ bắt đầu thực tế</label><input id="employeeAttendanceStart" type="time" step="60" autocomplete="off"'+(already||legacy?' disabled':'')+'></div>'+
       '<div class="field"><label>Giờ kết thúc thực tế</label><input id="employeeAttendanceEnd" type="time" step="60" autocomplete="off"'+(already||legacy?' disabled':'')+'></div>'+
-      '<div class="field wide"><label>Ghi chú (không bắt buộc)</label><textarea id="employeeAttendanceNote" maxlength="500"'+(already||legacy?' disabled':'')+'></textarea></div></div>'+
+      '<div class="field wide"><label>Ghi chú (không bắt buộc)</label><textarea id="employeeAttendanceNote"'+(already||legacy?' disabled':'')+'></textarea></div></div>'+
       '<div class="attendance-status"><b>Trạng thái:</b> '+esc(status)+'</div>'+
       '<div class="attendance-actions"><button class="btn primary" id="employeeAttendanceSubmit" type="button"'+(already||legacy||state.submitting?' disabled':'')+'>'+(state.submitting?'Đang gửi…':'Gửi giờ làm thực tế')+'</button><span class="muted">Tuần '+esc(fmt(state.week))+'–'+esc(fmt(add(state.week,6)))+'</span></div>'+
       '<div class="attendance-help">Hệ thống máy chủ sẽ kiểm tra lại quyền sở hữu ca tại thời điểm gửi. Give/Swap có thể làm thay đổi ca hiện tại.</div>'
