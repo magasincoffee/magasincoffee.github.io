@@ -1,76 +1,91 @@
 <!doctype html>
 <html lang="vi">
-<head><meta charset="utf-8"><title>Employee attendance schedule-linked QA</title></head>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TASK-099 Employee attendance UI QA</title>
+<style>html,body{margin:0;width:100%}#employeeApp{display:block;width:100%;min-height:900px;border:0}</style>
+</head>
 <body>
-<iframe id="employeeApp" title="Employee Attendance QA"></iframe>
+<iframe id="employeeApp" title="TASK-099 Employee Attendance QA"></iframe>
 <script>
 (() => {
-  const calls=[];
-  const toasts=[];
-  const state={attendance:null,history:[]};
-  window.__EMPLOYEE_ATTENDANCE_QA={calls,toasts,state};
-  const addDays=(s,n)=>{const d=new Date(s+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+  const initKey='task099-fixture-initialized';
+  if(new URLSearchParams(location.search).get('reset')==='1'&&sessionStorage.getItem(initKey)!=='1'){
+    localStorage.removeItem('task099-owner');localStorage.removeItem('task099-attendance');sessionStorage.setItem(initKey,'1');
+  }
+  const calls=[],toasts=[];
+  const state={
+    currentUser:'u-b',
+    scheduleOwner:localStorage.getItem('task099-owner')||'u-b',
+    attendance:JSON.parse(localStorage.getItem('task099-attendance')||'null')
+  };
+  const persist=()=>{
+    localStorage.setItem('task099-owner',state.scheduleOwner);
+    if(state.attendance)localStorage.setItem('task099-attendance',JSON.stringify(state.attendance));else localStorage.removeItem('task099-attendance');
+  };
+  const addDays=(s,n)=>{const d=new Date(s+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+  window.__TASK099_QA={
+    calls,toasts,state,
+    transferAway(){state.scheduleOwner='u-a';persist()},
+    restoreOwned(){state.scheduleOwner='u-b';persist()},
+    resetAttendance(){state.attendance=null;persist()},
+    rpcSubmitCount(){return calls.filter(x=>x.name==='submit_manual_time_attendance_v1').length}
+  };
   window.MAGASIN_CORE={
-    security:{escapeHtml:v=>String(v??"")},
+    security:{escapeHtml:v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},
     time:{
-      time5:v=>String(v??"").slice(0,5),
-      minutes:v=>{const s=String(v||"00:00").slice(0,5);return Number(s.slice(0,2))*60+Number(s.slice(3,5))}
+      time5:v=>String(v??'').slice(0,5),
+      minutes:v=>{const s=String(v||'00:00').slice(0,5);return Number(s.slice(0,2))*60+Number(s.slice(3,5))}
     },
     date:{
-      dateKey:()=> "2026-09-18",
-      monday:()=> "2026-09-14",
+      dateKey:()=> '2026-09-18',
+      monday:()=> '2026-09-14',
       addDays,
-      formatDate:v=>String(v??"").slice(0,10),
-      localDate:v=>new Date(String(v)+"T00:00:00Z")
+      formatDate:v=>String(v??'').slice(0,10)
     },
     ui:{toast:(message,type)=>toasts.push({message,type})},
     supabase:{
       async rpc(name,args={}){
-        calls.push({kind:"rpc",name,args:structuredClone(args||{})});
-        if(name==="get_my_today_schedules"){
-          return {data:[{
-            schedule_id:"sch-1",work_date:"2026-09-18",start_time:"06:00",end_time:"12:00",
-            store_id:"store-a",store_code:"CN1",store_name:"Cửa hàng QA",schedule_status:"APPROVED",
-            attendance_id:state.attendance?.id||null,attendance_status:state.attendance?.status||null,
-            check_in:state.attendance?.check_in||null,check_out:state.attendance?.check_out||null,
-            planned_start:"06:00",planned_end:"12:00",late_minutes:0,early_minutes:0,
-            hours_worked:state.attendance?.hours_worked||0,amount:state.attendance?.amount||0,grade:"A",hourly_rate:16000
-          }],error:null};
+        calls.push({kind:'rpc',name,args:structuredClone(args||{})});
+        if(name==='list_my_approved_schedules_v2'){
+          return {data:state.scheduleOwner===state.currentUser?[{
+            schedule_id:'sch-1',work_date:'2026-09-18',start_time:'06:00',end_time:'12:00',
+            store_id:'store-a',store_code:'CN1',store_name:'Cửa hàng QA',status:'APPROVED',origin:'MANAGER'
+          }]:[],error:null};
         }
-        if(name==="get_my_attendance_v2")return {data:state.history.map(x=>({...x})),error:null};
-        if(name==="clock_in_for_schedule"){
-          state.attendance={id:"att-1",status:"OPEN",check_in:"2026-09-18T06:00:00+07:00",check_out:null,hours_worked:0,amount:0};
-          return {data:"att-1",error:null};
+        if(name==='get_my_attendance_v2'){
+          const a=state.attendance;
+          return {data:a&&a.user_id===state.currentUser?[{
+            attendance_id:a.id,schedule_id:a.schedule_id,work_date:'2026-09-18',store_id:'store-a',store_code:'CN1',store_name:'Cửa hàng QA',
+            planned_start:'06:00',planned_end:'12:00',check_in:null,check_out:null,status:a.status,
+            late_minutes:0,early_minutes:0,hours_worked:0,amount:0,grade:null,hourly_rate:0
+          }]:[],error:null};
         }
-        if(name==="clock_out_attendance"){
-          state.attendance={...state.attendance,status:"COMPLETED",check_out:"2026-09-18T12:00:00+07:00",hours_worked:6,amount:96000};
-          state.history=[{
-            attendance_id:"att-1",schedule_id:"sch-1",work_date:"2026-09-18",store_id:"store-a",store_code:"CN1",store_name:"Cửa hàng QA",
-            planned_start:"06:00",planned_end:"12:00",check_in:state.attendance.check_in,check_out:state.attendance.check_out,status:"COMPLETED",
-            late_minutes:0,early_minutes:0,hours_worked:6,amount:96000,grade:"A",hourly_rate:16000
-          }];
-          return {data:{id:"att-1",status:"COMPLETED"},error:null};
+        if(name==='submit_manual_time_attendance_v1'){
+          if(state.scheduleOwner!==state.currentUser)return {data:null,error:{message:'ATTENDANCE_NOT_CURRENT_OWNER'}};
+          if(state.attendance){
+            if(state.attendance.user_id===state.currentUser&&state.attendance.actual_start===args.p_actual_start&&state.attendance.actual_end===args.p_actual_end){
+              return {data:{attendance_id:state.attendance.id,schedule_id:'sch-1',status:state.attendance.status,submission_status:'SUBMITTED',already_submitted:true},error:null};
+            }
+            return {data:null,error:{message:'ATTENDANCE_ACTIVE_SUBMISSION_EXISTS'}};
+          }
+          state.attendance={
+            id:'att-1',schedule_id:'sch-1',user_id:state.currentUser,
+            actual_start:args.p_actual_start,actual_end:args.p_actual_end,note:args.p_note||null,
+            status:'NEEDS_REVIEW',submission_status:'SUBMITTED',
+            confirmed_start:null,confirmed_end:null,confirmed_minutes:null
+          };
+          persist();
+          return {data:{attendance_id:'att-1',schedule_id:'sch-1',status:'NEEDS_REVIEW',submission_status:'SUBMITTED',already_submitted:false},error:null};
         }
-        if(name==="manual_attendance_from_schedule")return {data:"att-manual",error:null};
-        if(name==="auto_attendance_from_approved_schedules")return {data:[],error:null};
-        return {data:null,error:{message:"unexpected rpc "+name}};
+        return {data:null,error:{message:'UNEXPECTED_RPC'}};
       },
-      from(name){calls.push({kind:"from",name});throw new Error("Direct table access forbidden: "+name)}
+      from(name){calls.push({kind:'from',name});throw new Error('Direct table access forbidden')}
     }
   };
-  const frame=document.getElementById("employeeApp");
-  frame.srcdoc=`<!doctype html><html lang="vi"><body>
-    <section id="view-attendance">
-      <input id="attendanceFrom" type="date" value="2026-09-01">
-      <input id="attendanceTo" type="date" value="2026-09-18">
-      <select id="attendanceQuickRange"><option value="month">Tháng này</option><option value="week">Tuần này</option><option value="all">Tất cả</option></select>
-      <div id="attendanceTotalShifts"></div><div id="attendanceTotalHours"></div><div id="attendanceTotalIncome"></div><div id="attendanceAvgIncome"></div>
-      <div class="attendance-entry-grid">
-        <div class="panel"></div>
-        <div class="panel"><table id="attendanceHistoryTable"><tbody></tbody></table></div>
-      </div>
-    </section>
-  </body></html>`;
+  const frame=document.getElementById('employeeApp');
+  frame.srcdoc='<!doctype html><html lang="vi"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{--line:#dbe4ef;--muted:#718199}body{font-family:system-ui;margin:0;padding:12px}.panel{border:1px solid var(--line);border-radius:14px;padding:14px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:5px}.btn{padding:9px 12px}.primary{font-weight:700}.empty{padding:14px}.muted{color:var(--muted)}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}@media(max-width:600px){.grid2{grid-template-columns:1fr}}</style></head><body><section id="view-attendance"><div class="attendance-report-wrap"><div class="panel"><h2>Legacy report placeholder</h2></div><div class="grid2 attendance-entry-grid"><div class="panel"></div><div class="panel"><table id="attendanceHistoryTable"><tbody></tbody></table></div></div></div></section></body></html>';
 })();
 </script>
 <script src="/06_EMPLOYEE/attendance/engine-v1.js"></script>
