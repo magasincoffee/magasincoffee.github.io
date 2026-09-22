@@ -64,3 +64,11 @@ test("TASK-095 does not rewrite historical TASK-032 reminder evidence",async()=>
   assert.match(historical,/CLOCK_OUT_REMINDER/);
   assert.equal(JSON.parse(contract).verified.clock_out_reminder,true);
 });
+
+
+test("TASK-095 browser fixture bootstrap script is syntactically valid",async()=>{
+  const html=await read("09_QA/people-shift/employee-published-weekly-schedule-fixture.html");
+  const match=html.match(/<script>\s*([\s\S]*?)<\/script>/);
+  assert.ok(match,"fixture inline bootstrap script missing");
+  assert.doesNotThrow(()=>new vm.Script(match[1]));
+});
