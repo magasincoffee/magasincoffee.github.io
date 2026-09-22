@@ -97,6 +97,13 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/employee-give-lifecycle-browser.mjs
 
+      - name: Run TASK-096 Swap full lifecycle browser E2E
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/shift-swap-lifecycle-browser.mjs
+
+
       - name: Run Employee notification browser regression
         env:
           QA_BASE_URL: http://127.0.0.1:8767
