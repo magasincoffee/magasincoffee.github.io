@@ -1,6 +1,6 @@
 # MAGASIN — Current State
 
-Last updated: 2026-09-21
+Last updated: 2026-09-22
 
 ## Current program
 
@@ -322,8 +322,8 @@ Locked decisions:
 - Employee can self-check own payroll;
 - final stability requires full E2E, exact post-merge E2E recheck and cold/reload E2E recheck.
 
-Owner released this track for **DIRECT MANUAL WORK only**; Robot remains disabled. TASK-090→TASK-098 are **DONE**. TASK-098 Manual-Time Attendance V1 / Attendance Authority is **DONE / E2E-08 CLOSED / POST-MERGE GREEN** with evidence at `05_SYSTEM/TASK_098_MANUAL_TIME_ATTENDANCE_AUTHORITY_V1.md`. Workforce cursor is now TASK-099 **READY / MANUAL_WORK** → TASK-100; TASK-099 must not auto-run and TASK-100→108 remain staged behind the sequential gate.
+Owner released this track for **DIRECT MANUAL WORK only**; Robot remains disabled. TASK-090→TASK-099 are **DONE**. TASK-099 Employee Attendance Entry UI V1 is **DONE / E2E-09 CLOSED / POST-MERGE GREEN** with evidence at `05_SYSTEM/TASK_099_EMPLOYEE_ATTENDANCE_ENTRY_UI_V1.md`. Workforce cursor is now TASK-100 **READY / MANUAL_WORK** → TASK-101; TASK-100 must not auto-run and TASK-101→108 remain staged behind the sequential gate.
 
-TASK-098 implementation PR #257 final head is `95a62be5ec86cc10d3c2222b45eccf35f02eaf87`, merged as `8ce968fdd03461a06ed57072d2ecad40c657fe63`. PR-head People Shift `35740470718` / job `106788598596` and exact post-merge People Shift `35740641347` / job `106789194421` are GREEN on Node v20.20.2 with 217/217 deterministic checks, all 12 browser suites and 0 failures. Production migration `20260922142225_task_098_manual_time_attendance_authority_v1` remains live and byte-exact source matched across all 6 changed/new function bodies. Attendance authority follows the final current APPROVED schedule owner, stale old-owner mutation is denied after Give/Swap transfer, raw manual-time submission fails closed to NEEDS_REVIEW when review policy is unresolved, and raw attendance remains distinct from confirmed work time. E2E-08 is CLOSED; E2E-09 remains PARTIAL pending TASK-099 Employee Attendance Entry UI.
+TASK-099 implementation PR #259 final head is `6cf5a186e06e5a73c84169ca84461ffad69a85b3`, merged as `57ea0f6b84fe3a70a6c7fd395adbb508cd597061`. PR-head People Shift `35743617316` / job `106799408008` and exact post-merge People Shift `35743790428` / job `106800003976` are GREEN on Node v20.20.2 with 217/217 deterministic checks, all 12 browser suites, TASK_099_EMPLOYEE_ATTENDANCE_UI=PASS and 0 failures. Business OS and Pages validation/deployment are also GREEN. Employee Attendance now uses current server schedule truth and `submit_manual_time_attendance_v1` only; realtime clock-in/out and legacy manual attendance mutation are retired from the active Employee UI. Stale Give/Swap ownership fails closed and reconciles current truth. Raw `SUBMITTED / NEEDS_REVIEW` remains distinct from confirmed work time. E2E-09 is CLOSED; E2E-10 / Manager review / confirmed work time remains pending TASK-100.
 
 The currently active PFC cursor is unchanged and remains independently authoritative.
