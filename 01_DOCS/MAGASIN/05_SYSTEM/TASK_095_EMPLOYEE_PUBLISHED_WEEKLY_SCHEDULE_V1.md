@@ -3,13 +3,13 @@
 **Track:** WORKFORCE_OPERATIONS_V1  
 **Execution mode:** OWNER_DIRECT_TO_WORK / MANUAL_WORK  
 **Date:** 2026-09-22  
-**Status:** PENDING_FINAL_GATE  
+**Status:** DONE / E2E-04 STRONG / POST-MERGE GREEN  
 **Production migration:** `20260922015212_task_095_employee_published_weekly_schedule_v1` — APPLIED  
 **Production test data mutation:** NONE  
 **Private Employee data committed:** NONE  
 **Workforce Robot:** DISABLED  
 **PFC cursor mutation:** NONE  
-**Next task:** TASK-096 remains STAGED until TASK-095 final closure
+**Next task:** TASK-096 READY / MANUAL_WORK — DO NOT AUTO-RUN
 
 ## 1. Five-Step decisions
 
@@ -570,18 +570,197 @@ The TASK-094 explicit supersede/version workflow also remains Owner-undefined an
 
 ---
 
-## 16. Final-gate placeholders
+## 16. Remote PR / merge gates
 
-The following are intentionally not invented before remote PR/merge gates complete:
+Implementation PR:
 
-- PR number: **PENDING_FINAL_GATE**
-- final PR head: **PENDING_FINAL_GATE**
-- PR-head People Shift run/job: **PENDING_FINAL_GATE**
-- collateral PR workflows: **PENDING_FINAL_GATE**
-- merge SHA: **PENDING_FINAL_GATE**
-- exact post-merge People Shift run/job: **PENDING_FINAL_GATE**
-- exact post-merge collateral workflows: **PENDING_FINAL_GATE**
-- post-merge live reconciliation: **PENDING_FINAL_GATE**
-- source-of-truth closure: **PENDING_FINAL_GATE**
+**#245 — TASK-095: Employee published weekly schedule V1**
 
-TASK-095 is not DONE until all required gates are green.
+Final PR head:
+
+`d08fa9fef785755b309384a8247fac737fa663c1`
+
+### PR-head People Shift
+
+- run: **35677658047**
+- job: **106587440586**
+- runtime: **Node v20.20.2**
+- TASK-091 Workforce contract: **61/61 PASS**
+- Schedule-first + Published Schedule Feedback: **9/9 PASS**
+- People Shift deterministic: **43/43 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **187/187 PASS**
+- browser suites/markers: **9/9 PASS**
+- E2E-04 Employee Published Weekly Schedule browser: **PASS**
+- failures: **0**
+
+### Merge
+
+Merge SHA:
+
+`6e5617bae5cea60473f4aa1546295016ee0f174b`
+
+Exact post-merge People Shift:
+
+- run: **35677762865**
+- job: **106587761948**
+- exact main SHA: `6e5617bae5cea60473f4aa1546295016ee0f174b`
+- runtime: **Node v20.20.2**
+- TASK-091 Workforce contract: **61/61 PASS**
+- Schedule-first + Published Schedule Feedback: **9/9 PASS**
+- People Shift deterministic: **43/43 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **187/187 PASS**
+- browser suites/markers: **9/9 PASS**
+- failures: **0**
+
+Exact-merge collateral workflows:
+
+- Validate MAGASIN GitHub Pages source: run **35677762957** — SUCCESS
+- Pages build and deployment: run **35677762090** — SUCCESS
+
+No exact-main failure required repair.
+
+---
+
+## 17. Final post-merge live reconciliation
+
+Read-only observation:
+
+**2026-09-22 10:20:36 ICT**  
+(**2026-09-22 03:20:36 UTC**)
+
+Observed production state:
+
+- `work_schedules`: **0**
+- `notification_outbox`: **0**
+- `SCHEDULE_PUBLISHED` events: **0**
+- `CLOCK_OUT_REMINDER` events: **0**
+- duplicate non-null `event_key` groups: **0**
+
+Migration remains present:
+
+`20260922015212_task_095_employee_published_weekly_schedule_v1`
+
+### Canonical Employee reader
+
+Live `list_my_approved_schedules_v2(p_week_start)` remains:
+
+- authenticated-only;
+- own-user scoped with `ws.user_id=auth.uid()`;
+- APPROVED-only;
+- Monday-guarded;
+- exact Monday→Sunday;
+- deterministic ordering;
+- `SECURITY DEFINER`;
+- `search_path=public`;
+- executable only by authenticated + postgres.
+
+Legacy `get_my_schedule()` remains present but is not used by canonical Employee schedule engine. Its broader legacy grant/security debt remains outside TASK-095 and is not silently widened into this task.
+
+### Notification trigger
+
+Live `notification_schedule_trigger_v1` body is an **exact match** to the canonical migration source.
+
+It preserves enqueue creation for:
+
+- `SCHEDULE_PUBLISHED`;
+- `SCHEDULE_CHANGED`;
+- `SCHEDULE_CANCELLED`;
+- `SCHEDULE_TRANSFERRED_IN`;
+- `SCHEDULE_TRANSFERRED_OUT`.
+
+It has **no enqueue path creating new `CLOCK_OUT_REMINDER` events**.
+
+The remaining `CLOCK_OUT_REMINDER` references only cancel historical pending reminder rows during transfer/cancellation; they do not create new reminders.
+
+Trigger binding remains on `work_schedules`.
+
+Trigger function EXECUTE remains:
+
+- postgres only;
+- no PUBLIC;
+- no anon;
+- no authenticated.
+
+### Notification reader / idempotency
+
+Live `list_my_notifications_v1` remains current-audience scoped.
+
+Live `enqueue_notification_v1` remains event-key upsert based, preserving stable `SENT` state on conflict.
+
+The canonical publish key remains:
+
+`schedule:<work_schedule_id>:published`
+
+Therefore repeated processing of the same official schedule cannot create duplicate publish-event keys.
+
+### Security Advisor
+
+Post-merge Security Advisor:
+
+- `rls_enabled_no_policy`: 10 INFO
+- `function_search_path_mutable`: 1 WARN
+- `anon_security_definer_function_executable`: 19 WARN
+- `authenticated_security_definer_function_executable`: 68 WARN
+- `auth_leaked_password_protection`: 1 WARN
+
+Findings referencing `notification_schedule_trigger_v1`:
+
+**0**
+
+Remaining findings are unrelated legacy findings and remain outside TASK-095.
+
+No production row was inserted, updated or deleted during this final reconciliation.
+
+---
+
+## 18. Final source-of-truth handoff
+
+TASK-095 Definition of Done is satisfied:
+
+1. canonical Employee reader is own-user scoped;
+2. APPROVED only;
+3. exact Monday→Sunday;
+4. Sunday target next week is visible immediately under “Tuần sau”;
+5. Monday rollover shows the same published week under “Tuần này”;
+6. current/next week do not cross-wire;
+7. reload/direct route is stable;
+8. duplicate engine binding/read storms are bounded;
+9. failed week reads clear stale prior success;
+10. other-user rows are absent;
+11. PENDING/CANCELLED/out-of-week rows are absent;
+12. SCHEDULE_PUBLISHED is visible to the correct Employee;
+13. publish notification event key is idempotent;
+14. canonical schedule publication creates no new CLOCK_OUT_REMINDER;
+15. trigger/notification permissions did not regress;
+16. browser performs no direct official-schedule write;
+17. E2E-04 is STRONG;
+18. TASK-092/093/094 regressions are green;
+19. Swap/Give regressions remain green;
+20. PR-head CI is green;
+21. implementation merge is complete;
+22. exact post-merge CI is green;
+23. final evidence is complete.
+
+Known downstream boundary:
+
+**TASK-096 — Swap Lifecycle Reconciliation + Hardening**
+
+TASK-095 does not redesign Swap/Give or solve the TASK-094 Owner-undefined explicit supersede/version workflow.
+
+Canonical handoff after docs/state closure merges:
+
+- TASK-095 = **DONE**
+- TASK-096 = **READY / MANUAL_WORK**
+- Workforce current task = **TASK-096**
+- Workforce next task = **TASK-097**
+- Workforce Robot = **DISABLED**
+- PFC current task = **TASK-068**
+- PFC next task = **TASK-069**
+- PFC state = **UNCHANGED**
+- TASK-096 has **not** been started
+
+## TASK-095 result
+
+**DONE / E2E-04 STRONG / POST-MERGE GREEN**
