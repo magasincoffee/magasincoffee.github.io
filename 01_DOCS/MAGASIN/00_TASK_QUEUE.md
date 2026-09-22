@@ -214,7 +214,7 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 | MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | DONE |
 | MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | DONE |
 | MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | DONE |
-| MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | ACTIVE / OWNER RELEASED PREFLIGHT |
+| MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | ACTIVE / CONTROLLED STATE TRANSFER AUTHORIZED |
 | MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | QUEUED |
 | MIG-007 | Deprecate old embedded Supervisor copy | rollback window closed + pointer docs only | QUEUED |
 
@@ -309,3 +309,22 @@ Release means **begin preflight and controlled cutover orchestration**, not imme
 Hard invariant: production mutation authority instances must remain exactly **1**. Never start the new production authority while the old production authority is still active. If new-machine readiness or rollback safety cannot be proven, STOP fail-closed without changing production authority.
 
 MIG-005 may complete cutover only after preflight passes. MIG-006 final 8-hour RBT-009 soak is explicitly forbidden during MIG-005. STOP after MIG-005; do not self-start MIG-006.
+
+
+### MIG-005 Controlled state transfer authorization
+
+Owner explicitly authorized **controlled state transfer** for MIG-005 after the new repository runner was verified on the new machine.
+
+Verified new-machine probe at authorization checkpoint:
+- runner accepted repository jobs;
+- Node major 24;
+- Supervisor process inactive;
+- production autostart absent;
+- pending reboot false;
+- state files absent;
+- lane count 0;
+- registry lane count 0;
+- Owner STOP observed blocked;
+- machine role remains blocked until preserved production state is transferred and verified.
+
+Authorization is narrowly scoped: preserve existing production state/targets/latches/Owner STOP, perform final old-authority capture, enforce old STOP -> zero authority -> preserved state transfer -> hash/3-lane verification -> new START -> exactly-one-authority verification. No state reset/reinitialization, no private state committed to GitHub, no overlap, no MIG-006 Tier B soak during MIG-005. If safe transport or rollback cannot be proven, STOP fail-closed and request the minimum Owner action.
