@@ -213,8 +213,8 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 | MIG-001 | Freeze Baseline + Migration Bootstrap | exact baseline inventory + migration contract + target repo bootstrap plan; zero production cutover | DONE |
 | MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | DONE |
 | MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | DONE |
-| MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | ACTIVE / WORK RELEASED |
-| MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | QUEUED / OWNER-SAFE-GATE |
+| MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | DONE |
+| MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | READY / OWNER-SAFE-GATE |
 | MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | QUEUED |
 | MIG-007 | Deprecate old embedded Supervisor copy | rollback window closed + pointer docs only | QUEUED |
 
@@ -278,3 +278,23 @@ Owner explicitly released MIG-004. Exact target base: `magasincoffee/magasin-sup
 Scope is new-repository CI/integrity/lifecycle parity and release-gate qualification only. Production cutover remains forbidden and the embedded Business OS Supervisor remains the sole production authority. MIG-004 may exercise safe validation paths but must not create a second production mutation authority or begin the final 8-hour RBT-009 soak.
 
 MIG-004 must STOP after evidence/closure and must not self-start MIG-005.
+
+
+### MIG-004 completion
+
+MIG-004 new-repository CI / lifecycle parity is complete in `magasincoffee/magasin-supervisor`.
+
+- Exact implementation base: `63b955f59d7558a42311b3d47d58acc60a503dca`
+- Canonical implementation PR #8 merge: `19e0cab9318f9293409ebbc8237aeb299c548d77`
+- Target closure PR #9 merge: `a67b6ea19e7e10b4b63b56f9e7b5274a94135ca2`
+- Exact-main Tests: run `35686650024` — 567/567 PASS
+- Integrity: run `35686650049` — independent-repo/static green; runtime audit SKIPPED fail-closed
+- Lifecycle A-L isolated: run `35686650107` — 52/52 PASS
+- Autostart/install isolated contract: run `35686650035` — 25/25 PASS; production jobs SKIPPED
+- RBT-009 Tier A synthetic: run `35686650070` — 9/9 PASS; Tier B 480m SKIPPED / NOT RUN
+- MIG-002 provenance remains 137/137.
+- `production_cutover=false`
+- `production_authority=UNCHANGED_EXISTING_SUPERVISOR`
+- `ZERO_PRODUCTION_MUTATION=true`
+
+MIG-005 is **READY / OWNER-SAFE-GATE** only. MIG-004 does not authorize or start production cutover, does not clear Owner STOP, does not mutate live lane state/autostart, and does not run the final RBT-009 8-hour soak.

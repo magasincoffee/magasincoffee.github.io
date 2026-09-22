@@ -155,6 +155,26 @@ The qualifying sequence is:
 
 At MIG-006, run RBT-009 Tier B from zero for 480 uninterrupted minutes against the exact `magasincoffee/magasin-supervisor` candidate SHA, after new-repository CI/lifecycle parity and single production mutation authority are proven.
 
+## 8C. MIG-004 Definition of Done
+
+Status: **MIG-004 DONE / MIG-005 READY / OWNER-SAFE-GATE**
+
+MIG-004 is complete because:
+1. full root-native Supervisor regression is green in the independent repository;
+2. independent-repo Integrity is green without Business OS PROJECT_STATE/TASK_QUEUE runtime dependency;
+3. lifecycle A-L parity is green against isolated temporary state root and production lifecycle remains disabled;
+4. autostart/install parity is green in contract-only isolated mode without production HKCU mutation;
+5. Control Panel/state-maintenance safety contracts are green and fail closed;
+6. exact-main Tests, Integrity, Lifecycle, Autostart and RBT Tier A correlate to one exact target SHA;
+7. RBT-009 is structurally qualified only through synthetic Tier A; Tier B 480 minutes was not run;
+8. MIG-002 provenance remains 137/137 represented;
+9. project-adapter.v1 and state-root.v1 remain authoritative;
+10. no production/local-state/Brain/Work/latch/Owner STOP mutation occurred.
+
+Canonical evidence: `01_DOCS/MAGASIN/08_AUTONOMY/MIG_004_SUPERVISOR_CI_LIFECYCLE_PARITY_EVIDENCE.md`.
+
+MIG-005 is READY / OWNER-SAFE-GATE only. It is not started by MIG-004 closure.
+
 ## 8B. MIG-003 Definition of Done
 
 Status: **MIG-003 DONE / MIG-004 READY / NOT STARTED**
