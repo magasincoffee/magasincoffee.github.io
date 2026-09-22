@@ -214,11 +214,11 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 | MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | DONE |
 | MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | DONE |
 | MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | DONE |
-| MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | ACTIVE / CONTROLLED STATE TRANSFER AUTHORIZED |
-| MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | QUEUED |
+| MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | DONE |
+| MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | READY / NOT STARTED |
 | MIG-007 | Deprecate old embedded Supervisor copy | rollback window closed + pointer docs only | QUEUED |
 
-Migration invariant: the existing production Supervisor remains authoritative until MIG-005 explicitly proves cutover. RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING and may not be relabeled RELEASED during repository migration.
+Migration invariant: MIG-005 has completed the single-ownership handoff. The independent `magasin-supervisor` runtime candidate now owns production autostart authority; runtime processes remain intentionally quiescent because all three lanes are disabled. The old state/rollback source is retained and inactive. RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING and may not be relabeled RELEASED until MIG-006 completes.
 
 
 ### MIG-002 completion
@@ -328,3 +328,46 @@ Verified new-machine probe at authorization checkpoint:
 - machine role remains blocked until preserved production state is transferred and verified.
 
 Authorization is narrowly scoped: preserve existing production state/targets/latches/Owner STOP, perform final old-authority capture, enforce old STOP -> zero authority -> preserved state transfer -> hash/3-lane verification -> new START -> exactly-one-authority verification. No state reset/reinitialization, no private state committed to GitHub, no overlap, no MIG-006 Tier B soak during MIG-005. If safe transport or rollback cannot be proven, STOP fail-closed and request the minimum Owner action.
+
+
+### MIG-005 completion
+
+MIG-005 single-authority production cutover is complete.
+
+- target PR #10 runtime candidate: `218f330ee86eea4f0fb79ef9293bd43cf96a45de`
+- target PR #10 merge: `cca403faf0704d52ca488d7fecf3c72809a52291`
+- package candidate: `dc0b5f369f6a9c3ae89d821f1ddf603e1135f51e`
+- package SHA256: `b2a67e3c7ae568454c09386b2ceb4f7cc7cfba650e3a37243dea89a2ebfe5753`
+- transfer blob identity: `abf72af4ee51a06bf49af669cd4f590bd68a9aa7` at both package/runtime candidates
+- old pre-handoff state: `ALL_DISABLED_QUIESCENT`
+- old runtime authority: 0
+- old autostart ownership: released
+- old state root + rollback record: retained
+- imported topology: 3 config lanes / 3 registry lanes / enabled=0
+- Brain/Work targets: preserved
+- dispatch/relay latches: preserved
+- Owner STOP semantics: preserved false
+- browser profile: untouched
+- GitHub runner: untouched
+- exact runtime candidate installed: true
+- new autostart ownership: present
+- new runtime authority process: inactive because all lanes are disabled
+- production ownership authority instances: 1
+- ownership state: `NEW_AUTHORITY_OWNERSHIP_ACTIVE_ALL_DISABLED_RUNTIME_QUIESCENT`
+- split-brain: false
+- RBT-009 Tier B 480m: NOT RUN
+
+Exact-head gates before activation:
+- Supervisor Tests run `35711190701` / job `106691919524`: 588/588 PASS
+- Integrity run `35711190753` / job `106692010441`: SUCCESS
+- Lifecycle isolated run `35711190610` / job `106692198176`: 52/52 PASS
+- Autostart isolated run `35711190671` / job `106691966754`: 25/25 PASS
+- RBT Tier A run `35711190642` / job `106691974263`: SUCCESS
+- MIG-005 preflight run `35711190628` / hosted job `106693086802`: 21/21 + 16/16 PASS
+- fresh machine probes `106693404916`, `106693404967`, `106693404995`, `106693405039`: 4/4 SUCCESS
+- production-capable jobs remained SKIPPED
+- final 8h Tier B remained NOT_RUN
+
+Canonical evidence: `08_AUTONOMY/MIG_005_SINGLE_AUTHORITY_CUTOVER_EVIDENCE.md`.
+
+MIG-005 is **DONE**. MIG-006 is **READY / NOT STARTED** and must not auto-start. The final RBT-009 Tier B soak must run from zero on exact runtime candidate `218f330ee86eea4f0fb79ef9293bd43cf96a45de` only after explicit release.
