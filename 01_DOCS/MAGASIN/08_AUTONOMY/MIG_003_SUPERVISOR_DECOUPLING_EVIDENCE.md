@@ -1,6 +1,6 @@
 # MIG-003 — Supervisor Business OS Decoupling Closure
 
-Status: **DONE CANDIDATE / SOURCE PR-GATED**
+Status: **DONE / CANONICAL**
 Date: 2026-09-22
 Task: `MIG-003 — Decouple Business OS-specific paths/state`
 
@@ -234,3 +234,20 @@ After the source closure PR merges:
 - MIG-004 = **READY / NOT STARTED**
 
 Work must **STOP**. MIG-004 must not self-start.
+
+
+## 15. Business OS source closure provenance
+
+- source closure PR: #242
+- source closure PR head: `011c448ee48c908658459fe9d5ae2d1a67e90c3a`
+- source closure merge SHA: `1e653fac91eaa6b948a96a0b3195bdaa72ac332b`
+- PR-head Supervisor Tests run: `35671588010`, job `106569037360`: **SUCCESS**
+- post-merge Supervisor Tests run: `35671671797`, job `106569295148`: **SUCCESS**
+- post-merge full Supervisor suite: **551 / 551 PASS, 0 FAIL**
+- state-maintenance version/read-only/optional-latch/fail-closed/target-preservation/privacy gates: **PASS**
+
+Canonical Business OS source-of-truth now records:
+- `MIG-003 = DONE`
+- `MIG-004 = READY / NOT STARTED`
+
+No MIG-004 implementation was started by MIG-003 closure.

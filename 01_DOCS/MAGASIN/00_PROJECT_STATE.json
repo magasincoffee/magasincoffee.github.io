@@ -1011,7 +1011,24 @@
       "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
       "embedded_source_copy_preserved": true,
       "local_state_mutation": false,
-      "zero_production_mutation": true
+      "zero_production_mutation": true,
+      "source_closure": {
+        "pr": 242,
+        "pr_head_sha": "011c448ee48c908658459fe9d5ae2d1a67e90c3a",
+        "merge_sha": "1e653fac91eaa6b948a96a0b3195bdaa72ac332b",
+        "pr_head_supervisor_tests": {
+          "run_id": 35671588010,
+          "job_id": 106569037360,
+          "conclusion": "SUCCESS"
+        },
+        "post_merge_supervisor_tests": {
+          "run_id": 35671671797,
+          "job_id": 106569295148,
+          "conclusion": "SUCCESS",
+          "full_suite_pass": 551,
+          "full_suite_fail": 0
+        }
+      }
     },
     "mig_004": {
       "status": "READY_NOT_STARTED",
