@@ -122,7 +122,7 @@
   };
   window.MAGASIN_EMPLOYEE={
     profile:employee,
-    events:{emit(name,detail){calls.push({kind:"event",name,detail:structuredClone(detail||{})})}
+    events:{emit(name,detail){calls.push({kind:"event",name,detail:structuredClone(detail||{})})}}
   };
   const frame=document.getElementById("employeeApp");
   function reloadFrame(){frame.srcdoc=frameTemplate()}
