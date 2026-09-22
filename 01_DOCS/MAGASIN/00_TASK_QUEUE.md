@@ -215,7 +215,7 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 | MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | DONE |
 | MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | DONE |
 | MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | DONE |
-| MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | READY / NOT STARTED |
+| MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | ACTIVE / OWNER RELEASED PREP |
 | MIG-007 | Deprecate old embedded Supervisor copy | rollback window closed + pointer docs only | QUEUED |
 
 Migration invariant: MIG-005 has completed the single-ownership handoff. The independent `magasin-supervisor` runtime candidate now owns production autostart authority; runtime processes remain intentionally quiescent because all three lanes are disabled. The old state/rollback source is retained and inactive. RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING and may not be relabeled RELEASED until MIG-006 completes.
@@ -371,3 +371,20 @@ Exact-head gates before activation:
 Canonical evidence: `08_AUTONOMY/MIG_005_SINGLE_AUTHORITY_CUTOVER_EVIDENCE.md`.
 
 MIG-005 is **DONE**. MIG-006 is **READY / NOT STARTED** and must not auto-start. The final RBT-009 Tier B soak must run from zero on exact runtime candidate `218f330ee86eea4f0fb79ef9293bd43cf96a45de` only after explicit release.
+
+
+### MIG-006 Owner release
+
+Owner explicitly released MIG-006 final RBT-009 Tier B qualification.
+
+Locked runtime candidate under test:
+- `218f330ee86eea4f0fb79ef9293bd43cf96a45de`
+- target main merge containing MIG-005 closure: `cca403faf0704d52ca488d7fecf3c72809a52291`
+- required duration: **480 continuous minutes from zero**
+- previous historical partial credit: **forbidden**
+- current production ownership: **NEW_REPO_AUTOSTART_OWNERSHIP_ALL_DISABLED_RUNTIME_QUIESCENT**
+- current runtime processes: **0 by design because enabled_lane_count=0**
+
+Release authorizes preparation and execution of the exact-SHA soak only after the release workflow is corrected/qualified for the new platform state root and all-disabled semantics. It does not authorize enabling lanes, changing Brain/Work targets, clearing Owner STOP, creating a second authority, or redefining the runtime candidate.
+
+Tier B is not considered started until the self-hosted runner begins the 480-minute monitor on the exact locked runtime candidate. If interrupted, the attempt is non-qualifying and restarts from zero. STOP after MIG-006; do not self-start MIG-007.
