@@ -174,7 +174,7 @@ Canonical architecture: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md`
 Execution plan: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md`  
 E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 
-> Architecture is Owner-approved. Owner released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090→TASK-095 are DONE. TASK-095 Employee Published Weekly Schedule V1 is DONE with evidence at 05_SYSTEM/TASK_095_EMPLOYEE_PUBLISHED_WEEKLY_SCHEDULE_V1.md. TASK-096 is READY / MANUAL_WORK but MUST NOT auto-run; TASK-097→108 remain staged until Brain accepts each prior result. Current PFC queue remains independently authoritative.
+> Architecture is Owner-approved. Owner released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090→TASK-096 are DONE. TASK-096 Swap Lifecycle Reconciliation + Hardening is DONE with evidence at 05_SYSTEM/TASK_096_SWAP_LIFECYCLE_RECONCILIATION_HARDENING.md. TASK-097 is READY / MANUAL_WORK but MUST NOT auto-run; TASK-098→108 remain staged until Brain accepts each prior result. Current PFC queue remains independently authoritative.
 
 | ID | Task | Est. | Gate | Status |
 |---|---|---:|---|---|
@@ -184,8 +184,8 @@ E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 | TASK-093 | Manager Sunday Schedule Board V1 | 20m | Manager scheduling browser gate | DONE |
 | TASK-094 | Schedule Validation + Publish Gate | 20m | overlap/max-2/scope/publish regression | DONE |
 | TASK-095 | Employee Published Weekly Schedule V1 | 20m | publish→employee visibility E2E | DONE |
-| TASK-096 | Swap Lifecycle Reconciliation + Hardening | 20m | full swap lifecycle regression/E2E | READY / MANUAL_WORK |
-| TASK-097 | Give Lifecycle Reconciliation + Hardening | 20m | full give lifecycle regression/E2E | STAGED / WAIT_OWNER_RELEASE |
+| TASK-096 | Swap Lifecycle Reconciliation + Hardening | 20m | full swap lifecycle regression/E2E | DONE |
+| TASK-097 | Give Lifecycle Reconciliation + Hardening | 20m | full give lifecycle regression/E2E | READY / MANUAL_WORK |
 | TASK-098 | Manual-Time Attendance Contract + Migration Path | 20m | no active realtime check-in/out semantics | STAGED / WAIT_OWNER_RELEASE |
 | TASK-099 | Employee Attendance Entry UI V1 | 20m | manual-time submit browser E2E | STAGED / WAIT_OWNER_RELEASE |
 | TASK-100 | Manager Attendance Exception Review V1 | 20m | review/adjust/confirmed-time E2E | STAGED / WAIT_OWNER_RELEASE |
@@ -200,6 +200,7 @@ E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 
 TASK-094 completion evidence: `05_SYSTEM/TASK_094_SCHEDULE_VALIDATION_PUBLISH_GATE_V1.md`. Implementation PR #239 merged as `083606b268c0da4026c3637c150481ac422e6581`; exact post-merge gate exposed an attendance iframe lifecycle race, repaired on the same TASK-094 branch in PR #240 and merged as `2ed75c6e3237b91fb4cb403a237015541a39d956`. Final exact-main People Shift run `35635895604` / job `106453100188` succeeded on Node v20.20.2 with 182/182 deterministic checks, all 8 browser suites, E2E-03 STRONG, E2E-05 STRONG and 0 failures. Final live reconciliation retained the legacy duplicate DRAFT group fail-closed without cleanup. TASK-094 DONE; TASK-095 READY / MANUAL_WORK. Workforce Robot remains disabled; PFC remains TASK-068 → TASK-069.
 TASK-095 completion evidence: `05_SYSTEM/TASK_095_EMPLOYEE_PUBLISHED_WEEKLY_SCHEDULE_V1.md`. Implementation PR #245 final head `d08fa9fef785755b309384a8247fac737fa663c1` merged as `6e5617bae5cea60473f4aa1546295016ee0f174b`. PR-head People Shift run `35677658047` / job `106587440586` and exact post-merge run `35677762865` / job `106587761948` both succeeded on Node v20.20.2 with 187/187 deterministic checks, all 9 browser suites, E2E-04 STRONG and 0 failures. Production migration `20260922015212_task_095_employee_published_weekly_schedule_v1` remains live; canonical Employee reader is own-user/APPROVED/exact-week scoped; schedule notification trigger creates no new CLOCK_OUT_REMINDER and has no new security-advisor finding. TASK-095 DONE; TASK-096 READY / MANUAL_WORK. Workforce Robot remains disabled; PFC remains TASK-068 → TASK-069.
+TASK-096 completion evidence: `05_SYSTEM/TASK_096_SWAP_LIFECYCLE_RECONCILIATION_HARDENING.md`. Implementation PR #253 final head `4e2536a6851324776e0b2d0870d0220ee0eeb928` merged as `b166241aea681a5d8429a6f6efce0a03fe53de2b`. PR-head People Shift run `35730001119` / job `106752923813` and exact post-merge run `35730242009` / job `106753715304` both succeeded on Node v20.20.2 with 197/197 deterministic checks, all 10 browser suites, E2E-06 STRONG and 0 failures. Production migration `20260922124821_task_096_swap_lifecycle_reconciliation_hardening` remains live and exact-source matched across 9 changed/new function bodies. Peer acceptance is server-authoritative; Manager acts only on PEER_ACCEPTED; atomic apply is idempotent and cannot swap ownership back on retry. TASK-096 DONE; TASK-097 READY / MANUAL_WORK. Workforce Robot remains disabled; PFC remains TASK-068 → TASK-069.
 
 
 ## Supervisor Independent Repository Migration V1
