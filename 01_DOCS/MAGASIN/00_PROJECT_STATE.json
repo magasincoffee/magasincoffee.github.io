@@ -808,7 +808,7 @@
   },
   "supervisor_repository_migration": {
     "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
-    "state": "MIG_004_DONE_MIG_005_READY_OWNER_SAFE_GATE",
+    "state": "MIG_005_ACTIVE_PREFLIGHT",
     "source_repository": "magasincoffee/magasincoffee.github.io",
     "target_repository": "magasincoffee/magasin-supervisor",
     "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -861,7 +861,7 @@
     ],
     "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md",
     "last_completed_task": "MIG-004",
-    "current_task_status": "READY_OWNER_SAFE_GATE",
+    "current_task_status": "ACTIVE_OWNER_RELEASED_PREFLIGHT",
     "mig_001": {
       "status": "DONE",
       "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -1151,6 +1151,29 @@
       "zero_production_mutation": true,
       "next_task": "MIG-005",
       "next_task_status": "READY_OWNER_SAFE_GATE",
+      "stop_after_task": true
+    },
+    "mig_005": {
+      "status": "ACTIVE_OWNER_RELEASED_PREFLIGHT",
+      "scope": "SINGLE_AUTHORITY_PRODUCTION_CUTOVER_WITH_PRESERVED_TARGETS_LATCHES_OWNER_STOP_AND_ROLLBACK",
+      "owner_released": true,
+      "control_console": "OLD_MACHINE",
+      "target_repository": "magasincoffee/magasin-supervisor",
+      "target_candidate_sha": "a67b6ea19e7e10b4b63b56f9e7b5274a94135ca2",
+      "source_state_sha": "09b1170364c88f778de40d6ce68c90deab95197b",
+      "pre_cutover_production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
+      "production_cutover": false,
+      "new_machine_readiness_required": true,
+      "new_machine_readiness_verified": false,
+      "cutover_permitted_only_after_preflight": true,
+      "production_mutation_authority_instances_required": 1,
+      "split_brain_forbidden": true,
+      "preserve_brain_work_targets": true,
+      "preserve_lane_state_and_latches": true,
+      "owner_stop_authoritative": true,
+      "rollback_required": true,
+      "final_8h_soak_forbidden": true,
+      "next_task": "MIG-006",
       "stop_after_task": true
     }
   }
