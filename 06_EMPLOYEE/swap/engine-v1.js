@@ -8,7 +8,7 @@ function panel(){return d()?.getElementById('view-swap')}
 function show(t){const x=panel(),e=x?.querySelector('#swapResult');if(e){e.textContent=t;e.classList.add('open')}}
 function myShiftOptions(){return state.my.map(r=>`<option value="${esc(r.schedule_id||'')}">${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))} · ${esc(r.store_code||r.store_name||'')}</option>`).join('')}
 function statusBadge(status){const s=String(status||'').toUpperCase();return s==='APPROVED'?'green':s.startsWith('REJECTED')||s==='CANCELLED'?'red':s==='PENDING_MANAGER'||s==='PEER_ACCEPTED'?'blue':'amber'}
-function statusLabel(status){return ({PENDING_RECIPIENT:'Chờ người nhận',PENDING_MANAGER:'Chờ quản lý',APPROVED:'Đã duyệt',REJECTED_RECIPIENT:'Người nhận từ chối',REJECTED_MANAGER:'Quản lý từ chối',PENDING:'Chờ người kia đồng ý',PEER_ACCEPTED:'Người kia đã đồng ý · Chờ quản lý',REJECTED:'Đã từ chối',CANCELLED:'Đã hủy'})[String(status||'').toUpperCase()]||String(status||'')}
+function statusLabel(status){return ({PENDING_RECIPIENT:'Chờ người nhận',PENDING_MANAGER:'Đã đồng ý nhận ca · Chờ quản lý duyệt',APPROVED:'Đã duyệt',REJECTED_RECIPIENT:'Người nhận từ chối',REJECTED_MANAGER:'Quản lý từ chối',PENDING:'Chờ người kia đồng ý',PEER_ACCEPTED:'Người kia đã đồng ý · Chờ quản lý',REJECTED:'Đã từ chối',CANCELLED:'Đã hủy'})[String(status||'').toUpperCase()]||String(status||'')}
 
 async function loadProfile(){
   if(state.profile)return state.profile;

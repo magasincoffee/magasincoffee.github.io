@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>MAGASIN QA · TASK-097 Give Lifecycle</title></head>
+<body>
+<nav><button data-view="swap" id="managerGiveNav">Manager Give</button></nav>
+<section id="view-swap"></section>
+<iframe id="employeeApp" title="Employee Give Lifecycle QA"></iframe>
+
+<script>
+(()=>{
+ const storageKey="MAGASIN_TASK097_GIVE_QA_V1";
+ let saved=null;
+ try{saved=JSON.parse(localStorage.getItem(storageKey)||"null")}catch(_){saved=null}
+
+ const profiles={
+  "u-a":{id:"u-a",full_name:"Nhân viên A",role:"STAFF",status:"ACTIVE"},
+  "u-b":{id:"u-b",full_name:"Nhân viên B",role:"STAFF",status:"ACTIVE"},
+  "manager":{id:"manager",full_name:"Quản lý QA",role:"STORE_MANAGER",status:"ACTIVE"}
+ };
+ const baseSchedule=()=>({schedule_id:"sch-give",id:"sch-give",user_id:"u-a",work_date:"2026-09-28",start_time:"06:00",end_time:"12:00",store_id:"store-a",store_code:"CN-QA",store_name:"Cửa hàng QA",status:"APPROVED"});
+ let currentUser=saved?.currentUser||"u-a";
+ let managerScope=saved?.managerScope!==false;
+ let schedule=saved?.schedule||baseSchedule();
+ let give=saved?.give||null;
+ let giveSeq=Number(saved?.giveSeq||0);
+ let transferCount=Number(saved?.transferCount||0);
+ const notifications=new Map(Array.isArray(saved?.notifications)?saved.notifications:[]);
+ const calls=[];
+ const managerCalls=[];
+ const faults={
+  giverInactive:false,giverNonStaff:false,recipientInactive:false,recipientNonStaff:false,
+  attendance:false,availability:false,explicitUnavailable:false,overlap:false,maxTwo:false,
+  dailyHours:false,weeklyHours:false,swapPending:false,swapPeerAccepted:false
+ };
+
+ function persist(){
+  localStorage.setItem(storageKey,JSON.stringify({
+   currentUser,managerScope,schedule,give,giveSeq,transferCount,
+   notifications:[...notifications.entries()]
+  }));
+ }
+ function notify(key,type,audience,user=null){
+  notifications.set(key,{key,type,audience,user});
+  persist();
+ }
+ function err(message){return {data:null,error:{message}}}
+ function activeGive(){return give&&["PENDING_RECIPIENT","PENDING_MANAGER"].includes(give.status)}
+ function validate(scheduleId,recipientId,giverId){
+  const v=[];
+  if(schedule.id!==scheduleId){v.push("SCHEDULE_NOT_FOUND");return v}
+  if(schedule.user_id!==giverId)v.push("GIVER_SCHEDULE_NOT_OWNED");
+  if(schedule.status!=="APPROVED")v.push("SCHEDULE_NOT_APPROVED");
+  if(recipientId===giverId)v.push("SAME_EMPLOYEE_GIVE");
+  if(faults.giverInactive||profiles[giverId]?.status!=="ACTIVE")v.push("GIVER_INACTIVE");
+  if(faults.giverNonStaff||profiles[giverId]?.role!=="STAFF")v.push("GIVER_NOT_STAFF");
+  if(faults.recipientInactive||profiles[recipientId]?.status!=="ACTIVE")v.push("RECIPIENT_INACTIVE");
+  if(faults.recipientNonStaff||profiles[recipientId]?.role!=="STAFF")v.push("RECIPIENT_NOT_STAFF");
+  if(faults.attendance)v.push("ATTENDANCE_ALREADY_EXISTS");
+  if(faults.availability)v.push("RECIPIENT_NOT_AVAILABLE");
+  if(faults.explicitUnavailable)v.push("RECIPIENT_UNAVAILABLE");
+  if(faults.overlap)v.push("RECIPIENT_RESULTING_OVERLAP");
+  if(faults.swapPending||faults.swapPeerAccepted)v.push("SCHEDULE_HAS_ACTIVE_SWAP");
+  if(faults.maxTwo)v.push("RECIPIENT_MAX_TWO_ASSIGNMENTS_PER_DAY");
+  if(faults.dailyHours)v.push("RECIPIENT_DAILY_HOURS_LIMIT");
+  if(faults.weeklyHours)v.push("RECIPIENT_WEEKLY_HOURS_LIMIT");
+  return v;
+ }
+ function projection(row){
+  return {
+   id:row.id,requested_at:row.requested_at,status:row.status,reason:row.reason,
+   giver_id:row.giver_id,giver_name:profiles[row.giver_id]?.full_name,
+   recipient_id:row.recipient_id,recipient_name:profiles[row.recipient_id]?.full_name,
+   schedule_id:row.schedule_id,work_date:schedule.work_date,start_time:schedule.start_time,end_time:schedule.end_time,
+   store_id:schedule.store_id,store_code:schedule.store_code,store_name:schedule.store_name,
+   recipient_responded_at:row.recipient_responded_at||null,manager_id:row.manager_id||null,
+   resolved_at:row.resolved_at||null,manager_note:row.manager_note||null
+  };
+ }
+
+ async function employeeRpc(name,args={}){
+  calls.push({actor:currentUser,name,args:structuredClone(args||{})});
+
+  if(name==="list_my_approved_schedules_v2"){
+   return {data:schedule.user_id===currentUser&&schedule.status==="APPROVED"?[{...schedule}]:[],error:null};
+  }
+  if(name==="list_shift_give_candidates_v1"){
+   if(args.p_schedule_id!==schedule.id||schedule.user_id!==currentUser||schedule.status!=="APPROVED")return err("GIVER_SCHEDULE_NOT_OWNED");
+   if(activeGive())return {data:[],error:null};
+   const violations=validate(schedule.id,"u-b",currentUser);
+   return {data:violations.length?[]:[{user_id:"u-b",user_name:profiles["u-b"].full_name,work_date:schedule.work_date,start_time:schedule.start_time,end_time:schedule.end_time,store_id:schedule.store_id,store_code:schedule.store_code,store_name:schedule.store_name}],error:null};
+  }
+  if(name==="submit_shift_give_request"){
+   if(!String(args.p_reason||"").trim())return err("REASON_REQUIRED");
+   const violations=validate(args.p_schedule_id,args.p_recipient_user_id,currentUser);
+   if(violations.length)return err("SHIFT_GIVE_VALIDATION_FAILED: "+violations.join(","));
+   if(activeGive())return err("SHIFT_GIVE_ALREADY_PENDING");
+   give={id:"give-"+(++giveSeq),giver_id:currentUser,recipient_id:args.p_recipient_user_id,schedule_id:args.p_schedule_id,status:"PENDING_RECIPIENT",reason:String(args.p_reason).trim(),requested_at:"2026-09-27T10:00:00Z",recipient_responded_at:null,manager_id:null,resolved_at:null,manager_note:null};
+   persist();
+   notify("give:"+give.id+":recipient_request","SHIFT_GIVE_REQUESTED","USER",give.recipient_id);
+   return {data:give.id,error:null};
+  }
+  if(name==="list_my_shift_gives_v1"){
+   return {data:give&&[give.giver_id,give.recipient_id].includes(currentUser)?[projection(give)]:[],error:null};
+  }
+  if(name==="respond_shift_give_request"){
+   if(!give||give.id!==args.p_give_id)return err("SHIFT_GIVE_NOT_FOUND");
+   if(give.recipient_id!==currentUser)return err("RECIPIENT_NOT_ALLOWED");
+   if(give.status==="PENDING_MANAGER"&&args.p_accept===true)return {data:{id:give.id,status:"PENDING_MANAGER",accepted:true,already_accepted:true},error:null};
+   if(give.status==="REJECTED_RECIPIENT"&&args.p_accept===false)return {data:{id:give.id,status:"REJECTED_RECIPIENT",accepted:false,already_rejected:true},error:null};
+   if(give.status!=="PENDING_RECIPIENT")return err("SHIFT_GIVE_NOT_PENDING_RECIPIENT");
+   if(args.p_accept===false){
+    give.status="REJECTED_RECIPIENT";give.recipient_responded_at="2026-09-27T10:05:00Z";give.resolved_at="2026-09-27T10:05:00Z";persist();
+    notify("give:"+give.id+":recipient_rejected:giver","SHIFT_GIVE_RECIPIENT_REJECTED","USER",give.giver_id);
+    return {data:{id:give.id,status:give.status,accepted:false,already_rejected:false},error:null};
+   }
+   if(schedule.user_id!==give.giver_id)return err("GIVER_OWNERSHIP_CHANGED");
+   if(schedule.status!=="APPROVED")return err("SCHEDULE_NOT_APPROVED");
+   const violations=validate(give.schedule_id,give.recipient_id,give.giver_id);
+   if(violations.length)return err("SHIFT_GIVE_REVALIDATION_FAILED: "+violations.join(","));
+   give.status="PENDING_MANAGER";give.recipient_responded_at="2026-09-27T10:05:00Z";persist();
+   notify("give:"+give.id+":recipient_accepted:giver","SHIFT_GIVE_RECIPIENT_ACCEPTED","USER",give.giver_id);
+   notify("give:"+give.id+":manager_review","SHIFT_GIVE_MANAGER_REVIEW","STORE_MANAGERS",null);
+   return {data:{id:give.id,status:give.status,accepted:true,already_accepted:false},error:null};
+  }
+  if(name==="list_my_shift_swaps_v2"||name==="list_my_incoming_shift_swaps_v1"||name==="list_shift_swap_candidates_v1")return {data:[],error:null};
+  if(name==="submit_shift_swap_request"||name==="respond_shift_swap_request")return err("SWAP_NOT_USED_IN_TASK_097_FIXTURE");
+  return {data:[],error:null};
+ }
+
+ async function managerRpc(name,args={}){
+  managerCalls.push({name,args:structuredClone(args||{})});
+  if(name==="list_shift_swap_requests_v1")return {data:[],error:null};
+  if(name==="list_shift_give_requests_v1"){
+   if(!managerScope)return {data:[],error:null};
+   return {data:give&&give.status==="PENDING_MANAGER"&&args.p_status==="PENDING_MANAGER"?[projection(give)]:[],error:null};
+  }
+  if(name==="approve_shift_give"){
+   if(!managerScope)return err("STORE_NOT_ALLOWED");
+   if(!give||give.id!==args.p_give_id)return err("SHIFT_GIVE_NOT_FOUND");
+   if(give.status==="APPROVED"){
+    if(schedule.user_id!==give.recipient_id)return err("SHIFT_GIVE_APPROVED_OWNERSHIP_MISMATCH");
+    return {data:{id:give.id,status:"APPROVED",transferred:false,already_applied:true,schedule_id:give.schedule_id,giver_id:give.giver_id,recipient_id:give.recipient_id},error:null};
+   }
+   if(give.status!=="PENDING_MANAGER")return err("SHIFT_GIVE_NOT_PENDING_MANAGER");
+   if(!give.recipient_responded_at)return err("SHIFT_GIVE_RECIPIENT_CONSENT_REQUIRED");
+   if(schedule.user_id!==give.giver_id)return err("GIVER_OWNERSHIP_CHANGED");
+   if(schedule.status!=="APPROVED")return err("SCHEDULE_NOT_APPROVED");
+   const violations=validate(give.schedule_id,give.recipient_id,give.giver_id);
+   if(violations.length)return err("SHIFT_GIVE_REVALIDATION_FAILED: "+violations.join(","));
+   const oldOwner=schedule.user_id;
+   schedule.user_id=give.recipient_id;transferCount++;
+   give.status="APPROVED";give.manager_id="manager";give.resolved_at="2026-09-27T10:10:00Z";persist();
+   notify("schedule:"+schedule.id+":transfer:"+oldOwner+":"+schedule.user_id+":out","SCHEDULE_TRANSFERRED_OUT","USER",oldOwner);
+   notify("schedule:"+schedule.id+":transfer:"+oldOwner+":"+schedule.user_id+":in","SCHEDULE_TRANSFERRED_IN","USER",schedule.user_id);
+   notify("give:"+give.id+":approved:giver","SHIFT_GIVE_APPROVED","USER",give.giver_id);
+   notify("give:"+give.id+":approved:recipient","SHIFT_GIVE_APPROVED","USER",give.recipient_id);
+   return {data:{id:give.id,status:"APPROVED",transferred:true,already_applied:false,schedule_id:give.schedule_id,giver_id:give.giver_id,recipient_id:give.recipient_id},error:null};
+  }
+  if(name==="reject_shift_give"){
+   if(!managerScope)return err("STORE_NOT_ALLOWED");
+   if(!give||give.id!==args.p_give_id)return err("SHIFT_GIVE_NOT_FOUND");
+   if(give.status==="REJECTED_MANAGER")return {data:{id:give.id,status:"REJECTED_MANAGER",already_rejected:true},error:null};
+   if(give.status!=="PENDING_MANAGER")return err("SHIFT_GIVE_NOT_PENDING_MANAGER");
+   if(!give.recipient_responded_at)return err("SHIFT_GIVE_RECIPIENT_CONSENT_REQUIRED");
+   give.status="REJECTED_MANAGER";give.manager_id="manager";give.resolved_at="2026-09-27T10:10:00Z";persist();
+   notify("give:"+give.id+":rejected_manager:giver","SHIFT_GIVE_REJECTED_MANAGER","USER",give.giver_id);
+   notify("give:"+give.id+":rejected_manager:recipient","SHIFT_GIVE_REJECTED_MANAGER","USER",give.recipient_id);
+   return {data:{id:give.id,status:"REJECTED_MANAGER",already_rejected:false},error:null};
+  }
+  return {data:[],error:null};
+ }
+
+ function reset(){
+  currentUser="u-a";managerScope=true;schedule=baseSchedule();give=null;giveSeq=0;transferCount=0;
+  notifications.clear();calls.length=0;managerCalls.length=0;
+  for(const k of Object.keys(faults))faults[k]=false;
+  profiles["u-a"].status="ACTIVE";profiles["u-a"].role="STAFF";
+  profiles["u-b"].status="ACTIVE";profiles["u-b"].role="STAFF";
+  localStorage.removeItem(storageKey);persist();
+ }
+ window.__GIVE97_QA={
+  calls,managerCalls,notifications,profiles,faults,
+  get currentUser(){return currentUser},get give(){return give?structuredClone(give):null},
+  get schedule(){return structuredClone(schedule)},get transferCount(){return transferCount},
+  switchUserPersist(id){currentUser=id;persist()},
+  setManagerScope(v){managerScope=!!v;persist()},
+  reset,
+  employeeRpcAs:async(id,name,args)=>{const old=currentUser;currentUser=id;try{return await employeeRpc(name,args)}finally{currentUser=old}},
+  managerRpc,
+  setScheduleOwner(id){schedule.user_id=id;persist()},
+  setScheduleStatus(status){schedule.status=status;persist()},
+  refreshEmployee:()=>window.MAGASIN_EMPLOYEE?.swap?.refresh?.(),
+  refreshManager:()=>window.MAGASIN_MANAGER_SHIFT_CHANGE?.refresh?.()
+ };
+
+ window.MAGASIN_CORE={
+  security:{escapeHtml:v=>String(v??"")},
+  time:{time5:v=>String(v??"").slice(0,5)},
+  date:{monday:()=>"2026-09-28",formatDate:v=>String(v??"").slice(0,10)},
+  ui:{toast:()=>{}},
+  supabase:{getProfile:async()=>({...profiles[currentUser]}),rpc:employeeRpc}
+ };
+ window.supabase={createClient:()=>({rpc:managerRpc})};
+
+ const f=document.getElementById("employeeApp");
+ f.srcdoc=`<!doctype html><html lang="vi"><body>
+ <section id="view-swap">
+  <div id="swapChoices"><button onclick="openSwapForm('swap')">Đổi ca</button><button onclick="openSwapForm('give')">Cho ca</button></div>
+  <div id="swapForm">
+   <div><h3 id="swapFormTitle"></h3><div id="swapFormSub"></div></div>
+   <div class="swap-card"><h3>Ca của tôi</h3></div>
+   <div class="swap-card"><h3 id="partnerTitle"></h3><div class="field"><label>Trường hiện hữu</label><select></select></div></div>
+   <div class="swap-actions"><button onclick="backToSwapChoices()">Hủy</button><button class="btn primary" onclick="sendSwapRequest()">Gửi yêu cầu</button></div>
+   <div id="swapResult"></div>
+  </div>
+  <div class="history-head"><h3>Lịch sử</h3></div><div id="historyList"></div>
+ </section></body></html>`;
+})();
+</script>
+<script src="/06_EMPLOYEE/swap/engine-v1.js"></script>
+<script src="/05_MANAGER/Workforce/swap-approval-v1.js"></script>
+</body></html>
