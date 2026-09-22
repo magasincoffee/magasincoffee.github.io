@@ -211,8 +211,8 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 |---|---|---|---|
 | MIG-001 | Freeze Baseline + Migration Bootstrap | exact baseline inventory + migration contract + target repo bootstrap plan; zero production cutover | DONE |
 | MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | DONE |
-| MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | ACTIVE / WORK RELEASED |
-| MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | QUEUED |
+| MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | DONE |
+| MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | READY / NOT STARTED |
 | MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | QUEUED / OWNER-SAFE-GATE |
 | MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | QUEUED |
 | MIG-007 | Deprecate old embedded Supervisor copy | rollback window closed + pointer docs only | QUEUED |
@@ -247,10 +247,25 @@ Owner created the exact target repository `magasincoffee/magasin-supervisor`. Gi
 `ZERO_PRODUCTION_MUTATION=true`
 
 
-### MIG-003 Owner release
+### MIG-003 completion
 
-Owner explicitly released MIG-003. Exact target base: `magasincoffee/magasin-supervisor@64371bedc7b9c976047224152dba820c12a0674c`.
+MIG-003 decoupling is complete in `magasincoffee/magasin-supervisor`.
 
-Scope is decoupling only. Production cutover remains forbidden; existing embedded Supervisor remains the sole production authority. Self-hosted mutation/install/lifecycle/soak jobs in the target repository must remain inert until later gates.
+- exact implementation base: `64371bedc7b9c976047224152dba820c12a0674c`
+- canonical implementation PR #5 head: `f7fe79e22660c8a9fc0c1e3feecfcf90d282298a`
+- implementation merge: `aec7db9a715ceb41066af6636a4c91d34553eed5`
+- docs-only target closure PR #6 merge: `7691bafd1571039be363d3edf760270756b5c7c6`
+- project adapter: `supervisor-project-adapter.v1`
+- state-root contract: `supervisor-state-root.v1`
+- direct Business OS PROJECT_STATE/TASK_QUEUE/CURRENT_STATE defaults removed from generic platform core
+- old repository identity removed from generic defaults
+- root-native workflows/tests established
+- MIG-002 mapped paths preserved 137/137
+- self-hosted production workflows remain inert/fail-closed
+- production cutover remains false
+- production authority remains UNCHANGED_EXISTING_SUPERVISOR
+- RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING
 
-MIG-003 must STOP after evidence/closure and must not self-start MIG-004.
+Next task is MIG-004 READY / NOT STARTED. MIG-003 does not start or certify MIG-004.
+
+`ZERO_PRODUCTION_MUTATION=true`

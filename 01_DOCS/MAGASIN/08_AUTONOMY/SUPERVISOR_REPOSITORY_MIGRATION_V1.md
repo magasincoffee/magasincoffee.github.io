@@ -86,6 +86,25 @@ MIG-002 canonical artifacts:
 - RBT-009: IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING
 - next task: MIG-003 READY / NOT STARTED
 
+MIG-003 canonical artifacts:
+- target implementation base: `64371bedc7b9c976047224152dba820c12a0674c`
+- project adapter contract: `src/project-adapter.mjs` / `docs/PROJECT_ADAPTER_V1.md`
+- state-root contract: `src/state-root.mjs` + `windows/state-root.ps1` / `docs/STATE_ROOT_V1.md`
+- coupling manifest: `docs/MIG_003_COUPLING_CLOSURE.json`
+- target evidence: `docs/MIG_003_DECOUPLING_EVIDENCE.md`
+- canonical implementation PR #5 head: `f7fe79e22660c8a9fc0c1e3feecfcf90d282298a`
+- implementation merge: `aec7db9a715ceb41066af6636a4c91d34553eed5`
+- docs-only target closure PR #6 merge: `7691bafd1571039be363d3edf760270756b5c7c6`
+- PR-head gates: Supervisor Tests `35645284638` SUCCESS; Supervisor Integrity `35645284699` static SUCCESS / runtime SKIPPED
+- exact implementation-main gates: Supervisor Tests `35645394216` SUCCESS; Supervisor Integrity `35645394250` static SUCCESS / runtime SKIPPED
+- final target closure gates: Supervisor Tests `35671405631` SUCCESS; Supervisor Integrity `35671405652` static SUCCESS / runtime SKIPPED
+- decoupling tests: 50/50 PASS; platform core/safety: 184/184 PASS; integrity/static: 82/82 PASS; StrictMode A→O PASS
+- MIG-002 mapped paths preserved: 137/137; missing=0; 34 mapped coupling surfaces intentionally rewritten without re-freeze
+- production cutover: NONE
+- production authority: UNCHANGED_EXISTING_SUPERVISOR
+- RBT-009: IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING
+- next task: MIG-004 READY / NOT STARTED
+
 ## 6. Production guardrails
 
 During MIG-001 through MIG-004:
@@ -135,6 +154,26 @@ The qualifying sequence is:
 `MIG-001 -> MIG-002 -> MIG-003 -> MIG-004 -> MIG-005 -> MIG-006`
 
 At MIG-006, run RBT-009 Tier B from zero for 480 uninterrupted minutes against the exact `magasincoffee/magasin-supervisor` candidate SHA, after new-repository CI/lifecycle parity and single production mutation authority are proven.
+
+## 8B. MIG-003 Definition of Done
+
+Status: **MIG-003 DONE / MIG-004 READY / NOT STARTED**
+
+MIG-003 is complete because:
+1. generic platform runtime no longer embeds a Business OS PROJECT_STATE/TASK_QUEUE/CURRENT_STATE source/default;
+2. one explicit `supervisor-project-adapter.v1` boundary validates bounded project orchestration input and fails closed when absent/invalid;
+3. old Business OS repository identity is removed from generic defaults and project repository is explicit adapter/config input;
+4. one `supervisor-state-root.v1` contract provides explicit override plus legacy-preserve compatibility without moving/resetting production state;
+5. target workflows/scripts are root-native and no executable target path depends on `08_INTEGRATIONS/supervisor/**`;
+6. generic tests are decoupled from Business OS global task IDs and `02_CORE/**`/night-run monorepo fixtures;
+7. MAGASIN_LANE_DIRECTIVE_V1 serialization and exact-once/Owner STOP/lane isolation/scheduler/watchdog/privacy invariants are preserved;
+8. hosted MIG-003 tests/integrity are green on PR head and exact target main;
+9. self-hosted install/lifecycle/control-panel/state-maintenance/RBT jobs remain hard-disabled/inert;
+10. MIG-002 provenance remains authoritative and all 137 mapped target paths remain represented;
+11. no production/local-state/Brain/Work/latch/Owner STOP mutation occurred;
+12. RBT-009 remains pending and no MIG-004 parity certification is claimed.
+
+MIG-004 is READY / NOT STARTED. It may perform full new-repository CI/lifecycle parity validation only after a separate Work directive/release.
 
 ## 8A. MIG-002 Definition of Done
 

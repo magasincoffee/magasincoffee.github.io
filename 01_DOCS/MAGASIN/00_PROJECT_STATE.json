@@ -772,13 +772,13 @@
   },
   "supervisor_repository_migration": {
     "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
-    "state": "MIG_003_ACTIVE",
+    "state": "MIG_003_DONE_MIG_004_READY",
     "source_repository": "magasincoffee/magasincoffee.github.io",
     "target_repository": "magasincoffee/magasin-supervisor",
     "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
-    "current_task": "MIG-003",
-    "current_task_title": "Decouple Business OS-specific paths/state",
-    "next_task": "MIG-004",
+    "current_task": "MIG-004",
+    "current_task_title": "New-repo CI / lifecycle parity",
+    "next_task": "MIG-005",
     "production_cutover": false,
     "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
     "compatibility_window": "REQUIRED_UNTIL_NEW_REPO_PARITY_AND_ROLLBACK_GATES_PASS",
@@ -824,8 +824,8 @@
       "AUTH_MFA_CAPTCHA_AND_DESTRUCTIVE_ADMIN_REMAIN_FAIL_CLOSED"
     ],
     "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md",
-    "last_completed_task": "MIG-002",
-    "current_task_status": "ACTIVE_WORK_RELEASED",
+    "last_completed_task": "MIG-003",
+    "current_task_status": "READY_NOT_STARTED",
     "mig_001": {
       "status": "DONE",
       "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -890,18 +890,133 @@
       "local_state_mutation": false
     },
     "mig_003": {
-      "status": "ACTIVE_WORK_RELEASED",
+      "status": "DONE",
       "scope": "DECOUPLE_BUSINESS_OS_PROJECT_STATE_TASK_QUEUE_REPO_ROOT_LOCAL_STATE_AND_LEGACY_TASK_FIXTURES_WITHOUT_PRODUCTION_CUTOVER",
       "owner_released": true,
       "target_repository": "magasincoffee/magasin-supervisor",
-      "target_base_sha": "64371bedc7b9c976047224152dba820c12a0674c",
-      "source_state_sha": "3597e181f6d29e09835f4dd262b1f8d9b9e32c38",
+      "exact_base_sha": "64371bedc7b9c976047224152dba820c12a0674c",
+      "implementation_pr": 5,
+      "superseded_pr": 4,
+      "implementation_head_sha": "f7fe79e22660c8a9fc0c1e3feecfcf90d282298a",
+      "implementation_merge_sha": "aec7db9a715ceb41066af6636a4c91d34553eed5",
+      "target_docs_closure_pr": 6,
+      "target_docs_closure_merge_sha": "7691bafd1571039be363d3edf760270756b5c7c6",
+      "target_evidence": "docs/MIG_003_DECOUPLING_EVIDENCE.md",
+      "target_coupling_manifest": "docs/MIG_003_COUPLING_CLOSURE.json",
+      "project_adapter_contract": {
+        "schema": "supervisor-project-adapter.v1",
+        "implementation": "src/project-adapter.mjs",
+        "documentation": "docs/PROJECT_ADAPTER_V1.md",
+        "explicit_source_required": true,
+        "no_business_os_default": true,
+        "missing_source_fails_closed": true
+      },
+      "state_root_contract": {
+        "schema": "supervisor-state-root.v1",
+        "javascript": "src/state-root.mjs",
+        "powershell": "windows/state-root.ps1",
+        "documentation": "docs/STATE_ROOT_V1.md",
+        "default_compatibility": "legacy-preserve",
+        "live_state_move_or_reset": false
+      },
+      "coupling_closure": {
+        "project_state_direct_runtime": "CLOSED",
+        "project_policy_prompts": "CLOSED",
+        "old_repository_identity": "CLOSED",
+        "local_state_root": "CLOSED_WITH_COMPATIBILITY",
+        "embedded_repository_root": "CLOSED",
+        "business_global_task_fixtures": "CLOSED",
+        "monorepo_night_run": "CLOSED",
+        "hosted_ci_root_native": "READY_FOR_MIG_004_FULL_PARITY"
+      },
+      "mig_002_parity_preservation": {
+        "managed_records": 137,
+        "represented_after_mig_003": 137,
+        "missing_after_mig_003": 0,
+        "changed_mapped_file_count": 34,
+        "frozen_provenance_preserved": true
+      },
+      "pr_head_gates": {
+        "supervisor_tests": {
+          "run_id": 35645284638,
+          "job_id": 106484118473,
+          "conclusion": "SUCCESS"
+        },
+        "supervisor_integrity": {
+          "run_id": 35645284699,
+          "static_job_id": 106484151783,
+          "runtime_job_id": 106484202256,
+          "static_conclusion": "SUCCESS",
+          "runtime_conclusion": "SKIPPED_FAIL_CLOSED"
+        }
+      },
+      "exact_implementation_main_gates": {
+        "sha": "aec7db9a715ceb41066af6636a4c91d34553eed5",
+        "supervisor_tests": {
+          "run_id": 35645394216,
+          "job_id": 106484492607,
+          "conclusion": "SUCCESS",
+          "decoupling_contract_pass": 50,
+          "platform_core_pass": 184,
+          "strictmode_a_to_o": "PASS"
+        },
+        "supervisor_integrity": {
+          "run_id": 35645394250,
+          "static_job_id": 106484492995,
+          "runtime_job_id": 106484547597,
+          "static_conclusion": "SUCCESS",
+          "static_tests_pass": 82,
+          "runtime_conclusion": "SKIPPED_FAIL_CLOSED"
+        },
+        "lifecycle": {
+          "run_id": 35645394192,
+          "job_id": 106484493476,
+          "conclusion": "SKIPPED"
+        },
+        "autostart": {
+          "run_id": 35645394217,
+          "install_job_id": 106484493870,
+          "verify_job_id": 106484494405,
+          "conclusion": "SKIPPED"
+        },
+        "control_panel": {
+          "run_id": 35645394277,
+          "job_id": 106484493015,
+          "conclusion": "SKIPPED"
+        },
+        "rbt009": {
+          "run_id": 35645394259,
+          "tier_a_job_id": 106484513033,
+          "preflight_job_id": 106484519081,
+          "tier_b_job_id": 106484521238,
+          "conclusion": "SKIPPED"
+        }
+      },
+      "final_target_closure_main_sha": "7691bafd1571039be363d3edf760270756b5c7c6",
+      "final_target_closure_tests": {
+        "run_id": 35671405631,
+        "job_id": 106568460171,
+        "conclusion": "SUCCESS"
+      },
+      "final_target_closure_integrity": {
+        "run_id": 35671405652,
+        "static_job_id": 106568459169,
+        "runtime_job_id": 106568557765,
+        "static_conclusion": "SUCCESS",
+        "runtime_conclusion": "SKIPPED_FAIL_CLOSED"
+      },
+      "rbt_001_to_008": "ACCEPTED",
+      "rbt_009": "IMPLEMENTATION_CANDIDATE_FINAL_8H_SOAK_PENDING",
       "production_cutover": false,
       "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
-      "self_hosted_mutation_workflows_must_remain_inert": true,
-      "zero_production_mutation_required": true,
-      "stop_after_task": true,
-      "next_task": "MIG-004"
+      "embedded_source_copy_preserved": true,
+      "local_state_mutation": false,
+      "zero_production_mutation": true
+    },
+    "mig_004": {
+      "status": "READY_NOT_STARTED",
+      "scope": "FULL_NEW_REPOSITORY_CI_INTEGRITY_LIFECYCLE_PARITY_WITHOUT_PRODUCTION_CUTOVER_UNLESS_SEPARATELY_AUTHORIZED",
+      "production_cutover": false
     }
   }
 }
