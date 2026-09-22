@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
-const migrationUrl=new URL("../../07_DATABASE/migrations/20260922143000_task_098_manual_time_attendance_authority_v1.sql",import.meta.url);
+const migrationUrl=new URL("../../07_DATABASE/migrations/20260922142225_task_098_manual_time_attendance_authority_v1.sql",import.meta.url);
 const fixtureUrl=new URL("./shift-give-lifecycle-fixture.html",import.meta.url);
 
 test("TASK-098 schema adds raw submission/review/confirmed fields without rewriting legacy rows",async()=>{
