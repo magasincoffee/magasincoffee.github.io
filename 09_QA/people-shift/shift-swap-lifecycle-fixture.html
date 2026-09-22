@@ -12,16 +12,19 @@
 
 <script>
 (()=>{
+  const storageKey="MAGASIN_TASK096_SWAP_QA_V1";
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem(storageKey)||"null")}catch(_){saved=null}
   const calls=[];
   const managerCalls=[];
-  const notifications=new Map();
+  const notifications=new Map(Array.isArray(saved?.notifications)?saved.notifications:[]);
   const profiles={
     "u-a":{id:"u-a",full_name:"Nhân viên A",role:"STAFF",status:"ACTIVE"},
     "u-b":{id:"u-b",full_name:"Nhân viên B",role:"STAFF",status:"ACTIVE"},
     "manager":{id:"manager",full_name:"Quản lý QA",role:"STORE_MANAGER",status:"ACTIVE"}
   };
-  let currentUser="u-a";
-  let managerScope=true;
+  let currentUser=saved?.currentUser||"u-a";
+  let managerScope=saved?.managerScope!==false;
   const faults={
     attendance:false,give:false,availability:false,overlap:false,maxTwo:false,
     requesterInactive:false,targetInactive:false
@@ -30,13 +33,19 @@
     "sch-a":{schedule_id:"sch-a",id:"sch-a",user_id:"u-a",work_date:"2026-09-28",start_time:"06:00",end_time:"12:00",store_id:"store-a",store_code:"CN-QA",store_name:"Cửa hàng QA",status:"APPROVED"},
     "sch-b":{schedule_id:"sch-b",id:"sch-b",user_id:"u-b",work_date:"2026-09-28",start_time:"12:00",end_time:"17:00",store_id:"store-a",store_code:"CN-QA",store_name:"Cửa hàng QA",status:"APPROVED"}
   });
-  let schedules=baselineSchedules();
-  let swap=null;
-  let swapSeq=0;
-  let applyCount=0;
-
+  let schedules=saved?.schedules||baselineSchedules();
+  let swap=saved?.swap||null;
+  let swapSeq=Number(saved?.swapSeq||0);
+  let applyCount=Number(saved?.applyCount||0);
+  function persist(){
+    localStorage.setItem(storageKey,JSON.stringify({
+      currentUser,managerScope,schedules,swap,swapSeq,applyCount,
+      notifications:[...notifications.entries()]
+    }));
+  }
   function notify(key,type,audience,user=null){
     notifications.set(key,{key,type,audience,user});
+    persist();
   }
   function error(message){return {data:null,error:{message}}}
   function snapshotSchedule(s){return {...s}}
@@ -120,6 +129,7 @@
       if(violations.length)return error("SHIFT_SWAP_VALIDATION_FAILED: "+violations.join(","));
       if(activeSwapConflict(args.p_requester_schedule_id,args.p_target_schedule_id))return error("SHIFT_SWAP_ALREADY_ACTIVE");
       swap={id:"swap-"+(++swapSeq),requester_id:currentUser,target_user_id:target.user_id,requester_schedule_id:req.id,target_schedule_id:target.id,status:"PENDING",reason:String(args.p_reason).trim(),requested_at:"2026-09-27T10:00:00Z",peer_responded_at:null,approver_id:null,approved_at:null};
+      persist();
       notify("swap:"+swap.id+":requested:target","SHIFT_SWAP_REQUESTED","USER",swap.target_user_id);
       return {data:swap.id,error:null};
     }
@@ -142,12 +152,12 @@
       if(args.p_accept){
         const violations=validatePair(req.id,target.id,swap.requester_id);
         if(violations.length)return error("SHIFT_SWAP_PEER_REVALIDATION_FAILED: "+violations.join(","));
-        swap.status="PEER_ACCEPTED";swap.peer_responded_at="2026-09-27T10:05:00Z";
+        swap.status="PEER_ACCEPTED";swap.peer_responded_at="2026-09-27T10:05:00Z";persist();
         notify("swap:"+swap.id+":peer_accepted:requester","SHIFT_SWAP_PEER_ACCEPTED","USER",swap.requester_id);
         notify("swap:"+swap.id+":manager_review","SHIFT_SWAP_MANAGER_REVIEW","STORE_MANAGERS",null);
         return {data:{id:swap.id,status:"PEER_ACCEPTED",accepted:true,already_accepted:false},error:null};
       }
-      swap.status="REJECTED";swap.peer_responded_at="2026-09-27T10:05:00Z";
+      swap.status="REJECTED";swap.peer_responded_at="2026-09-27T10:05:00Z";persist();
       notify("swap:"+swap.id+":peer_rejected:requester","SHIFT_SWAP_PEER_REJECTED","USER",swap.requester_id);
       return {data:{id:swap.id,status:"REJECTED",accepted:false,already_rejected:false},error:null};
     }
@@ -157,7 +167,7 @@
       if(swap.status==="CANCELLED")return {data:{id:swap.id,status:"CANCELLED",already_cancelled:true},error:null};
       if(swap.status==="PEER_ACCEPTED")return error("SHIFT_SWAP_ALREADY_PEER_ACCEPTED");
       if(swap.status!=="PENDING")return error("SHIFT_SWAP_ALREADY_RESOLVED");
-      swap.status="CANCELLED";
+      swap.status="CANCELLED";persist();
       notify("swap:"+swap.id+":cancelled:target","SHIFT_SWAP_CANCELLED","USER",swap.target_user_id);
       return {data:{id:swap.id,status:"CANCELLED",already_cancelled:false},error:null};
     }
@@ -186,7 +196,7 @@
       const a=req.user_id,b=target.user_id;
       req.user_id=b;target.user_id=a;
       applyCount++;
-      swap.status="APPROVED";swap.approver_id="manager";swap.approved_at="2026-09-27T10:10:00Z";
+      swap.status="APPROVED";swap.approver_id="manager";swap.approved_at="2026-09-27T10:10:00Z";persist();
       notify("swap:"+swap.id+":approved:requester","SHIFT_SWAP_APPROVED","USER",swap.requester_id);
       notify("swap:"+swap.id+":approved:target","SHIFT_SWAP_APPROVED","USER",swap.target_user_id);
       notify("schedule:"+req.id+":transfer:out","SCHEDULE_TRANSFERRED_OUT","USER",a);
@@ -200,7 +210,7 @@
       if(!swap||swap.id!==args.p_swap_id)return error("SHIFT_SWAP_NOT_FOUND");
       if(swap.status==="REJECTED")return {data:{id:swap.id,status:"REJECTED",already_rejected:true},error:null};
       if(swap.status!=="PEER_ACCEPTED")return error("SHIFT_SWAP_PEER_ACCEPTANCE_REQUIRED");
-      swap.status="REJECTED";swap.approver_id="manager";
+      swap.status="REJECTED";swap.approver_id="manager";persist();
       notify("swap:"+swap.id+":manager_rejected:requester","SHIFT_SWAP_REJECTED","USER",swap.requester_id);
       notify("swap:"+swap.id+":manager_rejected:target","SHIFT_SWAP_REJECTED","USER",swap.target_user_id);
       return {data:{id:swap.id,status:"REJECTED",already_rejected:false},error:null};
@@ -213,6 +223,7 @@
     notifications.clear();calls.length=0;managerCalls.length=0;
     for(const k of Object.keys(faults))faults[k]=false;
     profiles["u-a"].status="ACTIVE";profiles["u-b"].status="ACTIVE";
+    localStorage.removeItem(storageKey);persist();
   }
 
   window.__SWAP96_QA={
@@ -221,12 +232,12 @@
     get swap(){return swap?structuredClone(swap):null},
     get schedules(){return structuredClone(schedules)},
     get applyCount(){return applyCount},
-    setUser(id){currentUser=id},
-    setManagerScope(v){managerScope=!!v},
+    setUser(id){currentUser=id;persist()},
+    setManagerScope(v){managerScope=!!v;persist()},
     reset,
     employeeRpcAs:async(id,name,args)=>{const old=currentUser;currentUser=id;try{return await employeeRpc(name,args)}finally{currentUser=old}},
     managerRpc,
-    setScheduleOwner(id,user){if(schedules[id])schedules[id].user_id=user},
+    setScheduleOwner(id,user){if(schedules[id]){schedules[id].user_id=user;persist()}},
     refreshEmployee:()=>window.MAGASIN_EMPLOYEE?.swap?.refresh?.(),
     refreshManager:()=>window.MAGASIN_MANAGER_SWAP_APPROVAL?.refresh?.()
   };
