@@ -115,12 +115,15 @@ async function submit(){
   const start=d.getElementById('employeeAttendanceStart')?.value||'',end=d.getElementById('employeeAttendanceEnd')?.value||'',note=d.getElementById('employeeAttendanceNote')?.value||'';
   if(!selected||!start||!end)return setMessage('Vui lòng chọn ca và nhập đủ giờ bắt đầu/kết thúc.','error','ATTENDANCE_FIELDS_REQUIRED');
   if(mins(end)<=mins(start))return setMessage('Giờ kết thúc phải sau giờ bắt đầu.','error','ATTENDANCE_ACTUAL_RANGE_INVALID');
-  state.submitting=true;render();
+  state.submitting=true;
+  const button=d.getElementById('employeeAttendanceSubmit');
+  if(button){button.disabled=true;button.textContent='Đang gửi…'}
   const q=await C.supabase.rpc('submit_manual_time_attendance_v1',{p_schedule_id:selected.schedule_id,p_actual_start:start,p_actual_end:end,p_note:note||null});
   state.submitting=false;
   if(q.error){
     const code=errorCode(q.error),copy=ERROR_COPY[code]||'Không thể gửi giờ làm thực tế.';
-    if(RECONCILE_ERRORS.has(code))await loadWeek();else render();
+    if(RECONCILE_ERRORS.has(code))await loadWeek();
+    else if(button){button.disabled=false;button.textContent='Gửi giờ làm thực tế'}
     setMessage(copy,'error',code);
     return;
   }
