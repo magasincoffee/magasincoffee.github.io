@@ -2,13 +2,13 @@
 const C=globalThis.MAGASIN_CORE;if(!C)return;
 const host=()=>document.getElementById('employeeApp'),d=()=>host()?.contentDocument||null;
 const esc=C.security.escapeHtml,hm=C.time.time5,fmt=C.date.formatDate;
-let mode='swap',state={my:[],candidates:[],swapHistory:[],giveHistory:[],profile:null};
+let mode='swap',state={my:[],candidates:[],swapHistory:[],incomingSwaps:[],giveHistory:[],profile:null};
 
 function panel(){return d()?.getElementById('view-swap')}
 function show(t){const x=panel(),e=x?.querySelector('#swapResult');if(e){e.textContent=t;e.classList.add('open')}}
 function myShiftOptions(){return state.my.map(r=>`<option value="${esc(r.schedule_id||'')}">${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))} · ${esc(r.store_code||r.store_name||'')}</option>`).join('')}
-function statusBadge(status){const s=String(status||'').toUpperCase();return s==='APPROVED'?'green':s.startsWith('REJECTED')?'red':s==='PENDING_MANAGER'?'blue':'amber'}
-function statusLabel(status){return ({PENDING_RECIPIENT:'Chờ người nhận',PENDING_MANAGER:'Chờ quản lý',APPROVED:'Đã duyệt',REJECTED_RECIPIENT:'Người nhận từ chối',REJECTED_MANAGER:'Quản lý từ chối',PENDING:'Đang chờ',REJECTED:'Đã từ chối'})[String(status||'').toUpperCase()]||String(status||'')}
+function statusBadge(status){const s=String(status||'').toUpperCase();return s==='APPROVED'?'green':s.startsWith('REJECTED')||s==='CANCELLED'?'red':s==='PENDING_MANAGER'||s==='PEER_ACCEPTED'?'blue':'amber'}
+function statusLabel(status){return ({PENDING_RECIPIENT:'Chờ người nhận',PENDING_MANAGER:'Chờ quản lý',APPROVED:'Đã duyệt',REJECTED_RECIPIENT:'Người nhận từ chối',REJECTED_MANAGER:'Quản lý từ chối',PENDING:'Chờ người kia đồng ý',PEER_ACCEPTED:'Người kia đã đồng ý · Chờ quản lý',REJECTED:'Đã từ chối',CANCELLED:'Đã hủy'})[String(status||'').toUpperCase()]||String(status||'')}
 
 async function loadProfile(){
   if(state.profile)return state.profile;
@@ -61,8 +61,15 @@ async function submit(){
     :{p_requester_schedule_id:req.value,p_target_schedule_id:target.value,p_reason:reasonText};
   const q=await C.supabase.rpc(rpcName,args);
   if(q.error)return show('Gửi yêu cầu thất bại: '+q.error.message);
-  const message=mode==='give'?'Đã gửi yêu cầu cho ca. Chờ người nhận đồng ý.':'Đã gửi yêu cầu đổi ca.';
+  const message=mode==='give'?'Đã gửi yêu cầu cho ca. Chờ người nhận đồng ý.':'Đã gửi yêu cầu đổi ca. Chờ người kia đồng ý.';
   show(message);C.ui.toast(message,'success');await loadHistory();
+}
+
+async function respondSwap(id,accept){
+  const q=await C.supabase.rpc('respond_shift_swap_request',{p_swap_id:id,p_accept:!!accept});
+  if(q.error){C.ui.toast('Xử lý yêu cầu đổi ca thất bại: '+q.error.message,'error');return}
+  C.ui.toast(accept?'Đã đồng ý đổi ca. Yêu cầu đang chờ quản lý duyệt.':'Đã từ chối đổi ca.',accept?'success':'info');
+  await loadMy();
 }
 
 async function respondGive(id,accept){
@@ -74,11 +81,13 @@ async function respondGive(id,accept){
 
 async function loadHistory(){
   await loadProfile();
-  const [swapQ,giveQ]=await Promise.all([
+  const [swapQ,incomingQ,giveQ]=await Promise.all([
     C.supabase.rpc('list_my_shift_swaps_v2'),
+    C.supabase.rpc('list_my_incoming_shift_swaps_v1'),
     C.supabase.rpc('list_my_shift_gives_v1')
   ]);
   state.swapHistory=swapQ.error?[]:(Array.isArray(swapQ.data)?swapQ.data:[]);
+  state.incomingSwaps=incomingQ.error?[]:(Array.isArray(incomingQ.data)?incomingQ.data:[]);
   state.giveHistory=giveQ.error?[]:(Array.isArray(giveQ.data)?giveQ.data:[]);
   renderHistory();
 }
@@ -86,6 +95,16 @@ async function loadHistory(){
 function renderHistory(){
   const x=panel(),box=x?.querySelector('#historyList');if(!box)return;
   const rows=[];
+  for(const r of state.incomingSwaps){
+    const pending=String(r.status||'').toUpperCase()==='PENDING';
+    const actions=pending
+      ?`<div style="display:flex;gap:6px;margin-top:8px"><button class="btn secondary js-swap-peer-reject" data-id="${esc(r.id)}">Từ chối</button><button class="btn primary js-swap-peer-accept" data-id="${esc(r.id)}">Đồng ý đổi ca</button></div>`
+      :'';
+    const incomingLabel=String(r.status||'').toUpperCase()==='PEER_ACCEPTED'
+      ?'Đã đồng ý · Chờ quản lý duyệt'
+      :statusLabel(r.status);
+    rows.push(`<div class="history-item"><div><b>Đổi ca gửi đến bạn · ${esc(fmt(r.target_date))} · ${esc(hm(r.target_start))}–${esc(hm(r.target_end))}</b><div class="muted">Từ ${esc(r.requester_name||'Nhân viên')} · ca đối ứng ${esc(fmt(r.requester_date))} · ${esc(hm(r.requester_start))}–${esc(hm(r.requester_end))} · ${esc(r.store_code||'')} · ${esc(r.reason||'')}</div>${actions}</div><span class="badge ${statusBadge(r.status)}">${esc(incomingLabel)}</span></div>`);
+  }
   for(const r of state.giveHistory){
     const incoming=state.profile?.id&&String(r.recipient_id)===String(state.profile.id);
     const actions=incoming&&String(r.status).toUpperCase()==='PENDING_RECIPIENT'
@@ -93,13 +112,14 @@ function renderHistory(){
     rows.push(`<div class="history-item"><div><b>Cho ca · ${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</b><div class="muted">${incoming?'Từ '+esc(r.giver_name||'Nhân viên'):'Cho '+esc(r.recipient_name||'Nhân viên')} · ${esc(r.store_code||'')} · ${esc(r.reason||'')}</div>${actions}</div><span class="badge ${statusBadge(r.status)}">${esc(statusLabel(r.status))}</span></div>`);
   }
   for(const r of state.swapHistory){
-    rows.push(`<div class="history-item"><div><b>Đổi ca · ${esc(fmt(r.requester_date))} · ${esc(hm(r.requester_start))}–${esc(hm(r.requester_end))} · ${esc(r.store_code||'')}</b><div class="muted">${esc(r.target_user_name||'')} · ${esc(r.target_date?fmt(r.target_date):'')}</div></div><span class="badge ${statusBadge(r.status)}">${esc(statusLabel(r.status))}</span></div>`);
+    rows.push(`<div class="history-item"><div><b>Đổi ca · ${esc(fmt(r.requester_date))} · ${esc(hm(r.requester_start))}–${esc(hm(r.requester_end))} · ${esc(r.store_code||'')}</b><div class="muted">${esc(r.target_user_name||'')} · ${esc(r.target_date?fmt(r.target_date):'')} · ${esc(r.reason||'')}</div></div><span class="badge ${statusBadge(r.status)}">${esc(statusLabel(r.status))}</span></div>`);
   }
   box.innerHTML=rows.length?rows.join(''):'<div class="empty">Chưa có yêu cầu đổi/cho ca.</div>';
+  box.querySelectorAll('.js-swap-peer-accept').forEach(b=>b.addEventListener('click',()=>respondSwap(b.dataset.id,true)));
+  box.querySelectorAll('.js-swap-peer-reject').forEach(b=>b.addEventListener('click',()=>respondSwap(b.dataset.id,false)));
   box.querySelectorAll('.js-give-accept').forEach(b=>b.addEventListener('click',()=>respondGive(b.dataset.id,true)));
   box.querySelectorAll('.js-give-reject').forEach(b=>b.addEventListener('click',()=>respondGive(b.dataset.id,false)));
 }
-
 function openForm(nextMode){
   mode=nextMode==='give'?'give':'swap';
   const x=panel();if(!x)return;
@@ -153,6 +173,6 @@ function init(){
   if(f.contentDocument){renderForm();loadHistory()}
 }
 globalThis.MAGASIN_EMPLOYEE=globalThis.MAGASIN_EMPLOYEE||{};
-globalThis.MAGASIN_EMPLOYEE.swap={refresh:()=>{renderForm();loadHistory()},openGive:()=>openForm('give'),openSwap:()=>openForm('swap')};
+globalThis.MAGASIN_EMPLOYEE.swap={refresh:()=>{renderForm();loadMy()},openGive:()=>openForm('give'),openSwap:()=>openForm('swap')};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
