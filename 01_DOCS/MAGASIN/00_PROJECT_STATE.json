@@ -645,8 +645,8 @@
     "note": "Staged parallel operational-relief track. Does not alter active PFC cursor until explicit Owner release/reprioritization.",
     "execution_mode": "OWNER_DIRECT_TO_WORK",
     "manual_work_may_execute": true,
-    "current_task": "TASK-099",
-    "next_task": "TASK-100",
+    "current_task": "TASK-100",
+    "next_task": "TASK-101",
     "task_090": {
       "status": "DONE",
       "evidence": "01_DOCS/MAGASIN/05_SYSTEM/TASK_090_WORKFORCE_V1_CURRENT_SYSTEM_RECONCILIATION.md",
@@ -949,6 +949,32 @@
       ],
       "task_099_not_started": true,
       "conclusion": "E2E_08_CLOSED_POST_MERGE_GREEN"
+    },
+    "task_099": {
+      "status": "DONE",
+      "e2e_09": "PARTIAL_EMPLOYEE_SIDE_CLOSED_MANAGER_REVIEW_CONFIRMED_WORK_TIME_PENDING_TASK_100",
+      "employee_side": "CLOSED",
+      "implementation_pr": 259,
+      "implementation_head": "6cf5a186e06e5a73c84169ca84461ffad69a85b3",
+      "implementation_merge_sha": "57ea0f6b84fe3a70a6c7fd395adbb508cd597061",
+      "pr_head_people_shift_run_id": 35743617316,
+      "pr_head_business_os_run_id": 35743617244,
+      "post_merge_people_shift_run_id": 35743790428,
+      "post_merge_business_os_run_id": 35743790505,
+      "post_merge_pages_validation_run_id": 35743790560,
+      "post_merge_pages_deploy_run_id": 35743786944,
+      "browser_marker": "TASK_099_EMPLOYEE_ATTENDANCE_UI=PASS",
+      "direct_browser_attendance_table_dml": false,
+      "legacy_employee_attendance_mutation_ui": false,
+      "workforce_robot_enabled": false,
+      "production_fixture_rows_created": false,
+      "task_100_not_started": true
+    },
+    "task_100": {
+      "status": "READY",
+      "execution_mode": "MANUAL_WORK",
+      "robot_may_execute": false,
+      "task_100_not_started": true
     }
   },
   "supervisor_repository_migration": {
