@@ -124,10 +124,12 @@ try{
     const e=page.frameLocator("#employeeApp");
     await e.locator("#view-swap[data-employee-swap-engine='1']").waitFor({timeout:10000});
     await page.waitForFunction(()=>globalThis.__SWAP96_QA.swap?.status==="APPROVED"&&globalThis.__SWAP96_QA.schedules["sch-a"].user_id==="u-b");
+    await e.locator("#historyList").filter({hasText:"Đã duyệt"}).waitFor({timeout:10000});
+    await page.evaluate(()=>globalThis.__SWAP96_QA.refreshEmployee());
     await e.locator("#employeeRequesterSchedule option[value='sch-a']").waitFor({state:"attached",timeout:10000});
     const state=await page.evaluate(()=>({swap:globalThis.__SWAP96_QA.swap,s:globalThis.__SWAP96_QA.schedules,applyCount:globalThis.__SWAP96_QA.applyCount}));
     if(state.applyCount!==1||state.s["sch-b"].user_id!=="u-a")throw new Error(JSON.stringify(state));
-    return "reload kept APPROVED + swapped ownership";
+    return "reload history kept APPROVED; public refresh rehydrated B→sch-a";
   });
 
   await check("negative_target_cannot_accept_another_persons_swap",async()=>{
