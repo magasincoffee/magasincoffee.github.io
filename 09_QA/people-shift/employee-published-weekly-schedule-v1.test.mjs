@@ -18,6 +18,9 @@ test("TASK-095 Employee schedule uses one canonical APPROVED reader and hardened
   assert.match(source,/data-schedule-loading/);
   assert.match(source,/data-schedule-error/);
   assert.match(source,/state\.rows=\[\];state\.error=/);
+  assert.match(source,/function bootFrame\(attempt=0\)/);
+  assert.match(source,/attempt<20/);
+  assert.match(source,/setTimeout\(\(\)=>bootFrame\(attempt\+1\),25\)/);
 });
 
 test("TASK-095 shared date primitives keep Asia Ho Chi Minh Sunday to Monday identity across UTC midnight",async()=>{
