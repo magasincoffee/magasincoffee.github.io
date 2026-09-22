@@ -214,7 +214,7 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 | MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | DONE |
 | MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | DONE |
 | MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | DONE |
-| MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | READY / OWNER-SAFE-GATE |
+| MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | ACTIVE / OWNER RELEASED PREFLIGHT |
 | MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | QUEUED |
 | MIG-007 | Deprecate old embedded Supervisor copy | rollback window closed + pointer docs only | QUEUED |
 
@@ -298,3 +298,14 @@ MIG-004 new-repository CI / lifecycle parity is complete in `magasincoffee/magas
 - `ZERO_PRODUCTION_MUTATION=true`
 
 MIG-005 is **READY / OWNER-SAFE-GATE** only. MIG-004 does not authorize or start production cutover, does not clear Owner STOP, does not mutate live lane state/autostart, and does not run the final RBT-009 8-hour soak.
+
+
+### MIG-005 Owner-safe release
+
+Owner explicitly released MIG-005 from the **old machine control console**. Exact target candidate at release: `magasincoffee/magasin-supervisor@a67b6ea19e7e10b4b63b56f9e7b5274a94135ca2`.
+
+Release means **begin preflight and controlled cutover orchestration**, not immediate authority switch. The existing Supervisor remains authoritative until the new-machine execution host/runner, candidate SHA, target/latch preservation, rollback path, and single-authority conditions are verified.
+
+Hard invariant: production mutation authority instances must remain exactly **1**. Never start the new production authority while the old production authority is still active. If new-machine readiness or rollback safety cannot be proven, STOP fail-closed without changing production authority.
+
+MIG-005 may complete cutover only after preflight passes. MIG-006 final 8-hour RBT-009 soak is explicitly forbidden during MIG-005. STOP after MIG-005; do not self-start MIG-006.
