@@ -140,6 +140,12 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/employee-attendance-schedule-linked-browser.mjs
 
+      - name: Run TASK-100 Manager attendance review browser E2E
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/manager-attendance-review-browser.mjs
+
       - name: Run Manager Workforce canonical browser E2E
         env:
           QA_BASE_URL: http://127.0.0.1:8767
