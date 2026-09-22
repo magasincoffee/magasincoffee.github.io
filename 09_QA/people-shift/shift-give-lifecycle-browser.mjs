@@ -39,9 +39,10 @@ try{
  await check("giver_opens_real_give_flow_and_sees_eligible_recipient",async()=>{
   await employee.locator("#swapChoices button").filter({hasText:"Cho ca"}).click();
   await employee.locator("#employeeRequesterSchedule").waitFor();
-  await employee.locator("#employeeSwapTarget option[value='u-b']").waitFor();
+  await employee.locator("#employeeSwapTarget").waitFor();
+  const optionCount=await employee.locator("#employeeSwapTarget option[value='u-b']").count();
   const label=await employee.locator("#partnerTitle").innerText();
-  if(!label.includes("Người nhận ca"))throw new Error(label);
+  if(optionCount!==1||!label.includes("Người nhận ca"))throw new Error(JSON.stringify({optionCount,label}));
   return "u-b eligible";
  });
 
@@ -121,9 +122,10 @@ try{
  await check("new_owner_schedule_refresh_shows_same_assignment_identity",async()=>{
   employee=await reloadAs("u-b");
   await employee.locator("#swapChoices button").filter({hasText:"Cho ca"}).click();
-  await employee.locator("#employeeRequesterSchedule option[value='sch-give']").waitFor({timeout:10000});
+  await employee.locator("#employeeRequesterSchedule").waitFor({timeout:10000});
+  const optionCount=await employee.locator("#employeeRequesterSchedule option[value='sch-give']").count();
   const value=await employee.locator("#employeeRequesterSchedule").inputValue();
-  if(value!=="sch-give")throw new Error(value);
+  if(optionCount!==1||value!=="sch-give")throw new Error(JSON.stringify({optionCount,value}));
   return "u-b owns canonical schedule_id sch-give";
  });
 
@@ -147,7 +149,9 @@ try{
   await employee.locator("#view-swap[data-employee-swap-engine='1']").waitFor({timeout:10000});
   await page.waitForFunction(()=>globalThis.__GIVE97_QA.give?.status==="APPROVED"&&globalThis.__GIVE97_QA.schedule.user_id==="u-b");
   await employee.locator("#swapChoices button").filter({hasText:"Cho ca"}).click();
-  await employee.locator("#employeeRequesterSchedule option[value='sch-give']").waitFor({timeout:10000});
+  await employee.locator("#employeeRequesterSchedule").waitFor({timeout:10000});
+  const optionCount=await employee.locator("#employeeRequesterSchedule option[value='sch-give']").count();
+  if(optionCount!==1)throw new Error("new owner schedule option missing after reload");
   const count=await page.evaluate(()=>globalThis.__GIVE97_QA.transferCount);
   if(count!==1)throw new Error("transfer repeated after reload");
   return "APPROVED + owner u-b persisted";
