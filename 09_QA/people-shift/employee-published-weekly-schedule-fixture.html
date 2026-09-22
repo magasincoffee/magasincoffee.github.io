@@ -135,10 +135,10 @@
     getPublishedNotifications:()=>[...state.notifications.values()].map(x=>({...x}))
   };
   if(params.get("published")==="1")seedPublished();
-  reloadFrame();
 })();
 </script>
 <script src="/06_EMPLOYEE/schedule/engine-v1.js"></script>
 <script src="/06_EMPLOYEE/notification/engine-v1.js"></script>
+<script>globalThis.__TASK095_QA.reloadFrame();</script>
 </body>
 </html>
