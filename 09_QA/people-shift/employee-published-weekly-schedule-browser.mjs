@@ -24,7 +24,8 @@ function wire(page){
 const sunday=await context.newPage();wire(sunday);
 await sunday.goto(`${BASE}/09_QA/people-shift/employee-published-weekly-schedule-fixture.html?now=2026-09-27T16%3A30%3A00.000Z`,{waitUntil:"networkidle"});
 const employee=sunday.frameLocator("#employeeApp");
-await employee.locator("body[data-employee-schedule-engine='1']").waitFor();
+await sunday.waitForFunction(()=>typeof globalThis.MAGASIN_EMPLOYEE?.schedule?.refresh==="function");
+await employee.locator("#view-schedule").waitFor({state:"attached"});
 
 await check("sunday_current_week_is_2026_09_21_and_target_week_not_cross_wired",async()=>{
   await employee.locator("#view-schedule .pill").filter({hasText:"21/09–27/09"}).waitFor();
@@ -102,9 +103,10 @@ await check("failed_future_week_clears_stale_success_and_recovers_without_cross_
 await check("iframe_reload_preserves_target_week_and_rows_without_duplicate_binding",async()=>{
   const before=await sunday.evaluate(()=>globalThis.__TASK095_QA.calls.filter(x=>x.kind==="rpc"&&x.name==="list_my_approved_schedules_v2").length);
   await sunday.evaluate(()=>globalThis.__TASK095_QA.reloadFrame());
-  await employee.locator("body[data-employee-schedule-engine='1']").waitFor();
   await employee.locator("#view-schedule .pill").filter({hasText:"28/09–04/10"}).waitFor();
   await employee.locator("#view-schedule .shift").first().waitFor();
+  const bound=await employee.locator("body").getAttribute("data-employee-schedule-engine");
+  if(bound!=="1")throw new Error("schedule engine binding marker="+bound);
   const result=await sunday.evaluate(()=>({
     week:globalThis.MAGASIN_EMPLOYEE.schedule.getWeek(),
     rows:globalThis.MAGASIN_EMPLOYEE.schedule.getRows().length,
@@ -141,7 +143,8 @@ await check("employee_notification_reader_sees_own_publish_events_once_and_no_le
 const monday=await context.newPage();wire(monday);
 await monday.goto(`${BASE}/09_QA/people-shift/employee-published-weekly-schedule-fixture.html?now=2026-09-27T17%3A30%3A00.000Z&published=1`,{waitUntil:"networkidle"});
 const mondayEmployee=monday.frameLocator("#employeeApp");
-await mondayEmployee.locator("body[data-employee-schedule-engine='1']").waitFor();
+await monday.waitForFunction(()=>typeof globalThis.MAGASIN_EMPLOYEE?.schedule?.refresh==="function");
+await mondayEmployee.locator("#view-schedule").waitFor({state:"attached"});
 
 await check("monday_rollover_current_week_is_same_schedule_seen_as_sunday_next_week",async()=>{
   await mondayEmployee.locator("#view-schedule .pill").filter({hasText:"28/09–04/10"}).waitFor();
