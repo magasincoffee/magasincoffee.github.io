@@ -212,7 +212,7 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 | MIG-001 | Freeze Baseline + Migration Bootstrap | exact baseline inventory + migration contract + target repo bootstrap plan; zero production cutover | DONE |
 | MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | DONE |
 | MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | DONE |
-| MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | READY / NOT STARTED |
+| MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | ACTIVE / WORK RELEASED |
 | MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | QUEUED / OWNER-SAFE-GATE |
 | MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | QUEUED |
 | MIG-007 | Deprecate old embedded Supervisor copy | rollback window closed + pointer docs only | QUEUED |
@@ -269,3 +269,11 @@ MIG-003 decoupling is complete in `magasincoffee/magasin-supervisor`.
 Next task is MIG-004 READY / NOT STARTED. MIG-003 does not start or certify MIG-004.
 
 `ZERO_PRODUCTION_MUTATION=true`
+
+### MIG-004 Owner release
+
+Owner explicitly released MIG-004. Exact target base: `magasincoffee/magasin-supervisor@63b955f59d7558a42311b3d47d58acc60a503dca`.
+
+Scope is new-repository CI/integrity/lifecycle parity and release-gate qualification only. Production cutover remains forbidden and the embedded Business OS Supervisor remains the sole production authority. MIG-004 may exercise safe validation paths but must not create a second production mutation authority or begin the final 8-hour RBT-009 soak.
+
+MIG-004 must STOP after evidence/closure and must not self-start MIG-005.
