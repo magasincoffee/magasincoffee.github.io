@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TASK-100 Manager Attendance Review Fixture</title>
+<style>
+:root{--border:#dce5f0;--muted:#617793;--text:#102a43;--primary:#16b7c5}*{box-sizing:border-box}body{margin:0;font:14px system-ui;background:#f4f7fb;color:var(--text);padding:18px}.btn{min-height:40px;border:1px solid var(--border);border-radius:10px;padding:0 13px;background:#fff;font-weight:700}.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px}.row,.actions{display:flex;align-items:center;gap:10px}.badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}.yellow{background:#fff6d8;color:#876900}.muted{color:var(--muted);font-size:12px}.view{display:block}#employeeApp{width:100%;height:510px;border:1px solid var(--border);border-radius:12px;background:#fff;margin-bottom:18px}</style>
+</head>
+<body>
+<button data-view="attendance" class="btn" id="openAttendance">Chấm công</button>
+<h2>Employee</h2>
+<iframe id="employeeApp"></iframe>
+<h2>Manager</h2>
+<section class="view" id="view-attendance"></section>
+<script>
+(()=>{
+ const calls=[],notifications=new Map();
+ const stores=[{id:"store-a",code:"CN-QA-A",name:"Cửa hàng QA A",status:"ACTIVE"}];
+ const schedules=[
+  {schedule_id:"sch-1",work_date:"2026-09-21",start_time:"06:00",end_time:"12:00",store_id:"store-a",store_code:"CN-QA-A",store_name:"Cửa hàng QA A",user_id:"u-b",status:"APPROVED"},
+  {schedule_id:"sch-2",work_date:"2026-09-22",start_time:"12:00",end_time:"17:00",store_id:"store-a",store_code:"CN-QA-A",store_name:"Cửa hàng QA A",user_id:"u-b",status:"APPROVED"},
+  {schedule_id:"sch-3",work_date:"2026-09-23",start_time:"17:00",end_time:"22:00",store_id:"store-a",store_code:"CN-QA-A",store_name:"Cửa hàng QA A",user_id:"u-b",status:"APPROVED"},
+  {schedule_id:"sch-4",work_date:"2026-09-24",start_time:"06:00",end_time:"12:00",store_id:"store-a",store_code:"CN-QA-A",store_name:"Cửa hàng QA A",user_id:"u-b",status:"APPROVED"}
+ ];
+ const attendance=[];
+ let manager={id:"manager-a",role:"STORE_MANAGER",status:"ACTIVE",stores:new Set(["store-a"])};
+ let reviewTransitions=0;
+ const err=message=>({data:null,error:{message,code:message}});
+ const row=s=>attendance.find(a=>a.schedule_id===s.schedule_id)||null;
+ function listEmployeeAttendance(from,to){return attendance.filter(a=>(!from||a.work_date>=from)&&(!to||a.work_date<=to)).map(a=>({...a,attendance_id:a.id,store_code:"CN-QA-A",store_name:"Cửa hàng QA A"}))}
+ function managerAllowed(storeId){return manager.status==="ACTIVE"&&(manager.role==="OWNER"||(manager.role==="STORE_MANAGER"&&manager.stores.has(storeId)))}
+ function listManager(args){
+  if(!managerAllowed(args.p_store_id))return err(manager.status!=="ACTIVE"?"ATTENDANCE_REVIEW_MANAGER_INACTIVE":manager.role!=="STORE_MANAGER"&&manager.role!=="OWNER"?"ATTENDANCE_REVIEW_ROLE_NOT_ALLOWED":"STORE_NOT_ALLOWED");
+  return {data:attendance.filter(a=>a.store_id===args.p_store_id&&a.submission_status==="SUBMITTED"&&["NORMAL","NEEDS_REVIEW","APPROVED","ADJUSTED","REJECTED"].includes(a.status)&&(!args.p_from_date||a.work_date>=args.p_from_date)&&(!args.p_to_date||a.work_date<=args.p_to_date)).map(a=>({...a,attendance_id:a.id,employee_id:a.user_id,employee_name:"Nhân viên B",store_code:"CN-QA-A",store_name:"Cửa hàng QA A"})),error:null};
+ }
+ function review(args){
+  const a=attendance.find(x=>x.id===args.p_attendance_id);if(!a)return err("ATTENDANCE_REVIEW_NOT_FOUND");
+  const s=schedules.find(x=>x.schedule_id===a.schedule_id);if(!s)return err("ATTENDANCE_REVIEW_SCHEDULE_NOT_FOUND");
+  if(!managerAllowed(a.store_id))return err(manager.status!=="ACTIVE"?"ATTENDANCE_REVIEW_MANAGER_INACTIVE":manager.role!=="STORE_MANAGER"&&manager.role!=="OWNER"?"ATTENDANCE_REVIEW_ROLE_NOT_ALLOWED":"STORE_NOT_ALLOWED");
+  if(s.status!=="APPROVED"||s.user_id!==a.user_id)return err("ATTENDANCE_NOT_CURRENT_OWNER");
+  if(s.store_id!==a.store_id||s.work_date!==a.work_date||s.start_time!==a.planned_start||s.end_time!==a.planned_end)return err("ATTENDANCE_REVIEW_SCHEDULE_SNAPSHOT_CHANGED");
+  const d=String(args.p_decision||"").toUpperCase();
+  if(["APPROVED","ADJUSTED","REJECTED"].includes(a.status)){
+    const exact=(a.status==="APPROVED"&&d==="APPROVE"&&a.confirmed_start===a.actual_start&&a.confirmed_end===a.actual_end)||
+      (a.status==="ADJUSTED"&&d==="ADJUST"&&a.confirmed_start===args.p_confirmed_start&&a.confirmed_end===args.p_confirmed_end)||
+      (a.status==="REJECTED"&&d==="REJECT");
+    if(!exact)return err("ATTENDANCE_ALREADY_REVIEWED");
+    return {data:{attendance_id:a.id,status:a.status,review_decision:a.review_decision,confirmed_start:a.confirmed_start,confirmed_end:a.confirmed_end,confirmed_minutes:a.confirmed_minutes,already_reviewed:true},error:null};
+  }
+  if(!["NORMAL","NEEDS_REVIEW"].includes(a.status))return err("ATTENDANCE_REVIEW_STATE_NOT_ALLOWED");
+  if(d==="REJECT"){
+    if(args.p_confirmed_start||args.p_confirmed_end)return err("ATTENDANCE_REJECT_CONFIRMED_TIME_NOT_ALLOWED");
+    Object.assign(a,{status:"REJECTED",reviewed_by:manager.id,reviewed_at:"2026-09-22T15:30:00Z",review_decision:"REJECT",confirmed_start:null,confirmed_end:null,confirmed_minutes:null});reviewTransitions++;
+  }else{
+    const start=d==="APPROVE"?a.actual_start:args.p_confirmed_start,end=d==="APPROVE"?a.actual_end:args.p_confirmed_end;
+    if(d==="APPROVE"&&(args.p_confirmed_start||args.p_confirmed_end))return err("ATTENDANCE_APPROVE_USES_ACTUAL_TIME");
+    if(d==="ADJUST"&&(!start||!end))return err("ATTENDANCE_ADJUST_CONFIRMED_TIME_REQUIRED");
+    if(!["APPROVE","ADJUST"].includes(d))return err("ATTENDANCE_REVIEW_DECISION_INVALID");
+    const mins=v=>Number(v.slice(0,2))*60+Number(v.slice(3,5));
+    if(mins(end)<=mins(start))return err("ATTENDANCE_CONFIRMED_RANGE_INVALID");
+    Object.assign(a,{status:d==="APPROVE"?"APPROVED":"ADJUSTED",reviewed_by:manager.id,reviewed_at:"2026-09-22T15:30:00Z",review_decision:d,confirmed_start:start,confirmed_end:end,confirmed_minutes:mins(end)-mins(start)});reviewTransitions++;
+    notifications.set("attendance:"+a.id+":confirmed",{type:"ATTENDANCE_CONFIRMED",attendance_id:a.id,status:a.status});
+  }
+  return {data:{attendance_id:a.id,schedule_id:a.schedule_id,status:a.status,review_decision:a.review_decision,confirmed_start:a.confirmed_start,confirmed_end:a.confirmed_end,confirmed_minutes:a.confirmed_minutes,already_reviewed:false},error:null};
+ }
+ async function employeeRpc(name,args={}){
+  calls.push({actor:"EMPLOYEE",kind:"rpc",name,args:structuredClone(args)});
+  if(name==="list_my_approved_schedules_v2")return {data:schedules.filter(s=>s.user_id==="u-b"&&s.status==="APPROVED"&&s.work_date>=args.p_week_start&&s.work_date<=dateAdd(args.p_week_start,6)).map(s=>({...s})),error:null};
+  if(name==="get_my_attendance_v2")return {data:listEmployeeAttendance(args.p_from_date,args.p_to_date),error:null};
+  if(name==="submit_manual_time_attendance_v1"){
+    const s=schedules.find(x=>x.schedule_id===args.p_schedule_id);if(!s)return err("ATTENDANCE_SCHEDULE_NOT_FOUND");
+    if(s.user_id!=="u-b")return err("ATTENDANCE_NOT_CURRENT_OWNER");
+    const old=row(s);if(old){
+      if(old.actual_start===args.p_actual_start&&old.actual_end===args.p_actual_end&&["SUBMITTED","NORMAL","NEEDS_REVIEW"].includes(old.status))return {data:{attendance_id:old.id,schedule_id:s.schedule_id,status:old.status,submission_status:"SUBMITTED",already_submitted:true},error:null};
+      return err("ATTENDANCE_ACTIVE_SUBMISSION_EXISTS");
+    }
+    const a={id:"att-"+(attendance.length+1),schedule_id:s.schedule_id,user_id:"u-b",work_date:s.work_date,store_id:s.store_id,planned_start:s.start_time,planned_end:s.end_time,actual_start:args.p_actual_start,actual_end:args.p_actual_end,submitted_at:"2026-09-22T15:20:00Z",submission_status:"SUBMITTED",status:"NEEDS_REVIEW",note:args.p_note||null,reviewed_by:null,reviewed_at:null,review_decision:null,confirmed_start:null,confirmed_end:null,confirmed_minutes:null};
+    attendance.push(a);notifications.set("attendance:"+a.id+":submitted",{type:"ATTENDANCE_SUBMITTED"});notifications.set("attendance:"+a.id+":needs_review",{type:"ATTENDANCE_NEEDS_REVIEW"});
+    return {data:{attendance_id:a.id,schedule_id:s.schedule_id,status:a.status,submission_status:a.submission_status,already_submitted:false},error:null};
+  }
+  return err("UNEXPECTED_EMPLOYEE_RPC_"+name);
+ }
+ async function managerRpc(name,args={}){
+  calls.push({actor:"MANAGER",kind:"rpc",name,args:structuredClone(args)});
+  if(name==="get_manager_accessible_stores"){
+    if(manager.status!=="ACTIVE")return err("ATTENDANCE_REVIEW_MANAGER_INACTIVE");
+    if(!["STORE_MANAGER","OWNER"].includes(manager.role))return err("ATTENDANCE_REVIEW_ROLE_NOT_ALLOWED");
+    return {data:stores.filter(s=>manager.role==="OWNER"||manager.stores.has(s.id)),error:null};
+  }
+  if(name==="list_manager_attendance_review_v1")return listManager(args);
+  if(name==="review_attendance_v1")return review(args);
+  return err("UNEXPECTED_MANAGER_RPC_"+name);
+ }
+ function dateAdd(s,n){const d=new Date(s+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
+ const frame=document.getElementById("employeeApp");
+ frame.srcdoc=`<!doctype html><html><head><style>*{box-sizing:border-box}body{font:13px system-ui;margin:0;padding:12px}.panel{border:1px solid #dde5ee;border-radius:12px;padding:12px;margin-bottom:12px}.field{display:grid;gap:4px}input,select,textarea,button{font:inherit}.btn{min-height:38px}.attendance-entry-grid{display:block}.attendance-report-wrap{display:block}.empty{padding:10px}.muted{color:#6c7e92}.section-title{font-weight:800}table{width:100%}</style></head><body><section id="view-attendance"><div class="attendance-entry-grid"><div class="panel"></div></div><div class="attendance-report-wrap"><div class="panel">Legacy hidden</div></div><table id="attendanceHistoryTable"></table></section></body></html>`;
+ window.__MAGASIN_WORKFORCE_TODAY__="2026-09-22";
+ window.MAGASIN_CORE={
+  security:{escapeHtml:v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))},
+  time:{time5:v=>String(v||"").slice(0,5),minutes:v=>{const x=String(v||"").slice(0,5);return Number(x.slice(0,2))*60+Number(x.slice(3,5))}},
+  date:{formatDate:v=>String(v||"").slice(0,10),addDays:dateAdd,monday:()=> "2026-09-21"},
+  supabase:{rpc:employeeRpc}
+ };
+ const managerApi={rpc:managerRpc,from(name){calls.push({actor:"MANAGER",kind:"from",name});throw new Error("DIRECT_TABLE_FORBIDDEN_"+name)}};
+ window.supabase={createClient(){return managerApi}};
+ window.__ATT100_QA={
+  calls,notifications,schedules,attendance,
+  employeeRpc,managerRpc,
+  get reviewTransitions(){return reviewTransitions},
+  setManagerRole(role){manager.role=role},
+  setManagerStatus(status){manager.status=status},
+  setManagerStores(ids){manager.stores=new Set(ids)},
+  setScheduleOwner(id,userId){const s=schedules.find(x=>x.schedule_id===id);if(s)s.user_id=userId},
+  state(){return {attendance:attendance.map(x=>({...x})),schedules:schedules.map(x=>({...x})),manager:{...manager,stores:[...manager.stores]},reviewTransitions,notifications:[...notifications.entries()]}}
+ };
+})();
+</script>
+<script src="/06_EMPLOYEE/attendance/engine-v1.js"></script>
+<script src="/05_MANAGER/Workforce/attendance-review-v1.js"></script>
+</body>
+</html>
