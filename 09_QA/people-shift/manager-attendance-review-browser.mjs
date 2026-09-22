@@ -93,7 +93,7 @@ try{
   });
 
   await check("manager_reject_flow_creates_no_confirmed_work_time",async()=>{
-    await selectSchedule(2,"17:10","22:10","raw cần từ chối");
+    await selectSchedule(2,"06:10","10:05","raw cần từ chối");
     await page.waitForFunction(()=>globalThis.__ATT100_QA.attendance.length===3);
     await page.evaluate(()=>globalThis.MAGASIN_MANAGER_ATTENDANCE_REVIEW.refresh());
     const card=page.locator("#view-attendance .mar-card[data-attendance-id='att-3']");
@@ -106,7 +106,7 @@ try{
   });
 
   await check("unauthorized_manager_and_stale_schedule_review_fail_closed",async()=>{
-    await selectSchedule(3,"06:05","12:00","authorization race");
+    await selectSchedule(3,"10:05","14:00","authorization race");
     await page.waitForFunction(()=>globalThis.__ATT100_QA.attendance.length===4);
     await page.evaluate(()=>globalThis.__ATT100_QA.setManagerStores([]));
     const denied=await page.evaluate(()=>globalThis.__ATT100_QA.managerRpc("review_attendance_v1",{p_attendance_id:"att-4",p_decision:"APPROVE",p_confirmed_start:null,p_confirmed_end:null}));
