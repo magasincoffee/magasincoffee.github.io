@@ -216,8 +216,8 @@
       "confirmation": "USER_TURN_CONTAINS_EXACT_RELAY_ID_MARKER"
     },
     "local_state": {
-      "config": "%LOCALAPPDATA%\\MAGASIN\\BusinessOS\\supervisor\\lanes.json",
-      "status": "%LOCALAPPDATA%\\MAGASIN\\BusinessOS\\supervisor\\lane-status.json",
+      "config": "%LOCALAPPDATA%\\MAGASIN\\Supervisor\\lanes.json",
+      "status": "%LOCALAPPDATA%\\MAGASIN\\Supervisor\\lane-status.json",
       "message_body_persistence": false
     },
     "safety": {
@@ -808,16 +808,16 @@
   },
   "supervisor_repository_migration": {
     "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
-    "state": "MIG_005_ACTIVE_CONTROLLED_STATE_TRANSFER",
+    "state": "MIG_005_DONE",
     "source_repository": "magasincoffee/magasincoffee.github.io",
     "target_repository": "magasincoffee/magasin-supervisor",
     "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
-    "current_task": "MIG-005",
-    "current_task_title": "Single-authority production cutover",
-    "next_task": "MIG-006",
-    "production_cutover": false,
-    "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
-    "compatibility_window": "REQUIRED_UNTIL_NEW_REPO_PARITY_AND_ROLLBACK_GATES_PASS",
+    "current_task": "MIG-006",
+    "current_task_title": "New-repo RBT-009 exact-SHA 8h soak",
+    "next_task": "MIG-007",
+    "production_cutover": true,
+    "production_authority": "NEW_REPO_AUTOSTART_OWNERSHIP_ALL_DISABLED_RUNTIME_QUIESCENT",
+    "compatibility_window": "OLD_ROLLBACK_SOURCE_RETAINED_UNTIL_MIG_006_ACCEPTANCE_AND_MIG_007_DEPRECATION",
     "two_device_policy": {
       "development_test_may_use_both_devices": true,
       "production_mutation_authority_instances": 1,
@@ -860,8 +860,8 @@
       "AUTH_MFA_CAPTCHA_AND_DESTRUCTIVE_ADMIN_REMAIN_FAIL_CLOSED"
     ],
     "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md",
-    "last_completed_task": "MIG-004",
-    "current_task_status": "ACTIVE_OWNER_AUTHORIZED_CONTROLLED_STATE_TRANSFER",
+    "last_completed_task": "MIG-005",
+    "current_task_status": "READY_NOT_STARTED",
     "mig_001": {
       "status": "DONE",
       "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -1154,17 +1154,17 @@
       "stop_after_task": true
     },
     "mig_005": {
-      "status": "ACTIVE_OWNER_AUTHORIZED_CONTROLLED_STATE_TRANSFER",
+      "status": "DONE",
       "scope": "SINGLE_AUTHORITY_PRODUCTION_CUTOVER_WITH_PRESERVED_TARGETS_LATCHES_OWNER_STOP_AND_ROLLBACK",
       "owner_released": true,
       "control_console": "OLD_MACHINE",
       "target_repository": "magasincoffee/magasin-supervisor",
-      "target_candidate_sha": "a67b6ea19e7e10b4b63b56f9e7b5274a94135ca2",
+      "target_candidate_sha": "218f330ee86eea4f0fb79ef9293bd43cf96a45de",
       "source_state_sha": "09b1170364c88f778de40d6ce68c90deab95197b",
       "pre_cutover_production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
-      "production_cutover": false,
+      "production_cutover": true,
       "new_machine_readiness_required": true,
-      "new_machine_readiness_verified": false,
+      "new_machine_readiness_verified": true,
       "cutover_permitted_only_after_preflight": true,
       "production_mutation_authority_instances_required": 1,
       "split_brain_forbidden": true,
@@ -1184,17 +1184,115 @@
       "new_machine_probe_runner_name_sanitized": "DESKTOP-4K7IM13",
       "new_machine_probe_node_major": 24,
       "new_machine_supervisor_active": false,
-      "new_machine_autostart_present": false,
+      "new_machine_autostart_present": true,
       "new_machine_pending_reboot": false,
-      "new_machine_state_files_present": false,
-      "new_machine_lane_count": 0,
-      "new_machine_registry_lane_count": 0,
-      "new_machine_role": "UNKNOWN_BLOCKED_PENDING_STATE_TRANSFER",
-      "owner_stop_observed_blocked": true,
-      "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
+      "new_machine_state_files_present": true,
+      "new_machine_lane_count": 3,
+      "new_machine_registry_lane_count": 3,
+      "new_machine_role": "NEW_AUTHORITY_OWNERSHIP_ACTIVE_ALL_DISABLED_RUNTIME_QUIESCENT",
+      "owner_stop_observed_blocked": false,
+      "production_authority": "NEW_REPO_AUTOSTART_OWNERSHIP_ALL_DISABLED_RUNTIME_QUIESCENT",
       "old_stop_before_state_capture_finalize": false,
       "zero_overlap_required": true,
-      "hash_verification_required": true
+      "hash_verification_required": true,
+      "target_pr_merge_sha": "cca403faf0704d52ca488d7fecf3c72809a52291",
+      "target_evidence": "docs/MIG_005_SINGLE_AUTHORITY_CUTOVER_EVIDENCE.md",
+      "source_closure_evidence": "01_DOCS/MAGASIN/08_AUTONOMY/MIG_005_SINGLE_AUTHORITY_CUTOVER_EVIDENCE.md",
+      "package_candidate_sha": "dc0b5f369f6a9c3ae89d821f1ddf603e1135f51e",
+      "package_sha256": "b2a67e3c7ae568454c09386b2ceb4f7cc7cfba650e3a37243dea89a2ebfe5753",
+      "transfer_blob_sha": "abf72af4ee51a06bf49af669cd4f590bd68a9aa7",
+      "package_runtime_ancestry_verified": true,
+      "transfer_blob_identity_verified": true,
+      "new_machine_enabled_lane_count": 0,
+      "production_ownership_authority_instances": 1,
+      "production_runtime_authority_instances": 0,
+      "old_pre_handoff_mode": "ALL_DISABLED_QUIESCENT",
+      "old_runtime_authority_instances": 0,
+      "old_autostart_ownership_released": true,
+      "old_state_root_untouched": true,
+      "old_rollback_record_ready": true,
+      "state_export": "PASS",
+      "state_import": "PASS",
+      "state_verify": "PASS",
+      "brain_work_targets_preserved": true,
+      "dispatch_relay_latches_preserved": true,
+      "owner_stop_semantics_preserved": true,
+      "owner_stop_blocked": false,
+      "browser_profile_untouched": true,
+      "github_runner_untouched": true,
+      "exact_runtime_candidate_installed": true,
+      "new_autostart_ownership_present": true,
+      "new_runtime_authority_active": false,
+      "new_rollback_record_ready": true,
+      "zero_overlap_verified": true,
+      "split_brain": false,
+      "raw_production_state_uploaded_to_git_or_actions": false,
+      "exact_head_gates": {
+        "supervisor_tests": {
+          "run_id": 35711190701,
+          "job_id": 106691919524,
+          "conclusion": "SUCCESS",
+          "full_suite_pass": 588,
+          "full_suite_fail": 0,
+          "adapter_state_root_pass": 50,
+          "platform_core_pass": 184
+        },
+        "supervisor_integrity": {
+          "run_id": 35711190753,
+          "job_id": 106692010441,
+          "conclusion": "SUCCESS",
+          "runtime_audit": "SKIPPED"
+        },
+        "lifecycle_isolated": {
+          "run_id": 35711190610,
+          "job_id": 106692198176,
+          "conclusion": "SUCCESS",
+          "pass": 52
+        },
+        "autostart_isolated": {
+          "run_id": 35711190671,
+          "job_id": 106691966754,
+          "conclusion": "SUCCESS",
+          "pass": 25,
+          "production_jobs": "SKIPPED"
+        },
+        "mig005_preflight": {
+          "run_id": 35711190628,
+          "hosted_job_id": 106693086802,
+          "conclusion": "SUCCESS",
+          "contract_pass": 21,
+          "supporting_pass": 16,
+          "machine_probe_jobs": [
+            106693404916,
+            106693404967,
+            106693404995,
+            106693405039
+          ],
+          "machine_probes_pass": 4
+        },
+        "rbt009_tier_a": {
+          "run_id": 35711190642,
+          "job_id": 106691974263,
+          "conclusion": "SUCCESS",
+          "tier_b": "SKIPPED_NOT_RUN"
+        }
+      },
+      "rbt009_tier_b_480m_run": false,
+      "next_task_status": "READY_NOT_STARTED"
+    },
+    "mig_006": {
+      "status": "READY_NOT_STARTED",
+      "scope": "NEW_REPO_RBT009_EXACT_RUNTIME_SHA_8H_TIER_B_SOAK",
+      "target_repository": "magasincoffee/magasin-supervisor",
+      "exact_runtime_candidate_sha": "218f330ee86eea4f0fb79ef9293bd43cf96a45de",
+      "target_main_merge_sha": "cca403faf0704d52ca488d7fecf3c72809a52291",
+      "start_from_zero": true,
+      "required_continuous_minutes": 480,
+      "owner_release_required": true,
+      "tier_b_480m_run": false,
+      "previous_historical_partial_credit_allowed": false,
+      "production_ownership_state": "NEW_AUTHORITY_OWNERSHIP_ACTIVE_ALL_DISABLED_RUNTIME_QUIESCENT",
+      "stop_before_start": true
     }
   }
 }
