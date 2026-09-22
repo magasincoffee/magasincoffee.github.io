@@ -3,14 +3,14 @@
 **Track:** WORKFORCE_OPERATIONS_V1  
 **Execution mode:** OWNER_DIRECT_TO_WORK / MANUAL_WORK  
 **Date:** 2026-09-22  
-**Status:** PENDING_FINAL_REMOTE_GATES  
-**E2E-08:** STRONG on reconciled executable branch head; final CLOSED claim waits for PR-head + exact post-merge  
-**E2E-09:** PARTIAL — backend contract/migration prepared; Employee Attendance Entry UI belongs TASK-099  
+**Status:** DONE / E2E-08 CLOSED / POST-MERGE GREEN  
+**E2E-08:** CLOSED — ownership side + attendance-authority side proven  
+**E2E-09:** PARTIAL — backend contract/migration complete; Employee Attendance Entry UI belongs TASK-099  
 **Production migration:** `20260922142225_task_098_manual_time_attendance_authority_v1` — APPLIED  
 **Production persistent test-data mutation:** NONE  
 **Workforce Robot:** DISABLED  
 **PFC cursor mutation:** NONE  
-**TASK-099:** NOT STARTED
+**TASK-099:** READY / MANUAL_WORK after canonical closure — NOT STARTED
 
 ## 1. Canonical starting point
 
@@ -622,17 +622,171 @@ Confirmed:
 - no salary data committed;
 - no secret/token/service-role credential committed.
 
-## 24. Final-gate placeholders
+## 24. Final implementation PR / exact post-merge gates
 
-The following remain pending until PR/merge closure:
+Implementation PR:
 
-- implementation PR number;
-- final PR head;
-- PR-head People Shift run/job;
-- merge SHA;
-- exact post-merge People Shift run/job;
-- exact-main collateral Pages gates;
-- final post-merge read-only audit;
-- canonical source-of-truth closure PR/SHA.
+**#257 — TASK-098: Manual-Time Attendance V1 and attendance authority**
 
-TASK-098 is not marked DONE in canonical project state until these remote gates complete.
+Final executable head before evidence-only documentation:
+
+`e4a52c307fec1b0614ed5c15fb52f7c986df57f8`
+
+Final PR head:
+
+`95a62be5ec86cc10d3c2222b45eccf35f02eaf87`
+
+The commit after the reconciled executable head adds only this TASK-098 evidence Markdown. No migration, workflow, fixture or test changed after `e4a52c3...`.
+
+### PR-head People Shift
+
+- run: **35740470718**
+- job: **106788598596**
+- exact PR head: `95a62be5ec86cc10d3c2222b45eccf35f02eaf87`
+- runtime: **Node v20.20.2**
+- TASK-091 Workforce contract: **61/61 PASS**
+- schedule-first compatibility: **9/9 PASS**
+- People Shift deterministic: **73/73 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **217/217 PASS**
+- browser suites: **12/12 PASS**
+- TASK-098 E2E-08 marker: **PASS**
+- failures: **0**
+
+### Implementation merge
+
+Merge SHA:
+
+`8ce968fdd03461a06ed57072d2ecad40c657fe63`
+
+### Exact post-merge People Shift
+
+- run: **35740641347**
+- job: **106789194421**
+- exact main SHA: `8ce968fdd03461a06ed57072d2ecad40c657fe63`
+- runtime: **Node v20.20.2**
+- TASK-091 Workforce contract: **61/61 PASS**
+- schedule-first compatibility: **9/9 PASS**
+- People Shift deterministic: **73/73 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **217/217 PASS**
+- browser suites: **12/12 PASS**
+- TASK-098 E2E-08 marker: **PASS**
+- failures: **0**
+
+Exact-main collateral workflows:
+
+- Validate MAGASIN GitHub Pages source: run **35740641773** — **SUCCESS**
+- Pages build and deployment: run **35740639580** — **SUCCESS**
+
+No exact-main failure required repair.
+
+## 25. Final post-merge live reconciliation
+
+Read-only observation:
+
+**2026-09-22 21:29:55 ICT**  
+(**2026-09-22 14:29:55 UTC**)
+
+Observed:
+
+- attendance rows: **0**
+- attendance by status: **{}**
+- work_schedules: **0**
+- active Give: **0**
+- active Swap: **0**
+- duplicate active attendance schedule groups: **0**
+- attendance notification rows: **0**
+- duplicate attendance event-key groups: **0**
+
+All six changed/new TASK-098 function bodies remain byte-exact against exact merged Git migration source on `8ce968f...`:
+
+1. `validate_attendance_assignment_authority_v1`
+2. `submit_manual_time_attendance_v1`
+3. `clock_in_for_schedule`
+4. `clock_out_attendance`
+5. `manual_attendance_from_schedule`
+6. `notification_attendance_trigger_v1`
+
+All six are SECURITY DEFINER with fixed `search_path=public`.
+
+Final targeted privilege boundary:
+
+- `validate_attendance_assignment_authority_v1`: postgres only;
+- `notification_attendance_trigger_v1`: postgres only;
+- `submit_manual_time_attendance_v1`: authenticated + postgres;
+- legacy clock-in/out/manual compatibility RPCs: authenticated + postgres with current-owner validation;
+- `auto_attendance_from_approved_schedules`: postgres only;
+- `get_my_attendance()`: authenticated + postgres;
+- targeted TASK-098 anon executable functions: **0**;
+- authenticated direct attendance table DML: **0**.
+
+Final Security Advisor:
+
+- RLS enabled/no-policy: 10 INFO, unrelated existing tables;
+- mutable search_path: 1 WARN, unrelated `magasin_normalize_name`;
+- anon SECURITY DEFINER executable: 18 WARN, no TASK-098 targeted function;
+- authenticated SECURITY DEFINER executable: 70 WARN; TASK-098 operational RPC surfaces are intentional and bounded internally;
+- leaked-password protection: 1 unrelated Auth warning.
+
+No production row was inserted, updated or deleted during final reconciliation.
+
+## 26. E2E-08 final status
+
+**E2E-08 = CLOSED.**
+
+Ownership side was proven by TASK-097:
+
+- A loses the canonical schedule after Give APPLIED;
+- B gains the same schedule_id.
+
+TASK-098 closes attendance-authority side:
+
+- stale A is denied Manual-Time Attendance on that transferred schedule;
+- current B is authorized under APPROVED + ACTIVE STAFF policy;
+- B submission remains raw `SUBMITTED / NEEDS_REVIEW`;
+- no confirmed work time is invented;
+- exact retry converges to the same attendance identity;
+- reload does not resurrect A authority;
+- shared transfer/attendance lock prevents split-brain mutation authority.
+
+## 27. Remaining intentional scope
+
+TASK-098 does **not** claim:
+
+- E2E-09 fully closed;
+- Employee Attendance Entry UI migrated;
+- realtime compatibility UI removed;
+- Manager attendance review implemented;
+- configurable deviation threshold defined;
+- confirmed work time produced;
+- payroll integrated.
+
+Those continue sequentially:
+
+- TASK-099 — Employee Attendance Entry UI V1;
+- TASK-100 — Manager Attendance Exception Review V1;
+- downstream payroll tasks consume confirmed work time only.
+
+Give CANCELLED timing and EXPIRED cutoff remain Owner-undefined and untouched.
+
+## 28. Canonical handoff
+
+After the docs/state closure merge:
+
+- TASK-098 = **DONE**
+- E2E-08 = **CLOSED**
+- TASK-099 = **READY / MANUAL_WORK**
+- Workforce current task = **TASK-099**
+- Workforce next task = **TASK-100**
+- Workforce Robot = **DISABLED**
+- PFC current task = **TASK-068**
+- PFC next task = **TASK-069**
+- PFC state = **UNCHANGED**
+- TASK-099 has **not** been started
+
+The canonical closure merge SHA is recorded in the Work return because a merge commit cannot self-contain its own future SHA.
+
+## TASK-098 result
+
+**DONE / E2E-08 CLOSED / POST-MERGE GREEN**
