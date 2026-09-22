@@ -3,14 +3,14 @@
 **Track:** WORKFORCE_OPERATIONS_V1  
 **Execution mode:** OWNER_DIRECT_TO_WORK / MANUAL_WORK  
 **Date:** 2026-09-22  
-**Status:** PENDING_FINAL_GATE  
-**E2E-07:** STRONG on final branch gate  
+**Status:** DONE / E2E-07 STRONG / POST-MERGE GREEN  
+**E2E-07:** STRONG / CLOSED  
 **E2E-08:** PARTIAL / OWNERSHIP SIDE PROVEN ONLY  
 **Production migration:** `20260922134157_task_097_give_lifecycle_reconciliation_hardening` — APPLIED  
 **Production test-data mutation:** NONE  
 **Workforce Robot:** DISABLED  
 **PFC cursor mutation:** NONE  
-**Next task:** TASK-098 remains STAGED until TASK-097 full PR/merge/post-merge closure
+**Next task:** TASK-098 READY / MANUAL_WORK — DO NOT AUTO-RUN
 
 ## 1. Five-Step
 
@@ -895,17 +895,176 @@ Confirmed:
 
 ---
 
-## 26. Final-gate placeholders
+## 26. Final PR / exact post-merge gates
 
-The following are intentionally not invented before remote gates complete:
+Implementation PR:
 
-- PR number: **PENDING_FINAL_GATE**
-- final PR head: **PENDING_FINAL_GATE**
-- PR-head People Shift run/job: **PENDING_FINAL_GATE**
-- merge SHA: **PENDING_FINAL_GATE**
-- exact post-merge People Shift run/job: **PENDING_FINAL_GATE**
-- exact post-merge collateral workflows: **PENDING_FINAL_GATE**
-- final post-merge live audit: **PENDING_FINAL_GATE**
-- canonical TASK-097→TASK-098 source-of-truth closure: **PENDING_FINAL_GATE**
+**#255 — TASK-097: Give lifecycle reconciliation and hardening**
 
-TASK-097 is not DONE until fresh PR-head CI, merge, exact post-merge CI, final live reconciliation and source-of-truth closure are complete.
+Final executable head:
+
+`d2f5819d4506552d3b4d158b9be384ff9a4575a5`
+
+Final PR head:
+
+`bbc24e7dca05c6a33c5ca95e732a00bcc5e17a86`
+
+The commit after the executable head adds only TASK-097 evidence Markdown. No executable source, migration, workflow, fixture or test changed.
+
+### PR-head People Shift
+
+- run: **35735967911**
+- job: **106773167923**
+- runtime: **Node v20.20.2**
+- TASK-091 Workforce contract: **61/61 PASS**
+- Schedule-first + Published Schedule Feedback: **9/9 PASS**
+- People Shift deterministic: **64/64 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **208/208 PASS**
+- browser suites/markers: **11/11 PASS**
+- TASK-097 Give lifecycle browser: **PASS**
+- failures: **0**
+
+### Merge
+
+Merge SHA:
+
+`4cf2d5c9ac07806be1c6748b2e992d7ea8201a7b`
+
+Exact post-merge People Shift:
+
+- run: **35736247975**
+- job: **106774124118**
+- exact main SHA: `4cf2d5c9ac07806be1c6748b2e992d7ea8201a7b`
+- runtime: **Node v20.20.2**
+- TASK-091 Workforce contract: **61/61 PASS**
+- Schedule-first + Published Schedule Feedback: **9/9 PASS**
+- People Shift deterministic: **64/64 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **208/208 PASS**
+- browser suites/markers: **11/11 PASS**
+- TASK-097 Give lifecycle browser: **PASS**
+- failures: **0**
+
+Exact-merge collateral workflows:
+
+- Validate MAGASIN GitHub Pages source: run **35736248255** — SUCCESS
+- Pages build and deployment: run **35736245765** — SUCCESS
+
+No exact-main failure required repair.
+
+---
+
+## 27. Final post-merge live reconciliation
+
+Read-only observation:
+
+**2026-09-22 20:53:04 ICT**  
+(**2026-09-22 13:53:04 UTC**)
+
+Observed:
+
+- Give rows: **0**
+- PENDING_RECIPIENT: **0**
+- PENDING_MANAGER: **0**
+- APPROVED: **0**
+- work_schedules: **0**
+- attendance rows: **0**
+- active Swap PENDING: **0**
+- active Swap PEER_ACCEPTED: **0**
+- SHIFT_GIVE notifications: **0**
+- duplicate Give event keys: **0**
+- duplicate active Give schedule groups: **0**
+
+Migration remains present:
+
+`20260922134157_task_097_give_lifecycle_reconciliation_hardening`
+
+All **6 changed TASK-097 function bodies** exact-match the migration on exact merged main:
+
+1. `validate_shift_give_v1`
+2. `list_shift_give_candidates_v1`
+3. `submit_shift_give_request`
+4. `respond_shift_give_request`
+5. `approve_shift_give`
+6. `reject_shift_give`
+
+Every changed function remains `SECURITY DEFINER` with fixed `search_path=public`.
+
+Grant boundary remains:
+
+- validator: postgres only;
+- Give notification trigger: postgres only;
+- operational Employee/Manager Give RPCs: authenticated + postgres;
+- no changed TASK-097 function is anon executable.
+
+Security Advisor remains:
+
+- `rls_enabled_no_policy`: 10 INFO
+- `function_search_path_mutable`: 1 WARN
+- `anon_security_definer_function_executable`: 19 WARN
+- `authenticated_security_definer_function_executable`: 70 WARN
+- `auth_leaked_password_protection`: 1 WARN
+
+The authenticated TASK-097 findings are the intentional operational SECURITY DEFINER RPC surfaces and remain bounded by internal auth/ownership/role/store-scope validation. No TASK-097 function appears in anon-executable or mutable-search-path findings.
+
+No production row was inserted, updated or deleted during final reconciliation.
+
+---
+
+## 28. Final source-of-truth handoff
+
+TASK-097 Definition of Done is satisfied:
+
+1. Give still follows recipient accepts THEN Manager approves.
+2. Manager cannot approve before recipient consent.
+3. giver and recipient must remain ACTIVE STAFF.
+4. Give blocks active Swap PENDING + PEER_ACCEPTED.
+5. attendance conflict blocks.
+6. availability mismatch blocks.
+7. explicit UNAVAILABLE blocks.
+8. resulting overlap blocks.
+9. resulting >2 assignments/day blocks.
+10. established daily/weekly hour caps remain enforced.
+11. duplicate active Give is prevented.
+12. candidate list matches hardened server eligibility.
+13. recipient response revalidates current truth.
+14. Manager approval revalidates immediately before transfer.
+15. ownership transfer A→B remains atomic.
+16. repeated Manager approval cannot transfer twice.
+17. old Employee schedule projection loses the assignment.
+18. new Employee schedule projection gains the same schedule_id.
+19. notifications follow recipient-first lifecycle.
+20. retry does not duplicate Manager/approval notification event keys.
+21. E2E-07 is STRONG / CLOSED.
+22. E2E-08 is PARTIAL / OWNERSHIP SIDE PROVEN and not overclaimed.
+23. E2E-01→06 regressions remain green.
+24. Swap regression remains green.
+25. current Attendance regression remains green.
+26. PR-head CI is green.
+27. merge is complete.
+28. exact post-merge CI is green.
+29. final evidence is complete.
+
+Known unresolved semantics remain intentionally outside TASK-097:
+
+- Give CANCELLED transition timing is Owner-undefined;
+- Give EXPIRED duration/cutoff is Owner-undefined;
+- old/new owner Manual-Time Attendance authority belongs TASK-098+;
+- E2E-08 remains partial until Attendance migration closes that side.
+
+Canonical handoff after docs/state closure merges:
+
+- TASK-097 = **DONE**
+- TASK-098 = **READY / MANUAL_WORK**
+- Workforce current task = **TASK-098**
+- Workforce next task = **TASK-099**
+- Workforce Robot = **DISABLED**
+- PFC current task = **TASK-068**
+- PFC next task = **TASK-069**
+- PFC state = **UNCHANGED**
+- TASK-098 has **not** been started
+
+## TASK-097 result
+
+**DONE / E2E-07 STRONG / POST-MERGE GREEN**
