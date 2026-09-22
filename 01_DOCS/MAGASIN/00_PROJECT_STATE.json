@@ -808,13 +808,13 @@
   },
   "supervisor_repository_migration": {
     "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
-    "state": "MIG_004_ACTIVE",
+    "state": "MIG_004_DONE_MIG_005_READY_OWNER_SAFE_GATE",
     "source_repository": "magasincoffee/magasincoffee.github.io",
     "target_repository": "magasincoffee/magasin-supervisor",
     "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
-    "current_task": "MIG-004",
-    "current_task_title": "New-repo CI / lifecycle parity",
-    "next_task": "MIG-005",
+    "current_task": "MIG-005",
+    "current_task_title": "Single-authority production cutover",
+    "next_task": "MIG-006",
     "production_cutover": false,
     "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
     "compatibility_window": "REQUIRED_UNTIL_NEW_REPO_PARITY_AND_ROLLBACK_GATES_PASS",
@@ -860,8 +860,8 @@
       "AUTH_MFA_CAPTCHA_AND_DESTRUCTIVE_ADMIN_REMAIN_FAIL_CLOSED"
     ],
     "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md",
-    "last_completed_task": "MIG-003",
-    "current_task_status": "ACTIVE_WORK_RELEASED",
+    "last_completed_task": "MIG-004",
+    "current_task_status": "READY_OWNER_SAFE_GATE",
     "mig_001": {
       "status": "DONE",
       "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -1067,18 +1067,91 @@
       }
     },
     "mig_004": {
-      "status": "ACTIVE_WORK_RELEASED",
-      "scope": "FULL_NEW_REPOSITORY_CI_INTEGRITY_LIFECYCLE_PARITY_WITHOUT_PRODUCTION_CUTOVER_UNLESS_SEPARATELY_AUTHORIZED",
-      "production_cutover": false,
+      "status": "DONE",
+      "scope": "FULL_NEW_REPOSITORY_CI_INTEGRITY_LIFECYCLE_PARITY_WITHOUT_PRODUCTION_CUTOVER",
       "owner_released": true,
       "target_repository": "magasincoffee/magasin-supervisor",
-      "target_base_sha": "63b955f59d7558a42311b3d47d58acc60a503dca",
-      "source_state_sha": "35e6a9325742ed2ddee90d03c93a88450a703c14",
+      "exact_base_sha": "63b955f59d7558a42311b3d47d58acc60a503dca",
+      "implementation_pr": 8,
+      "implementation_head_sha": "98f4abdb2b55d52acfe7773d789b351cf66ed05e",
+      "implementation_merge_sha": "19e0cab9318f9293409ebbc8237aeb299c548d77",
+      "target_docs_closure_pr": 9,
+      "target_docs_closure_merge_sha": "a67b6ea19e7e10b4b63b56f9e7b5274a94135ca2",
+      "target_evidence": "docs/MIG_004_CI_LIFECYCLE_PARITY_EVIDENCE.md",
+      "target_gate_manifest": "docs/MIG_004_GATE_PARITY.json",
+      "exact_main_gates": {
+        "sha": "19e0cab9318f9293409ebbc8237aeb299c548d77",
+        "supervisor_tests": {
+          "run_id": 35686650024,
+          "job_id": 106614800236,
+          "conclusion": "SUCCESS",
+          "full_root_native_pass": 567,
+          "full_root_native_fail": 0,
+          "adapter_state_root_pass": 50,
+          "platform_core_pass": 184
+        },
+        "supervisor_integrity": {
+          "run_id": 35686650049,
+          "static_job_id": 106614801646,
+          "runtime_job_id": 106614880182,
+          "static_conclusion": "SUCCESS",
+          "independent_repo_pass": 87,
+          "maintenance_control_panel_pass": 29,
+          "runtime_conclusion": "SKIPPED_FAIL_CLOSED",
+          "mig002_provenance": "137_OF_137"
+        },
+        "lifecycle_acceptance": {
+          "run_id": 35686650107,
+          "isolated_job_id": 106614800266,
+          "production_job_id": 106614801153,
+          "isolated_conclusion": "SUCCESS",
+          "a_to_l_pass": 52,
+          "production_conclusion": "SKIPPED"
+        },
+        "autostart_install": {
+          "run_id": 35686650035,
+          "isolated_job_id": 106614800199,
+          "install_job_id": 106614801441,
+          "verify_job_id": 106614801752,
+          "isolated_conclusion": "SUCCESS",
+          "contract_pass": 25,
+          "production_install_conclusion": "SKIPPED",
+          "verify_survival_conclusion": "SKIPPED"
+        },
+        "rbt009": {
+          "run_id": 35686650070,
+          "tier_a_job_id": 106614804896,
+          "preflight_job_id": 106614921175,
+          "tier_b_job_id": 106614921608,
+          "tier_a_conclusion": "SUCCESS",
+          "tier_a_pass": 9,
+          "preflight_conclusion": "SKIPPED",
+          "tier_b_conclusion": "SKIPPED_NOT_RUN"
+        }
+      },
+      "project_adapter_schema": "supervisor-project-adapter.v1",
+      "state_root_schema": "supervisor-state-root.v1",
+      "mig002_provenance": {
+        "managed_records": 137,
+        "represented": 137,
+        "missing": 0,
+        "frozen_provenance_preserved": true
+      },
+      "production_cutover": false,
       "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
+      "embedded_source_copy_preserved": true,
       "self_hosted_production_mutation_authority": false,
-      "zero_production_mutation_required": true,
-      "stop_after_task": true,
-      "next_task": "MIG-005"
+      "live_state_mutation": false,
+      "production_autostart_mutation": false,
+      "brain_work_target_mutation": false,
+      "owner_stop_cleared": false,
+      "rbt_001_to_008": "ACCEPTED",
+      "rbt_009": "IMPLEMENTATION_CANDIDATE_FINAL_8H_SOAK_PENDING",
+      "rbt009_tier_b_480m_run": false,
+      "zero_production_mutation": true,
+      "next_task": "MIG-005",
+      "next_task_status": "READY_OWNER_SAFE_GATE",
+      "stop_after_task": true
     }
   }
 }
