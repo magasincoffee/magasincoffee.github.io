@@ -808,7 +808,7 @@
   },
   "supervisor_repository_migration": {
     "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
-    "state": "MIG_005_ACTIVE_PREFLIGHT",
+    "state": "MIG_005_ACTIVE_CONTROLLED_STATE_TRANSFER",
     "source_repository": "magasincoffee/magasincoffee.github.io",
     "target_repository": "magasincoffee/magasin-supervisor",
     "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -861,7 +861,7 @@
     ],
     "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md",
     "last_completed_task": "MIG-004",
-    "current_task_status": "ACTIVE_OWNER_RELEASED_PREFLIGHT",
+    "current_task_status": "ACTIVE_OWNER_AUTHORIZED_CONTROLLED_STATE_TRANSFER",
     "mig_001": {
       "status": "DONE",
       "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -1154,7 +1154,7 @@
       "stop_after_task": true
     },
     "mig_005": {
-      "status": "ACTIVE_OWNER_RELEASED_PREFLIGHT",
+      "status": "ACTIVE_OWNER_AUTHORIZED_CONTROLLED_STATE_TRANSFER",
       "scope": "SINGLE_AUTHORITY_PRODUCTION_CUTOVER_WITH_PRESERVED_TARGETS_LATCHES_OWNER_STOP_AND_ROLLBACK",
       "owner_released": true,
       "control_console": "OLD_MACHINE",
@@ -1174,7 +1174,27 @@
       "rollback_required": true,
       "final_8h_soak_forbidden": true,
       "next_task": "MIG-006",
-      "stop_after_task": true
+      "stop_after_task": true,
+      "controlled_state_transfer_authorized": true,
+      "authorization_scope": "PRESERVE_AND_TRANSFER_EXISTING_PRODUCTION_STATE_ONLY_WITH_ZERO_OVERLAP_AND_HASH_VERIFICATION",
+      "authorization_source": "OWNER_EXPLICIT_CHAT_CONFIRMATION_2026-09-22",
+      "target_pr": 10,
+      "target_pr_head_at_authorization": "e5f9f386ce50377a07859e46cda53cd50a125586",
+      "new_machine_runner_verified": true,
+      "new_machine_probe_runner_name_sanitized": "DESKTOP-4K7IM13",
+      "new_machine_probe_node_major": 24,
+      "new_machine_supervisor_active": false,
+      "new_machine_autostart_present": false,
+      "new_machine_pending_reboot": false,
+      "new_machine_state_files_present": false,
+      "new_machine_lane_count": 0,
+      "new_machine_registry_lane_count": 0,
+      "new_machine_role": "UNKNOWN_BLOCKED_PENDING_STATE_TRANSFER",
+      "owner_stop_observed_blocked": true,
+      "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
+      "old_stop_before_state_capture_finalize": false,
+      "zero_overlap_required": true,
+      "hash_verification_required": true
     }
   }
 }
