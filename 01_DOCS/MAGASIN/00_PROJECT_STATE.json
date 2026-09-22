@@ -995,11 +995,15 @@
       "final_target_closure_main_sha": "7691bafd1571039be363d3edf760270756b5c7c6",
       "final_target_closure_tests": {
         "run_id": 35671405631,
-        "conclusion": "PENDING_AT_SOURCE_BRANCH_PREP"
+        "job_id": 106568460171,
+        "conclusion": "SUCCESS"
       },
       "final_target_closure_integrity": {
         "run_id": 35671405652,
-        "conclusion": "PENDING_AT_SOURCE_BRANCH_PREP"
+        "static_job_id": 106568459169,
+        "runtime_job_id": 106568557765,
+        "static_conclusion": "SUCCESS",
+        "runtime_conclusion": "SKIPPED_FAIL_CLOSED"
       },
       "rbt_001_to_008": "ACCEPTED",
       "rbt_009": "IMPLEMENTATION_CANDIDATE_FINAL_8H_SOAK_PENDING",
