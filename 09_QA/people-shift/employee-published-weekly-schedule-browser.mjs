@@ -24,7 +24,24 @@ function wire(page){
 const sunday=await context.newPage();wire(sunday);
 await sunday.goto(`${BASE}/09_QA/people-shift/employee-published-weekly-schedule-fixture.html?now=2026-09-27T16%3A30%3A00.000Z`,{waitUntil:"networkidle"});
 const employee=sunday.frameLocator("#employeeApp");
-await sunday.waitForFunction(()=>typeof globalThis.MAGASIN_EMPLOYEE?.schedule?.refresh==="function");
+const bootstrap=await sunday.evaluate(()=>({
+  core:!!globalThis.MAGASIN_CORE,
+  employee:!!globalThis.MAGASIN_EMPLOYEE,
+  schedule:typeof globalThis.MAGASIN_EMPLOYEE?.schedule?.refresh,
+  qa:!!globalThis.__TASK095_QA,
+  readyState:document.readyState,
+  scripts:[...document.scripts].map(x=>x.src||"INLINE"),
+  frame:{exists:!!document.getElementById("employeeApp"),srcdocLength:document.getElementById("employeeApp")?.srcdoc?.length||0}
+}));
+console.log("TASK095_BOOTSTRAP_DIAGNOSTIC="+JSON.stringify(bootstrap));
+try{
+  await sunday.waitForFunction(()=>typeof globalThis.MAGASIN_EMPLOYEE?.schedule?.refresh==="function",null,{timeout:5000});
+}catch(e){
+  console.log("TASK095_BOOTSTRAP_PAGE_ERRORS="+JSON.stringify(report.page_errors));
+  console.log("TASK095_BOOTSTRAP_CONSOLE_ERRORS="+JSON.stringify(report.console_errors));
+  console.log("TASK095_BOOTSTRAP_REQUEST_FAILURES="+JSON.stringify(report.request_failures));
+  throw e;
+}
 await employee.locator("#view-schedule").waitFor({state:"attached"});
 
 await check("sunday_current_week_is_2026_09_21_and_target_week_not_cross_wired",async()=>{
