@@ -27,5 +27,10 @@ test("Employee Swap reason remains required while Give uses dedicated lifecycle"
   assert.match(source,/submit_shift_swap_request/);
   assert.match(source,/submit_shift_give_request/);
   assert.match(source,/respond_shift_give_request/);
+  assert.match(source,/list_my_incoming_shift_swaps_v1/);
+  assert.match(source,/respond_shift_swap_request/);
+  assert.match(source,/PEER_ACCEPTED/);
+  assert.match(source,/Chờ người kia đồng ý/);
+  assert.match(source,/Người kia đã đồng ý · Chờ quản lý/);
   assert.doesNotMatch(source,/giveShiftState='NOT_CONNECTED'/);
 });
