@@ -23,8 +23,9 @@
   const pad=n=>String(n).padStart(2,"0");
   const dateKey=(d=new Date(state.now))=>{const p={};new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d).forEach(x=>p[x.type]=x.value);return `${p.year}-${p.month}-${p.day}`};
   const localDate=k=>new Date(`${String(k).slice(0,10)}T00:00:00+07:00`);
-  const addDays=(k,n)=>{const d=localDate(k);d.setUTCDate(d.getUTCDate()+n);return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`};
-  const monday=k=>{const d=localDate(k||dateKey()),day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()-(day-1));return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`};
+  const dateOnlyUtc=k=>new Date(`${String(k).slice(0,10)}T00:00:00Z`);
+  const addDays=(k,n)=>{const d=dateOnlyUtc(k);d.setUTCDate(d.getUTCDate()+n);return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`};
+  const monday=k=>{const d=dateOnlyUtc(k||dateKey()),day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()-(day-1));return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`};
   const weekDays=k=>Array.from({length:7},(_,i)=>addDays(k,i));
   const formatDate=k=>{const p=String(k).slice(0,10).split("-");return `${p[2]}/${p[1]}`};
   const time5=v=>String(v||"").slice(0,5);
