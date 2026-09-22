@@ -215,7 +215,7 @@ Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
 | MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | DONE |
 | MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | DONE |
 | MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | DONE |
-| MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | ACTIVE / OWNER RELEASED PREP |
+| MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | ACTIVE / TIER B IN PROGRESS |
 | MIG-007 | Deprecate old embedded Supervisor copy | rollback window closed + pointer docs only | QUEUED |
 
 Migration invariant: MIG-005 has completed the single-ownership handoff. The independent `magasin-supervisor` runtime candidate now owns production autostart authority; runtime processes remain intentionally quiescent because all three lanes are disabled. The old state/rollback source is retained and inactive. RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING and may not be relabeled RELEASED until MIG-006 completes.
@@ -388,3 +388,21 @@ Locked runtime candidate under test:
 Release authorizes preparation and execution of the exact-SHA soak only after the release workflow is corrected/qualified for the new platform state root and all-disabled semantics. It does not authorize enabling lanes, changing Brain/Work targets, clearing Owner STOP, creating a second authority, or redefining the runtime candidate.
 
 Tier B is not considered started until the self-hosted runner begins the 480-minute monitor on the exact locked runtime candidate. If interrupted, the attempt is non-qualifying and restarts from zero. STOP after MIG-006; do not self-start MIG-007.
+
+
+### MIG-006 Tier B live execution
+
+Tier B final qualification is **IN PROGRESS** on the locked runtime candidate.
+
+- target workflow run: `35717673431`
+- Tier B job: `106713284935`
+- control-plane SHA: `819f6461188f894327ec67feaf75f768ce881fce`
+- runtime candidate SHA: `218f330ee86eea4f0fb79ef9293bd43cf96a45de`
+- Tier B step start UTC: `2026-09-22T10:46:39Z`
+- required continuous duration: 480 minutes / 28,800 seconds
+- start-from-zero: true
+- partial-duration credit: 0
+- execution branch frozen: true
+- MIG-007 remains blocked until MIG-006 qualifies
+
+This is bookkeeping only. It does not modify the target execution branch or production runtime.
