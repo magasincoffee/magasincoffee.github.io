@@ -17,7 +17,7 @@
     "production_private_data_in_git": false,
     "red_actions_require_owner": true
   },
-  "last_updated": "2026-09-21",
+  "last_updated": "2026-09-22",
   "owner_boundary": {
     "task": "TASK-050",
     "resolved": [
@@ -772,7 +772,7 @@
   },
   "supervisor_repository_migration": {
     "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
-    "state": "MIG_003_DONE_MIG_004_READY",
+    "state": "MIG_004_ACTIVE",
     "source_repository": "magasincoffee/magasincoffee.github.io",
     "target_repository": "magasincoffee/magasin-supervisor",
     "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -825,7 +825,7 @@
     ],
     "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md",
     "last_completed_task": "MIG-003",
-    "current_task_status": "READY_NOT_STARTED",
+    "current_task_status": "ACTIVE_WORK_RELEASED",
     "mig_001": {
       "status": "DONE",
       "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -1031,9 +1031,18 @@
       }
     },
     "mig_004": {
-      "status": "READY_NOT_STARTED",
+      "status": "ACTIVE_WORK_RELEASED",
       "scope": "FULL_NEW_REPOSITORY_CI_INTEGRITY_LIFECYCLE_PARITY_WITHOUT_PRODUCTION_CUTOVER_UNLESS_SEPARATELY_AUTHORIZED",
-      "production_cutover": false
+      "production_cutover": false,
+      "owner_released": true,
+      "target_repository": "magasincoffee/magasin-supervisor",
+      "target_base_sha": "63b955f59d7558a42311b3d47d58acc60a503dca",
+      "source_state_sha": "35e6a9325742ed2ddee90d03c93a88450a703c14",
+      "production_authority": "UNCHANGED_EXISTING_SUPERVISOR",
+      "self_hosted_production_mutation_authority": false,
+      "zero_production_mutation_required": true,
+      "stop_after_task": true,
+      "next_task": "MIG-005"
     }
   }
 }
