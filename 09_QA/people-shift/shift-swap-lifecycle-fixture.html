@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<title>MAGASIN QA · TASK-096 Swap Lifecycle</title>
+</head>
+<body>
+  <nav><button data-view="swap" id="managerSwapNav">Manager Swap</button></nav>
+  <section id="view-swap"></section>
+  <iframe id="employeeApp" title="Employee Swap Lifecycle QA"></iframe>
+
+<script>
+(()=>{
+  const calls=[];
+  const managerCalls=[];
+  const notifications=new Map();
+  const profiles={
+    "u-a":{id:"u-a",full_name:"Nhân viên A",role:"STAFF",status:"ACTIVE"},
+    "u-b":{id:"u-b",full_name:"Nhân viên B",role:"STAFF",status:"ACTIVE"},
+    "manager":{id:"manager",full_name:"Quản lý QA",role:"STORE_MANAGER",status:"ACTIVE"}
+  };
+  let currentUser="u-a";
+  let managerScope=true;
+  const faults={
+    attendance:false,give:false,availability:false,overlap:false,maxTwo:false,
+    requesterInactive:false,targetInactive:false
+  };
+  const baselineSchedules=()=>({
+    "sch-a":{schedule_id:"sch-a",id:"sch-a",user_id:"u-a",work_date:"2026-09-28",start_time:"06:00",end_time:"12:00",store_id:"store-a",store_code:"CN-QA",store_name:"Cửa hàng QA",status:"APPROVED"},
+    "sch-b":{schedule_id:"sch-b",id:"sch-b",user_id:"u-b",work_date:"2026-09-28",start_time:"12:00",end_time:"17:00",store_id:"store-a",store_code:"CN-QA",store_name:"Cửa hàng QA",status:"APPROVED"}
+  });
+  let schedules=baselineSchedules();
+  let swap=null;
+  let swapSeq=0;
+  let applyCount=0;
+
+  function notify(key,type,audience,user=null){
+    notifications.set(key,{key,type,audience,user});
+  }
+  function error(message){return {data:null,error:{message}}}
+  function snapshotSchedule(s){return {...s}}
+  function validatePair(reqId,targetId,requesterId){
+    const req=schedules[reqId],target=schedules[targetId];
+    const violations=[];
+    if(!req)violations.push("REQUESTER_SCHEDULE_NOT_FOUND");
+    if(!target)violations.push("TARGET_SCHEDULE_NOT_FOUND");
+    if(!req||!target)return violations;
+    if(req.user_id!==requesterId)violations.push("REQUESTER_SCHEDULE_NOT_OWNED");
+    if(req.user_id===target.user_id)violations.push("SAME_EMPLOYEE_SWAP");
+    if(req.status!=="APPROVED")violations.push("REQUESTER_SCHEDULE_NOT_APPROVED");
+    if(target.status!=="APPROVED")violations.push("TARGET_SCHEDULE_NOT_APPROVED");
+    if(req.store_id!==target.store_id)violations.push("STORE_MISMATCH");
+    if(req.work_date!==target.work_date)violations.push("DATE_MISMATCH");
+    if(faults.requesterInactive||profiles[req.user_id]?.status!=="ACTIVE")violations.push("REQUESTER_INACTIVE");
+    if(faults.targetInactive||profiles[target.user_id]?.status!=="ACTIVE")violations.push("TARGET_INACTIVE");
+    if(faults.attendance)violations.push("ATTENDANCE_ALREADY_EXISTS");
+    if(faults.give)violations.push("SCHEDULE_HAS_PENDING_GIVE");
+    if(faults.availability)violations.push("REQUESTER_NOT_AVAILABLE_FOR_TARGET_SHIFT");
+    if(faults.overlap)violations.push("REQUESTER_RESULTING_OVERLAP");
+    if(faults.maxTwo)violations.push("REQUESTER_MAX_TWO_ASSIGNMENTS_PER_DAY");
+    return violations;
+  }
+  function activeSwapConflict(reqId,targetId,exclude=null){
+    if(!swap||swap.id===exclude||!["PENDING","PEER_ACCEPTED"].includes(swap.status))return false;
+    return [swap.requester_schedule_id,swap.target_schedule_id].some(x=>x===reqId||x===targetId);
+  }
+  function requesterProjection(row){
+    const r=schedules[row.requester_schedule_id],t=schedules[row.target_schedule_id];
+    return {
+      id:row.id,status:row.status,reason:row.reason,requested_at:row.requested_at,
+      store_code:"CN-QA",store_name:"Cửa hàng QA",
+      requester_schedule_id:row.requester_schedule_id,target_schedule_id:row.target_schedule_id,
+      target_user_id:row.target_user_id,
+      requester_date:r?.work_date,requester_start:r?.start_time,requester_end:r?.end_time,
+      target_date:t?.work_date,target_start:t?.start_time,target_end:t?.end_time,
+      target_user_name:profiles[row.target_user_id]?.full_name||"Nhân viên",
+      approver_id:row.approver_id||null,approved_at:row.approved_at||null,note:row.note||null
+    };
+  }
+  function incomingProjection(row){
+    const r=schedules[row.requester_schedule_id],t=schedules[row.target_schedule_id];
+    return {
+      id:row.id,status:row.status,reason:row.reason,requested_at:row.requested_at,
+      peer_responded_at:row.peer_responded_at||null,
+      store_code:"CN-QA",store_name:"Cửa hàng QA",
+      requester_name:profiles[row.requester_id]?.full_name||"Nhân viên",
+      requester_schedule_id:row.requester_schedule_id,target_schedule_id:row.target_schedule_id,
+      requester_date:r?.work_date,requester_start:r?.start_time,requester_end:r?.end_time,
+      target_date:t?.work_date,target_start:t?.start_time,target_end:t?.end_time
+    };
+  }
+  function managerProjection(row){
+    const r=schedules[row.requester_schedule_id],t=schedules[row.target_schedule_id];
+    return {
+      id:row.id,status:row.status,reason:row.reason,requested_at:row.requested_at,
+      store_id:"store-a",store_code:"CN-QA",store_name:"Cửa hàng QA",
+      requester_id:row.requester_id,requester_name:profiles[row.requester_id]?.full_name,
+      requester_schedule_id:row.requester_schedule_id,target_schedule_id:row.target_schedule_id,
+      target_user_id:row.target_user_id,target_user_name:profiles[row.target_user_id]?.full_name,
+      requester_date:r?.work_date,requester_start:r?.start_time,requester_end:r?.end_time,
+      target_date:t?.work_date,target_start:t?.start_time,target_end:t?.end_time
+    };
+  }
+  async function employeeRpc(name,args={}){
+    calls.push({actor:currentUser,name,args:structuredClone(args||{})});
+    if(name==="list_my_approved_schedules_v2"){
+      return {data:Object.values(schedules).filter(x=>x.user_id===currentUser&&x.status==="APPROVED").map(snapshotSchedule),error:null};
+    }
+    if(name==="list_shift_swap_candidates_v1"){
+      const mine=schedules[args.p_requester_schedule_id];
+      if(!mine||mine.user_id!==currentUser)return error("REQUESTER_SCHEDULE_NOT_OWNED");
+      const rows=Object.values(schedules).filter(x=>x.user_id!==currentUser&&x.status==="APPROVED"&&x.store_id===mine.store_id&&x.work_date===mine.work_date&&!activeSwapConflict(mine.id,x.id));
+      return {data:rows.map(x=>({schedule_id:x.id,user_id:x.user_id,user_name:profiles[x.user_id].full_name,work_date:x.work_date,start_time:x.start_time,end_time:x.end_time,store_id:x.store_id,store_code:x.store_code,store_name:x.store_name})),error:null};
+    }
+    if(name==="submit_shift_swap_request"){
+      const req=schedules[args.p_requester_schedule_id],target=schedules[args.p_target_schedule_id];
+      if(!String(args.p_reason||"").trim())return error("REASON_REQUIRED");
+      const violations=validatePair(args.p_requester_schedule_id,args.p_target_schedule_id,currentUser);
+      if(violations.length)return error("SHIFT_SWAP_VALIDATION_FAILED: "+violations.join(","));
+      if(activeSwapConflict(args.p_requester_schedule_id,args.p_target_schedule_id))return error("SHIFT_SWAP_ALREADY_ACTIVE");
+      swap={id:"swap-"+(++swapSeq),requester_id:currentUser,target_user_id:target.user_id,requester_schedule_id:req.id,target_schedule_id:target.id,status:"PENDING",reason:String(args.p_reason).trim(),requested_at:"2026-09-27T10:00:00Z",peer_responded_at:null,approver_id:null,approved_at:null};
+      notify("swap:"+swap.id+":requested:target","SHIFT_SWAP_REQUESTED","USER",swap.target_user_id);
+      return {data:swap.id,error:null};
+    }
+    if(name==="list_my_shift_swaps_v2"){
+      return {data:swap&&swap.requester_id===currentUser?[requesterProjection(swap)]:[],error:null};
+    }
+    if(name==="list_my_incoming_shift_swaps_v1"){
+      return {data:swap&&swap.target_user_id===currentUser?[incomingProjection(swap)]:[],error:null};
+    }
+    if(name==="respond_shift_swap_request"){
+      if(!swap||swap.id!==args.p_swap_id)return error("SHIFT_SWAP_NOT_FOUND");
+      if(swap.target_user_id!==currentUser)return error("SHIFT_SWAP_NOT_TARGET");
+      if(swap.status==="PEER_ACCEPTED"&&args.p_accept===true)return {data:{id:swap.id,status:"PEER_ACCEPTED",accepted:true,already_accepted:true},error:null};
+      if(swap.status==="REJECTED"&&args.p_accept===false&&swap.peer_responded_at&&!swap.approver_id)return {data:{id:swap.id,status:"REJECTED",accepted:false,already_rejected:true},error:null};
+      if(swap.status!=="PENDING")return error("SHIFT_SWAP_NOT_AWAITING_PEER");
+      const req=schedules[swap.requester_schedule_id],target=schedules[swap.target_schedule_id];
+      if(!req||req.user_id!==swap.requester_id)return error("REQUESTER_OWNERSHIP_CHANGED");
+      if(!target||target.user_id!==swap.target_user_id)return error("TARGET_OWNERSHIP_CHANGED");
+      if(req.status!=="APPROVED"||target.status!=="APPROVED")return error("SHIFT_SWAP_SCHEDULE_NOT_APPROVED");
+      if(args.p_accept){
+        const violations=validatePair(req.id,target.id,swap.requester_id);
+        if(violations.length)return error("SHIFT_SWAP_PEER_REVALIDATION_FAILED: "+violations.join(","));
+        swap.status="PEER_ACCEPTED";swap.peer_responded_at="2026-09-27T10:05:00Z";
+        notify("swap:"+swap.id+":peer_accepted:requester","SHIFT_SWAP_PEER_ACCEPTED","USER",swap.requester_id);
+        notify("swap:"+swap.id+":manager_review","SHIFT_SWAP_MANAGER_REVIEW","STORE_MANAGERS",null);
+        return {data:{id:swap.id,status:"PEER_ACCEPTED",accepted:true,already_accepted:false},error:null};
+      }
+      swap.status="REJECTED";swap.peer_responded_at="2026-09-27T10:05:00Z";
+      notify("swap:"+swap.id+":peer_rejected:requester","SHIFT_SWAP_PEER_REJECTED","USER",swap.requester_id);
+      return {data:{id:swap.id,status:"REJECTED",accepted:false,already_rejected:false},error:null};
+    }
+    if(name==="cancel_shift_swap"){
+      if(!swap||swap.id!==args.p_swap_id)return error("SHIFT_SWAP_NOT_FOUND");
+      if(swap.requester_id!==currentUser)return error("SHIFT_SWAP_NOT_OWNED");
+      if(swap.status==="CANCELLED")return {data:{id:swap.id,status:"CANCELLED",already_cancelled:true},error:null};
+      if(swap.status==="PEER_ACCEPTED")return error("SHIFT_SWAP_ALREADY_PEER_ACCEPTED");
+      if(swap.status!=="PENDING")return error("SHIFT_SWAP_ALREADY_RESOLVED");
+      swap.status="CANCELLED";
+      notify("swap:"+swap.id+":cancelled:target","SHIFT_SWAP_CANCELLED","USER",swap.target_user_id);
+      return {data:{id:swap.id,status:"CANCELLED",already_cancelled:false},error:null};
+    }
+    if(name==="list_my_shift_gives_v1")return {data:[],error:null};
+    if(name==="list_shift_give_candidates_v1")return {data:[],error:null};
+    if(name==="submit_shift_give_request")return {data:null,error:{message:"GIVE_NOT_USED_IN_TASK_096_FIXTURE"}};
+    if(name==="respond_shift_give_request")return {data:null,error:{message:"GIVE_NOT_USED_IN_TASK_096_FIXTURE"}};
+    return {data:[],error:null};
+  }
+  async function managerRpc(name,args={}){
+    managerCalls.push({name,args:structuredClone(args||{})});
+    if(name==="list_shift_swap_requests_v1"){
+      if(!managerScope)return {data:[],error:null};
+      return {data:swap&&swap.status===args.p_status&&args.p_status==="PEER_ACCEPTED"?[managerProjection(swap)]:[],error:null};
+    }
+    if(name==="approve_shift_swap"){
+      if(!managerScope)return error("STORE_NOT_ALLOWED");
+      if(!swap||swap.id!==args.p_swap_id)return error("SHIFT_SWAP_NOT_FOUND");
+      if(swap.status==="APPROVED")return {data:{id:swap.id,status:"APPROVED",swapped:false,already_applied:true},error:null};
+      if(swap.status!=="PEER_ACCEPTED")return error("SHIFT_SWAP_PEER_ACCEPTANCE_REQUIRED");
+      const req=schedules[swap.requester_schedule_id],target=schedules[swap.target_schedule_id];
+      if(!req||req.user_id!==swap.requester_id)return error("REQUESTER_OWNERSHIP_CHANGED");
+      if(!target||target.user_id!==swap.target_user_id)return error("TARGET_OWNERSHIP_CHANGED");
+      const violations=validatePair(req.id,target.id,swap.requester_id);
+      if(violations.length)return error("SHIFT_SWAP_REVALIDATION_FAILED: "+violations.join(","));
+      const a=req.user_id,b=target.user_id;
+      req.user_id=b;target.user_id=a;
+      applyCount++;
+      swap.status="APPROVED";swap.approver_id="manager";swap.approved_at="2026-09-27T10:10:00Z";
+      notify("swap:"+swap.id+":approved:requester","SHIFT_SWAP_APPROVED","USER",swap.requester_id);
+      notify("swap:"+swap.id+":approved:target","SHIFT_SWAP_APPROVED","USER",swap.target_user_id);
+      notify("schedule:"+req.id+":transfer:out","SCHEDULE_TRANSFERRED_OUT","USER",a);
+      notify("schedule:"+req.id+":transfer:in","SCHEDULE_TRANSFERRED_IN","USER",b);
+      notify("schedule:"+target.id+":transfer:out","SCHEDULE_TRANSFERRED_OUT","USER",b);
+      notify("schedule:"+target.id+":transfer:in","SCHEDULE_TRANSFERRED_IN","USER",a);
+      return {data:{id:swap.id,status:"APPROVED",swapped:true,already_applied:false},error:null};
+    }
+    if(name==="reject_shift_swap"){
+      if(!managerScope)return error("STORE_NOT_ALLOWED");
+      if(!swap||swap.id!==args.p_swap_id)return error("SHIFT_SWAP_NOT_FOUND");
+      if(swap.status==="REJECTED")return {data:{id:swap.id,status:"REJECTED",already_rejected:true},error:null};
+      if(swap.status!=="PEER_ACCEPTED")return error("SHIFT_SWAP_PEER_ACCEPTANCE_REQUIRED");
+      swap.status="REJECTED";swap.approver_id="manager";
+      notify("swap:"+swap.id+":manager_rejected:requester","SHIFT_SWAP_REJECTED","USER",swap.requester_id);
+      notify("swap:"+swap.id+":manager_rejected:target","SHIFT_SWAP_REJECTED","USER",swap.target_user_id);
+      return {data:{id:swap.id,status:"REJECTED",already_rejected:false},error:null};
+    }
+    if(name==="list_shift_give_requests_v1")return {data:[],error:null};
+    return {data:[],error:null};
+  }
+  function reset(){
+    currentUser="u-a";managerScope=true;schedules=baselineSchedules();swap=null;swapSeq=0;applyCount=0;
+    notifications.clear();calls.length=0;managerCalls.length=0;
+    for(const k of Object.keys(faults))faults[k]=false;
+    profiles["u-a"].status="ACTIVE";profiles["u-b"].status="ACTIVE";
+  }
+
+  window.__SWAP96_QA={
+    calls,managerCalls,notifications,profiles,faults,
+    get currentUser(){return currentUser},
+    get swap(){return swap?structuredClone(swap):null},
+    get schedules(){return structuredClone(schedules)},
+    get applyCount(){return applyCount},
+    setUser(id){currentUser=id},
+    setManagerScope(v){managerScope=!!v},
+    reset,
+    employeeRpcAs:async(id,name,args)=>{const old=currentUser;currentUser=id;try{return await employeeRpc(name,args)}finally{currentUser=old}},
+    managerRpc,
+    setScheduleOwner(id,user){if(schedules[id])schedules[id].user_id=user},
+    refreshEmployee:()=>window.MAGASIN_EMPLOYEE?.swap?.refresh?.(),
+    refreshManager:()=>window.MAGASIN_MANAGER_SWAP_APPROVAL?.refresh?.()
+  };
+
+  window.MAGASIN_CORE={
+    security:{escapeHtml:v=>String(v??"")},
+    time:{time5:v=>String(v??"").slice(0,5)},
+    date:{monday:()=>"2026-09-28",formatDate:v=>String(v??"").slice(0,10)},
+    ui:{toast:()=>{}},
+    supabase:{
+      getProfile:async()=>({...profiles[currentUser]}),
+      rpc:employeeRpc
+    }
+  };
+  window.supabase={createClient:()=>({rpc:managerRpc})};
+
+  const frame=document.getElementById("employeeApp");
+  frame.srcdoc=`<!doctype html><html lang="vi"><body>
+    <section id="view-swap">
+      <div id="swapChoices"><button onclick="openSwapForm('swap')">Đổi ca</button><button onclick="openSwapForm('give')">Cho ca</button></div>
+      <div id="swapForm">
+        <div class="swap-card"><h3>Ca của tôi</h3></div>
+        <div class="swap-card"><h3>Ca đối ứng</h3><div class="field"><label>Trường hiện hữu</label><select></select></div></div>
+        <div class="swap-actions"><button onclick="backToSwapChoices()">Hủy</button><button class="btn primary" onclick="sendSwapRequest()">Gửi yêu cầu</button></div>
+        <div id="swapResult"></div>
+      </div>
+      <div class="history-head"><h3>Lịch sử</h3></div>
+      <div id="historyList"></div>
+    </section>
+  </body></html>`;
+})();
+</script>
+<script src="/06_EMPLOYEE/swap/engine-v1.js"></script>
+<script src="/05_MANAGER/Workforce/swap-approval-v1.js"></script>
+</body>
+</html>
