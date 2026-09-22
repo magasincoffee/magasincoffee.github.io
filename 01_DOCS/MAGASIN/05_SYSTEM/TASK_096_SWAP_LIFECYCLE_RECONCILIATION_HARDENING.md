@@ -3,13 +3,13 @@
 **Track:** WORKFORCE_OPERATIONS_V1  
 **Execution mode:** OWNER_DIRECT_TO_WORK / MANUAL_WORK  
 **Date:** 2026-09-22  
-**Status:** PENDING_FINAL_GATE  
-**E2E-06:** STRONG on final branch gate  
+**Status:** DONE / E2E-06 STRONG / POST-MERGE GREEN  
+**E2E-06:** STRONG / CLOSED  
 **Production migration:** `20260922124821_task_096_swap_lifecycle_reconciliation_hardening` — APPLIED  
 **Production test-data mutation:** NONE  
 **Workforce Robot:** DISABLED  
 **PFC cursor mutation:** NONE  
-**Next task:** TASK-097 remains STAGED until TASK-096 full PR/merge/post-merge closure
+**Next task:** TASK-097 READY / MANUAL_WORK — DO NOT AUTO-RUN
 
 ## 1. Five-Step
 
@@ -839,17 +839,190 @@ Confirmed:
 
 ---
 
-## 23. Final-gate placeholders
+## 23. Final PR / exact post-merge gates
 
-The following values are intentionally not invented before remote gates complete:
+Implementation PR:
 
-- PR number: **PENDING_FINAL_GATE**
-- final PR head: **PENDING_FINAL_GATE**
-- PR-head People Shift run/job: **PENDING_FINAL_GATE**
-- merge SHA: **PENDING_FINAL_GATE**
-- exact post-merge People Shift run/job: **PENDING_FINAL_GATE**
-- exact post-merge collateral workflows: **PENDING_FINAL_GATE**
-- final post-merge live reconciliation timestamp: **PENDING_FINAL_GATE**
-- canonical TASK-096→TASK-097 source-of-truth closure: **PENDING_FINAL_GATE**
+**#253 — TASK-096: Swap lifecycle reconciliation and hardening**
 
-TASK-096 is not DONE until PR-head, merge, exact post-merge, final live reconciliation and state closure are green.
+Final PR head:
+
+`4e2536a6851324776e0b2d0870d0220ee0eeb928`
+
+The only change after executable head `3ea9e0fd100f90851b89d0348d5a95040640482f` was TASK-096 evidence Markdown; executable tree was unchanged.
+
+### PR-head People Shift
+
+- run: **35730001119**
+- job: **106752923813**
+- runtime: **Node v20.20.2**
+- TASK-091 Workforce contract: **61/61 PASS**
+- Schedule-first + Published Schedule Feedback: **9/9 PASS**
+- People Shift deterministic: **53/53 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **197/197 PASS**
+- browser suites/markers: **10/10 PASS**
+- TASK-096 Swap lifecycle browser: **PASS**
+- failures: **0**
+
+### Merge
+
+Merge SHA:
+
+`b166241aea681a5d8429a6f6efce0a03fe53de2b`
+
+Exact post-merge People Shift:
+
+- run: **35730242009**
+- job: **106753715304**
+- exact main SHA: `b166241aea681a5d8429a6f6efce0a03fe53de2b`
+- runtime: **Node v20.20.2**
+- TASK-091 Workforce contract: **61/61 PASS**
+- Schedule-first + Published Schedule Feedback: **9/9 PASS**
+- People Shift deterministic: **53/53 PASS**
+- Control Tower deterministic: **74/74 PASS**
+- deterministic total: **197/197 PASS**
+- browser suites/markers: **10/10 PASS**
+- TASK-096 Swap lifecycle browser: **PASS**
+- failures: **0**
+
+Exact-merge collateral workflows:
+
+- Validate MAGASIN GitHub Pages source: run **35730242058** — SUCCESS
+- Pages build and deployment: run **35730240658** — SUCCESS
+
+No exact-main failure required repair.
+
+---
+
+## 24. Final post-merge live reconciliation
+
+Read-only observation:
+
+**2026-09-22 20:05:53 ICT**  
+(**2026-09-22 13:05:53 UTC**)
+
+Observed:
+
+- total shift_swaps: **0**
+- PENDING swaps: **0**
+- PEER_ACCEPTED swaps: **0**
+- work_schedules: **0**
+- active Gives: **0**
+- SHIFT_SWAP notifications: **0**
+- duplicate Swap event_key groups: **0**
+- schedules participating in multiple active Swaps: **0**
+
+Migration remains present:
+
+`20260922124821_task_096_swap_lifecycle_reconciliation_hardening`
+
+Live schema confirms:
+
+- `peer_responded_at` exists;
+- status CHECK includes `PENDING / PEER_ACCEPTED / APPROVED / CANCELLED / REJECTED`;
+- `uq_shift_swaps_active_requester_schedule` exists;
+- `uq_shift_swaps_active_target_schedule` exists;
+- `idx_shift_swaps_target_user_status` exists.
+
+All **9 changed/new TASK-096 function bodies** are exact-body matches to canonical migration source:
+
+1. `validate_shift_swap_v1`
+2. `list_shift_swap_candidates_v1`
+3. `submit_shift_swap_request`
+4. `list_my_incoming_shift_swaps_v1`
+5. `respond_shift_swap_request`
+6. `approve_shift_swap`
+7. `reject_shift_swap`
+8. `cancel_shift_swap`
+9. `notification_shift_swap_trigger_v1`
+
+All remain `SECURITY DEFINER` with fixed `search_path=public`.
+
+Routine grants:
+
+- validator: postgres only;
+- notification trigger: postgres only;
+- Employee/Manager operational RPCs: authenticated + postgres;
+- no TASK-096 RPC is anon executable.
+
+No production row was inserted, updated or deleted during this final reconciliation.
+
+---
+
+## 25. Security Advisor final disposition
+
+Post-merge Security Advisor:
+
+- `rls_enabled_no_policy`: 10 INFO
+- `function_search_path_mutable`: 1 WARN
+- `anon_security_definer_function_executable`: 19 WARN
+- `authenticated_security_definer_function_executable`: 70 WARN
+- `auth_leaked_password_protection`: 1 WARN
+
+TASK-096-specific disposition:
+
+- **0 anon-executable TASK-096 functions**;
+- `notification_shift_swap_trigger_v1` is postgres-only;
+- `validate_shift_swap_v1` is postgres-only;
+- authenticated findings on operational Swap RPCs are intentional API surfaces and remain bounded by auth/ownership/role/store-scope checks inside the functions;
+- the two newly introduced authenticated surfaces are `list_my_incoming_shift_swaps_v1` and `respond_shift_swap_request`;
+- no mutable-search-path finding applies to a TASK-096 function.
+
+Legacy unrelated findings remain out of scope.
+
+---
+
+## 26. Final source-of-truth handoff
+
+TASK-096 Definition of Done is satisfied:
+
+1. Requester submits a real Swap request through server authority.
+2. Target Employee explicitly accepts before Manager can approve.
+3. Target Employee can explicitly reject.
+4. Manager actionable queue is PEER_ACCEPTED only.
+5. Server denies Manager approval before peer acceptance.
+6. Submit / peer / Manager boundaries revalidate as required.
+7. ACTIVE STAFF checks hold.
+8. APPROVED assignment ownership checks hold.
+9. Attendance conflict blocks.
+10. Active Give conflict blocks.
+11. Resulting overlap blocks.
+12. Canonical max 2 assignments/day holds on simulated resulting ownership.
+13. Duplicate active Swap conflicts are prevented across PENDING + PEER_ACCEPTED.
+14. Manager apply remains atomic.
+15. Double approval returns stable already-applied semantics and can never swap ownership back.
+16. Both Employee schedule sources refresh to new ownership.
+17. Notifications follow peer-first lifecycle.
+18. Browser uses RPCs and does not directly mutate canonical Swap rows.
+19. E2E-06 is STRONG / CLOSED.
+20. Existing E2E-01→05 regressions remain green.
+21. Give and current attendance regressions remain green.
+22. PR-head CI is green.
+23. Merge is complete.
+24. Exact post-merge CI is green.
+25. Final evidence is complete.
+
+Known unresolved semantics remain intentionally outside TASK-096:
+
+- EXPIRED duration/cutoff is Owner-undefined;
+- cross-store Swap remains fail closed;
+- cross-date Swap remains fail closed;
+- E2E-08 assignment ownership → Manual-Time Attendance remains downstream TASK-098+ integration;
+- Give lifecycle hardening belongs to TASK-097.
+
+Canonical handoff after docs/state closure merges:
+
+- TASK-096 = **DONE**
+- TASK-097 = **READY / MANUAL_WORK**
+- Workforce current task = **TASK-097**
+- Workforce next task = **TASK-098**
+- Workforce Robot = **DISABLED**
+- PFC current task = **TASK-068**
+- PFC next task = **TASK-069**
+- PFC state = **UNCHANGED**
+- TASK-097 has **not** been started
+
+## TASK-096 result
+
+**DONE / E2E-06 STRONG / POST-MERGE GREEN**
