@@ -808,7 +808,7 @@
   },
   "supervisor_repository_migration": {
     "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
-    "state": "MIG_006_ACTIVE_OWNER_RELEASED_PREP",
+    "state": "MIG_006_ACTIVE_TIER_B_IN_PROGRESS",
     "source_repository": "magasincoffee/magasincoffee.github.io",
     "target_repository": "magasincoffee/magasin-supervisor",
     "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -861,7 +861,7 @@
     ],
     "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md",
     "last_completed_task": "MIG-005",
-    "current_task_status": "ACTIVE_OWNER_RELEASED_PREP",
+    "current_task_status": "ACTIVE_TIER_B_IN_PROGRESS",
     "mig_001": {
       "status": "DONE",
       "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -1281,7 +1281,7 @@
       "next_task_status": "READY_NOT_STARTED"
     },
     "mig_006": {
-      "status": "ACTIVE_OWNER_RELEASED_PREP",
+      "status": "ACTIVE_TIER_B_IN_PROGRESS",
       "scope": "NEW_REPO_RBT009_EXACT_RUNTIME_SHA_8H_TIER_B_SOAK",
       "target_repository": "magasincoffee/magasin-supervisor",
       "exact_runtime_candidate_sha": "218f330ee86eea4f0fb79ef9293bd43cf96a45de",
@@ -1289,13 +1289,13 @@
       "start_from_zero": true,
       "required_continuous_minutes": 480,
       "owner_release_required": true,
-      "tier_b_480m_run": false,
+      "tier_b_480m_run": true,
       "previous_historical_partial_credit_allowed": false,
       "production_ownership_state": "NEW_AUTHORITY_OWNERSHIP_ACTIVE_ALL_DISABLED_RUNTIME_QUIESCENT",
       "stop_before_start": true,
       "owner_released": true,
       "owner_release_source": "OWNER_EXPLICIT_CHAT_CONFIRMATION_2026-09-22",
-      "tier_b_status": "NOT_STARTED",
+      "tier_b_status": "IN_PROGRESS",
       "production_runtime_authority_instances": 0,
       "production_ownership_authority_instances": 1,
       "exact_candidate_must_remain_runtime_under_test": true,
@@ -1307,7 +1307,18 @@
       "exact_once_event_validation_required": true,
       "owner_stop_authoritative": true,
       "stop_after_task": true,
-      "next_task": "MIG-007"
+      "next_task": "MIG-007",
+      "tier_b_run_id": 35717673431,
+      "tier_b_job_id": 106713284935,
+      "control_plane_sha": "819f6461188f894327ec67feaf75f768ce881fce",
+      "runtime_candidate_sha": "218f330ee86eea4f0fb79ef9293bd43cf96a45de",
+      "tier_b_start_utc": "2026-09-22T10:46:39Z",
+      "qualifying_duration_required_seconds": 28800,
+      "observed_qualifying_duration_seconds": null,
+      "partial_credit_seconds": 0,
+      "execution_branch_frozen": true,
+      "interrupted_attempt_credit_policy": "ZERO",
+      "next_task_status": "BLOCKED_UNTIL_MIG_006_QUALIFIES"
     }
   }
 }
