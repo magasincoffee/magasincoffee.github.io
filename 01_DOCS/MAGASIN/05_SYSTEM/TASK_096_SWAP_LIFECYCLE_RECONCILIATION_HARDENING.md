@@ -745,6 +745,8 @@ People Shift push:
 - E2E-06 dedicated Swap lifecycle: **PASS**
 - failures: **0**
 
+Executable-equivalence proof: every commit after green executable head `3ea9e0fd100f90851b89d0348d5a95040640482f` changes only this TASK-096 evidence Markdown file. No migration, workflow, runtime, fixture or test executable changed after run `35729475503`. A fresh PR-head gate remains mandatory.
+
 Browser suites:
 
 1. Employee Swap
