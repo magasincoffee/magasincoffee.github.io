@@ -1,6 +1,6 @@
 # MIG-004 — Supervisor New-Repository CI / Lifecycle Parity Evidence
 
-Status: **DONE / SOURCE CLOSURE PENDING MERGE**
+Status: **DONE / CANONICAL**
 
 ## Canonical target implementation
 
@@ -59,3 +59,22 @@ All required hosted parity gates executed against exact SHA `19e0cab9318f9293409
 MIG-004 closes only repository parity. The next task is `MIG-005`, status **READY / OWNER-SAFE-GATE**.
 
 MIG-005 is not started by this closure and requires its own explicit safe-gate authorization.
+
+
+## Canonical Business OS closure
+
+- canonical source closure PR: **#247**
+- source closure merge: `4093dda98fe90e9fb5019d99c9dcd1c11524d80d`
+- source post-merge Supervisor Tests run `35688515954`, job `106620360098`: **SUCCESS**
+- source post-merge full Supervisor suite: **551 / 551 PASS**, **0 fail**
+- source validation run `35688515956`: **SUCCESS**
+- canonical migration state: `MIG-004 = DONE`
+- next task: `MIG-005 = READY_OWNER_SAFE_GATE`
+
+Safety remains unchanged:
+- `production_cutover=false`
+- `production_authority=UNCHANGED_EXISTING_SUPERVISOR`
+- RBT-009 Tier B 480-minute soak: **NOT RUN**
+- `ZERO_PRODUCTION_MUTATION=true`
+
+This finalization is documentation-only. It does not start MIG-005, enable target production mutation authority, alter production autostart, clear Owner STOP, move live state, or mutate Brain/Work/lane/latch state.
