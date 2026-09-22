@@ -43,7 +43,7 @@ test("TASK-095 shared date primitives keep Asia Ho Chi Minh Sunday to Monday ide
 });
 
 test("TASK-095 schedule notification override keeps publish/change/transfer/cancel but creates no new clock-out reminder",async()=>{
-  const sql=await read("07_DATABASE/migrations/20260922012300_task_095_employee_published_weekly_schedule_v1.sql");
+  const sql=await read("07_DATABASE/migrations/20260922015212_task_095_employee_published_weekly_schedule_v1.sql");
   assert.match(sql,/create or replace function public\.notification_schedule_trigger_v1\(\)/i);
   for(const type of ["SCHEDULE_PUBLISHED","SCHEDULE_CHANGED","SCHEDULE_CANCELLED","SCHEDULE_TRANSFERRED_IN","SCHEDULE_TRANSFERRED_OUT"]){
     assert.match(sql,new RegExp(type));
