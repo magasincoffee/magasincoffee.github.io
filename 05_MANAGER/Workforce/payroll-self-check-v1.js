@@ -5,6 +5,8 @@ let state={stores:[],storeId:null,rows:[],loading:false,error:null,message:''};
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const stateText=v=>({ESTIMATED:'Ước tính',REVIEWED:'Đã review',FINALIZED:'Đã chốt',PAID:'Đã thanh toán'}[String(v||'').toUpperCase()]||String(v||'—'));
 const minutesText=v=>{const n=Number(v);if(!Number.isInteger(n)||n<0)return '—';const h=Math.floor(n/60),m=n%60;return m?h+' giờ '+m+' phút':h+' giờ'};
+const PAYROLL_STATES=new Set(['ESTIMATED','REVIEWED','FINALIZED','PAID']);
+const validProjectionRow=r=>!!r&&!!String(r.payroll_entry_id||'').trim()&&!!String(r.employee_id||'').trim()&&!!String(r.period_start||'').trim()&&!!String(r.period_end||'').trim()&&!!String(r.payroll_revision||'').trim()&&PAYROLL_STATES.has(String(r.state||'').toUpperCase())&&Number.isInteger(Number(r.confirmed_work_item_count))&&Number(r.confirmed_work_item_count)>=0&&Number.isInteger(Number(r.confirmed_work_minutes))&&Number(r.confirmed_work_minutes)>=0;
 const errorCode=e=>{const s=String(e?.message||e?.code||'PAYROLL_VIEW_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PAYROLL_VIEW_FAILED'};
 function client(){
  if(clientInstance)return clientInstance;
@@ -64,7 +66,9 @@ async function loadRows(){
  const q=await client().rpc('list_scoped_payroll_self_check_v1',{p_store_id:state.storeId});
  state.loading=false;
  if(q.error){state.error=errorCode(q.error);state.rows=[];render();return}
- state.error=null;state.rows=Array.isArray(q.data)?q.data:[];render();
+ const rows=Array.isArray(q.data)?q.data:[];
+ if(rows.some(r=>!validProjectionRow(r))){state.error='PAYROLL_PROJECTION_INVALID';state.rows=[];render();return}
+ state.error=null;state.rows=rows;render();
 }
 async function refresh(){
  if(busy)return;busy=true;
