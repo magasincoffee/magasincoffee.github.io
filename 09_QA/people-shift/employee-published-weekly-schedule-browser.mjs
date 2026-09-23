@@ -108,7 +108,9 @@ await check("same_week_refresh_is_deduped_to_one_effective_reader_call",async()=
 await check("failed_future_week_clears_stale_success_and_recovers_without_cross_wire",async()=>{
   await sunday.evaluate(()=>globalThis.__TASK095_QA.setFailWeek("2026-10-05"));
   await employee.locator('[data-schedule-week="next"]').click();
-  await employee.locator("[data-schedule-error='1']").filter({hasText:"QA_WEEK_READ_FAILED"}).waitFor();
+  await employee.locator("[data-schedule-error='1']").filter({hasText:"Không thể tải lịch làm"}).waitFor();
+  const errorText=await employee.locator("[data-schedule-error='1']").innerText();
+  if(errorText.includes("QA_WEEK_READ_FAILED"))throw new Error("raw backend error leaked: "+errorText);
   if(await employee.locator("#view-schedule .shift").count())throw new Error("stale prior-week shift remained visible");
   await sunday.evaluate(()=>globalThis.__TASK095_QA.setFailWeek(null));
   await employee.locator('[data-schedule-week="prev"]').click();
