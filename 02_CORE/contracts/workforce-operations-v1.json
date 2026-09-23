@@ -593,7 +593,7 @@
       "manager_review": "EXPLICIT_PERMISSION_REQUIRED_IN_LATER_TASK"
     },
     "persistence_implementation_task": "TASK-103",
-    "calculation_payload_implementation_task": "TASK-103_CONFIRMED_WORK_BASIS_ONLY_MONETARY_EVALUATOR_UNRESOLVED",
+    "calculation_payload_implementation_task": "TASK-103",
     "calculation_integration_contract": {
       "task": "TASK-103",
       "draft_table": "payroll_entries",
@@ -654,7 +654,8 @@
         "NO_ATTENDANCE_AMOUNT_REUSE",
         "NO_MONETARY_AMOUNT_WITHOUT_CANONICAL_EVALUATOR",
         "NO_AUTO_FINALIZE"
-      ]
+      ],
+      "monetary_evaluator_status": "UNRESOLVED_CANONICAL_GAP_DO_NOT_INFER"
     }
   },
   "invariants": [
