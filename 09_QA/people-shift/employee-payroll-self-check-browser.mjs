@@ -19,7 +19,8 @@ try{
  await page.goto(BASE+"/09_QA/people-shift/employee-payroll-self-check-fixture.html",{waitUntil:"networkidle",timeout:20000});
  await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.refresh());
  const f=page.frameLocator("#employeeApp");
- await f.locator("#view-payroll").waitFor({timeout:10000});
+ await f.locator('.nav [data-view="payroll"]').click();
+ await f.locator("#view-payroll").waitFor({state:"visible",timeout:10000});
  await f.locator("#employeePayrollRoot").filter({hasText:"Ước tính"}).waitFor({timeout:10000});
 
  await check("task104_employee_self_check_renders_exact_payroll_states",async()=>{
@@ -57,7 +58,8 @@ try{
  });
 
  await page.evaluate(()=>globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.refresh());
- await page.locator("#view-payroll-self-check").waitFor({timeout:10000});
+ await page.locator('.nav [data-view="payroll-self-check"]').click();
+ await page.locator("#view-payroll-self-check").waitFor({state:"visible",timeout:10000});
  await page.locator("#mgrPayrollRoot").filter({hasText:"Nguyễn An"}).waitFor({timeout:10000});
 
  await check("task104_manager_reader_is_store_scoped_rpc_only",async()=>{
