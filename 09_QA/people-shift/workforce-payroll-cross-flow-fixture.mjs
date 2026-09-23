@@ -1,4 +1,4 @@
-import {buildPayrollEstimateBasisV1,validatePayrollTruthTransition} from "../../02_CORE/shared/workforce-operations-v1.mjs";
+const CONTRACT=await fetch("/02_CORE/contracts/workforce-operations-v1.json").then(r=>{if(!r.ok)throw Error("WORKFORCE_CONTRACT_LOAD_FAILED_"+r.status);return r.json()});
 
 const calls=[];
 const employeeId="u-a";
@@ -110,26 +110,33 @@ function canonicalConfirmedRows(){
 }
 function serverBuildPayroll({validated=true,revision="R1",rule="QA-OPAQUE-RULE"}={}){
  const rows=canonicalConfirmedRows();
- const basis=buildPayrollEstimateBasisV1({
-   period_start:"2026-09-21",period_end:"2026-09-27",employee_id:employeeId,payroll_revision:revision,
-   pay_rule_reference:rule,pay_rule_validated:validated,confirmed_work_time_rows:rows
- });
- if(!basis.ok)return {data:null,error:{message:basis.code,detail:basis.detail}};
- const d=basis.detail,sourceSignature=JSON.stringify(d.source_revisions);
- const existing=payrollEntries.find(x=>x.logical_identity===d.logical_identity);
+ const ref=String(rule||"").trim(),rev=String(revision||"").trim();
+ if(!rev)return err("PAYROLL_REVISION_REQUIRED");
+ if(!ref)return err("PAY_RULE_REFERENCE_REQUIRED");
+ if(validated!==true)return err("PAY_RULE_NOT_VALIDATED");
+ if(!rows.length)return err("PAYROLL_CONFIRMED_WORK_TIME_REQUIRED");
+ if(rows.some(r=>!["CONFIRMED","REVISED"].includes(r.confirmed_work_time_state)))return err("CONFIRMED_WORK_TIME_NOT_READY");
+ if(rows.some(r=>!Number.isInteger(r.confirmed_minutes)||r.confirmed_minutes<0))return err("PAYROLL_CONFIRMED_MINUTES_INVALID");
+ const logicalIdentity=["2026-09-21","2026-09-27",employeeId,rev].join(":");
+ const sourceRevisions=rows.map(r=>r.revision_identity);
+ const sourceSignature=JSON.stringify(sourceRevisions);
+ const existing=payrollEntries.find(x=>x.logical_identity===logicalIdentity);
  if(existing){
-   if(existing.source_signature!==sourceSignature||existing.pay_rule_reference!==d.pay_rule_reference)return err("PAYROLL_REVISION_CONFLICT");
+   if(existing.source_signature!==sourceSignature||existing.pay_rule_reference!==ref)return err("PAYROLL_REVISION_CONFLICT");
    return {data:{...clone(existing),already_existing:true},error:null};
  }
- const entry={id:"pay-1",employee_id:employeeId,period_start:d.payroll_period.period_start,period_end:d.payroll_period.period_end,payroll_revision:d.payroll_revision,state:"ESTIMATED",pay_rule_reference:d.pay_rule_reference,pay_rule_validated:true,source_type:d.source_type,confirmed_work_item_count:d.confirmed_work_item_count,confirmed_work_minutes:d.confirmed_work_minutes,source_signature:sourceSignature,monetary_amount:null,updated_at:"2026-09-24T16:00:00Z",logical_identity:d.logical_identity};
+ const entry={id:"pay-1",employee_id:employeeId,period_start:"2026-09-21",period_end:"2026-09-27",payroll_revision:rev,state:"ESTIMATED",pay_rule_reference:ref,pay_rule_validated:true,source_type:"CONFIRMED_WORK_TIME",confirmed_work_item_count:rows.length,confirmed_work_minutes:rows.reduce((n,r)=>n+r.confirmed_minutes,0),source_signature:sourceSignature,monetary_amount:null,updated_at:"2026-09-24T16:00:00Z",logical_identity:logicalIdentity};
  payrollEntries.push(entry);payrollBuildCount++;
  return {data:{...clone(entry),already_existing:false},error:null};
 }
 function serverTransitionPayroll(nextState){
  const entry=payrollEntries[0];if(!entry)return err("PAYROLL_ENTRY_NOT_FOUND");
- const v=validatePayrollTruthTransition({from_state:entry.state,to_state:nextState,actor:"PAYROLL_AUTHORIZED"});
- if(!v.ok)return {data:null,error:{message:v.code,detail:v.detail}};
- entry.state=String(nextState).toUpperCase();entry.updated_at="2026-09-24T16:0"+(payrollStateTransitions+1)+":00Z";payrollStateTransitions++;
+ const from=String(entry.state||"").toUpperCase(),to=String(nextState||"").toUpperCase();
+ const machine=CONTRACT.state_machines?.PAYROLL;
+ const transition=machine?.transitions?.find(x=>x.from===from&&x.to===to);
+ if(!transition)return err("TRANSITION_NOT_ALLOWED");
+ if(!transition.actors?.includes("PAYROLL_AUTHORIZED"))return err("ACTOR_NOT_AUTHORIZED");
+ entry.state=to;entry.updated_at="2026-09-24T16:0"+(payrollStateTransitions+1)+":00Z";payrollStateTransitions++;
  return {data:clone(entry),error:null};
 }
 
