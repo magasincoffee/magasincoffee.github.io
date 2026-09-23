@@ -6,6 +6,7 @@ let sb=null,busy=false;
 let state={stores:[],storeId:null,rows:[],loading:false,error:null,message:''};
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const errorCode=e=>{const s=String(e?.message||e?.code||'PROFILE_VIEW_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PROFILE_VIEW_FAILED'};
+const validProjectionRow=r=>!!r&&!!String(r.employee_id||'').trim()&&['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())&&!!String(r.profile_status||'').trim();
 const client=()=>sb||(sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}}));
 const view=()=>document.getElementById('view-staff');
 function ensureCss(){
@@ -45,7 +46,9 @@ async function loadRows(){
  const q=await client().rpc('list_employee_profile_projection_v1',{p_store_id:state.storeId});
  state.loading=false;
  if(q.error){state.rows=[];state.error=errorCode(q.error);render();return}
- state.rows=Array.isArray(q.data)?q.data:[];state.error=null;render();
+ const rows=Array.isArray(q.data)?q.data:[];
+ if(rows.some(r=>!validProjectionRow(r))){state.rows=[];state.error='PROFILE_PROJECTION_INVALID';render();return}
+ state.rows=rows;state.error=null;render();
 }
 async function refresh(){
  if(busy||!ensureUi())return;busy=true;
