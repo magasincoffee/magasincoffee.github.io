@@ -3,7 +3,7 @@
 **Task:** SCHED-01  
 **Baseline:** `906dd7688dd45b8b46733b920ec8d264a3d2bcdc`  
 **Priority gate:** `WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1`  
-**Implementation status:** ACTIVE / production repair applied / branch QA pending  
+**Implementation status:** DONE / PRODUCTION REPAIRED / POST-MERGE GREEN  
 **Scope guard:** no SCHED-02 role redesign; no TASK-108; Workforce Robot DISABLED; PFC unchanged.
 
 ## 1. Production root cause
@@ -172,11 +172,90 @@ SCHED-01 adds:
 
 The existing People Shift workflow remains the full relevant Workforce regression pack.
 
-## 8. Pre-merge evidence
+## 8. Final closure evidence
 
-- rollback-only migration validation: PASS
-- production migration apply: PASS
-- production live read-only post-apply reconciliation: PASS
-- pre-migration security advisor baseline retained for comparison
+### Exact implementation lineage
 
-Implementation/PR/merge/post-merge evidence is filled at closure after CI and exact-main verification.
+- baseline main: `906dd7688dd45b8b46733b920ec8d264a3d2bcdc`
+- production migration: `20260923160755_sched_01_production_blocker_repair_v1`
+- implementation PR: **#281**
+- final PR head: `a5ee2ed673aaad68c6827f33b4752c6e8d394824`
+- implementation merge: `d0f0069ec4060dacf2de4ca6f695b969066b517f`
+
+### PR-head gates
+
+Final People Shift:
+- run **35887265500**
+- job **107270491986**
+- conclusion **SUCCESS**
+- SCHED-01 Owner / Manager / Employee browser smoke: **PASS**
+- full current People Shift / Workforce / Control Tower browser regression: **PASS**
+
+An earlier PR-head run **35887065456** failed only in the new Owner QA fixture because its mock assignment reader defaulted to Store A after a Store B switch. The fixture was corrected to derive scope from `p_generation_id`; no production runtime or migration semantics were weakened.
+
+### Exact-main gates
+
+People Shift:
+- run **35887441525**
+- job **107271085777**
+- conclusion **SUCCESS**
+- `MANAGER_WORKFORCE_CANONICAL_BROWSER=PASS`
+- `PEOPLE_SHIFT_DAY10_BROWSER_E2E=PASS`
+- `TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY=PASS`
+- SCHED-01 three-role scheduling browser smoke: **PASS**
+- browser diagnostics: no unexplained page / console / request / HTTP 5xx failures.
+
+Pages source validation:
+- run **35887441512**
+- job **107271088697**
+- conclusion **SUCCESS**
+
+Pages build/deployment:
+- run **35887440313**
+- build job **107271089095** — SUCCESS
+- deploy job **107271156826** — SUCCESS
+- report job **107271156756** — SUCCESS
+
+### Live final production reconciliation
+
+Read-only production audit after the implementation merge:
+
+- real ACTIVE Owner identity exercised the scheduling read path for all **4 ACTIVE stores**;
+- repeated `list_schedule_generations(store,week)` results were deterministic;
+- every returned generation could be read through repaired `get_schedule_generation` and `get_schedule_generation_assignments`;
+- `get_manager_weekly_schedule(store,week)` returned no cross-store rows;
+- `get_manager_weekly_availability(store,week)` loaded without SQL/RPC ambiguity;
+- real ACTIVE Staff identity successfully read `list_my_approved_schedules_v2` and `get_my_availability`;
+- production has **no ACTIVE STORE_MANAGER identity**, so no fake Manager was created merely for acceptance; Manager store-scope is covered by executable canonical browser/security regression and remains a SCHED-02 authority concern.
+
+Final production counts:
+- active stores: 4
+- availability rows: 7
+- generation runs: 4
+- generation assignments: 0
+- official schedules: 0
+- duplicate active generation groups: **0**
+- SCHED-01 migration present: YES
+- active-generation uniqueness guard present: YES
+- persistent fake production scheduling data created: **NO**
+
+Security Advisor remained at the pre-change database baseline:
+- RLS enabled/no policy: 11
+- mutable search_path: 1
+- anon SECURITY DEFINER executable: 18
+- authenticated SECURITY DEFINER executable: 76
+
+The repaired generation readers remain anon-denied and authenticated-enabled with fixed `search_path=public`.
+
+## 9. Closure / handoff
+
+`SCHED-01 = DONE`.
+
+The production blocker is repaired, one canonical scheduling path is documented, active-generation split-brain is reconciled and guarded, and relevant exact-main gates are green.
+
+Next:
+- `SCHED-02 = READY / MANUAL_WORK`
+- `SCHED-03 = BLOCKED_BEHIND_SCHED_02`
+- `TASK-108 = PAUSED_BEHIND_SCHED_GATE`
+- Workforce Robot = DISABLED
+- PFC = UNCHANGED
