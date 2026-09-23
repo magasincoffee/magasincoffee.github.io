@@ -15,7 +15,7 @@ test("TASK-101 canonical role contract denies Employee cross-user profile access
   assert.equal(cross.code,"CROSS_USER_DENY");
   assert.equal(authorizeWorkforceAccess({actor_role:"MANAGER",subject_employee_id:"b",capability:"PROFILE_READ",subject_store_id:"s1",allowed_store_ids:["s1"]}).ok,true);
   assert.equal(authorizeWorkforceAccess({actor_role:"MANAGER",subject_employee_id:"b",capability:"PROFILE_READ",subject_store_id:"s2",allowed_store_ids:["s1"]}).code,"STORE_SCOPE_DENY");
-  assert.equal(authorizeWorkforceAccess({actor_role:"OWNER",subject_employee_id:"b",capability:"PROFILE_READ"}).scope,"ENTERPRISE");
+  assert.equal(authorizeWorkforceAccess({actor_role:"OWNER",subject_employee_id:"b",capability:"PROFILE_READ"}).detail.scope,"ENTERPRISE");
 });
 
 test("TASK-101 self projection is authenticated self-only and ACTIVE Employee-only",async()=>{
