@@ -297,14 +297,33 @@ On activation of this SoT:
 
 ```text
 priority_gate = WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1
-current_sched_task = SCHED-01
-next_sched_task = SCHED-02
-SCHED-01 = READY / MANUAL_WORK
+current_sched_task = SCHED-02
+next_sched_task = SCHED-03
+SCHED-01 = DONE
+SCHED-02 = READY / MANUAL_WORK
 unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
 TASK-108 = PAUSED_BEHIND_SCHED_GATE
 Workforce Robot = DISABLED
 PFC = UNCHANGED
 ```
+
+## 13A. SCHED-01 closure checkpoint
+
+SCHED-01 closed after the production blocker was reproduced and repaired at the server/RPC layer.
+
+Canonical evidence:
+- evidence: `05_SYSTEM/SCHED_01_PRODUCTION_BLOCKER_REPAIR_CANONICAL_RECONCILIATION.md`;
+- migration: `20260923160755_sched_01_production_blocker_repair_v1`;
+- implementation PR #281;
+- final PR head `a5ee2ed673aaad68c6827f33b4752c6e8d394824`;
+- implementation merge `d0f0069ec4060dacf2de4ca6f695b969066b517f`;
+- PR-head People Shift `35887265500 / 107270491986` — SUCCESS;
+- exact-main People Shift `35887441525 / 107271085777` — SUCCESS;
+- exact-main Pages validation `35887441512 / 107271088697` — SUCCESS;
+- exact-main Pages deployment `35887440313 / 107271156826` — SUCCESS;
+- live final audit: all 4 active Owner store reads deterministic; Employee schedule/availability reads pass; duplicate active generation groups = 0; no fake scheduling data.
+
+SCHED-02 now owns the next sequential gate: role + authority lock. The overall Scheduling Production Readiness gate remains **ACTIVE**.
 
 ## 14. Canonical precedence
 
