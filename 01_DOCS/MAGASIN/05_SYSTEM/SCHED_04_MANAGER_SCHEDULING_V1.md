@@ -4,7 +4,8 @@
 **Gate:** WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1  
 **Scope:** Manager Scheduling only  
 **Database migration:** NONE  
-**Production fixture:** NONE
+**Production fixture:** NONE  
+**Implementation status:** DONE / POST-MERGE GREEN / PRODUCTION ASSETS DEPLOYED
 
 ## Objective
 
@@ -157,3 +158,80 @@ Not included:
 - Workforce Robot enablement;
 - PFC changes;
 - fake production Manager or scheduling rows.
+
+
+## Final implementation lineage
+
+- baseline main: `d4e23a7f27f4ff4e2f641c53c27717bcbf1b4403`
+- implementation PR: **#287**
+- final PR head: `67374dd48597f7241559c11091c3496641f32f4f`
+- implementation merge: `398f8164d676068a8bd7a8d14426e31ed948cba3`
+- database migration: **NONE**
+
+Final PR-head:
+- People Shift `35897139899 / 107303772936` — **SUCCESS**
+- SOP `35897139919` — **SUCCESS**
+- dedicated SCHED-04 browser flow — **PASS**
+- SCHED-01→03 browser regressions and full Workforce browser pack — **PASS**
+
+Exact implementation-main:
+- People Shift `35897358395 / 107304500565` — **SUCCESS**
+- deterministic regression: **316/316** = 77 Workforce + 9 schedule-first + 156 People Shift + 74 Control Tower
+- `SCHED_04_MANAGER_SCHEDULING_BROWSER=PASS`
+- `TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY=PASS`
+- `MANAGER_WORKFORCE_CANONICAL_BROWSER=PASS`
+- `PEOPLE_SHIFT_DAY10_BROWSER_E2E=PASS`
+- `CONTROL_TOWER_BROWSER_E2E=PASS`
+- SOP `35897358299 / 107304499985` — **SUCCESS**
+
+Exact implementation-main Pages:
+- source validation `35897358345 / 107304500738` — **SUCCESS**
+- build `35897357114 / 107304501913` — **SUCCESS**
+- deploy `35897357114 / 107304574534` — **SUCCESS**
+- report `35897357114 / 107304574618` — **SUCCESS**
+
+## Final production read-only reconciliation
+
+No production mutation was used for closure.
+
+- ACTIVE STORE_MANAGER: **0**
+- ACTIVE stores: **4**
+- Availability rows: **7**
+- generation runs: **4** = 3 DRAFT + 1 CANCELLED
+- generation assignments: **0**
+- official `work_schedules`: **0**
+- duplicate active generation store/week groups: **0**
+- authenticated direct `work_schedules` SELECT/INSERT/UPDATE: **DENIED**
+- authenticated direct generation INSERT: **DENIED**
+- canonical create/replace/validate/review/publish RPCs: **authenticated allowed / anon denied**
+- latest scheduling migration remains `20260923163337_sched_02_three_role_scheduling_authority_lock_v1`
+
+No fake Manager, generation assignment, official schedule or SCHED-04 database migration was created.
+
+## Closure / handoff
+
+`SCHED-04 = DONE`.
+
+Canonical Manager Scheduling V1 now has:
+- one active Manager writer;
+- exact-store scoped server authority;
+- Availability as input only;
+- generation state as pre-publish working state only;
+- explicit DRAFT → Validate → Review → Publish stages;
+- server-side revalidation at mutation/review/publish;
+- idempotent publish;
+- deterministic reload of DRAFT / REVIEWED / PUBLISHED;
+- post-publish re-read of official `work_schedules`;
+- friendly diagnostics without UUID/SQL/raw RPC leakage;
+- bounded double-submit;
+- mobile 390px and desktop coverage;
+- no legacy parallel writer.
+
+Next:
+- `SCHED-05 = READY / MANUAL_WORK`
+- `SCHED-06 = BLOCKED`
+- TASK-108 remains `PAUSED_BEHIND_SCHED_GATE`
+- Workforce Robot remains **DISABLED**
+- PFC remains unchanged at `TASK-068 → TASK-069`
+
+SCHED-05 is not started by this closure.

@@ -1994,8 +1994,8 @@
     "id": "WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1",
     "status": "HARD_GATE_ACTIVE",
     "execution_mode": "MANUAL_WORK",
-    "current_task": "SCHED-04",
-    "next_task": "SCHED-05",
+    "current_task": "SCHED-05",
+    "next_task": "SCHED-06",
     "task_01": {
       "status": "DONE",
       "evidence": "01_DOCS/MAGASIN/05_SYSTEM/SCHED_01_PRODUCTION_BLOCKER_REPAIR_CANONICAL_RECONCILIATION.md",
@@ -2087,11 +2087,49 @@
       "conclusion": "EMPLOYEE_SCHEDULE_UI_V1_CANONICAL_POST_MERGE_GREEN"
     },
     "task_04": {
-      "status": "READY",
-      "execution_mode": "MANUAL_WORK"
+      "status": "DONE",
+      "evidence": "01_DOCS/MAGASIN/05_SYSTEM/SCHED_04_MANAGER_SCHEDULING_V1.md",
+      "baseline": "d4e23a7f27f4ff4e2f641c53c27717bcbf1b4403",
+      "implementation_pull_request": 287,
+      "final_pr_head": "67374dd48597f7241559c11091c3496641f32f4f",
+      "implementation_merge": "398f8164d676068a8bd7a8d14426e31ed948cba3",
+      "pr_head_people_shift_run_id": 35897139899,
+      "pr_head_people_shift_job_id": 107303772936,
+      "post_merge_people_shift_run_id": 35897358395,
+      "post_merge_people_shift_job_id": 107304500565,
+      "post_merge_sop_run_id": 35897358299,
+      "post_merge_sop_job_id": 107304499985,
+      "pages_validation_run_id": 35897358345,
+      "pages_validation_job_id": 107304500738,
+      "pages_deployment_run_id": 35897357114,
+      "pages_build_job_id": 107304501913,
+      "pages_deployment_job_id": 107304574534,
+      "pages_report_job_id": 107304574618,
+      "deterministic_checks": 316,
+      "canonical_manager_writer": "05_MANAGER/Workforce/draft-publish-v1.js",
+      "official_schedule_authority": "work_schedules",
+      "generation_state_is_working_draft_only": true,
+      "reload_resumes_draft_reviewed_published": true,
+      "post_publish_reloads_official_schedule": true,
+      "publish_idempotent": true,
+      "cross_store_tampering_denied": true,
+      "mobile_390_no_horizontal_overflow": true,
+      "legacy_lich_lam_parallel_writer": false,
+      "browser_direct_schedule_dml": false,
+      "database_migration_created": false,
+      "active_manager_identity_present": false,
+      "active_stores_live_count": 4,
+      "availability_live_count": 7,
+      "generation_live_count": 4,
+      "generation_assignment_live_count": 0,
+      "official_schedules_live_count": 0,
+      "duplicate_active_generation_groups": 0,
+      "production_fake_scheduling_data_created": false,
+      "conclusion": "MANAGER_SCHEDULING_V1_CANONICAL_POST_MERGE_GREEN"
     },
     "task_05": {
-      "status": "BLOCKED_BEHIND_SCHED_04"
+      "status": "READY",
+      "execution_mode": "MANUAL_WORK"
     },
     "task_06": {
       "status": "BLOCKED"
