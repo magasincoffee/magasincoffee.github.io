@@ -9,6 +9,9 @@ on:
       - '05_MANAGER/Lich-lam/**'
       - '06_EMPLOYEE/**'
       - '02_CORE/shared/shared-core-v1.js'
+      - '02_CORE/shared/workforce-operations-v1.mjs'
+      - '02_CORE/contracts/workforce-operations-v1.json'
+      - '09_QA/business-os/workforce-operations-v1.test.mjs'
       - '07_DATABASE/migrations/**'
       - '02_CORE/contracts/people-shift-gap-plan.v1.json'
       - '09_QA/business-os/people-shift-gap-plan.test.mjs'
@@ -24,6 +27,9 @@ on:
       - '05_MANAGER/Lich-lam/**'
       - '06_EMPLOYEE/**'
       - '02_CORE/shared/shared-core-v1.js'
+      - '02_CORE/shared/workforce-operations-v1.mjs'
+      - '02_CORE/contracts/workforce-operations-v1.json'
+      - '09_QA/business-os/workforce-operations-v1.test.mjs'
       - '07_DATABASE/migrations/**'
       - '02_CORE/contracts/people-shift-gap-plan.v1.json'
       - '09_QA/business-os/people-shift-gap-plan.test.mjs'
@@ -49,7 +55,7 @@ jobs:
       - name: Verify People Shift acceptance contract
         run: node 09_QA/business-os/people-shift-gap-plan.test.mjs
 
-      - name: Run TASK-091 Workforce canonical contract regression
+      - name: Run TASK-091/TASK-102 Workforce canonical contract regression
         run: node --test 09_QA/business-os/workforce-operations-v1.test.mjs
 
       - name: Run Schedule-first compatibility regression
