@@ -6,6 +6,7 @@ import {
   WORKFORCE_SCHEMA_VERSION,
   WORKFORCE_TIMEZONE,
   authorizeWorkforceAccess,
+  buildPayrollEstimateBasisV1,
   canSubmitAttendanceForAssignment,
   diagnosticForAttendancePolicy,
   getCompatibilityMapping,
@@ -319,6 +320,116 @@ test("TASK-102 closes only E2E-12/E2E-13 contract responsibility and does not cl
   assert.equal(e13.closing_tasks.includes("TASK-102"),true);
   assert.equal(e14.closing_tasks.includes("TASK-102"),false);
   assert.deepEqual(e14.closing_tasks,["TASK-101","TASK-104","TASK-107"]);
+});
+
+
+test("TASK-103 payroll estimate basis consumes confirmed/revised work time only", () => {
+  const result = buildPayrollEstimateBasisV1({
+    period_start:"2026-09-01",
+    period_end:"2026-09-30",
+    employee_id:"EMP-A",
+    payroll_revision:"R1",
+    pay_rule_reference:"RULE-A",
+    pay_rule_validated:true,
+    confirmed_work_time_rows:[
+      {employee_id:"EMP-A",work_date:"2026-09-02",confirmed_minutes:240,confirmed_work_time_state:"CONFIRMED",revision_identity:"att-1:r1"},
+      {employee_id:"EMP-A",work_date:"2026-09-03",confirmed_minutes:300,confirmed_work_time_state:"REVISED",revision_identity:"att-2:r2"}
+    ]
+  });
+  assert.equal(result.ok,true);
+  assert.equal(result.detail.state,"ESTIMATED");
+  assert.equal(result.detail.confirmed_work_item_count,2);
+  assert.equal(result.detail.confirmed_work_minutes,540);
+  assert.deepEqual(result.detail.source_revisions,["att-1:r1","att-2:r2"]);
+  assert.equal(result.detail.monetary_amount,null);
+  assert.equal(result.detail.monetary_amount_reason,"CANONICAL_PAY_RULE_EVALUATOR_UNRESOLVED");
+});
+
+test("TASK-103 payroll estimate basis is order-independent and deterministic", () => {
+  const base={
+    period_start:"2026-09-01",
+    period_end:"2026-09-30",
+    employee_id:"EMP-A",
+    payroll_revision:"R1",
+    pay_rule_reference:"RULE-A",
+    pay_rule_validated:true
+  };
+  const a={employee_id:"EMP-A",work_date:"2026-09-03",confirmed_minutes:300,confirmed_work_time_state:"REVISED",revision_identity:"att-2:r2"};
+  const b={employee_id:"EMP-A",work_date:"2026-09-02",confirmed_minutes:240,confirmed_work_time_state:"CONFIRMED",revision_identity:"att-1:r1"};
+  assert.deepEqual(
+    buildPayrollEstimateBasisV1({...base,confirmed_work_time_rows:[a,b]}),
+    buildPayrollEstimateBasisV1({...base,confirmed_work_time_rows:[b,a]})
+  );
+});
+
+test("TASK-103 payroll estimate basis rejects raw or rejected attendance states", () => {
+  const base={
+    period_start:"2026-09-01",period_end:"2026-09-30",employee_id:"EMP-A",
+    payroll_revision:"R1",pay_rule_reference:"RULE-A",pay_rule_validated:true
+  };
+  for (const state of ["NEEDS_REVIEW","REJECTED","SUBMITTED"]) {
+    const r=buildPayrollEstimateBasisV1({...base,confirmed_work_time_rows:[
+      {employee_id:"EMP-A",work_date:"2026-09-02",confirmed_minutes:240,confirmed_work_time_state:state,revision_identity:"att-1:r1"}
+    ]});
+    assert.equal(r.ok,false,state);
+  }
+});
+
+test("TASK-103 payroll estimate basis rejects missing confirmed work and invalid pay-rule fact", () => {
+  const base={
+    period_start:"2026-09-01",period_end:"2026-09-30",employee_id:"EMP-A",
+    payroll_revision:"R1",pay_rule_reference:"RULE-A"
+  };
+  assert.equal(buildPayrollEstimateBasisV1({...base,pay_rule_validated:true,confirmed_work_time_rows:[]}).code,"PAYROLL_CONFIRMED_WORK_TIME_REQUIRED");
+  assert.equal(buildPayrollEstimateBasisV1({...base,pay_rule_validated:false,confirmed_work_time_rows:[
+    {employee_id:"EMP-A",work_date:"2026-09-02",confirmed_minutes:240,confirmed_work_time_state:"CONFIRMED",revision_identity:"att-1:r1"}
+  ]}).code,"PAY_RULE_NOT_VALIDATED");
+});
+
+test("TASK-103 payroll estimate basis rejects cross-employee and out-of-period inputs", () => {
+  const base={
+    period_start:"2026-09-01",period_end:"2026-09-30",employee_id:"EMP-A",
+    payroll_revision:"R1",pay_rule_reference:"RULE-A",pay_rule_validated:true
+  };
+  assert.equal(buildPayrollEstimateBasisV1({...base,confirmed_work_time_rows:[
+    {employee_id:"EMP-B",work_date:"2026-09-02",confirmed_minutes:240,confirmed_work_time_state:"CONFIRMED",revision_identity:"att-1:r1"}
+  ]}).code,"PAYROLL_CONFIRMED_WORK_TIME_EMPLOYEE_MISMATCH");
+  assert.equal(buildPayrollEstimateBasisV1({...base,confirmed_work_time_rows:[
+    {employee_id:"EMP-A",work_date:"2026-10-01",confirmed_minutes:240,confirmed_work_time_state:"CONFIRMED",revision_identity:"att-1:r1"}
+  ]}).code,"PAYROLL_CONFIRMED_WORK_OUTSIDE_PERIOD");
+});
+
+test("TASK-103 payroll estimate basis requires unique source revision and nonnegative integer minutes", () => {
+  const base={
+    period_start:"2026-09-01",period_end:"2026-09-30",employee_id:"EMP-A",
+    payroll_revision:"R1",pay_rule_reference:"RULE-A",pay_rule_validated:true
+  };
+  assert.equal(buildPayrollEstimateBasisV1({...base,confirmed_work_time_rows:[
+    {employee_id:"EMP-A",work_date:"2026-09-02",confirmed_minutes:120,confirmed_work_time_state:"CONFIRMED",revision_identity:"same"},
+    {employee_id:"EMP-A",work_date:"2026-09-03",confirmed_minutes:120,confirmed_work_time_state:"REVISED",revision_identity:"same"}
+  ]}).code,"PAYROLL_CONFIRMED_WORK_REVISION_DUPLICATE");
+  assert.equal(buildPayrollEstimateBasisV1({...base,confirmed_work_time_rows:[
+    {employee_id:"EMP-A",work_date:"2026-09-02",confirmed_minutes:-1,confirmed_work_time_state:"CONFIRMED",revision_identity:"r1"}
+  ]}).code,"PAYROLL_CONFIRMED_MINUTES_INVALID");
+});
+
+test("TASK-103 canonical contract keeps monetary calculation unresolved rather than inferring a rate", async () => {
+  const c=await rawContract();
+  const x=c.payroll_boundary.calculation_integration_contract;
+  assert.equal(x.task,"TASK-103");
+  assert.equal(x.draft_state,"ESTIMATED");
+  assert.equal(x.monetary_amount,"NOT_DERIVED_WITHOUT_CANONICAL_PAY_RULE_EVALUATOR");
+  assert.equal(x.pay_rule_behavior,"OPAQUE_VALIDATED_REFERENCE_REQUIRED; NO_RATE_OR_FORMULA_INFERENCE");
+  assert.equal(x.rules.includes("NO_EMPLOYEE_GRADES_HOURLY_RATE_INFERENCE"),true);
+  assert.equal(x.rules.includes("NO_ATTENDANCE_AMOUNT_REUSE"),true);
+  assert.equal(x.rules.includes("NO_AUTO_FINALIZE"),true);
+});
+
+test("TASK-103 is an E2E-12 closing task but not an E2E-13 or E2E-14 closing task", async () => {
+  const c=await rawContract();
+  assert.equal(c.e2e_traceability.find(x=>x.id==="E2E-12").closing_tasks.includes("TASK-103"),true);
+  assert.equal(c.e2e_traceability.find(x=>x.id==="E2E-13").closing_tasks.includes("TASK-103"),false);
+  assert.equal(c.e2e_traceability.find(x=>x.id==="E2E-14").closing_tasks.includes("TASK-103"),false);
 });
 
 test("attendance.amount is explicitly legacy non-payroll truth", async () => {
