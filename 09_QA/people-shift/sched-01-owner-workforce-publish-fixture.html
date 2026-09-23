@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><title>SCHED-01 Owner Publish QA</title>
+<style>
+:root{--muted:#617793;--border:#dce5f0;--text:#102a43}body{font:14px system-ui;color:var(--text);margin:20px}.card{border:1px solid var(--border);border-radius:12px;padding:12px}.btn{border:1px solid var(--border);background:#fff;border-radius:8px;padding:7px 10px}.primary{background:#16b7c5;color:#fff}
+</style></head>
+<body>
+<div id="panel-publish"></div>
+<script>
+(() => {
+  const calls=[];
+  const stores=[
+    {id:'store-a',code:'CN1',name:'Cửa hàng A',status:'ACTIVE'},
+    {id:'store-b',code:'CN2',name:'Cửa hàng B',status:'ACTIVE'}
+  ];
+  const pad=n=>String(n).padStart(2,'0');
+  const addDays=(s,n)=>{const d=new Date(String(s).slice(0,10)+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+  const monday=()=> '2026-09-21';
+  const weekDays=s=>Array.from({length:7},(_,i)=>addDays(s,i));
+  const formatDate=s=>{const p=String(s).slice(0,10).split('-');return p[2]+'/'+p[1]};
+  const time5=v=>String(v||'').slice(0,5);
+  const minutes=v=>{const x=time5(v);return Number(x.slice(0,2))*60+Number(x.slice(3,5))};
+  const shiftKind=v=>minutes(v)<720?'morning':minutes(v)<1020?'afternoon':'evening';
+  const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  window.MAGASIN_CORE={
+    DAYS:['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ Nhật'],
+    time:{time5,minutes,shiftKind},
+    date:{formatDate,monday,addDays,weekDays},
+    security:{escapeHtml},
+    stores:{accessible:async()=>stores.map(x=>({...x}))},
+    supabase:{
+      async rpc(name,args={}){
+        calls.push({name,args:structuredClone(args)});
+        const sid=name==='get_schedule_generation_assignments'
+          ? (args.p_generation_id==='gen-b'?'store-b':'store-a')
+          : (args.p_store_id||'store-a');
+        const store=stores.find(x=>x.id===sid)||stores[0];
+        const genId=sid==='store-b'?'gen-b':'gen-a';
+        if(name==='list_schedule_generations')return {data:[{id:genId,store_id:sid,store_code:store.code,status:'DRAFT',algorithm_version:'MANAGER_DIRECT_V1',week_start:args.p_week_start}],error:null};
+        if(name==='get_schedule_generation_assignments')return {data:[{id:'asg-'+genId,generation_id:genId,user_id:'user-'+sid,employee_name:sid==='store-b'?'Nhân viên Owner QA B':'Nhân viên Owner QA A',store_id:sid,store_code:store.code,work_date:'2026-09-22',start_time:'06:00',end_time:'12:00',score:0,status:'DRAFT'}],error:null};
+        if(name==='get_manager_weekly_schedule')return {data:[{schedule_id:'official-'+sid,work_date:'2026-09-23',start_time:'12:00',end_time:'17:00',store_id:sid,store_code:store.code,user_id:'official-user-'+sid,employee_name:sid==='store-b'?'Nhân viên chính thức B':'Nhân viên chính thức A',status:'APPROVED',origin:'MANAGER_ASSIGNED'}],error:null};
+        return {data:null,error:{message:'UNEXPECTED_RPC:'+name}};
+      }
+    }
+  };
+  window.__SCHED01_OWNER_QA={calls,stores};
+})();
+</script>
+<script src="/04_OWNER/Workforce/03-publish/engine-v1.js"></script>
+</body></html>
