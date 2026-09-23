@@ -152,7 +152,7 @@ export function authorizeWorkforceAccess({
     return ok({ scope: "SELF" });
   }
 
-  const scopedCaps = new Set(["PROFILE_READ", "AVAILABILITY_READ", "SCHEDULE_READ_WRITE", "SCHEDULE_PUBLISH", "ATTENDANCE_REVIEW"]);
+  const scopedCaps = new Set(["PROFILE_READ", "AVAILABILITY_READ", "SCHEDULE_READ_WRITE", "SCHEDULE_PUBLISH", "ATTENDANCE_REVIEW", "PAYROLL_READ"]);
   if (cap === "PAYROLL_REVIEW" && !permissions.has("PAYROLL_REVIEW")) return fail("EXPLICIT_PERMISSION_REQUIRED");
   if (cap !== "PAYROLL_REVIEW" && !scopedCaps.has(cap)) return fail("CAPABILITY_NOT_AUTHORIZED");
   if (!storeId || !allowedStores.has(storeId)) return fail("STORE_SCOPE_DENY");
