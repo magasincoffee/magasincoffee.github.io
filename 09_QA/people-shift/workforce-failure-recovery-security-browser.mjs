@@ -23,7 +23,7 @@ async function mgrRefresh(){
 }
 try{
  await page.goto(BASE+"/09_QA/people-shift/workforce-failure-recovery-security-fixture.html",{waitUntil:"networkidle",timeout:20000});
- await employee.locator("#profileFullName").waitFor({timeout:10000});
+ await employee.locator("#profileFullName").waitFor({state:"attached",timeout:10000});
  await empRefresh();
  await mgrRefresh();
 
@@ -57,7 +57,7 @@ try{
    const payrollRows=await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.state.rows.length);
    if(name!=="—"||payrollRows!==1)throw new Error(JSON.stringify({name,payrollRows}));
    await page.evaluate(()=>{globalThis.__TASK107_QA.setMode("employeeProfile","ok");return globalThis.MAGASIN_EMPLOYEE.profileProjection.refresh()});
-   await employee.locator("#profileFullName").filter({hasValue:"Nhân viên A"}).waitFor();
+   await employee.locator("#profileFullName").evaluate(el=>new Promise((resolve,reject)=>{const end=Date.now()+5000;(function poll(){if(el.value==="Nhân viên A")return resolve();if(Date.now()>end)return reject(new Error("profile recovery timeout"));setTimeout(poll,25)})()}));
    return "stale profile cleared; payroll truth isolated; refresh recovered";
  });
 
@@ -67,7 +67,7 @@ try{
    await employee.locator("#profileProjectionState").filter({hasText:"PROFILE_PROJECTION_INVALID"}).waitFor();
    if(await employee.locator("#profileFullName").inputValue()!=="—")throw new Error("stale profile rendered");
    await page.evaluate(()=>{globalThis.__TASK107_QA.setMode("employeeProfile","ok");return globalThis.MAGASIN_EMPLOYEE.profileProjection.refresh()});
-   await employee.locator("#profileFullName").filter({hasValue:"Nhân viên A"}).waitFor();
+   await employee.locator("#profileFullName").evaluate(el=>new Promise((resolve,reject)=>{const end=Date.now()+5000;(function poll(){if(el.value==="Nhân viên A")return resolve();if(Date.now()>end)return reject(new Error("profile recovery timeout"));setTimeout(poll,25)})()}));
    return "malformed profile rejected without stale data";
  });
 
