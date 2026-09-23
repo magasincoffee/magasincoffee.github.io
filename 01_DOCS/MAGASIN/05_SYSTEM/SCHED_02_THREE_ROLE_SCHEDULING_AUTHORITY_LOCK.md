@@ -4,7 +4,7 @@
 **Baseline:** `d94123915ccda9233bd2e0d97713cfcffee6863c`  
 **Priority gate:** `WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1`  
 **Execution mode:** MANUAL_WORK  
-**Implementation status:** ACTIVE / production authority migration applied / CI pending  
+**Implementation status:** DONE / AUTHORITY LOCKED / POST-MERGE GREEN  
 **Scope guard:** no SCHED-03 Employee UI redesign; no SCHED-04 Manager UX; no SCHED-05 Owner UX; TASK-108 PAUSED; Workforce Robot DISABLED; PFC unchanged.
 
 ## 1. Canonical truth unchanged
@@ -167,4 +167,86 @@ Browser smoke:
 - Employee V2 own schedule projection;
 - Owner store switching without stale cross-store projection.
 
-Final PR/head/merge/exact-main/closure SHA will be appended after green CI.
+### Final implementation lineage
+
+- baseline main: `d94123915ccda9233bd2e0d97713cfcffee6863c`
+- production migration: `20260923163337_sched_02_three_role_scheduling_authority_lock_v1`
+- implementation PR: **#283**
+- final PR head: `0c0cda8e011755ef9e580742e1ec92d908440012`
+- implementation merge: `a01d8bdb940c443fb2b3abc42275a0827db2b71a`
+
+PR-head People Shift:
+- run **35890338421**
+- job **107280905324**
+- conclusion **SUCCESS**
+- deterministic checks: **300/300** = 77 Workforce + 9 schedule-first + 140 People Shift + 74 Control Tower
+- `SCHED_02_THREE_ROLE_SCHEDULING_AUTHORITY_LOCK=PASS`
+- `SCHED_02_THREE_ROLE_AUTHORITY_BROWSER=PASS`
+- full existing browser regression pack: PASS
+
+The earlier PR-head run `35890269533` failed only because the new static test asserted the profile status expression before normalization, while the implementation correctly used `v_status<>'ACTIVE'`. The assertion was corrected; no production migration/runtime authority semantics changed.
+
+Exact-main People Shift:
+- run **35890519746**
+- job **107281516643**
+- conclusion **SUCCESS**
+- deterministic checks: **300/300**
+- SCHED-02 targeted authority marker: PASS
+- SCHED-02 three-role browser authority marker: PASS
+- `TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY=PASS`
+- `MANAGER_WORKFORCE_CANONICAL_BROWSER=PASS`
+- `PEOPLE_SHIFT_DAY10_BROWSER_E2E=PASS`
+- `CONTROL_TOWER_BROWSER_E2E=PASS`
+
+Exact-main Pages:
+- source validation `35890519568 / 107281515853` — SUCCESS
+- build `35890518178 / 107281517379` — SUCCESS
+- deploy `35890518178 / 107281586624` — SUCCESS
+- report `35890518178 / 107281586517` — SUCCESS
+
+### Final live read-only production audit
+
+After implementation merge:
+- ACTIVE Manager identity exists: **NO**
+- active stores: 4
+- Availability rows: 7
+- generation runs: 4
+- generation assignments: 0
+- official schedules: 0
+- transfer requests: 0
+- duplicate active generation groups: 0
+- deprecated authority checked: **ALL DENIED**
+- protected scheduling browser DML: **ZERO**
+- Owner live read path over all four active stores: PASS and deterministic on reload
+- Employee real ACTIVE self Availability + published schedule reads: PASS
+- Employee generation/draft read: DENIED
+
+Security Advisor final database profile remains:
+- RLS enabled/no policy: 11
+- mutable search_path: 1
+- anon SECURITY DEFINER executable: 13
+- authenticated SECURITY DEFINER executable: 66
+- leaked-password protection warning: 1 (unrelated auth configuration)
+
+No fake Manager, Employee, Availability, generation, assignment or schedule row was created.
+
+## 8. Closure / handoff
+
+`SCHED-02 = DONE`.
+
+Canonical authority is now:
+- Employee = active self-only Availability writer + self-only APPROVED schedule reader;
+- Manager = active exact-store scoped canonical scheduling operator;
+- Owner = active enterprise exception/oversight actor using the same state machine;
+- System = deterministic validation/lifecycle only;
+- browser direct protected scheduling DML = forbidden;
+- deprecated duplicate writers = server-deactivated.
+
+Next:
+- `SCHED-03 = READY / MANUAL_WORK`
+- `SCHED-04 = BLOCKED_BEHIND_SCHED_03`
+- `TASK-108 = PAUSED_BEHIND_SCHED_GATE`
+- Workforce Robot = DISABLED
+- PFC = UNCHANGED
+
+The canonical closure SHA is recorded on the merged SCHED-02 state-only closure PR metadata after merge.

@@ -175,9 +175,9 @@ Canonical SoT: `05_SYSTEM/WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1_SOURCE_OF
 | ID | Scope | Status |
 |---|---|---|
 | SCHED-01 | Production blocker repair + canonical reconciliation | **DONE** |
-| SCHED-02 | Role + authority lock | **READY / MANUAL_WORK** |
-| SCHED-03 | Employee Schedule UI V1 | BLOCKED_BEHIND_SCHED_02 |
-| SCHED-04 | Manager Scheduling V1 | BLOCKED |
+| SCHED-02 | Role + authority lock | **DONE** |
+| SCHED-03 | Employee Schedule UI V1 | **READY / MANUAL_WORK** |
+| SCHED-04 | Manager Scheduling V1 | BLOCKED_BEHIND_SCHED_03 |
 | SCHED-05 | Owner Scheduling V1 | BLOCKED |
 | SCHED-06 | Three-role synchronization | BLOCKED |
 | SCHED-07 | Professional UI/UX + responsive pass | BLOCKED |
@@ -186,7 +186,9 @@ Canonical SoT: `05_SYSTEM/WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1_SOURCE_OF
 
 SCHED-01 evidence: `05_SYSTEM/SCHED_01_PRODUCTION_BLOCKER_REPAIR_CANONICAL_RECONCILIATION.md`. Implementation PR #281 merged as `d0f0069ec4060dacf2de4ca6f695b969066b517f`; production migration `20260923160755_sched_01_production_blocker_repair_v1` is live; exact-main People Shift `35887441525 / 107271085777` and Pages gates are green; live duplicate active generation groups = 0.
 
-Current scheduling cursor: **SCHED-02 → SCHED-03**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
+SCHED-02 evidence: `05_SYSTEM/SCHED_02_THREE_ROLE_SCHEDULING_AUTHORITY_LOCK.md`. Production migration `20260923163337_sched_02_three_role_scheduling_authority_lock_v1` is live; implementation PR #283 final head `0c0cda8e011755ef9e580742e1ec92d908440012` merged as `a01d8bdb940c443fb2b3abc42275a0827db2b71a`; PR-head People Shift `35890338421 / 107280905324`, exact-main People Shift `35890519746 / 107281516643`, Pages validation `35890519568 / 107281515853` and deployment `35890518178 / 107281586624` are SUCCESS. Authority is self/store/enterprise, legacy duplicate writers are server-denied, browser protected-table DML is zero, and live data counts remain clean.
+
+Current scheduling cursor: **SCHED-03 → SCHED-04**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
 
 ## Workforce Operations V1 — MANUAL_WORK RELEASED / ROBOT DISABLED
 
