@@ -59,7 +59,7 @@ test("TASK-106 E2E-13 uses contract-only abstract actor without inventing live P
  const contract=JSON.parse(read("02_CORE/contracts/workforce-operations-v1.json"));
  assert.equal(contract.payroll_boundary.authorization_contract.live_actor_mapping,"UNRESOLVED_DO_NOT_INVENT_IN_TASK_102");
  const fixture=read("09_QA/people-shift/workforce-payroll-cross-flow-fixture.mjs");
- assert.match(fixture,/actor:"PAYROLL_AUTHORIZED"/);
+ assert.match(fixture,/transition\.actors\?\.includes\("PAYROLL_AUTHORIZED"\)/);
  assert.match(fixture,/liveActorMapping:"UNRESOLVED_NOT_TESTED"/);
  assert.doesNotMatch(fixture,/PAYROLL_AUTHORIZED.*STORE_MANAGER|STORE_MANAGER.*PAYROLL_AUTHORIZED|OWNER.*PAYROLL_AUTHORIZED/);
 });
