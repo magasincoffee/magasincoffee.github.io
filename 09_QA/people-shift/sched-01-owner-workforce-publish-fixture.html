@@ -31,7 +31,9 @@
     supabase:{
       async rpc(name,args={}){
         calls.push({name,args:structuredClone(args)});
-        const sid=args.p_store_id||'store-a';
+        const sid=name==='get_schedule_generation_assignments'
+          ? (args.p_generation_id==='gen-b'?'store-b':'store-a')
+          : (args.p_store_id||'store-a');
         const store=stores.find(x=>x.id===sid)||stores[0];
         const genId=sid==='store-b'?'gen-b':'gen-a';
         if(name==='list_schedule_generations')return {data:[{id:genId,store_id:sid,store_code:store.code,status:'DRAFT',algorithm_version:'MANAGER_DIRECT_V1',week_start:args.p_week_start}],error:null};
