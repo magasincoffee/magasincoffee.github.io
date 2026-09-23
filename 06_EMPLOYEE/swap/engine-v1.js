@@ -2,11 +2,11 @@
 const C=globalThis.MAGASIN_CORE;if(!C)return;
 const host=()=>document.getElementById('employeeApp'),d=()=>host()?.contentDocument||null;
 const esc=C.security.escapeHtml,hm=C.time.time5,fmt=C.date.formatDate;
-let mode='swap',state={my:[],candidates:[],swapHistory:[],incomingSwaps:[],giveHistory:[],profile:null};
+let mode='swap',state={my:[],candidates:[],swapHistory:[],incomingSwaps:[],giveHistory:[],profile:null,week:C.date.monday(),selectedScheduleId:null};
 
 function panel(){return d()?.getElementById('view-swap')}
 function show(t){const x=panel(),e=x?.querySelector('#swapResult');if(e){e.textContent=t;e.classList.add('open')}}
-function myShiftOptions(){return state.my.map(r=>`<option value="${esc(r.schedule_id||'')}">${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))} · ${esc(r.store_code||r.store_name||'')}</option>`).join('')}
+function myShiftOptions(){return state.my.map(r=>`<option value="${esc(r.schedule_id||'')}"${String(r.schedule_id)===String(state.selectedScheduleId)?' selected':''}>${esc(fmt(r.work_date))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))} · ${esc(r.store_code||r.store_name||'')}</option>`).join('')}
 function statusBadge(status){const s=String(status||'').toUpperCase();return s==='APPROVED'?'green':s.startsWith('REJECTED')||s==='CANCELLED'?'red':s==='PENDING_MANAGER'||s==='PEER_ACCEPTED'?'blue':'amber'}
 function statusLabel(status){return ({PENDING_RECIPIENT:'Chờ người nhận',PENDING_MANAGER:'Đã đồng ý nhận ca · Chờ quản lý duyệt',APPROVED:'Đã duyệt',REJECTED_RECIPIENT:'Người nhận từ chối',REJECTED_MANAGER:'Quản lý từ chối',PENDING:'Chờ người kia đồng ý',PEER_ACCEPTED:'Người kia đã đồng ý · Chờ quản lý',REJECTED:'Đã từ chối',CANCELLED:'Đã hủy'})[String(status||'').toUpperCase()]||String(status||'')}
 
@@ -18,30 +18,41 @@ async function loadProfile(){
   return state.profile;
 }
 
-async function loadMy(){
-  const q=await C.supabase.rpc('list_my_approved_schedules_v2',{p_week_start:C.date.monday()});
-  if(q.error){C.ui.toast('Không tải được ca của bạn: '+q.error.message,'error');return}
-  state.my=Array.isArray(q.data)?q.data:[];
+async function loadMy(week=state.week||C.date.monday(),selectedScheduleId=state.selectedScheduleId){
+  state.week=week||C.date.monday();
+  const q=await C.supabase.rpc('list_my_approved_schedules_v2',{p_week_start:state.week});
+  if(q.error){
+    state.my=[];state.selectedScheduleId=null;
+    C.ui.toast('Không thể tải lịch chính thức để đổi/cho ca. Vui lòng thử lại.','error');
+  }else{
+    state.my=(Array.isArray(q.data)?q.data:[]).filter(r=>String(r.status||'APPROVED').toUpperCase()==='APPROVED');
+    if(selectedScheduleId&&state.my.some(r=>String(r.schedule_id)===String(selectedScheduleId)))state.selectedScheduleId=selectedScheduleId;
+    else if(selectedScheduleId){
+      state.selectedScheduleId=null;
+      show('Ca này không còn thuộc lịch chính thức của bạn. Lịch đã được làm mới.');
+    }else state.selectedScheduleId=state.my[0]?.schedule_id||null;
+  }
   const x=panel(),card=x?.querySelector('.swap-card');
   if(card){
     card.querySelector('.employeeSwapSchedule')?.remove();
     const wrap=x.ownerDocument.createElement('div');
     wrap.className='field employeeSwapSchedule';
-    wrap.innerHTML=`<label>Ca của tôi</label><select id="employeeRequesterSchedule">${myShiftOptions()}</select>`;
+    wrap.innerHTML=`<label>Ca chính thức của tôi</label><select id="employeeRequesterSchedule">${myShiftOptions()}</select><div class="muted" style="margin-top:5px">Danh sách được tải lại từ lịch đã phát hành hiện tại.</div>`;
     card.appendChild(wrap);
-    wrap.querySelector('#employeeRequesterSchedule')?.addEventListener('change',loadCandidates);
+    const select=wrap.querySelector('#employeeRequesterSchedule');
+    select?.addEventListener('change',()=>{state.selectedScheduleId=select.value||null;void loadCandidates()});
   }
   await loadCandidates();
   await loadHistory();
+  return !!state.selectedScheduleId;
 }
-
 async function loadCandidates(){
   const x=panel(),sel=x?.querySelector('#employeeRequesterSchedule'),box=x?.querySelector('#employeeSwapTarget');
   if(!sel||!box)return;
   const name=mode==='give'?'list_shift_give_candidates_v1':'list_shift_swap_candidates_v1';
   const args=mode==='give'?{p_schedule_id:sel.value||null}:{p_requester_schedule_id:sel.value||null};
   const q=await C.supabase.rpc(name,args);
-  if(q.error){C.ui.toast('Không tải được người phù hợp: '+q.error.message,'error');return}
+  if(q.error){state.candidates=[];box.innerHTML='<option value="">Không thể tải người/ca phù hợp</option>';C.ui.toast('Không thể tải người/ca phù hợp lúc này.','error');return}
   state.candidates=Array.isArray(q.data)?q.data:[];
   box.innerHTML=state.candidates.length
     ?state.candidates.map(r=>mode==='give'
@@ -60,21 +71,21 @@ async function submit(){
     ?{p_schedule_id:req.value,p_recipient_user_id:target.value,p_reason:reasonText}
     :{p_requester_schedule_id:req.value,p_target_schedule_id:target.value,p_reason:reasonText};
   const q=await C.supabase.rpc(rpcName,args);
-  if(q.error)return show('Gửi yêu cầu thất bại: '+q.error.message);
+  if(q.error)return show(mode==='give'?'Không thể gửi yêu cầu cho ca. Dữ liệu ca có thể vừa thay đổi.':'Không thể gửi yêu cầu đổi ca. Dữ liệu ca có thể vừa thay đổi.');
   const message=mode==='give'?'Đã gửi yêu cầu cho ca. Chờ người nhận đồng ý.':'Đã gửi yêu cầu đổi ca. Chờ người kia đồng ý.';
   show(message);C.ui.toast(message,'success');await loadHistory();
 }
 
 async function respondSwap(id,accept){
   const q=await C.supabase.rpc('respond_shift_swap_request',{p_swap_id:id,p_accept:!!accept});
-  if(q.error){C.ui.toast('Xử lý yêu cầu đổi ca thất bại: '+q.error.message,'error');return}
+  if(q.error){C.ui.toast('Không thể xử lý yêu cầu đổi ca lúc này.','error');return}
   C.ui.toast(accept?'Đã đồng ý đổi ca. Yêu cầu đang chờ quản lý duyệt.':'Đã từ chối đổi ca.',accept?'success':'info');
   await loadMy();
 }
 
 async function respondGive(id,accept){
   const q=await C.supabase.rpc('respond_shift_give_request',{p_give_id:id,p_accept:!!accept});
-  if(q.error){C.ui.toast('Xử lý yêu cầu cho ca thất bại: '+q.error.message,'error');return}
+  if(q.error){C.ui.toast('Không thể xử lý yêu cầu cho ca lúc này.','error');return}
   C.ui.toast(accept?'Đã đồng ý nhận ca. Yêu cầu đang chờ quản lý duyệt.':'Đã từ chối nhận ca.',accept?'success':'info');
   await loadHistory();
 }
@@ -120,18 +131,20 @@ function renderHistory(){
   box.querySelectorAll('.js-give-accept').forEach(b=>b.addEventListener('click',()=>respondGive(b.dataset.id,true)));
   box.querySelectorAll('.js-give-reject').forEach(b=>b.addEventListener('click',()=>respondGive(b.dataset.id,false)));
 }
-function openForm(nextMode){
+function openForm(nextMode,scheduleId=null,week=null){
   mode=nextMode==='give'?'give':'swap';
+  if(week)state.week=week;
+  if(scheduleId)state.selectedScheduleId=scheduleId;
   const x=panel();if(!x)return;
   x.querySelector('#swapChoices')?.setAttribute('style','display:none');
   x.querySelector('#swapForm')?.classList.add('open');
   const title=x.querySelector('#swapFormTitle'),sub=x.querySelector('#swapFormSub'),partner=x.querySelector('#partnerTitle');
   if(title)title.textContent=mode==='give'?'Cho ca':'Đổi ca';
-  if(sub)sub.textContent=mode==='give'?'Chọn ca của bạn và người sẽ nhận ca.':'Chọn ca của bạn và ca muốn đổi.';
+  if(sub)sub.textContent=mode==='give'?'Chọn ca chính thức của bạn và người sẽ nhận ca.':'Chọn ca chính thức của bạn và ca muốn đổi.';
   if(partner)partner.textContent=mode==='give'?'Người nhận ca':'Ca muốn đổi';
   const label=x.querySelector('#employeeSwapTarget')?.closest('.field')?.querySelector('label');
   if(label)label.textContent=mode==='give'?'Nhân viên nhận ca':'Nhân viên / ca đối ứng';
-  loadMy();
+  void loadMy(state.week,state.selectedScheduleId);
 }
 function back(){const x=panel();if(!x)return;x.querySelector('#swapChoices')?.setAttribute('style','');x.querySelector('#swapForm')?.classList.remove('open')}
 
@@ -173,6 +186,6 @@ function init(){
   if(f.contentDocument){renderForm();loadHistory()}
 }
 globalThis.MAGASIN_EMPLOYEE=globalThis.MAGASIN_EMPLOYEE||{};
-globalThis.MAGASIN_EMPLOYEE.swap={refresh:()=>{renderForm();loadMy()},openGive:()=>openForm('give'),openSwap:()=>openForm('swap')};
+globalThis.MAGASIN_EMPLOYEE.swap={refresh:()=>{renderForm();return loadMy(state.week||C.date.monday(),state.selectedScheduleId)},openGive:(scheduleId,week)=>openForm('give',scheduleId,week),openSwap:(scheduleId,week)=>openForm('swap',scheduleId,week),getSelectedScheduleId:()=>state.selectedScheduleId,getWeek:()=>state.week};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
