@@ -13,7 +13,12 @@ import {
   getWorkforceContract,
   validateCanonicalState,
   validateContractShape,
+  payrollRevisionIdentity,
+  validatePayRuleReference,
+  validatePayrollPeriod,
   validatePayrollSource,
+  validatePayrollTruthInput,
+  validatePayrollTruthTransition,
   validateTransition,
   workforceWeekIdentity
 } from "../../02_CORE/shared/workforce-operations-v1.mjs";
@@ -206,6 +211,114 @@ test("Payroll source validator accepts confirmed work time only", () => {
   assert.equal(validatePayrollSource({source_type:"CONFIRMED_WORK_TIME",confirmed_work_time_state:"CONFIRMED"}).ok, true);
   assert.equal(validatePayrollSource({source_type:"CONFIRMED_WORK_TIME",confirmed_work_time_state:"REVISED"}).ok, true);
   assert.equal(validatePayrollSource({source_type:"PLANNED_SCHEDULE",confirmed_work_time_state:"CONFIRMED"}).ok, false);
+});
+
+
+test("TASK-102 payroll period is date-only ordered and does not invent cadence", async () => {
+  const sameDay = validatePayrollPeriod({period_start:"2026-09-01",period_end:"2026-09-01"});
+  assert.equal(sameDay.ok, true);
+  assert.equal(sameDay.detail.cadence, "UNSPECIFIED");
+  assert.equal(validatePayrollPeriod({period_start:"2026-09-30",period_end:"2026-09-01"}).code, "PAYROLL_PERIOD_RANGE_INVALID");
+  assert.equal(validatePayrollPeriod({period_start:"09/01/2026",period_end:"2026-09-30"}).code, "PAYROLL_PERIOD_INVALID");
+  const c = await rawContract();
+  assert.deepEqual(c.payroll_boundary.period_contract.rules, ["DATE_ONLY","START_LTE_END","CADENCE_UNSPECIFIED_DO_NOT_INFER"]);
+});
+
+test("TASK-102 pay rule is an explicit validated reference and never inferred from legacy rates", async () => {
+  assert.equal(validatePayRuleReference({pay_rule_reference:"",pay_rule_validated:true}).code, "PAY_RULE_REFERENCE_REQUIRED");
+  assert.equal(validatePayRuleReference({pay_rule_reference:"RULE-A",pay_rule_validated:false}).code, "PAY_RULE_NOT_VALIDATED");
+  assert.equal(validatePayRuleReference({pay_rule_reference:"RULE-A",pay_rule_validated:true}).ok, true);
+  const c = await rawContract();
+  assert.equal(c.payroll_boundary.pay_rule_reference_contract.reference_semantics, "OPAQUE_CANONICAL_REFERENCE_ONLY");
+  assert.deepEqual(c.payroll_boundary.pay_rule_reference_contract.must_not_infer_from, [
+    "attendance.hourly_rate",
+    "attendance.amount",
+    "employee_grades.hourly_rate"
+  ]);
+});
+
+test("TASK-102 payroll truth input accepts confirmed work time plus explicit valid pay-rule reference only", () => {
+  const okResult = validatePayrollTruthInput({
+    period_start:"2026-09-01",
+    period_end:"2026-09-30",
+    pay_rule_reference:"RULE-A",
+    pay_rule_validated:true,
+    source_type:"CONFIRMED_WORK_TIME",
+    confirmed_work_time_state:"CONFIRMED"
+  });
+  assert.equal(okResult.ok, true);
+  assert.equal(okResult.detail.payroll_period.identity, "2026-09-01:2026-09-30");
+  assert.equal(okResult.detail.source_type, "CONFIRMED_WORK_TIME");
+
+  const raw = validatePayrollTruthInput({
+    period_start:"2026-09-01",
+    period_end:"2026-09-30",
+    pay_rule_reference:"RULE-A",
+    pay_rule_validated:true,
+    source_type:"ATTENDANCE_SUBMITTED",
+    confirmed_work_time_state:"NEEDS_REVIEW"
+  });
+  assert.equal(raw.code, "PAYROLL_SOURCE_NOT_CONFIRMED_WORK_TIME");
+
+  const missingRule = validatePayrollTruthInput({
+    period_start:"2026-09-01",
+    period_end:"2026-09-30",
+    pay_rule_reference:"RULE-A",
+    pay_rule_validated:false,
+    source_type:"CONFIRMED_WORK_TIME",
+    confirmed_work_time_state:"CONFIRMED"
+  });
+  assert.equal(missingRule.code, "PAY_RULE_NOT_VALIDATED");
+});
+
+test("TASK-102 revised confirmed work time remains eligible source but raw or rejected attendance does not", () => {
+  assert.equal(validatePayrollTruthInput({
+    period_start:"2026-09-01",period_end:"2026-09-30",
+    pay_rule_reference:"RULE-A",pay_rule_validated:true,
+    source_type:"CONFIRMED_WORK_TIME",confirmed_work_time_state:"REVISED"
+  }).ok,true);
+  assert.equal(validatePayrollSource({source_type:"ATTENDANCE_SUBMITTED",confirmed_work_time_state:"REJECTED"}).ok,false);
+  assert.equal(validatePayrollSource({source_type:"PLANNED_SCHEDULE",confirmed_work_time_state:"CONFIRMED"}).ok,false);
+});
+
+test("TASK-102 payroll revision identity is deterministic and complete", () => {
+  const input={period_start:"2026-09-01",period_end:"2026-09-30",employee_id:"EMP-A",payroll_revision:"R1"};
+  const a=payrollRevisionIdentity(input),b=payrollRevisionIdentity(input);
+  assert.deepEqual(a,b);
+  assert.equal(a.detail.logical_identity,"2026-09-01:2026-09-30:EMP-A:R1");
+  assert.notEqual(a.detail.logical_identity,payrollRevisionIdentity({...input,payroll_revision:"R2"}).detail.logical_identity);
+  assert.equal(payrollRevisionIdentity({...input,employee_id:""}).code,"PAYROLL_EMPLOYEE_ID_REQUIRED");
+  assert.equal(payrollRevisionIdentity({...input,payroll_revision:""}).code,"PAYROLL_REVISION_REQUIRED");
+});
+
+test("TASK-102 payroll state semantics require explicit REVIEWED and explicit PAID transition", () => {
+  assert.equal(validatePayrollTruthTransition({from_state:"ESTIMATED",to_state:"REVIEWED"}).ok,true);
+  assert.equal(validatePayrollTruthTransition({from_state:"REVIEWED",to_state:"FINALIZED"}).ok,true);
+  assert.equal(validatePayrollTruthTransition({from_state:"FINALIZED",to_state:"PAID"}).ok,true);
+  assert.equal(validatePayrollTruthTransition({from_state:"ESTIMATED",to_state:"FINALIZED"}).ok,false);
+  assert.equal(validatePayrollTruthTransition({from_state:"REVIEWED",to_state:"PAID"}).ok,false);
+  assert.equal(validatePayrollTruthTransition({from_state:"FINALIZED",to_state:"PAID",actor:"MANAGER"}).code,"ACTOR_NOT_AUTHORIZED");
+});
+
+test("TASK-102 does not invent live payroll authorization mapping or calculation persistence", async () => {
+  const c=await rawContract();
+  assert.equal(c.payroll_boundary.authorization_contract.finalization_actor,"PAYROLL_AUTHORIZED");
+  assert.equal(c.payroll_boundary.authorization_contract.live_actor_mapping,"UNRESOLVED_DO_NOT_INVENT_IN_TASK_102");
+  assert.equal(c.payroll_boundary.authorization_contract.manager_review,"EXPLICIT_PERMISSION_REQUIRED_IN_LATER_TASK");
+  assert.equal(c.payroll_boundary.persistence_implementation_task,"TASK-103");
+  assert.equal(c.payroll_boundary.calculation_payload_implementation_task,"TASK-103");
+  assert.equal(authorizeWorkforceAccess({actor_role:"MANAGER",capability:"PAYROLL_REVIEW",subject_store_id:"CN1",allowed_store_ids:["CN1"]}).code,"EXPLICIT_PERMISSION_REQUIRED");
+});
+
+test("TASK-102 closes only E2E-12/E2E-13 contract responsibility and does not claim E2E-14", async () => {
+  const c=await rawContract();
+  const e12=c.e2e_traceability.find(x=>x.id==="E2E-12");
+  const e13=c.e2e_traceability.find(x=>x.id==="E2E-13");
+  const e14=c.e2e_traceability.find(x=>x.id==="E2E-14");
+  assert.equal(e12.closing_tasks.includes("TASK-102"),true);
+  assert.equal(e13.closing_tasks.includes("TASK-102"),true);
+  assert.equal(e14.closing_tasks.includes("TASK-102"),false);
+  assert.deepEqual(e14.closing_tasks,["TASK-101","TASK-104","TASK-107"]);
 });
 
 test("attendance.amount is explicitly legacy non-payroll truth", async () => {

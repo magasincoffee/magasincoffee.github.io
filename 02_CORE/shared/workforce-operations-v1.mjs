@@ -174,6 +174,74 @@ export function validatePayrollSource({ source_type, confirmed_work_time_state }
   return ok({ source_type: source, confirmed_work_time_state: state });
 }
 
+
+export function validatePayrollPeriod({ period_start, period_end } = {}) {
+  const start = typeof period_start === "string" ? period_start.trim() : "";
+  const end = typeof period_end === "string" ? period_end.trim() : "";
+  if (!validDateKey(start) || !validDateKey(end)) return fail("PAYROLL_PERIOD_INVALID");
+  if (start > end) return fail("PAYROLL_PERIOD_RANGE_INVALID", { period_start: start, period_end: end });
+  return ok({
+    period_start: start,
+    period_end: end,
+    identity: start + ":" + end,
+    cadence: "UNSPECIFIED"
+  });
+}
+
+export function validatePayRuleReference({ pay_rule_reference, pay_rule_validated = false } = {}) {
+  const reference = typeof pay_rule_reference === "string" ? pay_rule_reference.trim() : "";
+  if (!reference) return fail("PAY_RULE_REFERENCE_REQUIRED");
+  if (pay_rule_validated !== true) return fail("PAY_RULE_NOT_VALIDATED", { pay_rule_reference: reference });
+  return ok({ pay_rule_reference: reference, pay_rule_validated: true });
+}
+
+export function validatePayrollTruthInput({
+  period_start,
+  period_end,
+  pay_rule_reference,
+  pay_rule_validated = false,
+  source_type,
+  confirmed_work_time_state
+} = {}) {
+  const period = validatePayrollPeriod({ period_start, period_end });
+  if (!period.ok) return period;
+  const payRule = validatePayRuleReference({ pay_rule_reference, pay_rule_validated });
+  if (!payRule.ok) return payRule;
+  const source = validatePayrollSource({ source_type, confirmed_work_time_state });
+  if (!source.ok) return source;
+  return ok({
+    payroll_period: period.detail,
+    pay_rule_reference: payRule.detail.pay_rule_reference,
+    source_type: source.detail.source_type,
+    confirmed_work_time_state: source.detail.confirmed_work_time_state
+  });
+}
+
+export function payrollRevisionIdentity({
+  period_start,
+  period_end,
+  employee_id,
+  payroll_revision
+} = {}) {
+  const period = validatePayrollPeriod({ period_start, period_end });
+  if (!period.ok) return period;
+  const employeeId = employee_id == null ? "" : String(employee_id).trim();
+  const revision = payroll_revision == null ? "" : String(payroll_revision).trim();
+  if (!employeeId) return fail("PAYROLL_EMPLOYEE_ID_REQUIRED");
+  if (!revision) return fail("PAYROLL_REVISION_REQUIRED");
+  return ok({
+    logical_identity: period.detail.identity + ":" + employeeId + ":" + revision,
+    period_start: period.detail.period_start,
+    period_end: period.detail.period_end,
+    employee_id: employeeId,
+    payroll_revision: revision
+  });
+}
+
+export function validatePayrollTruthTransition({ from_state, to_state, actor = "PAYROLL_AUTHORIZED" } = {}) {
+  return validateTransition("PAYROLL", from_state, to_state, actor);
+}
+
 export function diagnosticForAttendancePolicy(policy = {}) {
   const hasDeviation = Number.isFinite(policy.deviation_minutes) && policy.deviation_minutes >= 0;
   const autoApproval = policy.auto_approval === true;
