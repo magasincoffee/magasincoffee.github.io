@@ -20,7 +20,7 @@ function fnBody(name,next){
 
 test('SCHED-02 store scope is active-actor and exact-token, never substring authority',()=>{
   const body=fnBody('can_access_store','manager_has_store_access');
-  assert.match(body,/p\.status<>'ACTIVE'/i);
+  assert.match(body,/v_status<>'ACTIVE'/i);
   assert.match(body,/v_role='OWNER'/i);
   assert.match(body,/v_role<>'STORE_MANAGER'/i);
   assert.match(body,/regexp_split_to_table\(upper\(v_scope\),'\[,; \]\+'\)/i);
