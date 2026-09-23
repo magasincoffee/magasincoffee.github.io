@@ -106,6 +106,16 @@ try{
    return "scope denial clears stale rows; allowed store refresh recovers";
  });
 
+ await check("manager_invalid_profile_projection_fails_closed",async()=>{
+   await page.evaluate(()=>globalThis.__TASK107_QA.setMode("managerProfile","invalid"));
+   await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
+   const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState());
+   if(st.error!=="PROFILE_PROJECTION_INVALID"||st.rows.length!==0)throw new Error(JSON.stringify(st));
+   await page.evaluate(()=>{globalThis.__TASK107_QA.setMode("managerProfile","ok");return globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh()});
+   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState().rows.length===1);
+   return "invalid scoped profile cannot render";
+ });
+
  await check("manager_invalid_payroll_projection_fails_closed",async()=>{
    await page.evaluate(()=>globalThis.__TASK107_QA.setMode("managerPayroll","invalid"));
    await page.evaluate(()=>globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.refresh());
