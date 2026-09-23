@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
 const root = new URL("../../", import.meta.url);
-const migrationUrl = new URL("07_DATABASE/migrations/20260923095500_task_103_payroll_calculation_integration_v1.sql", root);
+const migrationUrl = new URL("07_DATABASE/migrations/20260923100426_task_103_payroll_calculation_integration_v1.sql", root);
 
 async function sql() {
   return fs.readFile(migrationUrl, "utf8");
