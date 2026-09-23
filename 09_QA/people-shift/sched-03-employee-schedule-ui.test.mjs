@@ -17,7 +17,8 @@ test("SCHED-03 has one canonical Employee schedule reader",()=>{
 
 test("SCHED-03 presents official schedule separately from Availability",()=>{
   assert.match(schedule,/Lịch làm chính thức/);
-  assert.match(schedule,/Availability chỉ là thời gian bạn có thể nhận ca/);
+  assert.match(schedule,/Availability không phải lịch chính thức/);
+  assert.match(schedule,/Đây chỉ là thời gian bạn có thể nhận ca/);
   assert.match(schedule,/không phải lịch chính thức/);
   assert.match(schedule,/Đã phát hành/);
 });
@@ -31,7 +32,7 @@ test("SCHED-03 action identity is hidden binding and server-preflighted",()=>{
 });
 
 test("SCHED-03 downstream actions reuse existing Give Swap Attendance primitives",()=>{
-  assert.match(schedule,/attendance\?\.openSchedule/);
+  assert.match(schedule,/attendance\?\.openSchedule\?\./);
   assert.match(schedule,/openGive/);
   assert.match(schedule,/openSwap/);
   assert.match(attendance,/async function openSchedule\(scheduleId,week\)/);
@@ -42,7 +43,7 @@ test("SCHED-03 downstream actions reuse existing Give Swap Attendance primitives
 
 test("SCHED-03 stale ownership reconciles from server truth",()=>{
   assert.match(schedule,/if\(!current\)[\s\S]*không còn thuộc lịch chính thức/);
-  assert.match(attendance,/Ca này không còn thuộc lịch chính thức của bạn/);
+  assert.match(attendance,/Ca này (?:đã được chuyển cho người khác|không còn thuộc lịch chính thức của bạn)/);
   assert.match(swap,/Ca này không còn thuộc lịch chính thức của bạn/);
 });
 
