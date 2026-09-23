@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TASK-107 Workforce Failure Recovery Security QA</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:14px;font:14px system-ui;background:#f4f7fb;color:#102a43}
+.qa{background:#fff;border:1px solid #dce5f0;border-radius:14px;padding:12px;margin-bottom:16px}
+#employeeApp{width:100%;height:720px;border:1px solid #dce5f0;border-radius:12px}
+.nav{display:flex;gap:8px;flex-wrap:wrap}.nav button{border:1px solid #dce5f0;background:#fff;padding:9px 12px;border-radius:9px}
+.view{display:none}.view.active{display:block}.content{margin-top:12px}.card{border:1px solid #dce5f0;border-radius:12px;padding:12px}
+.btn{min-height:38px;border:1px solid #dce5f0;background:#fff;border-radius:9px;padding:0 11px}.muted{color:#617793;font-size:12px}
+</style>
+</head>
+<body>
+<section class="qa"><h2>Employee read path</h2><iframe id="employeeApp" title="TASK-107 Employee"></iframe></section>
+<section class="qa"><h2>Manager read path</h2>
+  <div class="nav">
+    <button class="active" data-view="dashboard">Tổng quan</button>
+    <button data-view="staff">Nhân viên</button>
+    <button data-view="attendance">Chấm công</button>
+  </div>
+  <div id="sidebar"></div><div id="pageTitle">Tổng quan</div><div id="pageSub" class="muted">TASK-107 QA</div>
+  <section class="content">
+    <section class="view active" id="view-dashboard">Dashboard</section>
+    <section class="view" id="view-staff"></section>
+    <section class="view" id="view-attendance">Attendance</section>
+  </section>
+</section>
+<script src="/09_QA/people-shift/workforce-failure-recovery-security-fixture.js"></script>
+<script src="/06_EMPLOYEE/profile/engine-v1.js"></script>
+<script src="/06_EMPLOYEE/payroll/engine-v1.js"></script>
+<script src="/05_MANAGER/Workforce/staff-projection-v1.js"></script>
+<script src="/05_MANAGER/Workforce/payroll-self-check-v1.js"></script>
+</body></html>
