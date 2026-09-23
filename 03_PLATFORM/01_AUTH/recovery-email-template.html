@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi">
+  <body style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;color:#17304c;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f7fb;padding:28px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #dce5f0;border-radius:18px;overflow:hidden;">
+            <tr><td style="padding:26px 30px 12px;font-size:24px;font-weight:800;color:#16b7c5;">MAGASIN</td></tr>
+            <tr>
+              <td style="padding:0 30px 30px;">
+                <h1 style="margin:8px 0 12px;font-size:22px;line-height:1.35;color:#17304c;">Đặt lại mật khẩu</h1>
+                <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#4f6780;">MAGASIN nhận được yêu cầu đặt lại mật khẩu cho tài khoản <strong>{{ .Email }}</strong>.</p>
+                <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#4f6780;">Nhấn nút bên dưới để mở phiên khôi phục an toàn. Liên kết có thời hạn và chỉ nên sử dụng email mới nhất.</p>
+                <p style="margin:0 0 24px;text-align:center;">
+                  <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#16b7c5;color:#ffffff;text-decoration:none;font-weight:800;padding:13px 22px;border-radius:10px;">Đặt mật khẩu mới</a>
+                </p>
+                <p style="margin:0 0 8px;font-size:13px;line-height:1.55;color:#617793;">Nếu nút không mở được, sao chép liên kết sau vào trình duyệt:</p>
+                <p style="margin:0 0 22px;font-size:12px;line-height:1.55;word-break:break-all;color:#2f6fde;">{{ .ConfirmationURL }}</p>
+                <div style="border-top:1px solid #e6edf3;padding-top:18px;">
+                  <p style="margin:0 0 8px;font-size:13px;line-height:1.55;color:#617793;"><strong>Bảo mật:</strong> Không chuyển tiếp email này. MAGASIN không bao giờ yêu cầu bạn gửi mật khẩu hoặc mã khôi phục qua tin nhắn.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.55;color:#617793;">Nếu bạn không yêu cầu đặt lại mật khẩu, có thể bỏ qua email này.</p>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:14px 0 0;font-size:12px;color:#8092a5;">MAGASIN · Hệ thống nội bộ</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
