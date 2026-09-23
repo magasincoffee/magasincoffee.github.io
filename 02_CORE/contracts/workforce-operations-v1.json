@@ -593,7 +593,69 @@
       "manager_review": "EXPLICIT_PERMISSION_REQUIRED_IN_LATER_TASK"
     },
     "persistence_implementation_task": "TASK-103",
-    "calculation_payload_implementation_task": "TASK-103"
+    "calculation_payload_implementation_task": "TASK-103_CONFIRMED_WORK_BASIS_ONLY_MONETARY_EVALUATOR_UNRESOLVED",
+    "calculation_integration_contract": {
+      "task": "TASK-103",
+      "draft_table": "payroll_entries",
+      "draft_builder": "build_payroll_estimate_v1",
+      "draft_state": "ESTIMATED",
+      "browser_execution": false,
+      "server_execution": [
+        "service_role",
+        "postgres"
+      ],
+      "source_selector": {
+        "source_type": "CONFIRMED_WORK_TIME",
+        "attendance_statuses": [
+          "APPROVED",
+          "ADJUSTED"
+        ],
+        "required_fields": [
+          "attendance.id",
+          "attendance.user_id",
+          "attendance.work_date",
+          "attendance.reviewed_by",
+          "attendance.reviewed_at",
+          "attendance.review_decision",
+          "attendance.confirmed_start",
+          "attendance.confirmed_end",
+          "attendance.confirmed_minutes"
+        ],
+        "rejected_states": [
+          "SUBMITTED",
+          "NORMAL",
+          "NEEDS_REVIEW",
+          "REJECTED"
+        ],
+        "legacy_fields_forbidden": [
+          "attendance.hourly_rate",
+          "attendance.hours_worked",
+          "attendance.amount"
+        ]
+      },
+      "deterministic_aggregate": {
+        "fields": [
+          "confirmed_work_item_count",
+          "confirmed_work_minutes",
+          "confirmed_work_source_revision"
+        ],
+        "source_revision": "SORTED_CONFIRMED_ROW_ID_REVIEW_TIMESTAMP_STATUS_TIME_MINUTES_FINGERPRINT"
+      },
+      "persistence_identity": "period_start + period_end + employee_id + payroll_revision",
+      "retry_rule": "SAME_IDENTITY_AND_SAME_SOURCE_RETURNS_EXISTING; CHANGED_SOURCE_REQUIRES_NEW_PAYROLL_REVISION",
+      "monetary_amount": "NOT_DERIVED_WITHOUT_CANONICAL_PAY_RULE_EVALUATOR",
+      "pay_rule_behavior": "OPAQUE_VALIDATED_REFERENCE_REQUIRED; NO_RATE_OR_FORMULA_INFERENCE",
+      "state_behavior": "TASK_103_CREATES_ESTIMATED_ONLY; REVIEWED_FINALIZED_PAID_MUTATION_NOT_IMPLEMENTED_HERE",
+      "rules": [
+        "CONFIRMED_OR_REVISED_WORK_TIME_ONLY",
+        "RAW_OR_REJECTED_ATTENDANCE_EXCLUDED",
+        "PAY_RULE_VALIDATION_FACT_REQUIRED",
+        "NO_EMPLOYEE_GRADES_HOURLY_RATE_INFERENCE",
+        "NO_ATTENDANCE_AMOUNT_REUSE",
+        "NO_MONETARY_AMOUNT_WITHOUT_CANONICAL_EVALUATOR",
+        "NO_AUTO_FINALIZE"
+      ]
+    }
   },
   "invariants": [
     {
