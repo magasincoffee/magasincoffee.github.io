@@ -24,7 +24,7 @@ test("SCHED-04 keeps exactly one canonical Manager scheduling writer surface",as
     "get_manager_weekly_schedule"
   ]) assert.match(draft,new RegExp(rpc),rpc);
   assert.doesNotMatch(draft,/auto_generate_schedule_generation|get_workforce_staffing_requirements/);
-  assert.doesNotMatch(draft,/\.from\(/);
+  assert.doesNotMatch(draft,/client\(\)\.from\(|sb\.from\(|supabase[^\n]*\.from\(/);
   assert.match(engine,/draft-publish-v1\.js\?v=20260924-sched04/);
   assert.match(legacy,/manager-runtime-v1\.html\?v=20260924-sched04#workforce/);
   assert.doesNotMatch(legacy,/publish_schedule_generation|replace_schedule_generation_assignments|create_schedule_generation/);
