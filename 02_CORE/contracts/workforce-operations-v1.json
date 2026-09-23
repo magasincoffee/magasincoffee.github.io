@@ -590,7 +590,9 @@
       "finalization_actor": "PAYROLL_AUTHORIZED",
       "live_actor_mapping": "UNRESOLVED_DO_NOT_INVENT_IN_TASK_102",
       "employee_read_scope": "SELF_ONLY",
-      "manager_review": "EXPLICIT_PERMISSION_REQUIRED_IN_LATER_TASK"
+      "manager_review": "EXPLICIT_PERMISSION_REQUIRED_LATER_NO_TASK_104_STATE_MUTATION",
+      "manager_read_scope": "STORE_SCOPED_PAYROLL_READ_ONLY",
+      "owner_read_scope": "ENTERPRISE_OR_STORE_FILTERED_READ_ONLY"
     },
     "persistence_implementation_task": "TASK-103",
     "calculation_payload_implementation_task": "TASK-103",
@@ -656,6 +658,48 @@
         "NO_AUTO_FINALIZE"
       ],
       "monetary_evaluator_status": "UNRESOLVED_CANONICAL_GAP_DO_NOT_INFER"
+    },
+    "self_check_contract": {
+      "task": "TASK-104",
+      "employee_reader": "get_my_payroll_self_check_v1",
+      "scoped_reader": "list_scoped_payroll_self_check_v1",
+      "employee_authority": "AUTH_UID_ACTIVE_STAFF_OR_EMPLOYEE_SELF_ONLY",
+      "manager_authority": "ACTIVE_STORE_MANAGER_CAN_ACCESS_STORE_READ_ONLY",
+      "owner_authority": "ACTIVE_OWNER_ENTERPRISE_OR_STORE_FILTERED_READ_ONLY",
+      "visible_fields": [
+        "payroll_entry_id",
+        "period_start",
+        "period_end",
+        "payroll_revision",
+        "state",
+        "confirmed_work_item_count",
+        "confirmed_work_minutes",
+        "updated_at"
+      ],
+      "manager_additional_fields": [
+        "employee_id",
+        "employee_name"
+      ],
+      "hidden_fields": [
+        "pay_rule_reference",
+        "pay_rule_validated",
+        "confirmed_work_source_revision"
+      ],
+      "monetary_fields": "ABSENT_UNTIL_CANONICAL_MONETARY_EVALUATOR_EXISTS",
+      "state_display_rule": "RENDER_CANONICAL_STATE_EXACTLY_NEVER_COERCE_ESTIMATED_TO_FINALIZED",
+      "mutation_authority": "NONE_TASK_104_IS_READ_ONLY",
+      "manager_review_authority": "NOT_GRANTED_PAYROLL_REVIEW_REMAINS_EXPLICIT_PERMISSION_GATED",
+      "rules": [
+        "EMPLOYEE_CANNOT_SELECT_SUBJECT_EMPLOYEE",
+        "EMPLOYEE_CROSS_USER_PAYROLL_DENY",
+        "MANAGER_PAYROLL_READ_IS_STORE_SCOPED",
+        "OWNER_SCOPE_IS_SEPARATE",
+        "NO_DIRECT_BROWSER_PAYROLL_TABLE_ACCESS",
+        "NO_PAYROLL_STATE_TRANSITION",
+        "NO_MONETARY_FORMULA_OR_AMOUNT",
+        "NO_PAY_RULE_INTERNAL_LEAK",
+        "EMPTY_PAYROLL_IS_VALID_EMPTY_STATE"
+      ]
     }
   },
   "invariants": [
