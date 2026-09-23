@@ -91,6 +91,12 @@ jobs:
           cat /tmp/people-shift-http.log || true
           exit 1
 
+      - name: Run SCHED-01 three-role scheduling browser smoke
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/sched-01-three-role-browser-smoke.mjs
+
       - name: Run Employee Swap browser regression
         env:
           QA_BASE_URL: http://127.0.0.1:8767
