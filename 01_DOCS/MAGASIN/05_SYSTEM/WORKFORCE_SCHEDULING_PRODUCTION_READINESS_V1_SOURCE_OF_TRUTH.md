@@ -297,12 +297,13 @@ On activation of this SoT:
 
 ```text
 priority_gate = WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1
-current_sched_task = SCHED-04
-next_sched_task = SCHED-05
+current_sched_task = SCHED-05
+next_sched_task = SCHED-06
 SCHED-01 = DONE
 SCHED-02 = DONE
 SCHED-03 = DONE
-SCHED-04 = READY / MANUAL_WORK
+SCHED-04 = DONE
+SCHED-05 = READY / MANUAL_WORK
 unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
 TASK-108 = PAUSED_BEHIND_SCHED_GATE
 Workforce Robot = DISABLED
@@ -367,6 +368,32 @@ Canonical evidence:
 - Security Advisor database counts remain 11/1/13/66.
 
 SCHED-04 now owns the next sequential gate: Manager Scheduling V1. The overall Scheduling Production Readiness gate remains **ACTIVE**.
+
+## 13D. SCHED-04 closure checkpoint
+
+SCHED-04 closed after the Manager scheduling flow was consolidated onto one existing canonical writer and the official schedule remained exclusively `work_schedules`.
+
+Canonical evidence:
+- evidence: `05_SYSTEM/SCHED_04_MANAGER_SCHEDULING_V1.md`;
+- baseline: `d4e23a7f27f4ff4e2f641c53c27717bcbf1b4403`;
+- implementation PR #287;
+- final PR head `67374dd48597f7241559c11091c3496641f32f4f`;
+- implementation merge `398f8164d676068a8bd7a8d14426e31ed948cba3`;
+- PR-head People Shift `35897139899 / 107303772936` — SUCCESS;
+- exact-main People Shift `35897358395 / 107304500565` — SUCCESS with 316/316 deterministic checks;
+- exact-main SOP `35897358299 / 107304499985` — SUCCESS;
+- exact-main Pages validation `35897358345 / 107304500738` — SUCCESS;
+- exact-main Pages build/deploy/report `35897357114 / 107304501913 / 107304574534 / 107304574618` — SUCCESS;
+- dedicated `SCHED_04_MANAGER_SCHEDULING_BROWSER=PASS`;
+- canonical writer remains `05_MANAGER/Workforce/draft-publish-v1.js`; no second writer and no browser protected-table DML;
+- reload resumes DRAFT / REVIEWED / PUBLISHED and post-publish re-reads official APPROVED schedule truth;
+- publish retry is idempotent and cross-store request tampering is denied;
+- legacy `/05_MANAGER/Lich-lam/` is a wrapper only;
+- production read-only reconciliation: 0 ACTIVE STORE_MANAGER, 4 ACTIVE stores, 7 Availability rows, 4 generation rows (3 DRAFT + 1 CANCELLED), 0 generation assignments, 0 official schedules, 0 duplicate active generation store/week groups;
+- latest scheduling migration remains `20260923163337_sched_02_three_role_scheduling_authority_lock_v1`;
+- no SCHED-04 migration, fake Manager or fake production schedule.
+
+SCHED-05 now owns the next sequential gate: Owner Scheduling V1. The overall Scheduling Production Readiness gate remains **ACTIVE**.
 
 ## 14. Canonical precedence
 
