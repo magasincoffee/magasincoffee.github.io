@@ -76,7 +76,7 @@ test("Manager direct board supports source availability plus add remove edit sav
   assert.match(draft,/data-f="start_time"/);
   assert.match(draft,/data-f="end_time"/);
   assert.match(draft,/id="msdSave"/);
-  assert.match(draft,/listDrafts\(\)/);
+  assert.match(draft,/listGenerations\(\)/);
   assert.match(draft,/state\.duplicateDrafts/);
 });
 
@@ -98,16 +98,16 @@ test("TASK-094 Manager board delegates create/resume and validation idempotency 
   const resumeStart=draft.indexOf("async function resumeOnly()");
   const resumeEnd=draft.indexOf("async function startOrResume()",resumeStart);
   const resume=draft.slice(resumeStart,resumeEnd);
-  assert.match(resume,/drafts\.length>1/);
+  assert.match(resume,/runs\.length>1/);
   assert.match(resume,/generationStatus='CONFLICT'/);
-  assert.match(resume,/fail-closed/);
+  assert.match(resume,/khóa thao tác/);
 
   assert.match(draft,/MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY/);
   assert.match(draft,/AVAILABILITY_MISMATCH/);
   assert.match(draft,/GENERATION_VERSION_CONFLICT/);
   assert.match(draft,/already_reviewed/);
   assert.match(draft,/already_published/);
-  assert.match(draft,/Canonical validation/);
+  assert.match(draft,/state\.lastValidation=q\.data\?\.valid\?'VALID':'INVALID'/);
 });
 
 test("Legacy demand stays isolated from canonical direct scheduling path",async()=>{
