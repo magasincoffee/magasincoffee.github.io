@@ -127,7 +127,7 @@ try{
 
  await check("reload_recovers_without_cross_user_or_stale_state",async()=>{
    await page.reload({waitUntil:"networkidle",timeout:20000});
-   await employee.locator("#profileFullName").waitFor({timeout:10000});
+   await employee.locator("#profileFullName").waitFor({state:"attached",timeout:10000});
    await empRefresh();await mgrRefresh();
    const x=await page.evaluate(()=>({name:globalThis.MAGASIN_EMPLOYEE.profileProjection.state.row?.full_name,ep:globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.state.rows,mp:globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState().rows,my:globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.getState().rows,calls:globalThis.__TASK107_QA.calls}));
    if(x.name!=="Nhân viên A"||x.ep.length!==1||x.mp.length!==1||x.my.length!==1||x.mp[0].employee_id!=="emp-a"||x.my[0].employee_id!=="emp-a")throw new Error(JSON.stringify(x));
