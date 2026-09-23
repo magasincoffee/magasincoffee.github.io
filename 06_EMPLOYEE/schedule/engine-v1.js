@@ -74,12 +74,12 @@ function actionEligibility(r){
   return {attendance:date<=today,giveSwap:date>=today};
 }
 function actionHtml(r){
-  const eligible=actionEligibility(r),id=esc(r.schedule_id);
+  const eligible=actionEligibility(r);
   let out='<div class="shift-actions">';
-  if(eligible.attendance)out+='<button type="button" class="primary-action" data-schedule-action="attendance" data-schedule-id="'+id+'">Chấm công</button>';
+  if(eligible.attendance)out+='<button type="button" class="primary-action" data-schedule-action="attendance">Chấm công</button>';
   if(eligible.giveSwap){
-    out+='<button type="button" data-schedule-action="give" data-schedule-id="'+id+'">Cho ca</button>';
-    out+='<button type="button" data-schedule-action="swap" data-schedule-id="'+id+'">Đổi ca</button>';
+    out+='<button type="button" data-schedule-action="give">Cho ca</button>';
+    out+='<button type="button" data-schedule-action="swap">Đổi ca</button>';
   }
   return out+'</div>';
 }
@@ -204,7 +204,7 @@ async function openAction(action,scheduleId){
 function openAvailability(){
   const d=doc();if(!d)return;
   d.defaultView?.showView?.('dashboard');
-  setTimeout(()=>globalThis.MAGASIN_EMPLOYEE?.availability?.open?.(),0);
+  globalThis.MAGASIN_EMPLOYEE?.availability?.open?.();
 }
 function bind(d){
   if(!d||!d.body||d.body.dataset.employeeScheduleEngine==='1')return;
@@ -218,8 +218,12 @@ function bind(d){
     }
     if(e.target.closest?.('[data-schedule-retry]')){void refresh();return}
     if(e.target.closest?.('[data-schedule-availability]')){openAvailability();return}
-    const actionButton=e.target.closest?.('[data-schedule-action][data-schedule-id]');
-    if(actionButton){void openAction(actionButton.dataset.scheduleAction,actionButton.dataset.scheduleId);return}
+    const actionButton=e.target.closest?.('[data-schedule-action]');
+    if(actionButton){
+      const card=actionButton.closest?.('[data-schedule-id]');
+      if(card?.dataset?.scheduleId)void openAction(actionButton.dataset.scheduleAction,card.dataset.scheduleId);
+      return;
+    }
     const a=e.target.closest?.('a,[data-view]');if(a?.dataset?.view==='schedule')setTimeout(()=>{void refresh()},0);
   },true);
 }
