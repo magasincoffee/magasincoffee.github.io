@@ -297,10 +297,11 @@ On activation of this SoT:
 
 ```text
 priority_gate = WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1
-current_sched_task = SCHED-02
-next_sched_task = SCHED-03
+current_sched_task = SCHED-03
+next_sched_task = SCHED-04
 SCHED-01 = DONE
-SCHED-02 = READY / MANUAL_WORK
+SCHED-02 = DONE
+SCHED-03 = READY / MANUAL_WORK
 unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
 TASK-108 = PAUSED_BEHIND_SCHED_GATE
 Workforce Robot = DISABLED
@@ -324,6 +325,25 @@ Canonical evidence:
 - live final audit: all 4 active Owner store reads deterministic; Employee schedule/availability reads pass; duplicate active generation groups = 0; no fake scheduling data.
 
 SCHED-02 now owns the next sequential gate: role + authority lock. The overall Scheduling Production Readiness gate remains **ACTIVE**.
+
+## 13B. SCHED-02 closure checkpoint
+
+SCHED-02 closed after three-role scheduling authority was locked server-side without changing the canonical scheduling truth.
+
+Canonical evidence:
+- evidence: `05_SYSTEM/SCHED_02_THREE_ROLE_SCHEDULING_AUTHORITY_LOCK.md`;
+- migration: `20260923163337_sched_02_three_role_scheduling_authority_lock_v1`;
+- implementation PR #283;
+- final PR head `0c0cda8e011755ef9e580742e1ec92d908440012`;
+- implementation merge `a01d8bdb940c443fb2b3abc42275a0827db2b71a`;
+- PR-head People Shift `35890338421 / 107280905324` — SUCCESS;
+- exact-main People Shift `35890519746 / 107281516643` — SUCCESS;
+- exact-main Pages validation `35890519568 / 107281515853` — SUCCESS;
+- exact-main Pages deployment `35890518178 / 107281586624` — SUCCESS;
+- final live audit: Owner 4-store reads PASS; Employee self reads PASS; Employee draft read denied; deprecated authority denied; protected browser DML zero; duplicate active generation groups zero;
+- production has no ACTIVE STORE_MANAGER and no fake Manager was created.
+
+SCHED-03 now owns the next sequential gate: Employee Schedule UI V1. The overall Scheduling Production Readiness gate remains **ACTIVE**.
 
 ## 14. Canonical precedence
 
