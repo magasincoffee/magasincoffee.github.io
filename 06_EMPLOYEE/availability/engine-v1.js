@@ -156,7 +156,7 @@ async function remove(id,button){
 async function finish(){syncPolicy();const msg=d()?.getElementById('quickRegMsg');if(msg)msg.textContent=state.registration==='REGISTRATION_OPEN'?'Đã hoàn thành đăng ký lịch làm.':closedMessage();if(state.registration==='REGISTRATION_OPEN')C.ui.toast('Đã hoàn thành đăng ký lịch.','success')}
 
 function wire(x,selector,fn){const b=x.querySelector(selector);if(!b||b.dataset.engineBound)return;b.removeAttribute('onclick');b.dataset.engineBound='1';b.addEventListener('click',fn)}
-function bind(){const x=d();if(!x||x.body.dataset.employeeAvailabilityEngine==='1')return;x.body.dataset.employeeAvailabilityEngine='1';wire(x,'[onclick="openWeeklyRegistration()"]',open);wire(x,'#weeklyRegistrationPanel button[onclick="closeWeeklyRegistration()"]',close);wire(x,'#weeklyRegistrationPanel button[onclick="quickRegister()"]',register);wire(x,'#weeklyRegistrationPanel button[onclick="finishQuickRegistration()"]',finish)}
+function bind(){const x=d();if(!x?.body||x.body.dataset.employeeAvailabilityEngine==='1')return;x.body.dataset.employeeAvailabilityEngine='1';wire(x,'[onclick="openWeeklyRegistration()"]',open);wire(x,'#weeklyRegistrationPanel button[onclick="closeWeeklyRegistration()"]',close);wire(x,'#weeklyRegistrationPanel button[onclick="quickRegister()"]',register);wire(x,'#weeklyRegistrationPanel button[onclick="finishQuickRegistration()"]',finish)}
 function init(){const f=host();if(!f||f.dataset.availabilityEngine==='1')return;f.dataset.availabilityEngine='1';f.addEventListener('load',()=>{bind();prepare(f.contentDocument)},{once:false});if(f.contentDocument){bind();prepare(f.contentDocument)}}
 
 syncPolicy();

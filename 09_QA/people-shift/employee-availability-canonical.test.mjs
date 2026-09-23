@@ -24,6 +24,12 @@ test("Employee availability has one active owner and shell contains no business 
   assert.doesNotMatch(engine,/availability-v2/i);
 });
 
+test("availability bind tolerates iframe contentDocument before body exists",async()=>{
+  const engine=await read("06_EMPLOYEE/availability/engine-v1.js");
+  assert.match(engine,/if\(!x\?\.body\|\|x\.body\.dataset\.employeeAvailabilityEngine==='1'\)return/);
+  assert.doesNotMatch(engine,/if\(!x\|\|x\.body\.dataset\.employeeAvailabilityEngine/);
+});
+
 test("Employee availability API exposes read/delete/week/registration policy without a second engine",async()=>{
   const engine=await read("06_EMPLOYEE/availability/engine-v1.js");
   assert.match(engine,/data-av-delete/);
