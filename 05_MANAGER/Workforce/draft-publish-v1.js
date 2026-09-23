@@ -22,6 +22,14 @@ let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignment
 const panel=()=>document.querySelector('#panel-publish');
 function client(){if(sb)return sb;if(!window.supabase?.createClient)throw new Error('SUPABASE_CLIENT_NOT_READY');sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});return sb}
 function status(text,type=''){const e=panel()?.querySelector('#msdStatus');if(!e)return;e.className='msd-status'+(type?' '+type:'');e.textContent=text||''}
+function lockControls(on){
+ const p=panel();if(!p)return;
+ p.setAttribute('aria-busy',on?'true':'false');
+ p.querySelectorAll('button,select').forEach(el=>{
+  if(on){if(!el.disabled){el.dataset.msdBusy='1';el.disabled=true}}
+  else if(el.dataset.msdBusy==='1'){el.disabled=false;delete el.dataset.msdBusy}
+ });
+}
 function errorText(e){
  const raw=String(e?.message||e?.code||e||'UNKNOWN');
  const known=[
@@ -134,12 +142,12 @@ async function resumeOnly(){
   if(state.generationStatus==='PUBLISHED')status('Lịch đã phát hành. Dữ liệu chính thức đã được tải lại từ server.','ok');
   else if(state.generationStatus==='REVIEWED')status('Lịch đã được duyệt và sẵn sàng phát hành.','ok');
  }catch(e){render();status('Không tải được bảng xếp lịch. '+errorText(e),'error')}
- finally{state.busy=false}
+ finally{state.busy=false;lockControls(false)}
 }
 async function startOrResume(){
  if(state.busy||!state.storeId||!state.week)return;
  if(state.generationId&&state.generationStatus!=='DRAFT')return resumeOnly();
- state.busy=true;render();status('Đang tạo hoặc mở bản nháp qua server…');
+ state.busy=true;lockControls(true);status('Đang tạo hoặc mở bản nháp qua server…');
  try{
   const q=await client().rpc('create_schedule_generation',{p_store_id:state.storeId,p_week_start:state.week,p_algorithm_version:'MANAGER_DIRECT_V1'});
   if(q.error)throw q.error;
@@ -160,7 +168,7 @@ async function startOrResume(){
   }
   state.generationId=null;state.generationStatus='CONFLICT';state.assignments=[];state.officialRows=[];
   render();status('Không thể mở bản nháp. '+errorText(e),'error');
- } finally{state.busy=false}
+ } finally{state.busy=false;lockControls(false)}
 }
 function sourceHtml(){
  if(!state.availability.length)return '<div class="msd-empty">Không có availability cho cửa hàng/tuần này.</div>';
@@ -175,7 +183,7 @@ function render(){
  const p=panel();if(!p)return;
  if(!document.getElementById('manager-schedule-draft-editor-css'))document.head.insertAdjacentHTML('beforeend',css);
  activate();
- const store=selectedStore(),stage=String(state.generationStatus||'NONE').toUpperCase(),busy=state.busy?' disabled':'';
+ const store=selectedStore(),stage=String(state.generationStatus||'NONE').toUpperCase(),busy='';
  const steps=[
   ['1','Availability',state.availability.length?'done':'current'],
   ['2','Bản nháp',stage==='DRAFT'?'current':['REVIEWED','PUBLISHED'].includes(stage)?'done':'idle'],
@@ -203,18 +211,18 @@ async function save(){
  if(state.busy||!state.generationId||state.generationStatus!=='DRAFT')return;
  syncRowsFromDom();
  for(const a of state.assignments){if(!a.user_id||mins(a.end_time)<=mins(a.start_time)){status('Có assignment thiếu nhân viên hoặc giờ kết thúc không sau giờ bắt đầu.','error');return}}
- state.busy=true;status('Đang lưu lịch nháp…');
+ state.busy=true;lockControls(true);status('Đang lưu lịch nháp…');
  try{
   const payload=state.assignments.map(cleanAssignment);
   const q=await client().rpc('replace_schedule_generation_assignments',{p_generation_id:state.generationId,p_assignments:payload});
   if(q.error)throw q.error;
   await loadDraftAssignments();state.lastValidation=null;state.officialRows=[];render();status(`Đã lưu ${Number(q.data??payload.length)} ca vào bản nháp. Hãy kiểm tra xung đột trước khi duyệt.`,'ok');
  }catch(e){status('Lưu draft thất bại: '+errorText(e),'error')}
- finally{state.busy=false}
+ finally{state.busy=false;lockControls(false)}
 }
 async function validate(){
  if(state.busy||!state.generationId||state.generationStatus==='PUBLISHED')return;
- state.busy=true;render();status('Đang kiểm tra lịch trên server…');
+ state.busy=true;lockControls(true);status('Đang kiểm tra lịch trên server…');
  try{
   const q=await client().rpc('validate_schedule_generation_v1',{p_generation_id:state.generationId});
   if(q.error)throw q.error;
@@ -227,22 +235,22 @@ async function validate(){
   status(lines.join('\n'),q.data?.valid?'ok':'error');
   return q;
  }catch(e){state.lastValidation='INVALID';render();status('Không thể kiểm tra lịch. '+errorText(e),'error')}
- finally{state.busy=false}
+ finally{state.busy=false;lockControls(false)}
 }
 async function review(){
  if(state.busy||!state.generationId||!['DRAFT','REVIEWED'].includes(state.generationStatus))return;
- state.busy=true;status('Đang revalidate và duyệt lịch trên server…');
+ state.busy=true;lockControls(true);status('Đang revalidate và duyệt lịch trên server…');
  try{
   const q=await client().rpc('review_schedule_generation',{p_generation_id:state.generationId,p_decision:'APPROVED'});
   if(q.error)throw q.error;
   state.generationStatus=q.data?.status||'REVIEWED';state.lastValidation='VALID';
   render();status(q.data?.already_reviewed?'Lịch đã được duyệt trước đó; thao tác lặp không tạo thay đổi mới.':'Đã kiểm tra lại và chuyển lịch sang trạng thái đã duyệt.','ok');
- }catch(e){status('Duyệt lịch thất bại: '+errorText(e),'error')}finally{state.busy=false}
+ }catch(e){status('Duyệt lịch thất bại: '+errorText(e),'error')}finally{state.busy=false;lockControls(false)}
 }
 async function publish(){
  if(state.busy||!state.generationId||!['REVIEWED','PUBLISHED'].includes(state.generationStatus))return;
  if(state.generationStatus==='REVIEWED'&&!confirm('Phát hành lịch REVIEWED thành lịch chính thức APPROVED?'))return;
- state.busy=true;status(state.generationStatus==='PUBLISHED'?'Đang kiểm tra retry Publish idempotent…':'Đang revalidate và phát hành lịch chính thức…');
+ state.busy=true;lockControls(true);status(state.generationStatus==='PUBLISHED'?'Đang kiểm tra thao tác phát hành lặp…':'Đang kiểm tra lại và phát hành lịch chính thức…');
  try{
   const q=await client().rpc('publish_schedule_generation',{p_generation_id:state.generationId});
   if(q.error)throw q.error;
@@ -260,7 +268,7 @@ async function publish(){
   render();
   status(q.data?.already_published?'Lịch đã được phát hành trước đó; thao tác lặp không tạo ca trùng.':'Đã phát hành '+detail.insertedScheduleCount+' ca chính thức và tải lại lịch từ server.','ok');
   return q;
- }catch(e){status('Publish thất bại: '+errorText(e),'error')}finally{state.busy=false}
+ }catch(e){status('Publish thất bại: '+errorText(e),'error')}finally{state.busy=false;lockControls(false)}
 }
 function bind(){
  const p=panel();if(!p)return;
