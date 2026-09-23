@@ -590,7 +590,7 @@
       "finalization_actor": "PAYROLL_AUTHORIZED",
       "live_actor_mapping": "UNRESOLVED_DO_NOT_INVENT_IN_TASK_102",
       "employee_read_scope": "SELF_ONLY",
-      "manager_review": "EXPLICIT_PERMISSION_REQUIRED_LATER_NO_TASK_104_STATE_MUTATION",
+      "manager_review": "EXPLICIT_PERMISSION_REQUIRED_IN_LATER_TASK",
       "manager_read_scope": "STORE_SCOPED_PAYROLL_READ_ONLY",
       "owner_read_scope": "ENTERPRISE_OR_STORE_FILTERED_READ_ONLY"
     },
