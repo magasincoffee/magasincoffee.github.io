@@ -3,7 +3,7 @@ const C=globalThis.MAGASIN_CORE;if(!C)return;
 const host=()=>document.getElementById('employeeApp');
 const doc=()=>host()?.contentDocument||null;
 const esc=C.security.escapeHtml,hm=C.time.time5,fmt=C.date.formatDate,add=C.date.addDays,mon=C.date.monday,mins=C.time.minutes;
-const DAYS=['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Chủ Nhật'];
+const DAYS=['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ Nhật'];
 const ERROR_COPY={
   AUTH_REQUIRED:'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
   EMPLOYEE_NOT_ACTIVE:'Tài khoản hiện không thể xem lịch làm.',
@@ -45,12 +45,12 @@ function ensureShell(d){
   panel.dataset.scheduleShell='sched03';
   panel.innerHTML=
     '<div class="schedule-hero"><div><h2>Lịch làm chính thức</h2><p>Chỉ hiển thị ca đã được phát hành và hiện đang thuộc về bạn.</p></div><span class="schedule-official">✓ Lịch chính thức</span></div>'+
-    '<div class="schedule-context"><div class="schedule-context-card"><strong>Hôm nay</strong><span id="employeeScheduleToday">—</span></div><div class="schedule-context-card"><strong>Nguồn lịch</strong><span>work_schedules · chỉ ca APPROVED của tài khoản hiện tại</span></div></div>'+
+    '<div class="schedule-context"><div class="schedule-context-card"><strong>Hôm nay</strong><span id="employeeScheduleToday">—</span></div><div class="schedule-context-card"><strong>Nguồn lịch</strong><span>Lịch chính thức · chỉ ca đã phát hành của tài khoản hiện tại</span></div></div>'+
     '<div class="schedule-week-nav" data-schedule-week-nav="1"><button type="button" data-schedule-week="prev">← Trước</button><button type="button" data-schedule-week="today">Tuần này</button><button type="button" data-schedule-week="next">Tuần sau →</button></div>'+
     '<div class="schedule-statusline"><span class="pill">Đang tải…</span></div>'+
     '<div class="schedule-notice" role="status" aria-live="polite"></div>'+
     '<div class="days" aria-live="polite"></div>'+
-    '<div class="schedule-availability"><div><strong>Đăng ký thời gian có thể làm ≠ lịch chính thức</strong><p>Availability chỉ là thời gian bạn có thể nhận ca. Ca chỉ trở thành lịch làm khi đã được quản lý phát hành và xuất hiện ở phía trên.</p></div><button type="button" data-schedule-availability>Đăng ký Availability</button></div>';
+    '<div class="schedule-availability"><div><strong>Availability không phải lịch chính thức</strong><p>Đây chỉ là thời gian bạn có thể nhận ca. Ca chỉ trở thành lịch làm khi đã được quản lý phát hành và xuất hiện ở phía trên.</p></div><button type="button" data-schedule-availability>Đăng ký Availability</button></div>';
   return panel;
 }
 function identity(d){
