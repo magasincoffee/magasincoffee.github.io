@@ -1,1 +1,92 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/03_PLATFORM/02_ASSETS/favicon.svg"><title>MAGASIN · Đăng nhập</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f4f7fb;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.card{width:min(460px,92vw);padding:30px;background:#fff;border:1px solid #dce5f0;border-radius:18px}h1{margin:0 0 8px}.sub{color:#617793;margin-bottom:20px}.field{margin:12px 0}.field label{display:block;font-weight:700;font-size:12px;margin-bottom:6px}.input{width:100%;height:44px;box-sizing:border-box;border:1px solid #dce5f0;border-radius:10px;padding:0 12px}.btn{width:100%;height:46px;margin-top:14px;border:0;border-radius:10px;background:#16b7c5;color:#fff;font-weight:800}.links{display:flex;justify-content:space-between;margin-top:12px;font-size:12px}.links a{color:#2f6fde;text-decoration:none}.view{display:none}.view.active{display:block}.msg{margin:12px 0;padding:10px;border-radius:10px;background:#eef8f5;color:#217653;font-size:12px}.msg.error{background:#fff0ee;color:#a33d32}</style></head><body><main class="card"><h1>MAGASIN</h1><div class="sub">Hệ thống nội bộ</div><div id="msg" class="msg" hidden></div><section id="login" class="view active"><form id="loginForm"><div class="field"><label>Tên đăng nhập hoặc email</label><input class="input" id="username" autocomplete="username" required></div><div class="field"><label>Mật khẩu</label><input class="input" id="password" type="password" autocomplete="current-password" required></div><button class="btn">Đăng nhập</button></form><div class="links"><a href="#" data-view="register">Đăng ký</a><a href="#" data-view="forgot">Quên mật khẩu?</a></div></section><section id="register" class="view"><form id="registerForm"><div class="field"><label>Họ và tên</label><input class="input" id="fullName" required></div><div class="field"><label>Số điện thoại</label><input class="input" id="phone"></div><div class="field"><label>Email</label><input class="input" id="email" type="email" required></div><div class="field"><label>Tên đăng nhập</label><input class="input" id="regUsername" required></div><div class="field"><label>Mật khẩu</label><input class="input" id="regPassword" type="password" minlength="8" required></div><button class="btn">Đăng ký</button></form><div class="links"><a href="#" data-view="login">← Đăng nhập</a></div></section><section id="forgot" class="view"><form id="forgotForm"><div class="field"><label>Email</label><input class="input" id="forgotEmail" type="email" required></div><button class="btn">Gửi hướng dẫn</button></form><div class="links"><a href="#" data-view="login">← Đăng nhập</a></div></section><section id="reset" class="view"><form id="resetForm"><div class="field"><label>Mật khẩu mới</label><input class="input" id="newPassword" type="password" minlength="8" required></div><div class="field"><label>Nhập lại mật khẩu</label><input class="input" id="confirmPassword" type="password" minlength="8" required></div><button class="btn">Cập nhật mật khẩu</button></form></section></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/03_PLATFORM/01_AUTH/auth-runtime-v1.js"></script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="/03_PLATFORM/02_ASSETS/favicon.svg">
+  <title>MAGASIN · Đăng nhập</title>
+  <style>
+    :root{color-scheme:light;--brand:#16b7c5;--brand-dark:#0f8f9c;--ink:#17304c;--muted:#617793;--line:#dce5f0;--bg:#f4f7fb;--ok-bg:#eef8f5;--ok:#217653;--err-bg:#fff0ee;--err:#a33d32;--warn-bg:#fff7e6;--warn:#8a5a00}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(145deg,#eef7fb 0%,#f7f9fc 52%,#edf3f8 100%);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 15% 15%,rgba(22,183,197,.12),transparent 26%),radial-gradient(circle at 88% 85%,rgba(47,111,222,.09),transparent 24%)}
+    .shell{position:relative;min-height:100vh;display:grid;place-items:center;padding:24px}
+    .card{width:min(470px,100%);padding:30px;background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 48px rgba(35,69,102,.12)}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}.brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:var(--brand);color:#fff;font-weight:900;letter-spacing:.04em}.brand-copy h1{margin:0;font-size:23px;letter-spacing:.02em}.brand-copy p{margin:2px 0 0;color:var(--muted);font-size:13px}
+    h2{margin:0 0 6px;font-size:22px}.sub{color:var(--muted);margin:0 0 20px;line-height:1.5;font-size:14px}.field{margin:14px 0}.field label{display:block;font-weight:750;font-size:12px;margin-bottom:7px}
+    .input-wrap{position:relative}.input{width:100%;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 13px;font:inherit;color:var(--ink);background:#fff;outline:none;transition:border .15s,box-shadow .15s}.input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(22,183,197,.12)}
+    .input.has-toggle{padding-right:76px}.toggle-password{position:absolute;right:7px;top:7px;height:32px;padding:0 9px;border:0;border-radius:8px;background:#eef4f8;color:#31516f;font-weight:700;font-size:12px;cursor:pointer}
+    .btn{width:100%;min-height:47px;margin-top:15px;border:0;border-radius:12px;background:var(--brand);color:#fff;font-weight:850;font-size:14px;cursor:pointer;transition:transform .08s,background .15s,opacity .15s}.btn:hover{background:var(--brand-dark)}.btn:active{transform:translateY(1px)}.btn:disabled{opacity:.58;cursor:not-allowed;transform:none}
+    .btn.secondary{background:#edf4f8;color:#244866}.btn.secondary:hover{background:#e2edf3}.links{display:flex;justify-content:space-between;gap:12px;margin-top:15px;font-size:13px;flex-wrap:wrap}.links a,.link-btn{color:#2f6fde;text-decoration:none;font-weight:700}
+    .link-btn{border:0;background:none;padding:0;cursor:pointer;font:inherit}.view{display:none}.view.active{display:block}.msg{margin:0 0 16px;padding:11px 12px;border-radius:11px;background:var(--ok-bg);color:var(--ok);font-size:13px;line-height:1.45}.msg.error{background:var(--err-bg);color:var(--err)}.msg.warn{background:var(--warn-bg);color:var(--warn)}
+    .status-box{padding:16px;border:1px solid var(--line);border-radius:14px;background:#f8fbfd;margin:14px 0}.status-box strong{display:block;margin-bottom:6px}.status-box p{margin:0;color:var(--muted);line-height:1.5;font-size:14px}
+    .spinner{width:28px;height:28px;margin:4px auto 14px;border:3px solid #dce8ee;border-top-color:var(--brand);border-radius:50%;animation:spin .85s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.fine{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.5}
+    @media(max-width:520px){.shell{padding:14px}.card{padding:22px 18px;border-radius:18px}.brand{margin-bottom:14px}.links{align-items:flex-start;flex-direction:column}.links a,.link-btn{min-height:28px}.btn{min-height:49px}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}.spinner{animation:none}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="card" aria-live="polite">
+      <div class="brand"><div class="brand-mark">M</div><div class="brand-copy"><h1>MAGASIN</h1><p>Hệ thống nội bộ</p></div></div>
+      <div id="msg" class="msg" hidden></div>
+
+      <section id="login" class="view active">
+        <h2>Đăng nhập</h2><p class="sub">Truy cập đúng không gian làm việc theo quyền tài khoản của bạn.</p>
+        <form id="loginForm">
+          <div class="field"><label for="username">Tên đăng nhập hoặc email</label><input class="input" id="username" autocomplete="username" required></div>
+          <div class="field"><label for="password">Mật khẩu</label><div class="input-wrap"><input class="input has-toggle" id="password" type="password" autocomplete="current-password" required><button type="button" class="toggle-password" data-toggle-password="password">Hiện</button></div></div>
+          <button class="btn" type="submit" data-label="Đăng nhập">Đăng nhập</button>
+        </form>
+        <div class="links"><a href="#" data-view="register">Đăng ký</a><a href="#" data-view="forgot">Quên mật khẩu?</a></div>
+      </section>
+
+      <section id="register" class="view">
+        <h2>Tạo tài khoản</h2><p class="sub">Tài khoản mới có thể cần được kích hoạt trước khi sử dụng.</p>
+        <form id="registerForm">
+          <div class="field"><label for="fullName">Họ và tên</label><input class="input" id="fullName" autocomplete="name" required></div>
+          <div class="field"><label for="phone">Số điện thoại</label><input class="input" id="phone" autocomplete="tel"></div>
+          <div class="field"><label for="email">Email</label><input class="input" id="email" type="email" autocomplete="email" required></div>
+          <div class="field"><label for="regUsername">Tên đăng nhập</label><input class="input" id="regUsername" autocomplete="username" required></div>
+          <div class="field"><label for="regPassword">Mật khẩu</label><div class="input-wrap"><input class="input has-toggle" id="regPassword" type="password" autocomplete="new-password" minlength="8" required><button type="button" class="toggle-password" data-toggle-password="regPassword">Hiện</button></div></div>
+          <button class="btn" type="submit" data-label="Đăng ký">Đăng ký</button>
+        </form>
+        <div class="links"><a href="#" data-view="login">← Đăng nhập</a></div>
+      </section>
+
+      <section id="forgot" class="view">
+        <h2>Quên mật khẩu</h2><p class="sub">Nhập email tài khoản. Nếu email hợp lệ, MAGASIN sẽ gửi một liên kết đặt lại mật khẩu.</p>
+        <form id="forgotForm">
+          <div class="field"><label for="forgotEmail">Email</label><input class="input" id="forgotEmail" type="email" autocomplete="email" required></div>
+          <button class="btn" type="submit" data-label="Gửi liên kết đặt mật khẩu">Gửi liên kết đặt mật khẩu</button>
+        </form>
+        <p class="fine">Để bảo vệ tài khoản, hệ thống không xác nhận email có tồn tại hay không.</p>
+        <div class="links"><a href="#" data-view="login">← Đăng nhập</a></div>
+      </section>
+
+      <section id="resetChecking" class="view">
+        <div class="spinner" aria-hidden="true"></div><h2>Đang xác minh liên kết</h2><p class="sub">MAGASIN đang kiểm tra phiên khôi phục an toàn trước khi cho phép đổi mật khẩu.</p>
+      </section>
+
+      <section id="resetInvalid" class="view">
+        <h2>Liên kết không còn hợp lệ</h2>
+        <div class="status-box"><strong>Không thể mở phiên đặt lại mật khẩu.</strong><p id="resetInvalidText">Liên kết có thể đã hết hạn, đã được sử dụng hoặc không còn hợp lệ.</p></div>
+        <button id="resendResetBtn" class="btn" type="button">Gửi lại liên kết đặt mật khẩu</button>
+        <div class="links"><a href="#" data-view="login">← Đăng nhập</a></div>
+      </section>
+
+      <section id="reset" class="view">
+        <h2>Đặt mật khẩu mới</h2><p class="sub">Phiên khôi phục đã được xác minh. Hãy chọn mật khẩu mới có ít nhất 8 ký tự.</p>
+        <form id="resetForm">
+          <div class="field"><label for="newPassword">Mật khẩu mới</label><div class="input-wrap"><input class="input has-toggle" id="newPassword" type="password" autocomplete="new-password" minlength="8" required><button type="button" class="toggle-password" data-toggle-password="newPassword">Hiện</button></div></div>
+          <div class="field"><label for="confirmPassword">Nhập lại mật khẩu</label><div class="input-wrap"><input class="input has-toggle" id="confirmPassword" type="password" autocomplete="new-password" minlength="8" required><button type="button" class="toggle-password" data-toggle-password="confirmPassword">Hiện</button></div></div>
+          <button class="btn" type="submit" data-label="Cập nhật mật khẩu">Cập nhật mật khẩu</button>
+        </form>
+        <p class="fine">Liên kết khôi phục chỉ được dùng cho phiên hợp lệ hiện tại. Sau khi đổi thành công, bạn sẽ được đăng xuất khỏi phiên khôi phục và trở về màn hình đăng nhập.</p>
+      </section>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/03_PLATFORM/01_AUTH/auth-runtime-v2.js"></script>
+</body>
+</html>
