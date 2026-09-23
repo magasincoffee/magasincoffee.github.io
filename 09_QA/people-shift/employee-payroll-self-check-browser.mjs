@@ -42,7 +42,7 @@ try{
  await check("task104_employee_projection_hides_monetary_and_pay_rule_internals",async()=>{
    const text=await f.locator("#view-payroll").innerText();
    if(/pay_rule_reference|confirmed_work_source_revision|hourly_rate|gross_pay|net_pay/i.test(text))throw new Error(text);
-   if(/96\.000|80\.000|đ\b/.test(text))throw new Error("synthetic monetary value rendered: "+text);
+   if(/\d[\d.,]*\s*(?:đ|₫|VND)(?:\s|$)/i.test(text))throw new Error("synthetic monetary value rendered: "+text);
    if(!text.includes("Số tiền chưa hiển thị"))throw new Error(text);
    return "no monetary/pay-rule internals rendered";
  });
@@ -81,9 +81,12 @@ try{
  });
 
  await check("task104_manager_ui_is_read_only_and_does_not_expose_transition_controls",async()=>{
-   const text=await page.locator("#view-payroll-self-check").innerText();
-   if(/Finalize|Mark paid|Duyệt payroll|Chốt lương|Thanh toán lương/i.test(text))throw new Error(text);
+   const view=page.locator("#view-payroll-self-check");
+   const text=await view.innerText();
+   const controls=await view.locator("button").allInnerTexts();
+   if(controls.some(x=>/Finalize|Mark paid|Duyệt payroll|Chốt lương|Thanh toán lương/i.test(x)))throw new Error(JSON.stringify(controls));
    if(!text.includes("read-only")&&!text.includes("Read-only"))throw new Error(text);
+   if(!text.includes("Không cấp quyền review/finalize"))throw new Error("missing authority warning: "+text);
    return "Manager surface is scoped read-only; no review/finalize/paid controls";
  });
 
