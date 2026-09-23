@@ -6,6 +6,7 @@ let state={loading:false,error:null,row:null,ready:false};
 const roleText=v=>({STAFF:'Nhân viên',EMPLOYEE:'Nhân viên'}[String(v||'').toUpperCase()]||String(v||'—'));
 const statusText=v=>({ACTIVE:'Đang hoạt động',PENDING:'Chờ duyệt',INACTIVE:'Ngưng hoạt động'}[String(v||'').toUpperCase()]||String(v||'—'));
 const safeCode=e=>{const s=String(e?.message||e?.code||'PROFILE_REQUEST_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PROFILE_REQUEST_FAILED'};
+const validProjectionRow=r=>!!r&&!!String(r.employee_id||'').trim()&&['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())&&String(r.profile_status||'').toUpperCase()==='ACTIVE';
 function el(id){return doc()?.getElementById(id)||null}
 function setValue(id,value){const x=el(id);if(x)x.value=value==null||value===''?'—':String(value)}
 function clearValues(){for(const id of IDS)setValue(id,'—')}
@@ -50,6 +51,7 @@ async function refresh(){
   const q=await C.supabase.rpc('get_my_employee_profile_v1');
   if(q.error){state.loading=false;state.row=null;state.error=safeCode(q.error);render();return}
   const row=Array.isArray(q.data)?q.data[0]:q.data;
+  if(row&&!validProjectionRow(row)){state.loading=false;state.row=null;state.error='PROFILE_PROJECTION_INVALID';render();return}
   state.loading=false;state.error=null;state.row=row||null;render();
 }
 function init(){

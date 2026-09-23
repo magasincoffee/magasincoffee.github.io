@@ -6,6 +6,8 @@ let state={loading:false,error:null,rows:[],ready:false};
 const safeCode=e=>{const s=String(e?.message||e?.code||'PAYROLL_REQUEST_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PAYROLL_REQUEST_FAILED'};
 const stateText=v=>({ESTIMATED:'Ước tính',REVIEWED:'Đã review',FINALIZED:'Đã chốt',PAID:'Đã thanh toán'}[String(v||'').toUpperCase()]||String(v||'—'));
 const minutesText=v=>{const n=Number(v);if(!Number.isInteger(n)||n<0)return '—';const h=Math.floor(n/60),m=n%60;return m?h+' giờ '+m+' phút':h+' giờ'};
+const PAYROLL_STATES=new Set(['ESTIMATED','REVIEWED','FINALIZED','PAID']);
+const validProjectionRow=r=>!!r&&!!String(r.payroll_entry_id||'').trim()&&!!String(r.period_start||'').trim()&&!!String(r.period_end||'').trim()&&!!String(r.payroll_revision||'').trim()&&PAYROLL_STATES.has(String(r.state||'').toUpperCase())&&Number.isInteger(Number(r.confirmed_work_item_count))&&Number(r.confirmed_work_item_count)>=0&&Number.isInteger(Number(r.confirmed_work_minutes))&&Number(r.confirmed_work_minutes)>=0;
 function ensureCss(d){
   if(!d||d.getElementById('employee-payroll-self-check-v1-css'))return;
   const s=d.createElement('style');s.id='employee-payroll-self-check-v1-css';
@@ -59,7 +61,9 @@ async function refresh(){
   const q=await C.supabase.rpc('get_my_payroll_self_check_v1');
   state.loading=false;
   if(q.error){state.error=safeCode(q.error);state.rows=[];render();return}
-  state.error=null;state.rows=Array.isArray(q.data)?q.data:[];state.ready=true;render();
+  const rows=Array.isArray(q.data)?q.data:[];
+  if(rows.some(r=>!validProjectionRow(r))){state.error='PAYROLL_PROJECTION_INVALID';state.rows=[];state.ready=true;render();return}
+  state.error=null;state.rows=rows;state.ready=true;render();
 }
 function boot(attempt=0){
   if(!ensureUi()){if(attempt<20)setTimeout(()=>boot(attempt+1),25);return}
