@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SCHED-03 Employee Schedule UI QA</title></head>
+<body>
+<iframe id="employeeApp" title="SCHED-03 Employee Schedule UI QA" style="display:block;width:100%;min-height:1100px;border:0"></iframe>
+<script>
+(() => {
+  const calls=[],views=[],downstream=[],events=[];
+  const employee={id:'u-employee',full_name:'Nhân viên SCHED-03',username:'sched03',role:'STAFF',status:'ACTIVE'};
+  const other={id:'u-other',full_name:'Nhân viên khác',role:'STAFF',status:'ACTIVE'};
+  const stores={
+    'store-a':{id:'store-a',code:'CN1',name:'MAGASIN 94 Đường 3/2'},
+    'store-b':{id:'store-b',code:'CN2',name:'MAGASIN Nguyễn Văn Cừ'}
+  };
+  const state={today:'2026-09-23',fail:false,official:[
+    {schedule_id:'sch-today',user_id:employee.id,work_date:'2026-09-23',start_time:'06:00',end_time:'12:00',store_id:'store-a',status:'APPROVED',origin:'MANAGER_ASSIGNED'},
+    {schedule_id:'sch-future',user_id:employee.id,work_date:'2026-09-25',start_time:'17:00',end_time:'22:00',store_id:'store-b',status:'APPROVED',origin:'MANAGER_ASSIGNED'},
+    {schedule_id:'sch-other',user_id:other.id,work_date:'2026-09-24',start_time:'06:00',end_time:'12:00',store_id:'store-a',status:'APPROVED',origin:'MANAGER_ASSIGNED'},
+    {schedule_id:'sch-draft',user_id:employee.id,work_date:'2026-09-24',start_time:'12:00',end_time:'17:00',store_id:'store-a',status:'DRAFT',origin:'GENERATION'},
+    {schedule_id:'sch-next',user_id:employee.id,work_date:'2026-09-28',start_time:'12:00',end_time:'17:00',store_id:'store-a',status:'APPROVED',origin:'MANAGER_ASSIGNED'}
+  ]};
+  const pad=n=>String(n).padStart(2,'0');
+  const dateObj=k=>new Date(String(k).slice(0,10)+'T00:00:00Z');
+  const addDays=(k,n)=>{const d=dateObj(k);d.setUTCDate(d.getUTCDate()+n);return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())};
+  const monday=(k=state.today)=>{const d=dateObj(k),day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()-(day-1));return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())};
+  const weekDays=k=>Array.from({length:7},(_,i)=>addDays(k,i));
+  const formatDate=k=>{const p=String(k).slice(0,10).split('-');return p[2]+'/'+p[1]};
+  const time5=v=>String(v||'').slice(0,5);
+  const minutes=v=>Number(time5(v).slice(0,2))*60+Number(time5(v).slice(3,5));
+  const shiftKind=v=>minutes(v)<720?'morning':minutes(v)<1020?'afternoon':'evening';
+  const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function projection(week){
+    const end=addDays(week,6);
+    return state.official.filter(r=>r.user_id===employee.id&&r.status==='APPROVED'&&r.work_date>=week&&r.work_date<=end).map(r=>({
+      schedule_id:r.schedule_id,work_date:r.work_date,start_time:r.start_time,end_time:r.end_time,
+      store_id:r.store_id,store_code:stores[r.store_id].code,store_name:stores[r.store_id].name,status:r.status,origin:r.origin
+    }));
+  }
+  window.MAGASIN_CORE={
+    security:{escapeHtml},
+    time:{time5,minutes,shiftKind},
+    date:{dateKey:()=>state.today,addDays,monday,weekDays,formatDate},
+    roles:{label:{STAFF:'Nhân viên',EMPLOYEE:'Nhân viên'}},
+    ui:{toast:(message,type)=>calls.push({kind:'toast',message,type}),setLoading:(el,on=true)=>{if(el)el.dataset.loading=on?'1':'0'}},
+    supabase:{
+      async rpc(name,args={}){
+        calls.push({kind:'rpc',name,args:structuredClone(args||{})});
+        if(name==='list_my_approved_schedules_v2'){
+          if(state.fail)return {data:null,error:{message:'SQLSTATE_999 INTERNAL_QA_RAW'}};
+          return {data:projection(args.p_week_start),error:null};
+        }
+        return {data:null,error:{message:'UNEXPECTED_QA_RPC'}};
+      },
+      from(name){calls.push({kind:'from',name});throw new Error('DIRECT_TABLE_FORBIDDEN')}
+    }
+  };
+  window.MAGASIN_EMPLOYEE={
+    profile:employee,
+    events:{emit:(name,detail)=>events.push({name,detail:structuredClone(detail||{})})},
+    attendance:{async openSchedule(id,week){downstream.push({type:'attendance',id,week});return true}},
+    swap:{
+      async openGive(id,week){downstream.push({type:'give',id,week});return true},
+      async openSwap(id,week){downstream.push({type:'swap',id,week});return true}
+    },
+    availability:{open(){downstream.push({type:'availability'})}}
+  };
+  const frame=document.getElementById('employeeApp');
+  function frameHtml(){
+    return '<!doctype html><html lang="vi"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+
+      ':root{--muted:#718199}*{box-sizing:border-box}html,body{margin:0;width:100%;max-width:100%;overflow-x:hidden}body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:12px;background:#f4f7fb;color:#17243a}.panel{background:#fff;border:1px solid #dbe5f0;border-radius:16px;padding:16px}.header-user-text{display:none}.header-avatar{display:none}'+
+      '</style></head><body>'+
+      '<section id="view-dashboard"></section><section id="view-attendance"></section><section id="view-swap"></section>'+
+      '<section id="view-schedule" class="page-view active"><div class="panel schedule-main-panel"><div class="section-head"><h2>Lịch làm của tôi</h2><span class="pill">Đang tải…</span></div><div class="days"></div></div></section>'+
+      '<div class="header-user-text"><strong>Nhân viên</strong><span>Nhân viên</span></div><button class="header-avatar">N</button>'+
+      '<script>window.showView=function(v){parent.__SCHED03_QA.views.push(v)}<\/script>'+
+      '</body></html>';
+  }
+  function reloadFrame(){frame.srcdoc=frameHtml()}
+  window.__SCHED03_QA={
+    calls,views,downstream,events,state,employee,other,
+    reloadFrame,
+    setFail:v=>{state.fail=!!v},
+    transferAway:id=>{const r=state.official.find(x=>x.schedule_id===id);if(r)r.user_id=other.id},
+    restoreOwner:id=>{const r=state.official.find(x=>x.schedule_id===id);if(r)r.user_id=employee.id},
+    rpcCount:()=>calls.filter(x=>x.kind==='rpc'&&x.name==='list_my_approved_schedules_v2').length
+  };
+})();
+</script>
+<script src="/06_EMPLOYEE/schedule/engine-v1.js"></script>
+<script>window.__SCHED03_QA.reloadFrame()</script>
+</body>
+</html>
