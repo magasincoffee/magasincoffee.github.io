@@ -535,7 +535,65 @@
       "RAW_SUBMITTED_ATTENDANCE_NOT_PAYROLL_INPUT",
       "REJECTED_ATTENDANCE_NOT_PAYROLL_INPUT"
     ],
-    "calculation_implementation_task": "TASK-103"
+    "calculation_implementation_task": "TASK-103",
+    "contract_version": "PAYROLL_TRUTH_V1",
+    "period_contract": {
+      "required_fields": [
+        "period_start",
+        "period_end"
+      ],
+      "identity": "period_start + period_end",
+      "rules": [
+        "DATE_ONLY",
+        "START_LTE_END",
+        "CADENCE_UNSPECIFIED_DO_NOT_INFER"
+      ]
+    },
+    "pay_rule_reference_contract": {
+      "required_fields": [
+        "pay_rule_reference",
+        "pay_rule_validated"
+      ],
+      "reference_semantics": "OPAQUE_CANONICAL_REFERENCE_ONLY",
+      "validity_fact": "pay_rule_validated MUST be explicit true from an authorized pay-rule source",
+      "must_not_infer_from": [
+        "attendance.hourly_rate",
+        "attendance.amount",
+        "employee_grades.hourly_rate"
+      ]
+    },
+    "confirmed_work_time_input_contract": {
+      "source_type": "CONFIRMED_WORK_TIME",
+      "accepted_states": [
+        "CONFIRMED",
+        "REVISED"
+      ],
+      "rejected_inputs": [
+        "RAW_SUBMITTED_ATTENDANCE",
+        "REJECTED_ATTENDANCE",
+        "PLANNED_SCHEDULE",
+        "ATTENDANCE_AMOUNT"
+      ],
+      "current_live_projection": "attendance.status APPROVED or ADJUSTED with confirmed_start, confirmed_end and confirmed_minutes present"
+    },
+    "revision_identity_contract": {
+      "required_fields": [
+        "period_start",
+        "period_end",
+        "employee_id",
+        "payroll_revision"
+      ],
+      "semantics": "DETERMINISTIC_LOGICAL_IDENTITY",
+      "finalize_retry": "SAME_REVISION_MUST_NOT_CREATE_COMPETING_FINAL_TRUTH"
+    },
+    "authorization_contract": {
+      "finalization_actor": "PAYROLL_AUTHORIZED",
+      "live_actor_mapping": "UNRESOLVED_DO_NOT_INVENT_IN_TASK_102",
+      "employee_read_scope": "SELF_ONLY",
+      "manager_review": "EXPLICIT_PERMISSION_REQUIRED_IN_LATER_TASK"
+    },
+    "persistence_implementation_task": "TASK-103",
+    "calculation_payload_implementation_task": "TASK-103"
   },
   "invariants": [
     {
