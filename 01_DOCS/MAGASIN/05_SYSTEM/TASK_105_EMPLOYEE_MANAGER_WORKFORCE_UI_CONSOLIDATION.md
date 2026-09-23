@@ -65,6 +65,136 @@ Expected post-TASK-105 status:
 - E2E-13 remains PARTIAL / TASK-102+104 STATE+SELF-CHECK SIDE CLOSED / TASK-106 pending;
 - E2E-14 remains PARTIAL / TASK-101+104 PROFILE+PAYROLL-AUTH READ SIDE CLOSED / TASK-107 pending.
 
-## 6. Closure evidence
+## 6. Implementation identity
 
-Implementation head / PR / merge / exact post-merge CI and final live read-only reconciliation are recorded at closure.
+Implementation branch: `task-105-workforce-ui-consolidation-v1`
+
+Final implementation / PR head:
+
+`df969a3dfadfbe7ed304375169db26de9108d252`
+
+Implementation PR:
+
+**#272 — TASK-105: Employee + Manager Workforce UI Consolidation**
+
+Implementation merge:
+
+`a07e2c5ac61855e2cc24e208e4800bdd1e3a2d48`
+
+No migration was created or applied.
+
+## 7. PR-head gates
+
+PR-head People Shift:
+- run **35866302477**
+- job **107198647432**
+- SUCCESS
+
+PR-head SOP:
+- run **35866302481**
+- job **107198647595**
+- SUCCESS
+
+All deterministic regressions passed before merge and the browser pack remained green.
+
+## 8. Exact post-merge main gates
+
+Exact implementation main:
+
+`a07e2c5ac61855e2cc24e208e4800bdd1e3a2d48`
+
+Exact-main People Shift:
+- run **35866459893**
+- job **107199178920**
+- SUCCESS
+
+Exact-main SOP:
+- run **35866459899**
+- job **107199178990**
+- SUCCESS
+
+Exact-main deterministic totals:
+- Workforce contract: **77/77**
+- schedule-first: **9/9**
+- People Shift: **112/112**
+- Control Tower: **74/74**
+- total: **272/272**
+- failures: **0**
+
+Browser evidence includes:
+- `MANAGER_WORKFORCE_CANONICAL_BROWSER=PASS`
+- `task105_canonical_ui_removes_legacy_demand_route=PASS`
+- legacy demand tab count = 0
+- legacy demand panel count = 0
+- Manager label = `📅 Xếp lịch`
+- Swap/Give label = `🔄 Đổi / cho ca`
+- all TASK-095→104 browser regressions remained PASS
+- page/console/request/5xx diagnostics remained 0 in the canonical Manager browser.
+
+Pages:
+- source validation run **35866459728** / job **107199178097** — SUCCESS
+- build/deployment run **35866458141**
+- build job **107199179263** — SUCCESS
+- deploy job **107199274782** — SUCCESS
+
+The public crawler could not inspect the authenticated Manager deep-route response directly. Therefore live static-asset evidence is bounded to exact-main source + successful GitHub Pages validation/deployment; no authenticated browser behavior is inferred from crawler access.
+
+## 9. Final production read-only reconciliation
+
+At approximately **2026-09-23 20:24 +07**:
+- profiles = **7**
+- ACTIVE profiles = **4**
+- employee_constraints = **0**
+- payroll_entries = **0**
+- attendance = **0**
+- `get_my_employee_profile_v1`: anon EXECUTE = NO; authenticated EXECUTE = YES
+- `list_employee_profile_projection_v1`: anon EXECUTE = NO; authenticated EXECUTE = YES
+- `get_my_payroll_self_check_v1`: anon EXECUTE = NO; authenticated EXECUTE = YES
+- `list_scoped_payroll_self_check_v1`: anon EXECUTE = NO; authenticated EXECUTE = YES
+- `list_manager_attendance_review_v1`: anon EXECUTE = NO; authenticated EXECUTE = YES.
+
+Targeted database Security Advisor counts remain:
+- RLS enabled/no policy = **11**
+- mutable function search_path = **1**
+- anon-executable SECURITY DEFINER = **18**
+- authenticated-executable SECURITY DEFINER = **76**
+
+An additional leaked-password-protection Auth configuration warning is currently present. TASK-105 does not touch Auth configuration and does not claim that unrelated warning as introduced or resolved.
+
+No persistent fake production data was created. No production schema or data mutation was performed by TASK-105.
+
+## 10. Scope boundaries preserved
+
+TASK-105 did not:
+- invent monetary formula or pay-rate semantics;
+- invent payroll cadence;
+- invent PAYROLL_AUTHORIZED mapping;
+- invent overtime/break/rounding;
+- invent allowance/bonus/deduction semantics;
+- mutate payroll state;
+- re-enable staffing demand as a canonical Workforce prerequisite;
+- start TASK-106;
+- enable Workforce Robot;
+- modify PFC.
+
+## 11. Canonical handoff
+
+After closure:
+- TASK-105 = **DONE**
+- E2E-12 = **PARTIAL / TASK-102+103 SOURCE+INTEGRATION SIDE CLOSED / TASK-106 PENDING**
+- E2E-13 = **PARTIAL / TASK-102+104 STATE+SELF-CHECK SIDE CLOSED / TASK-106 PENDING**
+- E2E-14 = **PARTIAL / TASK-101+104 PROFILE+PAYROLL-AUTH READ SIDE CLOSED / TASK-107 PENDING**
+- TASK-106 = **READY / MANUAL_WORK**
+- Workforce current = **TASK-106**
+- Workforce next = **TASK-107**
+- TASK-106 has **not** started
+- Workforce Robot = **DISABLED**
+- PFC current = **TASK-068**
+- PFC next = **TASK-069**
+- PFC = **UNCHANGED**
+
+The closure merge SHA is recorded in the closure PR / Work return because a commit cannot contain its own future merge SHA.
+
+## TASK-105 result
+
+**DONE / CANONICAL ROUTES ONLY + REGRESSION GREEN / E2E-12+13+14 REMAIN PARTIAL AS CANONICALLY OWNED / POST-MERGE GREEN**
