@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import {authorizeWorkforceAccess} from "../../02_CORE/shared/workforce-operations-v1.mjs";
 
-const migrationUrl=new URL("../../07_DATABASE/migrations/20260923060000_task_101_employee_profile_projection_v1.sql",import.meta.url);
+const migrationUrl=new URL("../../07_DATABASE/migrations/20260923061225_task_101_employee_profile_projection_v1.sql",import.meta.url);
 const engineUrl=new URL("../../06_EMPLOYEE/profile/engine-v1.js",import.meta.url);
 const runtimeUrl=new URL("../../06_EMPLOYEE/runtime/employee-runtime-v1.html",import.meta.url);
 const appUrl=new URL("../../06_EMPLOYEE/app/employee-v40.html",import.meta.url);
