@@ -39,8 +39,9 @@ test("TASK-103 source query consumes reviewed confirmed work time only", async (
 test("TASK-103 never consumes legacy attendance payroll-like fields", async () => {
   const source = await sql();
   const executable = source
+    .replace(/comment on[\\s\\S]*?;/gi, "")
     .split("\n")
-    .filter((line) => !/^\s*--/.test(line) && !/^\s*comment on/i.test(line))
+    .filter((line) => !/^\s*--/.test(line))
     .join("\n");
   assert.doesNotMatch(executable, /a\.amount|attendance\.amount/i);
   assert.doesNotMatch(executable, /a\.hourly_rate|attendance\.hourly_rate/i);
