@@ -27,6 +27,7 @@ const mockSdk = String.raw`
   window.__authCalls = { exchange: 0, verify: 0, getSession: 0, update: 0, signOut: 0, reset: 0, signIn: 0 };
   window.__loginPassword = '';
   window.__updatedPassword = '';
+  const auditKey = '__auth_mock_audit';
 
   const storageKey = '__mock_supabase_session';
   const readSession = () => {
@@ -100,6 +101,7 @@ const mockSdk = String.raw`
           async signInWithPassword({ password }) {
             window.__authCalls.signIn += 1;
             window.__loginPassword = password;
+            localStorage.setItem(auditKey, JSON.stringify({ signIn: window.__authCalls.signIn, password }));
             session = makeSession();
             writeSession(session);
             return { data: { user: session.user, session }, error: null };
@@ -164,9 +166,9 @@ try {
     await page.fill('#password', 'NewPassword123');
     await page.click('#loginForm button[type="submit"]');
     await page.waitForURL('**/04_OWNER/**');
-    const loginCalls = await page.evaluate(() => ({ calls: window.__authCalls, password: window.__loginPassword }));
-    assert.equal(loginCalls.calls.signIn, 1);
-    assert.equal(loginCalls.password, 'NewPassword123');
+    const loginAudit = await page.evaluate(() => JSON.parse(localStorage.getItem('__auth_mock_audit')));
+    assert.equal(loginAudit.signIn, 1);
+    assert.equal(loginAudit.password, 'NewPassword123');
     await context.close();
   }
 
