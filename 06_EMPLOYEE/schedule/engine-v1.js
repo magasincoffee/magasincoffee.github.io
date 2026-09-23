@@ -213,7 +213,7 @@ function bind(d){
     const weekButton=e.target.closest?.('[data-schedule-week]');
     if(weekButton){
       const action=weekButton.dataset.scheduleWeek;
-      state.week=action==='prev'?add(state.week,-7):action==='next'?add(mon(),7):mon();
+      state.week=action==='prev'?add(state.week,-7):action==='next'?add(state.week,7):mon();
       state.notice=null;void refresh();return;
     }
     if(e.target.closest?.('[data-schedule-retry]')){void refresh();return}
