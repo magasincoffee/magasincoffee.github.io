@@ -4,7 +4,7 @@
 **Baseline:** `78653a591d86784c8a16cdcbcb24ac82ce8a9447`  
 **Scheduling gate:** `WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1`  
 **Execution mode:** MANUAL_WORK  
-**Implementation status:** PR READY / BRANCH GATES GREEN  
+**Implementation status:** DONE / POST-MERGE GREEN / PRODUCTION ASSETS DEPLOYED  
 **Scope guard:** no SCHED-04 Manager board; no SCHED-05 Owner UX; no TASK-108; Workforce Robot DISABLED; PFC unchanged.
 
 ## 1. Canonical truth preserved
@@ -152,13 +152,95 @@ Branch-head People Shift gate:
 - `PEOPLE_SHIFT_DAY10_BROWSER_E2E=PASS`
 - `CONTROL_TOWER_BROWSER_E2E=PASS`
 
-## 8. Closure pending
+## 8. Final implementation lineage
 
-Final PR/head/merge/exact-main/Pages/live-post-merge evidence and canonical closure SHA are appended only after all gates are green.
+- baseline main: `78653a591d86784c8a16cdcbcb24ac82ce8a9447`
+- implementation PR: **#285**
+- final PR head: `336319b5fb3cd68e4f5a38cb157d4c834fc429cb`
+- implementation merge: `e96098f8484685f224a13ea5a5bbee5887b9dbb4`
+- database migration: **NONE**
 
-Required handoff after DoD:
-- `SCHED-03 = DONE`
+Final PR-head:
+- People Shift run `35894008824`
+- job `107293276082`
+- conclusion **SUCCESS**
+- deterministic regression: **308/308**
+- targeted SCHED-03 Employee Schedule browser: PASS
+- full Give/Swap/Attendance/TASK-095→107/Manager/Day-10/Control Tower browser pack: PASS
+
+Exact implementation-main:
+- People Shift `35894187738 / 107293880804` — **SUCCESS**
+- deterministic regression: **308/308** = 77 Workforce + 9 schedule-first + 148 People Shift + 74 Control Tower
+- `SCHED_03_EMPLOYEE_SCHEDULE_CONTRACT=PASS`
+- `SCHED_03_EMPLOYEE_SCHEDULE_UI=PASS`
+- `EMPLOYEE_PUBLISHED_WEEKLY_SCHEDULE_BROWSER=PASS`
+- `TASK_099_EMPLOYEE_ATTENDANCE_UI=PASS`
+- `TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY=PASS`
+- `MANAGER_WORKFORCE_CANONICAL_BROWSER=PASS`
+- `PEOPLE_SHIFT_DAY10_BROWSER_E2E=PASS`
+- `CONTROL_TOWER_BROWSER_E2E=PASS`
+
+Exact implementation-main Pages:
+- source validation `35894187653 / 107293880794` — **SUCCESS**
+- build `35894185846 / 107293881251` — **SUCCESS**
+- deploy `35894185846 / 107293956273` — **SUCCESS**
+- report `35894185846 / 107293956262` — **SUCCESS**
+
+### Production read-only reconciliation
+
+After the implementation merge, using a real ACTIVE Staff identity:
+- current-week own published rows: 0
+- next-week own published rows: 0
+- total official `work_schedules`: 0
+- Availability rows: 7
+- generation runs: 4
+- generation assignments: 0
+- active Give requests: 0
+- active Swap requests: 0
+- canonical V2 Employee reader authenticated: YES
+- legacy `get_my_schedule()` authenticated: NO
+- legacy V1 schedule reader authenticated: NO
+- direct authenticated `work_schedules` SELECT/INSERT/UPDATE: NO / NO / NO
+- latest database migration remains `20260923163337_sched_02_three_role_scheduling_authority_lock_v1`
+
+Security Advisor database profile is unchanged from SCHED-02:
+- RLS enabled/no policy: 11
+- mutable search_path: 1
+- anon SECURITY DEFINER executable: 13
+- authenticated SECURITY DEFINER executable: 66
+- leaked-password protection warning: 1, unrelated auth configuration
+
+No fake Employee, Availability, published schedule, Give or Swap row was created by SCHED-03.
+
+### Production Pages smoke
+
+Public production assets after deployment confirm:
+- unauthenticated `/06_EMPLOYEE/` correctly redirects to canonical Auth;
+- `/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20260923-sched03` is served;
+- `/06_EMPLOYEE/schedule/engine-v1.js?v=20260923-sched03` is served with the SCHED-03 official Schedule shell, mobile breakpoints, seven-day labels, V2 reader, stale preflight and downstream bindings.
+
+Production has no official Employee shifts, so a live authenticated shift-card mutation test was intentionally not fabricated. Current-owner/stale-transfer action behavior is proven through executable deterministic browser fixtures and existing lifecycle regressions.
+
+## 9. Closure / handoff
+
+`SCHED-03 = DONE`.
+
+Canonical Employee Schedule UI is now:
+- one active V2 reader;
+- own published/current schedule projection only;
+- Availability visibly separated as input;
+- current schedule identity bound privately to each shift;
+- Give/Swap/Attendance revalidated against server truth before handoff;
+- stale transferred shift removed before downstream action;
+- mobile 390px+ and desktop responsive;
+- technical backend identifiers/errors hidden from Employee;
+- no new scheduling writer, migration or client-side authority.
+
+Next:
 - `SCHED-04 = READY / MANUAL_WORK`
+- `SCHED-05 = BLOCKED_BEHIND_SCHED_04`
 - TASK-108 remains `PAUSED_BEHIND_SCHED_GATE`
 - Workforce Robot remains DISABLED
-- PFC remains unchanged.
+- PFC remains unchanged at `TASK-068 → TASK-069`
+
+The canonical closure SHA is recorded after the state-only closure PR is merged.
