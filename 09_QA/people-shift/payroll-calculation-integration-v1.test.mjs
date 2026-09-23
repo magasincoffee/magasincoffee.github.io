@@ -39,7 +39,7 @@ test("TASK-103 source query consumes reviewed confirmed work time only", async (
 test("TASK-103 never consumes legacy attendance payroll-like fields", async () => {
   const source = await sql();
   const executable = source
-    .replace(/comment on[\\s\\S]*?;/gi, "")
+    .replace(/comment on[\s\S]*?;/gi, "")
     .split("\n")
     .filter((line) => !/^\s*--/.test(line))
     .join("\n");
