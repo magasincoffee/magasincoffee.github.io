@@ -64,13 +64,13 @@ test("Direct save only persists DRAFT and does not auto validate review or publi
   assert.doesNotMatch(save,/validate_schedule_generation_v1/);
   assert.doesNotMatch(save,/review_schedule_generation/);
   assert.doesNotMatch(save,/publish_schedule_generation/);
-  assert.match(save,/Không auto-review, không auto-publish/);
+  assert.match(save,/Hãy kiểm tra xung đột trước khi duyệt/);
 });
 
 test("Manager direct board supports source availability plus add remove edit save and resume",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   assert.match(draft,/Employee Availability/);
-  assert.match(draft,/Monday → Sunday Schedule Board/);
+  assert.match(draft,/Lịch đang xếp · Thứ Hai → Chủ Nhật/);
   assert.match(draft,/data-add-av/);
   assert.match(draft,/data-remove/);
   assert.match(draft,/data-f="start_time"/);
@@ -83,7 +83,7 @@ test("Manager direct board supports source availability plus add remove edit sav
 test("Existing validation review publish hooks remain explicit downstream controls",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   for(const rpc of ["validate_schedule_generation_v1","review_schedule_generation","publish_schedule_generation","get_manager_weekly_schedule"])assert.match(draft,new RegExp(rpc),rpc);
-  assert.match(draft,/Review \/ Publish hiện hữu — downstream, không phải prerequisite/);
+  assert.match(draft,/Sau khi lưu bản nháp: kiểm tra xung đột → duyệt → phát hành/);
 });
 
 test("TASK-094 Manager board delegates create/resume and validation idempotency to server primitives",async()=>{
@@ -92,7 +92,7 @@ test("TASK-094 Manager board delegates create/resume and validation idempotency 
   const createEnd=draft.indexOf("function sourceHtml()",createStart);
   const create=draft.slice(createStart,createEnd);
   assert.match(create,/create_schedule_generation/);
-  assert.match(create,/Server đã tạo hoặc resume đúng một DRAFT canonical/);
+  assert.match(create,/Đã mở đúng một bản nháp cho cửa hàng và tuần đã chọn/);
   assert.doesNotMatch(create,/if\(drafts\.length\)\{/);
 
   const resumeStart=draft.indexOf("async function resumeOnly()");
