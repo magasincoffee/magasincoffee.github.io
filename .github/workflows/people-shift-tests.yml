@@ -170,6 +170,12 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/workforce-payroll-cross-flow-browser.mjs
 
+      - name: Run TASK-107 Workforce failure recovery security E2E
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/workforce-failure-recovery-security-browser.mjs
+
       - name: Run Manager Workforce canonical browser E2E
         env:
           QA_BASE_URL: http://127.0.0.1:8767
