@@ -242,6 +242,96 @@ export function validatePayrollTruthTransition({ from_state, to_state, actor = "
   return validateTransition("PAYROLL", from_state, to_state, actor);
 }
 
+
+export function buildPayrollEstimateBasisV1({
+  period_start,
+  period_end,
+  employee_id,
+  payroll_revision,
+  pay_rule_reference,
+  pay_rule_validated = false,
+  confirmed_work_time_rows = []
+} = {}) {
+  const identity = payrollRevisionIdentity({ period_start, period_end, employee_id, payroll_revision });
+  if (!identity.ok) return identity;
+
+  const payRule = validatePayRuleReference({ pay_rule_reference, pay_rule_validated });
+  if (!payRule.ok) return payRule;
+
+  if (!Array.isArray(confirmed_work_time_rows) || confirmed_work_time_rows.length === 0) {
+    return fail("PAYROLL_CONFIRMED_WORK_TIME_REQUIRED");
+  }
+
+  const employeeId = identity.detail.employee_id;
+  const revisions = new Set();
+  const accepted = [];
+
+  for (const row of confirmed_work_time_rows) {
+    if (!row || typeof row !== "object") return fail("PAYROLL_CONFIRMED_WORK_TIME_ROW_INVALID");
+
+    const rowEmployeeId = row.employee_id == null ? "" : String(row.employee_id).trim();
+    if (rowEmployeeId !== employeeId) {
+      return fail("PAYROLL_CONFIRMED_WORK_TIME_EMPLOYEE_MISMATCH");
+    }
+
+    const workDate = typeof row.work_date === "string" ? row.work_date.trim() : "";
+    if (!validDateKey(workDate)) return fail("PAYROLL_CONFIRMED_WORK_DATE_INVALID");
+    if (workDate < identity.detail.period_start || workDate > identity.detail.period_end) {
+      return fail("PAYROLL_CONFIRMED_WORK_OUTSIDE_PERIOD");
+    }
+
+    const state = normalize(row.confirmed_work_time_state);
+    const source = validatePayrollSource({
+      source_type: "CONFIRMED_WORK_TIME",
+      confirmed_work_time_state: state
+    });
+    if (!source.ok) return source;
+
+    const minutes = Number(row.confirmed_minutes);
+    if (!Number.isInteger(minutes) || minutes < 0) {
+      return fail("PAYROLL_CONFIRMED_MINUTES_INVALID");
+    }
+
+    const revision = row.revision_identity == null ? "" : String(row.revision_identity).trim();
+    if (!revision) return fail("PAYROLL_CONFIRMED_WORK_REVISION_REQUIRED");
+    if (revisions.has(revision)) return fail("PAYROLL_CONFIRMED_WORK_REVISION_DUPLICATE");
+    revisions.add(revision);
+
+    accepted.push({
+      work_date: workDate,
+      confirmed_minutes: minutes,
+      confirmed_work_time_state: state,
+      revision_identity: revision
+    });
+  }
+
+  accepted.sort((a, b) => {
+    const dateCmp = a.work_date.localeCompare(b.work_date);
+    return dateCmp || a.revision_identity.localeCompare(b.revision_identity);
+  });
+
+  const totalMinutes = accepted.reduce((sum, row) => sum + row.confirmed_minutes, 0);
+  const sourceRevisions = accepted.map((row) => row.revision_identity);
+
+  return ok({
+    state: "ESTIMATED",
+    logical_identity: identity.detail.logical_identity,
+    employee_id: employeeId,
+    payroll_revision: identity.detail.payroll_revision,
+    payroll_period: {
+      period_start: identity.detail.period_start,
+      period_end: identity.detail.period_end
+    },
+    pay_rule_reference: payRule.detail.pay_rule_reference,
+    source_type: "CONFIRMED_WORK_TIME",
+    confirmed_work_item_count: accepted.length,
+    confirmed_work_minutes: totalMinutes,
+    source_revisions: sourceRevisions,
+    monetary_amount: null,
+    monetary_amount_reason: "CANONICAL_PAY_RULE_EVALUATOR_UNRESOLVED"
+  });
+}
+
 export function diagnosticForAttendancePolicy(policy = {}) {
   const hasDeviation = Number.isFinite(policy.deviation_minutes) && policy.deviation_minutes >= 0;
   const autoApproval = policy.auto_approval === true;
