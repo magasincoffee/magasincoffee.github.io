@@ -64,26 +64,26 @@ test("Direct save only persists DRAFT and does not auto validate review or publi
   assert.doesNotMatch(save,/validate_schedule_generation_v1/);
   assert.doesNotMatch(save,/review_schedule_generation/);
   assert.doesNotMatch(save,/publish_schedule_generation/);
-  assert.match(save,/Không auto-review, không auto-publish/);
+  assert.match(save,/Hãy kiểm tra xung đột trước khi duyệt/);
 });
 
 test("Manager direct board supports source availability plus add remove edit save and resume",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   assert.match(draft,/Employee Availability/);
-  assert.match(draft,/Monday → Sunday Schedule Board/);
+  assert.match(draft,/Lịch đang xếp · Thứ Hai → Chủ Nhật/);
   assert.match(draft,/data-add-av/);
   assert.match(draft,/data-remove/);
   assert.match(draft,/data-f="start_time"/);
   assert.match(draft,/data-f="end_time"/);
   assert.match(draft,/id="msdSave"/);
-  assert.match(draft,/listDrafts\(\)/);
+  assert.match(draft,/listGenerations\(\)/);
   assert.match(draft,/state\.duplicateDrafts/);
 });
 
 test("Existing validation review publish hooks remain explicit downstream controls",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
-  for(const rpc of ["validate_schedule_generation_v1","review_schedule_generation","publish_schedule_generation"])assert.match(draft,new RegExp(rpc),rpc);
-  assert.match(draft,/Review \/ Publish hiện hữu — downstream, không phải prerequisite/);
+  for(const rpc of ["validate_schedule_generation_v1","review_schedule_generation","publish_schedule_generation","get_manager_weekly_schedule"])assert.match(draft,new RegExp(rpc),rpc);
+  assert.match(draft,/Sau khi lưu bản nháp: kiểm tra xung đột → duyệt → phát hành/);
 });
 
 test("TASK-094 Manager board delegates create/resume and validation idempotency to server primitives",async()=>{
@@ -92,22 +92,22 @@ test("TASK-094 Manager board delegates create/resume and validation idempotency 
   const createEnd=draft.indexOf("function sourceHtml()",createStart);
   const create=draft.slice(createStart,createEnd);
   assert.match(create,/create_schedule_generation/);
-  assert.match(create,/Server đã tạo hoặc resume đúng một DRAFT canonical/);
+  assert.match(create,/Đã mở đúng một bản nháp cho cửa hàng và tuần đã chọn/);
   assert.doesNotMatch(create,/if\(drafts\.length\)\{/);
 
   const resumeStart=draft.indexOf("async function resumeOnly()");
   const resumeEnd=draft.indexOf("async function startOrResume()",resumeStart);
   const resume=draft.slice(resumeStart,resumeEnd);
-  assert.match(resume,/drafts\.length>1/);
+  assert.match(resume,/runs\.length>1/);
   assert.match(resume,/generationStatus='CONFLICT'/);
-  assert.match(resume,/fail-closed/);
+  assert.match(resume,/khóa thao tác/);
 
   assert.match(draft,/MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY/);
   assert.match(draft,/AVAILABILITY_MISMATCH/);
   assert.match(draft,/GENERATION_VERSION_CONFLICT/);
   assert.match(draft,/already_reviewed/);
   assert.match(draft,/already_published/);
-  assert.match(draft,/Canonical validation/);
+  assert.match(draft,/state\.lastValidation=q\.data\?\.valid\?'VALID':'INVALID'/);
 });
 
 test("Legacy demand stays isolated from canonical direct scheduling path",async()=>{
@@ -135,4 +135,29 @@ test("Manager deep-links use canonical runtime",async()=>{
     assert.equal(source.includes("manager-runtime-v1.html"),true);
     assert.equal(source.includes("manager-v13-runtime.html"),false);
   }
+});
+
+
+test("SCHED-04 reload resumes DRAFT REVIEWED or PUBLISHED through one canonical active generation",async()=>{
+  const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
+  assert.match(draft,/async function listGenerations\(\)/);
+  assert.match(draft,/\['DRAFT','REVIEWED','PUBLISHED'\]/);
+  assert.match(draft,/if\(state\.generationStatus==='PUBLISHED'\)await loadOfficialRows\(\)/);
+  assert.match(draft,/get_manager_weekly_schedule/);
+  assert.match(draft,/officialRows/);
+});
+
+test("SCHED-04 Manager UI hides technical generation identity and raw backend diagnostics",async()=>{
+  const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
+  assert.doesNotMatch(draft,/Generation \$\{esc\(state\.generationId/);
+  assert.match(draft,/Không hiển thị ID kỹ thuật/);
+  assert.doesNotMatch(draft,/hit\[1\]\+' \('\+hit\[0\]/);
+  assert.match(draft,/Không thể hoàn tất thao tác\. Hãy tải lại dữ liệu và thử lại\./);
+});
+
+test("SCHED-04 legacy Lich-lam route wraps canonical Workforce surface only",async()=>{
+  const legacy=await read("05_MANAGER/Lich-lam/index.html");
+  assert.match(legacy,/manager-runtime-v1\.html\?v=20260924-sched04#workforce/);
+  assert.doesNotMatch(legacy,/manager-v13-runtime/);
+  assert.doesNotMatch(legacy,/draft-publish-v1\.js/);
 });

@@ -227,7 +227,7 @@ await check("e2e03_malformed_payload_is_rejected_and_manager_gets_diagnostic",as
   await page.evaluate(async()=>{await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.validate()});
   const text=await page.locator("#msdStatus").innerText();
   await page.evaluate(()=>{globalThis.__MW31_QA.state.assignments=globalThis.__MW31_QA.__saved;delete globalThis.__MW31_QA.__saved});
-  if(!text.includes("ASSIGNMENT_OVERLAP"))throw new Error(text);
+  if(!text.includes("Một nhân viên đang bị xếp ca trùng giờ")||text.includes("ASSIGNMENT_OVERLAP"))throw new Error(text);
   const official=await page.evaluate(()=>globalThis.__MW31_QA.state.official.length);
   if(official!==0)throw new Error("official writes="+official);
   return "server malformed rejection + visible ASSIGNMENT_OVERLAP diagnostic";
