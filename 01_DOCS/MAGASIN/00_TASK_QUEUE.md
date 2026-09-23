@@ -168,13 +168,33 @@ TASK-066 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_066_OP
 TASK-067 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_067_OPERATING_COST_TRUTH_CONTRACT_V1_EVIDENCE.md`. Source-agnostic Operating Cost Truth V1 reuses Financial Truth and separates exact recognized cost from payment, settlement proceeds, allocation context and budget context. ACTUAL exact items require actuality/period/amount/scope proof; ACTUAL PERIOD_AGGREGATE requires COMPLETE proven coverage; shared-company branch allocation requires explicit approval; historical source periods cannot become current ACTUAL. Existing Partial Financial Baseline compatibility is proven without changing Profit formula. PR #204 final head `4c9bbc2b99dd272a6f707ce2ebd422988cef9223`, merge `6233fc587921ba44a0b61a662b6b316ade8292c2`; PR-head run `35515915305` and exact post-merge run `35515946855` succeeded on Node v20.20.2 with TASK-067 31/31 and full Business OS 385/385 / 0 fail. TASK-067 DONE; TASK-068 READY / AUTO_CONTINUE.
 
 
+## Workforce Scheduling Production Readiness V1 — HARD GATE ACTIVE
+
+Canonical SoT: `05_SYSTEM/WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1_SOURCE_OF_TRUTH.md`
+
+| ID | Scope | Status |
+|---|---|---|
+| SCHED-01 | Production blocker repair + canonical reconciliation | **DONE** |
+| SCHED-02 | Role + authority lock | **READY / MANUAL_WORK** |
+| SCHED-03 | Employee Schedule UI V1 | BLOCKED_BEHIND_SCHED_02 |
+| SCHED-04 | Manager Scheduling V1 | BLOCKED |
+| SCHED-05 | Owner Scheduling V1 | BLOCKED |
+| SCHED-06 | Three-role synchronization | BLOCKED |
+| SCHED-07 | Professional UI/UX + responsive pass | BLOCKED |
+| SCHED-08 | Live three-role E2E acceptance | BLOCKED |
+| SCHED-09 | Production reconciliation + canonical closure | BLOCKED |
+
+SCHED-01 evidence: `05_SYSTEM/SCHED_01_PRODUCTION_BLOCKER_REPAIR_CANONICAL_RECONCILIATION.md`. Implementation PR #281 merged as `d0f0069ec4060dacf2de4ca6f695b969066b517f`; production migration `20260923160755_sched_01_production_blocker_repair_v1` is live; exact-main People Shift `35887441525 / 107271085777` and Pages gates are green; live duplicate active generation groups = 0.
+
+Current scheduling cursor: **SCHED-02 → SCHED-03**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
+
 ## Workforce Operations V1 — MANUAL_WORK RELEASED / ROBOT DISABLED
 
 Canonical architecture: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md`  
 Execution plan: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md`  
 E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 
-> Architecture is Owner-approved. Owner released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090→TASK-107 are DONE. TASK-107 Workforce Failure / Recovery / Security E2E is DONE with evidence at 05_SYSTEM/TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY_E2E.md. E2E-12 is CLOSED; E2E-13 is CLOSED; E2E-14 is CLOSED. TASK-108 is READY / MANUAL_WORK but has not started and MUST NOT auto-run. Current PFC queue remains independently authoritative.
+> Architecture is Owner-approved. Owner released Workforce Operations V1 for DIRECT MANUAL WORK execution only. Robot remains disabled for this track. TASK-090→TASK-107 are DONE. TASK-107 Workforce Failure / Recovery / Security E2E is DONE with evidence at 05_SYSTEM/TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY_E2E.md. E2E-12 is CLOSED; E2E-13 is CLOSED; E2E-14 is CLOSED. TASK-108 is PAUSED_BEHIND_SCHED_GATE / MANUAL_WORK, has not started, and MUST NOT auto-run. Current PFC queue remains independently authoritative.
 
 | ID | Task | Est. | Gate | Status |
 |---|---|---:|---|---|
@@ -196,7 +216,7 @@ E2E acceptance: `05_SYSTEM/WORKFORCE_OPERATIONS_V1_E2E_ACCEPTANCE_CONTRACT.md`
 | TASK-105 | Employee + Manager Workforce UI Consolidation | 20m | canonical routes only + regression | DONE |
 | TASK-106 | Workforce Cross-Flow Browser E2E Pack | 20m | E2E-01→E2E-16 | DONE |
 | TASK-107 | Workforce Failure / Recovery / Security E2E | 20m | retry/reload/idempotency/RBAC | DONE |
-| TASK-108 | Workforce Final Regression + Post-Merge E2E Recheck | 20m | PR-head + exact-main + cold/reload E2E | READY / MANUAL_WORK |
+| TASK-108 | Workforce Final Regression + Post-Merge E2E Recheck | 20m | PR-head + exact-main + cold/reload E2E | PAUSED_BEHIND_SCHED_GATE / MANUAL_WORK |
 
 TASK-094 completion evidence: `05_SYSTEM/TASK_094_SCHEDULE_VALIDATION_PUBLISH_GATE_V1.md`. Implementation PR #239 merged as `083606b268c0da4026c3637c150481ac422e6581`; exact post-merge gate exposed an attendance iframe lifecycle race, repaired on the same TASK-094 branch in PR #240 and merged as `2ed75c6e3237b91fb4cb403a237015541a39d956`. Final exact-main People Shift run `35635895604` / job `106453100188` succeeded on Node v20.20.2 with 182/182 deterministic checks, all 8 browser suites, E2E-03 STRONG, E2E-05 STRONG and 0 failures. Final live reconciliation retained the legacy duplicate DRAFT group fail-closed without cleanup. TASK-094 DONE; TASK-095 READY / MANUAL_WORK. Workforce Robot remains disabled; PFC remains TASK-068 → TASK-069.
 TASK-095 completion evidence: `05_SYSTEM/TASK_095_EMPLOYEE_PUBLISHED_WEEKLY_SCHEDULE_V1.md`. Implementation PR #245 final head `d08fa9fef785755b309384a8247fac737fa663c1` merged as `6e5617bae5cea60473f4aa1546295016ee0f174b`. PR-head People Shift run `35677658047` / job `106587440586` and exact post-merge run `35677762865` / job `106587761948` both succeeded on Node v20.20.2 with 187/187 deterministic checks, all 9 browser suites, E2E-04 STRONG and 0 failures. Production migration `20260922015212_task_095_employee_published_weekly_schedule_v1` remains live; canonical Employee reader is own-user/APPROVED/exact-week scoped; schedule notification trigger creates no new CLOCK_OUT_REMINDER and has no new security-advisor finding. TASK-095 DONE; TASK-096 READY / MANUAL_WORK. Workforce Robot remains disabled; PFC remains TASK-068 → TASK-069.
