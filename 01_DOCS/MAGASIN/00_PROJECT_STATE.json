@@ -17,7 +17,7 @@
     "production_private_data_in_git": false,
     "red_actions_require_owner": true
   },
-  "last_updated": "2026-09-22",
+  "last_updated": "2026-09-23",
   "owner_boundary": {
     "task": "TASK-050",
     "resolved": [
@@ -1469,7 +1469,7 @@
       "conclusion": "E2E_14_CLOSED_FAILURE_RECOVERY_SECURITY_POST_MERGE_GREEN"
     },
     "task_108": {
-      "status": "READY",
+      "status": "PAUSED_BEHIND_SCHED_GATE",
       "execution_mode": "MANUAL_WORK",
       "robot_may_execute": false,
       "task_108_not_started": true
@@ -1989,5 +1989,64 @@
       "interrupted_attempt_credit_policy": "ZERO",
       "next_task_status": "BLOCKED_UNTIL_MIG_006_QUALIFIES"
     }
+  },
+  "workforce_scheduling_production_readiness": {
+    "id": "WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1",
+    "status": "HARD_GATE_ACTIVE",
+    "execution_mode": "MANUAL_WORK",
+    "current_task": "SCHED-02",
+    "next_task": "SCHED-03",
+    "task_01": {
+      "status": "DONE",
+      "evidence": "01_DOCS/MAGASIN/05_SYSTEM/SCHED_01_PRODUCTION_BLOCKER_REPAIR_CANONICAL_RECONCILIATION.md",
+      "baseline": "906dd7688dd45b8b46733b920ec8d264a3d2bcdc",
+      "production_migration": "20260923160755_sched_01_production_blocker_repair_v1",
+      "implementation_pull_request": 281,
+      "final_pr_head": "a5ee2ed673aaad68c6827f33b4752c6e8d394824",
+      "implementation_merge": "d0f0069ec4060dacf2de4ca6f695b969066b517f",
+      "pr_head_people_shift_run_id": 35887265500,
+      "pr_head_people_shift_job_id": 107270491986,
+      "post_merge_people_shift_run_id": 35887441525,
+      "post_merge_people_shift_job_id": 107271085777,
+      "pages_validation_run_id": 35887441512,
+      "pages_validation_job_id": 107271088697,
+      "pages_deployment_run_id": 35887440313,
+      "pages_deployment_job_id": 107271156826,
+      "root_cause": "SQLSTATE_42702_RETURNS_TABLE_OUTPUT_VARIABLE_AMBIGUITY",
+      "duplicate_active_generation_groups_before": 1,
+      "duplicate_active_generation_groups_after": 0,
+      "production_fake_scheduling_data_created": false,
+      "active_manager_identity_present": false,
+      "security_advisor_database_counts": "RLS_NO_POLICY_11_SEARCHPATH_1_ANON_SD_18_AUTH_SD_76_UNCHANGED",
+      "conclusion": "PRODUCTION_BLOCKER_REPAIRED_CANONICAL_PATH_RECONCILED"
+    },
+    "task_02": {
+      "status": "READY",
+      "execution_mode": "MANUAL_WORK"
+    },
+    "task_03": {
+      "status": "BLOCKED_BEHIND_SCHED_02"
+    },
+    "task_04": {
+      "status": "BLOCKED"
+    },
+    "task_05": {
+      "status": "BLOCKED"
+    },
+    "task_06": {
+      "status": "BLOCKED"
+    },
+    "task_07": {
+      "status": "BLOCKED"
+    },
+    "task_08": {
+      "status": "BLOCKED"
+    },
+    "task_09": {
+      "status": "BLOCKED"
+    },
+    "task_108": "PAUSED_BEHIND_SCHED_GATE",
+    "robot_may_execute": false,
+    "pfc": "UNCHANGED_TASK_068_TO_TASK_069"
   }
 }
