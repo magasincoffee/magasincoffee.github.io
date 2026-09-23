@@ -82,7 +82,7 @@ test("Manager direct board supports source availability plus add remove edit sav
 
 test("Existing validation review publish hooks remain explicit downstream controls",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
-  for(const rpc of ["validate_schedule_generation_v1","review_schedule_generation","publish_schedule_generation"])assert.match(draft,new RegExp(rpc),rpc);
+  for(const rpc of ["validate_schedule_generation_v1","review_schedule_generation","publish_schedule_generation","get_manager_weekly_schedule"])assert.match(draft,new RegExp(rpc),rpc);
   assert.match(draft,/Review \/ Publish hiện hữu — downstream, không phải prerequisite/);
 });
 
@@ -135,4 +135,29 @@ test("Manager deep-links use canonical runtime",async()=>{
     assert.equal(source.includes("manager-runtime-v1.html"),true);
     assert.equal(source.includes("manager-v13-runtime.html"),false);
   }
+});
+
+
+test("SCHED-04 reload resumes DRAFT REVIEWED or PUBLISHED through one canonical active generation",async()=>{
+  const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
+  assert.match(draft,/async function listGenerations\(\)/);
+  assert.match(draft,/\['DRAFT','REVIEWED','PUBLISHED'\]/);
+  assert.match(draft,/if\(state\.generationStatus==='PUBLISHED'\)await loadOfficialRows\(\)/);
+  assert.match(draft,/get_manager_weekly_schedule/);
+  assert.match(draft,/officialRows/);
+});
+
+test("SCHED-04 Manager UI hides technical generation identity and raw backend diagnostics",async()=>{
+  const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
+  assert.doesNotMatch(draft,/Generation \$\{esc\(state\.generationId/);
+  assert.match(draft,/Không hiển thị ID kỹ thuật/);
+  assert.doesNotMatch(draft,/hit\[1\]\+' \('\+hit\[0\]/);
+  assert.match(draft,/Không thể hoàn tất thao tác\. Hãy tải lại dữ liệu và thử lại\./);
+});
+
+test("SCHED-04 legacy Lich-lam route wraps canonical Workforce surface only",async()=>{
+  const legacy=await read("05_MANAGER/Lich-lam/index.html");
+  assert.match(legacy,/manager-runtime-v1\.html\?v=20260924-sched04#workforce/);
+  assert.doesNotMatch(legacy,/manager-v13-runtime/);
+  assert.doesNotMatch(legacy,/draft-publish-v1\.js/);
 });
