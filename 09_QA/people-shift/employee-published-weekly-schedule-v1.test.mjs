@@ -8,10 +8,12 @@ const read=p=>fs.readFile(new URL("../../"+p,import.meta.url),"utf8");
 test("TASK-095 Employee schedule uses one canonical APPROVED reader and hardened iframe/request state",async()=>{
   const source=await read("06_EMPLOYEE/schedule/engine-v1.js");
   assert.match(source,/list_my_approved_schedules_v2/);
-  assert.match(source,/p_week_start:requestedWeek/);
+  assert.match(source,/async function readWeek\(week\)/);
+  assert.match(source,/p_week_start:week/);
+  assert.match(source,/readWeek\(requestedWeek\)/);
   assert.doesNotMatch(source,/get_my_schedule/);
   assert.doesNotMatch(source,/\.from\(/);
-  assert.match(source,/!d\.body\|\|d\.body\.dataset\.employeeScheduleEngine/);
+  assert.match(source,/d\.body\.dataset\.employeeScheduleEngine/);
   assert.match(source,/pending\?\.week===requestedWeek/);
   assert.match(source,/requestSeq/);
   assert.match(source,/requestedWeek!==state\.week/);

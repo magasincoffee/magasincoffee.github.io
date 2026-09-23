@@ -195,7 +195,11 @@
             return { data: { published: false, error_code: 'NOT_REVIEWED' }, error: null };
           }
           state.generation.status = 'PUBLISHED';
-          state.official = state.assignments.map(row => ({ ...row, status: 'APPROVED' }));
+          state.official = state.assignments.map((row,index) => ({
+            ...row,
+            schedule_id: 'schedule-qa-' + (index + 1),
+            status: 'APPROVED'
+          }));
           return {
             data: { published: true, inserted_schedule_count: state.official.length },
             error: null

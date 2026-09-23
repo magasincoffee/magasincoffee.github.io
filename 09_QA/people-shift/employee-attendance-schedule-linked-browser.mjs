@@ -56,11 +56,14 @@ try{
     await f.locator("#employeeAttendanceEnd").fill("12:10");
     await page.evaluate(()=>globalThis.__TASK099_QA.transferAway());
     await f.locator("#employeeAttendanceSubmit").click();
-    await f.locator("#employeeAttendanceMessage").filter({hasText:"ATTENDANCE_NOT_CURRENT_OWNER"}).waitFor({timeout:10000});
+    await f.locator("#employeeAttendanceMessage").filter({hasText:"Ca này đã được chuyển cho người khác"}).waitFor({timeout:10000});
+    const code=await f.locator("#employeeAttendanceMessage").getAttribute("data-error-code");
+    const visible=await f.locator("#employeeAttendanceMessage").innerText();
+    if(code!=="ATTENDANCE_NOT_CURRENT_OWNER"||visible.includes("ATTENDANCE_NOT_CURRENT_OWNER"))throw new Error(JSON.stringify({code,visible}));
     await f.locator("[data-attendance-empty='1']").waitFor();
     const s=await page.evaluate(()=>({attendance:globalThis.__TASK099_QA.state.attendance,owner:globalThis.__TASK099_QA.state.scheduleOwner,calls:globalThis.__TASK099_QA.calls.map(x=>x.name).filter(Boolean)}));
     if(s.attendance!==null||s.owner!=="u-a")throw new Error(JSON.stringify(s));
-    return "stale submit denied; UI refresh removes transferred schedule";
+    return "stale submit denied; friendly UI refresh removes transferred schedule";
   });
 
   await check("task099_no_direct_table_or_legacy_mutation_path",async()=>{

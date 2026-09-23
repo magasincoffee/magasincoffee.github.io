@@ -40,7 +40,8 @@ function setMessage(text,type='info',code=''){
   const p=panel();if(!p)return;
   let e=p.querySelector('#employeeAttendanceMessage');
   if(!e){e=p.ownerDocument.createElement('div');e.id='employeeAttendanceMessage';e.setAttribute('role','status');e.style.cssText='margin-top:10px;padding:10px 12px;border-radius:10px;font-size:12px';p.appendChild(e)}
-  e.textContent=text+(code?' · Mã: '+code:'');
+  e.textContent=text;
+  if(code)e.dataset.errorCode=code;else delete e.dataset.errorCode;
   const tones={success:['#e3f3ea','#176d49'],error:['#fff0f0','#9a3838'],info:['#eef7ff','#235dba']};
   const t=tones[type]||tones.info;e.style.background=t[0];e.style.color=t[1];
 }
@@ -146,7 +147,20 @@ function bind(d){
 }
 function boot(attempt=0){const d=doc();if(!d?.body){if(attempt<20)setTimeout(()=>boot(attempt+1),25);return}void refresh()}
 function init(){const f=host();if(!f||f.dataset.attendanceEngine==='1')return;f.dataset.attendanceEngine='1';f.addEventListener('load',()=>boot(),{once:false});boot()}
+async function openSchedule(scheduleId,week){
+  if(week)state.week=week;
+  state.selectedScheduleId=scheduleId||null;
+  await loadWeek();
+  const current=state.schedules.find(r=>String(r.schedule_id)===String(scheduleId||''));
+  if(!current){
+    setMessage('Ca này không còn thuộc lịch chính thức của bạn. Dữ liệu đã được làm mới.','error','ATTENDANCE_NOT_CURRENT_OWNER');
+    return false;
+  }
+  state.selectedScheduleId=current.schedule_id;
+  render();
+  return true;
+}
 globalThis.MAGASIN_EMPLOYEE=globalThis.MAGASIN_EMPLOYEE||{};
-globalThis.MAGASIN_EMPLOYEE.attendance={refresh,getWeek:()=>state.week,getRows:()=>state.schedules.slice()};
+globalThis.MAGASIN_EMPLOYEE.attendance={refresh,openSchedule,getWeek:()=>state.week,getRows:()=>state.schedules.slice(),getSelectedScheduleId:()=>state.selectedScheduleId};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
