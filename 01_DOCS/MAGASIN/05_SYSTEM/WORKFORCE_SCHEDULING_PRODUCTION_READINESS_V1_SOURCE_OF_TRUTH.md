@@ -297,11 +297,12 @@ On activation of this SoT:
 
 ```text
 priority_gate = WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1
-current_sched_task = SCHED-03
-next_sched_task = SCHED-04
+current_sched_task = SCHED-04
+next_sched_task = SCHED-05
 SCHED-01 = DONE
 SCHED-02 = DONE
-SCHED-03 = READY / MANUAL_WORK
+SCHED-03 = DONE
+SCHED-04 = READY / MANUAL_WORK
 unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
 TASK-108 = PAUSED_BEHIND_SCHED_GATE
 Workforce Robot = DISABLED
@@ -344,6 +345,28 @@ Canonical evidence:
 - production has no ACTIVE STORE_MANAGER and no fake Manager was created.
 
 SCHED-03 now owns the next sequential gate: Employee Schedule UI V1. The overall Scheduling Production Readiness gate remains **ACTIVE**.
+
+## 13C. SCHED-03 closure checkpoint
+
+SCHED-03 closed after the Employee Schedule UI was consolidated onto the canonical V2 published-schedule reader without adding scheduling authority or database state.
+
+Canonical evidence:
+- evidence: `05_SYSTEM/SCHED_03_EMPLOYEE_SCHEDULE_UI_V1.md`;
+- baseline: `78653a591d86784c8a16cdcbcb24ac82ce8a9447`;
+- implementation PR #285;
+- final PR head `336319b5fb3cd68e4f5a38cb157d4c834fc429cb`;
+- implementation merge `e96098f8484685f224a13ea5a5bbee5887b9dbb4`;
+- PR-head People Shift `35894008824 / 107293276082` — SUCCESS;
+- exact-main People Shift `35894187738 / 107293880804` — SUCCESS with 308/308 deterministic checks;
+- exact-main Pages validation `35894187653 / 107293880794` — SUCCESS;
+- exact-main Pages deployment `35894185846 / 107293956273` — SUCCESS;
+- production V2 real-Employee read path: PASS / empty current and next week because production has no official shifts;
+- legacy Employee schedule readers remain denied;
+- direct browser `work_schedules` SELECT/INSERT/UPDATE remain denied;
+- no SCHED-03 migration or fake production scheduling data;
+- Security Advisor database counts remain 11/1/13/66.
+
+SCHED-04 now owns the next sequential gate: Manager Scheduling V1. The overall Scheduling Production Readiness gate remains **ACTIVE**.
 
 ## 14. Canonical precedence
 
