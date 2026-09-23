@@ -40,7 +40,8 @@ function setMessage(text,type='info',code=''){
   const p=panel();if(!p)return;
   let e=p.querySelector('#employeeAttendanceMessage');
   if(!e){e=p.ownerDocument.createElement('div');e.id='employeeAttendanceMessage';e.setAttribute('role','status');e.style.cssText='margin-top:10px;padding:10px 12px;border-radius:10px;font-size:12px';p.appendChild(e)}
-  e.textContent=text+(code?' · Mã: '+code:'');
+  e.textContent=text;
+  if(code)e.dataset.errorCode=code;else delete e.dataset.errorCode;
   const tones={success:['#e3f3ea','#176d49'],error:['#fff0f0','#9a3838'],info:['#eef7ff','#235dba']};
   const t=tones[type]||tones.info;e.style.background=t[0];e.style.color=t[1];
 }
