@@ -17,7 +17,9 @@
   bridge.src='/05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js?v=20260903-manager-structure1';
   bridge.async=false;
   document.head.appendChild(bridge);
-  frame.src='/05_MANAGER/runtime/manager-shell-v1.html?v=20260903-manager-structure1';
+  const allowedRouteHash=new Set(['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check']);
+  const routeHash=allowedRouteHash.has(location.hash.slice(1))?location.hash:'';
+  frame.src='/05_MANAGER/runtime/manager-shell-v1.html?v=20260923-task105'+routeHash;
   frame.addEventListener('load',function(){
     try{
       const d=frame.contentDocument;

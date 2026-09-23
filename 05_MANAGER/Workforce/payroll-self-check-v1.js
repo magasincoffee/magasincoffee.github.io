@@ -22,7 +22,7 @@ function ensureUi(){
  ensureCss();
  let btn=document.querySelector('.nav [data-view="payroll-self-check"]');
  if(!btn){
-   btn=document.createElement('button');btn.dataset.view='payroll-self-check';btn.textContent='💰 Payroll';
+   btn=document.createElement('button');btn.dataset.view='payroll-self-check';btn.textContent='💰 Công / Lương';
    btn.addEventListener('click',()=>{activate();void refresh()});
    const att=document.querySelector('.nav [data-view="attendance"]');
    if(att?.parentNode)att.parentNode.insertBefore(btn,att.nextSibling);else document.querySelector('.nav')?.appendChild(btn);
@@ -40,7 +40,7 @@ function activate(){
  ensureUi();
  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('view-payroll-self-check')?.classList.add('active');
  document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.view==='payroll-self-check'));
- const t=document.getElementById('pageTitle'),s=document.getElementById('pageSub');if(t)t.textContent='Payroll';if(s)s.textContent='Read-only theo phạm vi cửa hàng';
+ const t=document.getElementById('pageTitle'),s=document.getElementById('pageSub');if(t)t.textContent='Công / Lương';if(s)s.textContent='Read-only theo phạm vi cửa hàng';
  document.getElementById('sidebar')?.classList.remove('open');
 }
 function render(){

@@ -18,6 +18,19 @@ page.on("response",r=>{if(r.status()>=500)report.request_failures.push(`HTTP ${r
 await page.goto(`${BASE}/09_QA/people-shift/manager-workforce-canonical-fixture.html`,{waitUntil:"networkidle"});
 await page.locator("#panel-publish .msd").waitFor();
 
+await page.waitForFunction(()=>globalThis.__MAGASIN_MANAGER_WORKFORCE_UI_CONSOLIDATED_V1__===true);
+
+await check("task105_canonical_ui_removes_legacy_demand_route",async()=>{
+  const state=await page.evaluate(()=>({
+    demandTab:document.querySelectorAll('[data-tab="demand"]').length,
+    demandPanel:document.querySelectorAll('#panel-demand').length,
+    workforceLabel:document.querySelector('[data-view="workforce"]')?.textContent||'',
+    swapLabel:document.querySelector('[data-view="swap"]')?.textContent||''
+  }));
+  if(state.demandTab!==0||state.demandPanel!==0||!state.workforceLabel.includes('Xếp lịch')||!state.swapLabel.includes('Đổi / cho ca'))throw new Error(JSON.stringify(state));
+  return JSON.stringify(state);
+});
+
 await check("sunday_defaults_to_exact_next_week_without_creating_draft",async()=>{
   const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
   const raw=await page.evaluate(()=>globalThis.__MW31_QA.state);
