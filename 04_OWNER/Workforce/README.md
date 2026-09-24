@@ -2,6 +2,8 @@
 
 SCHED-05 makes Owner Scheduling an enterprise oversight/exception projection over the same canonical scheduling engine used by Manager.
 
+Manager remains the daily scheduler. Owner policy oversight is reserved for exception handling and enterprise attention; intervention still uses the same canonical state machine and never creates a parallel daily scheduling truth.
+
 ## Canonical active path
 
 ```text
