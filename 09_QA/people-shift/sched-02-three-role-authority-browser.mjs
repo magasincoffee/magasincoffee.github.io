@@ -84,7 +84,7 @@ try{
     await owner.locator('#panel-publish').filter({hasText:'Chi CN2'}).waitFor();
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error(text);
-    const calls=await owner.evaluate(()=>globalThis.__SCHED01_OWNER_QA.calls);
+    const calls=await owner.evaluate(()=>globalThis.__SCHED05_OWNER_QA.calls);
     if(calls.some(x=>x.kind==='from'))throw new Error('direct table call');
     return 'Owner store-b canonical writer read; no stale store-a projection';
   });
