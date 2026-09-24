@@ -73,7 +73,7 @@ try {
 
   const employee = page.frameLocator("#employeeApp");
 
-  await page.waitForSelector("#owpGenerate");
+  await page.waitForSelector("#panel-publish .msd");
   await employee.locator("body[data-employee-availability-engine='1']").waitFor();
   await employee.locator("body[data-employee-schedule-engine='1']").waitFor();
 
@@ -81,9 +81,9 @@ try {
     const loaded = await page.evaluate(() => ({
       availability: typeof globalThis.MAGASIN_EMPLOYEE?.availability?.refresh === "function",
       schedule: typeof globalThis.MAGASIN_EMPLOYEE?.schedule?.refresh === "function",
-      ownerPublish: Boolean(document.querySelector("#owpGenerate"))
+      ownerScheduling: Boolean(document.querySelector(".msd[data-scheduling-actor='OWNER']"))
     }));
-    if (!loaded.availability || !loaded.schedule || !loaded.ownerPublish) {
+    if (!loaded.availability || !loaded.schedule || !loaded.ownerScheduling) {
       throw new Error(JSON.stringify(loaded));
     }
     return JSON.stringify(loaded);
@@ -118,12 +118,17 @@ try {
     return JSON.stringify(saved[0]);
   });
 
-  await check("owner_generate_requires_registered_availability", async () => {
-    await page.locator('[data-week="next"]').click();
-    await page.locator("#owpWeek").filter({ hasText: "21/09/2026" }).waitFor();
-    await page.locator("#owpGenerate").click();
-    await page.locator("#owpSummary").filter({ hasText: "DRAFT" }).waitFor();
-    await page.locator("#owpDraft").filter({ hasText: "Nhân viên QA" }).waitFor();
+  await check("owner_draft_requires_registered_availability", async () => {
+    await page.locator("#msdReload").click();
+    await page.locator(".msd-source-row").filter({ hasText: "Nhân viên QA" }).waitFor();
+    await page.locator("#msdStart").click();
+    await page.waitForFunction(() => globalThis.__PEOPLE_SHIFT_QA.state.generation?.status === "DRAFT");
+    await page.locator(".msd-source-row").filter({ hasText: "Nhân viên QA" }).locator("[data-add-av]").click();
+    await page.locator("#msdSave").click();
+    await page.waitForFunction(() =>
+      globalThis.__PEOPLE_SHIFT_QA.calls.some(call => call.name === "replace_schedule_generation_assignments") &&
+      globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy === false
+    );
     const state = await page.evaluate(() => ({
       status: globalThis.__PEOPLE_SHIFT_QA.state.generation?.status,
       weekStart: globalThis.__PEOPLE_SHIFT_QA.state.generation?.week_start,
@@ -141,12 +146,14 @@ try {
     return JSON.stringify(state);
   });
 
-  await check("owner_review_generation", async () => {
-    await page.locator("#owpReview").click();
-    await page.locator("#owpSummary").filter({ hasText: "REVIEWED" }).waitFor();
-    const status = await page.evaluate(() => globalThis.__PEOPLE_SHIFT_QA.state.generation?.status);
-    if (status !== "REVIEWED") throw new Error(`status=${status}`);
-    return status;
+  await check("owner_validate_review_generation", async () => {
+    await page.locator("#msdValidate").click();
+    await page.locator("#msdStatus").filter({ hasText: "Lịch không có xung đột chặn phát hành" }).waitFor();
+    await page.locator("#msdReview").click();
+    await page.waitForFunction(() => globalThis.__PEOPLE_SHIFT_QA.state.generation?.status === "REVIEWED");
+    const text = await page.locator("#panel-publish").innerText();
+    if (!text.includes("ĐÃ DUYỆT")) throw new Error(text);
+    return "REVIEWED";
   });
 
   page.once("dialog", async (dialog) => {
@@ -154,9 +161,9 @@ try {
   });
 
   await check("owner_publish_official_schedule", async () => {
-    await page.locator("#owpPublish").click();
-    await page.locator("#owpMsg").filter({ hasText: "Đã phát hành 1 ca" }).waitFor();
-    await page.locator("#owpOfficial").filter({ hasText: "Nhân viên QA" }).waitFor();
+    await page.locator("#msdPublish").click();
+    await page.waitForFunction(() => globalThis.__PEOPLE_SHIFT_QA.state.generation?.status === "PUBLISHED");
+    await page.locator(".msd-official-row").filter({ hasText: "Nhân viên QA" }).waitFor();
     const state = await page.evaluate(() => ({
       status: globalThis.__PEOPLE_SHIFT_QA.state.generation?.status,
       official: globalThis.__PEOPLE_SHIFT_QA.state.official.length
@@ -184,9 +191,12 @@ try {
     );
     const required = [
       "save_my_availability",
-      "auto_generate_schedule_generation",
+      "create_schedule_generation",
+      "replace_schedule_generation_assignments",
+      "validate_schedule_generation_v1",
       "review_schedule_generation",
       "publish_schedule_generation",
+      "get_manager_weekly_schedule",
       "list_my_approved_schedules_v2"
     ];
     let cursor = -1;

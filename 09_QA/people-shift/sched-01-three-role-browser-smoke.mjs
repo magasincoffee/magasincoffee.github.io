@@ -13,24 +13,24 @@ async function check(name,fn){
 try {
   const owner=await context.newPage();
   await check('owner_publish_loads_without_ambiguous_rpc_error',async()=>{
-    await owner.goto(base+'/09_QA/people-shift/sched-01-owner-workforce-publish-fixture.html');
-    await owner.locator('.owp').waitFor();
+    await owner.goto(base+'/09_QA/people-shift/sched-05-owner-scheduling-fixture.html');
+    await owner.locator('.msd').waitFor();
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('Không tải được Workforce Publish')||text.includes('ambiguous'))throw new Error(text);
-    if(!text.includes('Nhân viên Owner QA A'))throw new Error('Owner initial draft missing');
-    const calls=await owner.evaluate(()=>window.__SCHED01_OWNER_QA.calls.map(x=>x.name));
-    for(const name of ['list_schedule_generations','get_schedule_generation_assignments','get_manager_weekly_schedule'])if(!calls.includes(name))throw new Error('missing '+name);
+    if(!text.includes('An CN1')||!text.includes('Owner Scheduling · Giám sát & can thiệp'))throw new Error('Owner canonical scheduling surface missing');
+    const calls=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.map(x=>x.name));
+    for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
     return calls.join(',');
   });
 
   await check('owner_store_switch_reloads_same_canonical_read_path_without_leak',async()=>{
-    const before=await owner.evaluate(()=>window.__SCHED01_OWNER_QA.calls.length);
-    await owner.locator('[data-store="store-b"]').click();
-    await owner.locator('#panel-publish').filter({hasText:'Nhân viên Owner QA B'}).waitFor();
+    const before=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.length);
+    await owner.locator('#msdStore').selectOption('store-b');
+    await owner.locator('#panel-publish').filter({hasText:'Chi CN2'}).waitFor();
     const text=await owner.locator('#panel-publish').innerText();
-    if(text.includes('Nhân viên Owner QA A')||text.includes('Nhân viên chính thức A'))throw new Error('cross-store stale content: '+text);
-    const calls=await owner.evaluate(before=>window.__SCHED01_OWNER_QA.calls.slice(before),before);
-    const scoped=calls.filter(x=>['list_schedule_generations','get_manager_weekly_schedule'].includes(x.name));
+    if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error('cross-store stale content: '+text);
+    const calls=await owner.evaluate(before=>window.__SCHED05_OWNER_QA.calls.slice(before),before);
+    const scoped=calls.filter(x=>['get_manager_weekly_availability','list_schedule_generations'].includes(x.name));
     if(scoped.length<2||scoped.some(x=>x.args.p_store_id!=='store-b'))throw new Error(JSON.stringify(calls));
     return 'store-b scoped reload';
   });

@@ -115,6 +115,12 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/sched-04-manager-scheduling-browser.mjs
 
+      - name: Run SCHED-05 Owner Scheduling V1 browser E2E
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/sched-05-owner-scheduling-browser.mjs
+
       - name: Run Employee Swap browser regression
         env:
           QA_BASE_URL: http://127.0.0.1:8767

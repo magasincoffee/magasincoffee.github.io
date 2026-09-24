@@ -9,6 +9,7 @@ const employeeAvailability=read('06_EMPLOYEE/availability/engine-v1.js');
 const employeeSchedule=read('06_EMPLOYEE/schedule/engine-v1.js');
 const ownerReview=read('04_OWNER/Workforce/02-review/engine-v1.js');
 const ownerPublish=read('04_OWNER/Workforce/03-publish/engine-v1.js');
+const ownerRuntime=read('04_OWNER/Workforce/runtime/owner-workforce-runtime.html');
 
 function fnBody(name,next){
   const start=migration.indexOf('create or replace function public.'+name);
@@ -104,13 +105,14 @@ test('SCHED-02 Employee browser surfaces use only self RPCs for scheduling truth
   assert.doesNotMatch(combined,/\.from\(['"](?:work_schedules|employee_availability|schedule_generation_runs|schedule_generation_assignments)['"]\)/);
 });
 
-test('SCHED-02 Owner legacy UI is compatibility-only because server authority is revoked',()=>{
+test('SCHED-02 revoked Owner legacy authority stays inactive after SCHED-05 UI cleanup',()=>{
   assert.match(ownerReview,/manager_update_employee_availability/);
-  assert.match(ownerPublish,/auto_generate_schedule_generation/);
   assert.match(migration,/manager_update_employee_availability[\s\S]*DEPRECATED/i);
   assert.match(migration,/auto_generate_schedule_generation[\s\S]*DEPRECATED AS ACTIVE WRITER/i);
-  assert.match(ownerPublish,/review_schedule_generation/);
-  assert.match(ownerPublish,/publish_schedule_generation/);
+  assert.match(ownerRuntime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=20260924-sched05/);
+  assert.doesNotMatch(ownerRuntime,/02-review\/engine-v1\.js|03-publish\/engine-v1\.js|01-demand\/engine-v1\.js/);
+  assert.match(ownerPublish,/compatibility wrapper/);
+  assert.doesNotMatch(ownerPublish,/auto_generate_schedule_generation|review_schedule_generation|publish_schedule_generation/);
 });
 
 console.log('SCHED_02_THREE_ROLE_SCHEDULING_AUTHORITY_LOCK=PASS');

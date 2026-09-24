@@ -1,27 +1,30 @@
-# Owner Workforce
+# MAGASIN Owner Workforce
 
-Theo DEC-003 / Five-Step Schedule-first, Owner Workforce **không còn là canonical daily scheduling owner**.
+SCHED-05 makes Owner Scheduling an enterprise oversight/exception projection over the same canonical scheduling engine used by Manager.
 
-Target responsibility của Owner:
+Manager remains the daily scheduler. Owner policy oversight is reserved for exception handling and enterprise attention; intervention still uses the same canonical state machine and never creates a parallel daily scheduling truth.
 
-- policy;
-- exception;
-- attention;
-- read-only/attention projection cần cho Owner decision.
+## Canonical active path
 
-Các engine hiện hữu:
+```text
+04_OWNER/Workforce/
+  → runtime/owner-workforce-runtime.html
+  → 05_MANAGER/Workforce/draft-publish-v1.js
+  → create / replace / validate / review / publish RPCs
+  → work_schedules
+```
 
-- `01-demand/`
-- `02-review/`
-- `03-publish/`
+Owner selects an authorized store and week. There is **no Owner-only scheduling writer** and no browser direct DML.
 
-được giữ tạm như **TRANSITIONAL IMPLEMENTATION REFERENCE** vì đang chứa behavior/RPC usage đã có test. TASK-031 sẽ reuse/consolidate phần cần thiết vào Manager daily scheduling flow trước khi loại các Owner scheduling surfaces khỏi active ownership.
+## OLD / NEW inventory
 
-Không thêm business logic scheduling mới vào folder này trong Schedule-first critical path.
+| Owner asset | SCHED-05 classification | Active authority |
+|---|---|---|
+| `runtime/owner-workforce-runtime.html` | **REPLACE/WIRE** to canonical writer | active Owner scheduling surface |
+| `03-publish/engine-v1.js` | **WRAP / DEPRECATE** | compatibility loader only; no mutation RPC implementation |
+| `02-review/engine-v1.js` | **DEPRECATE ACTIVE UI** | not loaded by Owner runtime; SCHED-02 server mutations already revoked |
+| `01-demand/engine-v1.js` | **DEPRECATE ACTIVE UI** | not loaded by Owner runtime; staffing mutators already server-revoked |
+| `05_MANAGER/Workforce/draft-publish-v1.js` | **REUSE** | sole Owner/Manager browser scheduling writer |
+| `work_schedules` | **KEEP** | single official/current assignment truth |
 
-Canonical contract:
-
-- `01_DOCS/MAGASIN/05_SYSTEM/SCHEDULE_FIRST_CANONICAL_FLOW_V1.md`
-- `02_CORE/contracts/schedule-first-flow.v1.json`
-
-Manager là daily scheduler. Robot chỉ tạo DRAFT/proposal; explicit Manager review/publish mới tạo lịch chính thức.
+Historical legacy files remain for lineage only and must not be reintroduced as active mutation paths.

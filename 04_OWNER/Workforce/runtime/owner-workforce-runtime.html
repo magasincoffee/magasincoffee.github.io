@@ -1,1 +1,84 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>MAGASIN · Owner · Workforce</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{display:block;width:100%;height:100%;border:0}</style></head><body><iframe id="app" title="MAGASIN Owner / Workforce"></iframe><script>(function(){'use strict';const frame=document.getElementById('app');const load=(d,src)=>new Promise((ok,no)=>{if([...d.scripts].some(s=>(s.src||'').split('?')[0]===src.split('?')[0]))return ok();const s=d.createElement('script');s.src=src;s.async=true;s.onload=ok;s.onerror=no;(d.body||d.documentElement).appendChild(s)});const loadMany=async(d,list)=>{for(const x of list)await load(d,x)};const boot=async()=>{try{const d=frame.contentDocument;if(!d)return;await loadMany(d,['/02_CORE/shared/shared-core-v1.js?v=20260903-core-structure1','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','/05_MANAGER/runtime/compat/ui/manager-ui-source-header-suppress-v1.js?v=20260903-owner-workforce1','/05_MANAGER/runtime/compat/ui/manager-ui-shell-v3.js?v=20260903-owner-workforce1','/05_MANAGER/runtime/compat/ui/manager-ui-header-fix-v1.js?v=20260903-owner-workforce1','/05_MANAGER/runtime/compat/workforce/manager-workforce-day-header-fix-v2.js?v=20260903-owner-workforce1','/05_MANAGER/runtime/compat/workforce/manager-workforce-layout-v2.js?v=20260903-owner-workforce1','/05_MANAGER/runtime/compat/workforce/manager-workforce-tabs-v2.js?v=20260903-owner-workforce1','/02_CORE/ui/app-time-picker-24h.js?v=20260903-owner-workforce1','/04_OWNER/Access/owner-access-nav-v1.js?v=20260917-owner-access1','/04_OWNER/Workforce/01-demand/engine-v1.js?v=20260903-wfd1']);const hideLegacy=()=>{const w=d.querySelector('#view-workforce');if(!w)return false;w.querySelector('#panel-review')?.replaceChildren();w.querySelector('#panel-publish')?.replaceChildren();return true};const wire=()=>{const view=d.querySelector('#view-workforce');if(!view||view.dataset.ownerWorkforce1==='1')return false;view.dataset.ownerWorkforce1='1';hideLegacy();let reviewLoaded=false,publishLoaded=false;const review=async()=>{hideLegacy();if(reviewLoaded)return;reviewLoaded=true;await load(d,'/04_OWNER/Workforce/02-review/engine-v1.js?v=20260903-wfr1')};const pub=async()=>{hideLegacy();if(publishLoaded)return;publishLoaded=true;await load(d,'/04_OWNER/Workforce/03-publish/engine-v1.js?v=20260903-wfp1')};view.addEventListener('click',e=>{const b=e.target.closest?.('button[data-tab]');if(!b)return;const k=b.dataset.tab;if(k==='demand')hideLegacy();if(k==='review')review().catch(console.error);if(k==='publish')pub().catch(console.error)},true);return true};const ready=()=>wire()||setTimeout(ready,100);ready();const security=()=>{if([...d.scripts].some(x=>(x.src||'').includes('security-runtime.js')))return;const s=d.createElement('script');s.src='/02_CORE/security/security-runtime.js?v=20260903-owner-workforce1';s.async=true;(d.body||d.documentElement).appendChild(s)};setTimeout(security,300)}catch(e){console.error('Owner Workforce runtime failed',e)}};frame.addEventListener('load',boot,{once:true});frame.src='/05_MANAGER/runtime/manager-shell-v1.html?v=20260903-manager-structure1'})();</script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>MAGASIN · Owner · Scheduling</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{display:block;width:100%;height:100%;border:0}</style>
+</head>
+<body>
+<iframe id="app" title="MAGASIN Owner / Scheduling"></iframe>
+<script>
+(function(){
+'use strict';
+const frame=document.getElementById('app');
+const load=(d,src)=>new Promise((ok,no)=>{
+  if([...d.scripts].some(s=>(s.src||'').split('?')[0]===src.split('?')[0]))return ok();
+  const s=d.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;(d.body||d.documentElement).appendChild(s)
+});
+const loadMany=async(d,list)=>{for(const src of list)await load(d,src)};
+function ownerCss(d){
+  if(d.getElementById('owner-scheduling-v1-css'))return;
+  d.head.insertAdjacentHTML('beforeend',`<style id="owner-scheduling-v1-css">
+  .owner-sched-scope{margin:0 0 14px;padding:14px 16px;border:1px solid #bdd9e7;border-radius:14px;background:linear-gradient(135deg,#f2fbfd,#f7fbff)}
+  .owner-sched-scope strong{display:block;font-size:14px}
+  .owner-sched-scope span{display:block;margin-top:5px;color:var(--muted);font-size:12px;line-height:1.45}
+  .owner-sched-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+  .owner-sched-tags i{font-style:normal;font-size:10px;font-weight:800;padding:5px 8px;border-radius:999px;background:#fff;border:1px solid #cfe1ec;color:#315e76}
+  #view-workforce>.tabs{margin-top:0}
+  @media(max-width:800px){.owner-sched-scope{padding:12px}.owner-sched-tags{gap:5px}}
+  </style>`);
+}
+function prepareOwnerSurface(d){
+  const view=d.querySelector('#view-workforce');
+  if(!view)return false;
+  d.defaultView.__MAGASIN_SCHEDULING_ACTOR__='OWNER';
+  ownerCss(d);
+  d.querySelector('.sidebar [data-view="workforce"]')?.click();
+  d.getElementById('pageTitle')&&(d.getElementById('pageTitle').textContent='Owner Scheduling');
+  d.getElementById('pageSub')&&(d.getElementById('pageSub').textContent='Giám sát toàn hệ thống · can thiệp theo cửa hàng khi cần');
+  const heading=view.querySelector(':scope > .row h2');
+  if(heading)heading.textContent='Owner Scheduling';
+  const sub=view.querySelector(':scope > .row .muted');
+  if(sub)sub.textContent='Enterprise oversight trên cùng canonical scheduling truth với Manager.';
+  const badge=view.querySelector(':scope > .row .badge');
+  if(badge)badge.textContent='Enterprise oversight';
+  let scope=view.querySelector('#ownerSchedulingScope');
+  if(!scope){
+    scope=d.createElement('section');
+    scope.id='ownerSchedulingScope';
+    scope.className='owner-sched-scope';
+    scope.innerHTML='<strong>Giám sát & can thiệp theo cửa hàng</strong><span>Owner có thể chọn cửa hàng, xem Availability, bản nháp và lịch chính thức. Khi cần can thiệp, mọi thao tác vẫn dùng cùng DRAFT → Validate → Review → Publish và cùng work_schedules; không có Owner writer riêng.</span><div class="owner-sched-tags"><i>Enterprise scope</i><i>Selected-store control</i><i>One canonical writer</i><i>No direct table DML</i></div>';
+    view.querySelector('.tabs')?.before(scope);
+  }
+  const tabs=view.querySelector('.tabs');
+  if(tabs)tabs.innerHTML='<button class="active" data-tab="publish" aria-current="page">Lịch & can thiệp</button>';
+  const demand=view.querySelector('#panel-demand');if(demand){demand.replaceChildren();demand.classList.remove('active');demand.hidden=true}
+  const review=view.querySelector('#panel-review');if(review){review.replaceChildren();review.classList.remove('active');review.hidden=true}
+  const publish=view.querySelector('#panel-publish');if(publish){publish.hidden=false;publish.classList.add('active');publish.innerHTML='<section class="card"><div class="muted">Đang tải Owner Scheduling canonical…</div></section>'}
+  return !!publish;
+}
+async function boot(){
+  try{
+    const d=frame.contentDocument;if(!d)return;
+    await loadMany(d,[
+      '/02_CORE/shared/shared-core-v1.js?v=20260903-core-structure1',
+      'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+      '/05_MANAGER/runtime/compat/ui/manager-ui-source-header-suppress-v1.js?v=20260903-owner-workforce1',
+      '/05_MANAGER/runtime/compat/ui/manager-ui-shell-v3.js?v=20260903-owner-workforce1',
+      '/05_MANAGER/runtime/compat/ui/manager-ui-header-fix-v1.js?v=20260903-owner-workforce1',
+      '/04_OWNER/Access/owner-access-nav-v1.js?v=20260917-owner-access1'
+    ]);
+    let tries=0;while(!prepareOwnerSurface(d)&&tries++<80)await new Promise(r=>setTimeout(r,100));
+    if(!d.querySelector('#panel-publish'))throw new Error('OWNER_SCHEDULING_PANEL_NOT_READY');
+    await load(d,'/05_MANAGER/Workforce/draft-publish-v1.js?v=20260924-sched05');
+    setTimeout(()=>{if(![...d.scripts].some(x=>(x.src||'').includes('security-runtime.js'))){const s=d.createElement('script');s.src='/02_CORE/security/security-runtime.js?v=20260903-owner-workforce1';s.async=true;(d.body||d.documentElement).appendChild(s)}},300);
+  }catch(e){console.error('Owner Scheduling runtime failed',e)}
+}
+frame.addEventListener('load',boot,{once:true});
+frame.src='/05_MANAGER/runtime/manager-shell-v1.html?v=20260924-sched05';
+})();
+</script>
+</body>
+</html>

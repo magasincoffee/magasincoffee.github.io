@@ -55,9 +55,9 @@ test('SCHED-01 reconciliation preserves history and prevents active split-brain'
 test('ONE canonical scheduling path is wired across Owner Manager Employee',()=>{
   assert.match(sot,/work_schedules \/ canonical published assignment truth/);
   assert.match(ownerRuntime,/\/05_MANAGER\/runtime\/manager-shell-v1\.html/);
-  for(const rpc of ['list_schedule_generations','get_schedule_generation_assignments','get_manager_weekly_schedule','review_schedule_generation','publish_schedule_generation']){
-    assert.ok(ownerPublish.includes("'"+rpc+"'")||ownerPublish.includes('"'+rpc+'"'),'Owner missing '+rpc);
-  }
+  assert.match(ownerRuntime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=20260924-sched05/);
+  assert.match(ownerPublish,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=20260924-sched05/);
+  assert.doesNotMatch(ownerPublish,/auto_generate_schedule_generation|review_schedule_generation|publish_schedule_generation/);
   for(const rpc of ['get_manager_accessible_stores','get_manager_weekly_availability','list_schedule_generations','get_schedule_generation_assignments','create_schedule_generation','replace_schedule_generation_assignments','validate_schedule_generation_v1','review_schedule_generation','publish_schedule_generation']){
     assert.ok(managerDraft.includes("'"+rpc+"'")||managerDraft.includes('"'+rpc+'"'),'Manager missing '+rpc);
   }

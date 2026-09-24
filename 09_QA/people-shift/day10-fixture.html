@@ -79,6 +79,8 @@
     .replaceAll('"','&quot;').replaceAll("'","&#39;");
 
   window.__PEOPLE_SHIFT_QA = { calls, state, employee, store };
+  window.__MAGASIN_WORKFORCE_TODAY__ = '2026-09-20';
+  window.__MAGASIN_SCHEDULING_ACTOR__ = 'OWNER';
 
   window.MAGASIN_CORE = {
     DAYS: ['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ Nhật'],
@@ -106,6 +108,32 @@
     supabase: {
       async rpc(name, args = {}) {
         calls.push({ kind:'rpc', name, args: structuredClone(args) });
+
+        if (name === 'get_manager_accessible_stores') {
+          return { data: [{...store, status:'ACTIVE'}], error: null };
+        }
+
+        if (name === 'get_manager_weekly_availability') {
+          const end = addDays(args.p_week_start, 6);
+          return {
+            data: state.availability.filter(row =>
+              row.preferred_store_id === args.p_store_id &&
+              row.work_date >= args.p_week_start && row.work_date <= end
+            ).map(row => ({
+              availability_id: row.id,
+              user_id: employee.id,
+              employee_name: employee.full_name,
+              username: employee.username,
+              work_date: row.work_date,
+              start_time: row.start_time,
+              end_time: row.end_time,
+              preferred_store_id: row.preferred_store_id,
+              preferred_store_code: store.code,
+              availability_type: row.availability_type
+            })),
+            error: null
+          };
+        }
 
         if (name === 'get_my_availability') {
           const end = addDays(args.p_week_start, 6);
@@ -144,55 +172,79 @@
           };
         }
 
-        if (name === 'auto_generate_schedule_generation') {
-          const generationEnd = addDays(args.p_week_start, 6);
-          const eligibleAvailability = state.availability.find(row =>
-            row.preferred_store_id === args.p_store_id &&
-            row.work_date >= args.p_week_start &&
-            row.work_date <= generationEnd
-          );
-          if (!eligibleAvailability) {
-            return { data: null, error: new Error('QA_REQUIRES_MATCHING_WEEK_AVAILABILITY') };
+        if (name === 'create_schedule_generation') {
+          if (args.p_store_id !== store.id) return { data:null, error:new Error('STORE_NOT_ALLOWED') };
+          if (state.generation) {
+            if (state.generation.status === 'DRAFT') return { data: state.generation.id, error:null };
+            if (state.generation.status === 'REVIEWED') return { data:null, error:new Error('GENERATION_ALREADY_REVIEWED') };
+            if (state.generation.status === 'PUBLISHED') return { data:null, error:new Error('GENERATION_ALREADY_PUBLISHED') };
           }
           state.generation = {
             id: 'generation-qa',
             store_id: args.p_store_id,
+            store_code: store.code,
+            store_name: store.name,
             week_start: args.p_week_start,
+            week_end: addDays(args.p_week_start, 6),
             status: 'DRAFT',
             algorithm_version: args.p_algorithm_version
           };
-          state.assignments = [{
-            employee_id: employee.id,
+          state.assignments = [];
+          return { data: state.generation.id, error:null };
+        }
+
+        if (name === 'replace_schedule_generation_assignments') {
+          if (!state.generation || args.p_generation_id !== state.generation.id || state.generation.status !== 'DRAFT') {
+            return { data:null, error:new Error('GENERATION_NOT_DRAFT') };
+          }
+          state.assignments = (args.p_assignments || []).map((row,index) => ({
+            id: 'assignment-' + (index + 1),
+            generation_id: state.generation.id,
+            user_id: row.user_id,
+            employee_id: row.user_id,
             employee_name: employee.full_name,
-            work_date: eligibleAvailability.work_date,
-            start_time: eligibleAvailability.start_time,
-            end_time: eligibleAvailability.end_time,
+            work_date: row.work_date,
+            start_time: row.start_time,
+            end_time: row.end_time,
             store_id: store.id,
             store_code: store.code,
+            status: 'DRAFT',
             score: 100,
             warning: ''
-          }];
-          return {
-            data: {
-              generation_id: state.generation.id,
-              status: 'DRAFT',
-              algorithm_version: state.generation.algorithm_version
-            },
-            error: null
-          };
+          }));
+          return { data: state.assignments.length, error:null };
+        }
+
+        if (name === 'validate_schedule_generation_v1') {
+          if (!state.generation || args.p_generation_id !== state.generation.id) {
+            return { data:null, error:new Error('GENERATION_NOT_FOUND') };
+          }
+          const valid = state.assignments.length > 0;
+          return { data:{
+            valid,
+            violations: valid ? [] : [{code:'ASSIGNMENT_REQUIRED_FIELDS_MISSING'}],
+            warnings:[],
+            violation_count: valid ? 0 : 1,
+            warning_count:0,
+            assignment_count:state.assignments.length
+          }, error:null };
         }
 
         if (name === 'review_schedule_generation') {
           if (!state.generation || args.p_generation_id !== state.generation.id) {
             return { data: null, error: new Error('GENERATION_NOT_FOUND') };
           }
+          if (!state.assignments.length) return { data:null, error:new Error('GENERATION_VALIDATION_FAILED') };
           state.generation.status = 'REVIEWED';
-          return { data: { status: 'REVIEWED' }, error: null };
+          return { data: { status: 'REVIEWED', already_reviewed:false }, error: null };
         }
 
         if (name === 'publish_schedule_generation') {
           if (!state.generation || state.generation.status !== 'REVIEWED') {
             return { data: { published: false, error_code: 'NOT_REVIEWED' }, error: null };
+          }
+          if (state.generation.status === 'PUBLISHED') {
+            return { data:{ published:true, status:'PUBLISHED', already_published:true, inserted_schedule_count:state.official.length }, error:null };
           }
           state.generation.status = 'PUBLISHED';
           state.official = state.assignments.map((row,index) => ({
@@ -201,7 +253,7 @@
             status: 'APPROVED'
           }));
           return {
-            data: { published: true, inserted_schedule_count: state.official.length },
+            data: { published: true, status:'PUBLISHED', already_published:false, inserted_schedule_count: state.official.length },
             error: null
           };
         }
@@ -233,13 +285,15 @@
     }
   };
 
+  window.supabase = { createClient() { return window.MAGASIN_CORE.supabase; } };
+
   window.MAGASIN_EMPLOYEE = {
     profile: employee,
     events: { emit(name, detail) { calls.push({kind:'event', name, detail}); } }
   };
 })();
 </script>
-<script src="/04_OWNER/Workforce/03-publish/engine-v1.js"></script>
+<script src="/05_MANAGER/Workforce/draft-publish-v1.js?v=20260924-sched05"></script>
 <script>
 (() => {
   const frame = document.getElementById('employeeApp');
