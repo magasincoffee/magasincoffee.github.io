@@ -178,8 +178,8 @@ Canonical SoT: `05_SYSTEM/WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1_SOURCE_OF
 | SCHED-02 | Role + authority lock | **DONE** |
 | SCHED-03 | Employee Schedule UI V1 | **DONE** |
 | SCHED-04 | Manager Scheduling V1 | **DONE** |
-| SCHED-05 | Owner Scheduling V1 | **READY / MANUAL_WORK** |
-| SCHED-06 | Three-role synchronization | BLOCKED |
+| SCHED-05 | Owner Scheduling V1 | **DONE** |
+| SCHED-06 | Three-role synchronization | **READY / MANUAL_WORK** |
 | SCHED-07 | Professional UI/UX + responsive pass | BLOCKED |
 | SCHED-08 | Live three-role E2E acceptance | BLOCKED |
 | SCHED-09 | Production reconciliation + canonical closure | BLOCKED |
@@ -192,7 +192,9 @@ SCHED-03 evidence: `05_SYSTEM/SCHED_03_EMPLOYEE_SCHEDULE_UI_V1.md`. Implementati
 
 SCHED-04 evidence: `05_SYSTEM/SCHED_04_MANAGER_SCHEDULING_V1.md`. Implementation PR #287 final head `67374dd48597f7241559c11091c3496641f32f4f` merged as `398f8164d676068a8bd7a8d14426e31ed948cba3`; PR-head People Shift `35897139899 / 107303772936`, exact-main People Shift `35897358395 / 107304500565` with 316/316 deterministic checks, SOP `35897358299 / 107304499985`, Pages validation `35897358345 / 107304500738`, and Pages deployment `35897357114 / 107304574534` are SUCCESS. Manager now completes one canonical Availability → DRAFT → Validate → Review → Publish flow through the existing RPC writer; publish is idempotent, reload re-reads official `work_schedules`, cross-store tampering is denied, legacy Lich-lam only wraps the canonical surface, and no DB migration/fake Manager/fake production schedule was created.
 
-Current scheduling cursor: **SCHED-05 → SCHED-06**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
+SCHED-05 evidence: `05_SYSTEM/SCHED_05_OWNER_SCHEDULING_V1.md`. Implementation PR #289 final head `870fe55f1ad76f0c8a3f3ee0280d87b6882ac690` merged as `47a8a0da64ac68e50839023e47b584f1b8b97e18`; PR-head People Shift `35937446131 / 107437565949`, exact-main People Shift `35938947897 / 107442311642` with 322/322 deterministic checks, Pages validation `35938948068 / 107442312757`, and Pages deployment `35938946623 / 107442356690` are SUCCESS. Owner Scheduling is now enterprise oversight / selected-store control over the same Manager canonical writer and RPC state machine; four-store switching clears stale projections, publish/reload/idempotency and stale revalidation pass, legacy Owner publish is compatibility-only, no direct table DML exists, and no DB migration/fake production scheduling data was created.
+
+Current scheduling cursor: **SCHED-06 → SCHED-07**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
 
 ## Workforce Operations V1 — MANUAL_WORK RELEASED / ROBOT DISABLED
 

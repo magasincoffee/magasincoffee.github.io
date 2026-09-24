@@ -297,13 +297,14 @@ On activation of this SoT:
 
 ```text
 priority_gate = WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1
-current_sched_task = SCHED-05
-next_sched_task = SCHED-06
+current_sched_task = SCHED-06
+next_sched_task = SCHED-07
 SCHED-01 = DONE
 SCHED-02 = DONE
 SCHED-03 = DONE
 SCHED-04 = DONE
-SCHED-05 = READY / MANUAL_WORK
+SCHED-05 = DONE
+SCHED-06 = READY / MANUAL_WORK
 unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
 TASK-108 = PAUSED_BEHIND_SCHED_GATE
 Workforce Robot = DISABLED
@@ -394,6 +395,32 @@ Canonical evidence:
 - no SCHED-04 migration, fake Manager or fake production schedule.
 
 SCHED-05 now owns the next sequential gate: Owner Scheduling V1. The overall Scheduling Production Readiness gate remains **ACTIVE**.
+
+## 13E. SCHED-05 closure checkpoint
+
+SCHED-05 closed after Owner Scheduling was consolidated onto the same canonical browser writer and server state machine used by Manager, with Owner restricted to enterprise oversight / selected-store intervention rather than a second daily-scheduling truth.
+
+Canonical evidence:
+- evidence: `05_SYSTEM/SCHED_05_OWNER_SCHEDULING_V1.md`;
+- baseline: `3d7d819969f605df826b91e0e69df7bf62e2d3a0`;
+- implementation PR #289;
+- final PR head `870fe55f1ad76f0c8a3f3ee0280d87b6882ac690`;
+- implementation merge `47a8a0da64ac68e50839023e47b584f1b8b97e18`;
+- PR-head People Shift `35937446131 / 107437565949` — SUCCESS;
+- exact-main People Shift `35938947897 / 107442311642` — SUCCESS with 322/322 deterministic checks;
+- exact-main Pages validation `35938948068 / 107442312757` — SUCCESS;
+- exact-main Pages build/deploy/report `35938946623 / 107442310788 / 107442356690 / 107442356803` — SUCCESS;
+- dedicated `SCHED_05_OWNER_SCHEDULING_BROWSER=PASS`;
+- all 4 active stores are selectable in the Owner fixture and store-switch isolation is deterministic;
+- Owner full DRAFT → Validate → Review → Publish uses `05_MANAGER/Workforce/draft-publish-v1.js` and the same canonical create/replace/validate/review/publish RPCs as Manager;
+- publish retry is idempotent; reload reads server truth; stale publish returns to DRAFT; out-of-enterprise store requests are denied;
+- legacy `04_OWNER/Workforce/03-publish/engine-v1.js` is compatibility-only and demand/review legacy engines are not loaded by the active Owner runtime;
+- no Owner-only writer, browser protected-table DML, dual-write or fake production rows;
+- final production read-only reconciliation: 1 ACTIVE OWNER, 0 ACTIVE STORE_MANAGER, 4 ACTIVE stores, 7 Availability rows, 4 generation rows (3 DRAFT + 1 CANCELLED), 0 generation assignments, 0 official schedules, 0 duplicate active generation store/week groups;
+- latest scheduling migration remains `20260923163337_sched_02_three_role_scheduling_authority_lock_v1`;
+- no SCHED-05 migration, fake Manager/Employee, or fake production schedule.
+
+SCHED-06 now owns the next sequential gate: Three-role synchronization. The overall Scheduling Production Readiness gate remains **ACTIVE**.
 
 ## 14. Canonical precedence
 

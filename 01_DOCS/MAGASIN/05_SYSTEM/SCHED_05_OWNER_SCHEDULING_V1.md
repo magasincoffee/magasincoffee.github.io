@@ -5,7 +5,8 @@
 **Execution mode:** MANUAL_WORK  
 **Scope:** Owner Scheduling only  
 **Database migration:** NONE  
-**Production fixture:** NONE
+**Production fixture:** NONE  
+**Implementation status:** DONE / POST-MERGE GREEN / PRODUCTION ASSETS DEPLOYED
 
 ## Objective
 
@@ -146,14 +147,88 @@ Not included:
 - PFC changes;
 - fake production Manager/Employee/schedule rows.
 
-## Closure pending
+## Final implementation lineage
 
-Final PR head, implementation merge SHA, exact-main People Shift/SOP/Pages gates, final four-store read-only audit, and canonical closure SHA are appended only after all gates pass.
+- baseline main: `3d7d819969f605df826b91e0e69df7bf62e2d3a0`
+- implementation PR: **#289**
+- final PR head: `870fe55f1ad76f0c8a3f3ee0280d87b6882ac690`
+- implementation merge: `47a8a0da64ac68e50839023e47b584f1b8b97e18`
+- database migration: **NONE**
 
-Required handoff after DoD:
+Final PR-head:
+- People Shift `35937446131 / 107437565949` — **SUCCESS**
+- deterministic regression: **322/322**
+- `SCHED_05_OWNER_SCHEDULING_BROWSER=PASS`
+- SCHED-01→04, Manager/Employee, Give/Swap/Attendance, TASK-095→107, Day-10 and Control Tower browser pack — **PASS**
 
-- `SCHED-05 = DONE`
+Exact implementation-main:
+- People Shift `35938947897 / 107442311642` — **SUCCESS**
+- deterministic regression: **322/322** = 77 Workforce + 9 schedule-first + 162 People Shift + 74 Control Tower
+- `SCHED_05_OWNER_SCHEDULING_BROWSER=PASS`
+- `SCHED_04_MANAGER_SCHEDULING_BROWSER=PASS`
+- `TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY=PASS`
+- `MANAGER_WORKFORCE_CANONICAL_BROWSER=PASS`
+- `PEOPLE_SHIFT_DAY10_BROWSER_E2E=PASS`
+- `CONTROL_TOWER_BROWSER_E2E=PASS`
+
+Exact implementation-main Pages:
+- source validation `35938948068 / 107442312757` — **SUCCESS**
+- build `35938946623 / 107442310788` — **SUCCESS**
+- deploy `35938946623 / 107442356690` — **SUCCESS**
+- report `35938946623 / 107442356803` — **SUCCESS**
+
+## Final production read-only reconciliation
+
+No production mutation was used for closure.
+
+Per-store production truth:
+- CN1: 3 Availability rows, 4 generation rows, 0 generation assignments, 0 official schedules;
+- CN2: 0 Availability rows, 0 generation rows, 0 generation assignments, 0 official schedules;
+- CN3: 0 Availability rows, 0 generation rows, 0 generation assignments, 0 official schedules;
+- CN4: 0 Availability rows, 0 generation rows, 0 generation assignments, 0 official schedules.
+
+Global truth:
+- profiles: 7 total / 4 ACTIVE;
+- ACTIVE OWNER: **1**;
+- ACTIVE STORE_MANAGER: **0**;
+- ACTIVE stores: **4**;
+- Availability rows: **7**;
+- generations: **4** = 3 DRAFT + 1 CANCELLED;
+- generation assignments: **0**;
+- official `work_schedules`: **0**;
+- duplicate active generation store/week groups: **0**;
+- canonical create/replace/validate/review/publish RPCs: authenticated allowed;
+- legacy `auto_generate_schedule_generation`: authenticated denied;
+- direct authenticated `work_schedules` SELECT/INSERT/UPDATE: denied.
+
+No fake Owner/Manager/Employee, generation assignment, official schedule or SCHED-05 database migration was created.
+
+## Closure / handoff
+
+`SCHED-05 = DONE`.
+
+Canonical Owner Scheduling V1 now has:
+- enterprise oversight + selected-store intervention;
+- one shared Owner/Manager browser writer;
+- the same canonical server state machine and one official `work_schedules` truth;
+- all 4 active stores selectable;
+- deterministic store/week switching with stale projections cleared before reload;
+- DRAFT → Validate → Review → Publish full flow;
+- post-publish official reread;
+- idempotent publish retry;
+- stale publish revalidation;
+- out-of-enterprise fail-closed behavior;
+- legacy Owner publish compatibility-only;
+- no parallel Owner mutation path;
+- no browser direct table DML;
+- no raw UUID/SQL/backend error exposure;
+- 390px no-horizontal-overflow acceptance.
+
+Next:
 - `SCHED-06 = READY / MANUAL_WORK`
+- `SCHED-07 = BLOCKED`
 - TASK-108 remains `PAUSED_BEHIND_SCHED_GATE`
 - Workforce Robot remains **DISABLED**
-- PFC remains unchanged.
+- PFC remains unchanged at `TASK-068 → TASK-069`
+
+SCHED-06 is not started by this closure.
