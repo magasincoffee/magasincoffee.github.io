@@ -453,6 +453,13 @@ Canonical evidence:
 - persistent fake production residue introduced by SCHED-06 = 0;
 - latest scheduling migration remains `20260923163337_sched_02_three_role_scheduling_authority_lock_v1`; SCHED-06 adds no migration and requires no rollback migration;
 - OLD/NEW mapping: canonical production paths are KEEP; legacy Owner publish asset remains WRAP/DEPRECATE compatibility-only; NEW items are test/evidence only; no valid history deleted.
+- final acceptance-hardening PR #295 head `7a341acb0c393330297c15525c1bbaaa91ea5efd` merged as `37caf63f6c8aeb9e72ef1ba2aaba3f915b8a3884`;
+- PR #295 adds targeted Swap → Employee/Manager/Owner reread → Attendance-current-owner proof only; no runtime/SQL/production mutation;
+- final PR-head People Shift `35949459607 / 107474642099` — SUCCESS with 326/326 deterministic checks;
+- final exact-main People Shift `35949595271 / 107475057325` — SUCCESS with 326/326 deterministic checks;
+- final exact-main Pages validation `35949595316 / 107475057514` — SUCCESS;
+- final exact-main Pages build/deploy/report `35949593630 / 107475056790 / 107475143290 / 107475143223` — SUCCESS;
+- targeted Swap hardening proves same two schedule identities survive the transfer, all three role projections converge on current owners, stale owners lose Attendance authority, current owners retain it, retry cannot reverse ownership, reload converges, and cross-store access fails closed.
 
 SCHED-07 now owns the next sequential gate: Professional UI/UX + responsive pass. It is **READY / MANUAL_WORK** only. SCHED-08 remains BLOCKED, TASK-108 remains paused, Workforce Robot remains DISABLED, and PFC remains unchanged.
 
