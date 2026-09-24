@@ -17,14 +17,18 @@
   try{saved=JSON.parse(localStorage.getItem(storageKey)||"null")}catch(_){saved=null}
   const calls=[];
   const managerCalls=[];
+  const ownerCalls=[];
   const notifications=new Map(Array.isArray(saved?.notifications)?saved.notifications:[]);
   const profiles={
     "u-a":{id:"u-a",full_name:"Nhân viên A",role:"STAFF",status:"ACTIVE"},
     "u-b":{id:"u-b",full_name:"Nhân viên B",role:"STAFF",status:"ACTIVE"},
-    "manager":{id:"manager",full_name:"Quản lý QA",role:"STORE_MANAGER",status:"ACTIVE"}
+    "manager":{id:"manager",full_name:"Quản lý QA",role:"STORE_MANAGER",status:"ACTIVE"},
+    "owner":{id:"owner",full_name:"Owner QA",role:"OWNER",status:"ACTIVE"}
   };
   let currentUser=saved?.currentUser||"u-a";
   let managerScope=saved?.managerScope!==false;
+  let ownerScope=saved?.ownerScope!==false;
+  let attendance=saved?.attendance||null;
   const faults={
     attendance:false,give:false,availability:false,overlap:false,maxTwo:false,
     requesterInactive:false,targetInactive:false
@@ -39,7 +43,7 @@
   let applyCount=Number(saved?.applyCount||0);
   function persist(){
     localStorage.setItem(storageKey,JSON.stringify({
-      currentUser,managerScope,schedules,swap,swapSeq,applyCount,
+      currentUser,managerScope,ownerScope,schedules,swap,swapSeq,applyCount,attendance,
       notifications:[...notifications.entries()]
     }));
   }
@@ -171,14 +175,41 @@
       notify("swap:"+swap.id+":cancelled:target","SHIFT_SWAP_CANCELLED","USER",swap.target_user_id);
       return {data:{id:swap.id,status:"CANCELLED",already_cancelled:false},error:null};
     }
+    if(name==="submit_manual_time_attendance_v1"){
+      const schedule=schedules[args.p_schedule_id];
+      if(!schedule)return error("ATTENDANCE_SCHEDULE_NOT_FOUND");
+      if(schedule.status!=="APPROVED")return error("ATTENDANCE_SCHEDULE_NOT_APPROVED");
+      if(schedule.user_id!==currentUser)return error("ATTENDANCE_NOT_CURRENT_OWNER");
+      if(profiles[currentUser]?.status!=="ACTIVE")return error("ATTENDANCE_EMPLOYEE_INACTIVE");
+      if(profiles[currentUser]?.role!=="STAFF")return error("ATTENDANCE_EMPLOYEE_NOT_STAFF");
+      if(!args.p_actual_start||!args.p_actual_end)return error("ATTENDANCE_FIELDS_REQUIRED");
+      if(String(args.p_actual_end)<=String(args.p_actual_start))return error("ATTENDANCE_ACTUAL_RANGE_INVALID");
+      if(attendance){
+        if(attendance.schedule_id===schedule.id&&attendance.user_id===currentUser&&attendance.actual_start===args.p_actual_start&&attendance.actual_end===args.p_actual_end){
+          return {data:{attendance_id:attendance.id,schedule_id:attendance.schedule_id,status:attendance.status,submission_status:attendance.submission_status,already_submitted:true},error:null};
+        }
+        return error("ATTENDANCE_ACTIVE_SUBMISSION_EXISTS");
+      }
+      attendance={id:"att-swap-1",schedule_id:schedule.id,user_id:currentUser,store_id:schedule.store_id,work_date:schedule.work_date,actual_start:String(args.p_actual_start),actual_end:String(args.p_actual_end),status:"NEEDS_REVIEW",submission_status:"SUBMITTED"};
+      persist();
+      return {data:{attendance_id:attendance.id,schedule_id:attendance.schedule_id,status:attendance.status,submission_status:attendance.submission_status,already_submitted:false},error:null};
+    }
     if(name==="list_my_shift_gives_v1")return {data:[],error:null};
     if(name==="list_shift_give_candidates_v1")return {data:[],error:null};
     if(name==="submit_shift_give_request")return {data:null,error:{message:"GIVE_NOT_USED_IN_TASK_096_FIXTURE"}};
     if(name==="respond_shift_give_request")return {data:null,error:{message:"GIVE_NOT_USED_IN_TASK_096_FIXTURE"}};
     return {data:[],error:null};
   }
+  function officialRows(storeId,weekStart,scopeAllowed){
+    if(!scopeAllowed)return error("STORE_NOT_ALLOWED");
+    if(storeId&&storeId!=="store-a")return error("STORE_NOT_ALLOWED");
+    const week=String(weekStart||"").slice(0,10);
+    if(week&&week!=="2026-09-28")return {data:[],error:null};
+    return {data:Object.values(schedules).filter(x=>x.status==="APPROVED").map(x=>({...x,employee_name:profiles[x.user_id]?.full_name||x.user_id})),error:null};
+  }
   async function managerRpc(name,args={}){
     managerCalls.push({name,args:structuredClone(args||{})});
+    if(name==="get_manager_weekly_schedule")return officialRows(args.p_store_id||null,args.p_week_start||null,managerScope);
     if(name==="list_shift_swap_requests_v1"){
       if(!managerScope)return {data:[],error:null};
       return {data:swap&&swap.status===args.p_status&&args.p_status==="PEER_ACCEPTED"?[managerProjection(swap)]:[],error:null};
@@ -218,25 +249,32 @@
     if(name==="list_shift_give_requests_v1")return {data:[],error:null};
     return {data:[],error:null};
   }
+  async function ownerRpc(name,args={}){
+    ownerCalls.push({name,args:structuredClone(args||{})});
+    if(name==="get_manager_weekly_schedule")return officialRows(args.p_store_id||null,args.p_week_start||null,ownerScope);
+    return {data:[],error:null};
+  }
   function reset(){
-    currentUser="u-a";managerScope=true;schedules=baselineSchedules();swap=null;swapSeq=0;applyCount=0;
-    notifications.clear();calls.length=0;managerCalls.length=0;
+    currentUser="u-a";managerScope=true;ownerScope=true;schedules=baselineSchedules();swap=null;swapSeq=0;applyCount=0;attendance=null;
+    notifications.clear();calls.length=0;managerCalls.length=0;ownerCalls.length=0;
     for(const k of Object.keys(faults))faults[k]=false;
     profiles["u-a"].status="ACTIVE";profiles["u-b"].status="ACTIVE";
     localStorage.removeItem(storageKey);persist();
   }
 
   window.__SWAP96_QA={
-    calls,managerCalls,notifications,profiles,faults,
+    calls,managerCalls,ownerCalls,notifications,profiles,faults,
     get currentUser(){return currentUser},
     get swap(){return swap?structuredClone(swap):null},
     get schedules(){return structuredClone(schedules)},
     get applyCount(){return applyCount},
+    get attendance(){return attendance?structuredClone(attendance):null},
     setUser(id){currentUser=id;persist()},
     setManagerScope(v){managerScope=!!v;persist()},
+    setOwnerScope(v){ownerScope=!!v;persist()},
     reset,
     employeeRpcAs:async(id,name,args)=>{const old=currentUser;currentUser=id;try{return await employeeRpc(name,args)}finally{currentUser=old}},
-    managerRpc,
+    managerRpc,ownerRpc,
     setScheduleOwner(id,user){if(schedules[id]){schedules[id].user_id=user;persist()}},
     refreshEmployee:()=>window.MAGASIN_EMPLOYEE?.swap?.refresh?.(),
     refreshManager:()=>window.MAGASIN_MANAGER_SWAP_APPROVAL?.refresh?.()
