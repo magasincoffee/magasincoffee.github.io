@@ -15,11 +15,13 @@
  const profiles={
   "u-a":{id:"u-a",full_name:"Nhân viên A",role:"STAFF",status:"ACTIVE"},
   "u-b":{id:"u-b",full_name:"Nhân viên B",role:"STAFF",status:"ACTIVE"},
-  "manager":{id:"manager",full_name:"Quản lý QA",role:"STORE_MANAGER",status:"ACTIVE"}
+  "manager":{id:"manager",full_name:"Quản lý QA",role:"STORE_MANAGER",status:"ACTIVE"},
+  "owner":{id:"owner",full_name:"Owner QA",role:"OWNER",status:"ACTIVE"}
  };
  const baseSchedule=()=>({schedule_id:"sch-give",id:"sch-give",user_id:"u-a",work_date:"2026-09-28",start_time:"06:00",end_time:"12:00",store_id:"store-a",store_code:"CN-QA",store_name:"Cửa hàng QA",status:"APPROVED"});
  let currentUser=saved?.currentUser||"u-a";
  let managerScope=saved?.managerScope!==false;
+ let ownerScope=saved?.ownerScope!==false;
  let schedule=saved?.schedule||baseSchedule();
  let give=saved?.give||null;
  let giveSeq=Number(saved?.giveSeq||0);
@@ -28,6 +30,7 @@
  const notifications=new Map(Array.isArray(saved?.notifications)?saved.notifications:[]);
  const calls=[];
  const managerCalls=[];
+ const ownerCalls=[];
  const faults={
   giverInactive:false,giverNonStaff:false,recipientInactive:false,recipientNonStaff:false,
   attendance:false,availability:false,explicitUnavailable:false,overlap:false,maxTwo:false,
@@ -36,7 +39,7 @@
 
  function persist(){
   localStorage.setItem(storageKey,JSON.stringify({
-   currentUser,managerScope,schedule,give,giveSeq,transferCount,attendance,
+   currentUser,managerScope,ownerScope,schedule,give,giveSeq,transferCount,attendance,
    notifications:[...notifications.entries()]
   }));
  }
@@ -154,8 +157,17 @@
   return {data:[],error:null};
  }
 
+ function officialRows(storeId,weekStart,scopeAllowed){
+  if(!scopeAllowed)return err("STORE_NOT_ALLOWED");
+  if(storeId&&storeId!==schedule.store_id)return err("STORE_NOT_ALLOWED");
+  const week=String(weekStart||"").slice(0,10);
+  if(week&&week!=="2026-09-28")return {data:[],error:null};
+  return {data:schedule.status==="APPROVED"?[{...schedule,employee_name:profiles[schedule.user_id]?.full_name||schedule.user_id}]:[],error:null};
+ }
+
  async function managerRpc(name,args={}){
   managerCalls.push({name,args:structuredClone(args||{})});
+  if(name==="get_manager_weekly_schedule")return officialRows(args.p_store_id||null,args.p_week_start||null,managerScope);
   if(name==="list_shift_swap_requests_v1")return {data:[],error:null};
   if(name==="list_shift_give_requests_v1"){
    if(!managerScope)return {data:[],error:null};
@@ -197,24 +209,31 @@
   return {data:[],error:null};
  }
 
+ async function ownerRpc(name,args={}){
+  ownerCalls.push({name,args:structuredClone(args||{})});
+  if(name==="get_manager_weekly_schedule")return officialRows(args.p_store_id||null,args.p_week_start||null,ownerScope);
+  return {data:[],error:null};
+ }
+
  function reset(){
-  currentUser="u-a";managerScope=true;schedule=baseSchedule();give=null;giveSeq=0;transferCount=0;attendance=null;
-  notifications.clear();calls.length=0;managerCalls.length=0;
+  currentUser="u-a";managerScope=true;ownerScope=true;schedule=baseSchedule();give=null;giveSeq=0;transferCount=0;attendance=null;
+  notifications.clear();calls.length=0;managerCalls.length=0;ownerCalls.length=0;
   for(const k of Object.keys(faults))faults[k]=false;
   profiles["u-a"].status="ACTIVE";profiles["u-a"].role="STAFF";
   profiles["u-b"].status="ACTIVE";profiles["u-b"].role="STAFF";
   localStorage.removeItem(storageKey);persist();
  }
  window.__GIVE97_QA={
-  calls,managerCalls,notifications,profiles,faults,
+  calls,managerCalls,ownerCalls,notifications,profiles,faults,
   get currentUser(){return currentUser},get give(){return give?structuredClone(give):null},
   get schedule(){return structuredClone(schedule)},get transferCount(){return transferCount},
   get attendance(){return attendance?structuredClone(attendance):null},
   switchUserPersist(id){currentUser=id;persist()},
   setManagerScope(v){managerScope=!!v;persist()},
+  setOwnerScope(v){ownerScope=!!v;persist()},
   reset,
   employeeRpcAs:async(id,name,args)=>{const old=currentUser;currentUser=id;try{return await employeeRpc(name,args)}finally{currentUser=old}},
-  managerRpc,
+  managerRpc,ownerRpc,
   setScheduleOwner(id){schedule.user_id=id;persist()},
   setScheduleStatus(status){schedule.status=status;persist()},
   refreshEmployee:()=>window.MAGASIN_EMPLOYEE?.swap?.refresh?.(),
