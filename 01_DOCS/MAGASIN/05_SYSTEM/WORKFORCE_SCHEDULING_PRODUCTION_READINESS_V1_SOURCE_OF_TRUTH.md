@@ -297,14 +297,16 @@ On activation of this SoT:
 
 ```text
 priority_gate = WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1
-current_sched_task = SCHED-06
-next_sched_task = SCHED-07
+current_sched_task = SCHED-07
+next_sched_task = SCHED-08
 SCHED-01 = DONE
 SCHED-02 = DONE
 SCHED-03 = DONE
 SCHED-04 = DONE
 SCHED-05 = DONE
-SCHED-06 = READY / MANUAL_WORK
+SCHED-06 = DONE
+SCHED-07 = READY / MANUAL_WORK
+SCHED-08 = BLOCKED
 unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
 TASK-108 = PAUSED_BEHIND_SCHED_GATE
 Workforce Robot = DISABLED
@@ -421,6 +423,40 @@ Canonical evidence:
 - no SCHED-05 migration, fake Manager/Employee, or fake production schedule.
 
 SCHED-06 now owns the next sequential gate: Three-role synchronization. The overall Scheduling Production Readiness gate remains **ACTIVE**.
+
+## 13F. SCHED-06 closure checkpoint
+
+SCHED-06 closed after three-role synchronization was proven across one existing canonical assignment identity without adding a new production writer, database migration, or synchronization truth.
+
+Canonical evidence:
+- evidence: `05_SYSTEM/SCHED_06_THREE_ROLE_SYNCHRONIZATION_V1.md`;
+- starting baseline: `1919cbab4e05cb5fc4af07b5df6b62a9f029c05c`;
+- pre-task drift from SCHED-05 closure `14d39f537733ec759ad3e4a234b102b5912a2dd0` was only PR #291 Supervisor MIG-007 cleanup and did not change Workforce Scheduling semantics;
+- implementation PR #292;
+- final implementation PR head `b5e34647c3df689d19e0812a5a6a356561a56c0e`;
+- implementation merge / exact implementation main `c1fde945dfc706d728718d1c6fa68a5752f38786`;
+- PR-head People Shift `35948344813 / 107471249024` — SUCCESS with 325/325 deterministic checks;
+- exact-main People Shift `35948615268 / 107472066171` — SUCCESS with 325/325 deterministic checks;
+- exact-main Pages validation `35948615433 / 107472067094` — SUCCESS;
+- exact-main Pages build/deploy/report `35948614728 / 107472067415 / 107472094550 / 107472094401` — SUCCESS;
+- dedicated `SCHED_06_THREE_ROLE_SYNCHRONIZATION_BROWSER=PASS`;
+- initial Employee/Manager/Owner projections all resolve the same `sch-give` identity and owner A;
+- canonical Give A→B keeps `sch-give` identity, applies ownership exactly once, removes A from Employee self-read, and converges Employee B / Manager / Owner on B as current owner;
+- repeated/concurrent approval retry remains already-applied with transfer count 1;
+- Attendance after transfer is A=DENY / B=ALLOW and B exact retry reuses one attendance identity;
+- reload/stale state cannot resurrect A ownership or Attendance authority;
+- cross-store Manager/Owner reads fail closed;
+- browser protected-table direct mutation path remains absent;
+- existing full Swap, Give, Attendance, Workforce recovery/security and Manager canonical browser regressions remain PASS;
+- production read-only reconciliation at execution time: 7 profiles / 4 ACTIVE / 1 ACTIVE OWNER / 0 ACTIVE STORE_MANAGER / 4 ACTIVE stores / 7 Availability rows / 4 generation rows / 0 generation assignments / 0 official schedules / 0 Give / 0 Swap / 0 Attendance;
+- production lacked identities/schedules for safe destructive lifecycle proof, so executable local integration/browser fixtures were used per Owner instruction and no fake production rows were created;
+- persistent fake production residue introduced by SCHED-06 = 0;
+- latest scheduling migration remains `20260923163337_sched_02_three_role_scheduling_authority_lock_v1`; SCHED-06 adds no migration and requires no rollback migration;
+- OLD/NEW mapping: canonical production paths are KEEP; legacy Owner publish asset remains WRAP/DEPRECATE compatibility-only; NEW items are test/evidence only; no valid history deleted.
+
+SCHED-07 now owns the next sequential gate: Professional UI/UX + responsive pass. It is **READY / MANUAL_WORK** only. SCHED-08 remains BLOCKED, TASK-108 remains paused, Workforce Robot remains DISABLED, and PFC remains unchanged.
+
+The overall Scheduling Production Readiness gate remains **ACTIVE** until SCHED-09 canonical closure.
 
 ## 14. Canonical precedence
 
