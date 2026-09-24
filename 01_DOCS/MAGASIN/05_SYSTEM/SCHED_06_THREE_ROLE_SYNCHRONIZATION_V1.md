@@ -327,6 +327,63 @@ Exact-main Pages build/deployment:
 
 SCHED-06 changed QA/workflow assets only; no production browser runtime file or DB migration changed.
 
+## 11A. Final acceptance hardening — targeted Swap three-role synchronization
+
+The dispatch required the same explicit three-role/current-owner/Attendance proof for Swap that the primary SCHED-06 browser already provided for Give. Existing TASK-096 Swap regression was green, but the primary targeted SCHED-06 browser did not itself traverse the full Swap → three-role reread → Attendance chain.
+
+Acceptance-hardening PR **#295** closes that evidence gap without changing production runtime or SQL.
+
+Final hardening lineage:
+- PR: **#295**
+- final PR head: `7a341acb0c393330297c15525c1bbaaa91ea5efd`
+- merge / exact-main SHA: `37caf63f6c8aeb9e72ef1ba2aaba3f915b8a3884`
+- changed files: SCHED-06 deterministic test, SCHED-06 browser E2E, TASK-096 Swap fixture only
+- production runtime change: **NONE**
+- DB migration: **NONE**
+- production data mutation: **NONE**
+
+Targeted Swap proof now verifies:
+- initial Employee A / Employee B / Manager / Owner projections share the same two official schedule identities;
+- canonical Swap exchanges current owners on those two existing identities, without insert/clone/parallel truth;
+- Employee A/B self-reads and Manager/Owner official reads converge on the same post-Swap owners;
+- repeated Manager approval remains terminal/idempotent and cannot swap ownership back;
+- stale pre-Swap owner is denied Attendance on the transferred identity;
+- current post-Swap owner can submit Attendance and exact retry reuses the same attendance identity;
+- reload preserves post-Swap current owners;
+- cross-store Manager/Owner reads fail closed;
+- browser path remains RPC-only with no protected-table direct DML.
+
+Final PR-head People Shift:
+- run **35949459607**
+- job **107474642099**
+- conclusion **SUCCESS**
+- deterministic: **326/326** = 77 Workforce + 9 schedule-first + 166 People Shift + 74 Control Tower
+
+Final exact-main People Shift:
+- run **35949595271**
+- job **107475057325**
+- conclusion **SUCCESS**
+- deterministic: **326/326**
+
+Final exact-main browser markers include:
+```text
+SCHED_06_THREE_ROLE_SYNCHRONIZATION_BROWSER=PASS
+SHIFT_SWAP_LIFECYCLE_BROWSER=PASS
+SHIFT_GIVE_LIFECYCLE_BROWSER=PASS
+TASK_098_E2E_08=PASS
+TASK_099_EMPLOYEE_ATTENDANCE_UI=PASS
+TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY=PASS
+MANAGER_WORKFORCE_CANONICAL_BROWSER=PASS
+PEOPLE_SHIFT_DAY10_BROWSER_E2E=PASS
+CONTROL_TOWER_BROWSER_E2E=PASS
+```
+
+Final exact-main Pages:
+- validation `35949595316 / 107475057514` — **SUCCESS**
+- build `35949593630 / 107475056790` — **SUCCESS**
+- deploy `35949593630 / 107475143290` — **SUCCESS**
+- report `35949593630 / 107475143223` — **SUCCESS**
+
 ## 12. Security / authority conclusion
 
 PASS:
