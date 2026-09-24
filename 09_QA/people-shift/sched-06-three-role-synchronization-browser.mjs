@@ -136,6 +136,111 @@ try{
     return "RPC-only projections/mutations; one logical schedule identity";
   });
 
+  await page.goto(BASE+"/09_QA/people-shift/shift-swap-lifecycle-fixture.html",{waitUntil:"networkidle",timeout:20000});
+  await page.evaluate(()=>globalThis.__SWAP96_QA.reset());
+  const swapEmployee=page.frameLocator("#employeeApp");
+  await swapEmployee.locator("#view-swap[data-employee-swap-engine='1']").waitFor({timeout:10000});
+  await page.waitForFunction(()=>!!globalThis.MAGASIN_MANAGER_SWAP_APPROVAL);
+
+  await check("sched06_swap_initial_three_roles_share_both_official_identities",async()=>{
+    const [a,b,m,o]=await Promise.all([
+      page.evaluate(()=>globalThis.__SWAP96_QA.employeeRpcAs("u-a","list_my_approved_schedules_v2",{p_week_start:"2026-09-28"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.employeeRpcAs("u-b","list_my_approved_schedules_v2",{p_week_start:"2026-09-28"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.managerRpc("get_manager_weekly_schedule",{p_store_id:"store-a",p_week_start:"2026-09-28"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.ownerRpc("get_manager_weekly_schedule",{p_store_id:"store-a",p_week_start:"2026-09-28"}))
+    ]);
+    if(a.error||b.error||m.error||o.error)throw new Error(JSON.stringify({a,b,m,o}));
+    if(a.data?.[0]?.schedule_id!=="sch-a"||a.data?.[0]?.user_id!=="u-a")throw new Error(JSON.stringify(a));
+    if(b.data?.[0]?.schedule_id!=="sch-b"||b.data?.[0]?.user_id!=="u-b")throw new Error(JSON.stringify(b));
+    const map=rows=>Object.fromEntries((rows||[]).map(x=>[x.schedule_id,x.user_id]));
+    const mm=map(m.data),om=map(o.data);
+    if(mm["sch-a"]!=="u-a"||mm["sch-b"]!=="u-b"||om["sch-a"]!=="u-a"||om["sch-b"]!=="u-b")throw new Error(JSON.stringify({mm,om}));
+    return "Employee/Manager/Owner => sch-a:u-a + sch-b:u-b";
+  });
+
+  await check("sched06_swap_a_b_applies_on_same_two_schedule_identities",async()=>{
+    await swapEmployee.locator("#swapChoices button").first().click();
+    await swapEmployee.locator("#employeeRequesterSchedule").waitFor();
+    await swapEmployee.locator("#employeeSwapTarget").selectOption("sch-b");
+    await swapEmployee.locator("#employeeSwapReason").fill("SCHED-06 swap synchronization proof");
+    await swapEmployee.locator("#swapForm .swap-actions .btn.primary").click();
+    await page.waitForFunction(()=>globalThis.__SWAP96_QA.swap?.status==="PENDING");
+
+    await page.evaluate(()=>{globalThis.__SWAP96_QA.setUser("u-b");globalThis.__SWAP96_QA.refreshEmployee()});
+    await swapEmployee.locator(".js-swap-peer-accept").waitFor({timeout:10000});
+    await swapEmployee.locator(".js-swap-peer-accept").click();
+    await page.waitForFunction(()=>globalThis.__SWAP96_QA.swap?.status==="PEER_ACCEPTED");
+
+    await page.evaluate(()=>globalThis.__SWAP96_QA.refreshManager());
+    await page.locator("#view-swap .js-swap-approve").waitFor({timeout:10000});
+    await page.locator("#view-swap .js-swap-approve").click();
+    await page.waitForFunction(()=>globalThis.__SWAP96_QA.swap?.status==="APPROVED");
+
+    const s=await page.evaluate(()=>({s:globalThis.__SWAP96_QA.schedules,applyCount:globalThis.__SWAP96_QA.applyCount}));
+    if(Object.keys(s.s).sort().join(",")!=="sch-a,sch-b"||s.s["sch-a"].user_id!=="u-b"||s.s["sch-b"].user_id!=="u-a"||s.applyCount!==1)throw new Error(JSON.stringify(s));
+    return "same sch-a/sch-b identities; owners exchanged exactly once";
+  });
+
+  await check("sched06_swap_after_transfer_employee_manager_owner_converge",async()=>{
+    const [a,b,m,o]=await Promise.all([
+      page.evaluate(()=>globalThis.__SWAP96_QA.employeeRpcAs("u-a","list_my_approved_schedules_v2",{p_week_start:"2026-09-28"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.employeeRpcAs("u-b","list_my_approved_schedules_v2",{p_week_start:"2026-09-28"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.managerRpc("get_manager_weekly_schedule",{p_store_id:"store-a",p_week_start:"2026-09-28"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.ownerRpc("get_manager_weekly_schedule",{p_store_id:"store-a",p_week_start:"2026-09-28"}))
+    ]);
+    if(a.error||b.error||m.error||o.error)throw new Error(JSON.stringify({a,b,m,o}));
+    if(a.data?.length!==1||a.data[0].schedule_id!=="sch-b"||a.data[0].user_id!=="u-a")throw new Error(JSON.stringify(a));
+    if(b.data?.length!==1||b.data[0].schedule_id!=="sch-a"||b.data[0].user_id!=="u-b")throw new Error(JSON.stringify(b));
+    const map=rows=>Object.fromEntries((rows||[]).map(x=>[x.schedule_id,x.user_id]));
+    const mm=map(m.data),om=map(o.data);
+    if(mm["sch-a"]!=="u-b"||mm["sch-b"]!=="u-a"||om["sch-a"]!=="u-b"||om["sch-b"]!=="u-a")throw new Error(JSON.stringify({mm,om}));
+    return "A=>sch-b; B=>sch-a; Manager/Owner same current owners";
+  });
+
+  await check("sched06_swap_retry_never_reverts_ownership_or_duplicates_identity",async()=>{
+    const [r1,r2]=await Promise.all([
+      page.evaluate(()=>globalThis.__SWAP96_QA.managerRpc("approve_shift_swap",{p_swap_id:"swap-1"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.managerRpc("approve_shift_swap",{p_swap_id:"swap-1"}))
+    ]);
+    const s=await page.evaluate(()=>({s:globalThis.__SWAP96_QA.schedules,applyCount:globalThis.__SWAP96_QA.applyCount}));
+    if(r1.error||r2.error||r1.data?.already_applied!==true||r2.data?.already_applied!==true||s.applyCount!==1||Object.keys(s.s).length!==2||s.s["sch-a"].user_id!=="u-b"||s.s["sch-b"].user_id!=="u-a")throw new Error(JSON.stringify({r1,r2,s}));
+    return "two retries => already_applied; sch-a/sch-b ownership unchanged";
+  });
+
+  await check("sched06_swap_attendance_authority_follows_each_current_identity_owner",async()=>{
+    const stale=await page.evaluate(()=>globalThis.__SWAP96_QA.employeeRpcAs("u-a","submit_manual_time_attendance_v1",{p_schedule_id:"sch-a",p_actual_start:"06:10",p_actual_end:"12:05",p_note:"stale pre-swap owner"}));
+    if(!stale.error?.message.includes("ATTENDANCE_NOT_CURRENT_OWNER"))throw new Error(JSON.stringify(stale));
+    const current=await page.evaluate(()=>globalThis.__SWAP96_QA.employeeRpcAs("u-b","submit_manual_time_attendance_v1",{p_schedule_id:"sch-a",p_actual_start:"06:10",p_actual_end:"12:05",p_note:"current post-swap owner"}));
+    const retry=await page.evaluate(()=>globalThis.__SWAP96_QA.employeeRpcAs("u-b","submit_manual_time_attendance_v1",{p_schedule_id:"sch-a",p_actual_start:"06:10",p_actual_end:"12:05",p_note:"current post-swap owner"}));
+    const a=await page.evaluate(()=>globalThis.__SWAP96_QA.attendance);
+    if(current.error||retry.error||current.data?.already_submitted!==false||retry.data?.already_submitted!==true||a?.schedule_id!=="sch-a"||a?.user_id!=="u-b")throw new Error(JSON.stringify({current,retry,a}));
+    return "stale A on sch-a=DENY; current B=ALLOW; attendance identity idempotent";
+  });
+
+  await check("sched06_swap_reload_keeps_current_owners_and_scope_fail_closed",async()=>{
+    await page.reload({waitUntil:"networkidle",timeout:20000});
+    await page.waitForFunction(()=>globalThis.__SWAP96_QA?.swap?.status==="APPROVED"&&globalThis.__SWAP96_QA?.schedules?.["sch-a"]?.user_id==="u-b");
+    const [m,o,denied,mx,ox]=await Promise.all([
+      page.evaluate(()=>globalThis.__SWAP96_QA.managerRpc("get_manager_weekly_schedule",{p_store_id:"store-a",p_week_start:"2026-09-28"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.ownerRpc("get_manager_weekly_schedule",{p_store_id:"store-a",p_week_start:"2026-09-28"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.employeeRpcAs("u-a","submit_manual_time_attendance_v1",{p_schedule_id:"sch-a",p_actual_start:"06:10",p_actual_end:"12:05",p_note:"stale reload"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.managerRpc("get_manager_weekly_schedule",{p_store_id:"store-x",p_week_start:"2026-09-28"})),
+      page.evaluate(()=>globalThis.__SWAP96_QA.ownerRpc("get_manager_weekly_schedule",{p_store_id:"store-x",p_week_start:"2026-09-28"}))
+    ]);
+    const map=rows=>Object.fromEntries((rows||[]).map(x=>[x.schedule_id,x.user_id]));
+    const mm=map(m.data),om=map(o.data);
+    if(mm["sch-a"]!=="u-b"||mm["sch-b"]!=="u-a"||om["sch-a"]!=="u-b"||om["sch-b"]!=="u-a"||!denied.error?.message.includes("ATTENDANCE_NOT_CURRENT_OWNER")||!mx.error?.message.includes("STORE_NOT_ALLOWED")||!ox.error?.message.includes("STORE_NOT_ALLOWED"))throw new Error(JSON.stringify({m,o,denied,mx,ox}));
+    return "reload converged; stale A denied; cross-store Manager/Owner denied";
+  });
+
+  await check("sched06_swap_uses_rpc_only_no_parallel_table_path",async()=>{
+    const x=await page.evaluate(()=>({employee:globalThis.__SWAP96_QA.calls,manager:globalThis.__SWAP96_QA.managerCalls,owner:globalThis.__SWAP96_QA.ownerCalls,schedules:globalThis.__SWAP96_QA.schedules,applyCount:globalThis.__SWAP96_QA.applyCount}));
+    const all=[...x.employee,...x.manager,...x.owner];
+    if(all.some(v=>v.kind==="from"||String(v.name||"").startsWith(".from")))throw new Error(JSON.stringify(x));
+    if(Object.keys(x.schedules).sort().join(",")!=="sch-a,sch-b"||x.applyCount!==1)throw new Error(JSON.stringify(x));
+    return "RPC-only; exactly two canonical schedule identities retained";
+  });
+
   await check("sched06_browser_diagnostics_clean",async()=>{
     if(report.page_errors.length||report.console_errors.length||report.request_failures.length||report.http_errors.length)throw new Error(JSON.stringify(report));
     return "0 page/console/request/5xx errors";
