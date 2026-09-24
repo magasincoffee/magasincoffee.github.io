@@ -78,15 +78,15 @@ try{
 
   const owner=await context.newPage();
   await check('owner_store_switch_reads_same_canonical_truth_without_cross_store_stale_rows',async()=>{
-    await owner.goto(base+'/09_QA/people-shift/sched-01-owner-workforce-publish-fixture.html');
-    await owner.locator('.owp').waitFor();
-    await owner.locator('[data-store="store-b"]').click();
-    await owner.locator('#panel-publish').filter({hasText:'Nhân viên Owner QA B'}).waitFor();
+    await owner.goto(base+'/09_QA/people-shift/sched-05-owner-scheduling-fixture.html');
+    await owner.locator('.msd').waitFor();
+    await owner.locator('#msdStore').selectOption('store-b');
+    await owner.locator('#panel-publish').filter({hasText:'Chi CN2'}).waitFor();
     const text=await owner.locator('#panel-publish').innerText();
-    if(text.includes('Nhân viên Owner QA A')||text.includes('Nhân viên chính thức A'))throw new Error(text);
+    if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error(text);
     const calls=await owner.evaluate(()=>globalThis.__SCHED01_OWNER_QA.calls);
     if(calls.some(x=>x.kind==='from'))throw new Error('direct table call');
-    return 'Owner store-b canonical read; no stale store-a projection';
+    return 'Owner store-b canonical writer read; no stale store-a projection';
   });
 
   console.log(JSON.stringify({marker:'SCHED_02_THREE_ROLE_AUTHORITY_BROWSER=PASS',checks},null,2));
