@@ -43,15 +43,18 @@ test("current migration state has reconciled MIG-006 and is executing authorized
   assert.equal(migration.rbt009.status, "COMPLETE_RELEASED");
   assert.equal(migration.rbt009.qualification.rbt009_tier_b_480m, "PASS");
   assert.equal(migration.current_task, "MIG-007");
-  assert.ok(["MIG_007_EXECUTION_IN_PROGRESS", "COMPLETE"].includes(migration.state));
-  assert.ok(["EXECUTION_IN_PROGRESS", "COMPLETE"].includes(migration.mig_007.status));
-  if (migration.mig_007.status === "EXECUTION_IN_PROGRESS") {
-    assert.equal(migration.mig_007.complete, false);
-    assert.equal(migration.mig_007.rollback_window, "OPEN_UNTIL_VALIDATION_AND_MERGE");
-  }
+  assert.equal(migration.state, "COMPLETE");
+  assert.equal(migration.current_task_status, "COMPLETE");
+  assert.equal(migration.last_completed_task, "MIG-007");
+  assert.equal(migration.mig_007.status, "COMPLETE");
+  assert.equal(migration.mig_007.execution_status, "COMPLETE");
+  assert.equal(migration.mig_007.complete, true);
+  assert.equal(migration.mig_007.deleted_file_count, 137);
+  assert.equal(migration.mig_007.rollback_window, "CLOSED");
+  assert.equal(migration.compatibility_window, "CLOSED_LEGACY_EMBEDDED_SUPERVISOR_REMOVED");
 });
 
 test("migration plan keeps historical phases while exposing current MIG-007 execution status", () => {
-  assert.match(migrationPlan, /MIG-007 EXECUTION IN PROGRESS|MIG-007 COMPLETE/);
+  assert.match(migrationPlan, /MIG-007 COMPLETE \/ INDEPENDENT REPOSITORY MIGRATION COMPLETE/);
   assert.match(migrationPlan, /Historical MIG-001 through MIG-006 sections below remain historical records/);
 });
