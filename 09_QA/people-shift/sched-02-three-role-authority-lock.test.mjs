@@ -8,7 +8,8 @@ const manager=read('05_MANAGER/Workforce/draft-publish-v1.js');
 const employeeAvailability=read('06_EMPLOYEE/availability/engine-v1.js');
 const employeeSchedule=read('06_EMPLOYEE/schedule/engine-v1.js');
 const ownerReview=read('04_OWNER/Workforce/02-review/engine-v1.js');
-const ownerPublish=read('04_OWNER/Workforce/03-publish/engine-v1.js');\nconst ownerRuntime=read('04_OWNER/Workforce/runtime/owner-workforce-runtime.html');
+const ownerPublish=read('04_OWNER/Workforce/03-publish/engine-v1.js');
+const ownerRuntime=read('04_OWNER/Workforce/runtime/owner-workforce-runtime.html');
 
 function fnBody(name,next){
   const start=migration.indexOf('create or replace function public.'+name);
