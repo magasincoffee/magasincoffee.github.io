@@ -2,7 +2,7 @@
 
 **Track:** WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1  
 **Task:** SCHED-06  
-**Status:** DONE / CANONICAL CLOSURE CANDIDATE  
+**Status:** DONE / CANONICAL CLOSED  
 **Execution mode:** OWNER_DIRECT_TO_WORK / MANUAL_WORK  
 **Date:** 2026-09-24  
 **Starting canonical main:** `1919cbab4e05cb5fc4af07b5df6b62a9f029c05c`  
@@ -345,6 +345,29 @@ PASS:
 - no dual-write;
 - no DB migration;
 - no fake production residue.
+
+## 12A. Canonical state fan-out reconciliation
+
+Closure PR #293 correctly updated the active Scheduling Source of Truth, but the first closure merge left three secondary canonical state surfaces stale at SCHED-06 READY:
+
+- `01_DOCS/MAGASIN/00_PROJECT_STATE.json`;
+- `01_DOCS/MAGASIN/00_TASK_QUEUE.md`;
+- `01_DOCS/MAGASIN/00_CURRENT_STATE.md`.
+
+This was a documentation/state fan-out defect only. Runtime, database, scheduling authority, production data and the exact-main implementation evidence remained unchanged.
+
+The SCHED-06 state-repair closure synchronizes those surfaces to:
+
+```text
+SCHED-06 = DONE
+SCHED-07 = READY / MANUAL_WORK
+SCHED-08 = BLOCKED
+TASK-108 = PAUSED_BEHIND_SCHED_GATE
+Workforce Robot = DISABLED
+PFC = UNCHANGED
+```
+
+No SCHED-07 implementation is started by this repair.
 
 ## 13. SCHED-06 closure verdict
 
