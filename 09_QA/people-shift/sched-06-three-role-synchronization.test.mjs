@@ -40,10 +40,11 @@ test("SCHED-06 locks one active writer and one official schedule truth across ro
   assert.match(managerApproval,/approve_shift_give/);
 });
 
-test("SCHED-06 server primitives preserve schedule identity through publish, Give and Attendance",async()=>{
-  const [publishSql,giveSql,attendanceSql]=await Promise.all([
+test("SCHED-06 server primitives preserve schedule identity through Publish, Give, Swap and Attendance",async()=>{
+  const [publishSql,giveSql,swapSql,attendanceSql]=await Promise.all([
     read("07_DATABASE/migrations/20260921171458_task_094_schedule_validation_publish_gate_v1.sql"),
     read("07_DATABASE/migrations/20260922134157_task_097_give_lifecycle_reconciliation_hardening.sql"),
+    read("07_DATABASE/migrations/20260922124821_task_096_swap_lifecycle_reconciliation_hardening.sql"),
     read("07_DATABASE/migrations/20260922142225_task_098_manual_time_attendance_authority_v1.sql")
   ]);
 
@@ -59,6 +60,15 @@ test("SCHED-06 server primitives preserve schedule identity through publish, Giv
   assert.equal((approve.match(/update public\.work_schedules/g)||[]).length,1);
   assert.match(approve,/set user_id=v_give\.recipient_id/);
   assert.match(approve,/where id=p_give_id and status='PENDING_MANAGER'/);
+
+  const approveSwap=swapSql.split(/create or replace function public\.approve_shift_swap/i)[1].split(/create or replace function public\.reject_shift_swap/i)[0];
+  assert.match(approveSwap,/v_swap\.status='APPROVED'[\s\S]*already_applied/);
+  assert.equal((approveSwap.match(/update public\.work_schedules/g)||[]).length,2);
+  assert.match(approveSwap,/set user_id=v_target\.user_id/);
+  assert.match(approveSwap,/set user_id=v_tmp/);
+  assert.match(approveSwap,/shift_swap_schedule:/);
+  assert.match(approveSwap,/where id=v_req\.id/);
+  assert.match(approveSwap,/where id=v_target\.id/);
 
   assert.match(attendanceSql,/validate_attendance_assignment_authority_v1\(p_schedule_id, v_uid\)/);
   assert.match(attendanceSql,/v_schedule\.user_id <> p_employee_id[\s\S]*ATTENDANCE_NOT_CURRENT_OWNER/);
@@ -177,4 +187,53 @@ test("SCHED-06 deterministic three-role synchronization converges on one schedul
 
   assert.throws(()=>m.readRole("MANAGER","store-x"),/STORE_NOT_ALLOWED/);
   assert.throws(()=>m.readRole("OWNER","store-x"),/STORE_NOT_ALLOWED/);
+});
+
+
+function createSwapModel(){
+  const schedules=new Map([
+    ["sch-a",{id:"sch-a",user_id:"u-a",store_id:"store-a",status:"APPROVED"}],
+    ["sch-b",{id:"sch-b",user_id:"u-b",store_id:"store-a",status:"APPROVED"}]
+  ]);
+  let status="PEER_ACCEPTED",applyCount=0;
+  function approve(){
+    if(status==="APPROVED")return {already_applied:true,swapped:false};
+    if(status!=="PEER_ACCEPTED")throw new Error("SHIFT_SWAP_PEER_ACCEPTANCE_REQUIRED");
+    const a=schedules.get("sch-a"),b=schedules.get("sch-b");
+    if(a.user_id!=="u-a")throw new Error("REQUESTER_OWNERSHIP_CHANGED");
+    if(b.user_id!=="u-b")throw new Error("TARGET_OWNERSHIP_CHANGED");
+    const tmp=a.user_id;a.user_id=b.user_id;b.user_id=tmp;applyCount++;status="APPROVED";
+    return {already_applied:false,swapped:true};
+  }
+  function employee(user){return [...schedules.values()].filter(x=>x.user_id===user).map(x=>({...x}))}
+  function role(store="store-a"){
+    if(store!=="store-a")throw new Error("STORE_NOT_ALLOWED");
+    return [...schedules.values()].map(x=>({...x}));
+  }
+  function attendance(user,scheduleId){
+    const s=schedules.get(scheduleId);
+    if(!s||s.user_id!==user)throw new Error("ATTENDANCE_NOT_CURRENT_OWNER");
+    return {schedule_id:scheduleId,user_id:user};
+  }
+  return {schedules,approve,employee,role,attendance,get applyCount(){return applyCount}};
+}
+
+test("SCHED-06 deterministic Swap preserves both schedule identities while exchanging current owners",()=>{
+  const m=createSwapModel();
+  const before=[...m.schedules.values()].map(x=>x.id).sort();
+  assert.deepEqual(before,["sch-a","sch-b"]);
+  assert.deepEqual(m.approve(),{already_applied:false,swapped:true});
+  assert.deepEqual(m.approve(),{already_applied:true,swapped:false});
+  assert.equal(m.applyCount,1);
+  assert.deepEqual([...m.schedules.values()].map(x=>x.id).sort(),before);
+  assert.equal(m.schedules.get("sch-a").user_id,"u-b");
+  assert.equal(m.schedules.get("sch-b").user_id,"u-a");
+  assert.equal(m.employee("u-a")[0].id,"sch-b");
+  assert.equal(m.employee("u-b")[0].id,"sch-a");
+  const manager=m.role(),owner=m.role();
+  assert.equal(manager.find(x=>x.id==="sch-a").user_id,"u-b");
+  assert.equal(owner.find(x=>x.id==="sch-b").user_id,"u-a");
+  assert.throws(()=>m.attendance("u-a","sch-a"),/ATTENDANCE_NOT_CURRENT_OWNER/);
+  assert.equal(m.attendance("u-b","sch-a").schedule_id,"sch-a");
+  assert.throws(()=>m.role("store-x"),/STORE_NOT_ALLOWED/);
 });
