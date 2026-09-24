@@ -18,18 +18,18 @@ try {
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('Không tải được Workforce Publish')||text.includes('ambiguous'))throw new Error(text);
     if(!text.includes('An CN1')||!text.includes('Owner Scheduling · Giám sát & can thiệp'))throw new Error('Owner canonical scheduling surface missing');
-    const calls=await owner.evaluate(()=>window.__SCHED01_OWNER_QA.calls.map(x=>x.name));
+    const calls=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.map(x=>x.name));
     for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
     return calls.join(',');
   });
 
   await check('owner_store_switch_reloads_same_canonical_read_path_without_leak',async()=>{
-    const before=await owner.evaluate(()=>window.__SCHED01_OWNER_QA.calls.length);
+    const before=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.length);
     await owner.locator('#msdStore').selectOption('store-b');
     await owner.locator('#panel-publish').filter({hasText:'Chi CN2'}).waitFor();
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error('cross-store stale content: '+text);
-    const calls=await owner.evaluate(before=>window.__SCHED01_OWNER_QA.calls.slice(before),before);
+    const calls=await owner.evaluate(before=>window.__SCHED05_OWNER_QA.calls.slice(before),before);
     const scoped=calls.filter(x=>['get_manager_weekly_availability','list_schedule_generations'].includes(x.name));
     if(scoped.length<2||scoped.some(x=>x.args.p_store_id!=='store-b'))throw new Error(JSON.stringify(calls));
     return 'store-b scoped reload';
