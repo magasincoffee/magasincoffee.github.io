@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SCHED-05 Owner Scheduling canonical QA</title>
+<style>
+:root{--border:#dce5f0;--muted:#617793;--text:#102a43;--primary:#16b7c5}
+*{box-sizing:border-box}body{font:14px system-ui;margin:20px;color:var(--text);overflow-x:hidden}.card{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff}.btn{padding:7px 10px;border:1px solid var(--border);background:#fff;border-radius:8px}.btn.primary{background:var(--primary);color:#fff}.badge{padding:5px 8px;border-radius:9px}.blue{background:#e9f1ff}.muted{color:var(--muted)}.view,.panel{display:none}.view.active,.panel.active{display:block}.sidebar{display:flex;gap:8px;margin-bottom:12px}.tabs{display:flex;gap:8px;margin-bottom:12px}.owner-sched-scope{margin-bottom:12px;padding:12px;border:1px solid #bdd9e7;border-radius:12px;background:#f3fbfd}.owner-sched-scope strong{display:block}.owner-sched-scope span{display:block;margin-top:4px;color:var(--muted)}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <button data-view="workforce" class="active">Owner Scheduling</button>
+  <button data-view="schedule">Lịch chính thức</button>
+</nav>
+<section id="view-workforce" class="view active">
+  <section id="ownerSchedulingScope" class="owner-sched-scope">
+    <strong>Giám sát & can thiệp theo cửa hàng</strong>
+    <span>Owner enterprise oversight dùng cùng canonical writer với Manager.</span>
+  </section>
+  <div class="tabs"><button data-tab="publish" class="active">Lịch & can thiệp</button></div>
+  <div id="panel-demand" class="panel"></div>
+  <div id="panel-review" class="panel"></div>
+  <div id="panel-publish" class="panel active"></div>
+</section>
+<section id="view-schedule" class="view"></section>
+<script>
+(() => {
+  window.__MAGASIN_WORKFORCE_TODAY__="2026-09-27";
+  window.__MAGASIN_SCHEDULING_ACTOR__="OWNER";
+  const calls=[];
+  const stores=[
+    {id:"store-a",code:"CN1",name:"94 Đường 3/2",status:"ACTIVE"},
+    {id:"store-b",code:"CN2",name:"163 Nguyễn Văn Cừ",status:"ACTIVE"},
+    {id:"store-c",code:"CN3",name:"82A Nguyễn Văn Cừ",status:"ACTIVE"},
+    {id:"store-d",code:"CN4",name:"60 Trần Hưng Đạo",status:"ACTIVE"}
+  ];
+  const people={
+    "a-1":"An CN1","a-2":"Bình CN1",
+    "b-1":"Chi CN2","c-1":"Dũng CN3","d-1":"Em CN4"
+  };
+  const peopleMeta=Object.fromEntries(Object.keys(people).map(id=>[id,{status:"ACTIVE",role:"STAFF"}]));
+  const availability=[
+    {availability_id:"av-a1",user_id:"a-1",employee_name:people["a-1"],work_date:"2026-09-28",start_time:"06:00",end_time:"12:00",preferred_store_id:"store-a",preferred_store_code:"CN1",availability_type:"AVAILABLE"},
+    {availability_id:"av-a2",user_id:"a-2",employee_name:people["a-2"],work_date:"2026-09-28",start_time:"12:00",end_time:"17:00",preferred_store_id:"store-a",preferred_store_code:"CN1",availability_type:"PREFERRED"},
+    {availability_id:"av-b1",user_id:"b-1",employee_name:people["b-1"],work_date:"2026-09-29",start_time:"06:00",end_time:"12:00",preferred_store_id:"store-b",preferred_store_code:"CN2",availability_type:"AVAILABLE"},
+    {availability_id:"av-c1",user_id:"c-1",employee_name:people["c-1"],work_date:"2026-09-30",start_time:"12:00",end_time:"17:00",preferred_store_id:"store-c",preferred_store_code:"CN3",availability_type:"AVAILABLE"},
+    {availability_id:"av-d1",user_id:"d-1",employee_name:people["d-1"],work_date:"2026-10-01",start_time:"17:00",end_time:"22:00",preferred_store_id:"store-d",preferred_store_code:"CN4",availability_type:"AVAILABLE"}
+  ];
+  const state={
+    generations:new Map(),
+    assignments:new Map(),
+    official:new Map(),
+    createCount:0,
+    reviewTransitions:0,
+    publishTransitions:0,
+    officialInsertCount:0,
+    publishFailures:0
+  };
+  const key=(storeId,week)=>storeId+"|"+week;
+  const genById=id=>[...state.generations.values()].find(x=>x.id===id)||null;
+  const min=v=>Number(String(v||"00:00").slice(0,2))*60+Number(String(v||"00:00").slice(3,5));
+  const add=(s,n)=>{const d=new Date(String(s).slice(0,10)+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+  const err=message=>({data:null,error:{message}});
+  function storeAvailability(storeId,week){
+    const end=add(week,6);
+    return availability.filter(r=>r.preferred_store_id===storeId&&r.work_date>=week&&r.work_date<=end).map(x=>({...x}));
+  }
+  function covers(av,a){return av.user_id===a.user_id&&av.work_date===a.work_date&&min(av.start_time)<=min(a.start_time)&&min(av.end_time)>=min(a.end_time)}
+  function validateGeneration(gen){
+    const rows=(state.assignments.get(gen.id)||[]).map(x=>({...x}));
+    const violations=[];
+    for(const a of rows){
+      const meta=peopleMeta[a.user_id];
+      if(!meta)violations.push({code:"ASSIGNMENT_EMPLOYEE_NOT_FOUND"});
+      else if(meta.status!=="ACTIVE")violations.push({code:"EMPLOYEE_INACTIVE"});
+      else if(meta.role!=="STAFF")violations.push({code:"EMPLOYEE_NOT_STAFF"});
+      if(a.store_id!==gen.store_id)violations.push({code:"ASSIGNMENT_STORE_MISMATCH"});
+      if(a.work_date<gen.week_start||a.work_date>gen.week_end)violations.push({code:"ASSIGNMENT_OUTSIDE_GENERATION_WEEK"});
+      if(min(a.end_time)<=min(a.start_time))violations.push({code:"ASSIGNMENT_PAYLOAD_MALFORMED"});
+      if(!storeAvailability(gen.store_id,gen.week_start).some(av=>covers(av,a)))violations.push({code:"AVAILABILITY_MISMATCH"});
+    }
+    for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){
+      const a=rows[i],b=rows[j];
+      if(a.user_id===b.user_id&&a.work_date===b.work_date&&min(a.start_time)<min(b.end_time)&&min(b.start_time)<min(a.end_time))violations.push({code:"ASSIGNMENT_OVERLAP"});
+    }
+    const counts={};for(const a of rows){const k=a.user_id+"|"+a.work_date;counts[k]=(counts[k]||0)+1}
+    if(Object.values(counts).some(n=>n>2))violations.push({code:"MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY"});
+    return {valid:violations.length===0,violations,warnings:[],violation_count:violations.length,warning_count:0,assignment_count:rows.length};
+  }
+  function mappedAssignments(gen){
+    return (state.assignments.get(gen.id)||[]).map((x,i)=>({...x,id:"asg-"+gen.id+"-"+(i+1),generation_id:gen.id,employee_name:people[x.user_id]||"Nhân viên",store_code:stores.find(s=>s.id===gen.store_id)?.code||""}));
+  }
+  const api={
+    async rpc(name,args={}){
+      calls.push({kind:"rpc",name,args:structuredClone(args)});
+      if(name==="get_manager_accessible_stores")return {data:stores.map(x=>({...x})),error:null};
+      if(name==="get_manager_weekly_availability"){
+        if(!stores.some(s=>s.id===args.p_store_id))return err("STORE_NOT_ALLOWED");
+        return {data:storeAvailability(args.p_store_id,args.p_week_start),error:null};
+      }
+      if(name==="list_schedule_generations"){
+        if(!stores.some(s=>s.id===args.p_store_id))return err("STORE_NOT_ALLOWED");
+        const g=state.generations.get(key(args.p_store_id,args.p_week_start));
+        return {data:g?[{...g}]:[],error:null};
+      }
+      if(name==="create_schedule_generation"){
+        if(!stores.some(s=>s.id===args.p_store_id))return err("STORE_NOT_ALLOWED");
+        const k=key(args.p_store_id,args.p_week_start),old=state.generations.get(k);
+        if(old){
+          if(old.status==="DRAFT")return {data:old.id,error:null};
+          if(old.status==="REVIEWED")return err("GENERATION_ALREADY_REVIEWED");
+          if(old.status==="PUBLISHED")return err("GENERATION_ALREADY_PUBLISHED");
+        }
+        const g={id:"gen-"+args.p_store_id+"-"+args.p_week_start,store_id:args.p_store_id,week_start:args.p_week_start,week_end:add(args.p_week_start,6),status:"DRAFT",algorithm_version:args.p_algorithm_version||"MANAGER_DIRECT_V1"};
+        state.generations.set(k,g);state.assignments.set(g.id,[]);state.createCount++;
+        return {data:g.id,error:null};
+      }
+      if(name==="get_schedule_generation_assignments"){
+        const g=genById(args.p_generation_id);if(!g)return err("GENERATION_NOT_FOUND");
+        return {data:mappedAssignments(g),error:null};
+      }
+      if(name==="replace_schedule_generation_assignments"){
+        const g=genById(args.p_generation_id);if(!g)return err("GENERATION_NOT_FOUND");
+        if(g.status!=="DRAFT")return err("GENERATION_NOT_DRAFT");
+        const rows=(args.p_assignments||[]).map(x=>({...x,store_id:g.store_id,status:"DRAFT"}));
+        state.assignments.set(g.id,rows);
+        const v=validateGeneration(g);
+        if(!v.valid)return err(v.violations[0]?.code||"ASSIGNMENT_VALIDATION_FAILED");
+        return {data:rows.length,error:null};
+      }
+      if(name==="validate_schedule_generation_v1"){
+        const g=genById(args.p_generation_id);if(!g)return err("GENERATION_NOT_FOUND");
+        return {data:validateGeneration(g),error:null};
+      }
+      if(name==="review_schedule_generation"){
+        const g=genById(args.p_generation_id);if(!g)return err("GENERATION_NOT_FOUND");
+        if(g.status==="REVIEWED")return {data:{status:"REVIEWED",already_reviewed:true},error:null};
+        if(g.status!=="DRAFT")return err("GENERATION_NOT_DRAFT");
+        const v=validateGeneration(g);if(!v.valid)return err("GENERATION_VALIDATION_FAILED");
+        g.status="REVIEWED";state.reviewTransitions++;
+        return {data:{status:"REVIEWED",already_reviewed:false},error:null};
+      }
+      if(name==="publish_schedule_generation"){
+        const g=genById(args.p_generation_id);if(!g)return err("GENERATION_NOT_FOUND");
+        if(g.status==="PUBLISHED"){
+          const rows=state.official.get(key(g.store_id,g.week_start))||[];
+          return {data:{published:true,status:"PUBLISHED",already_published:true,inserted_schedule_count:rows.length},error:null};
+        }
+        if(g.status!=="REVIEWED")return err("GENERATION_MUST_BE_REVIEWED");
+        const v=validateGeneration(g);
+        if(!v.valid){g.status="DRAFT";state.publishFailures++;return {data:{published:false,status:"DRAFT",validation:v,error_code:"GENERATION_VALIDATION_FAILED"},error:null}}
+        const k=key(g.store_id,g.week_start);
+        if(!state.official.has(k)){
+          const rows=mappedAssignments(g).map((a,i)=>({schedule_id:"sch-"+g.store_id+"-"+(i+1),store_id:g.store_id,store_code:stores.find(s=>s.id===g.store_id)?.code||"",user_id:a.user_id,employee_name:a.employee_name,work_date:a.work_date,start_time:a.start_time,end_time:a.end_time,status:"APPROVED",origin:"MANAGER_ASSIGNED"}));
+          state.official.set(k,rows);state.officialInsertCount+=rows.length;
+        }
+        g.status="PUBLISHED";state.publishTransitions++;
+        return {data:{published:true,status:"PUBLISHED",already_published:false,inserted_schedule_count:(state.official.get(k)||[]).length},error:null};
+      }
+      if(name==="get_manager_weekly_schedule"){
+        if(!stores.some(s=>s.id===args.p_store_id))return err("STORE_NOT_ALLOWED");
+        return {data:(state.official.get(key(args.p_store_id,args.p_week_start))||[]).map(x=>({...x})),error:null};
+      }
+      return err("UNEXPECTED_RPC:"+name);
+    },
+    from(name){calls.push({kind:"from",name});throw new Error("DIRECT_TABLE_FORBIDDEN:"+name)}
+  };
+  window.__SCHED05_OWNER_QA={
+    calls,stores,availability,people,peopleMeta,state,
+    rpc:(name,args)=>api.rpc(name,args),
+    setPersonStatus:(id,status)=>{if(peopleMeta[id])peopleMeta[id].status=status},
+    activatePerson:id=>{if(peopleMeta[id])peopleMeta[id].status="ACTIVE"}
+  };
+  window.supabase={createClient(){return api}};
+  document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    document.querySelector("#view-"+b.dataset.view)?.classList.add("active");
+    document.querySelectorAll("[data-view]").forEach(x=>x.classList.toggle("active",x===b));
+  }));
+})();
+</script>
+<script src="/05_MANAGER/Workforce/draft-publish-v1.js?v=20260924-sched05"></script>
+</body>
+</html>
