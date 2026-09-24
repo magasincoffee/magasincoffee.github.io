@@ -179,8 +179,8 @@ Canonical SoT: `05_SYSTEM/WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1_SOURCE_OF
 | SCHED-03 | Employee Schedule UI V1 | **DONE** |
 | SCHED-04 | Manager Scheduling V1 | **DONE** |
 | SCHED-05 | Owner Scheduling V1 | **DONE** |
-| SCHED-06 | Three-role synchronization | **READY / MANUAL_WORK** |
-| SCHED-07 | Professional UI/UX + responsive pass | BLOCKED |
+| SCHED-06 | Three-role synchronization | **DONE** |
+| SCHED-07 | Professional UI/UX + responsive pass | **READY / MANUAL_WORK** |
 | SCHED-08 | Live three-role E2E acceptance | BLOCKED |
 | SCHED-09 | Production reconciliation + canonical closure | BLOCKED |
 
@@ -194,7 +194,9 @@ SCHED-04 evidence: `05_SYSTEM/SCHED_04_MANAGER_SCHEDULING_V1.md`. Implementation
 
 SCHED-05 evidence: `05_SYSTEM/SCHED_05_OWNER_SCHEDULING_V1.md`. Implementation PR #289 final head `870fe55f1ad76f0c8a3f3ee0280d87b6882ac690` merged as `47a8a0da64ac68e50839023e47b584f1b8b97e18`; PR-head People Shift `35937446131 / 107437565949`, exact-main People Shift `35938947897 / 107442311642` with 322/322 deterministic checks, Pages validation `35938948068 / 107442312757`, and Pages deployment `35938946623 / 107442356690` are SUCCESS. Owner Scheduling is now enterprise oversight / selected-store control over the same Manager canonical writer and RPC state machine; four-store switching clears stale projections, publish/reload/idempotency and stale revalidation pass, legacy Owner publish is compatibility-only, no direct table DML exists, and no DB migration/fake production scheduling data was created.
 
-Current scheduling cursor: **SCHED-06 → SCHED-07**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
+SCHED-06 evidence: `05_SYSTEM/SCHED_06_THREE_ROLE_SYNCHRONIZATION_V1.md`. Implementation PR #292 final head `b5e34647c3df689d19e0812a5a6a356561a56c0e` merged as `c1fde945dfc706d728718d1c6fa68a5752f38786`; PR-head People Shift `35948344813 / 107471249024` and exact-main People Shift `35948615268 / 107472066171` are SUCCESS with 325/325 deterministic checks. Exact-main Pages validation `35948615433 / 107472067094` and build/deploy/report `35948614728 / 107472067415 / 107472094550 / 107472094401` are SUCCESS. Publish retains one `work_schedules` truth; Give transfers ownership on the same schedule identity; Swap exchanges current owners on the same two schedule identities; Employee/Manager/Owner projections reread current ownership; stale owners lose Attendance authority and current owners retain it. Full Give, Swap, Attendance and failure/recovery/security browser regressions are green. No SCHED-06 migration or fake production data was created.
+
+Current scheduling cursor: **SCHED-07 → SCHED-08**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
 
 ## Workforce Operations V1 — MANUAL_WORK RELEASED / ROBOT DISABLED
 
