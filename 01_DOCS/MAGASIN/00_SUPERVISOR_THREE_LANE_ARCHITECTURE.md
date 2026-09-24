@@ -12,7 +12,7 @@ Long-running Work watchdog implementation: TASK-RBT-005 — runtime v2026-09-20.
 
 Canonical scheduler/observability design:
 
-`08_INTEGRATIONS/supervisor/docs/ROBOT_BROWSER_SCHEDULER_OBSERVABILITY_ARCHITECTURE.md`
+`magasincoffee/magasin-supervisor:docs/ROBOT_BROWSER_SCHEDULER_OBSERVABILITY_ARCHITECTURE.md`
 
 The extension does not replace Three-Lane V1. It changes how Three-Lane uses browser resources, Work revisions, long-running recovery and observability while retaining lane identity, exact-once delivery and Owner control.
 
@@ -389,4 +389,4 @@ TASK-RBT release additionally requires:
 - Chrome/CDP healthy;
 - Owner STOP authoritative.
 
-See `08_INTEGRATIONS/supervisor/docs/ROBOT_BROWSER_SCHEDULER_OBSERVABILITY_ARCHITECTURE.md` for the TASK-RBT-002 → TASK-RBT-009 dependency-correct roadmap and production soak matrix.
+See `magasincoffee/magasin-supervisor:docs/ROBOT_BROWSER_SCHEDULER_OBSERVABILITY_ARCHITECTURE.md` for the TASK-RBT-002 → TASK-RBT-009 dependency-correct roadmap and production soak matrix.
