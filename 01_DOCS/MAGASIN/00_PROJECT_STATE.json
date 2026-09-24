@@ -1477,7 +1477,7 @@
   },
   "supervisor_repository_migration": {
     "id": "MAGASIN_SUPERVISOR_INDEPENDENT_REPOSITORY_V1",
-    "state": "MIG_007_EXECUTION_IN_PROGRESS",
+    "state": "COMPLETE",
     "source_repository": "magasincoffee/magasincoffee.github.io",
     "target_repository": "magasincoffee/magasin-supervisor",
     "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -1486,7 +1486,7 @@
     "next_task": null,
     "production_cutover": true,
     "production_authority": "NEW_REPO_AUTOSTART_OWNERSHIP_ALL_DISABLED_RUNTIME_QUIESCENT",
-    "compatibility_window": "MIG_007_EXECUTION_ACTIVE_ROLLBACK_WINDOW_NOT_YET_CLOSED",
+    "compatibility_window": "CLOSED_LEGACY_EMBEDDED_SUPERVISOR_REMOVED",
     "two_device_policy": {
       "development_test_may_use_both_devices": true,
       "production_mutation_authority_instances": 1,
@@ -1536,8 +1536,8 @@
       "AUTH_MFA_CAPTCHA_AND_DESTRUCTIVE_ADMIN_REMAIN_FAIL_CLOSED"
     ],
     "canonical_plan": "01_DOCS/MAGASIN/08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md",
-    "last_completed_task": "MIG-006",
-    "current_task_status": "EXECUTION_IN_PROGRESS",
+    "last_completed_task": "MIG-007",
+    "current_task_status": "COMPLETE",
     "mig_001": {
       "status": "DONE",
       "source_baseline_sha": "4f76b929c5fedc44b451abd823f0f1f7fb3e50fe",
@@ -1982,10 +1982,10 @@
         "result": "NON_CANONICAL_PREQUALIFICATION_ATTEMPT_RECORD"
       },
       "next_task": "MIG-007",
-      "next_task_status": "AUTHORIZED_EXECUTION_IN_PROGRESS"
+      "next_task_status": "COMPLETED"
     },
     "mig_007": {
-      "status": "EXECUTION_IN_PROGRESS",
+      "status": "COMPLETE",
       "authority_status": "AUTHORIZED_READY_FOR_EXECUTION",
       "authority_repository": "magasincoffee/magasin-supervisor",
       "authority_manifest": "docs/MIG_007_AUTHORITY_MANIFEST.json",
@@ -2002,8 +2002,27 @@
       "inventory_missing_count": 0,
       "inventory_extra_count": 0,
       "cleanup_commit": "e66245a2236445aa05a139eb894c7a8efbdbb041",
-      "rollback_window": "OPEN_UNTIL_VALIDATION_AND_MERGE",
-      "complete": false
+      "rollback_window": "CLOSED",
+      "complete": true,
+      "execution_status": "COMPLETE",
+      "source_cleanup_pr": 291,
+      "preclosure_validation": {
+        "workflow": "Business OS Contract Tests",
+        "run_id": 35939535542,
+        "job_id": 107444140372,
+        "conclusion": "SUCCESS"
+      },
+      "residual_executable_surface": {
+        "embedded_supervisor_files": 0,
+        "supervisor_workflows": 0,
+        "supervisor_scripts": 0
+      },
+      "deleted_file_count": 137,
+      "architecture_links_reconciled": 2,
+      "rollback_history_preserved": true,
+      "local_recovery_material_mutated": false,
+      "completion_evidence_repository": "magasincoffee/magasin-supervisor",
+      "completion_evidence_path": "docs/MIG_007_FINAL_CLEANUP_CLOSURE.json"
     }
   },
   "workforce_scheduling_production_readiness": {
