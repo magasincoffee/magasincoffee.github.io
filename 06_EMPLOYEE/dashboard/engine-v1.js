@@ -45,7 +45,7 @@ function sourceState(x){
   const emptyMarker=x?.querySelector('#view-schedule [data-schedule-empty="1"]');
   const renderedShift=x?.querySelector('#view-schedule [data-schedule-id]');
   const error=state.error||errorMarker?.textContent?.trim()||null;
-  const settled=!!error||!!emptyMarker||!!renderedShift||rows.length>0;
+  const settled=state.ready===true||!!error||!!emptyMarker||!!renderedShift||rows.length>0;
   if(state.loading||loadingMarker||(!settled&&!wrongWeek))return {kind:'loading',rows:[],todayRows:[],week,currentWeek,state};
   if(error)return {kind:'error',error,rows:[],todayRows:[],week,currentWeek,state};
   if(wrongWeek)return {kind:'wrong-week',rows:[],todayRows:[],week,currentWeek,state};
@@ -213,7 +213,7 @@ function bind(x){
   x.addEventListener('click',e=>{
     const action=e.target.closest?.('[data-today-action]')?.dataset?.todayAction;
     if(action){
-      if(action==='retry-schedule'){void globalThis.MAGASIN_EMPLOYEE?.schedule?.refresh?.().finally?.(render);return}
+      if(action==='retry-schedule'){const p=globalThis.MAGASIN_EMPLOYEE?.schedule?.refresh?.();p?.finally?.(render);return}
       if(action==='availability'){globalThis.MAGASIN_EMPLOYEE?.availability?.open?.();return}
       if(action.startsWith('route:')){navigate(x,action.slice(6));return}
       if(action.startsWith('attendance:')){
