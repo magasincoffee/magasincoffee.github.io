@@ -18,6 +18,7 @@ const load=(d,src)=>new Promise((ok,no)=>{
   const s=d.createElement('script');s.src=src;s.async=false;s.onload=ok;s.onerror=no;(d.body||d.documentElement).appendChild(s)
 });
 const loadMany=async(d,list)=>{for(const src of list)await load(d,src)};
+const addCss=(d,href)=>{const l=d.createElement('link');l.rel='stylesheet';l.href=href;d.head.appendChild(l);return l};
 function ownerCss(d){
   if(d.getElementById('owner-scheduling-v1-css'))return;
   d.head.insertAdjacentHTML('beforeend',`<style id="owner-scheduling-v1-css">
@@ -62,13 +63,19 @@ function prepareOwnerSurface(d){
 async function boot(){
   try{
     const d=frame.contentDocument;if(!d)return;
+    addCss(d,'/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004');
+    addCss(d,'/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004');
+    addCss(d,'/02_CORE/ui/magasin-ui-v2-shell.css?v=20260925-ui2-004');
+    d.body.dataset.magasinUiV2='';
+    d.body.dataset.magasinShellV2='';
+    d.body.dataset.magasinShellRole='owner';
+    d.body.dataset.magasinShellMode='legacy-manager';
+    d.body.dataset.magasinShellCurrent='workforce';
+    d.defaultView.__MAGASIN_UI_V2_SHELL__={role:'OWNER',mode:'legacy-manager',current:'workforce'};
     await loadMany(d,[
       '/02_CORE/shared/shared-core-v1.js?v=20260903-core-structure1',
       'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-      '/05_MANAGER/runtime/compat/ui/manager-ui-source-header-suppress-v1.js?v=20260903-owner-workforce1',
-      '/05_MANAGER/runtime/compat/ui/manager-ui-shell-v3.js?v=20260903-owner-workforce1',
-      '/05_MANAGER/runtime/compat/ui/manager-ui-header-fix-v1.js?v=20260903-owner-workforce1',
-      '/04_OWNER/Access/owner-access-nav-v1.js?v=20260917-owner-access1'
+      '/02_CORE/ui/magasin-ui-v2-shell.js?v=20260925-ui2-004'
     ]);
     let tries=0;while(!prepareOwnerSurface(d)&&tries++<80)await new Promise(r=>setTimeout(r,100));
     if(!d.querySelector('#panel-publish'))throw new Error('OWNER_SCHEDULING_PANEL_NOT_READY');

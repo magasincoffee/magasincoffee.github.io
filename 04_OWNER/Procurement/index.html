@@ -8,8 +8,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/02_CORE/shared/shared-core-v1.js"></script>
 <link rel="stylesheet" href="./procurement-v2.css">
+<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004">
+<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004">
+<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20260925-ui2-004">
+<script defer src="/02_CORE/ui/magasin-ui-v2-shell.js?v=20260925-ui2-004"></script>
 </head>
-<body>
+<body data-magasin-ui-v2 data-magasin-shell-v2 data-magasin-shell-role="owner" data-magasin-shell-mode="standalone" data-magasin-shell-current="procurement">
 <div id="loading" class="denied"><h2>Đang mở hệ thống…</h2><p class="muted">Đang kiểm tra tài khoản và dữ liệu kế toán.</p></div>
 <div id="denied" class="denied hidden"><h2>Không có quyền truy cập</h2><p id="deniedText" class="muted"></p><a class="btn primary" href="/03_PLATFORM/01_AUTH/">Về đăng nhập</a></div>
 <div id="app" class="hidden">
