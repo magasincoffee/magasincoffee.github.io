@@ -37,7 +37,18 @@ function errorCode(e){
   return 'SCHEDULE_READ_FAILED';
 }
 function friendlyError(e){return ERROR_COPY[errorCode(e)]||'Không thể tải lịch làm lúc này. Vui lòng thử lại.'}
-function ensureCss(d){if(d&&!d.getElementById('employee-schedule-engine-v1-css'))d.head.insertAdjacentHTML('beforeend',css)}
+function ensureCss(d){
+  if(!d)return;
+  d.documentElement.dataset.schedulingRole='employee';
+  if(!d.getElementById('employee-schedule-engine-v1-css'))d.head.insertAdjacentHTML('beforeend',css);
+  if(!d.getElementById('workforce-scheduling-polish-v1-css')){
+    const link=d.createElement('link');
+    link.id='workforce-scheduling-polish-v1-css';
+    link.rel='stylesheet';
+    link.href='/02_CORE/ui/workforce-scheduling-polish-v1.css?v=20260925-sched07';
+    d.head.appendChild(link);
+  }
+}
 function ensureShell(d){
   const panel=d?.querySelector('#view-schedule .schedule-main-panel');if(!panel)return null;
   panel.classList.add('employee-schedule-engine');
