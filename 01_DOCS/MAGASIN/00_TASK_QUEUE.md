@@ -452,3 +452,12 @@ Tier B final qualification is **IN PROGRESS** on the locked runtime candidate.
 - MIG-007 remains blocked until MIG-006 qualifies
 
 This is bookkeeping only. It does not modify the target execution branch or production runtime.
+
+## MAGASIN UI/UX V2 — Owner P0 priority lock (2026-09-25)
+
+Canonical plan: `05_SYSTEM/MAGASIN_UI_UX_V2_P0_EXECUTION_PLAN.md`.
+
+Owner has designated UI/UX V2 as **P0 / highest implementation priority until closure**, activating immediately after the currently in-flight Brain/Work gate is safely closed. The sequence is `UI2-001 → UI2-017`; Brain dispatches only one dependency-correct task at a time and must VERIFY before advancing. Employee is 100% phone-primary; 360/390/430px acceptance is mandatory before UI V2 closure.
+
+This priority may be interrupted only by security, production incident, data-integrity emergency, or explicit Owner intervention. It does not authorize Work or Robot to skip an already-dispatched task or self-select the next UI task.
+
