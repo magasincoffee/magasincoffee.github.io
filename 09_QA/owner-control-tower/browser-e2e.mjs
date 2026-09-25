@@ -259,7 +259,9 @@ try {
   });
 
   await check("ui2_004_owner_shell_desktop_nav_contract", async () => {
-    await page.locator("#magasinUiV2Shell").waitFor({ state: "visible", timeout: 10000 });
+    await page.locator("#magasinUiV2Shell").waitFor({ state: "attached", timeout: 10000 });
+    await page.locator(".m-shell-v2-sidebar").waitFor({ state: "visible", timeout: 10000 });
+    await page.locator(".m-shell-v2-topbar").waitFor({ state: "visible", timeout: 10000 });
     const state = await page.evaluate(() => {
       const shell = document.querySelector("#magasinUiV2Shell");
       const sidebar = document.querySelector(".m-shell-v2-sidebar");
