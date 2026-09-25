@@ -180,8 +180,8 @@ Canonical SoT: `05_SYSTEM/WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1_SOURCE_OF
 | SCHED-04 | Manager Scheduling V1 | **DONE** |
 | SCHED-05 | Owner Scheduling V1 | **DONE** |
 | SCHED-06 | Three-role synchronization | **DONE** |
-| SCHED-07 | Professional UI/UX + responsive pass | **READY / MANUAL_WORK** |
-| SCHED-08 | Live three-role E2E acceptance | BLOCKED |
+| SCHED-07 | Professional UI/UX + responsive pass | **DONE** |
+| SCHED-08 | Live three-role E2E acceptance | **READY / MANUAL_WORK** |
 | SCHED-09 | Production reconciliation + canonical closure | BLOCKED |
 
 SCHED-01 evidence: `05_SYSTEM/SCHED_01_PRODUCTION_BLOCKER_REPAIR_CANONICAL_RECONCILIATION.md`. Implementation PR #281 merged as `d0f0069ec4060dacf2de4ca6f695b969066b517f`; production migration `20260923160755_sched_01_production_blocker_repair_v1` is live; exact-main People Shift `35887441525 / 107271085777` and Pages gates are green; live duplicate active generation groups = 0.
@@ -196,7 +196,9 @@ SCHED-05 evidence: `05_SYSTEM/SCHED_05_OWNER_SCHEDULING_V1.md`. Implementation P
 
 SCHED-06 evidence: `05_SYSTEM/SCHED_06_THREE_ROLE_SYNCHRONIZATION_V1.md`. Primary implementation PR #292 final head `b5e34647c3df689d19e0812a5a6a356561a56c0e` merged as `c1fde945dfc706d728718d1c6fa68a5752f38786`; acceptance-hardening PR #295 final head `7a341acb0c393330297c15525c1bbaaa91ea5efd` merged as `37caf63f6c8aeb9e72ef1ba2aaba3f915b8a3884`. Final PR-head People Shift `35949459607 / 107474642099` and final exact-main People Shift `35949595271 / 107475057325` are SUCCESS with 326/326 deterministic checks. Final exact-main Pages validation `35949595316 / 107475057514` and build/deploy/report `35949593630 / 107475056790 / 107475143290 / 107475143223` are SUCCESS. Publish retains one `work_schedules` truth; Give transfers ownership on the same schedule identity; targeted Swap proof exchanges current owners on the same two schedule identities and shows Employee/Manager/Owner reread convergence; stale owners lose Attendance authority and current owners retain it after Give and Swap. Retry/reload/cross-store and failure/recovery/security regressions are green. No SCHED-06 migration or fake production data was created.
 
-Current scheduling cursor: **SCHED-07 → SCHED-08**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
+SCHED-07 completion evidence: `05_SYSTEM/SCHED_07_PROFESSIONAL_UI_UX_RESPONSIVE_PASS.md`. Implementation PR #297 final head `6a83e44f8a5b87a07d1f2573f01b7dbfe9cd7021` merged as `7977a5b80dea853e0ee2997656aa6157035fb633`. PR-head People Shift `36089098140 / 107927389563` and SOP `36089098130 / 107927389606` are SUCCESS. Exact-main People Shift `36089225109 / 107927784809` and SOP `36089225147 / 107927784498` are SUCCESS with 329/329 deterministic checks; dedicated `SCHED_07_UI_RESPONSIVE=PASS`. Pages validation `36089225189 / 107927784732` and build/deploy/report `36089224309 / 107927784558 / 107927816143 / 107927816183` are SUCCESS. Employee/Manager/Owner scheduling now share the MAGASIN polish layer, enforce 44px mobile controls and visible keyboard focus, have no page-level horizontal overflow at the tested mobile widths, preserve the desktop seven-day board, and retain all canonical scheduling authority/RPC semantics. No migration, production business-data mutation or new scheduling writer was introduced.
+
+Current scheduling cursor: **SCHED-08 → SCHED-09**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
 
 ## Workforce Operations V1 — MANUAL_WORK RELEASED / ROBOT DISABLED
 

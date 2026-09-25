@@ -297,16 +297,17 @@ On activation of this SoT:
 
 ```text
 priority_gate = WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1
-current_sched_task = SCHED-07
-next_sched_task = SCHED-08
+current_sched_task = SCHED-08
+next_sched_task = SCHED-09
 SCHED-01 = DONE
 SCHED-02 = DONE
 SCHED-03 = DONE
 SCHED-04 = DONE
 SCHED-05 = DONE
 SCHED-06 = DONE
-SCHED-07 = READY / MANUAL_WORK
-SCHED-08 = BLOCKED
+SCHED-07 = DONE
+SCHED-08 = READY / MANUAL_WORK
+SCHED-09 = BLOCKED
 unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
 TASK-108 = PAUSED_BEHIND_SCHED_GATE
 Workforce Robot = DISABLED
@@ -462,6 +463,36 @@ Canonical evidence:
 - targeted Swap hardening proves same two schedule identities survive the transfer, all three role projections converge on current owners, stale owners lose Attendance authority, current owners retain it, retry cannot reverse ownership, reload converges, and cross-store access fails closed.
 
 SCHED-07 now owns the next sequential gate: Professional UI/UX + responsive pass. It is **READY / MANUAL_WORK** only. SCHED-08 remains BLOCKED, TASK-108 remains paused, Workforce Robot remains DISABLED, and PFC remains unchanged.
+
+The overall Scheduling Production Readiness gate remains **ACTIVE** until SCHED-09 canonical closure.
+
+## 13G. SCHED-07 closure checkpoint
+
+SCHED-07 closed after the canonical Employee / Manager / Owner scheduling surfaces passed the professional UI/UX and responsive production-readiness gate without changing scheduling authority or database truth.
+
+Canonical evidence:
+- evidence: `05_SYSTEM/SCHED_07_PROFESSIONAL_UI_UX_RESPONSIVE_PASS.md`;
+- starting baseline: `6752948290140fbe62f85944f5151ffd66afb66e`;
+- implementation PR #297;
+- final implementation PR head `6a83e44f8a5b87a07d1f2573f01b7dbfe9cd7021`;
+- implementation merge / exact implementation main `7977a5b80dea853e0ee2997656aa6157035fb633`;
+- PR-head People Shift `36089098140 / 107927389563` — SUCCESS;
+- PR-head SOP `36089098130 / 107927389606` — SUCCESS;
+- exact-main People Shift `36089225109 / 107927784809` — SUCCESS with 329/329 deterministic checks;
+- exact-main SOP `36089225147 / 107927784498` — SUCCESS;
+- exact-main Pages validation `36089225189 / 107927784732` — SUCCESS;
+- exact-main Pages build/deploy/report `36089224309 / 107927784558 / 107927816143 / 107927816183` — SUCCESS;
+- dedicated `SCHED_07_UI_RESPONSIVE=PASS`;
+- Employee mobile touch target = 44px with visible keyboard focus and no horizontal overflow;
+- Manager mobile board = one column, 44px controls and 390/390 no horizontal overflow;
+- Owner mobile store control = 44px and 390/390 no horizontal overflow;
+- Manager desktop board remains seven columns with 1440/1440 no horizontal overflow;
+- dedicated browser page/console/request/5xx diagnostics = 0;
+- existing SCHED-01→06, Give, Swap, Attendance, Profile, Payroll, recovery/security, Manager canonical, Day-10 and Control Tower browser regressions remain PASS;
+- `work_schedules`, canonical readers/writers and server authorization remain unchanged;
+- no SCHED-07 migration, new writer, production fixture or production business-data mutation.
+
+SCHED-08 now owns the next sequential gate: Live three-role E2E acceptance. It is **READY / MANUAL_WORK** only. SCHED-09 remains BLOCKED, TASK-108 remains paused, Workforce Robot remains DISABLED, and PFC remains unchanged.
 
 The overall Scheduling Production Readiness gate remains **ACTIVE** until SCHED-09 canonical closure.
 
