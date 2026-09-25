@@ -328,14 +328,12 @@
       });
     });
 
-    shell.querySelector('[data-shell-logout]')?.addEventListener('click', () => {
-      const sourceLogout = document.querySelector('#logoutBtn');
-      if (sourceLogout) {
-        sourceLogout.click();
-        return;
-      }
-      try { topWindow().location.assign('/03_PLATFORM/01_AUTH/'); }
-      catch (_) { location.assign('/03_PLATFORM/01_AUTH/'); }
+    const logout = shell.querySelector('[data-shell-logout]');
+    const sourceLogout = document.querySelector('#logoutBtn');
+    if (logout && !sourceLogout) logout.hidden = true;
+    logout?.addEventListener('click', () => {
+      const currentLogout = document.querySelector('#logoutBtn');
+      if (currentLogout) currentLogout.click();
     });
 
     document.addEventListener('keydown', event => {
