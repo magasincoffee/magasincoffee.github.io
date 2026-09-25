@@ -1,1 +1,155 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>MAGASIN · Chờ cấp quyền</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f4f7fb;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.card{width:min(560px,92vw);padding:30px;background:#fff;border:1px solid #dce5f0;border-radius:18px}.muted{color:#617793;font-size:14px;line-height:1.6}.btn{display:inline-block;margin-top:16px;padding:11px 15px;border-radius:10px;background:#16b7c5;color:#fff;text-decoration:none;font-weight:800}</style></head><body><main class="card"><h1>MAGASIN</h1><p class="muted">Tài khoản của bạn đã được xác thực nhưng chưa được cấp quyền truy cập hệ thống. Vui lòng chờ quản lý xét duyệt.</p><a class="btn" href="/03_PLATFORM/01_AUTH/">Quay lại đăng nhập</a></main></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="/03_PLATFORM/02_ASSETS/favicon.svg">
+  <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-tokens.css">
+  <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-primitives.css">
+  <title>MAGASIN · Chờ cấp quyền</title>
+  <style>
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 15% 20%,rgba(15,143,156,.10),transparent 30%),
+        var(--m-color-neutral-50);
+      color:var(--m-color-neutral-950);
+      overflow-x:hidden;
+    }
+    .pending-shell{
+      min-height:100vh;
+      min-height:100dvh;
+      display:grid;
+      place-items:center;
+      padding:
+        calc(var(--m-space-6) + var(--m-safe-top))
+        calc(var(--m-space-6) + var(--m-safe-right))
+        calc(var(--m-space-6) + var(--m-safe-bottom))
+        calc(var(--m-space-6) + var(--m-safe-left));
+    }
+    .pending-card{
+      width:min(620px,100%);
+      padding:clamp(28px,5vw,48px);
+      border-radius:var(--m-radius-2xl);
+      box-shadow:var(--m-shadow-md);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:var(--m-space-3);
+      margin-bottom:var(--m-space-7);
+    }
+    .brand-mark{
+      width:48px;
+      height:48px;
+      display:grid;
+      place-items:center;
+      flex:0 0 48px;
+      border-radius:var(--m-radius-lg);
+      background:var(--m-color-brand-600);
+      color:#fff;
+      font-size:19px;
+      font-weight:800;
+    }
+    .brand-copy h1{
+      margin:0;
+      font-size:22px;
+      line-height:28px;
+      letter-spacing:-.02em;
+    }
+    .brand-copy p{
+      margin:2px 0 0;
+      color:var(--m-color-neutral-500);
+      font-size:12px;
+      line-height:18px;
+    }
+    .pending-icon{
+      width:48px;
+      height:48px;
+      display:grid;
+      place-items:center;
+      margin-bottom:var(--m-space-4);
+      border-radius:50%;
+      background:var(--m-color-info-soft);
+      color:var(--m-color-info);
+      font-size:20px;
+      font-weight:700;
+    }
+    .pending-card h2{
+      margin:0;
+      font-size:28px;
+      line-height:34px;
+      font-weight:600;
+      letter-spacing:-.025em;
+    }
+    .pending-card p{
+      margin:var(--m-space-3) 0 0;
+      color:var(--m-color-neutral-500);
+      font-size:14px;
+      line-height:21px;
+    }
+    .pending-note{
+      margin-top:var(--m-space-5);
+      padding:var(--m-space-4);
+      border:1px solid var(--m-border-default);
+      border-radius:var(--m-radius-lg);
+      background:var(--m-color-neutral-50);
+      color:var(--m-color-neutral-700);
+      font-size:13px;
+      line-height:19px;
+    }
+    .pending-actions{
+      display:flex;
+      margin-top:var(--m-space-6);
+    }
+    .pending-actions .m-button{
+      min-height:46px;
+      text-decoration:none;
+    }
+    @media(max-width:520px){
+      .pending-shell{
+        display:block;
+        padding:
+          calc(var(--m-space-3) + var(--m-safe-top))
+          calc(var(--m-space-3) + var(--m-safe-right))
+          calc(var(--m-space-3) + var(--m-safe-bottom))
+          calc(var(--m-space-3) + var(--m-safe-left));
+        background:var(--m-color-surface);
+      }
+      .pending-card{
+        min-height:calc(100dvh - var(--m-safe-top) - var(--m-safe-bottom) - 24px);
+        width:100%;
+        padding:var(--m-space-5) var(--m-space-2) var(--m-space-7);
+        border:0;
+        border-radius:0;
+        box-shadow:none;
+      }
+      .pending-actions .m-button{
+        width:100%;
+        min-height:48px;
+      }
+    }
+  </style>
+</head>
+<body data-magasin-ui-v2>
+  <main class="pending-shell">
+    <section class="pending-card m-card">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">M</div>
+        <div class="brand-copy"><h1>MAGASIN</h1><p>Hệ thống nội bộ</p></div>
+      </div>
+      <div class="pending-icon" aria-hidden="true">…</div>
+      <h2>Đang chờ cấp quyền truy cập</h2>
+      <p>Tài khoản của bạn đã được xác thực nhưng chưa được cấp quyền làm việc trong hệ thống.</p>
+      <div class="pending-note" role="status">
+        Khi quản lý kích hoạt quyền phù hợp, bạn có thể quay lại màn hình đăng nhập và tiếp tục bằng chính tài khoản này.
+      </div>
+      <div class="pending-actions">
+        <a class="m-button m-button--primary" href="/03_PLATFORM/01_AUTH/">Quay lại đăng nhập</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
