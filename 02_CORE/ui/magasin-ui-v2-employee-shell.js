@@ -343,6 +343,7 @@
     if (pageWrap) observer.observe(pageWrap, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 
     const initial = canonicalFromHistory();
+    setPrimaryActive(initial);
     applyCanonicalRoute(initial);
 
     window.MAGASIN_EMPLOYEE_UI_V2_SHELL = Object.freeze({
