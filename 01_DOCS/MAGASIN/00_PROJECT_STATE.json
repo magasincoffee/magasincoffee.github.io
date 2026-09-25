@@ -642,10 +642,10 @@
     ],
     "attendance_mode": "EMPLOYEE_SELECTS_ACTUAL_START_END_NO_REALTIME_CHECKIN_CHECKOUT",
     "final_gate": "PR_HEAD_E2E_PLUS_EXACT_POST_MERGE_E2E_PLUS_COLD_RELOAD_RECHECK",
-    "note": "Staged parallel operational-relief track. Does not alter active PFC cursor until explicit Owner release/reprioritization. WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1 is canonically CLOSED in the final-close target state, but TASK-108 remains NOT_STARTED and paused until Brain accepts the merged SCHED-09 final closure; no autonomous execution authority is granted.",
+    "note": "Staged Workforce Operations V1 manual track. Scheduling Production Readiness is canonically CLOSED; Brain accepted SCHED-09 final merge a4eee395a670c949db26de13551f45c75faef68b and explicitly dispatched TASK-108 Gate A. No autonomous continuation is authorized.",
     "execution_mode": "OWNER_DIRECT_TO_WORK",
-    "manual_work_may_execute": false,
-    "current_task": null,
+    "manual_work_may_execute": true,
+    "current_task": "TASK-108",
     "next_task": null,
     "task_090": {
       "status": "DONE",
@@ -1469,10 +1469,17 @@
       "conclusion": "E2E_14_CLOSED_FAILURE_RECOVERY_SECURITY_POST_MERGE_GREEN"
     },
     "task_108": {
-      "status": "PAUSED_PENDING_BRAIN_ACCEPTANCE_OF_MERGED_SCHED_09_CLOSURE",
+      "status": "IN_PROGRESS_GATE_A",
       "execution_mode": "MANUAL_WORK",
       "robot_may_execute": false,
-      "task_108_not_started": true
+      "task_108_not_started": false,
+      "gate": "GATE_A_PR_HEAD",
+      "baseline": "a4eee395a670c949db26de13551f45c75faef68b",
+      "sched_09_final_merge_sha": "a4eee395a670c949db26de13551f45c75faef68b",
+      "sched_09_brain_acceptance": "SATISFIED",
+      "evidence": "01_DOCS/MAGASIN/05_SYSTEM/TASK_108_FINAL_REGRESSION_POST_MERGE_E2E_RECHECK.md",
+      "gate_b": "NOT_STARTED",
+      "gate_c": "NOT_STARTED"
     }
   },
   "supervisor_repository_migration": {
@@ -2416,7 +2423,7 @@
       "final_closure_pr_merge_sha": null,
       "final_closure_pr_merge_sha_note": "UNKNOWN_UNTIL_FINAL_CLOSE_PR_IS_MERGED; QUALIFIED_CLOSURE_BASIS_SHA_IS_NOT_THE_FUTURE_PR_MERGE_SHA"
     },
-    "task_108": "PAUSED_PENDING_BRAIN_ACCEPTANCE_OF_MERGED_SCHED_09_CLOSURE_NOT_STARTED",
+    "task_108": "RELEASED_TO_WORKFORCE_OPERATIONS_TASK_108_GATE_A_IN_PROGRESS",
     "robot_may_execute": false,
     "pfc": "UNCHANGED_TASK_068_TO_TASK_069",
     "qualified_canonical_closure_basis_sha": "3d736b47bbeec669e628eb3c6a832077931737a3",
