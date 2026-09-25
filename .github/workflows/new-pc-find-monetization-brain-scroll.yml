@@ -1,0 +1,81 @@
+name: New PC Find Monetization Brain Scroll
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-find-monetization-brain-scroll.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  find:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 15
+    steps:
+      - name: Scan ChatGPT sidebar for named conversation only
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $runtime = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor\runtime"
+          Push-Location $runtime
+          try {
+            @'
+          import { chromium } from "playwright-core";
+
+          const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+          const contexts = browser.contexts();
+          const page = contexts.flatMap(c => c.pages()).find(p => p.url().includes("chatgpt.com"));
+          if (!page) throw new Error("No ChatGPT page.");
+          await page.bringToFront();
+
+          async function findExact() {
+            return await page.locator('a[href*="/c/"]').evaluateAll((els) =>
+              els.map(a => ({
+                title: (a.textContent || "").replace(/\s+/g, " ").trim(),
+                url: a.href
+              })).filter(x => /^NÃO KIẾM TIỀN$/i.test(x.title))
+            );
+          }
+
+          let matches = await findExact();
+
+          for (let round = 0; round < 18 && matches.length === 0; round++) {
+            const moved = await page.evaluate(() => {
+              const els = [...document.querySelectorAll('*')];
+              let changed = 0;
+              for (const el of els) {
+                const r = el.getBoundingClientRect();
+                if (r.width <= 0 || r.height <= 0) continue;
+                if (r.left > 520 || r.width > 520) continue;
+                if (el.scrollHeight <= el.clientHeight + 80) continue;
+                const before = el.scrollTop;
+                el.scrollTop = Math.min(el.scrollHeight, before + Math.max(400, el.clientHeight * 0.85));
+                if (el.scrollTop !== before) changed++;
+              }
+              return changed;
+            });
+            await page.waitForTimeout(900);
+            matches = await findExact();
+            console.log("SIDEBAR_SCAN_ROUND=" + round + ";SCROLLABLES_MOVED=" + moved + ";MATCHES=" + matches.length);
+          }
+
+          const unique = [...new Map(matches.map(x => [x.url, x])).values()];
+          for (const item of unique) {
+            console.log("MONETIZATION_BRAIN_MATCH=" + JSON.stringify(item));
+          }
+          console.log("MONETIZATION_BRAIN_MATCH_COUNT=" + unique.length);
+
+          if (unique.length !== 1) throw new Error("Named monetization Brain was not resolved uniquely.");
+          await browser.close();
+          '@ | Set-Content ".\tmp-find-monetization-scroll.mjs" -Encoding UTF8
+
+            node ".\tmp-find-monetization-scroll.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "Sidebar scan failed." }
+          } finally {
+            Remove-Item ".\tmp-find-monetization-scroll.mjs" -Force -ErrorAction SilentlyContinue
+            Pop-Location
+          }

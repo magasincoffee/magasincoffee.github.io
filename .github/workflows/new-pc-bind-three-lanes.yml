@@ -1,0 +1,245 @@
+name: New PC Bind Three Lanes
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-bind-three-lanes.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bind:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 20
+    steps:
+      - name: Resolve six Owner-selected chats and bind lanes locally
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtime = Join-Path $root "runtime"
+          $lanePath = Join-Path $root "lanes.json"
+
+          if (-not (Test-Path (Join-Path $root "STOP"))) {
+            throw "Migration STOP latch is not active."
+          }
+          if (-not (Test-Path (Join-Path $root "AUTOSTART_DISABLED"))) {
+            throw "Migration AUTOSTART_DISABLED latch is not active."
+          }
+
+          Push-Location $runtime
+          try {
+            @'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+          import { chromium } from "playwright-core";
+          import {
+            normalizeLaneConfig,
+            normalizeChatGptConversationUrl
+          } from "./src/runtime/three-lane.mjs";
+
+          const root = process.env.LOCALAPPDATA + "\\MAGASIN\\BusinessOS\\supervisor";
+          const lanePath = root + "\\lanes.json";
+
+          const norm = (s) => (s || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/Đ/g, "D")
+            .replace(/đ/g, "d")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toUpperCase();
+
+          const desired = [
+            {
+              lane_id: "lane-1",
+              project_name: "NÂNG CẤP MAGASIN BUSINESS OS",
+              brain_title: "NÃO MAGASIN COFFEE 2",
+              work_title: "WORK MAGASIN COFFEE"
+            },
+            {
+              lane_id: "lane-2",
+              project_name: "ROBOT AUTO GIAO VIỆC KIẾM TIỀN",
+              brain_title: "NÃO KIẾM TIỀN",
+              work_title: "WORK KIẾM TIỀN"
+            },
+            {
+              lane_id: "lane-3",
+              project_name: "NÂNG CẤP ROBOT",
+              brain_title: "NÃO ROBOT",
+              work_title: "WORK ROBOT"
+            }
+          ];
+
+          const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+          const contexts = browser.contexts();
+          if (!contexts.length) throw new Error("No dedicated Chrome context.");
+          let page = contexts.flatMap(c => c.pages()).find(p => p.url().includes("chatgpt.com"));
+          if (!page) {
+            page = await contexts[0].newPage();
+            await page.goto("https://chatgpt.com/", { waitUntil: "domcontentloaded", timeout: 30000 });
+          }
+
+          await page.bringToFront();
+          await page.keyboard.press("Escape").catch(() => {});
+          await page.waitForTimeout(400);
+
+          const openSidebar = page.locator('[aria-label]').filter({ has: undefined });
+          await page.evaluate(async () => {
+            const norm = (s) => (s || "")
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/Đ/g, "D")
+              .replace(/đ/g, "d")
+              .replace(/\s+/g, " ")
+              .trim()
+              .toUpperCase();
+            const open = [...document.querySelectorAll('[aria-label]')]
+              .find(el => norm(el.getAttribute("aria-label")) === "MO THANH BEN");
+            if (open) {
+              open.click();
+              await new Promise(r => setTimeout(r, 700));
+            }
+          });
+
+          async function resolveTitle(title) {
+            const target = norm(title);
+
+            const direct = await page.locator('a[href*="/c/"]').evaluateAll((els, target) => {
+              const norm = (s) => (s || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/Đ/g, "D")
+                .replace(/đ/g, "d")
+                .replace(/\s+/g, " ")
+                .trim()
+                .toUpperCase();
+              const hits = els
+                .map(a => ({ href: a.href, text: norm(a.textContent) }))
+                .filter(x => x.text === target);
+              return hits.length === 1 ? hits[0].href : null;
+            }, target);
+            if (direct) return direct;
+
+            const viaControl = await page.evaluate((target) => {
+              const norm = (s) => (s || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/Đ/g, "D")
+                .replace(/đ/g, "d")
+                .replace(/\s+/g, " ")
+                .trim()
+                .toUpperCase();
+
+              const controls = [...document.querySelectorAll('[aria-label]')]
+                .filter(el => norm(el.getAttribute("aria-label")).includes(target));
+
+              for (const el of controls) {
+                let p = el;
+                for (let i = 0; i < 20 && p; i++, p = p.parentElement) {
+                  if (p.tagName === "A" && (p.getAttribute("href") || "").includes("/c/")) {
+                    return new URL(p.getAttribute("href"), location.origin).href;
+                  }
+                  const anchors = [...(p.querySelectorAll?.('a[href*="/c/"]') || [])];
+                  const exact = anchors.filter(a => norm(a.textContent) === target);
+                  if (exact.length === 1) return exact[0].href;
+                  if (anchors.length === 1) return anchors[0].href;
+                }
+              }
+              return null;
+            }, target);
+
+            if (viaControl) return viaControl;
+            throw new Error("Owner-selected conversation could not be resolved for title: " + title);
+          }
+
+          const now = new Date().toISOString();
+          const lanes = [];
+
+          for (const item of desired) {
+            const brain = normalizeChatGptConversationUrl(await resolveTitle(item.brain_title));
+            const work = normalizeChatGptConversationUrl(await resolveTitle(item.work_title));
+            lanes.push({
+              lane_id: item.lane_id,
+              project_name: item.project_name,
+              brain_url: brain,
+              brain_url_revision: 1,
+              work_url: work,
+              work_url_revision: 1,
+              work_url_saved_at: now,
+              work_mode: "OWNER",
+              work_state_reset_revision: 0,
+              relay_retry_rearm_revision: 0,
+              relay_retry_rearm_requested_at: null,
+              enabled: false
+            });
+          }
+
+          const normalized = normalizeLaneConfig({
+            schema_version: "three-lane-config.v1",
+            mode: "THREE_LANE_V1",
+            lanes
+          });
+
+          for (const lane of normalized.lanes) {
+            if (lane.enabled) throw new Error("Migration lane unexpectedly enabled.");
+            if (!lane.brain_url || !lane.work_url) throw new Error("Resolved lane target missing.");
+            if (lane.work_mode !== "OWNER") throw new Error("Resolved Work mode is not OWNER.");
+          }
+
+          const backup = fs.existsSync(lanePath)
+            ? lanePath + ".pre-bind-" + Date.now() + ".bak"
+            : null;
+          if (backup) fs.copyFileSync(lanePath, backup);
+
+          const tmp = lanePath + ".tmp";
+          fs.writeFileSync(tmp, JSON.stringify(normalized, null, 2), "utf8");
+          fs.renameSync(tmp, lanePath);
+
+          for (const lane of normalized.lanes) {
+            const brainDigest = crypto.createHash("sha256").update(lane.brain_url).digest("hex").slice(0, 12);
+            const workDigest = crypto.createHash("sha256").update(lane.work_url).digest("hex").slice(0, 12);
+            console.log(
+              "LANE_BOUND=" + lane.lane_id +
+              ";PROJECT=" + lane.project_name +
+              ";ENABLED=" + lane.enabled +
+              ";BRAIN_DIGEST=" + brainDigest +
+              ";WORK_DIGEST=" + workDigest
+            );
+          }
+
+          console.log("LANE_CONFIG_BACKUP_CREATED=" + String(Boolean(backup)));
+          console.log("THREE_LANE_BIND_COMPLETE=True");
+          await browser.close();
+          '@ | Set-Content ".\tmp-bind-three-lanes.mjs" -Encoding UTF8
+
+            node ".\tmp-bind-three-lanes.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "Three-lane local bind failed." }
+          } finally {
+            Remove-Item ".\tmp-bind-three-lanes.mjs" -Force -ErrorAction SilentlyContinue
+            Pop-Location
+          }
+
+      - name: Verify local config without exposing conversation URLs
+        shell: powershell
+        run: |
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $lanePath = Join-Path $root "lanes.json"
+          $cfg = Get-Content -LiteralPath $lanePath -Raw -Encoding UTF8 | ConvertFrom-Json
+
+          if ([string]$cfg.mode -ne "THREE_LANE_V1") { throw "Lane mode mismatch." }
+          if (@($cfg.lanes).Count -ne 3) { throw "Expected three lanes." }
+          if (@($cfg.lanes | Where-Object { $_.enabled }).Count -ne 0) { throw "A lane is enabled during migration." }
+          if (@($cfg.lanes | Where-Object { -not $_.brain_url -or -not $_.work_url }).Count -ne 0) {
+            throw "One or more lane targets are missing."
+          }
+
+          Write-Host "THREE_LANE_CONFIG_VALID=True"
+          Write-Host "ALL_LANES_DISABLED=True"
+          Write-Host ("STOP_EXISTS=" + (Test-Path (Join-Path $root "STOP")))
+          Write-Host ("AUTOSTART_DISABLED_EXISTS=" + (Test-Path (Join-Path $root "AUTOSTART_DISABLED")))

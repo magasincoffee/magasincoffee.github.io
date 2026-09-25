@@ -1,0 +1,57 @@
+name: New PC ChatGPT Search Inspect
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-chatgpt-search-inspect.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 10
+    steps:
+      - name: Inspect only ChatGPT search controls
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $runtime = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor\runtime"
+          Push-Location $runtime
+          try {
+            @'
+          import { chromium } from "playwright-core";
+          const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+          const contexts = browser.contexts();
+          const page = contexts.flatMap(c=>c.pages()).find(p=>p.url().includes("chatgpt.com"));
+          if (!page) throw new Error("No ChatGPT page.");
+          await page.bringToFront();
+          await page.waitForTimeout(1000);
+
+          const controls = await page.locator('button, a, input').evaluateAll((els) =>
+            els.map((el, i) => ({
+              tag: el.tagName,
+              text: (el.textContent || "").replace(/\s+/g," ").trim(),
+              aria: el.getAttribute("aria-label") || "",
+              title: el.getAttribute("title") || "",
+              placeholder: el.getAttribute("placeholder") || "",
+              href: el.getAttribute("href") || ""
+            })).filter(x => /search|tìm|kiếm/i.test([x.text,x.aria,x.title,x.placeholder].join(" ")))
+          );
+
+          for (const x of controls.slice(0, 30)) {
+            console.log("SEARCH_CONTROL=" + JSON.stringify(x));
+          }
+          console.log("SEARCH_CONTROL_COUNT=" + controls.length);
+          await browser.close();
+          '@ | Set-Content ".\tmp-search-inspect.mjs" -Encoding UTF8
+            node ".\tmp-search-inspect.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "Search control inspection failed." }
+          } finally {
+            Remove-Item ".\tmp-search-inspect.mjs" -Force -ErrorAction SilentlyContinue
+            Pop-Location
+          }

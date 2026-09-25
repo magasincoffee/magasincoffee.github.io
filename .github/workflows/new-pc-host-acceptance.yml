@@ -1,0 +1,115 @@
+name: New PC Host Acceptance
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-host-acceptance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect new PC host and installed MAGASIN runtime
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Continue"
+
+          function Section([string]$name) {
+            Write-Host ""
+            Write-Host ("===== " + $name + " =====")
+          }
+
+          Section "HOST"
+          Get-CimInstance Win32_ComputerSystem |
+            Select-Object Manufacturer,Model,@{N='RAM_GB';E={[math]::Round($_.TotalPhysicalMemory/1GB,2)}} |
+            Format-List
+          Get-CimInstance Win32_OperatingSystem |
+            Select-Object Caption,Version,BuildNumber,LastBootUpTime |
+            Format-List
+          Get-Volume |
+            Where-Object DriveLetter |
+            Select-Object DriveLetter,FileSystem,HealthStatus,OperationalStatus,
+              @{N='SizeGB';E={[math]::Round($_.Size/1GB,2)}},
+              @{N='FreeGB';E={[math]::Round($_.SizeRemaining/1GB,2)}} |
+            Format-Table -AutoSize
+
+          Section "PREREQUISITES"
+          foreach ($name in @("git.exe","node.exe","npm.cmd","chrome.exe","gh.exe","powershell.exe")) {
+            $cmd = Get-Command $name -ErrorAction SilentlyContinue
+            if ($cmd) {
+              Write-Host ($name + "=" + $cmd.Source)
+            } else {
+              Write-Host ($name + "=MISSING")
+            }
+          }
+          if (Get-Command git.exe -ErrorAction SilentlyContinue) { git --version }
+          if (Get-Command node.exe -ErrorAction SilentlyContinue) { node --version }
+          if (Get-Command npm.cmd -ErrorAction SilentlyContinue) { npm --version }
+          $gh = Get-Command gh.exe -ErrorAction SilentlyContinue
+          if (-not $gh) {
+            $candidate = Join-Path $env:ProgramFiles "GitHub CLI\gh.exe"
+            if (Test-Path $candidate) { $gh = Get-Item $candidate }
+          }
+          if ($gh) {
+            & $gh.FullName --version | Select-Object -First 1
+            $old = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            & $gh.FullName auth status --hostname github.com
+            Write-Host ("GH_AUTH_EXIT=" + $LASTEXITCODE)
+            $ErrorActionPreference = $old
+          }
+
+          Section "CANONICAL REPO"
+          $repoPath = "C:\MAGASIN\magasincoffee.github.io"
+          Write-Host ("REPO_EXISTS=" + (Test-Path (Join-Path $repoPath ".git")))
+          if (Test-Path (Join-Path $repoPath ".git")) {
+            Push-Location $repoPath
+            try {
+              Write-Host ("REPO_HEAD=" + (git rev-parse HEAD))
+              Write-Host ("REPO_STATUS_BEGIN")
+              git status --short
+              Write-Host ("REPO_STATUS_END")
+            } finally {
+              Pop-Location
+            }
+          }
+
+          Section "SUPERVISOR INSTALL"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtime = Join-Path $root "runtime"
+          Write-Host ("SUPERVISOR_ROOT=" + $root)
+          Write-Host ("RUNTIME_EXISTS=" + (Test-Path $runtime))
+          Write-Host ("CONTROL_PANEL_EXISTS=" + (Test-Path (Join-Path ([Environment]::GetFolderPath('Desktop')) "MAGASIN BUSINESS OS CONTROL.lnk")))
+          Write-Host ("STOP_EXISTS=" + (Test-Path (Join-Path $root "STOP")))
+          Write-Host ("AUTOSTART_DISABLED_EXISTS=" + (Test-Path (Join-Path $root "AUTOSTART_DISABLED")))
+          Write-Host ("LANES_EXISTS=" + (Test-Path (Join-Path $root "lanes.json")))
+          if (Test-Path (Join-Path $root "lanes.json")) {
+            $lanes = Get-Content (Join-Path $root "lanes.json") -Raw -Encoding UTF8 | ConvertFrom-Json
+            Write-Host ("LANE_MODE=" + $lanes.mode)
+            foreach ($lane in @($lanes.lanes)) {
+              Write-Host ("LANE=" + $lane.lane_id + ";ENABLED=" + $lane.enabled + ";PROJECT=" + $lane.project_name)
+            }
+          }
+
+          Section "RUNNER"
+          Get-CimInstance Win32_Process -Filter "Name='Runner.Listener.exe'" -ErrorAction SilentlyContinue |
+            Select-Object ProcessId,ExecutablePath,CommandLine |
+            Format-List
+
+          Section "DEDICATED CHROME"
+          $profile = Join-Path $root "browser_profile"
+          $robotChrome = @(Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" })
+          Write-Host ("DEDICATED_CHROME_PROCESS_COUNT=" + $robotChrome.Count)
+          Write-Host ("DEDICATED_PROFILE_EXISTS=" + (Test-Path $profile))
+
+          Section "RESULT"
+          Write-Host "NEW_PC_HOST_ACCEPTANCE_SCAN_COMPLETE=True"

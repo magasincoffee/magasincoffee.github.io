@@ -1,0 +1,71 @@
+name: New PC Migration Package Validate
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-migration-package-validate.yml"
+      - "08_INTEGRATIONS/supervisor/windows/bootstrap-new-pc.ps1"
+      - "08_INTEGRATIONS/supervisor/windows/prepare-new-pc-login.ps1"
+      - "08_INTEGRATIONS/supervisor/windows/export-migration-state.ps1"
+      - "08_INTEGRATIONS/supervisor/windows/connect-new-pc.ps1"
+      - "08_INTEGRATIONS/supervisor/windows/connect-new-pc.cmd"
+      - "08_INTEGRATIONS/supervisor/windows/connect-new-pc-v2.cmd"
+      - "01_DOCS/MAGASIN/00_NEW_PC_MIGRATION_RUNBOOK.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Parse PowerShell migration scripts
+        shell: powershell
+        run: |
+          $files = @(
+            ".\08_INTEGRATIONS\supervisor\windows\bootstrap-new-pc.ps1",
+            ".\08_INTEGRATIONS\supervisor\windows\prepare-new-pc-login.ps1",
+            ".\08_INTEGRATIONS\supervisor\windows\export-migration-state.ps1"
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file).Path,
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Host $_.Message }
+              throw "PowerShell parse failed: $file"
+            }
+            Write-Host "PARSE_OK=$file"
+          }
+      - name: Verify pinned runtime SHA exists
+        shell: powershell
+        run: |
+          git cat-file -e "18e6d5025429cb1aaee986a8033d8b47169a54c3^{commit}"
+          if ($LASTEXITCODE -ne 0) { throw "Pinned runtime SHA is unavailable." }
+          Write-Host "PINNED_SHA_OK=True"
+      - name: Verify migration safety markers
+        shell: powershell
+        run: |
+          $bootstrap = Get-Content ".\08_INTEGRATIONS\supervisor\windows\bootstrap-new-pc.ps1" -Raw
+          $export = Get-Content ".\08_INTEGRATIONS\supervisor\windows\export-migration-state.ps1" -Raw
+          foreach ($needle in @('AUTOSTART_DISABLED','STOP','lane.enabled = $false','browser_profile_migrated = $false','auth_tokens_migrated = $false')) {
+            if ($bootstrap -notmatch [regex]::Escape($needle)) { throw "Missing bootstrap safety marker: $needle" }
+          }
+          foreach ($needle in @('lanes_forced_disabled','browser_profile_included = $false','auth_tokens_included = $false','runtime_registry_included = $false')) {
+            if ($export -notmatch [regex]::Escape($needle)) { throw "Missing export safety marker: $needle" }
+          }
+          $cmd = Get-Content ".\08_INTEGRATIONS\supervisor\windows\connect-new-pc-v2.cmd" -Raw
+          foreach ($needle in @('ADMIN_ELEVATION_OK=True','85a9ba43ab911ba25175bb29c15d203d6dd91b73','connect-new-pc.ps1')) {
+            if ($cmd -notmatch [regex]::Escape($needle)) { throw "Missing CMD connector marker: $needle" }
+          }
+          Write-Host "SAFETY_MARKERS_OK=True"

@@ -1,0 +1,108 @@
+name: New PC Lane Target Preflight
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-lane-target-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 25
+    steps:
+      - name: Verify all six lane targets read-only
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $runtime = Join-Path $root "runtime"
+
+          if (-not (Test-Path (Join-Path $root "STOP"))) { throw "STOP latch missing." }
+          if (-not (Test-Path (Join-Path $root "AUTOSTART_DISABLED"))) { throw "AUTOSTART_DISABLED latch missing." }
+
+          Push-Location $runtime
+          try {
+            @'
+          import fs from "node:fs";
+          import crypto from "node:crypto";
+          import { chromium } from "playwright-core";
+          import { normalizeChatGptConversationUrl } from "./src/runtime/three-lane.mjs";
+
+          const root = process.env.LOCALAPPDATA + "\\MAGASIN\\BusinessOS\\supervisor";
+          const cfg = JSON.parse(fs.readFileSync(root + "\\lanes.json", "utf8"));
+
+          if (cfg.mode !== "THREE_LANE_V1") throw new Error("Unexpected lane mode.");
+          if (!Array.isArray(cfg.lanes) || cfg.lanes.length !== 3) throw new Error("Expected three lanes.");
+          if (cfg.lanes.some(l => l.enabled)) throw new Error("A lane is enabled during preflight.");
+
+          const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+          const contexts = browser.contexts();
+          if (!contexts.length) throw new Error("No dedicated Chrome context.");
+
+          let page = contexts.flatMap(c => c.pages()).find(p => p.url().includes("chatgpt.com"));
+          if (!page) page = await contexts[0].newPage();
+
+          const checks = [];
+          for (const lane of cfg.lanes) {
+            checks.push({ lane: lane.lane_id, role: "BRAIN", url: lane.brain_url });
+            checks.push({ lane: lane.lane_id, role: "WORK", url: lane.work_url });
+          }
+
+          for (const item of checks) {
+            const expected = normalizeChatGptConversationUrl(item.url);
+            const digest = crypto.createHash("sha256").update(expected).digest("hex").slice(0, 12);
+
+            await page.goto(expected, { waitUntil: "domcontentloaded", timeout: 30000 });
+            await page.waitForTimeout(1800);
+
+            const current = page.url();
+            if (!current.includes("chatgpt.com")) {
+              throw new Error(item.lane + " " + item.role + " left ChatGPT origin.");
+            }
+
+            const body = ((await page.locator("body").innerText({ timeout: 8000 }).catch(() => "")) || "")
+              .replace(/\s+/g, " ")
+              .slice(0, 15000);
+
+            const blocked = /conversation not found|unable to load conversation|you do not have access|access denied|khong tim thay cuoc tro chuyen|khong the tai cuoc tro chuyen|ban khong co quyen/i.test(
+              body.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\u0111/g,"d").replace(/\u0110/g,"D")
+            );
+            const loginRequired =
+              /\/auth\//.test(current) ||
+              ((await page.locator('a[href*="/auth/login"], button:has-text("Log in")').count().catch(() => 0)) > 0);
+
+            if (blocked) throw new Error(item.lane + " " + item.role + " target is unavailable.");
+            if (loginRequired) throw new Error(item.lane + " " + item.role + " requires login.");
+
+            console.log("TARGET_OK=" + item.lane + ":" + item.role + ";DIGEST=" + digest);
+          }
+
+          await page.goto("https://chatgpt.com/", { waitUntil: "domcontentloaded", timeout: 30000 });
+          console.log("ALL_LANE_TARGETS_ACCESSIBLE=True");
+          console.log("PREFLIGHT_MUTATION_SENT=False");
+          await browser.close();
+          '@ | Set-Content ".\tmp-lane-target-preflight.mjs" -Encoding UTF8
+
+            node ".\tmp-lane-target-preflight.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "Lane target preflight failed." }
+          } finally {
+            Remove-Item ".\tmp-lane-target-preflight.mjs" -Force -ErrorAction SilentlyContinue
+            Pop-Location
+          }
+
+      - name: Confirm STOP remains authoritative
+        shell: powershell
+        run: |
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $cfg = Get-Content (Join-Path $root "lanes.json") -Raw -Encoding UTF8 | ConvertFrom-Json
+          Write-Host ("STOP_EXISTS=" + (Test-Path (Join-Path $root "STOP")))
+          Write-Host ("AUTOSTART_DISABLED_EXISTS=" + (Test-Path (Join-Path $root "AUTOSTART_DISABLED")))
+          Write-Host ("ENABLED_LANE_COUNT=" + @($cfg.lanes | Where-Object { $_.enabled }).Count)
+          if (@($cfg.lanes | Where-Object { $_.enabled }).Count -ne 0) { throw "Lane enable drift during preflight." }
+          Write-Host "ROBOT_REMAINS_STOPPED=True"

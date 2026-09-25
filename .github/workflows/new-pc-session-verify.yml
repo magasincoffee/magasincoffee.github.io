@@ -1,0 +1,138 @@
+name: New PC Session Verify
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-session-verify.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare browser probe dependencies
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { throw "npm install failed." }
+
+      - name: Restart dedicated Chrome temporarily with CDP
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $profile = Join-Path $root "browser_profile"
+          $chrome = @(
+            "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+            "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+            "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
+          ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+          if (-not $chrome) { throw "Chrome not found." }
+
+          Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" } |
+            ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+
+          Start-Sleep -Seconds 2
+          $env:RUNNER_TRACKING_ID = "MAGASIN_SESSION_VERIFY_PERSISTENT"
+          Start-Process -FilePath $chrome -ArgumentList @(
+            "--remote-debugging-port=9222",
+            "--remote-debugging-address=127.0.0.1",
+            ('--user-data-dir="' + $profile + '"'),
+            "--no-first-run",
+            "--no-default-browser-check",
+            "about:blank"
+          )
+
+          $ok = $false
+          for ($i=0; $i -lt 30; $i++) {
+            try {
+              $null = Invoke-RestMethod -Uri "http://127.0.0.1:9222/json/version" -TimeoutSec 1
+              $ok = $true
+              break
+            } catch {
+              Start-Sleep -Seconds 1
+            }
+          }
+          if (-not $ok) { throw "Chrome CDP did not become ready." }
+          Write-Host "SESSION_VERIFY_CDP_READY=True"
+
+      - name: Verify ChatGPT Gmail GitHub authenticated sessions without exposing content
+        shell: powershell
+        working-directory: 08_INTEGRATIONS/supervisor
+        run: |
+          $script = @'
+          import { chromium } from "playwright-core";
+
+          const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+          const contexts = browser.contexts();
+          if (!contexts.length) throw new Error("No Chrome browser context.");
+          const context = contexts[0];
+
+          async function probe(name, url, evaluator) {
+            const page = await context.newPage();
+            try {
+              await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+              await page.waitForTimeout(1500);
+              const finalUrl = page.url();
+              const ok = await evaluator(page, finalUrl);
+              console.log(name + "_AUTH=" + (ok ? "True" : "False"));
+              console.log(name + "_FINAL_HOST=" + new URL(finalUrl).hostname);
+              return ok;
+            } finally {
+              await page.close();
+            }
+          }
+
+          const chatgpt = await probe("CHATGPT", "https://chatgpt.com/", async (page, finalUrl) => {
+            const host = new URL(finalUrl).hostname;
+            if (!host.endsWith("chatgpt.com")) return false;
+            return !/\/auth\/|\/login|\/signup/i.test(new URL(finalUrl).pathname);
+          });
+
+          const gmail = await probe("GMAIL", "https://mail.google.com/mail/u/0/#inbox", async (page, finalUrl) => {
+            const host = new URL(finalUrl).hostname;
+            return host === "mail.google.com";
+          });
+
+          const github = await probe("GITHUB", "https://github.com/settings/profile", async (page, finalUrl) => {
+            const u = new URL(finalUrl);
+            return u.hostname === "github.com" && !/^\/login/.test(u.pathname);
+          });
+
+          console.log("ALL_THREE_AUTH=" + (chatgpt && gmail && github ? "True" : "False"));
+          await browser.close();
+          if (!(chatgpt && gmail && github)) process.exit(2);
+          '@
+          $tmp = Join-Path (Get-Location) ".verify-sessions.mjs"
+          Set-Content -LiteralPath $tmp -Value $script -Encoding UTF8
+          try {
+            node $tmp
+            if ($LASTEXITCODE -ne 0) { throw "One or more dedicated browser sessions are not authenticated." }
+          } finally {
+            Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Close temporary CDP Chrome and preserve Owner STOP
+        if: always()
+        shell: powershell
+        run: |
+          $root = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor"
+          $profile = Join-Path $root "browser_profile"
+          Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -and $_.CommandLine -like "*$profile*" } |
+            ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+
+          Write-Host ("STOP_EXISTS=" + (Test-Path (Join-Path $root "STOP")))
+          Write-Host ("AUTOSTART_DISABLED_EXISTS=" + (Test-Path (Join-Path $root "AUTOSTART_DISABLED")))
+          Write-Host "DEDICATED_SESSION_VERIFY_COMPLETE=True"
+          Write-Host "ROBOT_REMAINS_STOPPED=True"

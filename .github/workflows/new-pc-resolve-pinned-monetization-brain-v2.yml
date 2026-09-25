@@ -1,0 +1,80 @@
+name: New PC Resolve Pinned Monetization Brain V2
+
+on:
+  push:
+    branches:
+      - migration/new-pc-bootstrap-v1
+    paths:
+      - ".github/workflows/new-pc-resolve-pinned-monetization-brain-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: [self-hosted, new-pc]
+    timeout-minutes: 10
+    steps:
+      - name: Resolve pinned Brain URL with sidebar normalization
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $runtime = Join-Path $env:LOCALAPPDATA "MAGASIN\BusinessOS\supervisor\runtime"
+          Push-Location $runtime
+          try {
+            @'
+          import { chromium } from "playwright-core";
+
+          const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+          const pages = browser.contexts().flatMap(c=>c.pages());
+          const page = pages.find(p=>p.url().includes("chatgpt.com"));
+          if (!page) throw new Error("No ChatGPT page.");
+          await page.bringToFront();
+          await page.keyboard.press("Escape").catch(()=>{});
+          await page.waitForTimeout(300);
+
+          const openSidebar = page.getByRole("button", { name: "Mở thanh bên", exact: true });
+          if (await openSidebar.count()) {
+            await openSidebar.first().click();
+            await page.waitForTimeout(700);
+          }
+
+          const controls = page.locator('button[aria-label*="NÃO KIẾM TIỀN"], [role="button"][aria-label*="NÃO KIẾM TIỀN"]');
+          const count = await controls.count();
+          console.log("MONETIZATION_CONTROL_COUNT=" + count);
+          if (count < 1) throw new Error("NÃO KIẾM TIỀN control not found.");
+
+          let resolved = null;
+          for (let idx = 0; idx < count && !resolved; idx++) {
+            const candidate = controls.nth(idx);
+            resolved = await candidate.evaluate((el) => {
+              let p = el;
+              for (let i = 0; i < 16 && p; i++, p = p.parentElement) {
+                if (p instanceof HTMLAnchorElement && /\/c\//.test(p.getAttribute("href") || "")) {
+                  return { href: p.href };
+                }
+                const anchors = [...(p.querySelectorAll?.('a[href*="/c/"]') || [])];
+                const hit = anchors.find(a => /NÃO KIẾM TIỀN/i.test((a.textContent || "").replace(/\s+/g," ").trim()));
+                if (hit?.href) return { href: hit.href };
+                if (anchors.length === 1 && anchors[0].href) return { href: anchors[0].href };
+              }
+              return null;
+            });
+          }
+
+          if (!resolved?.href || !/chatgpt\.com\/c\//.test(resolved.href)) {
+            throw new Error("NÃO KIẾM TIỀN URL not resolved.");
+          }
+
+          console.log("MONETIZATION_BRAIN_URL=" + resolved.href);
+          console.log("MONETIZATION_BRAIN_RESOLVED=True");
+          await browser.close();
+          '@ | Set-Content ".\tmp-resolve-pinned-brain-v2.mjs" -Encoding UTF8
+
+            node ".\tmp-resolve-pinned-brain-v2.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "Pinned Brain resolve V2 failed." }
+          } finally {
+            Remove-Item ".\tmp-resolve-pinned-brain-v2.mjs" -Force -ErrorAction SilentlyContinue
+            Pop-Location
+          }
