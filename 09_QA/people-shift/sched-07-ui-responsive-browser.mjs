@@ -23,9 +23,9 @@ await employee.locator(".employee-schedule-engine").waitFor();
 await check("sched07_employee_shared_polish_and_role_marker",async()=>{
   const state=await employee.locator("html").evaluate(el=>({
     role:el.dataset.schedulingRole,
-    css:!!el.ownerDocument.getElementById("workforce-scheduling-polish-v1-css")
+    engineCss:!!el.ownerDocument.getElementById("employee-schedule-engine-v1-css")
   }));
-  if(state.role!=="employee"||!state.css)throw new Error(JSON.stringify(state));
+  if(state.role!=="employee"||!state.engineCss)throw new Error(JSON.stringify(state));
   return JSON.stringify(state);
 });
 
