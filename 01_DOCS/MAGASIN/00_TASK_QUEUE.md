@@ -168,7 +168,7 @@ TASK-066 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_066_OP
 TASK-067 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_067_OPERATING_COST_TRUTH_CONTRACT_V1_EVIDENCE.md`. Source-agnostic Operating Cost Truth V1 reuses Financial Truth and separates exact recognized cost from payment, settlement proceeds, allocation context and budget context. ACTUAL exact items require actuality/period/amount/scope proof; ACTUAL PERIOD_AGGREGATE requires COMPLETE proven coverage; shared-company branch allocation requires explicit approval; historical source periods cannot become current ACTUAL. Existing Partial Financial Baseline compatibility is proven without changing Profit formula. PR #204 final head `4c9bbc2b99dd272a6f707ce2ebd422988cef9223`, merge `6233fc587921ba44a0b61a662b6b316ade8292c2`; PR-head run `35515915305` and exact post-merge run `35515946855` succeeded on Node v20.20.2 with TASK-067 31/31 and full Business OS 385/385 / 0 fail. TASK-067 DONE; TASK-068 READY / AUTO_CONTINUE.
 
 
-## Workforce Scheduling Production Readiness V1 — HARD GATE ACTIVE
+## Workforce Scheduling Production Readiness V1 — CANONICAL CLOSED
 
 Canonical SoT: `05_SYSTEM/WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1_SOURCE_OF_TRUTH.md`
 
@@ -182,7 +182,7 @@ Canonical SoT: `05_SYSTEM/WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1_SOURCE_OF
 | SCHED-06 | Three-role synchronization | **DONE** |
 | SCHED-07 | Professional UI/UX + responsive pass | **DONE** |
 | SCHED-08 | Live three-role E2E acceptance | **DONE** |
-| SCHED-09 | Production reconciliation + canonical closure | **IN_PROGRESS / CLOSURE_CANDIDATE / PENDING_EXACT_MAIN** |
+| SCHED-09 | Production reconciliation + canonical closure | **DONE / CANONICAL_CLOSED** |
 
 SCHED-01 evidence: `05_SYSTEM/SCHED_01_PRODUCTION_BLOCKER_REPAIR_CANONICAL_RECONCILIATION.md`. Implementation PR #281 merged as `d0f0069ec4060dacf2de4ca6f695b969066b517f`; production migration `20260923160755_sched_01_production_blocker_repair_v1` is live; exact-main People Shift `35887441525 / 107271085777` and Pages gates are green; live duplicate active generation groups = 0.
 
@@ -200,7 +200,7 @@ SCHED-07 completion evidence: `05_SYSTEM/SCHED_07_PROFESSIONAL_UI_UX_RESPONSIVE_
 
 SCHED-08 completion evidence: `05_SYSTEM/SCHED_08_LIVE_THREE_ROLE_E2E_ACCEPTANCE.md`. Live production acceptance exposed and repaired PostgreSQL 42702 in `validate_schedule_generation_v1`; production migration `20260925033927_sched_08_live_validator_alias_fix_v1` is live. Implementation PR #299 final head `287a5214c28f233e20f823f0b9fffc94247f4455` merged as `2e03cb2226813073f1e1449e03347a9210922534`. PR-head People Shift `36091391453 / 107934392499` and exact-main People Shift `36091508147 / 107934735123` are SUCCESS; exact-main deterministic regression is 331/331. Pages validation `36091508122 / 107934735211` and build/deploy/report `36091507559 / 107934736273 / 107934768302 / 107934768275` are SUCCESS. Final production transaction returned `SCHED08_FINAL_ROLLBACK_PASS` after proving Manager CN1 scope/cross-store deny, canonical publish/retry, Employee/Owner identity convergence, Give A→B exact-once current-owner transfer, stale-owner Attendance denial, recipient Attendance idempotency and cross-user fail-closed. Post-transaction audit found zero temporary scheduling residue and restored temporary profile state.
 
-Current scheduling cursor: **SCHED-09 CLOSURE_CANDIDATE / PENDING_EXACT_MAIN**. Fresh production reconciliation is **CLEAN** at `2026-09-25T07:54:23.968Z` UTC; evidence: `05_SYSTEM/SCHED_09_PRODUCTION_RECONCILIATION_CANONICAL_CLOSURE.md`. The overall gate remains **HARD GATE ACTIVE** pending candidate merge + exact-main post-merge gates + canonical closure SHA. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE** and MUST NOT start. Workforce Robot remains **DISABLED**. PFC remains unchanged.
+Scheduling gate target state: **CANONICAL CLOSED**. SCHED-01→SCHED-09 are **DONE**; SCHED-09 evidence is `05_SYSTEM/SCHED_09_PRODUCTION_RECONCILIATION_CANONICAL_CLOSURE.md`. Fresh production reconciliation is **CLEAN** at `2026-09-25T07:54:23.968Z` UTC. Qualified canonical closure basis / exact-main qualification SHA is `3d736b47bbeec669e628eb3c6a832077931737a3`; `EXACT_MAIN_QUALIFICATION=PASS` from 207 relevant blobs / 0 mismatches, prior full People Shift `36091508147 / 107934735123` SUCCESS on `2e03cb2226813073f1e1449e03347a9210922534`, exact-main Pages validation `36118165507 / 108017056130` SUCCESS, and Pages build/deploy/report `36118164405 / 108017057281 / 108017103429 / 108017103572` SUCCESS. TASK-108 remains **NOT_STARTED / PAUSED_PENDING_BRAIN_ACCEPTANCE_OF_MERGED_SCHED_09_CLOSURE**; this closure does not dispatch it. Workforce Robot remains **DISABLED**. PFC remains unchanged.
 
 ## Workforce Operations V1 — MANUAL_WORK RELEASED / ROBOT DISABLED
 
