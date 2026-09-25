@@ -642,7 +642,7 @@
     ],
     "attendance_mode": "EMPLOYEE_SELECTS_ACTUAL_START_END_NO_REALTIME_CHECKIN_CHECKOUT",
     "final_gate": "PR_HEAD_E2E_PLUS_EXACT_POST_MERGE_E2E_PLUS_COLD_RELOAD_RECHECK",
-    "note": "Staged parallel operational-relief track. Does not alter active PFC cursor until explicit Owner release/reprioritization. Execution is currently paused behind WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1; TASK-108 must not start until the scheduling gate is finally closed and accepted.",
+    "note": "Staged parallel operational-relief track. Does not alter active PFC cursor until explicit Owner release/reprioritization. WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1 is canonically CLOSED in the final-close target state, but TASK-108 remains NOT_STARTED and paused until Brain accepts the merged SCHED-09 final closure; no autonomous execution authority is granted.",
     "execution_mode": "OWNER_DIRECT_TO_WORK",
     "manual_work_may_execute": false,
     "current_task": null,
@@ -1469,7 +1469,7 @@
       "conclusion": "E2E_14_CLOSED_FAILURE_RECOVERY_SECURITY_POST_MERGE_GREEN"
     },
     "task_108": {
-      "status": "PAUSED_BEHIND_SCHED_GATE",
+      "status": "PAUSED_PENDING_BRAIN_ACCEPTANCE_OF_MERGED_SCHED_09_CLOSURE",
       "execution_mode": "MANUAL_WORK",
       "robot_may_execute": false,
       "task_108_not_started": true
@@ -2027,9 +2027,9 @@
   },
   "workforce_scheduling_production_readiness": {
     "id": "WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1",
-    "status": "HARD_GATE_ACTIVE",
+    "status": "CLOSED",
     "execution_mode": "MANUAL_WORK",
-    "current_task": "SCHED-09",
+    "current_task": null,
     "next_task": null,
     "task_01": {
       "status": "DONE",
@@ -2350,7 +2350,7 @@
       "conclusion": "LIVE_THREE_ROLE_E2E_ACCEPTANCE_POST_MERGE_GREEN_ZERO_RESIDUE"
     },
     "task_09": {
-      "status": "CLOSURE_CANDIDATE_PENDING_EXACT_MAIN",
+      "status": "DONE_CANONICAL_CLOSED",
       "execution_mode": "MANUAL_WORK",
       "evidence": "01_DOCS/MAGASIN/05_SYSTEM/SCHED_09_PRODUCTION_RECONCILIATION_CANONICAL_CLOSURE.md",
       "baseline": "5d73dee7fa41e4aa67ec12161350e0e7b0e69475",
@@ -2393,15 +2393,34 @@
       "prior_pages_validation_job_id": 107934735211,
       "prior_pages_deployment_run_id": 36091507559,
       "final_closure_pending": [
-        "CANDIDATE_PR_MERGE",
-        "EXACT_MAIN_POST_MERGE_GATES",
-        "CANONICAL_CLOSURE_SHA",
-        "BRAIN_ACCEPTANCE"
+        "BRAIN_VERIFY_AND_ACCEPT_MERGED_FINAL_CLOSURE_BEFORE_TASK_108_RELEASE"
       ],
-      "conclusion": "CLOSURE_CANDIDATE_PENDING_EXACT_MAIN_FINALIZATION"
+      "conclusion": "PRODUCTION_RECONCILIATION_CLEAN_EXACT_MAIN_QUALIFIED_CANONICAL_CLOSED",
+      "canonical_closure_basis_sha": "3d736b47bbeec669e628eb3c6a832077931737a3",
+      "exact_main_qualification_sha": "3d736b47bbeec669e628eb3c6a832077931737a3",
+      "exact_main_qualification": "PASS",
+      "qualification_compare_base_sha": "2e03cb2226813073f1e1449e03347a9210922534",
+      "relevant_blob_count": 207,
+      "relevant_blob_mismatch_count": 0,
+      "people_shift_workflow_blob_sha": "b24b24923857f0fb3fcc9aa8dae20be67e92da07",
+      "prior_exact_main_people_shift_head_sha": "2e03cb2226813073f1e1449e03347a9210922534",
+      "prior_exact_main_people_shift_conclusion": "SUCCESS",
+      "exact_main_pages_validation_run_id": 36118165507,
+      "exact_main_pages_validation_job_id": 108017056130,
+      "exact_main_pages_validation_conclusion": "SUCCESS",
+      "exact_main_pages_build_deployment_run_id": 36118164405,
+      "exact_main_pages_build_job_id": 108017057281,
+      "exact_main_pages_deploy_job_id": 108017103429,
+      "exact_main_pages_report_job_id": 108017103572,
+      "exact_main_pages_build_deployment_conclusion": "SUCCESS",
+      "final_closure_pr_merge_sha": null,
+      "final_closure_pr_merge_sha_note": "UNKNOWN_UNTIL_FINAL_CLOSE_PR_IS_MERGED; QUALIFIED_CLOSURE_BASIS_SHA_IS_NOT_THE_FUTURE_PR_MERGE_SHA"
     },
-    "task_108": "PAUSED_BEHIND_SCHED_GATE",
+    "task_108": "PAUSED_PENDING_BRAIN_ACCEPTANCE_OF_MERGED_SCHED_09_CLOSURE_NOT_STARTED",
     "robot_may_execute": false,
-    "pfc": "UNCHANGED_TASK_068_TO_TASK_069"
+    "pfc": "UNCHANGED_TASK_068_TO_TASK_069",
+    "qualified_canonical_closure_basis_sha": "3d736b47bbeec669e628eb3c6a832077931737a3",
+    "exact_main_qualification_sha": "3d736b47bbeec669e628eb3c6a832077931737a3",
+    "exact_main_qualification": "PASS"
   }
 }
