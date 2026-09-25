@@ -40,3 +40,9 @@ Locked points:
 - No React/framework rewrite is implied by this decision.
 - Architecture is staged only; it does not bypass the currently active Brain task/gate.
 
+## 2026-09-25 — UI/UX V2 promoted to P0 until closure
+
+**Decision:** APPROVED by Owner.
+
+After the currently in-flight Brain/Work gate is safely closed, `MAGASIN_OPERATIONS_UI_V2` becomes the highest implementation priority and stays P0 until the formal UI V2 closure gate is ACCEPTED. The canonical bounded execution plan is `01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_P0_EXECUTION_PLAN.md`. Employee phone-first delivery is the dominant UX acceptance constraint. Unrelated feature expansion must not be scheduled ahead of the next dependency-correct UI2 task except for security/production/data-integrity emergencies or explicit Owner intervention.
+
