@@ -372,6 +372,11 @@ body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut:fo
 
 body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-availability {
   min-width: 0;
+  display: none;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-availability:has(#weeklyRegistrationPanel.open) {
+  display: block;
 }
 
 body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel {
