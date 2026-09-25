@@ -203,6 +203,166 @@ await check("ui2_005_employee_desktop_rail_expansion",async()=>{
 await employeeDesktop.screenshot({path:path.join(OUT,"ui2-005-employee-desktop-1440.png"),fullPage:true});
 await employeeDesktop.close();
 
+const todayWidths=[360,390,430];
+for(const width of todayWidths){
+  const todayPage=await context.newPage();
+  todayPage.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
+  todayPage.on("console",m=>{if(m.type()==="error")report.console_errors.push(m.text())});
+  todayPage.on("requestfailed",r=>report.request_failures.push(`FAILED ${r.method()} ${r.url()} ${r.failure()?.errorText||""}`));
+  todayPage.on("response",r=>{if(r.status()>=500)report.request_failures.push(`HTTP ${r.status()} ${r.url()}`)});
+  await todayPage.setViewportSize({width,height:844});
+  await todayPage.goto(BASE+"/09_QA/people-shift/ui2-006-employee-today-fixture.html",{waitUntil:"networkidle"});
+  const today=todayPage.frameLocator("#employeeApp");
+  await today.locator("#view-dashboard.active").waitFor({state:"visible",timeout:10000});
+  await today.locator('[data-employee-primary-view="dashboard"][aria-current="page"]').waitFor({timeout:10000});
+  await today.locator('[data-today-shift-kind="current"]').waitFor({timeout:10000});
+
+  await check("ui2_006_employee_today_"+width+"_responsive_touch_no_collision",async()=>{
+    return today.locator("html").evaluate((html)=>{
+      const doc=html.ownerDocument,win=doc.defaultView;
+      const nav=doc.getElementById("employeeV2PrimaryNav");
+      const main=doc.querySelector(".main");
+      const dashboard=doc.querySelector("#view-dashboard");
+      const current=doc.querySelector('[data-today-shift-kind="current"]');
+      const week=doc.querySelectorAll("#employeeTodayWeekSummary .employee-today-day");
+      const queue=doc.querySelectorAll("#taskList [data-today-queue-action]");
+      const buttons=[...dashboard.querySelectorAll("button")].filter(b=>{
+        const s=getComputedStyle(b),r=b.getBoundingClientRect();
+        return s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0;
+      }).map(b=>{const r=b.getBoundingClientRect();return {text:b.textContent.trim(),w:r.width,h:r.height}});
+      const initial={
+        viewport:win.innerWidth,
+        scrollWidth:html.scrollWidth,
+        clientWidth:html.clientWidth,
+        navHeight:nav.getBoundingClientRect().height,
+        navBottom:win.innerHeight-nav.getBoundingClientRect().bottom,
+        mainPaddingBottom:parseFloat(getComputedStyle(main).paddingBottom),
+        currentKind:current?.dataset.todayShiftKind||null,
+        weekCells:week.length,
+        queueCount:queue.length,
+        minButtonHeight:buttons.length?Math.min(...buttons.map(x=>x.h)):0
+      };
+      win.scrollTo(0,html.scrollHeight);
+      const last=doc.querySelector('.employee-today-shortcut[data-today-route="payroll"]');
+      const collision=last.getBoundingClientRect().bottom>nav.getBoundingClientRect().top+1;
+      if(initial.scrollWidth>initial.clientWidth+1||Math.abs(initial.navBottom)>1||initial.mainPaddingBottom<initial.navHeight||initial.minButtonHeight<43.5||initial.currentKind!=="current"||initial.weekCells!==7||initial.queueCount<1||collision){
+        throw new Error(JSON.stringify({...initial,collision,buttons}));
+      }
+      return JSON.stringify({...initial,collision});
+    });
+  });
+
+  if(width===390){
+    await check("ui2_006_today_current_next_loading_empty_error_states",async()=>{
+      const state={};
+      state.current=await today.locator("#employeeTodayShiftHeading").innerText();
+      if(state.current!=="Đang trong ca")throw new Error(JSON.stringify(state));
+
+      await todayPage.evaluate(()=>__UI2_006_QA.setMode("next"));
+      await today.locator('[data-today-shift-kind="next"]').waitFor();
+      state.next=await today.locator("#employeeTodayShiftHeading").innerText();
+      if(state.next!=="Ca tiếp theo")throw new Error(JSON.stringify(state));
+
+      await todayPage.evaluate(()=>__UI2_006_QA.setMode("loading"));
+      await today.locator("[data-today-loading='1']").waitFor();
+      await today.locator("[data-today-week-loading='1']").waitFor();
+      state.loading=await today.locator("#employeeTodayShiftHeading").innerText();
+
+      await todayPage.evaluate(()=>__UI2_006_QA.setMode("empty"));
+      await today.locator("#todayNoShift").waitFor({state:"visible"});
+      state.empty=await today.locator("#employeeTodayShiftHeading").innerText();
+
+      await todayPage.evaluate(()=>__UI2_006_QA.setMode("error"));
+      await today.locator("[data-today-error='1']").waitFor();
+      await today.locator("[data-today-week-error='1']").waitFor();
+      state.error=await today.locator("#employeeTodayShiftHeading").innerText();
+
+      await today.locator('[data-today-action="retry-schedule"]').first().click();
+      await today.locator('[data-today-shift-kind="current"]').waitFor();
+      state.recovered=await today.locator("#employeeTodayShiftHeading").innerText();
+      if(state.loading!=="Đang tải lịch làm"||state.empty!=="Hôm nay không có ca"||state.error!=="Không tải được lịch"||state.recovered!=="Đang trong ca")throw new Error(JSON.stringify(state));
+      return JSON.stringify(state);
+    });
+
+    await check("ui2_006_today_action_queue_uses_existing_canonical_actions",async()=>{
+      await todayPage.evaluate(()=>__UI2_006_QA.setMode("current"));
+      await today.locator('[data-today-shift-kind="current"]').waitFor();
+      const queue=await today.locator("#taskList [data-today-queue-action]").evaluateAll(nodes=>nodes.map(n=>n.dataset.todayQueueAction));
+      if(!queue.includes("attendance:sch-current")||!queue.includes("availability"))throw new Error(JSON.stringify(queue));
+
+      await today.locator("#employeeDashboardAttendance").click();
+      await today.locator("#view-attendance.active").waitFor();
+      const actions=await todayPage.evaluate(()=>__UI2_006_QA.actions.slice());
+      if(!actions.some(x=>x.type==="schedule-action"&&x.action==="attendance"&&x.id==="sch-current"))throw new Error(JSON.stringify(actions));
+
+      await today.locator('[data-employee-primary-view="dashboard"]').click();
+      await today.locator("#view-dashboard.active").waitFor();
+      await today.locator('[data-today-action="availability"]').click();
+      await today.locator("#weeklyRegistrationPanel.open").waitFor({state:"visible"});
+      const after=await todayPage.evaluate(()=>__UI2_006_QA.actions.slice());
+      if(!after.some(x=>x.type==="availability-open"))throw new Error(JSON.stringify(after));
+      return JSON.stringify({queue,actions:after});
+    });
+
+    await check("ui2_006_today_direct_reload_back_keeps_dashboard_active",async()=>{
+      const frameHandle=await todayPage.locator("#employeeApp").elementHandle();
+      const frame=await frameHandle.contentFrame();
+      await today.locator('[data-employee-primary-view="dashboard"]').click();
+      await today.locator("#view-dashboard.active").waitFor();
+      const direct=frame.url();
+      if(!direct.endsWith("#dashboard"))throw new Error(direct);
+
+      await today.locator('[data-employee-primary-view="schedule"]').click();
+      await today.locator("#view-schedule.active").waitFor();
+      if(!frame.url().endsWith("#schedule"))throw new Error(frame.url());
+
+      await frame.evaluate(()=>history.back());
+      await today.locator("#view-dashboard.active").waitFor();
+      await today.locator('[data-employee-primary-view="dashboard"][aria-current="page"]').waitFor();
+      if(!frame.url().endsWith("#dashboard"))throw new Error(frame.url());
+
+      await frame.evaluate(()=>location.reload());
+      await today.locator("#view-dashboard.active").waitFor();
+      await today.locator('[data-employee-primary-view="dashboard"][aria-current="page"]').waitFor();
+      if(!frame.url().endsWith("#dashboard"))throw new Error(frame.url());
+
+      return direct+" -> schedule -> back/reload dashboard";
+    });
+
+    await todayPage.screenshot({path:path.join(OUT,"ui2-006-employee-today-phone-390.png"),fullPage:true});
+  }
+  await todayPage.close();
+}
+
+const todayDesktop=await context.newPage();
+todayDesktop.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
+todayDesktop.on("console",m=>{if(m.type()==="error")report.console_errors.push(m.text())});
+todayDesktop.on("requestfailed",r=>report.request_failures.push(`FAILED ${r.method()} ${r.url()} ${r.failure()?.errorText||""}`));
+todayDesktop.on("response",r=>{if(r.status()>=500)report.request_failures.push(`HTTP ${r.status()} ${r.url()}`)});
+await todayDesktop.setViewportSize({width:1440,height:1000});
+await todayDesktop.goto(BASE+"/09_QA/people-shift/ui2-006-employee-today-fixture.html",{waitUntil:"networkidle"});
+const todayDesktopFrame=todayDesktop.frameLocator("#employeeApp");
+await todayDesktopFrame.locator('[data-today-shift-kind="current"]').waitFor({timeout:10000});
+await check("ui2_006_today_desktop_expansion_smoke",async()=>{
+  return todayDesktopFrame.locator("html").evaluate(html=>{
+    const doc=html.ownerDocument;
+    const layout=doc.querySelector(".employee-today-layout");
+    const nav=doc.getElementById("employeeV2PrimaryNav");
+    const main=doc.querySelector(".main");
+    const state={
+      scroll:html.scrollWidth,
+      client:html.clientWidth,
+      columns:getComputedStyle(layout).gridTemplateColumns.split(" ").filter(Boolean).length,
+      navWidth:nav.getBoundingClientRect().width,
+      mainLeft:main.getBoundingClientRect().left
+    };
+    if(state.scroll>state.client+1||state.columns!==2||state.navWidth<200||state.navWidth>216||state.mainLeft<200)throw new Error(JSON.stringify(state));
+    return JSON.stringify(state);
+  });
+});
+await todayDesktop.screenshot({path:path.join(OUT,"ui2-006-employee-today-desktop-1440.png"),fullPage:true});
+await todayDesktop.close();
+
 await page.goto(BASE+"/09_QA/people-shift/manager-workforce-canonical-fixture.html",{waitUntil:"networkidle"});
 await page.locator("#panel-publish .msd").waitFor();
 await check("sched07_manager_mobile_stacks_board_without_page_overflow",async()=>{

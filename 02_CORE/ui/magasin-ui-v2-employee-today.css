@@ -1,0 +1,482 @@
+/*
+ * MAGASIN UI/UX V2 — Employee Today
+ * UI2-006
+ *
+ * Presentation-only styles for #view-dashboard.
+ * Requires the canonical V2 tokens/primitives and Employee V2 shell.
+ */
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-v2 {
+  min-width: 0;
+  display: grid;
+  gap: var(--m-space-4);
+  padding-bottom: var(--m-space-2);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-intro {
+  min-width: 0;
+  padding: var(--m-space-1) 0 var(--m-space-1);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-eyebrow {
+  margin: 0 0 var(--m-space-1);
+  color: var(--m-color-brand-700);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-greeting {
+  margin: 0;
+  color: var(--m-color-neutral-950);
+  font-size: clamp(24px, 7vw, 30px);
+  line-height: 1.15;
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-context {
+  margin: var(--m-space-2) 0 0;
+  color: var(--m-color-neutral-500);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-layout {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr);
+  gap: var(--m-space-4);
+  align-items: stretch;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-card {
+  min-width: 0;
+  padding: var(--m-space-5);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-xl);
+  background: var(--m-color-surface);
+  box-shadow: var(--m-shadow-sm);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-card--shift {
+  overflow: hidden;
+  position: relative;
+  border-color: color-mix(in srgb, var(--m-color-brand-600) 28%, var(--m-border-default));
+  background:
+    radial-gradient(circle at 100% 0, rgba(15,143,156,.10), transparent 42%),
+    var(--m-color-surface);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-card__head {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--m-space-3);
+  margin-bottom: var(--m-space-4);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-card__head-copy {
+  min-width: 0;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-card__kicker {
+  color: var(--m-color-neutral-500);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-card__title {
+  margin: 2px 0 0;
+  color: var(--m-color-neutral-950);
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 650;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-status {
+  flex: 0 0 auto;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .today-shift {
+  min-width: 0;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-main {
+  display: grid;
+  gap: var(--m-space-1);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-time {
+  color: var(--m-color-neutral-950);
+  font-size: clamp(28px, 8vw, 36px);
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -.03em;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-store {
+  overflow: hidden;
+  color: var(--m-color-neutral-700);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-date,
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-note {
+  color: var(--m-color-neutral-500);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-actions {
+  display: flex;
+  gap: var(--m-space-2);
+  flex-wrap: wrap;
+  margin-top: var(--m-space-5);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-actions .m-button {
+  min-height: 44px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-state {
+  min-height: 166px;
+  display: grid;
+  align-content: center;
+  gap: var(--m-space-3);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-state[hidden],
+body[data-magasin-employee-shell-v2] #view-dashboard #todayNoShift[hidden] {
+  display: none !important;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-state__copy {
+  display: grid;
+  gap: var(--m-space-1);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-state__copy strong {
+  color: var(--m-color-neutral-950);
+  font-size: 15px;
+  line-height: 21px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-state__copy span {
+  color: var(--m-color-neutral-500);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-skeleton {
+  display: grid;
+  gap: var(--m-space-3);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-skeleton .m-skeleton:nth-child(1) {
+  width: 42%;
+  height: 18px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-skeleton .m-skeleton:nth-child(2) {
+  width: 72%;
+  height: 42px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-skeleton .m-skeleton:nth-child(3) {
+  width: 58%;
+  height: 18px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-queue {
+  display: grid;
+  align-content: start;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-actions {
+  display: grid;
+  gap: var(--m-space-2);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-action {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 36px minmax(0,1fr) auto;
+  align-items: center;
+  gap: var(--m-space-3);
+  padding: var(--m-space-3);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-lg);
+  background: var(--m-color-neutral-50);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-action__icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--m-radius-md);
+  background: var(--m-color-info-soft);
+  color: var(--m-color-info);
+  font-size: 17px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-action__copy {
+  min-width: 0;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-action__copy strong,
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-action__copy span {
+  display: block;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-action__copy strong {
+  color: var(--m-color-neutral-950);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-action__copy span {
+  margin-top: 2px;
+  color: var(--m-color-neutral-500);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-action .m-button {
+  min-width: 84px;
+  min-height: 44px;
+  padding-inline: var(--m-space-3);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-source-note {
+  margin-top: var(--m-space-3);
+  padding-top: var(--m-space-3);
+  border-top: 1px solid var(--m-border-default);
+  color: var(--m-color-neutral-500);
+  font-size: 11px;
+  line-height: 17px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-week {
+  min-width: 0;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-week-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0,1fr));
+  gap: var(--m-space-1);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day {
+  min-width: 0;
+  min-height: 74px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: var(--m-space-2) var(--m-space-1);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-md);
+  background: var(--m-color-neutral-50);
+  text-align: center;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day[data-today="true"] {
+  border-color: color-mix(in srgb, var(--m-color-brand-600) 45%, var(--m-border-default));
+  background: rgba(15,143,156,.07);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day__dow {
+  color: var(--m-color-neutral-700);
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 700;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day__date {
+  color: var(--m-color-neutral-500);
+  font-size: 10px;
+  line-height: 14px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day__count {
+  color: var(--m-color-brand-700);
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 700;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-week-state {
+  min-height: 84px;
+  display: grid;
+  align-content: center;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-week-skeleton {
+  display: grid;
+  grid-template-columns: repeat(7,minmax(0,1fr));
+  gap: var(--m-space-1);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-week-skeleton .m-skeleton {
+  height: 74px;
+  border-radius: var(--m-radius-md);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: var(--m-space-2);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut {
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-2);
+  padding: 10px var(--m-space-3);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-lg);
+  background: var(--m-color-surface);
+  color: var(--m-color-neutral-700);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut:hover {
+  border-color: var(--m-border-strong);
+  background: var(--m-color-neutral-50);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut:focus-visible {
+  outline: var(--m-focus-outline);
+  outline-offset: var(--m-focus-offset);
+  box-shadow: var(--m-focus-ring);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-availability {
+  min-width: 0;
+  display: none;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-availability:has(#weeklyRegistrationPanel.open) {
+  display: block;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel {
+  min-width: 0;
+  display: none;
+  margin: 0;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel.open {
+  display: block;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel .weekly-reg-head {
+  margin-bottom: var(--m-space-3);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel .form {
+  min-width: 0;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel .field select,
+body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel .m-button,
+body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel .btn {
+  min-height: 44px;
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-error {
+  padding: var(--m-space-4);
+  border: 1px solid color-mix(in srgb, var(--m-color-danger) 26%, var(--m-border-default));
+  border-radius: var(--m-radius-lg);
+  background: var(--m-color-danger-soft);
+  color: var(--m-color-danger);
+}
+
+body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-empty {
+  padding: var(--m-space-4);
+  border: 1px dashed var(--m-border-strong);
+  border-radius: var(--m-radius-lg);
+  background: var(--m-color-neutral-50);
+}
+
+@media (max-width: 760px) {
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-layout {
+    grid-template-columns: minmax(0,1fr);
+  }
+
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-card {
+    padding: var(--m-space-4);
+    border-radius: var(--m-radius-lg);
+  }
+
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-action {
+    grid-template-columns: 36px minmax(0,1fr);
+  }
+
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-action .m-button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcuts {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut {
+    justify-content: flex-start;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel .form {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: var(--m-space-3) !important;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel .form > .m-button,
+  body[data-magasin-employee-shell-v2] #view-dashboard #weeklyRegistrationPanel .form > .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-week-grid,
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-week-skeleton {
+    gap: 3px;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day {
+    min-height: 68px;
+    padding: 6px 2px;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day__dow,
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day__date {
+    font-size: 9px;
+    line-height: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-magasin-employee-shell-v2] #view-dashboard .m-skeleton {
+    animation: none;
+  }
+}

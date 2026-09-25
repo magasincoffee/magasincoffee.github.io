@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UI2-006 Employee Today QA</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;max-width:100%;overflow-x:hidden;background:#eef2f7}
+    iframe{display:block;width:100%;height:100vh;min-height:0;border:0;background:#fff}
+  </style>
+</head>
+<body>
+<iframe id="employeeApp" title="UI2-006 Employee Today QA" src="/06_EMPLOYEE/app/employee-v40.html#dashboard"></iframe>
+<script>
+(() => {
+  const NativeDate=Date;
+  const FIXED_NOW='2026-09-25T08:00:00.000Z'; // 15:00 Asia/Ho_Chi_Minh
+  window.Date=class extends NativeDate{
+    constructor(...args){super(...(args.length?args:[FIXED_NOW]))}
+    static now(){return new NativeDate(FIXED_NOW).valueOf()}
+  };
+
+  const calls=[],actions=[];
+  const profile={id:'employee-ui2-006',full_name:'Nguyễn An',username:'nguyen.an',role:'STAFF',status:'ACTIVE'};
+  const state={
+    today:'2026-09-25',
+    week:'2026-09-21',
+    mode:'current',
+    availability:'REGISTRATION_OPEN'
+  };
+  const rowsByMode={
+    current:[
+      {schedule_id:'sch-current',work_date:'2026-09-25',start_time:'14:00',end_time:'18:00',store_code:'CN-QA-A',store_name:'MAGASIN QA A',status:'APPROVED'},
+      {schedule_id:'sch-next',work_date:'2026-09-25',start_time:'19:00',end_time:'22:00',store_code:'CN-QA-B',store_name:'MAGASIN QA B',status:'APPROVED'},
+      {schedule_id:'sch-sat',work_date:'2026-09-26',start_time:'08:00',end_time:'12:00',store_code:'CN-QA-A',store_name:'MAGASIN QA A',status:'APPROVED'}
+    ],
+    next:[
+      {schedule_id:'sch-next-only',work_date:'2026-09-25',start_time:'19:00',end_time:'22:00',store_code:'CN-QA-B',store_name:'MAGASIN QA B',status:'APPROVED'}
+    ],
+    ended:[
+      {schedule_id:'sch-ended',work_date:'2026-09-25',start_time:'08:00',end_time:'12:00',store_code:'CN-QA-A',store_name:'MAGASIN QA A',status:'APPROVED'}
+    ],
+    empty:[]
+  };
+
+  const pad=n=>String(n).padStart(2,'0');
+  const dateObj=k=>new NativeDate(String(k).slice(0,10)+'T00:00:00Z');
+  const addDays=(k,n)=>{const d=dateObj(k);d.setUTCDate(d.getUTCDate()+n);return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())};
+  const monday=(k=state.today)=>{const d=dateObj(k),day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()-(day-1));return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())};
+  const weekDays=k=>Array.from({length:7},(_,i)=>addDays(k,i));
+  const formatDate=k=>{const p=String(k).slice(0,10).split('-');return p[2]+'/'+p[1]};
+  const time5=v=>String(v||'').slice(0,5);
+  const minutes=v=>Number(time5(v).slice(0,2))*60+Number(time5(v).slice(3,5));
+  const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function currentRows(){
+    return state.mode==='error'||state.mode==='loading'?[]:(rowsByMode[state.mode]||rowsByMode.current).map(r=>({...r}));
+  }
+  function frame(){return document.getElementById('employeeApp')}
+  function frameDoc(){return frame().contentDocument}
+  function refreshDashboard(){window.MAGASIN_EMPLOYEE.dashboard?.refresh?.()}
+
+  window.MAGASIN_CORE={
+    TZ:'Asia/Ho_Chi_Minh',
+    security:{escapeHtml},
+    time:{time5,minutes},
+    date:{dateKey:()=>state.today,monday,weekDays,formatDate,addDays},
+    roles:{label:{STAFF:'Nhân viên',EMPLOYEE:'Nhân viên'}}
+  };
+
+  window.MAGASIN_EMPLOYEE={
+    profile,
+    schedule:{
+      getState:()=>({
+        week:state.week,
+        loading:state.mode==='loading',
+        error:state.mode==='error'?'Không thể tải lịch làm lúc này. Vui lòng thử lại.':null,
+        notice:null,
+        rowCount:currentRows().length,
+        ready:!['loading','error'].includes(state.mode)
+      }),
+      getRows:()=>currentRows(),
+      getWeek:()=>state.week,
+      getTodayRows:()=>currentRows().filter(r=>r.work_date===state.today),
+      async refresh(){calls.push({type:'schedule-refresh'});state.mode='current';refreshDashboard();return true},
+      async openAction(action,id){actions.push({type:'schedule-action',action,id});if(action==='attendance')frameDoc()?.defaultView?.showView?.('attendance');return true}
+    },
+    availability:{
+      getRegistrationState:()=>state.availability,
+      open(){actions.push({type:'availability-open'});frameDoc()?.getElementById('weeklyRegistrationPanel')?.classList.add('open')},
+      close(){frameDoc()?.getElementById('weeklyRegistrationPanel')?.classList.remove('open')},
+      refresh(){},
+      getRows:()=>[],
+      getWeek:()=>addDays(state.week,7)
+    },
+    attendance:{refresh(){}},
+    events:{emit(){}}
+  };
+
+  window.__UI2_006_QA={
+    state,calls,actions,profile,
+    setMode(mode){state.mode=mode;state.week='2026-09-21';refreshDashboard()},
+    setWrongWeek(){state.mode='current';state.week='2026-09-28';refreshDashboard()},
+    setAvailability(value){state.availability=value;refreshDashboard()},
+    refresh:refreshDashboard
+  };
+})();
+</script>
+<script src="/06_EMPLOYEE/dashboard/engine-v1.js"></script>
+</body>
+</html>
