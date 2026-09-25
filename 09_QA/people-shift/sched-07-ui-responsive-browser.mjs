@@ -78,7 +78,25 @@ for(const width of shellWidths){
     }));
     throw new Error("UI2_005_SHELL_BOOT_DIAG "+JSON.stringify({width,diag,shellAssets,consoleErrors:report.console_errors.slice(-8),pageErrors:report.page_errors.slice(-8)}));
   }
-  await employeeShell.locator('[data-employee-primary-view="schedule"][aria-current="page"]').waitFor();
+  try{
+    await employeeShell.locator('[data-employee-primary-view="schedule"][aria-current="page"]').waitFor({timeout:5000});
+  }catch(e){
+    const state=await employeeShell.evaluate(()=>({
+      href:location.href,
+      hash:location.hash,
+      activeView:document.querySelector('.page-view.active[id^="view-"]')?.id||null,
+      shellCurrent:window.MAGASIN_EMPLOYEE_UI_V2_SHELL?.getCurrentView?.()||null,
+      nav:[...document.querySelectorAll("[data-employee-primary-view]")].map(x=>({
+        view:x.dataset.employeePrimaryView,
+        current:x.getAttribute("aria-current"),
+        active:x.dataset.active,
+        display:getComputedStyle(x).display,
+        visibility:getComputedStyle(x).visibility,
+        rect:{w:x.getBoundingClientRect().width,h:x.getBoundingClientRect().height}
+      }))
+    }));
+    throw new Error("UI2_005_ACTIVE_STATE_DIAG "+JSON.stringify({width,state}));
+  }
 
   await check("ui2_005_employee_"+width+"_bottom_nav_bounds_touch_and_no_overflow",async()=>{
     return employeeShell.evaluate(()=>{
