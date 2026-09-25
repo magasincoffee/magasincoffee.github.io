@@ -69,7 +69,7 @@ test("SCHED-03 keeps one active Employee runtime path",()=>{
   assert.match(runtime,/schedule\/engine-v1\.js\?v=20260923-sched03/);
   assert.match(runtime,/attendance\/engine-v1\.js\?v=20260923-sched03/);
   assert.match(runtime,/swap\/engine-v1\.js\?v=20260923-sched03/);
-  assert.match(index,/employee-runtime-v1\.html\?v=20260925-ui2-006/);
+  assert.match(index,/employee-runtime-v1\.html\?v=20260926-ui2-007/);
 });
 
 console.log("SCHED_03_EMPLOYEE_SCHEDULE_CONTRACT=PASS");

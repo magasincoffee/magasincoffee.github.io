@@ -1,0 +1,527 @@
+/*
+ * MAGASIN UI/UX V2 — Employee Schedule
+ * UI2-007
+ *
+ * Presentation-only overrides for the canonical Employee Schedule engine.
+ * The schedule reader, state machine, RPC and downstream action handlers remain
+ * owned by 06_EMPLOYEE/schedule/engine-v1.js.
+ */
+
+body[data-magasin-employee-shell-v2] #view-schedule {
+  min-width: 0;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .schedule-main-panel.employee-schedule-engine {
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine,
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine * {
+  min-width: 0;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+  padding: var(--m-space-5);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-xl);
+  background:
+    radial-gradient(circle at 100% 0, rgba(15,143,156,.10), transparent 44%),
+    var(--m-color-surface);
+  box-shadow: var(--m-shadow-sm);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-hero h2 {
+  margin: 0;
+  color: var(--m-color-neutral-950);
+  font-size: clamp(22px, 6vw, 28px);
+  line-height: 1.18;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-hero p {
+  max-width: 62ch;
+  margin: var(--m-space-2) 0 0;
+  color: var(--m-color-neutral-500);
+  font-size: var(--m-text-body-size);
+  line-height: var(--m-text-body-line);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-official {
+  flex: 0 0 auto;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-1);
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--m-color-success) 30%, var(--m-border-default));
+  border-radius: var(--m-radius-pill);
+  background: var(--m-color-success-soft);
+  color: var(--m-color-success);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-context {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: var(--m-space-3);
+  margin: var(--m-space-4) 0;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-context-card {
+  padding: var(--m-space-4);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-lg);
+  background: var(--m-color-surface);
+  box-shadow: var(--m-shadow-sm);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-context-card strong {
+  display: block;
+  color: var(--m-color-neutral-950);
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 700;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-context-card span {
+  display: block;
+  margin-top: var(--m-space-1);
+  color: var(--m-color-neutral-500);
+  font-size: 12px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-nav {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: var(--m-space-2);
+  margin: var(--m-space-4) 0 var(--m-space-3);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-nav button,
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-actions button,
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-availability button,
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-error button {
+  min-height: 44px;
+  border-radius: var(--m-radius-md);
+  font: inherit;
+  font-size: var(--m-text-interactive-size);
+  line-height: var(--m-text-interactive-line);
+  font-weight: var(--m-text-interactive-weight);
+  cursor: pointer;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-nav button {
+  width: 100%;
+  padding: 10px var(--m-space-2);
+  border: 1px solid var(--m-border-default);
+  background: var(--m-color-surface);
+  color: var(--m-color-neutral-700);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-nav button[aria-current="true"] {
+  border-color: color-mix(in srgb, var(--m-color-brand-600) 42%, var(--m-border-default));
+  background: var(--m-color-info-soft);
+  color: var(--m-color-brand-700);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-nav button:disabled,
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-actions button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-nav button:focus-visible,
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-actions button:focus-visible,
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-availability button:focus-visible,
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-error button:focus-visible {
+  outline: var(--m-focus-outline);
+  outline-offset: var(--m-focus-offset);
+  box-shadow: var(--m-focus-ring);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-statusline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-2);
+  margin: 0 0 var(--m-space-3);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-statusline .pill {
+  max-width: 100%;
+  padding: 6px 9px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-color-neutral-100);
+  color: var(--m-color-neutral-700);
+  font-size: 11px;
+  line-height: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-notice {
+  margin: 0 0 var(--m-space-3);
+  padding: var(--m-space-3);
+  border: 1px solid color-mix(in srgb, var(--m-color-warning) 34%, var(--m-border-default));
+  border-radius: var(--m-radius-md);
+  background: var(--m-color-warning-soft);
+  color: var(--m-color-neutral-700);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .days {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(7,minmax(0,1fr));
+  gap: var(--m-space-2);
+  align-items: start;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .day {
+  min-height: 158px;
+  padding: var(--m-space-3);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-lg);
+  background: var(--m-color-surface);
+  box-shadow: var(--m-shadow-sm);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .day.today {
+  border-color: color-mix(in srgb, var(--m-color-brand-600) 55%, var(--m-border-default));
+  background:
+    linear-gradient(180deg, rgba(15,143,156,.08), rgba(15,143,156,.02) 42%, transparent 100%),
+    var(--m-color-surface);
+  box-shadow: 0 0 0 2px rgba(15,143,156,.08), var(--m-shadow-sm);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .day-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--m-space-2);
+  margin-bottom: var(--m-space-2);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .dow {
+  color: var(--m-color-neutral-950);
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 700;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .date {
+  margin-top: 1px;
+  color: var(--m-color-neutral-500);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .today-tag {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-color-info-soft);
+  color: var(--m-color-brand-700);
+  font-size: 9px;
+  line-height: 14px;
+  font-weight: 800;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift {
+  position: relative;
+  overflow: hidden;
+  margin-top: var(--m-space-2);
+  padding: var(--m-space-3);
+  border: 1px solid var(--m-border-default);
+  border-left: 3px solid var(--m-color-info);
+  border-radius: var(--m-radius-md);
+  background: var(--m-color-neutral-50);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift.morning-yellow {
+  border-color: color-mix(in srgb, var(--m-color-warning) 32%, var(--m-border-default));
+  border-left-color: var(--m-color-warning);
+  background: var(--m-color-warning-soft);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift.afternoon-red {
+  border-color: color-mix(in srgb, var(--m-color-danger) 24%, var(--m-border-default));
+  border-left-color: var(--m-color-danger);
+  background: var(--m-color-danger-soft);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift.evening-cyan {
+  border-color: color-mix(in srgb, var(--m-color-info) 26%, var(--m-border-default));
+  border-left-color: var(--m-color-info);
+  background: var(--m-color-info-soft);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-time {
+  color: var(--m-color-neutral-950);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 750;
+  letter-spacing: -.01em;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-store {
+  margin-top: var(--m-space-1);
+  color: var(--m-color-neutral-700);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-status {
+  display: inline-flex;
+  margin-top: var(--m-space-2);
+  padding: 4px 7px;
+  border-radius: var(--m-radius-pill);
+  background: var(--m-color-success-soft);
+  color: var(--m-color-success);
+  font-size: 10px;
+  line-height: 15px;
+  font-weight: 700;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(88px,1fr));
+  gap: var(--m-space-2);
+  margin-top: var(--m-space-3);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-actions button {
+  width: 100%;
+  padding: 9px var(--m-space-2);
+  border: 1px solid var(--m-border-default);
+  background: var(--m-color-surface);
+  color: var(--m-color-neutral-700);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-actions button.primary-action {
+  border-color: color-mix(in srgb, var(--m-color-brand-600) 36%, var(--m-border-default));
+  background: var(--m-color-info-soft);
+  color: var(--m-color-brand-700);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-day-empty {
+  padding: var(--m-space-3) 0 var(--m-space-1);
+  color: var(--m-color-neutral-500);
+  font-size: 11px;
+  line-height: 17px;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-empty,
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-error {
+  grid-column: 1 / -1;
+  min-height: 168px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--m-space-2);
+  padding: var(--m-space-6) var(--m-space-4);
+  border: 1px dashed var(--m-border-strong);
+  border-radius: var(--m-radius-xl);
+  background: var(--m-color-surface);
+  color: var(--m-color-neutral-500);
+  text-align: center;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-error {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--m-color-danger) 28%, var(--m-border-default));
+  background: var(--m-color-danger-soft);
+  color: var(--m-color-neutral-700);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-error button {
+  margin-top: var(--m-space-1);
+  padding: 9px var(--m-space-4);
+  border: 1px solid color-mix(in srgb, var(--m-color-danger) 34%, var(--m-border-default));
+  background: var(--m-color-surface);
+  color: var(--m-color-danger);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-skeleton {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: var(--m-space-3);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-skeleton span {
+  height: 148px;
+  border-radius: var(--m-radius-lg);
+  background: linear-gradient(90deg,var(--m-color-neutral-100) 25%,var(--m-color-neutral-50) 37%,var(--m-color-neutral-100) 63%);
+  background-size: 400% 100%;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-availability {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+  margin-top: var(--m-space-4);
+  padding: var(--m-space-4);
+  border: 1px solid var(--m-border-default);
+  border-radius: var(--m-radius-lg);
+  background: var(--m-color-neutral-50);
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-availability strong {
+  display: block;
+  color: var(--m-color-neutral-950);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 700;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-availability p {
+  margin: var(--m-space-1) 0 0;
+  color: var(--m-color-neutral-500);
+  font-size: 11px;
+  line-height: 17px;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-availability button {
+  flex: 0 0 auto;
+  padding: 9px var(--m-space-3);
+  border: 1px solid var(--m-border-default);
+  background: var(--m-color-surface);
+  color: var(--m-color-brand-700);
+  white-space: nowrap;
+}
+
+@media (max-width: 1179px) {
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .days {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-hero {
+    display: grid;
+    gap: var(--m-space-3);
+    padding: var(--m-space-4);
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-official {
+    justify-self: start;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-context {
+    grid-template-columns: 1fr;
+    gap: var(--m-space-2);
+    margin: var(--m-space-3) 0;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-context-card {
+    padding: var(--m-space-3);
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-nav {
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: var(--m-space-1);
+    margin: var(--m-space-3) 0;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-nav button {
+    padding-inline: var(--m-space-1);
+    font-size: 11px;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .days {
+    grid-template-columns: 1fr;
+    gap: var(--m-space-3);
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .day {
+    min-height: 0;
+    padding: var(--m-space-4);
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift {
+    padding: var(--m-space-3);
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-actions {
+    grid-template-columns: repeat(auto-fit,minmax(88px,1fr));
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-skeleton {
+    grid-template-columns: 1fr;
+    gap: var(--m-space-3);
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-skeleton span {
+    height: 124px;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-availability {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-availability button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 430px) {
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-hero {
+    border-radius: var(--m-radius-lg);
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-hero h2 {
+    font-size: 23px;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-statusline {
+    align-items: flex-start;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-nav button {
+    min-height: 46px;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .day {
+    border-radius: var(--m-radius-lg);
+  }
+}
+
+@media (max-width: 370px) {
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-week-nav button {
+    font-size: 10px;
+  }
+
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-actions {
+    grid-template-columns: repeat(auto-fit,minmax(82px,1fr));
+    gap: var(--m-space-1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .schedule-skeleton span {
+    animation: none;
+  }
+}
