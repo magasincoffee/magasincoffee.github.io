@@ -80,11 +80,7 @@
 
     const top = topWindow();
     try {
-      if (normalize(top.location.hash) !== key) {
-        const url = new URL(top.location.href);
-        url.hash = key;
-        top.history.pushState({ magasinEmployeeView: key }, '', url.pathname + url.search + url.hash);
-      }
+      if (normalize(top.location.hash) !== key) top.location.hash = key;
     } catch (_) {}
 
     const parent = parentWindow();
@@ -279,7 +275,14 @@
   };
 
   const bindHistory = () => {
-    const handler = () => applyCanonicalRoute(canonicalFromHistory());
+    const handler = () => {
+      const key = canonicalFromHistory();
+      if (normalize(currentView()) === key) {
+        setPrimaryActive(key);
+        return;
+      }
+      applyCanonicalRoute(key);
+    };
     const targets = new Set([topWindow(), parentWindow(), window]);
     for (const target of targets) {
       try {
