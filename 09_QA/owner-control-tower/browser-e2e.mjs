@@ -258,6 +258,46 @@ try {
     return page.url();
   });
 
+  await check("ui2_004_owner_shell_desktop_nav_contract", async () => {
+    await page.locator("#magasinUiV2Shell").waitFor({ state: "visible", timeout: 10000 });
+    const state = await page.evaluate(() => {
+      const shell = document.querySelector("#magasinUiV2Shell");
+      const sidebar = document.querySelector(".m-shell-v2-sidebar");
+      const topbar = document.querySelector(".m-shell-v2-topbar");
+      const links = Array.from(document.querySelectorAll(".m-shell-v2-nav__item")).map((node) => ({
+        key: node.dataset.shellKey,
+        href: node.getAttribute("href"),
+        current: node.getAttribute("aria-current")
+      }));
+      return {
+        shell: !!shell,
+        sidebarWidth: sidebar?.getBoundingClientRect().width || 0,
+        topbarHeight: topbar?.getBoundingClientRect().height || 0,
+        links
+      };
+    });
+    const expected = {
+      overview: "/04_OWNER/",
+      attention: "/04_OWNER/ControlTower/",
+      workforce: "/04_OWNER/Workforce/",
+      procurement: "/nhap-hang/",
+      access: "/04_OWNER/Access/"
+    };
+    if (!state.shell || state.sidebarWidth < 200 || state.topbarHeight < 56) {
+      throw new Error(JSON.stringify(state));
+    }
+    if (state.links.length !== 5) throw new Error(JSON.stringify(state.links));
+    for (const item of state.links) {
+      if (expected[item.key] !== item.href) throw new Error(JSON.stringify(item));
+    }
+    const active = state.links.find((item) => item.current === "page");
+    if (active?.key !== "attention") throw new Error(JSON.stringify(active));
+    if (state.links.some((item) => /finance|settings/i.test(item.key))) {
+      throw new Error(JSON.stringify(state.links));
+    }
+    return JSON.stringify(state);
+  });
+
   await check("authenticated_owner_identity", async () => {
     const text = await page.locator("#ownerIdentity").innerText();
     if (!/Owner QA.*OWNER/i.test(text)) throw new Error(text);
@@ -422,6 +462,39 @@ try {
   await shot(degradedPage, "03-source-gap");
   await degradedContext.close();
 
+  const tablet = await newQaContext(browser, { width: 900, height: 900 });
+  const tabletPage = await tablet.newPage();
+  attachDiagnostics(tabletPage, "tablet-owner-shell");
+  await check("ui2_004_owner_tablet_drawer_smoke", async () => {
+    await tabletPage.goto(`${BASE}/04_OWNER/ControlTower/`, {
+      waitUntil: "domcontentloaded",
+      timeout: 20000
+    });
+    await tabletPage.locator("#app:not(.hidden)").waitFor({ state: "visible", timeout: 10000 });
+    const menu = tabletPage.locator("[data-shell-menu]");
+    await menu.waitFor({ state: "visible", timeout: 10000 });
+    await menu.click();
+    const state = await tabletPage.evaluate(() => {
+      const drawer = document.querySelector(".m-shell-v2-sidebar");
+      return {
+        open: document.body.dataset.shellDrawerOpen,
+        expanded: document.querySelector("[data-shell-menu]")?.getAttribute("aria-expanded"),
+        width: drawer?.getBoundingClientRect().width || 0,
+        viewport: innerWidth,
+        scrollWidth: document.documentElement.scrollWidth
+      };
+    });
+    if (state.open !== "true" || state.expanded !== "true" || state.width > 321 || state.scrollWidth > state.viewport + 1) {
+      throw new Error(JSON.stringify(state));
+    }
+    await tabletPage.keyboard.press("Escape");
+    const closed = await tabletPage.evaluate(() => document.body.dataset.shellDrawerOpen);
+    if (closed !== "false") throw new Error("drawer did not close on Escape");
+    return JSON.stringify(state);
+  });
+  await shot(tabletPage, "04-owner-tablet-shell");
+  await tablet.close();
+
   const mobile = await newQaContext(browser, { width: 390, height: 844 });
   const mobilePage = await mobile.newPage();
   attachDiagnostics(mobilePage, "mobile-owner");
@@ -452,6 +525,30 @@ try {
     }
     return `${metrics.width}px viewport / ${metrics.scrollWidth}px document`;
   });
+  await check("ui2_004_owner_phone_drawer_touch_target", async () => {
+    const menu = mobilePage.locator("[data-shell-menu]");
+    const size = await menu.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return { width: r.width, height: r.height };
+    });
+    if (size.width < 43.5 || size.height < 43.5) throw new Error(JSON.stringify(size));
+    await menu.click();
+    const state = await mobilePage.evaluate(() => {
+      const drawer = document.querySelector(".m-shell-v2-sidebar");
+      return {
+        open: document.body.dataset.shellDrawerOpen,
+        width: drawer?.getBoundingClientRect().width || 0,
+        viewport: innerWidth,
+        scrollWidth: document.documentElement.scrollWidth
+      };
+    });
+    if (state.open !== "true" || state.width > state.viewport * .89 || state.scrollWidth > state.viewport + 1) {
+      throw new Error(JSON.stringify(state));
+    }
+    await mobilePage.keyboard.press("Escape");
+    return JSON.stringify({ size, state });
+  });
+
   await shot(mobilePage, "04-owner-mobile");
   await mobile.close();
 } catch (error) {
