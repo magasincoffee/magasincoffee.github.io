@@ -431,3 +431,11 @@ As of 2026-09-25:
 - One coherent MAGASIN design system is required across Login, Employee, Manager, Owner.
 - Business logic/backend rewrite is not part of this UI decision.
 - Current HTML/JS architecture may be retained; framework migration is not required.
+
+## 15. P0 execution priority lock
+
+Owner further decided on 2026-09-25 that UI/UX V2 is the **highest implementation priority until closure**.
+
+Canonical execution plan: `01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_P0_EXECUTION_PLAN.md`.
+
+This priority activates after the already in-flight Brain/Work gate is formally closed. Once active, Brain should prefer the next dependency-correct UI2 task over unrelated feature expansion until UI2-017 closure is ACCEPTED, except for security, production-incident, data-integrity, or explicit Owner-intervention emergencies.
