@@ -1,0 +1,434 @@
+/* SCHED-07 — shared scheduling polish. Presentation-only: no scheduling authority/data changes. */
+:root{
+  --sched-brand:#16b7c5;
+  --sched-brand-strong:#0f8996;
+  --sched-blue:#2f6fde;
+  --sched-ink:#102a43;
+  --sched-muted:#617793;
+  --sched-line:#dce5f0;
+  --sched-soft:#f4f8fc;
+  --sched-card:#ffffff;
+  --sched-ok:#23754a;
+  --sched-warn:#8a6500;
+  --sched-danger:#9a3838;
+  --sched-shadow:0 10px 30px rgba(16,42,67,.08);
+  --sched-radius:16px;
+  --sched-focus:0 0 0 3px rgba(47,111,222,.24);
+}
+
+.employee-schedule-engine,
+#view-workforce .msd,
+.owner-sched-scope{
+  color:var(--sched-ink);
+}
+
+.employee-schedule-engine *,
+#view-workforce .msd,
+#view-workforce .msd *{
+  min-width:0;
+  box-sizing:border-box;
+}
+
+.employee-schedule-engine button,
+.employee-schedule-engine select,
+#view-workforce .msd button,
+#view-workforce .msd select{
+  min-height:44px;
+  font:inherit;
+}
+
+.employee-schedule-engine button,
+#view-workforce .msd button{
+  cursor:pointer;
+}
+
+.employee-schedule-engine button:focus-visible,
+.employee-schedule-engine select:focus-visible,
+#view-workforce .msd button:focus-visible,
+#view-workforce .msd select:focus-visible,
+.owner-sched-scope a:focus-visible{
+  outline:2px solid var(--sched-blue);
+  outline-offset:2px;
+  box-shadow:var(--sched-focus);
+}
+
+.employee-schedule-engine button:disabled,
+#view-workforce .msd button:disabled,
+#view-workforce .msd select:disabled{
+  cursor:not-allowed;
+  opacity:.58;
+}
+
+
+/* Role shells — same MAGASIN scheduling language without changing navigation authority. */
+html[data-scheduling-role="employee"] .app-header{
+  min-height:64px !important;
+  padding:0 18px !important;
+  border-bottom:1px solid var(--sched-line) !important;
+  box-shadow:0 4px 18px rgba(16,42,67,.045);
+}
+html[data-scheduling-role="employee"] .header-page-title{
+  background:#eef7ff !important;
+  color:#235dba !important;
+  border:1px solid #d9e8f5;
+  font-size:16px !important;
+}
+html[data-scheduling-role="employee"] .header-menu,
+html[data-scheduling-role="employee"] .header-icon{
+  min-width:44px;
+  min-height:44px;
+  border-radius:11px;
+}
+html[data-scheduling-role="employee"] .drawer .nav a{
+  min-height:44px;
+  display:flex;
+  align-items:center;
+}
+html[data-scheduling-role="manager"] .header,
+html[data-scheduling-role="owner"] .header{
+  min-height:68px;
+  height:auto;
+  border-bottom:1px solid var(--sched-line);
+  box-shadow:0 4px 18px rgba(16,42,67,.04);
+}
+html[data-scheduling-role="manager"] .sidebar,
+html[data-scheduling-role="owner"] .sidebar{
+  border-right:1px solid var(--sched-line);
+  box-shadow:4px 0 20px rgba(16,42,67,.035);
+}
+html[data-scheduling-role="manager"] .nav button,
+html[data-scheduling-role="owner"] .nav button{
+  min-height:44px;
+  border-radius:11px;
+}
+html[data-scheduling-role="manager"] .nav button.active,
+html[data-scheduling-role="owner"] .nav button.active{
+  background:#eaf5ff;
+  color:#235dba;
+  box-shadow:inset 3px 0 0 var(--sched-brand);
+}
+html[data-scheduling-role="manager"] .content,
+html[data-scheduling-role="owner"] .content{
+  max-width:1540px;
+  margin:0 auto;
+  width:100%;
+}
+
+/* Employee */
+.employee-schedule-engine{
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+}
+.employee-schedule-engine .schedule-hero{
+  margin:-2px -2px 16px;
+  padding:18px;
+  border:1px solid #d9e8f5;
+  border-radius:var(--sched-radius);
+  background:linear-gradient(135deg,#f7fcff 0%,#eef7ff 100%);
+  box-shadow:0 8px 24px rgba(47,111,222,.06);
+}
+.employee-schedule-engine .schedule-hero h2{
+  letter-spacing:-.35px;
+}
+.employee-schedule-engine .schedule-context-card,
+.employee-schedule-engine .day,
+.employee-schedule-engine .schedule-availability{
+  box-shadow:0 5px 18px rgba(16,42,67,.045);
+}
+.employee-schedule-engine .schedule-week-nav{
+  padding:8px;
+  border:1px solid var(--sched-line);
+  border-radius:13px;
+  background:#f8fbfe;
+}
+.employee-schedule-engine .schedule-week-nav button{
+  min-height:44px;
+  padding:9px 13px;
+}
+.employee-schedule-engine .schedule-week-nav button[aria-current="true"]{
+  box-shadow:inset 0 0 0 1px rgba(47,111,222,.12);
+}
+.employee-schedule-engine .schedule-statusline{
+  min-height:28px;
+}
+.employee-schedule-engine .schedule-statusline .pill{
+  padding:6px 10px;
+  border-radius:999px;
+  background:#edf5ff;
+  color:#235dba;
+  font-weight:800;
+}
+.employee-schedule-engine .schedule-notice{
+  border-radius:12px;
+  padding:12px 14px;
+}
+.employee-schedule-engine .day{
+  transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.employee-schedule-engine .day.today{
+  border-color:#8ec2f4;
+  box-shadow:0 0 0 3px rgba(47,111,222,.08),0 8px 20px rgba(16,42,67,.05);
+}
+.employee-schedule-engine .shift{
+  padding:11px;
+}
+.employee-schedule-engine .shift-actions{
+  gap:7px;
+}
+.employee-schedule-engine .shift-actions button,
+.employee-schedule-engine .schedule-availability button,
+.employee-schedule-engine .schedule-error button{
+  min-height:44px;
+  border-radius:10px;
+}
+.employee-schedule-engine .schedule-week-empty,
+.employee-schedule-engine .schedule-error{
+  padding:32px 20px;
+  line-height:1.55;
+}
+
+/* Manager + Owner canonical scheduler */
+#view-workforce{
+  max-width:100%;
+  min-width:0;
+}
+#view-workforce .msd{
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+  padding:20px;
+  border-radius:18px;
+  box-shadow:var(--sched-shadow);
+}
+#view-workforce .msd-head{
+  padding:16px;
+  border:1px solid #d8e7f3;
+  border-radius:15px;
+  background:linear-gradient(135deg,#f8fcff 0%,#f0f7ff 100%);
+}
+#view-workforce .msd-head h2{
+  letter-spacing:-.35px;
+  font-size:22px;
+}
+#view-workforce .msd-head .msd-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+#view-workforce .msd-head .msd-actions .btn,
+#view-workforce .msd-head .msd-actions select{
+  min-height:44px;
+}
+#view-workforce #msdStore{
+  min-width:210px;
+  max-width:300px;
+}
+#view-workforce .msd-summary{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  align-items:center;
+}
+#view-workforce .msd-pill{
+  line-height:1.2;
+  border-radius:999px;
+}
+#view-workforce .msd-layout{
+  gap:16px;
+}
+#view-workforce .msd-source,
+#view-workforce .msd-board-wrap,
+#view-workforce .msd-downstream{
+  border-radius:14px;
+}
+#view-workforce .msd-source-row{
+  gap:8px;
+  align-items:center;
+}
+#view-workforce .msd-source-row .btn{
+  min-height:42px;
+}
+#view-workforce .msd-card{
+  padding:11px;
+  border-radius:12px;
+  box-shadow:0 3px 12px rgba(16,42,67,.045);
+}
+#view-workforce .msd-input{
+  min-height:42px;
+  height:42px;
+}
+#view-workforce .msd-status{
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  line-height:1.5;
+  border:1px solid #d7e6f6;
+}
+#view-workforce .msd-status.error{
+  border-color:#efc3c3;
+}
+#view-workforce .msd-status.ok{
+  border-color:#c7e4d3;
+}
+#view-workforce .msd-official-row{
+  border-radius:12px;
+}
+#view-workforce .msd-day{
+  border-radius:13px;
+}
+#view-workforce .msd-day-title{
+  min-height:42px;
+}
+#view-workforce [aria-busy="true"]{
+  cursor:progress;
+}
+
+/* Owner explanatory surface */
+.owner-sched-scope{
+  margin-bottom:16px;
+  padding:16px 18px;
+  border:1px solid #c5dfea;
+  border-radius:16px;
+  background:linear-gradient(135deg,#f2fbfd 0%,#f7fbff 100%);
+  box-shadow:0 6px 18px rgba(16,42,67,.045);
+}
+.owner-sched-scope strong{
+  font-size:15px;
+  letter-spacing:-.15px;
+}
+.owner-sched-scope span{
+  line-height:1.55;
+}
+.owner-sched-tags i{
+  min-height:30px;
+  display:inline-flex;
+  align-items:center;
+}
+
+/* Keep internal boards responsive without creating page-level horizontal overflow. */
+@media (max-width:980px){
+  #view-workforce .msd{
+    padding:16px;
+  }
+  #view-workforce .msd-head{
+    gap:14px;
+  }
+  #view-workforce .msd-head .msd-actions{
+    width:100%;
+  }
+  #view-workforce .msd-board-wrap{
+    max-width:100%;
+    overflow-x:auto;
+    overscroll-behavior-inline:contain;
+  }
+}
+
+@media (max-width:720px){
+  .employee-schedule-engine .schedule-hero{
+    padding:15px;
+  }
+  .employee-schedule-engine .schedule-hero h2{
+    font-size:21px;
+  }
+  .employee-schedule-engine .schedule-week-nav{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+  .employee-schedule-engine .schedule-week-nav button{
+    width:100%;
+  }
+  .employee-schedule-engine .shift-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  #view-workforce .msd{
+    padding:12px;
+    border-radius:14px;
+  }
+  #view-workforce .msd-head{
+    padding:14px;
+    border-radius:13px;
+  }
+  #view-workforce .msd-head .msd-actions{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    width:100%;
+  }
+  #view-workforce #msdStore{
+    grid-column:1/-1;
+    width:100%;
+    max-width:none;
+  }
+  #view-workforce .msd-head .msd-actions .btn,
+  #view-workforce .msd-head .msd-actions select{
+    width:100%;
+  }
+  #view-workforce .msd-summary{
+    gap:6px;
+  }
+  #view-workforce .msd-layout{
+    display:grid;
+    grid-template-columns:1fr !important;
+  }
+  #view-workforce .msd-board-wrap{
+    overflow:visible !important;
+  }
+  #view-workforce .msd-board{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    min-width:0 !important;
+    width:100% !important;
+    gap:10px;
+  }
+  #view-workforce .msd-day{
+    min-height:0;
+  }
+  #view-workforce .msd-source-row{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    align-items:stretch;
+  }
+  #view-workforce .msd-time-row{
+    grid-template-columns:1fr 1fr;
+  }
+  #view-workforce .msd-downstream .msd-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  #view-workforce .msd-downstream .btn{
+    width:100%;
+  }
+  #view-workforce .msd-official-row{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .owner-sched-scope{
+    padding:14px;
+  }
+}
+
+@media (max-width:420px){
+  #view-workforce .msd-head .msd-actions{
+    grid-template-columns:1fr;
+  }
+  #view-workforce #msdStore{
+    grid-column:auto;
+  }
+  #view-workforce .msd-time-row{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .employee-schedule-engine *,
+  #view-workforce .msd *{
+    scroll-behavior:auto !important;
+    transition:none !important;
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+  }
+}

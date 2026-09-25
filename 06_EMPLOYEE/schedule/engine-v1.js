@@ -19,7 +19,7 @@ const css='<style id="employee-schedule-engine-v1-css">'+
 '.employee-schedule-engine .schedule-official{display:inline-flex;align-items:center;gap:6px;border:1px solid #b9d5f5;background:#edf6ff;color:#195ba8;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:800;white-space:nowrap}'+
 '.employee-schedule-engine .schedule-context{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:14px 0}'+
 '.employee-schedule-engine .schedule-context-card{border:1px solid var(--sch-line);background:#fbfdff;border-radius:13px;padding:12px 13px}.employee-schedule-engine .schedule-context-card strong{display:block;color:var(--sch-ink);font-size:13px}.employee-schedule-engine .schedule-context-card span{display:block;color:var(--sch-muted);font-size:12px;margin-top:4px;line-height:1.45}'+
-'.employee-schedule-engine .schedule-week-nav{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:12px 0}.employee-schedule-engine .schedule-week-nav button{border:1px solid var(--sch-line);border-radius:10px;background:#fff;padding:8px 11px;font:inherit;font-size:12px;font-weight:750;color:#31445e;cursor:pointer;min-height:38px}.employee-schedule-engine .schedule-week-nav button[aria-current="true"]{background:#eaf4ff;border-color:#a8cdf5;color:#155da8}.employee-schedule-engine .schedule-week-nav button:disabled{opacity:.58;cursor:not-allowed}'+
+'.employee-schedule-engine .schedule-week-nav{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:12px 0}.employee-schedule-engine .schedule-week-nav button{border:1px solid var(--sch-line);border-radius:10px;background:#fff;padding:8px 11px;font:inherit;font-size:12px;font-weight:750;color:#31445e;cursor:pointer;min-height:44px}.employee-schedule-engine .schedule-week-nav button[aria-current="true"]{background:#eaf4ff;border-color:#a8cdf5;color:#155da8}.employee-schedule-engine .schedule-week-nav button:disabled{opacity:.58;cursor:not-allowed}.employee-schedule-engine .schedule-week-nav button:focus-visible,.employee-schedule-engine .shift-actions button:focus-visible,.employee-schedule-engine .schedule-availability button:focus-visible{outline:2px solid #2f6fde;outline-offset:2px}'+
 '.employee-schedule-engine .schedule-statusline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0 12px}.employee-schedule-engine .schedule-statusline .pill{font-size:12px}.employee-schedule-engine .schedule-notice{display:none;margin:8px 0 12px;padding:10px 12px;border-radius:10px;border:1px solid #e4d39a;background:#fff9e8;color:#715611;font-size:12px;line-height:1.45}.employee-schedule-engine .schedule-notice.open{display:block}'+
 '.employee-schedule-engine .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:9px;align-items:start}.employee-schedule-engine .day{min-width:0;border:1px solid var(--sch-line);border-radius:13px;background:#fff;padding:10px;box-shadow:0 3px 10px rgba(31,55,82,.04)}.employee-schedule-engine .day.today{border-color:#95c5f3;box-shadow:0 0 0 2px rgba(56,140,220,.08)}'+
 '.employee-schedule-engine .day-head{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:9px}.employee-schedule-engine .dow{font-weight:850;color:var(--sch-ink);font-size:12px}.employee-schedule-engine .date{font-size:11px;color:var(--sch-muted);margin-top:2px}.employee-schedule-engine .today-tag{display:inline-flex;border-radius:999px;background:#e8f4ff;color:#1765b4;padding:3px 6px;font-size:9px;font-weight:900}'+
@@ -37,7 +37,11 @@ function errorCode(e){
   return 'SCHEDULE_READ_FAILED';
 }
 function friendlyError(e){return ERROR_COPY[errorCode(e)]||'Không thể tải lịch làm lúc này. Vui lòng thử lại.'}
-function ensureCss(d){if(d&&!d.getElementById('employee-schedule-engine-v1-css'))d.head.insertAdjacentHTML('beforeend',css)}
+function ensureCss(d){
+  if(!d)return;
+  d.documentElement.dataset.schedulingRole='employee';
+  if(!d.getElementById('employee-schedule-engine-v1-css'))d.head.insertAdjacentHTML('beforeend',css);
+}
 function ensureShell(d){
   const panel=d?.querySelector('#view-schedule .schedule-main-panel');if(!panel)return null;
   panel.classList.add('employee-schedule-engine');

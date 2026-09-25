@@ -127,6 +127,12 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/sched-06-three-role-synchronization-browser.mjs
 
+      - name: Run SCHED-07 professional UI responsive browser E2E
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/sched-07-ui-responsive-browser.mjs
+
       - name: Run Employee Swap browser regression
         env:
           QA_BASE_URL: http://127.0.0.1:8767
