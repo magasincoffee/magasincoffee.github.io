@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 const css=fs.readFileSync("02_CORE/ui/workforce-scheduling-polish-v1.css","utf8");
-const employee=fs.readFileSync("06_EMPLOYEE/schedule/engine-v1.js","utf8");
+const employee=fs.readFileSync("06_EMPLOYEE/schedule/engine-v1.js","utf8");\nconst employeeShell=fs.readFileSync("06_EMPLOYEE/app/employee-v40.html","utf8");
 const manager=fs.readFileSync("05_MANAGER/Workforce/draft-publish-v1.js","utf8");
 
 test("SCHED-07 shared polish is loaded by all canonical scheduling roles",()=>{
