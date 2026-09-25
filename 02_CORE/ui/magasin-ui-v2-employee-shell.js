@@ -67,6 +67,10 @@
     return 'dashboard';
   };
 
+  // Capture the requested deep link before any legacy DOMContentLoaded bootstrap
+  // can render its default dashboard view.
+  const initialRequestedRoute = canonicalFromHistory();
+
   const replaceHash = (target, view) => {
     try {
       const url = new URL(target.location.href);
@@ -78,6 +82,7 @@
   const pushCanonicalRoute = view => {
     const key = normalize(view);
     if (!CANONICAL.has(key) || applyingRoute) return;
+    if (!routeReady && initialRequestedRoute !== 'dashboard' && key === 'dashboard') return;
 
     const top = topWindow();
     try {
@@ -344,9 +349,9 @@
     if (drawerNav) observer.observe(drawerNav, { childList: true, subtree: true });
     if (pageWrap) observer.observe(pageWrap, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 
-    const initial = canonicalFromHistory();
+    const initial = initialRequestedRoute;
     setPrimaryActive(initial);
-    setTimeout(() => applyCanonicalRoute(canonicalFromHistory()), 0);
+    setTimeout(() => applyCanonicalRoute(initialRequestedRoute), 0);
 
     window.MAGASIN_EMPLOYEE_UI_V2_SHELL = Object.freeze({
       version: '2.0',
