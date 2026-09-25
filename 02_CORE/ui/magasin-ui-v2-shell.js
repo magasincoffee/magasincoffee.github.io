@@ -318,7 +318,18 @@
     shell.querySelectorAll('.m-shell-v2-nav__item[data-shell-key]').forEach(node => {
       node.addEventListener('click', event => {
         const key = node.dataset.shellKey;
-        if (config.role === 'MANAGER') {
+        if (config.role === 'OWNER') {
+      const accountSource =
+        document.querySelector('#ownerIdentity') ||
+        document.querySelector('#userName') ||
+        document.querySelector('#profileName');
+      if (accountSource) {
+        const accountObserver = new MutationObserver(syncAccount);
+        accountObserver.observe(accountSource, { childList: true, subtree: true, characterData: true });
+      }
+    }
+
+    if (config.role === 'MANAGER') {
           event.preventDefault();
           activateManagerView(node.dataset.shellView || key);
         } else {
