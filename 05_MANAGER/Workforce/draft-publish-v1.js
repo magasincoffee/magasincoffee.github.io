@@ -200,6 +200,7 @@ function boardHtml(){
 }
 function render(){
  const p=panel();if(!p)return;
+ ensurePolish();
  if(!document.getElementById('manager-schedule-draft-editor-css'))document.head.insertAdjacentHTML('beforeend',css);
  activate();
  const store=selectedStore(),stage=String(state.generationStatus||'NONE').toUpperCase(),busy='',copy=actorCopy();
