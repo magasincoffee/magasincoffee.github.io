@@ -307,7 +307,7 @@ SCHED-05 = DONE
 SCHED-06 = DONE
 SCHED-07 = DONE
 SCHED-08 = DONE
-SCHED-09 = READY / MANUAL_WORK
+SCHED-09 = IN_PROGRESS / CLOSURE_CANDIDATE / PENDING_EXACT_MAIN
 unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
 TASK-108 = PAUSED_BEHIND_SCHED_GATE
 Workforce Robot = DISABLED
@@ -523,9 +523,38 @@ Canonical evidence:
 - advisor counts remain the existing security/performance debt profile; the alias-only migration adds no table/RLS/index/new callable surface;
 - `work_schedules` remains the only official/current schedule truth and no parallel writer was introduced.
 
-SCHED-09 now owns the final sequential gate: Production reconciliation + canonical closure. It is **READY / MANUAL_WORK** only. TASK-108 remains paused, Workforce Robot remains DISABLED, and PFC remains unchanged.
+SCHED-09 owns the final sequential gate and now has a reviewable **CLOSURE_CANDIDATE / PENDING_EXACT_MAIN**. Fresh production reconciliation is CLEAN, but the gate remains ACTIVE until merge + exact-main post-merge evidence + canonical closure SHA are accepted. TASK-108 remains paused, Workforce Robot remains DISABLED, and PFC remains unchanged.
 
 The overall Scheduling Production Readiness gate remains **ACTIVE** until SCHED-09 canonical closure.
+
+
+## 13I. SCHED-09 closure candidate checkpoint
+
+SCHED-09 has a documentation/state-only closure candidate. It is **not final closure**.
+
+Canonical candidate evidence:
+- evidence: `05_SYSTEM/SCHED_09_PRODUCTION_RECONCILIATION_CANONICAL_CLOSURE.md`;
+- candidate baseline: `5d73dee7fa41e4aa67ec12161350e0e7b0e69475`;
+- fresh production read-only audit timestamp: `2026-09-25T07:54:23.968Z` UTC;
+- `PRODUCTION_RECONCILIATION=CLEAN`;
+- production counts: 4 ACTIVE stores; 7 Availability; 4 generations = 3 DRAFT + 1 CANCELLED; 0 assignments; 0 official schedules; 0 Give; 0 Swap; 0 Attendance;
+- duplicate active generation, duplicate logical schedule/assignment, orphan, invalid-reference and stale-owner checks = 0;
+- SCHED-08 temporary scheduling/profile residue = 0; no ACTIVE STORE_MANAGER residue;
+- required migrations SCHED-01 / SCHED-02 / SCHED-08 are present in production migration history;
+- deprecated scheduling mutation RPC EXECUTE remains denied to anon/authenticated;
+- protected scheduling table SELECT/INSERT/UPDATE/DELETE remains denied to anon/authenticated;
+- security advisor counts remain 11 / 1 / 13 / 66 + leaked-password setting 1;
+- performance advisor counts remain 35 / 16 / 13 / 12;
+- prior exact executable-main People Shift `36091508147 / 107934735123`, Pages validation `36091508122 / 107934735211`, and Pages build/deploy/report `36091507559 / 107934736273 / 107934768302 / 107934768275` are SUCCESS;
+- old/new/deprecation mapping remains documented and no active parallel mutation authority was observed.
+
+Candidate state:
+- SCHED-09 = **IN_PROGRESS / CLOSURE_CANDIDATE / PENDING_EXACT_MAIN**;
+- overall Scheduling Production Readiness gate = **ACTIVE**;
+- TASK-108 = **PAUSED_BEHIND_SCHED_GATE**;
+- Workforce Robot = **DISABLED**.
+
+Final closure still requires the candidate PR to merge, relevant exact-main post-merge gates to pass, and the canonical closure SHA to be recorded and accepted. This checkpoint must not be read as permission to start TASK-108.
 
 ## 14. Canonical precedence
 
