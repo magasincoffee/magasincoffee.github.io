@@ -61,7 +61,10 @@ test("shared shell exposes responsive drawer, PageHeader metadata, user area and
   assert.ok(shellJs.includes("data-shell-user-name"));
   assert.ok(shellJs.includes("data-shell-store-slot"));
   assert.ok(shellJs.includes("mountStoreSwitcher"));
-  assert.ok(shellJs.includes("data-shell-drawer-open"));
+  assert.ok(
+    shellJs.includes("shellDrawerOpen") &&
+    shellCss.includes('[data-shell-drawer-open="true"]')
+  );
 });
 
 test("Manager runtime uses shared shell and keeps canonical route-state/Workforce engine", () => {
