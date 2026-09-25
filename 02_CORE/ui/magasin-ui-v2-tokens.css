@@ -1,0 +1,110 @@
+/*
+ * MAGASIN UI/UX V2 — canonical design tokens
+ * UI2-002
+ *
+ * Opt-in only: importing this file does not alter legacy UI.
+ * Tokens become active only inside [data-magasin-ui-v2] or .m-ui-v2.
+ */
+
+:where([data-magasin-ui-v2], .m-ui-v2) {
+  color-scheme: light;
+
+  /* Brand */
+  --m-color-brand-600: #0F8F9C;
+  --m-color-brand-700: #08747F;
+
+  /* Neutrals */
+  --m-color-neutral-950: #101828;
+  --m-color-neutral-700: #344054;
+  --m-color-neutral-500: #667085;
+  --m-color-neutral-300: #D0D5DD;
+  --m-color-neutral-200: #EAECF0;
+  --m-color-neutral-100: #F2F4F7;
+  --m-color-neutral-50: #F9FAFB;
+  --m-color-surface: #FFFFFF;
+
+  /* Semantic */
+  --m-color-success: #217653;
+  --m-color-success-soft: #ECFDF3;
+  --m-color-warning: #8A5A00;
+  --m-color-warning-soft: #FFFAEB;
+  --m-color-danger: #A33D32;
+  --m-color-danger-soft: #FEF3F2;
+  --m-color-info: #2F6FDE;
+  --m-color-info-soft: #EFF6FF;
+
+  /* Typography */
+  --m-font-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --m-text-page-size: 28px;
+  --m-text-page-line: 32px;
+  --m-text-page-weight: 600;
+  --m-text-section-size: 18px;
+  --m-text-section-line: 26px;
+  --m-text-section-weight: 600;
+  --m-text-body-size: 14px;
+  --m-text-body-line: 20px;
+  --m-text-body-weight: 400;
+  --m-text-small-size: 12px;
+  --m-text-small-line: 18px;
+  --m-text-small-weight: 400;
+  --m-text-interactive-size: 14px;
+  --m-text-interactive-line: 20px;
+  --m-text-interactive-weight: 600;
+
+  /* Spacing */
+  --m-space-1: 4px;
+  --m-space-2: 8px;
+  --m-space-3: 12px;
+  --m-space-4: 16px;
+  --m-space-5: 20px;
+  --m-space-6: 24px;
+  --m-space-7: 32px;
+  --m-space-8: 40px;
+  --m-space-9: 48px;
+
+  /* Radius */
+  --m-radius-sm: 8px;
+  --m-radius-md: 10px;
+  --m-radius-lg: 12px;
+  --m-radius-xl: 16px;
+  --m-radius-2xl: 20px;
+  --m-radius-pill: 999px;
+
+  /* Borders */
+  --m-border-default: #EAECF0;
+  --m-border-strong: #D0D5DD;
+  --m-border-width: 1px;
+
+  /* Shadows */
+  --m-shadow-sm: 0 1px 2px rgba(16, 24, 40, .05);
+  --m-shadow-md: 0 8px 24px rgba(16, 24, 40, .08);
+  --m-shadow-lg: 0 18px 48px rgba(16, 24, 40, .12);
+
+  /* Focus */
+  --m-focus-color: #2F6FDE;
+  --m-focus-outline: 2px solid var(--m-focus-color);
+  --m-focus-offset: 2px;
+  --m-focus-ring: 0 0 0 3px rgba(47, 111, 222, .18);
+
+  /* Interactive sizing */
+  --m-control-min-height: 40px;
+  --m-control-touch-height: 44px;
+  --m-icon-button-size: 40px;
+
+  /* Safe areas */
+  --m-safe-top: env(safe-area-inset-top, 0px);
+  --m-safe-right: env(safe-area-inset-right, 0px);
+  --m-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --m-safe-left: env(safe-area-inset-left, 0px);
+
+  /* Motion */
+  --m-motion-fast: 120ms;
+  --m-motion-normal: 180ms;
+  --m-ease-standard: cubic-bezier(.2, .8, .2, 1);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2):where([data-m-phone-primary="true"], .m-phone-primary),
+:where([data-magasin-ui-v2], .m-ui-v2) :where([data-m-phone-primary="true"], .m-phone-primary) {
+  --m-control-min-height: var(--m-control-touch-height);
+  --m-icon-button-size: var(--m-control-touch-height);
+}
