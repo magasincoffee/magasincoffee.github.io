@@ -23,3 +23,20 @@ Ghi nhận các quyết định quản trị đã được Owner/MAGASIN chốt.
 | DEC-015 | 2026-09-19 | Owner yêu cầu bắt đầu lại và sau đó release chính thức `PFC_3H_V1` từ TASK-051. Lần thực thi mới dùng generation `PFC_3H_V1_RESTART_01`; evidence của lần chạy trước chỉ là lịch sử và không được tự đẩy cursor sang task sau. | Profitability & Cash / Automation / Handoff | Bảo đảm restart sạch, tránh Robot hiểu nhầm trạng thái cũ là progress hợp lệ | `READY / AUTO_CONTINUE`; TASK-051 chạy lại từ đầu; Google Drive tiếp tục là read-only evidence; Brain/Work auto-continue qua TASK-059 trừ true boundary | Owner | APPROVED |
 | DEC-016 | 2026-09-20 | Owner approves the PFC_8H_V2 execution plan: TASK-060→083 primary queue and TASK-084→089 overflow if time remains. Every task must apply QUESTION→DELETE→SIMPLIFY→ACCELERATE→AUTOMATE, with special emphasis on SIMPLIFY→ACCELERATE→AUTOMATE. Google Drive remains read-only evidence. Approval stages the queue only; Robot remains PAUSED until explicit Owner release. | Profitability & Cash / Autonomy / Five-Step | Prepare an 8-hour unattended execution scope with no normal Owner intervention | Queue staged in source-of-truth; no execution until explicit release | Owner | APPROVED / STAGED |
 | DEC-017 | 2026-09-20 | Owner explicitly releases `PFC_8H_V2` for autonomous execution. TASK-060→083 may AUTO_CONTINUE; TASK-084→089 may run only if time remains. Five-Step remains mandatory with emphasis on SIMPLIFY→ACCELERATE→AUTOMATE. Google Drive remains read-only evidence. | Profitability & Cash / Autonomy / Five-Step | Owner will be unavailable and wants continuous execution without routine intervention | Project state changes to READY / AUTO_CONTINUE; Robot may execute until true Owner/security boundary or queue completion | Owner | APPROVED / RELEASED |
+
+## 2026-09-25 — MAGASIN UI/UX V2 architecture locked
+
+**Decision:** APPROVED by Owner.
+
+Canonical source: `01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_SOURCE_OF_TRUTH.md`.
+
+Locked points:
+- Login, Employee, Manager and Owner become one coherent MAGASIN product/design system.
+- Employee real-world usage is **100% phone-primary**; Employee is mobile-first and phone acceptance at 360/390/430px is mandatory.
+- Manager is an operations/action-center workspace.
+- Owner is an enterprise oversight/attention workspace, not a larger Manager UI.
+- Visual direction: Quiet Professional, using Shadcn Admin / TailAdmin / Twenty as design references only.
+- Existing accepted business logic, RPC/server authority, RLS and canonical data truth remain intact.
+- No React/framework rewrite is implied by this decision.
+- Architecture is staged only; it does not bypass the currently active Brain task/gate.
+

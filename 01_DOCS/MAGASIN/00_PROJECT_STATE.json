@@ -2429,5 +2429,44 @@
     "qualified_canonical_closure_basis_sha": "3d736b47bbeec669e628eb3c6a832077931737a3",
     "exact_main_qualification_sha": "3d736b47bbeec669e628eb3c6a832077931737a3",
     "exact_main_qualification": "PASS"
+  },
+  "ui_ux_v2": {
+    "status": "OWNER_APPROVED_ARCHITECTURE_STAGED",
+    "architecture_id": "MAGASIN_OPERATIONS_UI_V2",
+    "source_of_truth": "01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_SOURCE_OF_TRUTH.md",
+    "owner_approved_date": "2026-09-25",
+    "employee_usage_model": "100_PERCENT_PHONE_PRIMARY",
+    "employee_strategy": "MOBILE_FIRST",
+    "employee_required_viewports_px": [
+      360,
+      390,
+      430
+    ],
+    "employee_min_primary_touch_target_css_px": 44,
+    "shared_design_system_required": true,
+    "login_single_entry_role_resolved": true,
+    "manager_model": "OPERATIONS_ACTION_CENTER",
+    "owner_model": "ENTERPRISE_OVERSIGHT_ATTENTION_CENTER",
+    "visual_direction": "QUIET_PROFESSIONAL",
+    "reference_influences": [
+      "SHADCN_ADMIN_VISUAL_LANGUAGE",
+      "TAILADMIN_LAYOUT_COMPONENT_DISCIPLINE",
+      "TWENTY_OWNER_INFORMATION_ARCHITECTURE"
+    ],
+    "framework_migration_required": false,
+    "default_frontend_strategy": "PRESERVE_CURRENT_HTML_JS_AND_ADD_SHARED_DESIGN_SYSTEM",
+    "preserve_business_logic": true,
+    "preserve_rpc_authority": true,
+    "preserve_rls": true,
+    "preserve_canonical_data_truth": true,
+    "implementation_phases": [
+      "UI-01",
+      "UI-02",
+      "UI-03",
+      "UI-04",
+      "UI-05"
+    ],
+    "execution_status": "STAGED_NOT_DISPATCHED",
+    "execution_dependency": "CURRENT_ACTIVE_BRAIN_TASK_MUST_BE_FORMALLY_CLOSED_BEFORE_UI_V2_IMPLEMENTATION_DISPATCH"
   }
 }
