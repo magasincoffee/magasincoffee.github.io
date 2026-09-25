@@ -12,12 +12,12 @@ const availability = read("06_EMPLOYEE/availability/engine-v1.js");
 
 test("UI2-006 Today engine parses and remains read/presentation only", () => {
   assert.doesNotThrow(() => new Function(engine));
-  assert.doesNotMatch(engine, /\.rpc\(|\.from\(|createClient\(|\.insert\(|\.update\(|\.delete\(/);
+  assert.doesNotMatch(engine, /C\.supabase|\.rpc\(|createClient\(|\.insert\(|\.update\(|\.delete\(/);
   for (const hook of [
-    "schedule?.getState",
-    "schedule?.getRows",
-    "schedule?.getWeek",
-    "schedule?.getTodayRows",
+    "api.getState?.()",
+    "api.getRows?.()",
+    "api.getWeek?.()",
+    "api.getTodayRows?.()",
     "schedule?.openAction",
     "availability?.getRegistrationState",
     "availability?.open"
@@ -76,7 +76,7 @@ test("week-at-a-glance uses canonical current-week schedule rows only", () => {
   assert.ok(engine.includes("const currentWeek=C.date.monday()"));
   assert.ok(engine.includes("const wrongWeek=String(week)!==String(currentWeek)"));
   assert.ok(engine.includes("snapshot.rows.filter"));
-  assert.doesNotMatch(engine, /fetch\(|XMLHttpRequest|localStorage|sessionStorage/);
+  assert.doesNotMatch(engine, /fetch\(|XMLHttpRequest|localStorage|sessionStorage|C\.supabase/);
 });
 
 test("Schedule and Availability canonical APIs still expose the reused contracts", () => {
