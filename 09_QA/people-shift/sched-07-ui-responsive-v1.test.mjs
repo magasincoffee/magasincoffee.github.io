@@ -3,11 +3,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 const css=fs.readFileSync("02_CORE/ui/workforce-scheduling-polish-v1.css","utf8");
-const employee=fs.readFileSync("06_EMPLOYEE/schedule/engine-v1.js","utf8");\nconst employeeShell=fs.readFileSync("06_EMPLOYEE/app/employee-v40.html","utf8");
+const employee=fs.readFileSync("06_EMPLOYEE/schedule/engine-v1.js","utf8");
+const employeeShell=fs.readFileSync("06_EMPLOYEE/app/employee-v40.html","utf8");
 const manager=fs.readFileSync("05_MANAGER/Workforce/draft-publish-v1.js","utf8");
 
 test("SCHED-07 shared polish is loaded by all canonical scheduling roles",()=>{
-  assert.match(employee,/workforce-scheduling-polish-v1\.css/);
+  assert.match(employeeShell,/workforce-scheduling-polish-v1\.css/);
   assert.match(manager,/workforce-scheduling-polish-v1\.css/);
   assert.match(employee,/dataset\.schedulingRole='employee'/);
   assert.match(manager,/dataset\.schedulingRole=actorRole\(\)\.toLowerCase\(\)/);
@@ -23,7 +24,7 @@ test("SCHED-07 enforces touch, focus and responsive mobile board contracts",()=>
 });
 
 test("SCHED-07 remains presentation-only",()=>{
-  const combined=css+"\n"+employee+"\n"+manager;
+  const combined=css+"\n"+employee+"\n"+employeeShell+"\n"+manager;
   assert.doesNotMatch(css,/supabase|rpc\(|from\(/i);
   assert.match(manager,/create_schedule_generation/);
   assert.match(manager,/publish_schedule_generation/);
