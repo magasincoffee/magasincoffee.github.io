@@ -297,8 +297,8 @@ On activation of this SoT:
 
 ```text
 priority_gate = WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1
-current_sched_task = SCHED-08
-next_sched_task = SCHED-09
+current_sched_task = SCHED-09
+next_sched_task = NONE_UNTIL_SCHED_09_CLOSES_GATE
 SCHED-01 = DONE
 SCHED-02 = DONE
 SCHED-03 = DONE
@@ -306,8 +306,8 @@ SCHED-04 = DONE
 SCHED-05 = DONE
 SCHED-06 = DONE
 SCHED-07 = DONE
-SCHED-08 = READY / MANUAL_WORK
-SCHED-09 = BLOCKED
+SCHED-08 = DONE
+SCHED-09 = READY / MANUAL_WORK
 unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
 TASK-108 = PAUSED_BEHIND_SCHED_GATE
 Workforce Robot = DISABLED
@@ -493,6 +493,37 @@ Canonical evidence:
 - no SCHED-07 migration, new writer, production fixture or production business-data mutation.
 
 SCHED-08 now owns the next sequential gate: Live three-role E2E acceptance. It is **READY / MANUAL_WORK** only. SCHED-09 remains BLOCKED, TASK-108 remains paused, Workforce Robot remains DISABLED, and PFC remains unchanged.
+
+The overall Scheduling Production Readiness gate remains **ACTIVE** until SCHED-09 canonical closure.
+
+## 13H. SCHED-08 closure checkpoint
+
+SCHED-08 closed after the mandatory live-safe three-role production RPC scenario passed end-to-end and the only live blocker discovered during acceptance was repaired by a versioned migration.
+
+Canonical evidence:
+- evidence: `05_SYSTEM/SCHED_08_LIVE_THREE_ROLE_E2E_ACCEPTANCE.md`;
+- starting baseline: `fca86c8e0630e08a834c147a9279802beef6b743`;
+- live blocker: PostgreSQL `42702` ambiguity inside `validate_schedule_generation_v1` daily assignment-count query;
+- repair migration: `20260925033927_sched_08_live_validator_alias_fix_v1`;
+- implementation PR #299;
+- final implementation PR head `287a5214c28f233e20f823f0b9fffc94247f4455`;
+- implementation merge / exact implementation main `2e03cb2226813073f1e1449e03347a9210922534`;
+- PR-head People Shift `36091391453 / 107934392499` — SUCCESS;
+- same-head push People Shift `36091373142 / 107934335314` — SUCCESS;
+- exact-main People Shift `36091508147 / 107934735123` — SUCCESS with 331/331 deterministic checks;
+- exact-main Pages validation `36091508122 / 107934735211` — SUCCESS;
+- exact-main Pages build/deploy/report `36091507559 / 107934736273 / 107934768302 / 107934768275` — SUCCESS;
+- final live production marker: `SCHED08_FINAL_ROLLBACK_PASS`;
+- production RPC acceptance proved Availability → Manager scoped read → DRAFT/Validate/Review/Publish → Employee A reload → Owner same schedule identity → Give A→B → Manager/Owner current-owner convergence → stale A Attendance denial → B Attendance allow/idempotent retry;
+- Manager cross-store and stale/cross-user Employee paths fail closed;
+- publish, recipient acceptance, Manager Give approval and Attendance retries are idempotent;
+- live transaction used existing Auth identities with historical sign-in evidence and intentionally rolled back all temporary state;
+- separate final audit proved temporary Availability/assignment/official schedule/Give/Attendance residue = 0 and restored temporary profile state;
+- production official schedule/Give/Attendance/generation-assignment totals returned to 0;
+- advisor counts remain the existing security/performance debt profile; the alias-only migration adds no table/RLS/index/new callable surface;
+- `work_schedules` remains the only official/current schedule truth and no parallel writer was introduced.
+
+SCHED-09 now owns the final sequential gate: Production reconciliation + canonical closure. It is **READY / MANUAL_WORK** only. TASK-108 remains paused, Workforce Robot remains DISABLED, and PFC remains unchanged.
 
 The overall Scheduling Production Readiness gate remains **ACTIVE** until SCHED-09 canonical closure.
 
