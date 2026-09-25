@@ -17,7 +17,7 @@
     "production_private_data_in_git": false,
     "red_actions_require_owner": true
   },
-  "last_updated": "2026-09-23",
+  "last_updated": "2026-09-25",
   "owner_boundary": {
     "task": "TASK-050",
     "resolved": [
@@ -642,10 +642,10 @@
     ],
     "attendance_mode": "EMPLOYEE_SELECTS_ACTUAL_START_END_NO_REALTIME_CHECKIN_CHECKOUT",
     "final_gate": "PR_HEAD_E2E_PLUS_EXACT_POST_MERGE_E2E_PLUS_COLD_RELOAD_RECHECK",
-    "note": "Staged Workforce Operations V1 manual track. Scheduling Production Readiness is canonically CLOSED; Brain accepted SCHED-09 final merge a4eee395a670c949db26de13551f45c75faef68b and explicitly dispatched TASK-108 Gate A. No autonomous continuation is authorized.",
+    "note": "Workforce Operations V1 manual track is canonically CLOSED at TASK-108 after Brain ACCEPTED Gate A/B/C. TASK-108 qualified executable SHA is 8fd8a446d6722871af0be4171b5e129d2f6eea40 with People Shift run 36123096106 / job 108032943733. No autonomous continuation is authorized; UI/UX V2 P0 handoff is READY/RELEASED and remains Brain-dispatch-only.",
     "execution_mode": "OWNER_DIRECT_TO_WORK",
-    "manual_work_may_execute": true,
-    "current_task": "TASK-108",
+    "manual_work_may_execute": false,
+    "current_task": null,
     "next_task": null,
     "task_090": {
       "status": "DONE",
@@ -1469,17 +1469,42 @@
       "conclusion": "E2E_14_CLOSED_FAILURE_RECOVERY_SECURITY_POST_MERGE_GREEN"
     },
     "task_108": {
-      "status": "IN_PROGRESS_GATE_A",
+      "status": "DONE",
+      "closure_state": "CLOSED",
       "execution_mode": "MANUAL_WORK",
       "robot_may_execute": false,
       "task_108_not_started": false,
-      "gate": "GATE_A_PR_HEAD",
+      "gate": "CLOSED_GATE_A_B_C_ACCEPTED",
       "baseline": "a4eee395a670c949db26de13551f45c75faef68b",
       "sched_09_final_merge_sha": "a4eee395a670c949db26de13551f45c75faef68b",
       "sched_09_brain_acceptance": "SATISFIED",
       "evidence": "01_DOCS/MAGASIN/05_SYSTEM/TASK_108_FINAL_REGRESSION_POST_MERGE_E2E_RECHECK.md",
-      "gate_b": "NOT_STARTED",
-      "gate_c": "NOT_STARTED"
+      "gate_a": "PASS_ACCEPTED",
+      "gate_b": "PASS_ACCEPTED",
+      "gate_c": "PASS_ACCEPTED",
+      "brain_acceptance": "ACCEPTED",
+      "qualified_executable_sha": "8fd8a446d6722871af0be4171b5e129d2f6eea40",
+      "qualified_executable_sha_note": "TASK-108 executable qualification SHA; later documentation/state-only main commits are not the executable qualification SHA.",
+      "docs_reconciliation_base_main_sha": "67028d2d3d529759661047d421ff538e8de61e84",
+      "docs_reconciliation_base_main_sha_note": "Docs/state reconciliation base only; not the TASK-108 executable qualification SHA.",
+      "people_shift_run_id": 36123096106,
+      "people_shift_job_id": 108032943733,
+      "people_shift_run_status": "COMPLETED",
+      "people_shift_run_conclusion": "SUCCESS",
+      "gate_c_step_number": 32,
+      "gate_c_step_name": "Run TASK-108 Gate A cold/reload executable recheck",
+      "gate_c_step_conclusion": "SUCCESS",
+      "gate_c_evidence": {
+        "fresh_browser_sessions": 10,
+        "direct_route_loads": 10,
+        "reload_suites": 9,
+        "core_e2e_01_13": "PASS",
+        "idempotency_no_stale_state": "PASS",
+        "diagnostics": "PASS",
+        "cold_reload": "PASS"
+      },
+      "closed_date": "2026-09-25",
+      "conclusion": "TASK_108_CLOSED_GATE_A_B_C_ACCEPTED"
     }
   },
   "supervisor_repository_migration": {
@@ -2423,7 +2448,7 @@
       "final_closure_pr_merge_sha": null,
       "final_closure_pr_merge_sha_note": "UNKNOWN_UNTIL_FINAL_CLOSE_PR_IS_MERGED; QUALIFIED_CLOSURE_BASIS_SHA_IS_NOT_THE_FUTURE_PR_MERGE_SHA"
     },
-    "task_108": "RELEASED_TO_WORKFORCE_OPERATIONS_TASK_108_GATE_A_IN_PROGRESS",
+    "task_108": "WORKFORCE_OPERATIONS_TASK_108_CLOSED_GATE_A_B_C_ACCEPTED",
     "robot_may_execute": false,
     "pfc": "UNCHANGED_TASK_068_TO_TASK_069",
     "qualified_canonical_closure_basis_sha": "3d736b47bbeec669e628eb3c6a832077931737a3",
@@ -2431,7 +2456,7 @@
     "exact_main_qualification": "PASS"
   },
   "ui_ux_v2": {
-    "status": "OWNER_APPROVED_ARCHITECTURE_STAGED",
+    "status": "OWNER_APPROVED_P0_READY_RELEASED",
     "architecture_id": "MAGASIN_OPERATIONS_UI_V2",
     "source_of_truth": "01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_SOURCE_OF_TRUTH.md",
     "owner_approved_date": "2026-09-25",
@@ -2466,8 +2491,8 @@
       "UI-04",
       "UI-05"
     ],
-    "execution_status": "P0_QUEUED_AFTER_ACTIVE_GATE_CLOSURE",
-    "execution_dependency": "CURRENT_ACTIVE_BRAIN_TASK_MUST_BE_FORMALLY_CLOSED_BEFORE_UI_V2_IMPLEMENTATION_DISPATCH",
+    "execution_status": "P0_READY_RELEASED",
+    "execution_dependency": "TASK_108_CLOSED; UI2-001_IS_NEXT_DEPENDENCY_CORRECT_UI_TASK; BRAIN_DISPATCH_REQUIRED",
     "priority": "P0_HIGHEST_UNTIL_CLOSED",
     "priority_locked_by_owner": true,
     "priority_locked_date": "2026-09-25",
@@ -2499,6 +2524,12 @@
       "UI2-017"
     ],
     "next_ui_task": "UI2-001",
-    "closure_task": "UI2-017"
+    "closure_task": "UI2-017",
+    "release_basis_task": "TASK-108",
+    "release_basis_status": "CLOSED_GATE_A_B_C_ACCEPTED",
+    "release_basis_executable_sha": "8fd8a446d6722871af0be4171b5e129d2f6eea40",
+    "released_date": "2026-09-25",
+    "brain_dispatch_required": true,
+    "auto_start": false
   }
 }
