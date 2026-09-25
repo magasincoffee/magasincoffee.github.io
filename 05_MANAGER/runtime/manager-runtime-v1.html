@@ -26,11 +26,17 @@
       if(!d)return;
       const load=(src)=>{const s=d.createElement('script');s.src=src;s.async=false;(d.body||d.documentElement).appendChild(s);return s};
       load('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
-      load('/05_MANAGER/runtime/compat/ui/manager-ui-source-header-suppress-v1.js?v=20260903-manager-structure1');
-      load('/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260903-manager-structure1');
-      load('/05_MANAGER/runtime/compat/ui/manager-ui-header-fix-v1.js?v=20260903-manager-structure1');
-      const css=d.createElement('link');css.rel='stylesheet';css.href='/05_MANAGER/runtime/compat/ui/manager-drawer-fix.css?v=20260903-manager-structure1';d.head.appendChild(css);
+      const addCss=(href)=>{const l=d.createElement('link');l.rel='stylesheet';l.href=href;d.head.appendChild(l);return l};
+      addCss('/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004');
+      addCss('/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004');
+      addCss('/02_CORE/ui/magasin-ui-v2-shell.css?v=20260925-ui2-004');
+      d.body.dataset.magasinUiV2='';
+      d.body.dataset.magasinShellV2='';
+      d.body.dataset.magasinShellRole='manager';
+      d.body.dataset.magasinShellMode='legacy-manager';
+      d.defaultView.__MAGASIN_UI_V2_SHELL__={role:'MANAGER',mode:'legacy-manager'};
       load('/05_MANAGER/runtime/compat/router/manager-route-state-v2.js?v=20260903-manager-structure1');
+      load('/02_CORE/ui/magasin-ui-v2-shell.js?v=20260925-ui2-004');
       const waitForSupabase=()=>{
         if(window.supabase?.createClient || d.defaultView?.supabase?.createClient){
           load('/02_CORE/ui/app-time-picker-24h.js?v=20260903-manager-structure1');
