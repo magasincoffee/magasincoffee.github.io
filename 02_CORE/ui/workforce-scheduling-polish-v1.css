@@ -57,6 +57,61 @@
   opacity:.58;
 }
 
+
+/* Role shells — same MAGASIN scheduling language without changing navigation authority. */
+html[data-scheduling-role="employee"] .app-header{
+  min-height:64px !important;
+  padding:0 18px !important;
+  border-bottom:1px solid var(--sched-line) !important;
+  box-shadow:0 4px 18px rgba(16,42,67,.045);
+}
+html[data-scheduling-role="employee"] .header-page-title{
+  background:#eef7ff !important;
+  color:#235dba !important;
+  border:1px solid #d9e8f5;
+  font-size:16px !important;
+}
+html[data-scheduling-role="employee"] .header-menu,
+html[data-scheduling-role="employee"] .header-icon{
+  min-width:44px;
+  min-height:44px;
+  border-radius:11px;
+}
+html[data-scheduling-role="employee"] .drawer .nav a{
+  min-height:44px;
+  display:flex;
+  align-items:center;
+}
+html[data-scheduling-role="manager"] .header,
+html[data-scheduling-role="owner"] .header{
+  min-height:68px;
+  height:auto;
+  border-bottom:1px solid var(--sched-line);
+  box-shadow:0 4px 18px rgba(16,42,67,.04);
+}
+html[data-scheduling-role="manager"] .sidebar,
+html[data-scheduling-role="owner"] .sidebar{
+  border-right:1px solid var(--sched-line);
+  box-shadow:4px 0 20px rgba(16,42,67,.035);
+}
+html[data-scheduling-role="manager"] .nav button,
+html[data-scheduling-role="owner"] .nav button{
+  min-height:44px;
+  border-radius:11px;
+}
+html[data-scheduling-role="manager"] .nav button.active,
+html[data-scheduling-role="owner"] .nav button.active{
+  background:#eaf5ff;
+  color:#235dba;
+  box-shadow:inset 3px 0 0 var(--sched-brand);
+}
+html[data-scheduling-role="manager"] .content,
+html[data-scheduling-role="owner"] .content{
+  max-width:1540px;
+  margin:0 auto;
+  width:100%;
+}
+
 /* Employee */
 .employee-schedule-engine{
   width:100%;
