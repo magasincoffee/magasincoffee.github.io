@@ -65,7 +65,7 @@ test("Việc cần làm maps only to canonical existing states/actions", () => {
     "retry-schedule",
     "availability"
   ]) assert.ok(engine.includes(action), action);
-  assert.ok(engine.includes("Task / SOP riêng chưa có nguồn canonical"));
+  assert.ok(app.includes("Task / SOP riêng chưa có nguồn canonical"));
   assert.doesNotMatch(engine, /route:inventory/);
   assert.doesNotMatch(engine, /route:settings/);
 });
