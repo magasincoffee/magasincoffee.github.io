@@ -222,9 +222,14 @@
     nav.querySelectorAll('[data-view]').forEach(link => {
       const view = normalize(link.dataset.view);
       link.classList.toggle('employee-v2-primary-source', primaryKeys.has(view));
-      if (view === 'swap') link.textContent = '⇄ Đổi / Cho ca';
-      if (view === 'inventory') link.textContent = '□ Tồn hàng';
-      if (view === 'settings') link.textContent = '⚙ Cài đặt';
+      const label = view === 'swap'
+        ? '⇄ Đổi / Cho ca'
+        : view === 'inventory'
+          ? '□ Tồn hàng'
+          : view === 'settings'
+            ? '⚙ Cài đặt'
+            : null;
+      if (label && link.textContent !== label) link.textContent = label;
     });
   };
 
