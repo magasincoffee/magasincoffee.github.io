@@ -267,10 +267,7 @@
       const link = event.target.closest?.('.nav [data-view]');
       if (!link) return;
       const view = normalize(link.dataset.view);
-      setTimeout(() => {
-        setPrimaryActive(view);
-        if (CANONICAL.has(view)) pushCanonicalRoute(view);
-      }, 0);
+      setTimeout(() => setPrimaryActive(view), 0);
     }, true);
   };
 
