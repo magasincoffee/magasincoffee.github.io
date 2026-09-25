@@ -1,6 +1,6 @@
 # MAGASIN UI/UX V2 — P0 EXECUTION PLAN
 
-**Status:** OWNER PRIORITY LOCKED / READY AFTER ACTIVE-GATE CLOSURE  
+**Status:** OWNER PRIORITY LOCKED / P0 READY / RELEASED  
 **Priority:** P0 — highest implementation priority until UI/UX V2 closure  
 **Architecture:** `MAGASIN_OPERATIONS_UI_V2`  
 **Canonical UI SoT:** `01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_SOURCE_OF_TRUTH.md`  
@@ -10,7 +10,11 @@
 
 Owner decision dated 2026-09-25:
 
-After the currently in-flight Brain/Work gate is formally ACCEPTED or otherwise safely closed, MAGASIN UI/UX V2 becomes the **P0 implementation track** and remains the default next-work priority until the full UI/UX V2 closure gate is ACCEPTED.
+TASK-108 Gate A/B/C is Brain-ACCEPTED and TASK-108 is canonically DONE/CLOSED. Therefore MAGASIN UI/UX V2 is now the **P0 implementation track**, READY/RELEASED for Brain dispatch, and remains the default next-work priority until the full UI/UX V2 closure gate is ACCEPTED.
+
+Release basis: TASK-108 qualified executable SHA `8fd8a446d6722871af0be4171b5e129d2f6eea40`, People Shift run `36123096106`, job `108032943733`, with Gate C cold/reload evidence accepted. The current documentation/state `main` lineage is not a replacement for that executable qualification SHA.
+
+Next dependency-correct UI work item: **UI2-001**. This plan does not auto-start UI2-001; Brain must dispatch it explicitly.
 
 While this P0 track is active:
 - do not start unrelated feature-expansion work ahead of UI V2;
