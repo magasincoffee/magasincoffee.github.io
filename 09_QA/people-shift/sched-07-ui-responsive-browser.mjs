@@ -42,6 +42,167 @@ await check("sched07_employee_mobile_touch_focus_and_no_overflow",async()=>{
   return JSON.stringify(metric);
 });
 
+await check("ui2_005_schedule_secondary_actions_remain_reachable",async()=>{
+  const state=await employee.locator("#view-schedule").evaluate(root=>({
+    availability:root.querySelectorAll("[data-schedule-availability]").length,
+    give:root.querySelectorAll('[data-schedule-action="give"]').length,
+    swap:root.querySelectorAll('[data-schedule-action="swap"]').length
+  }));
+  if(state.availability<1||state.give<1||state.swap<1)throw new Error(JSON.stringify(state));
+  return JSON.stringify(state);
+});
+
+const shellWidths=[360,390,430];
+for(const width of shellWidths){
+  const employeeShell=await context.newPage();
+  const shellAssets=[];
+  employeeShell.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
+  employeeShell.on("console",m=>{if(m.type()==="error")report.console_errors.push(m.text())});
+  employeeShell.on("requestfailed",r=>report.request_failures.push(`FAILED ${r.method()} ${r.url()} ${r.failure()?.errorText||""}`));
+  employeeShell.on("response",r=>{
+    if(r.url().includes("magasin-ui-v2-employee-shell"))shellAssets.push({url:r.url(),status:r.status()});
+    if(r.status()>=500)report.request_failures.push(`HTTP ${r.status()} ${r.url()}`);
+  });
+  await employeeShell.setViewportSize({width,height:844});
+  await employeeShell.goto(BASE+"/06_EMPLOYEE/app/employee-v40.html#schedule",{waitUntil:"networkidle"});
+  try{
+    await employeeShell.locator("#employeeV2PrimaryNav").waitFor({state:"attached",timeout:5000});
+  }catch(e){
+    const diag=await employeeShell.evaluate(()=>({
+      readyState:document.readyState,
+      bodyDataset:{...document.body.dataset},
+      scripts:[...document.scripts].map(x=>x.src||"INLINE"),
+      shellGlobal:!!window.MAGASIN_EMPLOYEE_UI_V2_SHELL,
+      showViewType:typeof window.showView,
+      navExists:!!document.getElementById("employeeV2PrimaryNav")
+    }));
+    throw new Error("UI2_005_SHELL_BOOT_DIAG "+JSON.stringify({width,diag,shellAssets,consoleErrors:report.console_errors.slice(-8),pageErrors:report.page_errors.slice(-8)}));
+  }
+  try{
+    await employeeShell.locator('[data-employee-primary-view="schedule"][aria-current="page"]').waitFor({timeout:5000});
+  }catch(e){
+    const state=await employeeShell.evaluate(()=>({
+      href:location.href,
+      hash:location.hash,
+      activeView:document.querySelector('.page-view.active[id^="view-"]')?.id||null,
+      shellCurrent:window.MAGASIN_EMPLOYEE_UI_V2_SHELL?.getCurrentView?.()||null,
+      nav:[...document.querySelectorAll("[data-employee-primary-view]")].map(x=>({
+        view:x.dataset.employeePrimaryView,
+        current:x.getAttribute("aria-current"),
+        active:x.dataset.active,
+        display:getComputedStyle(x).display,
+        visibility:getComputedStyle(x).visibility,
+        rect:{w:x.getBoundingClientRect().width,h:x.getBoundingClientRect().height}
+      }))
+    }));
+    throw new Error("UI2_005_ACTIVE_STATE_DIAG "+JSON.stringify({width,state}));
+  }
+
+  await check("ui2_005_employee_"+width+"_bottom_nav_bounds_touch_and_no_overflow",async()=>{
+    return employeeShell.evaluate(()=>{
+      const html=document.documentElement;
+      const nav=document.getElementById("employeeV2PrimaryNav");
+      const rect=nav.getBoundingClientRect();
+      const buttons=[...nav.querySelectorAll("[data-employee-primary-view]")].map(x=>{
+        const r=x.getBoundingClientRect();
+        return {view:x.dataset.employeePrimaryView,w:r.width,h:r.height,current:x.getAttribute("aria-current")};
+      });
+      const state={
+        viewport:innerWidth,
+        scrollWidth:html.scrollWidth,
+        clientWidth:html.clientWidth,
+        nav:{left:rect.left,right:rect.right,bottom:innerHeight-rect.bottom,width:rect.width,height:rect.height,position:getComputedStyle(nav).position,paddingBottom:getComputedStyle(nav).paddingBottom},
+        buttons
+      };
+      if(state.scrollWidth>state.clientWidth+1)throw new Error(JSON.stringify(state));
+      if(Math.abs(rect.left)>1||Math.abs(rect.right-innerWidth)>1||Math.abs(state.nav.bottom)>1)throw new Error(JSON.stringify(state));
+      if(buttons.length!==5||buttons.some(x=>x.w<43.5||x.h<43.5))throw new Error(JSON.stringify(state));
+      return JSON.stringify(state);
+    });
+  });
+
+  if(width===390){
+    await check("ui2_005_employee_hash_back_reload_and_secondary_drawer",async()=>{
+      await employeeShell.locator('[data-employee-primary-view="attendance"]').click();
+      if(!employeeShell.url().endsWith("#attendance"))throw new Error(employeeShell.url());
+      await employeeShell.locator("#view-attendance.active").waitFor();
+
+      await employeeShell.locator('[data-employee-primary-view="schedule"]').click();
+      if(!employeeShell.url().endsWith("#schedule"))throw new Error(employeeShell.url());
+      await employeeShell.goBack();
+      await employeeShell.locator("#view-attendance.active").waitFor();
+      if(!employeeShell.url().endsWith("#attendance"))throw new Error(employeeShell.url());
+
+      await employeeShell.reload({waitUntil:"networkidle"});
+      await employeeShell.locator("#employeeV2PrimaryNav").waitFor({state:"attached"});
+      await employeeShell.locator("#view-attendance.active").waitFor();
+      await employeeShell.goto(BASE+"/06_EMPLOYEE/app/employee-v40.html#swap",{waitUntil:"networkidle"});
+      await employeeShell.locator("#view-swap.active").waitFor();
+      const scheduleCurrent=await employeeShell.locator('[data-employee-primary-view="schedule"]').getAttribute("aria-current");
+      if(scheduleCurrent!=="page")throw new Error("swap parent="+scheduleCurrent);
+
+      const menu=employeeShell.locator(".header-menu");
+      await menu.click();
+      const drawer=employeeShell.locator("#drawer.open");
+      await drawer.waitFor({state:"visible"});
+      const secondary=await drawer.locator(".nav a:visible").evaluateAll(nodes=>nodes.map(x=>x.dataset.view));
+      if(JSON.stringify(secondary)!==JSON.stringify(["inventory","swap","settings"]))throw new Error(JSON.stringify(secondary));
+      const expanded=await menu.getAttribute("aria-expanded");
+      if(expanded!=="true")throw new Error("aria-expanded="+expanded);
+      await employeeShell.keyboard.press("Escape");
+      if(await menu.getAttribute("aria-expanded")!=="false")throw new Error("drawer did not close");
+
+      const notice=employeeShell.locator('.header-icon[aria-label="Thông báo"]');
+      const noticeSize=await notice.evaluate(el=>{const r=el.getBoundingClientRect();return {w:r.width,h:r.height}});
+      if(noticeSize.w<43.5||noticeSize.h<43.5)throw new Error(JSON.stringify(noticeSize));
+      await notice.click();
+      await employeeShell.locator("#view-notice.active").waitFor();
+
+      return JSON.stringify({secondary,noticeSize,url:employeeShell.url()});
+    });
+    await employeeShell.screenshot({path:path.join(OUT,"ui2-005-employee-phone-390.png"),fullPage:true});
+  }
+  await employeeShell.close();
+}
+
+const employeeTablet=await context.newPage();
+employeeTablet.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
+employeeTablet.on("console",m=>{if(m.type()==="error")report.console_errors.push(m.text())});
+employeeTablet.on("requestfailed",r=>report.request_failures.push(`FAILED ${r.method()} ${r.url()} ${r.failure()?.errorText||""}`));
+employeeTablet.on("response",r=>{if(r.status()>=500)report.request_failures.push(`HTTP ${r.status()} ${r.url()}`)});
+await employeeTablet.setViewportSize({width:900,height:900});
+await employeeTablet.goto(BASE+"/06_EMPLOYEE/app/employee-v40.html#dashboard",{waitUntil:"networkidle"});
+await employeeTablet.locator("#employeeV2PrimaryNav").waitFor({state:"attached"});
+await check("ui2_005_employee_tablet_mobile_architecture_expansion",async()=>{
+  return employeeTablet.evaluate(()=>{
+    const html=document.documentElement,nav=document.getElementById("employeeV2PrimaryNav"),rect=nav.getBoundingClientRect();
+    const state={viewport:innerWidth,scroll:html.scrollWidth,client:html.clientWidth,navWidth:rect.width,navBottom:innerHeight-rect.bottom,columns:getComputedStyle(nav).gridTemplateColumns.split(" ").filter(Boolean).length};
+    if(state.scroll>state.client+1||state.columns!==5||Math.abs(state.navBottom)>1)throw new Error(JSON.stringify(state));
+    return JSON.stringify(state);
+  });
+});
+await employeeTablet.close();
+
+const employeeDesktop=await context.newPage();
+employeeDesktop.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
+employeeDesktop.on("console",m=>{if(m.type()==="error")report.console_errors.push(m.text())});
+employeeDesktop.on("requestfailed",r=>report.request_failures.push(`FAILED ${r.method()} ${r.url()} ${r.failure()?.errorText||""}`));
+employeeDesktop.on("response",r=>{if(r.status()>=500)report.request_failures.push(`HTTP ${r.status()} ${r.url()}`)});
+await employeeDesktop.setViewportSize({width:1440,height:1000});
+await employeeDesktop.goto(BASE+"/06_EMPLOYEE/app/employee-v40.html#dashboard",{waitUntil:"networkidle"});
+await employeeDesktop.locator("#employeeV2PrimaryNav").waitFor({state:"attached"});
+await check("ui2_005_employee_desktop_rail_expansion",async()=>{
+  return employeeDesktop.evaluate(()=>{
+    const html=document.documentElement,nav=document.getElementById("employeeV2PrimaryNav"),main=document.querySelector(".main");
+    const nr=nav.getBoundingClientRect(),mr=main.getBoundingClientRect();
+    const state={viewport:innerWidth,scroll:html.scrollWidth,client:html.clientWidth,navWidth:nr.width,navLeft:nr.left,mainLeft:mr.left,position:getComputedStyle(nav).position};
+    if(state.scroll>state.client+1||state.navWidth<200||state.navWidth>216||state.mainLeft<200||state.position!=="fixed")throw new Error(JSON.stringify(state));
+    return JSON.stringify(state);
+  });
+});
+await employeeDesktop.screenshot({path:path.join(OUT,"ui2-005-employee-desktop-1440.png"),fullPage:true});
+await employeeDesktop.close();
+
 await page.goto(BASE+"/09_QA/people-shift/manager-workforce-canonical-fixture.html",{waitUntil:"networkidle"});
 await page.locator("#panel-publish .msd").waitFor();
 await check("sched07_manager_mobile_stacks_board_without_page_overflow",async()=>{
