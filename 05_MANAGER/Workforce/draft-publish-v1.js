@@ -25,6 +25,16 @@ const css=`<style id="manager-schedule-draft-editor-css">
 let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignments:[],availability:[],officialRows:[],generationStatus:'NONE',generationOrigin:null,duplicateDrafts:0,lastValidation:null,busy:false};
 const panel=()=>document.querySelector('#panel-publish');
 function client(){if(sb)return sb;if(!window.supabase?.createClient)throw new Error('SUPABASE_CLIENT_NOT_READY');sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});return sb}
+function ensurePolish(){
+ const d=document;
+ d.documentElement.dataset.schedulingRole=actorRole().toLowerCase();
+ if(d.getElementById('workforce-scheduling-polish-v1-css'))return;
+ const link=d.createElement('link');
+ link.id='workforce-scheduling-polish-v1-css';
+ link.rel='stylesheet';
+ link.href='/02_CORE/ui/workforce-scheduling-polish-v1.css?v=20260925-sched07';
+ d.head.appendChild(link);
+}
 function status(text,type=''){const e=panel()?.querySelector('#msdStatus');if(!e)return;e.className='msd-status'+(type?' '+type:'');e.textContent=text||''}
 function lockControls(on){
  const p=panel();if(!p)return;
