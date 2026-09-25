@@ -245,7 +245,7 @@ try {
       waitUntil: "domcontentloaded",
       timeout: 20000
     });
-    const link = page.locator('a[href="/04_OWNER/ControlTower/"]');
+    const link = page.locator('.grid a[href="/04_OWNER/ControlTower/"]');
     await link.waitFor({ state: "visible", timeout: 10000 });
     await Promise.all([
       page.waitForURL("**/04_OWNER/ControlTower/**", { timeout: 15000 }),
