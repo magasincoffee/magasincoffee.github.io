@@ -93,7 +93,9 @@ await shellPage.evaluate(()=>{
 });
 await shellPage.addStyleTag({url:BASE+"/02_CORE/ui/magasin-ui-v2-shell.css"});
 await shellPage.addScriptTag({url:BASE+"/02_CORE/ui/magasin-ui-v2-shell.js"});
-await shellPage.locator("#magasinUiV2Shell").waitFor();
+await shellPage.locator("#magasinUiV2Shell").waitFor({state:"attached"});
+await shellPage.locator(".m-shell-v2-sidebar").waitFor({state:"visible"});
+await shellPage.locator(".m-shell-v2-topbar").waitFor({state:"visible"});
 
 await check("ui2_004_manager_desktop_shell_nav_contract",async()=>{
   const state=await shellPage.evaluate(()=>{
