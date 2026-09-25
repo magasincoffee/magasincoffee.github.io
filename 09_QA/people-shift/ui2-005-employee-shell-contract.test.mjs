@@ -82,6 +82,12 @@ test("Payroll remains engine-injected and shell delegates to its existing source
   assert.ok(js.includes("activateSourceView"));
 });
 
+test("deep-link bootstrap preserves the initially requested canonical route", () => {
+  assert.ok(js.includes("const initialRequestedRoute = canonicalFromHistory()"));
+  assert.ok(js.includes("initialRequestedRoute !== 'dashboard' && key === 'dashboard'"));
+  assert.ok(js.includes("setTimeout(() => applyCanonicalRoute(initialRequestedRoute), 0)"));
+});
+
 test("Employee shell supports responsive bottom nav, desktop expansion and accessible drawer", () => {
   assert.match(css, /grid-template-columns:\s*repeat\(5,/);
   assert.match(css, /@media \(min-width: 1024px\)/);
