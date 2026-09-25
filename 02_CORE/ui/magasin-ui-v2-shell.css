@@ -421,7 +421,13 @@ body[data-magasin-shell-v2][data-magasin-shell-mode="standalone"] > header {
   }
 
   body[data-magasin-shell-v2] .m-shell-v2-menu,
-  body[data-magasin-shell-v2] .m-shell-v2-topbar .m-icon-button,
+  body[data-magasin-shell-v2] .m-shell-v2-topbar .m-icon-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
   body[data-magasin-shell-v2] .m-shell-v2-nav__item,
   body[data-magasin-shell-v2] .m-shell-v2-logout {
     min-height: 44px;
