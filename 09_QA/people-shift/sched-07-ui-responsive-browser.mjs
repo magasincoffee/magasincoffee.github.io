@@ -363,6 +363,190 @@ await check("ui2_006_today_desktop_expansion_smoke",async()=>{
 await todayDesktop.screenshot({path:path.join(OUT,"ui2-006-employee-today-desktop-1440.png"),fullPage:true});
 await todayDesktop.close();
 
+const scheduleV2Widths=[360,390,430];
+for(const width of scheduleV2Widths){
+  const schedulePage=await context.newPage();
+  schedulePage.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
+  schedulePage.on("console",m=>{if(m.type()==="error")report.console_errors.push(m.text())});
+  schedulePage.on("requestfailed",r=>report.request_failures.push(`FAILED ${r.method()} ${r.url()} ${r.failure()?.errorText||""}`));
+  schedulePage.on("response",r=>{if(r.status()>=500)report.request_failures.push(`HTTP ${r.status()} ${r.url()}`)});
+  await schedulePage.setViewportSize({width,height:844});
+  await schedulePage.goto(BASE+"/09_QA/people-shift/ui2-007-employee-schedule-fixture.html",{waitUntil:"networkidle"});
+  const scheduleV2=schedulePage.frameLocator("#employeeApp");
+  await scheduleV2.locator("#view-schedule.active").waitFor({state:"visible",timeout:10000});
+  await scheduleV2.locator('[data-employee-primary-view="schedule"][aria-current="page"]').waitFor({timeout:10000});
+  await scheduleV2.locator('[data-schedule-id="sch-fri-am"]').waitFor({timeout:10000});
+
+  await scheduleV2.locator('[data-schedule-week="today"]').focus();
+  await check("ui2_007_employee_schedule_"+width+"_responsive_touch_no_collision",async()=>{
+    return scheduleV2.locator("html").evaluate(html=>{
+      const doc=html.ownerDocument,win=doc.defaultView;
+      const root=doc.querySelector("#view-schedule");
+      const nav=doc.getElementById("employeeV2PrimaryNav");
+      const main=doc.querySelector(".main");
+      const weekToday=root.querySelector('[data-schedule-week="today"]');
+      const buttons=[...root.querySelectorAll("button")].filter(b=>{
+        const s=getComputedStyle(b),r=b.getBoundingClientRect();
+        return s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0;
+      }).map(b=>{const r=b.getBoundingClientRect();return {text:b.textContent.trim(),w:r.width,h:r.height}});
+      const current=root.querySelector('.day.today[data-schedule-date="2026-09-25"]');
+      const state={
+        viewport:win.innerWidth,
+        scrollWidth:html.scrollWidth,
+        clientWidth:html.clientWidth,
+        cssAsset:!!doc.querySelector('link[href*="magasin-ui-v2-employee-schedule.css"]'),
+        navHeight:nav.getBoundingClientRect().height,
+        navBottom:win.innerHeight-nav.getBoundingClientRect().bottom,
+        mainPaddingBottom:parseFloat(getComputedStyle(main).paddingBottom),
+        dayCount:root.querySelectorAll(".days > .day").length,
+        currentDay:current?.dataset.scheduleDate||null,
+        currentTag:current?.querySelector(".today-tag")?.textContent.trim()||null,
+        currentShiftCount:current?.querySelectorAll(".shift").length||0,
+        minButtonHeight:buttons.length?Math.min(...buttons.map(x=>x.h)):0,
+        focusOutline:getComputedStyle(weekToday).outlineStyle
+      };
+      win.scrollTo(0,html.scrollHeight);
+      const last=root.querySelector("[data-schedule-availability]");
+      const collision=last.getBoundingClientRect().bottom>nav.getBoundingClientRect().top+1;
+      if(
+        state.scrollWidth>state.clientWidth+1||
+        !state.cssAsset||
+        Math.abs(state.navBottom)>1||
+        state.mainPaddingBottom<state.navHeight||
+        state.dayCount!==7||
+        state.currentDay!=="2026-09-25"||
+        state.currentTag!=="HÔM NAY"||
+        state.currentShiftCount!==2||
+        state.minButtonHeight<43.5||
+        state.focusOutline==="none"||
+        collision
+      )throw new Error(JSON.stringify({...state,collision,buttons}));
+      return JSON.stringify({...state,collision});
+    });
+  });
+
+  if(width===390){
+    await check("ui2_007_schedule_week_navigation_and_states",async()=>{
+      const state={};
+      state.initial=await scheduleV2.locator(".schedule-statusline .pill").innerText();
+      state.initialRows=await scheduleV2.locator(".shift").count();
+      state.initialMultiple=await scheduleV2.locator('[data-schedule-date="2026-09-25"] .shift').count();
+      if(state.initialRows!==4||state.initialMultiple!==2)throw new Error(JSON.stringify(state));
+
+      await scheduleV2.locator('[data-schedule-week="next"]').click();
+      await schedulePage.waitForFunction(()=>window.MAGASIN_EMPLOYEE?.schedule?.getWeek?.()==="2026-09-28");
+      await scheduleV2.locator('[data-schedule-id="sch-next"]').waitFor();
+      state.nextWeek=await schedulePage.evaluate(()=>window.MAGASIN_EMPLOYEE.schedule.getWeek());
+      state.nextRows=await scheduleV2.locator(".shift").count();
+      if(state.nextWeek!=="2026-09-28"||state.nextRows!==1)throw new Error(JSON.stringify(state));
+
+      await scheduleV2.locator('[data-schedule-week="today"]').click();
+      await schedulePage.waitForFunction(()=>window.MAGASIN_EMPLOYEE?.schedule?.getWeek?.()==="2026-09-21");
+      await scheduleV2.locator('[data-schedule-id="sch-fri-am"]').waitFor();
+
+      await schedulePage.evaluate(()=>window.__UI2_007_QA.startLoading());
+      await scheduleV2.locator("[data-schedule-loading='1']").waitFor();
+      state.loading=await scheduleV2.locator(".schedule-statusline .pill").innerText();
+      await schedulePage.evaluate(()=>window.__UI2_007_QA.releaseLoading("populated"));
+      await scheduleV2.locator('[data-schedule-id="sch-fri-am"]').waitFor();
+
+      await schedulePage.evaluate(async()=>{await window.__UI2_007_QA.setMode("empty")});
+      await scheduleV2.locator("[data-schedule-empty='1']").waitFor();
+      state.empty=await scheduleV2.locator("[data-schedule-empty='1']").innerText();
+
+      await schedulePage.evaluate(async()=>{await window.__UI2_007_QA.setMode("error")});
+      await scheduleV2.locator("[data-schedule-error='1']").waitFor();
+      state.error=await scheduleV2.locator("[data-schedule-error='1']").innerText();
+
+      await schedulePage.evaluate(()=>window.__UI2_007_QA.setModeOnly("populated"));
+      await scheduleV2.locator("[data-schedule-retry]").click();
+      await scheduleV2.locator('[data-schedule-id="sch-fri-am"]').waitFor();
+      state.recovered=await scheduleV2.locator(".shift").count();
+
+      if(!state.loading.includes("Đang tải")||!state.empty.includes("chưa có ca")||!state.error.includes("Không tải được lịch làm")||state.recovered!==4){
+        throw new Error(JSON.stringify(state));
+      }
+      return JSON.stringify(state);
+    });
+
+    await check("ui2_007_schedule_actions_delegate_to_existing_handlers",async()=>{
+      await schedulePage.evaluate(async()=>{await window.__UI2_007_QA.setMode("populated")});
+      await scheduleV2.locator('[data-schedule-id="sch-fri-am"]').waitFor();
+      const card=scheduleV2.locator('[data-schedule-id="sch-fri-am"]');
+      const actions=await card.locator("[data-schedule-action]").evaluateAll(nodes=>nodes.map(n=>n.dataset.scheduleAction));
+      if(!actions.includes("attendance")||!actions.includes("give")||!actions.includes("swap"))throw new Error(JSON.stringify(actions));
+
+      await card.locator('[data-schedule-action="attendance"]').click();
+      await scheduleV2.locator("#view-attendance.active").waitFor();
+      const downstream=await schedulePage.evaluate(()=>window.__UI2_007_QA.downstream.slice());
+      if(!downstream.some(x=>x.type==="attendance"&&x.id==="sch-fri-am"&&x.week==="2026-09-21"))throw new Error(JSON.stringify(downstream));
+
+      await scheduleV2.locator('[data-employee-primary-view="schedule"]').click();
+      await scheduleV2.locator("#view-schedule.active").waitFor();
+      await scheduleV2.locator('[data-schedule-id="sch-fri-am"]').waitFor();
+      return JSON.stringify({actions,downstream});
+    });
+
+    await check("ui2_007_schedule_direct_reload_back_keeps_shell_route",async()=>{
+      const frameHandle=await schedulePage.locator("#employeeApp").elementHandle();
+      const frame=await frameHandle.contentFrame();
+      await scheduleV2.locator('[data-employee-primary-view="schedule"]').click();
+      await scheduleV2.locator("#view-schedule.active").waitFor();
+      const direct=frame.url();
+      if(!direct.endsWith("#schedule"))throw new Error(direct);
+
+      await scheduleV2.locator('[data-employee-primary-view="dashboard"]').click();
+      await scheduleV2.locator("#view-dashboard.active").waitFor();
+      if(!frame.url().endsWith("#dashboard"))throw new Error(frame.url());
+
+      await frame.evaluate(()=>history.back());
+      await scheduleV2.locator("#view-schedule.active").waitFor();
+      await scheduleV2.locator('[data-employee-primary-view="schedule"][aria-current="page"]').waitFor();
+      if(!frame.url().endsWith("#schedule"))throw new Error(frame.url());
+
+      await frame.evaluate(()=>location.reload());
+      await scheduleV2.locator("#view-schedule.active").waitFor();
+      await scheduleV2.locator('[data-employee-primary-view="schedule"][aria-current="page"]').waitFor();
+      await scheduleV2.locator('[data-schedule-id="sch-fri-am"]').waitFor();
+      if(!frame.url().endsWith("#schedule"))throw new Error(frame.url());
+
+      return direct+" -> dashboard -> back/reload schedule";
+    });
+  }
+
+  await schedulePage.screenshot({path:path.join(OUT,`ui2-007-employee-schedule-phone-${width}.png`),fullPage:true});
+  await schedulePage.close();
+}
+
+const scheduleV2Desktop=await context.newPage();
+scheduleV2Desktop.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
+scheduleV2Desktop.on("console",m=>{if(m.type()==="error")report.console_errors.push(m.text())});
+scheduleV2Desktop.on("requestfailed",r=>report.request_failures.push(`FAILED ${r.method()} ${r.url()} ${r.failure()?.errorText||""}`));
+scheduleV2Desktop.on("response",r=>{if(r.status()>=500)report.request_failures.push(`HTTP ${r.status()} ${r.url()}`)});
+await scheduleV2Desktop.setViewportSize({width:1440,height:1000});
+await scheduleV2Desktop.goto(BASE+"/09_QA/people-shift/ui2-007-employee-schedule-fixture.html",{waitUntil:"networkidle"});
+const scheduleV2DesktopFrame=scheduleV2Desktop.frameLocator("#employeeApp");
+await scheduleV2DesktopFrame.locator('[data-schedule-id="sch-fri-am"]').waitFor({timeout:10000});
+await check("ui2_007_schedule_desktop_week_smoke",async()=>{
+  return scheduleV2DesktopFrame.locator("html").evaluate(html=>{
+    const doc=html.ownerDocument;
+    const days=doc.querySelector("#view-schedule .days");
+    const nav=doc.getElementById("employeeV2PrimaryNav");
+    const main=doc.querySelector(".main");
+    const state={
+      scroll:html.scrollWidth,
+      client:html.clientWidth,
+      columns:getComputedStyle(days).gridTemplateColumns.split(" ").filter(Boolean).length,
+      navWidth:nav.getBoundingClientRect().width,
+      mainLeft:main.getBoundingClientRect().left
+    };
+    if(state.scroll>state.client+1||state.columns!==7||state.navWidth<200||state.navWidth>216||state.mainLeft<200)throw new Error(JSON.stringify(state));
+    return JSON.stringify(state);
+  });
+});
+await scheduleV2Desktop.screenshot({path:path.join(OUT,"ui2-007-employee-schedule-desktop-1440.png"),fullPage:true});
+await scheduleV2Desktop.close();
+
 await page.goto(BASE+"/09_QA/people-shift/manager-workforce-canonical-fixture.html",{waitUntil:"networkidle"});
 await page.locator("#panel-publish .msd").waitFor();
 await check("sched07_manager_mobile_stacks_board_without_page_overflow",async()=>{
