@@ -78,7 +78,7 @@ test("secondary functions remain reachable without becoming primary nav", () => 
 test("Payroll remains engine-injected and shell delegates to its existing source nav", () => {
   assert.ok(payroll.includes('a.dataset.view=\'payroll\''));
   assert.ok(payroll.includes("get_my_payroll_self_check_v1"));
-  assert.ok(js.includes("sourceLink(view)"));
+  assert.ok(js.includes("const sourceLink = view =>"));
   assert.ok(js.includes("activateSourceView"));
 });
 
