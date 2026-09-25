@@ -20,7 +20,7 @@ const suites=[
 ];
 
 function compactOutput(value){
-  return value.replace(/\\s+/g,"");
+  return value.replace(/\s+/g,"");
 }
 
 function executedCheckPassed(output,checkName){
