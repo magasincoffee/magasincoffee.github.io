@@ -289,9 +289,9 @@
     MANAGER_NAV.hidden.forEach(view => {
       const button = sourceButton(view);
       if (!button) return;
-      button.hidden = true;
-      button.setAttribute('aria-hidden', 'true');
-      button.tabIndex = -1;
+      if (!button.hidden) button.hidden = true;
+      if (button.getAttribute('aria-hidden') !== 'true') button.setAttribute('aria-hidden', 'true');
+      if (button.tabIndex !== -1) button.tabIndex = -1;
     });
   };
 
