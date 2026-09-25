@@ -181,8 +181,8 @@ Canonical SoT: `05_SYSTEM/WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1_SOURCE_OF
 | SCHED-05 | Owner Scheduling V1 | **DONE** |
 | SCHED-06 | Three-role synchronization | **DONE** |
 | SCHED-07 | Professional UI/UX + responsive pass | **DONE** |
-| SCHED-08 | Live three-role E2E acceptance | **READY / MANUAL_WORK** |
-| SCHED-09 | Production reconciliation + canonical closure | BLOCKED |
+| SCHED-08 | Live three-role E2E acceptance | **DONE** |
+| SCHED-09 | Production reconciliation + canonical closure | **READY / MANUAL_WORK** |
 
 SCHED-01 evidence: `05_SYSTEM/SCHED_01_PRODUCTION_BLOCKER_REPAIR_CANONICAL_RECONCILIATION.md`. Implementation PR #281 merged as `d0f0069ec4060dacf2de4ca6f695b969066b517f`; production migration `20260923160755_sched_01_production_blocker_repair_v1` is live; exact-main People Shift `35887441525 / 107271085777` and Pages gates are green; live duplicate active generation groups = 0.
 
@@ -198,7 +198,9 @@ SCHED-06 evidence: `05_SYSTEM/SCHED_06_THREE_ROLE_SYNCHRONIZATION_V1.md`. Primar
 
 SCHED-07 completion evidence: `05_SYSTEM/SCHED_07_PROFESSIONAL_UI_UX_RESPONSIVE_PASS.md`. Implementation PR #297 final head `6a83e44f8a5b87a07d1f2573f01b7dbfe9cd7021` merged as `7977a5b80dea853e0ee2997656aa6157035fb633`. PR-head People Shift `36089098140 / 107927389563` and SOP `36089098130 / 107927389606` are SUCCESS. Exact-main People Shift `36089225109 / 107927784809` and SOP `36089225147 / 107927784498` are SUCCESS with 329/329 deterministic checks; dedicated `SCHED_07_UI_RESPONSIVE=PASS`. Pages validation `36089225189 / 107927784732` and build/deploy/report `36089224309 / 107927784558 / 107927816143 / 107927816183` are SUCCESS. Employee/Manager/Owner scheduling now share the MAGASIN polish layer, enforce 44px mobile controls and visible keyboard focus, have no page-level horizontal overflow at the tested mobile widths, preserve the desktop seven-day board, and retain all canonical scheduling authority/RPC semantics. No migration, production business-data mutation or new scheduling writer was introduced.
 
-Current scheduling cursor: **SCHED-08 → SCHED-09**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
+SCHED-08 completion evidence: `05_SYSTEM/SCHED_08_LIVE_THREE_ROLE_E2E_ACCEPTANCE.md`. Live production acceptance exposed and repaired PostgreSQL 42702 in `validate_schedule_generation_v1`; production migration `20260925033927_sched_08_live_validator_alias_fix_v1` is live. Implementation PR #299 final head `287a5214c28f233e20f823f0b9fffc94247f4455` merged as `2e03cb2226813073f1e1449e03347a9210922534`. PR-head People Shift `36091391453 / 107934392499` and exact-main People Shift `36091508147 / 107934735123` are SUCCESS; exact-main deterministic regression is 331/331. Pages validation `36091508122 / 107934735211` and build/deploy/report `36091507559 / 107934736273 / 107934768302 / 107934768275` are SUCCESS. Final production transaction returned `SCHED08_FINAL_ROLLBACK_PASS` after proving Manager CN1 scope/cross-store deny, canonical publish/retry, Employee/Owner identity convergence, Give A→B exact-once current-owner transfer, stale-owner Attendance denial, recipient Attendance idempotency and cross-user fail-closed. Post-transaction audit found zero temporary scheduling residue and restored temporary profile state.
+
+Current scheduling cursor: **SCHED-09**. TASK-108 remains **PAUSED_BEHIND_SCHED_GATE**. Workforce Robot remains **DISABLED**. PFC remains unchanged.
 
 ## Workforce Operations V1 — MANUAL_WORK RELEASED / ROBOT DISABLED
 
