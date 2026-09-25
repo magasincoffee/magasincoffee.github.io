@@ -1,30 +1,33 @@
-# SCHED-09 — Production Reconciliation + Canonical Closure Candidate
+# SCHED-09 — Production Reconciliation + Canonical Closure
 
 **Track:** WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1  
 **Task:** SCHED-09  
-**Candidate status:** IN_PROGRESS / CLOSURE_CANDIDATE / PENDING_EXACT_MAIN  
+**Target status:** DONE / CANONICAL_CLOSED  
 **Execution mode:** MANUAL_WORK  
-**Repository baseline:** `5d73dee7fa41e4aa67ec12161350e0e7b0e69475`  
-**Production project:** MAGASIN-NOIBO / `menvbzlsncmpuvnaifxa`  
-**Fresh read-only production audit:** `2026-09-25T07:54:23.968Z` UTC  
-**Fresh advisor observation:** `2026-09-25T07:54:50Z` UTC  
+**Fresh production read-only audit:** `2026-09-25T07:54:23.968Z` UTC  
 **Production reconciliation:** **CLEAN**  
-**Final gate status:** **NOT CLOSED — merge + exact-main post-merge gates + canonical closure SHA still required**
+**Qualified canonical closure basis SHA:** `3d736b47bbeec669e628eb3c6a832077931737a3`  
+**Exact-main qualification SHA:** `3d736b47bbeec669e628eb3c6a832077931737a3`  
+**Exact-main qualification:** **PASS**  
+**Last fully-green executable scheduling main:** `2e03cb2226813073f1e1449e03347a9210922534`  
+**Future final-close PR merge SHA:** intentionally not claimed before merge
 
-## 1. Scope and candidate boundary
+## 1. Closure meaning and boundary
 
-This file records the SCHED-09 closure **candidate** only. It consolidates the accepted read-only audit/reconciliation evidence and reconciles canonical state surfaces before final exact-main closure.
+SCHED-09 closes the Scheduling Production Readiness V1 gate on the exact qualified basis SHA `3d736b47bbeec669e628eb3c6a832077931737a3`.
 
-This candidate does **not**:
-- merge itself;
-- mark `WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1` CLOSED;
-- release or start TASK-108;
+That SHA is the **qualified canonical closure basis / exact-main qualification SHA**. It is not a prediction of the future docs-only final-close PR merge SHA.
+
+This closure records that all SCHED-01→SCHED-09 acceptance criteria are satisfied. It does **not**:
+- start or dispatch TASK-108;
 - enable Workforce Robot;
-- modify runtime, SQL, migration, RPC, RLS, grants, or production data.
+- change PFC;
+- mutate production;
+- change runtime, workflow, tests, SQL, migration, RPC, RLS, or grants.
 
-TASK-108 remains `PAUSED_BEHIND_SCHED_GATE` until the candidate is merged, relevant exact-main post-merge gates pass, Brain accepts the evidence, and the canonical closure SHA is recorded.
+TASK-108 remains **NOT_STARTED** and **PAUSED_PENDING_BRAIN_ACCEPTANCE_OF_MERGED_SCHED_09_CLOSURE**. Workforce Robot remains **DISABLED**. No downstream task may start from this PR result alone.
 
-## 2. Fresh read-only production reconciliation
+## 2. Fresh production reconciliation — CLEAN
 
 Fresh production snapshot:
 
@@ -33,185 +36,210 @@ Fresh production snapshot:
 | stores total / ACTIVE | 4 / **4** |
 | profiles total / ACTIVE / PENDING | 7 / **4** / **3** |
 | ACTIVE OWNER | **1** |
-| ACTIVE STORE_MANAGER | **0** |
-| all STORE_MANAGER profiles | **0** |
+| all / ACTIVE STORE_MANAGER | **0 / 0** |
 | ACTIVE STAFF | **1** |
 | PENDING STAFF | **3** |
 | Availability | **7** |
 | schedule generations | **4** |
-| generation status DRAFT / CANCELLED / REVIEWED / PUBLISHED | **3 / 1 / 0 / 0** |
+| DRAFT / CANCELLED / REVIEWED / PUBLISHED | **3 / 1 / 0 / 0** |
 | generation assignments | **0** |
 | official `work_schedules` | **0** |
 | Give | **0** |
 | Swap | **0** |
 | Attendance | **0** |
 
-Comparison with the SCHED-08 final zero-residue baseline: **no unexplained drift**.
+No unexplained drift exists versus the SCHED-08 rollback baseline.
 
-## 3. Duplicate / orphan / invalid-reference checks
-
-Fresh read-only SQL returned zero for every required integrity check:
-
-- duplicate active generation `(store_id, week_start)` groups = **0**;
+Integrity reconciliation:
+- duplicate active generation store/week groups = **0**;
 - duplicate generation-assignment logical identity groups = **0**;
-- duplicate APPROVED official schedule logical groups = **0**;
-- duplicate official `source_generation_assignment_id` groups = **0**;
-- Availability missing Employee/profile = **0**;
-- Availability missing preferred store = **0**;
-- assignment missing generation/user/store = **0**;
-- assignment invalid Employee = **0**;
-- assignment/generation store mismatch = **0**;
-- schedule missing user/store/source generation/source assignment = **0**;
-- schedule invalid Employee = **0**;
-- schedule/source-generation store mismatch = **0**;
-- Give missing schedule/giver/recipient/store = **0**;
-- Swap missing requester schedule/target schedule/requester/target user/store = **0**;
-- Attendance missing schedule/user/store = **0**;
-- Attendance stale-owner mismatch = **0**.
+- duplicate approved official schedule logical groups = **0**;
+- duplicate schedule source-assignment groups = **0**;
+- orphan/invalid Availability, assignment, schedule, Give, Swap, Attendance references = **0**;
+- stale-owner Attendance mismatch = **0**;
+- SCHED-08 persistent QA/business-data residue = **0**;
+- ACTIVE STORE_MANAGER residue = **0**.
 
-## 4. SCHED-08 temporary residue
+## 3. Required production migrations
 
-Fresh production state remains consistent with the SCHED-08 rollback audit:
-
-- temporary official schedule residue = **0**;
-- temporary generation-assignment residue = **0**;
-- temporary Give residue = **0**;
-- temporary Swap residue = **0**;
-- temporary Attendance residue = **0**;
-- ACTIVE STORE_MANAGER residue = **0**;
-- STAFF population restored to 1 ACTIVE + 3 PENDING;
-- Owner population remains 1 ACTIVE.
-
-Persistent SCHED-08 QA/business-data residue: **ZERO**.
-
-## 5. Required production migrations
-
-All required scheduling migrations are present in production migration history:
-
+Present in production migration history:
 - `20260923160755_sched_01_production_blocker_repair_v1`;
 - `20260923163337_sched_02_three_role_scheduling_authority_lock_v1`;
 - `20260925033927_sched_08_live_validator_alias_fix_v1`.
 
-## 6. Authority and grant reconciliation
+## 4. Authority / grants / security continuity
 
-Fresh PostgreSQL catalog/privilege inspection confirms deprecated paths remain non-authoritative.
+Fresh catalog/privilege inspection proved:
+- inspected deprecated scheduling mutation RPCs remain EXECUTE-denied to `anon` and `authenticated`;
+- canonical scheduling RPCs remain anon-denied/authenticated-enabled;
+- direct SELECT/INSERT/UPDATE/DELETE on protected scheduling tables remains denied to both browser roles;
+- no active deprecated mutation authority or protected-table browser DML regression was observed.
 
-For both `anon` and `authenticated`, EXECUTE remains denied on the inspected deprecated paths:
-
-- `auto_generate_schedule_generation`;
-- `cancel_schedule_generation`;
-- `manager_update_employee_availability`;
-- `create_store_transfer_request`;
-- `review_store_transfer_request`;
-- `upsert_workforce_staffing_requirement`;
-- `delete_workforce_staffing_requirement`;
-- legacy `get_my_schedule`;
-- legacy `list_my_approved_schedules_v1`.
-
-Canonical scheduling RPC observations remain:
-- `anon EXECUTE = false`;
-- `authenticated EXECUTE = true`;
-
-for:
-- `create_schedule_generation`;
-- `replace_schedule_generation_assignments`;
-- `validate_schedule_generation_v1`;
-- `review_schedule_generation`;
-- `publish_schedule_generation`;
-- `list_my_approved_schedules_v2`;
-- `get_manager_weekly_schedule`;
-- `get_manager_weekly_availability`.
-
-Direct browser table privileges remain denied for both `anon` and `authenticated` across SELECT/INSERT/UPDATE/DELETE on:
-- `employee_availability`;
-- `schedule_generation_runs`;
-- `schedule_generation_assignments`;
-- `work_schedules`.
-
-No active deprecated mutation path or protected-table browser DML regression was observed.
-
-## 7. Advisor continuity
-
-Fresh security advisor counts:
+Security advisor continuity:
 - RLS enabled/no policy = **11**;
-- mutable function search path = **1**;
+- mutable search path = **1**;
 - anon-executable SECURITY DEFINER = **13**;
 - authenticated-executable SECURITY DEFINER = **66**;
-- leaked-password protection = **1**.
+- leaked-password protection finding = **1**.
 
-Fresh performance advisor counts:
+Performance advisor continuity:
 - unindexed foreign keys = **35**;
 - auth/RLS init-plan = **16**;
 - unused indexes = **13**;
 - multiple permissive policies = **12**.
 
-These counts match the SCHED-08 recorded baseline. No SCHED-09 security/performance advisor drift was observed.
+No SCHED-09 security-authority regression was observed.
 
-## 8. Prior CI / browser / security evidence carried into the candidate
+## 5. Prior full executable qualification
 
-The last executable scheduling implementation main before this docs/state-only candidate is SCHED-08 merge `2e03cb2226813073f1e1449e03347a9210922534`.
+The last fully-qualified executable scheduling main is:
 
-Exact-main evidence:
-- People Shift `36091508147 / 107934735123` — SUCCESS;
-- Pages validation `36091508122 / 107934735211` — SUCCESS;
-- Pages build/deploy/report `36091507559 / 107934736273 / 107934768302 / 107934768275` — SUCCESS;
-- deterministic regression = **331/331 / 0 fail**;
-- SCHED-01→SCHED-07 browser gates = PASS;
-- Give/Swap/Attendance/Profile/Payroll/Failure-Recovery/Manager/Day-10/Control-Tower regressions = PASS;
+`2e03cb2226813073f1e1449e03347a9210922534`
+
+People Shift:
+- run `36091508147`;
+- job `107934735123`;
+- head SHA = `2e03cb2226813073f1e1449e03347a9210922534`;
+- status = COMPLETED;
+- conclusion = **SUCCESS**;
+- deterministic regression = **331/331**.
+
+Relevant browser/security steps were all SUCCESS, including:
+- SCHED-01 authority/browser smoke;
+- SCHED-02 authority smoke;
+- SCHED-03 Employee Scheduling;
+- SCHED-04 Manager Scheduling;
+- SCHED-05 Owner Scheduling;
+- SCHED-06 synchronization;
+- SCHED-07 responsive/UI;
+- Give / Swap / Attendance lifecycle regressions;
+- TASK-107 failure/recovery/security;
+- Manager Workforce canonical browser;
+- People Shift Day-10 browser;
+- Control Tower browser.
+
+Observed PASS markers include:
+- `SCHED_04_MANAGER_SCHEDULING_BROWSER=PASS`;
+- `SCHED_05_OWNER_SCHEDULING_BROWSER=PASS`;
+- `SCHED_06_THREE_ROLE_SYNCHRONIZATION_BROWSER=PASS`;
+- `SCHED_07_UI_RESPONSIVE=PASS`;
 - `TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY=PASS`;
 - `MANAGER_WORKFORCE_CANONICAL_BROWSER=PASS`;
 - `PEOPLE_SHIFT_DAY10_BROWSER_E2E=PASS`;
-- browser diagnostics contain no unexplained production error.
+- `CONTROL_TOWER_BROWSER_E2E=PASS`.
 
-SCHED-08 live production marker `SCHED08_FINAL_ROLLBACK_PASS` proved scoped Manager publish, same schedule identity across Employee/Owner/Give transfer, current-owner Attendance authority, retry idempotency, and cross-store/cross-user fail-closed behavior.
+## 6. Exact-main executable-equivalence qualification
 
-## 9. Version / deprecation mapping
+Read-only qualification compared `2e03cb2226813073f1e1449e03347a9210922534` → `3d736b47bbeec669e628eb3c6a832077931737a3`.
 
-Canonical active scheduling truth and paths remain:
+Exact Git diff between those SHAs contains only six documentation/canonical-state files:
+- `01_DOCS/MAGASIN/00_CURRENT_STATE.md`;
+- `01_DOCS/MAGASIN/00_PROJECT_STATE.json`;
+- `01_DOCS/MAGASIN/00_TASK_QUEUE.md`;
+- `01_DOCS/MAGASIN/05_SYSTEM/SCHED_08_LIVE_THREE_ROLE_E2E_ACCEPTANCE.md`;
+- `01_DOCS/MAGASIN/05_SYSTEM/SCHED_09_PRODUCTION_RECONCILIATION_CANONICAL_CLOSURE.md`;
+- `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1_SOURCE_OF_TRUTH.md`.
 
+There are **zero runtime/workflow/test/database executable changes**.
+
+Recursive tree/blob qualification covered **207 relevant blobs** with **0 mismatches**, including:
+- `.github/workflows/people-shift-tests.yml`;
+- `04_OWNER/Workforce/**`;
+- `05_MANAGER/Workforce/**`;
+- `05_MANAGER/runtime/**`;
+- `05_MANAGER/Lich-lam/**`;
+- `06_EMPLOYEE/**`;
+- required `02_CORE/shared/**` and Workforce contracts;
+- required Business OS scheduling tests;
+- `09_QA/people-shift/**`;
+- `04_OWNER/ControlTower/**`;
+- `09_QA/owner-control-tower/**`;
+- `07_DATABASE/migrations/**`.
+
+People Shift workflow exact blob identity:
+
+```text
+base blob = b24b24923857f0fb3fcc9aa8dae20be67e92da07
+head blob = b24b24923857f0fb3fcc9aa8dae20be67e92da07
+BYTE/BLOB IDENTICAL = YES
+```
+
+Therefore prior People Shift executable/browser/security evidence carries forward to `3d736b47bbeec669e628eb3c6a832077931737a3` without crossing an executable/test/workflow/database change.
+
+**EXACT_MAIN_QUALIFICATION=PASS**
+
+## 7. Exact-main Pages gates
+
+On exact qualification SHA `3d736b47bbeec669e628eb3c6a832077931737a3`:
+
+Pages source validation:
+- run `36118165507`;
+- job `108017056130`;
+- head SHA = `3d736b47bbeec669e628eb3c6a832077931737a3`;
+- status = COMPLETED;
+- conclusion = **SUCCESS**.
+
+Pages build/deployment:
+- run `36118164405`;
+- head SHA = `3d736b47bbeec669e628eb3c6a832077931737a3`;
+- status = COMPLETED;
+- conclusion = **SUCCESS**;
+- build job `108017057281` = SUCCESS;
+- deploy job `108017103429` = SUCCESS;
+- report-build-status job `108017103572` = SUCCESS.
+
+## 8. Final old/new/deprecation conclusion
+
+Canonical production scheduling remains:
 - official/current assignment truth = `public.work_schedules`;
 - draft working state = `schedule_generation_runs` + `schedule_generation_assignments`;
 - Employee official reader = `list_my_approved_schedules_v2`;
 - Manager/Owner official reader = `get_manager_weekly_schedule`;
-- shared Manager/Owner writer = `05_MANAGER/Workforce/draft-publish-v1.js`;
-- canonical mutation lifecycle = create → replace → validate → review → publish;
-- Give/Swap retain ownership on existing canonical schedule identities;
+- shared Manager/Owner browser writer = `05_MANAGER/Workforce/draft-publish-v1.js`;
+- server lifecycle = create → replace → validate → review → publish;
+- Give/Swap retain canonical schedule identities;
 - Attendance authority follows current `work_schedules.user_id`.
 
-Deprecated/compatibility-only paths remain documented and non-authoritative:
-- legacy Employee V1 readers = DEPRECATE / DELETE-LATER;
-- legacy Owner publish asset = compatibility WRAP only;
-- Owner legacy demand/review engines = not loaded by active Owner Scheduling runtime;
-- auto-generation/staffing-demand mutation path = deprecated as active scheduling authority;
-- browser direct protected-table DML = FORBIDDEN.
+Legacy/deprecated paths remain compatibility/history only and non-authoritative:
+- legacy Employee schedule readers = deprecated;
+- legacy Owner publish asset = compatibility wrapper only;
+- inactive Owner demand/review engines = not active scheduling writers;
+- deprecated auto-generation/staffing mutation paths = no active scheduling authority;
+- browser direct protected-table DML = forbidden.
 
-Historical assets may remain for lineage, but current grants and active runtime loading do not provide parallel mutation authority.
+**Final version/deprecation conclusion:** one canonical scheduling truth, one active writer path, no duplicate active mutation authority, and historical assets retained only where required for compatibility/lineage.
 
-## 10. Candidate state and finalization requirement
+## 9. Canonical closure state
 
-Candidate state:
+Target canonical state of this final-close PR:
 
 ```text
-WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1 = HARD_GATE_ACTIVE
-SCHED-09 = IN_PROGRESS / CLOSURE_CANDIDATE / PENDING_EXACT_MAIN
+WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1 = CLOSED
+SCHED-01 = DONE
+SCHED-02 = DONE
+SCHED-03 = DONE
+SCHED-04 = DONE
+SCHED-05 = DONE
+SCHED-06 = DONE
+SCHED-07 = DONE
+SCHED-08 = DONE
+SCHED-09 = DONE / CANONICAL_CLOSED
+
+qualified_canonical_closure_basis_sha = 3d736b47bbeec669e628eb3c6a832077931737a3
+exact_main_qualification_sha = 3d736b47bbeec669e628eb3c6a832077931737a3
+EXACT_MAIN_QUALIFICATION = PASS
 PRODUCTION_RECONCILIATION = CLEAN
-TASK-108 = PAUSED_BEHIND_SCHED_GATE
+
+TASK-108 = PAUSED_PENDING_BRAIN_ACCEPTANCE_OF_MERGED_SCHED_09_CLOSURE
+TASK_108_STARTED = NO
 Workforce Robot = DISABLED
 PFC = UNCHANGED
 ```
 
-This candidate may proceed to final closure only after all of the following are independently evidenced:
+The gate closure does not itself dispatch the next task. TASK-108 may only be reconsidered after Brain verifies and ACCEPTS the merged final closure. The future final-close PR merge SHA is intentionally not predeclared here.
 
-1. this candidate PR is reviewed and merged;
-2. the resulting exact `main` SHA is recorded;
-3. relevant exact-main post-merge deterministic/browser/security/pages gates are green;
-4. no contradictory canonical state is introduced by merge;
-5. Brain accepts the final evidence;
-6. only then may the canonical gate be changed from HARD_GATE_ACTIVE to CLOSED and TASK-108 be reconsidered.
-
-Until those conditions are met:
-
-**SCHED_GATE_FINAL_CLOSED=NO**  
-**TASK_108_STARTED=NO**  
 **PRODUCTION_MUTATION=NONE**  
-**RUNTIME_CHANGE=NONE**
+**RUNTIME_CHANGE=NONE**  
+**WORKFLOW_DISPATCH=NONE**  
+**TASK_108_STARTED=NO**  
+**WORKFORCE_ROBOT_ENABLED=NO**
