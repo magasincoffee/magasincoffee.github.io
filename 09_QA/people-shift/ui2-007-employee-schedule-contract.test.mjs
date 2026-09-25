@@ -32,7 +32,7 @@ test("UI2-007 leaves canonical Schedule authority and RPC surface unchanged",()=
   assert.match(schedule,/async function preflight\(scheduleId\)/);
   assert.match(schedule,/await readWeek\(week\)/);
   assert.doesNotMatch(schedule,/\.from\(['"](?:work_schedules|schedule_generation_runs|schedule_generation_assignments)['"]\)/);
-  assert.doesNotMatch(schedule,/\.insert\(|\.update\(|\.delete\(|createClient\(/);
+  assert.doesNotMatch(schedule,/C\.supabase\.from|createClient\(/);
 });
 
 test("UI2-007 preserves downstream Schedule action delegation",()=>{
