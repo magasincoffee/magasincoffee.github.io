@@ -1,0 +1,663 @@
+/*
+ * MAGASIN UI/UX V2 — foundational presentation primitives
+ * UI2-002
+ *
+ * All selectors are opt-in and namespaced beneath [data-magasin-ui-v2] or .m-ui-v2.
+ * This file contains no domain behavior and does not style legacy consumers unless imported
+ * and wrapped in an explicit V2 scope.
+ */
+
+@import url("./magasin-ui-v2-tokens.css");
+
+:where([data-magasin-ui-v2], .m-ui-v2) {
+  font-family: var(--m-font-sans);
+  color: var(--m-color-neutral-950);
+  font-size: var(--m-text-body-size);
+  line-height: var(--m-text-body-line);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2),
+:where([data-magasin-ui-v2], .m-ui-v2) *,
+:where([data-magasin-ui-v2], .m-ui-v2) *::before,
+:where([data-magasin-ui-v2], .m-ui-v2) *::after {
+  box-sizing: border-box;
+}
+
+/* Typography */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-page-title {
+  margin: 0;
+  font-size: var(--m-text-page-size);
+  line-height: var(--m-text-page-line);
+  font-weight: var(--m-text-page-weight);
+  letter-spacing: -.02em;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-section-title {
+  margin: 0;
+  font-size: var(--m-text-section-size);
+  line-height: var(--m-text-section-line);
+  font-weight: var(--m-text-section-weight);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-text-small {
+  font-size: var(--m-text-small-size);
+  line-height: var(--m-text-small-line);
+}
+
+/* Button / IconButton */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-icon-button {
+  appearance: none;
+  border: var(--m-border-width) solid transparent;
+  font: inherit;
+  font-size: var(--m-text-interactive-size);
+  line-height: var(--m-text-interactive-line);
+  font-weight: var(--m-text-interactive-weight);
+  cursor: pointer;
+  transition:
+    background-color var(--m-motion-fast) var(--m-ease-standard),
+    border-color var(--m-motion-fast) var(--m-ease-standard),
+    color var(--m-motion-fast) var(--m-ease-standard),
+    box-shadow var(--m-motion-fast) var(--m-ease-standard),
+    opacity var(--m-motion-fast) var(--m-ease-standard);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button {
+  min-height: var(--m-control-min-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-2);
+  padding: 9px 14px;
+  border-radius: var(--m-radius-md);
+  background: var(--m-color-surface);
+  border-color: var(--m-border-default);
+  color: var(--m-color-neutral-700);
+  text-decoration: none;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button--primary {
+  background: var(--m-color-brand-600);
+  border-color: var(--m-color-brand-600);
+  color: #FFFFFF;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button--secondary {
+  background: var(--m-color-neutral-50);
+  border-color: var(--m-border-default);
+  color: var(--m-color-neutral-700);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--m-color-neutral-700);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button--danger {
+  background: var(--m-color-danger);
+  border-color: var(--m-color-danger);
+  color: #FFFFFF;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-icon-button {
+  width: var(--m-icon-button-size);
+  min-width: var(--m-icon-button-size);
+  height: var(--m-icon-button-size);
+  min-height: var(--m-icon-button-size);
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--m-radius-md);
+  background: var(--m-color-surface);
+  border-color: var(--m-border-default);
+  color: var(--m-color-neutral-700);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button:hover,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-icon-button:hover {
+  border-color: var(--m-border-strong);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button--primary:hover {
+  background: var(--m-color-brand-700);
+  border-color: var(--m-color-brand-700);
+}
+
+/* Hover is cosmetic only: active/current/disabled state never depends on :hover. */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button:focus-visible,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-icon-button:focus-visible,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-input:focus-visible,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-select:focus-visible,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-tab:focus-visible,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-list-item--interactive:focus-visible {
+  outline: var(--m-focus-outline);
+  outline-offset: var(--m-focus-offset);
+  box-shadow: var(--m-focus-ring);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button:disabled,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button[aria-disabled="true"],
+:where([data-magasin-ui-v2], .m-ui-v2) .m-icon-button:disabled,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-icon-button[aria-disabled="true"],
+:where([data-magasin-ui-v2], .m-ui-v2) .m-input:disabled,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-select:disabled {
+  opacity: .52;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-button[aria-busy="true"],
+:where([data-magasin-ui-v2], .m-ui-v2) .m-icon-button[aria-busy="true"] {
+  cursor: progress;
+}
+
+/* Field / Input / Select */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-field {
+  display: grid;
+  gap: var(--m-space-2);
+  min-width: 0;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-label {
+  font-size: var(--m-text-small-size);
+  line-height: var(--m-text-small-line);
+  font-weight: 600;
+  color: var(--m-color-neutral-700);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-input,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-select {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--m-control-min-height);
+  border: var(--m-border-width) solid var(--m-border-strong);
+  border-radius: var(--m-radius-md);
+  background: var(--m-color-surface);
+  color: var(--m-color-neutral-950);
+  padding: 9px 12px;
+  font: inherit;
+  outline: none;
+  transition:
+    border-color var(--m-motion-fast) var(--m-ease-standard),
+    box-shadow var(--m-motion-fast) var(--m-ease-standard);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-input::placeholder {
+  color: var(--m-color-neutral-500);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-field-help,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-field-error {
+  margin: 0;
+  font-size: var(--m-text-small-size);
+  line-height: var(--m-text-small-line);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-field-help {
+  color: var(--m-color-neutral-500);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-field-error {
+  color: var(--m-color-danger);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-field[data-invalid="true"] .m-input,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-field[data-invalid="true"] .m-select {
+  border-color: var(--m-color-danger);
+}
+
+/* Card / Panel */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-card,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-panel {
+  min-width: 0;
+  background: var(--m-color-surface);
+  border: var(--m-border-width) solid var(--m-border-default);
+  color: var(--m-color-neutral-950);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-card {
+  border-radius: var(--m-radius-xl);
+  padding: var(--m-space-5);
+  box-shadow: var(--m-shadow-sm);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-panel {
+  border-radius: var(--m-radius-lg);
+  padding: var(--m-space-4);
+}
+
+/* Table */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-table-shell {
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+  border: var(--m-border-width) solid var(--m-border-default);
+  border-radius: var(--m-radius-lg);
+  background: var(--m-color-surface);
+  -webkit-overflow-scrolling: touch;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--m-color-neutral-950);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-table th,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-table td {
+  padding: 12px 14px;
+  border-bottom: var(--m-border-width) solid var(--m-border-default);
+  text-align: left;
+  vertical-align: middle;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-table th {
+  background: var(--m-color-neutral-50);
+  color: var(--m-color-neutral-500);
+  font-size: var(--m-text-small-size);
+  line-height: var(--m-text-small-line);
+  font-weight: 600;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* List */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-list {
+  display: grid;
+  gap: var(--m-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-list-item {
+  min-width: 0;
+  padding: var(--m-space-3);
+  border: var(--m-border-width) solid var(--m-border-default);
+  border-radius: var(--m-radius-lg);
+  background: var(--m-color-surface);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-list-item--interactive {
+  cursor: pointer;
+}
+
+/* Tabs */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-tabs {
+  display: flex;
+  gap: var(--m-space-1);
+  overflow-x: auto;
+  border-bottom: var(--m-border-width) solid var(--m-border-default);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-tab {
+  min-height: var(--m-control-min-height);
+  flex: 0 0 auto;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 9px 12px;
+  color: var(--m-color-neutral-500);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-tab[aria-selected="true"],
+:where([data-magasin-ui-v2], .m-ui-v2) .m-tab[data-state="active"] {
+  color: var(--m-color-brand-700);
+  border-bottom-color: var(--m-color-brand-600);
+}
+
+/* Badge / StatusBadge */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-1);
+  min-height: 24px;
+  border-radius: var(--m-radius-pill);
+  padding: 3px 8px;
+  background: var(--m-color-neutral-100);
+  color: var(--m-color-neutral-700);
+  font-size: var(--m-text-small-size);
+  line-height: var(--m-text-small-line);
+  font-weight: 600;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-status-badge--success {
+  background: var(--m-color-success-soft);
+  color: var(--m-color-success);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-status-badge--warning {
+  background: var(--m-color-warning-soft);
+  color: var(--m-color-warning);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-status-badge--danger {
+  background: var(--m-color-danger-soft);
+  color: var(--m-color-danger);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-status-badge--info {
+  background: var(--m-color-info-soft);
+  color: var(--m-color-info);
+}
+
+/* Modal visual shell */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding:
+    calc(var(--m-space-4) + var(--m-safe-top))
+    calc(var(--m-space-4) + var(--m-safe-right))
+    calc(var(--m-space-4) + var(--m-safe-bottom))
+    calc(var(--m-space-4) + var(--m-safe-left));
+  background: rgba(16, 24, 40, .44);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-modal {
+  width: min(640px, 100%);
+  max-height: calc(100dvh - var(--m-safe-top) - var(--m-safe-bottom) - 32px);
+  overflow: auto;
+  border: var(--m-border-width) solid var(--m-border-default);
+  border-radius: var(--m-radius-2xl);
+  background: var(--m-color-surface);
+  box-shadow: var(--m-shadow-lg);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-modal__header,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-modal__body,
+:where([data-magasin-ui-v2], .m-ui-v2) .m-modal__footer {
+  padding: var(--m-space-4);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-modal__header {
+  border-bottom: var(--m-border-width) solid var(--m-border-default);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--m-space-2);
+  border-top: var(--m-border-width) solid var(--m-border-default);
+}
+
+/* Drawer visual shell */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-drawer {
+  position: fixed;
+  z-index: 1001;
+  top: 0;
+  bottom: 0;
+  width: min(360px, 88vw);
+  overflow: auto;
+  background: var(--m-color-surface);
+  box-shadow: var(--m-shadow-lg);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-drawer--left {
+  left: 0;
+  padding:
+    calc(var(--m-space-4) + var(--m-safe-top))
+    var(--m-space-4)
+    calc(var(--m-space-4) + var(--m-safe-bottom))
+    calc(var(--m-space-4) + var(--m-safe-left));
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-drawer--right {
+  right: 0;
+  padding:
+    calc(var(--m-space-4) + var(--m-safe-top))
+    calc(var(--m-space-4) + var(--m-safe-right))
+    calc(var(--m-space-4) + var(--m-safe-bottom))
+    var(--m-space-4);
+}
+
+/* Toast visual shell */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-toast-stack {
+  position: fixed;
+  z-index: 1100;
+  right: calc(var(--m-space-4) + var(--m-safe-right));
+  bottom: calc(var(--m-space-4) + var(--m-safe-bottom));
+  display: grid;
+  gap: var(--m-space-2);
+  width: min(380px, calc(100vw - 32px));
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-toast {
+  padding: 12px 14px;
+  border: var(--m-border-width) solid var(--m-border-default);
+  border-radius: var(--m-radius-lg);
+  background: var(--m-color-neutral-950);
+  color: #FFFFFF;
+  box-shadow: var(--m-shadow-md);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-toast[data-tone="success"] {
+  background: var(--m-color-success);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-toast[data-tone="warning"] {
+  background: var(--m-color-warning);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-toast[data-tone="danger"] {
+  background: var(--m-color-danger);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-toast[data-tone="info"] {
+  background: var(--m-color-info);
+}
+
+/* Empty / Error state */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-state {
+  padding: var(--m-space-7) var(--m-space-5);
+  border: var(--m-border-width) dashed var(--m-border-strong);
+  border-radius: var(--m-radius-xl);
+  background: var(--m-color-neutral-50);
+  color: var(--m-color-neutral-500);
+  text-align: center;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-empty-state {
+  border-color: var(--m-border-strong);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-error-state {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--m-color-danger) 30%, white);
+  background: var(--m-color-danger-soft);
+  color: var(--m-color-danger);
+}
+
+/* Skeleton / Spinner */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-skeleton {
+  display: block;
+  min-height: 14px;
+  border-radius: var(--m-radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--m-color-neutral-100) 25%,
+    var(--m-color-neutral-50) 50%,
+    var(--m-color-neutral-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: m-ui-v2-skeleton 1.4s linear infinite;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-spinner {
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+  border: 3px solid var(--m-color-neutral-200);
+  border-top-color: var(--m-color-brand-600);
+  border-radius: 50%;
+  animation: m-ui-v2-spin .8s linear infinite;
+}
+
+@keyframes m-ui-v2-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes m-ui-v2-skeleton {
+  to { background-position: -200% 0; }
+}
+
+/* PageHeader */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--m-space-4);
+  margin-bottom: var(--m-space-5);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-page-header__copy {
+  min-width: 0;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-page-header__subtitle {
+  margin: var(--m-space-1) 0 0;
+  color: var(--m-color-neutral-500);
+  font-size: var(--m-text-body-size);
+  line-height: var(--m-text-body-line);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-page-header__actions {
+  display: flex;
+  gap: var(--m-space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* EmployeeChip */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-employee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  max-width: 100%;
+  min-height: 32px;
+  border-radius: var(--m-radius-pill);
+  padding: 4px 10px 4px 5px;
+  background: var(--m-color-neutral-100);
+  color: var(--m-color-neutral-700);
+  font-size: var(--m-text-small-size);
+  line-height: var(--m-text-small-line);
+  font-weight: 600;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-employee-chip__avatar {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--m-color-brand-600);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-employee-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Safe-area utilities for later phone shells */
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-safe-area {
+  padding:
+    var(--m-safe-top)
+    var(--m-safe-right)
+    var(--m-safe-bottom)
+    var(--m-safe-left);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-safe-area-top {
+  padding-top: var(--m-safe-top);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2) .m-safe-area-bottom {
+  padding-bottom: var(--m-safe-bottom);
+}
+
+/* Phone-primary contract */
+
+:where([data-magasin-ui-v2], .m-ui-v2):where([data-m-phone-primary="true"], .m-phone-primary) .m-button,
+:where([data-magasin-ui-v2], .m-ui-v2):where([data-m-phone-primary="true"], .m-phone-primary) .m-input,
+:where([data-magasin-ui-v2], .m-ui-v2):where([data-m-phone-primary="true"], .m-phone-primary) .m-select,
+:where([data-magasin-ui-v2], .m-ui-v2):where([data-m-phone-primary="true"], .m-phone-primary) .m-tab,
+:where([data-magasin-ui-v2], .m-ui-v2) :where([data-m-phone-primary="true"], .m-phone-primary) .m-button,
+:where([data-magasin-ui-v2], .m-ui-v2) :where([data-m-phone-primary="true"], .m-phone-primary) .m-input,
+:where([data-magasin-ui-v2], .m-ui-v2) :where([data-m-phone-primary="true"], .m-phone-primary) .m-select,
+:where([data-magasin-ui-v2], .m-ui-v2) :where([data-m-phone-primary="true"], .m-phone-primary) .m-tab {
+  min-height: var(--m-control-touch-height);
+}
+
+:where([data-magasin-ui-v2], .m-ui-v2):where([data-m-phone-primary="true"], .m-phone-primary) .m-icon-button,
+:where([data-magasin-ui-v2], .m-ui-v2) :where([data-m-phone-primary="true"], .m-phone-primary) .m-icon-button {
+  width: var(--m-control-touch-height);
+  min-width: var(--m-control-touch-height);
+  height: var(--m-control-touch-height);
+  min-height: var(--m-control-touch-height);
+}
+
+@media (max-width: 600px) {
+  :where([data-magasin-ui-v2], .m-ui-v2) .m-page-header {
+    flex-direction: column;
+  }
+
+  :where([data-magasin-ui-v2], .m-ui-v2) .m-page-header__actions {
+    width: 100%;
+  }
+
+  :where([data-magasin-ui-v2], .m-ui-v2) .m-page-header__actions > .m-button {
+    flex: 1 1 auto;
+  }
+
+  :where([data-magasin-ui-v2], .m-ui-v2) .m-modal {
+    width: 100%;
+    max-height: calc(100dvh - var(--m-safe-top) - var(--m-safe-bottom) - 16px);
+    border-radius: var(--m-radius-xl);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where([data-magasin-ui-v2], .m-ui-v2) .m-button,
+  :where([data-magasin-ui-v2], .m-ui-v2) .m-icon-button,
+  :where([data-magasin-ui-v2], .m-ui-v2) .m-input,
+  :where([data-magasin-ui-v2], .m-ui-v2) .m-select {
+    transition: none;
+  }
+
+  :where([data-magasin-ui-v2], .m-ui-v2) .m-skeleton,
+  :where([data-magasin-ui-v2], .m-ui-v2) .m-spinner {
+    animation: none;
+  }
+}
