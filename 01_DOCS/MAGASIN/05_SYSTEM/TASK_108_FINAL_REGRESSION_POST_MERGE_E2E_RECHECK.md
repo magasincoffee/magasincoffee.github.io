@@ -2,11 +2,15 @@
 
 **Track:** WORKFORCE_OPERATIONS_V1  
 **Task:** TASK-108  
-**Gate:** A — PR head  
+**Gate:** A + B + C — CLOSED  
 **Branch baseline:** `a4eee395a670c949db26de13551f45c75faef68b`  
 **SCHED-09 final merge SHA:** `a4eee395a670c949db26de13551f45c75faef68b`  
 **SCHED-09 final closure:** Brain ACCEPTED  
-**Task state:** IN_PROGRESS / MANUAL_WORK  
+**Qualified executable SHA:** `8fd8a446d6722871af0be4171b5e129d2f6eea40`  
+**People Shift evidence:** run `36123096106` / job `108032943733` / COMPLETED-SUCCESS  
+**Brain qualification:** Gate A PASS/ACCEPTED · Gate B PASS/ACCEPTED · Gate C PASS/ACCEPTED  
+**Task state:** DONE / CLOSED  
+**Docs reconciliation base main SHA:** `67028d2d3d529759661047d421ff538e8de61e84` — documentation/state base only; not the TASK-108 executable qualification SHA  
 **Workforce Robot:** DISABLED  
 **Production mutation:** NONE  
 **Production runtime change:** NONE  
@@ -16,7 +20,7 @@
 
 Gate A requires the full existing Workforce regression/browser/security pack to remain green on one exact reviewable PR head, plus executable cold/reload evidence appropriate to the canonical E2E acceptance contract.
 
-This task does not merge the PR and does not execute Gate B or Gate C.
+Gate A established the reviewable regression/cold-reload acceptance proof. Gate B and Gate C were subsequently Brain-ACCEPTED on the exact post-merge executable SHA `8fd8a446d6722871af0be4171b5e129d2f6eea40`. This closure reconciliation does not rerun CI and does not alter executable behavior.
 
 ## 2. Reuse-first coverage audit
 
@@ -97,16 +101,51 @@ Gate A is PASS only when the exact final PR head reports:
 
 Any reproducible regression failure is fail-closed and must not be repaired by weakening assertions or changing production runtime inside this task.
 
-## 5. State
+## 5. Gate B/C accepted qualification evidence
+
+Final executable qualification is bound to:
+
+- executable SHA: `8fd8a446d6722871af0be4171b5e129d2f6eea40`;
+- People Shift run: `36123096106`;
+- browser-gate job: `108032943733`;
+- run/job conclusion: `COMPLETED / SUCCESS`;
+- dedicated cold/reload step: `#32 Run TASK-108 Gate A cold/reload executable recheck` → `SUCCESS`.
+
+Executed Gate-C evidence:
+
+- `TASK_108_GATE_A_FRESH_BROWSER_SESSIONS=10`;
+- `TASK_108_GATE_A_DIRECT_ROUTE_LOADS=10`;
+- `TASK_108_GATE_A_RELOAD_SUITES=9`;
+- `TASK_108_GATE_A_CORE_E2E_01_13=PASS`;
+- `TASK_108_GATE_A_IDEMPOTENCY_NO_STALE_STATE=PASS`;
+- `TASK_108_GATE_A_DIAGNOSTICS=PASS`;
+- `TASK_108_GATE_A_COLD_RELOAD=PASS`.
+
+The accepted closure interpretation is:
+
+- Gate A = `PASS / ACCEPTED`;
+- Gate B = `PASS / ACCEPTED`;
+- Gate C = `PASS / ACCEPTED`;
+- TASK-108 = `DONE / CLOSED`.
+
+The executable qualification SHA above is intentionally distinct from later documentation/state-only `main` commits. Those later documentation commits do not replace or relabel the accepted executable qualification SHA.
+
+## 6. Canonical handoff state
 
 ```text
 SCHED-09 final merge SHA = a4eee395a670c949db26de13551f45c75faef68b
 SCHED-09 Brain acceptance = SATISFIED
-TASK-108 = IN_PROGRESS / MANUAL_WORK / GATE_A
+TASK-108 qualified executable SHA = 8fd8a446d6722871af0be4171b5e129d2f6eea40
+People Shift run/job = 36123096106 / 108032943733 / COMPLETED-SUCCESS
+Gate A = PASS / ACCEPTED
+Gate B = PASS / ACCEPTED
+Gate C = PASS / ACCEPTED
+TASK-108 = DONE / CLOSED
 Workforce Robot = DISABLED
-PR merge = FORBIDDEN_IN_GATE_A
-Gate B = NOT_STARTED
-Gate C = NOT_STARTED
+Repository/runtime mutation during closure reconciliation = NONE
+UI/UX V2 P0 = READY / RELEASED
+Next dependency-correct UI task = UI2-001
+UI2-001 auto-start = FORBIDDEN; Brain dispatch required
 ```
 
-PR-head run/job IDs and terminal conclusions are returned in the Gate-A execution evidence after CI completes on the final PR head.
+TASK-108 closure releases the already Owner-locked UI/UX V2 P0 dependency. It does not itself start UI2-001.
