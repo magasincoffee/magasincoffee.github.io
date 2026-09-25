@@ -40,6 +40,7 @@
   let applyingRoute = false;
   let drawerReturnFocus = null;
   let observer = null;
+  let routeReady = false;
 
   const normalize = value => {
     const key = String(value || '').replace(/^#/, '').trim().toLowerCase();
@@ -168,6 +169,7 @@
     const ok = activateSourceView(key);
     applyingRoute = false;
     if (ok) {
+      routeReady = true;
       setPrimaryActive(key);
       replaceHash(parentWindow(), key);
       if (window !== parentWindow()) replaceHash(window, key);
@@ -335,7 +337,7 @@
 
     observer = new MutationObserver(() => {
       decorateSecondaryDrawer();
-      setPrimaryActive(currentView());
+      if (routeReady) setPrimaryActive(currentView());
     });
     const drawerNav = document.querySelector('.drawer .nav');
     const pageWrap = document.querySelector('.page-wrap');
@@ -344,7 +346,7 @@
 
     const initial = canonicalFromHistory();
     setPrimaryActive(initial);
-    applyCanonicalRoute(initial);
+    setTimeout(() => applyCanonicalRoute(canonicalFromHistory()), 0);
 
     window.MAGASIN_EMPLOYEE_UI_V2_SHELL = Object.freeze({
       version: '2.0',
