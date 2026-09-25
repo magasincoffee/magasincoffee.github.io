@@ -2,7 +2,7 @@
 
 **SoT ID:** WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1  
 **Owner decision date:** 2026-09-23  
-**Status:** OWNER APPROVED / HARD GATE ACTIVE  
+**Status:** OWNER APPROVED / CANONICAL CLOSED  
 **Priority:** P0  
 **Execution mode:** MANUAL_WORK  
 **Workforce Robot:** DISABLED  
@@ -10,18 +10,18 @@
 
 ## 1. Owner decision / hard gate
 
-Scheduling for the three roles — **Employee, Manager, Owner** — is the current production-readiness gate.
+Scheduling for the three roles — **Employee, Manager, Owner** — was the production-readiness hard gate and is now **CANONICALLY CLOSED** on qualified basis SHA `3d736b47bbeec669e628eb3c6a832077931737a3`.
 
-This gate **MUST be completed and canonically CLOSED before any unrelated new Workforce work may start or resume**.
+Closure does not autonomously release downstream work.
 
-- TASK-108 and later unrelated Workforce work are paused behind this gate.
+- TASK-108 remains **NOT_STARTED** and paused pending Brain acceptance of the merged SCHED-09 final closure.
 - Only one SCHED task may be active at a time.
 - SCHED-01 → SCHED-09 execute in order unless a proven production blocker requires a bounded hotfix inside the active SCHED task.
 - No AUTO_CONTINUE by Robot. Workforce Robot remains DISABLED.
 - PFC remains unchanged unless the Owner explicitly reprioritizes it.
 - The already-merged Auth Password Reset hotfix is treated as completed prerequisite context; no new unrelated auth/product work may preempt this scheduling gate.
 
-The scheduling gate is not DONE because CI is green. It closes only after live three-role acceptance, clean data reconciliation, professional UI/UX, and canonical closure evidence.
+The scheduling gate was not closed merely because CI was green. It is closed only after live three-role acceptance, clean production reconciliation, professional UI/UX, canonical version/deprecation evidence, and exact-main qualification; those conditions are now recorded as satisfied.
 
 ## 2. Product objective
 
@@ -287,9 +287,9 @@ Required evidence as applicable:
 - live-safe three-role acceptance scenario passes;
 - canonical closure SHA is recorded.
 
-Until then:
+All gate criteria are now recorded as satisfied on qualified canonical closure basis SHA `3d736b47bbeec669e628eb3c6a832077931737a3` with `EXACT_MAIN_QUALIFICATION=PASS`.
 
-**DO NOT MOVE TO UNRELATED WORK.**
+Closure itself does **not** dispatch TASK-108 or any unrelated work; Brain acceptance of the merged final closure remains required before downstream release.
 
 ## 13. Current cursor
 
@@ -297,8 +297,9 @@ On activation of this SoT:
 
 ```text
 priority_gate = WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1
-current_sched_task = SCHED-09
-next_sched_task = NONE_UNTIL_SCHED_09_CLOSES_GATE
+priority_gate_status = CLOSED
+current_sched_task = NONE
+next_sched_task = NONE_AUTOMATICALLY
 SCHED-01 = DONE
 SCHED-02 = DONE
 SCHED-03 = DONE
@@ -307,9 +308,12 @@ SCHED-05 = DONE
 SCHED-06 = DONE
 SCHED-07 = DONE
 SCHED-08 = DONE
-SCHED-09 = IN_PROGRESS / CLOSURE_CANDIDATE / PENDING_EXACT_MAIN
-unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
-TASK-108 = PAUSED_BEHIND_SCHED_GATE
+SCHED-09 = DONE / CANONICAL_CLOSED
+qualified_canonical_closure_basis_sha = 3d736b47bbeec669e628eb3c6a832077931737a3
+exact_main_qualification_sha = 3d736b47bbeec669e628eb3c6a832077931737a3
+EXACT_MAIN_QUALIFICATION = PASS
+unrelated_workforce_progression = NOT_AUTO_RELEASED
+TASK-108 = PAUSED_PENDING_BRAIN_ACCEPTANCE_OF_MERGED_SCHED_09_CLOSURE / NOT_STARTED
 Workforce Robot = DISABLED
 PFC = UNCHANGED
 ```
@@ -523,43 +527,50 @@ Canonical evidence:
 - advisor counts remain the existing security/performance debt profile; the alias-only migration adds no table/RLS/index/new callable surface;
 - `work_schedules` remains the only official/current schedule truth and no parallel writer was introduced.
 
-SCHED-09 owns the final sequential gate and now has a reviewable **CLOSURE_CANDIDATE / PENDING_EXACT_MAIN**. Fresh production reconciliation is CLEAN, but the gate remains ACTIVE until merge + exact-main post-merge evidence + canonical closure SHA are accepted. TASK-108 remains paused, Workforce Robot remains DISABLED, and PFC remains unchanged.
+SCHED-09 has satisfied the final Production reconciliation + canonical closure gate. Fresh production reconciliation is **CLEAN** and exact-main qualification on `3d736b47bbeec669e628eb3c6a832077931737a3` is **PASS**. The target canonical state is **SCHED-09 DONE / CANONICAL_CLOSED** and **WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1 CLOSED**. TASK-108 remains NOT_STARTED and paused pending Brain acceptance of the merged final closure; Workforce Robot remains DISABLED and PFC remains unchanged.
 
-The overall Scheduling Production Readiness gate remains **ACTIVE** until SCHED-09 canonical closure.
+The Scheduling Production Readiness gate is **CLOSED** in this final canonical-closure target state.
 
 
-## 13I. SCHED-09 closure candidate checkpoint
+## 13I. SCHED-09 final canonical closure checkpoint
 
-SCHED-09 has a documentation/state-only closure candidate. It is **not final closure**.
+SCHED-09 is **DONE / CANONICAL_CLOSED** in this final-close target state.
 
-Canonical candidate evidence:
+Canonical closure evidence:
 - evidence: `05_SYSTEM/SCHED_09_PRODUCTION_RECONCILIATION_CANONICAL_CLOSURE.md`;
-- candidate baseline: `5d73dee7fa41e4aa67ec12161350e0e7b0e69475`;
-- fresh production read-only audit timestamp: `2026-09-25T07:54:23.968Z` UTC;
+- fresh production read-only audit: `2026-09-25T07:54:23.968Z` UTC;
 - `PRODUCTION_RECONCILIATION=CLEAN`;
-- production counts: 4 ACTIVE stores; 7 Availability; 4 generations = 3 DRAFT + 1 CANCELLED; 0 assignments; 0 official schedules; 0 Give; 0 Swap; 0 Attendance;
-- duplicate active generation, duplicate logical schedule/assignment, orphan, invalid-reference and stale-owner checks = 0;
-- SCHED-08 temporary scheduling/profile residue = 0; no ACTIVE STORE_MANAGER residue;
-- required migrations SCHED-01 / SCHED-02 / SCHED-08 are present in production migration history;
-- deprecated scheduling mutation RPC EXECUTE remains denied to anon/authenticated;
-- protected scheduling table SELECT/INSERT/UPDATE/DELETE remains denied to anon/authenticated;
-- security advisor counts remain 11 / 1 / 13 / 66 + leaked-password setting 1;
-- performance advisor counts remain 35 / 16 / 13 / 12;
-- prior exact executable-main People Shift `36091508147 / 107934735123`, Pages validation `36091508122 / 107934735211`, and Pages build/deploy/report `36091507559 / 107934736273 / 107934768302 / 107934768275` are SUCCESS;
-- old/new/deprecation mapping remains documented and no active parallel mutation authority was observed.
+- qualified canonical closure basis SHA: `3d736b47bbeec669e628eb3c6a832077931737a3`;
+- exact-main qualification SHA: `3d736b47bbeec669e628eb3c6a832077931737a3`;
+- `EXACT_MAIN_QUALIFICATION=PASS`;
+- compare basis: last fully-green executable scheduling main `2e03cb2226813073f1e1449e03347a9210922534`;
+- relevant executable/workflow/test/database blob audit: **207 blobs / 0 mismatches**;
+- People Shift workflow blob is identical at both SHAs: `b24b24923857f0fb3fcc9aa8dae20be67e92da07`;
+- prior full People Shift `36091508147 / 107934735123` on `2e03cb2226813073f1e1449e03347a9210922534` = SUCCESS with all relevant deterministic/browser/security steps SUCCESS;
+- exact-main Pages validation `36118165507 / 108017056130` on `3d736b47bbeec669e628eb3c6a832077931737a3` = SUCCESS;
+- exact-main Pages build/deploy/report `36118164405 / 108017057281 / 108017103429 / 108017103572` on `3d736b47bbeec669e628eb3c6a832077931737a3` = SUCCESS;
+- production counts remain clean: 4 ACTIVE stores; 7 Availability; 4 generations = 3 DRAFT + 1 CANCELLED; 0 assignments; 0 official schedules; 0 Give; 0 Swap; 0 Attendance;
+- duplicate/orphan/invalid-reference and SCHED-08 persistent residue findings = 0;
+- required SCHED-01 / SCHED-02 / SCHED-08 migrations are present;
+- deprecated mutation authority remains denied; protected scheduling browser table privileges remain denied;
+- version/deprecation mapping remains one canonical schedule truth and one active mutation path.
 
-Candidate state:
-- SCHED-09 = **IN_PROGRESS / CLOSURE_CANDIDATE / PENDING_EXACT_MAIN**;
-- overall Scheduling Production Readiness gate = **ACTIVE**;
-- TASK-108 = **PAUSED_BEHIND_SCHED_GATE**;
-- Workforce Robot = **DISABLED**.
+The SHA `3d736b47bbeec669e628eb3c6a832077931737a3` is explicitly the **qualified closure basis / exact-main qualification SHA**, not the unknown future merge SHA of this documentation-only final-close PR.
 
-Final closure still requires the candidate PR to merge, relevant exact-main post-merge gates to pass, and the canonical closure SHA to be recorded and accepted. This checkpoint must not be read as permission to start TASK-108.
+Canonical target state:
+- SCHED-01→SCHED-09 = **DONE**;
+- SCHED-09 = **CANONICAL_CLOSED**;
+- overall Scheduling Production Readiness gate = **CLOSED**;
+- TASK-108 = **NOT_STARTED / PAUSED_PENDING_BRAIN_ACCEPTANCE_OF_MERGED_SCHED_09_CLOSURE**;
+- Workforce Robot = **DISABLED**;
+- PFC = **UNCHANGED**.
+
+This closure does not authorize autonomous downstream execution.
 
 ## 14. Canonical precedence
 
 For production scheduling readiness, this document is the active Owner release instruction.
 
-Where an older planning document says Workforce may proceed directly to TASK-108 or another unrelated task, this hard gate takes precedence until SCHED-09 closes.
+Where an older planning document implies automatic progression to TASK-108, this closed scheduling gate does not supply execution authority. TASK-108 remains paused/not-started until Brain accepts the merged SCHED-09 final closure and separately dispatches or releases the task.
 
 Existing canonical semantic contracts remain valid unless a SCHED task explicitly and safely reconciles a contradiction with evidence.
