@@ -55,13 +55,29 @@ await check("ui2_005_schedule_secondary_actions_remain_reachable",async()=>{
 const shellWidths=[360,390,430];
 for(const width of shellWidths){
   const employeeShell=await context.newPage();
+  const shellAssets=[];
   employeeShell.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
   employeeShell.on("console",m=>{if(m.type()==="error")report.console_errors.push(m.text())});
   employeeShell.on("requestfailed",r=>report.request_failures.push(`FAILED ${r.method()} ${r.url()} ${r.failure()?.errorText||""}`));
-  employeeShell.on("response",r=>{if(r.status()>=500)report.request_failures.push(`HTTP ${r.status()} ${r.url()}`)});
+  employeeShell.on("response",r=>{
+    if(r.url().includes("magasin-ui-v2-employee-shell"))shellAssets.push({url:r.url(),status:r.status()});
+    if(r.status()>=500)report.request_failures.push(`HTTP ${r.status()} ${r.url()}`);
+  });
   await employeeShell.setViewportSize({width,height:844});
   await employeeShell.goto(BASE+"/06_EMPLOYEE/app/employee-v40.html#schedule",{waitUntil:"networkidle"});
-  await employeeShell.locator("#employeeV2PrimaryNav").waitFor({state:"attached"});
+  try{
+    await employeeShell.locator("#employeeV2PrimaryNav").waitFor({state:"attached",timeout:5000});
+  }catch(e){
+    const diag=await employeeShell.evaluate(()=>({
+      readyState:document.readyState,
+      bodyDataset:{...document.body.dataset},
+      scripts:[...document.scripts].map(x=>x.src||"INLINE"),
+      shellGlobal:!!window.MAGASIN_EMPLOYEE_UI_V2_SHELL,
+      showViewType:typeof window.showView,
+      navExists:!!document.getElementById("employeeV2PrimaryNav")
+    }));
+    throw new Error("UI2_005_SHELL_BOOT_DIAG "+JSON.stringify({width,diag,shellAssets,consoleErrors:report.console_errors.slice(-8),pageErrors:report.page_errors.slice(-8)}));
+  }
   await employeeShell.locator('[data-employee-primary-view="schedule"][aria-current="page"]').waitFor();
 
   await check("ui2_005_employee_"+width+"_bottom_nav_bounds_touch_and_no_overflow",async()=>{
