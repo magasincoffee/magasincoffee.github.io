@@ -35,8 +35,8 @@ await check("sched03_availability_is_explicitly_not_official_schedule",async()=>
   if(!text.includes("Availability")||!text.includes("không phải lịch chính thức"))throw new Error(text);
   await employee.locator("[data-schedule-availability]").click();
   const q=await page.evaluate(()=>({views:globalThis.__SCHED03_QA.views,downstream:globalThis.__SCHED03_QA.downstream}));
-  if(q.views.at(-1)!=="dashboard"||q.downstream.at(-1)?.type!=="availability")throw new Error(JSON.stringify(q));
-  return "Availability remains input, clearly separated from published schedule";
+  if(q.views.at(-1)!=="schedule"||q.downstream.at(-1)?.type!=="availability")throw new Error(JSON.stringify(q));
+  return "Availability remains input, clearly separated and secondary under Schedule";
 });
 
 await check("sched03_actions_bind_hidden_schedule_identity_and_preflight_server_truth",async()=>{
