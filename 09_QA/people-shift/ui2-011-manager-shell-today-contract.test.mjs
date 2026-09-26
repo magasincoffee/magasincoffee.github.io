@@ -81,6 +81,8 @@ test("UI2-011 accessibility presentation contract is desktop/tablet/phone safe",
   assert.match(managerCss,/min-height: 42px/);
   assert.match(managerCss,/:focus-visible/);
   assert.match(managerCss,/@media \(max-width: 1024px\)/);
+  assert.match(managerCss,/@media \(min-width: 720px\) and \(max-width: 1024px\)/);
+  assert.match(managerCss,/transform: none !important/);
   assert.match(managerCss,/@media \(max-width: 600px\)/);
   assert.match(managerCss,/min-height: 44px/);
   assert.match(managerCss,/grid-template-columns: minmax\(0, 1\.35fr\) minmax\(280px, \.65fr\)/);
