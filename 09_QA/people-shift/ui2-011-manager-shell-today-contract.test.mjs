@@ -8,11 +8,19 @@ const shellV2=read("05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js");
 const today=read("05_MANAGER/Workforce/ui-consolidation-v1.js");
 const swap=read("05_MANAGER/Workforce/swap-approval-v1.js");
 const attendance=read("05_MANAGER/Workforce/attendance-review-v1.js");
+const availability=read("05_MANAGER/Workforce/review-v1.js");
+const engine=read("05_MANAGER/Workforce/engine-v1.js");
+const managerRuntime=read("05_MANAGER/runtime/manager-runtime-v1.html");
+const managerIndex=read("05_MANAGER/index.html");
+const workforceIndex=read("05_MANAGER/Workforce/index.html");
+const ownerRuntime=read("04_OWNER/Workforce/runtime/owner-workforce-runtime.html");
+const ownerIndex=read("04_OWNER/Workforce/index.html");
+const routeBridge=read("05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js");
 const gate=read("09_QA/people-shift/browser-e2e.mjs");
 const rpc=s=>[...s.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 
 test("UI2-011 Manager shell exposes only canonical operations destinations",()=>{
-  assert.ok(shellHtml.includes('/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260926-ui2-011'));
+  assert.ok(shellHtml.includes('/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260927-ui2-011-correction1'));
   for(const route of ["dashboard","staff","workforce","schedule","swap","attendance","payroll-self-check"])assert.ok(today.includes("'"+route+"'")||today.includes('"'+route+'"'),route);
   for(const hidden of ["tasks","kpi","academy","settings"])assert.ok(today.includes("'"+hidden+"'"),hidden);
   assert.match(shellV2,/manager-v2-sidebar-source/);
@@ -58,12 +66,46 @@ test("UI2-011 adds no new direct protected-table/createClient path in the new Ma
   assert.equal((shellHtml.match(/\.from\('profiles'\)/g)||[]).length,1);
 });
 
-test("UI2-011 route/back/reload integration stays on existing Manager routes",()=>{
-  assert.match(today,/history\.pushState/);
+test("UI2-011 route/back/reload keeps canonical route bridge as the only history writer",()=>{
+  assert.doesNotMatch(today,/history\.pushState/);
   assert.match(today,/addEventListener\('popstate'/);
   assert.match(today,/addEventListener\('hashchange'/);
   assert.match(today,/location\.hash/);
   assert.match(today,/activate\(v\)/);
+  assert.match(routeBridge,/history\.pushState/);
+  assert.match(routeBridge,/addEventListener\('popstate'/);
+});
+
+test("UI2-011 correction blockers stay regression-locked",()=>{
+  assert.match(shellV2,/new URLSearchParams\(window\.location\.search\)\.get\('host'\)/);
+  assert.match(shellV2,/MAGASIN_MANAGER_UI_V2_011_OWNER_SKIPPED/);
+  assert.match(ownerRuntime,/host=owner/);
+  assert.match(managerRuntime,/host=manager/);
+  assert.match(shellV2,/dataset\.managerV2Logout='1'/);
+  assert.match(shellV2,/source\.querySelector\('#logoutBtn'\)\?\.click\(\)/);
+  assert.match(today,/\['NORMAL','NEEDS_REVIEW'\]/);
+  assert.doesNotMatch(today,/\['SUBMITTED','NEEDS_REVIEW'\]/);
+  assert.match(availability,/loading,error/);
+  assert.match(availability,/if\(q\.error\).*error=/s);
+  assert.match(today,/if\(refreshPromise\)return refreshPromise/);
+  assert.match(today,/refreshActive=true;renderToday\(\)/);
+  assert.match(today,/refreshButton\.disabled=refreshActive/);
+});
+
+test("UI2-011 cache chain bumps every modified Manager shell/runtime/engine child",()=>{
+  const v="20260927-ui2-011-correction1";
+  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+v));
+  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+v));
+  assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+v));
+  assert.ok(managerRuntime.includes("manager-shell-v1.html?v="+v+"&host=manager"));
+  assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+v+"&host=owner"));
+  assert.ok(managerRuntime.includes("engine-v1.js?v="+v));
+  assert.ok(shellHtml.includes("manager-ui-shell-v2.js?v="+v));
+  for(const child of ["review-v1.js","swap-approval-v1.js","attendance-review-v1.js","ui-consolidation-v1.js"])assert.ok(engine.includes(child+"?v="+v),child);
+});
+
+test("UI2-011 Availability reader preserves canonical RPC inventory while exposing read state",()=>{
+  assert.deepEqual(rpc(availability),["get_manager_weekly_availability","get_manager_accessible_stores"]);
 });
 
 test("UI2-011 browser gate is integrated into existing People Shift Day-10 browser gate",()=>{
