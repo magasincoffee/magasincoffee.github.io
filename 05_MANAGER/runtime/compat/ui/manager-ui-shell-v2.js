@@ -13,6 +13,7 @@ body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source .nav{display:
 body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source .nav button{min-height:42px!important;width:100%!important;padding:10px 12px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#dce7f5!important;text-align:left!important;font-weight:750!important;cursor:pointer!important}
 body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source .nav button:hover{background:#172d4b!important}
 body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source .nav button.active,body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source .nav button:focus-visible{background:#1b3558!important;color:#67e3e6!important}
+body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source #logoutBtn{min-height:42px!important;width:100%!important;margin-top:8px!important;border:1px solid #304967!important;border-radius:10px!important;background:#172d4b!important;color:#dce7f5!important;font-weight:750!important;cursor:pointer!important}
 body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source .nav button:focus-visible,
 body[data-magasin-shell-role="manager"] .manager-v2-header button:focus-visible,
 body[data-magasin-shell-role="manager"] .manager-v2-drawer button:focus-visible{outline:2px solid #7edfe5!important;outline-offset:2px!important}
@@ -43,6 +44,7 @@ body[data-magasin-shell-role="manager"] .manager-v2-drawer.open{transform:transl
 body[data-magasin-shell-role="manager"] .manager-v2-drawer .brand{color:#fff!important;font-size:20px!important;font-weight:900!important}
 body[data-magasin-shell-role="manager"] .manager-v2-drawer .brand-sub{color:#9fb2c9!important}
 body[data-magasin-shell-role="manager"] .manager-v2-drawer .nav{display:grid!important;gap:5px!important}
+body[data-magasin-shell-role="manager"] .manager-v2-drawer button{min-height:44px!important}
 body[data-magasin-shell-role="manager"] .manager-v2-drawer .nav button{min-height:44px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#dce7f5!important;text-align:left!important;font-weight:750!important;padding:11px 12px!important}
 body[data-magasin-shell-role="manager"] .manager-v2-drawer .nav button.active{background:#1b3558!important;color:#67e3e6!important}
 @media(max-width:900px){
@@ -50,6 +52,7 @@ body[data-magasin-shell-role="manager"] .manager-v2-drawer .nav button.active{ba
  body[data-magasin-shell-role="manager"] .main{margin-left:0!important;width:100%!important}
  body[data-magasin-shell-role="manager"] .manager-v2-menu{display:inline-flex!important}
  body[data-magasin-shell-role="manager"] .content{padding:18px!important}
+ body[data-magasin-shell-role="manager"] .manager-v2-header button{min-width:44px!important;min-height:44px!important}
 }
 @media(max-width:520px){
  body[data-magasin-shell-role="manager"] .manager-v2-header{height:62px!important;padding:0 12px!important}
