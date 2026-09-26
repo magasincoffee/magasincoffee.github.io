@@ -1,6 +1,7 @@
 (()=>{'use strict';
 if(window.__MAGASIN_MANAGER_WORKFORCE_UI2_011__)return;
 window.__MAGASIN_MANAGER_WORKFORCE_UI2_011__=true;
+window.__MAGASIN_MANAGER_WORKFORCE_UI_CONSOLIDATED_V1__=true;
 
 const labels={dashboard:'🏠 Hôm nay',staff:'👥 Nhân viên',workforce:'📅 Xếp lịch',schedule:'🗓 Lịch làm',swap:'🔄 Đổi / cho ca',attendance:'⏱ Chấm công','payroll-self-check':'💰 Công / Lương'};
 const allowed=new Set(Object.keys(labels));
