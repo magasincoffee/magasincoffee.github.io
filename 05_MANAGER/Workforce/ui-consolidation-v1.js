@@ -148,6 +148,26 @@ function renderToday(){
 function snapshot(api){
  try{return typeof api?.getState==='function'?api.getState():null}catch(_){return null}
 }
+function shiftSnapshot(){
+ const api=window.MAGASIN_MANAGER_SHIFT_CHANGE;if(!api)return null;
+ const direct=snapshot(api);if(direct)return direct;
+ const root=document.getElementById('view-swap');
+ if(!root)return {swaps:[],gives:[],loading:false,error:null,message:''};
+ const msg=root.querySelector('#mSwapMsg')?.textContent||'';
+ const error=/Không tải được yêu cầu/i.test(msg)?msg:null;
+ return {
+  swaps:[...root.querySelectorAll('.js-swap-approve')].map(x=>({id:x.dataset.id||null})),
+  gives:[...root.querySelectorAll('.js-give-approve')].map(x=>({id:x.dataset.id||null})),
+  loading:false,error,message:msg
+ };
+}
+function attendanceSnapshot(){
+ const api=window.MAGASIN_MANAGER_ATTENDANCE_REVIEW;if(!api)return null;
+ const direct=snapshot(api)||{};
+ const root=document.getElementById('view-attendance');
+ const errorText=root?.querySelector('.mar-state.error')?.textContent||'';
+ return {...direct,error:direct.error||errorText||null};
+}
 
 async function refreshToday(){
  ensureToday();
@@ -164,8 +184,8 @@ async function refreshToday(){
    if(!api||typeof api.refresh!=='function'){todayState.missing.push(name);continue}
    try{await api.refresh()}catch(e){errors.push(name+': '+String(e?.message||e))}
  }
- todayState.shift=snapshot(window.MAGASIN_MANAGER_SHIFT_CHANGE);
- todayState.attendance=snapshot(window.MAGASIN_MANAGER_ATTENDANCE_REVIEW);
+ todayState.shift=shiftSnapshot();
+ todayState.attendance=attendanceSnapshot();
  todayState.schedule=snapshot(window.MAGASIN_MANAGER_SCHEDULE_DRAFT);
  if(todayState.shift?.error)errors.push('Swap/Give: '+todayState.shift.error);
  if(todayState.attendance?.error)errors.push('Attendance: '+todayState.attendance.error);
