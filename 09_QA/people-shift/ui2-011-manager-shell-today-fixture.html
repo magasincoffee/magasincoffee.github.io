@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>UI2-011 Manager Shell Today QA</title>
+<style>
+:root{--m-border-default:#e4e7ec;--m-color-brand-600:#0f8f9c;--m-color-neutral-50:#f8fafc}
+*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:#f8fafc;color:#101828;font:14px system-ui,sans-serif}
+.app{min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;width:270px;background:#fff;padding:16px 12px}.brand{font-size:22px;font-weight:900}.brand-sub{font-size:12px;color:#667085;margin-bottom:14px}.nav{display:grid;gap:5px}.nav button{min-height:40px;border:0;background:transparent;text-align:left;border-radius:10px;padding:0 12px}.main{margin-left:270px}.header{height:68px;background:#fff;border-bottom:1px solid #e4e7ec;display:flex;justify-content:space-between;align-items:center;padding:0 22px;position:sticky;top:0}.header-left,.header-right{display:flex;align-items:center;gap:10px}.content{padding:24px}.view{display:none}.view.active{display:block}.btn{min-height:40px}.muted{color:#667085}.badge{padding:5px 8px;border-radius:999px;background:#eff6ff}.card{background:#fff;border:1px solid #e4e7ec;border-radius:14px;padding:16px}.menu{display:none}
+</style>
+</head>
+<body data-magasin-shell-role="manager">
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="brand">MAGASIN</div><div class="brand-sub">Quản lý vận hành</div>
+  <nav class="nav">
+    <button class="active" data-view="dashboard">Hôm nay</button>
+    <button data-view="staff">Nhân viên</button>
+    <button data-view="workforce">Xếp lịch</button>
+    <button data-view="schedule">Lịch làm</button>
+    <button data-view="tasks">Công việc</button>
+    <button data-view="kpi">KPI</button>
+    <button data-view="swap">Đổi / cho ca</button>
+    <button data-view="attendance">Chấm công</button>
+    <button data-view="academy">Academy</button>
+    <button data-view="settings">Cài đặt</button>
+    <button data-view="payroll-self-check">Công / Lương</button>
+  </nav>
+  <div style="margin-top:auto"><b id="profileName">Quản lý QA</b><span id="profileMeta">CN-QA-A</span><button id="logoutBtn">Đăng xuất</button></div>
+</aside>
+<main class="main">
+<header class="header"><div class="header-left"><button id="menuBtn" class="btn menu">☰</button><div><div id="pageTitle">Hôm nay</div><div id="pageSub">Action Center vận hành</div></div></div><div class="header-right"><span id="headerAvatar">Q</span></div></header>
+<section class="content">
+  <section class="view active" id="view-dashboard"></section>
+  <section class="view" id="view-staff"><div class="card">Nhân viên canonical</div></section>
+  <section class="view" id="view-workforce"><div class="card">Xếp lịch canonical</div></section>
+  <section class="view" id="view-schedule"><div class="card">Lịch làm canonical</div></section>
+  <section class="view" id="view-swap"><div class="card">Swap / Give canonical</div></section>
+  <section class="view" id="view-attendance"><div class="card">Attendance canonical</div></section>
+  <section class="view" id="view-payroll-self-check"><div class="card">Payroll canonical</div></section>
+  <section class="view" id="view-tasks"></section><section class="view" id="view-kpi"></section><section class="view" id="view-academy"></section><section class="view" id="view-settings"></section>
+</section>
+</main>
+</div>
+<script>
+(()=>{
+ const states={
+  shift:{swaps:[{id:'swap-1'}],gives:[{id:'give-1'}],loading:false,error:null},
+  attendance:{rows:[{id:'att-1',status:'NEEDS_REVIEW'}],loading:false,error:null},
+  availability:{rows:[{id:'av-1'},{id:'av-2'},{id:'av-3'}],loading:false,error:null},
+  schedule:{rows:[{id:'s1'},{id:'s2'},{id:'s3'},{id:'s4'}],loading:false,lastError:null}
+ };
+ const clone=v=>structuredClone(v);
+ const api=(key)=>({refresh:async()=>clone(states[key]),getState:()=>clone(states[key])});
+ window.MAGASIN_MANAGER_SHIFT_CHANGE=api('shift');
+ window.MAGASIN_MANAGER_SWAP_APPROVAL=window.MAGASIN_MANAGER_SHIFT_CHANGE;
+ window.MAGASIN_MANAGER_ATTENDANCE_REVIEW=api('attendance');
+ window.MAGASIN_MANAGER_AVAILABILITY=api('availability');
+ window.MAGASIN_MANAGER_OFFICIAL_SCHEDULE=api('schedule');
+ window.MAGASIN_MANAGER_STAFF_PROJECTION={refresh:async()=>{},getState:()=>({rows:[],loading:false,error:null})};
+ window.MAGASIN_MANAGER_PAYROLL_SELF_CHECK={refresh:async()=>{},getState:()=>({rows:[],loading:false,error:null})};
+ const titles={dashboard:['Hôm nay','Action Center vận hành'],staff:['Nhân viên','Projection canonical'],workforce:['Xếp lịch','Workforce canonical'],schedule:['Lịch làm','Official schedule'],swap:['Đổi / cho ca','Canonical approvals'],attendance:['Chấm công','Canonical review'],'payroll-self-check':['Công / Lương','Read-only canonical']};
+ function openView(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));
+  document.querySelectorAll('.sidebar [data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));
+  if(titles[v]){document.getElementById('pageTitle').textContent=titles[v][0];document.getElementById('pageSub').textContent=titles[v][1]}
+ }
+ document.querySelectorAll('.sidebar [data-view]').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.view)));
+ window.__UI2_011_QA={
+   states,
+   setMode(mode){
+    if(mode==='loading'){for(const k of Object.keys(states)){states[k].loading=true;states[k].error=null}}
+    if(mode==='error'){states.shift.loading=false;states.shift.error='SHIFT_QA_ERROR';states.attendance.loading=false;states.attendance.error='ATTENDANCE_QA_ERROR'}
+    if(mode==='empty'){states.shift={swaps:[],gives:[],loading:false,error:null};states.attendance={rows:[],loading:false,error:null};states.availability={rows:[],loading:false,error:null};states.schedule={rows:[],loading:false,lastError:null}}
+   },
+   disconnectShift(){delete window.MAGASIN_MANAGER_SHIFT_CHANGE;delete window.MAGASIN_MANAGER_SWAP_APPROVAL},
+   restoreShift(){window.MAGASIN_MANAGER_SHIFT_CHANGE=api('shift');window.MAGASIN_MANAGER_SWAP_APPROVAL=window.MAGASIN_MANAGER_SHIFT_CHANGE},
+   openView
+ };
+})();
+</script>
+<script src="/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260926-ui2-011"></script>
+<script src="/05_MANAGER/Workforce/ui-consolidation-v1.js?v=20260926-ui2-011"></script>
+</body></html>
