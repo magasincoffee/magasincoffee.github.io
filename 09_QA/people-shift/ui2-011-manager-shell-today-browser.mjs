@@ -211,6 +211,10 @@ await check("ui2_011_loading_error_empty_not_connected_states",async()=>{
 });
 
 await check("ui2_011_today_actions_delegate_without_writer_calls",async()=>{
+  await shellFrame().locator("body").evaluate(()=>{
+    localStorage.setItem("ui2_011_mode","ready");
+    localStorage.setItem("ui2_011_revision","1");
+  });
   await page.reload({waitUntil:"networkidle",timeout:30000});
   f=await waitReady();
   const before=await f.locator("body").evaluate(()=>window.__UI2_011_CALLS.filter(x=>x.kind==="rpc").map(x=>x.name));
