@@ -17,7 +17,8 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 function normalize(v){const s=String(v||'').replace(/^#/,'').trim().toLowerCase();return alias[s]||s}
 function renameNav(){for(const [view,label] of Object.entries(labels)){document.querySelectorAll('[data-view="'+view+'"]').forEach(b=>b.textContent=label)}}
 function hideDeprecated(){
- for(const view of ['tasks','kpi','academy','settings'])document.querySelectorAll('[data-view="'+view+'"]').forEach(b=>{b.hidden=true;b.setAttribute('aria-hidden','true');b.tabIndex=-1});
+ for(const view of ['kpi','academy'])document.querySelectorAll('[data-view="'+view+'"]').forEach(b=>{b.hidden=true;b.setAttribute('aria-hidden','true');b.tabIndex=-1});
+ for(const view of ['tasks','settings'])document.querySelectorAll('[data-view="'+view+'"]').forEach(b=>{b.hidden=true;b.setAttribute('aria-hidden','true');b.tabIndex=-1});
  document.querySelector('[data-tab="demand"]')?.remove();
  document.getElementById('panel-demand')?.remove();
 }
