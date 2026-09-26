@@ -290,6 +290,26 @@ body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2
   line-height: 17px;
 }
 
+@media (min-width: 720px) and (max-width: 1024px) {
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-sidebar {
+    width: var(--m-shell-sidebar-width) !important;
+    transform: none !important;
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-topbar {
+    left: var(--m-shell-sidebar-width) !important;
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-menu {
+    display: none !important;
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"][data-magasin-shell-mode="legacy-manager"] > .main,
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"][data-magasin-shell-mode="legacy-manager"] > .app > .main {
+    margin-left: var(--m-shell-sidebar-width) !important;
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-backdrop {
+    display: none !important;
+  }
+}
+
 @media (max-width: 1024px) {
   body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .content {
     padding: 22px;
