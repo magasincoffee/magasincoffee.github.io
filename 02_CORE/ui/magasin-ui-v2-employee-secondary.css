@@ -79,7 +79,12 @@ body[data-magasin-employee-shell-v2] .employee-secondary-card button:focus-visib
 body[data-magasin-employee-shell-v2] .employee-secondary-card select:focus-visible,
 body[data-magasin-employee-shell-v2] #view-swap button:focus-visible,
 body[data-magasin-employee-shell-v2] #view-swap select:focus-visible,
-body[data-magasin-employee-shell-v2] #view-swap input:focus-visible{
+body[data-magasin-employee-shell-v2] #view-swap input:focus-visible,
+body[data-magasin-employee-shell-v2] .employee-secondary-card button:focus,
+body[data-magasin-employee-shell-v2] .employee-secondary-card select:focus,
+body[data-magasin-employee-shell-v2] #view-swap button:focus,
+body[data-magasin-employee-shell-v2] #view-swap select:focus,
+body[data-magasin-employee-shell-v2] #view-swap input:focus{
   outline:2px solid var(--m-color-focus,#2f6fda);
   outline-offset:2px;
   box-shadow:0 0 0 4px rgba(47,111,218,.16);
