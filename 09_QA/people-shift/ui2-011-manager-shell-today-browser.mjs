@@ -171,6 +171,12 @@ for(const width of [1280,768,390]){
       const drawer=await f.locator(".m-shell-v2-sidebar").evaluate(el=>({w:el.getBoundingClientRect().width,viewport:el.ownerDocument.defaultView.innerWidth}));
       ensure(drawer.w<=drawer.viewport*.89,JSON.stringify(drawer));
       await f.locator("body").press("Escape");
+      await page.waitForTimeout(300);
+      const closed=await f.locator(".m-shell-v2-sidebar").evaluate(el=>({
+        right:el.getBoundingClientRect().right,
+        open:el.ownerDocument.body.dataset.shellDrawerOpen
+      }));
+      ensure(closed.open==="false"&&closed.right<=1,JSON.stringify(closed));
     }
     return JSON.stringify(m);
   });
