@@ -20,6 +20,12 @@ body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source [data-view="t
 body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source [data-view="kpi"],
 body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source [data-view="academy"],
 body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source [data-view="settings"]{display:none!important}
+body[data-magasin-shell-role="manager"].manager-shared-shell-ready .manager-v2-sidebar-source{display:none!important}
+body[data-magasin-shell-role="manager"].manager-shared-shell-ready .manager-v2-header{display:none!important}
+body[data-magasin-shell-role="manager"].manager-shared-shell-ready .main{margin-left:0!important;width:100%!important}
+body[data-magasin-shell-role="manager"] .m-shell-v2-nav__item[data-shell-key="tasks"],body[data-magasin-shell-role="manager"] .m-shell-v2-nav__item[data-shell-key="settings"]{display:none!important}
+body[data-magasin-shell-role="manager"] .m-shell-v2-nav__item{min-height:42px!important}
+body[data-magasin-shell-role="manager"] .m-shell-v2-nav__item:focus-visible,body[data-magasin-shell-role="manager"] [data-shell-menu]:focus-visible{outline:2px solid #2f6fde!important;outline-offset:2px!important}
 body[data-magasin-shell-role="manager"] .main{margin-left:var(--manager-nav-w)!important;width:calc(100% - var(--manager-nav-w))!important;max-width:none!important;padding:0!important}
 body[data-magasin-shell-role="manager"] .manager-v2-header{height:68px!important;background:#fff!important;border-bottom:1px solid var(--m-border-default,#e4e7ec)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 22px!important;position:sticky!important;top:0!important;z-index:800!important}
 body[data-magasin-shell-role="manager"] .manager-v2-header-left,body[data-magasin-shell-role="manager"] .manager-v2-header-right{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
@@ -81,6 +87,16 @@ function build(){
  syncActive(source.querySelector('.nav button.active')?.dataset.view||'dashboard');
  return true;
 }
-function boot(){let n=0;const tick=()=>{if(build())return;if(++n<30)setTimeout(tick,100)};tick()}
+function syncSharedShell(){
+ const shared=document.getElementById('magasinUiV2Shell')||document.querySelector('.m-shell-v2-sidebar');
+ if(!shared)return false;
+ document.body.classList.add('manager-shared-shell-ready');
+ for(const key of ['tasks','settings'])document.querySelectorAll('.m-shell-v2-nav__item[data-shell-key="'+key+'"]').forEach(x=>{x.setAttribute('aria-hidden','true');x.tabIndex=-1});
+ return true;
+}
+function boot(){
+ let n=0;const tick=()=>{build();syncSharedShell();if(++n<40)setTimeout(tick,150)};tick();
+ const observer=new MutationObserver(()=>syncSharedShell());observer.observe(document.documentElement,{childList:true,subtree:true});
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })(window,document);
