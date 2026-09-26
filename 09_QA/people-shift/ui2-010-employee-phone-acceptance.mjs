@@ -202,7 +202,7 @@ for(const width of widths){
   });
   ensure(giveMetric.mode==="give"&&giveMetric.overflow&&giveMetric.target>=43.5&&giveMetric.focus!=="none"&&!giveMetric.collision,"give "+width+" "+JSON.stringify(giveMetric));
   report.matrix.push({width,surface:"give",overflow:"PASS",target:"PASS",focus:"PASS",nav_collision:"PASS",source:"UI2-010 supplemental give probe",supplemental:giveMetric});
-  const giveShot=path.join(ACCEPT,`give-${width}.png`);await employee.locator("#view-swap").screenshot({path:giveShot});report.screenshots.push(giveShot);
+  await employee.locator("#view-swap").evaluate(view=>view.ownerDocument.defaultView.scrollTo(0,0));\n  const giveShot=path.join(ACCEPT,`give-${width}.png`);await employee.locator("#view-swap").screenshot({path:giveShot});report.screenshots.push(giveShot);
   await secondaryPage.close();
   await context.close();
 }
