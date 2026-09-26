@@ -5,6 +5,7 @@ const hm=v=>String(v||'').slice(0,5);
 let sb=null,busy=false;
 const client=()=>sb||(sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}));
 const view=()=>document.querySelector('#view-swap');
+const state={swaps:[],gives:[],loading:false,error:null};
 
 function swapRows(rows){
  return rows.length?rows.map(r=>`<div class="item"><div class="row" style="justify-content:space-between;gap:12px;align-items:flex-start"><div><b>${esc(r.requester_name||'Nhân viên')} ↔ ${esc(r.target_user_name||'Nhân viên')}</b><span>${esc(String(r.requester_date||''))} · ${esc(hm(r.requester_start))}–${esc(hm(r.requester_end))} ↔ ${esc(hm(r.target_start))}–${esc(hm(r.target_end))}</span><span>${esc(r.store_code||'')} · Người nhận đã đồng ý · ${esc(r.reason||'')}</span></div><div class="actions"><button class="btn js-swap-reject" data-id="${esc(r.id)}">Từ chối</button><button class="btn primary js-swap-approve" data-id="${esc(r.id)}">Duyệt đổi ca</button></div></div></div>`).join(''):'<div class="muted">Không có yêu cầu đổi ca đã được người nhận đồng ý.</div>';
@@ -22,13 +23,18 @@ function render(swaps,gives,msg=''){
 }
 async function load(msg=''){
  if(!window.supabase?.createClient)return;
+ state.loading=true;state.error=null;
  const [swapQ,giveQ]=await Promise.all([
    client().rpc('list_shift_swap_requests_v1',{p_store_id:null,p_status:'PEER_ACCEPTED'}),
    client().rpc('list_shift_give_requests_v1',{p_store_id:null,p_status:'PENDING_MANAGER'})
  ]);
  const errors=[swapQ.error,giveQ.error].filter(Boolean);
- if(errors.length){render([],[],'Không tải được yêu cầu: '+errors.map(e=>e.message||e.code||'UNKNOWN').join(' · '));return}
- render(Array.isArray(swapQ.data)?swapQ.data:[],Array.isArray(giveQ.data)?giveQ.data:[],msg);
+ state.loading=false;
+ if(errors.length){state.swaps=[];state.gives=[];state.error=errors.map(e=>e.message||e.code||'UNKNOWN').join(' · ');render([],[],'Không tải được yêu cầu: '+state.error);return}
+ state.swaps=Array.isArray(swapQ.data)?swapQ.data:[];
+ state.gives=Array.isArray(giveQ.data)?giveQ.data:[];
+ state.error=null;
+ render(state.swaps,state.gives,msg);
 }
 async function actSwap(fn,id){
  if(busy||!id)return;busy=true;
@@ -57,7 +63,7 @@ async function actGive(fn,id){
 function capture(e){if(e.target.closest?.('[data-view="swap"]'))setTimeout(()=>load(),0)}
 document.addEventListener('click',capture,true);
 function boot(){if(view())load()}
-window.MAGASIN_MANAGER_SHIFT_CHANGE={refresh:load};
-window.MAGASIN_MANAGER_SWAP_APPROVAL={refresh:load};
+window.MAGASIN_MANAGER_SHIFT_CHANGE={refresh:load,getState:()=>({swaps:state.swaps.map(x=>({...x})),gives:state.gives.map(x=>({...x})),loading:state.loading,error:state.error})};
+window.MAGASIN_MANAGER_SWAP_APPROVAL=window.MAGASIN_MANAGER_SHIFT_CHANGE;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
