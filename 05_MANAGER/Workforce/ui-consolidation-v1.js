@@ -15,6 +15,7 @@ const sourceNames={
   staff:'Nhân viên',
   payroll:'Công / Lương'
 };
+let refreshPromise=null,refreshActive=false;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function normalize(v){const s=String(v||'').replace(/^#/,'').trim().toLowerCase();return alias[s]||s}
 function renameNav(){for(const [view,label] of Object.entries(labels)){document.querySelectorAll('[data-view="'+view+'"]').forEach(b=>b.textContent=label)}}
@@ -40,10 +41,10 @@ function readState(key){
  if(!api?.getState)return {connection:'NOT_CONNECTED',loading:false,error:null,data:null};
  try{
   const data=api.getState();
-  return {connection:'CONNECTED',loading:!!data?.loading,error:data?.error||data?.lastError||null,data};
+  return {connection:'CONNECTED',loading:refreshActive||!!data?.loading,error:data?.error||data?.lastError||null,data};
  }catch(e){return {connection:'ERROR',loading:false,error:e?.message||String(e),data:null}}
 }
-function pendingAttendance(rows){return (rows||[]).filter(r=>['SUBMITTED','NEEDS_REVIEW'].includes(String(r?.status||'').toUpperCase())).length}
+function pendingAttendance(rows){return (rows||[]).filter(r=>['NORMAL','NEEDS_REVIEW'].includes(String(r?.status||'').toUpperCase())).length}
 function actionModel(){
  const shift=readState('shift'),attendance=readState('attendance'),availability=readState('availability'),schedule=readState('schedule');
  const swapCount=(shift.data?.swaps||[]).length+(shift.data?.gives||[]).length;
@@ -112,15 +113,16 @@ function renderToday(){
  const overall=model.some(x=>x.state==='ERROR')?'error':model.some(x=>x.state==='LOADING')?'loading':model.some(x=>x.state==='ACTION_REQUIRED')?'attention':'ready';
  root.dataset.actionCenterState=overall;
  root.innerHTML='<div class="manager-today-hero"><div><h1>Action Center</h1><p>Ưu tiên vận hành từ các Manager reader đã có. Không có doanh thu/KPI, deadline, owner hay pending count giả.</p></div><button type="button" class="manager-today-refresh" data-manager-today-refresh>↻ Làm mới canonical state</button></div><div class="manager-action-grid">'+model.map(card).join('')+'</div><div class="manager-today-note">Today chỉ đọc state và điều hướng. Mọi approve/review/publish vẫn diễn ra trong module canonical tương ứng với authority hiện hữu.</div>';
- root.querySelector('[data-manager-today-refresh]')?.addEventListener('click',()=>refreshToday());
+ const refreshButton=root.querySelector('[data-manager-today-refresh]');
+ if(refreshButton){refreshButton.disabled=refreshActive;refreshButton.setAttribute('aria-busy',String(refreshActive));refreshButton.textContent=refreshActive?'↻ Đang làm mới…':'↻ Làm mới canonical state';refreshButton.addEventListener('click',()=>refreshToday())}
 }
-async function refreshToday(){
- const root=document.getElementById('view-dashboard');if(!root)return;
- root.dataset.actionCenterState='loading';renderToday();
+function refreshToday(){
+ if(refreshPromise)return refreshPromise;
+ const root=document.getElementById('view-dashboard');if(!root)return Promise.resolve([]);
+ refreshActive=true;renderToday();
  const readers=['shift','attendance','availability','schedule'].map(stateApi).filter(x=>x?.refresh);
- const results=await Promise.allSettled(readers.map(x=>Promise.resolve().then(()=>x.refresh())));
- renderToday();
- return results;
+ refreshPromise=Promise.allSettled(readers.map(x=>Promise.resolve().then(()=>x.refresh()))).finally(()=>{refreshActive=false;refreshPromise=null;renderToday()});
+ return refreshPromise;
 }
 function activate(view){
  const v=normalize(view);if(!routable.has(v))return false;
@@ -145,17 +147,14 @@ function applyHash(attempt=0){
 }
 function consolidate(){renameNav();hideDeprecated();renderToday();applyHash()}
 document.addEventListener('click',e=>{
- const jump=e.target.closest?.('[data-workforce-jump]');if(jump){e.preventDefault();activate(jump.dataset.workforceJump);return}
- const nav=e.target.closest?.('[data-view]');if(nav&&allowed.has(normalize(nav.dataset.view))){
-   const next='#'+normalize(nav.dataset.view);if(location.hash!==next)history.pushState({managerView:normalize(nav.dataset.view)},'',next);
- }
+ const jump=e.target.closest?.('[data-workforce-jump]');if(jump){e.preventDefault();activate(jump.dataset.workforceJump)}
 },true);
 window.addEventListener('popstate',()=>applyHash());
 window.addEventListener('hashchange',()=>applyHash());
 document.addEventListener('magasin:shift-swap-resolved',()=>{if(document.getElementById('view-dashboard')?.classList.contains('active'))void refreshToday()});
 document.addEventListener('magasin:shift-give-resolved',()=>{if(document.getElementById('view-dashboard')?.classList.contains('active'))void refreshToday()});
 document.addEventListener('magasin:schedule-published',()=>{if(document.getElementById('view-dashboard')?.classList.contains('active'))void refreshToday()});
-window.MAGASIN_MANAGER_TODAY_V2={refresh:refreshToday,getState:()=>({cards:actionModel(),uiState:document.getElementById('view-dashboard')?.dataset.actionCenterState||'unknown'})};
+window.MAGASIN_MANAGER_TODAY_V2={refresh:refreshToday,getState:()=>({cards:actionModel(),uiState:document.getElementById('view-dashboard')?.dataset.actionCenterState||'unknown',refreshing:refreshActive})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',consolidate,{once:true});else consolidate();
 for(const ms of [50,250,1000])setTimeout(()=>{renameNav();hideDeprecated();renderToday()},ms);
 })();
