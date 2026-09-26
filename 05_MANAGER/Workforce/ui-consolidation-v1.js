@@ -4,6 +4,7 @@ window.__MAGASIN_MANAGER_WORKFORCE_UI2_011__=true;
 
 const labels={dashboard:'🏠 Hôm nay',staff:'👥 Nhân viên',workforce:'📅 Xếp lịch',schedule:'🗓 Lịch làm',swap:'🔄 Đổi / cho ca',attendance:'⏱ Chấm công','payroll-self-check':'💰 Công / Lương'};
 const allowed=new Set(Object.keys(labels));
+const routable=new Set([...allowed,'tasks']); // hidden legacy SOP compatibility route; not primary navigation
 const alias={'cham-cong':'attendance','doi-ca':'swap','nhan-su':'staff','cong-luong':'payroll-self-check','payroll':'payroll-self-check'};
 const sourceNames={
   shift:'Swap / Give approvals',
@@ -121,7 +122,7 @@ async function refreshToday(){
  return results;
 }
 function activate(view){
- const v=normalize(view);if(!allowed.has(v))return false;
+ const v=normalize(view);if(!routable.has(v))return false;
  const b=document.querySelector('.sidebar [data-view="'+v+'"]')||document.querySelector('[data-view="'+v+'"]');if(!b)return false;
  b.click();
  if(v==='dashboard')setTimeout(()=>{renderToday();void refreshToday()},0);
@@ -129,7 +130,7 @@ function activate(view){
 }
 function applyHash(attempt=0){
  const v=normalize(location.hash)||'dashboard';
- if(!allowed.has(v)){history.replaceState(null,'',location.pathname+location.search+'#dashboard');return activate('dashboard')}
+ if(!routable.has(v)){history.replaceState(null,'',location.pathname+location.search+'#dashboard');return activate('dashboard')}
  if(!activate(v)&&attempt<12)setTimeout(()=>applyHash(attempt+1),60);
 }
 function consolidate(){renameNav();hideDeprecated();renderToday();applyHash()}
