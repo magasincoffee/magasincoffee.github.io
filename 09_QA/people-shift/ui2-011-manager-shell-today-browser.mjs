@@ -163,14 +163,7 @@ for(const width of [1280,768,390]){
   await f.locator("#magasinUiV2Shell").waitFor({state:"attached"});
   const m=await metrics(width);
   await check("ui2_011_"+width+"_shell_today_accessibility",async()=>{
-    if(width>=1025)ensure(m.sidebarWidth>=250&&m.menuDisplay==="none",JSON.stringify(m));
-    if(width===768){
-      const menu=f.locator("[data-shell-menu]");await menu.click();
-      await f.locator('body[data-shell-drawer-open="true"]').waitFor();
-      const drawer=await f.locator(".m-shell-v2-sidebar").evaluate(el=>({w:el.getBoundingClientRect().width,scroll:el.ownerDocument.documentElement.scrollWidth,client:el.ownerDocument.documentElement.clientWidth}));
-      ensure(drawer.w<=321&&drawer.scroll<=drawer.client+1,JSON.stringify(drawer));
-      await f.locator("body").press("Escape");
-    }
+    if(width>=720)ensure(m.sidebarWidth>=220&&m.menuDisplay==="none"&&m.sidebarTransform==="none",JSON.stringify(m));
     if(width===390){
       ensure(m.menuSize.w>=43.5&&m.menuSize.h>=43.5&&m.navMin>=43.5,JSON.stringify(m));
       const menu=f.locator("[data-shell-menu]");await menu.click();
