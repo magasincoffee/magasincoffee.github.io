@@ -2,7 +2,7 @@
 const U='https://menvbzlsncmpuvnaifxa.supabase.co',K='sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx';
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const hm=v=>String(v||'').slice(0,5);
-let sb=null,busy=false,state={swaps:[],gives:[],loading:false,error:null,message:''};
+let sb=null,busy=false;
 const client=()=>sb||(sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}));
 const view=()=>document.querySelector('#view-swap');
 
@@ -22,16 +22,13 @@ function render(swaps,gives,msg=''){
 }
 async function load(msg=''){
  if(!window.supabase?.createClient)return;
- state.loading=true;state.error=null;state.message=msg; 
  const [swapQ,giveQ]=await Promise.all([
    client().rpc('list_shift_swap_requests_v1',{p_store_id:null,p_status:'PEER_ACCEPTED'}),
    client().rpc('list_shift_give_requests_v1',{p_store_id:null,p_status:'PENDING_MANAGER'})
  ]);
  const errors=[swapQ.error,giveQ.error].filter(Boolean);
- state.loading=false;
- if(errors.length){state.swaps=[];state.gives=[];state.error=errors.map(e=>e.message||e.code||'UNKNOWN').join(' · ');render([],[],'Không tải được yêu cầu: '+state.error);return}
- state.swaps=Array.isArray(swapQ.data)?swapQ.data:[];state.gives=Array.isArray(giveQ.data)?giveQ.data:[];state.error=null;state.message=msg;
- render(state.swaps,state.gives,msg);
+ if(errors.length){render([],[],'Không tải được yêu cầu: '+errors.map(e=>e.message||e.code||'UNKNOWN').join(' · '));return}
+ render(Array.isArray(swapQ.data)?swapQ.data:[],Array.isArray(giveQ.data)?giveQ.data:[],msg);
 }
 async function actSwap(fn,id){
  if(busy||!id)return;busy=true;
@@ -60,8 +57,7 @@ async function actGive(fn,id){
 function capture(e){if(e.target.closest?.('[data-view="swap"]'))setTimeout(()=>load(),0)}
 document.addEventListener('click',capture,true);
 function boot(){if(view())load()}
-const snapshot=()=>({swaps:state.swaps.map(x=>({...x})),gives:state.gives.map(x=>({...x})),loading:state.loading,error:state.error,message:state.message,busy});
-window.MAGASIN_MANAGER_SHIFT_CHANGE={refresh:load,getState:snapshot};
-window.MAGASIN_MANAGER_SWAP_APPROVAL={refresh:load,getState:snapshot};
+window.MAGASIN_MANAGER_SHIFT_CHANGE={refresh:load};
+window.MAGASIN_MANAGER_SWAP_APPROVAL={refresh:load};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
