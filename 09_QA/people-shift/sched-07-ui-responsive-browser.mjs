@@ -518,6 +518,8 @@ for(const width of scheduleV2Widths){
   await schedulePage.close();
 }
 
+await import("./ui2-008-employee-secondary-browser.mjs");
+
 const scheduleV2Desktop=await context.newPage();
 scheduleV2Desktop.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
 scheduleV2Desktop.on("console",m=>{if(m.type()==="error")report.console_errors.push(m.text())});

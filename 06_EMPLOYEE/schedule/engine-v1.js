@@ -207,7 +207,7 @@ async function openAction(action,scheduleId){
 }
 function openAvailability(){
   const d=doc();if(!d)return;
-  d.defaultView?.showView?.('dashboard');
+  d.defaultView?.showView?.('schedule');
   globalThis.MAGASIN_EMPLOYEE?.availability?.open?.();
 }
 function bind(d){

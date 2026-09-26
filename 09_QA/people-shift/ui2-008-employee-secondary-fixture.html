@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UI2-008 Employee secondary interactions QA</title>
+  <style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#eef2f7}iframe{display:block;width:100%;height:100vh;border:0;background:#fff}</style>
+</head>
+<body>
+<iframe id="employeeApp" title="UI2-008 Employee secondary interactions" src="/06_EMPLOYEE/app/employee-v40.html#schedule"></iframe>
+<script>
+(() => {
+  const calls=[],toasts=[];
+  const state={
+    today:"2026-09-25",
+    availabilityError:false,
+    candidateError:false,
+    historyError:false,
+    holdAvailabilitySave:false,
+    holdSwapSubmit:false,
+    availabilitySaveRelease:null,
+    swapSubmitRelease:null
+  };
+  const employee={id:"u-me",full_name:"Nguyễn An",username:"nguyen.an",role:"STAFF",status:"ACTIVE"};
+  const stores=[{id:"store-a",code:"CN-QA-A",name:"MAGASIN QA A",status:"ACTIVE"},{id:"store-b",code:"CN-QA-B",name:"MAGASIN QA B",status:"ACTIVE"}];
+  const scheduleRows=[
+    {schedule_id:"sch-mon",work_date:"2026-09-21",start_time:"08:00",end_time:"12:00",store_code:"CN-QA-A",store_name:"MAGASIN QA A",status:"APPROVED"},
+    {schedule_id:"sch-fri-am",work_date:"2026-09-25",start_time:"08:00",end_time:"12:00",store_code:"CN-QA-A",store_name:"MAGASIN QA A",status:"APPROVED"},
+    {schedule_id:"sch-sat",work_date:"2026-09-26",start_time:"17:00",end_time:"22:00",store_code:"CN-QA-B",store_name:"MAGASIN QA B",status:"APPROVED"}
+  ];
+  const availability=[
+    {id:"av-existing",work_date:"2026-09-29",start_time:"09:00",end_time:"13:00",preferred_store_id:"store-a",availability_type:"AVAILABLE",note:null}
+  ];
+  const incomingSwaps=[{id:"swap-in",status:"PENDING",target_date:"2026-09-26",target_start:"17:00",target_end:"22:00",requester_name:"Minh",requester_date:"2026-09-25",requester_start:"08:00",requester_end:"12:00",store_code:"CN-QA-B",reason:"Đổi ca QA"}];
+  const swapHistory=[{id:"swap-out",status:"PEER_ACCEPTED",requester_date:"2026-09-25",requester_start:"08:00",requester_end:"12:00",store_code:"CN-QA-A",target_user_name:"Lan",target_date:"2026-09-26",reason:"Lịch học"}];
+  const giveHistory=[{id:"give-in",recipient_id:"u-me",giver_name:"Hà",recipient_name:"Nguyễn An",status:"PENDING_RECIPIENT",work_date:"2026-09-26",start_time:"17:00",end_time:"22:00",store_code:"CN-QA-B",reason:"Nhờ nhận ca"}];
+  let avSeq=1,requestSeq=1;
+
+  const pad=n=>String(n).padStart(2,"0");
+  const dateObj=k=>new Date(String(k).slice(0,10)+"T00:00:00Z");
+  const addDays=(k,n)=>{const d=dateObj(k);d.setUTCDate(d.getUTCDate()+Number(n||0));return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate())};
+  const monday=(k=state.today)=>{const d=dateObj(k),day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()-(day-1));return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate())};
+  const weekDays=k=>Array.from({length:7},(_,i)=>addDays(k,i));
+  const formatDate=k=>String(k||"").slice(0,10).split("-").reverse().join("/");
+  const time5=v=>String(v||"").slice(0,5);
+  const minutes=v=>Number(time5(v).slice(0,2))*60+Number(time5(v).slice(3,5));
+  const shiftKind=v=>minutes(v)<720?"morning":minutes(v)<1020?"afternoon":"evening";
+  const escapeHtml=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  const qa={calls,toasts,state,availability,scheduleRows,incomingSwaps,swapHistory,giveHistory};
+  window.__UI2_008_QA=qa;
+  window.MAGASIN_CORE={
+    security:{escapeHtml},
+    time:{time5,minutes,shiftKind},
+    date:{dateKey:()=>state.today,monday,addDays,weekDays,formatDate},
+    roles:{label:{STAFF:"Nhân viên",EMPLOYEE:"Nhân viên"}},
+    stores:{active:async()=>stores.map(x=>({...x}))},
+    ui:{
+      toast:(message,type)=>toasts.push({message,type}),
+      setLoading:(el,on=true)=>{if(el)el.dataset.loading=on?"1":"0"}
+    },
+    supabase:{
+      async getProfile(){return {...employee}},
+      async rpc(name,args={}){
+        calls.push({kind:"rpc",name,args:structuredClone(args)});
+        if(name==="list_my_approved_schedules_v2"){
+          const start=args.p_week_start,end=addDays(start,6);
+          return {data:scheduleRows.filter(r=>r.work_date>=start&&r.work_date<=end).map(r=>({...r})),error:null};
+        }
+        if(name==="get_my_availability"){
+          if(state.availabilityError)return {data:null,error:{message:"AVAILABILITY_QA_ERROR"}};
+          const end=addDays(args.p_week_start,6);
+          return {data:availability.filter(r=>r.work_date>=args.p_week_start&&r.work_date<=end).map(r=>({...r})),error:null};
+        }
+        if(name==="save_my_availability"){
+          if(state.holdAvailabilitySave)await new Promise(resolve=>state.availabilitySaveRelease=resolve);
+          const id="av-"+(++avSeq);
+          availability.push({id,work_date:args.p_work_date,start_time:args.p_start_time,end_time:args.p_end_time,preferred_store_id:args.p_preferred_store_id,availability_type:args.p_availability_type,note:args.p_note});
+          return {data:id,error:null};
+        }
+        if(name==="delete_my_availability"){
+          const i=availability.findIndex(r=>r.id===args.p_availability_id);
+          if(i<0)return {data:false,error:null};
+          availability.splice(i,1);return {data:true,error:null};
+        }
+        if(name==="list_shift_swap_candidates_v1"){
+          if(state.candidateError)return {data:null,error:{message:"CANDIDATE_QA_ERROR"}};
+          return {data:[{schedule_id:"sch-peer",user_id:"u-peer",user_name:"Lan",work_date:"2026-09-26",start_time:"12:00",end_time:"16:00",store_code:"CN-QA-B"}],error:null};
+        }
+        if(name==="list_shift_give_candidates_v1"){
+          if(state.candidateError)return {data:null,error:{message:"CANDIDATE_QA_ERROR"}};
+          return {data:[{user_id:"u-recipient",user_name:"Minh",work_date:"2026-09-25",start_time:"08:00",end_time:"12:00",store_code:"CN-QA-A"}],error:null};
+        }
+        if(name==="submit_shift_swap_request"){
+          if(state.holdSwapSubmit)await new Promise(resolve=>state.swapSubmitRelease=resolve);
+          swapHistory.unshift({id:"swap-"+(++requestSeq),status:"PENDING",requester_date:"2026-09-25",requester_start:"08:00",requester_end:"12:00",store_code:"CN-QA-A",target_user_name:"Lan",target_date:"2026-09-26",reason:args.p_reason});
+          return {data:"swap-"+requestSeq,error:null};
+        }
+        if(name==="submit_shift_give_request"){
+          giveHistory.unshift({id:"give-"+(++requestSeq),recipient_id:args.p_recipient_user_id,giver_name:"Nguyễn An",recipient_name:"Minh",status:"PENDING_RECIPIENT",work_date:"2026-09-25",start_time:"08:00",end_time:"12:00",store_code:"CN-QA-A",reason:args.p_reason});
+          return {data:"give-"+requestSeq,error:null};
+        }
+        if(name==="list_my_shift_swaps_v2")return state.historyError?{data:null,error:{message:"HISTORY_QA_ERROR"}}:{data:swapHistory.map(x=>({...x})),error:null};
+        if(name==="list_my_incoming_shift_swaps_v1")return state.historyError?{data:null,error:{message:"HISTORY_QA_ERROR"}}:{data:incomingSwaps.map(x=>({...x})),error:null};
+        if(name==="list_my_shift_gives_v1")return state.historyError?{data:null,error:{message:"HISTORY_QA_ERROR"}}:{data:giveHistory.map(x=>({...x})),error:null};
+        if(name==="respond_shift_swap_request"){
+          const row=incomingSwaps.find(x=>x.id===args.p_swap_id);if(row)row.status=args.p_accept?"PEER_ACCEPTED":"REJECTED";
+          return {data:true,error:null};
+        }
+        if(name==="respond_shift_give_request"){
+          const row=giveHistory.find(x=>x.id===args.p_give_id);if(row)row.status=args.p_accept?"PENDING_MANAGER":"REJECTED_RECIPIENT";
+          return {data:true,error:null};
+        }
+        return {data:null,error:{message:"UNEXPECTED_QA_RPC:"+name}};
+      },
+      from(name){calls.push({kind:"from",name});throw new Error("DIRECT_TABLE_FORBIDDEN:"+name)}
+    }
+  };
+  window.MAGASIN_EMPLOYEE={profile:employee,events:{emit:()=>{}},attendance:{async openSchedule(){return true}}};
+  qa.releaseAvailabilitySave=()=>{state.holdAvailabilitySave=false;state.availabilitySaveRelease?.();state.availabilitySaveRelease=null};
+  qa.releaseSwapSubmit=()=>{state.holdSwapSubmit=false;state.swapSubmitRelease?.();state.swapSubmitRelease=null};
+})();
+</script>
+<script src="/06_EMPLOYEE/availability/engine-v1.js?v=20260926-ui2-008"></script>
+<script src="/06_EMPLOYEE/swap/engine-v1.js?v=20260926-ui2-008"></script>
+<script src="/06_EMPLOYEE/schedule/engine-v1.js?v=20260926-ui2-008"></script>
+</body>
+</html>
