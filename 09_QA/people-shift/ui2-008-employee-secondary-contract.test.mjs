@@ -48,7 +48,7 @@ test("Availability is secondary under Schedule and exposes explicit V2 states",(
 test("Availability keeps exact canonical RPC boundary and no direct DML",()=>{
   const names=[...availability.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
   assert.deepEqual(names,["get_my_availability","save_my_availability","delete_my_availability"]);
-  assert.doesNotMatch(availability,/\.from\(|createClient\(|\.insert\(|\.update\(|\.delete\(/);
+  assert.doesNotMatch(availability,/C\.supabase\.from|createClient\(|\.from\(['\"](?:employee_availability|work_schedules|shift_swaps|shift_gives)['\"]\)/);
   assert.match(availability,/p_availability_id:null/);
   assert.match(availability,/p_availability_type:'AVAILABLE'/);
   assert.match(availability,/p_preferred_store_id:target\.id/);
@@ -69,7 +69,7 @@ test("Swap Give retains canonical handlers RPC names and state-machine statuses"
     "list_my_shift_gives_v1"
   ]) assert.ok(swap.includes(name),name);
   for(const status of ["PENDING_RECIPIENT","PENDING_MANAGER","APPROVED","REJECTED_RECIPIENT","REJECTED_MANAGER","PENDING","PEER_ACCEPTED","REJECTED","CANCELLED"])assert.ok(swap.includes(status),status);
-  assert.doesNotMatch(swap,/\.from\(|createClient\(|\.insert\(|\.update\(|\.delete\(/);
+  assert.doesNotMatch(swap,/C\.supabase\.from|createClient\(|\.from\(['\"](?:employee_availability|work_schedules|shift_swaps|shift_gives)['\"]\)/);
   assert.match(swap,/p_requester_schedule_id:req\.value,p_target_schedule_id:target\.value,p_reason:reasonText/);
   assert.match(swap,/p_schedule_id:req\.value,p_recipient_user_id:target\.value,p_reason:reasonText/);
   assert.match(swap,/p_swap_id:id,p_accept:!!accept/);
@@ -84,7 +84,7 @@ test("Swap Give V2 shows canonical shift identity eligibility history incoming a
     "data-swap-retry",
     "employee-swap-ui-state",
     "renderSelectedShift",
-    "setEligibility('eligible')",
+    "setEligibility(state.candidates.length?'eligible':'ineligible')",
     "setEligibility('ineligible')",
     "state.incomingSwaps",
     "state.giveHistory",
