@@ -24,22 +24,25 @@
         :root{--muted:#718199;--line:#dbe4ef}*{box-sizing:border-box}body{font:14px system-ui;margin:0;padding:14px}.btn{padding:8px 11px}.weekly-reg-form{display:none}.weekly-reg-form.open{display:block}.field{display:grid;gap:4px;margin:7px 0}.week-summary{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.mini{border:1px solid #ddd;padding:5px}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day{min-height:80px;border:1px solid #ddd;padding:6px}.shift{margin-top:5px;padding:6px}.muted{color:#718199}
       </style></head><body>
         <header><div class='header-user-text'><strong>Nhân viên</strong><span>STAFF</span></div><div class='header-avatar'>N</div></header>
-        <section>
-          <button class='btn primary' onclick='openWeeklyRegistration()'>Đăng ký lịch làm</button>
-          <div id='weeklyRegistrationPanel' class='weekly-reg-form'>
-            <button class='btn' onclick='closeWeeklyRegistration()'>Đóng</button>
-            <div class='field'><label>Ngày</label><select id='quickRegDay'></select></div>
-            <div class='field'><label>Bắt đầu</label><select id='quickRegStart'></select></div>
-            <div class='field'><label>Kết thúc</label><select id='quickRegEnd'></select></div>
-            <div class='field'><label>Chi nhánh</label><select id='quickRegStore'></select></div>
-            <button class='btn primary' onclick='quickRegister()'>Đăng ký</button>
-            <div id='quickRegMsg'></div>
-            <div class='week-summary'></div>
-            <button class='btn' onclick='finishQuickRegistration()'>Hoàn thành</button>
-          </div>
-        </section>
         <nav><a href='#' data-view='schedule'>Lịch làm</a></nav>
-        <section id='view-schedule'><div class='schedule-main-panel'><span class='pill'></span><div class='days'></div></div></section>
+        <section id='view-schedule'>
+          <div class='schedule-main-panel'><span class='pill'></span><div class='days'></div></div>
+          <section class='employee-schedule-secondary'>
+            <button class='btn primary' type='button' data-schedule-availability>Đăng ký lịch làm</button>
+            <div id='weeklyRegistrationPanel' class='weekly-reg-form' data-availability-state='idle' data-availability-readonly='false' aria-hidden='true'>
+              <button class='btn' onclick='closeWeeklyRegistration()'>Đóng</button>
+              <div class='field'><label>Ngày</label><select id='quickRegDay'></select></div>
+              <div class='field'><label>Bắt đầu</label><select id='quickRegStart'></select></div>
+              <div class='field'><label>Kết thúc</label><select id='quickRegEnd'></select></div>
+              <div class='field'><label>Chi nhánh</label><select id='quickRegStore'></select></div>
+              <button id='saveReg' class='btn primary' onclick='quickRegister()'>Đăng ký</button>
+              <div id='quickRegMsg'></div>
+              <button type='button' data-availability-retry hidden>Thử lại</button>
+              <div class='week-summary'></div>
+              <button class='btn' onclick='finishQuickRegistration()'>Hoàn thành</button>
+            </div>
+          </section>
+        </section>
       </body></html>"></iframe>
     </section>
   </main>
