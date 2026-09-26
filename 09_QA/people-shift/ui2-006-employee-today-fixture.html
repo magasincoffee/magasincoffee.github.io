@@ -88,8 +88,8 @@
     },
     availability:{
       getRegistrationState:()=>state.availability,
-      open(){actions.push({type:'availability-open'});frameDoc()?.getElementById('weeklyRegistrationPanel')?.classList.add('open')},
-      close(){frameDoc()?.getElementById('weeklyRegistrationPanel')?.classList.remove('open')},
+      open(){actions.push({type:'availability-open'});frameDoc()?.defaultView?.showView?.('schedule');const panel=frameDoc()?.getElementById('weeklyRegistrationPanel');panel?.classList.add('open');panel?.setAttribute('aria-hidden','false')},
+      close(){const panel=frameDoc()?.getElementById('weeklyRegistrationPanel');panel?.classList.remove('open');panel?.setAttribute('aria-hidden','true')},
       refresh(){},
       getRows:()=>[],
       getWeek:()=>addDays(state.week,7)
