@@ -8,12 +8,7 @@ const stateText=v=>({ESTIMATED:'Ước tính',REVIEWED:'Đã review',FINALIZED:'
 const minutesText=v=>{const n=Number(v);if(!Number.isInteger(n)||n<0)return '—';const h=Math.floor(n/60),m=n%60;return m?h+' giờ '+m+' phút':h+' giờ'};
 const PAYROLL_STATES=new Set(['ESTIMATED','REVIEWED','FINALIZED','PAID']);
 const validProjectionRow=r=>!!r&&!!String(r.payroll_entry_id||'').trim()&&!!String(r.period_start||'').trim()&&!!String(r.period_end||'').trim()&&!!String(r.payroll_revision||'').trim()&&PAYROLL_STATES.has(String(r.state||'').toUpperCase())&&Number.isInteger(Number(r.confirmed_work_item_count))&&Number(r.confirmed_work_item_count)>=0&&Number.isInteger(Number(r.confirmed_work_minutes))&&Number(r.confirmed_work_minutes)>=0;
-function ensureCss(d){
-  if(!d||d.getElementById('employee-payroll-self-check-v1-css'))return;
-  const s=d.createElement('style');s.id='employee-payroll-self-check-v1-css';
-  s.textContent='.payroll-self-grid{display:grid;gap:12px}.payroll-self-note{padding:11px 13px;border:1px solid #d8e5f4;background:#f2f7fd;border-radius:11px;color:#42556d;font-size:12px}.payroll-self-table-wrap{overflow:auto}.payroll-self-table{width:100%;border-collapse:collapse}.payroll-self-table th,.payroll-self-table td{padding:10px 8px;border-bottom:1px solid #dbe4ef;text-align:left;font-size:12px;white-space:nowrap}.payroll-self-table th{color:#718199}.payroll-state{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900}.payroll-state.estimated{background:#fff0cb;color:#936000}.payroll-state.reviewed{background:#e7f0ff;color:#235dba}.payroll-state.finalized{background:#e3f3ea;color:#176d49}.payroll-state.paid{background:#eee5ff;color:#6741a5}.payroll-self-status{padding:11px 13px;border-radius:11px;font-size:12px}.payroll-self-status.info{background:#eef7ff;color:#235dba}.payroll-self-status.error{background:#fff0f0;color:#9a3838}.payroll-self-status.ok{background:#e3f3ea;color:#176d49}@media(max-width:600px){.payroll-self-table th,.payroll-self-table td{padding:8px 6px}}';
-  d.head.appendChild(s);
-}
+function ensureCss(){/* stylesheet is loaded by employee-v40.html */}
 function ensureUi(){
   const d=doc();if(!d?.body)return false;
   ensureCss(d);
@@ -26,8 +21,8 @@ function ensureUi(){
     }
   }
   if(!d.getElementById('view-payroll')){
-    const view=d.createElement('section');view.id='view-payroll';view.className='page-view';
-    view.innerHTML='<div class="panel"><div class="section-head"><div><h2>Tự kiểm tra lương</h2><div class="muted">Payroll canonical của chính tài khoản đang đăng nhập.</div></div><button class="btn secondary" type="button" id="employeePayrollRefresh">Làm mới</button></div><div id="employeePayrollRoot"></div></div>';
+    const view=d.createElement('section');view.id='view-payroll';view.className='page-view employee-payroll-v2';view.dataset.payrollUiState='idle';
+    view.innerHTML='<div class="employee-people-card employee-payroll-card"><div class="employee-people-intro"><div><div class="employee-people-eyebrow">Lương · Self-check</div><h2>Tự kiểm tra lương</h2><p>Projection payroll canonical của chính tài khoản đang đăng nhập. Màn hình này chỉ đọc và không có quyền review/finalize/paid.</p></div><button class="m-button m-button--secondary btn secondary" type="button" id="employeePayrollRefresh">Làm mới</button></div><div id="employeePayrollRoot" aria-live="polite"></div></div>';
     const profile=d.getElementById('view-profile');
     if(profile?.parentNode)profile.parentNode.insertBefore(view,profile);else d.querySelector('.page-wrap')?.appendChild(view);
     d.getElementById('employeePayrollRefresh')?.addEventListener('click',()=>refresh());
@@ -40,20 +35,26 @@ function activate(link){
   d.getElementById('view-payroll')?.classList.add('active');
   d.querySelectorAll('.nav a').forEach(x=>x.classList.remove('active'));link?.classList.add('active');
   const title=d.getElementById('headerPageTitle'),sub=d.getElementById('pageSub');
-  if(title)title.textContent='Lương';if(sub)sub.textContent='Tự kiểm tra payroll';
+  if(title)title.textContent='Lương';if(sub)sub.textContent='Payroll self-check chỉ đọc';
   d.defaultView?.scrollTo?.(0,0);
 }
 function render(){
   if(!ensureUi())return;
-  const root=doc()?.getElementById('employeePayrollRoot');if(!root)return;
-  if(state.loading){root.innerHTML='<div class="payroll-self-status info">Đang tải payroll từ máy chủ…</div>';return}
-  if(state.error){root.innerHTML='<div class="payroll-self-status error">Không thể tải payroll. Mã: '+esc(state.error)+'</div>';return}
-  if(!state.rows.length){root.innerHTML='<div class="payroll-self-grid"><div class="payroll-self-status ok">Chưa có payroll entry canonical cho tài khoản này.</div><div class="payroll-self-note">Không hiển thị số tiền khi chưa có canonical monetary evaluator. Attendance amount/rate cũ không phải payroll truth.</div></div>';return}
+  const d=doc(),view=d?.getElementById('view-payroll'),root=d?.getElementById('employeePayrollRoot');if(!root||!view)return;
+  if(state.loading){view.dataset.payrollUiState='loading';root.innerHTML='<div class="employee-people-state info" data-payroll-loading="1" role="status">Đang tải payroll canonical từ máy chủ…</div>';return}
+  if(state.error){
+    view.dataset.payrollUiState='error';
+    root.innerHTML='<div class="employee-people-state error" data-payroll-error="1" role="alert"><strong>Không thể tải payroll.</strong><span>Mã: '+esc(state.error)+'</span><button class="m-button m-button--secondary" type="button" data-payroll-retry>Thử lại</button></div>';
+    root.querySelector('[data-payroll-retry]')?.addEventListener('click',()=>refresh());
+    return;
+  }
+  if(!state.rows.length){view.dataset.payrollUiState='empty';root.innerHTML='<div class="payroll-self-grid"><div class="employee-people-state empty" data-payroll-empty="1"><strong>Chưa có payroll entry canonical cho tài khoản này.</strong><span>Khi máy chủ có projection hợp lệ, kỳ lương sẽ xuất hiện tại đây.</span></div><div class="payroll-self-note">Số tiền chưa hiển thị vì chưa có canonical monetary evaluator. Attendance amount/rate cũ không phải payroll truth.</div></div>';return}
+  view.dataset.payrollUiState='ready';
   const rows=state.rows.map(r=>{
     const st=String(r.state||'').toUpperCase(),klass=st.toLowerCase();
-    return '<tr><td>'+esc(r.period_start)+' → '+esc(r.period_end)+'</td><td>'+esc(minutesText(r.confirmed_work_minutes))+'</td><td>'+esc(r.confirmed_work_item_count)+'</td><td><span class="payroll-state '+esc(klass)+'">'+esc(stateText(st))+'</span></td><td>'+esc(r.payroll_revision)+'</td></tr>';
+    return '<article class="employee-payroll-entry"><div class="employee-payroll-entry__head"><div><span>Kỳ payroll</span><strong>'+esc(r.period_start)+' → '+esc(r.period_end)+'</strong><small>'+esc(r.confirmed_work_item_count)+' bản ghi giờ công đã xác nhận</small></div><span class="payroll-state '+esc(klass)+'">'+esc(stateText(st))+'</span></div><div class="employee-payroll-facts"><div><span>Giờ công xác nhận</span><strong>'+esc(minutesText(r.confirmed_work_minutes))+'</strong></div><div><span>Revision</span><strong>'+esc(r.payroll_revision)+'</strong></div></div></article>';
   }).join('');
-  root.innerHTML='<div class="payroll-self-grid"><div class="payroll-self-note">Trạng thái được hiển thị đúng theo payroll canonical. ESTIMATED không bao giờ được trình bày như FINALIZED. Số tiền chưa hiển thị vì chưa có canonical monetary evaluator.</div><div class="payroll-self-table-wrap"><table class="payroll-self-table"><thead><tr><th>Kỳ</th><th>Giờ công xác nhận</th><th>Số bản ghi</th><th>Trạng thái</th><th>Revision</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  root.innerHTML='<div class="payroll-self-grid"><div class="payroll-self-note">ESTIMATED không bao giờ được trình bày như FINALIZED. Số tiền chưa hiển thị vì chưa có canonical monetary evaluator.</div><div class="employee-payroll-list">'+rows+'</div></div>';
 }
 async function refresh(){
   if(!ensureUi())return;
