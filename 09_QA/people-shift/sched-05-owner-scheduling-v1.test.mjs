@@ -17,7 +17,7 @@ test("SCHED-05 Owner runtime reuses the canonical Manager scheduling writer",asy
   assert.doesNotMatch(runtime,/\/04_OWNER\/Workforce\/03-publish\/engine-v1\.js/);
   assert.match(runtime,/Lịch & can thiệp/);
   assert.match(runtime,/Enterprise oversight/);
-  assert.match(index,/owner-workforce-runtime\.html\?v=20260924-sched05/);
+  assert.match(index,/owner-workforce-runtime\.html\?v=20260927-ui2-011-correction1/);
 });
 
 test("SCHED-05 legacy Owner publish engine is compatibility-only and has zero mutation implementation",async()=>{
