@@ -10,6 +10,7 @@ const profile=read("06_EMPLOYEE/profile/engine-v1.js");
 const runtime=read("06_EMPLOYEE/runtime/employee-runtime-v1.html");
 const shell=read("02_CORE/ui/magasin-ui-v2-employee-shell.js");
 const css=read("02_CORE/ui/magasin-ui-v2-employee-people.css");
+const peopleShiftGate=read("09_QA/people-shift/browser-e2e.mjs");
 const rpcs=source=>[...source.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 
 const assertNoBrowserDml=source=>{
@@ -29,6 +30,7 @@ test("UI2-009 loads one namespaced Employee People presentation layer and keeps 
   assert.match(css,/@media \(max-width:430px\)/);
   assert.match(css,/safe-area-inset-bottom/);
   assert.doesNotMatch(css,/(^|\n)\s*:root\s*\{/m);
+  assert.match(peopleShiftGate,/ui2-009-employee-people-browser\.mjs/);
   for(const marker of [
     'magasin-ui-v2-employee-today.css?v=20260925-ui2-006',
     'magasin-ui-v2-employee-schedule.css?v=20260926-ui2-007',
