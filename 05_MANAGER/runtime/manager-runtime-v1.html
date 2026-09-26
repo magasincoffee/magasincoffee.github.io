@@ -30,7 +30,6 @@
       addCss('/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004');
       addCss('/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004');
       addCss('/02_CORE/ui/magasin-ui-v2-shell.css?v=20260925-ui2-004');
-      addCss('/02_CORE/ui/magasin-ui-v2-manager-operations.css?v=20260926-ui2-011');
       addCss('/02_CORE/ui/magasin-ui-v2-manager.css?v=20260926-ui2-011');
       d.body.dataset.magasinUiV2='';
       d.body.dataset.magasinShellV2='';
@@ -39,7 +38,6 @@
       d.defaultView.__MAGASIN_UI_V2_SHELL__={role:'MANAGER',mode:'legacy-manager'};
       load('/05_MANAGER/runtime/compat/router/manager-route-state-v2.js?v=20260903-manager-structure1');
       load('/02_CORE/ui/magasin-ui-v2-shell.js?v=20260925-ui2-004');
-      load('/02_CORE/ui/magasin-ui-v2-manager-operations.js?v=20260926-ui2-011');
       load('/02_CORE/ui/magasin-ui-v2-manager.js?v=20260926-ui2-011');
       const waitForSupabase=()=>{
         if(window.supabase?.createClient || d.defaultView?.supabase?.createClient){
