@@ -128,8 +128,17 @@ function activate(view){
  if(v==='dashboard')setTimeout(()=>{renderToday();void refreshToday()},0);
  return true;
 }
+function legacyTopRoute(){
+ try{
+  let w=window;for(let i=0;i<6&&w.parent&&w.parent!==w;i++)w=w.parent;
+  const p=String(w.location.pathname||'').replace(/\/+$/,'').toLowerCase();
+  if(p==='/05_manager/cong-viec')return 'tasks';
+ }catch(_){}
+ return null;
+}
 function applyHash(attempt=0){
- const v=normalize(location.hash)||'dashboard';
+ const compat=legacyTopRoute();
+ const v=compat||normalize(location.hash)||'dashboard';
  if(!routable.has(v)){history.replaceState(null,'',location.pathname+location.search+'#dashboard');return activate('dashboard')}
  if(!activate(v)&&attempt<12)setTimeout(()=>applyHash(attempt+1),60);
 }
