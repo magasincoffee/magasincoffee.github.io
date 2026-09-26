@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>UI2-011 Manager Shell + Today QA</title>
+<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004">
+<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004">
+<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20260925-ui2-004">
+<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-manager.css?v=20260926-ui2-011">
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-width:0;max-width:100%;background:#f4f7fb;font:14px Inter,system-ui,sans-serif}
+.app{min-height:100vh}.sidebar{position:fixed;left:0;top:0;bottom:0;width:270px;background:#fff}.nav{display:grid}.main{min-width:0}.header{height:68px}.content{min-width:0}.view{display:none}.view.active{display:block}.card{padding:16px;border:1px solid #EAECF0;border-radius:14px;background:#fff}.btn{min-height:40px}
+</style>
+</head>
+<body data-magasin-ui-v2 data-magasin-shell-v2 data-magasin-shell-role="manager" data-magasin-shell-mode="legacy-manager">
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="brand">MAGASIN</div><div class="brand-sub">Quản lý</div>
+  <nav class="nav">
+    <button class="active" data-view="dashboard">Tổng quan</button>
+    <button data-view="staff">Nhân sự</button>
+    <button data-view="workforce">Workforce</button>
+    <button data-view="schedule">Lịch làm</button>
+    <button data-view="tasks">Công việc</button>
+    <button data-view="kpi">KPI</button>
+    <button data-view="swap">Đổi ca</button>
+    <button data-view="attendance">Chấm công</button>
+    <button data-view="academy">Academy</button>
+    <button data-view="settings">Cài đặt</button>
+    <button data-view="payroll-self-check">Công / Lương</button>
+  </nav>
+  <b id="profileName">Manager QA</b><span id="profileMeta">Quản lý · CN-QA</span><button id="logoutBtn">Đăng xuất</button>
+</aside>
+<main class="main">
+<header class="header"><div class="header-left"><button id="menuBtn">☰</button><div><div id="pageTitle">Hôm nay</div><div id="pageSub">Action Center</div></div></div><div class="header-right"></div></header>
+<section class="content">
+  <section class="view active" id="view-dashboard"></section>
+  <section class="view" id="view-staff"><div class="card">Nhân viên canonical module</div></section>
+  <section class="view" id="view-workforce"><div class="panel" id="panel-publish"><div class="card">Xếp lịch canonical module</div></div></section>
+  <section class="view" id="view-schedule"><div class="card">Lịch làm canonical module</div></section>
+  <section class="view" id="view-tasks"><div class="card">Legacy task wrapper</div></section>
+  <section class="view" id="view-kpi"><div class="card">Legacy KPI demo</div></section>
+  <section class="view" id="view-swap"><div class="card">Swap/Give canonical module</div></section>
+  <section class="view" id="view-attendance"><div class="card">Attendance canonical module</div></section>
+  <section class="view" id="view-academy"><div class="card">Legacy Academy demo</div></section>
+  <section class="view" id="view-settings"><div class="card">Legacy Settings wrapper</div></section>
+  <section class="view" id="view-payroll-self-check"><div class="card">Payroll self-check canonical module</div></section>
+</section>
+</main>
+</div>
+<script>
+(()=>{
+  const allowed=new Set(['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check']);
+  const calls=[];
+  const state={
+    mode:'ready',
+    revision:Number(localStorage.getItem('ui2-011-revision')||1),
+    shift:{swaps:[{id:'swap-qa'}],gives:[{id:'give-qa'}],error:null,loading:false},
+    attendance:{rows:[{attendance_id:'att-qa',status:'NEEDS_REVIEW'}],error:null,loading:false},
+    schedule:{generationStatus:'REVIEWED',availability:[{id:'av-1'}],assignments:[{id:'as-1'}],busy:false}
+  };
+  let holdResolve=null;
+  const waitHold=()=>state.mode==='loading'?new Promise(r=>{holdResolve=r}):Promise.resolve();
+  function applyMode(){
+    const rev=state.revision;
+    if(state.mode==='empty'){
+      state.shift={swaps:[],gives:[],error:null,loading:false,revision:rev};
+      state.attendance={rows:[],error:null,loading:false,revision:rev};
+      state.schedule={generationStatus:'PUBLISHED',availability:[],assignments:[],busy:false,revision:rev};
+    }else if(state.mode==='error'){
+      state.shift={swaps:[],gives:[],error:'SHIFT_QA_ERROR',loading:false,revision:rev};
+      state.attendance={rows:[],error:'ATTENDANCE_QA_ERROR',loading:false,revision:rev};
+      state.schedule={generationStatus:'DRAFT',availability:[],assignments:[],busy:false,revision:rev};
+    }else{
+      state.shift={swaps:Array.from({length:rev},(_,i)=>({id:'swap-'+i})),gives:[{id:'give-qa'}],error:null,loading:false,revision:rev};
+      state.attendance={rows:Array.from({length:rev},(_,i)=>({attendance_id:'att-'+i,status:'NEEDS_REVIEW'})),error:null,loading:false,revision:rev};
+      state.schedule={generationStatus:'REVIEWED',availability:Array.from({length:rev},(_,i)=>({id:'av-'+i})),assignments:[{id:'as-1'}],busy:false,revision:rev};
+    }
+  }
+  function api(name,key){
+    return {
+      async refresh(){calls.push({kind:'refresh',name,revision:state.revision});await waitHold();applyMode();return true},
+      getState(){return structuredClone(state[key])}
+    };
+  }
+  function install(){
+    if(state.mode==='not-connected'){
+      delete window.MAGASIN_MANAGER_SHIFT_CHANGE;
+      delete window.MAGASIN_MANAGER_ATTENDANCE_REVIEW;
+      delete window.MAGASIN_MANAGER_SCHEDULE_DRAFT;
+      return;
+    }
+    window.MAGASIN_MANAGER_SHIFT_CHANGE=api('shift','shift');
+    window.MAGASIN_MANAGER_ATTENDANCE_REVIEW=api('attendance','attendance');
+    window.MAGASIN_MANAGER_SCHEDULE_DRAFT=api('schedule','schedule');
+  }
+  applyMode();install();
+  window.__UI2_011_QA={
+    calls,state,
+    setMode(mode){state.mode=mode;applyMode();install()},
+    setRevision(n){state.revision=Number(n);localStorage.setItem('ui2-011-revision',String(n));applyMode();install()},
+    release(){if(holdResolve){const r=holdResolve;holdResolve=null;state.mode='ready';r()}},
+    install
+  };
+
+  const titles={dashboard:'Hôm nay',staff:'Nhân viên',workforce:'Xếp lịch',schedule:'Lịch làm',swap:'Đổi / Cho ca',attendance:'Chấm công','payroll-self-check':'Công / Lương'};
+  function openView(view){
+    if(!allowed.has(view)&&!['tasks','kpi','academy','settings'].includes(view))return;
+    document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+view));
+    document.querySelectorAll('.sidebar [data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));
+    document.getElementById('pageTitle').textContent=titles[view]||view;
+  }
+  document.querySelectorAll('.sidebar [data-view]').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.view)));
+  window.addEventListener('hashchange',()=>{const v=location.hash.slice(1);if(v)openView(v)});
+  const direct=location.hash.slice(1);if(direct)openView(direct);
+})();
+</script>
+<script>window.__MAGASIN_UI_V2_SHELL__={role:'MANAGER',mode:'legacy-manager'};</script>
+<script src="/02_CORE/ui/magasin-ui-v2-shell.js?v=20260925-ui2-004"></script>
+<script src="/02_CORE/ui/magasin-ui-v2-manager.js?v=20260926-ui2-011"></script>
+<script src="/05_MANAGER/Workforce/ui-consolidation-v1.js?v=20260926-ui2-011"></script>
+</body>
+</html>
