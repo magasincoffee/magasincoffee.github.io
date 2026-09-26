@@ -42,7 +42,7 @@ test("UI2-011 Manager Today supersedes demo KPI hierarchy with fail-closed Actio
   for(const fake of ["49,2tr","2.410","4,7 / 5","18 nhân sự","1 request đổi ca","3 nhân viên chưa đăng ký"])assert.ok(!dashboard.includes(fake),fake);
   assert.match(consolidation,/Action Center/);
   assert.match(consolidation,/NOT_CONNECTED/);
-  assert.match(consolidation,/data-manager-today-state/);
+  assert.match(consolidation,/managerTodayState/);
   assert.match(consolidation,/phase='loading'/);
   assert.match(consolidation,/phase=errors\.length\?'error':todayState\.missing\.length\?'not-connected':'ready'/);
 });
@@ -56,22 +56,24 @@ test("UI2-011 Today delegates only to existing readers and source navigation, ne
   assert.doesNotMatch(consolidation,/approve_shift|reject_shift|review_attendance|publish_schedule_generation|replace_schedule_generation_assignments/);
 });
 
-test("UI2-011 touched domain modules only add read-only state exposure and preserve RPC inventory",()=>{
+test("UI2-011 preserves Manager domain module RPC inventories and derives Today state read-only",()=>{
   assert.deepEqual(rpcs(swap),["list_shift_swap_requests_v1","list_shift_give_requests_v1"]);
   for(const writer of ["approve_shift_swap","reject_shift_swap","approve_shift_give","reject_shift_give"])assert.ok(swap.includes("'"+writer+"'"),writer);
-  assert.match(swap,/getState:snapshot/);
   assert.deepEqual(rpcs(attendance),["get_manager_accessible_stores","list_manager_attendance_review_v1","review_attendance_v1"]);
-  assert.match(attendance,/loading:state\.loading,error:state\.error,message:state\.message/);
   assert.equal((swap.match(/createClient\s*\(/g)||[]).length,1);
   assert.equal((attendance.match(/createClient\s*\(/g)||[]).length,1);
   assert.doesNotMatch(swap,/\.from\s*\(/);
   assert.doesNotMatch(attendance,/\.from\s*\(/);
+  assert.match(consolidation,/function shiftSnapshot\(\)/);
+  assert.match(consolidation,/function attendanceSnapshot\(\)/);
+  assert.match(consolidation,/\.js-swap-approve/);
+  assert.match(consolidation,/\.js-give-approve/);
 });
 
 test("UI2-011 loader changes are cache/presentation-only and add no business RPC",()=>{
   assert.deepEqual(rpcs(engine),[]);
-  assert.match(engine,/swap-approval-v1\.js\?v=20260926-ui2-011/);
-  assert.match(engine,/attendance-review-v1\.js\?v=20260926-ui2-011/);
+  assert.match(engine,/swap-approval-v1\.js\?v=20260918-task032/);
+  assert.match(engine,/attendance-review-v1\.js\?v=20260922-task100/);
   assert.match(engine,/ui-consolidation-v1\.js\?v=20260926-ui2-011/);
   assert.match(runtime,/manager-shell-v1\.html\?v=20260926-ui2-011/);
   assert.match(runtime,/engine-v1\.js\?v=20260926-ui2-011/);
