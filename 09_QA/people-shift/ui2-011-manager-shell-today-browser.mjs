@@ -224,7 +224,9 @@ await check("ui2_011_today_actions_delegate_without_writer_calls",async()=>{
 });
 
 await check("ui2_011_route_back_forward_reload_reconciles_today_truth",async()=>{
+  await page.setViewportSize({width:1280,height:900});
   f=shellFrame();
+  await f.locator(".m-shell-v2-sidebar").waitFor({state:"visible",timeout:10000});
   await f.locator('.m-shell-v2-nav__item[data-shell-key="workforce"]').click();
   await page.waitForURL(/\/05_MANAGER\/Workforce\/$/,{timeout:10000});
   await f.locator("#view-workforce.active").waitFor();
