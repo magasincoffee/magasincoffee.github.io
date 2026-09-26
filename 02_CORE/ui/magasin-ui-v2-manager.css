@@ -344,7 +344,9 @@ body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2
     grid-column: 2;
     justify-self: start;
   }
-  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2 button {
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2 button,
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-nav__item,
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-logout {
     min-height: 44px;
   }
 }
