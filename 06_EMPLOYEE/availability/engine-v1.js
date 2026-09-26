@@ -163,7 +163,7 @@ async function register(event){
     const q=await C.supabase.rpc('save_my_availability',{p_availability_id:null,p_work_date:day,p_start_time:start,p_end_time:end,p_availability_type:'AVAILABLE',p_preferred_store_id:target.id,p_note:null});
     if(q.error)throw q.error;
     C.ui.toast('Đã lưu đăng ký lịch làm.','success');
-    const ok=await load({preserveLoading:true});
+    const ok=await load();
     if(ok)setUiState('success','Đã đăng ký lịch làm. Giá trị hiện tại đã được tải lại.');
   }catch(_){
     setUiState('error','Đăng ký thất bại. Vui lòng thử lại.',true);
@@ -187,7 +187,7 @@ async function remove(id,button){
     const q=await C.supabase.rpc('delete_my_availability',{p_availability_id:id});
     if(q.error)throw q.error;if(q.data!==true)throw new Error('DELETE_NOT_CONFIRMED');
     C.ui.toast('Đã xóa khoảng thời gian đăng ký.','success');
-    const ok=await load({preserveLoading:true});
+    const ok=await load();
     if(ok)setUiState('success','Đã xóa khoảng thời gian. Giá trị hiện tại đã được tải lại.');
   }catch(_){
     setUiState('error','Không thể xóa đăng ký lịch. Vui lòng thử lại.',true);
