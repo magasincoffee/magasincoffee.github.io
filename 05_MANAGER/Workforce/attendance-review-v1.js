@@ -101,6 +101,6 @@ async function act(card,decision){
 function capture(e){if(e.target.closest?.('[data-view="attendance"]'))setTimeout(()=>refresh(),0)}
 document.addEventListener('click',capture,true);
 async function boot(){if(!view()||!window.supabase?.createClient)return;await refresh()}
-window.MAGASIN_MANAGER_ATTENDANCE_REVIEW={refresh,getState:()=>({storeId:state.storeId,week:state.week,rows:state.rows.map(x=>({...x})),busy})};
+window.MAGASIN_MANAGER_ATTENDANCE_REVIEW={refresh,getState:()=>({storeId:state.storeId,week:state.week,rows:state.rows.map(x=>({...x})),loading:state.loading,error:state.error,busy})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
