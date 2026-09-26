@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>UI2-009 Employee People QA</title>
+<style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}#employeeApp{display:block;width:100%;height:100%;border:0;background:#f4f7fb}</style>
+</head>
+<body>
+<iframe id="employeeApp" title="UI2-009 Employee Attendance Payroll Profile QA"></iframe>
+<script>
+(()=>{
+  const calls=[];
+  const persistedName=localStorage.getItem('ui2-009-profile-name')||'Nguyễn An';
+  const state={
+    currentUser:'u-a',scheduleOwner:'u-a',attendanceError:false,payrollError:false,profileError:false,
+    profileName:persistedName,
+    attendance:[{attendance_id:'att-1',schedule_id:'sch-1',work_date:'2026-09-25',store_code:'CN-QA-A',store_name:'MAGASIN QA',planned_start:'08:00',planned_end:'12:00',status:'NEEDS_REVIEW',amount:999999,hourly_rate:999999}],
+    payroll:[
+      {payroll_entry_id:'pay-1',period_start:'2026-09-01',period_end:'2026-09-15',payroll_revision:'rev-7',state:'ESTIMATED',confirmed_work_item_count:3,confirmed_work_minutes:720},
+      {payroll_entry_id:'pay-2',period_start:'2026-09-16',period_end:'2026-09-30',payroll_revision:'rev-8',state:'FINALIZED',confirmed_work_item_count:2,confirmed_work_minutes:600}
+    ]
+  };
+  const addDays=(s,n)=>{const d=new Date(s+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+  const profileRow=()=>({employee_id:'u-a',username:'an.nguyen',full_name:state.profileName,phone:'0900000000',employee_role:'STAFF',profile_status:'ACTIVE',join_date:null,primary_store_id:'store-a',primary_store_code:'CN-QA-A',primary_store_name:'MAGASIN QA',employee_level:null,pay_rule_reference:null});
+  window.__UI2_009_QA={
+    calls,state,
+    transferAway(){state.scheduleOwner='u-b'},restoreOwned(){state.scheduleOwner='u-a'},
+    failAttendance(v=true){state.attendanceError=v},failPayroll(v=true){state.payrollError=v},failProfile(v=true){state.profileError=v},
+    setProfileName(v){state.profileName=v;localStorage.setItem('ui2-009-profile-name',v)},resetAttendance(){state.attendance=[]},
+    rpcNames(){return calls.filter(x=>x.kind==='rpc').map(x=>x.name)},
+    directTableCalls(){return calls.filter(x=>x.kind==='from')}
+  };
+  window.MAGASIN_CORE={
+    security:{escapeHtml:v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},
+    time:{time5:v=>String(v??'').slice(0,5),minutes:v=>{const s=String(v||'00:00').slice(0,5);return Number(s.slice(0,2))*60+Number(s.slice(3,5))}},
+    date:{monday:()=> '2026-09-21',addDays,formatDate:v=>String(v??'').slice(0,10)},
+    supabase:{
+      async rpc(name,args={}){
+        calls.push({kind:'rpc',name,args:structuredClone(args||{})});
+        if(name==='list_my_approved_schedules_v2'){
+          if(state.attendanceError)return {data:null,error:{message:'ATTENDANCE_QA_ERROR'}};
+          return {data:state.scheduleOwner===state.currentUser?[{schedule_id:'sch-1',work_date:'2026-09-25',start_time:'08:00',end_time:'12:00',store_id:'store-a',store_code:'CN-QA-A',store_name:'MAGASIN QA',status:'APPROVED',origin:'MANAGER'}]:[],error:null};
+        }
+        if(name==='get_my_attendance_v2')return state.attendanceError?{data:null,error:{message:'ATTENDANCE_QA_ERROR'}}:{data:state.attendance.map(x=>({...x})),error:null};
+        if(name==='submit_manual_time_attendance_v1'){
+          if(state.scheduleOwner!==state.currentUser)return {data:null,error:{message:'ATTENDANCE_NOT_CURRENT_OWNER'}};
+          return {data:{attendance_id:'att-1',schedule_id:'sch-1',status:'NEEDS_REVIEW',submission_status:'SUBMITTED',already_submitted:true},error:null};
+        }
+        if(name==='get_my_payroll_self_check_v1')return state.payrollError?{data:null,error:{message:'PAYROLL_QA_ERROR'}}:{data:state.payroll.map(x=>({...x})),error:null};
+        if(name==='get_my_employee_profile_v1')return state.profileError?{data:null,error:{message:'PROFILE_QA_ERROR'}}:{data:[profileRow()],error:null};
+        return {data:null,error:{message:'UNEXPECTED_QA_RPC:'+name}};
+      },
+      from(name){calls.push({kind:'from',name});throw new Error('DIRECT_TABLE_FORBIDDEN:'+name)}
+    }
+  };
+  window.MAGASIN_EMPLOYEE=window.MAGASIN_EMPLOYEE||{};
+  const allowed=new Set(['dashboard','schedule','attendance','swap','payroll','profile']);
+  const requested=allowed.has(location.hash.slice(1))?location.hash.slice(1):'attendance';
+  document.getElementById('employeeApp').src='/06_EMPLOYEE/app/employee-v40.html?qa=ui2-009#'+requested;
+})();
+</script>
+<script src="/06_EMPLOYEE/profile/engine-v1.js?v=20260926-ui2-009"></script>
+<script src="/06_EMPLOYEE/payroll/engine-v1.js?v=20260926-ui2-009"></script>
+<script src="/06_EMPLOYEE/attendance/engine-v1.js?v=20260926-ui2-009"></script>
+</body></html>
