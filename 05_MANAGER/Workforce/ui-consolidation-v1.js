@@ -12,9 +12,11 @@ function hideDeprecated(){
  document.getElementById('panel-demand')?.remove();
 }
 function rewriteToday(){
+ const delegated=window.MAGASIN_MANAGER_UI2_011;
+ if(delegated?.mountToday){delegated.mountToday();return}
  const root=document.getElementById('view-dashboard');if(!root||root.dataset.workforceTodayCanonical==='1')return;
  root.dataset.workforceTodayCanonical='1';
- root.innerHTML='<section class="card"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="margin:0">Hôm nay</h2><div class="muted" style="margin-top:5px">Đi thẳng tới các ngoại lệ và thao tác Workforce V1; không hiển thị số liệu demo làm business truth.</div></div><span class="badge blue">Workforce V1</span></div><div class="grid2" style="margin-top:16px"><button class="btn" data-workforce-jump="workforce">📅 Xếp lịch tuần</button><button class="btn" data-workforce-jump="swap">🔄 Đổi / cho ca</button><button class="btn" data-workforce-jump="attendance">⏱ Review chấm công</button><button class="btn" data-workforce-jump="staff">👥 Nhân viên</button><button class="btn" data-workforce-jump="payroll-self-check">💰 Công / Lương</button><button class="btn" data-workforce-jump="schedule">🗓 Lịch đã phát hành</button></div></section>';
+ root.innerHTML='<section class="card"><div><h2 style="margin:0">Hôm nay</h2><div class="muted" style="margin-top:5px">Action Center đang chờ Manager UI V2 presentation adapter. Không hiển thị KPI hoặc pending count demo.</div></div><div class="item" data-manager-today-fallback="NOT_CONNECTED" style="margin-top:14px"><b>NOT_CONNECTED</b><span>Các reader canonical sẽ được presentation adapter nối vào khi sẵn sàng.</span></div></section>';
 }
 function activate(view){
  const v=normalize(view);if(!allowed.has(v))return false;
