@@ -182,23 +182,23 @@ await page.setViewportSize({width:390,height:900});
 f=shellFrame();
 await check("ui2_011_loading_error_empty_not_connected_states",async()=>{
   await f.locator("#view-dashboard.active").waitFor();
-  await f.evaluate(()=>localStorage.setItem("ui2_011_mode","delay"));
-  await f.evaluate(()=>{void window.MAGASIN_MANAGER_TODAY_V2.refresh()});
+  await f.locator("body").evaluate(()=>localStorage.setItem("ui2_011_mode","delay"));
+  await f.locator("body").evaluate(()=>{void window.MAGASIN_MANAGER_TODAY_V2.refresh()});
   await f.locator('#view-dashboard[data-manager-today-state="loading"]').waitFor({timeout:3000});
   await f.locator('#view-dashboard[data-manager-today-state="ready"]').waitFor({timeout:10000});
 
-  await f.evaluate(()=>localStorage.setItem("ui2_011_mode","error"));
-  await f.evaluate(()=>window.MAGASIN_MANAGER_TODAY_V2.refresh());
+  await f.locator("body").evaluate(()=>localStorage.setItem("ui2_011_mode","error"));
+  await f.locator("body").evaluate(()=>window.MAGASIN_MANAGER_TODAY_V2.refresh());
   await f.locator('#view-dashboard[data-manager-today-state="error"] [data-manager-today-status][data-state="error"]').waitFor({timeout:10000});
   const errorText=await f.locator("[data-manager-today-status]").innerText();
 
-  await f.evaluate(()=>localStorage.setItem("ui2_011_mode","empty"));
-  await f.evaluate(()=>window.MAGASIN_MANAGER_TODAY_V2.refresh());
+  await f.locator("body").evaluate(()=>localStorage.setItem("ui2_011_mode","empty"));
+  await f.locator("body").evaluate(()=>window.MAGASIN_MANAGER_TODAY_V2.refresh());
   await f.locator('#view-dashboard[data-manager-today-state="ready"]').waitFor({timeout:10000});
   const emptyText=await f.locator("[data-manager-action-list]").innerText();
   ensure(emptyText.includes("Không có yêu cầu Swap/Give")&&emptyText.includes("Không có attendance"),emptyText);
 
-  await f.evaluate(()=>{
+  await f.locator("body").evaluate(()=>{
     delete window.MAGASIN_MANAGER_SHIFT_CHANGE;
     delete window.MAGASIN_MANAGER_ATTENDANCE_REVIEW;
     delete window.MAGASIN_MANAGER_SCHEDULE_DRAFT;
@@ -213,10 +213,10 @@ await check("ui2_011_loading_error_empty_not_connected_states",async()=>{
 await check("ui2_011_today_actions_delegate_without_writer_calls",async()=>{
   await page.reload({waitUntil:"networkidle",timeout:30000});
   f=await waitReady();
-  const before=await f.evaluate(()=>window.__UI2_011_CALLS.filter(x=>x.kind==="rpc").map(x=>x.name));
+  const before=await f.locator("body").evaluate(()=>window.__UI2_011_CALLS.filter(x=>x.kind==="rpc").map(x=>x.name));
   await f.locator('[data-manager-action-source="swap"]').click();
   await f.locator("#view-swap.active").waitFor({timeout:10000});
-  const after=await f.evaluate(()=>window.__UI2_011_CALLS.filter(x=>x.kind==="rpc").map(x=>x.name));
+  const after=await f.locator("body").evaluate(()=>window.__UI2_011_CALLS.filter(x=>x.kind==="rpc").map(x=>x.name));
   const writers=["approve_shift_swap","reject_shift_swap","approve_shift_give","reject_shift_give","review_attendance_v1","publish_schedule_generation","review_schedule_generation","replace_schedule_generation_assignments"];
   const newCalls=after.slice(before.length);
   ensure(!newCalls.some(x=>writers.includes(x)),JSON.stringify(newCalls));
@@ -244,7 +244,7 @@ await check("ui2_011_route_back_forward_reload_reconciles_today_truth",async()=>
   await page.goto(BASE+"/05_MANAGER/#dashboard",{waitUntil:"networkidle",timeout:30000});
   f=await waitReady();
   const before=await f.locator("[data-manager-today-summary]").innerText();
-  await f.evaluate(()=>localStorage.setItem("ui2_011_revision","2"));
+  await f.locator("body").evaluate(()=>localStorage.setItem("ui2_011_revision","2"));
   await page.reload({waitUntil:"networkidle",timeout:30000});
   f=await waitReady();
   const after=await f.locator("[data-manager-today-summary]").innerText();
@@ -254,7 +254,7 @@ await check("ui2_011_route_back_forward_reload_reconciles_today_truth",async()=>
 });
 
 await check("ui2_011_rpc_and_direct_table_diagnostics",async()=>{
-  const evidence=await f.evaluate(()=>({
+  const evidence=await f.locator("body").evaluate(()=>({
     rpc:window.__UI2_011_CALLS.filter(x=>x.kind==="rpc").map(x=>({name:x.name,args:x.args})),
     from:window.__UI2_011_CALLS.filter(x=>x.kind==="from").map(x=>x.name)
   }));
