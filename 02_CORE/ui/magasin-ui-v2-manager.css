@@ -1,0 +1,336 @@
+/*
+ * MAGASIN UI V2 — Manager operations shell + Today Action Center
+ * UI2-011 · presentation only
+ */
+@import url("./magasin-ui-v2-tokens.css");
+@import url("./magasin-ui-v2-primitives.css");
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] {
+  --m-shell-sidebar-width: 264px;
+  background: var(--m-color-neutral-50);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-sidebar {
+  background: #111C2E;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-nav__label {
+  color: #98A2B3;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-nav__item {
+  min-height: 42px;
+  border-radius: 11px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-nav__item[aria-current="page"],
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-nav__item[data-active="true"] {
+  background: rgba(255,255,255,.11);
+  box-shadow: inset 3px 0 0 var(--m-color-brand-500);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .m-shell-v2-topbar {
+  border-bottom-color: var(--m-border-default);
+  background: rgba(255,255,255,.98);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .content {
+  width: 100%;
+  max-width: 1440px;
+  padding: 28px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] #view-dashboard {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2 {
+  display: grid;
+  gap: 18px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2__hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid var(--m-border-default);
+  border-radius: 18px;
+  background: var(--m-color-surface);
+  box-shadow: var(--m-shadow-sm);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2__eyebrow {
+  margin-bottom: 5px;
+  color: var(--m-color-brand-700);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2__hero h2 {
+  margin: 0;
+  color: var(--m-color-neutral-950);
+  font-size: 24px;
+  line-height: 32px;
+  letter-spacing: -.02em;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2__hero p {
+  max-width: 720px;
+  margin: 6px 0 0;
+  color: var(--m-color-neutral-500);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2__refresh {
+  min-width: 112px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-center {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
+  gap: 18px;
+  min-width: 0;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-center__main,
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-center__aside {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--m-border-default);
+  border-radius: 16px;
+  background: var(--m-color-surface);
+  box-shadow: var(--m-shadow-sm);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-center__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-center__head h3 {
+  margin: 0;
+  color: var(--m-color-neutral-950);
+  font-size: 17px;
+  line-height: 24px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-center__head p {
+  margin: 3px 0 0;
+  color: var(--m-color-neutral-500);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-list {
+  display: grid;
+  gap: 10px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card {
+  width: 100%;
+  min-width: 0;
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 38px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 13px;
+  border: 1px solid var(--m-border-default);
+  border-radius: 13px;
+  background: var(--m-color-surface);
+  color: var(--m-color-neutral-950);
+  text-align: left;
+  font: inherit;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] button.manager-action-card {
+  cursor: pointer;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] button.manager-action-card:hover {
+  border-color: var(--m-border-strong);
+  background: var(--m-color-neutral-50);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card:focus-visible,
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2 button:focus-visible {
+  outline: var(--m-focus-outline);
+  outline-offset: var(--m-focus-offset);
+  box-shadow: var(--m-focus-ring);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card__icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--m-color-neutral-100);
+  color: var(--m-color-neutral-700);
+  font-size: 17px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card__copy {
+  min-width: 0;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card__title {
+  color: var(--m-color-neutral-950);
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 700;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card__detail {
+  margin-top: 2px;
+  color: var(--m-color-neutral-500);
+  font-size: 12px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card__status {
+  align-self: start;
+  min-width: max-content;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card[data-tone="attention"] .manager-action-card__icon {
+  background: var(--m-color-warning-soft);
+  color: var(--m-color-warning);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card[data-tone="danger"] .manager-action-card__icon {
+  background: var(--m-color-danger-soft);
+  color: var(--m-color-danger);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card[data-tone="ok"] .manager-action-card__icon {
+  background: var(--m-color-success-soft);
+  color: var(--m-color-success);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card[data-tone="info"] .manager-action-card__icon {
+  background: var(--m-color-info-soft);
+  color: var(--m-color-info);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-state {
+  display: grid;
+  gap: 5px;
+  padding: 13px;
+  border: 1px solid var(--m-border-default);
+  border-radius: 12px;
+  background: var(--m-color-neutral-50);
+  color: var(--m-color-neutral-700);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-state[data-state="loading"] {
+  border-color: #D8E5F4;
+  background: var(--m-color-info-soft);
+  color: var(--m-color-info);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-state[data-state="error"] {
+  border-color: #F3C7C3;
+  background: var(--m-color-danger-soft);
+  color: var(--m-color-danger);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-state[data-state="not-connected"] {
+  border-style: dashed;
+  color: var(--m-color-neutral-500);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-quick-links {
+  display: grid;
+  gap: 8px;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-quick-link {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--m-border-default);
+  border-radius: 10px;
+  background: var(--m-color-surface);
+  color: var(--m-color-neutral-700);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-quick-link:focus-visible {
+  outline: var(--m-focus-outline);
+  outline-offset: var(--m-focus-offset);
+  box-shadow: var(--m-focus-ring);
+}
+
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2__truth-note {
+  margin-top: 12px;
+  color: var(--m-color-neutral-500);
+  font-size: 11px;
+  line-height: 17px;
+}
+
+@media (max-width: 1024px) {
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .content {
+    padding: 22px;
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-center {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .content {
+    padding: 14px;
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2__hero {
+    padding: 16px;
+    flex-direction: column;
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2__refresh,
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-quick-link {
+    width: 100%;
+    min-height: 44px;
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-center__main,
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-center__aside {
+    padding: 14px;
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card {
+    min-height: 72px;
+    grid-template-columns: 38px minmax(0,1fr);
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-action-card__status {
+    grid-column: 2;
+    justify-self: start;
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .manager-today-v2 button {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] * {
+    scroll-behavior: auto !important;
+  }
+}
