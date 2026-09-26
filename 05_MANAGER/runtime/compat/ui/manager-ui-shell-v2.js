@@ -1,6 +1,24 @@
 /* MAGASIN UI V2 — Manager authenticated operations shell · UI2-011 */
 (function(window,document){
 'use strict';
+function resolveHostRole(){
+ const queryRole=String(new URLSearchParams(window.location.search).get('host')||'').toLowerCase();
+ if(queryRole==='owner'||queryRole==='manager')return queryRole;
+ const bodyRole=String(document.body?.dataset?.magasinShellRole||window.__MAGASIN_UI_V2_SHELL__?.role||'').toLowerCase();
+ if(bodyRole==='owner'||bodyRole==='manager')return bodyRole;
+ try{
+  let w=window;
+  for(let i=0;i<6;i++){
+   const p=String(w.location?.pathname||'').toLowerCase();
+   if(p.startsWith('/04_owner/workforce/'))return 'owner';
+   if(!w.parent||w.parent===w)break;
+   w=w.parent;
+  }
+ }catch(_){}
+ return null;
+}
+const resolvedHostRole=resolveHostRole();
+if(resolvedHostRole==='owner'){window.MAGASIN_MANAGER_UI_V2_011_OWNER_SKIPPED=true;return}
 if(window.MAGASIN_MANAGER_UI_V2_011)return;
 window.MAGASIN_MANAGER_UI_V2_011=true;
 const allowed=['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check'];
@@ -82,6 +100,8 @@ function build(){
  if(!document.getElementById('managerV2Drawer')){
    const drawer=document.createElement('aside');drawer.id='managerV2Drawer';drawer.className='manager-v2-drawer';drawer.setAttribute('aria-label','Điều hướng quản lý');
    const clone=source.cloneNode(true);clone.removeAttribute('id');clone.classList.remove('sidebar','manager-v2-sidebar-source');filterNav(clone);drawer.appendChild(clone);document.body.appendChild(drawer);
+   const clonedLogout=clone.querySelector('#logoutBtn');
+   if(clonedLogout){clonedLogout.removeAttribute('id');clonedLogout.dataset.managerV2Logout='1';clonedLogout.addEventListener('click',e=>{e.preventDefault();source.querySelector('#logoutBtn')?.click();closeDrawer()})}
    drawer.querySelectorAll('[data-view]').forEach(btn=>btn.addEventListener('click',()=>{source.querySelector('[data-view="'+CSS.escape(btn.dataset.view)+'"]')?.click();syncActive(btn.dataset.view);closeDrawer()}));
  }
  if(menu.dataset.bound!=='1'){menu.dataset.bound='1';menu.addEventListener('click',()=>{const drawer=document.getElementById('managerV2Drawer'),back=document.getElementById('managerV2Backdrop'),open=!drawer.classList.contains('open');drawer.classList.toggle('open',open);back.classList.toggle('open',open);menu.setAttribute('aria-expanded',String(open));if(open)drawer.querySelector('[data-view]:not([hidden])')?.focus()})}
