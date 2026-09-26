@@ -10,10 +10,7 @@ const validProjectionRow=r=>!!r&&!!String(r.employee_id||'').trim()&&['STAFF','E
 function el(id){return doc()?.getElementById(id)||null}
 function setValue(id,value){const x=el(id);if(x)x.value=value==null||value===''?'—':String(value)}
 function clearValues(){for(const id of IDS)setValue(id,'—')}
-function ensureCss(d){
-  if(!d||d.getElementById('magasin-ui-v2-employee-people-css'))return;
-  const link=d.createElement('link');link.id='magasin-ui-v2-employee-people-css';link.rel='stylesheet';link.href='/02_CORE/ui/magasin-ui-v2-employee-people.css?v=20260926-ui2-009';d.head.appendChild(link);
-}
+function ensureCss(){/* stylesheet is loaded by employee-v40.html */}
 function ensureUi(){
   const d=doc(),view=d?.getElementById('view-profile');if(!d||!view)return false;
   ensureCss(d);view.classList.add('employee-profile-v2');
