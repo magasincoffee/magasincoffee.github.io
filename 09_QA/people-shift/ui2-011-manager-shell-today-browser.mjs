@@ -243,6 +243,7 @@ await check("ui2_011_route_back_forward_reload_reconciles_today_truth",async()=>
   await page.waitForURL(/\/05_MANAGER\/Cham-cong\/$/,{timeout:10000});
   f=shellFrame();await f.locator("#view-attendance.active").waitFor({timeout:10000});
 
+  await f.locator("body").evaluate(()=>localStorage.setItem("ui2_011_mode","ready"));
   await page.goto(BASE+"/05_MANAGER/#dashboard",{waitUntil:"networkidle",timeout:30000});
   f=await waitReady();
   const before=await f.locator("[data-manager-today-summary]").innerText();
