@@ -30,10 +30,7 @@ function statusText(s){
   return m[String(s||'').toUpperCase()]||String(s||'Chưa gửi');
 }
 function panel(){return doc()?.querySelector('#view-attendance .attendance-entry-grid .panel:first-child')}
-function injectCss(d){
-  if(!d||d.getElementById('magasin-ui-v2-employee-people-css'))return;
-  const link=d.createElement('link');link.id='magasin-ui-v2-employee-people-css';link.rel='stylesheet';link.href='/02_CORE/ui/magasin-ui-v2-employee-people.css?v=20260926-ui2-009';d.head.appendChild(link);
-}
+function injectCss(){/* stylesheet is loaded by employee-v40.html */}
 function view(){return doc()?.getElementById('view-attendance')||null}
 function setUiState(name){const v=view();if(v)v.dataset.attendanceUiState=name}
 function setMessage(text,type='info',code=''){
