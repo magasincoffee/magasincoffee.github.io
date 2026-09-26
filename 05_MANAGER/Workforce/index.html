@@ -22,7 +22,7 @@
     if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/06_EMPLOYEE/');return}
     const f=document.getElementById('app');
     const allowedRouteHash=new Set(['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check']);const routeHash=allowedRouteHash.has(location.hash.slice(1))?location.hash:'';
-    f.src='/05_MANAGER/runtime/manager-runtime-v1.html?v=20260924-sched04'+routeHash;
+    f.src='/05_MANAGER/runtime/manager-runtime-v1.html?v=20260927-ui2-011-correction1'+routeHash;
     f.hidden=false;
   }catch(e){
     console.error('Manager route access failed',e);
