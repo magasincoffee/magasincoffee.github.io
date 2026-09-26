@@ -46,12 +46,14 @@
 (()=>{
  const states={
   shift:{swaps:[{id:'swap-1'}],gives:[{id:'give-1'}],loading:false,error:null},
-  attendance:{rows:[{id:'att-1',status:'NEEDS_REVIEW'}],loading:false,error:null},
+  attendance:{rows:[{id:'att-normal',status:'NORMAL'},{id:'att-review',status:'NEEDS_REVIEW'},{id:'att-submitted',status:'SUBMITTED'}],loading:false,error:null},
   availability:{rows:[{id:'av-1'},{id:'av-2'},{id:'av-3'}],loading:false,error:null},
   schedule:{rows:[{id:'s1'},{id:'s2'},{id:'s3'},{id:'s4'}],loading:false,lastError:null}
  };
  const clone=v=>structuredClone(v);
- const api=(key)=>({refresh:async()=>clone(states[key]),getState:()=>clone(states[key])});
+ const refreshCalls={shift:0,attendance:0,availability:0,schedule:0},refreshWaiters=[];let refreshHold=false,logoutCalls=0,routeWrites=0;
+ const waitForRefreshRelease=()=>refreshHold?new Promise(resolve=>refreshWaiters.push(resolve)):Promise.resolve();
+ const api=(key)=>({refresh:async()=>{refreshCalls[key]++;await waitForRefreshRelease();return clone(states[key])},getState:()=>clone(states[key])});
  window.MAGASIN_MANAGER_SHIFT_CHANGE=api('shift');
  window.MAGASIN_MANAGER_SWAP_APPROVAL=window.MAGASIN_MANAGER_SHIFT_CHANGE;
  window.MAGASIN_MANAGER_ATTENDANCE_REVIEW=api('attendance');
@@ -65,20 +67,29 @@
   document.querySelectorAll('.sidebar [data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));
   if(titles[v]){document.getElementById('pageTitle').textContent=titles[v][0];document.getElementById('pageSub').textContent=titles[v][1]}
  }
+ const canonicalRoutes=new Set(['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check']);
+ document.addEventListener('click',e=>{const b=e.target.closest?.('.sidebar [data-view]');const v=b?.dataset?.view;if(!canonicalRoutes.has(v))return;const next='#'+v;if(location.hash!==next){routeWrites++;history.pushState({qaCanonicalRouteBridge:true},'',next)}},true);
+ const applyCanonicalRoute=()=>{const v=String(location.hash||'#dashboard').slice(1);if(canonicalRoutes.has(v))openView(v)};
+ window.addEventListener('popstate',applyCanonicalRoute);window.addEventListener('hashchange',applyCanonicalRoute);
  document.querySelectorAll('.sidebar [data-view]').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.view)));
+ document.getElementById('logoutBtn').onclick=()=>{logoutCalls++};
  window.__UI2_011_QA={
    states,
    setMode(mode){
     if(mode==='loading'){for(const k of Object.keys(states)){states[k].loading=true;states[k].error=null}}
-    if(mode==='error'){states.shift.loading=false;states.shift.error='SHIFT_QA_ERROR';states.attendance.loading=false;states.attendance.error='ATTENDANCE_QA_ERROR'}
+    if(mode==='error'){states.shift.loading=false;states.shift.error='SHIFT_QA_ERROR';states.attendance.loading=false;states.attendance.error='ATTENDANCE_QA_ERROR';states.availability.loading=false;states.availability.error='AVAILABILITY_QA_ERROR'}
     if(mode==='empty'){states.shift={swaps:[],gives:[],loading:false,error:null};states.attendance={rows:[],loading:false,error:null};states.availability={rows:[],loading:false,error:null};states.schedule={rows:[],loading:false,lastError:null}}
    },
+   setRefreshHold(value){refreshHold=!!value;if(!refreshHold){for(const resolve of refreshWaiters.splice(0))resolve()}},
+   getRefreshCalls(){return clone(refreshCalls)},
+   getLogoutCalls(){return logoutCalls},
+   getRouteWrites(){return routeWrites},
    disconnectShift(){delete window.MAGASIN_MANAGER_SHIFT_CHANGE;delete window.MAGASIN_MANAGER_SWAP_APPROVAL},
    restoreShift(){window.MAGASIN_MANAGER_SHIFT_CHANGE=api('shift');window.MAGASIN_MANAGER_SWAP_APPROVAL=window.MAGASIN_MANAGER_SHIFT_CHANGE},
    openView
  };
 })();
 </script>
-<script src="/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260926-ui2-011"></script>
-<script src="/05_MANAGER/Workforce/ui-consolidation-v1.js?v=20260926-ui2-011"></script>
+<script src="/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260927-ui2-011-correction1"></script>
+<script src="/05_MANAGER/Workforce/ui-consolidation-v1.js?v=20260927-ui2-011-correction1"></script>
 </body></html>
