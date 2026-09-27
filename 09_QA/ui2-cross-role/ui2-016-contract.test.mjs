@@ -19,6 +19,17 @@ test("UI2-016 Manager authenticated shell enters touch drawer at 1024",()=>{
   assert.match(js,/\.manager-v2-header button\{min-width:44px!important;min-height:44px!important\}/);
 });
 
+test("UI2-016 Manager Today Scheduling Operations use 1024 touch breakpoints",()=>{
+  for(const p of [
+    "05_MANAGER/Workforce/ui-consolidation-v1.js",
+    "05_MANAGER/Workforce/manager-scheduling-ui2-v1.js",
+    "05_MANAGER/Workforce/manager-operations-ui2-v1.js"
+  ]) assert.match(read(p),/@media\(max-width:1024px\)/,p);
+  const engine=read("05_MANAGER/Workforce/engine-v1.js");
+  for(const p of ["ui-consolidation-v1.js","manager-scheduling-ui2-v1.js","manager-operations-ui2-v1.js"])
+    assert.ok(engine.includes(p+"?v=20260927-ui2-016"),p);
+});
+
 test("UI2-016 shared visual vocabulary remains canonical",()=>{
   const tokens=read("02_CORE/ui/magasin-ui-v2-tokens.css");
   const primitives=read("02_CORE/ui/magasin-ui-v2-primitives.css");
