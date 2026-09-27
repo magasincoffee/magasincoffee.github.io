@@ -98,7 +98,7 @@ test("TASK-104 Manager UI is RPC-only, read-only, store scoped and does not gran
   assert.doesNotMatch(engine,/\.from\(['"]payroll_entries['"]\)/);
   assert.doesNotMatch(engine,/review_payroll|finalize_payroll|mark_payroll_paid|PAYROLL_AUTHORIZED/i);
   assert.match(engine,/PAYROLL_REVIEW và mọi state transition vẫn yêu cầu explicit permission riêng/);
-  assert.match(wiring,/payroll-self-check-v1\.js\?v=20260923-task104/);
+  assert.match(wiring,/payroll-self-check-v1\.js\?v=20260927-ui2-013/);
 });
 
 test("TASK-104 canonical contract preserves exact-state display and unresolved monetary boundary",async()=>{
