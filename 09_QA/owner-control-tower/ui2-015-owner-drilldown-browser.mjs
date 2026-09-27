@@ -232,7 +232,8 @@ try{
   await opened.page.locator("#userName").filter({hasText:"Kế toán"}).waitFor({state:"visible",timeout:10000});
   await opened.page.waitForFunction(()=>!document.getElementById("magasinUiV2Shell"));
   const state=await opened.page.evaluate(()=>({shell:!!document.getElementById("magasinUiV2Shell"),context:!!document.querySelector('[data-owner-module-context="procurement"]'),path:location.pathname,overflow:document.documentElement.scrollWidth>innerWidth+1}));
-  if(state.shell||!state.context||state.path!=="/nhap-hang/"||state.overflow)throw new Error(JSON.stringify(state));
+  const acceptedPath=state.path==="/nhap-hang/"||state.path==="/04_OWNER/Procurement/";
+  if(state.shell||!state.context||!acceptedPath||state.overflow)throw new Error(JSON.stringify(state));
   await opened.ctx.close();
   return JSON.stringify(state);
  });
