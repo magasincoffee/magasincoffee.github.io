@@ -37,6 +37,20 @@ jobs:
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify UI2-017 executable equivalence to exact main
+        run: |
+          git diff --exit-code f98cfb15a47bbb66ad39c71348bb2668cf174364 HEAD -- \
+            02_CORE \
+            03_PLATFORM \
+            04_OWNER \
+            05_MANAGER \
+            06_EMPLOYEE \
+            07_DATABASE \
+            nhap-hang
+          echo "UI2_017_EXECUTABLE_DRIFT=NONE"
 
       - uses: actions/setup-node@v4
         with:
@@ -107,12 +121,18 @@ jobs:
           QA_OUT: qa-artifacts/control-tower
         run: node 09_QA/owner-control-tower/browser-e2e.mjs
 
+      - name: Run UI2-017 cold reload closure gate
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+          QA_OUT: qa-artifacts/ui2-cross-role
+        run: node 09_QA/ui2-cross-role/ui2-017-cold-reload-closure-browser.mjs
+
       - name: Build UI2-016 cross-role matrix
         env:
           QA_ROOT: qa-artifacts
         run: node 09_QA/ui2-cross-role/ui2-016-build-matrix.mjs
 
-      - name: Upload UI2-016 cross-role artifacts
+      - name: Upload UI2-016/UI2-017 cross-role artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
