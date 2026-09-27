@@ -8,6 +8,7 @@ on:
       - '04_OWNER/Access/**'
       - '02_CORE/ui/magasin-ui-v2-employee-shell.js'
       - '06_EMPLOYEE/**'
+      - 'nhap-hang/**'
       - '09_QA/auth/**'
       - '01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_AUTH_PROD_*'
       - '.github/workflows/auth-prod-tests.yml'
@@ -17,6 +18,7 @@ on:
       - '04_OWNER/Access/**'
       - '02_CORE/ui/magasin-ui-v2-employee-shell.js'
       - '06_EMPLOYEE/**'
+      - 'nhap-hang/**'
       - '09_QA/auth/**'
       - '01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_AUTH_PROD_*'
       - '.github/workflows/auth-prod-tests.yml'
@@ -60,6 +62,7 @@ jobs:
         run: |
           node --check 09_QA/auth/auth-prod-005-credentialed-production-smoke.mjs
           node --test 09_QA/auth/auth-prod-005-active-logout-contract.test.mjs
+          node --test 09_QA/auth/auth-prod-005-accountant-logout-contract.test.mjs
           sed '/^[[:space:]]*--/d' 09_QA/auth/auth-prod-005-production-readonly.sql > /tmp/auth-prod-005-readonly.sql
           if grep -Eiq '\b(insert|update|delete|alter|drop|create|truncate|grant|revoke)\b' /tmp/auth-prod-005-readonly.sql; then
             echo 'AUTH-PROD-005 reconciliation SQL is not read-only' >&2
@@ -133,6 +136,8 @@ jobs:
           AUTH_PROD_BASE_URL: https://magasincoffee.github.io
           AUTH_PROD_ACTIVE_USERNAME: ${{ secrets.PROCUREMENT_QA_USERNAME }}
           AUTH_PROD_ACTIVE_PASSWORD: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
+          AUTH_PROD_REQUIRE_ACTIVE_LOGOUT: ${{ github.event_name == 'push' }}
+          AUTH_PROD_RUN_RECOVERY_REQUEST: ${{ github.event_name == 'push' }}
           AUTH_PROD_PENDING_USERNAME: ${{ secrets.AUTH_PROD_PENDING_USERNAME }}
           AUTH_PROD_PENDING_PASSWORD: ${{ secrets.AUTH_PROD_PENDING_PASSWORD }}
         run: node 09_QA/auth/auth-prod-005-credentialed-production-smoke.mjs
