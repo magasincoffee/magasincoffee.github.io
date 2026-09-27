@@ -37,7 +37,7 @@ The UI2-017 branch is required to remain executable-equivalent to that SHA. UI2-
 | UI2-014 | #321 | `7716b17012bd1f74d49fe0a749bff68b45f39c7a` | `2a341ad8aaecb67feab35731f660ffb28fa17bf6` | ACCEPTED / MERGED — Owner Overview + Attention |
 | UI2-015 | #322 | `f6bada0df5bcfb88a3c84b0716694a06ab5713c4` | `329e0797e313328db5834459d49cff3e99fd77fd` | ACCEPTED / MERGED — Owner drill-down workspace |
 | UI2-016 | #323 | `3fc5389513edab8d1415ed0417f3632caa3da7db` | `f98cfb15a47bbb66ad39c71348bb2668cf174364` | ACCEPTED / MERGED — cross-role responsive/a11y consistency |
-| UI2-017 | PR pending at document creation | branch `ui2/ui2-017-exact-main-closure` | **NOT MERGED** | EXECUTOR CLOSURE EVIDENCE IN PROGRESS / AWAITING PLANNER VERIFY |
+| UI2-017 | #324 | branch `ui2/ui2-017-exact-main-closure` | **NOT MERGED** | EXECUTOR CLOSURE EVIDENCE IN PROGRESS / AWAITING PLANNER VERIFY |
 
 No later UI2 task exists after UI2-017.
 
