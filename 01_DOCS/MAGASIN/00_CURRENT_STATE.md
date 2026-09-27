@@ -1,6 +1,6 @@
 # MAGASIN — Current State
 
-Last updated: 2026-09-21
+Last updated: 2026-09-27
 
 ## Current program
 
@@ -19,6 +19,21 @@ Canonical architecture:
 - `02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`;
 - `02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`;
 - `02_PROFITABILITY_CASH/TASK_067_OPERATING_COST_TRUTH_CONTRACT_V1_EVIDENCE.md`.
+
+## P0 production blocker — AUTH-PROD
+
+**Search key:** `AUTH-PROD`  
+**Track:** `MAGASIN_AUTH_PRODUCTION_READINESS_V1`  
+**State:** `ACTIVE / PRODUCTION_READY=NO`
+
+UI/UX V2 is presentation-closed, but a production review on 2026-09-27 found unresolved real Auth/onboarding workflow defects: persistent-session PENDING loop, no normal Owner activation path for a new STAFF/PENDING account, and insufficient live lifecycle coverage. Production Auth readiness is therefore reopened as a separate P0 track and does not invalidate the accepted UI2 presentation work.
+
+Read first for this incident:
+
+1. `05_SYSTEM/MAGASIN_AUTH_PRODUCTION_READINESS_SOURCE_OF_TRUTH.md`
+2. `05_SYSTEM/MAGASIN_AUTH_PRODUCTION_READINESS_EXECUTION_PLAN.md`
+
+Current AUTH-PROD cursor: **AUTH-PROD-001 READY**. Do not declare the webapp production-ready until AUTH-PROD-001→008 reach canonical closure.
 
 ## Schedule-first continuity
 
