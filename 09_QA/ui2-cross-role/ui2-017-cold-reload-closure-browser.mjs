@@ -12,6 +12,7 @@ const report={
   status:"PASS",
   checks:[],
   diagnostics:{page_errors:[],console_errors:[],request_failures:[],http_errors:[]},
+  ignored_navigation_aborts:[],
   cache_assets:[]
 };
 const add=(name,status,detail="")=>{report.checks.push({name,status,detail:String(detail??"")});if(status!=="PASS")report.status="FAIL"};
@@ -73,7 +74,17 @@ async function newContext(role,width=390){
 function attachDiagnostics(page,label){
   page.on("pageerror",e=>report.diagnostics.page_errors.push(label+": "+String(e?.stack||e?.message||e)));
   page.on("console",m=>{if(m.type()==="error")report.diagnostics.console_errors.push(label+": "+m.text())});
-  page.on("requestfailed",r=>report.diagnostics.request_failures.push(label+": "+r.method()+" "+r.url()+" "+(r.failure()?.errorText||"")));
+  page.on("requestfailed",r=>{
+    const errorText=r.failure()?.errorText||"";
+    const url=r.url();
+    const expectedNavigationAbort=errorText==="net::ERR_ABORTED" &&
+      /\/(?:06_EMPLOYEE|05_MANAGER)\/runtime\/(?:employee|manager)-runtime-v1\.html/.test(url);
+    if(expectedNavigationAbort){
+      report.ignored_navigation_aborts.push(label+": "+r.method()+" "+url+" "+errorText);
+      return;
+    }
+    report.diagnostics.request_failures.push(label+": "+r.method()+" "+url+" "+errorText);
+  });
   page.on("response",r=>{if(r.status()>=500)report.diagnostics.http_errors.push(label+": "+r.status()+" "+r.url())});
 }
 
@@ -206,6 +217,7 @@ await browser.close();
 for(const [name,list] of Object.entries(report.diagnostics)){
   if(list.length)add("diagnostics_"+name,"FAIL",list.join("\n"));else add("diagnostics_"+name,"PASS","");
 }
+add("diagnostics_expected_navigation_aborts","PASS",JSON.stringify({count:report.ignored_navigation_aborts.length,items:report.ignored_navigation_aborts}));
 fs.writeFileSync(path.join(OUT,"ui2-017-cold-reload-closure-report.json"),JSON.stringify(report,null,2));
 console.log("UI2_017_COLD_RELOAD_CLOSURE="+report.status);
 if(report.status!=="PASS")process.exitCode=1;
