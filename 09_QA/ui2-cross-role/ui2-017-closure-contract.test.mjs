@@ -42,7 +42,8 @@ test("UI2-017 closure evidence is correlated to exact main and all task IDs",()=
   for(let i=1;i<=17;i++)assert.ok(evidence.includes("UI2-"+String(i).padStart(3,"0")),"UI2-"+i);
   for(const pr of [307,308,309,310,311,312,313,314,315,316,318,319,320,321,322,323])assert.ok(evidence.includes("#"+pr),"PR #"+pr);
   assert.match(evidence,/AWAITING PLANNER VERIFY/);
-  assert.doesNotMatch(evidence,/UI\/UX V2.*CLOSED[^-]/i);
+  assert.ok(evidence.includes("**Track status:** **CLOSURE-READY CANDIDATE / AWAITING PLANNER VERIFY / NOT YET CLOSED**"));
+  assert.ok(!evidence.includes("**Track status:** **CLOSED**"));
 });
 
 console.log("UI2_017_CLOSURE_CONTRACT=PASS");
