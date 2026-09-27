@@ -1,6 +1,6 @@
 # MAGASIN UI/UX V2 — P0 EXECUTION PLAN
 
-**Status:** OWNER PRIORITY LOCKED / P0 READY / RELEASED  
+**Status:** UI2-017 CLOSURE-READY CANDIDATE / AWAITING PLANNER VERIFY / NOT YET CLOSED  
 **Priority:** P0 — highest implementation priority until UI/UX V2 closure  
 **Architecture:** `MAGASIN_OPERATIONS_UI_V2`  
 **Canonical UI SoT:** `01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_SOURCE_OF_TRUTH.md`  
@@ -14,7 +14,7 @@ TASK-108 Gate A/B/C is Brain-ACCEPTED and TASK-108 is canonically DONE/CLOSED. T
 
 Release basis: TASK-108 qualified executable SHA `8fd8a446d6722871af0be4171b5e129d2f6eea40`, People Shift run `36123096106`, job `108032943733`, with Gate C cold/reload evidence accepted. The current documentation/state `main` lineage is not a replacement for that executable qualification SHA.
 
-Next dependency-correct UI work item: **UI2-001**. This plan does not auto-start UI2-001; Brain must dispatch it explicitly.
+Execution reconciliation on 2026-09-27: **UI2-001 → UI2-016 are ACCEPTED/MERGED. UI2-017 is the active final closure task and is awaiting Planner VERIFY.** No later UI2 implementation task is queued.
 
 While this P0 track is active:
 - do not start unrelated feature-expansion work ahead of UI V2;
@@ -125,7 +125,7 @@ MAGASIN UI/UX V2 is CLOSED only when:
 6. exact-main cold/reload verification passes;
 7. canonical project state and evidence docs are reconciled.
 
-Until then, UI/UX V2 remains P0 and the next dependency-correct UI task is preferred over unrelated feature expansion.
+Until Planner ACCEPTS UI2-017, UI/UX V2 remains P0 but no additional implementation task is authorized. The canonical closure candidate evidence is `MAGASIN_UI_UX_V2_UI2_017_CLOSURE_EVIDENCE.md`.
 
 ## 9. Stop boundaries
 
@@ -136,3 +136,13 @@ Only Brain may:
 - issue correction;
 - dispatch the next task;
 - declare the P0 UI track CLOSED.
+
+
+## 10. UI2-017 closure-candidate reconciliation — 2026-09-27
+
+- UI2-001 → UI2-016: **ACCEPTED / MERGED**.
+- UI2-016 merge/exact-main baseline: `f98cfb15a47bbb66ad39c71348bb2668cf174364`.
+- UI2-017: **EXECUTOR EVIDENCE IN PROGRESS / AWAITING PLANNER VERIFY**.
+- Canonical UI2-017 evidence: `01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_UI2_017_CLOSURE_EVIDENCE.md`.
+- `00_CURRENT_STATE.md` and `00_PROJECT_STATE.json` are intentionally not rewritten by Executor because they contain independent PFC/Workforce state and the UI track has not yet been Planner-declared CLOSED.
+- Planner/Owner retains the sole authority to ACCEPT UI2-017 and declare the P0 UI/UX V2 track CLOSED.
