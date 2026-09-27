@@ -5,11 +5,13 @@ const role=qs.get('qaRole')==='ACCOUNTANT'?'ACCOUNTANT':'OWNER';
 const authDelay=Math.max(0,Number(qs.get('qaAuthDelay'))||0);
 globalThis.__CONTROL_TOWER_QA_MODE=qs.get('qaMode')||'attention';
 globalThis.__CONTROL_TOWER_QA_FAIL=qs.get('qaFail')||'';
+globalThis.__CONTROL_TOWER_QA_DELAY=0;
 const calls=[];
 globalThis.__CONTROL_TOWER_QA_CALLS=calls;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const mode=()=>String(globalThis.__CONTROL_TOWER_QA_MODE||'attention');
 const failure=()=>String(globalThis.__CONTROL_TOWER_QA_FAIL||'');
+const delay=()=>Math.max(0,Number(globalThis.__CONTROL_TOWER_QA_DELAY)||0);
 const profile={id:'qa-owner',username:'qa-owner',full_name:role==='OWNER'?'Owner QA':'Accounting QA',role,status:'ACTIVE'};
 
 const client={
@@ -17,6 +19,7 @@ const client={
   calls.push({kind:'from',name,mode:mode()});
   return {
    async select(){
+    if(delay())await sleep(delay());
     if(failure()==='payables')return {data:null,error:{message:'qa payables failure'}};
     if(name==='v_procurement_supplier_payables'){
      return {data:mode()==='noattention'?[{balance_due:0,overdue_balance:0}]:[{balance_due:500000,overdue_balance:120000},{balance_due:350000,overdue_balance:0}],error:null};
@@ -43,6 +46,7 @@ globalThis.MAGASIN_CORE={
   get(){return client},
   async rpc(name,args){
    calls.push({kind:'rpc',name,args,mode:mode()});
+   if(delay())await sleep(delay());
    if(failure()==='workforce')return {data:null,error:{message:'qa workforce failure'}};
    if(mode()==='estimate'&&name==='get_manager_transfer_requests')return {data:null,error:{message:'qa partial transfer failure'}};
    if(name==='get_manager_transfer_requests')return {data:mode()==='noattention'?[{status:'APPROVED'}]:[{status:'PENDING'},{status:'APPROVED'}],error:null};
@@ -54,7 +58,7 @@ globalThis.MAGASIN_CORE={
  },
  roles:{hasRole(value,roles){return value?.status==='ACTIVE'&&roles.includes(String(value?.role||'').toUpperCase())}},
  date:{dateKey(){return '2026-09-18'},monday(){return '2026-09-14'}},
- stores:{async accessible(){calls.push({kind:'stores',mode:mode()});return [{id:'store-1',name:'QA Store'}]}},
+ stores:{async accessible(){calls.push({kind:'stores',mode:mode()});if(delay())await sleep(delay());return [{id:'store-1',name:'QA Store'}]}},
  security:{escapeHtml(value){return String(value??'')}},
  ui:{toast(){}}
 };
