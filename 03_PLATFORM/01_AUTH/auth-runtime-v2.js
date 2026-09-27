@@ -433,6 +433,10 @@
       await establishRecoverySession();
       return;
     }
+    if (params.search.get('auth') === 'verify' || ['signup', 'email'].includes(String(params.get('type') || '').toLowerCase())) {
+      await establishVerificationSession();
+      return;
+    }
 
     const sessionResult = await sb.auth.getSession();
     if (sessionResult.error) {
