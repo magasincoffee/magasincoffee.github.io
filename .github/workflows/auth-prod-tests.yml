@@ -1,10 +1,22 @@
 name: AUTH-PROD Regression Contract
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '03_PLATFORM/01_AUTH/**'
+      - '04_OWNER/Access/**'
+      - '02_CORE/ui/magasin-ui-v2-employee-shell.js'
+      - '06_EMPLOYEE/**'
+      - '09_QA/auth/**'
+      - '01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_AUTH_PROD_*'
+      - '.github/workflows/auth-prod-tests.yml'
   pull_request:
     paths:
       - '03_PLATFORM/01_AUTH/**'
       - '04_OWNER/Access/**'
+      - '02_CORE/ui/magasin-ui-v2-employee-shell.js'
+      - '06_EMPLOYEE/**'
       - '09_QA/auth/**'
       - '01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_AUTH_PROD_*'
       - '.github/workflows/auth-prod-tests.yml'
@@ -47,6 +59,7 @@ jobs:
         shell: bash
         run: |
           node --check 09_QA/auth/auth-prod-005-credentialed-production-smoke.mjs
+          node --test 09_QA/auth/auth-prod-005-active-logout-contract.test.mjs
           sed '/^[[:space:]]*--/d' 09_QA/auth/auth-prod-005-production-readonly.sql > /tmp/auth-prod-005-readonly.sql
           if grep -Eiq '\b(insert|update|delete|alter|drop|create|truncate|grant|revoke)\b' /tmp/auth-prod-005-readonly.sql; then
             echo 'AUTH-PROD-005 reconciliation SQL is not read-only' >&2
@@ -87,8 +100,8 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8769
         run: node 09_QA/auth/auth-prod-004-auth-state-machine-browser.mjs
 
-  auth-prod-credentialed-smoke:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_credentialed_smoke }}
+  auth-prod-active-production-smoke:
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run_credentialed_smoke) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -96,16 +109,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Detect existing secret-backed ACTIVE QA credentials
+        id: active_creds
+        shell: bash
+        env:
+          QA_USER: ${{ secrets.PROCUREMENT_QA_USERNAME }}
+          QA_PASS: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
+        run: |
+          if [ -n "$QA_USER" ] && [ -n "$QA_PASS" ]; then
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            echo 'AUTH_PROD_005_ACTIVE_SMOKE=OWNER_REQUIRED'
+          fi
       - name: Install Playwright Chromium
+        if: steps.active_creds.outputs.enabled == 'true'
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Run credentialed production smoke
+      - name: Run ACTIVE credentialed production smoke
+        if: steps.active_creds.outputs.enabled == 'true'
         env:
-          AUTH_PROD_BASE_URL: ${{ vars.AUTH_PROD_BASE_URL }}
-          AUTH_PROD_ACTIVE_USERNAME: ${{ secrets.AUTH_PROD_ACTIVE_USERNAME }}
-          AUTH_PROD_ACTIVE_EMAIL: ${{ secrets.AUTH_PROD_ACTIVE_EMAIL }}
-          AUTH_PROD_ACTIVE_PASSWORD: ${{ secrets.AUTH_PROD_ACTIVE_PASSWORD }}
+          AUTH_PROD_BASE_URL: https://magasincoffee.github.io
+          AUTH_PROD_ACTIVE_USERNAME: ${{ secrets.PROCUREMENT_QA_USERNAME }}
+          AUTH_PROD_ACTIVE_PASSWORD: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
           AUTH_PROD_PENDING_USERNAME: ${{ secrets.AUTH_PROD_PENDING_USERNAME }}
           AUTH_PROD_PENDING_PASSWORD: ${{ secrets.AUTH_PROD_PENDING_PASSWORD }}
         run: node 09_QA/auth/auth-prod-005-credentialed-production-smoke.mjs
