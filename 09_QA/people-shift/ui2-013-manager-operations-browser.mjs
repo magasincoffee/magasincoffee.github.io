@@ -41,7 +41,7 @@ async function keyboardFocusEvidence(page,selector){
 
 const browser=await chromium.launch({headless:true});
 
-for(const width of [1280,768,390]){
+for(const width of [1440,1024,768,390]){
  const {context,page}=await openPage(browser,width,980);
  const modules=[
   ["swap","ACTION_REQUIRED"],
