@@ -74,14 +74,20 @@ for(const width of [390,768,1280]){
   await page.goto(BASE+"/03_PLATFORM/01_AUTH/pending-access.html",{waitUntil:"networkidle",timeout:20000});
   const pending=page.locator(".pending-card");
   await pending.waitFor({state:"visible"});
-  const link=page.locator(".pending-actions .m-button");
-  await link.focus();
+  const pendingButtons=page.locator(".pending-actions .m-button");
+  const pendingButtonCount=await pendingButtons.count();
+  if(pendingButtonCount<2)throw new Error("AUTH-PROD pending surface must expose check-access and switch-account actions");
+  for(let i=0;i<pendingButtonCount;i++)await pendingButtons.nth(i).focus();
   await check(`ui2_016_auth_pending_${width}_responsive_focus`,async()=>{
     const metric=await page.evaluate(expected=>{
-      const html=document.documentElement,card=document.querySelector(".pending-card"),button=document.querySelector(".pending-actions .m-button"),r=card.getBoundingClientRect(),b=button.getBoundingClientRect(),s=getComputedStyle(button);
-      return {viewport:innerWidth,expected,doc:html.scrollWidth,client:html.clientWidth,right:r.right,left:r.left,target:b.height,outline:s.outlineStyle,shadow:s.boxShadow};
+      const html=document.documentElement,card=document.querySelector(".pending-card"),r=card.getBoundingClientRect();
+      const buttons=Array.from(document.querySelectorAll(".pending-actions .m-button")).map(button=>{
+        const b=button.getBoundingClientRect(),s=getComputedStyle(button);
+        return {target:b.height,outline:s.outlineStyle,shadow:s.boxShadow};
+      });
+      return {viewport:innerWidth,expected,doc:html.scrollWidth,client:html.clientWidth,right:r.right,left:r.left,buttons};
     },width);
-    if(metric.doc>metric.client+1||metric.right>width+1||metric.left<-1||(width===390&&metric.target<43.5)||(metric.outline==="none"&&metric.shadow==="none"))throw new Error(JSON.stringify(metric));
+    if(metric.doc>metric.client+1||metric.right>width+1||metric.left<-1||metric.buttons.some(b=>(width===390&&b.target<43.5)||(b.outline==="none"&&b.shadow==="none")))throw new Error(JSON.stringify(metric));
     return JSON.stringify(metric);
   });
   if(width===390){
