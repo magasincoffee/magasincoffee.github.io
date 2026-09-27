@@ -2,25 +2,28 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
-test("source loading is isolated from the Owner auth denial boundary", async () => {
+test("source loading remains isolated behind Owner auth via refreshAll", async () => {
   const source = await fs.readFile(
     new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
     "utf8"
   );
+  const bootAt=source.indexOf("async function boot()");
+  const authAt=source.indexOf("await requireOwnerAccess",bootAt);
+  const deniedAt=source.indexOf('denied.classList.remove("hidden")',authAt);
+  const refreshCallAt=source.indexOf("await refreshAll(core)",authAt);
+  const refreshFnAt=source.indexOf("async function refreshAll(core)");
+  const revenueAt=source.indexOf("await loadReconciledRevenue",refreshFnAt);
+  const payablesAt=source.indexOf("await loadProcurementPayables",refreshFnAt);
+  const workforceAt=source.indexOf("await loadWorkforceAttention",refreshFnAt);
 
-  const bootAt = source.indexOf("async function boot()");
-  const authAt = source.indexOf("await requireOwnerAccess", bootAt);
-  const authReturnAt = source.indexOf("return;", authAt);
-  const revenueAt = source.indexOf("await loadReconciledRevenue", authAt);
-  const payablesAt = source.indexOf("await loadProcurementPayables", authAt);
-  const workforceAt = source.indexOf("await loadWorkforceAttention", authAt);
-
-  assert.ok(bootAt >= 0);
-  assert.ok(authAt > bootAt);
-  assert.ok(authReturnAt > authAt);
-  assert.ok(revenueAt > authReturnAt);
-  assert.ok(payablesAt > authReturnAt);
-  assert.ok(workforceAt > authReturnAt);
+  assert.ok(bootAt>=0);
+  assert.ok(authAt>bootAt);
+  assert.ok(deniedAt>authAt);
+  assert.ok(refreshCallAt>deniedAt);
+  assert.ok(refreshFnAt>=0);
+  assert.ok(revenueAt>refreshFnAt);
+  assert.ok(payablesAt>refreshFnAt);
+  assert.ok(workforceAt>refreshFnAt);
 });
 
 test("every connected source loader is wrapped by section-local failure isolation", async () => {
@@ -28,20 +31,11 @@ test("every connected source loader is wrapped by section-local failure isolatio
     new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
     "utf8"
   );
-
-  assert.match(source, /loadSectionSafely/);
-  assert.match(
-    source,
-    /const revenue = await loadSectionSafely\([\s\S]*?await loadReconciledRevenue/
-  );
-  assert.match(
-    source,
-    /const payables = await loadSectionSafely\([\s\S]*?await loadProcurementPayables/
-  );
-  assert.match(
-    source,
-    /const workforce = await loadSectionSafely\([\s\S]*?await loadWorkforceAttention/
-  );
+  const refresh=source.slice(source.indexOf("async function refreshAll(core)"),source.indexOf("async function boot()"));
+  assert.match(refresh,/loadSectionSafely/);
+  assert.match(refresh,/loadSectionSafely\([\s\S]*?await loadReconciledRevenue/);
+  assert.match(refresh,/loadSectionSafely\([\s\S]*?await loadProcurementPayables/);
+  assert.match(refresh,/loadSectionSafely\([\s\S]*?await loadWorkforceAttention/);
 });
 
 test("source failures cannot reuse the permission-denied error surface", async () => {
@@ -49,13 +43,10 @@ test("source failures cannot reuse the permission-denied error surface", async (
     new URL("../../04_OWNER/ControlTower/control-tower-v1.js", import.meta.url),
     "utf8"
   );
-
-  const deniedAt = source.indexOf('denied.classList.remove("hidden")');
-  const revenueAt = source.indexOf("const revenue = await loadSectionSafely");
-  assert.ok(deniedAt >= 0);
-  assert.ok(revenueAt > deniedAt);
-
-  const postAuthSourceCode = source.slice(revenueAt);
-  assert.doesNotMatch(postAuthSourceCode, /denied\.classList\.remove\("hidden"\)/);
-  assert.doesNotMatch(postAuthSourceCode, /app\.classList\.add\("hidden"\)/);
+  const refreshAt=source.indexOf("async function refreshAll(core)");
+  const bootAt=source.indexOf("async function boot()");
+  assert.ok(refreshAt>=0&&bootAt>refreshAt);
+  const refreshCode=source.slice(refreshAt,bootAt);
+  assert.doesNotMatch(refreshCode,/denied\.classList\.remove\("hidden"\)/);
+  assert.doesNotMatch(refreshCode,/app\.classList\.add\("hidden"\)/);
 });
