@@ -10,7 +10,7 @@ const check=async(name,fn)=>{try{report.checks.push({name,status:"PASS",detail:S
 
 const browser=await chromium.launch({headless:true});
 const context=await browser.newContext({locale:"vi-VN",timezoneId:"Asia/Ho_Chi_Minh"});
-const widths=[360,390,430];
+const widths=[360,390,430,768];
 
 for(const width of widths){
   const page=await context.newPage();
