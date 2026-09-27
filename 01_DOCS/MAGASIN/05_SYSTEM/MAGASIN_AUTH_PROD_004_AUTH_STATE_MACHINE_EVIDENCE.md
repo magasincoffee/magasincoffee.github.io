@@ -2,7 +2,7 @@
 
 **Track:** `AUTH-PROD / MAGASIN_AUTH_PRODUCTION_READINESS_V1`  
 **Task:** `AUTH-PROD-004 — Harden registration and Auth boot state machine`  
-**Status:** `EXECUTOR CANDIDATE / AWAITING CI + PLANNER VERIFY`  
+**Status:** `PLANNER-ACCEPTED / MERGED PR #328`  
 **Base:** `main @ 99ce61b9d3de77c5c6e2705aa189f262075ca87f`  
 **Branch:** `auth-prod/auth-prod-004-auth-state-machine`
 
