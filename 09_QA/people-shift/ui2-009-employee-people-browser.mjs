@@ -8,7 +8,7 @@ fs.mkdirSync(OUT,{recursive:true});
 const report={generated_at:new Date().toISOString(),status:"PASS",checks:[],page_errors:[],console_errors:[],request_failures:[],http_errors:[],screenshots:[]};
 async function check(name,fn){try{report.checks.push({name,status:"PASS",detail:String(await fn()??"")})}catch(e){report.checks.push({name,status:"FAIL",detail:String(e?.stack||e)});report.status="FAIL"}}
 const browser=await chromium.launch({headless:true});
-const widths=[360,390,430];
+const widths=[360,390,430,768];
 
 async function surfaceMetrics(f,viewSelector,focusSelector,width){
   const focus=f.locator(focusSelector);await focus.focus();await focus.press('Tab');await f.locator(':focus').press('Shift+Tab');
