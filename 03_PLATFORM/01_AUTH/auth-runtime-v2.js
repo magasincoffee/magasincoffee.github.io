@@ -374,14 +374,36 @@
       return;
     }
 
-    const session = await sb.auth.getSession();
-    if (!session.data.session) return;
+    const sessionResult = await sb.auth.getSession();
+    if (sessionResult.error) {
+      setMessage('Không thể kiểm tra phiên đăng nhập lúc này. Vui lòng thử lại.', 'error');
+      return;
+    }
+    if (!sessionResult.data.session) return;
+
     try {
-      const profile = await profileOf(session.data.session.user.id);
-      if (String(profile.status).toUpperCase() === 'ACTIVE') route(profile);
-      else pending();
+      const profile = await profileOf(sessionResult.data.session.user.id);
+      const accountStatus = String(profile.status || '').toUpperCase();
+      if (accountStatus === 'ACTIVE') {
+        route(profile);
+        return;
+      }
+      if (accountStatus === 'PENDING') {
+        pending();
+        return;
+      }
+
+      await sb.auth.signOut({ scope: 'local' });
+      setView('login');
+      if (accountStatus === 'INACTIVE') {
+        setMessage('Tài khoản hiện không hoạt động. Vui lòng liên hệ quản lý.', 'error');
+      } else {
+        setMessage('Trạng thái tài khoản không hợp lệ. Vui lòng liên hệ quản lý.', 'error');
+      }
     } catch (_) {
-      // Fail closed: remain on auth surface when profile cannot be resolved.
+      try { await sb.auth.signOut({ scope: 'local' }); } catch (_) {}
+      setView('login');
+      setMessage('Không thể xác minh quyền truy cập của tài khoản. Vui lòng đăng nhập lại.', 'error');
     }
   };
 
