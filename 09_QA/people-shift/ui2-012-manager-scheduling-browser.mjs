@@ -58,7 +58,7 @@ for(const width of [1440,1024,768,390]){
    };
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
    if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5)throw new Error(JSON.stringify(metric));
-   if(expected<=768&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
+   if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
    if(expected===768&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet board scroll: "+JSON.stringify(metric));
    return JSON.stringify(metric);
   },width);
