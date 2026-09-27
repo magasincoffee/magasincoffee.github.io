@@ -2,96 +2,132 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>MAGASIN · Owner Control Tower</title>
+<title>MAGASIN · Owner Attention Center</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/02_CORE/shared/shared-core-v1.js"></script>
-<link rel="stylesheet" href="./control-tower-v1.css">
+<script src="/02_CORE/shared/shared-core-v1.js?v=20260927-ui2-014"></script>
+<link rel="stylesheet" href="/04_OWNER/ControlTower/control-tower-v1.css?v=20260927-ui2-014">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20260925-ui2-004">
 <script defer src="/02_CORE/ui/magasin-ui-v2-shell.js?v=20260925-ui2-004"></script>
 </head>
 <body data-magasin-ui-v2 data-magasin-shell-v2 data-magasin-shell-role="owner" data-magasin-shell-mode="standalone" data-magasin-shell-current="attention">
-<div id="loading" class="screen">
-  <div class="message"><h2>Đang kiểm tra quyền Owner…</h2><p>Control Tower chỉ mở sau khi xác thực tài khoản Owner đang hoạt động.</p></div>
+<div id="loading" class="screen" aria-live="polite">
+  <div class="message"><div class="eyebrow">MAGASIN OWNER</div><h2>Đang kiểm tra quyền Owner…</h2><p>Overview chỉ tải canonical read models sau khi xác thực Owner đang hoạt động.</p></div>
 </div>
 <div id="denied" class="screen hidden">
-  <div class="message"><h2>Không có quyền truy cập</h2><p id="deniedText">Chỉ Owner được mở Control Tower.</p><div class="message-actions"><a class="back" href="/03_PLATFORM/01_AUTH/">Về đăng nhập</a><a class="back" href="/04_OWNER/">Trang Owner</a></div></div>
+  <div class="message"><div class="eyebrow">ACCESS</div><h2>Không có quyền truy cập</h2><p id="deniedText">Chỉ Owner được mở Control Tower.</p><div class="message-actions"><a class="back" href="/03_PLATFORM/01_AUTH/">Về đăng nhập</a></div></div>
 </div>
 
-<main id="app" class="shell hidden">
-  <div class="topbar">
+<main id="app" class="owner-shell hidden">
+  <header class="owner-hero">
     <div>
-      <div class="eyebrow">MAGASIN BUSINESS OS</div>
-      <h1>Owner Control Tower</h1>
-      <p class="subtitle">Lớp quan sát read-only: việc gì cần Owner chú ý ngay.</p>
+      <div class="eyebrow">MAGASIN BUSINESS OS · OWNER</div>
+      <h1>Owner Overview</h1>
+      <p class="subtitle">Enterprise oversight trước drill-down: nguồn nào đáng tin, điều gì cần chú ý ngay, rồi mới đi vào module.</p>
     </div>
     <div class="top-actions">
       <span id="ownerIdentity" class="owner-chip">OWNER</span>
-      <a class="back" href="/04_OWNER/">← Trang Owner</a>
+      <button id="refreshControlTower" class="refresh-button" type="button">Làm mới</button>
     </div>
-  </div>
+  </header>
 
-  <section class="context" aria-label="Bối cảnh báo cáo">
-    <div class="context-card"><span class="label">Ngày báo cáo</span><strong id="reportingDate">—</strong></div>
-    <div class="context-card"><span class="label">Phạm vi</span><strong id="branchScope">ALL</strong></div>
-    <div class="context-card"><span class="label">Cập nhật</span><strong id="refreshedAt">—</strong></div>
+  <section id="overview" class="oversight-section" data-owner-section="overview" aria-labelledby="overviewTitle">
+    <div class="section-heading">
+      <div><span class="section-kicker">OVERVIEW</span><h2 id="overviewTitle">Bối cảnh báo cáo & độ tin cậy nguồn</h2></div>
+      <span id="overallState" class="overall-state" data-state="idle">Chưa tải</span>
+    </div>
+
+    <div class="context" aria-label="Bối cảnh cross-store">
+      <div class="context-card"><span class="label">Ngày báo cáo</span><strong id="reportingDate">—</strong></div>
+      <div class="context-card"><span class="label">Phạm vi</span><strong id="branchScope">ALL</strong><small>Enterprise scope hiện tại; không tạo store selector khi canonical snapshot chỉ có ALL.</small></div>
+      <div class="context-card"><span class="label">Lần làm mới UI</span><strong id="refreshedAt">—</strong></div>
+    </div>
+
+    <div class="source-panel">
+      <div class="source-panel-head">
+        <div><h3>Nguồn & chất lượng dữ liệu</h3><p>Freshness và quality được hiển thị trước các metric; GAP / NOT CONNECTED không được trình bày như số 0 đáng tin.</p></div>
+      </div>
+      <div id="qualityList" class="quality-list"></div>
+    </div>
   </section>
 
-  <section class="grid">
-    <article class="card">
-      <div class="card-head"><h2>Doanh thu</h2><span id="revenueQuality" class="quality-chip">—</span></div>
-      <div id="revenueValue" class="metric">—</div>
-      <div id="revenueMeta" class="meta"></div>
-    </article>
-
-    <article class="card">
-      <div class="card-head"><h2>Công nợ NCC</h2><span id="payableQuality" class="quality-chip">—</span></div>
-      <div id="payableValue" class="metric">—</div>
-      <div class="metric-row">
-        <div class="mini"><span class="label">Quá hạn</span><strong id="payableOverdue">—</strong></div>
-        <div class="mini"><span class="label">Đơn mở</span><strong id="payableOpenOrders">—</strong></div>
-        <div class="mini"><span class="label">Đơn quá hạn</span><strong id="payableOverdueOrders">—</strong></div>
-      </div>
-      <div id="payableMeta" class="meta"></div>
-      <div class="actions"><a href="/nhap-hang/">Mở Mua hàng →</a></div>
-    </article>
-
-    <article class="card">
-      <div class="card-head"><h2>Workforce</h2><span id="workforceQuality" class="quality-chip">—</span></div>
-      <div class="metric-row">
-        <div class="mini"><span class="label">Staffing gap</span><strong id="workforceGap">—</strong></div>
-        <div class="mini"><span class="label">Chưa xử lý</span><strong id="workforceUnresolved">—</strong></div>
-      </div>
-      <div id="workforceMeta" class="meta"></div>
-      <div class="actions"><a href="/04_OWNER/Workforce/">Mở Workforce →</a></div>
-    </article>
-
-    <article class="card">
-      <div class="card-head"><h2>Tồn kho</h2><span id="inventoryQuality" class="quality-chip">—</span></div>
-      <div class="metric-row"><div class="mini"><span class="label">Cảnh báo</span><strong id="inventoryWarnings">—</strong></div></div>
-      <div id="inventoryMeta" class="meta"></div>
-    </article>
-
-    <article class="card">
-      <div class="card-head"><h2>Task / SOP</h2><span id="taskQuality" class="quality-chip">—</span></div>
-      <div class="metric-row">
-        <div class="mini"><span class="label">Quá hạn</span><strong id="taskOverdue">—</strong></div>
-        <div class="mini"><span class="label">Đang mở</span><strong id="taskOpen">—</strong></div>
-      </div>
-      <div id="taskMeta" class="meta"></div>
-    </article>
-
-    <article class="card full">
-      <div class="card-head"><h2>Chất lượng dữ liệu</h2></div>
-      <div id="qualityList"></div>
-    </article>
+  <section id="attention" class="attention-section" data-owner-section="attention" aria-labelledby="attentionTitle">
+    <div class="section-heading attention-heading">
+      <div><span class="section-kicker">ATTENTION CENTER</span><h2 id="attentionTitle">What needs Owner attention now?</h2><p>Chỉ factual exceptions hoặc source-quality gaps từ normalized snapshot; không gán severity, owner hay deadline giả.</p></div>
+      <span id="attentionCount" class="attention-count">—</span>
+    </div>
+    <div id="attentionLoading" class="attention-empty hidden" role="status">Đang làm mới canonical sources…</div>
+    <div id="attentionList" class="attention-list" aria-live="polite"></div>
+    <div id="noAttention" class="attention-empty hidden">Không có factual exception từ các nguồn đang đủ tin cậy.</div>
   </section>
 
-  <div class="notice">Control Tower chỉ đọc. Nguồn chưa tích hợp hoặc không đủ tin cậy phải hiển thị GAP / NOT CONNECTED và không được giữ số liệu.</div>
+  <section id="operatingSnapshot" class="oversight-section" aria-labelledby="snapshotTitle">
+    <div class="section-heading">
+      <div><span class="section-kicker">OPERATING SNAPSHOT</span><h2 id="snapshotTitle">Cross-store read models</h2><p>Metric giữ nguyên quality semantics của từng nguồn; dấu “—” nghĩa là không có số đủ tin cậy.</p></div>
+    </div>
+
+    <div class="metrics-grid">
+      <article class="metric-card">
+        <div class="card-head"><h3>Doanh thu</h3><span id="revenueQuality" class="quality-chip">—</span></div>
+        <div id="revenueValue" class="metric">—</div>
+        <div id="revenueMeta" class="meta"></div>
+      </article>
+
+      <article class="metric-card">
+        <div class="card-head"><h3>Công nợ NCC</h3><span id="payableQuality" class="quality-chip">—</span></div>
+        <div id="payableValue" class="metric">—</div>
+        <div class="metric-row">
+          <div class="mini"><span class="label">Quá hạn</span><strong id="payableOverdue">—</strong></div>
+          <div class="mini"><span class="label">Đơn mở</span><strong id="payableOpenOrders">—</strong></div>
+          <div class="mini"><span class="label">Đơn quá hạn</span><strong id="payableOverdueOrders">—</strong></div>
+        </div>
+        <div id="payableMeta" class="meta"></div>
+        <div class="actions"><a href="/nhap-hang/">Mở Mua hàng →</a></div>
+      </article>
+
+      <article class="metric-card">
+        <div class="card-head"><h3>Workforce</h3><span id="workforceQuality" class="quality-chip">—</span></div>
+        <div class="metric-row">
+          <div class="mini"><span class="label">Staffing gap</span><strong id="workforceGap">—</strong></div>
+          <div class="mini"><span class="label">Chưa xử lý</span><strong id="workforceUnresolved">—</strong></div>
+        </div>
+        <div id="workforceMeta" class="meta"></div>
+        <div class="actions"><a href="/04_OWNER/Workforce/">Mở Workforce →</a></div>
+      </article>
+
+      <article class="metric-card compact">
+        <div class="card-head"><h3>Tồn kho</h3><span id="inventoryQuality" class="quality-chip">—</span></div>
+        <div class="metric-row"><div class="mini"><span class="label">Cảnh báo</span><strong id="inventoryWarnings">—</strong></div></div>
+        <div id="inventoryMeta" class="meta"></div>
+      </article>
+
+      <article class="metric-card compact">
+        <div class="card-head"><h3>Task / SOP</h3><span id="taskQuality" class="quality-chip">—</span></div>
+        <div class="metric-row">
+          <div class="mini"><span class="label">Quá hạn</span><strong id="taskOverdue">—</strong></div>
+          <div class="mini"><span class="label">Đang mở</span><strong id="taskOpen">—</strong></div>
+        </div>
+        <div id="taskMeta" class="meta"></div>
+      </article>
+    </div>
+  </section>
+
+  <section id="ownerModules" class="module-entry-section" aria-labelledby="modulesTitle">
+    <div class="section-heading">
+      <div><span class="section-kicker">DRILL-DOWN</span><h2 id="modulesTitle">Đi tới module khi cần xử lý sâu</h2><p>Module entry là bước sau Overview và Attention Center, không còn là landing architecture chính.</p></div>
+    </div>
+    <div class="module-grid">
+      <a class="module-card" href="/04_OWNER/Workforce/"><strong>Workforce</strong><span>Lịch, staffing và nghiệp vụ Workforce hiện có.</span><b>Mở module →</b></a>
+      <a class="module-card" href="/nhap-hang/"><strong>Mua hàng & Công nợ</strong><span>Đơn nhập, nhà cung cấp, công nợ và báo cáo mua hàng.</span><b>Mở module →</b></a>
+      <a class="module-card" href="/04_OWNER/Access/"><strong>Phân quyền</strong><span>Quản lý quyền tài khoản nội bộ.</span><b>Mở module →</b></a>
+    </div>
+  </section>
+
+  <div class="notice">Owner Overview chỉ đọc. Source unavailable phải giữ GAP / NOT CONNECTED semantics; UI không tự tạo KPI, writer, store scope hay business transition.</div>
 </main>
-<script type="module" src="./control-tower-v1.js"></script>
+<script type="module" src="/04_OWNER/ControlTower/control-tower-v1.js?v=20260927-ui2-014"></script>
 </body>
 </html>
