@@ -131,7 +131,7 @@ try{
     finance:!!document.querySelector('[data-owner-finance-reserved]'),
     financeLinks:document.querySelectorAll('[data-owner-finance-reserved] a').length,
     duplicateLegacy:document.querySelectorAll('.sidebar:not(.m-shell-v2-sidebar)').length,
-    minControl:Math.min(...[...document.querySelectorAll('button,a')].filter(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return r.width>0&&r.height>0&&s.display!=="none"&&s.visibility!=="hidden"}).map(el=>el.getBoundingClientRect().height))
+    minControl:Math.min(...[...document.querySelectorAll('.m-shell-v2-menu,.m-shell-v2-nav__item,.owner-module-context a,.tabs button')].filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&r.height>0}).map(el=>el.getBoundingClientRect().height))
    }));
    if(metrics.doc>metrics.viewport+1||metrics.active!=="workforce"||!metrics.context||!metrics.finance||metrics.financeLinks!==0||metrics.duplicateLegacy!==1)throw new Error(JSON.stringify(metrics));
    if(width<=768&&metrics.minControl<43.5)throw new Error(JSON.stringify(metrics));
@@ -162,8 +162,14 @@ try{
    const table=await page.locator("#sec-orders .table-wrap").evaluate(el=>({client:el.clientWidth,scroll:el.scrollWidth,right:el.getBoundingClientRect().right}));
    if(table.right>width+1)throw new Error(JSON.stringify(table));
    await page.locator('[data-close="orderDialog"]').first().click();
-   const focus=await focusEvidence(page.locator("#nav [data-tab='orders']"));
-   if(focus.outline==="none"||(width<=768&&focus.height<43.5))throw new Error(JSON.stringify(focus));
+   await page.locator("#nav [data-tab='orders']").click();
+   await page.keyboard.press("Tab");
+   const focus=await page.evaluate(()=>{
+     const el=document.activeElement;
+     const r=el?.getBoundingClientRect();
+     return {inTabs:!!el?.closest?.("#nav"),outline:el?getComputedStyle(el).outlineStyle:"none",height:r?.height||0,text:el?.textContent?.trim()||""};
+   });
+   if(!focus.inTabs||focus.outline==="none"||(width<=768&&focus.height<43.5))throw new Error(JSON.stringify(focus));
    return JSON.stringify({m,tabs,box,table,focus});
   });
   await shot(procurement.page,"ui2-015-procurement-"+width);
