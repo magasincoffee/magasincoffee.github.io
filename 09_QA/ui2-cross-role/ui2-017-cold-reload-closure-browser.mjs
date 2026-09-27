@@ -117,8 +117,11 @@ for(const spec of [
   await context.addInitScript(()=>sessionStorage.setItem("__ui2_logged","1"));
   const page=await context.newPage();
   attachDiagnostics(page,"cold-"+spec.role);
-  const firstUrl=BASE+spec.entry+"#"+spec.first;
-  const secondUrl=BASE+spec.entry+"#"+spec.second;
+  // Query token forces a real document navigation between canonical deep links;
+  // hash-only navigation would not re-bootstrap the outer entry when the bounded
+  // runtime iframe is intentionally stubbed by this closure probe.
+  const firstUrl=BASE+spec.entry+"?ui2closure=first#"+spec.first;
+  const secondUrl=BASE+spec.entry+"?ui2closure=second#"+spec.second;
   await page.goto(firstUrl,{waitUntil:"domcontentloaded"});
   const cold=await iframeSrc(page);
   await page.reload({waitUntil:"domcontentloaded"});
