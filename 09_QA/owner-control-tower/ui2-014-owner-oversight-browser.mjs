@@ -166,12 +166,13 @@ try{
  await check("ui2_014_refresh_clears_stale_attention_then_no_attention",async()=>{
   const before=await page.locator("#attentionList .attention-item").count();
   if(before<2)throw new Error("initial attention missing");
-  await page.evaluate(()=>{globalThis.__CONTROL_TOWER_QA_MODE="noattention"});
+  await page.evaluate(()=>{globalThis.__CONTROL_TOWER_QA_MODE="noattention";globalThis.__CONTROL_TOWER_QA_DELAY=120});
   await page.locator("#refreshControlTower").click();
   await page.waitForFunction(()=>document.body.dataset.ownerOverviewLoading==="true");
   const during=await page.evaluate(()=>({items:document.querySelectorAll("#attentionList .attention-item").length,loading:!document.getElementById("attentionLoading")?.classList.contains("hidden")}));
   if(during.items!==0||!during.loading)throw new Error(JSON.stringify(during));
   await page.waitForFunction(()=>document.body.dataset.ownerOverviewLoading==="false");
+  await page.evaluate(()=>{globalThis.__CONTROL_TOWER_QA_DELAY=0});
   const after=await page.evaluate(()=>({items:document.querySelectorAll("#attentionList .attention-item").length,empty:!document.getElementById("noAttention")?.classList.contains("hidden"),work:document.getElementById("workforceUnresolved")?.textContent}));
   if(after.items!==0||!after.empty||after.work!=="0")throw new Error(JSON.stringify(after));
   return JSON.stringify({before,during,after});
