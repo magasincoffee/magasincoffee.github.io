@@ -80,6 +80,10 @@ await check("ui2_012_none_context_and_empty_day_state",async()=>{
  return JSON.stringify({stage:ui.stage,emptyDays:ui.emptyDays});
 });
 
+await frame.evaluate(async()=>{
+ globalThis.__MW31_QA.availability.push({availability_id:"av-ui2-edit",user_id:"u-3",employee_name:"Nhân viên QA 3",username:"qa3",work_date:"2026-09-28",start_time:"06:00",end_time:"12:00",preferred_store_id:"store-a",preferred_store_code:"CN-QA-A",availability_type:"AVAILABLE"});
+ await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.refresh();
+});
 await check("ui2_012_busy_locks_controls_during_canonical_start",async()=>{
  await frame.evaluate(()=>globalThis.__MW31_QA.setDelay(120));
  const click=frame.locator("#msdStart").click();
@@ -163,6 +167,8 @@ await check("ui2_012_official_schedule_entry_delegates_to_existing_route",async(
 });
 
 await check("ui2_012_store_and_week_navigation_clear_stale_projection_then_reload",async()=>{
+ await frame.evaluate(async()=>{globalThis.__MW31_QA.setAccessibleStores(["store-a","store-c"]);await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.openDirect({storeId:"store-a",week:"2026-09-28"})});
+ await frame.waitForFunction(()=>document.querySelectorAll("#msdStore option").length===2&&!globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy);
  await frame.locator("#msdStore").selectOption("store-c");
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-c"&&!s.busy});
  let state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
