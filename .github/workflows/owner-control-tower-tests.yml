@@ -6,12 +6,20 @@ on:
       - '04_OWNER/ControlTower/**'
       - '04_OWNER/index.html'
       - '09_QA/owner-control-tower/**'
+      - '02_CORE/ui/magasin-ui-v2-tokens.css'
+      - '02_CORE/ui/magasin-ui-v2-primitives.css'
+      - '02_CORE/ui/magasin-ui-v2-shell.css'
+      - '02_CORE/ui/magasin-ui-v2-shell.js'
       - '.github/workflows/owner-control-tower-tests.yml'
   pull_request:
     paths:
       - '04_OWNER/ControlTower/**'
       - '04_OWNER/index.html'
       - '09_QA/owner-control-tower/**'
+      - '02_CORE/ui/magasin-ui-v2-tokens.css'
+      - '02_CORE/ui/magasin-ui-v2-primitives.css'
+      - '02_CORE/ui/magasin-ui-v2-shell.css'
+      - '02_CORE/ui/magasin-ui-v2-shell.js'
       - '.github/workflows/owner-control-tower-tests.yml'
 
 permissions:
