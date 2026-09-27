@@ -9,7 +9,7 @@ const report={status:"PASS",checks:[],screenshots:[],page_errors:[],console_erro
 const check=async(name,fn)=>{try{report.checks.push({name,status:"PASS",detail:String(await fn()??"")})}catch(e){report.status="FAIL";report.checks.push({name,status:"FAIL",detail:String(e?.stack||e)})}};
 
 const browser=await chromium.launch({headless:true});
-for(const width of [1280,768,390]){
+for(const width of [1440,1024,768,390]){
  const context=await browser.newContext({locale:"vi-VN",timezoneId:"Asia/Ho_Chi_Minh",viewport:{width,height:900}});
  const page=await context.newPage();
  page.on("pageerror",e=>report.page_errors.push(width+": "+String(e?.stack||e?.message||e)));
