@@ -77,7 +77,7 @@ for(const width of [1440,1024,768,390]){
    if(metric.doc>metric.viewport+1||!metric.hierarchy)throw new Error(JSON.stringify(metric));
    if(metric.scoped&&!metric.scopeControl)throw new Error("missing canonical scope control "+JSON.stringify(metric));
    if(!metric.scoped&&metric.scopeControl)throw new Error("Swap/Give gained invented scope "+JSON.stringify(metric));
-   if(width<=768&&metric.touchMin<43.5)throw new Error("touch target "+JSON.stringify(metric));
+   if(width<=1024&&metric.touchMin<43.5)throw new Error("touch target "+JSON.stringify(metric));
    if(width===390&&["staff","payroll-self-check"].includes(view)&&!metric.tables.some(x=>x.tab===0&&x.scroll>=x.client))throw new Error("table not contained "+JSON.stringify(metric));
    return JSON.stringify(metric);
   });
@@ -85,7 +85,7 @@ for(const width of [1440,1024,768,390]){
   await check("ui2_013_"+width+"_"+view+"_keyboard_focus",async()=>{
    const ev=await keyboardFocusEvidence(page,focusSelector);
    if(ev.outline==="none"&&ev.shadow==="none")throw new Error(JSON.stringify(ev));
-   if(width<=768&&ev.height<43.5)throw new Error(JSON.stringify(ev));
+   if(width<=1024&&ev.height<43.5)throw new Error(JSON.stringify(ev));
    return JSON.stringify(ev);
   });
   const shot=path.join(OUT,"ui2-013-"+view+"-"+width+".png");
