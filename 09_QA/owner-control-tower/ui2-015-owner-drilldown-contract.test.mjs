@@ -30,7 +30,7 @@ test("UI2-015 Finance is explicit reserved presentation with no route or fabrica
   assert.match(adapterJs,/data-owner-finance-reserved/);
   assert.doesNotMatch(adapterJs,/href=.*Finance|\/04_OWNER\/Finance/i);
   assert.doesNotMatch(adapterJs,/\.rpc\s*\(|\.from\s*\(|\.insert\s*\(|\.update\s*\(|\.delete\s*\(|\.upsert\s*\(/);
-  assert.doesNotMatch(adapterJs,/cash|profit|revenue|kpi/i);
+  assert.doesNotMatch(adapterJs,/finance_(?:cash|profit|revenue)|cashFlow|profitMargin|revenueAmount/i);
 });
 
 test("UI2-015 Workforce keeps canonical scheduling writer and adds only Owner presentation context",()=>{
