@@ -127,13 +127,18 @@ function syncAll(){
  if(raf)return;
  raf=requestAnimationFrame(()=>{raf=0;injectCss();for(const [key,spec] of Object.entries(MODULES))syncOne(key,spec)});
 }
+function invalidatePresentation(){
+ for(const spec of Object.values(MODULES)){
+  const root=document.querySelector(spec.root);if(root)delete root.dataset.ui2OperationsState;
+ }
+}
 function boot(){
  injectCss();syncAll();
- const observer=new MutationObserver(syncAll);
+ const observer=new MutationObserver(()=>{invalidatePresentation();syncAll()});
  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-busy','disabled']});
- document.addEventListener('click',()=>setTimeout(syncAll,0),true);
- document.addEventListener('change',()=>setTimeout(syncAll,0),true);
- window.MAGASIN_MANAGER_OPERATIONS_UI2_013={refresh:syncAll,getState:()=>Object.fromEntries(Object.entries(MODULES).map(([key,spec])=>[key,document.querySelector(spec.root)?.dataset.ui2OperationsState||'NOT_READY']))};
+ document.addEventListener('click',()=>setTimeout(()=>{invalidatePresentation();syncAll()},0),true);
+ document.addEventListener('change',()=>setTimeout(()=>{invalidatePresentation();syncAll()},0),true);
+ window.MAGASIN_MANAGER_OPERATIONS_UI2_013={refresh:()=>{invalidatePresentation();syncAll()},getState:()=>Object.fromEntries(Object.entries(MODULES).map(([key,spec])=>[key,document.querySelector(spec.root)?.dataset.ui2OperationsState||'NOT_READY']))};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
