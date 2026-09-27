@@ -40,7 +40,7 @@ const css=`<style id="manager-operations-ui2-013-css">
 #view-attendance.mui2-module .mar-card-head{align-items:center}
 #view-attendance.mui2-module .mar-state,#view-staff.mui2-module .msp-state,#view-payroll-self-check.mui2-module .mgr-payroll-status,#view-payroll-self-check.mui2-module .mgr-payroll-note{border:1px solid #dfe5ec}
 #view-staff.mui2-module .msp-table-wrap,#view-payroll-self-check.mui2-module .mgr-payroll-table-wrap{margin-top:10px}
-@media(max-width:900px){
+@media(max-width:1024px){
  .mui2-module-head{grid-template-columns:minmax(0,1fr)}
  .mui2-module-controls{width:100%;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}
  .mui2-module-controls select{min-width:0;width:100%;grid-column:1/-1}
