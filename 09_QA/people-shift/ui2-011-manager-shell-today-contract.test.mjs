@@ -95,9 +95,10 @@ test("UI2-011 correction blockers stay regression-locked",()=>{
 test("UI2-011 cache chain remains preserved when later Manager UI tasks advance upstream runtime versions",()=>{
   const v="20260927-ui2-011-correction1";
   const managerV="20260927-ui2-013";
+  const ownerV="20260927-ui2-015";
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
-  assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+v));
+  assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+ownerV));
   assert.ok(managerRuntime.includes("manager-shell-v1.html?v="+v+"&host=manager"));
   assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+v+"&host=owner"));
   assert.ok(managerRuntime.includes("engine-v1.js?v="+managerV));
