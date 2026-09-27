@@ -258,8 +258,16 @@
         }
       });
       if (result.error) throw new Error('Không thể tạo tài khoản lúc này.');
-      setView('login');
-      setMessage(result.data.session ? 'Đăng ký thành công. Tài khoản chờ kích hoạt.' : 'Đăng ký thành công. Hãy xác nhận email trước khi đăng nhập.');
+      if (result.data && result.data.session) {
+        const signedOut = await sb.auth.signOut({ scope: 'local' });
+        if (signedOut && signedOut.error) throw new Error('Không thể kết thúc phiên đăng ký lúc này.');
+        clearRecoveryMarker();
+        setView('login');
+        setMessage('Đăng ký thành công. Tài khoản đang chờ quản lý kích hoạt. Bạn có thể đăng nhập bằng tài khoản khác trong lúc chờ.');
+      } else {
+        setView('login');
+        setMessage('Đăng ký thành công. Hãy xác nhận email trước khi đăng nhập.');
+      }
     } catch (error) {
       setMessage(error.message || 'Không thể tạo tài khoản lúc này.', 'error');
     } finally {
