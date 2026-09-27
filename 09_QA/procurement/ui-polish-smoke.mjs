@@ -23,7 +23,7 @@ const delta=(a,b)=>!a||!b?999:Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y),Math.
 
 try{
   await page.goto(`${BASE}/03_PLATFORM/01_AUTH/`,{waitUntil:'domcontentloaded',timeout:30000});
-  await page.fill('#username',USER);await page.fill('#password',PASS);await page.locator('#loginForm button').click();
+  await page.fill('#username',USER);await page.fill('#password',PASS);await page.locator('#loginForm button[type="submit"]').click();
   await page.waitForURL('**/04_OWNER/Procurement/**',{waitUntil:'domcontentloaded',timeout:45000});
   await page.waitForSelector('#app:not(.hidden)',{timeout:45000});
   await page.waitForLoadState('networkidle',{timeout:45000}).catch(()=>{});
