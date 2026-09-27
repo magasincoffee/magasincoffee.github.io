@@ -324,6 +324,31 @@
     document.body.dataset.employeeScheduleSecondary = 'availability-swap-give';
   };
 
+  const bindLogout = () => {
+    const button = document.querySelector('.logout-btn');
+    if (!button || button.dataset.authProdLogoutBound === 'true') return;
+    button.dataset.authProdLogoutBound = 'true';
+    button.removeAttribute('onclick');
+    button.addEventListener('click', async () => {
+      const parent = parentWindow();
+      const sb = parent?.MAGASIN_CORE?.supabase?.get?.();
+      if (!sb?.auth?.signOut) {
+        console.error('Employee logout: Auth client unavailable');
+        return;
+      }
+      try {
+        const result = await sb.auth.signOut({ scope: 'local' });
+        if (result?.error) {
+          console.error('Employee logout failed', result.error);
+          return;
+        }
+        topWindow().location.replace('/03_PLATFORM/01_AUTH/');
+      } catch (error) {
+        console.error('Employee logout failed', error);
+      }
+    });
+  };
+
   const boot = () => {
     if (!document.body || document.getElementById('employeeV2PrimaryNav')) return;
 
@@ -337,6 +362,7 @@
     bindDrawer();
     bindSourceNav();
     bindHistory();
+    bindLogout();
     syncSourceNavigation();
     verifyScheduleSecondaryReachability();
 
