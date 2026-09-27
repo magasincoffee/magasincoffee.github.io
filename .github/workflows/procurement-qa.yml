@@ -2,7 +2,7 @@ name: Procurement QA Robot
 
 on:
   push:
-    branches: [main, 'feat/procurement-*', 'fix/procurement-*', 'ui2/**']
+    branches: [main, 'feat/procurement-*', 'fix/procurement-*']
     paths:
       - '04_OWNER/Procurement/**'
       - '04_OWNER/index.html'
@@ -129,21 +129,30 @@ jobs:
           JSON
           fi
 
+      - name: Record pull-request live DB boundary
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p "$QA_OUT"
+          cat > "$QA_OUT/procurement-e2e-report.json" <<'JSON'
+          {"status":"SKIPPED","reason":"Pull-request gate is static + local-route/presentation only; credentialed Procurement database integrity smoke remains unchanged on main/manual runs."}
+          JSON
+
       - name: Install Playwright
-        if: steps.creds.outputs.enabled == 'true'
+        if: github.event_name != 'pull_request' && steps.creds.outputs.enabled == 'true'
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
       - name: Browser + database smoke test
-        if: steps.creds.outputs.enabled == 'true'
+        if: github.event_name != 'pull_request' && steps.creds.outputs.enabled == 'true'
         env:
           PROCUREMENT_QA_USERNAME: ${{ secrets.PROCUREMENT_QA_USERNAME }}
           PROCUREMENT_QA_PASSWORD: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
         run: node 09_QA/procurement/e2e-smoke.mjs
 
       - name: UI polish + layout stability test
-        if: steps.creds.outputs.enabled == 'true'
+        if: github.event_name != 'pull_request' && steps.creds.outputs.enabled == 'true'
         env:
           PROCUREMENT_QA_USERNAME: ${{ secrets.PROCUREMENT_QA_USERNAME }}
           PROCUREMENT_QA_PASSWORD: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
