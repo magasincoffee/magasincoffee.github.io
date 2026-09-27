@@ -9,7 +9,7 @@ const report={status:"PASS",checks:[],screenshots:[],page_errors:[],console_erro
 const check=async(name,fn)=>{try{report.checks.push({name,status:"PASS",detail:String(await fn()??"")})}catch(e){report.status="FAIL";report.checks.push({name,status:"FAIL",detail:String(e?.stack||e)})}};
 
 const browser=await chromium.launch({headless:true});
-for(const width of [1280,768,390]){
+for(const width of [1440,1024,768,390]){
  const context=await browser.newContext({locale:"vi-VN",timezoneId:"Asia/Ho_Chi_Minh",viewport:{width,height:900}});
  const page=await context.newPage();
  page.on("pageerror",e=>report.page_errors.push(width+": "+String(e?.stack||e?.message||e)));
@@ -20,7 +20,7 @@ for(const width of [1280,768,390]){
  await page.locator("#view-dashboard.active .manager-action-grid").waitFor({timeout:10000});
 
  await check("ui2_011_"+width+"_shell_today_layout_focus_nav",async()=>{
-   const focus=width>900?page.locator('.manager-v2-sidebar-source [data-view="dashboard"]'):page.locator(".manager-v2-menu");
+   const focus=width>1024?page.locator('.manager-v2-sidebar-source [data-view="dashboard"]'):page.locator(".manager-v2-menu");
    await focus.focus();await focus.press("Tab");await page.locator(":focus").press("Shift+Tab");
    return page.evaluate(expected=>{
      const html=document.documentElement,source=document.querySelector(".manager-v2-sidebar-source"),menu=document.querySelector(".manager-v2-menu"),drawer=document.getElementById("managerV2Drawer"),today=document.getElementById("view-dashboard"),focused=document.activeElement;
@@ -39,7 +39,7 @@ for(const width of [1280,768,390]){
        actionState:today.dataset.actionCenterState
      };
      if(metric.scroll>metric.client+1||metric.focus==="none"||!metric.hiddenDemo||metric.actionState!=="attention")throw new Error(JSON.stringify(metric));
-     if(expected>=1000){
+     if(expected>1024){
        if(!metric.sourceVisible||metric.menuVisible||metric.minTarget<39.5||JSON.stringify(metric.primary)!==JSON.stringify(["dashboard","staff","workforce","schedule","swap","attendance","payroll-self-check"]))throw new Error(JSON.stringify(metric));
      }else{
        if(metric.sourceVisible||!metric.menuVisible||metric.minTarget<43.5||metric.minTodayTarget<43.5||metric.drawerWidth>310)throw new Error(JSON.stringify(metric));
@@ -57,7 +57,7 @@ for(const width of [1280,768,390]){
    return JSON.stringify(rows);
  });
 
- if(width<=768){
+ if(width<=1024){
    await check("ui2_011_"+width+"_drawer_mobile_safe_keyboard",async()=>{
      const menu=page.locator(".manager-v2-menu");await menu.click();
      await page.locator("#managerV2Drawer.open").waitFor({state:"visible"});

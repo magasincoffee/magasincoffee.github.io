@@ -72,7 +72,7 @@ test("UI2-013 responsive presentation contract is operations-first and touch key
  assert.match(ui,/mui2-table-region/);
  assert.match(ui,/overflow-x:auto/);
  assert.match(ui,/overscroll-behavior-x:contain/);
- assert.match(ui,/@media\(max-width:900px\)/);
+ assert.match(ui,/@media\(max-width:1024px\)/);
  assert.match(ui,/@media\(max-width:520px\)/);
  assert.match(ui,/min-height:44px!important/);
  assert.match(ui,/:focus-visible/);
@@ -82,17 +82,18 @@ test("UI2-013 responsive presentation contract is operations-first and touch key
 test("UI2-013 preserves Today getState compatibility and does not redesign scheduling",()=>{
  for(const api of ["MAGASIN_MANAGER_SHIFT_CHANGE","MAGASIN_MANAGER_ATTENDANCE_REVIEW","MAGASIN_MANAGER_STAFF_PROJECTION","MAGASIN_MANAGER_PAYROLL_SELF_CHECK"])assert.ok(today.includes(api),api);
  for(const source of [swap,attendance,staff,payroll])assert.match(source,/getState:/);
- assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=20260927-ui2-012/);
+ assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=20260927-ui2-016/);
  assert.doesNotMatch(ui,/msd-ui2-012|Bảng nháp 7 ngày|publish_schedule_generation/);
 });
 
 test("UI2-013 complete Manager cache chain loads changed assets while Owner path stays untouched",()=>{
  const v="20260927-ui2-013";
+ const entryV="20260927-ui2-016";
  assert.match(engine,new RegExp("swap-approval-v1\\.js\\?v="+v));
  assert.match(engine,new RegExp("payroll-self-check-v1\\.js\\?v="+v));
- assert.match(engine,new RegExp("manager-operations-ui2-v1\\.js\\?v="+v));
- assert.ok(runtime.includes("engine-v1.js?v="+v));
- assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+v));
+ assert.match(engine,/manager-operations-ui2-v1\.js\?v=20260927-ui2-016/);
+ assert.ok(runtime.includes("engine-v1.js?v=20260927-ui2-016"));
+ assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+entryV));
  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+v));
  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+v+"#workforce"));
  assert.doesNotMatch(ownerRuntime,new RegExp(v));

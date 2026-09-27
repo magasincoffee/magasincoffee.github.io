@@ -56,7 +56,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 @media(max-width:1100px){
  .msd-ui2-012 .msd-board{grid-template-columns:repeat(7,minmax(156px,1fr));min-width:1128px;width:max-content}
 }
-@media(max-width:900px){
+@media(max-width:1024px){
  .msu2-context-bar{grid-template-columns:minmax(0,1fr)}
  .msu2-week-controls{grid-template-columns:44px minmax(112px,1fr) 44px}
  .msu2-week-controls .badge{grid-column:1/-1}

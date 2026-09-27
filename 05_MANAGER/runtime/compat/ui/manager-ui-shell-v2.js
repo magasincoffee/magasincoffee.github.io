@@ -65,7 +65,7 @@ body[data-magasin-shell-role="manager"] .manager-v2-drawer .nav{display:grid!imp
 body[data-magasin-shell-role="manager"] .manager-v2-drawer button{min-height:44px!important}
 body[data-magasin-shell-role="manager"] .manager-v2-drawer .nav button{min-height:44px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#dce7f5!important;text-align:left!important;font-weight:750!important;padding:11px 12px!important}
 body[data-magasin-shell-role="manager"] .manager-v2-drawer .nav button.active{background:#1b3558!important;color:#67e3e6!important}
-@media(max-width:900px){
+@media(max-width:1024px){
  body[data-magasin-shell-role="manager"] .manager-v2-sidebar-source{display:none!important}
  body[data-magasin-shell-role="manager"] .main{margin-left:0!important;width:100%!important}
  body[data-magasin-shell-role="manager"] .manager-v2-menu{display:inline-flex!important}

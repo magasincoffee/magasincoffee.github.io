@@ -20,7 +20,7 @@ const gate=read("09_QA/people-shift/browser-e2e.mjs");
 const rpc=s=>[...s.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 
 test("UI2-011 Manager shell exposes only canonical operations destinations",()=>{
-  assert.ok(shellHtml.includes('/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260927-ui2-011-correction1'));
+  assert.ok(shellHtml.includes('/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260927-ui2-016'));
   for(const route of ["dashboard","staff","workforce","schedule","swap","attendance","payroll-self-check"])assert.ok(today.includes("'"+route+"'")||today.includes('"'+route+'"'),route);
   for(const hidden of ["tasks","kpi","academy","settings"])assert.ok(today.includes("'"+hidden+"'"),hidden);
   assert.match(shellV2,/manager-v2-sidebar-source/);
@@ -94,16 +94,19 @@ test("UI2-011 correction blockers stay regression-locked",()=>{
 
 test("UI2-011 cache chain remains preserved when later Manager UI tasks advance upstream runtime versions",()=>{
   const v="20260927-ui2-011-correction1";
+  const shellV="20260927-ui2-016";
   const managerV="20260927-ui2-013";
-  const ownerV="20260927-ui2-015";
-  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerV));
+  const managerEntryV="20260927-ui2-016";
+  const ownerEntryV="20260927-ui2-016";
+  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
-  assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+ownerV));
-  assert.ok(managerRuntime.includes("manager-shell-v1.html?v="+v+"&host=manager"));
-  assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+v+"&host=owner"));
-  assert.ok(managerRuntime.includes("engine-v1.js?v="+managerV));
-  assert.ok(shellHtml.includes("manager-ui-shell-v2.js?v="+v));
-  for(const child of ["review-v1.js","attendance-review-v1.js","ui-consolidation-v1.js"])assert.ok(engine.includes(child+"?v="+v),child);
+  assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+ownerEntryV));
+  assert.ok(managerRuntime.includes("manager-shell-v1.html?v="+shellV+"&host=manager"));
+  assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+shellV+"&host=owner"));
+  assert.ok(managerRuntime.includes("engine-v1.js?v=20260927-ui2-016"));
+  assert.ok(shellHtml.includes("manager-ui-shell-v2.js?v="+shellV));
+  for(const child of ["review-v1.js","attendance-review-v1.js"])assert.ok(engine.includes(child+"?v="+v),child);
+  assert.ok(engine.includes("ui-consolidation-v1.js?v=20260927-ui2-016"));
   assert.ok(engine.includes("swap-approval-v1.js?v="+managerV));
 });
 

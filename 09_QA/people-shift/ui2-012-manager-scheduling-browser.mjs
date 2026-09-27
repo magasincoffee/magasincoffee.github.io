@@ -23,7 +23,7 @@ async function managerFrame(page){
 
 const browser=await chromium.launch({headless:true});
 
-for(const width of [1280,768,390]){
+for(const width of [1440,1024,768,390]){
  const context=await browser.newContext({locale:"vi-VN",timezoneId:"Asia/Ho_Chi_Minh",viewport:{width,height:900}});
  const page=await context.newPage();attachDiagnostics(page);
  await page.goto(BASE+"/09_QA/people-shift/ui2-012-manager-scheduling-fixture.html",{waitUntil:"networkidle",timeout:20000});
@@ -58,7 +58,7 @@ for(const width of [1280,768,390]){
    };
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
    if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5)throw new Error(JSON.stringify(metric));
-   if(expected<=768&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
+   if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
    if(expected===768&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet board scroll: "+JSON.stringify(metric));
    return JSON.stringify(metric);
   },width);
