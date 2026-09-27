@@ -50,7 +50,7 @@ for(const width of [1280,768,390]){
     const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};
     const controls=[...root.querySelectorAll("button,select,input")].filter(visible);
     const scoped=root.dataset.ui2OperationsModule!=="swap";
-    const banner=root.querySelector(":scope > .mui2-state-banner");
+    const banner=root.querySelector(".mui2-state-banner");
     const tables=[...root.querySelectorAll(".mui2-table-region")].map(x=>({scroll:x.scrollWidth,client:x.clientWidth,tab:x.tabIndex}));
     return {
      expectedWidth,viewport:innerWidth,doc:document.documentElement.scrollWidth,
