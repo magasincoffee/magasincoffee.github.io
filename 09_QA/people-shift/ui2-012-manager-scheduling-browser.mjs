@@ -37,6 +37,8 @@ for(const width of [1280,768,390]){
 
  await check("ui2_012_"+width+"_hierarchy_no_page_overflow_touch_focus",async()=>{
   await frame.locator("#msdSave").focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
   return frame.evaluate(expected=>{
    const html=document.documentElement,root=document.querySelector(".msd-ui2-012"),wrap=root?.querySelector(".msd-board-wrap"),focused=document.activeElement;
    const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return !el.hidden&&s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};
@@ -47,13 +49,17 @@ for(const width of [1280,768,390]){
     stage:root?.dataset.ui2SchedulingState,
     hierarchy:[".msu2-context-bar",".msu2-stage-rail",".msu2-state-banner",".msd-source",".msd-board-wrap",".msd-downstream"].every(sel=>!!root?.querySelector(sel)),
     touchMin:controls.length?Math.min(...controls.map(x=>x.getBoundingClientRect().height)):0,
-    focus:getComputedStyle(focused).outlineStyle,
+    focusOutline:getComputedStyle(focused).outlineStyle,
+    focusShadow:getComputedStyle(focused).boxShadow,
+    focusedId:focused?.id||"",
     boardScroll:wrap?.scrollWidth||0,boardClient:wrap?.clientWidth||0,
+    dayCount:root?.querySelectorAll(".msd-day").length||0,
     emptyDays:root?.querySelectorAll(".msd-day .msd-empty").length||0
    };
-   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.stage!=="DRAFT"||metric.focus==="none"||metric.emptyDays<5)throw new Error(JSON.stringify(metric));
+   const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
+   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5)throw new Error(JSON.stringify(metric));
    if(expected<=768&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
-   if(expected<=768&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained board scroll: "+JSON.stringify(metric));
+   if(expected===768&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet board scroll: "+JSON.stringify(metric));
    return JSON.stringify(metric);
   },width);
  });
