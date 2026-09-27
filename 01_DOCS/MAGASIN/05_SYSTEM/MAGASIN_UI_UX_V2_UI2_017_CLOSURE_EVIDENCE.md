@@ -4,8 +4,8 @@
 **Assignment:** UI2-017-A001  
 **Exact baseline:** `main @ f98cfb15a47bbb66ad39c71348bb2668cf174364`  
 **Execution branch:** `ui2/ui2-017-exact-main-closure`  
-**Track status:** **CLOSURE-READY CANDIDATE / AWAITING PLANNER VERIFY / NOT YET CLOSED**  
-**Authority:** only Planner/Owner may ACCEPT UI2-017 and declare the UI/UX V2 track CLOSED.
+**Track status:** **PLANNER-ACCEPTED / PR #324 CLOSURE MERGE — CLOSED WHEN PRESENT ON MAIN**  
+**Authority:** Planner independently VERIFIED and ACCEPTED UI2-017 on 2026-09-27. PR #324 is the closure merge; when this document is present on `main`, the UI/UX V2 track is CLOSED.
 
 ## 1. Scope and boundary
 
@@ -37,7 +37,7 @@ The UI2-017 branch is required to remain executable-equivalent to that SHA. UI2-
 | UI2-014 | #321 | `7716b17012bd1f74d49fe0a749bff68b45f39c7a` | `2a341ad8aaecb67feab35731f660ffb28fa17bf6` | ACCEPTED / MERGED — Owner Overview + Attention |
 | UI2-015 | #322 | `f6bada0df5bcfb88a3c84b0716694a06ab5713c4` | `329e0797e313328db5834459d49cff3e99fd77fd` | ACCEPTED / MERGED — Owner drill-down workspace |
 | UI2-016 | #323 | `3fc5389513edab8d1415ed0417f3632caa3da7db` | `f98cfb15a47bbb66ad39c71348bb2668cf174364` | ACCEPTED / MERGED — cross-role responsive/a11y consistency |
-| UI2-017 | #324 | branch `ui2/ui2-017-exact-main-closure` | **NOT MERGED** | EXECUTOR CLOSURE EVIDENCE IN PROGRESS / AWAITING PLANNER VERIFY |
+| UI2-017 | #324 | `a5669faf1d3f848906ca2d175921ea83218aeafb` + Planner closure-finalization docs/test commits | PR #324 closure merge | **PLANNER-ACCEPTED / CLOSED WHEN PRESENT ON MAIN** |
 
 No later UI2 task exists after UI2-017.
 
@@ -127,15 +127,15 @@ Closure evidence preserves all accepted authority contracts:
 
 ## 7. State reconciliation decision
 
-`01_DOCS/MAGASIN/00_CURRENT_STATE.md` and `01_DOCS/MAGASIN/00_PROJECT_STATE.json` intentionally remain unchanged in UI2-017 Executor work because they carry independent PFC/Workforce state and UI2-017 has not yet been Planner-ACCEPTED.
+`01_DOCS/MAGASIN/00_CURRENT_STATE.md` and `01_DOCS/MAGASIN/00_PROJECT_STATE.json` intentionally remain unchanged because they carry independent PFC/Workforce state. UI2 closure does not overwrite those workstreams.
 
-The P0 execution plan is updated only to mark UI2-001→016 as accepted/merged and UI2-017 as a closure-ready candidate awaiting Planner verification.
+The P0 execution plan records UI2-001→016 as accepted/merged and UI2-017 as independently VERIFIED / PLANNER-ACCEPTED. PR #324 is the canonical closure merge.
 
-If Planner ACCEPTS UI2-017 and merges its PR, Planner/Owner may then declare the UI/UX V2 track CLOSED without rewriting or superseding independent PFC/Workforce state.
+When this document and the final reconciliation are present on `main` through PR #324, MAGASIN UI/UX V2 is CLOSED.
 
 ## 8. STOP boundary
 
 Executor must stop with the UI2-017 PR OPEN and unmerged.
 
-**Current closure verdict in this document:** CLOSURE-READY CANDIDATE / **AWAITING PLANNER VERIFY**.  
-This document does not self-ACCEPT UI2-017 and does not declare the project CLOSED.
+**Final closure verdict:** **PLANNER-ACCEPTED / PR #324 CLOSURE MERGE**.  
+This is a Planner verdict, not Executor self-acceptance. When this document is present on `main` through PR #324, MAGASIN UI/UX V2 is **CLOSED**.
