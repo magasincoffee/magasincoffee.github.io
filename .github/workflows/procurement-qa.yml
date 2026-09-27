@@ -8,8 +8,18 @@ on:
       - '04_OWNER/index.html'
       - '03_PLATFORM/01_AUTH/auth-runtime-v1.js'
       - 'nhap-hang/**'
+      - '02_CORE/ui/magasin-owner-drilldown-v1.*'
       - '07_DATABASE/migrations/*procurement*'
       - '09_QA/procurement/**'
+      - '09_QA/owner-control-tower/ui2-015-*'
+      - '.github/workflows/procurement-qa.yml'
+  pull_request:
+    paths:
+      - '04_OWNER/Procurement/**'
+      - 'nhap-hang/**'
+      - '02_CORE/ui/magasin-owner-drilldown-v1.*'
+      - '09_QA/procurement/**'
+      - '09_QA/owner-control-tower/ui2-015-*'
       - '.github/workflows/procurement-qa.yml'
   workflow_dispatch:
   schedule:
@@ -119,21 +129,30 @@ jobs:
           JSON
           fi
 
+      - name: Record pull-request live DB boundary
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p "$QA_OUT"
+          cat > "$QA_OUT/procurement-e2e-report.json" <<'JSON'
+          {"status":"SKIPPED","reason":"Pull-request gate is static + local-route/presentation only; credentialed Procurement database integrity smoke remains unchanged on main/manual runs."}
+          JSON
+
       - name: Install Playwright
-        if: steps.creds.outputs.enabled == 'true'
+        if: github.event_name != 'pull_request' && steps.creds.outputs.enabled == 'true'
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
       - name: Browser + database smoke test
-        if: steps.creds.outputs.enabled == 'true'
+        if: github.event_name != 'pull_request' && steps.creds.outputs.enabled == 'true'
         env:
           PROCUREMENT_QA_USERNAME: ${{ secrets.PROCUREMENT_QA_USERNAME }}
           PROCUREMENT_QA_PASSWORD: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
         run: node 09_QA/procurement/e2e-smoke.mjs
 
       - name: UI polish + layout stability test
-        if: steps.creds.outputs.enabled == 'true'
+        if: github.event_name != 'pull_request' && steps.creds.outputs.enabled == 'true'
         env:
           PROCUREMENT_QA_USERNAME: ${{ secrets.PROCUREMENT_QA_USERNAME }}
           PROCUREMENT_QA_PASSWORD: ${{ secrets.PROCUREMENT_QA_PASSWORD }}

@@ -6,20 +6,33 @@
 <meta name="robots" content="noindex,nofollow">
 <title>MAGASIN · Nhập hàng kế toán</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/02_CORE/shared/shared-core-v1.js"></script>
-<link rel="stylesheet" href="./procurement-v2.css">
+<script src="/02_CORE/shared/shared-core-v1.js?v=20260927-ui2-015"></script>
+<link rel="stylesheet" href="./procurement-v2.css?v=20260927-ui2-015">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20260925-ui2-004">
+<link rel="stylesheet" href="/02_CORE/ui/magasin-owner-drilldown-v1.css?v=20260927-ui2-015">
 <script defer src="/02_CORE/ui/magasin-ui-v2-shell.js?v=20260925-ui2-004"></script>
+<script defer src="/02_CORE/ui/magasin-owner-drilldown-v1.js?v=20260927-ui2-015"></script>
 </head>
 <body data-magasin-ui-v2 data-magasin-shell-v2 data-magasin-shell-role="owner" data-magasin-shell-mode="standalone" data-magasin-shell-current="procurement">
 <div id="loading" class="denied"><h2>Đang mở hệ thống…</h2><p class="muted">Đang kiểm tra tài khoản và dữ liệu kế toán.</p></div>
 <div id="denied" class="denied hidden"><h2>Không có quyền truy cập</h2><p id="deniedText" class="muted"></p><a class="btn primary" href="/03_PLATFORM/01_AUTH/">Về đăng nhập</a></div>
 <div id="app" class="hidden">
-<header>
-  <div class="topbar"><div class="brand"><div class="logo">M</div><div><h1>MAGASIN · Nhập hàng kế toán</h1><small>Mua hàng · công nợ · giá tham chiếu *ĐỊNH GIÁ</small></div></div><div class="userbox"><a class="btn ghost small" href="/04_OWNER/">Trang Owner</a><span id="userName"></span><button id="logoutBtn" class="btn small">Đăng xuất</button></div></div>
-  <div class="nav" id="nav"><button data-tab="orders" class="active">Đơn nhập</button><button data-tab="products">Danh mục</button><button data-tab="suppliers">Nhà cung cấp</button><button data-tab="payables">Công nợ</button><button data-tab="reports">Báo cáo</button></div>
+<header data-owner-local-module-header>
+  <section class="owner-module-context" data-owner-module-context="procurement" aria-labelledby="procurementContextTitle">
+    <div class="owner-module-context__row">
+      <div>
+        <span class="owner-module-eyebrow">OWNER WORKSPACE · PROCUREMENT</span>
+        <h1 id="procurementContextTitle" class="owner-module-title">Mua hàng & công nợ</h1>
+        <p class="owner-module-copy">Đơn nhập, hàng hóa, nhà cung cấp, công nợ và báo cáo mua hàng trên đúng workflows kế toán hiện hữu. Không phải Finance runtime.</p>
+        <div class="owner-module-meta"><span id="userName" class="owner-module-pill">Đang xác thực…</span><span class="owner-module-pill">Canonical route: /nhap-hang/</span><span class="owner-module-pill">Accounting authority unchanged</span></div>
+      </div>
+      <div class="owner-module-actions"><a href="/04_OWNER/">← Overview</a><a href="/04_OWNER/ControlTower/">Attention Center</a></div>
+    </div>
+    <button id="logoutBtn" type="button" hidden>Đăng xuất</button>
+  </section>
+  <div class="nav owner-module-tabs" id="nav" aria-label="Các phân hệ Mua hàng"><button data-tab="orders" class="active">Đơn nhập</button><button data-tab="products">Danh mục</button><button data-tab="suppliers">Nhà cung cấp</button><button data-tab="payables">Công nợ</button><button data-tab="reports">Báo cáo</button></div>
 </header>
 <main>
 <section id="sec-orders" class="section active">

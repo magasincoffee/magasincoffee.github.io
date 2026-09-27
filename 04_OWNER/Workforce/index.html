@@ -1,1 +1,29 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>MAGASIN · Owner · Workforce</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f7fb}iframe{display:block;width:100%;height:100%;border:0}</style></head><body><iframe id="app" title="MAGASIN Owner / Workforce" hidden></iframe><script src="/02_CORE/shared/shared-core-v1.js?v=20260903-core-120"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>(async()=>{try{const core=window.MAGASIN_CORE;if(!core)throw new Error('Shared Core chưa sẵn sàng.');const p=await core.supabase.requireActive();if(!core.roles.hasRole(p,['OWNER'])){location.replace('/');return}const f=document.getElementById('app');f.src='/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20260927-ui2-011-correction1';f.hidden=false}catch(e){console.error('Owner Workforce auth failed',e);location.replace('/')}})();</script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>MAGASIN · Owner · Workforce</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#f4f7fb;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033}
+body{overflow:hidden}.hidden{display:none!important}
+iframe{display:block;width:100%;height:100%;border:0;background:#f4f7fb}
+.screen{min-height:100%;display:grid;place-items:center;padding:20px}
+.message{max-width:580px;padding:28px;border:1px solid #dfe6ee;border-radius:18px;background:#fff;box-shadow:0 12px 34px rgba(16,33,59,.08);text-align:center}
+.message h2{margin:4px 0 8px}.message p{margin:0;color:#667085;line-height:1.6}
+.message a{min-height:44px;display:inline-flex;align-items:center;justify-content:center;margin-top:18px;padding:9px 13px;border:1px solid #cfd8e3;border-radius:10px;color:#344054;font-weight:800;text-decoration:none}
+.message a:focus-visible{outline:2px solid #2f6fde;outline-offset:2px}
+</style>
+<script src="/02_CORE/shared/shared-core-v1.js?v=20260927-ui2-015"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div id="loading" class="screen" aria-live="polite"><div class="message"><small>MAGASIN OWNER · WORKFORCE</small><h2>Đang kiểm tra quyền Owner…</h2><p>Canonical Workforce chỉ được tải sau khi xác thực Owner đang hoạt động.</p></div></div>
+<div id="denied" class="screen hidden"><div class="message"><small>ACCESS</small><h2>Không có quyền truy cập</h2><p id="deniedText">Chỉ Owner được mở Workforce enterprise.</p><a href="/03_PLATFORM/01_AUTH/">Về đăng nhập</a></div></div>
+<iframe id="app" title="MAGASIN Owner / Workforce" hidden></iframe>
+<script>
+(async()=>{const loading=document.getElementById('loading'),denied=document.getElementById('denied'),deniedText=document.getElementById('deniedText'),frame=document.getElementById('app');try{const core=window.MAGASIN_CORE;if(!core)throw new Error('Shared Core chưa sẵn sàng.');const p=await core.supabase.requireActive();if(!core.roles.hasRole(p,['OWNER']))throw new Error('Chỉ Owner được mở Workforce enterprise.');frame.src='/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20260927-ui2-015';frame.hidden=false;loading.classList.add('hidden')}catch(e){console.error('[OWNER_WORKFORCE_AUTH]',e);loading.classList.add('hidden');frame.hidden=true;denied.classList.remove('hidden');deniedText.textContent=e?.message||'Không thể xác thực quyền Owner.'}})();
+</script>
+</body>
+</html>
