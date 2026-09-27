@@ -92,6 +92,30 @@ The new credentialed runner covers the first three items without printing creden
 
 The remaining Owner activation, active-role logout and recovery lifecycle remain explicit manual Owner smoke unless dedicated disposable QA identities are provisioned and authorized for automated production mutation.
 
+
+## 4.1 Browser vault/profile verification attempt
+
+A live production-browser verification was attempted against:
+
+`https://magasincoffee.github.io/03_PLATFORM/01_AUTH/`
+
+using the connected browser profile/vault path, without exposing or requesting credential values.
+
+Result:
+
+```text
+production login page reached = PASS
+existing authenticated session = NOT AVAILABLE
+vault credential available      = NO
+ACTIVE login smoke              = BLOCKED / OWNER_REQUIRED
+PENDING switch smoke            = BLOCKED / OWNER_REQUIRED
+production mutation             = NONE
+```
+
+The browser run confirmed the production Auth page is reachable but the connected vault/profile contains no MAGASIN credentials. This is an external Owner dependency, not a code/test failure.
+
+The available GitHub connector can inspect workflow results but does not expose repository secret values or provide a workflow-dispatch action in this execution context. Therefore the credentialed workflow cannot be legitimately triggered from this executor session.
+
 ## 5. Authority boundary
 
 This task execution so far:
