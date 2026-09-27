@@ -33,7 +33,7 @@ try {
   await ownerContext.route("https://cdn.jsdelivr.net/**", route =>
     route.fulfill({ status:200, contentType:"application/javascript", body:"globalThis.supabase = globalThis.supabase || {};" })
   );
-  await ownerContext.route("**/02_CORE/shared/shared-core-v1.js", route =>
+  await ownerContext.route("**/02_CORE/shared/shared-core-v1.js*", route =>
     route.fulfill({
       status:200,
       contentType:"application/javascript",
