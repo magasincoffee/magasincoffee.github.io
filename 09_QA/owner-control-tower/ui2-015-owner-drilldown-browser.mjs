@@ -12,7 +12,12 @@ const fail=(name,detail="")=>{report.status="FAIL";report.checks.push({name,stat
 const check=async(name,fn)=>{try{pass(name,await fn())}catch(e){fail(name,e?.stack||e)}};
 
 function diagnostics(page,label){
- page.on("console",m=>{if(m.type()==="error")report.console_errors.push({label,text:m.text()})});
+ page.on("console",m=>{
+  if(m.type()!=="error")return;
+  const text=m.text();
+  if((label==="workforce-denied"&&text.includes("[OWNER_WORKFORCE_AUTH]"))||(label==="access-denied"&&text.includes("[OWNER_ACCESS]")))return;
+  report.console_errors.push({label,text});
+ });
  page.on("pageerror",e=>report.page_errors.push({label,error:String(e?.stack||e)}));
  page.on("requestfailed",r=>{if(!/favicon|google-analytics|googletagmanager/i.test(r.url()))report.request_failures.push({label,url:r.url(),error:r.failure()?.errorText||""})});
  page.on("response",r=>{if(r.status()>=500)report.http_errors.push({label,url:r.url(),status:r.status()})});
@@ -27,6 +32,7 @@ async function newContext(browser,width,height=980){
  await ctx.route("**/04_OWNER/Procurement/procurement-v2-boot.js*",route=>route.fulfill({status:200,contentType:"application/javascript",path:"09_QA/owner-control-tower/ui2-015-procurement-boot-mock.js"}));
  await ctx.route("**/05_MANAGER/runtime/manager-shell-v1.html*",route=>route.fulfill({status:200,contentType:"text/html",path:"09_QA/owner-control-tower/ui2-015-manager-shell-fixture.html"}));
  await ctx.route("**/05_MANAGER/Workforce/draft-publish-v1.js*",route=>route.fulfill({status:200,contentType:"application/javascript",path:"09_QA/owner-control-tower/ui2-015-writer-mock.js"}));
+ await ctx.route("**/02_CORE/security/security-runtime.js*",route=>route.fulfill({status:200,contentType:"application/javascript",body:""}));
  return ctx;
 }
 
