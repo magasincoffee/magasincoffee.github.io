@@ -157,7 +157,7 @@ test("SCHED-04 Manager UI hides technical generation identity and raw backend di
 
 test("SCHED-04 legacy Lich-lam route wraps canonical Workforce surface only",async()=>{
   const legacy=await read("05_MANAGER/Lich-lam/index.html");
-  assert.match(legacy,/manager-runtime-v1\.html\?v=20260927-ui2-012#workforce/);
+  assert.match(legacy,/manager-runtime-v1\.html\?v=20260927-ui2-013#workforce/);
   assert.doesNotMatch(legacy,/manager-v13-runtime/);
   assert.doesNotMatch(legacy,/draft-publish-v1\.js/);
 });
