@@ -19,6 +19,7 @@
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     let html = await res.text();
     html = html.replace('<head>', '<head><base href="/04_OWNER/Procurement/">');
+    html = html.replace('<button id="logoutBtn" type="button" hidden>', '<button id="logoutBtn" type="button" class="btn">');
     html = html.replace('</body>', `<script>addEventListener('load',()=>history.replaceState(history.state,'','${friendlyPath}'+location.search+location.hash),{once:true});<\/script></body>`);
     document.open();
     document.write(html);
