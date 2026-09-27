@@ -190,6 +190,66 @@
     }
   };
 
+  const establishVerificationSession = async () => {
+    const params = parseAuthParams();
+    const callbackError = params.get('error_code') || params.get('error');
+    setView('login');
+    setMessage('Đang xác nhận email…');
+
+    try {
+      if (callbackError) throw new Error('verification_callback_error');
+
+      let current = await sb.auth.getSession();
+      if (current.error) throw current.error;
+      let session = current.data && current.data.session;
+
+      const code = params.search.get('code') || '';
+      if (!session && code) {
+        const exchanged = await sb.auth.exchangeCodeForSession(code);
+        if (exchanged.error || !exchanged.data || !exchanged.data.session) throw exchanged.error || new Error('verification_exchange_failed');
+        session = exchanged.data.session;
+      }
+
+      const tokenHash = params.get('token_hash') || '';
+      const tokenType = String(params.get('type') || '').toLowerCase();
+      if (!session && tokenHash && ['signup', 'email'].includes(tokenType)) {
+        const verified = await sb.auth.verifyOtp({ token_hash: tokenHash, type: tokenType });
+        if (verified.error || !verified.data || !verified.data.session) throw verified.error || new Error('verification_otp_failed');
+        session = verified.data.session;
+      }
+
+      if (!session || !session.user) throw new Error('verification_session_missing');
+
+      const profile = await profileOf(session.user.id);
+      const accountStatus = String(profile.status || '').toUpperCase();
+      if (accountStatus === 'ACTIVE') {
+        replaceUrl('');
+        route(profile);
+        return;
+      }
+
+      await sb.auth.signOut({ scope: 'local' });
+      clearRecoveryMarker();
+      replaceUrl('');
+      setView('login');
+      if (accountStatus === 'PENDING') {
+        setMessage('Email đã được xác nhận. Tài khoản đang chờ quản lý kích hoạt.');
+      } else if (accountStatus === 'INACTIVE') {
+        setMessage('Email đã được xác nhận nhưng tài khoản hiện không hoạt động.', 'error');
+      } else {
+        setMessage('Không thể xác minh trạng thái tài khoản. Vui lòng liên hệ quản lý.', 'error');
+      }
+      $('username').focus();
+    } catch (_) {
+      try { await sb.auth.signOut({ scope: 'local' }); } catch (_) {}
+      clearRecoveryMarker();
+      replaceUrl('');
+      setView('login');
+      setMessage('Liên kết xác nhận email không hợp lệ hoặc đã hết hạn. Vui lòng thử đăng nhập hoặc đăng ký lại.', 'error');
+      $('username').focus();
+    }
+  };
+
   document.querySelectorAll('[data-view]').forEach(link => {
     link.addEventListener('click', event => {
       event.preventDefault();
@@ -225,9 +285,34 @@
       const email = await emailOf($('username').value);
       const result = await sb.auth.signInWithPassword({ email, password: $('password').value });
       if (result.error) throw new Error('Tên đăng nhập hoặc mật khẩu không đúng.');
-      const profile = await profileOf(result.data.user.id);
-      if (String(profile.status).toUpperCase() !== 'ACTIVE') return pending();
-      route(profile);
+
+      let profile;
+      try {
+        profile = await profileOf(result.data.user.id);
+      } catch (_) {
+        await sb.auth.signOut({ scope: 'local' });
+        setView('login');
+        setMessage('Không thể xác minh quyền truy cập của tài khoản. Vui lòng đăng nhập lại.', 'error');
+        return;
+      }
+
+      const accountStatus = String(profile.status || '').toUpperCase();
+      if (accountStatus === 'ACTIVE') {
+        route(profile);
+        return;
+      }
+      if (accountStatus === 'PENDING') {
+        pending();
+        return;
+      }
+
+      await sb.auth.signOut({ scope: 'local' });
+      setView('login');
+      if (accountStatus === 'INACTIVE') {
+        setMessage('Tài khoản hiện không hoạt động. Vui lòng liên hệ quản lý.', 'error');
+      } else {
+        setMessage('Trạng thái tài khoản không hợp lệ. Vui lòng liên hệ quản lý.', 'error');
+      }
     } catch (error) {
       setMessage(error.message || 'Không thể đăng nhập lúc này.', 'error');
     } finally {
@@ -258,8 +343,16 @@
         }
       });
       if (result.error) throw new Error('Không thể tạo tài khoản lúc này.');
-      setView('login');
-      setMessage(result.data.session ? 'Đăng ký thành công. Tài khoản chờ kích hoạt.' : 'Đăng ký thành công. Hãy xác nhận email trước khi đăng nhập.');
+      if (result.data.session) {
+        const signedOut = await sb.auth.signOut({ scope: 'local' });
+        if (signedOut && signedOut.error) throw new Error('Không thể kết thúc phiên đăng ký lúc này.');
+        clearRecoveryMarker();
+        setView('login');
+        setMessage('Đăng ký thành công. Tài khoản đang chờ quản lý kích hoạt. Bạn có thể đăng nhập bằng tài khoản khác trong lúc chờ.');
+      } else {
+        setView('login');
+        setMessage('Đăng ký thành công. Hãy xác nhận email trước khi đăng nhập.');
+      }
     } catch (error) {
       setMessage(error.message || 'Không thể tạo tài khoản lúc này.', 'error');
     } finally {
@@ -340,15 +433,41 @@
       await establishRecoverySession();
       return;
     }
+    if (params.search.get('auth') === 'verify' || ['signup', 'email'].includes(String(params.get('type') || '').toLowerCase())) {
+      await establishVerificationSession();
+      return;
+    }
 
-    const session = await sb.auth.getSession();
-    if (!session.data.session) return;
+    const sessionResult = await sb.auth.getSession();
+    if (sessionResult.error) {
+      setMessage('Không thể kiểm tra phiên đăng nhập lúc này. Vui lòng thử lại.', 'error');
+      return;
+    }
+    if (!sessionResult.data.session) return;
+
     try {
-      const profile = await profileOf(session.data.session.user.id);
-      if (String(profile.status).toUpperCase() === 'ACTIVE') route(profile);
-      else pending();
+      const profile = await profileOf(sessionResult.data.session.user.id);
+      const accountStatus = String(profile.status || '').toUpperCase();
+      if (accountStatus === 'ACTIVE') {
+        route(profile);
+        return;
+      }
+      if (accountStatus === 'PENDING') {
+        pending();
+        return;
+      }
+
+      await sb.auth.signOut({ scope: 'local' });
+      setView('login');
+      if (accountStatus === 'INACTIVE') {
+        setMessage('Tài khoản hiện không hoạt động. Vui lòng liên hệ quản lý.', 'error');
+      } else {
+        setMessage('Trạng thái tài khoản không hợp lệ. Vui lòng liên hệ quản lý.', 'error');
+      }
     } catch (_) {
-      // Fail closed: remain on auth surface when profile cannot be resolved.
+      try { await sb.auth.signOut({ scope: 'local' }); } catch (_) {}
+      setView('login');
+      setMessage('Không thể xác minh quyền truy cập của tài khoản. Vui lòng đăng nhập lại.', 'error');
     }
   };
 
