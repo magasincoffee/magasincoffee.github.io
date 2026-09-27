@@ -173,10 +173,11 @@ function sync(){
  const model=stageModel(state,busy);
  const banner=r.querySelector('.msu2-state-banner');
  if(banner){
-  banner.dataset.tone=model.tone;
-  banner.querySelector('strong').textContent=model.title;
-  banner.querySelector('.msu2-state-copy span').textContent=model.detail;
-  banner.querySelector('.msu2-state-chip').textContent=model.chip;
+  if(banner.dataset.tone!==model.tone)banner.dataset.tone=model.tone;
+  const title=banner.querySelector('strong'),detail=banner.querySelector('.msu2-state-copy span'),chip=banner.querySelector('.msu2-state-chip');
+  if(title&&title.textContent!==model.title)title.textContent=model.title;
+  if(detail&&detail.textContent!==model.detail)detail.textContent=model.detail;
+  if(chip&&chip.textContent!==model.chip)chip.textContent=model.chip;
  }
  if(stage==='CONFLICT'){
   for(const id of ['msdStart','msdSave','msdValidate','msdReview','msdPublish']){
