@@ -1,0 +1,125 @@
+name: UI2 Cross Role Acceptance
+
+on:
+  push:
+    paths:
+      - '02_CORE/ui/**'
+      - '03_PLATFORM/01_AUTH/**'
+      - '04_OWNER/**'
+      - '05_MANAGER/**'
+      - '06_EMPLOYEE/**'
+      - '09_QA/auth/**'
+      - '09_QA/people-shift/**'
+      - '09_QA/owner-control-tower/**'
+      - '09_QA/procurement/**'
+      - '09_QA/ui2-cross-role/**'
+      - '.github/workflows/ui2-cross-role-tests.yml'
+  pull_request:
+    paths:
+      - '02_CORE/ui/**'
+      - '03_PLATFORM/01_AUTH/**'
+      - '04_OWNER/**'
+      - '05_MANAGER/**'
+      - '06_EMPLOYEE/**'
+      - '09_QA/auth/**'
+      - '09_QA/people-shift/**'
+      - '09_QA/owner-control-tower/**'
+      - '09_QA/procurement/**'
+      - '09_QA/ui2-cross-role/**'
+      - '.github/workflows/ui2-cross-role-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  cross-role-browser-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run UI2-016 static contract
+        run: node --test 09_QA/ui2-cross-role/*.test.mjs
+
+      - name: Run accepted role static regressions
+        run: |
+          node --test 09_QA/people-shift/*.test.mjs
+          node --test 09_QA/owner-control-tower/*.test.mjs
+          node 09_QA/procurement/static-audit.mjs 04_OWNER/Procurement/index.html
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start cross-role QA server
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/ui2-cross-role qa-artifacts/people-shift qa-artifacts/control-tower
+          nohup python3 -m http.server 8769 --bind 127.0.0.1 > /tmp/ui2-cross-role-http.log 2>&1 &
+          echo $! > /tmp/ui2-cross-role-http.pid
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -fsS http://127.0.0.1:8769/03_PLATFORM/01_AUTH/ > /dev/null && \
+               curl -fsS http://127.0.0.1:8769/09_QA/people-shift/ui2-011-manager-shell-today-fixture.html > /dev/null && \
+               curl -fsS http://127.0.0.1:8769/04_OWNER/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/ui2-cross-role-http.log || true
+          exit 1
+
+      - name: Run Auth routing regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+        run: node 09_QA/auth/password-reset-hotfix-browser.mjs
+
+      - name: Run Auth responsive/accessibility matrix
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+          QA_OUT: qa-artifacts/ui2-cross-role
+        run: node 09_QA/ui2-cross-role/ui2-016-auth-responsive-browser.mjs
+
+      - name: Run Employee responsive matrix
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+          QA_OUT: qa-artifacts/people-shift
+        run: |
+          node 09_QA/people-shift/sched-07-ui-responsive-browser.mjs
+          node 09_QA/people-shift/ui2-009-employee-people-browser.mjs
+
+      - name: Run Manager responsive matrix
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+          QA_OUT: qa-artifacts/people-shift
+        run: |
+          node 09_QA/people-shift/ui2-011-manager-shell-today-browser.mjs
+          node 09_QA/people-shift/ui2-012-manager-scheduling-browser.mjs
+          node 09_QA/people-shift/ui2-013-manager-operations-browser.mjs
+
+      - name: Run Owner responsive matrix
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+          QA_OUT: qa-artifacts/control-tower
+        run: node 09_QA/owner-control-tower/browser-e2e.mjs
+
+      - name: Build UI2-016 cross-role matrix
+        env:
+          QA_ROOT: qa-artifacts
+        run: node 09_QA/ui2-cross-role/ui2-016-build-matrix.mjs
+
+      - name: Upload UI2-016 cross-role artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui2-016-cross-role-${{ github.run_id }}
+          path: |
+            qa-artifacts/ui2-cross-role/
+            qa-artifacts/people-shift/
+            qa-artifacts/control-tower/
+          if-no-files-found: warn
+          retention-days: 30
