@@ -10,11 +10,11 @@ const baseDir = path.dirname(target);
 const scriptFiles = [...html.matchAll(/<script[^>]*\bsrc=["']([^"']+)["'][^>]*><\/script>/gi)]
   .map(m => m[1])
   .filter(src => src.startsWith('./'))
-  .map(src => path.join(baseDir, src.slice(2)));
+  .map(src => path.join(baseDir, src.slice(2).split('?')[0]));
 const cssFiles = [...html.matchAll(/<link[^>]*\bhref=["']([^"']+)["'][^>]*>/gi)]
   .map(m => m[1])
   .filter(src => src.startsWith('./'))
-  .map(src => path.join(baseDir, src.slice(2)));
+  .map(src => path.join(baseDir, src.slice(2).split('?')[0]));
 const jsParts = scriptFiles.map(file => ({file, content:fs.existsSync(file)?fs.readFileSync(file,'utf8'):''}));
 const source = [html, ...jsParts.map(x=>x.content)].join('\n');
 
