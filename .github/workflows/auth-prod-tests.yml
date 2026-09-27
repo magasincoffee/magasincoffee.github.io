@@ -1,0 +1,44 @@
+name: AUTH-PROD Regression Contract
+
+on:
+  pull_request:
+    paths:
+      - '03_PLATFORM/01_AUTH/**'
+      - '04_OWNER/Access/**'
+      - '09_QA/auth/**'
+      - '01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_AUTH_PROD_001_REGRESSION_CONTRACT_EVIDENCE.md'
+      - '.github/workflows/auth-prod-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auth-prod-red-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify AUTH-PROD-001 intentional RED contract
+        shell: bash
+        run: |
+          set +e
+          node --test 09_QA/auth/auth-prod-001-regression-contract.test.mjs 2>&1 | tee /tmp/auth-prod-001-red.log
+          status=${PIPESTATUS[0]}
+          set -e
+
+          test "$status" -ne 0
+          grep -Fq "# tests 6" /tmp/auth-prod-001-red.log
+          grep -Fq "# pass 2" /tmp/auth-prod-001-red.log
+          grep -Fq "# fail 4" /tmp/auth-prod-001-red.log
+          grep -Fq "not ok 1 - AUTH-PROD D1: pending surface provides an authenticated escape and access recheck" /tmp/auth-prod-001-red.log
+          grep -Fq "not ok 2 - AUTH-PROD D1/D3: signup cannot leave a returned PENDING session capturing the browser" /tmp/auth-prod-001-red.log
+          grep -Fq "not ok 3 - AUTH-PROD D2: Owner activation is explicit and independent from ACCOUNTANT role assignment" /tmp/auth-prod-001-red.log
+          grep -Fq "not ok 4 - AUTH-PROD D3: Auth boot explicitly distinguishes ACTIVE, PENDING and INACTIVE" /tmp/auth-prod-001-red.log
+          grep -Fq "ok 5 - AUTH-PROD baseline: username/email resolution and role routes remain canonical" /tmp/auth-prod-001-red.log
+          grep -Fq "ok 6 - AUTH-PROD D4: credential failure path remains separate from authorization mutation" /tmp/auth-prod-001-red.log
+
+          echo "AUTH_PROD_001_RED_CONTRACT=PASS"
