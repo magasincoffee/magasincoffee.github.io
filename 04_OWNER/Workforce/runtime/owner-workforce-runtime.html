@@ -49,8 +49,9 @@ function prepareOwnerSurface(d){
   if(!scope){
     scope=d.createElement('section');
     scope.id='ownerSchedulingScope';
-    scope.className='owner-sched-scope';
-    scope.innerHTML='<strong>Giám sát & can thiệp theo cửa hàng</strong><span>Owner có thể chọn cửa hàng, xem Availability, bản nháp và lịch chính thức. Khi cần can thiệp, mọi thao tác vẫn dùng cùng DRAFT → Validate → Review → Publish và cùng work_schedules; không có Owner writer riêng.</span><div class="owner-sched-tags"><i>Enterprise scope</i><i>Selected-store control</i><i>One canonical writer</i><i>No direct table DML</i></div>';
+    scope.className='owner-sched-scope owner-module-context';
+    scope.dataset.ownerModuleContext='workforce';
+    scope.innerHTML='<div class="owner-module-context__row"><div><span class="owner-module-eyebrow">OWNER WORKSPACE · WORKFORCE</span><strong class="owner-module-title">Giám sát & can thiệp theo cửa hàng</strong><span class="owner-module-copy">Owner có thể chọn cửa hàng, xem Availability, bản nháp và lịch chính thức. Mọi thao tác vẫn dùng cùng DRAFT → Validate → Review → Publish và cùng work_schedules; không có Owner writer riêng.</span><div class="owner-sched-tags owner-module-meta"><i>Enterprise scope</i><i>Selected-store control</i><i>One canonical writer</i><i>No direct table DML</i></div></div><div class="owner-module-actions"><a href="/04_OWNER/">← Overview</a><a href="/04_OWNER/ControlTower/">Attention Center</a></div></div>';
     view.querySelector('.tabs')?.before(scope);
   }
   const tabs=view.querySelector('.tabs');
@@ -66,6 +67,7 @@ async function boot(){
     addCss(d,'/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004');
     addCss(d,'/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004');
     addCss(d,'/02_CORE/ui/magasin-ui-v2-shell.css?v=20260925-ui2-004');
+    addCss(d,'/02_CORE/ui/magasin-owner-drilldown-v1.css?v=20260927-ui2-015');
     d.body.dataset.magasinUiV2='';
     d.body.dataset.magasinShellV2='';
     d.body.dataset.magasinShellRole='owner';
@@ -75,7 +77,8 @@ async function boot(){
     await loadMany(d,[
       '/02_CORE/shared/shared-core-v1.js?v=20260903-core-structure1',
       'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-      '/02_CORE/ui/magasin-ui-v2-shell.js?v=20260925-ui2-004'
+      '/02_CORE/ui/magasin-ui-v2-shell.js?v=20260925-ui2-004',
+      '/02_CORE/ui/magasin-owner-drilldown-v1.js?v=20260927-ui2-015'
     ]);
     let tries=0;while(!prepareOwnerSurface(d)&&tries++<80)await new Promise(r=>setTimeout(r,100));
     if(!d.querySelector('#panel-publish'))throw new Error('OWNER_SCHEDULING_PANEL_NOT_READY');
