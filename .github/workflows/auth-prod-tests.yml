@@ -9,6 +9,12 @@ on:
       - '01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_AUTH_PROD_*'
       - '.github/workflows/auth-prod-tests.yml'
   workflow_dispatch:
+    inputs:
+      run_credentialed_smoke:
+        description: 'Run AUTH-PROD-005 against production using repository secrets'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -36,6 +42,17 @@ jobs:
           grep -Fq "ok 5 - AUTH-PROD baseline: username/email resolution and role routes remain canonical" /tmp/auth-prod-contract.log
           grep -Fq "ok 6 - AUTH-PROD D4: credential failure path remains separate from authorization mutation" /tmp/auth-prod-contract.log
           echo "AUTH_PROD_004_STATE_MACHINE_CONTRACT=PASS"
+
+      - name: Validate AUTH-PROD-005 layered QA harness
+        shell: bash
+        run: |
+          node --check 09_QA/auth/auth-prod-005-credentialed-production-smoke.mjs
+          sed '/^[[:space:]]*--/d' 09_QA/auth/auth-prod-005-production-readonly.sql > /tmp/auth-prod-005-readonly.sql
+          if grep -Eiq '\b(insert|update|delete|alter|drop|create|truncate|grant|revoke)\b' /tmp/auth-prod-005-readonly.sql; then
+            echo 'AUTH-PROD-005 reconciliation SQL is not read-only' >&2
+            exit 1
+          fi
+          echo "AUTH_PROD_005_LAYERED_QA_HARNESS=PASS"
 
       - name: Install Playwright Chromium
         run: |
@@ -69,3 +86,26 @@ jobs:
         env:
           QA_BASE_URL: http://127.0.0.1:8769
         run: node 09_QA/auth/auth-prod-004-auth-state-machine-browser.mjs
+
+  auth-prod-credentialed-smoke:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_credentialed_smoke }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run credentialed production smoke
+        env:
+          AUTH_PROD_BASE_URL: ${{ vars.AUTH_PROD_BASE_URL }}
+          AUTH_PROD_ACTIVE_USERNAME: ${{ secrets.AUTH_PROD_ACTIVE_USERNAME }}
+          AUTH_PROD_ACTIVE_EMAIL: ${{ secrets.AUTH_PROD_ACTIVE_EMAIL }}
+          AUTH_PROD_ACTIVE_PASSWORD: ${{ secrets.AUTH_PROD_ACTIVE_PASSWORD }}
+          AUTH_PROD_PENDING_USERNAME: ${{ secrets.AUTH_PROD_PENDING_USERNAME }}
+          AUTH_PROD_PENDING_PASSWORD: ${{ secrets.AUTH_PROD_PENDING_PASSWORD }}
+        run: node 09_QA/auth/auth-prod-005-credentialed-production-smoke.mjs
