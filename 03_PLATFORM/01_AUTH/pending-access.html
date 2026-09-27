@@ -102,12 +102,22 @@
     }
     .pending-actions{
       display:flex;
+      flex-wrap:wrap;
+      gap:var(--m-space-3);
       margin-top:var(--m-space-6);
     }
     .pending-actions .m-button{
       min-height:46px;
       text-decoration:none;
     }
+    .pending-status{
+      min-height:22px;
+      margin-top:var(--m-space-4);
+      color:var(--m-color-neutral-600);
+      font-size:13px;
+      line-height:19px;
+    }
+    .pending-status[data-kind="error"]{color:var(--m-color-danger);}
     @media(max-width:520px){
       .pending-shell{
         display:block;
@@ -147,9 +157,117 @@
         Khi quản lý kích hoạt quyền phù hợp, bạn có thể quay lại màn hình đăng nhập và tiếp tục bằng chính tài khoản này.
       </div>
       <div class="pending-actions">
-        <a class="m-button m-button--primary" href="/03_PLATFORM/01_AUTH/">Quay lại đăng nhập</a>
+        <button id="checkAccessBtn" class="m-button m-button--secondary" type="button">Kiểm tra quyền</button>
+        <button id="switchAccountBtn" class="m-button m-button--primary" type="button">Đăng xuất / Dùng tài khoản khác</button>
       </div>
+      <div id="pendingStatus" class="pending-status" role="status" aria-live="polite"></div>
     </section>
   </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/02_CORE/shared/shared-core-v1.js?v=20260927-auth-prod-002"></script>
+  <script>
+  (() => {
+    'use strict';
+
+    const AUTH_URL = '/03_PLATFORM/01_AUTH/';
+    const RECOVERY_STORAGE_KEY = 'magasin.auth.recovery.session.v1';
+    const checkBtn = document.getElementById('checkAccessBtn');
+    const switchBtn = document.getElementById('switchAccountBtn');
+    const statusNode = document.getElementById('pendingStatus');
+    const core = window.MAGASIN_CORE;
+    const sb = core && core.supabase && core.supabase.get ? core.supabase.get() : null;
+
+    const setStatus = (message, kind = '') => {
+      statusNode.textContent = message || '';
+      statusNode.dataset.kind = kind;
+    };
+
+    const setBusy = busy => {
+      checkBtn.disabled = !!busy;
+      switchBtn.disabled = !!busy;
+    };
+
+    const clearLocalMarkers = () => {
+      sessionStorage.removeItem(RECOVERY_STORAGE_KEY);
+    };
+
+    const route = profile => {
+      const role = String(profile && profile.role || '').toUpperCase();
+      if (role === 'OWNER') location.replace('/04_OWNER/');
+      else if (role === 'ACCOUNTANT') location.replace('/nhap-hang/');
+      else if (['STAFF', 'EMPLOYEE'].includes(role)) location.replace('/06_EMPLOYEE/');
+      else location.replace('/05_MANAGER/');
+    };
+
+    const readAuthoritativeState = async () => {
+      if (!sb) throw new Error('Không tải được hệ thống xác thực.');
+      const sessionResult = await sb.auth.getSession();
+      if (sessionResult.error) throw sessionResult.error;
+      const session = sessionResult.data && sessionResult.data.session;
+      if (!session || !session.user) return { session: null, profile: null };
+      const profileResult = await sb.from('profiles').select('role,status').eq('id', session.user.id).single();
+      if (profileResult.error) throw profileResult.error;
+      return { session, profile: profileResult.data };
+    };
+
+    const checkAccess = async () => {
+      setBusy(true);
+      setStatus('Đang kiểm tra quyền truy cập…');
+      try {
+        const { session, profile } = await readAuthoritativeState();
+        if (!session) {
+          clearLocalMarkers();
+          location.replace(AUTH_URL);
+          return;
+        }
+
+        const accountStatus = String(profile && profile.status || '').toUpperCase();
+        if (accountStatus === 'ACTIVE') {
+          route(profile);
+          return;
+        }
+        if (accountStatus === 'INACTIVE') {
+          setStatus('Tài khoản hiện không hoạt động. Bạn có thể đăng xuất và dùng tài khoản khác.', 'error');
+          return;
+        }
+        setStatus('Tài khoản vẫn đang chờ quản lý kích hoạt.');
+      } catch (_) {
+        setStatus('Chưa thể kiểm tra quyền lúc này. Vui lòng thử lại.', 'error');
+      } finally {
+        setBusy(false);
+      }
+    };
+
+    const switchAccount = async () => {
+      setBusy(true);
+      setStatus('Đang đăng xuất…');
+      try {
+        if (!sb) throw new Error('Không tải được hệ thống xác thực.');
+        const result = await sb.auth.signOut({ scope: 'local' });
+        if (result && result.error) throw result.error;
+        clearLocalMarkers();
+        location.replace(AUTH_URL + '?switch=1');
+      } catch (_) {
+        setStatus('Chưa thể đăng xuất lúc này. Vui lòng thử lại.', 'error');
+        setBusy(false);
+      }
+    };
+
+    checkBtn.addEventListener('click', checkAccess);
+    switchBtn.addEventListener('click', switchAccount);
+
+    (async () => {
+      try {
+        const current = await sb.auth.getSession();
+        if (current.error || !current.data || !current.data.session) {
+          clearLocalMarkers();
+          location.replace(AUTH_URL);
+        }
+      } catch (_) {
+        setStatus('Chưa thể xác minh phiên đăng nhập lúc này.', 'error');
+      }
+    })();
+  })();
+  </script>
 </body>
 </html>
