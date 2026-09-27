@@ -32,16 +32,16 @@ jobs:
 
           test "$status" -ne 0
           grep -Fq "# tests 6" /tmp/auth-prod-001-red.log
-          grep -Fq "# pass 3" /tmp/auth-prod-001-red.log
-          grep -Fq "# fail 3" /tmp/auth-prod-001-red.log
+          grep -Fq "# pass 4" /tmp/auth-prod-001-red.log
+          grep -Fq "# fail 2" /tmp/auth-prod-001-red.log
           grep -Fq "ok 1 - AUTH-PROD D1: pending surface provides an authenticated escape and access recheck" /tmp/auth-prod-001-red.log
           grep -Fq "not ok 2 - AUTH-PROD D1/D3: signup cannot leave a returned PENDING session capturing the browser" /tmp/auth-prod-001-red.log
-          grep -Fq "not ok 3 - AUTH-PROD D2: Owner activation is explicit and independent from ACCOUNTANT role assignment" /tmp/auth-prod-001-red.log
+          grep -Fq "ok 3 - AUTH-PROD D2: Owner activation is explicit and independent from ACCOUNTANT role assignment" /tmp/auth-prod-001-red.log
           grep -Fq "not ok 4 - AUTH-PROD D3: Auth boot explicitly distinguishes ACTIVE, PENDING and INACTIVE" /tmp/auth-prod-001-red.log
           grep -Fq "ok 5 - AUTH-PROD baseline: username/email resolution and role routes remain canonical" /tmp/auth-prod-001-red.log
           grep -Fq "ok 6 - AUTH-PROD D4: credential failure path remains separate from authorization mutation" /tmp/auth-prod-001-red.log
 
-          echo "AUTH_PROD_002_D1_CONTRACT=PASS"
+          echo "AUTH_PROD_003_D2_CONTRACT=PASS"
 
       - name: Install Playwright Chromium
         run: |
@@ -65,3 +65,8 @@ jobs:
         env:
           QA_BASE_URL: http://127.0.0.1:8769
         run: node 09_QA/auth/auth-prod-002-pending-browser.mjs
+
+      - name: Run AUTH-PROD-003 Owner activation browser regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+        run: node 09_QA/auth/auth-prod-003-owner-activation-browser.mjs
