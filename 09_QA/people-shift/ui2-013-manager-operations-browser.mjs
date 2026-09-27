@@ -44,7 +44,13 @@ for(const width of [1280,768,390]){
   await activate(page,view);
   if(view==="staff")await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
   if(view==="payroll-self-check")await page.evaluate(()=>globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.refresh());
-  await page.waitForFunction(([id,expected])=>document.getElementById("view-"+id)?.dataset.ui2OperationsState===expected,[view,expected]);
+  await page.waitForFunction(([id,expected])=>{
+   const root=document.getElementById("view-"+id);if(!root||root.dataset.ui2OperationsState!==expected)return false;
+   if(!root.querySelector(".mui2-module-head")||!root.querySelector(".mui2-state-banner"))return false;
+   if(id!=="swap"&&!root.querySelector(".mui2-module-controls select"))return false;
+   if(["staff","payroll-self-check"].includes(id)&&expected==="READY"&&!root.querySelector(".mui2-table-region"))return false;
+   return true;
+  },[view,expected]);
   await check("ui2_013_"+width+"_"+view+"_hierarchy_responsive",async()=>{
    const metric=await page.locator("#view-"+view).evaluate((root,expectedWidth)=>{
     const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};
