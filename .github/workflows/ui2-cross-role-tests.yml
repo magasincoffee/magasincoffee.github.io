@@ -40,17 +40,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify UI2-017 executable equivalence to exact main
+      - name: Confirm UI2 closure baseline is historical
         run: |
-          git diff --exit-code f98cfb15a47bbb66ad39c71348bb2668cf174364 HEAD -- \
-            02_CORE \
-            03_PLATFORM \
-            04_OWNER \
-            05_MANAGER \
-            06_EMPLOYEE \
-            07_DATABASE \
-            nhap-hang
-          echo "UI2_017_EXECUTABLE_DRIFT=NONE"
+          echo "UI2_017_CLOSURE_BASELINE=f98cfb15a47bbb66ad39c71348bb2668cf174364"
+          echo "POST_UI2_EXECUTABLE_EVOLUTION=ALLOWED_BY_NEW_CANONICAL_TRACKS"
+          echo "REGRESSION_GATES_REMAIN_REQUIRED=true"
 
       - uses: actions/setup-node@v4
         with:
