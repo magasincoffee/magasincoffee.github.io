@@ -176,7 +176,15 @@ body[data-owner-drilldown-v1] [data-owner-local-module-header]{
   body[data-owner-drilldown-v1] .owner-module-tabs button,
   body[data-owner-drilldown-v1] .btn,
   body[data-owner-drilldown-v1] input,
-  body[data-owner-drilldown-v1] select{
+  body[data-owner-drilldown-v1] select,
+  body[data-owner-drilldown-v1] .m-shell-v2-nav__item,
+  body[data-owner-drilldown-v1] .m-shell-v2-logout{
+    min-height:44px;
+  }
+  body[data-owner-drilldown-v1] .m-shell-v2-menu{
+    width:44px;
+    min-width:44px;
+    height:44px;
     min-height:44px;
   }
 }
