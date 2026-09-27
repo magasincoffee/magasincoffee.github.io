@@ -2,7 +2,7 @@
 
 **Track:** `AUTH-PROD / MAGASIN_AUTH_PRODUCTION_READINESS_V1`  
 **Task:** `AUTH-PROD-002 — Fix pending escape and account switching`  
-**Status:** `EXECUTOR CANDIDATE / AWAITING CI + PLANNER VERIFY`  
+**Status:** `PLANNER-ACCEPTED / MERGED PR #326`  
 **Base lineage:** AUTH-PROD-001 merged through PR #325  
 **Branch:** `auth-prod/auth-prod-002-pending-escape`
 
