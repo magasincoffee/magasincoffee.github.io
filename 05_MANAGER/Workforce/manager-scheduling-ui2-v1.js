@@ -62,9 +62,9 @@ const css=`<style id="manager-scheduling-ui2-012-css">
  .msu2-week-controls .badge{grid-column:1/-1}
  .msu2-draft-actions{display:grid;grid-template-columns:1fr 1fr;margin-top:8px}
  .msu2-draft-actions #msdSave{grid-column:1/-1;min-width:0}
- .msd-ui2-012 button,.msd-ui2-012 select{min-height:44px}
- .msu2-draft-actions .btn,.msu2-control-group .btn,.msu2-week-controls .btn,.msd-ui2-012 .msd-source-row .btn,.msd-ui2-012 .msd-downstream .btn{min-height:44px}
- .msd-ui2-012 .msd-input{height:44px}
+ .msd-ui2-012 button,.msd-ui2-012 select{min-height:44px!important}
+ .msu2-draft-actions .btn,.msu2-control-group .btn,.msu2-week-controls .btn,.msd-ui2-012 .msd-source-row .btn,.msd-ui2-012 .msd-downstream .btn{min-height:44px!important}
+ .msd-ui2-012 .msd-input{min-height:44px!important;height:44px!important}
  .msd-ui2-012 .msd-source-list{grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
  .msd-ui2-012 .msd-downstream .msd-actions{display:grid;grid-template-columns:1fr 1fr}
  .msd-ui2-012 .msd-downstream .btn{min-width:0}
