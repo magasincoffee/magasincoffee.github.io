@@ -1,6 +1,7 @@
 /* MAGASIN — Owner account permissions navigation */
 (()=>{'use strict';
 function install(){
+  if(document.body?.hasAttribute('data-magasin-shell-v2')||document.querySelector('#magasinUiV2Shell'))return true;
   const nav=document.querySelector('.sidebar .nav, nav.nav');
   if(!nav||nav.querySelector('[data-owner-access-nav]'))return false;
   const btn=document.createElement('button');
