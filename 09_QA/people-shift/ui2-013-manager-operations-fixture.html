@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>UI2-013 Manager Operations Modules QA</title>
+<style>
+:root{--border:#dfe5ec;--muted:#667085;--text:#101828}
+*{box-sizing:border-box}html,body{margin:0;min-width:0;width:100%;background:#f4f7fb;color:var(--text);font-family:Arial,sans-serif}
+body{padding:16px}.qa-shell{max-width:1280px;margin:0 auto;min-width:0}.nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.nav button,.btn{min-height:40px;border:1px solid #d0d5dd;border-radius:10px;background:#fff;color:#344054;padding:0 12px;font-weight:700;cursor:pointer}.nav button.active,.btn.primary{background:#eef5ff;border-color:#aac9ef;color:#235dba}
+.content,.view{min-width:0;max-width:100%}.view{display:none}.view.active{display:block}.card{border:1px solid var(--border);border-radius:14px;background:#fff;padding:14px}.row{display:flex;gap:8px;align-items:center}.actions{display:flex;gap:8px;flex-wrap:wrap}.muted{color:var(--muted);font-size:12px}.list{display:grid;gap:8px}.item{padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}.item span{display:block;margin-top:3px;font-size:11px;color:var(--muted)}.badge{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:800}.badge.red{background:#fee4e2;color:#912018}.badge.green{background:#e8f5ed;color:#23754a}.badge.yellow{background:#fff1c6;color:#795700}
+@media(max-width:900px){body{padding:12px}.nav button{min-height:44px}}
+</style>
+</head>
+<body>
+<div class="qa-shell">
+ <nav class="nav" aria-label="Manager QA modules">
+  <button data-view="swap">Đổi / cho ca</button>
+  <button data-view="attendance">Chấm công</button>
+  <button data-view="staff">Nhân viên</button>
+  <button data-view="payroll-self-check">Công / Lương</button>
+ </nav>
+ <main class="content">
+  <section class="view" id="view-swap"></section>
+  <section class="view" id="view-attendance"></section>
+  <section class="view" id="view-staff"></section>
+  <section class="view" id="view-payroll-self-check"></section>
+ </main>
+</div>
+<script>
+(()=>{
+'use strict';
+window.__MAGASIN_WORKFORCE_TODAY__='2026-09-27';
+const clone=x=>structuredClone(x);
+const stores=[
+ {id:'store-a',code:'CN-QA-A',name:'Cửa hàng QA A',status:'ACTIVE'},
+ {id:'store-b',code:'CN-QA-B',name:'Cửa hàng QA B',status:'ACTIVE'}
+];
+const baseAttendance=()=>[
+ {attendance_id:'att-1',schedule_id:'sch-1',user_id:'u-1',employee_name:'Nhân viên QA 1',store_id:'store-a',store_code:'CN-QA-A',store_name:'Cửa hàng QA A',work_date:'2026-09-27',planned_start:'06:00',planned_end:'12:00',actual_start:'06:10',actual_end:'12:05',status:'NEEDS_REVIEW',confirmed_start:null,confirmed_end:null,confirmed_minutes:null,note:'raw one'},
+ {attendance_id:'att-2',schedule_id:'sch-2',user_id:'u-2',employee_name:'Nhân viên QA 2',store_id:'store-a',store_code:'CN-QA-A',store_name:'Cửa hàng QA A',work_date:'2026-09-27',planned_start:'12:00',planned_end:'17:00',actual_start:'12:15',actual_end:'17:20',status:'NORMAL',confirmed_start:null,confirmed_end:null,confirmed_minutes:null,note:''},
+ {attendance_id:'att-3',schedule_id:'sch-3',user_id:'u-3',employee_name:'Nhân viên QA 3',store_id:'store-a',store_code:'CN-QA-A',store_name:'Cửa hàng QA A',work_date:'2026-09-26',planned_start:'06:00',planned_end:'10:00',actual_start:'06:20',actual_end:'10:05',status:'NEEDS_REVIEW',confirmed_start:null,confirmed_end:null,confirmed_minutes:null,note:''},
+ {attendance_id:'att-4',schedule_id:'sch-4',user_id:'u-4',employee_name:'Nhân viên QA 4',store_id:'store-a',store_code:'CN-QA-A',store_name:'Cửa hàng QA A',work_date:'2026-09-26',planned_start:'10:00',planned_end:'14:00',actual_start:'10:05',actual_end:'14:00',status:'NEEDS_REVIEW',confirmed_start:null,confirmed_end:null,confirmed_minutes:null,note:'conflict'}
+];
+const baseStaff=()=>({
+ 'store-a':[{employee_id:'u-1',employee_role:'STAFF',full_name:'Nhân viên QA A',username:'qa-a',phone:'0900000001',employee_level:'L2',primary_store_code:'CN-QA-A',primary_store_name:'Cửa hàng QA A',profile_status:'ACTIVE',join_date:'2026-01-02'}],
+ 'store-b':[{employee_id:'u-2',employee_role:'STAFF',full_name:'Nhân viên QA B',username:'qa-b',phone:'0900000002',employee_level:'L1',primary_store_code:'CN-QA-B',primary_store_name:'Cửa hàng QA B',profile_status:'ACTIVE',join_date:'2026-03-04'}]
+});
+const basePayroll=()=>({
+ 'store-a':[{payroll_entry_id:'pay-1',employee_id:'u-1',employee_name:'Nhân viên QA A',period_start:'2026-09-21',period_end:'2026-09-27',confirmed_work_item_count:4,confirmed_work_minutes:1320,state:'ESTIMATED',payroll_revision:'R1'}],
+ 'store-b':[{payroll_entry_id:'pay-2',employee_id:'u-2',employee_name:'Nhân viên QA B',period_start:'2026-09-21',period_end:'2026-09-27',confirmed_work_item_count:3,confirmed_work_minutes:960,state:'REVIEWED',payroll_revision:'R2'}]
+});
+const state={
+ calls:[],delayMs:0,errors:{},
+ swapPending:true,givePending:true,
+ attendance:baseAttendance(),attendanceConflictOnce:false,
+ staff:baseStaff(),payroll:basePayroll()
+};
+const err=message=>({data:null,error:{message}});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function swapRow(){return {id:'swap-1',status:'PEER_ACCEPTED',reason:'Đổi ca QA',store_id:'store-a',store_code:'CN-QA-A',requester_name:'Nhân viên QA 1',target_user_name:'Nhân viên QA 2',requester_date:'2026-09-28',requester_start:'06:00',requester_end:'12:00',target_start:'12:00',target_end:'17:00'}}
+function giveRow(){return {id:'give-1',status:'PENDING_MANAGER',reason:'Cho ca QA',store_id:'store-a',store_code:'CN-QA-A',giver_name:'Nhân viên QA 1',recipient_name:'Nhân viên QA 3',work_date:'2026-09-28',start_time:'06:00',end_time:'12:00'}}
+const api={
+ async rpc(name,args={}){
+  state.calls.push({kind:'rpc',name,args:clone(args)});
+  if(state.delayMs)await sleep(state.delayMs);
+  if(state.errors[name])return err(state.errors[name]);
+  if(name==='get_manager_accessible_stores')return {data:clone(stores),error:null};
+  if(name==='list_shift_swap_requests_v1')return {data:args.p_status==='PEER_ACCEPTED'&&state.swapPending?[swapRow()]:[],error:null};
+  if(name==='list_shift_give_requests_v1')return {data:args.p_status==='PENDING_MANAGER'&&state.givePending?[giveRow()]:[],error:null};
+  if(name==='approve_shift_swap'){state.swapPending=false;return {data:{id:args.p_swap_id,status:'APPROVED',swapped:true},error:null}};
+  if(name==='reject_shift_swap'){state.swapPending=false;return {data:{id:args.p_swap_id,status:'REJECTED'},error:null}};
+  if(name==='approve_shift_give'){state.givePending=false;return {data:{id:args.p_give_id,status:'APPROVED',transferred:true},error:null}};
+  if(name==='reject_shift_give'){state.givePending=false;return {data:{id:args.p_give_id,status:'REJECTED_MANAGER'},error:null}};
+  if(name==='list_manager_attendance_review_v1'){
+   return {data:clone(state.attendance.filter(r=>(!args.p_store_id||r.store_id===args.p_store_id)&&r.work_date>=args.p_from_date&&r.work_date<=args.p_to_date)),error:null};
+  }
+  if(name==='review_attendance_v1'){
+   const row=state.attendance.find(r=>r.attendance_id===args.p_attendance_id);if(!row)return err('ATTENDANCE_NOT_FOUND');
+   if(state.attendanceConflictOnce&&row.attendance_id==='att-4'){
+    state.attendanceConflictOnce=false;row.status='APPROVED';row.confirmed_start=row.actual_start;row.confirmed_end=row.actual_end;row.confirmed_minutes=235;
+    return err('ATTENDANCE_ALREADY_REVIEWED');
+   }
+   const terminal=['APPROVED','ADJUSTED','REJECTED'].includes(row.status);
+   const expected=args.p_decision==='APPROVE'?'APPROVED':args.p_decision==='ADJUST'?'ADJUSTED':'REJECTED';
+   if(terminal){
+    if(row.status===expected)return {data:{already_reviewed:true,status:row.status},error:null};
+    return err('ATTENDANCE_ALREADY_REVIEWED');
+   }
+   row.status=expected;
+   if(expected==='REJECTED'){row.confirmed_start=null;row.confirmed_end=null;row.confirmed_minutes=null}
+   else{
+    row.confirmed_start=expected==='ADJUST'?args.p_confirmed_start:row.actual_start;
+    row.confirmed_end=expected==='ADJUST'?args.p_confirmed_end:row.actual_end;
+    const [sh,sm]=row.confirmed_start.split(':').map(Number),[eh,em]=row.confirmed_end.split(':').map(Number);row.confirmed_minutes=(eh*60+em)-(sh*60+sm);
+   }
+   return {data:{already_reviewed:false,status:row.status},error:null};
+  }
+  if(name==='list_employee_profile_projection_v1')return {data:clone(state.staff[args.p_store_id]||[]),error:null};
+  if(name==='list_scoped_payroll_self_check_v1')return {data:clone(state.payroll[args.p_store_id]||[]),error:null};
+  return err('UNEXPECTED_RPC_'+name);
+ },
+ from(name){state.calls.push({kind:'from',name});throw new Error('DIRECT_TABLE_FORBIDDEN:'+name)}
+};
+window.supabase={createClient(){return api}};
+window.__UI2_013_QA={
+ state,stores,
+ setDelay:ms=>{state.delayMs=Math.max(0,Number(ms)||0)},
+ setRpcError:(name,message)=>{if(message)state.errors[name]=String(message);else delete state.errors[name]},
+ resetSwapGive:()=>{state.swapPending=true;state.givePending=true},
+ clearSwapGive:()=>{state.swapPending=false;state.givePending=false},
+ resetAttendance:()=>{state.attendance=baseAttendance();state.attendanceConflictOnce=false},
+ setAttendanceRows:rows=>{state.attendance=clone(rows||[])},
+ conflictAttendanceOnce:()=>{state.attendanceConflictOnce=true},
+ resetStaff:()=>{state.staff=baseStaff()},
+ setStaffRows:(storeId,rows)=>{state.staff[storeId]=clone(rows||[])},
+ resetPayroll:()=>{state.payroll=basePayroll()},
+ setPayrollRows:(storeId,rows)=>{state.payroll[storeId]=clone(rows||[])},
+ clearCalls:()=>{state.calls.length=0}
+};
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+ document.getElementById('view-'+b.dataset.view)?.classList.add('active');
+ document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===b));
+ if(b.dataset.view==='payroll-self-check')setTimeout(()=>window.MAGASIN_MANAGER_PAYROLL_SELF_CHECK?.refresh?.(),0);
+}));
+window.prompt=()=> 'QA rejection';
+})();
+</script>
+<script src="/05_MANAGER/Workforce/swap-approval-v1.js?v=20260927-ui2-013"></script>
+<script src="/05_MANAGER/Workforce/attendance-review-v1.js?v=20260927-ui2-011-correction1"></script>
+<script src="/05_MANAGER/Workforce/staff-projection-v1.js?v=20260923-task105"></script>
+<script src="/05_MANAGER/Workforce/payroll-self-check-v1.js?v=20260923-task104"></script>
+<script src="/05_MANAGER/Workforce/manager-operations-ui2-v1.js?v=20260927-ui2-013"></script>
+</body>
+</html>
