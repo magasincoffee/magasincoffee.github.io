@@ -20,6 +20,7 @@ test("UI2-012 is a Manager-only presentation layer over the existing canonical s
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=20260927-ui2-012/);
   assert.match(ui,/\.msd\[data-scheduling-actor="MANAGER"\]/);
   assert.match(ui,/dataset\.ui2ScheduleBoard='1'/);
+  assert.match(ui,/classList\.add\('msd-ui2-012'\)/);
   assert.doesNotMatch(ui,/OWNER|Owner Scheduling|enterprise oversight/i);
   assert.equal(rpc(ui).length,0);
   assert.doesNotMatch(ui,/createClient\s*\(|\.from\s*\(|\.(?:insert|update|delete|upsert)\s*\(/);
