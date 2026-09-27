@@ -97,7 +97,7 @@ function enhance(key,spec){
    const select=controls?.querySelector('select');
    if(select&&!select.getAttribute('aria-label'))select.setAttribute('aria-label','Cửa hàng trong phạm vi Manager');
   }
-  let banner=root.querySelector(':scope > .mui2-state-banner');
+  let banner=root.querySelector('.mui2-state-banner');
   if(!banner){
    banner=document.createElement('div');banner.className='mui2-state-banner';banner.setAttribute('role','status');banner.setAttribute('aria-live','polite');
    banner.innerHTML='<div class="mui2-state-copy"><strong></strong><span></span></div><span class="mui2-state-chip"></span>';
@@ -116,7 +116,7 @@ function syncOne(key,spec){
  try{data=window[spec.api]?.getState?.()||{}}catch(e){data={error:String(e?.message||e)}}
  const model=stateOf(key,data);
  root.dataset.ui2OperationsState=model.state;
- const banner=root.querySelector(':scope > .mui2-state-banner');if(!banner)return;
+ const banner=root.querySelector('.mui2-state-banner');if(!banner)return;
  if(banner.dataset.state!==model.state)banner.dataset.state=model.state;
  setText(banner.querySelector('.mui2-state-copy strong'),model.title);
  setText(banner.querySelector('.mui2-state-copy span'),model.detail);
