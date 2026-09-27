@@ -25,6 +25,15 @@ async function activate(page,view,state){
  await page.locator("#view-"+view+".active").waitFor();
  if(state)await page.waitForFunction(([id,expected])=>document.getElementById("view-"+id)?.dataset.ui2OperationsState===expected,[view,state]);
 }
+async function showResponsive(page,view){
+ await page.evaluate(id=>{
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.getElementById("view-"+id)?.classList.add("active");
+  document.querySelectorAll("[data-view]").forEach(x=>x.classList.toggle("active",x.dataset.view===id));
+ },view);
+ const api=view==="swap"?"MAGASIN_MANAGER_SHIFT_CHANGE":view==="attendance"?"MAGASIN_MANAGER_ATTENDANCE_REVIEW":view==="staff"?"MAGASIN_MANAGER_STAFF_PROJECTION":"MAGASIN_MANAGER_PAYROLL_SELF_CHECK";
+ await page.evaluate(async name=>{await globalThis[name].refresh();globalThis.MAGASIN_MANAGER_OPERATIONS_UI2_013.refresh()},api);
+}
 async function keyboardFocusEvidence(page,selector){
  const el=page.locator(selector).first();await el.waitFor();await el.focus();await page.keyboard.press("Shift+Tab");await page.keyboard.press("Tab");
  return el.evaluate(node=>({id:node.id||"",outline:getComputedStyle(node).outlineStyle,shadow:getComputedStyle(node).boxShadow,height:node.getBoundingClientRect().height}));
@@ -41,9 +50,7 @@ for(const width of [1280,768,390]){
   ["payroll-self-check","READY"]
  ];
  for(const [view,expected] of modules){
-  await activate(page,view);
-  if(view==="staff")await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
-  if(view==="payroll-self-check")await page.evaluate(()=>globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.refresh());
+  await showResponsive(page,view);
   await page.waitForFunction(([id,expected])=>{
    const root=document.getElementById("view-"+id);if(!root||root.dataset.ui2OperationsState!==expected)return false;
    if(!root.querySelector(".mui2-module-head")||!root.querySelector(".mui2-state-banner"))return false;
