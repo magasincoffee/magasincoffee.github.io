@@ -21,18 +21,23 @@ async function boot(){
  let tries=0,panel;while(!(panel=document.querySelector('#panel-review'))&&tries++<60)await new Promise(r=>setTimeout(r,150));if(!panel)return;
  if(!document.getElementById('mw-review-v3-css'))document.head.insertAdjacentHTML('beforeend',css);
  const sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
- let week=targetWeek(),storeId=null,stores=[],rows=[];
+ let week=targetWeek(),storeId=null,stores=[],rows=[],loading=true,error=null,scopeReady=false;
+ async function load(){
+  if(!scopeReady){loading=false;return []}
+  loading=true;error=null;
+  const q=await sb.rpc('get_manager_weekly_availability',{p_store_id:storeId||null,p_week_start:week});
+  if(q.error){loading=false;error=q.error.message||q.error.code||'UNKNOWN';panel.innerHTML=`<section class="card"><div class="mwr3-status error">Không tải được availability: ${esc(error)}</div></section>`;return []}
+  rows=Array.isArray(q.data)?q.data:[];
+  loading=false;error=null;
+  render();
+  return rows;
+ }
+ window.MAGASIN_MANAGER_AVAILABILITY={refresh:load,getState:()=>({week,storeId,rows:rows.map(x=>({...x})),stores:stores.map(x=>({...x})),loading,error})};
  const storesQ=await sb.rpc('get_manager_accessible_stores');
- if(storesQ.error){panel.innerHTML=`<section class="card"><div class="mwr3-status error">Không tải được phạm vi cửa hàng: ${esc(storesQ.error.message||storesQ.error.code||'UNKNOWN')}</div></section>`;return}
+ if(storesQ.error){loading=false;error=storesQ.error.message||storesQ.error.code||'UNKNOWN';panel.innerHTML=`<section class="card"><div class="mwr3-status error">Không tải được phạm vi cửa hàng: ${esc(error)}</div></section>`;return}
  stores=(Array.isArray(storesQ.data)?storesQ.data:[]).filter(s=>s?.id&&String(s.status||'ACTIVE').toUpperCase()==='ACTIVE');
  if(stores.length===1)storeId=stores[0].id;
-
- async function load(){
-  const q=await sb.rpc('get_manager_weekly_availability',{p_store_id:storeId||null,p_week_start:week});
-  if(q.error){panel.innerHTML=`<section class="card"><div class="mwr3-status error">Không tải được availability: ${esc(q.error.message||q.error.code||'UNKNOWN')}</div></section>`;return}
-  rows=Array.isArray(q.data)?q.data:[];
-  render();
- }
+ scopeReady=true;loading=false;error=null;
  function render(){
   const days=Array.from({length:7},(_,i)=>add(week,i)),map=Object.fromEntries(days.map(d=>[d,[]]));
   rows.forEach(r=>{const k=String(r.work_date).slice(0,10);if(map[k])map[k].push(r)});
@@ -45,7 +50,6 @@ async function boot(){
    document.dispatchEvent(new CustomEvent('magasin:manager-schedule-open',{detail:{storeId,week}}));
   });
  }
- window.MAGASIN_MANAGER_AVAILABILITY={refresh:load,getState:()=>({week,storeId,rows:rows.map(x=>({...x})),stores:stores.map(x=>({...x}))})};
  await load();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

@@ -99,5 +99,5 @@ test("TASK-100 Manager UI sends intent by RPC only and exposes approve adjust re
   assert.doesNotMatch(ui,/\.from\(['"]attendance['"]\)/);
   assert.doesNotMatch(ui,/\.from\(['"]work_schedules['"]\)/);
   assert.doesNotMatch(ui,/service_role/i);
-  assert.match(engine,/attendance-review-v1\.js\?v=20260922-task100/);
+  assert.match(engine,/attendance-review-v1\.js\?v=20260927-ui2-011-correction1/);
 });
