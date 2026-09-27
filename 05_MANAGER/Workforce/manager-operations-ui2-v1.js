@@ -104,7 +104,9 @@ function enhance(key,spec){
    head.after(banner);
   }
  }
- root.querySelectorAll('.mar-reviewed,.msp-table-wrap,.mgr-payroll-table-wrap').forEach(el=>{
+ const tableRegions=new Set([...root.querySelectorAll('.mar-reviewed,.msp-table-wrap,.mgr-payroll-table-wrap')]);
+ root.querySelectorAll('table').forEach(table=>{if(table.parentElement)tableRegions.add(table.parentElement)});
+ tableRegions.forEach(el=>{
   el.classList.add('mui2-table-region');el.tabIndex=0;el.setAttribute('role','region');el.setAttribute('aria-label','Bảng dữ liệu có thể cuộn ngang khi cần');
  });
  root.querySelectorAll('#mSwapMsg,.mar-state,.msp-state,.mgr-payroll-status').forEach(el=>{el.setAttribute('role','status');el.setAttribute('aria-live','polite')});
