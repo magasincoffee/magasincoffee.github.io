@@ -88,11 +88,12 @@ test("UI2-013 preserves Today getState compatibility and does not redesign sched
 
 test("UI2-013 complete Manager cache chain loads changed assets while Owner path stays untouched",()=>{
  const v="20260927-ui2-013";
+ const entryV="20260927-ui2-016";
  assert.match(engine,new RegExp("swap-approval-v1\\.js\\?v="+v));
  assert.match(engine,new RegExp("payroll-self-check-v1\\.js\\?v="+v));
  assert.match(engine,new RegExp("manager-operations-ui2-v1\\.js\\?v="+v));
  assert.ok(runtime.includes("engine-v1.js?v="+v));
- assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+v));
+ assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+entryV));
  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+v));
  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+v+"#workforce"));
  assert.doesNotMatch(ownerRuntime,new RegExp(v));
