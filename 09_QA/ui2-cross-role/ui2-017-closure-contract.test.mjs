@@ -40,10 +40,10 @@ test("UI2-017 closure evidence is correlated to exact main and all task IDs",()=
   const evidence=read("01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_UI2_017_CLOSURE_EVIDENCE.md");
   assert.ok(evidence.includes(BASE));
   for(let i=1;i<=17;i++)assert.ok(evidence.includes("UI2-"+String(i).padStart(3,"0")),"UI2-"+i);
-  for(const pr of [307,308,309,310,311,312,313,314,315,316,318,319,320,321,322,323])assert.ok(evidence.includes("#"+pr),"PR #"+pr);
-  assert.match(evidence,/AWAITING PLANNER VERIFY/);
-  assert.ok(evidence.includes("**Track status:** **CLOSURE-READY CANDIDATE / AWAITING PLANNER VERIFY / NOT YET CLOSED**"));
-  assert.ok(!evidence.includes("**Track status:** **CLOSED**"));
+  for(const pr of [307,308,309,310,311,312,313,314,315,316,318,319,320,321,322,323,324])assert.ok(evidence.includes("#"+pr),"PR #"+pr);
+  assert.match(evidence,/PLANNER-ACCEPTED/);
+  assert.ok(evidence.includes("**Track status:** **PLANNER-ACCEPTED / PR #324 CLOSURE MERGE — CLOSED WHEN PRESENT ON MAIN**"));
+  assert.doesNotMatch(evidence,/AWAITING PLANNER VERIFY|NOT YET CLOSED/);
 });
 
 console.log("UI2_017_CLOSURE_CONTRACT=PASS");
