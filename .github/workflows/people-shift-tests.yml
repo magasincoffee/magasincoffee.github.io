@@ -18,6 +18,10 @@ on:
       - '09_QA/people-shift/**'
       - '04_OWNER/ControlTower/**'
       - '09_QA/owner-control-tower/**'
+      - '02_CORE/ui/magasin-ui-v2-tokens.css'
+      - '02_CORE/ui/magasin-ui-v2-primitives.css'
+      - '02_CORE/ui/magasin-ui-v2-shell.css'
+      - '02_CORE/ui/magasin-ui-v2-shell.js'
       - '.github/workflows/people-shift-tests.yml'
   pull_request:
     paths:
@@ -36,6 +40,10 @@ on:
       - '09_QA/people-shift/**'
       - '04_OWNER/ControlTower/**'
       - '09_QA/owner-control-tower/**'
+      - '02_CORE/ui/magasin-ui-v2-tokens.css'
+      - '02_CORE/ui/magasin-ui-v2-primitives.css'
+      - '02_CORE/ui/magasin-ui-v2-shell.css'
+      - '02_CORE/ui/magasin-ui-v2-shell.js'
       - '.github/workflows/people-shift-tests.yml'
 
 permissions:
