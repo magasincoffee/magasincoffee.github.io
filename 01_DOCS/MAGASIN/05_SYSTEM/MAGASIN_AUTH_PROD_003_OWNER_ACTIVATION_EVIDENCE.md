@@ -2,7 +2,7 @@
 
 **Track:** `AUTH-PROD / MAGASIN_AUTH_PRODUCTION_READINESS_V1`  
 **Task:** `AUTH-PROD-003 — Decouple Owner role assignment from activation`  
-**Status:** `EXECUTOR CANDIDATE / AWAITING CI + PLANNER VERIFY`  
+**Status:** `PLANNER-ACCEPTED / MERGED PR #327`  
 **Base:** `main @ 1152c6bb86dc746cf1981a95d45af7db9e23431d`  
 **Branch:** `auth-prod/auth-prod-003-owner-activation`
 
