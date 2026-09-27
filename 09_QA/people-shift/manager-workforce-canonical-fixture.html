@@ -28,6 +28,8 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
   window.__MAGASIN_WORKFORCE_TODAY__="2026-09-27";
   const calls=[];
   const store={id:"store-a",code:"CN-QA-A",name:"Cửa hàng QA A",status:"ACTIVE"};
+  const store2={id:"store-c",code:"CN-QA-C",name:"Cửa hàng QA C",status:"ACTIVE"};
+  const accessibleStores=[store];
   const people={
     "u-1":"Nhân viên QA 1",
     "u-2":"Nhân viên QA 2",
@@ -54,7 +56,9 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
     reviewTransitions:0,
     publishTransitions:0,
     officialInsertCount:0,
-    publishFailures:0
+    publishFailures:0,
+    delayMs:0,
+    rpcErrors:{}
   };
   function mapAssignment(x,i){
     return {
@@ -120,8 +124,10 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
   const api={
     async rpc(name,args={}){
       calls.push({kind:"rpc",name,args:structuredClone(args||{})});
+      if(state.delayMs)await new Promise(resolve=>setTimeout(resolve,state.delayMs));
+      if(state.rpcErrors[name])return err(state.rpcErrors[name]);
       if(name==="current_user_role")return {data:"STORE_MANAGER",error:null};
-      if(name==="get_manager_accessible_stores")return {data:[store],error:null};
+      if(name==="get_manager_accessible_stores")return {data:accessibleStores.map(x=>({...x})),error:null};
       if(name==="get_manager_weekly_availability"){
         const end=new Date(args.p_week_start+"T00:00:00Z");end.setUTCDate(end.getUTCDate()+6);const to=end.toISOString().slice(0,10);
         return {data:availability.filter(x=>(!args.p_store_id||x.preferred_store_id===args.p_store_id)&&x.work_date>=args.p_week_start&&x.work_date<=to).map(x=>({...x})),error:null};
@@ -213,7 +219,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
     },
     from(name){calls.push({kind:"from",name});throw new Error("Direct table access forbidden:"+name)}
   };
-  window.__MW31_QA={calls,state,store,availability,people,peopleMeta,canonicalValidation,rpc:(name,args)=>api.rpc(name,args),setPersonStatus:(id,status)=>{if(peopleMeta[id])peopleMeta[id].status=status},setPersonRole:(id,role)=>{if(peopleMeta[id])peopleMeta[id].role=role},setCompeting:(rows)=>{state.competing=Array.isArray(rows)?rows:[]}};
+  window.__MW31_QA={calls,state,store,store2,availability,people,peopleMeta,canonicalValidation,rpc:(name,args)=>api.rpc(name,args),setPersonStatus:(id,status)=>{if(peopleMeta[id])peopleMeta[id].status=status},setPersonRole:(id,role)=>{if(peopleMeta[id])peopleMeta[id].role=role},setCompeting:(rows)=>{state.competing=Array.isArray(rows)?rows:[]},setDelay:(ms)=>{state.delayMs=Math.max(0,Number(ms)||0)},setRpcError:(name,message)=>{if(message)state.rpcErrors[name]=String(message);else delete state.rpcErrors[name]},setAccessibleStores:(ids)=>{accessibleStores.splice(0,accessibleStores.length,...(Array.isArray(ids)?ids:[]).map(id=>id==="store-c"?store2:store).filter((x,i,a)=>a.indexOf(x)===i))}};
   window.supabase={createClient(){return api}};
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));

@@ -92,14 +92,15 @@ test("UI2-011 correction blockers stay regression-locked",()=>{
   assert.match(today,/refreshButton\.disabled=refreshActive/);
 });
 
-test("UI2-011 cache chain bumps every modified Manager shell/runtime/engine child",()=>{
+test("UI2-011 cache chain remains preserved when later Manager UI tasks advance upstream runtime versions",()=>{
   const v="20260927-ui2-011-correction1";
-  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+v));
-  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+v));
+  const managerV="20260927-ui2-012";
+  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerV));
+  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
   assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+v));
   assert.ok(managerRuntime.includes("manager-shell-v1.html?v="+v+"&host=manager"));
   assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+v+"&host=owner"));
-  assert.ok(managerRuntime.includes("engine-v1.js?v="+v));
+  assert.ok(managerRuntime.includes("engine-v1.js?v="+managerV));
   assert.ok(shellHtml.includes("manager-ui-shell-v2.js?v="+v));
   for(const child of ["review-v1.js","swap-approval-v1.js","attendance-review-v1.js","ui-consolidation-v1.js"])assert.ok(engine.includes(child+"?v="+v),child);
 });

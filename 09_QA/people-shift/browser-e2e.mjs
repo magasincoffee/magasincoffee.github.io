@@ -11,6 +11,9 @@ if(process.exitCode)throw new Error("UI2-010 Employee phone acceptance gate fail
 await import("./ui2-011-manager-shell-today-browser.mjs");
 if(process.exitCode)throw new Error("UI2-011 Manager shell Today browser gate failed");
 
+await import("./ui2-012-manager-scheduling-browser.mjs");
+if(process.exitCode)throw new Error("UI2-012 Manager scheduling browser gate failed");
+
 const BASE = process.env.QA_BASE_URL || "http://127.0.0.1:8767";
 const OUT = process.env.QA_OUT || "qa-artifacts/people-shift";
 fs.mkdirSync(OUT, { recursive: true });
