@@ -225,9 +225,34 @@
       const email = await emailOf($('username').value);
       const result = await sb.auth.signInWithPassword({ email, password: $('password').value });
       if (result.error) throw new Error('Tên đăng nhập hoặc mật khẩu không đúng.');
-      const profile = await profileOf(result.data.user.id);
-      if (String(profile.status).toUpperCase() !== 'ACTIVE') return pending();
-      route(profile);
+
+      let profile;
+      try {
+        profile = await profileOf(result.data.user.id);
+      } catch (_) {
+        await sb.auth.signOut({ scope: 'local' });
+        setView('login');
+        setMessage('Không thể xác minh quyền truy cập của tài khoản. Vui lòng đăng nhập lại.', 'error');
+        return;
+      }
+
+      const accountStatus = String(profile.status || '').toUpperCase();
+      if (accountStatus === 'ACTIVE') {
+        route(profile);
+        return;
+      }
+      if (accountStatus === 'PENDING') {
+        pending();
+        return;
+      }
+
+      await sb.auth.signOut({ scope: 'local' });
+      setView('login');
+      if (accountStatus === 'INACTIVE') {
+        setMessage('Tài khoản hiện không hoạt động. Vui lòng liên hệ quản lý.', 'error');
+      } else {
+        setMessage('Trạng thái tài khoản không hợp lệ. Vui lòng liên hệ quản lý.', 'error');
+      }
     } catch (error) {
       setMessage(error.message || 'Không thể đăng nhập lúc này.', 'error');
     } finally {
