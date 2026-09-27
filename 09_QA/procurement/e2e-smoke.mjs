@@ -27,7 +27,7 @@ async function visible(sel,name){try{await page.locator(sel).waitFor({state:'vis
 
 try{
   await page.goto(`${BASE}/03_PLATFORM/01_AUTH/`,{waitUntil:'domcontentloaded',timeout:30000});
-  await page.fill('#username',USER);await page.fill('#password',PASS);await page.locator('#loginForm button').click();
+  await page.fill('#username',USER);await page.fill('#password',PASS);await page.locator('#loginForm button[type="submit"]').click();
   const loginOutcome=await Promise.race([
     page.waitForURL('**/04_OWNER/Procurement/**',{waitUntil:'domcontentloaded',timeout:45000}).then(()=> 'success'),
     page.locator('#msg.error:not([hidden])').waitFor({state:'visible',timeout:45000}).then(()=> 'error')
