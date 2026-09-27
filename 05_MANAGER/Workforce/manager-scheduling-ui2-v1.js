@@ -104,6 +104,7 @@ function structure(r){
  if(r.dataset.ui2SchedulingEnhanced==='1')return;
  r.dataset.ui2SchedulingEnhanced='1';
  r.dataset.ui2ScheduleBoard='1';
+ r.classList.add('msd-ui2-012');
  const head=r.querySelector('.msd-head');
  const title=head?.firstElementChild;
  if(title)title.classList.add('msu2-title');
