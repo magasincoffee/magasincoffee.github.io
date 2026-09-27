@@ -2,7 +2,7 @@
 
 **Track:** `AUTH-PROD / MAGASIN_AUTH_PRODUCTION_READINESS_V1`  
 **Task:** `AUTH-PROD-001 — Lock incident regression contract`  
-**Status:** `EXECUTOR RED-CONTRACT PROVEN / AWAITING PLANNER VERIFY`  
+**Status:** `PLANNER-ACCEPTED / MERGED PR #325`  
 **Base:** `main @ 722c70045d3f86d187099d0a07451b0e4bec99ea`  
 **Branch:** `auth-prod/auth-prod-001-regression-contract`  
 **Production mutation:** NONE  
