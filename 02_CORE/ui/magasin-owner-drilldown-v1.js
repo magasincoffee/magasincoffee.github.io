@@ -17,11 +17,38 @@ function mountFinanceReserved(){
   nav.appendChild(section);
   return true;
 }
+function syncModuleTabs(){
+  const tablist=document.querySelector('.owner-module-tabs');
+  if(!tablist)return;
+  tablist.setAttribute('role','tablist');
+  const apply=()=>tablist.querySelectorAll('[data-tab]').forEach(button=>{
+    button.setAttribute('role','tab');
+    button.setAttribute('aria-selected',button.classList.contains('active')?'true':'false');
+  });
+  apply();
+  tablist.addEventListener('click',()=>setTimeout(apply,0));
+}
+function reconcileProcurementRole(){
+  const user=document.querySelector('#userName');
+  if(!user)return;
+  const apply=()=>{
+    if(!/Kế toán/i.test(user.textContent||''))return;
+    document.getElementById('magasinUiV2Shell')?.remove();
+    document.body.removeAttribute('data-magasin-shell-v2');
+    document.body.removeAttribute('data-magasin-shell-role');
+    document.body.dataset.ownerDrilldownV1='';
+  };
+  apply();
+  new MutationObserver(apply).observe(user,{childList:true,subtree:true,characterData:true});
+}
 function install(){
-  if(!document.body||String(document.body.dataset.magasinShellRole||'').toLowerCase()!=='owner')return;
+  if(!document.body)return;
   document.body.dataset.ownerDrilldownV1='';
   const context=document.querySelector('[data-owner-module-context]');
   if(context)context.dataset.ownerModuleContextReady='true';
+  syncModuleTabs();
+  reconcileProcurementRole();
+  if(String(document.body.dataset.magasinShellRole||'').toLowerCase()!=='owner')return;
   if(mountFinanceReserved())return;
   const obs=new MutationObserver(()=>{if(mountFinanceReserved())obs.disconnect()});
   obs.observe(document.documentElement,{childList:true,subtree:true});
