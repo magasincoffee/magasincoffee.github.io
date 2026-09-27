@@ -69,11 +69,12 @@ async function workforceAllowed(browser,width){
  const opened=await openPage(browser,width,"/04_OWNER/Workforce/?qaRole=OWNER","workforce-"+width);
  const page=opened.page;
  await page.locator("#app:not([hidden])").waitFor({state:"visible",timeout:10000});
- const frame=page.frameLocator("#app");
+ const runtime=page.frameLocator("#app");
+ const frame=runtime.frameLocator("#app");
  await frame.locator("#magasinUiV2Shell").waitFor({state:"attached",timeout:10000});
  await frame.locator("#ownerSchedulingScope").waitFor({state:"visible",timeout:10000});
  await frame.locator(".msd[data-scheduling-actor='OWNER']").waitFor({state:"visible",timeout:10000});
- return {...opened,frame};
+ return {...opened,runtime,frame};
 }
 
 async function procurementAllowed(browser,width,route="/nhap-hang/?qaRole=OWNER"){
@@ -193,7 +194,8 @@ try{
   const opened=await workforceAllowed(browser,1280);
   await opened.page.reload({waitUntil:"domcontentloaded"});
   await opened.page.locator("#app:not([hidden])").waitFor({state:"visible",timeout:10000});
-  const frame=opened.page.frameLocator("#app");
+  const runtime=opened.page.frameLocator("#app");
+  const frame=runtime.frameLocator("#app");
   await frame.locator("#magasinUiV2Shell").waitFor({state:"attached",timeout:10000});
   const active=await frame.locator('.m-shell-v2-nav__item[aria-current="page"]').getAttribute("data-shell-key");
   if(active!=="workforce")throw new Error(String(active));
