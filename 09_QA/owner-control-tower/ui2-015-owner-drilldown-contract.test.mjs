@@ -34,7 +34,7 @@ test("UI2-015 Finance is explicit reserved presentation with no route or fabrica
 });
 
 test("UI2-015 Workforce keeps canonical scheduling writer and adds only Owner presentation context",()=>{
-  assert.match(workforceIndex,/owner-workforce-runtime\.html\?v=20260927-ui2-015/);
+  assert.match(workforceIndex,/owner-workforce-runtime\.html\?v=20260927-ui2-016/);
   assert.match(workforceIndex,/id="loading"/);
   assert.match(workforceIndex,/id="denied"/);
   assert.match(workforceIndex,/requireActive/);
