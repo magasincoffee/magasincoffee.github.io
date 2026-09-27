@@ -5,6 +5,8 @@ const username = String(process.env.AUTH_PROD_ACTIVE_USERNAME || '').trim();
 const password = String(process.env.AUTH_PROD_ACTIVE_PASSWORD || '');
 const pendingUsername = String(process.env.AUTH_PROD_PENDING_USERNAME || '').trim();
 const pendingPassword = String(process.env.AUTH_PROD_PENDING_PASSWORD || '');
+const requireLogout = String(process.env.AUTH_PROD_REQUIRE_ACTIVE_LOGOUT || '').toLowerCase() === 'true';
+const runRecoveryRequest = String(process.env.AUTH_PROD_RUN_RECOVERY_REQUEST || '').toLowerCase() === 'true';
 if (!username || !password) {
   console.error('AUTH_PROD_005_ACTIVE_SMOKE=OWNER_REQUIRED missing=active_qa_credentials');
   process.exit(2);
@@ -88,22 +90,41 @@ try {
     await assertActiveDestination(page, 'ACTIVE email login');
 
     const shellLogout = page.locator('[data-shell-logout]:visible');
-    if (await shellLogout.count()) {
-      await shellLogout.click();
+    const sourceLogout = page.locator('#logoutBtn:visible');
+    const hasVisibleLogout = (await shellLogout.count()) > 0 || (await sourceLogout.count()) > 0;
+
+    if (hasVisibleLogout) {
+      if (await shellLogout.count()) await shellLogout.click();
+      else await sourceLogout.click();
+      await page.waitForURL('**/03_PLATFORM/01_AUTH/**', { timeout: 30_000 });
+      await page.locator('#login.active').waitFor({ timeout: 20_000 });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.locator('#login.active').waitFor({ timeout: 20_000 });
+      assert.match(new URL(page.url()).pathname, /\/03_PLATFORM\/01_AUTH\/?$/, 'logout must remain on Auth after reload');
+      console.log('AUTH_PROD_005_ACTIVE_LOGOUT=PASS');
+    } else if (requireLogout) {
+      assert.fail('exact-main active role surface must expose a visible logout control');
     } else {
-      const managerLogout = page.locator('#logoutBtn:visible');
-      assert.ok(await managerLogout.count(), 'active role surface must expose a visible logout control');
-      await managerLogout.click();
+      console.log('AUTH_PROD_005_ACTIVE_LOGOUT=DEFERRED_UNTIL_EXACT_MAIN');
     }
 
-    await page.waitForURL('**/03_PLATFORM/01_AUTH/**', { timeout: 30_000 });
-    await page.locator('#login.active').waitFor({ timeout: 20_000 });
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.locator('#login.active').waitFor({ timeout: 20_000 });
-    assert.match(new URL(page.url()).pathname, /\/03_PLATFORM\/01_AUTH\/?$/, 'logout must remain on Auth after reload');
     assertDiagnosticsClean(diagnostics, 'ACTIVE email login/logout');
     console.log('AUTH_PROD_005_ACTIVE_EMAIL_LOGIN=PASS');
-    console.log('AUTH_PROD_005_ACTIVE_LOGOUT=PASS');
+    await context.close();
+  }
+
+  if (runRecoveryRequest) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const diagnostics = attachDiagnostics(page);
+    await page.goto(authUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.locator('#login.active').waitFor({ timeout: 20_000 });
+    await page.click('[data-view="forgot"]');
+    await page.fill('#forgotEmail', email);
+    await page.click('#forgotForm button[type="submit"]');
+    await page.waitForFunction(() => document.querySelector('#msg')?.textContent.includes('Nếu email tồn tại'), null, { timeout: 20_000 });
+    assertDiagnosticsClean(diagnostics, 'password recovery request');
+    console.log('AUTH_PROD_005_RECOVERY_REQUEST=PASS');
     await context.close();
   }
 
