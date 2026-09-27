@@ -52,7 +52,7 @@ await check("ui2_005_schedule_secondary_actions_remain_reachable",async()=>{
   return JSON.stringify(state);
 });
 
-const shellWidths=[360,390,430];
+const shellWidths=[360,390,430,768];
 for(const width of shellWidths){
   const employeeShell=await context.newPage();
   const shellAssets=[];
@@ -203,7 +203,7 @@ await check("ui2_005_employee_desktop_rail_expansion",async()=>{
 await employeeDesktop.screenshot({path:path.join(OUT,"ui2-005-employee-desktop-1440.png"),fullPage:true});
 await employeeDesktop.close();
 
-const todayWidths=[360,390,430];
+const todayWidths=[360,390,430,768];
 for(const width of todayWidths){
   const todayPage=await context.newPage();
   todayPage.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
@@ -363,7 +363,7 @@ await check("ui2_006_today_desktop_expansion_smoke",async()=>{
 await todayDesktop.screenshot({path:path.join(OUT,"ui2-006-employee-today-desktop-1440.png"),fullPage:true});
 await todayDesktop.close();
 
-const scheduleV2Widths=[360,390,430];
+const scheduleV2Widths=[360,390,430,768];
 for(const width of scheduleV2Widths){
   const schedulePage=await context.newPage();
   schedulePage.on("pageerror",e=>report.page_errors.push(String(e?.stack||e?.message||e)));
