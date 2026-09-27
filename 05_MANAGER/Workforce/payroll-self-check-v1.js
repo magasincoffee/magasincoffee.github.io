@@ -75,6 +75,6 @@ async function refresh(){
  try{if(!state.stores.length)await loadStores();await loadRows()}catch(e){state.loading=false;state.rows=[];state.error=errorCode(e);render()}finally{busy=false}
 }
 function boot(){ensureUi();render()}
-window.MAGASIN_MANAGER_PAYROLL_SELF_CHECK={refresh,getState:()=>({storeId:state.storeId,stores:state.stores.map(x=>({...x})),rows:state.rows.map(x=>({...x})),error:state.error})};
+window.MAGASIN_MANAGER_PAYROLL_SELF_CHECK={refresh,getState:()=>({storeId:state.storeId,stores:state.stores.map(x=>({...x})),rows:state.rows.map(x=>({...x})),loading:state.loading,error:state.error})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
