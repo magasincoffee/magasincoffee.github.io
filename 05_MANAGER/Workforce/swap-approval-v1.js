@@ -15,7 +15,10 @@ function giveRows(rows){
 }
 function render(swaps,gives,msg=''){
  const root=view();if(!root)return;
- root.innerHTML=`<div class="row" style="justify-content:space-between;gap:12px"><div><h2 style="margin:0">Yêu cầu đổi / cho ca</h2><div class="muted" style="margin-top:5px">Manager chỉ xử lý Swap/Give sau khi người nhận đã đồng ý.</div></div><span class="badge ${swaps.length+gives.length?'red':'green'}">${swaps.length+gives.length} chờ xử lý</span></div><div id="mSwapMsg" class="muted" style="margin-top:12px">${esc(msg)}</div><section class="card" style="margin-top:16px"><h3>Đổi ca</h3><div class="list">${swapRows(swaps)}</div></section><section class="card" style="margin-top:16px"><h3>Cho ca</h3><div class="list">${giveRows(gives)}</div></section>`;
+ const total=swaps.length+gives.length;
+ const swapBody=state.loading?'<div class="msw-state">Đang tải yêu cầu đổi ca canonical…</div>':state.error?'<div class="msw-state error">Không thể tải yêu cầu đổi ca. Hãy làm mới để thử lại.</div>':swapRows(swaps);
+ const giveBody=state.loading?'<div class="msw-state">Đang tải yêu cầu cho ca canonical…</div>':state.error?'<div class="msw-state error">Không thể tải yêu cầu cho ca. Hãy làm mới để thử lại.</div>':giveRows(gives);
+ root.innerHTML=`<div class="row" style="justify-content:space-between;gap:12px"><div><h2 style="margin:0">Yêu cầu đổi / cho ca</h2><div class="muted" style="margin-top:5px">Manager chỉ xử lý Swap/Give sau khi người nhận đã đồng ý.</div></div><span class="badge ${total?'red':'green'}">${total} chờ xử lý</span></div><div id="mSwapMsg" class="muted" style="margin-top:12px">${esc(msg)}</div><section class="card" style="margin-top:16px"><h3>Đổi ca</h3><div class="list">${swapBody}</div></section><section class="card" style="margin-top:16px"><h3>Cho ca</h3><div class="list">${giveBody}</div></section>`;
  root.querySelectorAll('.js-swap-approve').forEach(b=>b.onclick=()=>actSwap('approve_shift_swap',b.dataset.id));
  root.querySelectorAll('.js-swap-reject').forEach(b=>b.onclick=()=>actSwap('reject_shift_swap',b.dataset.id));
  root.querySelectorAll('.js-give-approve').forEach(b=>b.onclick=()=>actGive('approve_shift_give',b.dataset.id));
@@ -23,14 +26,14 @@ function render(swaps,gives,msg=''){
 }
 async function load(msg=''){
  if(!window.supabase?.createClient)return;
- state.loading=true;state.error=null;
+ state.loading=true;state.error=null;render(state.swaps,state.gives,msg);
  const [swapQ,giveQ]=await Promise.all([
    client().rpc('list_shift_swap_requests_v1',{p_store_id:null,p_status:'PEER_ACCEPTED'}),
    client().rpc('list_shift_give_requests_v1',{p_store_id:null,p_status:'PENDING_MANAGER'})
  ]);
  const errors=[swapQ.error,giveQ.error].filter(Boolean);
  state.loading=false;
- if(errors.length){state.swaps=[];state.gives=[];state.error=errors.map(e=>e.message||e.code||'UNKNOWN').join(' · ');render([],[],'Không tải được yêu cầu: '+state.error);return}
+ if(errors.length){state.swaps=[];state.gives=[];state.error=errors.map(e=>e.message||e.code||'UNKNOWN').join(' · ');render([],[],'Không tải được yêu cầu canonical.');return}
  state.swaps=Array.isArray(swapQ.data)?swapQ.data:[];
  state.gives=Array.isArray(giveQ.data)?giveQ.data:[];
  state.error=null;

@@ -14,6 +14,9 @@ if(process.exitCode)throw new Error("UI2-011 Manager shell Today browser gate fa
 await import("./ui2-012-manager-scheduling-browser.mjs");
 if(process.exitCode)throw new Error("UI2-012 Manager scheduling browser gate failed");
 
+await import("./ui2-013-manager-operations-browser.mjs");
+if(process.exitCode)throw new Error("UI2-013 Manager operations browser gate failed");
+
 const BASE = process.env.QA_BASE_URL || "http://127.0.0.1:8767";
 const OUT = process.env.QA_OUT || "qa-artifacts/people-shift";
 fs.mkdirSync(OUT, { recursive: true });

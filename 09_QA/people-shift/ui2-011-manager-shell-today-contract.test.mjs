@@ -94,7 +94,7 @@ test("UI2-011 correction blockers stay regression-locked",()=>{
 
 test("UI2-011 cache chain remains preserved when later Manager UI tasks advance upstream runtime versions",()=>{
   const v="20260927-ui2-011-correction1";
-  const managerV="20260927-ui2-012";
+  const managerV="20260927-ui2-013";
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
   assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+v));
@@ -102,7 +102,8 @@ test("UI2-011 cache chain remains preserved when later Manager UI tasks advance 
   assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+v+"&host=owner"));
   assert.ok(managerRuntime.includes("engine-v1.js?v="+managerV));
   assert.ok(shellHtml.includes("manager-ui-shell-v2.js?v="+v));
-  for(const child of ["review-v1.js","swap-approval-v1.js","attendance-review-v1.js","ui-consolidation-v1.js"])assert.ok(engine.includes(child+"?v="+v),child);
+  for(const child of ["review-v1.js","attendance-review-v1.js","ui-consolidation-v1.js"])assert.ok(engine.includes(child+"?v="+v),child);
+  assert.ok(engine.includes("swap-approval-v1.js?v="+managerV));
 });
 
 test("UI2-011 Availability reader preserves canonical RPC inventory while exposing read state",()=>{

@@ -89,11 +89,13 @@ test("UI2-012 responsive contract contains board scrolling touch targets and foc
 
 test("UI2-012 Manager asset cache chain advances while Owner runtime remains on its existing path",()=>{
   const v="20260927-ui2-012";
-  assert.ok(runtime.includes("engine-v1.js?v="+v));
-  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+v));
-  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+v));
-  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+v+"#workforce"));
-  assert.doesNotMatch(ownerRuntime,new RegExp(v));
+  const managerV="20260927-ui2-013";
+  assert.ok(runtime.includes("engine-v1.js?v="+managerV));
+  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerV));
+  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
+  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerV+"#workforce"));
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=20260927-ui2-012/);
+  assert.doesNotMatch(ownerRuntime,new RegExp(managerV));
 });
 
 test("UI2-012 bounded browser gate is integrated into the existing People Shift Day-10 gate",()=>{
