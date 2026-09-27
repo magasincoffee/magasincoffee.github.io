@@ -103,9 +103,9 @@ test("UI2-011 cache chain remains preserved when later Manager UI tasks advance 
   assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+ownerEntryV));
   assert.ok(managerRuntime.includes("manager-shell-v1.html?v="+shellV+"&host=manager"));
   assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+shellV+"&host=owner"));
-  assert.ok(managerRuntime.includes("engine-v1.js?v="+managerV));
+  assert.ok(managerRuntime.includes("engine-v1.js?v=20260927-ui2-016"));
   assert.ok(shellHtml.includes("manager-ui-shell-v2.js?v="+shellV));
-  for(const child of ["review-v1.js","attendance-review-v1.js","ui-consolidation-v1.js"])assert.ok(engine.includes(child+"?v="+v),child);
+  for(const child of ["review-v1.js","attendance-review-v1.js"])assert.ok(engine.includes(child+"?v="+v),child);\n  assert.ok(engine.includes("ui-consolidation-v1.js?v=20260927-ui2-016"));
   assert.ok(engine.includes("swap-approval-v1.js?v="+managerV));
 });
 
