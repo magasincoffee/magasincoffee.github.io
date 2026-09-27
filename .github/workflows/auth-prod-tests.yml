@@ -1,0 +1,26 @@
+name: AUTH-PROD Regression Contract
+
+on:
+  pull_request:
+    paths:
+      - '03_PLATFORM/01_AUTH/**'
+      - '04_OWNER/Access/**'
+      - '09_QA/auth/**'
+      - '01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_AUTH_PROD_001_REGRESSION_CONTRACT_EVIDENCE.md'
+      - '.github/workflows/auth-prod-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auth-prod-red-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run AUTH-PROD-001 desired-state regression contract
+        run: node --test 09_QA/auth/auth-prod-001-regression-contract.test.mjs
