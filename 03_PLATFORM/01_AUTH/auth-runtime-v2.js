@@ -343,7 +343,7 @@
         }
       });
       if (result.error) throw new Error('Không thể tạo tài khoản lúc này.');
-      if (result.data && result.data.session) {
+      if (result.data.session) {
         const signedOut = await sb.auth.signOut({ scope: 'local' });
         if (signedOut && signedOut.error) throw new Error('Không thể kết thúc phiên đăng ký lúc này.');
         clearRecoveryMarker();
