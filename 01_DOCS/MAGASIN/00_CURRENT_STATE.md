@@ -33,7 +33,7 @@ Read first for this incident:
 1. `05_SYSTEM/MAGASIN_AUTH_PRODUCTION_READINESS_SOURCE_OF_TRUTH.md`
 2. `05_SYSTEM/MAGASIN_AUTH_PRODUCTION_READINESS_EXECUTION_PLAN.md`
 
-Current AUTH-PROD cursor: **AUTH-PROD-001 READY**. Do not declare the webapp production-ready until AUTH-PROD-001→008 reach canonical closure.
+Current AUTH-PROD cursor: **AUTH-PROD-003 READY**. AUTH-PROD-001 and AUTH-PROD-002 are DONE/MERGED through PR #325 and PR #326. Do not declare the webapp production-ready until AUTH-PROD-001→008 reach canonical closure.
 
 ## Schedule-first continuity
 
