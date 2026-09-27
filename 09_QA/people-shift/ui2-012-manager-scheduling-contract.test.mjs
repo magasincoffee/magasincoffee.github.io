@@ -78,7 +78,7 @@ test("UI2-012 explicitly represents NONE DRAFT REVIEWED PUBLISHED CONFLICT and b
 
 test("UI2-012 responsive contract contains board scrolling touch targets and focus-visible affordances",()=>{
   assert.match(ui,/@media\(max-width:1100px\)/);
-  assert.match(ui,/@media\(max-width:900px\)/);
+  assert.match(ui,/@media\(max-width:1024px\)/);
   assert.match(ui,/@media\(max-width:520px\)/);
   assert.match(ui,/min-height:44px/);
   assert.match(ui,/overflow-x:auto/);
