@@ -36,6 +36,7 @@ function reconcileProcurementRole(){
     document.getElementById('magasinUiV2Shell')?.remove();
     document.body.removeAttribute('data-magasin-shell-v2');
     document.body.removeAttribute('data-magasin-shell-role');
+    document.body.style.setProperty('--m-shell-topbar-height','0px');
     document.body.dataset.ownerDrilldownV1='';
   };
   apply();
