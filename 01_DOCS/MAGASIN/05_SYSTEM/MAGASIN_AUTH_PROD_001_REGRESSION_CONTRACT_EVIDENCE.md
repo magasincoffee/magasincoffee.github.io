@@ -2,7 +2,7 @@
 
 **Track:** `AUTH-PROD / MAGASIN_AUTH_PRODUCTION_READINESS_V1`  
 **Task:** `AUTH-PROD-001 — Lock incident regression contract`  
-**Status:** `EXECUTOR RED-CONTRACT CANDIDATE / AWAITING CI EVIDENCE`  
+**Status:** `EXECUTOR RED-CONTRACT PROVEN / AWAITING PLANNER VERIFY`  
 **Base:** `main @ 722c70045d3f86d187099d0a07451b0e4bec99ea`  
 **Branch:** `auth-prod/auth-prod-001-regression-contract`  
 **Production mutation:** NONE  
@@ -56,18 +56,26 @@ Command:
 node --test 09_QA/auth/auth-prod-001-regression-contract.test.mjs
 ```
 
-Expected task-phase result:
+Observed CI result on initial contract head `048d16ef92fdac8a8338bdcaf7cd7c0dfb33d41b`:
+
+- workflow: `AUTH-PROD Regression Contract`
+- run: `36327488546`
+- job/check: `108642935022 / auth-prod-red-contract`
+- conclusion: **FAILURE — INTENTIONAL RED**
+- Node test summary: **6 tests / 2 pass / 4 fail**
+
+Observed mapping:
 
 ```text
-OVERALL = FAIL (INTENTIONAL RED CONTRACT)
-D1      = FAIL
-D2      = FAIL
-D3      = FAIL on missing explicit INACTIVE/non-collapsed state handling
-baseline username/email/role routing = PASS
-D4 credential/authorization separation = PASS
+FAIL  D1 pending surface: no canonical Supabase client / bounded escape contract yet
+FAIL  D1/D3 signup returned-session cleanup: missing
+FAIL  D2 Owner activation: ACCOUNTANT remains hidden activation bridge
+FAIL  D3 boot semantics: PENDING/INACTIVE are not explicitly distinguished
+PASS  canonical username/email resolution + role routing baseline
+PASS  D4 credential failure remains separate from profile authorization mutation
 ```
 
-A failing run is the correct AUTH-PROD-001 result if failures correspond to the locked defects above.
+This is the expected AUTH-PROD-001 RED result. No assertion was loosened to manufacture PASS.
 
 ## 4. Authority boundary
 
