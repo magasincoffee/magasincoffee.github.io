@@ -381,6 +381,21 @@ body[data-magasin-shell-v2][data-magasin-shell-mode="standalone"] > header {
     place-items: center;
   }
 
+  /* UI2-016: <=1024px is the shared drawer/touch shell, so its primary
+     navigation and topbar controls must meet the 44px touch target contract. */
+  body[data-magasin-shell-v2] .m-shell-v2-menu,
+  body[data-magasin-shell-v2] .m-shell-v2-topbar .m-icon-button {
+    width: var(--m-control-touch-height);
+    min-width: var(--m-control-touch-height);
+    height: var(--m-control-touch-height);
+    min-height: var(--m-control-touch-height);
+  }
+
+  body[data-magasin-shell-v2] .m-shell-v2-nav__item,
+  body[data-magasin-shell-v2] .m-shell-v2-logout {
+    min-height: var(--m-control-touch-height);
+  }
+
   body[data-magasin-shell-v2] .m-shell-v2-sidebar {
     width: min(320px, 88vw);
     transform: translateX(-104%);
@@ -420,18 +435,6 @@ body[data-magasin-shell-v2][data-magasin-shell-mode="standalone"] > header {
     max-width: 38vw;
   }
 
-  body[data-magasin-shell-v2] .m-shell-v2-menu,
-  body[data-magasin-shell-v2] .m-shell-v2-topbar .m-icon-button {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-  }
-
-  body[data-magasin-shell-v2] .m-shell-v2-nav__item,
-  body[data-magasin-shell-v2] .m-shell-v2-logout {
-    min-height: 44px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
