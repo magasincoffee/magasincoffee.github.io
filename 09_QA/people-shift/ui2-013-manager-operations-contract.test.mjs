@@ -49,10 +49,10 @@ test("UI2-013 Attendance keeps canonical reader review state machine and explici
  assert.doesNotMatch(attendance,/\.from\(['"]attendance['"]\)|\.from\(['"]work_schedules['"]\)/);
 });
 
-test("UI2-013 Employees stays read-only canonical projection and never adds a writer",()=>{
- assert.deepEqual(set(staff),["get_manager_accessible_stores","list_employee_profile_projection_v1"].sort());
- assert.match(staff,/validProjectionRow/);
- for(const field of ["full_name","username","phone","employee_level","primary_store_code","profile_status","join_date"])assert.ok(staff.includes(field),field);
+test("UI2-013 Employees remains RPC-only while XSTORE adds bounded management-owned Store Priority writer",()=>{
+ assert.deepEqual(set(staff),["get_manager_accessible_stores","list_employee_store_priority_profiles_v1","set_employee_store_priority_profile_v1"].sort());
+ for(const field of ["full_name","username","phone","profile_status","priority_store_codes"])assert.ok(staff.includes(field),field);
+ assert.match(staff,/Ưu tiên 1 là chi nhánh chính/);
  assert.doesNotMatch(staff,/\.from\s*\(|\.insert\s*\(|\.update\s*\(|\.delete\s*\(|save_employee|update_employee/i);
 });
 
@@ -88,11 +88,11 @@ test("UI2-013 preserves Today getState compatibility and does not redesign sched
 
 test("UI2-013 complete Manager cache chain loads changed assets while Owner path stays untouched",()=>{
  const v="20260927-ui2-013";
- const entryV="20260927-ui2-016";
+ const entryV="20260928-xstore006";
  assert.match(engine,new RegExp("swap-approval-v1\\.js\\?v="+v));
  assert.match(engine,new RegExp("payroll-self-check-v1\\.js\\?v="+v));
  assert.match(engine,/manager-operations-ui2-v1\.js\?v=20260927-ui2-016/);
- assert.ok(runtime.includes("engine-v1.js?v=20260927-ui2-016"));
+ assert.ok(runtime.includes("engine-v1.js?v=20260928-xstore006"));
  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+entryV));
  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+v));
  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+v+"#workforce"));
