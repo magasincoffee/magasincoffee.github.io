@@ -113,6 +113,11 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8769
         run: node 09_QA/auth/auth-prod-005-invalid-credential-retry-browser.mjs
 
+      - name: Run AUTH-PROD-007 duplicate username signup regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+        run: node 09_QA/auth/auth-prod-007-duplicate-username-browser.mjs
+
       - name: Run AUTH-PROD-003 Owner activation browser regression
         env:
           QA_BASE_URL: http://127.0.0.1:8769
