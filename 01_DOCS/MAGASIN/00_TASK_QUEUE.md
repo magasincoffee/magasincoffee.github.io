@@ -235,7 +235,7 @@ TASK-107 completion evidence: `05_SYSTEM/TASK_107_WORKFORCE_FAILURE_RECOVERY_SEC
 
 TASK-108 completion evidence: `05_SYSTEM/TASK_108_FINAL_REGRESSION_POST_MERGE_E2E_RECHECK.md`. Qualified executable SHA `8fd8a446d6722871af0be4171b5e129d2f6eea40`; Gate A = PASS / ACCEPTED, Gate B = PASS / ACCEPTED, Gate C = PASS / ACCEPTED; TASK-108 = DONE / CLOSED. This closes `WORKFORCE_OPERATIONS_V1` without enabling Workforce Robot or authorizing an automatic next Workforce task.
 
-## Workforce Cross-Store Scheduling V1 — PLAN STAGED / NOT RELEASED
+## Workforce Cross-Store Scheduling V1 — XSTORE-001→006 DONE / XSTORE-007 WAIT_OWNER
 
 Temporary Source of Truth: `05_SYSTEM/WORKFORCE_CROSS_STORE_SCHEDULING_TEMP_SOURCE_OF_TRUTH.md`  
 Search key: `WORKFORCE-CROSS-STORE`
@@ -244,21 +244,21 @@ This is a new post-V1 extension and does not alter the CLOSED status of `WORKFOR
 
 | ID | Task | Status |
 |---|---|---|
-| XSTORE-001 | Store Manager authority + current implementation reconciliation | **WAIT_OWNER_ROLE_SWITCH / LIVE_SMOKE** |
-| XSTORE-002 | Store Priority Profile contract | PLANNED |
-| XSTORE-003 | Availability simplification — time only | PLANNED |
-| XSTORE-004 | Cross-store scheduling contract | PLANNED |
-| XSTORE-005 | Four-store weekly master view | PLANNED |
-| XSTORE-006 | Safe cross-store manual assignment | PLANNED |
-| XSTORE-007 | Staffing Requirement business rule | **WAIT_OWNER / DISCUSSION** |
-| XSTORE-008 | Auto Schedule four-store DRAFT engine | BLOCKED_BY_XSTORE_007 |
-| XSTORE-009 | Review/edit/publish integration | PLANNED |
-| XSTORE-010 | Full regression / production-safe acceptance | PLANNED |
-| XSTORE-011 | Canonical reconciliation + delete TEMP SoT | PLANNED |
+| XSTORE-001 | Store Manager authority + current implementation reconciliation | **DONE** |
+| XSTORE-002 | Store Priority Profile contract | **DONE / FEATURE READY** |
+| XSTORE-003 | Availability simplification — time only | **DONE** |
+| XSTORE-004 | Cross-store scheduling contract | **DONE** |
+| XSTORE-005 | Four-store weekly master view | **DONE** |
+| XSTORE-006 | Safe cross-store manual assignment | **DONE** |
+| XSTORE-007 | Staffing Requirement business rule | **CURRENT / WAIT_OWNER / DISCUSSION** |
+| XSTORE-008 | Auto Schedule four-store DRAFT engine | **BLOCKED_BY_XSTORE_007** |
+| XSTORE-009 | Review/edit/publish integration | **READY_AFTER_XSTORE_008** |
+| XSTORE-010 | Full regression / production-safe acceptance | **BLOCKED_BY_XSTORE_008_009** |
+| XSTORE-011 | Canonical reconciliation + delete TEMP SoT | **PLANNED** |
 
 Approved semantics: management-owned store priority in Employee Profile; Employee Availability no longer chooses store; one shared workforce pool across CN1–CN4; Robot creates DRAFT only; Manager remains final publisher.
 
-Role architecture decision 2026-09-28: `STORE_MANAGER = Quản lý cửa hàng` and `INVENTORY_MANAGER = Quản lý kho` are separate roles. Workforce accepts STORE_MANAGER/OWNER only. For the shared CN1–CN4 model, Owner Access now assigns `access_scope = ALL` when saving STORE_MANAGER, backed by a bounded Owner-only RLS update grant. XSTORE-001 remains open only until Owner changes the live observed Manager account from INVENTORY_MANAGER to STORE_MANAGER and the live role/scope Workforce smoke passes. Inventory/Warehouse implementation remains out of scope.
+Role architecture decision 2026-09-28: `STORE_MANAGER = Quản lý cửa hàng` and `INVENTORY_MANAGER = Quản lý kho` are separate roles. Workforce accepts STORE_MANAGER/OWNER only. Production now has an ACTIVE STORE_MANAGER with `access_scope = ALL`, and the live Manager Workforce page loads operational Availability data. XSTORE-001→006 are accepted on executable main `88f59398eca38605e7af599315c425dab2cba33e`: People Shift `36455322621`, UI2 Cross Role `36455322637`, Pages validation `36455322652`, Pages deployment `36455321577` all SUCCESS; XSTORE four-store master browser PASS. Production retains 0 fabricated Store Priority rows; management must enter real employee priority orders. Inventory/Warehouse implementation remains out of scope.
 
 
 ## Supervisor Independent Repository Migration V1 — CLOSED
