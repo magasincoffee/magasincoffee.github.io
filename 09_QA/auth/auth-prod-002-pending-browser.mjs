@@ -141,7 +141,10 @@ try {
     const sessionRaw = await page.evaluate(() => localStorage.getItem('__auth_prod_002_session'));
     assert.deepEqual(audit, { signOut: 1, scope: 'local' });
     assert.equal(sessionRaw, 'null');
-    assert.match(page.url(), /switch=1/);
+    await page.waitForFunction(() =>
+      document.querySelector('#msg')?.textContent.includes('sẵn sàng đăng nhập bằng tài khoản khác')
+    );
+    assert.doesNotMatch(page.url(), /[?&]switch=1/, 'switch query must be removed after cleanup handshake');
     assert.deepEqual(consoleErrors, []);
     assert.deepEqual(pageErrors, []);
     await context.close();
