@@ -62,8 +62,9 @@
     const role = String(profile.role || '').toUpperCase();
     if (role === 'OWNER') location.replace('/04_OWNER/');
     else if (role === 'ACCOUNTANT') location.replace('/nhap-hang/');
+    else if (role === 'STORE_MANAGER') location.replace('/05_MANAGER/');
     else if (['STAFF', 'EMPLOYEE'].includes(role)) location.replace('/06_EMPLOYEE/');
-    else location.replace('/05_MANAGER/');
+    else location.replace('/03_PLATFORM/01_AUTH/role-unavailable.html');
   };
 
   const pending = () => location.replace('/03_PLATFORM/01_AUTH/pending-access.html');
