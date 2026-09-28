@@ -13,7 +13,7 @@ const formatDate=k=>{const p=String(k).slice(0,10).split('-');return `${p[2]}/${
 const time5=v=>String(v||'').slice(0,5),minutes=v=>{const x=time5(v);return Number(x.slice(0,2))*60+Number(x.slice(3,5))};
 const shiftKind=start=>{const m=minutes(start);return m<720?'morning':m<1020?'afternoon':'evening'};
 const escapeHtml=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
-const roleLabel={OWNER:'Chủ hệ thống',ACCOUNTANT:'Kế toán',STORE_MANAGER:'Chủ cửa hàng',MANAGER:'Quản lý',INVENTORY_MANAGER:'Quản lý tồn hàng',EMPLOYEE:'Nhân viên',STAFF:'Nhân viên'};
+const roleLabel={OWNER:'Chủ hệ thống',ACCOUNTANT:'Kế toán',STORE_MANAGER:'Quản lý cửa hàng',MANAGER:'Quản lý',INVENTORY_MANAGER:'Quản lý kho',EMPLOYEE:'Nhân viên',STAFF:'Nhân viên'};
 let client=null;
 const create=()=>global.supabase?.createClient?global.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
 const getSupabase=()=>client||(client=create());
