@@ -32,8 +32,8 @@ try{
    const empRows=await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.state.rows);
    const mgrProfiles=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState().rows);
    const mgrPayroll=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.getState().rows);
-   if(name!=="Nhân viên A"||empRows.length!==1||mgrProfiles.length!==1||mgrProfiles[0].employee_id!=="emp-a"||mgrPayroll.length!==1||mgrPayroll[0].employee_id!=="emp-a")throw new Error(JSON.stringify({name,empRows,mgrProfiles,mgrPayroll}));
-   return "Employee=A only; Manager=store-a only";
+   if(name!=="Nhân viên A"||empRows.length!==1||mgrProfiles.length!==2||!mgrProfiles.some(x=>x.employee_id==="emp-a")||!mgrProfiles.some(x=>x.employee_id==="emp-b")||mgrPayroll.length!==1||mgrPayroll[0].employee_id!=="emp-a")throw new Error(JSON.stringify({name,empRows,mgrProfiles,mgrPayroll}));
+   return "Employee=A only; Store Manager sees shared employee pool; payroll remains selected-store scoped";
  });
 
  await check("e2e14_employee_cannot_supply_cross_user_subject",async()=>{
@@ -42,11 +42,11 @@ try{
    return "parameterized cross-user attempts rejected";
  });
 
- await check("e2e14_manager_cross_store_denied_and_owner_scope_separate",async()=>{
+ await check("e2e14_store_manager_all_scope_and_owner_enterprise_scope",async()=>{
    const r=await page.evaluate(async()=>({mp:await globalThis.__TASK107_QA.managerCrossProfile(),my:await globalThis.__TASK107_QA.managerCrossPayroll(),op:await globalThis.__TASK107_QA.ownerProfile(),oy:await globalThis.__TASK107_QA.ownerPayroll()}));
-   if(!r.mp.error?.message.includes("STORE_NOT_ALLOWED")||!r.my.error?.message.includes("STORE_NOT_ALLOWED"))throw new Error(JSON.stringify(r));
+   if(r.mp.error||r.my.error||r.mp.data.length!==1||r.mp.data[0].employee_id!=="emp-b"||r.my.data.length!==1||r.my.data[0].employee_id!=="emp-b")throw new Error(JSON.stringify(r));
    if(r.op.error||r.oy.error||r.op.data.length!==2||r.oy.data.length!==2)throw new Error(JSON.stringify(r));
-   return "Manager store-b denied; Owner enterprise mock sees 2 separately";
+   return "STORE_MANAGER ALL can operate CN2; Owner enterprise mock remains separate";
  });
 
  await check("failure_isolation_employee_profile_error_clears_only_profile",async()=>{
@@ -88,22 +88,22 @@ try{
    return "unknown payroll state rejected; canonical refresh recovered";
  });
 
- await check("manager_cross_store_stale_state_clears_and_recovers",async()=>{
-   await page.evaluate(async()=>{
-     const s=document.getElementById("mspStore");const o=document.createElement("option");o.value="store-b";o.textContent="CN2";s.appendChild(o);s.value="store-b";s.dispatchEvent(new Event("change",{bubbles:true}));
-     const p=document.getElementById("mgrPayrollStore");const q=document.createElement("option");q.value="store-b";q.textContent="CN2";p.appendChild(q);p.value="store-b";p.dispatchEvent(new Event("change",{bubbles:true}));
+ await check("store_manager_shared_profile_pool_and_payroll_store_switch",async()=>{
+   const initial=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState());
+   if(initial.error||initial.rows.length!==2)throw new Error(JSON.stringify(initial));
+   await page.evaluate(()=>{
+     const p=document.getElementById("mgrPayrollStore");
+     p.value="store-b";p.dispatchEvent(new Event("change",{bubbles:true}));
    });
-   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState().error==="STORE_NOT_ALLOWED");
-   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.getState().error==="STORE_NOT_ALLOWED");
-   const denied=await page.evaluate(()=>({p:globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState(),y:globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.getState()}));
-   if(denied.p.rows.length||denied.y.rows.length)throw new Error(JSON.stringify(denied));
-   await page.evaluate(async()=>{
-     document.getElementById("mspStore").value="store-a";document.getElementById("mspStore").dispatchEvent(new Event("change",{bubbles:true}));
-     document.getElementById("mgrPayrollStore").value="store-a";document.getElementById("mgrPayrollStore").dispatchEvent(new Event("change",{bubbles:true}));
+   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.getState().rows[0]?.employee_id==="emp-b");
+   const cn2=await page.evaluate(()=>({p:globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState(),y:globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.getState()}));
+   if(cn2.p.rows.length!==2||cn2.y.rows.length!==1||cn2.y.rows[0].employee_id!=="emp-b")throw new Error(JSON.stringify(cn2));
+   await page.evaluate(()=>{
+     const p=document.getElementById("mgrPayrollStore");
+     p.value="store-a";p.dispatchEvent(new Event("change",{bubbles:true}));
    });
-   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState().rows.length===1);
-   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.getState().rows.length===1);
-   return "scope denial clears stale rows; allowed store refresh recovers";
+   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.getState().rows[0]?.employee_id==="emp-a");
+   return "shared Employee Profile pool remains stable while payroll store selector switches CN1/CN2";
  });
 
  await check("manager_invalid_profile_projection_fails_closed",async()=>{
@@ -140,7 +140,7 @@ try{
    await employee.locator("#profileFullName").waitFor({state:"attached",timeout:10000});
    await empRefresh();await mgrRefresh();
    const x=await page.evaluate(()=>({name:globalThis.MAGASIN_EMPLOYEE.profileProjection.state.row?.full_name,ep:globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.state.rows,mp:globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState().rows,my:globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.getState().rows,calls:globalThis.__TASK107_QA.calls}));
-   if(x.name!=="Nhân viên A"||x.ep.length!==1||x.mp.length!==1||x.my.length!==1||x.mp[0].employee_id!=="emp-a"||x.my[0].employee_id!=="emp-a")throw new Error(JSON.stringify(x));
+   if(x.name!=="Nhân viên A"||x.ep.length!==1||x.mp.length!==2||x.my.length!==1||!x.mp.some(r=>r.employee_id==="emp-a")||!x.mp.some(r=>r.employee_id==="emp-b")||x.my[0].employee_id!=="emp-a")throw new Error(JSON.stringify(x));
    if(x.calls.some(c=>c.kind==="from"))throw new Error("direct table access after reload");
    return "fresh session re-reads self/store-scoped canonical state";
  });
