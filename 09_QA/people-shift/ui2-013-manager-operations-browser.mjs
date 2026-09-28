@@ -54,7 +54,7 @@ for(const width of [1440,1024,768,390]){
   await page.waitForFunction(([id,expected])=>{
    const root=document.getElementById("view-"+id);if(!root||root.dataset.ui2OperationsState!==expected)return false;
    if(!root.querySelector(".mui2-module-head")||!root.querySelector(".mui2-state-banner"))return false;
-   if(id!=="swap"&&!root.querySelector(".mui2-module-controls select"))return false;
+   if(!["swap","staff"].includes(id)&&!root.querySelector(".mui2-module-controls select"))return false;
    if(["staff","payroll-self-check"].includes(id)&&expected==="READY"&&!root.querySelector(".mui2-table-region"))return false;
    return true;
   },[view,expected]);
@@ -62,7 +62,7 @@ for(const width of [1440,1024,768,390]){
    const metric=await page.locator("#view-"+view).evaluate((root,expectedWidth)=>{
     const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};
     const controls=[...root.querySelectorAll("button,select,input")].filter(visible);
-    const scoped=root.dataset.ui2OperationsModule!=="swap";
+    const scoped=!["swap","staff"].includes(root.dataset.ui2OperationsModule);
     const banner=root.querySelector(".mui2-state-banner");
     const tables=[...root.querySelectorAll(".mui2-table-region")].map(x=>({scroll:x.scrollWidth,client:x.clientWidth,tab:x.tabIndex}));
     return {
@@ -166,28 +166,32 @@ await check("ui2_013_attendance_states_actions_and_conflict_refresh",async()=>{
  return JSON.stringify(data);
 });
 
-await check("ui2_013_employees_loading_error_empty_rows_store_switch_clears_stale",async()=>{
+await check("ui2_013_employees_shared_pool_loading_error_empty_recovery",async()=>{
  await activate(page,"staff");
  await page.evaluate(()=>globalThis.__UI2_013_QA.resetStaff());
  await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
  await page.waitForFunction(()=>document.getElementById("view-staff")?.dataset.ui2OperationsState==="READY");
+ const initial=await page.locator("#view-staff").innerText();
+ if(!initial.includes("Nhân viên QA A")||!initial.includes("Nhân viên QA B")||!initial.includes("CN-QA-A")||!initial.includes("CN-QA-B"))throw new Error(initial);
  await page.evaluate(()=>globalThis.__UI2_013_QA.setDelay(140));
- await page.locator("#mspStore").selectOption("store-b");
+ const loadingPromise=page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
  await page.waitForFunction(()=>document.getElementById("view-staff")?.dataset.ui2OperationsState==="LOADING");
- const during=await page.locator("#view-staff").innerText();if(during.includes("Nhân viên QA A"))throw new Error("stale store-a row during loading");
+ const during=await page.locator("#view-staff").innerText();
+ if(during.includes("Nhân viên QA A")||during.includes("Nhân viên QA B"))throw new Error("stale shared-pool rows during loading");
+ await loadingPromise;
  await page.waitForFunction(()=>document.getElementById("view-staff")?.dataset.ui2OperationsState==="READY");
- if(!(await page.locator("#view-staff").innerText()).includes("Nhân viên QA B"))throw new Error("store-b row missing");
  await page.evaluate(()=>globalThis.__UI2_013_QA.setDelay(0));
- await page.evaluate(()=>{globalThis.__UI2_013_QA.setRpcError("list_employee_profile_projection_v1","QA_PROFILE_ERROR")});
- await page.locator("#mspStore").selectOption("store-a");
+ await page.evaluate(()=>globalThis.__UI2_013_QA.setRpcError("list_employee_store_priority_profiles_v1","QA_PROFILE_ERROR"));
+ await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
  await page.waitForFunction(()=>document.getElementById("view-staff")?.dataset.ui2OperationsState==="ERROR");
- if((await page.locator("#view-staff").innerText()).includes("Nhân viên QA B"))throw new Error("stale row after error");
- await page.evaluate(()=>{globalThis.__UI2_013_QA.setRpcError("list_employee_profile_projection_v1",null);globalThis.__UI2_013_QA.setStaffRows("store-a",[])});
+ const errored=await page.locator("#view-staff").innerText();
+ if(errored.includes("Nhân viên QA A")||errored.includes("Nhân viên QA B"))throw new Error("stale shared-pool row after error");
+ await page.evaluate(()=>{globalThis.__UI2_013_QA.setRpcError("list_employee_store_priority_profiles_v1",null);globalThis.__UI2_013_QA.setStaffRows([])});
  await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
  await page.waitForFunction(()=>document.getElementById("view-staff")?.dataset.ui2OperationsState==="EMPTY");
  await page.evaluate(()=>{globalThis.__UI2_013_QA.resetStaff();return globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh()});
  await page.waitForFunction(()=>document.getElementById("view-staff")?.dataset.ui2OperationsState==="READY");
- return "READY → store switch LOADING(no stale) → READY → ERROR(no stale) → EMPTY → READY";
+ return "READY(shared CN1/CN2 pool) → LOADING(no stale) → ERROR(no stale) → EMPTY → READY";
 });
 
 await check("ui2_013_payroll_loading_error_empty_rows_store_switch_read_only",async()=>{
