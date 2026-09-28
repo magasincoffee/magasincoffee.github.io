@@ -51,7 +51,8 @@ test("Availability keeps exact canonical RPC boundary and no direct DML",()=>{
   assert.doesNotMatch(availability,/C\.supabase\.from|createClient\(|\.from\(['\"](?:employee_availability|work_schedules|shift_swaps|shift_gives)['\"]\)/);
   assert.match(availability,/p_availability_id:null/);
   assert.match(availability,/p_availability_type:'AVAILABLE'/);
-  assert.match(availability,/p_preferred_store_id:target\.id/);
+  assert.match(availability,/p_preferred_store_id:null/);
+  assert.doesNotMatch(availability,/quickRegStore|state\.stores/);
   assert.match(availability,/p_note:null/);
 });
 
@@ -108,11 +109,11 @@ test("UI2-005 shell UI2-006 Today UI2-007 Schedule remain present and runtime ca
   for(const label of ["Hôm nay","Lịch","Công","Lương","Tôi"])assert.ok(shell.includes("'"+label+"'"));
   assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-today.css?v=20260925-ui2-006"));
   assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-schedule.css?v=20260926-ui2-007"));
-  assert.match(runtime,/employee-v40\.html\?ui=v45-ui2-008&runtime=engine/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003)&runtime=engine/);
   assert.match(runtime,/schedule\/engine-v1\.js\?v=20260926-ui2-008/);
-  assert.match(runtime,/availability\/engine-v1\.js\?v=20260926-ui2-008/);
+  assert.match(runtime,/availability\/engine-v1\.js\?v=(?:20260926-ui2-008|20260928-xstore003)/);
   assert.match(runtime,/swap\/engine-v1\.js\?v=20260926-ui2-008/);
-  assert.match(index,/employee-runtime-v1\.html\?v=20260926-ui2-008/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003)/);
 });
 
 console.log("UI2_008_EMPLOYEE_SECONDARY_CONTRACT=PASS");
