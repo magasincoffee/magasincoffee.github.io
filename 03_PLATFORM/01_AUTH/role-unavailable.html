@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>MAGASIN · Phân hệ chưa triển khai</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#f4f7fb;font:14px Inter,system-ui,sans-serif;color:#172033}.card{width:min(560px,100%);background:#fff;border:1px solid #dce5f0;border-radius:18px;padding:28px;box-shadow:0 12px 34px rgba(16,33,59,.08)}h1{margin:0 0 8px;font-size:24px}.muted{color:#667085;line-height:1.6}.badge{display:inline-flex;margin:12px 0;padding:6px 9px;border-radius:999px;background:#eef5ff;color:#235dba;font-weight:800}.actions{display:flex;gap:8px;margin-top:18px}.btn{min-height:42px;border:1px solid #d7e0ea;border-radius:10px;background:#fff;padding:0 14px;font-weight:800;cursor:pointer}.primary{background:#16b7c5;border-color:#16b7c5;color:#fff}</style>
+</head>
+<body>
+<section class="card">
+  <h1>Phân hệ chưa triển khai</h1>
+  <div id="roleBadge" class="badge">Đang kiểm tra vai trò…</div>
+  <p id="message" class="muted">Vai trò hiện tại chưa có workspace production tương ứng. Hệ thống không tự chuyển sang khu vực Quản lý cửa hàng để tránh cấp nhầm quyền.</p>
+  <div class="actions"><button id="logoutBtn" class="btn primary">Đăng xuất</button></div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/02_CORE/shared/shared-core-v1.js?v=20260928-xstore-role"></script>
+<script>
+(async()=>{const C=window.MAGASIN_CORE;try{const p=await C.supabase.requireActive();const role=String(p.role||'').toUpperCase();const label=C.roles.label[role]||role||'Không xác định';document.getElementById('roleBadge').textContent=label+' · '+role;if(role==='STORE_MANAGER'){location.replace('/05_MANAGER/');return}if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/06_EMPLOYEE/');return}if(role==='OWNER'){location.replace('/04_OWNER/');return}if(role==='ACCOUNTANT'){location.replace('/nhap-hang/');return}}catch(e){document.getElementById('message').textContent='Không thể xác minh phiên đăng nhập. Hãy đăng xuất và đăng nhập lại.'}})();
+document.getElementById('logoutBtn').onclick=async()=>{try{await window.MAGASIN_CORE?.supabase.get()?.auth.signOut()}finally{location.replace('/03_PLATFORM/01_AUTH/')}};
+</script>
+</body>
+</html>
