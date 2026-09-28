@@ -108,6 +108,11 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8769
         run: node 09_QA/auth/auth-prod-005-pending-switch-browser.mjs
 
+      - name: Run AUTH-PROD-005 invalid credential retry regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+        run: node 09_QA/auth/auth-prod-005-invalid-credential-retry-browser.mjs
+
       - name: Run AUTH-PROD-003 Owner activation browser regression
         env:
           QA_BASE_URL: http://127.0.0.1:8769

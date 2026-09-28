@@ -278,9 +278,10 @@
 
   $('loginForm').addEventListener('submit', async event => {
     event.preventDefault();
+    const form = event.currentTarget;
     if (state.loginSubmitting) return;
     state.loginSubmitting = true;
-    setFormBusy(event.currentTarget, true, 'Đang đăng nhập…');
+    setFormBusy(form, true, 'Đang đăng nhập…');
     try {
       const email = await emailOf($('username').value);
       const result = await sb.auth.signInWithPassword({ email, password: $('password').value });
@@ -317,15 +318,16 @@
       setMessage(error.message || 'Không thể đăng nhập lúc này.', 'error');
     } finally {
       state.loginSubmitting = false;
-      setFormBusy(event.currentTarget, false, '');
+      setFormBusy(form, false, '');
     }
   });
 
   $('registerForm').addEventListener('submit', async event => {
     event.preventDefault();
+    const form = event.currentTarget;
     if (state.registerSubmitting) return;
     state.registerSubmitting = true;
-    setFormBusy(event.currentTarget, true, 'Đang tạo tài khoản…');
+    setFormBusy(form, true, 'Đang tạo tài khoản…');
     try {
       const full = $('fullName').value.trim();
       const phone = $('phone').value.trim();
@@ -357,15 +359,16 @@
       setMessage(error.message || 'Không thể tạo tài khoản lúc này.', 'error');
     } finally {
       state.registerSubmitting = false;
-      setFormBusy(event.currentTarget, false, '');
+      setFormBusy(form, false, '');
     }
   });
 
   $('forgotForm').addEventListener('submit', async event => {
     event.preventDefault();
+    const form = event.currentTarget;
     if (state.forgotSubmitting) return;
     state.forgotSubmitting = true;
-    setFormBusy(event.currentTarget, true, 'Đang gửi…');
+    setFormBusy(form, true, 'Đang gửi…');
     try {
       const email = $('forgotEmail').value.trim().toLowerCase();
       if (!email) throw new Error('Vui lòng nhập email.');
@@ -376,12 +379,13 @@
       setMessage('Chưa thể gửi liên kết đặt lại mật khẩu lúc này. Vui lòng thử lại sau.', 'error');
     } finally {
       state.forgotSubmitting = false;
-      setFormBusy(event.currentTarget, false, '');
+      setFormBusy(form, false, '');
     }
   });
 
   $('resetForm').addEventListener('submit', async event => {
     event.preventDefault();
+    const form = event.currentTarget;
     if (state.resetSubmitting) return;
     if (!state.recoveryReady || !state.recoveryUserId) {
       showInvalidRecovery('missing_session');
@@ -389,7 +393,7 @@
     }
 
     state.resetSubmitting = true;
-    setFormBusy(event.currentTarget, true, 'Đang cập nhật…');
+    setFormBusy(form, true, 'Đang cập nhật…');
     try {
       const password = $('newPassword').value;
       const confirm = $('confirmPassword').value;
@@ -423,7 +427,7 @@
       setMessage(error.message || 'Chưa thể cập nhật mật khẩu. Vui lòng yêu cầu liên kết mới.', 'error');
     } finally {
       state.resetSubmitting = false;
-      setFormBusy(event.currentTarget, false, '');
+      setFormBusy(form, false, '');
     }
   });
 
