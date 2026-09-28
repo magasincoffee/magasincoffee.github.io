@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** OWNER-APPROVED LOGIC / MANAGER ROLE SPLIT LOCKED / IMPLEMENTATION NOT STARTED  
+**Status:** OWNER-APPROVED LOGIC / ROLE ARCHITECTURE LOCKED / XSTORE-001 OWNER ROLE SWITCH PENDING  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -75,19 +75,30 @@ Do not fix `ROLE_NOT_ALLOWED` by broadly allowing every Manager-family role. Inv
 
 ## 0.1 Role split — Owner decision 2026-09-28
 
-Canonical role distinction:
+Canonical role distinction is locked:
 
-- `STORE_MANAGER` = **Quản lý cửa hàng** — in scope for Workforce, employee scheduling, attendance review and store operations.
-- `INVENTORY_MANAGER` = **Quản lý kho** — separate role, intentionally out of scope for this Workforce track and will be implemented/reconciled in a later inventory project.
+- `OWNER` = Chủ hệ thống.
+- `STORE_MANAGER` = **Quản lý cửa hàng** — Workforce/store operations role.
+- `INVENTORY_MANAGER` = **Quản lý kho** — separate future inventory role; out of scope for this Workforce track.
+- `STAFF / EMPLOYEE` = Nhân viên.
+
+For the approved shared-workforce model, `STORE_MANAGER` receives `access_scope = ALL` so the Manager scheduling surface can operate CN1–CN4 together.
+
+Owner Access implementation:
+- role label is now **Quản lý cửa hàng** for `STORE_MANAGER`;
+- role label is now **Quản lý kho** for `INVENTORY_MANAGER`;
+- saving `STORE_MANAGER` sets `access_scope = ALL`;
+- moving a non-Owner account away from `STORE_MANAGER` clears the Workforce store scope so old Workforce authority is not retained;
+- production migration `xstore_001_store_manager_access_scope_owner_grant` grants only bounded `access_scope` UPDATE privilege to authenticated; existing Owner-only RLS remains the authorization boundary.
 
 Do not use `INVENTORY_MANAGER` as a substitute for `STORE_MANAGER` in Workforce.  
-Do not broaden Workforce RPCs to allow `INVENTORY_MANAGER` merely to bypass `ROLE_NOT_ALLOWED`.
+Do not implement Inventory/Warehouse functionality in this track.
 
-Current production note:
-- the live account used in the observed Manager screenshot is currently assigned `INVENTORY_MANAGER`;
-- that role assignment is not the intended Workforce role;
-- role/store-scope correction to `STORE_MANAGER` must be handled explicitly before real Manager Workforce acceptance;
-- this temporary Source of Truth does **not** authorize implementing Inventory/Warehouse features.
+Current production handoff:
+- the observed Manager account is still assigned `INVENTORY_MANAGER`;
+- Owner must change it to `STORE_MANAGER` through Owner Access;
+- after that change, perform a live Manager smoke proving role + ALL-store scope + Workforce readers;
+- only then close XSTORE-001.
 
 ## 1. Purpose
 
@@ -257,7 +268,7 @@ Out of scope unless explicitly added later:
 
 | ID | Work | Result | Gate |
 |---|---|---|---|
-| XSTORE-001 | Store Manager authority + current implementation reconciliation | Enforce `STORE_MANAGER` as Workforce Manager role, reconcile store scope, and audit profile/Availability/scheduling RPC/UI paths | **ROLE/SCOPE BLOCKER MUST CLOSE FIRST** |
+| XSTORE-001 | Store Manager authority + current implementation reconciliation | `STORE_MANAGER` + `ALL` scope UI/DB contract implemented; Owner switches live account then live-smoke Workforce role/scope | **WAIT_OWNER_ROLE_SWITCH / LIVE_SMOKE** |
 | XSTORE-002 | Store Priority Profile contract | Canonical primary store + ordered allowed stores; management write / Employee read-only | Authorization + migration + regression |
 | XSTORE-003 | Availability simplification | Remove store choice from normal Employee weekly registration and preserve time-only availability | Existing Availability E2E remains green |
 | XSTORE-004 | Cross-store scheduling contract | Define shared pool, global conflict rules and one weekly scheduling truth across CN1–CN4 | No parallel schedule authority |
@@ -272,7 +283,7 @@ Out of scope unless explicitly added later:
 ## 5. Recommended execution order
 
 ```text
-XSTORE-001 (Manager role/scope authority first)
+XSTORE-001 (role architecture implemented; Owner role switch + live smoke pending)
 → XSTORE-002
 → XSTORE-003
 → XSTORE-004
@@ -299,7 +310,7 @@ Already approved:
 - Manager reviews/edits and publishes.
 
 Still unresolved:
-- Manager store-scope assignment for the canonical `STORE_MANAGER` role;
+- live Owner role switch of the observed Manager account to `STORE_MANAGER` followed by role/scope smoke;
 - the canonical **Staffing Requirement** input used by Auto Schedule:
   - fixed templates by store/time block;
   - day-specific requirements;
@@ -307,8 +318,8 @@ Still unresolved:
   - or another Owner-defined operating rule.
 
 Until these are decided:
-- XSTORE-001 is the first execution gate and must close the Manager role/scope mismatch;
-- XSTORE-002→006 may be planned but must not bypass XSTORE-001 authority;
+- XSTORE-001 role architecture is implemented; it closes only after Owner switches the live Manager account and the role/scope smoke passes;
+- XSTORE-002→006 must not bypass that live XSTORE-001 acceptance;
 - XSTORE-008 must not invent staffing demand;
 - no robot-generated schedule may claim to be operationally optimal.
 
