@@ -65,6 +65,7 @@ jobs:
         shell: bash
         run: |
           node --check 09_QA/auth/auth-prod-005-credentialed-production-smoke.mjs
+          node --test 09_QA/auth/auth-prod-005-owner-profile-grant-contract.test.mjs
           node --test 09_QA/auth/auth-prod-005-active-logout-contract.test.mjs
           node --test 09_QA/auth/auth-prod-005-accountant-logout-contract.test.mjs
           sed '/^[[:space:]]*--/d' 09_QA/auth/auth-prod-005-production-readonly.sql > /tmp/auth-prod-005-readonly.sql
