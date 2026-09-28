@@ -17,7 +17,7 @@
     "production_private_data_in_git": false,
     "red_actions_require_owner": true
   },
-  "last_updated": "2026-09-25",
+  "last_updated": "2026-09-28",
   "owner_boundary": {
     "task": "TASK-050",
     "resolved": [
@@ -190,7 +190,11 @@
     },
     "completed_at": "2026-09-19T07:20:05.409165Z",
     "hard_stop_enforced_by": "GITHUB_HOSTED_WORKFLOW",
-    "owner_reprioritized_task_preserved": "TASK-049"
+    "owner_reprioritized_task_preserved": "TASK-049",
+    "historical": true,
+    "active": false,
+    "scope_classification": "HISTORICAL_NIGHT_RUN_EVIDENCE_ONLY",
+    "current_execution_authority": false
   },
   "supervisor_orchestration": {
     "schema_version": "three-lane.v1",
@@ -256,7 +260,12 @@
       "current_autonomy": "AUTO_CONTINUE",
       "robot_may_execute": true,
       "reason": "PFC_8H_V2_OWNER_RELEASE_ACTIVE"
-    }
+    },
+    "status": "HISTORICAL_PROJECT_INTEGRATION_ONLY",
+    "active_runtime_owner": "magasincoffee/magasin-supervisor",
+    "runtime_owned_by_webapp": false,
+    "embedded_runtime_removed": true,
+    "migration_status": "COMPLETE_MIG_007"
   },
   "architecture_handoff": {
     "state": "PFC_8H_V2_RELEASED_ACTIVE",
@@ -2531,5 +2540,17 @@
     "released_date": "2026-09-25",
     "brain_dispatch_required": true,
     "auto_start": false
+  },
+  "external_project_boundary": {
+    "schema_version": "webapp-external-project-boundary.v1",
+    "canonical_doc": "01_DOCS/MAGASIN/05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md",
+    "webapp_repository": "magasincoffee/magasincoffee.github.io",
+    "supervisor_repository": "magasincoffee/magasin-supervisor",
+    "supervisor_runtime_owned_by_webapp": false,
+    "supervisor_migration_status": "COMPLETE_MIG_007",
+    "embedded_supervisor_runtime": "REMOVED",
+    "supervisor_rollback_window": "CLOSED",
+    "media_robot_current_webapp_scope": "NONE",
+    "historical_external_references_are_runtime_authority": false
   }
 }
