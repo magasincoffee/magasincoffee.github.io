@@ -9,12 +9,12 @@ Before doing any work in a new chat, read:
 3. `05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md`.
 4. `00_PROJECT_STATE.json`.
 5. `00_TASK_QUEUE.md`.
-5. `00_MASTER_PLAN.md`.
-6. `06_DECISION_LOG.md`.
-7. current domain/task docs.
-8. `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`.
-9. `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
-10. repository/PR/CI state.
+6. `00_MASTER_PLAN.md`.
+7. `06_DECISION_LOG.md`.
+8. current domain/task docs.
+9. `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`.
+10. `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
+11. repository/PR/CI state.
 
 Do not continue from stale chat memory when repository evidence is newer.
 
