@@ -235,7 +235,7 @@ TASK-107 completion evidence: `05_SYSTEM/TASK_107_WORKFORCE_FAILURE_RECOVERY_SEC
 
 TASK-108 completion evidence: `05_SYSTEM/TASK_108_FINAL_REGRESSION_POST_MERGE_E2E_RECHECK.md`. Qualified executable SHA `8fd8a446d6722871af0be4171b5e129d2f6eea40`; Gate A = PASS / ACCEPTED, Gate B = PASS / ACCEPTED, Gate C = PASS / ACCEPTED; TASK-108 = DONE / CLOSED. This closes `WORKFORCE_OPERATIONS_V1` without enabling Workforce Robot or authorizing an automatic next Workforce task.
 
-## Workforce Cross-Store Scheduling V1 — XSTORE-001→006 DONE / XSTORE-007 WAIT_OWNER
+## Workforce Cross-Store Scheduling V1 — XSTORE-001→010 DONE / XSTORE-011 LIVE ACCEPTANCE
 
 Temporary Source of Truth: `05_SYSTEM/WORKFORCE_CROSS_STORE_SCHEDULING_TEMP_SOURCE_OF_TRUTH.md`  
 Search key: `WORKFORCE-CROSS-STORE`
@@ -250,15 +250,17 @@ This is a new post-V1 extension and does not alter the CLOSED status of `WORKFOR
 | XSTORE-004 | Cross-store scheduling contract | **DONE** |
 | XSTORE-005 | Four-store weekly master view | **DONE** |
 | XSTORE-006 | Safe cross-store manual assignment | **DONE** |
-| XSTORE-007 | Staffing Requirement business rule | **CURRENT / WAIT_OWNER / DISCUSSION** |
-| XSTORE-008 | Auto Schedule four-store DRAFT engine | **BLOCKED_BY_XSTORE_007** |
-| XSTORE-009 | Review/edit/publish integration | **READY_AFTER_XSTORE_008** |
-| XSTORE-010 | Full regression / production-safe acceptance | **BLOCKED_BY_XSTORE_008_009** |
-| XSTORE-011 | Canonical reconciliation + delete TEMP SoT | **PLANNED** |
+| XSTORE-007 | Staffing Requirement business rule | **DONE / FEATURE READY** |
+| XSTORE-008 | Auto Schedule four-store DRAFT engine | **DONE / FEATURE READY / REAL INPUT PENDING** |
+| XSTORE-009 | Review/edit/publish integration | **DONE** |
+| XSTORE-010 | Full regression / production-safe acceptance | **DONE / EXACT-MAIN GREEN** |
+| XSTORE-011 | Real-data live acceptance + canonical reconciliation + delete TEMP SoT | **CURRENT / WAIT_REAL_CONFIGURATION_AND_LIVE_ACCEPTANCE** |
 
 Approved semantics: management-owned store priority in Employee Profile; Employee Availability no longer chooses store; one shared workforce pool across CN1–CN4; Robot creates DRAFT only; Manager remains final publisher.
 
 Role architecture decision 2026-09-28: `STORE_MANAGER = Quản lý cửa hàng` and `INVENTORY_MANAGER = Quản lý kho` are separate roles. Workforce accepts STORE_MANAGER/OWNER only. Production now has an ACTIVE STORE_MANAGER with `access_scope = ALL`, and the live Manager Workforce page loads operational Availability data. XSTORE-001→006 are accepted on executable main `88f59398eca38605e7af599315c425dab2cba33e`: People Shift `36455322621`, UI2 Cross Role `36455322637`, Pages validation `36455322652`, Pages deployment `36455321577` all SUCCESS; XSTORE four-store master browser PASS. Production retains 0 fabricated Store Priority rows; management must enter real employee priority orders. Inventory/Warehouse implementation remains out of scope.
+
+XSTORE-007→010 are accepted on executable main `2429183e30dcc3760327e70a3e8a62019d13d2b0`: People Shift `36498812008`, UI2 Cross Role `36498812066`, Pages validation `36498811986`, Pages deployment `36498811328` all SUCCESS. Manager-entered `XSTORE_V1` weekly Staffing Requirements are now the only new Robot demand authority; the global Robot creates DRAFT only and hands off to canonical edit/Validate/Review/Publish. Legacy auto writer remains revoked. Production currently has 0 Store Priority rows, 0 XSTORE_V1 requirement rows, 0 draft assignments and 0 official schedules because no business values were fabricated. XSTORE-011 remains open for real Manager configuration + live end-to-end acceptance, then permanent-doc reconciliation and TEMP SoT deletion.
 
 
 ## Supervisor Independent Repository Migration V1 — CLOSED
