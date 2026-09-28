@@ -1,0 +1,30 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>XSTORE four-store master QA</title>
+<style>:root{--border:#dce5f0;--muted:#667085}.btn{padding:8px}.msd{padding:10px}</style></head><body>
+<div id="panel-publish"><section class="msd"><div id="xstoreMasterMount"></div></section></div>
+<script>
+(()=>{'use strict';
+const week='2026-10-05';
+const stores=[
+ {id:'s1',code:'CN1',name:'MAGASIN COFFEE CN1',status:'ACTIVE'},
+ {id:'s2',code:'CN2',name:'MAGASIN COFFEE CN2',status:'ACTIVE'},
+ {id:'s3',code:'CN3',name:'MAGASIN COFFEE CN3',status:'ACTIVE'},
+ {id:'s4',code:'CN4',name:'MAGASIN COFFEE CN4',status:'ACTIVE'}
+];
+const plan=[
+ {plan_source:'DRAFT',store_id:'s1',store_code:'CN1',store_name:'MAGASIN COFFEE CN1',user_id:'e1',employee_name:'Như Huỳnh',work_date:'2026-10-05',start_time:'06:00',end_time:'12:00',row_status:'DRAFT'},
+ {plan_source:'OFFICIAL',store_id:'s3',store_code:'CN3',store_name:'MAGASIN COFFEE CN3',user_id:'e2',employee_name:'Mai Chi',work_date:'2026-10-06',start_time:'17:00',end_time:'22:00',row_status:'APPROVED'}
+];
+const availability=[
+ {availability_id:'a1',user_id:'e1',employee_name:'Như Huỳnh',work_date:'2026-10-05',start_time:'06:00',end_time:'12:00',priority_store_ids:['s3','s2','s4','s1'],priority_store_codes:['CN3','CN2','CN4','CN1']},
+ {availability_id:'a2',user_id:'e2',employee_name:'Mai Chi',work_date:'2026-10-06',start_time:'17:00',end_time:'22:00',priority_store_ids:['s1','s3'],priority_store_codes:['CN1','CN3']},
+ {availability_id:'a3',user_id:'e3',employee_name:'Chưa cấu hình',work_date:'2026-10-07',start_time:'12:00',end_time:'17:00',priority_store_ids:[],priority_store_codes:[]}
+];
+const calls=[],opens=[];
+window.__XSTORE_QA={calls,opens,stores,plan,availability};
+window.MAGASIN_MANAGER_SCHEDULE_DRAFT={getState:()=>({week,storeId:'s1'})};
+window.supabase={createClient:()=>({rpc:async(name,args)=>{calls.push({name,args});if(name==='get_manager_accessible_stores')return{data:stores,error:null};if(name==='get_cross_store_weekly_plan_v1')return{data:plan,error:null};if(name==='get_cross_store_weekly_availability_v1')return{data:availability,error:null};return{data:null,error:{message:'UNEXPECTED '+name}}}})};
+document.addEventListener('magasin:manager-schedule-open',e=>opens.push(e.detail));
+})();
+</script>
+<script src="/05_MANAGER/Workforce/cross-store-master-v1.js"></script>
+</body></html>
