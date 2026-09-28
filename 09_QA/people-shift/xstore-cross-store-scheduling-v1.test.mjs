@@ -28,7 +28,7 @@ test("XSTORE-002 Store Priority is management-owned ordered profile truth",()=>{
 test("XSTORE-003 weekly Availability is time-only",()=>{
   assert.match(p3,/update public\.employee_availability[\s\S]*preferred_store_id=null/);
   assert.match(p3,/p_preferred_store_id uuid default null/);
-  assert.match(p3,/preferred_store_id,null/);
+  assert.match(p3,/p_end_time,null,v_type,p_note/);
   assert.match(av,/p_preferred_store_id:null/);
   assert.doesNotMatch(av,/quickRegStore|state\.stores/);
   assert.doesNotMatch(shell,/quickRegStore|Chi nhánh mong muốn/);
