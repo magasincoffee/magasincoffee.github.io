@@ -313,10 +313,11 @@ Locked direction:
 - Auto Schedule cannot be implemented until Owner approves the Staffing Requirement input.
 
 Plan IDs: `XSTORE-001 → XSTORE-011`.  
-Current state: **ROLE ARCHITECTURE LOCKED / XSTORE-001 OWNER ROLE SWITCH + LIVE SMOKE PENDING**.  
-Canonical Manager role: **STORE_MANAGER = Quản lý cửa hàng**, with `access_scope = ALL` for shared CN1–CN4 Workforce. `INVENTORY_MANAGER = Quản lý kho` is separate and out of current Workforce scope. Owner Access + bounded `access_scope` grant are implemented.  
-First gate remaining: Owner changes the live Manager account to `STORE_MANAGER`, then live-smoke role/scope/Workforce readers.  
-Current unresolved business decision after that: **how staffing need per store/time block is defined**.
+Current state: **XSTORE-001→006 DONE / PRODUCTION FOUNDATION ACCEPTED / XSTORE-007 WAIT_OWNER**.  
+Canonical Manager role: **STORE_MANAGER = Quản lý cửa hàng**, with `access_scope = ALL` for shared CN1–CN4 Workforce. `INVENTORY_MANAGER = Quản lý kho` remains separate and out of current Workforce scope.  
+Accepted executable main: `88f59398eca38605e7af599315c425dab2cba33e`; People Shift `36455322621`, UI2 Cross Role `36455322637`, Pages validation `36455322652` and Pages deployment `36455321577` are SUCCESS. XSTORE four-store master browser and canonical Manager Workforce browser are PASS.  
+Production: 17 time-only Availability rows / 0 legacy preferred-store rows / 0 Store Priority rows / 0 draft assignments / 0 official schedules. Store Priority rows remain 0 intentionally; management must enter real employee priority orders rather than the system inventing them.  
+Current unresolved business decision: **XSTORE-007 — how staffing need per store/time block is defined**. XSTORE-008 Auto Schedule remains blocked and no Robot writer is enabled.
 
 When XSTORE-011 closes, proven rules must be folded into permanent canonical Workforce docs and the temporary Source of Truth must be deleted.
 
