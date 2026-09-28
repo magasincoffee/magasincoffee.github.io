@@ -9,11 +9,12 @@ async function read(relative) {
 }
 
 test("Five-Step architecture reset remains canonical under Profitability & Cash priority", async () => {
-  const [architecture, enterprise, current, queue, stateRaw] = await Promise.all([
+  const [architecture, enterprise, current, queue, boundary, stateRaw] = await Promise.all([
     read("01_DOCS/MAGASIN/00_ARCHITECTURE_5_STEP_RESET.md"),
     read("01_DOCS/MAGASIN/00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md"),
     read("01_DOCS/MAGASIN/00_CURRENT_STATE.md"),
     read("01_DOCS/MAGASIN/00_TASK_QUEUE.md"),
+    read("01_DOCS/MAGASIN/05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md"),
     read("01_DOCS/MAGASIN/00_PROJECT_STATE.json")
   ]);
   const state = JSON.parse(stateRaw);
@@ -34,7 +35,12 @@ test("Five-Step architecture reset remains canonical under Profitability & Cash 
     assert.equal(state.autonomy, "AUTO_CONTINUE");
     assert.equal(state.requires_user, false);
   }
-  assert.equal(state.night_run?.id, "NIGHT_RUN_2026-09-18");
+  assert.equal(state.external_project_boundary?.supervisor_runtime_owned_by_webapp, false);
+  assert.equal(state.external_project_boundary?.media_robot_current_webapp_scope, "NONE");
+  assert.equal(state.night_run?.historical, true);
+  assert.equal(state.night_run?.active, false);
+  assert.equal(state.supervisor_orchestration?.runtime_owned_by_webapp, false);
+  assert.match(boundary, /Supervisor platform authority\s+= magasincoffee\/magasin-supervisor/);
 
   assert.match(current, /Profitability & Cash first/);
   assert.match(current, /FINANCIAL_BASELINE\.md/);
@@ -61,20 +67,22 @@ test("deferred SOP write path remains fail-closed", async () => {
   assert.match(queue, /TASK-026[^\n]*DEFERRED/);
 });
 
-test("conversation-aware handoff architecture is part of Five-Step execution", async () => {
-  const [architecture, handoff, current] = await Promise.all([
+test("external automation boundary is explicit and WEBAPP-owned truth stays local", async () => {
+  const [architecture, boundary, threeLane, current] = await Promise.all([
     read("01_DOCS/MAGASIN/00_ARCHITECTURE_5_STEP_RESET.md"),
-    read("01_DOCS/MAGASIN/00_SUPERVISOR_HANDOFF_ARCHITECTURE.md"),
+    read("01_DOCS/MAGASIN/05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md"),
+    read("01_DOCS/MAGASIN/00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md"),
     read("01_DOCS/MAGASIN/00_CURRENT_STATE.md")
   ]);
 
-  assert.match(architecture, /Conversation-aware execution handoff/);
-  assert.match(handoff, /same supervised ChatGPT browser profile/);
-  assert.match(handoff, /live explicit Owner instruction/);
-  assert.match(handoff, /assistant is running → WAIT/);
-  assert.match(handoff, /HANDOFF_RECONCILE/);
-  assert.match(handoff, /QUESTION[\s\S]*DELETE[\s\S]*SIMPLIFY[\s\S]*ACCELERATE[\s\S]*AUTOMATE/);
-  assert.match(current, /00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH\.md/);
+  assert.match(architecture, /External automation integration boundary/);
+  assert.match(boundary, /WEBAPP repository authority\s+= magasincoffee\/magasincoffee\.github\.io/);
+  assert.match(boundary, /Supervisor platform authority\s+= magasincoffee\/magasin-supervisor/);
+  assert.match(boundary, /Media Robot current WEBAPP scope = NONE/);
+  assert.match(threeLane, /WEBAPP-side integration contract only/);
+  assert.match(current, /External project boundary/);
+  assert.doesNotMatch(current, /## Approved night run/);
+  assert.doesNotMatch(current, /## Three-Lane V1 active architecture/);
 });
 
 test("deferred Gmail activation stays fail-closed and non-blocking", async () => {
