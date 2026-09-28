@@ -235,6 +235,29 @@ TASK-107 completion evidence: `05_SYSTEM/TASK_107_WORKFORCE_FAILURE_RECOVERY_SEC
 
 TASK-108 completion evidence: `05_SYSTEM/TASK_108_FINAL_REGRESSION_POST_MERGE_E2E_RECHECK.md`. Qualified executable SHA `8fd8a446d6722871af0be4171b5e129d2f6eea40`; Gate A = PASS / ACCEPTED, Gate B = PASS / ACCEPTED, Gate C = PASS / ACCEPTED; TASK-108 = DONE / CLOSED. This closes `WORKFORCE_OPERATIONS_V1` without enabling Workforce Robot or authorizing an automatic next Workforce task.
 
+## Workforce Cross-Store Scheduling V1 — PLAN STAGED / NOT RELEASED
+
+Temporary Source of Truth: `05_SYSTEM/WORKFORCE_CROSS_STORE_SCHEDULING_TEMP_SOURCE_OF_TRUTH.md`  
+Search key: `WORKFORCE-CROSS-STORE`
+
+This is a new post-V1 extension and does not alter the CLOSED status of `WORKFORCE_OPERATIONS_V1`. No implementation or autonomous Workforce execution is authorized by this planning entry.
+
+| ID | Task | Status |
+|---|---|---|
+| XSTORE-001 | Current implementation reconciliation | PLANNED |
+| XSTORE-002 | Store Priority Profile contract | PLANNED |
+| XSTORE-003 | Availability simplification — time only | PLANNED |
+| XSTORE-004 | Cross-store scheduling contract | PLANNED |
+| XSTORE-005 | Four-store weekly master view | PLANNED |
+| XSTORE-006 | Safe cross-store manual assignment | PLANNED |
+| XSTORE-007 | Staffing Requirement business rule | **WAIT_OWNER / DISCUSSION** |
+| XSTORE-008 | Auto Schedule four-store DRAFT engine | BLOCKED_BY_XSTORE_007 |
+| XSTORE-009 | Review/edit/publish integration | PLANNED |
+| XSTORE-010 | Full regression / production-safe acceptance | PLANNED |
+| XSTORE-011 | Canonical reconciliation + delete TEMP SoT | PLANNED |
+
+Approved semantics: management-owned store priority in Employee Profile; Employee Availability no longer chooses store; one shared workforce pool across CN1–CN4; Robot creates DRAFT only; Manager remains final publisher.
+
 
 ## Supervisor Independent Repository Migration V1 — CLOSED
 
