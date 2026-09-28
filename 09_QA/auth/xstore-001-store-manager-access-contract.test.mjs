@@ -23,3 +23,10 @@ test('XSTORE-001: access_scope UPDATE stays bounded by existing Owner-only RLS',
   assert.match(sql, /grant update\s*\(\s*access_scope\s*\)\s+on\s+(table\s+)?public\.profiles\s+to\s+authenticated\s*;/);
   assert.doesNotMatch(sql, /grant\s+update\s+on\s+(table\s+)?public\.profiles\s+to\s+authenticated/);
 });
+
+
+test('XSTORE-001: Owner Access save action remains usable for non-Owner accounts', () => {
+  assert.match(access, /<button class="btn primary" data-save>Lưu quyền & trạng thái<\/button>/);
+  assert.match(access, /function syncSaveState\(row\)[\s\S]*btn\.disabled=false;/);
+  assert.doesNotMatch(access, /data-save disabled>Lưu quyền & trạng thái/);
+});
