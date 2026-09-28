@@ -92,6 +92,29 @@ The new credentialed runner covers the first three items without printing creden
 
 The remaining Owner activation, active-role logout and recovery lifecycle remain explicit manual Owner smoke unless dedicated disposable QA identities are provisioned and authorized for automated production mutation.
 
+## 4.1 Manual production defect: Owner logout
+
+Manual exact-production smoke on 2026-09-28 confirmed an ACTIVE OWNER session can reach `/04_OWNER/`, but the visible shared-shell `Đăng xuất` button did not sign out.
+
+Root cause on exact main `0898df204010d2989a56b65de0499c92a9fa53fa`:
+
+- the shared shell generated a visible logout control;
+- its handler delegated exclusively to page-local `#logoutBtn`;
+- Owner Overview has no dependable source `#logoutBtn` handler;
+- therefore the shared control could become inert and leave the persisted Supabase session intact.
+
+Correction contract:
+
+- preserve source-button delegation when a page already owns a canonical logout handler;
+- otherwise call `sb.auth.signOut({ scope: 'local' })` directly;
+- clear `magasin.auth.recovery.session.v1`;
+- redirect to Auth with `?switch=1` only after sign-out succeeds;
+- if sign-out fails, remain on the authenticated page and expose a retry state;
+- bump the Owner Overview shell script cache token;
+- gate with `auth-prod-005-owner-logout-browser.mjs`.
+
+Authority impact: session cleanup only. No role/status, Auth user, password, RLS, grant, function, trigger or schema mutation.
+
 ## 5. Authority boundary
 
 This task execution so far:
