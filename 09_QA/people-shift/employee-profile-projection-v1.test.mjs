@@ -81,11 +81,12 @@ test("TASK-101 Employee UI reads profile by RPC only and runtime wires projectio
   assert.match(engine,/get_my_employee_profile_v1/);
   assert.doesNotMatch(engine,/\.from\(['"]profiles['"]\)/);
   assert.doesNotMatch(engine,/service_role/i);
-  assert.match(runtime,/\/06_EMPLOYEE\/profile\/engine-v1\.js\?v=20260923-task101/);
+  assert.match(runtime,/\/06_EMPLOYEE\/profile\/engine-v1\.js\?v=(?:20260923-task101|20260928-xstore002)/);
   assert.match(runtime,/E\.profileProjection\?\.refresh/);
   assert.match(app,/if\(view==='profile'\)globalThis\.MAGASIN_EMPLOYEE\?\.profileProjection\?\.refresh/);
   assert.match(app,/id="profilePhone"/);
   assert.match(app,/id="profilePrimaryStore"/);
+  assert.match(app,/id="profileStorePriority"/);
   assert.match(app,/id="profileLevel"/);
   assert.match(app,/id="profileJoinDate"/);
 });
