@@ -313,8 +313,9 @@ Locked direction:
 - Auto Schedule cannot be implemented until Owner approves the Staffing Requirement input.
 
 Plan IDs: `XSTORE-001 → XSTORE-011`.  
-Current state: **PLAN STAGED / IMPLEMENTATION NOT STARTED**.  
-Current unresolved Owner decision: **how staffing need per store/time block is defined**.
+Current state: **STRUCTURAL AUDIT FOUND MANAGER AUTHORITY BLOCKER / IMPLEMENTATION NOT STARTED**.  
+First gate: **XSTORE-001 — reconcile Manager role/capability + store scope with Workforce backend**.  
+Current unresolved Owner decisions: **canonical Manager authority model** and **how staffing need per store/time block is defined**.
 
 When XSTORE-011 closes, proven rules must be folded into permanent canonical Workforce docs and the temporary Source of Truth must be deleted.
 
