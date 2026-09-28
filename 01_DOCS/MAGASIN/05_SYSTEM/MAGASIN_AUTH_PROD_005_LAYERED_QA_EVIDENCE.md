@@ -148,6 +148,45 @@ Correction contract:
 
 Authority impact: session cleanup only. No role/status, password, Auth-user, RLS, grant, function, trigger or schema mutation.
 
+## 4.3 Manual production defect: Owner Access save denied
+
+Manual production verification of Owner activation reached the Access screen and rendered the intended independent role/status controls, but saving a non-Owner account failed with:
+
+`permission denied for table profiles`
+
+Fresh production privilege inspection showed:
+
+```text
+profiles RLS                         = enabled
+profiles_update_owner policy         = present
+authenticated SELECT on profiles     = yes
+authenticated UPDATE on profiles     = no
+```
+
+This means PostgreSQL rejected the request at the table/column privilege layer before the Owner-only RLS policy could authorize it.
+
+Bounded production correction:
+
+- grant `UPDATE(role, status)` on `public.profiles` to `authenticated`;
+- keep `anon` UPDATE revoked;
+- keep RLS enabled;
+- keep `profiles_update_owner` unchanged as the authorization boundary;
+- do not grant UPDATE on email, username, full_name, phone, access_scope, timestamps, or any other profile column;
+- add a repository migration and a static contract test preventing accidental broad table-level UPDATE.
+
+Post-migration verification:
+
+```text
+authenticated UPDATE(role)   = true
+authenticated UPDATE(status) = true
+authenticated UPDATE(email)  = false
+anon UPDATE(role)            = false
+profiles RLS                 = true
+Owner UPDATE transaction     = PASS (rolled back)
+```
+
+The transaction verification executed under the authenticated OWNER security context, updated a non-Owner row to its existing values, returned successfully, and was rolled back.
+
 ## 5. Authority boundary
 
 This task execution so far:
