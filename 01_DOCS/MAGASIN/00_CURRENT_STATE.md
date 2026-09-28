@@ -313,9 +313,10 @@ Locked direction:
 - Auto Schedule cannot be implemented until Owner approves the Staffing Requirement input.
 
 Plan IDs: `XSTORE-001 → XSTORE-011`.  
-Current state: **STRUCTURAL AUDIT FOUND MANAGER AUTHORITY BLOCKER / IMPLEMENTATION NOT STARTED**.  
-First gate: **XSTORE-001 — reconcile Manager role/capability + store scope with Workforce backend**.  
-Current unresolved Owner decisions: **canonical Manager authority model** and **how staffing need per store/time block is defined**.
+Current state: **ROLE ARCHITECTURE LOCKED / XSTORE-001 OWNER ROLE SWITCH + LIVE SMOKE PENDING**.  
+Canonical Manager role: **STORE_MANAGER = Quản lý cửa hàng**, with `access_scope = ALL` for shared CN1–CN4 Workforce. `INVENTORY_MANAGER = Quản lý kho` is separate and out of current Workforce scope. Owner Access + bounded `access_scope` grant are implemented.  
+First gate remaining: Owner changes the live Manager account to `STORE_MANAGER`, then live-smoke role/scope/Workforce readers.  
+Current unresolved business decision after that: **how staffing need per store/time block is defined**.
 
 When XSTORE-011 closes, proven rules must be folded into permanent canonical Workforce docs and the temporary Source of Truth must be deleted.
 
