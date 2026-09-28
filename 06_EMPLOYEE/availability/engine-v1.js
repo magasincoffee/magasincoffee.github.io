@@ -3,7 +3,7 @@ const C=globalThis.MAGASIN_CORE;if(!C)return;
 const host=()=>document.getElementById('employeeApp'),d=()=>host()?.contentDocument||null,esc=C.security.escapeHtml,hm=C.time.time5;
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/,TIME_RE=/^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const DAY_NAMES=['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ Nhật'];
-let state={week:null,today:null,registration:'REGISTRATION_CLOSED',policyReason:'UNINITIALIZED',rows:[],stores:[],savePending:false,deletePending:new Set(),uiState:'idle'};
+let state={week:null,today:null,registration:'REGISTRATION_CLOSED',policyReason:'UNINITIALIZED',rows:[],savePending:false,deletePending:new Set(),uiState:'idle'};
 
 const options=sel=>{let s='';for(let m=0;m<1440;m+=30){const v=`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;s+=`<option value="${v}"${v===hm(sel)?' selected':''}>${v}</option>`}return s};
 const panel=x=>(x||d())?.getElementById('weeklyRegistrationPanel')||null;
@@ -58,21 +58,13 @@ function renderDayOptions(x){
   day.innerHTML=state.week?targetDays().map((k,i)=>`<option value="${k}">${DAY_NAMES[i]} · ${C.date.formatDate(k)}</option>`).join(''):'';
   day.dataset.availabilityWeek=key;
 }
-function renderStoreOptions(x){
-  const select=x?.getElementById('quickRegStore');if(!select)return;
-  const signature=state.stores.map(s=>`${s.id||''}:${s.code||''}`).join('|');
-  if(select.dataset.availabilityStores===signature)return;
-  if(!state.stores.length)select.innerHTML='<option value="">Không có chi nhánh khả dụng</option>';
-  else select.innerHTML=state.stores.map(s=>`<option value="${esc(s.code)}">${esc(s.code)}${s.name?` · ${esc(s.name)}`:''}</option>`).join('');
-  select.dataset.availabilityStores=signature;
-}
 function applyRegistrationState(x=d()){
   if(!x)return;
   const closed=state.registration!=='REGISTRATION_OPEN';
   updateContext();
-  for(const id of ['quickRegDay','quickRegStart','quickRegEnd','quickRegStore','saveReg']){
+  for(const id of ['quickRegDay','quickRegStart','quickRegEnd','saveReg']){
     const el=x.getElementById(id);
-    if(el)el.disabled=closed||(id==='quickRegStore'&&!state.stores.length)||(id==='saveReg'&&state.savePending);
+    if(el)el.disabled=closed||(id==='saveReg'&&state.savePending);
   }
   x.querySelectorAll('[data-av-delete]').forEach(b=>{b.disabled=closed||state.deletePending.has(String(b.dataset.avDelete||''))});
   const msg=x.getElementById('quickRegMsg');
@@ -99,9 +91,6 @@ async function prepare(x){
   if(en&&!en.dataset.engineBound){en.innerHTML=options('12:00');en.dataset.engineBound='1'}
   renderDayOptions(x);
   setUiState('loading','Đang tải Availability tuần kế tiếp…');
-  state.stores=await C.stores.active().catch(()=>[]);
-  state.stores=state.stores.filter(s=>s&&s.id&&s.code&&(!s.status||String(s.status).toUpperCase()==='ACTIVE'));
-  renderStoreOptions(x);
   applyRegistrationState(x);
   return load({preserveLoading:true});
 }
@@ -132,11 +121,11 @@ async function retry(){return prepare(d())}
 
 function renderSummary(){
   const x=d();if(!x)return;const box=x.querySelector('#weeklyRegistrationPanel .week-summary');if(!box)return;
-  const days=targetDays(),storeName=id=>state.stores.find(s=>String(s.id)===String(id))?.code||state.stores.find(s=>String(s.id)===String(id))?.name||'Chi nhánh';
+  const days=targetDays();
   const closed=state.registration!=='REGISTRATION_OPEN';
   box.innerHTML=days.map((k,i)=>{
     const rows=state.rows.filter(r=>String(r.work_date).slice(0,10)===k).sort((a,b)=>C.time.minutes(a.start_time)-C.time.minutes(b.start_time));
-    return `<div class="mini"><h4>${DAY_NAMES[i]}</h4><div class="date">${C.date.formatDate(k)}</div>${rows.length?rows.map(r=>`<div class="miniShift"><b>${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</b><br>${esc(storeName(r.preferred_store_id))}<br><span>Đã đăng ký</span>${r.id?`<br><button type="button" data-av-delete="${esc(r.id)}"${closed?' disabled':''}>Xóa</button>`:''}</div>`).join(''):'<div class="muted" style="margin-top:17px">Chưa đăng ký</div>'}</div>`;
+    return `<div class="mini"><h4>${DAY_NAMES[i]}</h4><div class="date">${C.date.formatDate(k)}</div>${rows.length?rows.map(r=>`<div class="miniShift"><b>${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</b><br><span>Đã đăng ký thời gian</span>${r.id?`<br><button type="button" data-av-delete="${esc(r.id)}"${closed?' disabled':''}>Xóa</button>`:''}</div>`).join(''):'<div class="muted" style="margin-top:17px">Chưa đăng ký</div>'}</div>`;
   }).join('');
   box.querySelectorAll('[data-av-delete]').forEach(b=>b.addEventListener('click',()=>remove(b.dataset.avDelete,b)));
 }
@@ -146,21 +135,14 @@ async function register(event){
   syncPolicy();renderDayOptions(x);applyRegistrationState(x);
   if(state.registration!=='REGISTRATION_OPEN'){setUiState('readonly',closedMessage());return}
   if(state.savePending){setUiState('submitting','Đang lưu đăng ký, vui lòng chờ.');return}
-  const day=x.getElementById('quickRegDay')?.value,start=x.getElementById('quickRegStart')?.value,end=x.getElementById('quickRegEnd')?.value,store=x.getElementById('quickRegStore')?.value;
+  const day=x.getElementById('quickRegDay')?.value,start=x.getElementById('quickRegStart')?.value,end=x.getElementById('quickRegEnd')?.value;
   if(!day||!isTargetDate(day)){setUiState('error','Ngày đăng ký phải thuộc đúng tuần kế tiếp.');return}
   if(!TIME_RE.test(String(start||''))||!TIME_RE.test(String(end||''))){setUiState('error','Giờ đăng ký không hợp lệ.');return}
   if(C.time.minutes(end)<=C.time.minutes(start)){setUiState('error','Giờ kết thúc phải sau giờ bắt đầu.');return}
   const button=event?.currentTarget||x.getElementById('saveReg');
   state.savePending=true;if(button)button.disabled=true;setUiState('submitting','Đang lưu khoảng thời gian…');
   try{
-    if(!state.stores.length){
-      state.stores=await C.stores.active().catch(()=>[]);
-      state.stores=state.stores.filter(s=>s&&s.id&&s.code&&(!s.status||String(s.status).toUpperCase()==='ACTIVE'));
-      renderStoreOptions(x);
-    }
-    const target=state.stores.find(s=>String(s.code)===String(store));
-    if(!target){setUiState('error','Không tìm thấy chi nhánh đang hoạt động.',true);return}
-    const q=await C.supabase.rpc('save_my_availability',{p_availability_id:null,p_work_date:day,p_start_time:start,p_end_time:end,p_availability_type:'AVAILABLE',p_preferred_store_id:target.id,p_note:null});
+    const q=await C.supabase.rpc('save_my_availability',{p_availability_id:null,p_work_date:day,p_start_time:start,p_end_time:end,p_availability_type:'AVAILABLE',p_preferred_store_id:null,p_note:null});
     if(q.error)throw q.error;
     C.ui.toast('Đã lưu đăng ký lịch làm.','success');
     const ok=await load();
