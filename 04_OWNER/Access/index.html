@@ -72,7 +72,7 @@ function render(){
  for(const p of rows){
   const role=String(p.role||'').toUpperCase(),status=String(p.status||'').toUpperCase(),isOwner=role==='OWNER',isAccountant=role==='ACCOUNTANT',active=status==='ACTIVE',tr=document.createElement('tr');
   tr.dataset.id=p.id;
-  tr.innerHTML=`<td><div class="name">${esc(p.full_name||p.username||'Chưa đặt tên')}</div><div class="sub">@${esc(p.username||'—')}</div></td><td>${esc(p.email||'—')}</td><td><span class="badge ${isOwner?'owner':isAccountant?'accountant':''}">${esc(roleLabel(role))}</span></td><td class="scope-cell"><span class="sub">${esc(scopeLabel(p))}</span></td><td><span class="badge ${active?'active':'inactive'}">${esc(statusLabel(status))}</span></td><td class="role-cell"><select class="role-select" data-role ${isOwner?'disabled':''}>${roleOptions(role)}</select></td><td class="status-cell">${isOwner?'<span class="sub">Được bảo vệ</span>':`<select class="status-select" data-account-status>${statusOptions(status)}</select>`}</td><td class="save-cell">${isOwner?'<span class="sub">Được bảo vệ</span>':`<button class="btn primary" data-save disabled>Lưu quyền & trạng thái</button>`}</td>`;
+  tr.innerHTML=`<td><div class="name">${esc(p.full_name||p.username||'Chưa đặt tên')}</div><div class="sub">@${esc(p.username||'—')}</div></td><td>${esc(p.email||'—')}</td><td><span class="badge ${isOwner?'owner':isAccountant?'accountant':''}">${esc(roleLabel(role))}</span></td><td class="scope-cell"><span class="sub">${esc(scopeLabel(p))}</span></td><td><span class="badge ${active?'active':'inactive'}">${esc(statusLabel(status))}</span></td><td class="role-cell"><select class="role-select" data-role ${isOwner?'disabled':''}>${roleOptions(role)}</select></td><td class="status-cell">${isOwner?'<span class="sub">Được bảo vệ</span>':`<select class="status-select" data-account-status>${statusOptions(status)}</select>`}</td><td class="save-cell">${isOwner?'<span class="sub">Được bảo vệ</span>':`<button class="btn primary" data-save>Lưu quyền & trạng thái</button>`}</td>`;
   body.appendChild(tr);
  }
  $('#emptyState').classList.toggle('hidden',rows.length>0);
@@ -98,11 +98,9 @@ async function save(row){
 }
 async function boot(){try{if(!core||!sb)throw new Error('Không tải được hệ thống xác thực.');owner=await core.supabase.requireActive();if(!core.roles.hasRole(owner,['OWNER']))throw new Error('Chỉ Chủ hệ thống được quản lý phân quyền.');$('#ownerIdentity').textContent=`${owner.full_name||owner.username||'Owner'} · OWNER`;await load();$('#loading').classList.add('hidden');$('#app').classList.remove('hidden')}catch(e){console.error('[OWNER_ACCESS]',e);$('#loading').classList.add('hidden');$('#denied').classList.remove('hidden');$('#deniedText').textContent=e?.message||String(e)}}
 function syncSaveState(row){
- const p=accounts.find(x=>x.id===row.dataset.id),btn=row.querySelector('[data-save]');
- if(!p||!btn)return;
- const role=row.querySelector('[data-role]')?.value||'',status=row.querySelector('[data-account-status]')?.value||'';
- const nextScope=String(role).toUpperCase()==='STORE_MANAGER'?'ALL':'';
- btn.disabled=String(role).toUpperCase()===String(p.role||'').toUpperCase()&&String(status).toUpperCase()===String(p.status||'').toUpperCase()&&nextScope===String(p.access_scope||'');
+ const btn=row.querySelector('[data-save]');
+ if(!btn)return;
+ btn.disabled=false;
 }
 $('#searchInput').addEventListener('input',render);
 $('#refreshBtn').addEventListener('click',()=>load().catch(e=>setStatus(e?.message||String(e),'error')));
