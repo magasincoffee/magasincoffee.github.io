@@ -244,7 +244,7 @@ This is a new post-V1 extension and does not alter the CLOSED status of `WORKFOR
 
 | ID | Task | Status |
 |---|---|---|
-| XSTORE-001 | Manager authority + current implementation reconciliation | **CURRENT / STRUCTURAL BLOCKER** |
+| XSTORE-001 | Store Manager authority + current implementation reconciliation | **WAIT_OWNER_ROLE_SWITCH / LIVE_SMOKE** |
 | XSTORE-002 | Store Priority Profile contract | PLANNED |
 | XSTORE-003 | Availability simplification — time only | PLANNED |
 | XSTORE-004 | Cross-store scheduling contract | PLANNED |
@@ -258,7 +258,7 @@ This is a new post-V1 extension and does not alter the CLOSED status of `WORKFOR
 
 Approved semantics: management-owned store priority in Employee Profile; Employee Availability no longer chooses store; one shared workforce pool across CN1–CN4; Robot creates DRAFT only; Manager remains final publisher.
 
-Live audit 2026-09-28: Manager route currently accepts a broader manager-family surface than Workforce RPC authority. Workforce backend requires OWNER/STORE_MANAGER + canonical store scope, while production has no ACTIVE STORE_MANAGER. XSTORE-001 must reconcile role/capability/store-scope authority before any cross-store implementation; do not solve this by broadly granting Workforce access to unrelated manager-family roles.
+Role architecture decision 2026-09-28: `STORE_MANAGER = Quản lý cửa hàng` and `INVENTORY_MANAGER = Quản lý kho` are separate roles. Workforce accepts STORE_MANAGER/OWNER only. For the shared CN1–CN4 model, Owner Access now assigns `access_scope = ALL` when saving STORE_MANAGER, backed by a bounded Owner-only RLS update grant. XSTORE-001 remains open only until Owner changes the live observed Manager account from INVENTORY_MANAGER to STORE_MANAGER and the live role/scope Workforce smoke passes. Inventory/Warehouse implementation remains out of scope.
 
 
 ## Supervisor Independent Repository Migration V1 — CLOSED
