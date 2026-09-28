@@ -64,7 +64,10 @@ const mockSdk=String.raw`
           async resetPasswordForEmail(){return {data:{},error:null};},
           async updateUser(){return {data:{user},error:null};}
         },
-        async rpc(){return {data:'qa004@example.test',error:null};},
+        async rpc(name,args){
+          if(name==='resolve_login_email'&&args?.p_username==='qa.auth004')return {data:null,error:null};
+          return {data:'qa004@example.test',error:null};
+        },
         from(table){
           return {
             select(){return this;},
