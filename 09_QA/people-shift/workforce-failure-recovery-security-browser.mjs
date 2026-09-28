@@ -112,8 +112,8 @@ try{
    const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState());
    if(st.error!=="PROFILE_PROJECTION_INVALID"||st.rows.length!==0)throw new Error(JSON.stringify(st));
    await page.evaluate(()=>{globalThis.__TASK107_QA.setMode("managerProfile","ok");return globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh()});
-   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState().rows.length===1);
-   return "invalid scoped profile cannot render";
+   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState().rows.length===2);
+   return "invalid shared-pool profile cannot render; canonical two-employee pool recovers";
  });
 
  await check("manager_invalid_payroll_projection_fails_closed",async()=>{
@@ -129,7 +129,7 @@ try{
  await check("retry_refresh_is_idempotent_read_only",async()=>{
    await empRefresh();await empRefresh();await mgrRefresh();await mgrRefresh();
    const x=await page.evaluate(()=>({calls:globalThis.__TASK107_QA.calls,ep:globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.state.rows.length,mp:globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.getState().rows.length,my:globalThis.MAGASIN_MANAGER_PAYROLL_SELF_CHECK.getState().rows.length}));
-   if(x.ep!==1||x.mp!==1||x.my!==1)throw new Error(JSON.stringify(x));
+   if(x.ep!==1||x.mp!==2||x.my!==1)throw new Error(JSON.stringify(x));
    if(x.calls.some(c=>c.kind==="from"))throw new Error("direct table call");
    if(x.calls.some(c=>/build_payroll_estimate|review|finalize|insert|update|delete/i.test(c.name)))throw new Error(JSON.stringify(x.calls));
    return "repeated refresh converges to same rows with RPC reads only";
