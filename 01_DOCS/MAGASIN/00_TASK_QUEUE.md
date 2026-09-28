@@ -244,7 +244,7 @@ This is a new post-V1 extension and does not alter the CLOSED status of `WORKFOR
 
 | ID | Task | Status |
 |---|---|---|
-| XSTORE-001 | Current implementation reconciliation | PLANNED |
+| XSTORE-001 | Manager authority + current implementation reconciliation | **CURRENT / STRUCTURAL BLOCKER** |
 | XSTORE-002 | Store Priority Profile contract | PLANNED |
 | XSTORE-003 | Availability simplification — time only | PLANNED |
 | XSTORE-004 | Cross-store scheduling contract | PLANNED |
@@ -257,6 +257,8 @@ This is a new post-V1 extension and does not alter the CLOSED status of `WORKFOR
 | XSTORE-011 | Canonical reconciliation + delete TEMP SoT | PLANNED |
 
 Approved semantics: management-owned store priority in Employee Profile; Employee Availability no longer chooses store; one shared workforce pool across CN1–CN4; Robot creates DRAFT only; Manager remains final publisher.
+
+Live audit 2026-09-28: Manager route currently accepts a broader manager-family surface than Workforce RPC authority. Workforce backend requires OWNER/STORE_MANAGER + canonical store scope, while production has no ACTIVE STORE_MANAGER. XSTORE-001 must reconcile role/capability/store-scope authority before any cross-store implementation; do not solve this by broadly granting Workforce access to unrelated manager-family roles.
 
 
 ## Supervisor Independent Repository Migration V1 — CLOSED
