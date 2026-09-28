@@ -2,7 +2,8 @@
 
 **Search key:** `AUTH-PROD`  
 **Canonical track ID:** `MAGASIN_AUTH_PRODUCTION_READINESS_V1`  
-**Status:** `ACTIVE / P0 PRODUCTION BLOCKER`  
+**Status:** `CLOSED / PRODUCTION READY — AUTH & ONBOARDING SCOPE`  
+**Closed:** 2026-09-28  
 **Created:** 2026-09-27  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Production baseline at creation:** `main @ 63ed0c6712493c608b4c7c869bb28cf939241536`  
@@ -25,8 +26,8 @@ Therefore:
 
 ```text
 UI2_PRESENTATION = CLOSED
-AUTH_PROD        = ACTIVE / P0
-PRODUCTION_READY = NO
+AUTH_PROD        = CLOSED
+PRODUCTION_READY = YES / AUTH_AND_ONBOARDING_SCOPE
 ```
 
 No deployment or project-level “production ready” declaration is valid until this track is CLOSED.
@@ -289,18 +290,21 @@ Credentialed production E2E must use secret-backed test credentials or an explic
 
 ## 10. Closure semantics
 
-Closing UI2 does not close AUTH-PROD.
+Closing UI2 did not close AUTH-PROD. AUTH-PROD closed independently on 2026-09-28 after the exact-main production cutover gate and canonical reconciliation completed.
 
-When AUTH-PROD closes, update:
+Canonical closure evidence:
 
-- this Source of Truth status;
-- the AUTH-PROD execution plan;
-- `00_CURRENT_STATE.md`;
-- a canonical AUTH-PROD closure evidence document.
+- `MAGASIN_AUTH_PRODUCTION_READINESS_CLOSURE_EVIDENCE.md`;
+- exact executable cutover: `main @ 8c2080614837d1638f8c983796817aa143f5c7c2`;
+- closure-doc base: `main @ c76ad69ea23f33cd364c34e16021ff329e70f0c4`;
+- compare between those SHAs contains AUTH-PROD documentation/evidence only, with no Auth runtime drift.
 
-Until then:
+Final state:
 
 ```text
-AUTH_PROD = ACTIVE
-PRODUCTION_READY = NO
+AUTH_PROD         = CLOSED
+PRODUCTION_READY  = YES / AUTH_AND_ONBOARDING_SCOPE
+AUTH-PROD-001→008 = DONE
 ```
+
+Profitability & Cash, Workforce Operations and other independent tracks retain their own state. Any later Auth incident must open a new explicitly named generation rather than silently reopening this closed track.
