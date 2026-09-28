@@ -42,7 +42,6 @@ await check("double_click_is_bounded_to_one_save_mutation",async()=>{
   await employee.locator("#quickRegDay").selectOption("2026-09-28");
   await employee.locator("#quickRegStart").selectOption("06:00");
   await employee.locator("#quickRegEnd").selectOption("12:00");
-  await employee.locator("#quickRegStore").selectOption("CN1");
   const before=await page.evaluate(()=>globalThis.__EMPLOYEE_AVAILABILITY_QA.calls.filter(x=>x.name==="save_my_availability").length);
   await page.evaluate(()=>{
     const b=document.getElementById("employeeApp")?.contentDocument?.getElementById("saveReg");
@@ -54,7 +53,7 @@ await check("double_click_is_bounded_to_one_save_mutation",async()=>{
     rows:globalThis.__EMPLOYEE_AVAILABILITY_QA.rows.map(x=>({...x})),
     saves:globalThis.__EMPLOYEE_AVAILABILITY_QA.calls.filter(x=>x.name==="save_my_availability").length
   }));
-  if(result.rows.length!==1||result.rows[0].availability_type!=="AVAILABLE"||result.rows[0].preferred_store_id!=="store-a")throw new Error(JSON.stringify(result));
+  if(result.rows.length!==1||result.rows[0].availability_type!=="AVAILABLE"||result.rows[0].preferred_store_id!==null)throw new Error(JSON.stringify(result));
   if(result.saves-before!==1)throw new Error("save delta="+(result.saves-before));
   return "1 logical click burst -> 1 RPC";
 });
