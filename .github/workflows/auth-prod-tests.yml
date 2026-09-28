@@ -6,6 +6,8 @@ on:
     paths:
       - '03_PLATFORM/01_AUTH/**'
       - '04_OWNER/Access/**'
+      - '04_OWNER/index.html'
+      - '02_CORE/ui/magasin-ui-v2-shell.js'
       - '02_CORE/ui/magasin-ui-v2-employee-shell.js'
       - '06_EMPLOYEE/**'
       - 'nhap-hang/**'
@@ -16,6 +18,8 @@ on:
     paths:
       - '03_PLATFORM/01_AUTH/**'
       - '04_OWNER/Access/**'
+      - '04_OWNER/index.html'
+      - '02_CORE/ui/magasin-ui-v2-shell.js'
       - '02_CORE/ui/magasin-ui-v2-employee-shell.js'
       - '06_EMPLOYEE/**'
       - 'nhap-hang/**'
@@ -87,6 +91,11 @@ jobs:
           done
           cat /tmp/auth-prod-http.log || true
           exit 1
+
+      - name: Run AUTH-PROD-005 Owner logout browser regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+        run: node 09_QA/auth/auth-prod-005-owner-logout-browser.mjs
 
       - name: Run AUTH-PROD-002 pending browser regression
         env:
