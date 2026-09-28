@@ -1,6 +1,6 @@
 # MAGASIN — Current State
 
-Last updated: 2026-09-27
+Last updated: 2026-09-28
 
 ## Current program
 
@@ -20,20 +20,22 @@ Canonical architecture:
 - `02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`;
 - `02_PROFITABILITY_CASH/TASK_067_OPERATING_COST_TRUTH_CONTRACT_V1_EVIDENCE.md`.
 
-## P0 production blocker — AUTH-PROD
+## Auth production readiness — AUTH-PROD CLOSED
 
 **Search key:** `AUTH-PROD`  
 **Track:** `MAGASIN_AUTH_PRODUCTION_READINESS_V1`  
-**State:** `ACTIVE / PRODUCTION_READY=NO`
+**State:** `CLOSED / PRODUCTION_READY=YES / AUTH_AND_ONBOARDING_SCOPE`
 
-UI/UX V2 is presentation-closed, but a production review on 2026-09-27 found unresolved real Auth/onboarding workflow defects: persistent-session PENDING loop, no normal Owner activation path for a new STAFF/PENDING account, and insufficient live lifecycle coverage. Production Auth readiness is therefore reopened as a separate P0 track and does not invalidate the accepted UI2 presentation work.
+UI/UX V2 remains presentation-closed. The separate AUTH-PROD production-readiness track opened on 2026-09-27 to correct real Auth/onboarding lifecycle defects and is now canonically CLOSED. The exact-main production cutover proved registration, confirmation, PENDING escape/switch-account, Owner activation, ACTIVE username/email login, role routing, logout, recovery, cold/reload/back behavior, bounded invalid-credential retry and duplicate-username handling. This closure applies to Auth/onboarding scope only and does not mark independent PFC or Workforce tracks complete.
 
-Read first for this incident:
+Canonical AUTH-PROD records:
 
 1. `05_SYSTEM/MAGASIN_AUTH_PRODUCTION_READINESS_SOURCE_OF_TRUTH.md`
 2. `05_SYSTEM/MAGASIN_AUTH_PRODUCTION_READINESS_EXECUTION_PLAN.md`
+3. `05_SYSTEM/MAGASIN_AUTH_PRODUCTION_READINESS_CLOSURE_EVIDENCE.md`
+4. `05_SYSTEM/MAGASIN_AUTH_PROD_007_EXACT_MAIN_CUTOVER_EVIDENCE.md`
 
-Current AUTH-PROD cursor: **AUTH-PROD-005 READY**. AUTH-PROD-001→004 are DONE/MERGED through PR #325, #326, #327 and #328. Do not declare the webapp production-ready until AUTH-PROD-001→008 reach canonical closure.
+Current AUTH-PROD cursor: **CLOSED**. AUTH-PROD-001→008 are DONE. Exact executable cutover was proven on `8c2080614837d1638f8c983796817aa143f5c7c2`; subsequent pre-closure drift through `c76ad69ea23f33cd364c34e16021ff329e70f0c4` is documentation/evidence-only. Any later Auth incident must open a new generation.
 
 ## Schedule-first continuity
 
