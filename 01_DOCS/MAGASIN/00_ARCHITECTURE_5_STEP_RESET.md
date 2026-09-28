@@ -107,17 +107,13 @@ Revenue → COGS/Cost → Cash → Contribution → Profitability → Break-even
             Owner / Manager decisions
 ```
 
-### Owner handoff gate
+### External execution boundary
 
-Architecture discussion is a hard Owner boundary:
+The original architecture-reset pause/release gate is historical and has been satisfied. Current execution authority comes from WEBAPP project truth in `00_PROJECT_STATE.json` and `00_TASK_QUEUE.md`.
 
-- `00_PROJECT_STATE.json = WAIT_USER / PAUSED`;
-- Supervisor/Brain/Work must not execute new implementation tasks;
-- existing task history is not permission to continue;
-- Owner must explicitly lock architecture and release Robot;
-- only then may source-of-truth return to `READY / AUTO_CONTINUE`.
+Automation/orchestration infrastructure is external to this repository. Canonical ownership is defined in `05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md`; Supervisor platform runtime belongs to `magasincoffee/magasin-supervisor` and may consume WEBAPP project truth only through the explicit adapter/integration boundary.
 
-Canonical discussion document: `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md`.
+Canonical business architecture: `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md`.
 
 ### Schedule-first status
 
@@ -149,7 +145,7 @@ TASK-029 must determine which of these is canonical and which is compatibility/l
 
 ## 5. Deferred during Profitability & Cash architecture lock
 
-- new Supervisor/Robot autonomy features not required for the Owner handoff gate;
+- external orchestration-platform features; they belong to `magasincoffee/magasin-supervisor`, not WEBAPP architecture;
 - SOP/Task write-capable workflow after TASK-026 Owner decisions;
 - broad dashboard expansion before financial truth exists;
 - payroll/KPI/recruitment expansion;
@@ -157,7 +153,7 @@ TASK-029 must determine which of these is canonical and which is compatibility/l
 - speculative production schema rewrite;
 - cosmetic architecture cleanup with no critical-path effect.
 
-TASK-026 remains preserved. TASK-049 is infrastructure work and is paused from further expansion. TASK-050 owns the current architecture discussion.
+TASK-026 remains preserved. TASK-049 is historical and superseded by the completed independent Supervisor migration. TASK-050 is complete; Profitability & Cash execution is governed by the current project state/queue.
 
 ## 6. Architecture rules from now on
 
@@ -184,47 +180,25 @@ TASK-026 remains preserved. TASK-049 is infrastructure work and is paused from f
 - **TASK-034 — Notification event-outbox production:** durable RLS-protected schedule/attendance/Swap/Give outbox + Employee in-app reader + rollback integration smoke verified. DONE.
 - **TASK-035 — MAGASIN email adapter/config:** Gmail adapter/config prepared; production OAuth activation explicitly deferred by Owner and remains fail-closed/non-blocking. DEFERRED.
 - **TASK-036 — Schedule-first closure regression + recovery gate:** canonical schedule regression/recovery gate completed; external email remains fail-closed. DONE.
-- **TASK-037 — Windows auto-reboot/logon recovery:** canonical runner + Supervisor + dedicated Business OS Chrome/CDP recovery verified on self-hosted Windows. DONE.
-- **TASK-038 — Night-run persistence:** deadline + cursor + lease + checkpoint + GitHub-hosted hard-stop contract verified. DONE.
-- **TASK-039 — Business OS Robot V2 project registry:** exactly two Owner-approved project state strategies with deny-unregistered policy. DONE.
-- **TASK-040 — Business OS Robot V2 portfolio scheduler:** project isolation + WAIT_USER skip policy verified. DONE.
-- **TASK-041 — Business OS Robot V2 recovery engine:** lease/checkpoint/stale-cursor recovery + project boundary regression verified. DONE.
-- **TASK-042 — SaydiVoiceProvider production adapter offline:** Media Robot offline gate verified with 23 tests; no live provider action or merge. DONE.
-- **TASK-043 — Cross-project handoff integration:** Business OS → Media Robot → Business OS state/checkpoint/constraint isolation verified. DONE.
-- **TASK-044 — Portfolio-aware diagnostics:** project/task/checkpoint/error context with privacy-safe persistence verified. DONE.
-- **TASK-045 — Restart/resume simulation:** kill/restart/reconcile/resume regression over existing Robot V2 primitives verified. DONE.
-- **TASK-046 — Night full QA:** both-project regression evidence verified; no bounded fix remains. DONE.
-- **TASK-047 — Night docs / evidence / PR prep:** changelog, canonical evidence report and reviewable PR descriptions reconciled. DONE.
-- **TASK-048 — Night final checkpoint:** approved 09:15 +07 hard stop completed. A later Owner-reprioritized active task was preserved. DONE.
-- **TASK-049 — Supervisor Three-Lane owner-bound Brain/Work orchestration:** one Brain coordinates a bounded Worker pool; dynamic directives, full-result relay, strict `conversationFull` rollover, local-only registry and automatic runtime upgrade. IN_PROGRESS.
-- **TASK-050 — Enterprise architecture lock — Profitability & Cash first:** Owner/ChatGPT discussion only; implementation queue locked; source-of-truth WAIT_USER/PAUSED until explicit Owner release. ACTIVE DISCUSSION.
+- **TASK-037 → TASK-049 — historical automation/orchestration generation:** retained in `00_TASK_QUEUE.md` and migration/night-run evidence only. These tasks no longer define WEBAPP runtime ownership or current architecture.
+- **TASK-050 — Enterprise architecture lock — Profitability & Cash first:** DONE / architecture locked; the active PFC queue now carries implementation authority.
 
 ## 8. Definition of success
 
 The reset is successful when MAGASIN can trace operating events into a trustworthy financial truth spine and use it to explain Revenue, COGS/Cost, Cash, Contribution, Profitability and Break-even without competing sources of truth. Schedule-first remains a proven example of the required vertical-slice discipline.
 
 
-## 9. Conversation-aware execution handoff
+## 9. External automation integration boundary
 
-The Five-Step method also governs **how automation takes over work**, not only which business module is built.
+The Five-Step method still governs when automation is appropriate, but orchestration runtime implementation is not part of WEBAPP architecture.
 
-Canonical runtime handoff is defined in `00_SUPERVISOR_HANDOFF_ARCHITECTURE.md`:
+WEBAPP owns business/project truth. External automation may:
 
-```text
-Owner works in ChatGPT Robot browser
-  → Supervisor observes current chat first
-  → WAIT if assistant is running or Owner message is pending
-  → reconcile live Owner instruction + repository once
-  → continue exact current work
-  → AUTO_CONTINUE from canonical state
-```
+1. read the explicit project adapter/integration contract;
+2. act only when WEBAPP project state authorizes execution;
+3. reconcile results back into WEBAPP source-of-truth;
+4. fail closed on Owner/security/destructive boundaries.
 
-This deletes the old behavior of blindly sending the same generic continuation prompt at startup. The Supervisor must preserve work already in progress and must not treat a stale repository task as more recent than an explicit live Owner redirect without first reconciling that redirect back into source-of-truth.
+Supervisor runtime, browser control, autostart, recovery and release certification are owned by `magasincoffee/magasin-supervisor`. Historical pre-migration handoff/Brain/Worker documents are preserved only as provenance and must not be treated as current platform authority.
 
-### TASK-049 Three-Lane Five-Step reset
-
-- QUESTION: Brain identity must not be inferred by automation.
-- DELETE: active Brain auto-discovery/rebind candidate scanning.
-- SIMPLIFY: three fixed lanes; Owner supplies Brain URL, Robot owns Work URL.
-- ACCELERATE: reuse Work conversation until positive full evidence.
-- AUTOMATE: create/roll Work chat and relay screenshot + full text back to same-lane Brain.
+See `05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md` and the retained project-side `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md` integration contract.

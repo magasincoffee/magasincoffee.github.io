@@ -217,76 +217,32 @@ Mandatory new-chat bootstrap:
 
 1. **`00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — READ FIRST / CANONICAL.**
 2. `00_CURRENT_STATE.md`.
-3. `00_PROJECT_STATE.json`.
-4. `00_TASK_QUEUE.md`.
-5. `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`.
-6. `02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`.
-7. `02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`.
-8. `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
-8. `00_MASTER_PLAN.md`.
-9. `06_DECISION_LOG.md`.
-10. `00_CHATGPT_CONTEXT.md`.
-11. repository/PR/CI state.
+3. `05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md`.
+4. `00_PROJECT_STATE.json`.
+5. `00_TASK_QUEUE.md`.
+6. `02_PROFITABILITY_CASH/FINANCIAL_BASELINE.md`.
+7. `02_PROFITABILITY_CASH/TASK_066_OPEX_SOURCE_INVENTORY_V1_EVIDENCE.md`.
+8. `02_PROFITABILITY_CASH/TASK_065_CASH_TRUTH_REGRESSION_AND_EVIDENCE.md`.
+9. `02_PROFITABILITY_CASH/TASK_059_PFC_3H_FINAL_HANDOFF_EVIDENCE.md`.
+10. `00_MASTER_PLAN.md`.
+11. `06_DECISION_LOG.md`.
+12. `00_CHATGPT_CONTEXT.md`.
+13. repository/PR/CI state.
 
 Repository evidence overrides stale chat memory.
 
 
-## Approved night run
+## External project boundary
 
-Owner approved `NIGHT_RUN_2026-09-18` for the window `2026-09-18 23:15 +07 → 2026-09-19 09:15 +07`.
+Canonical boundary: `05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md`.
 
-Execution scope is restricted to:
+- WEBAPP/business truth remains owned by `magasincoffee/magasincoffee.github.io`.
+- Supervisor runtime/platform authority is external at `magasincoffee/magasin-supervisor`; MIG-001→MIG-007 are complete and the embedded executable Supervisor surface has been removed.
+- `magasincoffee/magasin-media-robot` is not part of current WEBAPP execution scope; remaining mentions belong only to historical night-run/cross-project evidence.
+- Pre-migration Brain/Worker, handoff and Robot documents are historical compatibility records, not current runtime authority.
+- The project-owned Three-Lane integration contract and MAGASIN lane directive remain valid WEBAPP-side integration boundaries.
 
-- `magasincoffee/magasincoffee.github.io`;
-- `magasincoffee/magasin-media-robot`.
-
-Windows reboot/logon recovery is installed and verified on the self-hosted machine:
-
-- HKCU logon autostart registered;
-- canonical GitHub Runner verified online;
-- Supervisor verified online;
-- Owner STOP latch is clear;
-- Windows login/PIN is never bypassed.
-
-The GitHub-hosted hard-stop guard will close the old night window at 09:15 +07 even if the PC is offline; an Owner-reprioritized task remains authoritative.
-
-
-## Superseded Brain/Worker architecture
-
-Canonical contract: `00_SUPERVISOR_BRAIN_WORKER_ARCHITECTURE.md`.
-
-- exactly one Brain conversation coordinates work;
-- up to 3 concurrent Workers initially;
-- Worker prompts are dynamic Brain `DISPATCH` instructions, never a repeated canned Continue prompt;
-- each completed Worker assistant turn is captured in full once and relayed to Brain;
-- message bodies are transient and are not persisted in Git/log/status/registry;
-- target missing, conversation missing, stalled and unavailable states fail closed after bounded recovery;
-- only explicit ChatGPT `conversationFull` evidence authorizes rollover of an existing logical conversation;
-- a new Worker slot requires a validated Brain directive plus free capacity;
-- runtime auto-upgrade from `main` is part of TASK-049 acceptance.
-
-## Three-Lane V1 active architecture
-
-Canonical contract: `00_SUPERVISOR_THREE_LANE_ARCHITECTURE.md`.
-
-- exactly three isolated project lanes;
-- Brain identity is Owner-bound by explicit URL only; no active Brain auto-discovery;
-- each lane has its own project name, Owner Brain URL, optional Owner Work URL / Robot-managed Work URL, status, message, START and STOP;
-- Owner may paste/replace Work URL while a lane is stopped; if blank, Robot auto-creates it; automatic Work rollover still requires positive `conversationFull` evidence;
-- each completed Work result is relayed exactly once to the same lane Brain with both screenshot and full captured text;
-- Brain chat is never auto-rolled; if Brain is full/missing, that lane waits for Owner to replace its Brain URL;
-- transient fetch/CDP/network failures auto-retry in `RECOVERING` and do not ask Owner unless the condition is non-transient/security-related;
-- local lane config/status/evidence remain outside Git.
-
-## TASK-049 acceptance checkpoint — E2/F
-
-**Partial acceptance only — TASK-049 remains IN_PROGRESS.**
-
-- **TASK-049/E2 — Owner-visible Robot UI/live status: ACCEPTED.** PR #141 merged at `f076779c4d1e3afd709385f0558a7185caeabf51`. The Owner-facing Control Panel is Vietnamese; `ĐANG LÀM VIỆC` is derived from live `runtime-status.json.worker_running` IDs reconciled to the local `orchestration.json` worker registry and displays Worker/task identity; visible time conversion uses Windows `SE Asia Standard Time` with no `ToLocalTime()`; recovery actions remain mutually exclusive.
-- **TASK-049/F — runtime survival / technical-recovery acceptance: ACCEPTED.** Supervisor Autostart Install run `35414750942` completed with Supervisor Tests **212/212 PASS**, install success and `verify-survival` success. Install evidence: `WORKER_RETRY_REQUIRED=False`, `TECHNICAL_RECOVERY_STUCK=False`, `SUPERVISOR_ONLINE=True`, `BRAIN_WORKER_RUNTIME=True`, `BUSINESS_CHROME_ONLINE=True`, `BUSINESS_CHROME_CDP_HEALTHY=True`. Post-job survival evidence: `POST_JOB_SUPERVISOR_ALIVE=True`, `POST_JOB_BRAIN_WORKER_ALIVE=True`, `POST_JOB_ROBOT_CHROME_ALIVE=True`.
-- This checkpoint does **not** assert the remaining TASK-049 acceptance items in `00_SUPERVISOR_BRAIN_WORKER_ARCHITECTURE.md`; those must be independently reconciled before TASK-049 can become DONE.
-
-
+Historical migration/night-run evidence is preserved for provenance but must not be interpreted as current WEBAPP state.
 
 ## PFC 8-hour V2 — ACTIVE
 

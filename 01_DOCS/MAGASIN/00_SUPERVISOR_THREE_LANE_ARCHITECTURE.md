@@ -1,5 +1,8 @@
 # MAGASIN Supervisor — Three-Lane Architecture V1
 
+> **WEBAPP-side integration contract only.** Supervisor platform/runtime implementation and release authority live in `magasincoffee/magasin-supervisor`. This retained file defines MAGASIN project integration semantics, not platform source ownership. See `05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md`.
+
+
 Date: 2026-09-19  
 Status: OWNER APPROVED / ACTIVE PRODUCTION BASELINE + TASK-RBT TARGET EXTENSION  
 Original task: TASK-049  

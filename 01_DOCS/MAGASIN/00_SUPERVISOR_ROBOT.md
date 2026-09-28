@@ -1,5 +1,8 @@
 # MAGASIN Supervisor Robot — V1 Contract
 
+> **Historical / superseded runtime contract.** The embedded Supervisor implementation was extracted and removed through MIG-007. Current platform authority is `magasincoffee/magasin-supervisor`; this file remains only as historical WEBAPP provenance.
+
+
 ## Purpose
 
 Giữ chuỗi thực hiện dự án liên tục khi Owner không ngồi chờ từng lượt ChatGPT.

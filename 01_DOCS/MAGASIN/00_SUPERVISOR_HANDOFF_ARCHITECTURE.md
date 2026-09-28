@@ -1,5 +1,8 @@
 # MAGASIN Supervisor — Conversation-Aware Handoff Architecture
 
+> **Historical / superseded runtime contract.** Retained for provenance only. Current Supervisor runtime/browser-control authority is `magasincoffee/magasin-supervisor`; current WEBAPP ownership rules are in `05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md`. Do not treat local paths or runtime behavior below as current WEBAPP state.
+
+
 **Date:** 2026-09-18  
 **Status:** CANONICAL  
 **Purpose:** allow the Owner to work directly with ChatGPT, then let the Supervisor take over without restarting, duplicating, or ignoring the live work.

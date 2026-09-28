@@ -1,5 +1,8 @@
 # MAGASIN Supervisor — Brain / Worker Multi-Conversation Architecture V1
 
+> **Historical / superseded.** This pre-migration Brain/Worker platform design is retained for provenance only. Current Supervisor platform/runtime authority is `magasincoffee/magasin-supervisor`; current WEBAPP ownership rules are in `05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md`. Do not use this file as current runtime authority.
+
+
 **Date:** 2026-09-19  
 **Status:** OWNER APPROVED / ACTIVE IMPLEMENTATION  
 **Task:** TASK-049 — Supervisor Brain/Worker multi-conversation orchestration
