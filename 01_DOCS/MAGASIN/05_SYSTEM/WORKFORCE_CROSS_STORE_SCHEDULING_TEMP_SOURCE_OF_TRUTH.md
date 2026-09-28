@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→006 IMPLEMENTED / PRODUCTION FOUNDATION ACCEPTED / XSTORE-007 WAIT_OWNER  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-011 WAIT_REAL_CONFIGURATION_AND_LIVE_ACCEPTANCE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -274,11 +274,11 @@ Out of scope unless explicitly added later:
 | XSTORE-004 | Cross-store scheduling contract | Shared pool + global overlap/eligibility validation while preserving canonical schedule truth | **DONE** |
 | XSTORE-005 | Four-store master scheduling view | CN1–CN4 visible together in one weekly operating view | **DONE** |
 | XSTORE-006 | Cross-store manual assignment | Eligible staff can be assigned across stores; invalid/overlap cases fail closed | **DONE** |
-| XSTORE-007 | Staffing Requirement rule | Define how many people/roles/time blocks each store needs | **WAIT_OWNER / DISCUSSION** |
-| XSTORE-008 | Auto Schedule DRAFT engine | Generate a global four-store draft using hard constraints + store-priority preferences | **BLOCKED_BY_XSTORE_007** |
-| XSTORE-009 | Review/edit/publish integration | Existing canonical Validate/Review/Publish path is preserved; Robot handoff awaits XSTORE-008 | **READY_AFTER_XSTORE_008** |
-| XSTORE-010 | Full regression + production-safe acceptance | Final complete track regression including Auto Schedule | **BLOCKED_BY_XSTORE_008_009** |
-| XSTORE-011 | Canonical reconciliation + temp cleanup | Move final proven rules/evidence into permanent docs and remove this TEMP Source of Truth | **PLANNED** |
+| XSTORE-007 | Staffing Requirement rule | Manager/Owner explicitly enters weekly store/date/time/headcount requirements; only `XSTORE_V1` rows are Robot authority | **DONE / FEATURE READY** |
+| XSTORE-008 | Auto Schedule DRAFT engine | Global four-store DRAFT from Availability + Store Priority + explicit requirements; shortages returned; no auto-publish | **DONE / FEATURE READY / REAL INPUT PENDING** |
+| XSTORE-009 | Review/edit/publish integration | Robot hands off to existing per-store edit + Validate → Review → Publish canonical state machine | **DONE** |
+| XSTORE-010 | Full regression + production-safe acceptance | Exact-main static/browser/cross-role/pages regression | **DONE / EXACT-MAIN GREEN** |
+| XSTORE-011 | Canonical reconciliation + temp cleanup | Live real-data acceptance, permanent-doc reconciliation, then delete TEMP Source of Truth | **CURRENT / WAIT_REAL_CONFIGURATION_AND_LIVE_ACCEPTANCE** |
 
 ## 5. Recommended execution order
 
@@ -289,11 +289,11 @@ XSTORE-001 DONE
 → XSTORE-004 DONE
 → XSTORE-005 DONE
 → XSTORE-006 DONE
-→ XSTORE-007 (CURRENT OWNER business-rule decision)
-→ XSTORE-008
-→ XSTORE-009
-→ XSTORE-010
-→ XSTORE-011
+→ XSTORE-007 DONE
+→ XSTORE-008 DONE
+→ XSTORE-009 DONE
+→ XSTORE-010 DONE
+→ XSTORE-011 CURRENT / real business configuration + live acceptance + cleanup
 ```
 
 Do not jump to the Robot before profile authority, Availability semantics and cross-store manual scheduling are proven.
@@ -309,18 +309,20 @@ Already approved:
 - Robot/Auto Schedule creates a draft only;
 - Manager reviews/edits and publishes.
 
-Still unresolved:
-- the canonical **Staffing Requirement** input used by Auto Schedule:
-  - fixed templates by store/time block;
-  - day-specific requirements;
-  - role/skill-specific requirements;
-  - or another Owner-defined operating rule.
+Staffing Requirement semantics are now resolved for V1:
+
+- Manager/Owner explicitly enters weekly requirements as **store + date + start time + end time + target headcount**;
+- the system does not infer or invent headcount;
+- only rows tagged `authority_source='XSTORE_V1'` are consumed by the new Robot;
+- legacy staffing templates/rows remain historical/compatibility data and are not new Robot authority.
 
 Current execution boundary:
-- XSTORE-001→006 are implemented and accepted as the production foundation;
-- production currently has 0 Store Priority rows, so management must enter the real priority order for employees; no priorities were invented during implementation;
-- XSTORE-008 must not invent staffing demand;
-- no robot-generated schedule may claim to be operationally optimal.
+- XSTORE-001→010 are implemented;
+- accepted executable main for XSTORE-007→010: `2429183e30dcc3760327e70a3e8a62019d13d2b0`;
+- acceptance evidence: `05_SYSTEM/XSTORE_007_010_STAFFING_AUTO_DRAFT_ACCEPTANCE.md`;
+- production currently has 0 Store Priority rows and 0 `XSTORE_V1` Staffing Requirement rows; management must enter real business values;
+- no Store Priority, staffing demand, draft assignment or official schedule was fabricated during implementation;
+- XSTORE-011 remains open until a real Manager-configured week is exercised end-to-end and accepted.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
@@ -359,6 +361,39 @@ Implementation result:
 - `work_schedules` remains the sole official schedule truth;
 - no Robot/Auto Schedule writer has been activated.
 
+## 6.2 XSTORE-007→010 implementation acceptance — 2026-09-29
+
+Accepted executable main:
+
+`2429183e30dcc3760327e70a3e8a62019d13d2b0`
+
+Canonical evidence:
+
+`05_SYSTEM/XSTORE_007_010_STAFFING_AUTO_DRAFT_ACCEPTANCE.md`
+
+Exact-main gates:
+- People Shift Day-10 run `36498812008` = **SUCCESS**;
+- UI2 Cross Role Acceptance run `36498812066` = **SUCCESS**;
+- Pages source validation run `36498811986` = **SUCCESS**;
+- Pages build/deployment run `36498811328` = **SUCCESS**;
+- XSTORE four-store master browser E2E = PASS;
+- XSTORE staffing/Robot static contracts = PASS.
+
+Implementation result:
+- Manager can enter real weekly staffing requirements for CN1–CN4;
+- legacy staffing data is not Robot authority;
+- Robot solves the shared four-store pool using Availability + ordered Store Priority;
+- Robot creates DRAFT only and reports shortages;
+- Manager remains responsible for edit, Validate, Review and Publish;
+- legacy `auto_generate_schedule_generation` remains browser-revoked;
+- `work_schedules` remains the sole official schedule truth.
+
+Production remains intentionally free of fabricated business inputs:
+- Store Priority rows = 0;
+- `XSTORE_V1` Staffing Requirement rows = 0;
+- draft assignments = 0;
+- official schedules = 0.
+
 ## 7. Definition of Done
 
 This track is complete only when:
@@ -380,10 +415,15 @@ This track is complete only when:
 
 Do not leave this temporary file as a second permanent source of truth.
 
-At XSTORE-011:
-- reconcile final rules into the canonical Workforce architecture/state/evidence;
+At XSTORE-011, only after real-data live acceptance:
+- Manager sets real Store Priority values for employees;
+- Manager enters real weekly staffing requirements for CN1–CN4;
+- Manager runs Auto Schedule and reviews any shortages;
+- Manager adjusts the DRAFT as needed;
+- canonical Validate → Review → Publish succeeds on a real target week;
+- reconcile final rules into permanent Workforce architecture/state/evidence;
 - record closure evidence;
-- remove pointers to this temporary track;
+- remove temporary-track pointers;
 - delete `WORKFORCE_CROSS_STORE_SCHEDULING_TEMP_SOURCE_OF_TRUTH.md`.
 
 Until then, this file is the single temporary authority for the cross-store scheduling extension.
