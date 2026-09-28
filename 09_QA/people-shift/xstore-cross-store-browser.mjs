@@ -19,9 +19,9 @@ const text=(await page.locator(".xsm").innerText()).replace(/\s+/g," ");
 for(const token of ["CN1","CN2","CN3","CN4","Như Huỳnh","Mai Chi","1 nhân viên chưa có Store Priority"]){
  if(!text.includes(token))throw new Error("missing "+token+" in "+text);
 }
-const cn1=page.locator(".xsm-store").filter({hasText:"CN1"});
+const cn1=page.locator(".xsm-store").filter({has:page.locator(".xsm-store-title b").filter({hasText:/^CN1 · MAGASIN COFFEE CN1$/})});
 if(!(await cn1.innerText()).includes("06:00–12:00"))throw new Error("CN1 draft not projected");
-const cn3=page.locator(".xsm-store").filter({hasText:"CN3"});
+const cn3=page.locator(".xsm-store").filter({has:page.locator(".xsm-store-title b").filter({hasText:/^CN3 · MAGASIN COFFEE CN3$/})});
 if(!(await cn3.innerText()).includes("17:00–22:00 · Đã phát hành"))throw new Error("CN3 official not projected");
 
 await cn3.locator("[data-xsm-open='s3']").click();
