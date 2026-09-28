@@ -112,9 +112,9 @@ for(const width of widths){
   await check("ui2_009_"+width+"_rpc_only_diagnostics",async()=>{
     const s=await page.evaluate(()=>({calls:globalThis.__UI2_009_QA.calls,direct:globalThis.__UI2_009_QA.directTableCalls()}));
     if(s.direct.length)throw new Error(JSON.stringify(s.direct));
-    const allowed=new Set(['list_my_approved_schedules_v2','get_my_attendance_v2','submit_manual_time_attendance_v1','get_my_payroll_self_check_v1','get_my_employee_profile_v1']);
+    const allowed=new Set(['list_my_approved_schedules_v2','get_my_attendance_v2','submit_manual_time_attendance_v1','get_my_payroll_self_check_v1','get_my_employee_profile_v1','get_my_store_priority_profile_v1']);
     const unexpected=s.calls.filter(x=>x.kind==='rpc'&&!allowed.has(x.name));if(unexpected.length)throw new Error(JSON.stringify(unexpected));
-    return '0 direct table calls; only preserved Attendance/Payroll/Profile RPC inventory observed';
+    return '0 direct table calls; only preserved Attendance/Payroll/Profile/Store-Priority RPC inventory observed';
   });
   await context.close();
 }
