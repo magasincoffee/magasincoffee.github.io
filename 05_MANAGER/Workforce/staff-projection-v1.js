@@ -3,59 +3,82 @@ if(window.__MAGASIN_MANAGER_STAFF_PROJECTION_V1__)return;
 window.__MAGASIN_MANAGER_STAFF_PROJECTION_V1__=true;
 const SB_URL='https://menvbzlsncmpuvnaifxa.supabase.co',SB_KEY='sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx';
 let sb=null,busy=false;
-let state={stores:[],storeId:null,rows:[],loading:false,error:null,message:''};
+let state={stores:[],rows:[],editId:null,loading:false,error:null};
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const errorCode=e=>{const s=String(e?.message||e?.code||'PROFILE_VIEW_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PROFILE_VIEW_FAILED'};
-const validProjectionRow=r=>!!r&&!!String(r.employee_id||'').trim()&&['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())&&!!String(r.profile_status||'').trim();
 const client=()=>sb||(sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}}));
 const view=()=>document.getElementById('view-staff');
 function ensureCss(){
  if(document.getElementById('manager-staff-projection-v1-css'))return;
  const s=document.createElement('style');s.id='manager-staff-projection-v1-css';
- s.textContent='.msp-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.msp-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.msp-table-wrap{overflow:auto}.msp-table{width:100%;border-collapse:collapse;min-width:720px}.msp-table th,.msp-table td{padding:10px 8px;border-bottom:1px solid #eef2f6;text-align:left;font-size:12px}.msp-table th{color:var(--muted)}.msp-state{margin-top:12px;padding:11px 13px;border-radius:11px;font-size:12px}.msp-state.info{background:#eef7ff;color:#235dba}.msp-state.ok{background:#e6f4ed;color:#176d49}.msp-state.error{background:#fff0f0;color:#9a3838}@media(max-width:800px){.msp-actions{width:100%}.msp-actions select{flex:1;min-width:0}}';
+ s.textContent='.msp-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.msp-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.msp-table-wrap{overflow:auto}.msp-table{width:100%;border-collapse:collapse;min-width:860px}.msp-table th,.msp-table td{padding:10px 8px;border-bottom:1px solid #eef2f6;text-align:left;font-size:12px;vertical-align:middle}.msp-table th{color:var(--muted)}.msp-state{margin-top:12px;padding:11px 13px;border-radius:11px;font-size:12px}.msp-state.info{background:#eef7ff;color:#235dba}.msp-state.ok{background:#e6f4ed;color:#176d49}.msp-state.error{background:#fff0f0;color:#9a3838}.msp-priority{font-weight:800;color:#0f4778}.msp-edit{margin:14px 0;padding:14px;border:1px solid #cfe1eb;border-radius:13px;background:#f8fcfd}.msp-priority-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:8px;margin-top:10px}.msp-field{display:grid;gap:5px}.msp-field label{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase}.msp-field select{height:40px;border:1px solid #ccd9e4;border-radius:9px;background:#fff;padding:0 8px}.msp-edit-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}@media(max-width:800px){.msp-priority-grid{grid-template-columns:1fr 1fr}.msp-actions{width:100%}}@media(max-width:520px){.msp-priority-grid{grid-template-columns:1fr}}';
  document.head.appendChild(s);
 }
 function ensureUi(){
- const root=view();if(!root)return false;
- ensureCss();
- if(root.dataset.canonicalStaffProjection==='1')return true;
- root.dataset.canonicalStaffProjection='1';
- root.innerHTML='<section class="card"><div class="msp-head"><div><h2 style="margin:0">Nhân viên</h2><div class="muted" style="margin-top:5px">Projection vận hành read-only theo phạm vi cửa hàng canonical.</div></div><div class="msp-actions"><select class="btn" id="mspStore"></select><button class="btn" id="mspRefresh">Làm mới</button></div></div><div id="mspRoot"></div></section>';
- root.querySelector('#mspStore')?.addEventListener('change',e=>{state.storeId=e.target.value||null;void loadRows()});
+ const root=view();if(!root)return false;ensureCss();
+ if(root.dataset.canonicalStaffProjection==='2')return true;
+ root.dataset.canonicalStaffProjection='2';
+ root.innerHTML='<section class="card"><div class="msp-head"><div><h2 style="margin:0">Nhân viên</h2><div class="muted" style="margin-top:5px">Quản lý thiết lập chi nhánh chính và thứ tự ưu tiên làm việc. Nhân viên chỉ xem, không tự sửa.</div></div><div class="msp-actions"><button class="btn" id="mspRefresh">Làm mới</button></div></div><div id="mspRoot"></div></section>';
  root.querySelector('#mspRefresh')?.addEventListener('click',()=>refresh());
  return true;
 }
+const storeOptions=(value,slot)=>'<option value="">'+(slot===1?'— Chọn chi nhánh chính —':'— Không sử dụng —')+'</option>'+state.stores.map(s=>'<option value="'+esc(s.id)+'"'+(String(s.id)===String(value||'')?' selected':'')+'>'+esc(s.code)+' · '+esc(s.name)+'</option>').join('');
+function editHtml(row){
+ if(!row)return '';
+ const ids=Array.isArray(row.priority_store_ids)?row.priority_store_ids:[];
+ return '<div class="msp-edit" data-msp-editor="'+esc(row.employee_id)+'"><b>'+esc(row.full_name||row.username||'Nhân viên')+'</b><div class="muted" style="margin-top:4px">Ưu tiên 1 là chi nhánh chính. Các vị trí sau là chi nhánh phụ theo thứ tự giảm dần. Bỏ khỏi danh sách = không được xếp vào chi nhánh đó.</div><div class="msp-priority-grid">'+[0,1,2,3].map(i=>'<div class="msp-field"><label>Ưu tiên '+(i+1)+(i===0?' · Chính':'')+'</label><select data-msp-priority="'+(i+1)+'">'+storeOptions(ids[i],i+1)+'</select></div>').join('')+'</div><div class="msp-edit-actions"><button class="btn" data-msp-cancel>Hủy</button><button class="btn primary" data-msp-save>Lưu ưu tiên chi nhánh</button></div><div class="msp-state info" data-msp-msg>Quản lý quyết định thứ tự này theo hồ sơ làm việc của nhân viên.</div></div>';
+}
 function render(){
  if(!ensureUi())return;
- const root=document.getElementById('mspRoot'),select=document.getElementById('mspStore');if(!root||!select)return;
- select.innerHTML=state.stores.map(x=>'<option value="'+esc(x.id)+'"'+(String(x.id)===String(state.storeId||'')?' selected':'')+'>'+esc(x.code||x.name||x.id)+' · '+esc(x.name||'Cửa hàng')+'</option>').join('')||'<option value="">Không có cửa hàng được phép</option>';
- if(state.loading){root.innerHTML='<div class="msp-state info">Đang tải projection nhân viên từ máy chủ…</div>';return}
- if(state.error){root.innerHTML='<div class="msp-state error">Không thể tải danh sách nhân viên. Mã: '+esc(state.error)+'</div>';return}
- if(!state.rows.length){root.innerHTML='<div class="msp-state ok">Không có nhân viên trong phạm vi cửa hàng đã chọn.</div>';return}
- const rows=state.rows.map(r=>'<tr><td><b>'+esc(r.full_name||r.username||'Nhân viên')+'</b><div class="muted">'+esc(r.username||'—')+'</div></td><td>'+esc(r.phone||'—')+'</td><td>'+esc(r.employee_level||'Chưa có nguồn chuẩn')+'</td><td>'+esc(r.primary_store_code||r.primary_store_name||'Chưa có nguồn chuẩn')+'</td><td>'+esc(r.profile_status||'—')+'</td><td>'+esc(r.join_date||'Chưa có nguồn chuẩn')+'</td></tr>').join('');
- root.innerHTML='<div class="msp-state info">Chỉ hiển thị các trường vận hành do TASK-101 projection trả về; không suy diễn email, rate, join date hoặc pay rule.</div><div class="msp-table-wrap"><table class="msp-table"><thead><tr><th>Nhân viên</th><th>Điện thoại</th><th>Cấp</th><th>Chi nhánh chính</th><th>Trạng thái</th><th>Ngày vào</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+ const root=document.getElementById('mspRoot');if(!root)return;
+ if(state.loading){root.innerHTML='<div class="msp-state info">Đang tải hồ sơ nhân viên…</div>';return}
+ if(state.error){root.innerHTML='<div class="msp-state error">Không thể tải hồ sơ nhân viên. Mã: '+esc(state.error)+'</div>';return}
+ const edit=state.rows.find(r=>String(r.employee_id)===String(state.editId||''));
+ const rows=state.rows.map(r=>{const codes=Array.isArray(r.priority_store_codes)?r.priority_store_codes.filter(Boolean):[];return '<tr><td><b>'+esc(r.full_name||r.username||'Nhân viên')+'</b><div class="muted">@'+esc(r.username||'—')+'</div></td><td>'+esc(r.phone||'—')+'</td><td>'+esc(r.profile_status||'—')+'</td><td><div class="msp-priority">'+esc(codes.length?codes.join(' → '):'Chưa thiết lập')+'</div><div class="muted">'+esc(codes.length?'Ưu tiên 1 = chi nhánh chính':'Chưa đủ điều kiện xếp lịch cross-store')+'</div></td><td><button class="btn" data-msp-edit="'+esc(r.employee_id)+'">Thiết lập</button></td></tr>'}).join('');
+ root.innerHTML=(edit?editHtml(edit):'')+'<div class="msp-state info">Store Priority là authority của Quản lý. Availability hằng tuần chỉ còn ngày/giờ có thể làm.</div><div class="msp-table-wrap"><table class="msp-table"><thead><tr><th>Nhân viên</th><th>Điện thoại</th><th>Trạng thái</th><th>Ưu tiên chi nhánh</th><th>Thao tác</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+ bind();
+}
+function bind(){
+ const root=document.getElementById('mspRoot');if(!root)return;
+ root.querySelectorAll('[data-msp-edit]').forEach(b=>b.addEventListener('click',()=>{state.editId=b.dataset.mspEdit;render();root.querySelector('[data-msp-editor] select')?.focus()}));
+ root.querySelector('[data-msp-cancel]')?.addEventListener('click',()=>{state.editId=null;render()});
+ root.querySelector('[data-msp-save]')?.addEventListener('click',savePriority);
 }
 async function loadStores(){
  const q=await client().rpc('get_manager_accessible_stores');if(q.error)throw q.error;
  state.stores=(Array.isArray(q.data)?q.data:[]).filter(x=>x?.id&&String(x.status||'ACTIVE').toUpperCase()==='ACTIVE');
- if(!state.storeId||!state.stores.some(x=>String(x.id)===String(state.storeId)))state.storeId=state.stores[0]?.id||null;
 }
 async function loadRows(){
- if(!state.storeId){state.rows=[];state.loading=false;state.error=null;render();return}
- state.loading=true;state.error=null;state.rows=[];render();
- const q=await client().rpc('list_employee_profile_projection_v1',{p_store_id:state.storeId});
+ state.loading=true;state.error=null;render();
+ const q=await client().rpc('list_employee_store_priority_profiles_v1');
  state.loading=false;
  if(q.error){state.rows=[];state.error=errorCode(q.error);render();return}
- const rows=Array.isArray(q.data)?q.data:[];
- if(rows.some(r=>!validProjectionRow(r))){state.rows=[];state.error='PROFILE_PROJECTION_INVALID';render();return}
- state.rows=rows;state.error=null;render();
+ state.rows=Array.isArray(q.data)?q.data:[];state.error=null;render();
+}
+async function savePriority(){
+ const editor=document.querySelector('[data-msp-editor]');if(!editor||busy)return;
+ const employeeId=editor.dataset.mspEditor,msg=editor.querySelector('[data-msp-msg]');
+ const values=[...editor.querySelectorAll('[data-msp-priority]')].map(x=>x.value||'');
+ if(!values[0]){if(msg){msg.className='msp-state error';msg.textContent='Phải chọn chi nhánh ưu tiên 1 (chi nhánh chính).'}return}
+ let gap=false,seenEmpty=false;for(const v of values){if(!v)seenEmpty=true;else if(seenEmpty)gap=true}
+ if(gap){if(msg){msg.className='msp-state error';msg.textContent='Thứ tự ưu tiên phải liên tục; không được bỏ trống ở giữa.'}return}
+ const ids=values.filter(Boolean);
+ if(new Set(ids).size!==ids.length){if(msg){msg.className='msp-state error';msg.textContent='Một chi nhánh không thể xuất hiện hai lần.'}return}
+ busy=true;editor.querySelector('[data-msp-save]').disabled=true;
+ if(msg){msg.className='msp-state info';msg.textContent='Đang lưu ưu tiên chi nhánh…'}
+ try{
+  const q=await client().rpc('set_employee_store_priority_profile_v1',{p_employee_id:employeeId,p_store_ids:ids});
+  if(q.error)throw q.error;
+  state.editId=null;await loadRows();
+ }catch(e){
+  if(msg&&msg.isConnected){msg.className='msp-state error';msg.textContent='Không thể lưu. Mã: '+errorCode(e);editor.querySelector('[data-msp-save]').disabled=false}
+ }finally{busy=false}
 }
 async function refresh(){
  if(busy||!ensureUi())return;busy=true;
- try{if(!state.stores.length)await loadStores();await loadRows()}
- catch(e){state.loading=false;state.rows=[];state.error=errorCode(e);render()}
- finally{busy=false}
+ try{if(!state.stores.length)await loadStores();busy=false;await loadRows()}
+ catch(e){busy=false;state.loading=false;state.rows=[];state.error=errorCode(e);render()}
 }
 document.addEventListener('click',e=>{if(e.target.closest?.('[data-view="staff"]'))setTimeout(()=>refresh(),0)},true);
-window.MAGASIN_MANAGER_STAFF_PROJECTION={refresh,getState:()=>({storeId:state.storeId,rows:state.rows.map(x=>({...x})),loading:state.loading,error:state.error})};
+window.MAGASIN_MANAGER_STAFF_PROJECTION={refresh,getState:()=>({rows:state.rows.map(x=>({...x})),stores:state.stores.map(x=>({...x})),loading:state.loading,error:state.error})};
 })();
