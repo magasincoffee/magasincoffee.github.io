@@ -53,7 +53,7 @@ TASK-026 remains a valid Owner decision pack but is deferred; it no longer block
 
 Task tiếp theo chỉ chạy khi task hiện tại đạt Definition of Done hoặc được chuyển rõ sang `WAIT_USER` / `BLOCKED`.
 
-Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
+Automation outside this repository may continue only when `00_PROJECT_STATE.json` permits it. Supervisor runtime authority is owned by `magasincoffee/magasin-supervisor`; this queue remains WEBAPP project truth.
 | TASK-037 | Windows auto-reboot/logon recovery | 75m | runner + Supervisor + Business Chrome autostart / Owner STOP latch | DONE |
 | TASK-038 | Night-run persistence | 35m | deadline + cursor + lease + checkpoint + hard-stop contract | DONE |
 | TASK-039 | Business OS Robot V2 project registry | 60m | two-project registry + project adapter contract | DONE |
@@ -66,9 +66,9 @@ Supervisor chỉ auto-continue khi `00_PROJECT_STATE.json` cho phép.
 | TASK-046 | Night full QA | 35m | both-project regression + bounded fixes | DONE |
 | TASK-047 | Night docs / evidence / PR prep | 20m | changelog/test logs/reviewable PRs | DONE |
 | TASK-048 | Night final checkpoint | 10m | background hard-stop only; preserve later Owner task | DONE |
-| TASK-049 | Supervisor Three-Lane owner-bound Brain/Work orchestration | 120m | 3 fixed lanes + Owner Brain URLs + Robot-managed Work URLs + screenshot/full-text relay + full-only Work rollover + auto-upgrade | PAUSED — no further expansion during architecture discussion |
+| TASK-049 | Supervisor Three-Lane owner-bound Brain/Work orchestration | 120m | historical integration baseline; platform later extracted to independent repository | SUPERSEDED / CLOSED BY SUPERVISOR MIGRATION |
 
-| TASK-050 | Canonical enterprise architecture locked — Profitability & Cash first | Owner detailing | Apply Five-Step continuously across every aspect; derive implementation queue from canonical architecture; Robot release requires explicit Owner approval | WAIT_USER / ARCHITECTURE_LOCKED / ROBOT_PAUSED |
+| TASK-050 | Canonical enterprise architecture locked — Profitability & Cash first | Owner detailing | Apply Five-Step continuously across every aspect; derive implementation queue from canonical architecture | DONE / ARCHITECTURE LOCKED |
 
 | TASK-051 | PFC source inventory + delete/defer map | 20m | verified existing financial sources + trust/quality classification + explicit non-goals | DONE |
 | TASK-052 | Financial Truth contract v1 | 20m | canonical period/scope/quality/source/as-of/lineage contract; no synthetic zero | DONE |
@@ -120,31 +120,17 @@ TASK-059 completion evidence: `01_DOCS/MAGASIN/02_PROFITABILITY_CASH/TASK_059_PF
 | TASK-088 | Profitability Readiness by Branch/Channel | overflow | readiness without synthetic contribution | OVERFLOW / AUTO_CONTINUE_IF_TIME_REMAINS |
 | TASK-089 | Extended Regression + Next-Priority Handoff | overflow | close overflow scope safely | OVERFLOW / AUTO_CONTINUE_IF_TIME_REMAINS |
 
-TASK-049 partial acceptance checkpoint (does not close the task):
-- **E2 ACCEPTED** — PR #141 / merge `f076779c4d1e3afd709385f0558a7185caeabf51`; Vietnamese Owner UI, evidence-backed live Worker status, fixed UTC+7 display, mutually exclusive recovery controls.
-- **F ACCEPTED** — Supervisor Autostart Install run `35414750942`: **212/212 PASS**, install + verify-survival success; no `WORKER_RETRY_REQUIRED` or `TECHNICAL_RECOVERY_STUCK`; Supervisor / Brain-Worker / Robot Chrome survived post-job verification.
-- Overall TASK-049 remains **IN_PROGRESS** until the other acceptance items are independently reconciled.
+## Historical automation handoff closure
 
+TASK-049 is no longer an active WEBAPP implementation task. Its runtime/platform work was superseded by the independent Supervisor repository migration, completed through MIG-007. Historical acceptance evidence remains in Git history and migration evidence; current WEBAPP execution authority is the business queue below.
 
-## Owner architecture handoff gate
-
-While TASK-050 is `ARCHITECTURE_LOCKED / ROBOT_PAUSED`:
-
-- source-of-truth remains `WAIT_USER / PAUSED`;
-- Supervisor/Brain/Work must not start implementation tasks;
-- silence or an old queued task is not approval;
-- no new automation expansion is allowed merely to make Robot more autonomous;
-- Profitability & Cash is the enterprise critical path;
-- Robot may resume only after Owner explicitly releases execution, the implementation queue traces to the canonical architecture, and `00_PROJECT_STATE.json` is explicitly returned to `READY / AUTO_CONTINUE`.
-
-Canonical architecture: `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md` — mandatory first read.
-
+Canonical business architecture remains `00_ENTERPRISE_ARCHITECTURE_5_STEP_PROFIT_CASH.md`. External automation must consume WEBAPP project truth through the explicit project boundary and may not become a second business source of truth.
 
 ## Profitability & Cash 3-hour autonomous queue
 
 Canonical runbook: `02_PROFITABILITY_CASH/THREE_HOUR_EXECUTION_QUEUE_V1.md`.
 
-TASK-051 → TASK-059 are deliberately restricted to work that does not require Owner business decisions, secrets, private production exports or destructive actions. The queue must stop at a true Owner/security boundary only. Owner explicitly released Robot on 2026-09-19. That released execution scope is now COMPLETE. TASK-060 is outside the completed release and remains `PLANNED / WAIT_OWNER_RELEASE`; Robot must stay PAUSED until a new explicit Owner release.
+TASK-051 → TASK-059 were a bounded historical automated execution generation and are COMPLETE. Their evidence remains authoritative for that generation only. Current execution state is defined by the active PFC V2 queue and `00_PROJECT_STATE.json`; external automation is not itself a WEBAPP project.
 
 
 Execution generation: `PFC_3H_V1_RESTART_01` — Owner officially restarted and released the queue from TASK-051 on 2026-09-19. Previous partial execution evidence is historical only and must not advance the cursor.
@@ -248,210 +234,28 @@ TASK-106 completion evidence: `05_SYSTEM/TASK_106_WORKFORCE_CROSS_FLOW_BROWSER_E
 TASK-107 completion evidence: `05_SYSTEM/TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY_E2E.md`. Implementation PR #277 final head `3cd3ed9571b29ac69e9892012e42d1a47be821ff` merged as `313efd034980819772ab19ac44582a67eb087dd5`. PR-head People Shift run `35874674906` / job `107227400674` and exact post-merge People Shift run `35875096691` / job `107228834872` are SUCCESS. Exact-main deterministic regression is 286/286 (77 Workforce + 9 schedule-first + 126 People Shift + 74 Control Tower) with `TASK_107_WORKFORCE_FAILURE_RECOVERY_SECURITY=PASS`; Pages validation `35875096700` and deployment `35875095130` are SUCCESS. Executable E2E proves Employee self-only, Manager store-scoped, Owner separate scope, cross-user/cross-store denial, malformed/stale projection fail-closed, refresh/reload recovery, idempotent RPC-only retries and zero browser diagnostics. Live read-only audit found 7 profiles / 4 ACTIVE, 0 employee constraints, 0 payroll entries and 0 attendance; all four TASK-101/104 readers remain anon-denied/authenticated-enabled with fixed search_path, and targeted Security Advisor baseline remains 11/1/18/76. No migration or production data mutation occurred; no PAYROLL_AUTHORIZED mapping or monetary/rate/cadence semantics were invented. E2E-14 CLOSED. TASK-107 DONE. Scheduling Production Readiness is canonically closed and merged as `a4eee395a670c949db26de13551f45c75faef68b`; Brain acceptance is satisfied. TASK-108 Gate A is now **IN_PROGRESS / MANUAL_WORK** under explicit dispatch. Workforce Robot remains disabled; Gate B/Gate C are not started; PFC remains TASK-068 → TASK-069.
 
 
-## Supervisor Independent Repository Migration V1
+## Supervisor Independent Repository Migration V1 — CLOSED
 
-Owner approved the independent Supervisor repository architecture and explicitly released migration execution on 2026-09-21.
+Owner-approved migration of the Supervisor platform to `magasincoffee/magasin-supervisor` is complete.
 
-Canonical migration plan: `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`
+```text
+MIG-001 = DONE
+MIG-002 = DONE
+MIG-003 = DONE
+MIG-004 = DONE
+MIG-005 = DONE
+MIG-006 = COMPLETE / QUALIFIED
+MIG-007 = COMPLETE / FINAL CLEANUP
+rollback window = CLOSED
+embedded executable Supervisor files = 0
+```
 
-| ID | Task | Gate | Status |
-|---|---|---|---|
-| MIG-001 | Freeze Baseline + Migration Bootstrap | exact baseline inventory + migration contract + target repo bootstrap plan; zero production cutover | DONE |
-| MIG-002 | Extract Supervisor Platform to independent repository | source/test/windows/docs/workflows/scripts parity | DONE |
-| MIG-003 | Decouple Business OS-specific paths/state | platform build/test/release self-contained | DONE |
-| MIG-004 | New-repo CI / lifecycle parity | tests + integrity + lifecycle acceptance green | DONE |
-| MIG-005 | Single-authority production cutover | preserve lane targets/latches; no split-brain | DONE |
-| MIG-006 | New-repo RBT-009 exact-SHA 8h soak | uninterrupted Tier B + privacy/exact-once evidence | ACTIVE / TIER B IN PROGRESS |
-| MIG-007 | Deprecate old embedded Supervisor copy | rollback window closed + pointer docs only | QUEUED |
+Canonical historical authority:
+- `08_AUTONOMY/SUPERVISOR_REPOSITORY_MIGRATION_V1.md`;
+- MIG-001→MIG-005 evidence under `08_AUTONOMY/`;
+- `05_SYSTEM/EXTERNAL_PROJECT_BOUNDARY_V1.md` for the current ownership boundary.
 
-Migration invariant: MIG-005 has completed the single-ownership handoff. The independent `magasin-supervisor` runtime candidate now owns production autostart authority; runtime processes remain intentionally quiescent because all three lanes are disabled. The old state/rollback source is retained and inactive. RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING and may not be relabeled RELEASED until MIG-006 completes.
-
-
-### MIG-002 completion
-
-MIG-002 extraction is complete in `magasincoffee/magasin-supervisor`.
-
-- target bootstrap main: `815fc10bbc1814ed46f73b63391b9e67e29aa446`
-- extraction PR #1 merge: `e67ae8101c391fc0a77b41ae6190bb615356be99`
-- extraction-safe CI PR #2 merge: `07160cfab6943d647661f732590a0ce45e2f92a5`
-- docs-only closure PR #3 merge: `64371bedc7b9c976047224152dba820c12a0674c`
-- parity: 137/137 represented, missing=0, duplicate=0
-- MOVE byte-equivalent: 90/90
-- REWRITE provenance: 47/47
-- production cutover: false
-- production authority: UNCHANGED_EXISTING_SUPERVISOR
-- RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING
-
-Next task is MIG-003 READY / NOT STARTED. Do not self-start MIG-003 from MIG-002 closure.
-
-`ZERO_PRODUCTION_MUTATION=true`
-
-
-### MIG-002 owner/auth boundary resolved
-
-Owner created the exact target repository `magasincoffee/magasin-supervisor`. GitHub verification confirms it is public, size 0, and empty. Resume MIG-002 from frozen baseline `4f76b929c5fedc44b451abd823f0f1f7fb3e50fe` and the existing 137-record map. Do not re-freeze or substitute moving main.
-
-`ZERO_PRODUCTION_MUTATION=true`
-
-
-### MIG-003 completion
-
-MIG-003 decoupling is complete in `magasincoffee/magasin-supervisor`.
-
-- exact implementation base: `64371bedc7b9c976047224152dba820c12a0674c`
-- canonical implementation PR #5 head: `f7fe79e22660c8a9fc0c1e3feecfcf90d282298a`
-- implementation merge: `aec7db9a715ceb41066af6636a4c91d34553eed5`
-- docs-only target closure PR #6 merge: `7691bafd1571039be363d3edf760270756b5c7c6`
-- project adapter: `supervisor-project-adapter.v1`
-- state-root contract: `supervisor-state-root.v1`
-- direct Business OS PROJECT_STATE/TASK_QUEUE/CURRENT_STATE defaults removed from generic platform core
-- old repository identity removed from generic defaults
-- root-native workflows/tests established
-- MIG-002 mapped paths preserved 137/137
-- self-hosted production workflows remain inert/fail-closed
-- production cutover remains false
-- production authority remains UNCHANGED_EXISTING_SUPERVISOR
-- RBT-009 remains IMPLEMENTATION CANDIDATE / FINAL 8H SOAK PENDING
-
-Next task is MIG-004 READY / NOT STARTED. MIG-003 does not start or certify MIG-004.
-
-`ZERO_PRODUCTION_MUTATION=true`
-
-### MIG-004 Owner release
-
-Owner explicitly released MIG-004. Exact target base: `magasincoffee/magasin-supervisor@63b955f59d7558a42311b3d47d58acc60a503dca`.
-
-Scope is new-repository CI/integrity/lifecycle parity and release-gate qualification only. Production cutover remains forbidden and the embedded Business OS Supervisor remains the sole production authority. MIG-004 may exercise safe validation paths but must not create a second production mutation authority or begin the final 8-hour RBT-009 soak.
-
-MIG-004 must STOP after evidence/closure and must not self-start MIG-005.
-
-
-### MIG-004 completion
-
-MIG-004 new-repository CI / lifecycle parity is complete in `magasincoffee/magasin-supervisor`.
-
-- Exact implementation base: `63b955f59d7558a42311b3d47d58acc60a503dca`
-- Canonical implementation PR #8 merge: `19e0cab9318f9293409ebbc8237aeb299c548d77`
-- Target closure PR #9 merge: `a67b6ea19e7e10b4b63b56f9e7b5274a94135ca2`
-- Exact-main Tests: run `35686650024` — 567/567 PASS
-- Integrity: run `35686650049` — independent-repo/static green; runtime audit SKIPPED fail-closed
-- Lifecycle A-L isolated: run `35686650107` — 52/52 PASS
-- Autostart/install isolated contract: run `35686650035` — 25/25 PASS; production jobs SKIPPED
-- RBT-009 Tier A synthetic: run `35686650070` — 9/9 PASS; Tier B 480m SKIPPED / NOT RUN
-- MIG-002 provenance remains 137/137.
-- `production_cutover=false`
-- `production_authority=UNCHANGED_EXISTING_SUPERVISOR`
-- `ZERO_PRODUCTION_MUTATION=true`
-
-MIG-005 is **READY / OWNER-SAFE-GATE** only. MIG-004 does not authorize or start production cutover, does not clear Owner STOP, does not mutate live lane state/autostart, and does not run the final RBT-009 8-hour soak.
-
-
-### MIG-005 Owner-safe release
-
-Owner explicitly released MIG-005 from the **old machine control console**. Exact target candidate at release: `magasincoffee/magasin-supervisor@a67b6ea19e7e10b4b63b56f9e7b5274a94135ca2`.
-
-Release means **begin preflight and controlled cutover orchestration**, not immediate authority switch. The existing Supervisor remains authoritative until the new-machine execution host/runner, candidate SHA, target/latch preservation, rollback path, and single-authority conditions are verified.
-
-Hard invariant: production mutation authority instances must remain exactly **1**. Never start the new production authority while the old production authority is still active. If new-machine readiness or rollback safety cannot be proven, STOP fail-closed without changing production authority.
-
-MIG-005 may complete cutover only after preflight passes. MIG-006 final 8-hour RBT-009 soak is explicitly forbidden during MIG-005. STOP after MIG-005; do not self-start MIG-006.
-
-
-### MIG-005 Controlled state transfer authorization
-
-Owner explicitly authorized **controlled state transfer** for MIG-005 after the new repository runner was verified on the new machine.
-
-Verified new-machine probe at authorization checkpoint:
-- runner accepted repository jobs;
-- Node major 24;
-- Supervisor process inactive;
-- production autostart absent;
-- pending reboot false;
-- state files absent;
-- lane count 0;
-- registry lane count 0;
-- Owner STOP observed blocked;
-- machine role remains blocked until preserved production state is transferred and verified.
-
-Authorization is narrowly scoped: preserve existing production state/targets/latches/Owner STOP, perform final old-authority capture, enforce old STOP -> zero authority -> preserved state transfer -> hash/3-lane verification -> new START -> exactly-one-authority verification. No state reset/reinitialization, no private state committed to GitHub, no overlap, no MIG-006 Tier B soak during MIG-005. If safe transport or rollback cannot be proven, STOP fail-closed and request the minimum Owner action.
-
-
-### MIG-005 completion
-
-MIG-005 single-authority production cutover is complete.
-
-- target PR #10 runtime candidate: `218f330ee86eea4f0fb79ef9293bd43cf96a45de`
-- target PR #10 merge: `cca403faf0704d52ca488d7fecf3c72809a52291`
-- package candidate: `dc0b5f369f6a9c3ae89d821f1ddf603e1135f51e`
-- package SHA256: `b2a67e3c7ae568454c09386b2ceb4f7cc7cfba650e3a37243dea89a2ebfe5753`
-- transfer blob identity: `abf72af4ee51a06bf49af669cd4f590bd68a9aa7` at both package/runtime candidates
-- old pre-handoff state: `ALL_DISABLED_QUIESCENT`
-- old runtime authority: 0
-- old autostart ownership: released
-- old state root + rollback record: retained
-- imported topology: 3 config lanes / 3 registry lanes / enabled=0
-- Brain/Work targets: preserved
-- dispatch/relay latches: preserved
-- Owner STOP semantics: preserved false
-- browser profile: untouched
-- GitHub runner: untouched
-- exact runtime candidate installed: true
-- new autostart ownership: present
-- new runtime authority process: inactive because all lanes are disabled
-- production ownership authority instances: 1
-- ownership state: `NEW_AUTHORITY_OWNERSHIP_ACTIVE_ALL_DISABLED_RUNTIME_QUIESCENT`
-- split-brain: false
-- RBT-009 Tier B 480m: NOT RUN
-
-Exact-head gates before activation:
-- Supervisor Tests run `35711190701` / job `106691919524`: 588/588 PASS
-- Integrity run `35711190753` / job `106692010441`: SUCCESS
-- Lifecycle isolated run `35711190610` / job `106692198176`: 52/52 PASS
-- Autostart isolated run `35711190671` / job `106691966754`: 25/25 PASS
-- RBT Tier A run `35711190642` / job `106691974263`: SUCCESS
-- MIG-005 preflight run `35711190628` / hosted job `106693086802`: 21/21 + 16/16 PASS
-- fresh machine probes `106693404916`, `106693404967`, `106693404995`, `106693405039`: 4/4 SUCCESS
-- production-capable jobs remained SKIPPED
-- final 8h Tier B remained NOT_RUN
-
-Canonical evidence: `08_AUTONOMY/MIG_005_SINGLE_AUTHORITY_CUTOVER_EVIDENCE.md`.
-
-MIG-005 is **DONE**. MIG-006 is **READY / NOT STARTED** and must not auto-start. The final RBT-009 Tier B soak must run from zero on exact runtime candidate `218f330ee86eea4f0fb79ef9293bd43cf96a45de` only after explicit release.
-
-
-### MIG-006 Owner release
-
-Owner explicitly released MIG-006 final RBT-009 Tier B qualification.
-
-Locked runtime candidate under test:
-- `218f330ee86eea4f0fb79ef9293bd43cf96a45de`
-- target main merge containing MIG-005 closure: `cca403faf0704d52ca488d7fecf3c72809a52291`
-- required duration: **480 continuous minutes from zero**
-- previous historical partial credit: **forbidden**
-- current production ownership: **NEW_REPO_AUTOSTART_OWNERSHIP_ALL_DISABLED_RUNTIME_QUIESCENT**
-- current runtime processes: **0 by design because enabled_lane_count=0**
-
-Release authorizes preparation and execution of the exact-SHA soak only after the release workflow is corrected/qualified for the new platform state root and all-disabled semantics. It does not authorize enabling lanes, changing Brain/Work targets, clearing Owner STOP, creating a second authority, or redefining the runtime candidate.
-
-Tier B is not considered started until the self-hosted runner begins the 480-minute monitor on the exact locked runtime candidate. If interrupted, the attempt is non-qualifying and restarts from zero. STOP after MIG-006; do not self-start MIG-007.
-
-
-### MIG-006 Tier B live execution
-
-Tier B final qualification is **IN PROGRESS** on the locked runtime candidate.
-
-- target workflow run: `35717673431`
-- Tier B job: `106713284935`
-- control-plane SHA: `819f6461188f894327ec67feaf75f768ce881fce`
-- runtime candidate SHA: `218f330ee86eea4f0fb79ef9293bd43cf96a45de`
-- Tier B step start UTC: `2026-09-22T10:46:39Z`
-- required continuous duration: 480 minutes / 28,800 seconds
-- start-from-zero: true
-- partial-duration credit: 0
-- execution branch frozen: true
-- MIG-007 remains blocked until MIG-006 qualifies
-
-This is bookkeeping only. It does not modify the target execution branch or production runtime.
+There is no active Supervisor platform implementation task in this WEBAPP queue. The retained Three-Lane and lane-directive documents are WEBAPP-side integration contracts only.
 
 ## MAGASIN UI/UX V2 — Owner P0 priority lock (2026-09-25)
 
