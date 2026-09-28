@@ -81,21 +81,21 @@ try{
     await staffRow.locator('[data-save]').click();
     await page.waitForFunction(()=>window.__authProd003Updates.length===1);
     let updates=await page.evaluate(()=>window.__authProd003Updates);
-    assert.deepEqual(updates[0],{id:'p-staff',payload:{role:'STAFF',status:'ACTIVE'}});
+    assert.deepEqual(updates[0],{id:'p-staff',payload:{role:'STAFF',status:'ACTIVE',access_scope:''}});
 
     const managerRow=page.locator('#accountsBody tr[data-id="p-manager"]');
     await managerRow.locator('[data-account-status]').selectOption('ACTIVE');
     await managerRow.locator('[data-save]').click();
     await page.waitForFunction(()=>window.__authProd003Updates.length===2);
     updates=await page.evaluate(()=>window.__authProd003Updates);
-    assert.deepEqual(updates[1],{id:'p-manager',payload:{role:'STORE_MANAGER',status:'ACTIVE'}});
+    assert.deepEqual(updates[1],{id:'p-manager',payload:{role:'STORE_MANAGER',status:'ACTIVE',access_scope:'ALL'}});
 
     const accountantRow=page.locator('#accountsBody tr[data-id="p-accountant"]');
     await accountantRow.locator('[data-account-status]').selectOption('ACTIVE');
     await accountantRow.locator('[data-save]').click();
     await page.waitForFunction(()=>window.__authProd003Updates.length===3);
     updates=await page.evaluate(()=>window.__authProd003Updates);
-    assert.deepEqual(updates[2],{id:'p-accountant',payload:{role:'ACCOUNTANT',status:'ACTIVE'}});
+    assert.deepEqual(updates[2],{id:'p-accountant',payload:{role:'ACCOUNTANT',status:'ACTIVE',access_scope:''}});
 
     assert.deepEqual(pageErrors,[]);
     assert.deepEqual(consoleErrors,[]);
