@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** OWNER-APPROVED LOGIC / STRUCTURAL AUDIT FOUND MANAGER AUTHORITY BLOCKER / IMPLEMENTATION NOT STARTED  
+**Status:** OWNER-APPROVED LOGIC / MANAGER ROLE SPLIT LOCKED / IMPLEMENTATION NOT STARTED  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -72,6 +72,22 @@ AUTHENTICATED USER
 ```
 
 Do not fix `ROLE_NOT_ALLOWED` by broadly allowing every Manager-family role. Inventory, finance and Workforce authority must remain explicit.
+
+## 0.1 Role split — Owner decision 2026-09-28
+
+Canonical role distinction:
+
+- `STORE_MANAGER` = **Quản lý cửa hàng** — in scope for Workforce, employee scheduling, attendance review and store operations.
+- `INVENTORY_MANAGER` = **Quản lý kho** — separate role, intentionally out of scope for this Workforce track and will be implemented/reconciled in a later inventory project.
+
+Do not use `INVENTORY_MANAGER` as a substitute for `STORE_MANAGER` in Workforce.  
+Do not broaden Workforce RPCs to allow `INVENTORY_MANAGER` merely to bypass `ROLE_NOT_ALLOWED`.
+
+Current production note:
+- the live account used in the observed Manager screenshot is currently assigned `INVENTORY_MANAGER`;
+- that role assignment is not the intended Workforce role;
+- role/store-scope correction to `STORE_MANAGER` must be handled explicitly before real Manager Workforce acceptance;
+- this temporary Source of Truth does **not** authorize implementing Inventory/Warehouse features.
 
 ## 1. Purpose
 
@@ -241,7 +257,7 @@ Out of scope unless explicitly added later:
 
 | ID | Work | Result | Gate |
 |---|---|---|---|
-| XSTORE-001 | Manager authority + current implementation reconciliation | Lock canonical Manager role/capability + store scope; audit profile, Availability, Manager/Owner scheduling tables/RPC/UI paths and smallest safe delta | **ROLE/SCOPE BLOCKER MUST CLOSE FIRST** |
+| XSTORE-001 | Store Manager authority + current implementation reconciliation | Enforce `STORE_MANAGER` as Workforce Manager role, reconcile store scope, and audit profile/Availability/scheduling RPC/UI paths | **ROLE/SCOPE BLOCKER MUST CLOSE FIRST** |
 | XSTORE-002 | Store Priority Profile contract | Canonical primary store + ordered allowed stores; management write / Employee read-only | Authorization + migration + regression |
 | XSTORE-003 | Availability simplification | Remove store choice from normal Employee weekly registration and preserve time-only availability | Existing Availability E2E remains green |
 | XSTORE-004 | Cross-store scheduling contract | Define shared pool, global conflict rules and one weekly scheduling truth across CN1–CN4 | No parallel schedule authority |
@@ -283,7 +299,7 @@ Already approved:
 - Manager reviews/edits and publishes.
 
 Still unresolved:
-- the canonical **Manager authority model**: which business role/capability is allowed to operate Workforce and which stores it may control;
+- Manager store-scope assignment for the canonical `STORE_MANAGER` role;
 - the canonical **Staffing Requirement** input used by Auto Schedule:
   - fixed templates by store/time block;
   - day-specific requirements;
