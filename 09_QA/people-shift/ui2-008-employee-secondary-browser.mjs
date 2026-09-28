@@ -134,7 +134,6 @@ for(const width of widths){
       await employee.locator("#quickRegDay").selectOption("2026-09-28");
       await employee.locator("#quickRegStart").selectOption("06:00");
       await employee.locator("#quickRegEnd").selectOption("12:00");
-      await employee.locator("#quickRegStore").selectOption("CN-QA-A");
       await page.evaluate(()=>{globalThis.__UI2_008_QA.state.holdAvailabilitySave=true});
       await employee.locator("#saveReg").click();
       await employee.locator('#weeklyRegistrationPanel[data-availability-state="submitting"]').waitFor();
@@ -147,7 +146,7 @@ for(const width of widths){
         policy:globalThis.MAGASIN_EMPLOYEE.availability.getPolicy(),
         rows:globalThis.MAGASIN_EMPLOYEE.availability.getRows()
       }));
-      if(evidence.save?.args?.p_work_date!=="2026-09-28"||evidence.save?.args?.p_start_time!=="06:00"||evidence.save?.args?.p_end_time!=="12:00"||evidence.save?.args?.p_preferred_store_id!=="store-a"||evidence.save?.args?.p_availability_type!=="AVAILABLE")throw new Error(JSON.stringify(evidence));
+      if(evidence.save?.args?.p_work_date!=="2026-09-28"||evidence.save?.args?.p_start_time!=="06:00"||evidence.save?.args?.p_end_time!=="12:00"||evidence.save?.args?.p_preferred_store_id!==null||evidence.save?.args?.p_availability_type!=="AVAILABLE")throw new Error(JSON.stringify(evidence));
       return JSON.stringify(evidence);
     });
 
