@@ -71,15 +71,19 @@ test("TASK-091 week helper proves Monday-Saturday open, Sunday closed, rollover 
   assert.equal(vnMidnight.next_week_start,"2026-10-05");
 });
 
-test("write guards reject Sunday, out-of-week date, malformed time and unknown store in the active engine",async()=>{
-  const engine=await read("06_EMPLOYEE/availability/engine-v1.js");
+test("write guards keep week/time safety and XSTORE availability is time-only",async()=>{
+  const [engine,shell]=await Promise.all([
+    read("06_EMPLOYEE/availability/engine-v1.js"),
+    read("06_EMPLOYEE/app/employee-v40.html")
+  ]);
   assert.match(engine,/state\.registration!=='REGISTRATION_OPEN'/);
   assert.match(engine,/Ngày đăng ký phải thuộc đúng tuần kế tiếp/);
   assert.match(engine,/TIME_RE\.test/);
   assert.match(engine,/Giờ kết thúc phải sau giờ bắt đầu/);
-  assert.match(engine,/Không tìm thấy chi nhánh đang hoạt động/);
-  assert.match(engine,/state\.stores\.filter\(s=>s&&s\.id&&s\.code/);
-  assert.doesNotMatch(engine,/STORE_CODES/);
+  assert.match(engine,/p_preferred_store_id:null/);
+  assert.doesNotMatch(engine,/quickRegStore|state\.stores|Không tìm thấy chi nhánh đang hoạt động/);
+  assert.doesNotMatch(shell,/quickRegStore|Chi nhánh mong muốn/);
+  assert.match(shell,/Chỉ đăng ký ngày và giờ có thể làm/);
 });
 
 test("save/delete are UI-bounded against duplicate in-flight mutations and reload never auto-resubmits",async()=>{
