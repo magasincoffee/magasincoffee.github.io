@@ -113,7 +113,6 @@ try {
     await employee.locator("#quickRegDay").selectOption(day);
     await employee.locator("#quickRegStart").selectOption("06:00");
     await employee.locator("#quickRegEnd").selectOption("12:00");
-    await employee.locator("#quickRegStore").selectOption("CN-QA");
 
     await employee.locator("#weeklyRegistrationPanel button", { hasText: "Đăng ký" }).click();
     await employee.locator("#quickRegMsg").filter({ hasText: "Đã đăng ký lịch làm." }).waitFor();
@@ -127,7 +126,7 @@ try {
         preferred_store_id: row.preferred_store_id
       }))
     );
-    if (saved.length !== 1 || saved[0].preferred_store_id !== "store-qa") {
+    if (saved.length !== 1 || saved[0].preferred_store_id !== null) {
       throw new Error(JSON.stringify(saved));
     }
     return JSON.stringify(saved[0]);
