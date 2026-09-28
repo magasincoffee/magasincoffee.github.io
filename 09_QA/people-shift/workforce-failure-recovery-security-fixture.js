@@ -33,6 +33,11 @@ async function serverRpc(actor,name,args={}){
      if(modes.employeeProfile==='invalid')return {data:[{...clone(profiles[0]),profile_status:'BROKEN'}],error:null};
      return {data:[clone(profiles[0])],error:null};
    }
+   if(name==='get_my_store_priority_profile_v1'){
+     if(badArgs(args))return error('RPC_SIGNATURE_DENY');
+     if(modes.employeeProfile==='error')return error('PROFILE_INACTIVE');
+     return {data:[{employee_id:'emp-a',primary_store_id:'store-a',primary_store_code:'CN1',primary_store_name:'Cửa hàng QA 1',priority_store_ids:['store-a','store-b'],priority_store_codes:['CN1','CN2'],priority_store_names:['Cửa hàng QA 1','Cửa hàng QA 2']}],error:null};
+   }
    if(name==='get_my_payroll_self_check_v1'){
      if(badArgs(args))return error('RPC_SIGNATURE_DENY');
      if(modes.employeePayroll==='error')return error('PAYROLL_SELF_PROFILE_INACTIVE');
@@ -43,21 +48,29 @@ async function serverRpc(actor,name,args={}){
    return error('UNEXPECTED_EMPLOYEE_RPC_'+name);
  }
  if(name==='get_manager_accessible_stores'){
-   return {data:actor==='OWNER'?clone(stores):[clone(stores[0])],error:null};
+   return {data:clone(stores),error:null};
+ }
+ if(name==='list_employee_store_priority_profiles_v1'){
+   if(actor==='MANAGER'&&modes.managerProfile==='error')return error('PROFILE_VIEW_FAILED');
+   let rows=clone(profiles).map((p,i)=>({...p,
+     priority_store_ids:i===0?['store-a','store-b']:['store-b','store-a'],
+     priority_store_codes:i===0?['CN1','CN2']:['CN2','CN1'],
+     priority_store_names:i===0?['Cửa hàng QA 1','Cửa hàng QA 2']:['Cửa hàng QA 2','Cửa hàng QA 1']
+   }));
+   if(actor==='MANAGER'&&modes.managerProfile==='invalid')rows=[{...rows[0],employee_id:null}];
+   return {data:rows,error:null};
  }
  if(name==='list_employee_profile_projection_v1'){
    const sid=args?.p_store_id??null;
-   if(actor==='MANAGER'&&(!sid||sid!=='store-a'))return error('STORE_NOT_ALLOWED');
    if(actor==='MANAGER'&&modes.managerProfile==='error')return error('PROFILE_VIEW_FAILED');
-   let rows=actor==='OWNER'&&!sid?clone(profiles):clone(profiles.filter(x=>x.primary_store_id===sid));
+   let rows=!sid?clone(profiles):clone(profiles.filter(x=>x.primary_store_id===sid));
    if(actor==='MANAGER'&&modes.managerProfile==='invalid')rows=[{...clone(profiles[0]),employee_id:null}];
    return {data:rows,error:null};
  }
  if(name==='list_scoped_payroll_self_check_v1'){
    const sid=args?.p_store_id??null;
-   if(actor==='MANAGER'&&(!sid||sid!=='store-a'))return error('STORE_NOT_ALLOWED');
    if(actor==='MANAGER'&&modes.managerPayroll==='error')return error('PAYROLL_VIEW_FAILED');
-   let rows=actor==='OWNER'&&!sid?clone(payroll):clone(scopedRows(payroll,sid));
+   let rows=!sid?clone(payroll):clone(scopedRows(payroll,sid));
    if(actor==='MANAGER'&&modes.managerPayroll==='invalid')rows=[{...clone(payroll[0]),state:'BROKEN'}];
    return {data:rows,error:null};
  }
