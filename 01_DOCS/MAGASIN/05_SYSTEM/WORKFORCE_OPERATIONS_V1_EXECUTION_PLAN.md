@@ -3,10 +3,10 @@
 **Plan ID:** WORKFORCE_OPERATIONS_V1  
 **Date:** 2026-09-21  
 **Architecture:** `WORKFORCE_OPERATIONS_V1_ARCHITECTURE.md`  
-**Status:** OWNER RELEASED / SCHEDULING PRODUCTION-READINESS HARD GATE ACTIVE  
+**Status:** CLOSED / TASK-090→108 DONE / SCHED-01→09 CANONICAL_CLOSED  
 **Execution policy:** reuse-first, no duplicate module, Five-Step on every task.
 
-## Owner production-readiness override — 2026-09-23
+## Owner production-readiness override — 2026-09-23 — CLOSED
 
 The Owner has activated:
 
@@ -14,31 +14,31 @@ The Owner has activated:
 
 as a **hard release gate**.
 
-Current rule:
-- scheduling across Employee / Manager / Owner must be production-ready before unrelated new Workforce work resumes;
-- execute `SCHED-01 → SCHED-09` sequentially;
-- only one SCHED task active at a time;
-- `TASK-108` is paused behind this gate;
+Closure state:
+- scheduling across Employee / Manager / Owner completed the production-readiness hard gate;
+- `SCHED-01 → SCHED-09` are DONE / CANONICAL_CLOSED;
+- `TASK-090 → TASK-108` are DONE / CLOSED;
+- TASK-108 Gate A/B/C are PASS / ACCEPTED on qualified executable SHA `8fd8a446d6722871af0be4171b5e129d2f6eea40`;
 - Workforce Robot remains DISABLED;
-- PFC remains unchanged unless separately reprioritized by Owner;
-- data must remain clean with one canonical scheduling truth, explicit old/new version lineage, no overlapping active mutation authority, and professional production-grade UI/UX.
+- closure does not authorize an automatic next Workforce task or a new Workforce generation;
+- PFC remains independently authoritative unless separately reprioritized by Owner;
+- one canonical scheduling truth, explicit old/new lineage and no overlapping active mutation authority remain permanent invariants.
 
-The already-merged Auth Password Reset hotfix is completed prerequisite context and does not supersede this scheduling gate.
-
-Canonical scheduling gate cursor:
+Canonical closure cursor:
 
 ```text
 priority_gate = WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1
-current_sched_task = SCHED-01
-next_sched_task = SCHED-02
-SCHED-01 = READY / MANUAL_WORK
-TASK-108 = PAUSED_BEHIND_SCHED_GATE
-unrelated_workforce_progression = BLOCKED_UNTIL_SCHED_GATE_CLOSED
+SCHED-01 → SCHED-09 = DONE / CANONICAL_CLOSED
+TASK-090 → TASK-108 = DONE / CLOSED
+TASK-108_GATE_A = PASS / ACCEPTED
+TASK-108_GATE_B = PASS / ACCEPTED
+TASK-108_GATE_C = PASS / ACCEPTED
 Workforce Robot = DISABLED
+automatic_next_workforce_task = NONE
 PFC = UNCHANGED
 ```
 
-This override takes precedence over older release wording in this plan until `SCHED-09` closes.
+The former hard-gate instructions are historical execution provenance and no longer represent an active blocker or cursor.
 
 ## Operating rule
 
@@ -96,7 +96,7 @@ Before coding, reconcile existing implementation and prove the smallest required
 | TASK-105 | Employee + Manager Workforce UI Consolidation | keep only canonical V1 surfaces; remove/hide duplicate/deprecated active paths |
 | TASK-106 | Workforce Cross-Flow Browser E2E Pack | full availability→publish→swap/give→attendance→payroll scenarios |
 | TASK-107 | Workforce Failure / Recovery / Security E2E | reload, retry, idempotency, permission, failure isolation, timezone/week-boundary |
-| TASK-108 | Workforce Final Regression + Post-Merge E2E Recheck | full QA, exact-main rerun, cold/reload rerun, docs/state handoff; **PAUSED until SCHED-01→09 gate closes** |
+| TASK-108 | Workforce Final Regression + Post-Merge E2E Recheck | full QA, exact-main rerun, cold/reload rerun, docs/state handoff; **DONE / CLOSED** |
 
 ## Production-readiness scheduling gate
 
@@ -176,12 +176,12 @@ Required:
 
 Current status:
 
-`OWNER RELEASED / SCHEDULING PRODUCTION-READINESS HARD GATE ACTIVE`.
+`WORKFORCE_OPERATIONS_V1 = CLOSED`.
 
-TASK-090→107 canonical work remains valid.
-
-`TASK-108` and unrelated new Workforce work are blocked until:
-
-`WORKFORCE_SCHEDULING_PRODUCTION_READINESS_V1 = CLOSED`.
-
-Current PFC cursor remains authoritative and unchanged until separate Owner reprioritization/release.
+- TASK-090→TASK-108 are DONE / CLOSED.
+- SCHED-01→SCHED-09 are DONE / CANONICAL_CLOSED.
+- TASK-108 Gate A/B/C are PASS / ACCEPTED.
+- Workforce Robot remains DISABLED.
+- No next Workforce task is implied by closure.
+- Any Workforce V2, new capability generation or autonomous Workforce execution requires a new explicit Owner release.
+- Current PFC cursor remains independently authoritative and unchanged until separate Owner reprioritization/release.
