@@ -182,7 +182,7 @@ async function onMaster(detail={}){
  state.week=week;
  state.stores=Array.isArray(detail.stores)?detail.stores.map(x=>({...x})):[];
  state.unconfiguredEmployeeCount=Number(detail.unconfiguredEmployeeCount||0);
- state.assignmentCount=null;state.shortages=[];
+ if(changed){state.assignmentCount=null;state.shortages=[];state.message='';state.messageType=''}
  render();
  if(changed||!state.requirements.length)await loadRequirements();
 }
