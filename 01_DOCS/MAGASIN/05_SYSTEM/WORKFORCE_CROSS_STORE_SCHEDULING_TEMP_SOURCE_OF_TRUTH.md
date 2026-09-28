@@ -3,11 +3,75 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** OWNER-APPROVED LOGIC / PLAN STAGED / IMPLEMENTATION NOT STARTED  
+**Status:** OWNER-APPROVED LOGIC / STRUCTURAL AUDIT FOUND MANAGER AUTHORITY BLOCKER / IMPLEMENTATION NOT STARTED  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
 > New-chat bootstrap: search for **WORKFORCE-CROSS-STORE**, read this file first, then reconcile current repository state before changing Workforce code. Do not reopen or rewrite the already-closed Workforce Operations V1 history.
+
+## 0. Structural audit — 2026-09-28
+
+A live Manager-page check exposed a production authority mismatch that must be resolved before cross-store scheduling implementation.
+
+Verified findings:
+
+1. **Manager route and backend role model disagree.**
+   - `/05_MANAGER/` currently admits any ACTIVE non-Employee account instead of enforcing one canonical Manager authority set.
+   - Workforce RPCs such as `get_manager_accessible_stores`, `get_manager_weekly_availability`, `get_manager_weekly_schedule` and generation readers accept only `OWNER` or `STORE_MANAGER`.
+   - Production currently has no ACTIVE `STORE_MANAGER`; there is an ACTIVE manager-family role that is not accepted by Workforce RPCs.
+   - Result: the page loads, but the server correctly fails closed with `ROLE_NOT_ALLOWED`.
+
+2. **Store scope is not established for the live Manager path.**
+   - `can_access_store` requires `STORE_MANAGER` plus exact store codes in `profiles.access_scope`.
+   - A Manager-facing account without that canonical scope cannot load Workforce data even if the UI route opens.
+
+3. **The Manager shell is still a prototype container with static/demo business content in source.**
+   - canonical JS replaces/hides some surfaces at runtime;
+   - however hard-coded KPI/staff/swap/attendance examples remain in `manager-shell-v1.html`;
+   - production architecture should not depend on later scripts successfully hiding prototype business data.
+
+4. **Manager modules do not share one authority/context service.**
+   - Availability, Staff, Official Schedule and other modules independently create Supabase clients and independently resolve store scope;
+   - one role/scope mismatch therefore appears in multiple screens with inconsistent UX.
+
+5. **Current employee store model is not sufficient for the approved cross-store logic.**
+   - `employee_constraints` already has one `preferred_store_id` plus `allowed_store_ids[]`, but production currently has no rows;
+   - it does not represent an ordered store ranking such as `CN3 > CN2 > CN4 > CN1`;
+   - a canonical ordered management-owned Store Priority model is still required.
+
+6. **Availability is still store-coupled.**
+   - `employee_availability.preferred_store_id` exists;
+   - the active Employee UI requires choosing a store for each registration;
+   - this contradicts the newly approved time-only Availability rule and must be migrated safely rather than merely hidden in UI.
+
+7. **Scheduling draft state is currently store-centric.**
+   - `schedule_generation_runs` is operated as one store/week generation;
+   - the cross-store target requires one Manager operating view and global conflict checks across CN1–CN4;
+   - keep `work_schedules` as final canonical schedule truth, but design a safe enterprise planning/orchestration layer rather than reactivating deprecated legacy auto-scheduling blindly.
+
+8. **Staffing requirement data already exists but is not yet trusted as the new robot authority.**
+   - production contains existing `staffing_requirement_templates` data;
+   - SCHED-02 revoked/deprecated browser mutation authority for the old demand path;
+   - XSTORE-007 must reconcile this existing data against the Owner-approved real staffing rule before Auto Schedule can use it.
+
+9. **Previous Manager readiness evidence was incomplete for real production identity.**
+   - SCHED-02 explicitly recorded that production had no ACTIVE `STORE_MANAGER`;
+   - Manager authority was proven with fixtures/security tests, not a real active Manager identity;
+   - final XSTORE acceptance must include a real production-safe Manager role/scope smoke.
+
+### Immediate architecture gate
+
+Before XSTORE profile/scheduling changes, the project must define one canonical Manager authority model:
+
+```text
+AUTHENTICATED USER
+→ role / capability
+→ allowed stores
+→ Manager Context
+→ Workforce readers/writers
+```
+
+Do not fix `ROLE_NOT_ALLOWED` by broadly allowing every Manager-family role. Inventory, finance and Workforce authority must remain explicit.
 
 ## 1. Purpose
 
@@ -177,7 +241,7 @@ Out of scope unless explicitly added later:
 
 | ID | Work | Result | Gate |
 |---|---|---|---|
-| XSTORE-001 | Current implementation reconciliation | Identify current profile, Availability, Manager/Owner scheduling tables/RPC/UI paths and smallest safe delta | No duplicate truth/writer |
+| XSTORE-001 | Manager authority + current implementation reconciliation | Lock canonical Manager role/capability + store scope; audit profile, Availability, Manager/Owner scheduling tables/RPC/UI paths and smallest safe delta | **ROLE/SCOPE BLOCKER MUST CLOSE FIRST** |
 | XSTORE-002 | Store Priority Profile contract | Canonical primary store + ordered allowed stores; management write / Employee read-only | Authorization + migration + regression |
 | XSTORE-003 | Availability simplification | Remove store choice from normal Employee weekly registration and preserve time-only availability | Existing Availability E2E remains green |
 | XSTORE-004 | Cross-store scheduling contract | Define shared pool, global conflict rules and one weekly scheduling truth across CN1–CN4 | No parallel schedule authority |
@@ -192,7 +256,7 @@ Out of scope unless explicitly added later:
 ## 5. Recommended execution order
 
 ```text
-XSTORE-001
+XSTORE-001 (Manager role/scope authority first)
 → XSTORE-002
 → XSTORE-003
 → XSTORE-004
@@ -219,14 +283,16 @@ Already approved:
 - Manager reviews/edits and publishes.
 
 Still unresolved:
+- the canonical **Manager authority model**: which business role/capability is allowed to operate Workforce and which stores it may control;
 - the canonical **Staffing Requirement** input used by Auto Schedule:
   - fixed templates by store/time block;
   - day-specific requirements;
   - role/skill-specific requirements;
   - or another Owner-defined operating rule.
 
-Until this is decided:
-- XSTORE-001→006 may be planned/reconciled;
+Until these are decided:
+- XSTORE-001 is the first execution gate and must close the Manager role/scope mismatch;
+- XSTORE-002→006 may be planned but must not bypass XSTORE-001 authority;
 - XSTORE-008 must not invent staffing demand;
 - no robot-generated schedule may claim to be operationally optimal.
 
