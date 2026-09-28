@@ -429,6 +429,24 @@
 
   const boot = async () => {
     const params = parseAuthParams();
+
+    if (params.search.get('switch') === '1') {
+      setView('login');
+      setMessage('Đang hoàn tất chuyển tài khoản…');
+      try {
+        const result = await sb.auth.signOut({ scope: 'local' });
+        if (result && result.error) throw result.error;
+        clearRecoveryMarker();
+        replaceUrl('');
+        setView('login');
+        setMessage('Đã sẵn sàng đăng nhập bằng tài khoản khác.');
+        $('username').focus();
+      } catch (_) {
+        setView('login');
+        setMessage('Chưa thể hoàn tất chuyển tài khoản. Vui lòng tải lại trang để thử lại.', 'error');
+      }
+      return;
+    }
     if (params.search.get('auth') === 'reset' || params.hash.get('type') === 'recovery') {
       await establishRecoverySession();
       return;
