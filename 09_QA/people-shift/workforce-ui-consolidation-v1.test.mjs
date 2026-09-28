@@ -40,11 +40,13 @@ test("Manager consolidation removes deprecated active surfaces and keeps safe ca
   assert.doesNotMatch(src,/manager-v13-runtime|auto_generate_schedule_generation|get_workforce_staffing_requirements/);
 });
 
-test("Manager staff surface reuses TASK-101 server projection and never reads tables directly",()=>{
+test("Manager staff surface remains RPC-only and XSTORE Store Priority is the only added profile writer",()=>{
   const src=read("05_MANAGER/Workforce/staff-projection-v1.js");
   assert.match(src,/get_manager_accessible_stores/);
-  assert.match(src,/list_employee_profile_projection_v1/);
-  assert.doesNotMatch(src,/\.from\(|insert\(|update\(|delete\(/);
+  assert.match(src,/list_employee_store_priority_profiles_v1/);
+  assert.match(src,/set_employee_store_priority_profile_v1/);
+  assert.match(src,/Ưu tiên 1 là chi nhánh chính/);
+  assert.doesNotMatch(src,/\.from\(|\.insert\(|\.update\(|\.delete\(/);
 });
 
 test("Employee canonical runtime retains TASK-099\/101\/104 engines and adds consolidation only",()=>{
