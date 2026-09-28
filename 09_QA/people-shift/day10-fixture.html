@@ -34,7 +34,6 @@
               <div class='field'><label>Ngày</label><select id='quickRegDay'></select></div>
               <div class='field'><label>Bắt đầu</label><select id='quickRegStart'></select></div>
               <div class='field'><label>Kết thúc</label><select id='quickRegEnd'></select></div>
-              <div class='field'><label>Chi nhánh</label><select id='quickRegStore'></select></div>
               <button id='saveReg' class='btn primary' onclick='quickRegister()'>Đăng ký</button>
               <div id='quickRegMsg'></div>
               <button type='button' data-availability-retry hidden>Thử lại</button>
@@ -120,7 +119,7 @@
           const end = addDays(args.p_week_start, 6);
           return {
             data: state.availability.filter(row =>
-              row.preferred_store_id === args.p_store_id &&
+              args.p_store_id === store.id &&
               row.work_date >= args.p_week_start && row.work_date <= end
             ).map(row => ({
               availability_id: row.id,
@@ -130,8 +129,8 @@
               work_date: row.work_date,
               start_time: row.start_time,
               end_time: row.end_time,
-              preferred_store_id: row.preferred_store_id,
-              preferred_store_code: store.code,
+              preferred_store_id: null,
+              preferred_store_code: null,
               availability_type: row.availability_type
             })),
             error: null
