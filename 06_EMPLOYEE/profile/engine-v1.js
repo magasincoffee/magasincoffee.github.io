@@ -1,8 +1,8 @@
 (()=>{'use strict';
 const C=globalThis.MAGASIN_CORE;if(!C)return;
 const host=()=>document.getElementById('employeeApp'),doc=()=>host()?.contentDocument||null;
-const IDS=['profileFullName','profileUsername','profilePhone','profileRole','profileStatus','profilePrimaryStore','profileLevel','profileJoinDate'];
-let state={loading:false,error:null,row:null,ready:false};
+const IDS=['profileFullName','profileUsername','profilePhone','profileRole','profileStatus','profilePrimaryStore','profileStorePriority','profileLevel','profileJoinDate'];
+let state={loading:false,error:null,row:null,storePriority:null,ready:false};
 const roleText=v=>({STAFF:'Nhân viên',EMPLOYEE:'Nhân viên'}[String(v||'').toUpperCase()]||String(v||'—'));
 const statusText=v=>({ACTIVE:'Đang hoạt động',PENDING:'Chờ duyệt',INACTIVE:'Ngưng hoạt động'}[String(v||'').toUpperCase()]||String(v||'—'));
 const safeCode=e=>{const s=String(e?.message||e?.code||'PROFILE_REQUEST_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PROFILE_REQUEST_FAILED'};
@@ -49,7 +49,9 @@ function render(){
   setValue('profilePhone',r.phone);
   setValue('profileRole',roleText(r.employee_role));
   setValue('profileStatus',statusText(r.profile_status));
-  setValue('profilePrimaryStore',r.primary_store_code?(r.primary_store_code+(r.primary_store_name?' · '+r.primary_store_name:'')):(r.primary_store_name||'Chưa có nguồn chuẩn'));
+  const sp=state.storePriority,priorityCodes=Array.isArray(sp?.priority_store_codes)?sp.priority_store_codes.filter(Boolean):[];
+  setValue('profilePrimaryStore',sp?.primary_store_code?(sp.primary_store_code+(sp.primary_store_name?' · '+sp.primary_store_name:'')):(r.primary_store_code?(r.primary_store_code+(r.primary_store_name?' · '+r.primary_store_name:'')):'Chưa được Quản lý thiết lập'));
+  setValue('profileStorePriority',priorityCodes.length?priorityCodes.join(' → '):'Chưa được Quản lý thiết lập');
   setValue('profileLevel',r.employee_level||'Chưa có nguồn chuẩn');
   setValue('profileJoinDate',r.join_date||'Chưa có nguồn chuẩn');
   updateHeader(r);setUiState('ready');
@@ -57,11 +59,15 @@ function render(){
 }
 async function refresh(){
   ensureUi();state.loading=true;state.error=null;render();
-  const q=await C.supabase.rpc('get_my_employee_profile_v1');
-  if(q.error){state.loading=false;state.row=null;state.error=safeCode(q.error);render();return}
+  const [q,spq]=await Promise.all([
+    C.supabase.rpc('get_my_employee_profile_v1'),
+    C.supabase.rpc('get_my_store_priority_profile_v1')
+  ]);
+  if(q.error){state.loading=false;state.row=null;state.storePriority=null;state.error=safeCode(q.error);render();return}
   const row=Array.isArray(q.data)?q.data[0]:q.data;
-  if(row&&!validProjectionRow(row)){state.loading=false;state.row=null;state.error='PROFILE_PROJECTION_INVALID';render();return}
-  state.loading=false;state.error=null;state.row=row||null;render();
+  if(row&&!validProjectionRow(row)){state.loading=false;state.row=null;state.storePriority=null;state.error='PROFILE_PROJECTION_INVALID';render();return}
+  const sp=spq.error?null:(Array.isArray(spq.data)?spq.data[0]:spq.data);
+  state.loading=false;state.error=null;state.row=row||null;state.storePriority=sp||null;render();
 }
 function init(){
   const h=host();if(!h)return;
