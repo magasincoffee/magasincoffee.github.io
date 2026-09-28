@@ -147,7 +147,7 @@ AUTH-PROD-004 = DONE / PR #328
 AUTH-PROD-005 = DONE / layered QA + PR #329/#330/#331/#332/#334/#335
 AUTH-PROD-006 = DONE / PR #336
 AUTH-PROD-007 = DONE / PR #337/#338
-AUTH-PROD-008 = CLOSURE
+AUTH-PROD-008 = DONE / PR #339 — CANONICAL CLOSURE
 ```
 
 All final AUTH-PROD fix/evidence PRs inspected for the cutover gate had zero unresolved review threads.
