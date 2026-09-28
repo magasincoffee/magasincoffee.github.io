@@ -95,7 +95,7 @@ async function iframeSrc(page,id="app"){
 
 for(const spec of [
   {role:"EMPLOYEE",target:"/06_EMPLOYEE/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20260926-ui2-008"},
-  {role:"MANAGER",target:"/05_MANAGER/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20260927-ui2-016"},
+  {role:"STORE_MANAGER",label:"MANAGER",target:"/05_MANAGER/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20260927-ui2-016"},
   {role:"OWNER",target:"/04_OWNER/",runtime:null}
 ]){
   const context=await newContext(spec.role);
@@ -108,7 +108,7 @@ for(const spec of [
     page.waitForURL(url=>url.pathname===spec.target,{timeout:10000}),
     page.click("#loginForm button[type=submit]")
   ]);
-  await check("ui2_017_auth_routes_"+spec.role.toLowerCase(),async()=>{
+  await check("ui2_017_auth_routes_"+String(spec.label||spec.role).toLowerCase(),async()=>{
     const detail={url:page.url()};
     if(new URL(page.url()).pathname!==spec.target)throw new Error(JSON.stringify(detail));
     if(spec.runtime){
@@ -122,12 +122,12 @@ for(const spec of [
 
 for(const spec of [
   {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20260926-ui2-008"},
-  {role:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20260927-ui2-016"}
+  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20260927-ui2-016"}
 ]){
-  const context=await newContext(spec.role,spec.role==="MANAGER"?1024:390);
+  const context=await newContext(spec.role,(spec.label||spec.role)==="MANAGER"?1024:390);
   await context.addInitScript(()=>sessionStorage.setItem("__ui2_logged","1"));
   const page=await context.newPage();
-  attachDiagnostics(page,"cold-"+spec.role);
+  attachDiagnostics(page,"cold-"+(spec.label||spec.role));
   // Query token forces a real document navigation between canonical deep links;
   // hash-only navigation would not re-bootstrap the outer entry when the bounded
   // runtime iframe is intentionally stubbed by this closure probe.
@@ -143,7 +143,7 @@ for(const spec of [
   const back=await iframeSrc(page);
   await page.reload({waitUntil:"domcontentloaded"});
   const backReload=await iframeSrc(page);
-  await check("ui2_017_"+spec.role.toLowerCase()+"_cold_reload_back_deeplink",async()=>{
+  await check("ui2_017_"+String(spec.label||spec.role).toLowerCase()+"_cold_reload_back_deeplink",async()=>{
     const expectedFirst=spec.runtime+"#"+spec.first,expectedSecond=spec.runtime+"#"+spec.second;
     const detail={cold,hardReload,second,back,backReload,url:page.url()};
     if(cold!==expectedFirst||hardReload!==expectedFirst||second!==expectedSecond||back!==expectedFirst||backReload!==expectedFirst)throw new Error(JSON.stringify(detail));
