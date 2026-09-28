@@ -128,6 +128,7 @@ await check("availability_tab_handoff_opens_same_direct_board",async()=>{
   await page.locator("#panel-review .mwr3-card").waitFor();
   const availabilityText=await page.locator("#panel-review").innerText();
   if(!availabilityText.includes("Employee sở hữu availability")||!availabilityText.includes("Nhân viên QA 1"))throw new Error(availabilityText);
+  await page.locator("#mwr3Store").selectOption("store-a");
   const beforeLists=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==="list_schedule_generations").length);
   await page.locator("#mwr3OpenSchedule").click();
   await page.waitForFunction(before=>globalThis.__MW31_QA.calls.filter(x=>x.name==="list_schedule_generations").length>before,beforeLists);
