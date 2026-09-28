@@ -42,10 +42,10 @@ const baseAttendance=()=>[
  {attendance_id:'att-4',schedule_id:'sch-4',user_id:'u-4',employee_name:'Nhân viên QA 4',store_id:'store-a',store_code:'CN-QA-A',store_name:'Cửa hàng QA A',work_date:'2026-09-26',planned_start:'10:00',planned_end:'14:00',actual_start:'10:05',actual_end:'14:00',status:'NEEDS_REVIEW',confirmed_start:null,confirmed_end:null,confirmed_minutes:null,note:'conflict'},
  {attendance_id:'att-5',schedule_id:'sch-5',user_id:'u-5',employee_name:'Nhân viên QA 5',store_id:'store-a',store_code:'CN-QA-A',store_name:'Cửa hàng QA A',work_date:'2026-09-25',planned_start:'14:00',planned_end:'18:00',actual_start:'14:00',actual_end:'18:00',status:'APPROVED',confirmed_start:'14:00',confirmed_end:'18:00',confirmed_minutes:240,note:''}
 ];
-const baseStaff=()=>({
- 'store-a':[{employee_id:'u-1',employee_role:'STAFF',full_name:'Nhân viên QA A',username:'qa-a',phone:'0900000001',employee_level:'L2',primary_store_code:'CN-QA-A',primary_store_name:'Cửa hàng QA A',profile_status:'ACTIVE',join_date:'2026-01-02'}],
- 'store-b':[{employee_id:'u-2',employee_role:'STAFF',full_name:'Nhân viên QA B',username:'qa-b',phone:'0900000002',employee_level:'L1',primary_store_code:'CN-QA-B',primary_store_name:'Cửa hàng QA B',profile_status:'ACTIVE',join_date:'2026-03-04'}]
-});
+const baseStaff=()=>[
+ {employee_id:'u-1',employee_role:'STAFF',full_name:'Nhân viên QA A',username:'qa-a',phone:'0900000001',profile_status:'ACTIVE',primary_store_id:'store-a',primary_store_code:'CN-QA-A',primary_store_name:'Cửa hàng QA A',priority_store_ids:['store-a','store-b'],priority_store_codes:['CN-QA-A','CN-QA-B'],priority_store_names:['Cửa hàng QA A','Cửa hàng QA B']},
+ {employee_id:'u-2',employee_role:'STAFF',full_name:'Nhân viên QA B',username:'qa-b',phone:'0900000002',profile_status:'ACTIVE',primary_store_id:'store-b',primary_store_code:'CN-QA-B',primary_store_name:'Cửa hàng QA B',priority_store_ids:['store-b','store-a'],priority_store_codes:['CN-QA-B','CN-QA-A'],priority_store_names:['Cửa hàng QA B','Cửa hàng QA A']}
+];
 const basePayroll=()=>({
  'store-a':[{payroll_entry_id:'pay-1',employee_id:'u-1',employee_name:'Nhân viên QA A',period_start:'2026-09-21',period_end:'2026-09-27',confirmed_work_item_count:4,confirmed_work_minutes:1320,state:'ESTIMATED',payroll_revision:'R1'}],
  'store-b':[{payroll_entry_id:'pay-2',employee_id:'u-2',employee_name:'Nhân viên QA B',period_start:'2026-09-21',period_end:'2026-09-27',confirmed_work_item_count:3,confirmed_work_minutes:960,state:'REVIEWED',payroll_revision:'R2'}]
@@ -96,7 +96,7 @@ const api={
    }
    return {data:{already_reviewed:false,status:row.status},error:null};
   }
-  if(name==='list_employee_profile_projection_v1')return {data:clone(state.staff[args.p_store_id]||[]),error:null};
+  if(name==='list_employee_store_priority_profiles_v1')return {data:clone(state.staff),error:null};
   if(name==='list_scoped_payroll_self_check_v1')return {data:clone(state.payroll[args.p_store_id]||[]),error:null};
   return err('UNEXPECTED_RPC_'+name);
  },
@@ -113,7 +113,7 @@ window.__UI2_013_QA={
  setAttendanceRows:rows=>{state.attendance=clone(rows||[])},
  conflictAttendanceOnce:()=>{state.attendanceConflictOnce=true},
  resetStaff:()=>{state.staff=baseStaff()},
- setStaffRows:(storeId,rows)=>{state.staff[storeId]=clone(rows||[])},
+ setStaffRows:rows=>{state.staff=clone(rows||[])},
  resetPayroll:()=>{state.payroll=basePayroll()},
  setPayrollRows:(storeId,rows)=>{state.payroll[storeId]=clone(rows||[])},
  clearCalls:()=>{state.calls.length=0}
