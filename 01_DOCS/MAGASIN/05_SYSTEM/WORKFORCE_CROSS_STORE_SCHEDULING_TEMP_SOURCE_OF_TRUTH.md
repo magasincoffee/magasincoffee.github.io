@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** OWNER-APPROVED LOGIC / ROLE ARCHITECTURE LOCKED / XSTORE-001 OWNER ROLE SWITCH PENDING  
+**Status:** XSTORE-001→006 IMPLEMENTED / PRODUCTION FOUNDATION ACCEPTED / XSTORE-007 WAIT_OWNER  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -94,11 +94,11 @@ Owner Access implementation:
 Do not use `INVENTORY_MANAGER` as a substitute for `STORE_MANAGER` in Workforce.  
 Do not implement Inventory/Warehouse functionality in this track.
 
-Current production handoff:
-- the observed Manager account is still assigned `INVENTORY_MANAGER`;
-- Owner must change it to `STORE_MANAGER` through Owner Access;
-- after that change, perform a live Manager smoke proving role + ALL-store scope + Workforce readers;
-- only then close XSTORE-001.
+Current production acceptance:
+- one ACTIVE `STORE_MANAGER` is present with `access_scope = ALL`;
+- the live Manager Workforce page loads real Availability data under that authority;
+- `INVENTORY_MANAGER` remains separate and is not accepted as Workforce authority;
+- XSTORE-001 is CLOSED.
 
 ## 1. Purpose
 
@@ -268,28 +268,28 @@ Out of scope unless explicitly added later:
 
 | ID | Work | Result | Gate |
 |---|---|---|---|
-| XSTORE-001 | Store Manager authority + current implementation reconciliation | `STORE_MANAGER` + `ALL` scope UI/DB contract implemented; Owner switches live account then live-smoke Workforce role/scope | **WAIT_OWNER_ROLE_SWITCH / LIVE_SMOKE** |
-| XSTORE-002 | Store Priority Profile contract | Canonical primary store + ordered allowed stores; management write / Employee read-only | Authorization + migration + regression |
-| XSTORE-003 | Availability simplification | Remove store choice from normal Employee weekly registration and preserve time-only availability | Existing Availability E2E remains green |
-| XSTORE-004 | Cross-store scheduling contract | Define shared pool, global conflict rules and one weekly scheduling truth across CN1–CN4 | No parallel schedule authority |
-| XSTORE-005 | Four-store master scheduling view | Owner/authorized Manager can see the weekly schedules of all four stores in one operating view | Desktop/mobile + role scope |
-| XSTORE-006 | Cross-store manual assignment | Management can assign eligible available staff across stores while preventing overlap/invalid assignment | Global validation E2E |
-| XSTORE-007 | Staffing Requirement rule | Define how many people/roles/time blocks each store needs | **OWNER DECISION REQUIRED before Auto Schedule** |
-| XSTORE-008 | Auto Schedule DRAFT engine | Generate a global four-store draft using hard constraints + store-priority preferences | Draft only; deterministic/explainable |
-| XSTORE-009 | Review/edit/publish integration | Manager adjusts robot draft then uses canonical Validate/Review/Publish path | Existing publish authority preserved |
-| XSTORE-010 | Full regression + production-safe acceptance | Employee/Profile/Availability + 4-store scheduling + auto-draft + reload/idempotency/security | Exact-main + E2E |
-| XSTORE-011 | Canonical reconciliation + temp cleanup | Move proven rules/evidence into permanent docs and remove this TEMP Source of Truth | TEMP file deleted only after closure |
+| XSTORE-001 | Store Manager authority + current implementation reconciliation | `STORE_MANAGER + ALL` live; Manager page loads real Workforce data | **DONE** |
+| XSTORE-002 | Store Priority Profile contract | Ordered primary/allowed stores; Manager/Owner write; Employee read-only | **DONE / FEATURE READY** |
+| XSTORE-003 | Availability simplification | Employee Availability is time-only; legacy per-registration store values cleared | **DONE** |
+| XSTORE-004 | Cross-store scheduling contract | Shared pool + global overlap/eligibility validation while preserving canonical schedule truth | **DONE** |
+| XSTORE-005 | Four-store master scheduling view | CN1–CN4 visible together in one weekly operating view | **DONE** |
+| XSTORE-006 | Cross-store manual assignment | Eligible staff can be assigned across stores; invalid/overlap cases fail closed | **DONE** |
+| XSTORE-007 | Staffing Requirement rule | Define how many people/roles/time blocks each store needs | **WAIT_OWNER / DISCUSSION** |
+| XSTORE-008 | Auto Schedule DRAFT engine | Generate a global four-store draft using hard constraints + store-priority preferences | **BLOCKED_BY_XSTORE_007** |
+| XSTORE-009 | Review/edit/publish integration | Existing canonical Validate/Review/Publish path is preserved; Robot handoff awaits XSTORE-008 | **READY_AFTER_XSTORE_008** |
+| XSTORE-010 | Full regression + production-safe acceptance | Final complete track regression including Auto Schedule | **BLOCKED_BY_XSTORE_008_009** |
+| XSTORE-011 | Canonical reconciliation + temp cleanup | Move final proven rules/evidence into permanent docs and remove this TEMP Source of Truth | **PLANNED** |
 
 ## 5. Recommended execution order
 
 ```text
-XSTORE-001 (role architecture implemented; Owner role switch + live smoke pending)
-→ XSTORE-002
-→ XSTORE-003
-→ XSTORE-004
-→ XSTORE-005
-→ XSTORE-006
-→ XSTORE-007 (Owner business-rule decision)
+XSTORE-001 DONE
+→ XSTORE-002 DONE
+→ XSTORE-003 DONE
+→ XSTORE-004 DONE
+→ XSTORE-005 DONE
+→ XSTORE-006 DONE
+→ XSTORE-007 (CURRENT OWNER business-rule decision)
 → XSTORE-008
 → XSTORE-009
 → XSTORE-010
@@ -310,18 +310,54 @@ Already approved:
 - Manager reviews/edits and publishes.
 
 Still unresolved:
-- live Owner role switch of the observed Manager account to `STORE_MANAGER` followed by role/scope smoke;
 - the canonical **Staffing Requirement** input used by Auto Schedule:
   - fixed templates by store/time block;
   - day-specific requirements;
   - role/skill-specific requirements;
   - or another Owner-defined operating rule.
 
-Until these are decided:
-- XSTORE-001 role architecture is implemented; it closes only after Owner switches the live Manager account and the role/scope smoke passes;
-- XSTORE-002→006 must not bypass that live XSTORE-001 acceptance;
+Current execution boundary:
+- XSTORE-001→006 are implemented and accepted as the production foundation;
+- production currently has 0 Store Priority rows, so management must enter the real priority order for employees; no priorities were invented during implementation;
 - XSTORE-008 must not invent staffing demand;
 - no robot-generated schedule may claim to be operationally optimal.
+
+## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
+
+Accepted executable main:
+
+`88f59398eca38605e7af599315c425dab2cba33e`
+
+Evidence:
+- People Shift Day-10 run `36455322621` = **SUCCESS**;
+- UI2 Cross Role Acceptance run `36455322637` = **SUCCESS**;
+- Pages source validation run `36455322652` = **SUCCESS**;
+- Pages build/deployment run `36455321577` = **SUCCESS**;
+- Manager Workforce canonical browser = PASS;
+- XSTORE four-store master browser = PASS;
+- TASK-107 failure/recovery/security = PASS;
+- TASK-108 cold/reload executable recheck = PASS.
+
+Production reconciliation:
+- ACTIVE `STORE_MANAGER` with `access_scope = ALL`: present;
+- Employee Availability rows: 17;
+- Availability rows retaining legacy `preferred_store_id`: 0;
+- Employee Store Priority rows: 0 — intentionally not fabricated; management input is still required;
+- draft assignments: 0;
+- official schedules: 0;
+- browser grants on `employee_store_priorities`: none;
+- XSTORE reader/writer RPCs are authenticated-executable and retain internal role/scope validation;
+- Security Advisor categories are unchanged; authenticated SECURITY DEFINER count increased from 66 to 71 because exactly five XSTORE authenticated RPCs were added.
+
+Implementation result:
+- Store Priority management surface is live;
+- Employee profile has read-only Store Priority projection;
+- Employee Availability is time-only;
+- Manager works from the shared employee pool;
+- four-store weekly master view is live;
+- manual cross-store scheduling uses global safety validation;
+- `work_schedules` remains the sole official schedule truth;
+- no Robot/Auto Schedule writer has been activated.
 
 ## 7. Definition of Done
 
