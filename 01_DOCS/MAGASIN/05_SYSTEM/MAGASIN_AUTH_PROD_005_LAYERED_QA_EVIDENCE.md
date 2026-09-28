@@ -116,6 +116,24 @@ The browser run confirmed the production Auth page is reachable but the connecte
 
 The available GitHub connector can inspect workflow results but does not expose repository secret values or provide a workflow-dispatch action in this execution context. Therefore the credentialed workflow cannot be legitimately triggered from this executor session.
 
+## 4.2 Production smoke defect — Owner logout
+
+Manual production smoke reached an ACTIVE OWNER session successfully, but the shared Owner shell `Đăng xuất` action did not clear the Supabase session.
+
+Root cause: `magasin-ui-v2-shell.js` delegated its logout button exclusively to a page-local `#logoutBtn`. Owner Overview does not provide a dependable source logout handler, so the visible shell action could become inert.
+
+Bounded correction in this PR:
+
+- keep delegation to an existing source `#logoutBtn` where one exists;
+- otherwise execute canonical `sb.auth.signOut({ scope: 'local' })`;
+- clear the stale recovery-session marker;
+- redirect to `/03_PLATFORM/01_AUTH/?switch=1` only after sign-out succeeds;
+- on sign-out failure, remain on the authenticated page and expose a retry state instead of pretending logout succeeded;
+- bump the Owner Overview shell asset token so browsers receive the corrected runtime;
+- add a Playwright regression proving the fallback performs local sign-out and clears the recovery marker.
+
+This correction changes session handling only. It does not mutate role/status, RLS, grants, profiles, Auth users, passwords, schema, functions or triggers.
+
 ## 5. Authority boundary
 
 This task execution so far:
