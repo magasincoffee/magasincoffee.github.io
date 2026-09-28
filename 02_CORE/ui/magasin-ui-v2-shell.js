@@ -340,11 +340,26 @@
     });
 
     const logout = shell.querySelector('[data-shell-logout]');
-    const sourceLogout = document.querySelector('#logoutBtn');
-    if (logout && !sourceLogout) logout.hidden = true;
-    logout?.addEventListener('click', () => {
+    logout?.addEventListener('click', async () => {
       const currentLogout = document.querySelector('#logoutBtn');
-      if (currentLogout) currentLogout.click();
+      if (currentLogout && currentLogout !== logout) {
+        currentLogout.click();
+        return;
+      }
+
+      logout.disabled = true;
+      try {
+        const sb = window.MAGASIN_CORE?.supabase?.get?.();
+        if (!sb?.auth?.signOut) throw new Error('Supabase logout unavailable.');
+        const result = await sb.auth.signOut({ scope: 'local' });
+        if (result?.error) throw result.error;
+        try { sessionStorage.removeItem('magasin.auth.recovery.session.v1'); } catch (_) {}
+        location.replace('/03_PLATFORM/01_AUTH/?switch=1');
+      } catch (error) {
+        console.error('[MAGASIN_SHELL_LOGOUT]', error);
+        logout.disabled = false;
+        logout.textContent = 'Thử lại đăng xuất';
+      }
     });
 
     document.addEventListener('keydown', event => {
