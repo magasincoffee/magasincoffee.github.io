@@ -2,10 +2,10 @@
 
 **Track:** `AUTH-PROD / MAGASIN_AUTH_PRODUCTION_READINESS_V1`  
 **Task:** `AUTH-PROD-005 — Expand real Auth workflow QA`  
-**Status:** `PARTIAL / OWNER_REQUIRED`  
-**Exact base inspected:** `main @ 43e7f678e578b4480e87bf7e1201beed161437aa`  
+**Status:** `PARTIAL / B8 OWNER_REQUIRED`  
+**Exact base inspected:** `main @ 5355f46cba37232ae351885f9ca313922ec08e6f`  
 **Production project:** `menvbzlsncmpuvnaifxa` (`MAGASIN-NOIBO`)  
-**Evidence date:** `2026-09-27`
+**Evidence date:** `2026-09-28`
 
 ## 1. Layer A — deterministic local/browser regression
 
@@ -210,3 +210,72 @@ D3                                   = NOT CLOSED
 ```
 
 AUTH-PROD-006 must not start until AUTH-PROD-005 receives the required credentialed/manual production evidence or Planner explicitly reclassifies the dependency.
+
+
+## 7. Fresh exact-main reconciliation after Owner activation correction
+
+Fresh production reconciliation on `main @ 5355f46cba37232ae351885f9ca313922ec08e6f`:
+
+```text
+auth_users           = 9
+confirmed_auth_users = 6
+profiles             = 9
+ACTIVE               = 7
+PENDING              = 2
+INACTIVE             = 0
+OWNER                = 1
+auth_without_profile = 0
+profile_without_auth = 0
+```
+
+This confirms one-to-one Auth/profile consistency remains intact after the bounded Owner role/status grant correction and subsequent manual activation activity.
+
+Exact-main workflow evidence:
+
+```text
+Validate MAGASIN GitHub Pages source = run 36370707185 = SUCCESS
+AUTH-PROD Regression Contract        = run 36370707187 = SUCCESS
+UI2 Cross Role Acceptance            = run 36370707210 = SUCCESS
+People Shift Day-10 Tests            = run 36370707170 = SUCCESS
+pages build and deployment           = run 36370706131 = SUCCESS
+```
+
+Manual production evidence now confirms:
+
+```text
+B2  ACTIVE email login          = PASS
+B3  reload/cold boot            = PASS
+B4  logout                      = PASS
+B5  ACTIVE username login       = PASS
+B6  PENDING login               = PASS
+B7  Check access                = PASS
+B9  Owner activation/save       = PASS
+B10 activated account login     = PASS
+B11 recovery                    = PASS
+```
+
+The Owner activation/save result is now supported by the production grant fix:
+`UPDATE(role,status)` is available to `authenticated`, while RLS still limits the writer to OWNER.
+
+The only unresolved Layer C item is:
+
+```text
+B8 PENDING -> Sign out / Use another account -> ACTIVE login = OWNER_REQUIRED / MANUAL RETEST
+```
+
+Secret-backed CI has no PENDING credential configured, so it cannot manufacture this PASS. The deterministic stale-session handoff regression is GREEN, but exact production B8 still needs one final manual retest.
+
+## 8. Current task decision
+
+```text
+Layer A deterministic/local          = PASS
+Layer B production read-only         = PASS
+Layer C ACTIVE credentialed smoke    = PASS
+Layer C Owner activation/save        = PASS
+Layer C recovery/manual lifecycle    = PASS
+Layer C PENDING switch production    = OWNER_REQUIRED
+AUTH-PROD-005 DoD                    = NOT CLOSED
+D3                                   = NOT CLOSED
+```
+
+Do not advance AUTH-PROD-006 until the final B8 production retest is recorded PASS or Planner explicitly reclassifies the dependency.
