@@ -115,6 +115,39 @@ Correction contract:
 
 Authority impact: session cleanup only. No role/status, Auth user, password, RLS, grant, function, trigger or schema mutation.
 
+## 4.2 Manual production matrix — same-browser switch
+
+Manual Owner smoke against exact main `58def7b6c1102dc5c89bc3849b1db50fe15cd016` reported:
+
+```text
+B2  ACTIVE email login          = PASS
+B3  reload/cold boot            = PASS
+B4  logout                      = PASS
+B5  ACTIVE username login       = PASS
+B6  PENDING login               = PASS
+B7  Check access                = PASS
+B8  PENDING -> switch -> ACTIVE = FAIL
+B9  Owner activation            = PASS
+B10 activated account login     = PASS
+B11 recovery                    = PASS
+```
+
+The evidence screenshot is intentionally not committed because it contains production identities. The result matrix alone is recorded.
+
+The B8 failure exposed a test gap: AUTH-PROD-002 proved that the PENDING page called local sign-out and returned to Auth, but did not prove that a second ACTIVE account could immediately authenticate in the same browser after a stale-session handoff.
+
+Correction contract:
+
+- Auth boot recognizes `?switch=1`;
+- performs a second canonical `signOut({ scope: 'local' })` before accepting the next account;
+- clears stale recovery markers;
+- removes the transient switch query after cleanup;
+- remains on Login and focuses the username field;
+- does not auto-route any stale PENDING session;
+- deterministic browser coverage simulates a first sign-out that reports success while deliberately leaving stale local session state, then proves the Auth handoff clears it and ACTIVE login succeeds.
+
+Authority impact: session cleanup only. No role/status, password, Auth-user, RLS, grant, function, trigger or schema mutation.
+
 ## 5. Authority boundary
 
 This task execution so far:
