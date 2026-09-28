@@ -336,6 +336,11 @@
       const password = $('regPassword').value;
       if (!full || !email || !username || password.length < 8) throw new Error('Vui lòng nhập đủ thông tin; mật khẩu tối thiểu 8 ký tự.');
       if (!/^[A-Za-z0-9._-]{3,30}$/.test(username)) throw new Error('Tên đăng nhập không hợp lệ.');
+
+      const usernameCheck = await sb.rpc('resolve_login_email', { p_username: username });
+      if (usernameCheck.error) throw new Error('Không thể kiểm tra tên đăng nhập lúc này.');
+      if (usernameCheck.data) throw new Error('Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.');
+
       const result = await sb.auth.signUp({
         email,
         password,
