@@ -11,10 +11,11 @@ test("SCHED-05 Owner runtime reuses the canonical Manager scheduling writer",asy
     read("04_OWNER/Workforce/index.html")
   ]);
   assert.match(runtime,/__MAGASIN_SCHEDULING_ACTOR__='OWNER'/);
-  assert.match(runtime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=20260924-sched05/);
+  assert.match(runtime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005)/);
   assert.doesNotMatch(runtime,/\/04_OWNER\/Workforce\/01-demand\/engine-v1\.js/);
   assert.doesNotMatch(runtime,/\/04_OWNER\/Workforce\/02-review\/engine-v1\.js/);
   assert.doesNotMatch(runtime,/\/04_OWNER\/Workforce\/03-publish\/engine-v1\.js/);
+  assert.match(runtime,/cross-store-master-v1\.js\?v=20260928-xstore005/);
   assert.match(runtime,/Lịch & can thiệp/);
   assert.match(runtime,/Enterprise oversight/);
   assert.match(index,/owner-workforce-runtime\.html\?v=20260927-ui2-016/);
@@ -23,7 +24,7 @@ test("SCHED-05 Owner runtime reuses the canonical Manager scheduling writer",asy
 test("SCHED-05 legacy Owner publish engine is compatibility-only and has zero mutation implementation",async()=>{
   const legacy=await read("04_OWNER/Workforce/03-publish/engine-v1.js");
   assert.match(legacy,/compatibility wrapper/);
-  assert.match(legacy,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=20260924-sched05/);
+  assert.match(legacy,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005)/);
   for(const forbidden of [
     "auto_generate_schedule_generation",
     "create_schedule_generation",
