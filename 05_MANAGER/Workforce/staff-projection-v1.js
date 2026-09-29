@@ -18,8 +18,8 @@ function ensureCss(){
 function ensureUi(){
  const root=view();if(!root)return false;ensureCss();
  if(root.dataset.canonicalStaffProjection==='2')return true;
- root.dataset.canonicalStaffProjection='2';
- root.innerHTML='<section class="card"><div class="msp-head"><div><h2 style="margin:0">Nhân viên</h2><div class="muted" style="margin-top:5px">Quản lý thiết lập chi nhánh chính và thứ tự ưu tiên làm việc. Nhân viên chỉ xem, không tự sửa.</div></div><div class="msp-actions"><button class="btn" id="mspRefresh">Làm mới</button></div></div><div id="mspRoot"></div></section>';
+ root.dataset.canonicalStaffProjection='3';root.classList.add('wf-role-page');
+ root.innerHTML='<section class="card"><div class="msp-head wf-section-head"><div><h2 class="wf-section-title">Nhân viên</h2><div class="wf-section-copy">Một Workforce Profile canonical dùng chung cho Quản lý, Nhân viên và bộ xếp lịch. Quản lý là bên duy nhất thiết lập Store Priority.</div></div><div class="msp-actions"><button class="btn" id="mspRefresh">Làm mới</button></div></div><div id="mspRoot"></div></section>';
  root.querySelector('#mspRefresh')?.addEventListener('click',()=>refresh());
  return true;
 }
@@ -32,11 +32,11 @@ function editHtml(row){
 function render(){
  if(!ensureUi())return;
  const root=document.getElementById('mspRoot');if(!root)return;
- if(state.loading){root.innerHTML='<div class="msp-state info">Đang tải hồ sơ nhân viên…</div>';return}
- if(state.error){root.innerHTML='<div class="msp-state error">Không thể tải hồ sơ nhân viên. Mã: '+esc(state.error)+'</div>';return}
+ if(state.loading){root.innerHTML='<div class="msp-state wf-state" data-state="LOADING">Đang tải Workforce Profile canonical…</div>';return}
+ if(state.error){root.innerHTML='<div class="msp-state wf-state" data-state="ERROR">Không thể tải Workforce Profile. Mã: '+esc(state.error)+'</div>';return}
  const edit=state.rows.find(r=>String(r.employee_id)===String(state.editId||''));
  const rows=state.rows.map(r=>{const codes=Array.isArray(r.priority_store_codes)?r.priority_store_codes.filter(Boolean):[];return '<tr><td><b>'+esc(r.full_name||r.username||'Nhân viên')+'</b><div class="muted">@'+esc(r.username||'—')+'</div></td><td>'+esc(r.phone||'—')+'</td><td>'+esc(r.profile_status||'—')+'</td><td><div class="msp-priority">'+esc(codes.length?codes.join(' → '):'Chưa thiết lập')+'</div><div class="muted">'+esc(codes.length?'Ưu tiên 1 = chi nhánh chính':'Chưa đủ điều kiện xếp lịch cross-store')+'</div></td><td><button class="btn" data-msp-edit="'+esc(r.employee_id)+'">Thiết lập</button></td></tr>'}).join('');
- root.innerHTML=(edit?editHtml(edit):'')+'<div class="msp-state info">Store Priority là authority của Quản lý. Availability hằng tuần chỉ còn ngày/giờ có thể làm.</div><div class="msp-table-wrap"><table class="msp-table"><thead><tr><th>Nhân viên</th><th>Điện thoại</th><th>Trạng thái</th><th>Ưu tiên chi nhánh</th><th>Thao tác</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+ root.innerHTML=(edit?editHtml(edit):'')+'<div class="msp-state wf-state" data-state="READY">Store Priority là authority của Quản lý. Employee và Auto Schedule đọc cùng canonical truth này.</div><div class="msp-table-wrap"><table class="msp-table"><thead><tr><th>Nhân viên</th><th>Điện thoại</th><th>Trạng thái</th><th>Ưu tiên chi nhánh</th><th>Thao tác</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
  bind();
 }
 function bind(){
