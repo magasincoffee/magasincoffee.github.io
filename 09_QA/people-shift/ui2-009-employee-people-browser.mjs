@@ -38,6 +38,22 @@ for(const width of widths){
   page.on('requestfailed',r=>report.request_failures.push(width+': '+r.method()+' '+r.url()+' '+(r.failure()?.errorText||'')));
   page.on('response',r=>{if(r.status()>=500)report.http_errors.push(width+': '+r.status()+' '+r.url())});
   await page.goto(BASE+'/09_QA/people-shift/ui2-009-employee-people-fixture.html#attendance',{waitUntil:'networkidle',timeout:20000});
+  await page.evaluate(()=>{
+    const core=globalThis.MAGASIN_CORE,orig=core?.supabase?.rpc?.bind(core.supabase);
+    if(!orig||core.supabase.__merCanonicalShim)return;
+    core.supabase.__merCanonicalShim=true;
+    core.supabase.rpc=async(name,args={})=>{
+      if(name!=='get_my_employee_workforce_profile_v1')return orig(name,args);
+      const base=await orig('get_my_employee_profile_v1',{});
+      if(base?.error)return base;
+      const priority=await orig('get_my_store_priority_profile_v1',{});
+      if(priority?.error)return priority;
+      const b=Array.isArray(base?.data)?base.data[0]:base?.data;
+      const p=Array.isArray(priority?.data)?priority.data[0]:priority?.data;
+      return {data:[{...(b||{}),...(p||{}),store_priority_updated_at:'2026-09-29T06:00:00Z'}],error:null};
+    };
+    globalThis.MAGASIN_EMPLOYEE?.profileProjection?.refresh?.();
+  });
   let f=page.frameLocator('#employeeApp');
   await f.locator('#view-attendance.active .employee-attendance-v1').waitFor({timeout:10000});
   await f.locator('#employeeAttendanceSchedule').waitFor({timeout:10000});
@@ -112,7 +128,7 @@ for(const width of widths){
   await check("ui2_009_"+width+"_rpc_only_diagnostics",async()=>{
     const s=await page.evaluate(()=>({calls:globalThis.__UI2_009_QA.calls,direct:globalThis.__UI2_009_QA.directTableCalls()}));
     if(s.direct.length)throw new Error(JSON.stringify(s.direct));
-    const allowed=new Set(['list_my_approved_schedules_v2','get_my_attendance_v2','submit_manual_time_attendance_v1','get_my_payroll_self_check_v1','get_my_employee_profile_v1','get_my_store_priority_profile_v1']);
+    const allowed=new Set(['list_my_approved_schedules_v2','get_my_attendance_v2','submit_manual_time_attendance_v1','get_my_payroll_self_check_v1','get_my_employee_workforce_profile_v1','get_my_employee_profile_v1','get_my_store_priority_profile_v1']);
     const unexpected=s.calls.filter(x=>x.kind==='rpc'&&!allowed.has(x.name));if(unexpected.length)throw new Error(JSON.stringify(unexpected));
     return '0 direct table calls; only preserved Attendance/Payroll/Profile/Store-Priority RPC inventory observed';
   });
