@@ -113,7 +113,7 @@ test("UI2-005 shell UI2-006 Today UI2-007 Schedule remain present and runtime ca
   assert.match(runtime,/schedule\/engine-v1\.js\?v=20260926-ui2-008/);
   assert.match(runtime,/availability\/engine-v1\.js\?v=(?:20260926-ui2-008|20260928-xstore003)/);
   assert.match(runtime,/swap\/engine-v1\.js\?v=20260926-ui2-008/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005)/);
 });
 
 console.log("UI2_008_EMPLOYEE_SECONDARY_CONTRACT=PASS");
