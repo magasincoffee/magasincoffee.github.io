@@ -3,7 +3,7 @@
 **Search key:** `MANAGER-EMPLOYEE-RECONCILIATION`  
 **Track ID:** `MANAGER_EMPLOYEE_SYSTEM_RECONCILIATION_V1`  
 **Created:** 2026-09-29  
-**Status:** MER-001→005 IMPLEMENTED / MER-006 CURRENT / PRODUCTION ROLLBACK SMOKE PASS / CI REQUALIFICATION  
+**Status:** MER-001→006 DONE / MER-007 CURRENT / CANONICAL RECONCILIATION  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete after the reconciled architecture is accepted, permanent docs are updated, and production cross-role smoke passes.
 
@@ -105,8 +105,8 @@ Cross-store Availability / Auto Schedule must read the same canonical Store Prio
 | MER-003 | Manager Workforce Context | Shared actor/client/store-scope context for Manager modules | DONE |
 | MER-004 | Shared cross-role UI primitives/state semantics | Manager + Employee loading/error/empty/ready become consistent | DONE |
 | MER-005 | Manager Employee profile UX | Manager can list/edit priorities reliably; Employee sees same read-only revision | DONE |
-| MER-006 | Cross-role E2E + production smoke | Manager save → Employee read → Scheduler read proves one truth | CURRENT |
-| MER-007 | Canonical reconciliation + TEMP cleanup | Update permanent docs, close track, delete this file | BLOCKED_BY_MER_006 |
+| MER-006 | Cross-role E2E + production smoke | Manager save → Employee read → Scheduler read proves one truth | DONE |
+| MER-007 | Canonical reconciliation + TEMP cleanup | Update permanent docs, close track, delete this file | CURRENT |
 
 ## 5. MER-006 acceptance evidence — 2026-09-29
 
@@ -143,7 +143,16 @@ Auto Schedule reconciliation:
 - the result explicitly requires Manager review and reports `published=false`;
 - this preserves Manager as the final scheduling decision-maker and uses the same Store Priority authority proven by Manager/Employee/Scheduler smoke.
 
-Regression acceptance is not complete until the MER browser E2E passes on the candidate PR. A dedicated `mer-006-production-acceptance.test.mjs` regression contract is added so People Shift and UI2 Cross Role CI re-run the full MER browser path before MER-006 can advance.
+Regression acceptance completed on PR #341 candidate `9ec81b84b7b7b9e52b15b23b42701fa95b09abb2`:
+
+- UI2 Cross Role Acceptance #317 — SUCCESS;
+- People Shift Day-10 Tests #1094 — SUCCESS;
+- MER canonical profile browser E2E passed in both workflows;
+- TASK-107 failure-recovery fixture was reconciled to `get_my_employee_workforce_profile_v1`, `list_employee_workforce_profiles_v1`, and shared `MAGASIN_MANAGER_WORKFORCE_CONTEXT`;
+- UI2-017 and Day-10 historical fixtures were reconciled to the current MER-005 runtime/context rather than weakening assertions;
+- final People Shift regression continued through TASK-108, Manager Workforce canonical browser, XSTORE four-store master, Day-10 browser E2E, and Control Tower.
+
+MER-006 is therefore DONE. MER-007 is the only current task.
 
 ## 6. Execution order
 
