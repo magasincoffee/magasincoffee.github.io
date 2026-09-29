@@ -23,7 +23,7 @@ try{
     const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
     const text=await page.locator("#panel-publish").innerText();
     if(st.storeId!=="store-a"||st.week!=="2026-09-28"||st.generationId!==null)throw new Error(JSON.stringify(st));
-    if(!text.includes("Availability là dữ liệu đầu vào")||!text.includes("CN-QA-A"))throw new Error(text);
+    if(!text.includes("Xếp tự động toàn hệ thống")||!text.includes("CN-QA-A"))throw new Error(text);
     return "store-a · 2026-09-28 · no draft on read";
   });
 
