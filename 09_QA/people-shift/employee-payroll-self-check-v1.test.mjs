@@ -92,13 +92,13 @@ test("TASK-104 Employee UI uses self RPC only, renders canonical states and wire
 
 test("TASK-104 Manager UI is RPC-only, read-only, store scoped and does not grant review/finalize controls",async()=>{
   const [engine,wiring]=await Promise.all([fs.readFile(managerEngineUrl,"utf8"),fs.readFile(managerWorkforceEngineUrl,"utf8")]);
-  assert.match(engine,/get_manager_accessible_stores/);
+  assert.match(engine,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
   assert.match(engine,/list_scoped_payroll_self_check_v1/);
   assert.match(engine,/p_store_id:state\.storeId/);
   assert.doesNotMatch(engine,/\.from\(['"]payroll_entries['"]\)/);
   assert.doesNotMatch(engine,/review_payroll|finalize_payroll|mark_payroll_paid|PAYROLL_AUTHORIZED/i);
   assert.match(engine,/PAYROLL_REVIEW và mọi state transition vẫn yêu cầu explicit permission riêng/);
-  assert.match(wiring,/payroll-self-check-v1\.js\?v=20260927-ui2-013/);
+  assert.match(wiring,/payroll-self-check-v1\\.js\\?v=(?:20260927-ui2-013|20260929-mer003)/);
 });
 
 test("TASK-104 canonical contract preserves exact-state display and unresolved monetary boundary",async()=>{
