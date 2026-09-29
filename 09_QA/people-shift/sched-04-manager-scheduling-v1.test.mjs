@@ -23,10 +23,11 @@ test("SCHED-04 keeps exactly one canonical Manager scheduling writer surface",as
     "get_manager_weekly_schedule"
   ]) assert.match(draft,new RegExp(rpc),rpc);
   assert.doesNotMatch(draft,/auto_generate_schedule_generation|get_workforce_staffing_requirements/);
-  assert.match(draft,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);\n  assert.doesNotMatch(draft,/client\\(\\)\\.from\\(|sb\\.from\\(|supabase[^\\n]*\\.from\\(/);
-  assert.match(engine,/draft-publish-v1\\.js\\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003)/);
+  assert.match(draft,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
+  assert.doesNotMatch(draft,/client\(\)\.from\(|sb\.from\(|supabase[^\n]*\.from\(/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003)/);
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=20260927-ui2-016/);
-  assert.match(legacy,/manager-runtime-v1\\.html\\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005)#workforce/);
+  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005)#workforce/);
   assert.doesNotMatch(legacy,/publish_schedule_generation|replace_schedule_generation_assignments|create_schedule_generation/);
 });
 
