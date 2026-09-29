@@ -96,13 +96,19 @@ const api={
    }
    return {data:{already_reviewed:false,status:row.status},error:null};
   }
-  if(name==='list_employee_store_priority_profiles_v1')return {data:clone(state.staff),error:null};
+  if(name==='list_employee_workforce_profiles_v1')return {data:clone(state.staff),error:null};
   if(name==='list_scoped_payroll_self_check_v1')return {data:clone(state.payroll[args.p_store_id]||[]),error:null};
   return err('UNEXPECTED_RPC_'+name);
  },
  from(name){state.calls.push({kind:'from',name});throw new Error('DIRECT_TABLE_FORBIDDEN:'+name)}
 };
 window.supabase={createClient(){return api}};
+ window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+  version:'QA',
+  client:()=>api,
+  stores:async()=>{const q=await api.rpc('get_manager_accessible_stores',{});if(q.error)throw q.error;return q.data||[]},
+  actor:async()=>({id:'manager-qa',role:'STORE_MANAGER',status:'ACTIVE',access_scope:'ALL'})
+ };
 window.__UI2_013_QA={
  state,stores,
  setDelay:ms=>{state.delayMs=Math.max(0,Number(ms)||0)},
