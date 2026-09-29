@@ -32,7 +32,10 @@ test("XSTORE-008 global Robot respects Store Priority and creates DRAFT only",()
 
 test("XSTORE-009 preserves Manager review/edit/publish authority",()=>{
   assert.match(ui,/XẾP LỊCH TỰ ĐỘNG 4 CỬA HÀNG/);
-  assert.match(ui,/Robot chỉ tạo DRAFT/);\n  assert.match(ui,/Quản lý hãy kiểm tra\/chỉnh sửa trước khi duyệt và phát hành/);\n  assert.match(ui,/Thiết lập ưu tiên nhân viên/);\n  assert.match(ui,/Tạo DRAFT tự động/);
+  assert.match(ui,/Robot chỉ tạo DRAFT/);
+  assert.match(ui,/Quản lý hãy kiểm tra\/chỉnh sửa trước khi duyệt và phát hành/);
+  assert.match(ui,/Thiết lập ưu tiên nhân viên/);
+  assert.match(ui,/Tạo DRAFT tự động/);
   assert.match(master,/Robot chỉ tạo bản nháp; Quản lý vẫn kiểm tra, chỉnh sửa và phát hành/);
   assert.match(engine,/cross-store-auto-schedule-v1\.js/);
   assert.doesNotMatch(ui,/publish_schedule_generation/);
