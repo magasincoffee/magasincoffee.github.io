@@ -9,10 +9,9 @@ const PAYROLL_STATES=new Set(['ESTIMATED','REVIEWED','FINALIZED','PAID']);
 const validProjectionRow=r=>!!r&&!!String(r.payroll_entry_id||'').trim()&&!!String(r.employee_id||'').trim()&&!!String(r.period_start||'').trim()&&!!String(r.period_end||'').trim()&&!!String(r.payroll_revision||'').trim()&&PAYROLL_STATES.has(String(r.state||'').toUpperCase())&&Number.isInteger(Number(r.confirmed_work_item_count))&&Number(r.confirmed_work_item_count)>=0&&Number.isInteger(Number(r.confirmed_work_minutes))&&Number(r.confirmed_work_minutes)>=0;
 const errorCode=e=>{const s=String(e?.message||e?.code||'PAYROLL_VIEW_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PAYROLL_VIEW_FAILED'};
 function client(){
- if(clientInstance)return clientInstance;
- const maker=window.supabase?.createClient;if(!maker)throw Error('PAYROLL_SUPABASE_UNAVAILABLE');
- clientInstance=maker(SB_URL,SB_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
- return clientInstance;
+ const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;
+ if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');
+ return ctx.client();
 }
 function ensureCss(){
  if(document.getElementById('manager-payroll-self-check-v1-css'))return;
@@ -56,8 +55,7 @@ function render(){
  root.innerHTML='<div class="mgr-payroll-note">Chỉ hiển thị payroll canonical trong store scope. Không hiển thị monetary amount/pay-rate/pay-rule internals.</div><div class="mgr-payroll-table-wrap"><table class="mgr-payroll-table"><thead><tr><th>Nhân viên</th><th>Kỳ</th><th>Giờ công xác nhận</th><th>Số bản ghi</th><th>Trạng thái</th><th>Revision</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 async function loadStores(){
- const q=await client().rpc('get_manager_accessible_stores');if(q.error)throw q.error;
- state.stores=(Array.isArray(q.data)?q.data:[]).filter(x=>x?.id&&String(x.status||'ACTIVE').toUpperCase()==='ACTIVE');
+ state.stores=await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores();
  if(!state.storeId||!state.stores.some(x=>String(x.id)===String(state.storeId)))state.storeId=state.stores[0]?.id||null;
 }
 async function loadRows(){
