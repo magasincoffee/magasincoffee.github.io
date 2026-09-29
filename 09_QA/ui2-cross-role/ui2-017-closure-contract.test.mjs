@@ -13,8 +13,8 @@ test("UI2-017 role routing contract remains canonical",()=>{
   assert.match(auth,/else location\.replace\('\/03_PLATFORM\/01_AUTH\/role-unavailable\.html'\)/);
   const employee=read("06_EMPLOYEE/index.html");
   const manager=read("05_MANAGER/index.html");
-  assert.match(employee,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003)/);
-  assert.match(manager,/manager-runtime-v1\.html\?v=(?:20260927-ui2-016|20260928-xstore006|20260929-xstore-livefix2)/);
+  assert.match(employee,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005)/);
+  assert.match(manager,/manager-runtime-v1\.html\?v=(?:20260927-ui2-016|20260928-xstore006|20260929-xstore-livefix2|20260929-mer005)/);
 });
 
 test("UI2-017 exact UI2-016 cache chain remains canonical",()=>{
