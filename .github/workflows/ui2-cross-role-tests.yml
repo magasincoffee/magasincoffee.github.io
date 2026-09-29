@@ -100,6 +100,12 @@ jobs:
           node 09_QA/people-shift/sched-07-ui-responsive-browser.mjs
           node 09_QA/people-shift/ui2-009-employee-people-browser.mjs
 
+      - name: Run MER canonical profile cross-role E2E
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/mer-cross-role-profile-browser.mjs
+
       - name: Run Manager responsive matrix
         env:
           QA_BASE_URL: http://127.0.0.1:8769
