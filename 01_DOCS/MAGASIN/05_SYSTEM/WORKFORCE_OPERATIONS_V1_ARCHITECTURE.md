@@ -1,7 +1,7 @@
 # MAGASIN — Workforce Operations V1 Architecture
 
 **Date:** 2026-09-21  
-**Status:** OWNER APPROVED / ARCHITECTURE LOCKED / IMPLEMENTATION NOT YET RELEASED  
+**Status:** OWNER APPROVED / CANONICAL / WORKFORCE V1 CLOSED — POST-CLOSURE RECONCILIATIONS RECORDED  
 **Purpose:** giảm tải quản lý nhân sự hằng ngày bằng một Workforce core tối giản, bám đúng cách MAGASIN vận hành thật.
 
 ## 1. North Star
@@ -378,3 +378,58 @@ Implementation plan is staged at:
 `WORKFORCE_OPERATIONS_V1_EXECUTION_PLAN.md`.
 
 This architecture lock does **not** by itself authorize Robot execution of TASK-090 onward. Existing PFC queue/cursor remains unchanged until Owner explicitly releases the Workforce plan.
+
+## 17. Post-closure reconciliation — Manager ↔ Employee canonical Workforce Profile — 2026-09-29
+
+Workforce V1 remains **CLOSED**. The later `MANAGER_EMPLOYEE_SYSTEM_RECONCILIATION_V1` track reconciled Employee Profile, Manager Workforce context and cross-store scheduling readers without reopening TASK-090→108 or SCHED-01→09.
+
+Canonical profile authority:
+
+```text
+AUTHENTICATED ACTOR
+→ Manager Workforce Context
+→ employee_workforce_profile_projection_v1
+   ├─ Manager/Owner: list_employee_workforce_profiles_v1()
+   ├─ Employee self: get_my_employee_workforce_profile_v1()
+   └─ Scheduler: get_cross_store_weekly_availability_v1(date)
+```
+
+Canonical Store Priority rules:
+
+- `public.employee_store_priorities` is the scheduling authority for ordered allowed stores.
+- Priority 1 is the employee's primary store for this Workforce scheduling model.
+- A store absent from the ordered list is `NOT_ELIGIBLE`.
+- Manager/Owner has write authority through `set_employee_store_priority_profile_v1(uuid, uuid[])`.
+- Employee has read-only visibility through the canonical self projection.
+- No active Workforce surface may derive a second primary-store/scheduling truth from legacy `employee_constraints.preferred_store_id`.
+- Backend reader failure is an error state and must never be rendered as “not configured”.
+
+Manager Workforce Context:
+
+- `05_MANAGER/Workforce/manager-context-v1.js` is the shared Manager/Owner Workforce context boundary.
+- It owns the shared authenticated Supabase client, actor validation and accessible-store scope used by Manager Workforce modules.
+- Individual Manager Workforce modules must not independently manufacture role/store authority.
+
+Cross-role consistency:
+
+```text
+Manager saves Store Priority
+→ Manager reload reads same canonical profile
+→ Employee self-profile reads same ordered priority
+→ Cross-store scheduler reads same ordered priority
+```
+
+Auto Schedule remains subordinate to the same authority:
+
+- it consumes `public.employee_store_priorities`;
+- preference ordering follows `priority ASC`;
+- it creates/reuses DRAFT scheduling state only;
+- it never reviews or publishes automatically;
+- Manager remains the final edit / Validate / Review / Publish authority;
+- `work_schedules` remains the sole official schedule truth.
+
+Acceptance and provenance are recorded permanently in:
+
+`MANAGER_EMPLOYEE_SYSTEM_RECONCILIATION_V1_ACCEPTANCE.md`
+
+This reconciliation does **not** close or supersede `WORKFORCE_CROSS_STORE_SCHEDULING_V1`. That track remains independently governed by its temporary Source of Truth until real Store Priority + Staffing Requirement configuration and live XSTORE acceptance are completed.
