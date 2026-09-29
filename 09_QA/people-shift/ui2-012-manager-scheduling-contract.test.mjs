@@ -16,7 +16,7 @@ const rpc=s=>[...s.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 const rpcSet=s=>[...new Set(rpc(s))].sort();
 
 test("UI2-012 is a Manager-only presentation layer over the existing canonical scheduling writer",()=>{
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1)/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003)/);
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=20260927-ui2-016/);
   assert.match(ui,/\.msd\[data-scheduling-actor="MANAGER"\]/);
   assert.match(ui,/dataset\.ui2ScheduleBoard='1'/);
@@ -28,9 +28,9 @@ test("UI2-012 is a Manager-only presentation layer over the existing canonical s
 });
 
 test("UI2-012 preserves the canonical Manager scheduling RPC inventory and writer boundaries",()=>{
+  assert.match(draft,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
   assert.deepEqual(rpcSet(draft),[
     "create_schedule_generation",
-    "get_manager_accessible_stores",
     "get_manager_weekly_availability",
     "get_manager_weekly_schedule",
     "get_schedule_generation_assignments",
@@ -89,8 +89,8 @@ test("UI2-012 responsive contract contains board scrolling touch targets and foc
 
 test("UI2-012 Manager asset cache chain advances while Owner runtime remains on its existing path",()=>{
   const v="20260927-ui2-012";
-  const managerV="20260929-xstore-livefix2";
-  const managerEntryV="20260929-xstore-livefix2";
+  const managerV="20260929-mer005";
+  const managerEntryV="20260929-mer005";
   assert.ok(runtime.includes("engine-v1.js?v="+managerV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
