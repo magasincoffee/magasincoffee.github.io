@@ -150,6 +150,12 @@ window.MAGASIN_CORE={
 };
 const managerApi={rpc:managerRpc,from(name){calls.push({actor:"MANAGER",kind:"from",name});throw Error("DIRECT_TABLE_FORBIDDEN_"+name)}};
 window.supabase={createClient(){return managerApi}};
+window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+ client:()=>managerApi,
+ stores:async()=>stores.map(clone),
+ actor:async()=>({id:"manager-qa",role:"STORE_MANAGER",status:"ACTIVE",access_scope:"ALL"}),
+ getSnapshot:()=>({actor:{id:"manager-qa",role:"STORE_MANAGER",status:"ACTIVE",access_scope:"ALL"},stores:stores.map(clone),ready:true})
+};
 
 const frame=document.getElementById("employeeApp");
 await new Promise(resolve=>{
