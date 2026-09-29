@@ -25,7 +25,7 @@ test("SCHED-04 keeps exactly one canonical Manager scheduling writer surface",as
   ]) assert.match(draft,new RegExp(rpc),rpc);
   assert.doesNotMatch(draft,/auto_generate_schedule_generation|get_workforce_staffing_requirements/);
   assert.doesNotMatch(draft,/client\(\)\.from\(|sb\.from\(|supabase[^\n]*\.from\(/);
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005)/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1)/);
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=20260927-ui2-016/);
   assert.match(legacy,/manager-runtime-v1\.html\?v=20260927-ui2-013#workforce/);
   assert.doesNotMatch(legacy,/publish_schedule_generation|replace_schedule_generation_assignments|create_schedule_generation/);
@@ -43,7 +43,7 @@ test("SCHED-04 active generation reload covers DRAFT REVIEWED PUBLISHED and publ
 test("SCHED-04 UX distinguishes availability draft validation review and official publish",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   for(const label of ["Availability","Bản nháp","Kiểm tra","Duyệt","Phát hành"])assert.match(draft,new RegExp(label),label);
-  assert.match(draft,/Availability là dữ liệu đầu vào; chỉ lịch đã phát hành mới là lịch làm chính thức/);
+  assert.match(draft,/Xếp tự động toàn hệ thống → Quản lý chỉnh sửa → Kiểm tra → Duyệt → Phát hành/);
   assert.match(draft,/Không hiển thị ID kỹ thuật/);
   assert.match(draft,/Mở lịch chính thức/);
   assert.doesNotMatch(draft,/Generation \$\{esc\(state\.generationId/);
