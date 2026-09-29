@@ -181,12 +181,12 @@ await check("ui2_013_employees_shared_pool_loading_error_empty_recovery",async()
  await loadingPromise;
  await page.waitForFunction(()=>document.getElementById("view-staff")?.dataset.ui2OperationsState==="READY");
  await page.evaluate(()=>globalThis.__UI2_013_QA.setDelay(0));
- await page.evaluate(()=>globalThis.__UI2_013_QA.setRpcError("list_employee_store_priority_profiles_v1","QA_PROFILE_ERROR"));
+ await page.evaluate(()=>globalThis.__UI2_013_QA.setRpcError("list_employee_workforce_profiles_v1","QA_PROFILE_ERROR"));
  await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
  await page.waitForFunction(()=>document.getElementById("view-staff")?.dataset.ui2OperationsState==="ERROR");
  const errored=await page.locator("#view-staff").innerText();
  if(errored.includes("Nhân viên QA A")||errored.includes("Nhân viên QA B"))throw new Error("stale shared-pool row after error");
- await page.evaluate(()=>{globalThis.__UI2_013_QA.setRpcError("list_employee_store_priority_profiles_v1",null);globalThis.__UI2_013_QA.setStaffRows([])});
+ await page.evaluate(()=>{globalThis.__UI2_013_QA.setRpcError("list_employee_workforce_profiles_v1",null);globalThis.__UI2_013_QA.setStaffRows([])});
  await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
  await page.waitForFunction(()=>document.getElementById("view-staff")?.dataset.ui2OperationsState==="EMPTY");
  await page.evaluate(()=>{globalThis.__UI2_013_QA.resetStaff();return globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh()});
