@@ -17,6 +17,12 @@ const payroll=[
 ];
 const error=message=>({data:null,error:{message,code:message}});
 const badArgs=args=>args&&Object.keys(args).length>0;
+const workforceProfiles=()=>clone(profiles).map((p,i)=>({...p,
+  priority_store_ids:i===0?['store-a','store-b']:['store-b','store-a'],
+  priority_store_codes:i===0?['CN1','CN2']:['CN2','CN1'],
+  priority_store_names:i===0?['Cửa hàng QA 1','Cửa hàng QA 2']:['Cửa hàng QA 2','Cửa hàng QA 1'],
+  store_priority_updated_at:'2026-09-29T00:00:00Z'
+}));
 
 function scopedRows(rows,storeId){
  return rows.filter(r=>{
@@ -27,6 +33,12 @@ function scopedRows(rows,storeId){
 async function serverRpc(actor,name,args={}){
  calls.push({actor,kind:'rpc',name,args:clone(args||{})});
  if(actor==='EMPLOYEE'){
+   if(name==='get_my_employee_workforce_profile_v1'){
+     if(badArgs(args))return error('RPC_SIGNATURE_DENY');
+     if(modes.employeeProfile==='error')return error('PROFILE_INACTIVE');
+     if(modes.employeeProfile==='invalid')return {data:[{...workforceProfiles()[0],profile_status:'BROKEN'}],error:null};
+     return {data:[workforceProfiles()[0]],error:null};
+   }
    if(name==='get_my_employee_profile_v1'){
      if(badArgs(args))return error('RPC_SIGNATURE_DENY');
      if(modes.employeeProfile==='error')return error('PROFILE_INACTIVE');
@@ -50,13 +62,15 @@ async function serverRpc(actor,name,args={}){
  if(name==='get_manager_accessible_stores'){
    return {data:clone(stores),error:null};
  }
+ if(name==='list_employee_workforce_profiles_v1'){
+   if(actor==='MANAGER'&&modes.managerProfile==='error')return error('PROFILE_VIEW_FAILED');
+   let rows=workforceProfiles();
+   if(actor==='MANAGER'&&modes.managerProfile==='invalid')rows=[{...rows[0],employee_id:null}];
+   return {data:rows,error:null};
+ }
  if(name==='list_employee_store_priority_profiles_v1'){
    if(actor==='MANAGER'&&modes.managerProfile==='error')return error('PROFILE_VIEW_FAILED');
-   let rows=clone(profiles).map((p,i)=>({...p,
-     priority_store_ids:i===0?['store-a','store-b']:['store-b','store-a'],
-     priority_store_codes:i===0?['CN1','CN2']:['CN2','CN1'],
-     priority_store_names:i===0?['Cửa hàng QA 1','Cửa hàng QA 2']:['Cửa hàng QA 2','Cửa hàng QA 1']
-   }));
+   let rows=workforceProfiles();
    if(actor==='MANAGER'&&modes.managerProfile==='invalid')rows=[{...rows[0],employee_id:null}];
    return {data:rows,error:null};
  }
@@ -89,6 +103,12 @@ window.MAGASIN_CORE={
  supabase:employeeApi
 };
 window.supabase={createClient(){return managerApi}};
+window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+ client:()=>managerApi,
+ stores:async()=>stores.map(clone),
+ actor:async()=>({id:'manager-qa',role:'STORE_MANAGER',status:'ACTIVE',access_scope:'ALL'}),
+ getSnapshot:()=>({actor:{id:'manager-qa',role:'STORE_MANAGER',status:'ACTIVE',access_scope:'ALL'},stores:stores.map(clone),ready:true})
+};
 
 const frame=document.getElementById('employeeApp');
 frame.srcdoc='<!doctype html><html lang="vi"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{font:13px system-ui;margin:0;padding:12px}.nav{display:flex;gap:6px;flex-wrap:wrap}.nav a{padding:8px 10px;border:1px solid #dbe4ef;border-radius:8px}.nav a.active{background:#e7f0ff}.page-view{display:none}.page-view.active{display:block}.panel{border:1px solid #dbe4ef;border-radius:12px;padding:12px;margin-top:10px}.profile-grid{display:grid;grid-template-columns:120px 1fr;gap:12px}.profile-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{display:grid;gap:4px}.field input{width:100%;height:34px}.section-head{display:flex;justify-content:space-between;gap:8px}.btn{min-height:36px}.muted{color:#718199}@media(max-width:600px){.profile-grid,.profile-fields{grid-template-columns:1fr}}</style></head><body><div class="header-user-text"><strong>Nhân viên</strong><span>Nhân viên</span></div><button class="header-avatar">N</button><div id="headerPageTitle">Tổng quan</div><div id="pageSub">TASK-107 QA</div><nav class="nav"><a data-view="dashboard">Dashboard</a><a class="active" data-view="profile">Cá nhân</a></nav><div class="page-wrap"><section class="page-view" id="view-dashboard">Dashboard</section><section class="page-view active" id="view-profile"><div class="profile-layout"><div class="panel profile-main"><div class="profile-grid"><div><button class="profile-avatar"><span id="profileAvatarFallback">N</span></button></div><div class="profile-fields"><div class="field"><label>Họ tên</label><input id="profileFullName" readonly></div><div class="field"><label>Tên đăng nhập</label><input id="profileUsername" readonly></div><div class="field"><label>Số điện thoại</label><input id="profilePhone" readonly></div><div class="field"><label>Vai trò</label><input id="profileRole" readonly></div><div class="field"><label>Trạng thái</label><input id="profileStatus" readonly></div><div class="field"><label>Chi nhánh chính</label><input id="profilePrimaryStore" readonly></div><div class="field"><label>Cấp độ</label><input id="profileLevel" readonly></div><div class="field"><label>Ngày vào làm</label><input id="profileJoinDate" readonly></div></div></div></div></div></section></div></body></html>';
