@@ -220,6 +220,21 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
     from(name){calls.push({kind:"from",name});throw new Error("Direct table access forbidden:"+name)}
   };
   window.__MW31_QA={calls,state,store,store2,availability,people,peopleMeta,canonicalValidation,rpc:(name,args)=>api.rpc(name,args),setPersonStatus:(id,status)=>{if(peopleMeta[id])peopleMeta[id].status=status},setPersonRole:(id,role)=>{if(peopleMeta[id])peopleMeta[id].role=role},setCompeting:(rows)=>{state.competing=Array.isArray(rows)?rows:[]},setDelay:(ms)=>{state.delayMs=Math.max(0,Number(ms)||0)},setRpcError:(name,message)=>{if(message)state.rpcErrors[name]=String(message);else delete state.rpcErrors[name]},setAccessibleStores:(ids)=>{accessibleStores.splice(0,accessibleStores.length,...(Array.isArray(ids)?ids:[]).map(id=>id==="store-c"?store2:store).filter((x,i,a)=>a.indexOf(x)===i))}};
+
+  window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+    version:"QA",
+    client:()=>api,
+    stores:async()=>{
+      const q=await api.rpc("get_manager_accessible_stores",{});
+      if(q.error)throw q.error;
+      return (q.data||[]).map(x=>({...x}));
+    },
+    actor:async()=>({id:"qa-manager",role:window.__MAGASIN_SCHEDULING_ACTOR__||"STORE_MANAGER",status:"ACTIVE",access_scope:"ALL"}),
+    refresh:async()=>({actor:{id:"qa-manager",role:window.__MAGASIN_SCHEDULING_ACTOR__||"STORE_MANAGER",status:"ACTIVE",access_scope:"ALL"},stores:(await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores())}),
+    invalidate:()=>{},
+    getSnapshot:()=>({ready:true,actor:{id:"qa-manager",role:window.__MAGASIN_SCHEDULING_ACTOR__||"STORE_MANAGER",status:"ACTIVE",access_scope:"ALL"},stores:[]})
+  };
+
   window.supabase={createClient(){return api}};
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
