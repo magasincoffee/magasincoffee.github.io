@@ -9,6 +9,7 @@ const autoDraftMigration=read("07_DATABASE/migrations/20260929063000_xstore_007_
 const browserE2E=read("09_QA/people-shift/mer-cross-role-profile-browser.mjs");
 const peopleShiftWorkflow=read(".github/workflows/people-shift-tests.yml");
 const ui2Workflow=read(".github/workflows/ui2-cross-role-tests.yml");
+const reconciliationSot=read("01_DOCS/MAGASIN/05_SYSTEM/MANAGER_EMPLOYEE_SYSTEM_RECONCILIATION_TEMP_SOURCE_OF_TRUTH.md");
 
 test("MER-006 keeps Manager Employee Scheduler on one canonical profile truth",()=>{
   assert.match(merMigration,/employee_workforce_profile_projection_v1/);
@@ -55,5 +56,19 @@ test("MER-006 browser E2E is required by both Workforce and cross-role CI",()=>{
   assert.match(
     ui2Workflow,
     /node 09_QA\/people-shift\/mer-cross-role-profile-browser\.mjs/
+  );
+});
+
+test("MER-006 advances the authoritative cursor only after accepted gates",()=>{
+  assert.match(reconciliationSot,/MER-001→006 DONE \/ MER-007 CURRENT/);
+  assert.match(reconciliationSot,/UI2 Cross Role Acceptance #317 — SUCCESS/);
+  assert.match(reconciliationSot,/People Shift Day-10 Tests #1094 — SUCCESS/);
+  assert.match(
+    reconciliationSot,
+    /MER-006 \| Cross-role E2E \+ production smoke \| Manager save → Employee read → Scheduler read proves one truth \| DONE/
+  );
+  assert.match(
+    reconciliationSot,
+    /MER-007 \| Canonical reconciliation \+ TEMP cleanup \| Update permanent docs, close track, delete this file \| CURRENT/
   );
 });
