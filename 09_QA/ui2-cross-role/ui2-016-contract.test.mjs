@@ -53,7 +53,7 @@ test("UI2-016 shell cache chain is bumped for all production consumers",()=>{
     assert.match(c,/magasin-ui-v2-shell\.css\?v=20260927-ui2-016/,p);
     assert.doesNotMatch(c,/magasin-ui-v2-shell\.css\?v=20260925-ui2-004/,p);
   }
-  assert.match(read("05_MANAGER/index.html"),/manager-runtime-v1\.html\?v=(?:20260927-ui2-016|20260928-xstore006)/);
+  assert.match(read("05_MANAGER/index.html"),/manager-runtime-v1\.html\?v=(?:20260927-ui2-016|20260928-xstore006|20260929-xstore-livefix2)/);
   assert.match(read("05_MANAGER/runtime/manager-runtime-v1.html"),/manager-shell-v1\.html\?v=20260927-ui2-016&host=manager/);
   assert.match(read("04_OWNER/Workforce/runtime/owner-workforce-runtime.html"),/manager-shell-v1\.html\?v=20260927-ui2-016&host=owner/);
   assert.match(read("05_MANAGER/runtime/manager-shell-v1.html"),/manager-ui-shell-v2\.js\?v=20260927-ui2-016/);
