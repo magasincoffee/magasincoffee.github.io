@@ -78,7 +78,7 @@ test("TASK-101 Employee UI reads profile by RPC only and runtime wires projectio
     fs.readFile(runtimeUrl,"utf8"),
     fs.readFile(appUrl,"utf8")
   ]);
-  assert.match(engine,/get_my_employee_profile_v1/);
+  assert.match(engine,/get_my_employee_workforce_profile_v1/);
   assert.doesNotMatch(engine,/\.from\(['"]profiles['"]\)/);
   assert.doesNotMatch(engine,/service_role/i);
   assert.match(runtime,/\/06_EMPLOYEE\/profile\/engine-v1\.js\?v=(?:20260923-task101|20260928-xstore002)/);
