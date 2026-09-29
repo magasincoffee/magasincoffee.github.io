@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MER Cross Role Profile QA</title>
+<style>
+body{font-family:system-ui;margin:0;padding:18px;background:#f6f8fb}
+#view-staff{margin-bottom:18px}
+#employeeApp{width:100%;height:520px;border:1px solid #d9e1ea;border-radius:12px;background:#fff}
+.card{background:#fff;border:1px solid #d9e1ea;border-radius:12px;padding:14px}
+.btn{min-height:38px;border:1px solid #ccd6e1;border-radius:8px;background:#fff;padding:0 12px}
+.btn.primary{background:#0f9eaa;color:#fff}
+.muted{color:#667085}
+</style>
+</head>
+<body>
+<section id="view-staff"></section>
+<iframe id="employeeApp" title="Employee profile"></iframe>
+<script>
+(()=>{
+ const stores=[
+  {id:'s1',code:'CN1',name:'CN1',status:'ACTIVE'},
+  {id:'s2',code:'CN2',name:'CN2',status:'ACTIVE'},
+  {id:'s3',code:'CN3',name:'CN3',status:'ACTIVE'},
+  {id:'s4',code:'CN4',name:'CN4',status:'ACTIVE'}
+ ];
+ const state={priority:[],calls:[]};
+ const row=()=>({
+   employee_id:'e1',username:'mai.chi',full_name:'MAI CHI',phone:'0900000000',
+   employee_role:'STAFF',profile_status:'ACTIVE',join_date:null,
+   primary_store_id:state.priority[0]||null,
+   primary_store_code:stores.find(s=>s.id===state.priority[0])?.code||null,
+   primary_store_name:stores.find(s=>s.id===state.priority[0])?.name||null,
+   priority_store_ids:[...state.priority],
+   priority_store_codes:state.priority.map(id=>stores.find(s=>s.id===id)?.code),
+   priority_store_names:state.priority.map(id=>stores.find(s=>s.id===id)?.name),
+   employee_level:null,pay_rule_reference:null,
+   store_priority_updated_at:state.priority.length?'2026-09-29T07:00:00Z':null
+ });
+ async function rpc(name,args={}){
+   state.calls.push({name,args:JSON.parse(JSON.stringify(args||{}))});
+   if(name==='list_employee_workforce_profiles_v1')return {data:[row()],error:null};
+   if(name==='set_employee_store_priority_profile_v1'){
+     state.priority=[...(args.p_store_ids||[])];
+     return {data:{employee_id:'e1',store_ids:[...state.priority]},error:null};
+   }
+   if(name==='get_my_employee_workforce_profile_v1')return {data:[row()],error:null};
+   if(name==='get_cross_store_weekly_availability_v1')return {data:[{
+     availability_id:'a1',work_date:'2026-10-05',start_time:'06:00',end_time:'12:00',
+     user_id:'e1',employee_name:'MAI CHI',username:'mai.chi',
+     primary_store_id:row().primary_store_id,primary_store_code:row().primary_store_code,
+     priority_store_ids:[...row().priority_store_ids],priority_store_codes:[...row().priority_store_codes],
+     availability_type:'AVAILABLE',note:null
+   }],error:null};
+   return {data:null,error:{message:'UNEXPECTED_RPC_'+name}};
+ }
+ const client={rpc};
+ window.__MER_QA={state,stores,row,rpc};
+ window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+   client:()=>client,
+   stores:async()=>stores.map(x=>({...x})),
+   getSnapshot:()=>({actor:{id:'m1',role:'STORE_MANAGER',status:'ACTIVE'},stores:stores.map(x=>({...x})),ready:true})
+ };
+ window.MAGASIN_CORE={supabase:{rpc}};
+ window.supabase={};
+ window.MAGASIN_EMPLOYEE=window.MAGASIN_EMPLOYEE||{};
+ const frame=document.getElementById('employeeApp');
+ frame.srcdoc=`<!doctype html><html><head><style>body{font-family:system-ui;margin:0;padding:16px}.profile-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:grid;gap:4px}.field input{height:38px}.employee-people-state{margin-top:12px;padding:10px;border:1px solid #ddd}.header-user-text{display:flex;gap:8px}.header-avatar{width:36px;height:36px}.profile-avatar{width:70px;height:70px}</style></head><body><div class="header-user-text"><strong>Nhân viên</strong><span>Nhân viên</span></div><button class="header-avatar">M</button><section id="view-profile"><div class="profile-main"><h2>Thông tin cá nhân</h2><button class="profile-avatar"><span id="profileAvatarFallback">M</span></button><div class="profile-fields">${['FullName','Username','Phone','Role','Status','PrimaryStore','StorePriority','Level','JoinDate'].map(k=>'<div class="field"><label>'+k+'</label><input id="profile'+k+'" readonly></div>').join('')}</div></div><div class="security-link-panel"><button>Security</button></div></section></body></html>`;
+})();
+</script>
+<script src="/05_MANAGER/Workforce/staff-projection-v1.js"></script>
+<script src="/06_EMPLOYEE/profile/engine-v1.js"></script>
+</body>
+</html>
