@@ -104,6 +104,12 @@
  };
  const managerApi={rpc:managerRpc,from(name){calls.push({actor:"MANAGER",kind:"from",name});throw new Error("DIRECT_TABLE_FORBIDDEN_"+name)}};
  window.supabase={createClient(){return managerApi}};
+ window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+  version:"QA",
+  client:()=>managerApi,
+  stores:async()=>{const q=await managerApi.rpc("get_manager_accessible_stores",{});if(q.error)throw q.error;return q.data||[]},
+  actor:async()=>({id:"manager-qa",role:"STORE_MANAGER",status:"ACTIVE",access_scope:"ALL"})
+ };
  window.__ATT100_QA={
   calls,notifications,schedules,attendance,
   employeeRpc,managerRpc,
