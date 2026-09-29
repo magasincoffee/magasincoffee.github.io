@@ -9,7 +9,7 @@ const hm=v=>String(v||'').slice(0,5);
 const toDate=s=>new Date(String(s).slice(0,10)+'T00:00:00Z');
 const add=(s,n)=>{const d=toDate(s);d.setUTCDate(d.getUTCDate()+Number(n||0));return d.toISOString().slice(0,10)};
 let sb=null,pending=false,queued=false;
-const client=()=>sb||(sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}));
+const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const scheduleApi=()=>window.MAGASIN_MANAGER_SCHEDULE_DRAFT;
 const mount=()=>document.getElementById('xstoreMasterMount');
 function ensureCss(){
