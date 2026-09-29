@@ -185,3 +185,16 @@ Current status:
 - No next Workforce task is implied by closure.
 - Any Workforce V2, new capability generation or autonomous Workforce execution requires a new explicit Owner release.
 - Current PFC cursor remains independently authoritative and unchanged until separate Owner reprioritization/release.
+
+## Post-closure canonical reconciliation — 2026-09-29
+
+`MANAGER_EMPLOYEE_SYSTEM_RECONCILIATION_V1` completed after this execution plan had already closed.
+
+It is recorded as a post-closure reconciliation, not a reopened Workforce task generation:
+- one canonical Employee Workforce Profile projection is shared by Manager/Owner, Employee self and scheduler readers;
+- Store Priority is Manager/Owner-write and Employee-read-only;
+- Manager Workforce modules use shared `manager-context-v1.js` for actor/client/store scope;
+- cross-role browser and production-safe rollback smoke acceptance passed;
+- permanent evidence: `MANAGER_EMPLOYEE_SYSTEM_RECONCILIATION_V1_ACCEPTANCE.md`.
+
+This addendum does not create a next Workforce task. `WORKFORCE_OPERATIONS_V1` remains CLOSED and the independent `WORKFORCE_CROSS_STORE_SCHEDULING_V1` XSTORE-011 live-configuration gate remains separately authoritative.
