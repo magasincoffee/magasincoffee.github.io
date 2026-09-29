@@ -173,6 +173,21 @@
     setPersonStatus:(id,status)=>{if(peopleMeta[id])peopleMeta[id].status=status},
     activatePerson:id=>{if(peopleMeta[id])peopleMeta[id].status="ACTIVE"}
   };
+
+  window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+    version:"QA",
+    client:()=>api,
+    stores:async()=>{
+      const q=await api.rpc("get_manager_accessible_stores",{});
+      if(q.error)throw q.error;
+      return (q.data||[]).map(x=>({...x}));
+    },
+    actor:async()=>({id:"qa-manager",role:window.__MAGASIN_SCHEDULING_ACTOR__||"STORE_MANAGER",status:"ACTIVE",access_scope:"ALL"}),
+    refresh:async()=>({actor:{id:"qa-manager",role:window.__MAGASIN_SCHEDULING_ACTOR__||"STORE_MANAGER",status:"ACTIVE",access_scope:"ALL"},stores:(await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores())}),
+    invalidate:()=>{},
+    getSnapshot:()=>({ready:true,actor:{id:"qa-manager",role:window.__MAGASIN_SCHEDULING_ACTOR__||"STORE_MANAGER",status:"ACTIVE",access_scope:"ALL"},stores:[]})
+  };
+
   window.supabase={createClient(){return api}};
   document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{
     document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
