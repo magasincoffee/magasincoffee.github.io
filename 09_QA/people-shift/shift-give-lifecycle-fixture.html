@@ -248,6 +248,12 @@
   supabase:{getProfile:async()=>({...profiles[currentUser]}),rpc:employeeRpc}
  };
  window.supabase={createClient:()=>({rpc:managerRpc})};
+ window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+  version:"QA",
+  client:()=>({rpc:managerRpc}),
+  actor:async()=>({id:"manager-qa",role:"STORE_MANAGER",status:"ACTIVE",access_scope:"ALL"}),
+  stores:async()=>[]
+ };
 
  const f=document.getElementById("employeeApp");
  f.srcdoc=`<!doctype html><html lang="vi"><body>
