@@ -88,7 +88,7 @@ test("TASK-100 confirmed notification is idempotent by stable event key",async()
 
 test("TASK-100 Manager UI sends intent by RPC only and exposes approve adjust reject controls",async()=>{
   const [ui,engine]=await Promise.all([fs.readFile(uiUrl,"utf8"),fs.readFile(engineUrl,"utf8")]);
-  assert.match(ui,/get_manager_accessible_stores/);
+  assert.match(ui,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
   assert.match(ui,/list_manager_attendance_review_v1/);
   assert.match(ui,/review_attendance_v1/);
   assert.match(ui,/data-review="APPROVE"/);
