@@ -23,7 +23,7 @@ test("Canonical Workforce shell opens scheduling, keeps Demand hidden, and label
 test("Manager availability is read-only scheduling input and defaults to next week",async()=>{
   const review=await read("05_MANAGER/Workforce/review-v1.js");
   assert.match(review,/get_manager_weekly_availability/);
-  assert.match(review,/get_manager_accessible_stores/);
+  assert.match(review,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
   assert.match(review,/Asia\/Ho_Chi_Minh/);
   assert.match(review,/targetWeek=\(\)=>add\(monday\(todayVN\(\)\),7\)/);
   assert.match(review,/magasin:manager-schedule-open/);
@@ -37,7 +37,6 @@ test("Manager availability is read-only scheduling input and defaults to next we
 test("Manager direct draft creation uses existing permissioned generation primitives without demand or Robot prerequisite",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   for(const rpc of [
-    "get_manager_accessible_stores",
     "get_manager_weekly_availability",
     "list_schedule_generations",
     "create_schedule_generation",
@@ -119,7 +118,7 @@ test("Legacy demand stays isolated from canonical direct scheduling path",async(
   assert.match(demand,/OWNER_ONLY/);
   assert.doesNotMatch(demand,/replace_schedule_generation_assignments/);
   assert.equal(engine.includes("demand-v1.js"),false,"legacy demand must not load in canonical Manager flow");
-  for(const file of ["review-v1.js","draft-publish-v1.js","official-v1.js"])assert.equal(engine.includes(file),true,file);
+  for(const file of ["manager-context-v1.js","review-v1.js","draft-publish-v1.js","official-v1.js"])assert.equal(engine.includes(file),true,file);
 });
 
 test("Official schedule remains server-read only",async()=>{
@@ -157,7 +156,7 @@ test("SCHED-04 Manager UI hides technical generation identity and raw backend di
 
 test("SCHED-04 legacy Lich-lam route wraps canonical Workforce surface only",async()=>{
   const legacy=await read("05_MANAGER/Lich-lam/index.html");
-  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2)#workforce/);
+  assert.match(legacy,/manager-runtime-v1\\.html\\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005)#workforce/);
   assert.doesNotMatch(legacy,/manager-v13-runtime/);
   assert.doesNotMatch(legacy,/draft-publish-v1\.js/);
 });
