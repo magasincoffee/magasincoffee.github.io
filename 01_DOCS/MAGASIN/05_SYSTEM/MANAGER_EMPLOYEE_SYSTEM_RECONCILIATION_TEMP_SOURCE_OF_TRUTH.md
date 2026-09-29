@@ -3,7 +3,7 @@
 **Search key:** `MANAGER-EMPLOYEE-RECONCILIATION`  
 **Track ID:** `MANAGER_EMPLOYEE_SYSTEM_RECONCILIATION_V1`  
 **Created:** 2026-09-29  
-**Status:** OWNER-APPROVED / IMPLEMENTATION IN PROGRESS  
+**Status:** MER-001→005 IMPLEMENTED / MER-006 CURRENT / REGRESSION ACCEPTANCE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete after the reconciled architecture is accepted, permanent docs are updated, and production cross-role smoke passes.
 
@@ -100,13 +100,13 @@ Cross-store Availability / Auto Schedule must read the same canonical Store Prio
 
 | ID | Work | Result | Status |
 |---|---|---|---|
-| MER-001 | Canonical Employee Workforce Profile SQL contract | One projection; remove UUID aggregate bug and duplicated profile truth | CURRENT |
-| MER-002 | Rewire Store Priority Manager/Employee/Scheduler readers | All three surfaces use canonical profile truth | PLANNED |
-| MER-003 | Manager Workforce Context | Shared actor/client/store-scope context for Manager modules | PLANNED |
-| MER-004 | Shared cross-role UI primitives/state semantics | Manager + Employee loading/error/empty/ready become consistent | PLANNED |
-| MER-005 | Manager Employee profile UX | Manager can list/edit priorities reliably; Employee sees same read-only revision | PLANNED |
-| MER-006 | Cross-role E2E + production smoke | Manager save → Employee read → Scheduler read proves one truth | PLANNED |
-| MER-007 | Canonical reconciliation + TEMP cleanup | Update permanent docs, close track, delete this file | PLANNED |
+| MER-001 | Canonical Employee Workforce Profile SQL contract | One projection; remove UUID aggregate bug and duplicated profile truth | DONE |
+| MER-002 | Rewire Store Priority Manager/Employee/Scheduler readers | All three surfaces use canonical profile truth | DONE |
+| MER-003 | Manager Workforce Context | Shared actor/client/store-scope context for Manager modules | DONE |
+| MER-004 | Shared cross-role UI primitives/state semantics | Manager + Employee loading/error/empty/ready become consistent | DONE |
+| MER-005 | Manager Employee profile UX | Manager can list/edit priorities reliably; Employee sees same read-only revision | DONE |
+| MER-006 | Cross-role E2E + production smoke | Manager save → Employee read → Scheduler read proves one truth | CURRENT |
+| MER-007 | Canonical reconciliation + TEMP cleanup | Update permanent docs, close track, delete this file | BLOCKED_BY_MER_006 |
 
 ## 5. Execution order
 
