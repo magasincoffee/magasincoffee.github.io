@@ -7,7 +7,7 @@ let state={stores:[],rows:[],editId:null,loading:false,error:null};
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const errorCode=e=>{const s=String(e?.message||e?.code||'PROFILE_VIEW_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PROFILE_VIEW_FAILED'};
 const validProjectionRow=r=>!!r&&!!String(r.employee_id||'').trim()&&['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())&&!!String(r.profile_status||'').trim()&&Array.isArray(r.priority_store_ids)&&Array.isArray(r.priority_store_codes);
-const client=()=>sb||(sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}}));
+const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const view=()=>document.getElementById('view-staff');
 function ensureCss(){
  if(document.getElementById('manager-staff-projection-v1-css'))return;
@@ -46,12 +46,11 @@ function bind(){
  root.querySelector('[data-msp-save]')?.addEventListener('click',savePriority);
 }
 async function loadStores(){
- const q=await client().rpc('get_manager_accessible_stores');if(q.error)throw q.error;
- state.stores=(Array.isArray(q.data)?q.data:[]).filter(x=>x?.id&&String(x.status||'ACTIVE').toUpperCase()==='ACTIVE');
+ state.stores=await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores();
 }
 async function loadRows(){
  state.loading=true;state.error=null;render();
- const q=await client().rpc('list_employee_store_priority_profiles_v1');
+ const q=await client().rpc('list_employee_workforce_profiles_v1');
  state.loading=false;
  if(q.error){state.rows=[];state.error=errorCode(q.error);render();return}
  const rows=Array.isArray(q.data)?q.data:[];
