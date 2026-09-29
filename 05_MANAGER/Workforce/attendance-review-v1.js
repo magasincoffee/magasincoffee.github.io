@@ -40,7 +40,7 @@ const css=`<style id="manager-attendance-review-v1-css">
 let sb=null,busy=false;
 let state={stores:[],storeId:null,week:weekStart(),rows:[],loading:false,error:null,message:''};
 const view=()=>document.querySelector('#view-attendance');
-const client=()=>sb||(sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}));
+const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const reviewed=r=>['APPROVED','ADJUSTED','REJECTED'].includes(String(r.status||'').toUpperCase());
 const pending=r=>['NORMAL','NEEDS_REVIEW'].includes(String(r.status||'').toUpperCase());
 
@@ -63,8 +63,7 @@ function render(){
  root.querySelectorAll('[data-review]').forEach(b=>b.addEventListener('click',()=>act(b.closest('[data-attendance-id]'),b.dataset.review)));
 }
 async function loadStores(){
- const q=await client().rpc('get_manager_accessible_stores');if(q.error)throw q.error;
- state.stores=(Array.isArray(q.data)?q.data:[]).filter(s=>s?.id&&String(s.status||'ACTIVE').toUpperCase()==='ACTIVE');
+ state.stores=await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores();
  if(!state.storeId||!state.stores.some(s=>String(s.id)===String(state.storeId)))state.storeId=state.stores[0]?.id||null;
 }
 async function loadRows(message=''){
@@ -100,7 +99,7 @@ async function act(card,decision){
 }
 function capture(e){if(e.target.closest?.('[data-view="attendance"]'))setTimeout(()=>refresh(),0)}
 document.addEventListener('click',capture,true);
-async function boot(){if(!view()||!window.supabase?.createClient)return;await refresh()}
+async function boot(){if(!view()||!window.MAGASIN_MANAGER_WORKFORCE_CONTEXT?.client)return;await refresh()}
 window.MAGASIN_MANAGER_ATTENDANCE_REVIEW={refresh,getState:()=>({storeId:state.storeId,week:state.week,rows:state.rows.map(x=>({...x})),loading:state.loading,error:state.error,busy})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
