@@ -288,6 +288,12 @@
   };
 
   window.supabase = { createClient() { return window.MAGASIN_CORE.supabase; } };
+  window.MAGASIN_MANAGER_WORKFORCE_CONTEXT = {
+    client() { return window.MAGASIN_CORE.supabase; },
+    async stores() { return [{ ...store, status:'ACTIVE' }]; },
+    async actor() { return { id:'owner-qa', role:'OWNER', status:'ACTIVE', access_scope:'ALL' }; },
+    getSnapshot() { return { actor:{ id:'owner-qa', role:'OWNER', status:'ACTIVE', access_scope:'ALL' }, stores:[{ ...store, status:'ACTIVE' }], ready:true }; }
+  };
 
   window.MAGASIN_EMPLOYEE = {
     profile: employee,
