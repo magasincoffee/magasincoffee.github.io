@@ -13,16 +13,14 @@ const kind=v=>mins(v)<720?'m':mins(v)<1020?'a':'e';
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 let sb=null,state={week:monday(new Date()),storeId:null,stores:[],rows:[],loading:false,lastError:null};
 const view=()=>document.querySelector('#view-schedule');
-const client=()=>{if(sb)return sb;if(!window.supabase?.createClient)throw Error('SUPABASE_CLIENT_NOT_READY');sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});return sb};
+const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const css=`<style id="manager-official-schedule-css">
 .mos-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;flex-wrap:wrap}.mos-title h2{margin:0}.mos-controls{display:flex;gap:7px;align-items:end;flex-wrap:wrap}.mos-field{display:grid;gap:4px;font-size:10px;font-weight:800;color:var(--muted)}.mos-field select{min-width:230px;height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:0 10px}.mos-meta{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}.mos-board{display:grid;grid-template-columns:repeat(7,minmax(190px,1fr));gap:10px;overflow:auto;margin-top:14px}.mos-day{border:1px solid var(--border);border-radius:14px;background:#fff;min-height:220px;overflow:hidden}.mos-day-head{padding:11px;background:#f8fafd;border-bottom:1px solid #eef2f6}.mos-day-head strong{display:block}.mos-day-head span{display:block;color:var(--muted);font-size:11px;margin-top:2px}.mos-shift{margin:9px;padding:10px;border:1px solid;border-radius:10px}.mos-shift.m{background:#fff9d8;border-color:#f0e6a3;color:#725f00}.mos-shift.a{background:#fbe4e4;border-color:#edbaba;color:#9a3838}.mos-shift.e{background:#ddf8f8;border-color:#a3dfdf;color:#08777a}.mos-shift b{display:block}.mos-shift small{display:block;margin-top:4px}.mos-empty{padding:34px 12px;text-align:center;color:var(--muted);font-size:12px}.mos-error{margin-top:14px;padding:12px;border-radius:11px;background:#fbeaea;color:#9a3838}.mos-note{margin-top:12px;padding:10px 12px;border:1px solid var(--border);border-radius:11px;background:#f8fafd;color:var(--muted);font-size:12px}@media(max-width:800px){.mos-controls{width:100%}.mos-field{width:100%}.mos-field select{min-width:0;width:100%}.mos-board{grid-template-columns:repeat(7,minmax(235px,1fr))}}
 </style>`;
 function ensureCss(){if(!document.getElementById('manager-official-schedule-css'))document.head.insertAdjacentHTML('beforeend',css)}
 async function loadStores(){
  if(state.stores.length)return;
- const q=await client().rpc('get_manager_accessible_stores');
- if(q.error)throw q.error;
- state.stores=Array.isArray(q.data)?q.data:[];
+ state.stores=await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores();
  if(state.storeId && !state.stores.some(s=>String(s.id)===String(state.storeId)))state.storeId=null;
 }
 async function loadRows(){
