@@ -3,7 +3,7 @@
 **Search key:** `MANAGER-EMPLOYEE-RECONCILIATION`  
 **Track ID:** `MANAGER_EMPLOYEE_SYSTEM_RECONCILIATION_V1`  
 **Created:** 2026-09-29  
-**Status:** MER-001→005 IMPLEMENTED / MER-006 CURRENT / REGRESSION ACCEPTANCE  
+**Status:** MER-001→005 IMPLEMENTED / MER-006 CURRENT / PRODUCTION ROLLBACK SMOKE PASS / CI REQUALIFICATION  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete after the reconciled architecture is accepted, permanent docs are updated, and production cross-role smoke passes.
 
@@ -108,7 +108,44 @@ Cross-store Availability / Auto Schedule must read the same canonical Store Prio
 | MER-006 | Cross-role E2E + production smoke | Manager save → Employee read → Scheduler read proves one truth | CURRENT |
 | MER-007 | Canonical reconciliation + TEMP cleanup | Update permanent docs, close track, delete this file | BLOCKED_BY_MER_006 |
 
-## 5. Execution order
+## 5. MER-006 acceptance evidence — 2026-09-29
+
+Candidate production reconciliation was performed against `main @ 44fb85af5ae8fc9d83c199b0ecce305af03cfc20`.
+
+Production role/read evidence:
+
+- production Supabase contains one `ACTIVE STORE_MANAGER` and four `ACTIVE STAFF` profiles;
+- under a real active STORE_MANAGER auth context, `list_employee_workforce_profiles_v1()` returned the employee pool without the historical UUID aggregate failure;
+- under a real active STAFF auth context, `get_my_employee_workforce_profile_v1()` returned an `ACTIVE STAFF` canonical profile;
+- production currently has no persisted Store Priority configuration for the Manager-visible employee pool, so MER-006 qualification MUST NOT manufacture a persistent production state.
+
+Bounded transactional cross-role smoke:
+
+1. begin a database transaction;
+2. use the real active STORE_MANAGER auth context;
+3. call `set_employee_store_priority_profile_v1()` for a real active STAFF who has availability in week `2026-10-05`;
+4. assign temporary Store Priority `CN3 → CN2 → CN4 → CN1`;
+5. Manager `list_employee_workforce_profiles_v1()` returned the same Primary Store + ordered priority;
+6. switch to the real STAFF auth context in the same transaction;
+7. Employee `get_my_employee_workforce_profile_v1()` returned the same Primary Store + ordered priority;
+8. switch back to STORE_MANAGER;
+9. `get_cross_store_weekly_availability_v1('2026-10-05')` returned the same priority truth for that employee, with seven availability rows in the week;
+10. `ROLLBACK` the transaction;
+11. post-rollback verification confirmed zero persisted Store Priority rows for the qualification employee.
+
+Therefore the production smoke exercised the real canonical writer/readers while leaving production data unchanged.
+
+Auto Schedule reconciliation:
+
+- production `auto_generate_cross_store_schedule_v1()` consumes `public.employee_store_priorities` directly;
+- candidate selection is ordered by `esp.priority ASC`;
+- generated rows remain `DRAFT`;
+- the result explicitly requires Manager review and reports `published=false`;
+- this preserves Manager as the final scheduling decision-maker and uses the same Store Priority authority proven by Manager/Employee/Scheduler smoke.
+
+Regression acceptance is not complete until the MER browser E2E passes on the candidate PR. A dedicated `mer-006-production-acceptance.test.mjs` regression contract is added so People Shift and UI2 Cross Role CI re-run the full MER browser path before MER-006 can advance.
+
+## 6. Execution order
 
 ```text
 MER-001
@@ -122,7 +159,7 @@ MER-001
 
 Do not bypass MER-001 with frontend-only workarounds.
 
-## 6. Safety / non-goals
+## 7. Safety / non-goals
 
 - Do not fabricate employee Store Priority.
 - Do not modify Inventory/Warehouse scope.
@@ -132,7 +169,7 @@ Do not bypass MER-001 with frontend-only workarounds.
 - Preserve `work_schedules` as official schedule truth.
 - Preserve Manager as final scheduling decision-maker.
 
-## 7. Definition of Done
+## 8. Definition of Done
 
 This track closes only when:
 
