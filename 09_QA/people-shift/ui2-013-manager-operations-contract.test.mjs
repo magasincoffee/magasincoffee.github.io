@@ -40,7 +40,7 @@ test("UI2-013 Swap Give preserves peer/recipient gates and existing approve reje
 });
 
 test("UI2-013 Attendance keeps canonical reader review state machine and explicit APPROVE ADJUST REJECT controls",()=>{
- assert.deepEqual(set(attendance),["get_manager_accessible_stores","list_manager_attendance_review_v1","review_attendance_v1"].sort());
+ assert.deepEqual(set(attendance),["list_manager_attendance_review_v1","review_attendance_v1"].sort());
  for(const decision of ["APPROVE","ADJUST","REJECT"])assert.match(attendance,new RegExp('data-review="'+decision+'"'));
  assert.match(attendance,/\['NORMAL','NEEDS_REVIEW'\]/);
  assert.match(attendance,/p_confirmed_start:null,p_confirmed_end:null/);
@@ -50,14 +50,14 @@ test("UI2-013 Attendance keeps canonical reader review state machine and explici
 });
 
 test("UI2-013 Employees remains RPC-only while XSTORE adds bounded management-owned Store Priority writer",()=>{
- assert.deepEqual(set(staff),["get_manager_accessible_stores","list_employee_store_priority_profiles_v1","set_employee_store_priority_profile_v1"].sort());
+ assert.deepEqual(set(staff),["list_employee_workforce_profiles_v1","set_employee_store_priority_profile_v1"].sort());
  for(const field of ["full_name","username","phone","profile_status","priority_store_codes"])assert.ok(staff.includes(field),field);
  assert.match(staff,/Ưu tiên 1 là chi nhánh chính/);
  assert.doesNotMatch(staff,/\.from\s*\(|\.insert\s*\(|\.update\s*\(|\.delete\s*\(|save_employee|update_employee/i);
 });
 
 test("UI2-013 Payroll remains read-only scoped projection without monetary or transition authority",()=>{
- assert.deepEqual(set(payroll),["get_manager_accessible_stores","list_scoped_payroll_self_check_v1"].sort());
+ assert.deepEqual(set(payroll),["list_scoped_payroll_self_check_v1"].sort());
  assert.match(payroll,/loading:state\.loading/);
  assert.match(payroll,/confirmed_work_minutes/);
  assert.match(payroll,/confirmed_work_item_count/);
@@ -88,9 +88,9 @@ test("UI2-013 preserves Today getState compatibility and does not redesign sched
 
 test("UI2-013 complete Manager cache chain loads changed assets while Owner path stays untouched",()=>{
  const v="20260927-ui2-013";
- const entryV="20260929-xstore-livefix2";
+ const entryV="20260929-mer005";
  assert.match(engine,new RegExp("swap-approval-v1\\.js\\?v="+v));
- assert.match(engine,new RegExp("payroll-self-check-v1\\.js\\?v="+v));
+ assert.match(engine,/payroll-self-check-v1\.js\?v=20260929-mer003/);
  assert.match(engine,/manager-operations-ui2-v1\.js\?v=20260927-ui2-016/);
  assert.ok(runtime.includes("engine-v1.js?v="+entryV));
  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+entryV));
