@@ -42,6 +42,12 @@
   from(name){calls.push({actor:'MANAGER',kind:'from',name});throw Error('DIRECT_TABLE_FORBIDDEN_'+name)}
  };
  window.supabase={createClient(){return managerApi}};
+ window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+  client:()=>managerApi,
+  stores:async()=>structuredClone(stores),
+  actor:async()=>({id:'manager-qa',role:'STORE_MANAGER',status:'ACTIVE',access_scope:'ALL'}),
+  getSnapshot:()=>({actor:{id:'manager-qa',role:'STORE_MANAGER',status:'ACTIVE',access_scope:'ALL'},stores:structuredClone(stores),ready:true})
+ };
  const frame=document.getElementById('employeeApp');
  frame.srcdoc='<!doctype html><html lang="vi"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{font:13px system-ui;margin:0;padding:12px}.nav{display:flex;gap:6px;flex-wrap:wrap}.nav a{padding:8px 10px;border:1px solid #dbe4ef;border-radius:8px}.nav a.active{background:#e7f0ff}.page-view{display:none}.page-view.active{display:block}.panel{border:1px solid #dbe4ef;border-radius:12px;padding:12px;margin-top:10px}.section-head{display:flex;justify-content:space-between;gap:8px}.btn{min-height:36px}.muted{color:#718199}.page-wrap{width:100%}</style></head><body><div id="headerPageTitle">Tổng quan</div><div id="pageSub">QA</div><nav class="nav"><a class="active" data-view="dashboard">Dashboard</a><a data-view="profile">Profile</a></nav><div class="page-wrap"><section class="page-view active" id="view-dashboard">Dashboard</section><section class="page-view" id="view-profile">Profile</section></div></body></html>';
 })();
