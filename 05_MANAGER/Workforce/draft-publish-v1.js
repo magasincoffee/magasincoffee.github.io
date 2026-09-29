@@ -24,7 +24,7 @@ const css=`<style id="manager-schedule-draft-editor-css">
 
 let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignments:[],availability:[],officialRows:[],generationStatus:'NONE',generationOrigin:null,duplicateDrafts:0,lastValidation:null,busy:false};
 const panel=()=>document.querySelector('#panel-publish');
-function client(){if(sb)return sb;if(!window.supabase?.createClient)throw new Error('SUPABASE_CLIENT_NOT_READY');sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});return sb}
+function client(){const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw new Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()}
 function ensurePolish(){
  const d=document;
  d.documentElement.dataset.schedulingRole=actorRole().toLowerCase();
@@ -101,9 +101,7 @@ function cleanAssignment(a){return{
 }}
 function selectedStore(){return state.stores.find(s=>String(s.id)===String(state.storeId||''))||null}
 async function loadStores(){
- const q=await client().rpc('get_manager_accessible_stores');
- if(q.error)throw q.error;
- state.stores=(Array.isArray(q.data)?q.data:[]).filter(s=>s?.id&&String(s.status||'ACTIVE').toUpperCase()==='ACTIVE');
+ state.stores=await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores();
  if(!state.storeId&&state.stores.length)state.storeId=state.stores[0].id;
  if(state.storeId&&!state.stores.some(s=>String(s.id)===String(state.storeId)))state.storeId=state.stores[0]?.id||null;
 }
