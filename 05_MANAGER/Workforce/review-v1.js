@@ -17,10 +17,10 @@ const css=`<style id="mw-review-v3-css">
 </style>`;
 
 async function boot(){
- if(!window.supabase?.createClient)return;
+ if(!window.MAGASIN_MANAGER_WORKFORCE_CONTEXT?.client)return;
  let tries=0,panel;while(!(panel=document.querySelector('#panel-review'))&&tries++<60)await new Promise(r=>setTimeout(r,150));if(!panel)return;
  if(!document.getElementById('mw-review-v3-css'))document.head.insertAdjacentHTML('beforeend',css);
- const sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+ const sb=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.client();
  let week=targetWeek(),storeId=null,stores=[],rows=[],loading=true,error=null,scopeReady=false;
  async function load(){
   if(!scopeReady){loading=false;return []}
@@ -33,9 +33,7 @@ async function boot(){
   return rows;
  }
  window.MAGASIN_MANAGER_AVAILABILITY={refresh:load,getState:()=>({week,storeId,rows:rows.map(x=>({...x})),stores:stores.map(x=>({...x})),loading,error})};
- const storesQ=await sb.rpc('get_manager_accessible_stores');
- if(storesQ.error){loading=false;error=storesQ.error.message||storesQ.error.code||'UNKNOWN';panel.innerHTML=`<section class="card"><div class="mwr3-status error">Không tải được phạm vi cửa hàng: ${esc(error)}</div></section>`;return}
- stores=(Array.isArray(storesQ.data)?storesQ.data:[]).filter(s=>s?.id&&String(s.status||'ACTIVE').toUpperCase()==='ACTIVE');
+ try{stores=await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores()}catch(e){loading=false;error=e?.message||e?.code||'UNKNOWN';panel.innerHTML=`<section class="card"><div class="mwr3-status error">Không tải được phạm vi cửa hàng: ${esc(error)}</div></section>`;return}
  if(stores.length===1)storeId=stores[0].id;
  scopeReady=true;loading=false;error=null;
  function render(){
