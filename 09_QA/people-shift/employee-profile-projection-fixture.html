@@ -18,22 +18,25 @@
     primary_store_id:'store-a',
     primary_store_code:'CN1',
     primary_store_name:'Cửa hàng QA',
+    priority_store_ids:['store-a','store-b'],
+    priority_store_codes:['CN1','CN2'],
+    priority_store_names:['Cửa hàng QA','Cửa hàng QA 2'],
     employee_level:null,
-    pay_rule_reference:null
+    pay_rule_reference:null,
+    store_priority_updated_at:'2026-09-29T06:00:00Z'
   };
   window.__TASK101_QA={
     calls,state,row,
     fail(){state.mode='error'},
     recover(){state.mode='ok'},
-    rpcCount(){return calls.filter(x=>x.kind==='rpc'&&x.name==='get_my_employee_profile_v1').length}
+    rpcCount(){return calls.filter(x=>x.kind==='rpc'&&x.name==='get_my_employee_workforce_profile_v1').length}
   };
   window.MAGASIN_CORE={
     supabase:{
       async rpc(name,args={}){
         calls.push({kind:'rpc',name,args:structuredClone(args||{})});
         if(state.mode==='error')return {data:null,error:{message:'PROFILE_INACTIVE'}};
-        if(name==='get_my_employee_profile_v1')return {data:[structuredClone(row)],error:null};
-        if(name==='get_my_store_priority_profile_v1')return {data:[{employee_id:'u-a',primary_store_id:'store-a',primary_store_code:'CN1',primary_store_name:'Cửa hàng QA',priority_store_ids:['store-a','store-b'],priority_store_codes:['CN1','CN2'],priority_store_names:['Cửa hàng QA','Cửa hàng QA 2']}],error:null};
+        if(name==='get_my_employee_workforce_profile_v1')return {data:[structuredClone(row)],error:null};
         return {data:null,error:{message:'UNEXPECTED_RPC'}};
       },
       from(name){calls.push({kind:'from',name});throw new Error('Direct table access forbidden')}
