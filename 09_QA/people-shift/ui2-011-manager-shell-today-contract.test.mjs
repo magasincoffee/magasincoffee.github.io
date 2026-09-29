@@ -48,7 +48,7 @@ test("UI2-011 Today is an Action Center built only from existing read-only Manag
 
 test("UI2-011 modified domain hooks preserve exact existing RPC inventories",()=>{
   assert.deepEqual(rpc(swap),["list_shift_swap_requests_v1","list_shift_give_requests_v1"]);
-  assert.deepEqual(rpc(attendance),["get_manager_accessible_stores","list_manager_attendance_review_v1","review_attendance_v1"]);
+  assert.deepEqual(rpc(attendance),["list_manager_attendance_review_v1","review_attendance_v1"]);
   assert.equal(rpc(today).length,0);
   assert.equal(rpc(shellV2).length,0);
   assert.match(swap,/getState:/);
@@ -96,7 +96,7 @@ test("UI2-011 cache chain remains preserved when later Manager UI tasks advance 
   const v="20260927-ui2-011-correction1";
   const shellV="20260927-ui2-016";
   const managerV="20260927-ui2-013";
-  const managerEntryV="20260929-xstore-livefix2";
+  const managerEntryV="20260929-mer005";
   const ownerEntryV="20260927-ui2-016";
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
@@ -105,14 +105,14 @@ test("UI2-011 cache chain remains preserved when later Manager UI tasks advance 
   assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+shellV+"&host=owner"));
   assert.ok(managerRuntime.includes("engine-v1.js?v="+managerEntryV));
   assert.ok(shellHtml.includes("manager-ui-shell-v2.js?v="+shellV));
-  assert.ok(engine.includes("review-v1.js?v=20260928-xstore003"));
-  assert.ok(engine.includes("attendance-review-v1.js?v="+v));
+  assert.ok(engine.includes("review-v1.js?v=20260929-mer003"));
+  assert.ok(engine.includes("attendance-review-v1.js?v=20260929-mer003"));
   assert.ok(engine.includes("ui-consolidation-v1.js?v=20260927-ui2-016"));
   assert.ok(engine.includes("swap-approval-v1.js?v="+managerV));
 });
 
 test("UI2-011 Availability reader preserves canonical RPC inventory while exposing read state",()=>{
-  assert.deepEqual(rpc(availability),["get_manager_weekly_availability","get_manager_accessible_stores"]);
+  assert.deepEqual(rpc(availability),["get_manager_weekly_availability"]);
 });
 
 test("UI2-011 browser gate is integrated into existing People Shift Day-10 browser gate",()=>{
