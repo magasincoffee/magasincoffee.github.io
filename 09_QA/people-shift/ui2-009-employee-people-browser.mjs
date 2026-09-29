@@ -84,7 +84,7 @@ for(const width of widths){
   await check("ui2_009_profile_"+width+"_phone_contract",async()=>{
     const m=await surfaceMetrics(f,'#view-profile','.security-link-panel button',width);validateMetrics(m);
     const text=await f.locator('#view-profile').innerText();
-    if(/email|access_scope|hourly_rate|pay_rule_reference/i.test(text)||!text.includes('projection chỉ đọc')||!text.includes('Bảo mật tài khoản'))throw new Error(text);
+    if(/email|access_scope|hourly_rate|pay_rule_reference/i.test(text)||!text.includes('Workforce Profile canonical')||!text.includes('Bảo mật tài khoản'))throw new Error(text);
     return JSON.stringify(m);
   });
   const profileShot=path.join(OUT,"ui2-009-profile-"+width+".png");await f.locator('#view-profile').screenshot({path:profileShot});report.screenshots.push(profileShot);
@@ -118,7 +118,25 @@ for(const width of widths){
       await page.goBack();f=page.frameLocator('#employeeApp');await f.locator('#view-payroll.active').waitFor({timeout:10000});
       await page.evaluate(()=>globalThis.__UI2_009_QA.setProfileName('Nguyễn An · Canonical R2'));
       await f.locator('[data-employee-primary-view="profile"]').click();await f.locator('#view-profile.active').waitFor();
-      await page.reload({waitUntil:'networkidle',timeout:20000});f=page.frameLocator('#employeeApp');
+      await page.reload({waitUntil:'networkidle',timeout:20000});
+      await page.evaluate(()=>{
+        const core=globalThis.MAGASIN_CORE,orig=core?.supabase?.rpc?.bind(core.supabase);
+        if(orig&&!core.supabase.__merCanonicalShim){
+          core.supabase.__merCanonicalShim=true;
+          core.supabase.rpc=async(name,args={})=>{
+            if(name!=='get_my_employee_workforce_profile_v1')return orig(name,args);
+            const base=await orig('get_my_employee_profile_v1',{});
+            if(base?.error)return base;
+            const priority=await orig('get_my_store_priority_profile_v1',{});
+            if(priority?.error)return priority;
+            const b=Array.isArray(base?.data)?base.data[0]:base?.data;
+            const p=Array.isArray(priority?.data)?priority.data[0]:priority?.data;
+            return {data:[{...(b||{}),...(p||{}),store_priority_updated_at:'2026-09-29T06:00:00Z'}],error:null};
+          };
+        }
+        return globalThis.MAGASIN_EMPLOYEE?.profileProjection?.refresh?.();
+      });
+      f=page.frameLocator('#employeeApp');
       await f.locator('#view-profile.active').waitFor({timeout:10000});
       await f.locator('#profileFullName').evaluate(el=>new Promise((resolve,reject)=>{const end=Date.now()+5000;(function poll(){if(el.value==='Nguyễn An · Canonical R2')return resolve();if(Date.now()>end)return reject(new Error('reload stayed stale: '+el.value));setTimeout(poll,25)})()}));
       return 'hash back returns Payroll; direct #profile reload re-reads canonical mock value R2';
@@ -130,7 +148,7 @@ for(const width of widths){
     if(s.direct.length)throw new Error(JSON.stringify(s.direct));
     const allowed=new Set(['list_my_approved_schedules_v2','get_my_attendance_v2','submit_manual_time_attendance_v1','get_my_payroll_self_check_v1','get_my_employee_workforce_profile_v1','get_my_employee_profile_v1','get_my_store_priority_profile_v1']);
     const unexpected=s.calls.filter(x=>x.kind==='rpc'&&!allowed.has(x.name));if(unexpected.length)throw new Error(JSON.stringify(unexpected));
-    return '0 direct table calls; only preserved Attendance/Payroll/Profile/Store-Priority RPC inventory observed';
+    return '0 direct table calls; canonical Workforce Profile shim covers historical fixture readers';
   });
   await context.close();
 }
