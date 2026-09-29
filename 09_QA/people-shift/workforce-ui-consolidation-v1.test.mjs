@@ -42,8 +42,8 @@ test("Manager consolidation removes deprecated active surfaces and keeps safe ca
 
 test("Manager staff surface remains RPC-only and XSTORE Store Priority is the only added profile writer",()=>{
   const src=read("05_MANAGER/Workforce/staff-projection-v1.js");
-  assert.match(src,/get_manager_accessible_stores/);
-  assert.match(src,/list_employee_store_priority_profiles_v1/);
+  assert.match(src,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
+  assert.match(src,/list_employee_workforce_profiles_v1/);
   assert.match(src,/set_employee_store_priority_profile_v1/);
   assert.match(src,/Ưu tiên 1 là chi nhánh chính/);
   assert.doesNotMatch(src,/\.from\(|\.insert\(|\.update\(|\.delete\(/);
