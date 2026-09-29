@@ -18,7 +18,7 @@ if(count!==4)throw new Error("expected 4 stores, got "+count);
 const auto=page.locator(".xsa");
 await auto.waitFor();
 const autoText=(await auto.innerText()).replace(/\s+/g," ");
-for(const token of ["Nhu cầu nhân sự & Xếp tự động","4 khung nhu cầu","Đủ cấu hình 4 CN","Xếp tự động"]){
+for(const token of ["XẾP LỊCH TỰ ĐỘNG 4 CỬA HÀNG","1. Store Priority","2. Nhu cầu nhân sự","3. Auto Schedule","4 khung nhu cầu","Đủ cấu hình 4 CN","Tạo DRAFT tự động"]){
  if(!autoText.includes(token))throw new Error("missing automation token "+token+" in "+autoText);
 }
 if(await page.locator("#xsaAuto").isDisabled())throw new Error("auto schedule should be enabled with complete requirements");
