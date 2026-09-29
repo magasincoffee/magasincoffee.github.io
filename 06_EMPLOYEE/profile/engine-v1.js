@@ -13,7 +13,7 @@ function clearValues(){for(const id of IDS)setValue(id,'—')}
 function ensureCss(){/* stylesheet is loaded by employee-v40.html */}
 function ensureUi(){
   const d=doc(),view=d?.getElementById('view-profile');if(!d||!view)return false;
-  ensureCss(d);view.classList.add('employee-profile-v2');
+  ensureCss(d);view.classList.add('employee-profile-v2','wf-role-page');
   view.querySelector('.profile-main')?.classList.add('employee-people-card');
   view.querySelector('.security-link-panel')?.classList.add('employee-people-card');
   return true;
@@ -21,13 +21,13 @@ function ensureUi(){
 function ensureStateBox(){
   const d=doc(),root=d?.querySelector('#view-profile .profile-main');if(!d||!root)return null;
   let box=d.getElementById('profileProjectionState');
-  if(!box){box=d.createElement('div');box.id='profileProjectionState';box.className='employee-people-state';box.setAttribute('role','status');box.setAttribute('aria-live','polite');root.appendChild(box)}
+  if(!box){box=d.createElement('div');box.id='profileProjectionState';box.className='employee-people-state wf-state';box.setAttribute('role','status');box.setAttribute('aria-live','polite');root.appendChild(box)}
   return box;
 }
 function setUiState(name){const v=doc()?.getElementById('view-profile');if(v)v.dataset.profileUiState=name}
 function setStateMessage(text,type='info'){
   const box=ensureStateBox();if(!box)return;
-  box.dataset.tone=type;box.className='employee-people-state '+type;box.textContent=text;
+  box.dataset.tone=type;box.dataset.state=type==='error'?'ERROR':type==='success'?'READY':type==='info'?'LOADING':'EMPTY';box.className='employee-people-state wf-state '+type;box.textContent=text;
 }
 function updateHeader(row){
   const d=doc();if(!d)return;
