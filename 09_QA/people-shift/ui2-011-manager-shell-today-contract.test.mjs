@@ -108,7 +108,7 @@ test("UI2-011 cache chain remains preserved when later Manager UI tasks advance 
   assert.ok(engine.includes("review-v1.js?v=20260929-mer003"));
   assert.ok(engine.includes("attendance-review-v1.js?v=20260929-mer003"));
   assert.ok(engine.includes("ui-consolidation-v1.js?v=20260927-ui2-016"));
-  assert.ok(engine.includes("swap-approval-v1.js?v="+managerV));
+  assert.ok(engine.includes("swap-approval-v1.js?v=20260929-mer003"));
 });
 
 test("UI2-011 Availability reader preserves canonical RPC inventory while exposing read state",()=>{
