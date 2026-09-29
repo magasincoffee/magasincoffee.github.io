@@ -6,7 +6,7 @@ const U='https://menvbzlsncmpuvnaifxa.supabase.co',K='sb_publishable_HsvCS6HDZnC
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const hm=v=>String(v||'').slice(0,5);
 let sb=null;
-const client=()=>sb||(sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}));
+const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const state={week:null,stores:[],requirements:[],editing:false,loading:false,busy:false,message:'',messageType:'',shortages:[],assignmentCount:null,unconfiguredEmployeeCount:0};
 const mount=()=>document.getElementById('xstoreAutomationMount');
 const storeById=id=>state.stores.find(s=>String(s.id)===String(id||''))||null;
