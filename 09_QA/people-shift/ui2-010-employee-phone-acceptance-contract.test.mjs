@@ -89,7 +89,7 @@ test("Employee RPC inventory remains the accepted UI2-009 inventory and no prote
     ],
     attendance:["list_my_approved_schedules_v2","get_my_attendance_v2","submit_manual_time_attendance_v1"],
     payroll:["get_my_payroll_self_check_v1"],
-    profile:["get_my_employee_profile_v1"]
+    profile:["get_my_employee_workforce_profile_v1"]
   };
   for(const [name,names] of Object.entries(expected)){
     for(const rpc of names)assert.ok(engines[name].includes(rpc),name+" missing "+rpc);
