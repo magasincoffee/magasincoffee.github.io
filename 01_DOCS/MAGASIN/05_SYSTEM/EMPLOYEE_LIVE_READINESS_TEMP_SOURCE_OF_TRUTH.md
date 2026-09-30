@@ -33,7 +33,7 @@ ACTIVE EMPLOYEE
 
 ## EMLIVE-001 — Employee surface + availability data capture
 
-**Status:** `IN_PROGRESS`
+**Status:** `DONE / PR #346 / EXACT-MAIN GREEN`
 
 - remove/hide unfinished legacy Employee surfaces from the active UI;
 - remove local-only avatar edit affordance;
@@ -46,7 +46,7 @@ ACTIVE EMPLOYEE
 
 ## EMLIVE-002 — Schedule / Swap-Give / Attendance live UX reconciliation
 
-**Status:** `TODO`
+**Status:** `IN_PROGRESS`
 
 - verify published schedule, swap/give, attendance empty/error/success states against production truth;
 - remove remaining stale/deprecated presentation;
@@ -70,6 +70,7 @@ ACTIVE EMPLOYEE
 - delete this TEMP file.
 
 ```text
-CURRENT = EMLIVE-001
-NEXT    = clean Employee surface + make availability capture truthful
+CURRENT = EMLIVE-002
+PREVIOUS = EMLIVE-001 DONE / exact main e28d2bb9d6b6e1520731541b8eb64a0783ba6990
+NEXT    = reconcile Schedule / Swap-Give / Attendance live UX
 ```
