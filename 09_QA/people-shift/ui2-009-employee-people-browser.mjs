@@ -84,7 +84,7 @@ for(const width of widths){
   await check("ui2_009_profile_"+width+"_phone_contract",async()=>{
     const m=await surfaceMetrics(f,'#view-profile','.security-link-panel button',width);validateMetrics(m);
     const text=await f.locator('#view-profile').innerText();
-    if(/email|access_scope|hourly_rate|pay_rule_reference/i.test(text)||!text.includes('Workforce Profile canonical')||!text.includes('Bảo mật tài khoản'))throw new Error(text);
+    if(/email|access_scope|hourly_rate|pay_rule_reference/i.test(text)||!text.includes('Thông tin này được đồng bộ từ hồ sơ nhân sự')||!text.includes('Bảo mật tài khoản'))throw new Error(text);
     return JSON.stringify(m);
   });
   const profileShot=path.join(OUT,"ui2-009-profile-"+width+".png");await f.locator('#view-profile').screenshot({path:profileShot});report.screenshots.push(profileShot);
@@ -97,7 +97,7 @@ for(const width of widths){
       await page.evaluate(()=>globalThis.__UI2_009_QA.failPayroll(false));await f.locator('[data-payroll-retry]').click();await f.locator('#view-payroll[data-payroll-ui-state="ready"]').waitFor();
       await f.locator('[data-employee-primary-view="profile"]').click();await f.locator('#view-profile.active').waitFor();
       await page.evaluate(()=>{globalThis.__UI2_009_QA.failProfile(true);return globalThis.MAGASIN_EMPLOYEE.profileProjection.refresh()});
-      await f.locator('#profileProjectionState').filter({hasText:'PROFILE_QA_ERROR'}).waitFor();
+      await f.locator('#profileProjectionState').filter({hasText:'Không thể tải thông tin cá nhân lúc này'}).waitFor();
       if((await f.locator('#profileFullName').inputValue())!=='—')throw new Error('profile stale');
       await page.evaluate(()=>{globalThis.__UI2_009_QA.failProfile(false);return globalThis.MAGASIN_EMPLOYEE.profileProjection.refresh()});
       await f.locator('#profileFullName').evaluate(el=>new Promise((resolve,reject)=>{const end=Date.now()+5000;(function poll(){if(el.value==='Nguyễn An')return resolve();if(Date.now()>end)return reject(new Error('profile did not recover'));setTimeout(poll,25)})()}));
