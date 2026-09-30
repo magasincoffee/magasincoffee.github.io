@@ -24,7 +24,7 @@ try{
   await check("task101_employee_self_projection_renders_operational_allowlist",async()=>{
     const vals=await f.locator("#view-profile").evaluate(root=>Object.fromEntries(["profileFullName","profileUsername","profilePhone","profileRole","profileStatus","profilePrimaryStore","profileStorePriority","profileLevel","profileJoinDate"].map(id=>[id,root.querySelector("#"+id)?.value])));
     if(vals.profileFullName!=="Nguyễn An"||vals.profileUsername!=="an.nguyen"||vals.profilePhone!=="0900000000"||!vals.profilePrimaryStore.includes("CN1")||vals.profileStorePriority!=="CN1 → CN2")throw new Error(JSON.stringify(vals));
-    if(vals.profileLevel!=="Chưa có nguồn chuẩn"||vals.profileJoinDate!=="Chưa có nguồn chuẩn")throw new Error(JSON.stringify(vals));
+    if(vals.profileLevel!=="Chưa cập nhật"||vals.profileJoinDate!=="Chưa cập nhật")throw new Error(JSON.stringify(vals));
     return "own operational profile rendered; missing canonical sources remain explicit";
   });
 
@@ -44,7 +44,8 @@ try{
 
   await check("task101_error_fails_closed_and_clears_stale_profile",async()=>{
     await page.evaluate(()=>{globalThis.__TASK101_QA.fail();return globalThis.MAGASIN_EMPLOYEE.profileProjection.refresh()});
-    await f.locator("#profileProjectionState").filter({hasText:"PROFILE_INACTIVE"}).waitFor({timeout:10000});
+    await f.locator("#profileProjectionState").filter({hasText:"Không thể tải thông tin cá nhân lúc này"}).waitFor({timeout:10000});
+    const err=await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.profileProjection.state.error);if(err!=="PROFILE_INACTIVE")throw new Error("unexpected internal error: "+err);
     const value=await f.locator("#profileFullName").inputValue();
     if(value!=="—")throw new Error("stale profile remained: "+value);
     await page.evaluate(()=>{globalThis.__TASK101_QA.recover();return globalThis.MAGASIN_EMPLOYEE.profileProjection.refresh()});

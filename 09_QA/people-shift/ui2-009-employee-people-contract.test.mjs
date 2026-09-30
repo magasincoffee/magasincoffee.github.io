@@ -68,11 +68,11 @@ test("UI2-009 Attendance does not promote legacy income/report presentation as t
 test("UI2-009 Payroll remains parameterless self-check read-only with exact state semantics and no money invention",()=>{
   assert.deepEqual(rpcs(payroll),['get_my_payroll_self_check_v1']);
   assert.match(payroll,/ESTIMATED:'Ước tính'/);
-  assert.match(payroll,/REVIEWED:'Đã review'/);
+  assert.match(payroll,/REVIEWED:'Đã kiểm tra'/);
   assert.match(payroll,/FINALIZED:'Đã chốt'/);
   assert.match(payroll,/PAID:'Đã thanh toán'/);
-  assert.match(payroll,/ESTIMATED không bao giờ được trình bày như FINALIZED/);
-  assert.match(payroll,/Số tiền chưa hiển thị vì chưa có canonical monetary evaluator/);
+  assert.match(payroll,/Trạng thái Ước tính không có nghĩa là kỳ lương đã được chốt/);
+  assert.match(payroll,/Số tiền chưa hiển thị trên màn hình này/);
   assert.match(payroll,/data-payroll-retry/);
   assert.doesNotMatch(payroll,/hourly_rate|gross_pay|net_pay|pay_rule_reference|confirmed_work_source_revision/i);
   assertNoBrowserDml(payroll);
@@ -82,8 +82,8 @@ test("UI2-009 Profile stays on existing operational projection allowlist and pre
   assert.deepEqual(rpcs(profile),['get_my_employee_workforce_profile_v1']);
   for(const id of ['profileFullName','profileUsername','profilePhone','profileRole','profileStatus','profilePrimaryStore','profileStorePriority','profileLevel','profileJoinDate'])assert.ok(profile.includes("'"+id+"'")||app.includes('id="'+id+'"'),id);
   assert.match(app,/id="view-profile" class="page-view employee-profile-v2"/);
-  assert.match(app,/Hồ sơ vận hành chỉ đọc từ projection canonical/);
-  assert.match(app,/class="panel security-link-panel"[\s\S]*Mật khẩu do Supabase Auth quản lý/);
+  assert.match(app,/Thông tin được đồng bộ từ hồ sơ nhân sự của bạn/);
+  assert.match(app,/class="panel security-link-panel"[\s\S]*Để đổi mật khẩu, hãy đăng xuất/);
   assert.doesNotMatch(app,/onclick="showView\('settings'\)"|id="view-settings"/);
   assert.doesNotMatch(profile,/\bemail\b|access_scope|hourly_rate|pay_rule_reference|service_role/i);
   assertNoBrowserDml(profile);
@@ -96,7 +96,7 @@ test("UI2-009 direct route/back/reload authority stays delegated to the existing
   assert.match(runtime,/E\.attendance\?\.refresh\?\.\(\)/);
   assert.match(runtime,/E\.profileProjection\?\.refresh\?\.\(\)/);
   assert.match(runtime,/E\.payrollSelfCheck\?\.refresh\?\.\(\)/);
-  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001)&runtime=engine/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003)&runtime=engine/);
 });
 
 console.log("UI2_009_EMPLOYEE_PEOPLE_CONTRACT=PASS");

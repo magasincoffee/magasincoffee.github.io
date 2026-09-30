@@ -49,7 +49,8 @@ try{
 
  await check("task104_employee_error_clears_stale_payroll_rows_and_recovers",async()=>{
    await page.evaluate(()=>{globalThis.__TASK104_QA.failEmployee();return globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.refresh()});
-   await f.locator("#employeePayrollRoot").filter({hasText:"PAYROLL_SELF_PROFILE_INACTIVE"}).waitFor({timeout:10000});
+   await f.locator("#employeePayrollRoot").filter({hasText:"Không thể tải thông tin lương lúc này"}).waitFor({timeout:10000});
+   const err=await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.state.error);if(err!=="PAYROLL_SELF_PROFILE_INACTIVE")throw new Error("unexpected internal error: "+err);
    const bad=await f.locator("#employeePayrollRoot").innerText();
    if(bad.includes("Đã chốt")||bad.includes("Ước tính"))throw new Error("stale payroll remained: "+bad);
    await page.evaluate(()=>{globalThis.__TASK104_QA.recoverEmployee();return globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.refresh()});
