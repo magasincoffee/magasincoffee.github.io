@@ -52,7 +52,8 @@ try{
  await check("failure_isolation_employee_profile_error_clears_only_profile",async()=>{
    await page.evaluate(()=>globalThis.__TASK107_QA.setMode("employeeProfile","error"));
    await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.profileProjection.refresh());
-   await employee.locator("#profileProjectionState").filter({hasText:"PROFILE_INACTIVE"}).waitFor();
+   await employee.locator("#profileProjectionState").filter({hasText:"Không thể tải thông tin cá nhân lúc này"}).waitFor();
+   const profileError=await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.profileProjection.state.error);if(profileError!=="PROFILE_INACTIVE")throw new Error(profileError);
    const name=await employee.locator("#profileFullName").inputValue();
    const payrollRows=await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.state.rows.length);
    if(name!=="—"||payrollRows!==1)throw new Error(JSON.stringify({name,payrollRows}));
@@ -64,7 +65,8 @@ try{
  await check("invalid_employee_profile_projection_fails_closed_then_recovers",async()=>{
    await page.evaluate(()=>globalThis.__TASK107_QA.setMode("employeeProfile","invalid"));
    await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.profileProjection.refresh());
-   await employee.locator("#profileProjectionState").filter({hasText:"PROFILE_PROJECTION_INVALID"}).waitFor();
+   await employee.locator("#profileProjectionState").filter({hasText:"Không thể tải thông tin cá nhân lúc này"}).waitFor();
+   const invalidProfileError=await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.profileProjection.state.error);if(invalidProfileError!=="PROFILE_PROJECTION_INVALID")throw new Error(invalidProfileError);
    if(await employee.locator("#profileFullName").inputValue()!=="—")throw new Error("stale profile rendered");
    await page.evaluate(()=>{globalThis.__TASK107_QA.setMode("employeeProfile","ok");return globalThis.MAGASIN_EMPLOYEE.profileProjection.refresh()});
    await employee.locator("#profileFullName").evaluate(el=>new Promise((resolve,reject)=>{const end=Date.now()+5000;(function poll(){if(el.value==="Nhân viên A")return resolve();if(Date.now()>end)return reject(new Error("profile recovery timeout"));setTimeout(poll,25)})()}));
@@ -73,7 +75,7 @@ try{
 
  await check("unresolved_profile_fields_are_explicit_not_invented",async()=>{
    const level=await employee.locator("#profileLevel").inputValue(),join=await employee.locator("#profileJoinDate").inputValue();
-   if(level!=="Chưa có nguồn chuẩn"||join!=="Chưa có nguồn chuẩn")throw new Error(JSON.stringify({level,join}));
+   if(level!=="Chưa cập nhật"||join!=="Chưa cập nhật")throw new Error(JSON.stringify({level,join}));
    return "missing level/join date remain unresolved";
  });
 
