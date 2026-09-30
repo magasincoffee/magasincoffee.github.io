@@ -15,9 +15,9 @@ test("SCHED-03 has one canonical Employee schedule reader",()=>{
   assert.match(schedule,/toUpperCase\(\)==='APPROVED'/);
 });
 
-test("SCHED-03 presents official schedule separately from Availability",()=>{
+test("SCHED-03 presents official schedule separately from employee availability input",()=>{
   assert.match(schedule,/Lịch làm chính thức/);
-  assert.match(schedule,/Availability không phải lịch chính thức/);
+  assert.match(schedule,/Thời gian có thể làm không phải lịch chính thức/);
   assert.match(schedule,/Đây chỉ là thời gian bạn có thể nhận ca/);
   assert.match(schedule,/không phải lịch chính thức/);
   assert.match(schedule,/Đã phát hành/);
