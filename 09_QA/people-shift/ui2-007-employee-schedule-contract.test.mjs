@@ -61,9 +61,9 @@ test("UI2-005 shell and UI2-006 Today remain canonical while cache entry advance
   assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-today.css?v=20260925-ui2-006"));
   assert.ok(todayCss.includes(".employee-today-v2"));
   assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001)&runtime=engine/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002)/);
   assert.equal((runtime.match(/\/06_EMPLOYEE\/schedule\/engine-v1\.js/g)||[]).length,1);
-  assert.match(runtime,/schedule\/engine-v1\.js\?v=20260926-ui2-008/);
+  assert.match(runtime,/schedule\/engine-v1\.js\?v=(?:20260926-ui2-008|20260930-emlive002)/);
 });
 
 test("UI2-007 Schedule presentation remains bounded after UI2-008 adds a separate secondary layer",()=>{
