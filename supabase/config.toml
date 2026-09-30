@@ -4,3 +4,13 @@
 
 [functions.notification-email-worker]
 verify_jwt = false
+
+# Source-controlled Auth email templates for local/dev parity.
+# Hosted production must be applied through Supabase Dashboard > Authentication > Email Templates.
+[auth.email.template.recovery]
+subject = "MAGASIN · Đặt lại mật khẩu"
+content_path = "./03_PLATFORM/01_AUTH/recovery-email-template.html"
+
+[auth.email.template.confirmation]
+subject = "MAGASIN · Xác nhận email"
+content_path = "./03_PLATFORM/01_AUTH/confirmation-email-template.html"
