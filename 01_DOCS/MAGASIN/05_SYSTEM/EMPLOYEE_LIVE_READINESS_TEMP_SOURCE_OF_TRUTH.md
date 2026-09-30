@@ -5,7 +5,7 @@
 **Status:** `ACTIVE / TEMPORARY EXECUTION AUTHORITY`  
 **Created:** 2026-09-30  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
-**Baseline:** `main @ 376e95d7d232749beebcf5f8c194bc6b5055c358`  
+**Baseline:** `main @ d09510a9ee1036ccb9e9e1b05e888ca70e5a8af7`  
 **TEMP lifecycle rule:** **DELETE THIS FILE after EMLIVE-004 closes.**
 
 ## Boundary
@@ -54,7 +54,7 @@ ACTIVE EMPLOYEE
 
 ## EMLIVE-003 — Employee notification/profile/payroll live UX
 
-**Status:** `IN_PROGRESS`
+**Status:** `DONE / PR #348 / EXACT-MAIN GREEN`
 
 - verify notification feed, canonical profile, payroll self-check;
 - no fake writable profile/payroll controls;
@@ -62,7 +62,7 @@ ACTIVE EMPLOYEE
 
 ## EMLIVE-004 — Exact-main + real employee acceptance + TEMP cleanup
 
-**Status:** `TODO / MUST_BE_LAST`
+**Status:** `READY / MUST_BE_LAST`
 
 - exact-main People Shift / UI acceptance GREEN;
 - bounded real Employee lifecycle acceptance;
@@ -70,7 +70,7 @@ ACTIVE EMPLOYEE
 - delete this TEMP file.
 
 ```text
-CURRENT = EMLIVE-003
-PREVIOUS = EMLIVE-002 DONE / PR #347 / exact main 376e95d7d232749beebcf5f8c194bc6b5055c358
-NEXT    = reconcile Employee Notification / Profile / Payroll live UX
+CURRENT = EMLIVE-004
+PREVIOUS = EMLIVE-003 DONE / PR #348 / exact main d09510a9ee1036ccb9e9e1b05e888ca70e5a8af7
+NEXT    = exact-main + bounded real Employee acceptance + permanent closure evidence + TEMP cleanup
 ```
