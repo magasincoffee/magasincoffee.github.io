@@ -40,22 +40,22 @@ function updateHeader(row){
 }
 function render(){
   ensureUi();
-  if(state.loading){setUiState('loading');clearValues();setStateMessage('Đang tải hồ sơ vận hành canonical từ máy chủ…','info');return}
-  if(state.error){setUiState('error');clearValues();setStateMessage('Không thể tải hồ sơ. Mã: '+state.error,'error');return}
+  if(state.loading){setUiState('loading');clearValues();setStateMessage('Đang tải thông tin cá nhân…','info');return}
+  if(state.error){setUiState('error');clearValues();setStateMessage('Không thể tải thông tin cá nhân lúc này. Hãy thử lại.,'error');return}
   const r=state.row;
-  if(!r){setUiState('empty');clearValues();setStateMessage('Không có hồ sơ vận hành hợp lệ.','error');return}
+  if(!r){setUiState('empty');clearValues();setStateMessage('Chưa có thông tin nhân sự để hiển thị. Vui lòng liên hệ quản lý nếu bạn cho rằng đây là lỗi.','error');return}
   setValue('profileFullName',r.full_name);
   setValue('profileUsername',r.username);
   setValue('profilePhone',r.phone);
   setValue('profileRole',roleText(r.employee_role));
   setValue('profileStatus',statusText(r.profile_status));
   const priorityCodes=Array.isArray(r.priority_store_codes)?r.priority_store_codes.filter(Boolean):[];
-  setValue('profilePrimaryStore',r.primary_store_code?(r.primary_store_code+(r.primary_store_name?' · '+r.primary_store_name:'')):'Chưa được Quản lý thiết lập');
-  setValue('profileStorePriority',priorityCodes.length?priorityCodes.join(' → '):'Chưa được Quản lý thiết lập');
-  setValue('profileLevel',r.employee_level||'Chưa có nguồn chuẩn');
-  setValue('profileJoinDate',r.join_date||'Chưa có nguồn chuẩn');
+  setValue('profilePrimaryStore',r.primary_store_code?(r.primary_store_code+(r.primary_store_name?' · '+r.primary_store_name:'')):'Chưa được thiết lập');
+  setValue('profileStorePriority',priorityCodes.length?priorityCodes.join(' → '):'Chưa được thiết lập');
+  setValue('profileLevel',r.employee_level||'Chưa cập nhật');
+  setValue('profileJoinDate',r.join_date||'Chưa cập nhật');
   updateHeader(r);setUiState('ready');
-  setStateMessage('Đồng bộ từ cùng Workforce Profile canonical mà Quản lý và bộ xếp lịch đang sử dụng. Hồ sơ này chỉ đọc.','success');
+  setStateMessage('Thông tin này được đồng bộ từ hồ sơ nhân sự và chỉ dùng để xem.','success');
 }
 async function refresh(){
   ensureUi();state.loading=true;state.error=null;render();
