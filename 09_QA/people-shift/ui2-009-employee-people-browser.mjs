@@ -62,7 +62,7 @@ for(const width of widths){
     const m=await surfaceMetrics(f,'#view-attendance','.attendance-week-nav button:first-child',width);validateMetrics(m);
     const text=await f.locator('#view-attendance').innerText();
     const legacyVisible=await f.locator('.legacy-attendance-report').isVisible().catch(()=>false);
-    if(legacyVisible||/Tổng tiền nhận|0đ\s*\/\s*giờ/.test(text)||!text.includes('không phải payroll truth')||!text.includes('Cần quản lý xem xét'))throw new Error(text);
+    if(legacyVisible||/Tổng tiền nhận|0đ\s*\/\s*giờ/.test(text)||!text.includes('cần được quản lý xác nhận trước khi dùng để tính lương')||!text.includes('Cần quản lý xem xét'))throw new Error(text);
     return JSON.stringify({...m,legacyVisible});
   });
   const attendanceShot=path.join(OUT,"ui2-009-attendance-"+width+".png");await f.locator('#view-attendance').screenshot({path:attendanceShot});report.screenshots.push(attendanceShot);
