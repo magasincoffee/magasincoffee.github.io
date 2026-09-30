@@ -84,9 +84,9 @@ test("TASK-104 Employee UI uses self RPC only, renders canonical states and wire
   assert.doesNotMatch(engine,/service_role/i);
   assert.match(engine,/ESTIMATED:'Ước tính'/);
   assert.match(engine,/FINALIZED:'Đã chốt'/);
-  assert.match(engine,/ESTIMATED không bao giờ được trình bày như FINALIZED/);
+  assert.match(engine,/Trạng thái Ước tính không có nghĩa là kỳ lương đã được chốt/);
   assert.match(engine,/Số tiền chưa hiển thị/);
-  assert.match(runtime,/\/06_EMPLOYEE\/payroll\/engine-v1\.js\?v=20260923-task104/);
+  assert.match(runtime,/\/06_EMPLOYEE\/payroll\/engine-v1\.js\?v=(?:20260923-task104|20260930-emlive003)/);
   assert.match(runtime,/E\.payrollSelfCheck\?\.refresh/);
 });
 
