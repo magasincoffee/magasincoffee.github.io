@@ -41,7 +41,7 @@ function updateHeader(row){
 function render(){
   ensureUi();
   if(state.loading){setUiState('loading');clearValues();setStateMessage('Đang tải thông tin cá nhân…','info');return}
-  if(state.error){setUiState('error');clearValues();setStateMessage('Không thể tải thông tin cá nhân lúc này. Hãy thử lại.,'error');return}
+  if(state.error){setUiState('error');clearValues();setStateMessage('Không thể tải thông tin cá nhân lúc này. Hãy thử lại.','error');return}
   const r=state.row;
   if(!r){setUiState('empty');clearValues();setStateMessage('Chưa có thông tin nhân sự để hiển thị. Vui lòng liên hệ quản lý nếu bạn cho rằng đây là lỗi.','error');return}
   setValue('profileFullName',r.full_name);
