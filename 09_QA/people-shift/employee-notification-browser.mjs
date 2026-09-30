@@ -33,8 +33,19 @@ await check("notification_renders_schedule_and_clockout_events",async()=>{
 await check("notification_empty_state_is_truthful",async()=>{
   await page.evaluate(()=>{globalThis.__NOTIFICATION_QA.rows.splice(0)});
   await page.evaluate(()=>globalThis.MAGASIN_EMPLOYEE.notification.refresh());
-  await employee.locator("#view-notice").filter({hasText:"Chưa có thông báo mới"}).waitFor();
+  await employee.locator("[data-notification-empty=\"1\"]").filter({hasText:"Bạn chưa có thông báo nào"}).waitFor();
   return "empty state";
+});
+
+await check("notification_error_is_employee_friendly_and_retryable",async()=>{
+  await page.evaluate(()=>{globalThis.__NOTIFICATION_QA.fail();return globalThis.MAGASIN_EMPLOYEE.notification.refresh()});
+  await employee.locator("[data-notification-error=\"1\"]").filter({hasText:"Không thể tải thông báo lúc này"}).waitFor();
+  const text=await employee.locator("#view-notice").innerText();
+  if(text.includes("NOTIFICATION_QA_ERROR"))throw new Error(text);
+  await page.evaluate(()=>globalThis.__NOTIFICATION_QA.recover());
+  await employee.locator("[data-notification-retry]").click();
+  await employee.locator("[data-notification-empty=\"1\"]").waitFor();
+  return "technical error hidden; retry recovers";
 });
 
 if(report.page_errors.length){report.checks.push({name:"page_errors",status:"FAIL",detail:report.page_errors.join("\n")});report.status="FAIL"}
