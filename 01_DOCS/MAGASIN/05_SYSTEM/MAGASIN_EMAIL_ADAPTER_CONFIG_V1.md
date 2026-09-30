@@ -5,6 +5,8 @@
 **Date:** 2026-09-18  
 **Status:** DEFERRED_BY_OWNER / FAIL_CLOSED
 
+> **2026-09-30 boundary clarification:** this document governs MAGASIN operational notification email only. Supabase Auth emails (confirmation, password recovery, password-change security notices) are governed separately by `MAGASIN_AUTH_EMAIL_PRODUCTION_V1.md` and do not pass through `notification-email-worker`.
+
 ## Five-Step
 
 ### QUESTION
