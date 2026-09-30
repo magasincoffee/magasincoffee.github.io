@@ -30,6 +30,14 @@ function weekLabel(){
   if(!days.length)return 'Tuần tới · chưa xác định';
   return `Tuần tới · ${C.date.formatDate(days[0])} – ${C.date.formatDate(days[6])}`;
 }
+function emitAvailabilityState(){
+  globalThis.MAGASIN_EMPLOYEE?.events?.emit?.('availability-loaded',{
+    week:state.week,
+    registration:state.registration,
+    rows:state.rows.map(r=>({...r})),
+    uiState:state.uiState
+  });
+}
 function setUiState(kind,text,retry=false){
   state.uiState=kind||'idle';
   const x=d(),p=panel(x),msg=x?.getElementById('quickRegMsg'),button=p?.querySelector('[data-availability-retry]');
@@ -90,7 +98,7 @@ async function prepare(x){
   if(st&&!st.dataset.engineBound){st.innerHTML=options('06:00');st.dataset.engineBound='1'}
   if(en&&!en.dataset.engineBound){en.innerHTML=options('12:00');en.dataset.engineBound='1'}
   renderDayOptions(x);
-  setUiState('loading','Đang tải Availability tuần kế tiếp…');
+  setUiState('loading','Đang tải thời gian có thể làm tuần sau…');
   applyRegistrationState(x);
   return load({preserveLoading:true});
 }
@@ -99,22 +107,25 @@ async function load(options={}){
   const weekChanged=syncPolicy();
   if(weekChanged)renderDayOptions(x);
   applyRegistrationState(x);
-  if(!options.preserveLoading)setUiState('loading','Đang làm mới Availability tuần kế tiếp…');
+  if(!options.preserveLoading)setUiState('loading','Đang làm mới thời gian có thể làm tuần sau…');
   if(!state.week){
     state.rows=[];renderSummary();
     setUiState('error','Không xác định được tuần đăng ký. Vui lòng tải lại trang.',true);
+    emitAvailabilityState();
     return false;
   }
   const q=await C.supabase.rpc('get_my_availability',{p_week_start:state.week});
   if(q.error){
     state.rows=[];renderSummary();applyRegistrationState(x);
-    setUiState('error','Không thể tải Availability lúc này. Vui lòng thử lại.',true);
+    setUiState('error','Không thể tải thời gian có thể làm lúc này. Vui lòng thử lại.',true);
     C.ui.toast('Không tải được đăng ký lịch lúc này.','error');
+    emitAvailabilityState();
     return false;
   }
   state.rows=(Array.isArray(q.data)?q.data:[]).filter(r=>isTargetDate(r.work_date));
   renderSummary();applyRegistrationState(x);
   setUiState('ready',state.registration==='REGISTRATION_OPEN'?'Đang mở đăng ký tuần kế tiếp.':'Đăng ký đã đóng. Các khoảng hiện có ở chế độ chỉ xem.');
+  emitAvailabilityState();
   return true;
 }
 async function retry(){return prepare(d())}
@@ -183,10 +194,15 @@ async function remove(id,button){
 
 async function finish(){
   syncPolicy();
+  const count=state.rows.length;
   if(state.registration==='REGISTRATION_OPEN'){
-    setUiState('success','Đã hoàn thành đăng ký lịch làm.');
-    C.ui.toast('Đã hoàn thành đăng ký lịch.','success');
-  }else setUiState('readonly',closedMessage());
+    setUiState('success',count?('Đã lưu '+count+' khoảng thời gian. Mỗi khoảng có hiệu lực ngay khi được lưu.'):'Bạn chưa lưu khoảng thời gian nào cho tuần sau.');
+    C.ui.toast(count?('Đã lưu '+count+' khoảng thời gian có thể làm.'):'Chưa có thời gian nào được đăng ký.',count?'success':'info');
+  }else{
+    setUiState('readonly',closedMessage());
+  }
+  emitAvailabilityState();
+  close();
 }
 
 function wire(x,selector,fn){
