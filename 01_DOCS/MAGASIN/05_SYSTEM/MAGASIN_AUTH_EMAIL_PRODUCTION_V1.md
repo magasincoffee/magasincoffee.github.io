@@ -4,7 +4,7 @@
 **Created:** 2026-09-30  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Production Supabase:** `MAGASIN-NOIBO / menvbzlsncmpuvnaifxa`  
-**Status:** `SOURCE_READY / PRODUCTION_DASHBOARD_APPLY_REQUIRED`
+**Status:** `OWNER_CONFIRMED_PRODUCTION_TEMPLATES_APPLIED / GMAIL_SMTP_TEMPORARILY_ACCEPTED`
 
 ## 1. Why this track exists
 
@@ -140,17 +140,17 @@ AUTH-EMAIL-004 password-change security template  = DONE
 AUTH-EMAIL-005 local/source mapping                = DONE
 ```
 
-Remaining production actions:
+Production reconciliation update — 2026-09-30:
 
 ```text
-AUTH-EMAIL-006 apply Recovery template in hosted Supabase       = WAIT_SUPABASE_DASHBOARD_SESSION
-AUTH-EMAIL-007 apply Confirmation/security templates            = WAIT_SUPABASE_DASHBOARD_SESSION
-AUTH-EMAIL-008 inspect/configure production SMTP sender         = WAIT_SUPABASE_DASHBOARD_SESSION / CREDENTIAL_BOUNDARY
-AUTH-EMAIL-009 send bounded real recovery + confirmation smoke  = AFTER_006_008
-AUTH-EMAIL-010 record live evidence and close                   = AFTER_SMOKE
+AUTH-EMAIL-006 Recovery template hosted apply        = OWNER_CONFIRMED_DONE
+AUTH-EMAIL-007 Confirmation template hosted apply    = OWNER_CONFIRMED_DONE
+AUTH-EMAIL-008 SMTP strategy                         = GMAIL SMTP / TEMPORARILY_ACCEPTED_BY_OWNER
+AUTH-EMAIL-009 live Auth-mail smoke                  = CONSOLIDATED_INTO_EMPREG-008
+AUTH-EMAIL-010 closure reconciliation                = CONSOLIDATED_INTO_EMPREG-009
 ```
 
-The browser automation session attempted on 2026-09-30 reached the Supabase sign-in page; no authenticated Dashboard session was available. No Supabase configuration was changed.
+Owner confirmation is the authority for the hosted Dashboard apply because those settings are not represented by Git alone. The remaining live acceptance and closure evidence are now consolidated into the temporary employee-registration hardening generation `EMPREG-HARDENING`; do not reopen template redesign unless a new defect is demonstrated.
 
 ## 8. Acceptance contract
 
@@ -171,7 +171,8 @@ Production closure requires:
 
 ```text
 SOURCE TEMPLATE WORK = DONE
-PRODUCTION APPLY      = WAIT_AUTHENTICATED_SUPABASE_DASHBOARD
-SMTP ACTIVATION       = OWNER CREDENTIAL BOUNDARY
-LIVE SMOKE            = PENDING
+PRODUCTION APPLY      = OWNER_CONFIRMED_DONE
+SMTP                  = GMAIL / TEMPORARILY_ACCEPTED
+LIVE SMOKE            = EMPREG-008
+CLOSURE               = EMPREG-009
 ```
