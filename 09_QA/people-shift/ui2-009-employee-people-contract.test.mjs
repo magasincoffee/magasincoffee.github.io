@@ -83,7 +83,8 @@ test("UI2-009 Profile stays on existing operational projection allowlist and pre
   for(const id of ['profileFullName','profileUsername','profilePhone','profileRole','profileStatus','profilePrimaryStore','profileStorePriority','profileLevel','profileJoinDate'])assert.ok(profile.includes("'"+id+"'")||app.includes('id="'+id+'"'),id);
   assert.match(app,/id="view-profile" class="page-view employee-profile-v2"/);
   assert.match(app,/Hồ sơ vận hành chỉ đọc từ projection canonical/);
-  assert.match(app,/class="panel security-link-panel"[\s\S]*Mật khẩu do Supabase Auth quản lý/);\n  assert.doesNotMatch(app,/onclick="showView\('settings'\)"|id="view-settings"/);
+  assert.match(app,/class="panel security-link-panel"[\s\S]*Mật khẩu do Supabase Auth quản lý/);
+  assert.doesNotMatch(app,/onclick="showView\('settings'\)"|id="view-settings"/);
   assert.doesNotMatch(profile,/\bemail\b|access_scope|hourly_rate|pay_rule_reference|service_role/i);
   assertNoBrowserDml(profile);
 });
