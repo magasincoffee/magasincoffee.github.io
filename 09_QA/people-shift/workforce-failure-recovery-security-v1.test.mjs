@@ -61,7 +61,7 @@ test("TASK-107 read UIs reject malformed canonical projections and never fall ba
 
 test("TASK-107 unresolved profile fields remain explicit and no monetary/pay semantics are invented",async()=>{
   const [ep,ey,my]=await Promise.all([fs.readFile(employeeProfileUrl,"utf8"),fs.readFile(employeePayrollUrl,"utf8"),fs.readFile(managerPayrollUrl,"utf8")]);
-  assert.match(ep,/Chưa có nguồn chuẩn/);
+  assert.match(ep,/Chưa cập nhật/);
   assert.match(ey,/Số tiền chưa hiển thị/);
   assert.match(my,/Không hiển thị monetary amount\/pay-rate\/pay-rule internals/);
   assert.doesNotMatch(ey+my,/hourly_rate|gross_pay|net_pay|overtime|rounding|break rule/i);
