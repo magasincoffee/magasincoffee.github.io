@@ -162,8 +162,38 @@ function renderQueue(x,snapshot){
   }
 
   const availability=globalThis.MAGASIN_EMPLOYEE?.availability;
-  if(availability?.getRegistrationState?.()==='REGISTRATION_OPEN'){
-    actions.push({icon:'＋',title:'Đăng ký Availability tuần sau',detail:'Gửi thời gian bạn có thể nhận ca; đây chưa phải lịch chính thức.',label:'Đăng ký',action:'availability'});
+  const availabilityState=availability?.getUiState?.()||'idle';
+  const registration=availability?.getRegistrationState?.();
+  const availabilityRows=availability?.getRows?.()||[];
+  const availabilityDays=new Set(availabilityRows.map(r=>String(r?.work_date||'').slice(0,10)).filter(Boolean)).size;
+  const availabilitySettled=!['idle','loading'].includes(String(availabilityState));
+  if(availabilitySettled&&registration==='REGISTRATION_OPEN'){
+    if(availabilityRows.length){
+      actions.push({
+        icon:'✓',
+        title:'Thời gian có thể làm tuần sau đã được lưu',
+        detail:availabilityRows.length+' khoảng · '+availabilityDays+' ngày. Bạn có thể xem hoặc sửa trước khi đăng ký đóng.',
+        label:'Xem / sửa',
+        action:'availability'
+      });
+    }else{
+      actions.push({
+        icon:'＋',
+        title:'Đăng ký thời gian có thể làm tuần sau',
+        detail:'Chưa có khoảng thời gian nào được lưu. Đây là dữ liệu để Quản lý xếp lịch, chưa phải lịch chính thức.',
+        label:'Đăng ký',
+        action:'availability',
+        variant:'primary'
+      });
+    }
+  }else if(availabilitySettled&&registration==='REGISTRATION_CLOSED'&&availabilityRows.length){
+    actions.push({
+      icon:'✓',
+      title:'Đăng ký tuần sau đã đóng',
+      detail:'Đã lưu '+availabilityRows.length+' khoảng · '+availabilityDays+' ngày. Hiện chỉ có thể xem.',
+      label:'Xem',
+      action:'availability'
+    });
   }
   if(snapshot.state?.notice){
     actions.push({icon:'!',title:'Lịch vừa có thay đổi',detail:String(snapshot.state.notice),label:'Xem lịch',action:'route:schedule'});
@@ -171,7 +201,13 @@ function renderQueue(x,snapshot){
 
   list.innerHTML=actions.map(queueItem).join('');
   empty.hidden=actions.length>0;
-  if(badge)badge.textContent=actions.length?actions.length+' việc':'Không có việc';
+  if(badge){
+    badge.textContent=actions.length?actions.length+' việc':'Không có việc';
+    badge.dataset.taskQuality=actions.length?'CANONICAL_ACTIONS':'NO_ACTION';
+    badge.className='m-badge '+(actions.length?'m-status-badge--info':'m-status-badge--neutral');
+  }
+  const queue=x?.querySelector('.task-panel');
+  if(queue)queue.dataset.taskSourceState=actions.length?'CANONICAL_ACTIONS':'NO_ACTION';
 }
 
 function renderWeek(x,snapshot){
@@ -232,6 +268,7 @@ function init(){
   f.dataset.dashboardEngine='1';
   f.addEventListener('load',()=>{const x=f.contentDocument;bind(x);render()});
   document.addEventListener('magasin:schedule-loaded',render);
+  document.addEventListener('magasin:availability-loaded',render);
   if(f.contentDocument){bind(f.contentDocument);render()}
 }
 globalThis.MAGASIN_EMPLOYEE=globalThis.MAGASIN_EMPLOYEE||{};
