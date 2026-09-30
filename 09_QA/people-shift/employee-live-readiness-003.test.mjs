@@ -61,8 +61,8 @@ test("EMLIVE-003 runtime cache serves reconciled assets",()=>{
 });
 
 test("EMLIVE-003 execution authority advances only the TEMP Employee Live track",()=>{
-  assert.match(sot,/EMLIVE-002[\s\S]*Status:\*\* `DONE \/ PR #347 \/ EXACT-MAIN GREEN`/);
-  assert.match(sot,/EMLIVE-003[\s\S]*Status:\*\* `IN_PROGRESS`/);
+  assert.match(sot,/EMLIVE-002[\s\S]*\*\*Status:\*\* `DONE \/ PR #347 \/ EXACT-MAIN GREEN`/);
+  assert.match(sot,/EMLIVE-003[\s\S]*\*\*Status:\*\* `IN_PROGRESS`/);
   assert.match(sot,/CURRENT = EMLIVE-003/);
   assert.match(sot,/exact main 376e95d7d232749beebcf5f8c194bc6b5055c358/);
 });
