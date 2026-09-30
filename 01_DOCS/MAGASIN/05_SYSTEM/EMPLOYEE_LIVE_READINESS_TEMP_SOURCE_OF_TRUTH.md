@@ -5,7 +5,7 @@
 **Status:** `ACTIVE / TEMPORARY EXECUTION AUTHORITY`  
 **Created:** 2026-09-30  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
-**Baseline:** `main @ 3f87c41a1ca13155820d2086e230ed43ead9e71d`  
+**Baseline:** `main @ 376e95d7d232749beebcf5f8c194bc6b5055c358`  
 **TEMP lifecycle rule:** **DELETE THIS FILE after EMLIVE-004 closes.**
 
 ## Boundary
@@ -46,7 +46,7 @@ ACTIVE EMPLOYEE
 
 ## EMLIVE-002 — Schedule / Swap-Give / Attendance live UX reconciliation
 
-**Status:** `IN_PROGRESS`
+**Status:** `DONE / PR #347 / EXACT-MAIN GREEN`
 
 - verify published schedule, swap/give, attendance empty/error/success states against production truth;
 - remove remaining stale/deprecated presentation;
@@ -54,7 +54,7 @@ ACTIVE EMPLOYEE
 
 ## EMLIVE-003 — Employee notification/profile/payroll live UX
 
-**Status:** `TODO`
+**Status:** `IN_PROGRESS`
 
 - verify notification feed, canonical profile, payroll self-check;
 - no fake writable profile/payroll controls;
@@ -70,7 +70,7 @@ ACTIVE EMPLOYEE
 - delete this TEMP file.
 
 ```text
-CURRENT = EMLIVE-002
-PREVIOUS = EMLIVE-001 DONE / exact main e28d2bb9d6b6e1520731541b8eb64a0783ba6990
-NEXT    = reconcile Schedule / Swap-Give / Attendance live UX
+CURRENT = EMLIVE-003
+PREVIOUS = EMLIVE-002 DONE / PR #347 / exact main 376e95d7d232749beebcf5f8c194bc6b5055c358
+NEXT    = reconcile Employee Notification / Profile / Payroll live UX
 ```
