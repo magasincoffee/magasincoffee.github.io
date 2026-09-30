@@ -14,3 +14,8 @@ content_path = "./03_PLATFORM/01_AUTH/recovery-email-template.html"
 [auth.email.template.confirmation]
 subject = "MAGASIN · Xác nhận email"
 content_path = "./03_PLATFORM/01_AUTH/confirmation-email-template.html"
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "MAGASIN · Mật khẩu đã được thay đổi"
+content_path = "./03_PLATFORM/01_AUTH/password-changed-email-template.html"
