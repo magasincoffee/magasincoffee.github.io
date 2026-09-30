@@ -8,6 +8,14 @@ const normalize=v=>{const s=String(v||'').replace(/^#/,'').trim().toLowerCase();
 function relabel(d){
  const labels={dashboard:'🏠 Hôm nay',schedule:'📅 Lịch làm',attendance:'⏱ Chấm công',swap:'🔄 Đổi / cho ca',payroll:'💰 Lương',profile:'👤 Cá nhân'};
  for(const [view,label] of Object.entries(labels)){const a=d.querySelector('.nav [data-view="'+view+'"]');if(a)a.textContent=label}
+ for(const view of ['inventory','settings']){
+   d.querySelector('.nav [data-view="'+view+'"]')?.remove();
+   d.getElementById('view-'+view)?.remove();
+ }
+ const avatarInput=d.getElementById('avatarInput');if(avatarInput)avatarInput.remove();
+ const headerAvatar=d.querySelector('.header-avatar');if(headerAvatar){headerAvatar.removeAttribute('onclick');headerAvatar.setAttribute('aria-label','Ảnh đại diện')}
+ const profileAvatar=d.querySelector('.profile-avatar');if(profileAvatar){profileAvatar.removeAttribute('onclick');profileAvatar.setAttribute('aria-label','Ảnh đại diện')}
+ const caption=d.querySelector('.avatar-caption');if(caption)caption.textContent='Ảnh đại diện hiển thị theo hồ sơ hệ thống';
  const legacy=d.querySelector('#view-attendance .attendance-report-wrap > .panel:first-child');
  if(legacy){legacy.hidden=true;legacy.setAttribute('aria-hidden','true');legacy.style.display='none'}
 }
