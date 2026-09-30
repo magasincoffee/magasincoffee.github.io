@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-011 WAIT_REAL_CONFIGURATION_AND_LIVE_ACCEPTANCE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-011 BLOCKED / OWNER_REQUIRED — REAL BUSINESS CONFIGURATION  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -278,7 +278,7 @@ Out of scope unless explicitly added later:
 | XSTORE-008 | Auto Schedule DRAFT engine | Global four-store DRAFT from Availability + Store Priority + explicit requirements; shortages returned; no auto-publish | **DONE / FEATURE READY / REAL INPUT PENDING** |
 | XSTORE-009 | Review/edit/publish integration | Robot hands off to existing per-store edit + Validate → Review → Publish canonical state machine | **DONE** |
 | XSTORE-010 | Full regression + production-safe acceptance | Exact-main static/browser/cross-role/pages regression | **DONE / EXACT-MAIN GREEN** |
-| XSTORE-011 | Canonical reconciliation + temp cleanup | Live real-data acceptance, permanent-doc reconciliation, then delete TEMP Source of Truth | **CURRENT / WAIT_REAL_CONFIGURATION_AND_LIVE_ACCEPTANCE** |
+| XSTORE-011 | Canonical reconciliation + temp cleanup | Live real-data acceptance, permanent-doc reconciliation, then delete TEMP Source of Truth | **BLOCKED / OWNER_REQUIRED — REAL BUSINESS CONFIGURATION** |
 
 ## 5. Recommended execution order
 
@@ -293,7 +293,7 @@ XSTORE-001 DONE
 → XSTORE-008 DONE
 → XSTORE-009 DONE
 → XSTORE-010 DONE
-→ XSTORE-011 CURRENT / real business configuration + live acceptance + cleanup
+→ XSTORE-011 BLOCKED / OWNER_REQUIRED / real business configuration + live acceptance + cleanup
 ```
 
 Do not jump to the Robot before profile authority, Availability semantics and cross-store manual scheduling are proven.
@@ -322,7 +322,7 @@ Current execution boundary:
 - acceptance evidence: `05_SYSTEM/XSTORE_007_010_STAFFING_AUTO_DRAFT_ACCEPTANCE.md`;
 - production currently has 0 Store Priority rows and 0 `XSTORE_V1` Staffing Requirement rows; management must enter real business values;
 - no Store Priority, staffing demand, draft assignment or official schedule was fabricated during implementation;
-- XSTORE-011 remains open until a real Manager-configured week is exercised end-to-end and accepted.
+- XSTORE-011 remains open until a real Manager-configured week is exercised end-to-end and accepted.\n- Live preflight on 2026-09-30 reconfirmed: Store Priority rows = 0, XSTORE_V1 Staffing Requirement rows = 0, draft assignments = 0, official schedules = 0.\n- Preflight evidence: `05_SYSTEM/XSTORE_011_LIVE_PREFLIGHT_EVIDENCE_2026_09_30.md`.\n- Current gate is `BLOCKED / OWNER_REQUIRED — REAL BUSINESS CONFIGURATION`; this is not a code/schema/production-health blocker.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
