@@ -9,7 +9,7 @@ const notification=read("06_EMPLOYEE/notification/engine-v1.js");
 const app=read("06_EMPLOYEE/app/employee-v40.html");
 const runtime=read("06_EMPLOYEE/runtime/employee-runtime-v1.html");
 const index=read("06_EMPLOYEE/index.html");
-const sot=read("01_DOCS/MAGASIN/05_SYSTEM/EMPLOYEE_LIVE_READINESS_TEMP_SOURCE_OF_TRUTH.md");
+const acceptance=read("01_DOCS/MAGASIN/05_SYSTEM/EMPLOYEE_LIVE_READINESS_V1_ACCEPTANCE.md");
 
 test("EMLIVE-003 keeps Employee Notification Profile Payroll on canonical read authority",()=>{
   assert.deepEqual([...profile.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(x=>x[1]),["get_my_employee_workforce_profile_v1"]);
@@ -61,11 +61,10 @@ test("EMLIVE-003 runtime cache serves reconciled assets",()=>{
   assert.match(index,/employee-runtime-v1\.html\?v=20260930-emlive003/);
 });
 
-test("EMLIVE-003 execution authority advances only the TEMP Employee Live track",()=>{
-  assert.match(sot,/EMLIVE-002[\s\S]*\*\*Status:\*\* `DONE \/ PR #347 \/ EXACT-MAIN GREEN`/);
-  assert.match(sot,/EMLIVE-003[\s\S]*\*\*Status:\*\* `IN_PROGRESS`/);
-  assert.match(sot,/CURRENT = EMLIVE-003/);
-  assert.match(sot,/exact main 376e95d7d232749beebcf5f8c194bc6b5055c358/);
+test("EMLIVE-003 remains permanently closed after TEMP authority cleanup",()=>{
+  assert.match(acceptance,/EMLIVE-003` = DONE \/ PR #348 \/ EXACT-MAIN GREEN/);
+  assert.match(acceptance,/d09510a9ee1036ccb9e9e1b05e888ca70e5a8af7/);
+  assert.match(acceptance,/EMLIVE-004/);
 });
 
 console.log("EMLIVE_003_EMPLOYEE_NOTIFICATION_PROFILE_PAYROLL=PASS");
