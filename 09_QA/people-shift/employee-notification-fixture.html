@@ -10,7 +10,7 @@
   window.MAGASIN_CORE={
     security:{escapeHtml:v=>String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))},
     supabase:{
-      async rpc(name,args={}){calls.push({kind:"rpc",name,args:structuredClone(args||{})});if(name==="list_my_notifications_v1"){if(state.fail)return {data:null,error:{message:"NOTIFICATION_QA_ERROR"}};return {data:rows.map(x=>({...x})),error:null};return {data:null,error:{message:"unexpected rpc "+name}}},
+      async rpc(name,args={}){calls.push({kind:"rpc",name,args:structuredClone(args||{})});if(name==="list_my_notifications_v1"){if(state.fail)return {data:null,error:{message:"NOTIFICATION_QA_ERROR"}};return {data:rows.map(x=>({...x})),error:null}}return {data:null,error:{message:"unexpected rpc "+name}}},
       from(name){calls.push({kind:"from",name});throw new Error("Direct table access forbidden: "+name)}
     }
   };
