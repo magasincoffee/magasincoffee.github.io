@@ -61,7 +61,8 @@ test("MER-004/005: cross-role UI state and role boundary are explicit",()=>{
  assert.match(employeeApp,/workforce-cross-role-v1\.css\?v=20260929-mer004/);
  assert.match(staff,/wf-state/);
  assert.match(employeeProfile,/wf-state/);
- assert.match(employeeProfile,/backend|Workforce Profile|canonical/i);
+ assert.match(employeeProfile,/Thông tin này được đồng bộ từ hồ sơ nhân sự và chỉ dùng để xem/);
+ assert.doesNotMatch(employeeProfile,/backend|Workforce Profile|canonical/i);
  assert.match(managerEntry,/role!=='STORE_MANAGER'/);
  assert.match(managerEntry,/role==='OWNER'/);
 });
