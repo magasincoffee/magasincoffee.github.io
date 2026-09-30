@@ -167,7 +167,15 @@ function renderQueue(x,snapshot){
   const availabilityRows=availability?.getRows?.()||[];
   const availabilityDays=new Set(availabilityRows.map(r=>String(r?.work_date||'').slice(0,10)).filter(Boolean)).size;
   const availabilitySettled=!['idle','loading'].includes(String(availabilityState));
-  if(availabilitySettled&&registration==='REGISTRATION_OPEN'){
+  if(!availabilitySettled&&registration==='REGISTRATION_OPEN'){
+    actions.push({
+      icon:'＋',
+      title:'Thời gian có thể làm tuần sau',
+      detail:'Đang kiểm tra các khoảng thời gian đã lưu.',
+      label:'Mở đăng ký',
+      action:'availability'
+    });
+  }else if(availabilitySettled&&registration==='REGISTRATION_OPEN'){
     if(availabilityRows.length){
       actions.push({
         icon:'✓',
