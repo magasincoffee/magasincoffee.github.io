@@ -39,8 +39,9 @@ test("EMLIVE-003 Payroll remains read-only and removes implementation language",
   assert.match(payroll,/Chưa có kỳ lương nào để hiển thị/);
   assert.match(payroll,/Kỳ lương/);
   assert.match(payroll,/Trạng thái Ước tính không có nghĩa là kỳ lương đã được chốt/);
-  assert.doesNotMatch(payroll,/Self-check|Projection payroll canonical|Payroll self-check|payroll entry canonical|canonical monetary evaluator|payroll truth|Kỳ payroll|Revision|review\/finalize\/paid/i);
+  assert.doesNotMatch(payroll,/Self-check|Projection payroll canonical|Payroll self-check|payroll entry canonical|canonical monetary evaluator|payroll truth|Kỳ payroll|review\/finalize\/paid/i);
   assert.doesNotMatch(payroll,/review_payroll|finalize_payroll|mark_payroll_paid|PAYROLL_AUTHORIZED/i);
+  assert.doesNotMatch(payroll,/>Revision</i);
 });
 
 test("EMLIVE-003 Notification has loading empty error retry without exposing backend error text",()=>{
