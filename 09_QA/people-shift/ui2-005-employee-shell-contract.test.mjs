@@ -60,15 +60,13 @@ test("canonical Employee deep-link allowlists remain unchanged", () => {
   assert.ok(runtime.includes(allow));
 });
 
-test("secondary functions remain reachable without becoming primary nav", () => {
-  assert.ok(app.includes('data-view="inventory"'));
+test("only canonical live secondary actions remain reachable", () => {
   assert.ok(app.includes('data-view="swap"'));
-  assert.ok(app.includes('data-view="settings"'));
   assert.ok(app.includes('aria-label="Thông báo"'));
+  assert.doesNotMatch(app, /data-view="inventory"|data-view="settings"/);
   assert.ok(js.includes("PRIMARY_PARENT"));
-  assert.ok(js.includes("view === 'swap'"));
-  assert.ok(js.includes("view === 'inventory'"));
-  assert.ok(js.includes("view === 'settings'"));
+  assert.ok(js.includes("swap: 'schedule'"));
+  assert.doesNotMatch(js, /inventory: 'dashboard'|settings: 'profile'/);
 
   assert.ok(schedule.includes("data-schedule-availability"));
   assert.ok(schedule.includes('data-schedule-action="give"'));

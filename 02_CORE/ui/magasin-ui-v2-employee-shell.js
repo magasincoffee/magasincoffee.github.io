@@ -29,9 +29,7 @@
     'ca-nhan': 'profile'
   });
   const PRIMARY_PARENT = Object.freeze({
-    swap: 'schedule',
-    inventory: 'dashboard',
-    settings: 'profile'
+    swap: 'schedule'
   });
 
   let originalShowView = null;
@@ -225,13 +223,7 @@
     nav.querySelectorAll('[data-view]').forEach(link => {
       const view = normalize(link.dataset.view);
       link.classList.toggle('employee-v2-primary-source', primaryKeys.has(view));
-      const label = view === 'swap'
-        ? '⇄ Đổi / Cho ca'
-        : view === 'inventory'
-          ? '□ Tồn hàng'
-          : view === 'settings'
-            ? '⚙ Cài đặt'
-            : null;
+      const label = view === 'swap' ? '⇄ Đổi / Cho ca' : null;
       if (label && link.textContent !== label) link.textContent = label;
     });
   };

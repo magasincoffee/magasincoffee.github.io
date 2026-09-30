@@ -146,7 +146,7 @@ for(const width of shellWidths){
       const drawer=employeeShell.locator("#drawer.open");
       await drawer.waitFor({state:"visible"});
       const secondary=await drawer.locator(".nav a:visible").evaluateAll(nodes=>nodes.map(x=>x.dataset.view));
-      if(JSON.stringify(secondary)!==JSON.stringify(["inventory","swap","settings"]))throw new Error(JSON.stringify(secondary));
+      if(JSON.stringify(secondary)!==JSON.stringify(["swap"]))throw new Error(JSON.stringify(secondary));
       const expanded=await menu.getAttribute("aria-expanded");
       if(expanded!=="true")throw new Error("aria-expanded="+expanded);
       await employeeShell.keyboard.press("Escape");

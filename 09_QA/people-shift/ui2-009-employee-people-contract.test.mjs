@@ -83,7 +83,8 @@ test("UI2-009 Profile stays on existing operational projection allowlist and pre
   for(const id of ['profileFullName','profileUsername','profilePhone','profileRole','profileStatus','profilePrimaryStore','profileStorePriority','profileLevel','profileJoinDate'])assert.ok(profile.includes("'"+id+"'")||app.includes('id="'+id+'"'),id);
   assert.match(app,/id="view-profile" class="page-view employee-profile-v2"/);
   assert.match(app,/Hồ sơ vận hành chỉ đọc từ projection canonical/);
-  assert.match(app,/class="panel security-link-panel"[\s\S]*onclick="showView\('settings'\)"/);
+  assert.match(app,/class="panel security-link-panel"[\s\S]*Mật khẩu do Supabase Auth quản lý/);
+  assert.doesNotMatch(app,/onclick="showView\('settings'\)"|id="view-settings"/);
   assert.doesNotMatch(profile,/\bemail\b|access_scope|hourly_rate|pay_rule_reference|service_role/i);
   assertNoBrowserDml(profile);
 });
@@ -95,7 +96,7 @@ test("UI2-009 direct route/back/reload authority stays delegated to the existing
   assert.match(runtime,/E\.attendance\?\.refresh\?\.\(\)/);
   assert.match(runtime,/E\.profileProjection\?\.refresh\?\.\(\)/);
   assert.match(runtime,/E\.payrollSelfCheck\?\.refresh\?\.\(\)/);
-  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003)&runtime=engine/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001)&runtime=engine/);
 });
 
 console.log("UI2_009_EMPLOYEE_PEOPLE_CONTRACT=PASS");
