@@ -20,7 +20,7 @@ test("EMLIVE-004 removes temporary authority and preserves permanent acceptance 
   assert.equal(exists(acceptancePath),true);
   assert.match(acceptance,/MAGASIN_EMPLOYEE_LIVE_READINESS_V1/);
   assert.match(acceptance,/EMLIVE-004/);
-  assert.match(acceptance,/CANDIDATE \/ PENDING FINAL EXACT-MAIN CLOSURE/);
+  assert.match(acceptance,/CLOSED \/ ACCEPTED/);
   assert.match(acceptance,/ACTIVE Employee profiles: \*\*4\*\*/);
   assert.match(acceptance,/ACTIVE Employee profiles with existing sign-in history: \*\*3\*\*/);
   assert.match(acceptance,/Employee Availability rows: \*\*17\*\*/);
