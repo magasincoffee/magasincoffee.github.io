@@ -107,7 +107,7 @@ try{
    return "ESTIMATED→FINALIZED rejected; state remains ESTIMATED";
  });
 
- for(const [next,label] of [["REVIEWED","Đã review"],["FINALIZED","Đã chốt"],["PAID","Đã thanh toán"]]){
+ for(const [next,label] of [["REVIEWED","Đã kiểm tra"],["FINALIZED","Đã chốt"],["PAID","Đã thanh toán"]]){
    await check("e2e13_employee_self_check_renders_"+next.toLowerCase(),async()=>{
      const r=await page.evaluate(next=>globalThis.__TASK106_QA.serverTransitionPayroll(next),next);
      if(r.error)throw new Error(JSON.stringify(r));
