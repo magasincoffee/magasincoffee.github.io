@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-011 BLOCKED / OWNER_REQUIRED — REAL BUSINESS CONFIGURATION  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 REQUIRED BEFORE XSTORE-011 / XSTORE-011 BLOCKED  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -99,6 +99,61 @@ Current production acceptance:
 - the live Manager Workforce page loads real Availability data under that authority;
 - `INVENTORY_MANAGER` remains separate and is not accepted as Workforce authority;
 - XSTORE-001 is CLOSED.
+
+## 0.2 Owner correction — 2026-10-01 — recurring weekly staffing requirement
+
+A post-implementation Owner review found that the XSTORE-007 weekly staffing-input model is not the desired real operating model.
+
+### Correct business rule
+
+Staffing demand is a **recurring weekly operating configuration**, not transaction data that a Manager must re-enter for each calendar week.
+
+Canonical meaning:
+
+```text
+Weekly Staffing Template = how many people each store normally needs by weekday/time block
+Availability             = when employees can work in a specific target week
+Schedule DRAFT            = proposed employee assignments for a specific target week
+work_schedules            = published official schedule truth
+```
+
+Manager/Owner configures the staffing template once using:
+
+```text
+store + day_of_week + start_time + end_time + target_headcount
+```
+
+Example:
+
+```text
+CN1 · Monday · 07:00–12:00 · 2 people
+```
+
+The same rule is reused for future weeks until management explicitly changes and saves it. Manager must **not** have to recreate identical requirements for every new week.
+
+### Required UX
+
+The Manager staffing-requirement surface must be presented as a weekly operating board, visually aligned with the official scheduling board:
+
+- CN1–CN4 in one coherent operating view;
+- Monday→Sunday columns;
+- one or more time blocks per day/store;
+- target headcount visible directly in each block;
+- explicit edit/save flow;
+- saved values persist as the default recurring weekly configuration;
+- no technical fields such as `authority_source`, migration names or legacy minimum/maximum semantics shown to normal users.
+
+### Authority correction
+
+The already-implemented XSTORE-007 model stores Robot authority in date-bound `staffing_requirements` rows tagged `authority_source='XSTORE_V1'`. That implementation history remains valid evidence, but this model is **superseded for final production acceptance** by the recurring weekly configuration described above.
+
+The legacy table `staffing_requirement_templates` demonstrates an earlier recurring-week concept, but it must **not** be blindly reactivated as final authority. Reconcile and design one clean canonical recurring authority that preserves current role/scope/security rules and avoids parallel truths.
+
+### Execution gate
+
+Do **not** execute XSTORE-011 real-data acceptance using the current weekly/date-bound staffing input.
+
+Complete XSTORE-C01→C05 first. Only then may XSTORE-011 resume.
 
 ## 1. Purpose
 
@@ -278,7 +333,12 @@ Out of scope unless explicitly added later:
 | XSTORE-008 | Auto Schedule DRAFT engine | Global four-store DRAFT from Availability + Store Priority + explicit requirements; shortages returned; no auto-publish | **DONE / FEATURE READY / REAL INPUT PENDING** |
 | XSTORE-009 | Review/edit/publish integration | Robot hands off to existing per-store edit + Validate → Review → Publish canonical state machine | **DONE** |
 | XSTORE-010 | Full regression + production-safe acceptance | Exact-main static/browser/cross-role/pages regression | **DONE / EXACT-MAIN GREEN** |
-| XSTORE-011 | Canonical reconciliation + temp cleanup | Live real-data acceptance, permanent-doc reconciliation, then delete TEMP Source of Truth | **BLOCKED / OWNER_REQUIRED — REAL BUSINESS CONFIGURATION** |
+| XSTORE-C01 | Recurring Staffing architecture lock | Reconcile current date-bound XSTORE requirement model, legacy recurring template, role/scope/security boundaries, and lock one recurring weekly authority | **READY / NEXT AUTHORITATIVE TASK** |
+| XSTORE-C02 | Recurring Staffing schema + RPC authority | Implement canonical `store + day_of_week + start + end + target_headcount` persistence/read/write authority; preserve Manager/Owner scope and remove weekly re-entry requirement | **BLOCKED BY C01** |
+| XSTORE-C03 | Manager weekly staffing board UX | Replace row-based weekly/date input with CN1–CN4 Monday→Sunday staffing board; edit once, save, reuse until changed | **BLOCKED BY C02** |
+| XSTORE-C04 | Auto Schedule recurring projection | Auto Schedule projects the saved recurring template into the requested calendar week without creating a second staffing truth | **BLOCKED BY C02/C03** |
+| XSTORE-C05 | Regression + production-safe correction acceptance | Prove persistence across weeks, Manager edit/save, Robot projection, security, browser/reload and exact-main gates; no fake staffing/schedule business data | **BLOCKED BY C04** |
+| XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **BLOCKED BY XSTORE-C01→C05** |
 
 ## 5. Recommended execution order
 
@@ -293,7 +353,12 @@ XSTORE-001 DONE
 → XSTORE-008 DONE
 → XSTORE-009 DONE
 → XSTORE-010 DONE
-→ XSTORE-011 BLOCKED / OWNER_REQUIRED / real business configuration + live acceptance + cleanup
+→ XSTORE-C01 READY / recurring staffing architecture lock
+→ XSTORE-C02
+→ XSTORE-C03
+→ XSTORE-C04
+→ XSTORE-C05
+→ XSTORE-011 / real business configuration + live acceptance + cleanup
 ```
 
 Do not jump to the Robot before profile authority, Availability semantics and cross-store manual scheduling are proven.
@@ -309,15 +374,20 @@ Already approved:
 - Robot/Auto Schedule creates a draft only;
 - Manager reviews/edits and publishes.
 
-Staffing Requirement semantics are now resolved for V1:
+Staffing Requirement semantics from XSTORE-007 are now **historical implementation state and must be corrected before final acceptance**.
 
-- Manager/Owner explicitly enters weekly requirements as **store + date + start time + end time + target headcount**;
-- the system does not infer or invent headcount;
-- only rows tagged `authority_source='XSTORE_V1'` are consumed by the new Robot;
-- legacy staffing templates/rows remain historical/compatibility data and are not new Robot authority.
+Owner-approved final operating semantics as of 2026-10-01:
+
+- Manager/Owner configures a recurring weekly requirement as **store + weekday + start time + end time + target headcount**;
+- the configuration is saved once and reused for later weeks until management edits and saves it;
+- Manager must not re-enter the same demand for every calendar week;
+- the system must not infer or invent headcount;
+- Auto Schedule must project the recurring authority into the selected target week rather than treating date-bound copies as a second authority;
+- existing `XSTORE_V1` date-bound rows and legacy template structures are migration/reconciliation inputs only until XSTORE-C01 locks the final canonical authority.
 
 Current execution boundary:
-- XSTORE-001→010 are implemented;
+- XSTORE-001→010 are implemented and remain historical accepted implementation lineage;
+- XSTORE-C01 is the **next authoritative task** and must be completed before any XSTORE-011 business-data acceptance;
 - accepted executable main for XSTORE-007→010: `2429183e30dcc3760327e70a3e8a62019d13d2b0`;
 - acceptance evidence: `05_SYSTEM/XSTORE_007_010_STAFFING_AUTO_DRAFT_ACCEPTANCE.md`;
 - production currently has 0 Store Priority rows and 0 `XSTORE_V1` Staffing Requirement rows; management must enter real business values;
@@ -404,7 +474,7 @@ This track is complete only when:
 4. the scheduler uses one cross-store workforce pool without duplicate/overlapping assignments;
 5. Owner/authorized scheduling management can review CN1–CN4 together;
 6. manual cross-store assignment is safe and validated;
-7. staffing-requirement semantics are explicitly approved;
+7. recurring weekly staffing-requirement semantics are implemented: Manager configures once by store/weekday/time/headcount and the saved configuration persists until explicitly changed;
 8. Auto Schedule generates a reviewable four-store DRAFT only;
 9. Manager can edit, validate and publish through the canonical scheduling path;
 10. full relevant regression/E2E/security/reload checks are green;
@@ -415,9 +485,9 @@ This track is complete only when:
 
 Do not leave this temporary file as a second permanent source of truth.
 
-At XSTORE-011, only after real-data live acceptance:
+At XSTORE-011, only after XSTORE-C01→C05 are complete and the corrected recurring model is exact-main green:
 - Manager sets real Store Priority values for employees;
-- Manager enters real weekly staffing requirements for CN1–CN4;
+- Manager configures the real recurring weekly staffing template for CN1–CN4 once (weekday/time/headcount), and verifies it persists/reuses across target weeks;
 - Manager runs Auto Schedule and reviews any shortages;
 - Manager adjusts the DRAFT as needed;
 - canonical Validate → Review → Publish succeeds on a real target week;
