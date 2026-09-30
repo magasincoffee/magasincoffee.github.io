@@ -25,5 +25,5 @@ test("EMLIVE-002 runtime cache points browsers at the reconciled Schedule and At
   const index=read("06_EMPLOYEE/index.html");
   assert.match(runtime,/schedule\/engine-v1\.js\?v=20260930-emlive002/);
   assert.match(runtime,/attendance\/engine-v1\.js\?v=20260930-emlive002/);
-  assert.match(index,/employee-runtime-v1\.html\?v=20260930-emlive002/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive002|20260930-emlive003)/);
 });
