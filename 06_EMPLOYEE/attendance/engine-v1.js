@@ -46,11 +46,11 @@ function renderHistory(d){
   table.classList.add('employee-attendance-history-table');
   table.innerHTML='<thead><tr><th>Ngày</th><th>Ca chính thức</th><th>Cửa hàng</th><th>Trạng thái</th></tr></thead><tbody></tbody>';
   const body=table.querySelector('tbody');
-  if(!state.history.length){body.innerHTML='<tr><td colspan="4"><div class="employee-people-state empty">Chưa có bản ghi chấm công canonical trong tuần này.</div></td></tr>';return}
+  if(!state.history.length){body.innerHTML='<tr><td colspan="4"><div class="employee-people-state empty">Tuần này chưa có bản ghi chấm công.</div></td></tr>';return}
   body.innerHTML=state.history.map(r=>'<tr><td data-label="Ngày">'+esc(fmt(r.work_date))+'</td><td data-label="Ca chính thức">'+esc(hm(r.planned_start))+'–'+esc(hm(r.planned_end))+'</td><td data-label="Cửa hàng">'+esc(r.store_code||r.store_name||'Cửa hàng')+'</td><td data-label="Trạng thái"><span class="employee-attendance-history-status">'+esc(statusText(r.status))+'</span></td></tr>').join('');
 }
 function intro(){
-  return '<div class="employee-people-intro"><div><div class="employee-people-eyebrow">Giờ công · Manual-time</div><h2>Chấm công theo lịch làm</h2><p>Chỉ gửi giờ bắt đầu/kết thúc thực tế cho ca chính thức hiện thuộc về bạn. Dữ liệu chấm công thô không phải giờ công đã xác nhận và không phải payroll truth.</p></div></div>';
+  return '<div class="employee-people-intro"><div><div class="employee-people-eyebrow">Giờ công · Nhân viên tự khai báo</div><h2>Chấm công theo lịch làm</h2><p>Chỉ gửi giờ bắt đầu/kết thúc thực tế cho ca chính thức hiện thuộc về bạn. Giờ bạn gửi cần được quản lý xác nhận trước khi dùng để tính lương.</p></div></div>';
 }
 function render(){
   const d=doc(),p=panel();if(!d||!p)return;
@@ -60,7 +60,7 @@ function render(){
   if(legacyReport){legacyReport.hidden=true;legacyReport.setAttribute('aria-hidden','true');legacyReport.classList.add('legacy-attendance-report')}
   const historyPanel=d.querySelector('#view-attendance .attendance-entry-grid .panel:nth-child(2)');if(historyPanel)historyPanel.classList.add('employee-attendance-history');
   p.classList.add('employee-attendance-v1','employee-attendance-v2-card','employee-people-card');
-  if(state.loading){setUiState('loading');p.innerHTML=intro()+'<div class="employee-people-state info" data-attendance-loading="1" role="status">Đang tải lịch chính thức và trạng thái chấm công từ máy chủ…</div>';renderHistory(d);return}
+  if(state.loading){setUiState('loading');p.innerHTML=intro()+'<div class="employee-people-state info" data-attendance-loading="1" role="status">Đang tải lịch và chấm công…</div>';renderHistory(d);return}
   if(state.error){setUiState('error');p.innerHTML=intro()+'<div class="employee-people-state error" data-attendance-error="1" role="alert"><strong>Không tải được dữ liệu chấm công.</strong><span>'+esc(state.error)+'</span><button class="m-button m-button--secondary btn secondary" type="button" data-attendance-retry>Thử lại</button></div>';renderHistory(d);return}
   const selected=state.schedules.find(r=>String(r.schedule_id)===String(state.selectedScheduleId))||state.schedules[0]||null;
   state.selectedScheduleId=selected?.schedule_id||null;
@@ -78,10 +78,10 @@ function render(){
       '<div class="field"><label>Giờ bắt đầu thực tế</label><input id="employeeAttendanceStart" class="m-input" type="time" step="60" autocomplete="off"'+(already||legacy?' disabled':'')+'></div>'+
       '<div class="field"><label>Giờ kết thúc thực tế</label><input id="employeeAttendanceEnd" class="m-input" type="time" step="60" autocomplete="off"'+(already||legacy?' disabled':'')+'></div>'+
       '<div class="field wide"><label>Ghi chú (không bắt buộc)</label><textarea id="employeeAttendanceNote" class="m-input"'+(already||legacy?' disabled':'')+'></textarea></div></div>'+
-      '<div class="attendance-status"><span>Trạng thái canonical</span><strong>'+esc(status)+'</strong></div>'+
+      '<div class="attendance-status"><span>Trạng thái chấm công</span><strong>'+esc(status)+'</strong></div>'+
       '<div class="attendance-actions"><button class="m-button m-button--primary btn primary" id="employeeAttendanceSubmit" type="button"'+(already||legacy||state.submitting?' disabled':'')+'>'+(state.submitting?'Đang gửi…':'Gửi giờ làm thực tế')+'</button><span class="muted">Tuần '+esc(fmt(state.week))+'–'+esc(fmt(add(state.week,6)))+'</span></div>'+
-      '<div class="attendance-help">Máy chủ kiểm tra lại quyền sở hữu ca tại thời điểm gửi. Give/Swap có thể làm thay đổi ca hiện tại; khi đó màn hình sẽ tải lại canonical truth.</div>'
-      :'<div class="employee-people-state empty" data-attendance-empty="1"><strong>Không có ca được phát hành cho bạn trong tuần này.</strong><span>Nếu ca vừa được Give/Swap, hãy làm mới hoặc chuyển tuần để lấy lịch hiện tại từ máy chủ.</span></div>');
+      '<div class="attendance-help">Hệ thống kiểm tra lại ca ngay khi bạn gửi. Nếu ca vừa được cho/đổi, lịch sẽ tự tải lại.</div>'
+      :'<div class="employee-people-state empty" data-attendance-empty="1"><strong>Không có ca được phát hành cho bạn trong tuần này.</strong><span>Nếu ca vừa được cho/đổi, hãy làm mới hoặc chuyển tuần để xem lịch hiện tại.</span></div>');
   renderHistory(d);
 }
 async function loadWeek(){
@@ -101,7 +101,7 @@ async function loadWeek(){
     state.loading=false;state.error=null;state.ready=true;render();
   })().catch(e=>{
     if(seq!==requestSeq||requestedWeek!==state.week)return;
-    state.schedules=[];state.history=[];state.loading=false;state.error=ERROR_COPY[errorCode(e)]||'Không thể tải dữ liệu từ máy chủ.';render();
+    state.schedules=[];state.history=[];state.loading=false;state.error=ERROR_COPY[errorCode(e)]||'Không thể tải dữ liệu chấm công lúc này.';render();
   });
   pending={week:requestedWeek,promise:run};try{return await run}finally{if(pending?.promise===run)pending=null}
 }
@@ -132,7 +132,7 @@ async function submit(){
   }
   await loadWeek();
   const retry=!!q.data?.already_submitted;
-  setMessage(retry?'Bản ghi đã tồn tại; hệ thống giữ nguyên cùng một lần chấm công.':'Đã gửi giờ làm thực tế. Trạng thái hiện tại được lấy lại từ máy chủ.','success',retry?'ALREADY_SUBMITTED':'ATTENDANCE_SUBMITTED');
+  setMessage(retry?'Bản ghi đã tồn tại; hệ thống giữ nguyên cùng một lần chấm công.':'Đã gửi giờ làm thực tế. Hệ thống đã cập nhật trạng thái mới nhất.','success',retry?'ALREADY_SUBMITTED':'ATTENDANCE_SUBMITTED');
 }
 function bind(d){
   if(!d?.body||d.body.dataset.employeeAttendanceEngine==='1')return;
