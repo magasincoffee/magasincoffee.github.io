@@ -20,15 +20,37 @@ const availability=[
  {availability_id:'a3',user_id:'e3',employee_name:'Chưa cấu hình',work_date:'2026-10-07',start_time:'12:00',end_time:'17:00',priority_store_ids:[],priority_store_codes:[]}
 ];
 const requirements=[
- {requirement_id:'r1',store_id:'s1',store_code:'CN1',store_name:'MAGASIN COFFEE CN1',work_date:'2026-10-05',start_time:'06:00',end_time:'12:00',target_headcount:2,status:'ACTIVE'},
- {requirement_id:'r2',store_id:'s2',store_code:'CN2',store_name:'MAGASIN COFFEE CN2',work_date:'2026-10-05',start_time:'06:00',end_time:'12:00',target_headcount:2,status:'ACTIVE'},
- {requirement_id:'r3',store_id:'s3',store_code:'CN3',store_name:'MAGASIN COFFEE CN3',work_date:'2026-10-05',start_time:'06:00',end_time:'12:00',target_headcount:2,status:'ACTIVE'},
- {requirement_id:'r4',store_id:'s4',store_code:'CN4',store_name:'MAGASIN COFFEE CN4',work_date:'2026-10-05',start_time:'06:00',end_time:'12:00',target_headcount:2,status:'ACTIVE'}
+ {requirement_id:'r1',store_id:'s1',store_code:'CN1',store_name:'MAGASIN COFFEE CN1',day_of_week:1,start_time:'06:00',end_time:'12:00',target_headcount:2},
+ {requirement_id:'r2',store_id:'s2',store_code:'CN2',store_name:'MAGASIN COFFEE CN2',day_of_week:1,start_time:'07:00',end_time:'12:00',target_headcount:2},
+ {requirement_id:'r3',store_id:'s3',store_code:'CN3',store_name:'MAGASIN COFFEE CN3',day_of_week:2,start_time:'17:00',end_time:'22:00',target_headcount:3},
+ {requirement_id:'r4',store_id:'s4',store_code:'CN4',store_name:'MAGASIN COFFEE CN4',day_of_week:7,start_time:'08:00',end_time:'13:00',target_headcount:2},
+ {requirement_id:'r5',store_id:'s1',store_code:'CN1',store_name:'MAGASIN COFFEE CN1',day_of_week:5,start_time:'12:00',end_time:'17:00',target_headcount:1}
 ];
 const calls=[],opens=[];
 window.__XSTORE_QA={calls,opens,stores,plan,availability,requirements};
 window.MAGASIN_MANAGER_SCHEDULE_DRAFT={getState:()=>({week,storeId:'s1'})};
-const api={rpc:async(name,args)=>{calls.push({name,args});if(name==='get_manager_accessible_stores')return{data:stores,error:null};if(name==='get_cross_store_weekly_plan_v1')return{data:plan,error:null};if(name==='get_cross_store_weekly_availability_v1')return{data:availability,error:null};if(name==='list_cross_store_staffing_requirements_v1')return{data:requirements,error:null};if(name==='replace_cross_store_staffing_requirements_v1')return{data:{week_start:week,requirement_count:(args?.p_requirements||[]).length,authority_source:'XSTORE_V1'},error:null};if(name==='auto_generate_cross_store_schedule_v1')return{data:{week_start:week,status:'DRAFT',algorithm_version:'XSTORE_GLOBAL_V1',assignment_count:8,shortages:[],shortage_count:0,requires_manager_review:true,published:false},error:null};return{data:null,error:{message:'UNEXPECTED '+name}}}};
+const api={rpc:async(name,args)=>{
+ calls.push({name,args});
+ if(name==='get_manager_accessible_stores')return{data:stores,error:null};
+ if(name==='get_cross_store_weekly_plan_v1')return{data:plan,error:null};
+ if(name==='get_cross_store_weekly_availability_v1')return{data:availability,error:null};
+ if(name==='list_workforce_recurring_staffing_requirements_v1')return{data:requirements.map(x=>({...x})),error:null};
+ if(name==='replace_workforce_recurring_staffing_requirements_v1'){
+  const incoming=Array.isArray(args?.p_requirements)?args.p_requirements:[];
+  requirements.splice(0,requirements.length,...incoming.map((x,i)=>({
+   requirement_id:'saved-'+(i+1),
+   store_id:x.store_id,
+   store_code:stores.find(s=>s.id===x.store_id)?.code||'',
+   store_name:stores.find(s=>s.id===x.store_id)?.name||'',
+   day_of_week:Number(x.day_of_week),
+   start_time:x.start_time,
+   end_time:x.end_time,
+   target_headcount:Number(x.target_headcount)
+  })));
+  return{data:{requirement_count:requirements.length,accessible_store_count:4,accessible_store_codes:['CN1','CN2','CN3','CN4']},error:null};
+ }
+ return{data:null,error:{message:'UNEXPECTED '+name}};
+}};
 window.supabase={createClient:()=>api};
 window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
  version:'QA',
