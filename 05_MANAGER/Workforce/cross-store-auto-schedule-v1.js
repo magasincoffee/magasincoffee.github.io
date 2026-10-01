@@ -14,7 +14,7 @@ const DAYS=[
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const hm=v=>String(v||'').slice(0,5);
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
-const state={week:null,stores:[],requirements:[],editing:false,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0};
+const state={week:null,stores:[],requirements:[],editing:false,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null};
 const mount=()=>document.getElementById('xstoreAutomationMount');
 const validBlock=r=>r.store_id&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&r.start_time&&r.end_time&&Number(r.target_headcount)>0;
 const configuredStoreIds=()=>new Set(state.requirements.filter(validBlock).map(r=>String(r.store_id)));
@@ -68,6 +68,14 @@ function boardHtml(){
   +'</tbody></table></div>';
 }
 
+function shortagesHtml(){
+ if(!state.shortages.length)return '';
+ return '<div class="xsa-status">'+state.shortages.slice(0,12).map(x=>{
+  const store=state.stores.find(s=>String(s.id)===String(x.store_id||''));
+  return esc((x.store_code||store?.code||'CN')+' · '+String(x.work_date||'').slice(0,10)+' · '+hm(x.start_time)+'–'+hm(x.end_time)+' · thiếu '+Number(x.missing||0));
+ }).join('<br>')+'</div>';
+}
+
 function render(){
  const m=mount();if(!m)return;
  ensureCss();
@@ -75,21 +83,24 @@ function render(){
  const totalStores=state.stores.length;
  const priorityReady=state.unconfiguredEmployeeCount===0;
  const requirementsReady=state.requirements.length>0;
+ const complete=requirementsReady&&totalStores>0&&storeCount===totalStores;
  const summary=[
   '<span class="xsa-pill">'+state.requirements.length+' khung cố định</span>',
   '<span class="xsa-pill '+(storeCount===totalStores&&totalStores?'ok':'warn')+'">'+storeCount+'/'+totalStores+' CN đã cấu hình</span>'
  ];
  if(state.unconfiguredEmployeeCount)summary.push('<span class="xsa-pill warn">'+state.unconfiguredEmployeeCount+' NV chưa có ưu tiên CN</span>');
+ if(state.assignmentCount!==null)summary.push('<span class="xsa-pill ok">'+state.assignmentCount+' ca Robot đã xếp</span>');
  m.innerHTML='<section class="xsa">'
   +'<div class="xsa-head"><div><div class="xsa-kicker">Workforce · Cross-store</div><h4>NHU CẦU NHÂN SỰ HÀNG TUẦN</h4><div class="muted" style="margin-top:5px">Cấu hình một lần theo cửa hàng × thứ trong tuần × khung giờ × số người. Giá trị được dùng lại cho các tuần sau cho đến khi Quản lý chỉnh và lưu.</div></div>'
-  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaStaff">Thiết lập ưu tiên nhân viên</button><button class="btn" type="button" id="xsaConfig">'+(state.editing?'Đang chỉnh':'Chỉnh nhu cầu tuần mẫu')+'</button><button class="btn primary" type="button" id="xsaAuto" disabled title="Chờ XSTORE-C04 chuyển Robot sang recurring staffing">Tạo DRAFT tự động · Chờ C04</button></div></div>'
+  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaStaff">Thiết lập ưu tiên nhân viên</button><button class="btn" type="button" id="xsaConfig">'+(state.editing?'Đang chỉnh':'Chỉnh nhu cầu tuần mẫu')+'</button><button class="btn primary" type="button" id="xsaAuto"'+(!complete||state.loading||state.busy?' disabled':'')+'>Tạo DRAFT tự động</button></div></div>'
   +'<div class="xsa-flow"><div class="xsa-step '+(priorityReady?'ready':'warn')+'"><b>1. Store Priority</b><span>'+(priorityReady?'Đã sẵn sàng':'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa được gán ưu tiên CN')+'</span></div>'
   +'<div class="xsa-step '+(requirementsReady?'ready':'warn')+'"><b>2. Nhu cầu nhân sự recurring</b><span>'+(requirementsReady?'Đang dùng cấu hình cố định hàng tuần':'Chưa có cấu hình; Quản lý cần nhập dữ liệu thực tế')+'</span></div>'
-  +'<div class="xsa-step locked"><b>3. Auto Schedule</b><span>Đang tạm khóa đến XSTORE-C04 để Robot không đọc staffing truth date-bound cũ.</span></div></div>'
+  +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>3. Auto Schedule</b><span>'+(complete?'Sẵn sàng project tuần mẫu recurring vào tuần đang chọn và tạo DRAFT':'Cần cấu hình recurring staffing cho đủ phạm vi cửa hàng trước khi chạy Robot')+'</span></div></div>'
   +'<div class="xsa-summary">'+summary.join('')+'</div>'
   +'<div class="xsa-recurring-note"><b>Tuần mẫu cố định:</b> không chọn ngày lịch và không cần nhập lại mỗi tuần. Hệ thống không tự đoán số người.</div>'
   +boardHtml()
   +(state.editing?'<div class="xsa-editor-actions"><button class="btn" type="button" id="xsaCancel">Hủy thay đổi</button><button class="btn primary" type="button" id="xsaSave">Lưu cấu hình tuần mẫu</button></div>':'')
+  +shortagesHtml()
   +(state.message?'<div class="xsa-status '+esc(state.messageType)+'">'+esc(state.message)+'</div>':'')
   +'</section>';
  bind();
@@ -156,8 +167,49 @@ async function saveRequirements(){
  finally{state.busy=false;render()}
 }
 
-function autoSchedule(){
- setMessage('Auto Schedule đang tạm khóa đến XSTORE-C04 để tránh dùng staffing truth theo ngày/tuần cũ.','');
+async function callAuto(replaceExisting){
+ const q=await client().rpc('auto_generate_cross_store_schedule_v1',{
+  p_week_start:state.week,
+  p_replace_existing:!!replaceExisting,
+  p_algorithm_version:'XSTORE_GLOBAL_RECURRING_V1'
+ });
+ if(q.error)throw q.error;
+ return q.data||{};
+}
+
+async function autoSchedule(){
+ if(state.busy)return;
+ if(!state.week)return setMessage('Chưa xác định tuần cần xếp lịch.','error');
+ const complete=state.requirements.length>0&&state.stores.length>0&&configuredStoreCount()===state.stores.length;
+ if(!complete)return setMessage('Cần cấu hình nhu cầu recurring cho đủ phạm vi cửa hàng trước khi chạy Robot.','error');
+ state.busy=true;state.shortages=[];state.assignmentCount=null;render();
+ try{
+  let result;
+  try{result=await callAuto(false)}
+  catch(e){
+   const raw=String(e?.message||e?.code||e||'');
+   if(!raw.includes('EXISTING_DRAFT_REQUIRES_CONFIRMATION'))throw e;
+   if(!confirm('Tuần này đã có bản nháp. Xếp tự động sẽ thay thế các assignment DRAFT hiện tại của các cửa hàng trong phạm vi. Lịch đã duyệt/phát hành không bị thay đổi. Tiếp tục?')){
+    state.message='Đã giữ nguyên bản nháp hiện tại.';state.messageType='';return;
+   }
+   result=await callAuto(true);
+  }
+  state.assignmentCount=Number(result.assignment_count||0);
+  state.shortages=Array.isArray(result.shortages)?result.shortages:[];
+  state.message=state.shortages.length
+   ? 'Robot đã project nhu cầu tuần mẫu và tạo DRAFT nhưng còn '+state.shortages.length+' khung thiếu người. Quản lý cần kiểm tra và chỉnh trước khi duyệt.'
+   : 'Robot đã project nhu cầu tuần mẫu recurring vào tuần đang chọn và tạo DRAFT. Quản lý hãy kiểm tra/chỉnh sửa trước khi duyệt và phát hành.';
+  state.messageType=state.shortages.length?'':'ok';
+  setTimeout(()=>window.MAGASIN_CROSS_STORE_MASTER?.refresh?.(),0);
+ }catch(e){
+  const raw=String(e?.message||e?.code||e||'UNKNOWN');
+  const friendly=raw.includes('STAFFING_REQUIREMENT_INCOMPLETE')?'Chưa cấu hình nhu cầu recurring cho đủ các cửa hàng.'
+   :raw.includes('OFFICIAL_WEEK_ALREADY_EXISTS')?'Tuần này đã có lịch chính thức; Robot không được ghi đè.'
+   :raw.includes('NON_DRAFT_GENERATION_EXISTS')?'Có lịch đã duyệt/phát hành trong tuần; hãy xử lý lịch hiện tại trước khi chạy Robot.'
+   :raw.includes('STAFFING_REQUIREMENT_EMPTY')?'Chưa có nhu cầu recurring để Robot xếp.'
+   :'Xếp tự động thất bại: '+raw;
+  state.message=friendly;state.messageType='error';
+ }finally{state.busy=false;render()}
 }
 
 function bind(){
@@ -178,7 +230,10 @@ function bind(){
 }
 
 async function onMaster(detail={}){
- state.week=detail.week||null;
+ const nextWeek=detail.week||null;
+ const weekChanged=String(nextWeek||'')!==String(state.week||'');
+ state.week=nextWeek;
+ if(weekChanged){state.assignmentCount=null;state.shortages=[];state.message='';state.messageType=''}
  state.stores=Array.isArray(detail.stores)?detail.stores.map(x=>({...x})):[];
  state.unconfiguredEmployeeCount=Number(detail.unconfiguredEmployeeCount||0);
  render();
@@ -188,7 +243,7 @@ async function onMaster(detail={}){
 document.addEventListener('magasin:xstore-master-rendered',e=>void onMaster(e.detail||{}));
 window.MAGASIN_XSTORE_AUTO_SCHEDULE={
  refresh:loadRequirements,
- getState:()=>({...state,stores:state.stores.map(x=>({...x})),requirements:state.requirements.map(x=>({...x}))})
+ getState:()=>({...state,stores:state.stores.map(x=>({...x})),requirements:state.requirements.map(x=>({...x})),shortages:state.shortages.map(x=>({...x}))})
 };
 ensureCss();
 })();
