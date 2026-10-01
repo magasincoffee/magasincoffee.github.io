@@ -26,14 +26,14 @@ async function boot(){
   if(!scopeReady){loading=false;return []}
   loading=true;error=null;
   const q=await sb.rpc('get_manager_weekly_availability',{p_store_id:storeId||null,p_week_start:week});
-  if(q.error){loading=false;error=q.error.message||q.error.code||'UNKNOWN';panel.innerHTML=`<section class="card"><div class="mwr3-status error">Không tải được thời gian có thể làm: ${esc(error)}</div></section>`;return []}
+  if(q.error){console.warn('[MANAGER_AVAILABILITY_LOAD]',q.error);loading=false;error='LOAD_FAILED';panel.innerHTML='<section class="card"><div class="mwr3-status error">Không tải được thời gian có thể làm. Vui lòng tải lại và thử lại.</div></section>';return []}
   rows=Array.isArray(q.data)?q.data:[];
   loading=false;error=null;
   render();
   return rows;
  }
  window.MAGASIN_MANAGER_AVAILABILITY={refresh:load,getState:()=>({week,storeId,rows:rows.map(x=>({...x})),stores:stores.map(x=>({...x})),loading,error})};
- try{stores=await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores()}catch(e){loading=false;error=e?.message||e?.code||'UNKNOWN';panel.innerHTML=`<section class="card"><div class="mwr3-status error">Không tải được phạm vi cửa hàng: ${esc(error)}</div></section>`;return}
+ try{stores=await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores()}catch(e){console.warn('[MANAGER_STORE_SCOPE_LOAD]',e);loading=false;error='LOAD_FAILED';panel.innerHTML='<section class="card"><div class="mwr3-status error">Không tải được danh sách cửa hàng. Vui lòng tải lại và thử lại.</div></section>';return}
  if(stores.length===1)storeId=stores[0].id;
  scopeReady=true;loading=false;error=null;
  function render(){
