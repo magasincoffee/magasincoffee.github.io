@@ -97,7 +97,7 @@ function renderShift(x,snapshot){
   }
   if(snapshot.kind==='wrong-week'){
     x.body.dataset.employeeTodayState='unavailable';heading.textContent='Cần mở lại tuần này';setBadge(x,'Chưa có dữ liệu','warning');
-    box.innerHTML='<div class="m-empty-state employee-today-state employee-today-empty" data-today-unavailable="1"><div class="employee-today-state__copy"><strong>Lịch đang mở ở tuần khác.</strong><span>Today không suy đoán ca từ dữ liệu ngoài tuần hiện tại.</span></div>'+actionButton('Mở Lịch','route:schedule','secondary')+'</div>';
+    box.innerHTML='<div class="m-empty-state employee-today-state employee-today-empty" data-today-unavailable="1"><div class="employee-today-state__copy"><strong>Lịch đang mở ở tuần khác.</strong><span>Màn hình Hôm nay không suy đoán ca từ dữ liệu ngoài tuần hiện tại.</span></div>'+actionButton('Mở Lịch','route:schedule','secondary')+'</div>';
     return;
   }
 
@@ -224,7 +224,7 @@ function renderWeek(x,snapshot){
     root.innerHTML='<div class="employee-today-week-skeleton" data-today-week-loading="1">'+Array.from({length:7},()=>'<span class="m-skeleton"></span>').join('')+'</div>';return;
   }
   if(snapshot.kind==='error'){
-    root.innerHTML='<div class="employee-today-error" data-today-week-error="1"><strong>Không tải được lịch tuần này.</strong><div style="margin-top:4px">Today không hiển thị dữ liệu cũ khi nguồn lịch lỗi.</div></div>';return;
+    root.innerHTML='<div class="employee-today-error" data-today-week-error="1"><strong>Không tải được lịch tuần này.</strong><div style="margin-top:4px">Màn hình Hôm nay không hiển thị dữ liệu cũ khi nguồn lịch đang lỗi.</div></div>';return;
   }
   if(snapshot.kind==='wrong-week'){
     root.innerHTML='<div class="employee-today-empty" data-today-week-unavailable="1"><strong>Chưa có dữ liệu tuần hiện tại.</strong><div class="muted" style="margin-top:4px">Mở Lịch để quay về tuần này.</div></div>';return;
