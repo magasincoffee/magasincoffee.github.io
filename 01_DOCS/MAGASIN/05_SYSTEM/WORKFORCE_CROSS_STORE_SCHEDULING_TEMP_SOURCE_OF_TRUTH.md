@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C04 DONE / XSTORE-C05 READY / XSTORE-011 BLOCKED  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-011 READY  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -337,8 +337,8 @@ Out of scope unless explicitly added later:
 | XSTORE-C02 | Recurring Staffing schema + RPC authority | Implement canonical `store + day_of_week + start + end + target_headcount` persistence/read/write authority; preserve Manager/Owner scope and remove weekly re-entry requirement | **DONE / EXACT-MAIN GREEN** |
 | XSTORE-C03 | Manager weekly staffing board UX | Replace row-based weekly/date input with CN1–CN4 Monday→Sunday staffing board; edit once, save, reuse until changed | **DONE / EXACT-MAIN GREEN** |
 | XSTORE-C04 | Auto Schedule recurring projection | Auto Schedule projects the saved recurring template into the requested calendar week without creating a second staffing truth | **DONE / EXACT-MAIN GREEN / LIVE CUTOVER VERIFIED** |
-| XSTORE-C05 | Regression + production-safe correction acceptance | Prove persistence across weeks, Manager edit/save, Robot projection, security, browser/reload and exact-main gates; no fake staffing/schedule business data | **READY / NEXT AUTHORITATIVE TASK** |
-| XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **BLOCKED BY XSTORE-C01→C05** |
+| XSTORE-C05 | Regression + production-safe correction acceptance | Prove persistence across weeks, Manager edit/save, Robot projection, security, browser/reload and exact-main gates; no fake staffing/schedule business data | **DONE / EXACT-MAIN GREEN / PRODUCTION-SAFE ACCEPTANCE** |
+| XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **READY / NEXT AUTHORITATIVE TASK** |
 
 ## 5. Recommended execution order
 
@@ -357,8 +357,8 @@ XSTORE-001 DONE
 → XSTORE-C02 DONE / recurring staffing schema + RPC authority
 → XSTORE-C03 DONE / Manager weekly staffing board UX
 → XSTORE-C04 DONE / Auto Schedule recurring projection
-→ XSTORE-C05 READY / regression + production-safe correction acceptance
-→ XSTORE-011 / real business configuration + live acceptance + cleanup
+→ XSTORE-C05 DONE / exact-main green / production-safe acceptance
+→ XSTORE-011 READY / real business configuration + live acceptance + cleanup
 ```
 
 Do not jump to the Robot before profile authority, Availability semantics and cross-store manual scheduling are proven.
@@ -387,12 +387,12 @@ Owner-approved final operating semantics as of 2026-10-01:
 
 Current execution boundary:
 - XSTORE-001→010 are implemented and remain historical accepted implementation lineage;
-- XSTORE-C01→C04 are **DONE**; XSTORE-C05 is the **next authoritative task**;
+- XSTORE-C01→C05 are **DONE**; XSTORE-011 is the **next authoritative task**;
 - accepted executable main for XSTORE-007→010: `2429183e30dcc3760327e70a3e8a62019d13d2b0`;
 - acceptance evidence: `05_SYSTEM/XSTORE_007_010_STAFFING_AUTO_DRAFT_ACCEPTANCE.md`;
 - production currently has 0 Store Priority rows and 0 `XSTORE_V1` Staffing Requirement rows; management must enter real business values;
 - no Store Priority, staffing demand, draft assignment or official schedule was fabricated during implementation;
-- XSTORE-011 remains open until a real Manager-configured week is exercised end-to-end and accepted.\n- Live preflight on 2026-09-30 reconfirmed: Store Priority rows = 0, XSTORE_V1 Staffing Requirement rows = 0, draft assignments = 0, official schedules = 0.\n- Preflight evidence: `05_SYSTEM/XSTORE_011_LIVE_PREFLIGHT_EVIDENCE_2026_09_30.md`.\n- Current gate is `XSTORE-C05 READY`; real business configuration remains deferred until XSTORE-C05 is complete.
+- XSTORE-011 remains open until a real Manager-configured week is exercised end-to-end and accepted.\n- Live preflight on 2026-09-30 reconfirmed: Store Priority rows = 0, XSTORE_V1 Staffing Requirement rows = 0, draft assignments = 0, official schedules = 0.\n- Preflight evidence: `05_SYSTEM/XSTORE_011_LIVE_PREFLIGHT_EVIDENCE_2026_09_30.md`.\n- Current gate is `XSTORE-011 READY`; real business configuration and end-to-end publish acceptance belong to XSTORE-011.
 
 ## 6.0.1 XSTORE-C01 recurring staffing architecture lock — 2026-10-01
 
@@ -516,6 +516,38 @@ Exact-main gates:
 - Pages build/deployment `36853279239` = **SUCCESS**.
 
 XSTORE-C05 is now the next authoritative task and owns the full recurring-model regression, security, persistence/reload and production-safe acceptance gate before XSTORE-011.
+
+## 6.0.5 XSTORE-C05 recurring regression + production-safe correction acceptance — 2026-10-01
+
+XSTORE-C05 is **DONE / EXACT-MAIN GREEN / PRODUCTION-SAFE ACCEPTANCE**.
+
+Acceptance:
+- recurring Manager save/read/edit/read semantics were proven using an existing ACTIVE `STORE_MANAGER` identity inside a transaction;
+- the same recurring staffing configuration was projected into two distinct target weeks;
+- both Robot results remained `DRAFT`, `published=false`, with `staffing_authority=RECURRING_WEEKLY_V1`;
+- no date-bound `XSTORE_V1` staffing rows were materialized;
+- no official `work_schedules` rows were created;
+- all transactional test values and temporary generation runs were rolled back;
+- post-rollback production returned to recurring rows = 0, XSTORE date-bound rows = 0, assignments = 0, official schedules = 0;
+- browser regression proves recurring edit persistence across reload and reuse after changing target week;
+- recurring direct browser CRUD remains denied;
+- old date-bound staffing RPC browser execution remains revoked.
+
+Canonical evidence:
+
+`05_SYSTEM/XSTORE_C05_RECURRING_REGRESSION_ACCEPTANCE.md`
+
+Acceptance PR #360:
+- head `38a9760bccd80ba4f8795850646179846f24d229`;
+- merge / executable main `adeeee59bcec573f81d03a273a2d93babc0583dd`.
+
+Exact-main gates:
+- Validate MAGASIN GitHub Pages source `36855243385` = **SUCCESS**;
+- UI2 Cross Role Acceptance `36855243424` = **SUCCESS**;
+- People Shift Day-10 Tests `36855243411` = **SUCCESS**;
+- Pages build/deployment `36855242031` = **SUCCESS**.
+
+XSTORE-011 is now the next authoritative task. It owns real Manager business configuration, real Auto Schedule review/edit/Validate/Review/Publish acceptance, permanent Workforce documentation reconciliation, and deletion of this TEMP SOT.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
