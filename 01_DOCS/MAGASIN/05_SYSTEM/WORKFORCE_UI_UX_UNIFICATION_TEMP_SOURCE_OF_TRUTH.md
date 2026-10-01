@@ -3,7 +3,7 @@
 **Track ID:** `WORKFORCE_UI_UX_UNIFICATION_V1`  
 **Lifecycle:** TEMPORARY — delete this file after WUI-009 completes.  
 **Created:** 2026-10-01  
-**Status:** WUI-001 READY / WUI-002→009 BLOCKED BY ORDER  
+**Status:** WUI-001 RUNNING / PR #363 REGRESSION RECONCILIATION / WUI-002→009 BLOCKED BY ORDER  
 **Repository:** `magasincoffee/magasincoffee.github.io`
 
 ## 0. Authority boundary
@@ -198,7 +198,7 @@ Never weaken an authority/security contract merely to make CI green.
 
 | Task ID | Task | Required outcome | State |
 |---|---|---|---|
-| WUI-001 | Regression triage + contract reconciliation | Classify every current PR #363 failure; update only stale expectations; fix real regressions if any; no safety/authority weakening | **READY / NEXT AUTHORITATIVE TASK** |
+| WUI-001 | Regression triage + contract reconciliation | Classify every current PR #363 failure; update only stale expectations; fix real regressions if any; no safety/authority weakening | **RUNNING / PR #363 QUALIFICATION** |
 | WUI-002 | Recurring staffing editor state acceptance | Prove existing time/headcount survives +Khung/remove/save/reload/week change; new block starts empty; no 05:00 reset | **BLOCKED BY WUI-001** |
 | WUI-003 | Manager + Employee layout foundation acceptance | Prove full remaining viewport usage, correct sidebar/main relationship, contained board scrolling, responsive/touch behavior | **BLOCKED BY WUI-002** |
 | WUI-004 | Typography / palette / time-band visual acceptance | Prove one font/palette foundation and yellow/red/light-blue start-time rule across all required scheduling surfaces | **BLOCKED BY WUI-003** |
@@ -528,6 +528,6 @@ Do not compress the estimate by skipping exact-main or production verification.
 
 ## 9. Current next task
 
-`WUI-001` is the only authoritative next executable task.
+`WUI-001` is currently **RUNNING** and remains the only authoritative active task.
 
-All other WUI tasks are blocked by task order.
+Do not start a second WUI-001 execution while PR #363 qualification is running. All other WUI tasks remain blocked by task order.
