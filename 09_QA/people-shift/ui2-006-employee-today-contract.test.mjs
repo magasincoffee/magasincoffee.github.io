@@ -54,7 +54,7 @@ test("Today current/next/ended/empty/loading/error states are explicit and fail 
     "data-today-week-error"
   ]) assert.ok(engine.includes(marker), marker);
   assert.ok(engine.includes("Màn hình Hôm nay không suy đoán ca từ dữ liệu ngoài tuần hiện tại."));
-  assert.ok(engine.includes("Today không hiển thị dữ liệu cũ khi nguồn lịch lỗi."));
+  assert.ok(engine.includes("Màn hình Hôm nay không hiển thị dữ liệu cũ khi nguồn lịch đang lỗi."));
 });
 
 test("Việc cần làm maps only to canonical existing states/actions", () => {
