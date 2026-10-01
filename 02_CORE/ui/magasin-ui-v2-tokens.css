@@ -34,7 +34,7 @@
   --m-color-info-soft: #EFF6FF;
 
   /* Typography */
-  --m-font-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --m-font-sans: "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, -apple-system, sans-serif;
   --m-text-page-size: 28px;
   --m-text-page-line: 32px;
   --m-text-page-weight: 600;
