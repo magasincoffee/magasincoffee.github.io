@@ -153,7 +153,7 @@ async function resumeOnly(){
    state.generationId=null;state.generationStatus='NONE';state.generationOrigin=null;state.assignments=[];state.officialRows=[];
   }
   render();
-  if(state.generationStatus==='PUBLISHED')status('Lịch đã phát hành. Dữ liệu chính thức đã được tải lại từ server.','ok');
+  if(state.generationStatus==='PUBLISHED')status('Lịch đã phát hành. Dữ liệu chính thức đã được tải lại từ hệ thống.','ok');
   else if(state.generationStatus==='REVIEWED')status('Lịch đã được duyệt và sẵn sàng phát hành.','ok');
  }catch(e){render();status('Không tải được bảng xếp lịch. '+errorText(e),'error')}
  finally{state.busy=false;lockControls(false)}
@@ -222,7 +222,7 @@ function syncRowsFromDom(){
 }
 function addFromAvailability(index){
  if(!state.generationId||state.generationStatus!=='DRAFT')return status('Hãy tạo/mở lịch nháp trước.','error');
- const r=state.availability[Number(index)];if(!r)return status('Không tìm thấy availability đã chọn.','error');
+ const r=state.availability[Number(index)];if(!r)return status('Không tìm thấy khoảng thời gian có thể làm đã chọn.','error');
  const candidate={id:null,generation_id:state.generationId,user_id:r.user_id,employee_name:r.employee_name||r.username,store_id:state.storeId,store_code:r.preferred_store_code||selectedStore()?.code||'',work_date:String(r.work_date).slice(0,10),start_time:hm(r.start_time),end_time:hm(r.end_time),skill_code:null,skill_level:0,score:0,warning:null,status:'DRAFT',note:'MANAGER_DIRECT_FROM_AVAILABILITY'};
  const duplicate=state.assignments.some(a=>String(a.user_id)===String(candidate.user_id)&&String(a.work_date).slice(0,10)===candidate.work_date&&hm(a.start_time)===candidate.start_time&&hm(a.end_time)===candidate.end_time);
  if(duplicate)return status('Ca này đã có trong lịch nháp.','error');
@@ -287,7 +287,7 @@ async function publish(){
   await loadOfficialRows();
   if(!q.data?.already_published)document.dispatchEvent(new CustomEvent('magasin:schedule-published',{detail}));
   render();
-  status(q.data?.already_published?'Lịch đã được phát hành trước đó; thao tác lặp không tạo ca trùng.':'Đã phát hành '+detail.insertedScheduleCount+' ca chính thức và tải lại lịch từ server.','ok');
+  status(q.data?.already_published?'Lịch đã được phát hành trước đó; thao tác lặp không tạo ca trùng.':'Đã phát hành '+detail.insertedScheduleCount+' ca chính thức và tải lại lịch từ hệ thống.','ok');
   return q;
  }catch(e){status('Phát hành lịch thất bại: '+errorText(e),'error')}finally{state.busy=false;lockControls(false)}
 }
