@@ -32,7 +32,7 @@
     primary: Object.freeze([
       ['overview', '⌂', 'Tổng quan', '/04_OWNER/'],
       ['attention', '!', 'Cần chú ý', '/04_OWNER/ControlTower/'],
-      ['workforce', '▦', 'Workforce', '/04_OWNER/Workforce/'],
+      ['workforce', '▦', 'Nhân sự', '/04_OWNER/Workforce/'],
       ['procurement', '□', 'Mua hàng', '/nhap-hang/'],
       ['access', '⌘', 'Phân quyền', '/04_OWNER/Access/']
     ]),
@@ -47,7 +47,7 @@
     attendance: ['Chấm công', 'Kiểm tra giờ công theo lịch đã phát hành'],
     staff: ['Nhân viên', 'Danh sách và trạng thái nhân sự'],
     'payroll-self-check': ['Công / Lương', 'Đối soát công và lương'],
-    schedule: ['Lịch đã phát hành', 'Lịch làm chính thức từ server'],
+    schedule: ['Lịch đã phát hành', 'Lịch làm chính thức từ hệ thống'],
     tasks: ['Công việc', 'Nguồn công việc và quy trình hiện có'],
     settings: ['Cài đặt', 'Cấu hình hiện có']
   });
