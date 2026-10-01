@@ -41,21 +41,21 @@
   });
 
   const MANAGER_META = Object.freeze({
-    dashboard: ['Hôm nay', 'Điều hành Workforce và ngoại lệ cần xử lý'],
-    workforce: ['Xếp lịch', 'Availability → Draft → Validate → Review → Publish'],
-    swap: ['Đổi / Cho ca', 'Review và xử lý yêu cầu chuyển ca'],
-    attendance: ['Chấm công', 'Review giờ công theo lịch đã phát hành'],
+    dashboard: ['Hôm nay', 'Điều hành nhân sự và các việc cần xử lý'],
+    workforce: ['Xếp lịch', 'Thời gian có thể làm → Lịch nháp → Kiểm tra → Duyệt → Phát hành'],
+    swap: ['Đổi / Cho ca', 'Kiểm tra và xử lý yêu cầu chuyển ca'],
+    attendance: ['Chấm công', 'Kiểm tra giờ công theo lịch đã phát hành'],
     staff: ['Nhân viên', 'Danh sách và trạng thái nhân sự'],
     'payroll-self-check': ['Công / Lương', 'Đối soát công và lương'],
     schedule: ['Lịch đã phát hành', 'Lịch làm chính thức từ server'],
-    tasks: ['Công việc', 'Nguồn Task / SOP hiện có'],
+    tasks: ['Công việc', 'Nguồn công việc và quy trình hiện có'],
     settings: ['Cài đặt', 'Cấu hình hiện có']
   });
 
   const OWNER_META = Object.freeze({
-    overview: ['Tổng quan', 'MAGASIN Owner'],
-    attention: ['Cần chú ý', 'Control Tower · read-only attention'],
-    workforce: ['Workforce', 'Giám sát lịch và can thiệp theo cửa hàng'],
+    overview: ['Tổng quan', 'Điều hành hệ thống MAGASIN'],
+    attention: ['Cần chú ý', 'Các vấn đề cần theo dõi trên toàn hệ thống'],
+    workforce: ['Nhân sự', 'Giám sát lịch và hỗ trợ theo cửa hàng'],
     procurement: ['Mua hàng', 'Nhập hàng · công nợ · báo cáo mua hàng'],
     access: ['Phân quyền', 'Quản lý quyền tài khoản nội bộ']
   });
@@ -149,8 +149,8 @@
   const metaFor = key => {
     const source = config.role === 'OWNER' ? OWNER_META : MANAGER_META;
     return source[key] || (config.role === 'OWNER'
-      ? ['MAGASIN Owner', 'Oversight & administration']
-      : ['MAGASIN Manager', 'Vận hành cửa hàng']);
+      ? ['Chủ hệ thống', 'Giám sát và quản trị']
+      : ['Quản lý cửa hàng', 'Vận hành cửa hàng']);
   };
 
   const setPageMeta = key => {
