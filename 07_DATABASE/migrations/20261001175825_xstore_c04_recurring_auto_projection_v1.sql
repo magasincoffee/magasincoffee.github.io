@@ -299,7 +299,7 @@ begin
         v_generation,c.user_id,r.store_id,r.work_date,r.start_time,r.end_time,
         null,0,v_score,
         case when c.priority>1 then 'CROSS_STORE_PRIORITY_'||c.priority::text else null end,
-        'DRAFT','AUTO_XSTORE_GLOBAL_V1'
+        'DRAFT','AUTO_XSTORE_GLOBAL_RECURRING_V1'
       );
 
       v_assignment_count := v_assignment_count+1;
