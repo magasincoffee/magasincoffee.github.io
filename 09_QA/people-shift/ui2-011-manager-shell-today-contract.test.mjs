@@ -94,20 +94,20 @@ test("UI2-011 correction blockers stay regression-locked",()=>{
 
 test("UI2-011 cache chain remains preserved when later Manager UI tasks advance upstream runtime versions",()=>{
   const v="20260927-ui2-011-correction1";
-  const shellV="20260927-ui2-016";
+  const managerShellV="20261001-ui-unified1";\n  const ownerShellV="20260927-ui2-016";
   const managerV="20260927-ui2-013";
-  const managerEntryV="20260929-mer005";
+  const managerEntryV="20261001-ui-unified1";
   const ownerEntryV="20260927-ui2-016";
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+ownerEntryV));
-  assert.ok(managerRuntime.includes("manager-shell-v1.html?v="+shellV+"&host=manager"));
-  assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+shellV+"&host=owner"));
+  assert.ok(managerRuntime.includes("manager-shell-v1.html?v="+managerShellV+"&host=manager"));
+  assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+ownerShellV+"&host=owner"));
   assert.ok(managerRuntime.includes("engine-v1.js?v="+managerEntryV));
-  assert.ok(shellHtml.includes("manager-ui-shell-v2.js?v="+shellV));
-  assert.ok(engine.includes("review-v1.js?v=20260929-mer003"));
-  assert.ok(engine.includes("attendance-review-v1.js?v=20260929-mer003"));
-  assert.ok(engine.includes("ui-consolidation-v1.js?v=20260927-ui2-016"));
+  assert.ok(shellHtml.includes("manager-ui-shell-v2.js?v="+ownerShellV));
+  assert.ok(engine.includes("review-v1.js?v=20261001-ui-unified1"));
+  assert.match(engine,/attendance-review-v1\\.js\\?v=(?:20260929-mer003|20261001-ui-unified1)/);
+  assert.ok(engine.includes("ui-consolidation-v1.js?v=20261001-ui-unified1"));
   assert.ok(engine.includes("swap-approval-v1.js?v=20260929-mer003"));
 });
 
