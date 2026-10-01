@@ -17,7 +17,7 @@ try {
     await owner.locator('.msd').waitFor();
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('Không tải được Workforce Publish')||text.includes('ambiguous'))throw new Error(text);
-    if(!text.includes('An CN1')||!text.includes('Owner Scheduling · Giám sát & can thiệp'))throw new Error('Owner canonical scheduling surface missing');
+    if(!text.includes('An CN1')||!text.includes('Giám sát xếp lịch'))throw new Error('Owner canonical scheduling surface missing');
     const calls=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.map(x=>x.name));
     for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
     return calls.join(',');
