@@ -42,6 +42,12 @@ await page.waitForFunction(()=>{
 const starts=cell.locator('[data-xsa-f="start_time"]');
 const ends=cell.locator('[data-xsa-f="end_time"]');
 const heads=cell.locator('[data-xsa-f="target_headcount"]');
+const firstBlock=cell.locator('.xsa-block-edit').first();
+if(!(await firstBlock.getAttribute('class')).includes('xsa-band-morning'))throw new Error("06:00 block should be yellow/morning");
+await starts.first().selectOption("12:00");
+if(!(await firstBlock.getAttribute('class')).includes('xsa-band-afternoon'))throw new Error("12:00 block should be red/afternoon");
+await starts.first().selectOption("17:00");
+if(!(await firstBlock.getAttribute('class')).includes('xsa-band-evening'))throw new Error("17:00 block should be light-blue/evening");
 await starts.first().selectOption("07:00");
 await ends.first().selectOption("12:00");
 await heads.first().fill("3");
