@@ -69,7 +69,7 @@ test("UI2-005 shell and UI2-006 Today remain canonical while cache entry advance
 test("UI2-007 Schedule presentation remains bounded after UI2-008 adds a separate secondary layer",()=>{
   assert.doesNotMatch(scheduleCss,/availability-form|swap-form|give-form/);
   assert.ok(fs.existsSync("02_CORE/ui/magasin-ui-v2-employee-secondary.css"));
-  assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-schedule.css?v=20260926-ui2-007"));
+  assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-schedule.css?v=20261001-ui-unified1"));
 });
 
 console.log("UI2_007_EMPLOYEE_SCHEDULE_CONTRACT=PASS");
