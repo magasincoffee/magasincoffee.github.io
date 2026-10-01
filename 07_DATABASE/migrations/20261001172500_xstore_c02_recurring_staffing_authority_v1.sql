@@ -10,8 +10,8 @@ create table if not exists public.workforce_recurring_staffing_requirements (
   start_time time without time zone not null,
   end_time time without time zone not null,
   target_headcount integer not null check (target_headcount between 1 and 20),
-  created_by uuid references public.profiles(id),
-  updated_by uuid references public.profiles(id),
+  created_by uuid references public.profiles(id) on delete set null,
+  updated_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint workforce_recurring_staffing_time_check check (end_time > start_time),
@@ -182,9 +182,10 @@ begin
     v_keys := array_append(v_keys,v_key);
   end loop;
 
-  -- Serialize board replacement for this actor-visible scope.
+  -- Serialize all recurring-board replacements so overlapping Owner/Manager scopes
+  -- cannot race each other and produce a lost-update board.
   perform pg_advisory_xact_lock(
-    hashtextextended('workforce_recurring_staffing:'||auth.uid()::text,0)
+    hashtextextended('workforce_recurring_staffing:canonical_board',0)
   );
 
   -- Only actor-accessible stores may be replaced; inaccessible rows are untouched.
