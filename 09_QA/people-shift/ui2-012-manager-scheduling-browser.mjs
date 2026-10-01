@@ -82,7 +82,7 @@ const frame=await managerFrame(page);
 await check("ui2_012_none_context_and_empty_day_state",async()=>{
  const state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
  const ui=await frame.locator(".msd-ui2-012").evaluate(r=>({stage:r.dataset.ui2SchedulingState,chip:r.querySelector(".msu2-state-chip")?.textContent,text:r.innerText,emptyDays:r.querySelectorAll(".msd-day .msd-empty").length}));
- if(state.generationStatus!=="NONE"||ui.stage!=="NONE"||ui.chip!=="NONE"||!ui.text.includes("Chưa có phiên xếp lịch")||ui.emptyDays!==7)throw new Error(JSON.stringify({state,ui}));
+ if(state.generationStatus!=="NONE"||ui.stage!=="NONE"||ui.chip!=="CHƯA TẠO"||!ui.text.includes("Chưa có phiên xếp lịch")||ui.emptyDays!==7)throw new Error(JSON.stringify({state,ui}));
  return JSON.stringify({stage:ui.stage,emptyDays:ui.emptyDays});
 });
 
@@ -158,7 +158,7 @@ await check("ui2_012_review_publish_confirmation_official_and_idempotent_retry",
  const after=await frame.evaluate(()=>({inserts:globalThis.__MW31_QA.state.officialInsertCount,transitions:globalThis.__MW31_QA.state.publishTransitions,rows:globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().officialRows.length}));
  const status=await frame.locator("#msdStatus").innerText();
  const published=await frame.locator(".msu2-state-chip").innerText();
- if(reviewed!=="REVIEWED"||published!=="PUBLISHED"||!confirmed||after.inserts!==before.inserts||after.transitions!==before.transitions||after.rows!==2||!status.includes("đã được phát hành trước đó"))throw new Error(JSON.stringify({reviewed,published,confirmed,before,after,status}));
+ if(reviewed!=="ĐÃ DUYỆT"||published!=="ĐÃ PHÁT HÀNH"||!confirmed||after.inserts!==before.inserts||after.transitions!==before.transitions||after.rows!==2||!status.includes("đã được phát hành trước đó"))throw new Error(JSON.stringify({reviewed,published,confirmed,before,after,status}));
  return JSON.stringify({reviewed,published,confirmed,before,after});
 });
 
@@ -179,7 +179,7 @@ await check("ui2_012_store_and_week_navigation_clear_stale_projection_then_reloa
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-c"&&!s.busy});
  let state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
  let text=await frame.locator("#panel-publish").innerText();
- if(state.generationStatus!=="NONE"||state.assignments.length||state.availability.length||state.officialRows.length||!text.includes("Không có availability")||text.includes("Nhân viên QA 1"))throw new Error(JSON.stringify({state,text}));
+ if(state.generationStatus!=="NONE"||state.assignments.length||state.availability.length||state.officialRows.length||!text.includes("Không có thời gian có thể làm")||text.includes("Nhân viên QA 1"))throw new Error(JSON.stringify({state,text}));
  await frame.locator("#msdStore").selectOption("store-a");
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-a"&&!s.busy&&s.generationStatus==="PUBLISHED"});
  await frame.locator('[data-msd-week="next"]').click();
@@ -205,7 +205,7 @@ await check("ui2_012_duplicate_generation_conflict_locks_authoring",async()=>{
   validate:r.querySelector("#msdValidate")?.disabled,
   text:r.innerText
  }));
- if(state.duplicateDrafts!==1||ui.chip!=="CONFLICT"||!ui.start||!ui.save||!ui.validate||!ui.text.includes("Khóa do nhiều phiên cùng store/week"))throw new Error(JSON.stringify({state,ui}));
+ if(state.duplicateDrafts!==1||ui.chip!=="XUNG ĐỘT"||!ui.start||!ui.save||!ui.validate||!ui.text.includes("Có nhiều phiên xếp lịch cùng cửa hàng và tuần"))throw new Error(JSON.stringify({state,ui}));
  return JSON.stringify({duplicateDrafts:state.duplicateDrafts,chip:ui.chip});
 });
 
