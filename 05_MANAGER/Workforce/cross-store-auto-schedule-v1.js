@@ -203,7 +203,7 @@ async function loadRequirements(){
   state.requirements=(Array.isArray(q.data)?q.data:[]).map(normalizeRequirement);
   state.loaded=true;state.message='';state.messageType='';
  }catch(e){
-  state.requirements=[];state.loaded=false;state.message='Không tải được cấu hình nhu cầu hàng tuần: '+String(e?.message||e?.code||'UNKNOWN');state.messageType='error';
+  console.warn('[XSTORE_STAFFING_LOAD]',e);state.requirements=[];state.loaded=false;state.message='Không tải được nhu cầu nhân sự hàng tuần. Vui lòng tải lại và thử lại.';state.messageType='error';
  }finally{state.loading=false;render()}
 }
 
@@ -225,7 +225,7 @@ async function saveRequirements(){
   state.editing=false;state.loaded=false;
   await loadRequirements();
   state.message='Đã lưu '+Number(q.data?.requirement_count??payload.length)+' khung nhu cầu hàng tuần. Cấu hình này được dùng lại cho mọi tuần cho đến khi bạn chỉnh và lưu.';state.messageType='ok';render();
- }catch(e){state.message='Lưu cấu hình nhu cầu thất bại: '+String(e?.message||e?.code||'UNKNOWN');state.messageType='error';render()}
+ }catch(e){console.warn('[XSTORE_STAFFING_SAVE]',e);state.message='Không thể lưu nhu cầu nhân sự lúc này. Vui lòng kiểm tra dữ liệu và thử lại.';state.messageType='error';render()}
  finally{state.busy=false;render()}
 }
 
@@ -269,7 +269,7 @@ async function autoSchedule(){
    :raw.includes('OFFICIAL_WEEK_ALREADY_EXISTS')?'Tuần này đã có lịch chính thức; hệ thống không được ghi đè.'
    :raw.includes('NON_DRAFT_GENERATION_EXISTS')?'Có lịch đã duyệt hoặc phát hành trong tuần; hãy xử lý lịch hiện tại trước khi xếp tự động.'
    :raw.includes('STAFFING_REQUIREMENT_EMPTY')?'Chưa có nhu cầu nhân sự hàng tuần để xếp lịch tự động.'
-   :'Xếp tự động thất bại: '+raw;
+   :'Không thể xếp lịch tự động lúc này. Vui lòng kiểm tra dữ liệu và thử lại.';
   state.message=friendly;state.messageType='error';
  }finally{state.busy=false;render()}
 }
