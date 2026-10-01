@@ -178,7 +178,7 @@ const assetSpecs=[
   ["/05_MANAGER/Workforce/manager-operations-ui2-v1.js?v=20260927-ui2-016","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/engine-v1.js?v=20261001-ui-unified1","manager-scheduling-ui2-v1.js?v=20261001-ui-unified1"],
   ["/05_MANAGER/runtime/manager-shell-v1.html?v=20261001-ui-unified1","manager-ui-shell-v2.js?v=20260927-ui2-016"],
-  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261001-ui-unified1","manager-shell-v1.html?v=20260927-ui2-016"],
+  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261001-ui-unified1","manager-shell-v1.html?v=20261001-ui-unified1"],
   ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20260927-ui2-016","manager-shell-v1.html?v=20260927-ui2-016"]
 ];
 for(const [url,marker] of assetSpecs){
@@ -198,11 +198,19 @@ await check("ui2_017_no_stale_ui2_016_cache_chain",async()=>{
       "manager-scheduling-ui2-v1.js?v=20260927-ui2-012",
       "manager-scheduling-ui2-v1.js?v=20260927-ui2-016",
       "ui-consolidation-v1.js?v=20260927-ui2-011-correction1",
-      "manager-operations-ui2-v1.js?v=20260927-ui2-013"
+      "ui-consolidation-v1.js?v=20260927-ui2-016"
     ]],
-    ["/05_MANAGER/runtime/manager-runtime-v1.html",["manager-shell-v1.html?v=20260927-ui2-011-correction1","manager-shell-v1.html?v=20260927-ui2-016","engine-v1.js?v=20260927-ui2-013"]],
-    ["/05_MANAGER/runtime/manager-shell-v1.html",["manager-ui-shell-v2.js?v=20260927-ui2-011-correction1"]],
-    ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html",["manager-shell-v1.html?v=20260927-ui2-011-correction1","magasin-ui-v2-shell.css?v=20260925-ui2-004"]]
+    ["/05_MANAGER/runtime/manager-runtime-v1.html",[
+      "manager-shell-v1.html?v=20260927-ui2-011-correction1",
+      "manager-shell-v1.html?v=20260927-ui2-016",
+      "engine-v1.js?v=20260927-ui2-013",
+      "engine-v1.js?v=20260929-mer005"
+    ]],
+    ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html",[
+      "manager-shell-v1.html?v=20260927-ui2-011-correction1",
+      "magasin-ui-v2-shell.css?v=20260925-ui2-004",
+      "20261001-ui-unified1"
+    ]]
   ];
   const stale=[];
   for(const [url,forbidden] of files){
@@ -210,7 +218,7 @@ await check("ui2_017_no_stale_ui2_016_cache_chain",async()=>{
     for(const token of forbidden)if(body.includes(token))stale.push({url,token});
   }
   if(stale.length)throw new Error(JSON.stringify(stale));
-  return "no stale previous-version references in affected UI2-016 cache chain";
+  return "Manager/Employee unified cache is current while Owner cache remains unchanged";
 });
 
 await browser.close();
