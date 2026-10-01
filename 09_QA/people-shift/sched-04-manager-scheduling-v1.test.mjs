@@ -69,6 +69,6 @@ test("SCHED-04 keeps server-side conflict and idempotency semantics explicit",as
 test("SCHED-04 Manager shell no longer contains fake schedule truth",async()=>{
   const shell=await read("05_MANAGER/runtime/manager-shell-v1.html");
   assert.match(shell,/Đang tải bảng xếp lịch…/);
-  assert.match(shell,/Đang tải lịch làm chính thức từ server/);
+  assert.match(shell,/Đang tải lịch làm chính thức…/);
   assert.doesNotMatch(shell,/Trắng · CN2|Mai Chi · CN2|Coverage<\/b><span>96%/);
 });
