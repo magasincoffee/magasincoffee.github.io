@@ -40,7 +40,7 @@ test("UI2-011 Today is an Action Center built only from existing read-only Manag
   ])assert.ok(today.includes(api),api);
   for(const state of ["NOT_CONNECTED","LOADING","ERROR","EMPTY","ACTION_REQUIRED","READY"])assert.ok(today.includes(state),state);
   assert.match(today,/Task \/ SOP/);
-  assert.match(today,/Không có nguồn Task \/ SOP canonical/);
+  assert.match(today,/Chưa có nguồn công việc hoặc quy trình/);
   assert.doesNotMatch(today,/Doanh thu|Đơn hàng|Đánh giá khách|49,2tr|18 nhân sự|KPI 98%/);
   assert.doesNotMatch(today,/approve_shift|reject_shift|review_attendance|publish_schedule_generation|save_|insert\(|update\(|delete\(/);
   assert.match(today,/data-workforce-jump/);
