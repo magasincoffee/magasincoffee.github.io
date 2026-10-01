@@ -3,7 +3,7 @@
 **Track ID:** `WORKFORCE_UI_UX_UNIFICATION_V1`  
 **Lifecycle:** TEMPORARY — delete this file after WUI-009 completes.  
 **Created:** 2026-10-01  
-**Status:** WUI-001 RUNNING / PR #363 REGRESSION RECONCILIATION / WUI-002→009 BLOCKED BY ORDER  
+**Status:** WUI-001 DONE / WUI-002 READY / WUI-003→009 BLOCKED BY ORDER  
 **Repository:** `magasincoffee/magasincoffee.github.io`
 
 ## 0. Authority boundary
@@ -194,12 +194,34 @@ Known failure pattern is predominantly stale contract assertions that still pin 
 
 Never weaken an authority/security contract merely to make CI green.
 
+### WUI-001 reconciled qualification — 2026-10-01
+
+Accepted PR #363 head for WUI-001:
+
+`b257b16f3f1490c4189215d185fd90b80b386990`
+
+All relevant qualification gates are green on that exact head:
+
+- People Shift Day-10 Tests — run `36884997422` — SUCCESS;
+- UI2 Cross Role Acceptance — run `36884997603` — SUCCESS;
+- SOP Task Tests — run `36884997402` — SUCCESS;
+- Owner Control Tower Tests — run `36884997771` — SUCCESS;
+- AUTH-PROD Regression Contract — run `36884997637`, attempt 2 — SUCCESS.
+
+The first AUTH-PROD attempt was cancelled during Playwright system-package download, not by a test failure. The cancelled job was rerun directly and passed.
+
+Permanent WUI-001 acceptance evidence:
+
+`01_DOCS/MAGASIN/05_SYSTEM/WUI_001_REGRESSION_TRIAGE_ACCEPTANCE.md`
+
+PR #363 remains open. Merge and exact-main qualification remain reserved for `WUI-007`.
+
 ## 5. Task table
 
 | Task ID | Task | Required outcome | State |
 |---|---|---|---|
-| WUI-001 | Regression triage + contract reconciliation | Classify every current PR #363 failure; update only stale expectations; fix real regressions if any; no safety/authority weakening | **RUNNING / PR #363 QUALIFICATION** |
-| WUI-002 | Recurring staffing editor state acceptance | Prove existing time/headcount survives +Khung/remove/save/reload/week change; new block starts empty; no 05:00 reset | **BLOCKED BY WUI-001** |
+| WUI-001 | Regression triage + contract reconciliation | Classify every current PR #363 failure; update only stale expectations; fix real regressions if any; no safety/authority weakening | **DONE / PR #363 QUALIFICATION GREEN** |
+| WUI-002 | Recurring staffing editor state acceptance | Prove existing time/headcount survives +Khung/remove/save/reload/week change; new block starts empty; no 05:00 reset | **READY / NEXT AUTHORITATIVE TASK** |
 | WUI-003 | Manager + Employee layout foundation acceptance | Prove full remaining viewport usage, correct sidebar/main relationship, contained board scrolling, responsive/touch behavior | **BLOCKED BY WUI-002** |
 | WUI-004 | Typography / palette / time-band visual acceptance | Prove one font/palette foundation and yellow/red/light-blue start-time rule across all required scheduling surfaces | **BLOCKED BY WUI-003** |
 | WUI-005 | Vietnamese UX copy acceptance | Remove user-visible technical/mixed-language terms from primary Manager/Employee Workforce surfaces; keep internal identifiers internal | **BLOCKED BY WUI-004** |
@@ -246,6 +268,17 @@ DONE evidence:
 - all failures have classification;
 - no known real regression is hidden by an assertion change;
 - affected tests progress to green or expose a newly identified concrete product bug.
+
+WUI-001 closure:
+
+- initial PR qualification exposed 33 failing tests, with later browser stages exposing additional stale assertions/fixture drift;
+- all discovered failures were reconciled without relaxing auth, role, scheduling-writer, recurring-staffing or direct-table authority;
+- confirmed functional regressions hidden by assertion changes: 0;
+- confirmed authority/security regressions hidden by assertion changes: 0;
+- exact accepted PR head: `b257b16f3f1490c4189215d185fd90b80b386990`;
+- all relevant PR qualification gates are green;
+- acceptance evidence: `01_DOCS/MAGASIN/05_SYSTEM/WUI_001_REGRESSION_TRIAGE_ACCEPTANCE.md`;
+- next task: `WUI-002`.
 
 ### WUI-002 — Recurring staffing editor state acceptance
 
@@ -528,6 +561,6 @@ Do not compress the estimate by skipping exact-main or production verification.
 
 ## 9. Current next task
 
-`WUI-001` is currently **RUNNING** and remains the only authoritative active task.
+`WUI-001` is **DONE**.
 
-Do not start a second WUI-001 execution while PR #363 qualification is running. All other WUI tasks remain blocked by task order.
+`WUI-002` is the only authoritative next executable task. Do not execute WUI-003 or later tasks before WUI-002 is complete.
