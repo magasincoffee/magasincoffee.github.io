@@ -13,6 +13,14 @@ const DAYS=[
 ];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const hm=v=>String(v||'').slice(0,5);
+const minuteOf=v=>{const m=String(v||'').match(/^(\d{1,2}):(\d{2})/);return m?Number(m[1])*60+Number(m[2]):-1};
+const shiftBand=v=>{const m=minuteOf(v);return m>=300&&m<720?'morning':m>=720&&m<1020?'afternoon':m>=1020&&m<=1320?'evening':'neutral'};
+const bandClass=v=>'xsa-band-'+shiftBand(v);
+function applyBandClass(el,value){
+ if(!el)return;
+ el.classList.remove('xsa-band-morning','xsa-band-afternoon','xsa-band-evening','xsa-band-neutral');
+ el.classList.add(bandClass(value));
+}
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const state={week:null,stores:[],requirements:[],editing:false,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null};
 const mount=()=>document.getElementById('xstoreAutomationMount');
@@ -59,8 +67,18 @@ function ensureCss(){
 .xsa-store-sub{font-size:11px;line-height:16px;color:var(--m-color-neutral-500,#667085);margin-top:2px}
 .xsa-cell{width:140px;min-width:140px}
 .xsa-empty{font-size:12px;color:var(--m-color-neutral-500,#667085);padding:7px 2px}
-.xsa-block{display:block;margin:0 0 6px;padding:8px;border-radius:8px;background:var(--m-color-info-soft,#EFF6FF);color:#174D82;font-size:12px;line-height:18px;font-weight:700}
-.xsa-block-edit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin-bottom:7px;padding:7px;border:1px solid var(--m-border-default,#EAECF0);border-radius:9px;background:#fff}
+.xsa-block{display:block;margin:0 0 6px;padding:8px;border:1px solid var(--m-border-default,#EAECF0);border-radius:8px;font-size:12px;line-height:18px;font-weight:700}
+.xsa-block-edit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin-bottom:7px;padding:7px;border:1px solid var(--m-border-default,#EAECF0);border-radius:9px}
+.xsa-band-morning{background:var(--m-shift-morning-bg,#FFF4CC)!important;border-color:var(--m-shift-morning-border,#E7B84B)!important;color:var(--m-shift-morning-text,#6B5100)!important}
+.xsa-band-afternoon{background:var(--m-shift-afternoon-bg,#FDE7E7)!important;border-color:var(--m-shift-afternoon-border,#E39C9C)!important;color:var(--m-shift-afternoon-text,#8A2C2C)!important}
+.xsa-band-evening{background:var(--m-shift-evening-bg,#E8F3FF)!important;border-color:var(--m-shift-evening-border,#9EC7F1)!important;color:var(--m-shift-evening-text,#235DBA)!important}
+.xsa-band-neutral{background:#fff!important;color:var(--m-color-neutral-950,#101828)!important}
+.xsa-band-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.xsa-band-legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;line-height:16px;color:var(--m-color-neutral-700,#344054)}
+.xsa-band-dot{width:12px;height:12px;border-radius:4px;border:1px solid transparent;flex:0 0 auto}
+.xsa-band-dot.morning{background:var(--m-shift-morning-bg,#FFF4CC);border-color:var(--m-shift-morning-border,#E7B84B)}
+.xsa-band-dot.afternoon{background:var(--m-shift-afternoon-bg,#FDE7E7);border-color:var(--m-shift-afternoon-border,#E39C9C)}
+.xsa-band-dot.evening{background:var(--m-shift-evening-bg,#E8F3FF);border-color:var(--m-shift-evening-border,#9EC7F1)}
 .xsa-block-edit input,.xsa-block-edit select{width:100%;min-width:0;height:38px;border:1px solid var(--m-color-neutral-300,#D0D5DD);border-radius:8px;padding:0 7px;background:#fff;color:var(--m-color-neutral-950,#101828);font:inherit;font-size:12px}
 .xsa-block-edit input[data-xsa-f="target_headcount"]{grid-column:1/2}
 .xsa-block-edit .xsa-remove{grid-column:2/3}
@@ -110,10 +128,10 @@ function cellHtml(store,day){
  const rows=cellRows(store.id,day.id);
  const attr=esc(String(store.id)+'-'+day.id);
  if(!state.editing){
-  return '<td class="xsa-cell" data-xsa-cell="'+attr+'">'+(rows.length?rows.map(({r})=>'<span class="xsa-block">'+esc(hm(r.start_time))+'–'+esc(hm(r.end_time))+' · '+esc(r.target_headcount)+' người</span>').join(''):'<div class="xsa-empty">—</div>')+'</td>';
+  return '<td class="xsa-cell" data-xsa-cell="'+attr+'">'+(rows.length?rows.map(({r})=>'<span class="xsa-block '+bandClass(r.start_time)+'">'+esc(hm(r.start_time))+'–'+esc(hm(r.end_time))+' · '+esc(r.target_headcount)+' người</span>').join(''):'<div class="xsa-empty">—</div>')+'</td>';
  }
  const editors=rows.map(({r,index})=>
-  '<div class="xsa-block-edit" data-xsa-block="'+index+'">'
+  '<div class="xsa-block-edit '+bandClass(r.start_time)+'" data-xsa-block="'+index+'">'
    +'<input type="time" aria-label="Bắt đầu" data-xsa-f="start_time" value="'+esc(r.start_time)+'">'
    +'<input type="time" aria-label="Kết thúc" data-xsa-f="end_time" value="'+esc(r.end_time)+'">'
    +'<input type="number" min="1" max="20" step="1" aria-label="Số người" data-xsa-f="target_headcount" value="'+esc(r.target_headcount||1)+'">'
@@ -159,7 +177,7 @@ function render(){
   +'<div class="xsa-step '+(requirementsReady?'ready':'warn')+'"><b>2. Nhu cầu nhân sự hàng tuần</b><span>'+(requirementsReady?'Đang dùng cấu hình cố định hàng tuần':'Chưa có cấu hình; Quản lý cần nhập dữ liệu thực tế')+'</span></div>'
   +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>3. Xếp lịch tự động</b><span>'+(complete?'Sẵn sàng áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp':'Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động')+'</span></div></div>'
   +'<div class="xsa-summary">'+summary.join('')+'</div>'
-  +'<div class="xsa-recurring-note"><b>Cấu hình cố định hàng tuần:</b> không chọn ngày lịch và không cần nhập lại mỗi tuần. Hệ thống không tự đoán số người.</div>'
+  +'<div class="xsa-recurring-note"><b>Cấu hình cố định hàng tuần:</b> không chọn ngày lịch và không cần nhập lại mỗi tuần. Hệ thống không tự đoán số người.<div class="xsa-band-legend" aria-label="Quy ước màu khung giờ"><span><i class="xsa-band-dot morning"></i>05:00–12:00 · Vàng</span><span><i class="xsa-band-dot afternoon"></i>12:00–17:00 · Đỏ nhạt</span><span><i class="xsa-band-dot evening"></i>17:00–22:00 · Xanh dương nhạt</span></div></div>'
   +boardHtml()
   +(state.editing?'<div class="xsa-editor-actions"><button class="btn" type="button" id="xsaCancel">Hủy thay đổi</button><button class="btn primary" type="button" id="xsaSave">Lưu nhu cầu hàng tuần</button></div>':'')
   +shortagesHtml()
@@ -276,6 +294,14 @@ async function autoSchedule(){
 
 function bind(){
  const m=mount();if(!m)return;
+ if(m.dataset.xsaBandBound!=='1'){
+  m.dataset.xsaBandBound='1';
+  m.addEventListener('change',e=>{
+   const field=e.target?.closest?.('[data-xsa-f="start_time"]');
+   if(!field)return;
+   applyBandClass(field.closest('[data-xsa-block]'),field.value);
+  });
+ }
  m.querySelector('#xsaStaff')?.addEventListener('click',()=>document.querySelector('[data-view="staff"]')?.click());
  m.querySelector('#xsaConfig')?.addEventListener('click',()=>{if(state.editing)syncFromDom();state.editing=!state.editing;state.message='';state.messageType='';render()});
  m.querySelector('#xsaCancel')?.addEventListener('click',()=>{state.editing=false;state.loaded=false;void loadRequirements()});
