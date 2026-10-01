@@ -49,6 +49,7 @@ const api={rpc:async(name,args)=>{
   })));
   return{data:{requirement_count:requirements.length,accessible_store_count:4,accessible_store_codes:['CN1','CN2','CN3','CN4']},error:null};
  }
+ if(name==='auto_generate_cross_store_schedule_v1')return{data:{week_start:week,status:'DRAFT',algorithm_version:'XSTORE_GLOBAL_RECURRING_V1',staffing_authority:'RECURRING_WEEKLY_V1',assignment_count:8,shortages:[],shortage_count:0,requires_manager_review:true,published:false},error:null};
  return{data:null,error:{message:'UNEXPECTED '+name}};
 }};
 window.supabase={createClient:()=>api};
