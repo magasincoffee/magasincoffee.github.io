@@ -12,7 +12,7 @@ const scheduleCss=read("02_CORE/ui/magasin-ui-v2-employee-schedule.css");
 const todayCss=read("02_CORE/ui/magasin-ui-v2-employee-today.css");
 
 test("UI2-007 loads a namespaced V2 Schedule presentation layer",()=>{
-  assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-schedule.css?v=20260926-ui2-007"));
+  assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-schedule.css?v=20261001-ui-unified1"));
   assert.match(scheduleCss,/body\[data-magasin-employee-shell-v2\] #view-schedule/);
   assert.match(scheduleCss,/schedule-week-nav/);
   assert.match(scheduleCss,/\.day\.today/);
@@ -60,8 +60,8 @@ test("UI2-005 shell and UI2-006 Today remain canonical while cache entry advance
   for(const label of ["Hôm nay","Lịch","Công","Lương","Tôi"])assert.ok(shell.includes("'"+label+"'"));
   assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-today.css?v=20260925-ui2-006"));
   assert.ok(todayCss.includes(".employee-today-v2"));
-  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003)&runtime=engine/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002|20260930-emlive003)/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1)&runtime=engine/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002|20260930-emlive003|20261001-ui-unified1)/);
   assert.equal((runtime.match(/\/06_EMPLOYEE\/schedule\/engine-v1\.js/g)||[]).length,1);
   assert.match(runtime,/schedule\/engine-v1\.js\?v=(?:20260926-ui2-008|20260930-emlive002)/);
 });
