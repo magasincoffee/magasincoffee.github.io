@@ -23,7 +23,7 @@ try {
   assert.equal(er?.status(), 200);
   const badge = employee.locator('#taskBadge[data-task-quality="NOT_CONNECTED"]');
   await badge.waitFor({ state:"visible", timeout:5000 });
-  assert.equal((await badge.innerText()).trim(), "NOT CONNECTED");
+  assert.equal((await badge.innerText()).trim(), "CHƯA KẾT NỐI");
   assert.equal(await employee.locator('.task-panel[data-task-source-state="NOT_CONNECTED"]').count(), 1);
   assert.equal(await employee.getByText("Đang tải công việc…", { exact:true }).count(), 0);
   assert.equal(await employee.getByText("Hôm nay không có công việc", { exact:true }).count(), 0);
