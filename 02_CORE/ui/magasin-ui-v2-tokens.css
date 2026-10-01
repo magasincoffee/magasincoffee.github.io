@@ -33,6 +33,17 @@
   --m-color-info: #2F6FDE;
   --m-color-info-soft: #EFF6FF;
 
+  /* Shift visual bands — canonical across Manager + Employee scheduling */
+  --m-shift-morning-bg: #FFF4CC;
+  --m-shift-morning-border: #E7B84B;
+  --m-shift-morning-text: #6B5100;
+  --m-shift-afternoon-bg: #FDE7E7;
+  --m-shift-afternoon-border: #E39C9C;
+  --m-shift-afternoon-text: #8A2C2C;
+  --m-shift-evening-bg: #E8F3FF;
+  --m-shift-evening-border: #9EC7F1;
+  --m-shift-evening-text: #235DBA;
+
   /* Typography */
   --m-font-sans: "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, -apple-system, sans-serif;
   --m-text-page-size: 28px;
