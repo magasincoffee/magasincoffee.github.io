@@ -18,6 +18,7 @@ const managerEngine=read("05_MANAGER/Workforce/engine-v1.js");
 const managerRuntime=read("05_MANAGER/runtime/manager-runtime-v1.html");
 const employeeRuntime=read("06_EMPLOYEE/runtime/employee-runtime-v1.html");
 const employeeApp=read("06_EMPLOYEE/app/employee-v40.html");
+const employeeScheduleCss=read("02_CORE/ui/magasin-ui-v2-employee-schedule.css");
 
 test("unified UI JavaScript sources parse",()=>{
  for(const [name,source] of [
@@ -94,6 +95,26 @@ test("primary user guidance is Vietnamese while internal status/RPC identifiers 
  assert.doesNotMatch(draft,/Employee Availability|Không có availability|Không tìm thấy availability|canonical work_schedules/);
  assert.doesNotMatch(master,/Robot chỉ tạo|Store Priority Profile|Chưa có assignment/);
  assert.doesNotMatch(employeeApp,/>NOT CONNECTED<|Lối tắt Today|phê duyệt canonical/);
+});
+
+
+test("shift colors follow one visual rule across Manager and Employee scheduling",()=>{
+ for(const token of [
+  "--m-shift-morning-bg: #FFF4CC",
+  "--m-shift-afternoon-bg: #FDE7E7",
+  "--m-shift-evening-bg: #E8F3FF"
+ ])assert.ok(tokens.includes(token),token);
+ assert.match(auto,/m>=300&&m<720\?'morning':m>=720&&m<1020\?'afternoon':m>=1020&&m<=1320\?'evening'/);
+ assert.match(auto,/xsa-band-morning/);
+ assert.match(auto,/05:00–12:00 · Vàng/);
+ assert.match(auto,/12:00–17:00 · Đỏ nhạt/);
+ assert.match(auto,/17:00–22:00 · Xanh dương nhạt/);
+ assert.match(master,/xsm-band-morning/);
+ assert.match(draft,/msd-band-morning/);
+ assert.match(employeeScheduleCss,/var\(--m-shift-morning-bg\)/);
+ assert.match(employeeScheduleCss,/var\(--m-shift-afternoon-bg\)/);
+ assert.match(employeeScheduleCss,/var\(--m-shift-evening-bg\)/);
+ assert.ok(employeeApp.includes("magasin-ui-v2-employee-schedule.css?v=20261001-ui-unified1"));
 });
 
 test("unified asset cache chain reaches both Manager and Employee entry points",()=>{
