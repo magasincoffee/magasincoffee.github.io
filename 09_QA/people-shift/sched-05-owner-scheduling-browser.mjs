@@ -31,7 +31,7 @@ try{
     const text=await page.locator("#panel-publish").innerText();
     const options=await page.locator("#msdStore option").allTextContents();
     if(s.storeId!=="store-a"||s.stores.length!==4)throw new Error(JSON.stringify(s));
-    if(options.length!==4||!text.includes("Owner Scheduling · Giám sát & can thiệp")||!text.includes("Owner không tạo lịch song song"))throw new Error(JSON.stringify({options,text}));
+    if(options.length!==4||!text.includes("Giám sát xếp lịch")||!text.includes("không tạo lịch song song"))throw new Error(JSON.stringify({options,text}));
     const actor=await page.locator(".msd").getAttribute("data-scheduling-actor");
     if(actor!=="OWNER")throw new Error("actor="+actor);
     return "4 active stores · OWNER actor · shared canonical surface";
