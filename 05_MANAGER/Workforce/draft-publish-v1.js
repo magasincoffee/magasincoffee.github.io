@@ -32,7 +32,7 @@ function ensurePolish(){
  const link=d.createElement('link');
  link.id='workforce-scheduling-polish-v1-css';
  link.rel='stylesheet';
- link.href='/02_CORE/ui/workforce-scheduling-polish-v1.css?v=20260925-sched07';
+ link.href='/02_CORE/ui/workforce-scheduling-polish-v1.css?v=20261001-ui-unified1';
  d.head.appendChild(link);
 }
 function status(text,type=''){const e=panel()?.querySelector('#msdStatus');if(!e)return;e.className='msd-status'+(type?' '+type:'');e.textContent=text||''}
