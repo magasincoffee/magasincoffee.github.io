@@ -69,8 +69,8 @@ test("UI2-012 explicitly represents NONE DRAFT REVIEWED PUBLISHED CONFLICT and b
     "Đang soạn lịch tuần",
     "Đã duyệt · chờ phát hành",
     "Đã phát hành",
-    "Khóa do nhiều phiên cùng store/week",
-    "Đang cập nhật canonical state"
+    "Có nhiều phiên xếp lịch cùng cửa hàng và tuần",
+    "Đang cập nhật dữ liệu"
   ])assert.ok(ui.includes(copy),copy);
   assert.match(ui,/if\(stage==='CONFLICT'\)/);
   assert.match(ui,/el\.disabled=true/);
@@ -89,8 +89,8 @@ test("UI2-012 responsive contract contains board scrolling touch targets and foc
 
 test("UI2-012 Manager asset cache chain advances while Owner runtime remains on its existing path",()=>{
   const v="20260927-ui2-012";
-  const managerV="20260929-mer005";
-  const managerEntryV="20260929-mer005";
+  const managerV="20261001-ui-unified1";
+  const managerEntryV="20261001-ui-unified1";
   assert.ok(runtime.includes("engine-v1.js?v="+managerV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
