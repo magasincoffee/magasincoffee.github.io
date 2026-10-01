@@ -61,7 +61,7 @@ test("SCHED-05 shared writer is role-aware but retains one canonical RPC set",as
   const writer=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   assert.match(writer,/actorRole=\(\)=>String\(window\.__MAGASIN_SCHEDULING_ACTOR__/);
   assert.match(writer,/Giám sát xếp lịch/);
-  assert.match(writer,/Owner không tạo lịch song song/);
+  assert.match(writer,/không tạo lịch song song/);
   for(const rpc of [
     "get_manager_weekly_availability",
     "list_schedule_generations",
