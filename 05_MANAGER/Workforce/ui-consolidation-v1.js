@@ -8,9 +8,9 @@ const allowed=new Set(Object.keys(labels));
 const routable=new Set([...allowed,'tasks']); // hidden legacy SOP compatibility route; not primary navigation
 const alias={'cham-cong':'attendance','doi-ca':'swap','nhan-su':'staff','cong-luong':'payroll-self-check','payroll':'payroll-self-check'};
 const sourceNames={
-  shift:'Swap / Give approvals',
-  attendance:'Attendance review',
-  availability:'Availability',
+  shift:'Đổi / cho ca',
+  attendance:'Duyệt chấm công',
+  availability:'Thời gian có thể làm',
   schedule:'Lịch chính thức',
   staff:'Nhân viên',
   payroll:'Công / Lương'
@@ -56,36 +56,40 @@ function actionModel(){
    key:'shift',route:'swap',label:'Đổi / cho ca',priority:swapCount>0?'high':'normal',
    state:shift.connection!=='CONNECTED'?shift.connection:shift.loading?'LOADING':shift.error?'ERROR':swapCount?'ACTION_REQUIRED':'EMPTY',
    value:shift.connection==='CONNECTED'&&!shift.loading&&!shift.error?String(swapCount):'—',
-   detail:shift.error?'Không tải được yêu cầu canonical.':swapCount?swapCount+' yêu cầu đã qua bước Employee và chờ Manager xử lý.':'Không có yêu cầu Swap/Give chờ Manager.'
+   detail:shift.error?'Không tải được yêu cầu đổi hoặc cho ca.':swapCount?swapCount+' yêu cầu đang chờ Quản lý xử lý.':'Không có yêu cầu đổi hoặc cho ca đang chờ xử lý.'
   },
   {
-   key:'attendance',route:'attendance',label:'Attendance review',priority:attendanceCount>0?'high':'normal',
+   key:'attendance',route:'attendance',label:'Duyệt chấm công',priority:attendanceCount>0?'high':'normal',
    state:attendance.connection!=='CONNECTED'?attendance.connection:attendance.loading?'LOADING':attendance.error?'ERROR':attendanceCount?'ACTION_REQUIRED':'EMPTY',
    value:attendance.connection==='CONNECTED'&&!attendance.loading&&!attendance.error?String(attendanceCount):'—',
-   detail:attendance.error?'Không tải được attendance canonical.':attendanceCount?attendanceCount+' bản ghi raw attendance cần review explicit.':'Không có attendance cần review trong state hiện tại.'
+   detail:attendance.error?'Không tải được dữ liệu chấm công.':attendanceCount?attendanceCount+' bản ghi chấm công cần Quản lý kiểm tra.':'Không có chấm công nào đang chờ kiểm tra.'
   },
   {
-   key:'availability',route:'workforce',label:'Availability tuần',priority:'normal',
+   key:'availability',route:'workforce',label:'Thời gian có thể làm',priority:'normal',
    state:availability.connection!=='CONNECTED'?availability.connection:availability.loading?'LOADING':availability.error?'ERROR':availabilityRows.length?'READY':'EMPTY',
    value:availability.connection==='CONNECTED'&&!availability.loading&&!availability.error?String(availabilityRows.length):'—',
-   detail:availability.error?'Không tải được availability canonical.':availabilityRows.length?availabilityRows.length+' đăng ký availability canonical đã tải.':'Chưa có đăng ký availability trong state hiện tại.'
+   detail:availability.error?'Không tải được đăng ký thời gian có thể làm.':availabilityRows.length?availabilityRows.length+' đăng ký thời gian có thể làm đã tải.':'Chưa có đăng ký thời gian có thể làm.'
   },
   {
    key:'schedule',route:'schedule',label:'Lịch chính thức',priority:'normal',
    state:schedule.connection!=='CONNECTED'?schedule.connection:schedule.loading?'LOADING':schedule.error?'ERROR':scheduleRows.length?'READY':'EMPTY',
    value:schedule.connection==='CONNECTED'&&!schedule.loading&&!schedule.error?String(scheduleRows.length):'—',
-   detail:schedule.error?'Không tải được lịch canonical.':scheduleRows.length?scheduleRows.length+' ca APPROVED đang có trong reader hiện tại.':'Chưa có ca APPROVED trong state hiện tại.'
+   detail:schedule.error?'Không tải được lịch chính thức.':scheduleRows.length?scheduleRows.length+' ca đã phát hành đang có trong lịch chính thức.':'Chưa có ca nào được phát hành.'
   },
   {
-   key:'tasks',route:null,label:'Task / SOP',priority:'normal',state:'NOT_CONNECTED',value:'—',
-   detail:'Không có nguồn Task / SOP canonical đã kết nối cho Manager Today.'
+   key:'tasks',route:null,label:'Công việc / Quy trình',priority:'normal',state:'NOT_CONNECTED',value:'—',
+   detail:'Chưa có nguồn công việc hoặc quy trình được kết nối cho màn hình Hôm nay.'
   }
  ];
 }
+function stateLabel(state){
+ const map={NOT_CONNECTED:'CHƯA KẾT NỐI',LOADING:'ĐANG TẢI',ERROR:'LỖI',EMPTY:'KHÔNG CÓ',ACTION_REQUIRED:'CẦN XỬ LÝ',READY:'SẴN SÀNG',CONNECTED:'ĐÃ KẾT NỐI'};
+ return map[String(state||'').toUpperCase()]||String(state||'');
+}
 function card(x){
  const tone=x.state==='ACTION_REQUIRED'?'danger':x.state==='ERROR'?'error':x.state==='NOT_CONNECTED'?'muted':x.state==='LOADING'?'loading':'neutral';
- const action=x.route?'<button type="button" class="manager-action-link" data-workforce-jump="'+esc(x.route)+'">Mở '+esc(labels[x.route].replace(/^\S+\s/,''))+'</button>':'<span class="manager-action-link disabled" aria-disabled="true">Không có route canonical</span>';
- return '<article class="manager-action-card '+tone+'" data-action-source="'+esc(x.key)+'" data-action-state="'+esc(x.state)+'"><div class="manager-action-top"><div><span class="manager-action-label">'+esc(x.label)+'</span><strong>'+esc(x.value)+'</strong></div><span class="manager-action-state">'+esc(x.state)+'</span></div><p>'+esc(x.detail)+'</p>'+action+'</article>';
+ const action=x.route?'<button type="button" class="manager-action-link" data-workforce-jump="'+esc(x.route)+'">Mở '+esc(labels[x.route].replace(/^\S+\s/,''))+'</button>':'<span class="manager-action-link disabled" aria-disabled="true">Chưa có màn hình tương ứng</span>';
+ return '<article class="manager-action-card '+tone+'" data-action-source="'+esc(x.key)+'" data-action-state="'+esc(x.state)+'"><div class="manager-action-top"><div><span class="manager-action-label">'+esc(x.label)+'</span><strong>'+esc(x.value)+'</strong></div><span class="manager-action-state">'+esc(stateLabel(x.state))+'</span></div><p>'+esc(x.detail)+'</p>'+action+'</article>';
 }
 function ensureTodayCss(){
  if(document.getElementById('manager-ui2-today-css'))return;
@@ -112,9 +116,9 @@ function renderToday(){
  const model=actionModel();
  const overall=model.some(x=>x.state==='ERROR')?'error':model.some(x=>x.state==='LOADING')?'loading':model.some(x=>x.state==='ACTION_REQUIRED')?'attention':'ready';
  root.dataset.actionCenterState=overall;
- root.innerHTML='<div class="manager-today-hero"><div><h1>Action Center</h1><p>Ưu tiên vận hành từ các Manager reader đã có. Không có doanh thu/KPI, deadline, owner hay pending count giả.</p></div><button type="button" class="manager-today-refresh" data-manager-today-refresh>↻ Làm mới canonical state</button></div><div class="manager-action-grid">'+model.map(card).join('')+'</div><div class="manager-today-note">Today chỉ đọc state và điều hướng. Mọi approve/review/publish vẫn diễn ra trong module canonical tương ứng với authority hiện hữu.</div>';
+ root.innerHTML='<div class="manager-today-hero"><div><h1>Việc cần xử lý</h1><p>Tổng hợp các việc vận hành đang cần Quản lý chú ý. Chỉ hiển thị dữ liệu đã được hệ thống xác minh.</p></div><button type="button" class="manager-today-refresh" data-manager-today-refresh>↻ Làm mới dữ liệu</button></div><div class="manager-action-grid">'+model.map(card).join('')+'</div><div class="manager-today-note">Màn hình Hôm nay chỉ tổng hợp và điều hướng. Việc duyệt hoặc phát hành vẫn thực hiện tại đúng màn hình nghiệp vụ.</div>';
  const refreshButton=root.querySelector('[data-manager-today-refresh]');
- if(refreshButton){refreshButton.disabled=refreshActive;refreshButton.setAttribute('aria-busy',String(refreshActive));refreshButton.textContent=refreshActive?'↻ Đang làm mới…':'↻ Làm mới canonical state';refreshButton.addEventListener('click',()=>refreshToday())}
+ if(refreshButton){refreshButton.disabled=refreshActive;refreshButton.setAttribute('aria-busy',String(refreshActive));refreshButton.textContent=refreshActive?'↻ Đang làm mới…':'↻ Làm mới dữ liệu';refreshButton.addEventListener('click',()=>refreshToday())}
 }
 function refreshToday(){
  if(refreshPromise)return refreshPromise;
