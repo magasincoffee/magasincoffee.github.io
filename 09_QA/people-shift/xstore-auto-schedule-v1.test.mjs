@@ -16,7 +16,7 @@ test("C03 recurring Manager board remains canonical staffing editor",()=>{
  assert.match(ui,/replace_workforce_recurring_staffing_requirements_v1/);
  assert.doesNotMatch(ui,/list_cross_store_staffing_requirements_v1|replace_cross_store_staffing_requirements_v1/);
  assert.doesNotMatch(ui,/data-xsa-f="work_date"|type="date"/);
- assert.match(ui,/Lưu cấu hình tuần mẫu/);
+ assert.match(ui,/Lưu nhu cầu hàng tuần/);
 });
 
 test("C04 Robot projects recurring weekday blocks directly into target week",()=>{
@@ -38,10 +38,10 @@ test("C04 revokes browser authority for superseded date-bound staffing RPCs",()=
 test("C04 Manager UI calls recurring Robot and still never publishes",()=>{
  assert.match(ui,/auto_generate_cross_store_schedule_v1/);
  assert.match(ui,/XSTORE_GLOBAL_RECURRING_V1/);
- assert.match(ui,/Tạo DRAFT tự động/);
+ assert.match(ui,/Tạo lịch nháp tự động/);
  assert.doesNotMatch(ui,/Chờ C04|Đang tạm khóa đến XSTORE-C04/);
  assert.doesNotMatch(ui,/publish_schedule_generation|review_schedule_generation/);
- assert.match(master,/Robot chỉ tạo bản nháp; Quản lý vẫn kiểm tra, chỉnh sửa và phát hành/);
+ assert.match(master,/Hệ thống chỉ tạo lịch nháp; Quản lý vẫn kiểm tra, chỉnh sửa và phát hành/);
  assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=20261001-xstore-c04/);
 });
 
