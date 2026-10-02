@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 READY / SCHED-UI-005→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 READY / SCHED-UI-006→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -159,8 +159,8 @@ Owner/release chain:
 | SCHED-UI-001 | Recurring staffing readable view + dedicated editor | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-002 | Manager information architecture: Lập lịch tuần vs Thiết lập xếp lịch | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-003 | Guided Auto Schedule “next action” workflow | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-004 | Draft → edit → check → approve → publish visual simplification | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-005 | Shared canonical time-band classifier | **BLOCKED BY 004** |
+| SCHED-UI-004 | Draft → edit → check → approve → publish visual simplification | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-005 | Shared canonical time-band classifier | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-006 | Employee official schedule time-band integration | **BLOCKED BY 005** |
 | SCHED-UI-007 | Employee availability CTA + editor UX | **BLOCKED BY 006** |
 | SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **BLOCKED BY 007** |
@@ -324,6 +324,25 @@ Required:
 - PUBLISHED maps to `Đã phát hành`;
 - final step exposes `Duyệt lịch` then `Phát hành lịch` as appropriate;
 - idempotent existing behavior preserved.
+
+Completion evidence — 2026-10-02:
+
+- implementation continued on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `adbc215f789e1fd393e629f7eace64150842731c`;
+- source availability is visually separated from the editable weekly draft surface;
+- store/week context remains discoverable while reopen/reload/save are secondary draft utilities;
+- DRAFT makes `Duyệt lịch` the primary final action, REVIEWED maps to user-facing `Đã duyệt` and makes `Phát hành lịch` primary, and PUBLISHED maps to `Đã phát hành`;
+- conflict presentation keeps the conflict result beside a `Tải lại trạng thái` recovery action;
+- existing Manager scheduling RPC inventory, writer boundary, server validation, review/publish state machine, and idempotent publish semantics remain unchanged;
+- Manager cache chain advanced to `20261002-sched-ui-004` and cold-reload expectations were aligned to the same exact cache version;
+- a presentation-layer MutationObserver feedback loop was removed by observing `aria-busy` instead of class mutations while retaining child-list synchronization;
+- `SOP Task Tests` PR run `37015278341`: SUCCESS;
+- `UI2 Cross Role Acceptance` PR run `37015278397`: SUCCESS;
+- `People Shift Day-10 Tests` PR run `37015278485`: SUCCESS;
+- `UI2 Cross Role Acceptance` push run `37015272789`: SUCCESS;
+- job-level qualification on the verified exact head: Manager responsive matrix, UI2-017 cold reload closure gate, People Shift regression tests, SCHED-01 three-role scheduling browser smoke, and XSTORE four-store master browser E2E: SUCCESS;
+- PR remains open and unmerged; no production-impacting product code from this task was merged to `main`;
+- no Owner input is required to close this technical task.
 
 ## 12. SCHED-UI-005 — Shared canonical time-band classifier
 
@@ -708,10 +727,12 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-003 = DONE / VERIFIED`
 
-`SCHED-UI-004 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-004 = DONE / VERIFIED`
+
+`SCHED-UI-005 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
 Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
 
-Do not execute SCHED-UI-005 or later before SCHED-UI-004 is complete.
+Do not execute SCHED-UI-006 or later before SCHED-UI-005 is complete.
