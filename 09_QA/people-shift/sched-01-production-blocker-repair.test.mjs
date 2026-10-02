@@ -55,8 +55,8 @@ test('SCHED-01 reconciliation preserves history and prevents active split-brain'
 test('ONE canonical scheduling path is wired across Owner Manager Employee',()=>{
   assert.match(sot,/work_schedules \/ canonical published assignment truth/);
   assert.match(ownerRuntime,/\/05_MANAGER\/runtime\/manager-shell-v1\.html/);
-  assert.match(ownerRuntime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-mer003)/);
-  assert.match(ownerPublish,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-mer003)/);
+  assert.match(ownerRuntime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-mer003|20261003-sched-ui-008)/);
+  assert.match(ownerPublish,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-mer003|20261003-sched-ui-008)/);
   assert.doesNotMatch(ownerPublish,/auto_generate_schedule_generation|review_schedule_generation|publish_schedule_generation/);
   assert.match(managerDraft,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
   assert.match(ownerRuntime,/manager-context-v1\.js\?v=20260929-mer003/);
