@@ -63,7 +63,7 @@ async function refresh(){
   current.querySelectorAll('[data-xsm-open]').forEach(b=>b.addEventListener('click',()=>document.dispatchEvent(new CustomEvent('magasin:manager-schedule-open',{detail:{storeId:b.dataset.xsmOpen,week}}))));
   document.dispatchEvent(new CustomEvent('magasin:xstore-master-rendered',{detail:{week,stores:stores.map(s=>({...s})),availabilityCount:availability.length,unconfiguredEmployeeCount:unconfigured}}));
  }catch(e){
-  const current=mount();if(current)current.innerHTML='<div class="xsm-loading">Không tải được tổng lịch 4 cửa hàng. '+esc(String(e?.message||e?.code||''))+'</div>';
+  console.warn('[XSTORE_MASTER_LOAD]',e);const current=mount();if(current)current.innerHTML='<div class="xsm-loading">Không tải được tổng lịch 4 cửa hàng. Vui lòng tải lại và thử lại.</div>';
  }finally{
   pending=false;
   if(queued){queued=false;setTimeout(refresh,0)}

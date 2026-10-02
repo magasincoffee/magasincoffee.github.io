@@ -12,6 +12,7 @@ const shellJs=read("02_CORE/ui/magasin-ui-v2-shell.js");
 const auto=read("05_MANAGER/Workforce/cross-store-auto-schedule-v1.js");
 const master=read("05_MANAGER/Workforce/cross-store-master-v1.js");
 const draft=read("05_MANAGER/Workforce/draft-publish-v1.js");
+const official=read("05_MANAGER/Workforce/official-v1.js");
 const schedulingUi=read("05_MANAGER/Workforce/manager-scheduling-ui2-v1.js");
 const today=read("05_MANAGER/Workforce/ui-consolidation-v1.js");
 const managerEngine=read("05_MANAGER/Workforce/engine-v1.js");
@@ -19,6 +20,7 @@ const managerRuntime=read("05_MANAGER/runtime/manager-runtime-v1.html");
 const employeeRuntime=read("06_EMPLOYEE/runtime/employee-runtime-v1.html");
 const employeeApp=read("06_EMPLOYEE/app/employee-v40.html");
 const employeeScheduleCss=read("02_CORE/ui/magasin-ui-v2-employee-schedule.css");
+const employeeSchedule=read("06_EMPLOYEE/schedule/engine-v1.js");
 
 test("unified UI JavaScript sources parse",()=>{
  for(const [name,source] of [
@@ -27,6 +29,8 @@ test("unified UI JavaScript sources parse",()=>{
   ["staffing board",auto],
   ["cross-store master",master],
   ["draft editor",draft],
+  ["official schedule",official],
+  ["employee schedule",employeeSchedule],
   ["scheduling presentation",schedulingUi],
   ["manager today",today]
  ])assert.doesNotThrow(()=>new Function(source),name);
@@ -95,6 +99,17 @@ test("primary user guidance is Vietnamese while internal status/RPC identifiers 
  assert.doesNotMatch(draft,/Employee Availability|Không có availability|Không tìm thấy availability|canonical work_schedules/);
  assert.doesNotMatch(master,/Robot chỉ tạo|Store Priority Profile|Chưa có assignment/);
  assert.doesNotMatch(employeeApp,/>NOT CONNECTED<|Lối tắt Today|phê duyệt canonical/);
+ assert.doesNotMatch(draft,/qua server|trên server|revalidate|Không hiển thị ID kỹ thuật/);
+ assert.match(draft,/Không khởi tạo được bảng xếp lịch\. Vui lòng tải lại và thử lại\./);
+ assert.doesNotMatch(draft,/Không khởi tạo được bảng xếp lịch: ['"]?\s*\+/);
+ assert.match(master,/\[XSTORE_MASTER_LOAD\]/);
+ assert.match(master,/Không tải được tổng lịch 4 cửa hàng\. Vui lòng tải lại và thử lại\./);
+ assert.doesNotMatch(master,/Không tải được tổng lịch 4 cửa hàng\. ['"]?\s*\+/);
+ assert.match(official,/\[MANAGER_OFFICIAL_LOAD\]/);
+ assert.match(official,/Không tải được lịch làm chính thức\. Vui lòng tải lại và thử lại\./);
+ assert.doesNotMatch(official,/state\.lastError=e\?\.message|state\.lastError=e\.message/);
+ assert.match(employeeSchedule,/Khi quản lý phát hành lịch, ca chính thức của bạn sẽ xuất hiện tại đây\./);
+ assert.doesNotMatch(employeeSchedule,/Khi quản lý publish lịch/);
 });
 
 

@@ -51,7 +51,7 @@ async function refresh(){
  const root=view();if(!root||state.loading)return;
  state.loading=true;state.lastError=null;
  try{await loadStores();await loadRows();render()}
- catch(e){state.lastError=e?.message||e?.code||String(e);state.rows=[];render()}
+ catch(e){console.warn('[MANAGER_OFFICIAL_LOAD]',e);state.lastError='Không tải được lịch làm chính thức. Vui lòng tải lại và thử lại.';state.rows=[];render()}
  finally{state.loading=false}
 }
 function capture(e){

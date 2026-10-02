@@ -168,7 +168,7 @@ async function resumeOnly(){
 async function startOrResume(){
  if(state.busy||!state.storeId||!state.week)return;
  if(state.generationId&&state.generationStatus!=='DRAFT')return resumeOnly();
- state.busy=true;lockControls(true);status('Đang tạo hoặc mở bản nháp qua server…');
+ state.busy=true;lockControls(true);status('Đang tạo hoặc mở bản nháp…');
  try{
   const q=await client().rpc('create_schedule_generation',{p_store_id:state.storeId,p_week_start:state.week,p_algorithm_version:'MANAGER_DIRECT_V1'});
   if(q.error)throw q.error;
@@ -221,7 +221,7 @@ function render(){
  const stepHtml='<div class="msd-summary" aria-label="Tiến trình xếp lịch">'+steps.map(([n,label,kind])=>`<span class="msd-pill ${kind==='done'?'msd-ok':kind==='current'?'msd-warning':''}">${n}. ${esc(label)}</span>`).join('')+'</div>';
  const officialAction=actorRole()==='OWNER'?'':'<div class="msd-actions" style="margin-top:8px"><button class="btn primary" id="msdOfficial" type="button">Mở lịch chính thức</button></div>';
  const officialHtml=stage==='PUBLISHED'?'<div class="msd-status ok"><b>Lịch chính thức đã phát hành</b><br>'+state.officialRows.length+' ca chính thức đã được tải lại từ hệ thống.'+officialRowsHtml()+officialAction+'</div>':'';
- p.innerHTML=`<section class="card msd" data-scheduling-actor="${esc(actorRole())}"><div class="msd-head"><div><h2 style="margin:0">${esc(copy.title)}</h2><div class="muted" style="margin-top:5px">${esc(copy.subtitle)}</div></div><div class="msd-actions"><select class="btn" id="msdStore" aria-label="Cửa hàng">${state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId)?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}</select><button class="btn" type="button" data-msd-week="prev"${busy}>←</button><button class="btn" type="button" data-msd-week="target"${busy}>Tuần sau</button><button class="btn" type="button" data-msd-week="next"${busy}>→</button><span class="badge blue">${esc(state.week||'—')}</span><button class="btn" type="button" id="msdStart"${busy+(stage==='REVIEWED'||stage==='PUBLISHED'?' disabled':'')}>${state.generationId?'Mở lại bản nháp':'Tạo bản nháp'}</button><button class="btn" type="button" id="msdReload"${busy}>Tải lại</button><button class="btn primary" type="button" id="msdSave"${busy+(stage==='DRAFT'?'':' disabled')}>Lưu bản nháp</button></div></div>${stepHtml}<div class="msd-summary"><span class="msd-pill">${esc(store?.code||'—')}</span><span class="msd-pill">${state.availability.length} đăng ký thời gian</span><span class="msd-pill">${state.assignments.length} ca trong phiên xếp lịch</span><span class="msd-pill ${stage==='PUBLISHED'?'msd-ok':stage==='CONFLICT'?'msd-warning':''}">${stage==='NONE'?'CHƯA TẠO':stage==='DRAFT'?'BẢN NHÁP':stage==='REVIEWED'?'ĐÃ DUYỆT':stage==='PUBLISHED'?'ĐÃ PHÁT HÀNH':'CẦN XỬ LÝ'}</span>${state.duplicateDrafts?`<span class="msd-pill msd-warning">Phát hiện nhiều phiên cùng cửa hàng và tuần · đã khóa thao tác</span>`:''}</div><div id="xstoreMasterMount"></div><div class="msd-layout"><div class="msd-source"><b>Thời gian nhân viên có thể làm</b><div class="muted" style="margin-top:4px">${esc(copy.source)}</div>${sourceHtml()}</div><div class="msd-board-wrap"><b>Lịch đang xếp · Thứ Hai → Chủ Nhật</b><div class="muted" style="margin:4px 0 10px">Chỉnh ca tại đây khi lịch còn là bản nháp. Không hiển thị ID kỹ thuật.</div>${boardHtml()}</div></div><div class="msd-downstream"><div class="muted" style="margin-bottom:8px">Sau khi lưu bản nháp: kiểm tra xung đột → duyệt → phát hành.</div><div class="msd-actions"><button class="btn" type="button" id="msdValidate"${busy+(!state.generationId||stage==='PUBLISHED'?' disabled':'')}>Kiểm tra xung đột</button><button class="btn" type="button" id="msdReview"${busy+(stage==='DRAFT'?'':' disabled')}>Duyệt lịch</button><button class="btn primary" type="button" id="msdPublish"${busy+(stage==='REVIEWED'?'':' disabled')}>Phát hành</button></div></div>${officialHtml}<div id="msdStatus" class="msd-status">${state.generationId?(stage==='PUBLISHED'?'Lịch chính thức đã sẵn sàng.':stage==='REVIEWED'?'Lịch đã duyệt; kiểm tra lần cuối rồi phát hành.':'Bản nháp sẵn sàng chỉnh sửa.'):'Chọn cửa hàng/tuần rồi tạo hoặc mở bản nháp.'}</div></section>`;
+ p.innerHTML=`<section class="card msd" data-scheduling-actor="${esc(actorRole())}"><div class="msd-head"><div><h2 style="margin:0">${esc(copy.title)}</h2><div class="muted" style="margin-top:5px">${esc(copy.subtitle)}</div></div><div class="msd-actions"><select class="btn" id="msdStore" aria-label="Cửa hàng">${state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId)?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}</select><button class="btn" type="button" data-msd-week="prev"${busy}>←</button><button class="btn" type="button" data-msd-week="target"${busy}>Tuần sau</button><button class="btn" type="button" data-msd-week="next"${busy}>→</button><span class="badge blue">${esc(state.week||'—')}</span><button class="btn" type="button" id="msdStart"${busy+(stage==='REVIEWED'||stage==='PUBLISHED'?' disabled':'')}>${state.generationId?'Mở lại bản nháp':'Tạo bản nháp'}</button><button class="btn" type="button" id="msdReload"${busy}>Tải lại</button><button class="btn primary" type="button" id="msdSave"${busy+(stage==='DRAFT'?'':' disabled')}>Lưu bản nháp</button></div></div>${stepHtml}<div class="msd-summary"><span class="msd-pill">${esc(store?.code||'—')}</span><span class="msd-pill">${state.availability.length} đăng ký thời gian</span><span class="msd-pill">${state.assignments.length} ca trong phiên xếp lịch</span><span class="msd-pill ${stage==='PUBLISHED'?'msd-ok':stage==='CONFLICT'?'msd-warning':''}">${stage==='NONE'?'CHƯA TẠO':stage==='DRAFT'?'BẢN NHÁP':stage==='REVIEWED'?'ĐÃ DUYỆT':stage==='PUBLISHED'?'ĐÃ PHÁT HÀNH':'CẦN XỬ LÝ'}</span>${state.duplicateDrafts?`<span class="msd-pill msd-warning">Phát hiện nhiều phiên cùng cửa hàng và tuần · đã khóa thao tác</span>`:''}</div><div id="xstoreMasterMount"></div><div class="msd-layout"><div class="msd-source"><b>Thời gian nhân viên có thể làm</b><div class="muted" style="margin-top:4px">${esc(copy.source)}</div>${sourceHtml()}</div><div class="msd-board-wrap"><b>Lịch đang xếp · Thứ Hai → Chủ Nhật</b><div class="muted" style="margin:4px 0 10px">Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp.</div>${boardHtml()}</div></div><div class="msd-downstream"><div class="muted" style="margin-bottom:8px">Sau khi lưu bản nháp: kiểm tra xung đột → duyệt → phát hành.</div><div class="msd-actions"><button class="btn" type="button" id="msdValidate"${busy+(!state.generationId||stage==='PUBLISHED'?' disabled':'')}>Kiểm tra xung đột</button><button class="btn" type="button" id="msdReview"${busy+(stage==='DRAFT'?'':' disabled')}>Duyệt lịch</button><button class="btn primary" type="button" id="msdPublish"${busy+(stage==='REVIEWED'?'':' disabled')}>Phát hành</button></div></div>${officialHtml}<div id="msdStatus" class="msd-status">${state.generationId?(stage==='PUBLISHED'?'Lịch chính thức đã sẵn sàng.':stage==='REVIEWED'?'Lịch đã duyệt; kiểm tra lần cuối rồi phát hành.':'Bản nháp sẵn sàng chỉnh sửa.'):'Chọn cửa hàng/tuần rồi tạo hoặc mở bản nháp.'}</div></section>`;
  bind();
 }
 function syncRowsFromDom(){
@@ -250,7 +250,7 @@ async function save(){
 }
 async function validate(){
  if(state.busy||!state.generationId||state.generationStatus==='PUBLISHED')return;
- state.busy=true;lockControls(true);status('Đang kiểm tra lịch trên server…');
+ state.busy=true;lockControls(true);status('Đang kiểm tra lịch…');
  try{
   const q=await client().rpc('validate_schedule_generation_v1',{p_generation_id:state.generationId});
   if(q.error)throw q.error;
@@ -267,7 +267,7 @@ async function validate(){
 }
 async function review(){
  if(state.busy||!state.generationId||!['DRAFT','REVIEWED'].includes(state.generationStatus))return;
- state.busy=true;lockControls(true);status('Đang revalidate và duyệt lịch trên server…');
+ state.busy=true;lockControls(true);status('Đang kiểm tra lại và duyệt lịch…');
  try{
   const q=await client().rpc('review_schedule_generation',{p_generation_id:state.generationId,p_decision:'APPROVED'});
   if(q.error)throw q.error;
@@ -323,7 +323,7 @@ async function openDirect(detail={}){
 }
 async function boot(){
  let tries=0;while(!panel()&&tries++<60)await new Promise(r=>setTimeout(r,150));if(!panel())return;
- try{await loadStores();state.week=targetWeek();await resumeOnly()}catch(e){render();status('Không khởi tạo được bảng xếp lịch: '+(e.message||e.code||e),'error')}
+ try{await loadStores();state.week=targetWeek();await resumeOnly()}catch(e){console.warn('[MANAGER_SCHEDULE_BOOT]',e);render();status('Không khởi tạo được bảng xếp lịch. Vui lòng tải lại và thử lại.','error')}
 }
 document.addEventListener('magasin:manager-schedule-open',e=>openDirect(e.detail));
 document.addEventListener('magasin:owner-schedule-open',e=>openDirect(e.detail));
