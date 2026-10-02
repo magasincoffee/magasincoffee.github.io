@@ -21,7 +21,7 @@
     const role=String(p.role||'').toUpperCase();
     if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/employee/');return}
     const f=document.getElementById('app');
-    f.src='/05_MANAGER/runtime/manager-runtime-v1.html?v=20260918-task-route1';
+    f.src='/05_MANAGER/runtime/manager-runtime-v1.html?v=20260918-task-route1#tasks';
     f.hidden=false;
   }catch(e){
     console.error('Manager Task access failed',e);
