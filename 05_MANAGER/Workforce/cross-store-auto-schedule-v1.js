@@ -65,7 +65,7 @@ function ensureCss(){
 .xsa-board th:first-child,.xsa-board td:first-child{position:sticky;left:0;z-index:2;background:#fff;width:180px;min-width:180px}
 .xsa-store-name{font-size:12px;line-height:18px;font-weight:700;color:var(--m-color-neutral-950,#101828)}
 .xsa-store-sub{font-size:11px;line-height:16px;color:var(--m-color-neutral-500,#667085);margin-top:2px}
-.xsa-workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,420px);gap:12px;align-items:start}
+.xsa-workspace{display:block}\n.xsa-workspace.has-editor{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,420px);gap:12px;align-items:start}
 .xsa-workspace>.xsa-board-wrap{margin-top:12px}
 .xsa-cell{width:140px;min-width:140px;padding:0!important}
 .xsa-cell-open{display:block;width:100%;min-height:72px;padding:8px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
@@ -207,7 +207,7 @@ function render(){
   +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>3. Xếp lịch tự động</b><span>'+(complete?'Sẵn sàng áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp':'Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động')+'</span></div></div>'
   +'<div class="xsa-summary">'+summary.join('')+'</div>'
   +'<div class="xsa-recurring-note"><b>Cấu hình cố định hàng tuần:</b> không chọn ngày lịch và không cần nhập lại mỗi tuần. Hệ thống không tự đoán số người.<div class="xsa-band-legend" aria-label="Quy ước màu khung giờ"><span><i class="xsa-band-dot morning"></i>05:00–12:00 · Vàng</span><span><i class="xsa-band-dot afternoon"></i>12:00–17:00 · Đỏ nhạt</span><span><i class="xsa-band-dot evening"></i>17:00–22:00 · Xanh dương nhạt</span></div></div>'
-  +'<div class="xsa-workspace">'+boardHtml()+editorHtml()+'</div>'
+  +'<div class="xsa-workspace'+(state.editing?' has-editor':'')+'">'+boardHtml()+editorHtml()+'</div>'
   +shortagesHtml()
   +(state.message?'<div class="xsa-status '+esc(state.messageType)+'">'+esc(state.message)+'</div>':'')
   +'</section>';
