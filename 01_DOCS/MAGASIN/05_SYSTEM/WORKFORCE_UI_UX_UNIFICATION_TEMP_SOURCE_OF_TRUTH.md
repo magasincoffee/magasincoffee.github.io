@@ -3,7 +3,7 @@
 **Track ID:** `WORKFORCE_UI_UX_UNIFICATION_V1`  
 **Lifecycle:** TEMPORARY — delete this file after WUI-009 completes.  
 **Created:** 2026-10-01  
-**Status:** WUI-001 DONE / WUI-002 READY / WUI-003→009 BLOCKED BY ORDER  
+**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 READY / WUI-004→009 BLOCKED BY ORDER  
 **Repository:** `magasincoffee/magasincoffee.github.io`
 
 ## 0. Authority boundary
@@ -221,8 +221,8 @@ PR #363 remains open. Merge and exact-main qualification remain reserved for `WU
 | Task ID | Task | Required outcome | State |
 |---|---|---|---|
 | WUI-001 | Regression triage + contract reconciliation | Classify every current PR #363 failure; update only stale expectations; fix real regressions if any; no safety/authority weakening | **DONE / PR #363 QUALIFICATION GREEN** |
-| WUI-002 | Recurring staffing editor state acceptance | Prove existing time/headcount survives +Khung/remove/save/reload/week change; new block starts empty; no 05:00 reset | **READY / NEXT AUTHORITATIVE TASK** |
-| WUI-003 | Manager + Employee layout foundation acceptance | Prove full remaining viewport usage, correct sidebar/main relationship, contained board scrolling, responsive/touch behavior | **BLOCKED BY WUI-002** |
+| WUI-002 | Recurring staffing editor state acceptance | Prove existing time/headcount survives +Khung/remove/save/reload/week change; new block starts empty; no 05:00 reset | **DONE / ACCEPTANCE GREEN** |
+| WUI-003 | Manager + Employee layout foundation acceptance | Prove full remaining viewport usage, correct sidebar/main relationship, contained board scrolling, responsive/touch behavior | **READY / NEXT AUTHORITATIVE TASK** |
 | WUI-004 | Typography / palette / time-band visual acceptance | Prove one font/palette foundation and yellow/red/light-blue start-time rule across all required scheduling surfaces | **BLOCKED BY WUI-003** |
 | WUI-005 | Vietnamese UX copy acceptance | Remove user-visible technical/mixed-language terms from primary Manager/Employee Workforce surfaces; keep internal identifiers internal | **BLOCKED BY WUI-004** |
 | WUI-006 | Cross-role browser regression | Run bounded Manager + Employee browser regression for navigation, scheduling, time editor, colors, reload and responsive states | **BLOCKED BY WUI-005** |
@@ -311,6 +311,19 @@ DONE evidence:
 - static contract green;
 - browser test green;
 - no regression in C02/C04/C05 recurring-authority tests.
+
+WUI-002 closure:
+
+- accepted PR #363 head: `b257b16f3f1490c4189215d185fd90b80b386990`;
+- People Shift Day-10 Tests run `36884997422`, job `110445912700` — SUCCESS;
+- static evidence: `WORKFORCE_UI_UNIFIED_V1=PASS`;
+- time-picker static assertion preserving business-field attributes and forbidding the 05:00 fallback — PASS;
+- browser evidence: `XSTORE_RECURRING_STABLE_EDITOR_BROWSER=PASS`;
+- recurring authority regressions: `XSTORE_C02_RECURRING_STAFFING_AUTHORITY=PASS`, `XSTORE_C04_RECURRING_PROJECTION=PASS`, `XSTORE_C05_RECURRING_ACCEPTANCE=PASS`;
+- acceptance flow proves existing `07:00–12:00 / 3` survives add/remove/save/reload and reuse in the next target week while a new block starts with empty start/end and `Chọn giờ`;
+- durable acceptance evidence: `01_DOCS/MAGASIN/05_SYSTEM/WUI_002_RECURRING_STAFFING_EDITOR_ACCEPTANCE.md`;
+- no production business data, schema, RPC authority or scheduling authority was changed;
+- next task: `WUI-003`.
 
 ### WUI-003 — Manager + Employee layout foundation acceptance
 
@@ -563,4 +576,6 @@ Do not compress the estimate by skipping exact-main or production verification.
 
 `WUI-001` is **DONE**.
 
-`WUI-002` is the only authoritative next executable task. Do not execute WUI-003 or later tasks before WUI-002 is complete.
+`WUI-002` is **DONE**.
+
+`WUI-003` is the only authoritative next executable task. Do not execute WUI-004 or later tasks before WUI-003 is complete.
