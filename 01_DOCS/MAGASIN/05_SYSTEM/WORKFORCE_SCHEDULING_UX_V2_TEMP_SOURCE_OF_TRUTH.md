@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 READY / SCHED-UI-007→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 READY / SCHED-UI-008→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -161,8 +161,8 @@ Owner/release chain:
 | SCHED-UI-003 | Guided Auto Schedule “next action” workflow | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-004 | Draft → edit → check → approve → publish visual simplification | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-005 | Shared canonical time-band classifier | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-006 | Employee official schedule time-band integration | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-007 | Employee availability CTA + editor UX | **BLOCKED BY 006** |
+| SCHED-UI-006 | Employee official schedule time-band integration | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-007 | Employee availability CTA + editor UX | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **BLOCKED BY 007** |
 | SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **BLOCKED BY 008** |
 | SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **BLOCKED BY 009** |
@@ -403,6 +403,33 @@ Required:
 - empty week remains neutral;
 - desktop/tablet/mobile acceptance;
 - existing schedule reader/RPC/state machine unchanged unless necessary for shared presentation helper.
+
+Completion evidence — 2026-10-02:
+
+- implementation continued on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `a04c0f1dec27267d52c5674ab02c58bf2822d33e`;
+- Employee official published shifts now delegate visual band classification to canonical `MAGASIN_CORE.time.shiftKind()` rather than maintaining a divergent local time classifier;
+- Employee presentation maps all four canonical states explicitly: morning → yellow, afternoon → light red, evening → light blue, and neutral → neutral; neutral no longer falls through to evening;
+- published shift cards expose `data-time-band` for durable semantic qualification while preserving the full visible time range;
+- Employee runtime loads Shared Core cache `20261002-sched-ui-005` and Employee Schedule cache `20261002-sched-ui-006`;
+- existing canonical schedule reader `list_my_approved_schedules_v2`, APPROVED-only projection, ownership preflight, attendance/give/swap actions, and scheduling state machine remain unchanged;
+- SCHED-03 QA fixture was aligned to the canonical four-state classifier and opted into the same canonical UI token scope used by the real Employee app;
+- durable browser log records `SCHED_03_EMPLOYEE_SCHEDULE_UI=PASS`;
+- SCHED-03 mobile qualification verifies canonical morning/evening token colors and full readable times `06:00–12:00` and `17:00–22:00`;
+- next-week qualification verifies `12:00–17:00` as canonical afternoon;
+- tablet 820px qualification verifies two-column fit, canonical bands, no horizontal overflow, and an empty week with no shift/time-band styling;
+- desktop qualification verifies a seven-column week with no horizontal overflow;
+- canonical-reader qualification verifies V2 reader only with no direct table or legacy schedule reader;
+- `People Shift Day-10 Tests` PR run `37034586626`: SUCCESS;
+- `UI2 Cross Role Acceptance` PR run `37034586547`: SUCCESS;
+- `SOP Task Tests` PR run `37034586636`: SUCCESS;
+- `AUTH-PROD Regression Contract` PR run `37034586616`: SUCCESS;
+- `People Shift Day-10 Tests` push run `37034581326`: SUCCESS;
+- `UI2 Cross Role Acceptance` push run `37034581385`: SUCCESS;
+- job-level qualification: People Shift job `110929515638` and UI2 cross-role job `110929516582`: SUCCESS;
+- job-level gates include People Shift regression tests, SCHED-01 three-role scheduling browser smoke, SCHED-03 Employee Schedule UI browser E2E, XSTORE four-store master browser E2E, UI2-016 static contract, accepted role static regressions, Employee responsive matrix, Manager responsive matrix, and UI2-017 cold reload closure gate: SUCCESS;
+- PR remains open and unmerged; no production-impacting product code from this task was merged to `main`;
+- no Owner input is required to close this technical task.
 
 ## 14. SCHED-UI-007 — Employee availability CTA + editor UX
 
@@ -752,10 +779,11 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-005 = DONE / VERIFIED`
 
-`SCHED-UI-006 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-006 = DONE / VERIFIED`
+`SCHED-UI-007 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
 Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
 
-Do not execute SCHED-UI-007 or later before SCHED-UI-006 is complete.
+Do not execute SCHED-UI-008 or later before SCHED-UI-007 is complete.
