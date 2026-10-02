@@ -19,6 +19,18 @@ test("C03 recurring Manager board remains canonical staffing editor",()=>{
  assert.match(ui,/Lưu nhu cầu hàng tuần/);
 });
 
+test("SCHED-UI-001 keeps the recurring weekly grid scan-only and edits one store/day in a dedicated panel",()=>{
+ assert.match(ui,/xsa-cell-open/);
+ assert.match(ui,/xsa-workspace\.has-editor/);
+ assert.match(ui,/xsa-editor-panel/);
+ assert.match(ui,/data-xsa-open-store/);
+ assert.doesNotMatch(ui,/xsa-block-edit/);
+ for(const label of ["Bắt đầu","Kết thúc","Số người","Xóa khung","+ Thêm khung","Hủy thay đổi","Lưu nhu cầu hàng tuần"])assert.ok(ui.includes(label),label);
+ assert.match(ui,/start_time:''/);
+ assert.match(ui,/end_time:''/);
+ assert.match(ui,/@media\(max-width:760px\)[\s\S]*\.xsa-editor-panel\{position:fixed;left:0;right:0;bottom:0/);
+});
+
 test("C04 Robot projects recurring weekday blocks directly into target week",()=>{
  assert.match(cutover,/from public\.workforce_recurring_staffing_requirements req/);
  assert.match(cutover,/p_week_start \+ \(req\.day_of_week::integer - 1\)/);
