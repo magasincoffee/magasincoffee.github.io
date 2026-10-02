@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 READY / SCHED-UI-002→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 READY / SCHED-UI-003→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -156,8 +156,8 @@ Owner/release chain:
 | Task | Scope | Current state |
 |---|---|---|
 | SCHED-UI-000 | Owner-approved Design Lock / Cách B | **DONE / OWNER APPROVED** |
-| SCHED-UI-001 | Recurring staffing readable view + dedicated editor | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-002 | Manager information architecture: Lập lịch tuần vs Thiết lập xếp lịch | **BLOCKED BY 001** |
+| SCHED-UI-001 | Recurring staffing readable view + dedicated editor | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-002 | Manager information architecture: Lập lịch tuần vs Thiết lập xếp lịch | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-003 | Guided Auto Schedule “next action” workflow | **BLOCKED BY 002** |
 | SCHED-UI-004 | Draft → edit → check → approve → publish visual simplification | **BLOCKED BY 003** |
 | SCHED-UI-005 | Shared canonical time-band classifier | **BLOCKED BY 004** |
@@ -211,6 +211,22 @@ Regression requirements:
 - no empty → 05:00 regression;
 - save/reload/week reuse green;
 - no real business values invented.
+
+
+Completion evidence — 2026-10-02:
+
+- implementation branch: `sched-ui-001-recurring-editor`;
+- PR: `#381` — `SCHED-UI-001: dedicated recurring staffing day editor`;
+- verified head: `4d0e3b760a60de4b28bf4757464a43239c556e9d`;
+- PR remains open and unmerged; no production-impacting product code from this task was merged to `main`;
+- recurring staffing weekly grid remains the scan/read surface; store/day selection opens a dedicated full-width editor on desktop and full-width sheet on mobile;
+- editor labels and actions cover Bắt đầu / Kết thúc / Số người / Xóa, `+ Thêm khung`, cancel, and save;
+- regression coverage verifies add/remove preservation, blank new start/end values, no empty→05:00 fallback, save/reload, next-week reuse, and mobile editor width;
+- `SOP Task Tests` run `37004964969`: SUCCESS;
+- `UI2 Cross Role Acceptance` PR run `37004964896`: SUCCESS;
+- `People Shift Day-10 Tests` PR run `37004964955`: SUCCESS;
+- `UI2 Cross Role Acceptance` push run `37004958809`: SUCCESS;
+- no Owner input is required to close this technical task.
 
 ## 9. SCHED-UI-002 — Manager scheduling information architecture
 
@@ -648,10 +664,12 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-000 = DONE / OWNER APPROVED`
 
-`SCHED-UI-001 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-001 = DONE / VERIFIED`
+
+`SCHED-UI-002 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
 Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
 
-Do not execute SCHED-UI-002 or later before SCHED-UI-001 is complete.
+Do not execute SCHED-UI-003 or later before SCHED-UI-002 is complete.
