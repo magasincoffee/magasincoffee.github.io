@@ -17,6 +17,31 @@ System không được trở thành nguồn quyết định nghiệp vụ thay c
 
 Khi mở một cuộc trò chuyện mới hoặc robot đọc dự án, **không chọn Source of Truth chỉ theo tên file hoặc ngày tạo**. Đọc status/lifecycle của đúng track trước.
 
+### Production release authority
+
+Cross-project production delivery authority:
+
+`PRODUCTION_RELEASE_GOVERNANCE_V1_SOURCE_OF_TRUTH.md`
+
+Status: `ACTIVE / MANDATORY FOR ALL FUTURE PRODUCTION RELEASES`
+
+This file governs how every production-impacting change reaches the live WebApp:
+
+`Development branch → Preview/Staging → QA → Owner review → frozen exact RC → 00:00 Asia/Ho_Chi_Minh release → production smoke / rollback`
+
+Important:
+
+- production-impacting work must not be developed directly on `main`;
+- Owner-visible changes must be reviewable before production;
+- required QA must be green;
+- Owner approval applies to an exact RC SHA;
+- production release normally occurs at 00:00 Asia/Ho_Chi_Minh;
+- rollback SHA must be recorded before release;
+- failed production smoke must trigger rollback/recovery rather than improvised live patching;
+- domain SOTs keep their business/task authority but may not weaken this production-release policy.
+
+Future chats/robots that upgrade, repair, merge or deploy production must read this release SOT together with the relevant domain SOT.
+
 ### Active temporary execution authorities
 
 Hiện chỉ có hai TEMP Source of Truth còn hoạt động trong thư mục này:
