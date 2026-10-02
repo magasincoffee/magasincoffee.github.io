@@ -53,9 +53,10 @@ test("Manager recurring staffing editor is compact responsive and uses the share
  assert.match(auto,/table-layout:fixed/);
  assert.match(auto,/@media\(max-width:760px\)/);
  for(const copy of [
-  "Nhu cầu nhân sự hàng tuần",
+  "Lập lịch tuần",
+  "Thiết lập xếp lịch",
+  "Nhu cầu nhân sự cố định hàng tuần",
   "Ưu tiên cửa hàng",
-  "Xếp lịch tự động",
   "Tạo lịch nháp tự động",
   "Lưu nhu cầu hàng tuần"
  ])assert.ok(auto.includes(copy),copy);
