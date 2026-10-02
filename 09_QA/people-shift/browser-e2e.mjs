@@ -105,7 +105,9 @@ try {
   });
 
   await check("employee_availability_registration", async () => {
-    await employee.locator("button", { hasText: "Đăng ký lịch làm" }).first().click();
+    const availabilityCta=employee.locator("[data-schedule-availability]").first();
+    await availabilityCta.filter({ hasText: "Đăng ký ngay" }).waitFor();
+    await availabilityCta.click();
     await employee.locator("#weeklyRegistrationPanel.open").waitFor();
 
     const day = await employee.locator("#quickRegDay option").first().getAttribute("value");
@@ -115,8 +117,9 @@ try {
     await employee.locator("#quickRegEnd").selectOption("12:00");
 
     await employee.locator("#weeklyRegistrationPanel button", { hasText: "Đăng ký" }).click();
-    await employee.locator("#quickRegMsg").filter({ hasText: "Đã đăng ký lịch làm." }).waitFor();
-    await employee.locator(".week-summary").filter({ hasText: "Đã đăng ký" }).waitFor();
+    await employee.locator("#quickRegMsg").filter({ hasText: "Đã lưu khoảng thời gian có thể làm." }).waitFor();
+    await employee.locator(".week-summary").filter({ hasText: "Thời gian có thể làm" }).waitFor();
+    await employee.locator("[data-schedule-availability]").filter({ hasText: "Xem / sửa đăng ký" }).waitFor();
 
     const saved = await page.evaluate(() =>
       globalThis.__PEOPLE_SHIFT_QA.state.availability.map((row) => ({
