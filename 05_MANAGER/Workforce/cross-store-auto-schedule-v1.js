@@ -14,7 +14,7 @@ const DAYS=[
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const hm=v=>String(v||'').slice(0,5);
 const minuteOf=v=>{const m=String(v||'').match(/^(\d{1,2}):(\d{2})/);return m?Number(m[1])*60+Number(m[2]):-1};
-const shiftBand=v=>{const m=minuteOf(v);return m>=300&&m<720?'morning':m>=720&&m<1020?'afternoon':m>=1020&&m<=1320?'evening':'neutral'};
+const shiftBand=v=>window.MAGASIN_CORE?.time?.shiftKind?.(v)||'neutral';
 const bandClass=v=>'xsa-band-'+shiftBand(v);
 function applyBandClass(el,value){
  if(!el)return;
