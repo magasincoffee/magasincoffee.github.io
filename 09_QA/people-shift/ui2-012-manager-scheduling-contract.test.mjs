@@ -17,7 +17,7 @@ const rpcSet=s=>[...new Set(rpc(s))].sort();
 
 test("UI2-012 is a Manager-only presentation layer over the existing canonical scheduling writer",()=>{
   assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1)/);
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003)/);
   assert.match(ui,/\.msd\[data-scheduling-actor="MANAGER"\]/);
   assert.match(ui,/dataset\.ui2ScheduleBoard='1'/);
   assert.match(ui,/classList\.add\('msd-ui2-012'\)/);
@@ -90,13 +90,13 @@ test("UI2-012 responsive contract contains board scrolling touch targets and foc
 
 test("UI2-012 Manager asset cache chain advances while Owner runtime remains on its existing path",()=>{
   const v="20260927-ui2-012";
-  const managerV="20261002-sched-ui-002";
-  const managerEntryV="20261002-sched-ui-002";
+  const managerV="20261002-sched-ui-003";
+  const managerEntryV="20261002-sched-ui-003";
   assert.ok(runtime.includes("engine-v1.js?v="+managerV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
   assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerV+"#workforce"));
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003)/);
   assert.doesNotMatch(ownerRuntime,new RegExp(managerV));
 });
 
