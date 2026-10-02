@@ -44,7 +44,7 @@ Future chats/robots that upgrade, repair, merge or deploy production must read t
 
 ### Active temporary execution authorities
 
-Hiện chỉ có hai TEMP Source of Truth còn hoạt động trong thư mục này:
+Hiện có ba TEMP Source of Truth còn hoạt động trong thư mục này:
 
 1. `EMPLOYEE_REGISTRATION_PRODUCTION_HARDENING_TEMP_SOURCE_OF_TRUTH.md`
    - Track: `MAGASIN_EMPLOYEE_REGISTRATION_PRODUCTION_HARDENING_V1`
@@ -55,6 +55,12 @@ Hiện chỉ có hai TEMP Source of Truth còn hoạt động trong thư mục n
    - Track: `WORKFORCE_CROSS_STORE_SCHEDULING_V1`
    - Status: `XSTORE-011 BLOCKED / OWNER INPUT REQUIRED`
    - Là authority cho cross-store scheduling cho đến khi XSTORE-011 được hoàn tất và TEMP file được xóa theo lifecycle của chính track.
+
+3. `WORKFORCE_SCHEDULING_UX_V2_TEMP_SOURCE_OF_TRUTH.md`
+   - Track: `WORKFORCE_SCHEDULING_UX_V2`
+   - Status: `SCHED-UI-000 BLOCKED / OWNER DESIGN SESSION REQUIRED`
+   - Chỉ sở hữu Scheduling UX V2: recurring staffing readability, guided Auto Schedule UX, cross-role time-band presentation, Employee availability CTA, professional role URLs và Owner scheduling parity.
+   - Không thay thế XSTORE business authority và phải tuân `PRODUCTION_RELEASE_GOVERNANCE_V1_SOURCE_OF_TRUTH.md`.
 
 Không coi evidence/plan/acceptance của track đã đóng là task queue đang chạy.
 
