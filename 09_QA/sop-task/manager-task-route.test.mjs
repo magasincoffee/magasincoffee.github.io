@@ -9,7 +9,7 @@ const routeState = fs.readFileSync(new URL("../../05_MANAGER/runtime/compat/rout
 assert.match(route, /\/02_CORE\/shared\/shared-core-v1\.js/);
 assert.match(route, /C\.supabase\.requireActive\(\)/);
 assert.match(route, /\['STAFF','EMPLOYEE'\]\.includes\(role\)/);
-assert.match(route, /location\.replace\('\/06_EMPLOYEE\/'\)/);
+assert.match(route, /location\.replace\('\/employee\/'\)/);
 assert.match(route, /\/05_MANAGER\/runtime\/manager-runtime-v1\.html/);
 assert.doesNotMatch(route, /manager-v13-runtime\.html/);
 
@@ -21,9 +21,10 @@ assert.match(runtime, /manager-route-bridge-v1\.js/);
 assert.match(bridge, /const PREFIX='\/05_MANAGER'/);
 assert.match(bridge, /tasks:'Cong-viec'/);
 assert.match(bridge, /clickView\(routeView\(\)\)/);
-assert.match(routeState, /const PREFIX='\/05_MANAGER'/);
-assert.match(routeState, /tasks: 'Cong-viec'/);
-assert.doesNotMatch(routeState, /`\/manager\//);
-assert.doesNotMatch(routeState, /'\/manager\//);
+assert.match(routeState, /const LEGACY_PREFIX='\/05_MANAGER'/);
+assert.match(routeState, /tasks:'Cong-viec'/);
+assert.match(routeState, /'\/manager\/scheduling\/'/);
+assert.match(routeState, /'\/manager\/schedule\/'/);
+assert.match(routeState, /'\/manager\/#'/);
 
 console.log("PASS Manager Task deep-link canonical route contract");
