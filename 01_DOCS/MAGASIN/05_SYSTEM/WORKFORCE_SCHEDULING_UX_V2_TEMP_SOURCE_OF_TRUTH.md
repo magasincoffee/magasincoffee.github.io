@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 READY / SCHED-UI-003→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 READY / SCHED-UI-004→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -157,8 +157,8 @@ Owner/release chain:
 |---|---|---|
 | SCHED-UI-000 | Owner-approved Design Lock / Cách B | **DONE / OWNER APPROVED** |
 | SCHED-UI-001 | Recurring staffing readable view + dedicated editor | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-002 | Manager information architecture: Lập lịch tuần vs Thiết lập xếp lịch | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-003 | Guided Auto Schedule “next action” workflow | **BLOCKED BY 002** |
+| SCHED-UI-002 | Manager information architecture: Lập lịch tuần vs Thiết lập xếp lịch | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-003 | Guided Auto Schedule “next action” workflow | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-004 | Draft → edit → check → approve → publish visual simplification | **BLOCKED BY 003** |
 | SCHED-UI-005 | Shared canonical time-band classifier | **BLOCKED BY 004** |
 | SCHED-UI-006 | Employee official schedule time-band integration | **BLOCKED BY 005** |
@@ -251,6 +251,25 @@ Requirements:
 - prerequisites may link the Manager directly to the relevant setup section;
 - no second business writer;
 - existing XSTORE semantics preserved.
+
+
+Completion evidence — 2026-10-02:
+
+- implementation continued on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified head: `39b50be7e77d9b96764de3e92ac012bf8af1aaff`;
+- `Lập lịch tuần` is the default operational surface;
+- `Thiết lập xếp lịch` contains the recurring setup areas for `Ưu tiên cửa hàng` and `Nhu cầu nhân sự cố định hàng tuần`;
+- the recurring staffing board is not rendered on the default weekly surface and appears only inside scheduling setup;
+- prerequisite links can open the relevant setup section directly;
+- recurring staffing continues to use the existing `replace_workforce_recurring_staffing_requirements_v1` writer; no second business writer was introduced;
+- existing XSTORE Auto Schedule semantics and RPC authority remain unchanged;
+- Manager cache chain advanced to `20261002-sched-ui-002` so the IA update is exercised by qualification;
+- `SOP Task Tests` PR run `37006504099`: SUCCESS;
+- `People Shift Day-10 Tests` PR run `37006504060`: SUCCESS;
+- `UI2 Cross Role Acceptance` PR run `37006504044`: SUCCESS;
+- push qualification runs `37006498638` and `37006498630`: SUCCESS;
+- PR remains open and unmerged; no production-impacting product code from this task was merged to `main`;
+- no Owner input is required to close this technical task.
 
 ## 10. SCHED-UI-003 — Guided Auto Schedule next-action workflow
 
@@ -666,10 +685,12 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-001 = DONE / VERIFIED`
 
-`SCHED-UI-002 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-002 = DONE / VERIFIED`
+
+`SCHED-UI-003 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
 Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
 
-Do not execute SCHED-UI-003 or later before SCHED-UI-002 is complete.
+Do not execute SCHED-UI-004 or later before SCHED-UI-003 is complete.
