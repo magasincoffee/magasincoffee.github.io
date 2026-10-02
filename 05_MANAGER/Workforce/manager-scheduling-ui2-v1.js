@@ -69,13 +69,24 @@ const css=`<style id="manager-scheduling-ui2-012-css">
  .msd-ui2-012 .msd-downstream .btn{min-width:0}
  .msd-ui2-012 .msd-downstream #msdPublish{grid-column:1/-1}
 }
-@media(max-width:520px){
+@media(max-width:600px){
  .msd-ui2-012 .msu2-title h2{font-size:22px;line-height:28px}
  .msu2-state-banner{display:grid}
  .msu2-state-chip{justify-self:start}
+ .msu2-draft-actions{grid-template-columns:1fr}
+ .msu2-draft-actions #msdSave{grid-column:auto}
+ .msd-ui2-012 .msd-source,.msd-ui2-012 .msd-board-wrap,.msd-ui2-012 .msd-downstream{padding:12px}
  .msd-ui2-012 .msd-source-list{grid-template-columns:1fr}
+ .msd-ui2-012 .msd-board-wrap{overflow:visible;scrollbar-gutter:auto}
+ .msd-ui2-012 .msd-board{grid-template-columns:1fr;min-width:0;width:100%;gap:10px}
+ .msd-ui2-012 .msd-day{min-height:0;width:100%}
+ .msd-ui2-012 .msd-day-title{position:static}
+ .msd-ui2-012 .msd-time-row{grid-template-columns:1fr}
  .msd-ui2-012 .msd-downstream .msd-actions{grid-template-columns:1fr}
  .msd-ui2-012 .msd-downstream #msdPublish{grid-column:auto}
+ .msu2-conflict-resolution{display:none;grid-template-columns:1fr}
+ .msu2-conflict-resolution[data-visible="1"]{display:grid}
+ .msu2-conflict-resolution .btn{width:100%;min-width:0}
 }
 </style>`;
 
