@@ -23,7 +23,7 @@ async function managerFrame(page){
 
 const browser=await chromium.launch({headless:true});
 
-for(const width of [1440,1024,768,390]){
+for(const width of [1440,1024,768,430,390,360]){
  const context=await browser.newContext({locale:"vi-VN",timezoneId:"Asia/Ho_Chi_Minh",viewport:{width,height:900}});
  const page=await context.newPage();attachDiagnostics(page);
  await page.goto(BASE+"/09_QA/people-shift/ui2-012-manager-scheduling-fixture.html",{waitUntil:"networkidle",timeout:20000});
@@ -54,6 +54,8 @@ for(const width of [1440,1024,768,390]){
     focusShadow:getComputedStyle(focused).boxShadow,
     focusedId:focused?.id||"",
     boardScroll:wrap?.scrollWidth||0,boardClient:wrap?.clientWidth||0,
+    boardColumns:root?.querySelector(".msd-board")?getComputedStyle(root.querySelector(".msd-board")).gridTemplateColumns.split(" ").filter(Boolean).length:0,
+    dayTitlePosition:root?.querySelector(".msd-day-title")?getComputedStyle(root.querySelector(".msd-day-title")).position:"",
     dayCount:root?.querySelectorAll(".msd-day").length||0,
     emptyDays:root?.querySelectorAll(".msd-day .msd-empty").length||0,
     sourceRole:root?.querySelector(".msd-source")?.dataset.msu2Section||"",
@@ -66,7 +68,9 @@ for(const width of [1440,1024,768,390]){
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
    if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5||metric.sourceRole!=="availability-source"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
-   if(expected===768&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet board scroll: "+JSON.stringify(metric));
+   if(expected<=430&&(metric.boardColumns!==1||metric.boardScroll>metric.boardClient+1||metric.dayTitlePosition==="fixed"||metric.dayTitlePosition==="sticky"))throw new Error("phone draft board must stack without overlay/scroll: "+JSON.stringify(metric));
+   if((expected===768||expected===1024)&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet board scroll: "+JSON.stringify(metric));
+   if(expected===1440&&(metric.boardColumns!==7||metric.boardScroll>metric.boardClient+1))throw new Error("desktop draft board should fit seven days: "+JSON.stringify(metric));
    return JSON.stringify(metric);
   },width);
  });
@@ -247,6 +251,6 @@ await check("ui2_012_no_direct_table_calls_and_clean_diagnostics",async()=>{
 await context.close();
 await browser.close();
 fs.writeFileSync(path.join(OUT,"ui2-012-manager-scheduling-report.json"),JSON.stringify(report,null,2));
-console.log("UI2_012_MANAGER_SCHEDULING_BROWSER="+report.status);
+console.log("SCHED_UI_011_DRAFT_RESPONSIVE="+report.status);\nconsole.log("UI2_012_MANAGER_SCHEDULING_BROWSER="+report.status);
 for(const c of report.checks)console.log("["+c.status+"] "+c.name+" — "+c.detail);
 if(report.status!=="PASS")process.exitCode=1;
