@@ -251,6 +251,7 @@ await check("ui2_012_no_direct_table_calls_and_clean_diagnostics",async()=>{
 await context.close();
 await browser.close();
 fs.writeFileSync(path.join(OUT,"ui2-012-manager-scheduling-report.json"),JSON.stringify(report,null,2));
-console.log("SCHED_UI_011_DRAFT_RESPONSIVE="+report.status);\nconsole.log("UI2_012_MANAGER_SCHEDULING_BROWSER="+report.status);
+console.log("SCHED_UI_011_DRAFT_RESPONSIVE="+report.status);
+console.log("UI2_012_MANAGER_SCHEDULING_BROWSER="+report.status);
 for(const c of report.checks)console.log("["+c.status+"] "+c.name+" — "+c.detail);
 if(report.status!=="PASS")process.exitCode=1;
