@@ -14,7 +14,10 @@ page.on("pageerror",e=>errors.push(String(e?.message||e)));
 page.on("console",m=>{if(m.type()==="error")errors.push(m.text())});
 
 await page.goto(FIXTURE,{waitUntil:"networkidle"});
-await page.evaluate(()=>localStorage.removeItem("xstore-c05-recurring-requirements"));
+await page.evaluate(()=>{
+ localStorage.removeItem("xstore-c05-recurring-requirements");
+ localStorage.removeItem("xstore-c05-priority-e3");
+});
 await page.reload({waitUntil:"networkidle"});
 
 await page.locator(".xsm").waitFor();
@@ -38,6 +41,7 @@ if(beforePriorityRpc!==0)throw new Error("Auto Schedule ran before Store Priorit
 await page.evaluate(async()=>{
  const row=globalThis.__XSTORE_QA.availability.find(x=>x.user_id==="e3");
  row.priority_store_ids=["s1"];row.priority_store_codes=["CN1"];
+ localStorage.setItem("xstore-c05-priority-e3","1");
  await globalThis.MAGASIN_CROSS_STORE_MASTER.refresh();
 });
 await page.waitForFunction(()=>document.querySelector('#xsaNextAction')?.dataset.xsaNextAction==="auto");
