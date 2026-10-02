@@ -61,7 +61,7 @@ test("UI2-014 Attention Center is factual and only drills into existing canonica
  assert.match(js,/section\.quality === "GAP"/);
  assert.match(js,/section\.quality === "ESTIMATE"/);
  assert.match(js,/payables: "\/nhap-hang\/"/);
- assert.match(js,/workforce: "\/04_OWNER\/Workforce\/"/);
+ assert.match(js,/workforce: "\/owner\/scheduling\/"/);
  assert.doesNotMatch(js,/severity|priority|deadline|assigned_to|owner_id/i);
  assert.doesNotMatch(js,/Math\.random|fake|mock/i);
 });
