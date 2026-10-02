@@ -3,7 +3,7 @@
 **Track ID:** `WORKFORCE_UI_UX_UNIFICATION_V1`  
 **Lifecycle:** TEMPORARY — delete this file after WUI-009 completes.  
 **Created:** 2026-10-01  
-**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 DONE / WUI-004 DONE / WUI-005 DONE / WUI-006 DONE / WUI-007 READY / WUI-008→009 BLOCKED BY ORDER  
+**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 DONE / WUI-004 DONE / WUI-005 DONE / WUI-006 DONE / WUI-007 DONE / WUI-008 READY / WUI-009 BLOCKED BY ORDER  
 **Repository:** `magasincoffee/magasincoffee.github.io`
 
 ## 0. Authority boundary
@@ -226,8 +226,8 @@ PR #363 remains open. Merge and exact-main qualification remain reserved for `WU
 | WUI-004 | Typography / palette / time-band visual acceptance | Prove one font/palette foundation and yellow/red/light-blue start-time rule across all required scheduling surfaces | **DONE / ACCEPTANCE GREEN** |
 | WUI-005 | Vietnamese UX copy acceptance | Remove user-visible technical/mixed-language terms from primary Manager/Employee Workforce surfaces; keep internal identifiers internal | **DONE / ACCEPTANCE GREEN** |
 | WUI-006 | Cross-role browser regression | Run bounded Manager + Employee browser regression for navigation, scheduling, time editor, colors, reload and responsive states | **DONE / ACCEPTANCE GREEN** |
-| WUI-007 | PR merge + exact-main qualification | PR #363 or superseding PR green → merge → exact-main source/UI2/People Shift/SOP/Auth/Owner/Pages gates green | **READY / NEXT AUTHORITATIVE TASK** |
-| WUI-008 | Production-safe UI acceptance | Verify deployed Manager + Employee UI, cache cutover, no stale 05:00 reset, Vietnamese copy and color rule; no business data fabricated | **BLOCKED BY WUI-007** |
+| WUI-007 | PR merge + exact-main qualification | PR #363 or superseding PR green → merge → exact-main source/UI2/People Shift/SOP/Auth/Owner/Pages gates green | **DONE / EXACT-MAIN GREEN** |
+| WUI-008 | Production-safe UI acceptance | Verify deployed Manager + Employee UI, cache cutover, no stale 05:00 reset, Vietnamese copy and color rule; no business data fabricated | **READY / NEXT AUTHORITATIVE TASK** |
 | WUI-009 | Closure evidence + TEMP cleanup | Write permanent acceptance evidence, verify primary XSTORE SOT unchanged, then delete this TEMP SOT in the closure PR | **BLOCKED BY WUI-008** |
 
 Execution order is strict:
@@ -525,6 +525,24 @@ Then require exact-main green for all workflows triggered by changed paths, incl
 
 If a workflow does not trigger because no relevant path changed, record that explicitly rather than inventing a run.
 
+WUI-007 closure:
+
+- PR #363 final accepted head: `9c4a4ccbeaa420c12b335c89c4d52dbee370c354`;
+- PR #363 merged with exact expected head;
+- qualified product exact-main / merge SHA: `d11c0b9905ad702e637d8d3329419bef7300b231`;
+- pre-merge scope audit: 57 changed files, limited to UI/UX/runtime entry assets/QA/docs; no migration/schema/RPC business-authority change and no fabricated production business rows;
+- exact-main Validate MAGASIN GitHub Pages source run `36963178725` — SUCCESS;
+- exact-main pages build and deployment run `36963178154` — SUCCESS;
+- exact-main UI2 Cross Role Acceptance run `36963178685`, job `110701118755` — SUCCESS;
+- exact-main People Shift Day-10 Tests run `36963178766`, job `110701119121` — SUCCESS;
+- exact-main SOP Task Tests run `36963178744`, job `110701119037` — SUCCESS;
+- exact-main AUTH-PROD Regression Contract run `36963178721` — SUCCESS;
+- exact-main Owner Control Tower Tests run `36963178739`, job `110701119114` — SUCCESS;
+- exact-main artifacts: People Shift `11208927581`, UI2 `11208252442`, SOP `11208222445`, Owner `11209041341`;
+- durable acceptance evidence: `01_DOCS/MAGASIN/05_SYSTEM/WUI_007_EXACT_MAIN_QUALIFICATION_ACCEPTANCE.md`;
+- primary XSTORE SOT/business authority remains outside this UI/UX track;
+- next task: `WUI-008`.
+
 ### WUI-008 — Production-safe UI acceptance
 
 After exact-main deploy:
@@ -649,4 +667,6 @@ Do not compress the estimate by skipping exact-main or production verification.
 
 `WUI-006` is **DONE**.
 
-`WUI-007` is the only authoritative next executable task. Do not execute WUI-008 or later tasks before WUI-007 is complete.
+`WUI-007` is **DONE**.
+
+`WUI-008` is the only authoritative next executable task. Do not execute WUI-009 before WUI-008 is complete.
