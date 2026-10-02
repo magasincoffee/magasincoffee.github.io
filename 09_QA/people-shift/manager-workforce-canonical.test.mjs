@@ -149,7 +149,8 @@ test("SCHED-04 reload resumes DRAFT REVIEWED or PUBLISHED through one canonical 
 test("SCHED-04 Manager UI hides technical generation identity and raw backend diagnostics",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   assert.doesNotMatch(draft,/Generation \$\{esc\(state\.generationId/);
-  assert.match(draft,/Không hiển thị ID kỹ thuật/);
+  assert.match(draft,/Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp/);
+  assert.doesNotMatch(draft,/Không hiển thị ID kỹ thuật/);
   assert.doesNotMatch(draft,/hit\[1\]\+' \('\+hit\[0\]/);
   assert.match(draft,/Không thể hoàn tất thao tác\. Hãy tải lại dữ liệu và thử lại\./);
 });

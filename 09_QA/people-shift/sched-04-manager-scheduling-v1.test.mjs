@@ -44,7 +44,8 @@ test("SCHED-04 UX distinguishes availability draft validation review and officia
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   for(const label of ["Thời gian có thể làm","Bản nháp","Kiểm tra","Duyệt","Phát hành"])assert.match(draft,new RegExp(label),label);
   assert.match(draft,/Xếp tự động toàn hệ thống → Quản lý chỉnh sửa → Kiểm tra → Duyệt → Phát hành/);
-  assert.match(draft,/Không hiển thị ID kỹ thuật/);
+  assert.match(draft,/Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp/);
+  assert.doesNotMatch(draft,/Không hiển thị ID kỹ thuật/);
   assert.match(draft,/Mở lịch chính thức/);
   assert.doesNotMatch(draft,/Generation \$\{esc\(state\.generationId/);
 });
