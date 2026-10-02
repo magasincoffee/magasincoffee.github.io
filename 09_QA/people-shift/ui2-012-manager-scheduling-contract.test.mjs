@@ -17,7 +17,7 @@ const rpcSet=s=>[...new Set(rpc(s))].sort();
 
 test("UI2-012 is a Manager-only presentation layer over the existing canonical scheduling writer",()=>{
   assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1)/);
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004)/);
   assert.match(ui,/\.msd\[data-scheduling-actor="MANAGER"\]/);
   assert.match(ui,/dataset\.ui2ScheduleBoard='1'/);
   assert.match(ui,/classList\.add\('msd-ui2-012'\)/);
@@ -61,6 +61,11 @@ test("UI2-012 hierarchy makes context source board and publish progression expli
   assert.doesNotMatch(ui,/msu2-stage-rail/);
   assert.match(ui,/magasin:manager-scheduling-ui-state/);
   assert.match(ui,/msu2-state-banner/);
+  assert.match(ui,/Nguồn tham khảo/);
+  assert.match(ui,/Lịch nháp đang chỉnh/);
+  assert.match(ui,/Thao tác phụ · lịch nháp/);
+  assert.match(ui,/Bước cuối · duyệt và phát hành/);
+  assert.match(ui,/msu2-conflict-resolution/);
 });
 
 test("UI2-012 explicitly represents NONE DRAFT REVIEWED PUBLISHED CONFLICT and busy states",()=>{
@@ -90,13 +95,13 @@ test("UI2-012 responsive contract contains board scrolling touch targets and foc
 
 test("UI2-012 Manager asset cache chain advances while Owner runtime remains on its existing path",()=>{
   const v="20260927-ui2-012";
-  const managerV="20261002-sched-ui-003";
-  const managerEntryV="20261002-sched-ui-003";
+  const managerV="20261002-sched-ui-004";
+  const managerEntryV="20261002-sched-ui-004";
   assert.ok(runtime.includes("engine-v1.js?v="+managerV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
   assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerV+"#workforce"));
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004)/);
   assert.doesNotMatch(ownerRuntime,new RegExp(managerV));
 });
 
