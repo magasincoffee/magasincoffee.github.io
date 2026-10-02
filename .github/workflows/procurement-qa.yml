@@ -6,7 +6,7 @@ on:
     paths:
       - '04_OWNER/Procurement/**'
       - '04_OWNER/index.html'
-      - '03_PLATFORM/01_AUTH/auth-runtime-v1.js'
+      - '03_PLATFORM/01_AUTH/auth-runtime-v2.js'
       - 'nhap-hang/**'
       - '02_CORE/ui/magasin-owner-drilldown-v1.*'
       - '07_DATABASE/migrations/*procurement*'

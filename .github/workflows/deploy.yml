@@ -52,7 +52,7 @@ jobs:
           done
 
           # Prevent production code from pointing back at the deprecated noibo repo.
-          if grep -RIn --exclude-dir=.git --exclude-dir=99_LEGACY \
+          if grep -RIn --exclude-dir=.git \
              --exclude='*.md' 'magasincoffee/noibo' \
              02_CORE 03_PLATFORM 04_OWNER 05_MANAGER 06_EMPLOYEE; then
             echo 'Production runtime still references deprecated magasincoffee/noibo.'
