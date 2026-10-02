@@ -31,7 +31,7 @@ await check("sched03_mobile_current_week_is_official_self_only",async()=>{
   if(bands.length!==2||bands[0].band!=="morning"||bands[1].band!=="evening")throw new Error(JSON.stringify(bands));
   if(bands[0].time!=="06:00–12:00"||bands[1].time!=="17:00–22:00")throw new Error(JSON.stringify(bands));
   const tokenColors=await employee.locator("body").evaluate(()=>{
-    const root=getComputedStyle(document.documentElement);
+    const root=getComputedStyle(document.body);
     const resolve=value=>{const probe=document.createElement("div");probe.style.background=value;document.body.appendChild(probe);const out=getComputedStyle(probe).backgroundColor;probe.remove();return out};
     return {morning:resolve(root.getPropertyValue("--m-shift-morning-bg").trim()),evening:resolve(root.getPropertyValue("--m-shift-evening-bg").trim())};
   });
