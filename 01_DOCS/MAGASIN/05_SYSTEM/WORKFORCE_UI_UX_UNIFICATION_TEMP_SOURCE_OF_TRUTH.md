@@ -3,7 +3,7 @@
 **Track ID:** `WORKFORCE_UI_UX_UNIFICATION_V1`  
 **Lifecycle:** TEMPORARY — delete this file after WUI-009 completes.  
 **Created:** 2026-10-01  
-**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 DONE / WUI-004 DONE / WUI-005 READY / WUI-006→009 BLOCKED BY ORDER  
+**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 DONE / WUI-004 DONE / WUI-005 DONE / WUI-006 READY / WUI-007→009 BLOCKED BY ORDER  
 **Repository:** `magasincoffee/magasincoffee.github.io`
 
 ## 0. Authority boundary
@@ -224,8 +224,8 @@ PR #363 remains open. Merge and exact-main qualification remain reserved for `WU
 | WUI-002 | Recurring staffing editor state acceptance | Prove existing time/headcount survives +Khung/remove/save/reload/week change; new block starts empty; no 05:00 reset | **DONE / ACCEPTANCE GREEN** |
 | WUI-003 | Manager + Employee layout foundation acceptance | Prove full remaining viewport usage, correct sidebar/main relationship, contained board scrolling, responsive/touch behavior | **DONE / ACCEPTANCE GREEN** |
 | WUI-004 | Typography / palette / time-band visual acceptance | Prove one font/palette foundation and yellow/red/light-blue start-time rule across all required scheduling surfaces | **DONE / ACCEPTANCE GREEN** |
-| WUI-005 | Vietnamese UX copy acceptance | Remove user-visible technical/mixed-language terms from primary Manager/Employee Workforce surfaces; keep internal identifiers internal | **READY / NEXT AUTHORITATIVE TASK** |
-| WUI-006 | Cross-role browser regression | Run bounded Manager + Employee browser regression for navigation, scheduling, time editor, colors, reload and responsive states | **BLOCKED BY WUI-005** |
+| WUI-005 | Vietnamese UX copy acceptance | Remove user-visible technical/mixed-language terms from primary Manager/Employee Workforce surfaces; keep internal identifiers internal | **DONE / ACCEPTANCE GREEN** |
+| WUI-006 | Cross-role browser regression | Run bounded Manager + Employee browser regression for navigation, scheduling, time editor, colors, reload and responsive states | **READY / NEXT AUTHORITATIVE TASK** |
 | WUI-007 | PR merge + exact-main qualification | PR #363 or superseding PR green → merge → exact-main source/UI2/People Shift/SOP/Auth/Owner/Pages gates green | **BLOCKED BY WUI-006** |
 | WUI-008 | Production-safe UI acceptance | Verify deployed Manager + Employee UI, cache cutover, no stale 05:00 reset, Vietnamese copy and color rule; no business data fabricated | **BLOCKED BY WUI-007** |
 | WUI-009 | Closure evidence + TEMP cleanup | Write permanent acceptance evidence, verify primary XSTORE SOT unchanged, then delete this TEMP SOT in the closure PR | **BLOCKED BY WUI-008** |
@@ -447,6 +447,21 @@ DONE evidence:
 - SOP fail-closed semantics remain intact while display label becomes `CHƯA KẾT NỐI`;
 - no fake Task/SOP facts introduced.
 
+WUI-005 closure:
+
+- final accepted PR #363 head: `9c4a4ccbeaa420c12b335c89c4d52dbee370c354`;
+- real user-facing defects corrected: Manager `server` wording, Manager `revalidate` wording, implementation-facing ID guidance, raw Manager scheduling/bootstrap diagnostics, raw four-store overview diagnostics, raw official-schedule diagnostics, and Employee `publish` wording;
+- raw technical diagnostics on corrected paths now go to `console.warn`, while users receive plain Vietnamese fallbacks;
+- first qualification head `b322540cbd8f1e2f2a93e2e59aadac39914b42a3` exposed exactly two stale SCHED-04 wording assertions; only those wording expectations were reconciled, with server-side conflict/idempotency and scheduling-authority assertions preserved;
+- People Shift Day-10 PR run `36959280988`, job `110689129792`: static/canonical regressions SUCCESS, SCHED-03 Employee Schedule browser SUCCESS, SCHED-04 Manager Scheduling browser SUCCESS;
+- SOP Task Tests run `36959281027`, job `110689129844` — SUCCESS, including fail-closed browser regression;
+- user-visible disconnected Task/SOP label remains `CHƯA KẾT NỐI`; internal `NOT_CONNECTED` remains internal;
+- AUTH-PROD Regression Contract run `36959280949` — SUCCESS;
+- Owner Control Tower Tests run `36959281093` — SUCCESS;
+- durable acceptance evidence: `01_DOCS/MAGASIN/05_SYSTEM/WUI_005_VIETNAMESE_UX_COPY_ACCEPTANCE.md`;
+- no fake Task/SOP facts, production business data, schema, RPC authority, auth boundary or scheduling authority was changed;
+- next task: `WUI-006`.
+
 ### WUI-006 — Cross-role browser regression
 
 Run bounded browser coverage for:
@@ -613,4 +628,6 @@ Do not compress the estimate by skipping exact-main or production verification.
 
 `WUI-004` is **DONE**.
 
-`WUI-005` is the only authoritative next executable task. Do not execute WUI-006 or later tasks before WUI-005 is complete.
+`WUI-005` is **DONE**.
+
+`WUI-006` is the only authoritative next executable task. Do not execute WUI-007 or later tasks before WUI-006 is complete.
