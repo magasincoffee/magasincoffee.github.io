@@ -89,8 +89,8 @@ test("UI2-012 responsive contract contains board scrolling touch targets and foc
 
 test("UI2-012 Manager asset cache chain advances while Owner runtime remains on its existing path",()=>{
   const v="20260927-ui2-012";
-  const managerV="20261002-sched-ui-001";
-  const managerEntryV="20261002-sched-ui-001";
+  const managerV="20261002-sched-ui-002";
+  const managerEntryV="20261002-sched-ui-002";
   assert.ok(runtime.includes("engine-v1.js?v="+managerV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
