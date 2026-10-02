@@ -94,9 +94,9 @@ async function iframeSrc(page,id="app"){
 }
 
 for(const spec of [
-  {role:"EMPLOYEE",target:"/06_EMPLOYEE/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261003-sched-ui-007"},
-  {role:"STORE_MANAGER",label:"MANAGER",target:"/05_MANAGER/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261002-sched-ui-005"},
-  {role:"OWNER",target:"/04_OWNER/",runtime:null}
+  {role:"EMPLOYEE",target:"/employee/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261003-sched-ui-007"},
+  {role:"STORE_MANAGER",label:"MANAGER",target:"/manager/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261002-sched-ui-005"},
+  {role:"OWNER",target:"/owner/",runtime:null}
 ]){
   const context=await newContext(spec.role);
   const page=await context.newPage();
