@@ -33,6 +33,7 @@ test("SCHED-UI-010 numbered roots consume bounded canonical markers without repl
 
 test("SCHED-UI-010 navigation prefers clean paths while keeping legacy path readers",async()=>{
   const managerRoute=await read("05_MANAGER/runtime/compat/router/manager-route-state-v2.js");
+  const managerBridge=await read("05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js");
   const employeeShell=await read("02_CORE/ui/magasin-ui-v2-employee-shell.js");
   const globalShell=await read("02_CORE/ui/magasin-ui-v2-shell.js");
   const controlTower=await read("04_OWNER/ControlTower/control-tower-v1.js");
@@ -41,6 +42,9 @@ test("SCHED-UI-010 navigation prefers clean paths while keeping legacy path read
   assert.match(managerRoute,/LEGACY_PREFIX='\/05_MANAGER'/);
   assert.match(managerRoute,/ancestorBridgeOwnsUrl/);
   assert.match(managerRoute,/MAGASIN_MANAGER_ROUTE_BRIDGE_V1/);
+  assert.match(managerRoute,/if\(ancestorBridgeOwnsUrl\(\)\)return/);
+  assert.match(managerBridge,/routeBridgeObserverBound/);
+  assert.match(managerBridge,/active&&active!==wanted/);
   for(const p of ["/employee/schedule/","/employee/attendance/","/employee/payroll/"])assert.ok(employeeShell.includes(p),p);
   assert.ok(globalShell.includes("['overview', '⌂', 'Tổng quan', '/owner/']"));
   assert.ok(globalShell.includes("['workforce', '▦', 'Nhân sự', '/owner/scheduling/']"));
