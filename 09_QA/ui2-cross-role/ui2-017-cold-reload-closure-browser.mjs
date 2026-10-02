@@ -162,7 +162,7 @@ for(const spec of [
   await page.reload({waitUntil:"domcontentloaded"});
   const hardReload=await iframeSrc(page);
   await check("ui2_017_owner_workforce_cold_hard_reload",async()=>{
-    const expected="/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20260927-ui2-016";
+    const expected="/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261003-sched-ui-008";
     const detail={cold,hardReload,url:page.url()};
     if(cold!==expected||hardReload!==expected)throw new Error(JSON.stringify(detail));
     return JSON.stringify(detail);
@@ -179,7 +179,7 @@ const assetSpecs=[
   ["/05_MANAGER/Workforce/engine-v1.js?v=20261002-sched-ui-005","manager-scheduling-ui2-v1.js?v=20261002-sched-ui-004"],
   ["/05_MANAGER/runtime/manager-shell-v1.html?v=20261001-ui-unified1","manager-ui-shell-v2.js?v=20260927-ui2-016"],
   ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261002-sched-ui-005","manager-shell-v1.html?v=20261001-ui-unified1"],
-  ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20260927-ui2-016","manager-shell-v1.html?v=20260927-ui2-016"]
+  ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261003-sched-ui-008","owner-scheduling-overview-v1.js?v=20261003-sched-ui-008"]
 ];
 for(const [url,marker] of assetSpecs){
   await check("ui2_017_cache_asset_"+url.split("?")[0].replaceAll("/","_"),async()=>{
@@ -218,7 +218,7 @@ await check("ui2_017_no_stale_ui2_016_cache_chain",async()=>{
     for(const token of forbidden)if(body.includes(token))stale.push({url,token});
   }
   if(stale.length)throw new Error(JSON.stringify(stale));
-  return "Manager/Employee unified cache is current while Owner cache remains unchanged";
+  return "Manager/Employee cache remains current and Owner scheduling entry uses the SCHED-UI-008 cache chain";
 });
 
 await browser.close();
