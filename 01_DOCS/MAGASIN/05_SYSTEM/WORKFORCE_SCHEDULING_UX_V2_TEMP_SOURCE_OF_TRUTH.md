@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 READY / SCHED-UI-008→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 READY / SCHED-UI-009→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -162,8 +162,8 @@ Owner/release chain:
 | SCHED-UI-004 | Draft → edit → check → approve → publish visual simplification | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-005 | Shared canonical time-band classifier | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-006 | Employee official schedule time-band integration | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-007 | Employee availability CTA + editor UX | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **BLOCKED BY 007** |
+| SCHED-UI-007 | Employee availability CTA + editor UX | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **BLOCKED BY 008** |
 | SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **BLOCKED BY 009** |
 | SCHED-UI-011 | Responsive/mobile scheduling redesign | **BLOCKED BY 010** |
@@ -450,6 +450,32 @@ Required editor behavior:
 - open/closed/read-only states obvious;
 - distinguish `Thời gian có thể làm` from `Lịch làm chính thức`;
 - mobile CTA visible without hunting through the page.
+
+Completion evidence — 2026-10-03:
+
+- implementation continued on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `093def2390edfe3b2f022c973caa8861d986bbb6`;
+- CTA state contract is verified end-to-end: no saved intervals → `Đăng ký ngay`, saved intervals → `Xem / sửa đăng ký`, closed/read-only → `Xem thời gian đã đăng ký`;
+- Employee scheduling distinguishes `Thời gian có thể làm` from `Lịch làm chính thức`, and the availability action is promoted as a visible scheduling action rather than hidden in the page;
+- the editor keeps immediate-save authority with no fake final-submit step; explicit close/back behavior replaces the old `Xong` concept;
+- all availability CTA surfaces now share the same dynamic state/copy contract, including the CTA inserted by the official schedule shell;
+- availability readiness is synchronized before the engine exposes its ready marker, eliminating iframe/bootstrap timing ambiguity;
+- saved availability intervals use canonical `MAGASIN_CORE.time.shiftKind()` bands; durable browser evidence verifies morning and evening bands;
+- mobile qualification verifies the CTA is visible without horizontal hunting or page-level horizontal overflow;
+- canonical availability authority remains unchanged: `get_my_availability`, `save_my_availability`, and `delete_my_availability`; save continues with `p_preferred_store_id:null`; no schema/RPC/RLS/business-authority change or second writer was introduced;
+- integrated Day-10 regression was updated to wait for the explicit availability readiness contract and to accept synchronized duplicate CTA surfaces without weakening the actual state/copy assertion;
+- `SOP Task Tests` PR run `37056347521`: SUCCESS;
+- `AUTH-PROD Regression Contract` PR run `37056347421`: SUCCESS;
+- `UI2 Cross Role Acceptance` PR run `37056347500`: SUCCESS;
+- `People Shift Day-10 Tests` PR run `37056347425`: SUCCESS;
+- `UI2 Cross Role Acceptance` push run `37056342952`: SUCCESS;
+- `People Shift Day-10 Tests` push run `37056342939`: SUCCESS;
+- People Shift job `111001882867`: SUCCESS with no failed steps;
+- dedicated SCHED-UI-007 browser evidence passes `Đăng ký ngay`, close/back without final-submit semantics, mobile CTA visibility, saved `Xem / sửa đăng ký`, and canonical time-band rendering;
+- integrated `PEOPLE_SHIFT_DAY10_BROWSER_E2E=PASS` and `employee_availability_registration` PASS with `06:00–12:00`, `preferred_store_id:null`;
+- integrated diagnostics report `console_errors=0`, `page_errors=0`, `request_failures=0`, and `http_5xx=0` for the Day-10 flow;
+- PR remains open and unmerged; no production-impacting product code from this task was merged to `main`;
+- no Owner input is required to close this technical task.
 
 ## 15. SCHED-UI-008 — Owner scheduling parity + language cleanup
 
@@ -780,10 +806,13 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 `SCHED-UI-005 = DONE / VERIFIED`
 
 `SCHED-UI-006 = DONE / VERIFIED`
-`SCHED-UI-007 = READY / NEXT AUTHORITATIVE TASK`
+
+`SCHED-UI-007 = DONE / VERIFIED`
+
+`SCHED-UI-008 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
 Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
 
-Do not execute SCHED-UI-008 or later before SCHED-UI-007 is complete.
+Do not execute SCHED-UI-009 or later before SCHED-UI-008 is complete.
