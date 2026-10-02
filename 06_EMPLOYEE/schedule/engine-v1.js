@@ -96,6 +96,8 @@ function updateNav(d){
     const active=(action==='today'&&state.week===current)||(action==='next'&&state.week===next);
     b.setAttribute('aria-current',active?'true':'false');
     b.disabled=state.loading;
+    if(state.loading){b.setAttribute('aria-disabled','true');b.title='Đang tải lịch, vui lòng chờ.'}
+    else{b.removeAttribute('aria-disabled');b.removeAttribute('title')}
   });
 }
 function paint(d){
@@ -188,7 +190,9 @@ async function preflight(scheduleId){
 async function openAction(action,scheduleId){
   const key=action+':'+scheduleId;if(state.actionPending.has(key))return;
   state.actionPending.add(key);
-  const d=doc();d?.querySelectorAll('[data-schedule-id="'+CSS.escape(String(scheduleId))+'"] [data-schedule-action]').forEach(b=>b.disabled=true);
+  const d=doc();
+  setNotice(d,'Đang kiểm tra ca hiện tại trước khi mở thao tác…');
+  d?.querySelectorAll('[data-schedule-id="'+CSS.escape(String(scheduleId))+'"] [data-schedule-action]').forEach(b=>{b.disabled=true;b.setAttribute('aria-disabled','true');b.title='Đang kiểm tra ca hiện tại, vui lòng chờ.'});
   try{
     const current=await preflight(scheduleId);if(!current)return;
     setNotice(d,null);
@@ -205,7 +209,7 @@ async function openAction(action,scheduleId){
     }
   }finally{
     state.actionPending.delete(key);
-    d?.querySelectorAll('[data-schedule-id="'+CSS.escape(String(scheduleId))+'"] [data-schedule-action]').forEach(b=>b.disabled=false);
+    d?.querySelectorAll('[data-schedule-id="'+CSS.escape(String(scheduleId))+'"] [data-schedule-action]').forEach(b=>{b.disabled=false;b.removeAttribute('aria-disabled');b.removeAttribute('title')});
   }
 }
 function openAvailability(){
