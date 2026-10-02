@@ -221,6 +221,7 @@ function wire(x,selector,fn){
 }
 function bind(){
   const x=d();if(!x?.body)return;
+  syncPolicy();
   x.body.dataset.employeeAvailabilityEngine='1';
   wire(x,'[data-schedule-availability]',open);
   wire(x,'#weeklyRegistrationPanel [data-availability-close="header"]',close);
