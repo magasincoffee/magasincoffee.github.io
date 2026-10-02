@@ -207,4 +207,5 @@ if(errors.length)throw new Error(errors.join("\n"));
 
 await page.screenshot({path:path.join(OUT,"xstore-recurring-stable-editor.png"),fullPage:true});
 await browser.close();
-console.log("SCHED_UI_011_RECURRING_RESPONSIVE=PASS");\nconsole.log("XSTORE_RECURRING_STABLE_EDITOR_BROWSER=PASS");
+console.log("SCHED_UI_011_RECURRING_RESPONSIVE=PASS");
+console.log("XSTORE_RECURRING_STABLE_EDITOR_BROWSER=PASS");
