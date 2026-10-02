@@ -23,6 +23,8 @@ assert.match(bridge, /tasks:'Cong-viec'/);
 assert.match(bridge, /return '\/manager\/#'\+key/);
 assert.match(bridge, /syncFromLocation\(true\)/);
 assert.match(routeState, /const LEGACY_PREFIX='\/05_MANAGER'/);
+assert.match(routeState, /ancestorBridgeOwnsUrl/);
+assert.match(routeState, /MAGASIN_MANAGER_ROUTE_BRIDGE_V1/);
 assert.match(routeState, /tasks:'Cong-viec'/);
 assert.match(routeState, /'\/manager\/scheduling\/'/);
 assert.match(routeState, /'\/manager\/schedule\/'/);
