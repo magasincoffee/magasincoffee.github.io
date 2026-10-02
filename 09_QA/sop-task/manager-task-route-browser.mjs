@@ -74,6 +74,7 @@ for (let i = 0; i < 40; i++) {
   await page.waitForTimeout(100);
 }
 assert.ok(shell, "canonical Manager shell frame must load");
+await page.waitForURL(url=>url.pathname==="/manager/"&&url.hash==="#tasks",{timeout:10000});
 
 let taskActive = false;
 for (let i = 0; i < 50; i++) {
