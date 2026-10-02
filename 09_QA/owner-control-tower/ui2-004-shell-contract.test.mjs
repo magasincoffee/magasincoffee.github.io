@@ -42,9 +42,9 @@ test("Owner nav contains only traced active destinations", () => {
   const ownerBlock = shellJs.match(/const OWNER_NAV = Object\.freeze\(\{[\s\S]*?\n  \}\);/)?.[0] || "";
   assert.ok(ownerBlock);
   for (const route of [
-    "/04_OWNER/",
+    "/owner/",
     "/04_OWNER/ControlTower/",
-    "/04_OWNER/Workforce/",
+    "/owner/scheduling/",
     "/nhap-hang/",
     "/04_OWNER/Access/"
   ]) {
