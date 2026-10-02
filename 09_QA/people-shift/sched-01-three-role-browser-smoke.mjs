@@ -14,13 +14,18 @@ try {
   const owner=await context.newPage();
   await check('owner_publish_loads_without_ambiguous_rpc_error',async()=>{
     await owner.goto(base+'/09_QA/people-shift/sched-05-owner-scheduling-fixture.html');
-    await owner.locator('.msd').waitFor();
+    await owner.locator('#ownerSchedulingOverview[data-owner-overview-state="ready"]').waitFor();
+    const overview=await owner.locator('#ownerSchedulingOverview').innerText();
+    for(const code of ['CN1','CN2','CN3','CN4'])if(!overview.includes(code))throw new Error('missing '+code+' in Owner overview');
+    if(await owner.locator('#panel-publish').isVisible())throw new Error('Owner detail visible before store selection');
+    await owner.locator('[data-owner-store-open="store-a"]').click();
+    await owner.locator('.msd[data-scheduling-actor="OWNER"]').waitFor();
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('Không tải được Workforce Publish')||text.includes('ambiguous'))throw new Error(text);
-    if(!text.includes('An CN1')||!text.includes('Giám sát xếp lịch'))throw new Error('Owner canonical scheduling surface missing');
+    if(!text.includes('An CN1')||!text.includes('Giám sát xếp lịch'))throw new Error('Owner shared scheduling detail missing');
     const calls=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.map(x=>x.name));
     for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
-    return calls.join(',');
+    return 'overview CN1–CN4 → shared store-a detail · '+calls.join(',');
   });
 
   await check('owner_store_switch_reloads_same_canonical_read_path_without_leak',async()=>{
