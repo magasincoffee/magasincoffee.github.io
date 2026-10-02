@@ -4,7 +4,7 @@ const DAYS=['T2','T3','T4','T5','T6','T7','CN'];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const hm=v=>String(v||'').slice(0,5);
 const mins=v=>{const s=hm(v);return Number(s.slice(0,2))*60+Number(s.slice(3,5))};
-const shiftBand=v=>{const m=mins(v);return m>=300&&m<720?'morning':m>=720&&m<1020?'afternoon':m>=1020&&m<=1320?'evening':'neutral'};
+const shiftBand=v=>window.MAGASIN_CORE?.time?.shiftKind?.(v)||'neutral';
 const bandClass=v=>'msd-band-'+shiftBand(v);
 function applyBandClass(el,value){
  if(!el)return;
