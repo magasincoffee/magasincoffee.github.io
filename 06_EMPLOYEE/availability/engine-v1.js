@@ -19,9 +19,9 @@ function launcherState(){
 }
 function syncLauncher(x=d()){
   if(!x)return;
-  const cta=x.querySelector('[data-schedule-availability]'),card=x.querySelector('.employee-schedule-secondary'),hint=x.getElementById('availabilityActionHint');
+  const ctas=[...x.querySelectorAll('[data-schedule-availability]')],card=x.querySelector('.employee-schedule-secondary'),hint=x.getElementById('availabilityActionHint');
   const view=launcherState();
-  if(cta){
+  for(const cta of ctas){
     cta.textContent=view.label;
     cta.dataset.availabilityCtaState=view.key;
     cta.className='m-button '+(view.primary?'m-button--primary':'m-button--secondary');
@@ -239,7 +239,7 @@ function init(){
 syncPolicy();
 globalThis.MAGASIN_EMPLOYEE=globalThis.MAGASIN_EMPLOYEE||{};
 globalThis.MAGASIN_EMPLOYEE.availability={
-  refresh:load,open,close,remove,
+  refresh:load,syncLauncher,open,close,remove,
   getRows:()=>state.rows.slice(),
   getWeek:()=>state.week,
   getRegistrationState:()=>state.registration,
