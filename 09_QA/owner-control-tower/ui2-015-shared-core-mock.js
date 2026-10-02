@@ -34,7 +34,12 @@ globalThis.MAGASIN_CORE={
   async getSession(){return {user:{id:profile.id}}}
  },
  roles:{hasRole(value,roles){return value?.status==='ACTIVE'&&roles.includes(String(value?.role||'').toUpperCase())}},
- date:{dateKey(){return '2026-09-27'},monday(){return '2026-09-21'}},
+ date:{
+  dateKey(){return '2026-09-27'},
+  monday(){return '2026-09-21'},
+  addDays(value,n){const d=new Date(String(value).slice(0,10)+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+Number(n||0));return d.toISOString().slice(0,10)},
+  formatDate(value){const s=String(value||'').slice(0,10);return s?String(Number(s.slice(8,10)))+'/'+String(Number(s.slice(5,7)))+'/'+s.slice(0,4):'—'}
+ },
  stores:{async accessible(){return []}},
  security:{escapeHtml(value){return String(value??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}},
  ui:{toast(){}}
