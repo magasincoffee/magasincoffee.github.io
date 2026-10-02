@@ -22,7 +22,7 @@ function applyBandClass(el,value){
  el.classList.add(bandClass(value));
 }
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
-const state={week:null,stores:[],requirements:[],editing:false,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null};
+const state={week:null,stores:[],requirements:[],editing:false,editorCell:null,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null};
 const mount=()=>document.getElementById('xstoreAutomationMount');
 const validBlock=r=>r.store_id&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&r.start_time&&r.end_time&&Number(r.target_headcount)>0;
 const configuredStoreIds=()=>new Set(state.requirements.filter(validBlock).map(r=>String(r.store_id)));
@@ -65,10 +65,19 @@ function ensureCss(){
 .xsa-board th:first-child,.xsa-board td:first-child{position:sticky;left:0;z-index:2;background:#fff;width:180px;min-width:180px}
 .xsa-store-name{font-size:12px;line-height:18px;font-weight:700;color:var(--m-color-neutral-950,#101828)}
 .xsa-store-sub{font-size:11px;line-height:16px;color:var(--m-color-neutral-500,#667085);margin-top:2px}
-.xsa-cell{width:140px;min-width:140px}
+.xsa-workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,420px);gap:12px;align-items:start}
+.xsa-workspace>.xsa-board-wrap{margin-top:12px}
+.xsa-cell{width:140px;min-width:140px;padding:0!important}
+.xsa-cell-open{display:block;width:100%;min-height:72px;padding:8px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.xsa-cell-open:hover,.xsa-cell-open:focus-visible{background:#F8FBFE;outline:2px solid var(--m-color-info,#2F6FDE);outline-offset:-2px}
+.xsa-cell-open[aria-expanded="true"]{background:#F4F9FF;box-shadow:inset 0 0 0 2px #9EC7F1}
 .xsa-empty{font-size:12px;color:var(--m-color-neutral-500,#667085);padding:7px 2px}
 .xsa-block{display:block;margin:0 0 6px;padding:8px;border:1px solid var(--m-border-default,#EAECF0);border-radius:8px;font-size:12px;line-height:18px;font-weight:700}
-.xsa-block-edit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin-bottom:7px;padding:7px;border:1px solid var(--m-border-default,#EAECF0);border-radius:9px}
+.xsa-editor-panel{position:sticky;top:12px;margin-top:12px;border:1px solid var(--m-border-default,#EAECF0);border-radius:14px;background:#fff;padding:14px;box-shadow:0 10px 28px rgba(16,24,40,.10)}
+.xsa-editor-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}
+.xsa-editor-head h5{margin:0;font-size:16px;line-height:22px;color:var(--m-color-neutral-950,#101828)}
+.xsa-editor-head p{margin:3px 0 0;font-size:12px;line-height:18px;color:var(--m-color-neutral-500,#667085)}
+.xsa-editor-block{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px;padding:12px;border:1px solid var(--m-border-default,#EAECF0);border-radius:10px}
 .xsa-band-morning{background:var(--m-shift-morning-bg,#FFF4CC)!important;border-color:var(--m-shift-morning-border,#E7B84B)!important;color:var(--m-shift-morning-text,#6B5100)!important}
 .xsa-band-afternoon{background:var(--m-shift-afternoon-bg,#FDE7E7)!important;border-color:var(--m-shift-afternoon-border,#E39C9C)!important;color:var(--m-shift-afternoon-text,#8A2C2C)!important}
 .xsa-band-evening{background:var(--m-shift-evening-bg,#E8F3FF)!important;border-color:var(--m-shift-evening-border,#9EC7F1)!important;color:var(--m-shift-evening-text,#235DBA)!important}
@@ -79,13 +88,14 @@ function ensureCss(){
 .xsa-band-dot.morning{background:var(--m-shift-morning-bg,#FFF4CC);border-color:var(--m-shift-morning-border,#E7B84B)}
 .xsa-band-dot.afternoon{background:var(--m-shift-afternoon-bg,#FDE7E7);border-color:var(--m-shift-afternoon-border,#E39C9C)}
 .xsa-band-dot.evening{background:var(--m-shift-evening-bg,#E8F3FF);border-color:var(--m-shift-evening-border,#9EC7F1)}
-.xsa-block-edit input,.xsa-block-edit select{width:100%;min-width:0;height:38px;border:1px solid var(--m-color-neutral-300,#D0D5DD);border-radius:8px;padding:0 7px;background:#fff;color:var(--m-color-neutral-950,#101828);font:inherit;font-size:12px}
-.xsa-block-edit input[data-xsa-f="target_headcount"]{grid-column:1/2}
-.xsa-block-edit .xsa-remove{grid-column:2/3}
-.xsa-block-edit .magasin-time-select{width:100%!important;min-width:0!important;max-width:100%!important}
-.xsa-remove{height:38px;padding:0 10px;border:1px solid #F0C7C7;border-radius:8px;background:#fff;color:var(--m-color-danger,#A33D32);cursor:pointer;font-size:16px}
-.xsa-add-block{width:100%;min-height:38px;border:1px dashed #9CB7C7;border-radius:8px;background:#fff;color:var(--m-color-brand-700,#08747F);font-size:12px;font-weight:700;cursor:pointer}
-.xsa-editor-actions{display:flex;justify-content:flex-end;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.xsa-field{display:grid;grid-template-columns:1fr;gap:5px}
+.xsa-field>span{font-size:11px;line-height:16px;font-weight:700;color:var(--m-color-neutral-700,#344054)}
+.xsa-editor-block input,.xsa-editor-block select{width:100%;min-width:0;min-height:44px;border:1px solid var(--m-color-neutral-300,#D0D5DD);border-radius:8px;padding:0 10px;background:#fff;color:var(--m-color-neutral-950,#101828);font:inherit;font-size:13px}
+.xsa-editor-block .magasin-time-select{width:100%!important;min-width:0!important;max-width:100%!important}
+.xsa-remove{width:100%;min-height:42px;padding:8px 10px;border:1px solid #F0C7C7;border-radius:8px;background:#fff;color:var(--m-color-danger,#A33D32);cursor:pointer;font-size:12px;font-weight:700}
+.xsa-add-block{width:100%;min-height:44px;border:1px dashed #9CB7C7;border-radius:8px;background:#fff;color:var(--m-color-brand-700,#08747F);font-size:12px;font-weight:700;cursor:pointer}
+.xsa-editor-actions{display:flex;justify-content:flex-end;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--m-border-default,#EAECF0)}
+.xsa-editor-actions .btn{min-height:44px}
 .xsa-status{margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--m-color-info-soft,#EFF6FF);color:#235DBA;font-size:12px;line-height:18px;white-space:pre-wrap}
 .xsa-status.ok{background:var(--m-color-success-soft,#ECFDF3);color:var(--m-color-success,#217653)}
 .xsa-status.error{background:var(--m-color-danger-soft,#FEF3F2);color:var(--m-color-danger,#A33D32)}
@@ -94,6 +104,10 @@ function ensureCss(){
  .xsa-actions{width:100%}
  .xsa-actions .btn{flex:1 1 180px;min-height:44px}
  .xsa-board{min-width:1100px}
+}
+@media(max-width:760px){
+ .xsa-workspace{display:block}
+ .xsa-editor-panel{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:50;width:100%;max-height:86vh;overflow:auto;margin:0;padding:16px;border-radius:18px 18px 0 0;box-shadow:0 -12px 36px rgba(16,24,40,.18)}
 }
 @media(max-width:600px){
  .xsa{padding:12px}
@@ -127,18 +141,11 @@ function cellRows(storeId,day){
 function cellHtml(store,day){
  const rows=cellRows(store.id,day.id);
  const attr=esc(String(store.id)+'-'+day.id);
- if(!state.editing){
-  return '<td class="xsa-cell" data-xsa-cell="'+attr+'">'+(rows.length?rows.map(({r})=>'<span class="xsa-block '+bandClass(r.start_time)+'">'+esc(hm(r.start_time))+'–'+esc(hm(r.end_time))+' · '+esc(r.target_headcount)+' người</span>').join(''):'<div class="xsa-empty">—</div>')+'</td>';
- }
- const editors=rows.map(({r,index})=>
-  '<div class="xsa-block-edit '+bandClass(r.start_time)+'" data-xsa-block="'+index+'">'
-   +'<input type="time" aria-label="Bắt đầu" data-xsa-f="start_time" value="'+esc(r.start_time)+'">'
-   +'<input type="time" aria-label="Kết thúc" data-xsa-f="end_time" value="'+esc(r.end_time)+'">'
-   +'<input type="number" min="1" max="20" step="1" aria-label="Số người" data-xsa-f="target_headcount" value="'+esc(r.target_headcount||1)+'">'
-   +'<button class="xsa-remove" type="button" data-xsa-remove="'+index+'" aria-label="Xóa khung">×</button>'
-  +'</div>'
- ).join('');
- return '<td class="xsa-cell" data-xsa-cell="'+attr+'">'+editors+'<button class="xsa-add-block" type="button" data-xsa-add-store="'+esc(store.id)+'" data-xsa-add-day="'+day.id+'">+ Khung</button></td>';
+ const selected=state.editing&&String(state.editorCell?.storeId||'')===String(store.id)&&Number(state.editorCell?.day||0)===Number(day.id);
+ const label='Chỉnh '+String(store.code||store.name||'cửa hàng')+' · '+day.name;
+ return '<td class="xsa-cell" data-xsa-cell="'+attr+'"><button class="xsa-cell-open" type="button" data-xsa-open-store="'+esc(store.id)+'" data-xsa-open-day="'+day.id+'" aria-label="'+esc(label)+'" aria-expanded="'+(selected?'true':'false')+'">'
+  +(rows.length?rows.map(({r})=>'<span class="xsa-block '+bandClass(r.start_time)+'">'+esc(hm(r.start_time))+'–'+esc(hm(r.end_time))+' · '+esc(r.target_headcount)+' người</span>').join(''):'<span class="xsa-empty">—</span>')
+  +'</button></td>';
 }
 
 function boardHtml(){
@@ -146,6 +153,28 @@ function boardHtml(){
  return '<div class="xsa-board-wrap"><table class="xsa-board"><thead><tr><th>Cửa hàng</th>'+DAYS.map(d=>'<th>'+esc(d.label)+'<br><span style="font-weight:500">'+esc(d.name)+'</span></th>').join('')+'</tr></thead><tbody>'
   +state.stores.map(store=>'<tr><td><div class="xsa-store-name">'+esc(store.code)+' · '+esc(store.name)+'</div><div class="xsa-store-sub">Cấu hình cố định hàng tuần</div></td>'+DAYS.map(day=>cellHtml(store,day)).join('')+'</tr>').join('')
   +'</tbody></table></div>';
+}
+
+function editorHtml(){
+ if(!state.editing||!state.editorCell)return '';
+ const store=state.stores.find(s=>String(s.id)===String(state.editorCell.storeId||''));
+ const day=DAYS.find(d=>Number(d.id)===Number(state.editorCell.day||0));
+ if(!store||!day)return '';
+ const rows=cellRows(store.id,day.id);
+ const blocks=rows.map(({r,index})=>
+  '<div class="xsa-editor-block '+bandClass(r.start_time)+'" data-xsa-block="'+index+'">'
+   +'<label class="xsa-field"><span>Bắt đầu</span><input type="time" aria-label="Bắt đầu" data-xsa-f="start_time" value="'+esc(r.start_time)+'"></label>'
+   +'<label class="xsa-field"><span>Kết thúc</span><input type="time" aria-label="Kết thúc" data-xsa-f="end_time" value="'+esc(r.end_time)+'"></label>'
+   +'<label class="xsa-field"><span>Số người</span><input type="number" min="1" max="20" step="1" aria-label="Số người" data-xsa-f="target_headcount" value="'+esc(r.target_headcount||1)+'"></label>'
+   +'<button class="xsa-remove" type="button" data-xsa-remove="'+index+'">Xóa khung</button>'
+  +'</div>'
+ ).join('');
+ return '<aside class="xsa-editor-panel" role="dialog" aria-label="Chỉnh nhu cầu nhân sự '+esc(day.name)+'">'
+  +'<div class="xsa-editor-head"><div><div class="xsa-kicker">Chỉnh một ngày</div><h5>'+esc(store.code)+' · '+esc(store.name)+'</h5><p>'+esc(day.name)+' · Cấu hình cố định hàng tuần</p></div></div>'
+  +(blocks||'<div class="xsa-empty">Chưa có khung giờ cho ngày này.</div>')
+  +'<button class="xsa-add-block" type="button" id="xsaAddBlock">+ Thêm khung</button>'
+  +'<div class="xsa-editor-actions"><button class="btn" type="button" id="xsaCancel">Hủy thay đổi</button><button class="btn primary" type="button" id="xsaSave">Lưu nhu cầu hàng tuần</button></div>'
+  +'</aside>';
 }
 
 function shortagesHtml(){
@@ -172,14 +201,13 @@ function render(){
  if(state.assignmentCount!==null)summary.push('<span class="xsa-pill ok">'+state.assignmentCount+' ca đã được xếp tự động</span>');
  m.innerHTML='<section class="xsa">'
   +'<div class="xsa-head"><div><div class="xsa-kicker">Nhân sự · Nhiều cửa hàng</div><h4>Nhu cầu nhân sự hàng tuần</h4><div class="muted" style="margin-top:5px">Cấu hình một lần theo cửa hàng × thứ trong tuần × khung giờ × số người. Giá trị được dùng lại cho các tuần sau cho đến khi Quản lý chỉnh và lưu.</div></div>'
-  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaStaff">Thiết lập ưu tiên nhân viên</button><button class="btn" type="button" id="xsaConfig">'+(state.editing?'Đang chỉnh':'Chỉnh nhu cầu hàng tuần')+'</button><button class="btn primary" type="button" id="xsaAuto"'+(!complete||state.loading||state.busy?' disabled':'')+'>Tạo lịch nháp tự động</button></div></div>'
+  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaStaff">Thiết lập ưu tiên nhân viên</button><button class="btn" type="button" id="xsaConfig">Chỉnh nhu cầu hàng tuần</button><button class="btn primary" type="button" id="xsaAuto"'+(!complete||state.loading||state.busy?' disabled':'')+'>Tạo lịch nháp tự động</button></div></div>'
   +'<div class="xsa-flow"><div class="xsa-step '+(priorityReady?'ready':'warn')+'"><b>1. Ưu tiên cửa hàng</b><span>'+(priorityReady?'Đã sẵn sàng':'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa được gán ưu tiên CN')+'</span></div>'
   +'<div class="xsa-step '+(requirementsReady?'ready':'warn')+'"><b>2. Nhu cầu nhân sự hàng tuần</b><span>'+(requirementsReady?'Đang dùng cấu hình cố định hàng tuần':'Chưa có cấu hình; Quản lý cần nhập dữ liệu thực tế')+'</span></div>'
   +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>3. Xếp lịch tự động</b><span>'+(complete?'Sẵn sàng áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp':'Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động')+'</span></div></div>'
   +'<div class="xsa-summary">'+summary.join('')+'</div>'
   +'<div class="xsa-recurring-note"><b>Cấu hình cố định hàng tuần:</b> không chọn ngày lịch và không cần nhập lại mỗi tuần. Hệ thống không tự đoán số người.<div class="xsa-band-legend" aria-label="Quy ước màu khung giờ"><span><i class="xsa-band-dot morning"></i>05:00–12:00 · Vàng</span><span><i class="xsa-band-dot afternoon"></i>12:00–17:00 · Đỏ nhạt</span><span><i class="xsa-band-dot evening"></i>17:00–22:00 · Xanh dương nhạt</span></div></div>'
-  +boardHtml()
-  +(state.editing?'<div class="xsa-editor-actions"><button class="btn" type="button" id="xsaCancel">Hủy thay đổi</button><button class="btn primary" type="button" id="xsaSave">Lưu nhu cầu hàng tuần</button></div>':'')
+  +'<div class="xsa-workspace">'+boardHtml()+editorHtml()+'</div>'
   +shortagesHtml()
   +(state.message?'<div class="xsa-status '+esc(state.messageType)+'">'+esc(state.message)+'</div>':'')
   +'</section>';
@@ -240,7 +268,7 @@ async function saveRequirements(){
   }));
   const q=await client().rpc('replace_workforce_recurring_staffing_requirements_v1',{p_requirements:payload});
   if(q.error)throw q.error;
-  state.editing=false;state.loaded=false;
+  state.editing=false;state.editorCell=null;state.loaded=false;
   await loadRequirements();
   state.message='Đã lưu '+Number(q.data?.requirement_count??payload.length)+' khung nhu cầu hàng tuần. Cấu hình này được dùng lại cho mọi tuần cho đến khi bạn chỉnh và lưu.';state.messageType='ok';render();
  }catch(e){console.warn('[XSTORE_STAFFING_SAVE]',e);state.message='Không thể lưu nhu cầu nhân sự lúc này. Vui lòng kiểm tra dữ liệu và thử lại.';state.messageType='error';render()}
@@ -303,15 +331,27 @@ function bind(){
   });
  }
  m.querySelector('#xsaStaff')?.addEventListener('click',()=>document.querySelector('[data-view="staff"]')?.click());
- m.querySelector('#xsaConfig')?.addEventListener('click',()=>{if(state.editing)syncFromDom();state.editing=!state.editing;state.message='';state.messageType='';render()});
- m.querySelector('#xsaCancel')?.addEventListener('click',()=>{state.editing=false;state.loaded=false;void loadRequirements()});
+ m.querySelector('#xsaConfig')?.addEventListener('click',()=>{
+  const first=m.querySelector('[data-xsa-open-store]');
+  if(first){first.focus();first.scrollIntoView?.({block:'nearest',inline:'nearest'});}
+  state.message='Chọn một ô cửa hàng/ngày trong bảng để chỉnh nhu cầu.';state.messageType='';
+  const status=m.querySelector('.xsa-status');if(!status)render();
+ });
+ m.querySelectorAll('[data-xsa-open-store]').forEach(b=>b.addEventListener('click',()=>{
+  if(state.editing)syncFromDom();
+  state.editing=true;
+  state.editorCell={storeId:b.dataset.xsaOpenStore||'',day:Number(b.dataset.xsaOpenDay||0)};
+  state.message='';state.messageType='';render();
+ }));
+ m.querySelector('#xsaCancel')?.addEventListener('click',()=>{state.editing=false;state.editorCell=null;state.loaded=false;void loadRequirements()});
  m.querySelector('#xsaSave')?.addEventListener('click',saveRequirements);
  m.querySelector('#xsaAuto')?.addEventListener('click',autoSchedule);
- m.querySelectorAll('[data-xsa-add-store]').forEach(b=>b.addEventListener('click',()=>{
+ m.querySelector('#xsaAddBlock')?.addEventListener('click',()=>{
+  if(!state.editorCell)return;
   syncFromDom();
-  state.requirements.push({requirement_id:null,store_id:b.dataset.xsaAddStore||'',day_of_week:Number(b.dataset.xsaAddDay||0),start_time:'',end_time:'',target_headcount:1});
+  state.requirements.push({requirement_id:null,store_id:state.editorCell.storeId||'',day_of_week:Number(state.editorCell.day||0),start_time:'',end_time:'',target_headcount:1});
   render();
- }));
+ });
  m.querySelectorAll('[data-xsa-remove]').forEach(b=>b.addEventListener('click',()=>{
   syncFromDom();state.requirements.splice(Number(b.dataset.xsaRemove),1);render();
  }));
