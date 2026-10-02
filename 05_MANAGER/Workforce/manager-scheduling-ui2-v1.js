@@ -51,7 +51,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msd-ui2-012 .msd-status{border:1px solid #d8e5f4}
 .msd-ui2-012 .msd-status.error{border-color:#efc0bc}.msd-ui2-012 .msd-status.ok{border-color:#badfc8}
 .msd-ui2-012 .msd-official-row{min-height:48px}
-.msd-ui2-012 button:focus-visible,.msd-ui2-012 select:focus-visible,.msd-ui2-012 .msd-board-wrap:focus-visible{outline:2px solid #2f6fde!important;outline-offset:2px!important}
+.msd-ui2-012 button:focus-visible,.msd-ui2-012 select:focus-visible,.msd-ui2-012 input:focus-visible,.msd-ui2-012 .msd-board-wrap:focus-visible{outline:2px solid #2f6fde!important;outline-offset:2px!important}
 @media(max-width:1100px){
  .msd-ui2-012 .msd-board{grid-template-columns:repeat(7,minmax(156px,1fr));min-width:1128px;width:max-content}
 }
@@ -101,12 +101,12 @@ function group(className,label){
 }
 function stageModel(state,busy){
  const stage=String(state?.generationStatus||'NONE').toUpperCase();
- if(busy)return {tone:'busy',chip:'ĐANG ĐỒNG BỘ',title:'Đang cập nhật dữ liệu',detail:'Giữ nguyên cửa hàng và tuần hiện tại; thao tác tạm khóa trong lúc hệ thống xử lý.'};
+ if(busy)return {tone:'busy',chip:'ĐANG CẬP NHẬT',title:'Đang cập nhật dữ liệu',detail:'Giữ nguyên cửa hàng và tuần hiện tại; thao tác tạm khóa cho đến khi hoàn tất.'};
  if(stage==='DRAFT')return {tone:'draft',chip:'LỊCH NHÁP',title:'Đang soạn lịch tuần',detail:'Chỉnh các ca, lưu lịch nháp rồi kiểm tra xung đột trước khi duyệt.'};
- if(stage==='REVIEWED')return {tone:'reviewed',chip:'ĐÃ DUYỆT',title:'Đã duyệt · chờ phát hành',detail:'Lịch nháp đã được duyệt. Khi phát hành, hệ thống sẽ tạo lịch làm chính thức.'};
- if(stage==='PUBLISHED')return {tone:'published',chip:'ĐÃ PHÁT HÀNH',title:'Đã phát hành',detail:'Lịch làm chính thức bên dưới được đọc trực tiếp từ dữ liệu đã phát hành.'};
- if(stage==='CONFLICT')return {tone:'conflict',chip:'XUNG ĐỘT',title:'Có nhiều phiên xếp lịch cùng cửa hàng và tuần',detail:'Tạm khóa chỉnh sửa cho đến khi xung đột phiên xếp lịch được xử lý.'};
- return {tone:'none',chip:'CHƯA TẠO',title:'Chưa có phiên xếp lịch',detail:'Chọn cửa hàng và tuần, sau đó tạo hoặc mở một lịch nháp.'};
+ if(stage==='REVIEWED')return {tone:'reviewed',chip:'ĐÃ DUYỆT',title:'Đã duyệt · chờ phát hành',detail:'Lịch nháp đã được duyệt. Bước tiếp theo là phát hành lịch làm chính thức.'};
+ if(stage==='PUBLISHED')return {tone:'published',chip:'ĐÃ PHÁT HÀNH',title:'Đã phát hành',detail:'Lịch làm chính thức đã sẵn sàng để xem bên dưới.'};
+ if(stage==='CONFLICT')return {tone:'conflict',chip:'CẦN XỬ LÝ',title:'Có nhiều bản nháp cùng cửa hàng và tuần',detail:'Tạm khóa chỉnh sửa để tránh ghi đè. Tải lại sau khi dữ liệu trùng được xử lý.'};
+ return {tone:'none',chip:'CHƯA TẠO',title:'Chưa có lịch nháp',detail:'Chọn cửa hàng và tuần, sau đó tạo hoặc mở một lịch nháp.'};
 }
 function structure(r){
  if(r.dataset.ui2SchedulingEnhanced==='1')return;
@@ -140,6 +140,8 @@ function structure(r){
  if(summaries[0])summaries[0].remove();
  const banner=document.createElement('div');
  banner.className='msu2-state-banner';
+ banner.setAttribute('role','status');
+ banner.setAttribute('aria-live','polite');
  banner.innerHTML='<div class="msu2-state-copy"><strong></strong><span></span></div><span class="msu2-state-chip"></span>';
  head?.after(banner);
  const supportingSummary=r.querySelector(':scope > .msd-summary');
@@ -169,7 +171,7 @@ function structure(r){
   const k=document.createElement('span');k.className='msu2-section-kicker';k.textContent='Bước cuối · duyệt và phát hành';downstream.prepend(k);
  }
  if(downstream&&!downstream.querySelector('.msu2-conflict-resolution')){
-  const conflict=document.createElement('div');conflict.className='msu2-conflict-resolution';conflict.innerHTML='<div><strong>Cần xử lý xung đột phiên xếp lịch</strong><span>Giữ nguyên dữ liệu hiện tại. Sau khi phiên trùng được xử lý, tải lại trạng thái để tiếp tục.</span></div><button class="btn" type="button" data-msu2-conflict-reload>Tải lại trạng thái</button>';downstream.appendChild(conflict);
+  const conflict=document.createElement('div');conflict.className='msu2-conflict-resolution';conflict.innerHTML='<div><strong>Cần xử lý nhiều bản nháp cùng tuần</strong><span>Giữ nguyên dữ liệu hiện tại. Sau khi dữ liệu trùng được xử lý, tải lại trạng thái để tiếp tục.</span></div><button class="btn" type="button" data-msu2-conflict-reload>Tải lại trạng thái</button>';downstream.appendChild(conflict);
   conflict.querySelector('[data-msu2-conflict-reload]')?.addEventListener('click',()=>r.querySelector('#msdReload')?.click());
  }
  const status=r.querySelector('#msdStatus');
