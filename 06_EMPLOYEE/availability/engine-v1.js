@@ -180,7 +180,7 @@ async function register(event){
     if(q.error)throw q.error;
     C.ui.toast('Đã lưu thời gian có thể làm.','success');
     const ok=await load();
-    if(ok)setUiState('success','Đã lưu khoảng thời gian có thể làm. Giá trị hiện tại đã được tải lại.');
+    if(ok)setUiState('success','Đã lưu khoảng thời gian có thể làm. Mỗi khoảng có hiệu lực ngay khi được lưu.');
   }catch(_){
     setUiState('error','Đăng ký thất bại. Vui lòng thử lại.',true);
   }finally{
