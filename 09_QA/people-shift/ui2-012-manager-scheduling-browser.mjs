@@ -55,10 +55,16 @@ for(const width of [1440,1024,768,390]){
     focusedId:focused?.id||"",
     boardScroll:wrap?.scrollWidth||0,boardClient:wrap?.clientWidth||0,
     dayCount:root?.querySelectorAll(".msd-day").length||0,
-    emptyDays:root?.querySelectorAll(".msd-day .msd-empty").length||0
+    emptyDays:root?.querySelectorAll(".msd-day .msd-empty").length||0,
+    sourceRole:root?.querySelector(".msd-source")?.dataset.msu2Section||"",
+    draftRole:root?.querySelector(".msd-board-wrap")?.dataset.msu2Section||"",
+    draftUtilityPrimary:root?.querySelectorAll(".msu2-draft-actions .primary").length||0,
+    reviewVisible:!root?.querySelector("#msdReview")?.hidden,
+    reviewPrimary:root?.querySelector("#msdReview")?.classList.contains("primary")||false,
+    publishHidden:root?.querySelector("#msdPublish")?.hidden||false
    };
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
-   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5)throw new Error(JSON.stringify(metric));
+   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5||metric.sourceRole!=="availability-source"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
    if(expected===768&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet board scroll: "+JSON.stringify(metric));
    return JSON.stringify(metric);
@@ -150,6 +156,13 @@ await check("ui2_012_review_publish_confirmation_official_and_idempotent_retry",
  await frame.locator("#msdReview").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().generationStatus==="REVIEWED");
  const reviewed=await frame.locator(".msu2-state-chip").innerText();
+ const reviewedActions=await frame.locator(".msd-ui2-012").evaluate(r=>({
+  reviewHidden:r.querySelector("#msdReview")?.hidden,
+  validateHidden:r.querySelector("#msdValidate")?.hidden,
+  publishHidden:r.querySelector("#msdPublish")?.hidden,
+  publishPrimary:r.querySelector("#msdPublish")?.classList.contains("primary")
+ }));
+ if(!reviewedActions.reviewHidden||!reviewedActions.validateHidden||reviewedActions.publishHidden||!reviewedActions.publishPrimary)throw new Error(JSON.stringify(reviewedActions));
  let confirmed=false;
  page.once("dialog",async d=>{confirmed=true;await d.accept()});
  await frame.locator("#msdPublish").click();
@@ -159,8 +172,13 @@ await check("ui2_012_review_publish_confirmation_official_and_idempotent_retry",
  const after=await frame.evaluate(()=>({inserts:globalThis.__MW31_QA.state.officialInsertCount,transitions:globalThis.__MW31_QA.state.publishTransitions,rows:globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().officialRows.length}));
  const status=await frame.locator("#msdStatus").innerText();
  const published=await frame.locator(".msu2-state-chip").innerText();
- if(reviewed!=="ĐÃ DUYỆT"||published!=="ĐÃ PHÁT HÀNH"||!confirmed||after.inserts!==before.inserts||after.transitions!==before.transitions||after.rows!==2||!status.includes("đã được phát hành trước đó"))throw new Error(JSON.stringify({reviewed,published,confirmed,before,after,status}));
- return JSON.stringify({reviewed,published,confirmed,before,after});
+ const publishedActions=await frame.locator(".msd-ui2-012").evaluate(r=>({
+  validateHidden:r.querySelector("#msdValidate")?.hidden,
+  reviewHidden:r.querySelector("#msdReview")?.hidden,
+  publishHidden:r.querySelector("#msdPublish")?.hidden
+ }));
+ if(reviewed!=="ĐÃ DUYỆT"||published!=="ĐÃ PHÁT HÀNH"||!confirmed||after.inserts!==before.inserts||after.transitions!==before.transitions||after.rows!==2||!status.includes("đã được phát hành trước đó")||!publishedActions.validateHidden||!publishedActions.reviewHidden||!publishedActions.publishHidden)throw new Error(JSON.stringify({reviewed,published,confirmed,before,after,status,publishedActions}));
+ return JSON.stringify({reviewed,published,confirmed,before,after,reviewedActions,publishedActions});
 });
 
 await check("ui2_012_official_schedule_entry_delegates_to_existing_route",async()=>{
@@ -204,10 +222,19 @@ await check("ui2_012_duplicate_generation_conflict_locks_authoring",async()=>{
   start:r.querySelector("#msdStart")?.disabled,
   save:r.querySelector("#msdSave")?.disabled,
   validate:r.querySelector("#msdValidate")?.disabled,
+  validateHidden:r.querySelector("#msdValidate")?.hidden,
+  conflictVisible:r.querySelector(".msu2-conflict-resolution")?.dataset.visible,
+  conflictButton:!!r.querySelector("[data-msu2-conflict-reload]"),
+  statusInsideDownstream:r.querySelector("#msdStatus")?.parentElement?.classList.contains("msd-downstream")||false,
   text:r.innerText
  }));
- if(state.duplicateDrafts!==1||ui.chip!=="XUNG ĐỘT"||!ui.start||!ui.save||!ui.validate||!ui.text.includes("Có nhiều phiên xếp lịch cùng cửa hàng và tuần"))throw new Error(JSON.stringify({state,ui}));
- return JSON.stringify({duplicateDrafts:state.duplicateDrafts,chip:ui.chip});
+ if(state.duplicateDrafts!==1||ui.chip!=="XUNG ĐỘT"||!ui.start||!ui.save||!ui.validate||!ui.validateHidden||ui.conflictVisible!=="1"||!ui.conflictButton||!ui.statusInsideDownstream||!ui.text.includes("Có nhiều phiên xếp lịch cùng cửa hàng và tuần")||!ui.text.includes("Cần xử lý xung đột phiên xếp lịch"))throw new Error(JSON.stringify({state,ui}));
+ await frame.evaluate(()=>globalThis.__MW31_QA.setCompeting([]));
+ await frame.locator("[data-msu2-conflict-reload]").click();
+ await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return !s.busy&&s.generationStatus==="PUBLISHED"});
+ const recovered=await frame.locator(".msu2-state-chip").innerText();
+ if(recovered!=="ĐÃ PHÁT HÀNH")throw new Error(recovered);
+ return JSON.stringify({duplicateDrafts:state.duplicateDrafts,chip:ui.chip,recovered});
 });
 
 await check("ui2_012_no_direct_table_calls_and_clean_diagnostics",async()=>{
