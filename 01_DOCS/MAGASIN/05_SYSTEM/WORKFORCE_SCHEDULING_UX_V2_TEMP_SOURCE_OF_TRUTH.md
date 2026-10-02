@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 READY / SCHED-UI-004→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 READY / SCHED-UI-005→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -158,8 +158,8 @@ Owner/release chain:
 | SCHED-UI-000 | Owner-approved Design Lock / Cách B | **DONE / OWNER APPROVED** |
 | SCHED-UI-001 | Recurring staffing readable view + dedicated editor | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-002 | Manager information architecture: Lập lịch tuần vs Thiết lập xếp lịch | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-003 | Guided Auto Schedule “next action” workflow | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-004 | Draft → edit → check → approve → publish visual simplification | **BLOCKED BY 003** |
+| SCHED-UI-003 | Guided Auto Schedule “next action” workflow | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-004 | Draft → edit → check → approve → publish visual simplification | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-005 | Shared canonical time-band classifier | **BLOCKED BY 004** |
 | SCHED-UI-006 | Employee official schedule time-band integration | **BLOCKED BY 005** |
 | SCHED-UI-007 | Employee availability CTA + editor UX | **BLOCKED BY 006** |
@@ -290,6 +290,25 @@ Required:
 - no duplicate stepper from another module;
 - no Auto Schedule execution when prerequisites are incomplete;
 - technical state may remain internal.
+
+Completion evidence — 2026-10-02:
+
+- implementation continued on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `854d8a2ec7cd4d83948d27f7f88a40c445af7e12`;
+- one five-step visible workflow is present: Chuẩn bị → Tạo lịch nháp → Chỉnh lịch → Kiểm tra → Duyệt & phát hành;
+- one `Việc cần làm tiếp theo` block and one state-driven primary CTA are used; prerequisite blockers explain what must be configured before automatic draft generation;
+- Store Priority and recurring staffing prerequisites gate automatic draft generation; no Auto Schedule execution occurs before prerequisites are complete;
+- the Manager scheduling duplicate step rail was removed and summary counts remain supporting metadata only;
+- existing scheduling authority is preserved: no new writer/RPC was introduced, and the existing `auto_generate_cross_store_schedule_v1` / `XSTORE_GLOBAL_RECURRING_V1` path remains authoritative;
+- user-facing technical `Auto Schedule` copy was removed while internal technical state remains unchanged;
+- XSTORE browser qualification verifies prerequisite transition persistence across reload and next-week navigation;
+- `SOP Task Tests` PR run `37010910483`: SUCCESS;
+- `UI2 Cross Role Acceptance` PR run `37010910576`: SUCCESS;
+- `People Shift Day-10 Tests` PR run `37010910437`: SUCCESS;
+- push qualification runs `37010902535` and `37010902531`: SUCCESS;
+- `XSTORE four-store master browser E2E`, `UI2-016 static contract`, accepted role static regressions, and `UI2-017 cold reload closure gate`: SUCCESS on the verified exact head;
+- PR remains open and unmerged; no production-impacting product code from this task was merged to `main`;
+- no Owner input is required to close this technical task.
 
 ## 11. SCHED-UI-004 — Draft/review/publish visual simplification
 
@@ -687,10 +706,12 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-002 = DONE / VERIFIED`
 
-`SCHED-UI-003 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-003 = DONE / VERIFIED`
+
+`SCHED-UI-004 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
 Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
 
-Do not execute SCHED-UI-004 or later before SCHED-UI-003 is complete.
+Do not execute SCHED-UI-005 or later before SCHED-UI-004 is complete.
