@@ -49,7 +49,7 @@ test("EMLIVE-004 keeps the accepted EMLIVE-003 runtime and user-facing semantics
   assert.match(runtime,/profile\/engine-v1\.js\?v=20260930-emlive003/);
   assert.match(runtime,/payroll\/engine-v1\.js\?v=20260930-emlive003/);
   assert.match(runtime,/notification\/engine-v1\.js\?v=20260930-emlive003/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive003|20261001-ui-unified1)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006)/);
   assert.match(profile,/Không thể tải thông tin cá nhân lúc này\. Hãy thử lại\./);
   assert.match(payroll,/Không thể tải thông tin lương lúc này/);
   assert.match(notification,/Không thể tải thông báo lúc này/);
