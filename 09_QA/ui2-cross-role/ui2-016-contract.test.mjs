@@ -27,7 +27,7 @@ test("UI2-016 Manager Today Scheduling Operations use 1024 touch breakpoints",()
   ]) assert.match(read(p),/@media\(max-width:1024px\)/,p);
   const engine=read("05_MANAGER/Workforce/engine-v1.js");
   assert.ok(engine.includes("ui-consolidation-v1.js?v=20261001-ui-unified1"));
-  assert.ok(engine.includes("manager-scheduling-ui2-v1.js?v=20261001-ui-unified1"));
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20261001-ui-unified1|20261002-sched-ui-003)/);
   assert.ok(engine.includes("manager-operations-ui2-v1.js?v=20260927-ui2-016"));
 });
 
