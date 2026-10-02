@@ -175,7 +175,7 @@ for(const width of [1440,1024,768,430,390,360]){
  },width);
  if(metric.scrollWidth>metric.clientWidth+1)throw new Error("recurring setup page overflow: "+JSON.stringify(metric));
  if(width<=1024&&metric.touchMin<43.5)throw new Error("recurring setup touch target: "+JSON.stringify(metric));
- if(width<=430&&(metric.boardDisplay!=="block"||metric.rowDisplay!=="grid"||metric.headDisplay!=="none"||metric.boardScroll>metric.boardClient+1||metric.cellHeight<63.5||!metric.cellLabel.includes("Thứ Hai")))throw new Error("phone recurring cards: "+JSON.stringify(metric));
+ if(width<=430&&(metric.boardDisplay!=="block"||metric.rowDisplay!=="grid"||metric.headDisplay!=="none"||metric.boardScroll>metric.boardClient+1||metric.cellHeight<63.5||!metric.cellLabel.includes("Thứ 2")))throw new Error("phone recurring cards: "+JSON.stringify(metric));
  if((width===768||width===1024)&&metric.boardScroll<=metric.boardClient)throw new Error("tablet recurring board should scroll internally: "+JSON.stringify(metric));
  if(width===1440&&metric.boardScroll>metric.boardClient+1)throw new Error("desktop recurring board should fit: "+JSON.stringify(metric));
 }
