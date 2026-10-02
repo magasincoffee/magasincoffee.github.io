@@ -12,6 +12,9 @@
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20260927-ui2-016">
 <script defer src="/02_CORE/ui/magasin-ui-v2-shell.js?v=20260928-auth-prod-005-owner-logout"></script>
+<script>
+(()=>{const token=String(new URLSearchParams(location.search).get('canonical')||'');if(token&&token!=='owner-root'){location.replace('/03_PLATFORM/01_AUTH/role-unavailable.html');return}if(token==='owner-root')history.replaceState({},document.title,'/owner/');})();
+</script>
 </head>
 <body data-magasin-ui-v2 data-magasin-shell-v2 data-magasin-shell-role="owner" data-magasin-shell-mode="standalone" data-magasin-shell-current="overview">
 <div id="loading" class="screen" aria-live="polite">
@@ -95,7 +98,7 @@
           <div class="mini"><span class="label">Chưa xử lý</span><strong id="workforceUnresolved">—</strong></div>
         </div>
         <div id="workforceMeta" class="meta"></div>
-        <div class="actions"><a href="/04_OWNER/Workforce/">Mở Workforce →</a></div>
+        <div class="actions"><a href="/owner/scheduling/">Mở Workforce →</a></div>
       </article>
 
       <article class="metric-card compact">
@@ -120,7 +123,7 @@
       <div><span class="section-kicker">KHU VỰC CHI TIẾT</span><h2 id="modulesTitle">Đi tới khu vực khi cần xử lý sâu</h2><p>Bắt đầu từ tổng quan, sau đó mở đúng khu vực cần xử lý.</p></div>
     </div>
     <div class="module-grid">
-      <a class="module-card" href="/04_OWNER/Workforce/"><strong>Nhân sự & lịch làm</strong><span>Xem trạng thái xếp lịch từng cửa hàng và mở chi tiết lập lịch tuần.</span><b>Mở khu vực →</b></a>
+      <a class="module-card" href="/owner/scheduling/"><strong>Nhân sự & lịch làm</strong><span>Xem trạng thái xếp lịch từng cửa hàng và mở chi tiết lập lịch tuần.</span><b>Mở khu vực →</b></a>
       <a class="module-card" href="/nhap-hang/"><strong>Mua hàng & Công nợ</strong><span>Đơn nhập, nhà cung cấp, công nợ và báo cáo mua hàng.</span><b>Mở module →</b></a>
       <a class="module-card" href="/04_OWNER/Access/"><strong>Phân quyền</strong><span>Quản lý quyền tài khoản nội bộ.</span><b>Mở module →</b></a>
     </div>
