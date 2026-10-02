@@ -121,7 +121,7 @@ test("shift colors follow one visual rule across Manager and Employee scheduling
   "--m-shift-afternoon-bg: #FDE7E7",
   "--m-shift-evening-bg: #E8F3FF"
  ])assert.ok(tokens.includes(token),token);
- assert.match(auto,/m>=300&&m<720\?'morning':m>=720&&m<1020\?'afternoon':m>=1020&&m<=1320\?'evening'/);
+ for(const src of [auto,master,draft])assert.match(src,/MAGASIN_CORE\?\.time\?\.shiftKind\?\.\(v\)\|\|'neutral'/);
  assert.match(auto,/xsa-band-morning/);
  assert.match(auto,/05:00–12:00 · Vàng/);
  assert.match(auto,/12:00–17:00 · Đỏ nhạt/);
@@ -137,9 +137,9 @@ test("shift colors follow one visual rule across Manager and Employee scheduling
 test("unified asset cache chain reaches both Manager and Employee entry points",()=>{
  for(const token of [
   "review-v1.js?v=20261001-ui-unified1",
-  "draft-publish-v1.js?v=20261001-ui-unified1",
-  "cross-store-master-v1.js?v=20261001-ui-unified1",
-  "cross-store-auto-schedule-v1.js?v=20261002-sched-ui-003",
+  "draft-publish-v1.js?v=20261002-sched-ui-005",
+  "cross-store-master-v1.js?v=20261002-sched-ui-005",
+  "cross-store-auto-schedule-v1.js?v=20261002-sched-ui-005",
   "manager-scheduling-ui2-v1.js?v=20261002-sched-ui-004",
   "official-v1.js?v=20261001-ui-unified1",
   "ui-consolidation-v1.js?v=20261001-ui-unified1"
@@ -150,7 +150,7 @@ test("unified asset cache chain reaches both Manager and Employee entry points",
   "magasin-ui-v2-shell.css?v=20261001-ui-unified1",
   "magasin-ui-v2-shell.js?v=20261001-ui-unified1",
   "app-time-picker-24h.js?v=20261001-ui-unified1",
-  "engine-v1.js?v=20261002-sched-ui-004"
+  "engine-v1.js?v=20261002-sched-ui-005"
  ])assert.ok(managerRuntime.includes(token),token);
  assert.ok(employeeRuntime.includes("employee-v40.html?ui=20261001-ui-unified1&runtime=engine"));
  assert.ok(employeeRuntime.includes("dashboard/engine-v1.js?v=20261001-ui-unified1"));
