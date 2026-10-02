@@ -220,7 +220,7 @@ function wire(x,selector,fn){
   b.removeAttribute('onclick');b.dataset.engineBound='1';b.addEventListener('click',fn);
 }
 function bind(){
-  const x=d();if(!x?.body||x.body.dataset.employeeAvailabilityEngine==='1')return;
+  const x=d();if(!x?.body)return;
   x.body.dataset.employeeAvailabilityEngine='1';
   wire(x,'[data-schedule-availability]',open);
   wire(x,'#weeklyRegistrationPanel [data-availability-close="header"]',close);
