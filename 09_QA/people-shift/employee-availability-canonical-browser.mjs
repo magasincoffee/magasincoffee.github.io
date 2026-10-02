@@ -44,7 +44,10 @@ await check("sched_ui_007_primary_cta_opens_editor_and_back_closes",async()=>{
   const opened=await employee.locator("#weeklyRegistrationPanel").evaluate(p=>({open:p.classList.contains("open"),hidden:p.getAttribute("aria-hidden")}));
   if(!opened.open||opened.hidden!=="false")throw new Error(JSON.stringify(opened));
   await employee.locator("[data-availability-close='back']").click();
-  await employee.locator("#weeklyRegistrationPanel").waitFor({state:"hidden"});
+  await page.waitForFunction(()=>{
+    const p=document.getElementById("employeeApp")?.contentDocument?.getElementById("weeklyRegistrationPanel");
+    return !!p && !p.classList.contains("open") && p.getAttribute("aria-hidden")==="true";
+  });
   const closed=await employee.locator("#weeklyRegistrationPanel").evaluate(p=>({open:p.classList.contains("open"),hidden:p.getAttribute("aria-hidden")}));
   if(closed.open||closed.hidden!=="true")throw new Error(JSON.stringify(closed));
   return "primary CTA opens editor; back closes without final-submit semantics";
