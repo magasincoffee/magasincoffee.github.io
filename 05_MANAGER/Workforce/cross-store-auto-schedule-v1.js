@@ -22,6 +22,7 @@ function applyBandClass(el,value){
  el.classList.add(bandClass(value));
 }
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
+const scheduleApi=()=>window.MAGASIN_MANAGER_SCHEDULE_DRAFT;
 const state={week:null,stores:[],requirements:[],editing:false,editorCell:null,surface:'week',setupFocus:null,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null};
 const mount=()=>document.getElementById('xstoreAutomationMount');
 const validBlock=r=>r.store_id&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&r.start_time&&r.end_time&&Number(r.target_headcount)>0;
@@ -59,12 +60,19 @@ function ensureCss(){
 .xsa-setup-card h5{margin:0;font-size:14px;line-height:20px;color:var(--m-color-neutral-950,#101828)}
 .xsa-setup-card p{margin:4px 0 0;font-size:12px;line-height:18px;color:var(--m-color-neutral-500,#667085)}
 .xsa-setup-card .xsa-actions{margin-top:10px}
-.xsa-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
-.xsa-step{border:1px solid var(--m-border-default,#EAECF0);border-radius:12px;background:var(--m-color-neutral-50,#F9FAFB);padding:12px}
-.xsa-step b{display:block;font-size:13px;line-height:18px}
-.xsa-step span{display:block;margin-top:4px;font-size:12px;line-height:18px;color:var(--m-color-neutral-500,#667085)}
-.xsa-step.ready{border-color:#B7DFC5;background:var(--m-color-success-soft,#ECFDF3)}
-.xsa-step.warn{border-color:#E8D194;background:var(--m-color-warning-soft,#FFFAEB)}
+.xsa-guide{margin-top:14px;border:1px solid var(--m-border-default,#EAECF0);border-radius:14px;background:#fff;padding:13px}
+.xsa-guide-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:0;padding:0;list-style:none}
+.xsa-guide-step{min-height:42px;display:flex;align-items:center;justify-content:center;padding:8px;border:1px solid var(--m-border-default,#EAECF0);border-radius:9px;background:var(--m-color-neutral-50,#F9FAFB);color:var(--m-color-neutral-500,#667085);font-size:11px;line-height:16px;font-weight:800;text-align:center}
+.xsa-guide-step.done{border-color:#B7DFC5;background:var(--m-color-success-soft,#ECFDF3);color:var(--m-color-success,#217653)}
+.xsa-guide-step.current{border-color:#9EC7F1;background:var(--m-color-info-soft,#EFF6FF);color:#235DBA}
+.xsa-next{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:10px;padding:12px;border:1px solid #D8E5F4;border-radius:11px;background:#F7FBFF}
+.xsa-next-copy{display:grid;gap:3px}
+.xsa-next-kicker{font-size:10px;line-height:14px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#667085}
+.xsa-next-copy strong{font-size:14px;line-height:20px;color:var(--m-color-neutral-950,#101828)}
+.xsa-next-copy p{margin:0;font-size:12px;line-height:18px;color:var(--m-color-neutral-500,#667085)}
+.xsa-next .btn.primary{min-width:190px;min-height:44px}
+.xsa-next[data-disabled="true"]{border-color:#E8D194;background:#FFFAEB}
+.xsa-next[data-disabled="true"] .xsa-next-copy strong{color:#805B08}
 .xsa-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .xsa-pill{font-size:12px;line-height:18px;font-weight:700;padding:5px 9px;border-radius:999px;background:var(--m-color-info-soft,#EFF6FF);color:var(--m-color-info,#2F6FDE)}
 .xsa-pill.ok{background:var(--m-color-success-soft,#ECFDF3);color:var(--m-color-success,#217653)}
@@ -112,7 +120,10 @@ function ensureCss(){
 .xsa-status.ok{background:var(--m-color-success-soft,#ECFDF3);color:var(--m-color-success,#217653)}
 .xsa-status.error{background:var(--m-color-danger-soft,#FEF3F2);color:var(--m-color-danger,#A33D32)}
 @media(max-width:1024px){
- .xsa-flow{grid-template-columns:1fr}
+ .xsa-guide-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .xsa-guide-step:last-child{grid-column:1/-1}
+ .xsa-next{grid-template-columns:1fr}
+ .xsa-next .btn.primary{width:100%;min-width:0}
  .xsa-actions{width:100%}
  .xsa-actions .btn{flex:1 1 180px;min-height:44px}
  .xsa-board{min-width:1100px}
@@ -143,6 +154,45 @@ function normalizeRequirement(r={}){return{
  end_time:hm(r.end_time),
  target_headcount:Number(r.target_headcount||1)
 }}
+
+function workflowModel(priorityReady,staffingReady){
+ const scheduling=scheduleApi()?.getState?.()||{};
+ const stage=String(scheduling.generationStatus||'NONE').toUpperCase();
+ const validation=String(scheduling.lastValidation||'').toUpperCase();
+ let model={stage,validation,current:1,doneAll:false,action:'setup-priority',label:'Thiết lập ưu tiên cửa hàng',title:'Hoàn thiện dữ liệu chuẩn bị',reason:'Cần có ưu tiên cửa hàng và nhu cầu nhân sự cố định trước khi tạo lịch nháp.',disabled:false};
+ if(!state.week){
+  model={...model,action:'blocked',label:'Chưa thể tạo lịch',title:'Chưa xác định tuần xếp lịch',reason:'Hệ thống cần xác định tuần vận hành trước khi tiếp tục.',disabled:true};
+ }else if(!priorityReady){
+  model={...model,action:'setup-priority',label:'Thiết lập ưu tiên cửa hàng',title:'Hoàn thiện ưu tiên cửa hàng',reason:'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa có ưu tiên cửa hàng. Auto Schedule chưa được phép chạy.',disabled:false};
+ }else if(!staffingReady){
+  model={...model,action:'setup-requirements',label:'Thiết lập nhu cầu nhân sự',title:'Hoàn thiện nhu cầu nhân sự cố định',reason:'Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi tạo lịch nháp tự động.',disabled:false};
+ }else if(stage==='CONFLICT'){
+  model={...model,current:4,action:'blocked',label:'Đang khóa thao tác',title:'Cần xử lý xung đột phiên xếp lịch',reason:'Có nhiều phiên xếp lịch cùng cửa hàng và tuần. Các thao tác tạo/duyệt/phát hành đang bị khóa an toàn.',disabled:true};
+ }else if(stage==='NONE'){
+  model={...model,current:2,action:'auto',label:'Tạo lịch nháp tự động',title:'Tạo lịch nháp',reason:'Dữ liệu chuẩn bị đã sẵn sàng. Hệ thống sẽ áp dụng cấu hình cố định vào tuần đang chọn.',disabled:false};
+ }else if(stage==='DRAFT'&&validation==='VALID'){
+  model={...model,current:5,action:'review',label:'Duyệt lịch',title:'Duyệt lịch đã kiểm tra',reason:'Lịch đã qua kiểm tra xung đột. Bước tiếp theo là duyệt trước khi phát hành.',disabled:false};
+ }else if(stage==='DRAFT'){
+  model={...model,current:3,action:'validate',label:validation==='INVALID'?'Kiểm tra lại lịch':'Kiểm tra lịch',title:'Chỉnh lịch nháp rồi kiểm tra',reason:validation==='INVALID'?'Lịch còn vấn đề cần xử lý. Chỉnh ca ở bảng lịch rồi kiểm tra lại.':'Bạn có thể chỉnh ca trực tiếp ở bảng lịch bên dưới; khi xong hãy kiểm tra xung đột.',disabled:false};
+ }else if(stage==='REVIEWED'){
+  model={...model,current:5,action:'publish',label:'Phát hành lịch',title:'Phát hành lịch đã duyệt',reason:'Lịch đã được duyệt và sẵn sàng chuyển thành lịch làm chính thức.',disabled:false};
+ }else if(stage==='PUBLISHED'){
+  model={...model,current:5,doneAll:true,action:'official',label:'Mở lịch chính thức',title:'Lịch tuần đã phát hành',reason:'Quy trình tuần này đã hoàn tất. Bạn có thể mở lịch chính thức để kiểm tra.',disabled:false};
+ }
+ const busy=state.loading||state.busy||scheduling.busy===true;
+ if(busy)model={...model,disabled:true,label:'Đang cập nhật…',reason:'Hệ thống đang xử lý dữ liệu. Thao tác tiếp theo sẽ mở lại khi hoàn tất.'};
+ return model;
+}
+
+function workflowHtml(model,summary){
+ const labels=['Chuẩn bị','Tạo lịch nháp','Chỉnh lịch','Kiểm tra','Duyệt & phát hành'];
+ const steps='<ol class="xsa-guide-steps" aria-label="Tiến trình xếp lịch">'+labels.map((label,i)=>{
+  const n=i+1,kind=model.doneAll||n<model.current?'done':n===model.current?'current':'idle';
+  return '<li class="xsa-guide-step '+kind+'" data-xsa-guide-step="'+n+'" aria-current="'+(kind==='current'?'step':'false')+'">'+n+'. '+label+'</li>';
+ }).join('')+'</ol>';
+ const action='<section class="xsa-next" data-disabled="'+model.disabled+'" data-xsa-guide-stage="'+esc(model.stage)+'"><div class="xsa-next-copy"><span class="xsa-next-kicker">Việc cần làm tiếp theo</span><strong>'+esc(model.title)+'</strong><p>'+esc(model.reason)+'</p></div><button class="btn primary" type="button" id="xsaNextAction" data-xsa-next-action="'+esc(model.action)+'"'+(model.disabled?' disabled aria-disabled="true"':'')+'>'+esc(model.label)+'</button></section>';
+ return '<div class="xsa-guide">'+steps+action+'<div class="xsa-summary">'+summary.join('')+'</div></div>';
+}
 
 function setMessage(text,type=''){state.message=text||'';state.messageType=type;render()}
 
@@ -205,6 +255,7 @@ function render(){
  const priorityReady=state.unconfiguredEmployeeCount===0;
  const requirementsReady=state.requirements.length>0;
  const complete=requirementsReady&&totalStores>0&&storeCount===totalStores;
+ const workflow=workflowModel(priorityReady,complete);
  const surface=state.surface==='setup'?'setup':'week';
  const summary=[
   '<span class="xsa-pill">'+state.requirements.length+' khung cố định</span>',
@@ -219,15 +270,10 @@ function render(){
   +'</div>';
 
  const weekSurface='<div class="xsa-surface" data-xsa-surface="week">'
-  +'<div class="xsa-head"><div><div class="xsa-kicker">Vận hành tuần</div><h4>Lập lịch tuần</h4><div class="muted" style="margin-top:5px">Tạo lịch nháp cho tuần đang chọn từ dữ liệu đã thiết lập. Bạn không cần đọc lại bảng nhu cầu cố định mỗi tuần.</div></div>'
-  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaSetupOpen">Thiết lập xếp lịch</button><button class="btn primary" type="button" id="xsaAuto"'+(!complete||state.loading||state.busy?' disabled':'')+'>Tạo lịch nháp tự động</button></div></div>'
-  +'<div class="xsa-flow">'
-  +'<div class="xsa-step '+(priorityReady?'ready':'warn')+'"><b>1. Ưu tiên cửa hàng</b><span>'+(priorityReady?'Đã sẵn sàng':'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa được gán ưu tiên cửa hàng')+'</span><button class="xsa-inline-link" type="button" data-xsa-go-setup="priority">'+(priorityReady?'Xem thiết lập':'Thiết lập ưu tiên cửa hàng')+'</button></div>'
-  +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>2. Nhu cầu nhân sự cố định</b><span>'+(complete?'Đã có cấu hình cho '+storeCount+'/'+totalStores+' cửa hàng':'Cần hoàn thiện nhu cầu nhân sự cố định cho các cửa hàng')+'</span><button class="xsa-inline-link" type="button" data-xsa-go-setup="requirements">'+(complete?'Xem thiết lập':'Thiết lập nhu cầu nhân sự')+'</button></div>'
-  +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>3. Tạo lịch nháp</b><span>'+(complete?'Sẵn sàng áp dụng cấu hình cố định vào tuần đang chọn':'Hoàn thiện nhu cầu nhân sự trước khi tạo lịch nháp tự động')+'</span></div>'
-  +'</div>'
-  +'<div class="xsa-summary">'+summary.join('')+'</div>'
-  +'<div class="xsa-week-note">Nhu cầu nhân sự cố định và ưu tiên cửa hàng nằm trong <b>Thiết lập xếp lịch</b>. Chỉ quay lại đó khi cần thay đổi cấu hình.</div>'
+  +'<div class="xsa-head"><div><div class="xsa-kicker">Vận hành tuần</div><h4>Lập lịch tuần</h4><div class="muted" style="margin-top:5px">Theo một luồng duy nhất từ chuẩn bị đến phát hành. Cấu hình cố định chỉ cần mở khi có thay đổi.</div></div>'
+  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaSetupOpen">Thiết lập xếp lịch</button></div></div>'
+  +workflowHtml(workflow,summary)
+  +'<div class="xsa-week-note">Các số lượng phía trên chỉ là thông tin hỗ trợ. Hãy dùng <b>Việc cần làm tiếp theo</b> làm hành động chính cho trạng thái hiện tại.</div>'
   +shortagesHtml()
   +(state.message?'<div class="xsa-status '+esc(state.messageType)+'">'+esc(state.message)+'</div>':'')
   +'</div>';
@@ -324,7 +370,9 @@ async function callAuto(replaceExisting){
 async function autoSchedule(){
  if(state.busy)return;
  if(!state.week)return setMessage('Chưa xác định tuần cần xếp lịch.','error');
+ const priorityReady=state.unconfiguredEmployeeCount===0;
  const complete=state.requirements.length>0&&state.stores.length>0&&configuredStoreCount()===state.stores.length;
+ if(!priorityReady)return setMessage('Cần thiết lập ưu tiên cửa hàng cho tất cả nhân viên trước khi xếp lịch tự động.','error');
  if(!complete)return setMessage('Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động.','error');
  state.busy=true;state.shortages=[];state.assignmentCount=null;render();
  try{
@@ -344,6 +392,7 @@ async function autoSchedule(){
    ? 'Hệ thống đã áp dụng nhu cầu hàng tuần và tạo lịch nháp nhưng còn '+state.shortages.length+' khung thiếu người. Quản lý cần kiểm tra và chỉnh trước khi duyệt.'
    : 'Hệ thống đã áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp. Quản lý hãy kiểm tra, chỉnh sửa trước khi duyệt và phát hành.';
   state.messageType=state.shortages.length?'':'ok';
+  await scheduleApi()?.refresh?.();
   setTimeout(()=>window.MAGASIN_CROSS_STORE_MASTER?.refresh?.(),0);
  }catch(e){
   const raw=String(e?.message||e?.code||e||'UNKNOWN');
@@ -391,7 +440,16 @@ function bind(){
  }));
  m.querySelector('#xsaCancel')?.addEventListener('click',()=>{state.editing=false;state.editorCell=null;state.loaded=false;void loadRequirements()});
  m.querySelector('#xsaSave')?.addEventListener('click',saveRequirements);
- m.querySelector('#xsaAuto')?.addEventListener('click',autoSchedule);
+ m.querySelector('#xsaNextAction')?.addEventListener('click',async e=>{
+  const action=e.currentTarget?.dataset?.xsaNextAction||'';
+  if(action==='setup-priority')return openSurface('setup','priority');
+  if(action==='setup-requirements')return openSurface('setup','requirements');
+  if(action==='auto')return autoSchedule();
+  if(action==='validate')return scheduleApi()?.validate?.();
+  if(action==='review')return scheduleApi()?.review?.();
+  if(action==='publish')return scheduleApi()?.publish?.();
+  if(action==='official')return document.querySelector('.sidebar [data-view="schedule"], [data-view="schedule"]')?.click();
+ });
  m.querySelector('#xsaAddBlock')?.addEventListener('click',()=>{
   if(!state.editorCell)return;
   syncFromDom();
@@ -419,6 +477,7 @@ async function onMaster(detail={}){
 }
 
 document.addEventListener('magasin:xstore-master-rendered',e=>void onMaster(e.detail||{}));
+document.addEventListener('magasin:manager-scheduling-ui-state',()=>{if(state.surface==='week')render()});
 window.MAGASIN_XSTORE_AUTO_SCHEDULE={
  refresh:loadRequirements,
  getState:()=>({...state,stores:state.stores.map(x=>({...x})),requirements:state.requirements.map(x=>({...x})),shortages:state.shortages.map(x=>({...x}))})
