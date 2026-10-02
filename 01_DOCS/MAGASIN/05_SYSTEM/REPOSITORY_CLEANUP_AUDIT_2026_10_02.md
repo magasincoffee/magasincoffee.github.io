@@ -181,3 +181,98 @@ Retained intentionally:
 - current XSTORE recurring staffing implementation;
 - active EMPREG/XSTORE TEMP SOTs;
 - all migrations and canonical QA/evidence.
+
+
+## Wave 3 — repository reading/index and GitHub metadata cleanup
+
+Wave 2 merged to `main @ 726120f9a306dcf170a604904df8ea0d2445301e`.
+
+### A. Stale pull requests
+
+Before cleanup, GitHub still showed 12 open PRs created between 2026-09-01 and 2026-09-22. They belonged to historical Attendance, Robot, Supervisor, migration and superseded task branches and were all heavily diverged from current `main`.
+
+The active EMPREG and XSTORE SOTs do not depend on those PRs.
+
+The following stale PRs were closed without merging and without deleting their commits/branches:
+
+- #260 — TASK-099 canonical closure;
+- #225 — new-PC migration bootstrap;
+- #224 — Supervisor post-release architecture;
+- #221 — Supervisor RBT-009 flood baseline;
+- #215 — Supervisor release soak;
+- #150 — TASK-049 safe-send reconcile;
+- #119 — Robot V2 portfolio orchestration;
+- #117 — TASK-035 runner diagnostic;
+- #108 — TASK-035 migration history reconcile;
+- #66 — Supervisor recovery hardening;
+- #59 — Supervisor chat-storm fix;
+- #9 — Attendance duplicate sync workflow.
+
+After closure, the only open PR was the active cleanup PR; no historical PR remained open.
+
+Closing is metadata cleanup only: no stale PR was merged into current production.
+
+### B. System documentation authority index
+
+`01_DOCS/MAGASIN/05_SYSTEM/README.md` is upgraded from a generic folder description to a bounded authority index.
+
+It now makes explicit that only these TEMP execution authorities are active:
+
+- EMPREG hardening;
+- XSTORE cross-store scheduling.
+
+It also distinguishes closed/canonical SOTs and evidence files from active task queues. This reduces the risk that a future chat/robot reopens a completed track by choosing a historical file by name alone.
+
+### C. Post-cleanup tree
+
+Baseline before cleanup:
+
+- 618 blobs;
+- `05_MANAGER`: 63 files;
+- `99_LEGACY`: 35 files.
+
+After Wave 1 + Wave 2:
+
+- 546 blobs;
+- `05_MANAGER`: 27 files;
+- `99_LEGACY`: 0 files;
+- active GitHub workflows: 9;
+- active Auth source contains only the v2 runtime path plus current templates/pages;
+- current Manager runtime keeps only the three compatibility files that it actually loads.
+
+Net active-tree reduction before this documentation-only wave: **72 files**.
+
+### D. Branch inventory limitation
+
+GitHub branch inventory contains **410 branches** at audit time.
+
+The connected GitHub capability available in this session supports reading/searching branches and moving refs, but does **not** expose branch deletion. Therefore stale branches were not falsely reported as deleted.
+
+PR clutter was cleaned safely; branch history remains the main GitHub-metadata cleanup item outside the executable capability available here.
+
+Do not force-move old branch refs merely to simulate deletion; that would destroy useful branch lineage without actually cleaning GitHub metadata.
+
+## Cleanup conclusion
+
+The active WebApp tree is now materially cleaner:
+
+- legacy quarantine removed;
+- unused Manager compatibility patches removed;
+- superseded Auth v1 removed;
+- legacy Manager demand source removed;
+- dead Manager route stubs removed;
+- expired one-time Night Run workflow removed;
+- stale deployment/workflow references reconciled;
+- stale open PRs closed;
+- active authority index added.
+
+Intentionally retained:
+
+- active EMPREG and XSTORE TEMP SOTs;
+- canonical/closed SOTs and acceptance evidence;
+- database migrations;
+- active QA suites and fixtures;
+- active role runtimes/routes;
+- Git history and existing branches.
+
+This is the intended definition of a clean repository: no parallel executable legacy path in `main`, while preserving authoritative history and current project boundaries.
