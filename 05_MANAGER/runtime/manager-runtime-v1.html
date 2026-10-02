@@ -38,13 +38,16 @@
       d.defaultView.__MAGASIN_UI_V2_SHELL__={role:'MANAGER',mode:'legacy-manager'};
       load('/05_MANAGER/runtime/compat/router/manager-route-state-v2.js?v=20260903-manager-structure1');
       load('/02_CORE/ui/magasin-ui-v2-shell.js?v=20261001-ui-unified1');
-      const waitForSupabase=()=>{
-        if(window.supabase?.createClient || d.defaultView?.supabase?.createClient){
+      load('/02_CORE/shared/shared-core-v1.js?v=20261002-sched-ui-005');
+      const waitForRuntimeDeps=()=>{
+        const hasSupabase=window.supabase?.createClient || d.defaultView?.supabase?.createClient;
+        const hasCore=!!d.defaultView?.MAGASIN_CORE?.time?.shiftKind;
+        if(hasSupabase&&hasCore){
           load('/02_CORE/ui/app-time-picker-24h.js?v=20261001-ui-unified1');
-          load('/05_MANAGER/Workforce/engine-v1.js?v=20261002-sched-ui-004');
-        }else setTimeout(waitForSupabase,100);
+          load('/05_MANAGER/Workforce/engine-v1.js?v=20261002-sched-ui-005');
+        }else setTimeout(waitForRuntimeDeps,100);
       };
-      waitForSupabase();
+      waitForRuntimeDeps();
       let checks=0;
       const injectSecurity=()=>{
         const doc=frame.contentDocument;if(!doc)return;
