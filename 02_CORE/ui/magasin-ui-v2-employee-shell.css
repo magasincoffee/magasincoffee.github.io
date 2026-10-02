@@ -97,8 +97,8 @@ body[data-magasin-employee-shell-v2] .drawer .nav a:focus-visible {
 body[data-magasin-employee-shell-v2] .main {
   min-width: 0;
   width: 100% !important;
-  max-width: 1280px;
-  margin: 0 auto !important;
+  max-width: none;
+  margin: 0 !important;
   padding:
     var(--m-space-4)
     calc(var(--m-space-4) + var(--m-safe-right))
@@ -370,11 +370,16 @@ body[data-magasin-employee-shell-v2] #view-payroll .panel {
   }
 
   body[data-magasin-employee-shell-v2] .main {
-    width: calc(100% - var(--m-employee-desktop-rail)) !important;
-    max-width: 1440px;
+    width: auto !important;
+    max-width: none;
     margin-left: var(--m-employee-desktop-rail) !important;
-    margin-right: auto !important;
+    margin-right: 0 !important;
     padding-bottom: var(--m-space-7) !important;
+  }
+
+  body[data-magasin-employee-shell-v2] .page-wrap {
+    width: min(100%, 1440px);
+    margin-inline: auto;
   }
 }
 

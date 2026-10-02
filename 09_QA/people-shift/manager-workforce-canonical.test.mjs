@@ -16,7 +16,7 @@ test("Canonical Workforce shell opens scheduling, keeps Demand hidden, and label
   assert.match(shell,/Xếp lịch tuần/);
   assert.match(shell,/class="active" data-tab="publish"/);
   assert.match(shell,/data-tab="demand" hidden/);
-  assert.match(shell,/Availability của nhân viên → Manager tạo và lưu lịch nháp/);
+  assert.match(shell,/Thời gian nhân viên có thể làm → Quản lý tạo lịch nháp → kiểm tra → duyệt → phát hành/);
   assert.doesNotMatch(shell,/Nhu cầu nhân sự, review và phát hành lịch tuần/);
 });
 
@@ -68,7 +68,7 @@ test("Direct save only persists DRAFT and does not auto validate review or publi
 
 test("Manager direct board supports source availability plus add remove edit save and resume",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
-  assert.match(draft,/Employee Availability/);
+  assert.match(draft,/Thời gian nhân viên có thể làm/);
   assert.match(draft,/Lịch đang xếp · Thứ Hai → Chủ Nhật/);
   assert.match(draft,/data-add-av/);
   assert.match(draft,/data-remove/);
@@ -149,14 +149,15 @@ test("SCHED-04 reload resumes DRAFT REVIEWED or PUBLISHED through one canonical 
 test("SCHED-04 Manager UI hides technical generation identity and raw backend diagnostics",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   assert.doesNotMatch(draft,/Generation \$\{esc\(state\.generationId/);
-  assert.match(draft,/Không hiển thị ID kỹ thuật/);
+  assert.match(draft,/Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp/);
+  assert.doesNotMatch(draft,/Không hiển thị ID kỹ thuật/);
   assert.doesNotMatch(draft,/hit\[1\]\+' \('\+hit\[0\]/);
   assert.match(draft,/Không thể hoàn tất thao tác\. Hãy tải lại dữ liệu và thử lại\./);
 });
 
 test("SCHED-04 legacy Lich-lam route wraps canonical Workforce surface only",async()=>{
   const legacy=await read("05_MANAGER/Lich-lam/index.html");
-  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005)#workforce/);
+  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1)#workforce/);
   assert.doesNotMatch(legacy,/manager-v13-runtime/);
   assert.doesNotMatch(legacy,/draft-publish-v1\.js/);
 });

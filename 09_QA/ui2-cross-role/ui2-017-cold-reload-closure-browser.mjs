@@ -94,8 +94,8 @@ async function iframeSrc(page,id="app"){
 }
 
 for(const spec of [
-  {role:"EMPLOYEE",target:"/06_EMPLOYEE/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20260930-emlive003"},
-  {role:"STORE_MANAGER",label:"MANAGER",target:"/05_MANAGER/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20260929-mer005"},
+  {role:"EMPLOYEE",target:"/06_EMPLOYEE/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261001-ui-unified1"},
+  {role:"STORE_MANAGER",label:"MANAGER",target:"/05_MANAGER/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261001-ui-unified1"},
   {role:"OWNER",target:"/04_OWNER/",runtime:null}
 ]){
   const context=await newContext(spec.role);
@@ -121,8 +121,8 @@ for(const spec of [
 }
 
 for(const spec of [
-  {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20260930-emlive003"},
-  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20260929-mer005"}
+  {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261001-ui-unified1"},
+  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261001-ui-unified1"}
 ]){
   const context=await newContext(spec.role,(spec.label||spec.role)==="MANAGER"?1024:390);
   await context.addInitScript(()=>sessionStorage.setItem("__ui2_logged","1"));
@@ -171,14 +171,14 @@ for(const spec of [
 }
 
 const assetSpecs=[
-  ["/02_CORE/ui/magasin-ui-v2-shell.css?v=20260927-ui2-016","--m-control-touch-height"],
+  ["/02_CORE/ui/magasin-ui-v2-shell.css?v=20261001-ui-unified1","--m-control-touch-height"],
   ["/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260927-ui2-016","@media(max-width:1024px)"],
-  ["/05_MANAGER/Workforce/ui-consolidation-v1.js?v=20260927-ui2-016","@media(max-width:1024px)"],
-  ["/05_MANAGER/Workforce/manager-scheduling-ui2-v1.js?v=20260927-ui2-016","@media(max-width:1024px)"],
+  ["/05_MANAGER/Workforce/ui-consolidation-v1.js?v=20261001-ui-unified1","@media(max-width:1024px)"],
+  ["/05_MANAGER/Workforce/manager-scheduling-ui2-v1.js?v=20261001-ui-unified1","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/manager-operations-ui2-v1.js?v=20260927-ui2-016","@media(max-width:1024px)"],
-  ["/05_MANAGER/Workforce/engine-v1.js?v=20260927-ui2-016","manager-scheduling-ui2-v1.js?v=20260927-ui2-016"],
-  ["/05_MANAGER/runtime/manager-shell-v1.html?v=20260927-ui2-016","manager-ui-shell-v2.js?v=20260927-ui2-016"],
-  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20260929-mer005","manager-shell-v1.html?v=20260927-ui2-016"],
+  ["/05_MANAGER/Workforce/engine-v1.js?v=20261001-ui-unified1","manager-scheduling-ui2-v1.js?v=20261001-ui-unified1"],
+  ["/05_MANAGER/runtime/manager-shell-v1.html?v=20261001-ui-unified1","manager-ui-shell-v2.js?v=20260927-ui2-016"],
+  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261001-ui-unified1","manager-shell-v1.html?v=20261001-ui-unified1"],
   ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20260927-ui2-016","manager-shell-v1.html?v=20260927-ui2-016"]
 ];
 for(const [url,marker] of assetSpecs){
@@ -196,12 +196,21 @@ await check("ui2_017_no_stale_ui2_016_cache_chain",async()=>{
   const files=[
     ["/05_MANAGER/Workforce/engine-v1.js",[
       "manager-scheduling-ui2-v1.js?v=20260927-ui2-012",
+      "manager-scheduling-ui2-v1.js?v=20260927-ui2-016",
       "ui-consolidation-v1.js?v=20260927-ui2-011-correction1",
-      "manager-operations-ui2-v1.js?v=20260927-ui2-013"
+      "ui-consolidation-v1.js?v=20260927-ui2-016"
     ]],
-    ["/05_MANAGER/runtime/manager-runtime-v1.html",["manager-shell-v1.html?v=20260927-ui2-011-correction1","engine-v1.js?v=20260927-ui2-013"]],
-    ["/05_MANAGER/runtime/manager-shell-v1.html",["manager-ui-shell-v2.js?v=20260927-ui2-011-correction1"]],
-    ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html",["manager-shell-v1.html?v=20260927-ui2-011-correction1","magasin-ui-v2-shell.css?v=20260925-ui2-004"]]
+    ["/05_MANAGER/runtime/manager-runtime-v1.html",[
+      "manager-shell-v1.html?v=20260927-ui2-011-correction1",
+      "manager-shell-v1.html?v=20260927-ui2-016",
+      "engine-v1.js?v=20260927-ui2-013",
+      "engine-v1.js?v=20260929-mer005"
+    ]],
+    ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html",[
+      "manager-shell-v1.html?v=20260927-ui2-011-correction1",
+      "magasin-ui-v2-shell.css?v=20260925-ui2-004",
+      "20261001-ui-unified1"
+    ]]
   ];
   const stale=[];
   for(const [url,forbidden] of files){
@@ -209,7 +218,7 @@ await check("ui2_017_no_stale_ui2_016_cache_chain",async()=>{
     for(const token of forbidden)if(body.includes(token))stale.push({url,token});
   }
   if(stale.length)throw new Error(JSON.stringify(stale));
-  return "no stale previous-version references in affected UI2-016 cache chain";
+  return "Manager/Employee unified cache is current while Owner cache remains unchanged";
 });
 
 await browser.close();

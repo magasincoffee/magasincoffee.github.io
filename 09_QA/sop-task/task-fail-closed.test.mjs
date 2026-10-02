@@ -8,7 +8,7 @@ const employee = fs.readFileSync(new URL("../../06_EMPLOYEE/app/employee-v40.htm
 
 test("Manager Task surface fails closed instead of presenting prototype task facts", () => {
   assert.match(manager, /id="view-tasks"/);
-  assert.match(manager, /data-task-quality="NOT_CONNECTED">NOT CONNECTED</);
+  assert.match(manager, /data-task-quality="NOT_CONNECTED">CHƯA KẾT NỐI</);
   assert.match(manager, /data-task-source-state="NOT_CONNECTED"/);
   assert.match(manager, /Chưa có nguồn công việc đã xác minh/);
   assert.doesNotMatch(manager, /data-modal="Giao việc"/);
@@ -25,8 +25,8 @@ test("Manager Task surface fails closed instead of presenting prototype task fac
 
 test("Employee Task surface is explicit NOT_CONNECTED, not loading or false-empty", () => {
   assert.match(employee, /data-task-source-state="NOT_CONNECTED"/);
-  assert.match(employee, /id="taskBadge" data-task-quality="NOT_CONNECTED">NOT CONNECTED</);
-  assert.match(employee, /Nguồn Công việc chưa được kết nối/);
+  assert.match(employee, /id="taskBadge" data-task-quality="NOT_CONNECTED">CHƯA KẾT NỐI</);
+  assert.match(employee, /Nguồn công việc chưa được kết nối/);
   assert.doesNotMatch(employee, /Đang tải công việc/);
   assert.doesNotMatch(employee, /id="taskBadge">Đang tải/);
   assert.doesNotMatch(employee, /<strong>Hôm nay không có công việc<\/strong>/);

@@ -25,9 +25,9 @@ test("SCHED-04 keeps exactly one canonical Manager scheduling writer surface",as
   assert.doesNotMatch(draft,/auto_generate_schedule_generation|get_workforce_staffing_requirements/);
   assert.match(draft,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
   assert.doesNotMatch(draft,/client\(\)\.from\(|sb\.from\(|supabase[^\n]*\.from\(/);
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003)/);
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=20260927-ui2-016/);
-  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005)#workforce/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1)/);
+  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1)#workforce/);
   assert.doesNotMatch(legacy,/publish_schedule_generation|replace_schedule_generation_assignments|create_schedule_generation/);
 });
 
@@ -42,9 +42,10 @@ test("SCHED-04 active generation reload covers DRAFT REVIEWED PUBLISHED and publ
 
 test("SCHED-04 UX distinguishes availability draft validation review and official publish",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
-  for(const label of ["Availability","Bản nháp","Kiểm tra","Duyệt","Phát hành"])assert.match(draft,new RegExp(label),label);
+  for(const label of ["Thời gian có thể làm","Bản nháp","Kiểm tra","Duyệt","Phát hành"])assert.match(draft,new RegExp(label),label);
   assert.match(draft,/Xếp tự động toàn hệ thống → Quản lý chỉnh sửa → Kiểm tra → Duyệt → Phát hành/);
-  assert.match(draft,/Không hiển thị ID kỹ thuật/);
+  assert.match(draft,/Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp/);
+  assert.doesNotMatch(draft,/Không hiển thị ID kỹ thuật/);
   assert.match(draft,/Mở lịch chính thức/);
   assert.doesNotMatch(draft,/Generation \$\{esc\(state\.generationId/);
 });
@@ -68,7 +69,7 @@ test("SCHED-04 keeps server-side conflict and idempotency semantics explicit",as
 
 test("SCHED-04 Manager shell no longer contains fake schedule truth",async()=>{
   const shell=await read("05_MANAGER/runtime/manager-shell-v1.html");
-  assert.match(shell,/Đang tải bảng xếp lịch canonical/);
-  assert.match(shell,/Đang tải lịch làm chính thức từ server/);
+  assert.match(shell,/Đang tải bảng xếp lịch…/);
+  assert.match(shell,/Đang tải lịch làm chính thức…/);
   assert.doesNotMatch(shell,/Trắng · CN2|Mai Chi · CN2|Coverage<\/b><span>96%/);
 });

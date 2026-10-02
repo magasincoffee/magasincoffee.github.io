@@ -9,6 +9,13 @@
 @import url("./magasin-ui-v2-tokens.css");
 @import url("./magasin-ui-v2-primitives.css");
 
+body[data-magasin-shell-v2],
+body[data-magasin-shell-v2] *,
+body[data-magasin-shell-v2] *::before,
+body[data-magasin-shell-v2] *::after {
+  box-sizing: border-box;
+}
+
 body[data-magasin-shell-v2] {
   --m-shell-topbar-height: 64px;
   --m-shell-sidebar-width: 248px;
@@ -349,12 +356,19 @@ body[data-magasin-shell-v2][data-magasin-shell-mode="legacy-manager"] .main > .h
 body[data-magasin-shell-v2][data-magasin-shell-mode="legacy-manager"] > .main,
 body[data-magasin-shell-v2][data-magasin-shell-mode="legacy-manager"] > .app > .main {
   min-width: 0;
+  width: auto !important;
+  max-width: none !important;
   margin-left: var(--m-shell-sidebar-width) !important;
+  margin-right: 0 !important;
   padding-top: var(--m-shell-topbar-height);
 }
 
 body[data-magasin-shell-v2][data-magasin-shell-mode="legacy-manager"] .content {
   min-width: 0;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: clamp(14px, 1.7vw, 24px);
 }
 
 /* Standalone Owner hosts keep their current module DOM and receive outer shell offsets only. */

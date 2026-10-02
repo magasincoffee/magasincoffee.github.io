@@ -53,8 +53,8 @@ test("Today current/next/ended/empty/loading/error states are explicit and fail 
     "data-today-error",
     "data-today-week-error"
   ]) assert.ok(engine.includes(marker), marker);
-  assert.ok(engine.includes("Today không suy đoán ca từ dữ liệu ngoài tuần hiện tại."));
-  assert.ok(engine.includes("Today không hiển thị dữ liệu cũ khi nguồn lịch lỗi."));
+  assert.ok(engine.includes("Màn hình Hôm nay không suy đoán ca từ dữ liệu ngoài tuần hiện tại."));
+  assert.ok(engine.includes("Màn hình Hôm nay không hiển thị dữ liệu cũ khi nguồn lịch đang lỗi."));
 });
 
 test("Việc cần làm maps only to canonical existing states/actions", () => {
@@ -65,7 +65,7 @@ test("Việc cần làm maps only to canonical existing states/actions", () => {
     "retry-schedule",
     "availability"
   ]) assert.ok(engine.includes(action), action);
-  assert.ok(app.includes("Task / SOP riêng chưa có nguồn canonical"));
+  assert.ok(app.includes("Chưa có nguồn công việc hoặc quy trình riêng được xác minh"));
   assert.doesNotMatch(engine, /route:inventory/);
   assert.doesNotMatch(engine, /route:settings/);
 });

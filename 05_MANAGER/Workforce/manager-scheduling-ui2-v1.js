@@ -93,12 +93,12 @@ function group(className,label){
 }
 function stageModel(state,busy){
  const stage=String(state?.generationStatus||'NONE').toUpperCase();
- if(busy)return {tone:'busy',chip:'ĐANG ĐỒNG BỘ',title:'Đang cập nhật canonical state',detail:'Giữ nguyên store/week hiện tại; thao tác được khóa trong lúc server xử lý.'};
- if(stage==='DRAFT')return {tone:'draft',chip:'DRAFT',title:'Đang soạn lịch tuần',detail:'Chỉnh assignment, lưu draft rồi kiểm tra xung đột trước khi duyệt.'};
- if(stage==='REVIEWED')return {tone:'reviewed',chip:'REVIEWED',title:'Đã duyệt · chờ phát hành',detail:'Draft đã qua review. Phát hành sẽ tạo lịch chính thức qua canonical writer.'};
- if(stage==='PUBLISHED')return {tone:'published',chip:'PUBLISHED',title:'Đã phát hành',detail:'Official Schedule bên dưới được đọc lại từ canonical work_schedules.'};
- if(stage==='CONFLICT')return {tone:'conflict',chip:'CONFLICT',title:'Khóa do nhiều phiên cùng store/week',detail:'Không cho authoring tiếp tục cho tới khi canonical generation conflict được giải quyết.'};
- return {tone:'none',chip:'NONE',title:'Chưa có phiên xếp lịch',detail:'Chọn cửa hàng và tuần, sau đó tạo hoặc mở đúng một canonical draft.'};
+ if(busy)return {tone:'busy',chip:'ĐANG ĐỒNG BỘ',title:'Đang cập nhật dữ liệu',detail:'Giữ nguyên cửa hàng và tuần hiện tại; thao tác tạm khóa trong lúc hệ thống xử lý.'};
+ if(stage==='DRAFT')return {tone:'draft',chip:'LỊCH NHÁP',title:'Đang soạn lịch tuần',detail:'Chỉnh các ca, lưu lịch nháp rồi kiểm tra xung đột trước khi duyệt.'};
+ if(stage==='REVIEWED')return {tone:'reviewed',chip:'ĐÃ DUYỆT',title:'Đã duyệt · chờ phát hành',detail:'Lịch nháp đã được duyệt. Khi phát hành, hệ thống sẽ tạo lịch làm chính thức.'};
+ if(stage==='PUBLISHED')return {tone:'published',chip:'ĐÃ PHÁT HÀNH',title:'Đã phát hành',detail:'Lịch làm chính thức bên dưới được đọc trực tiếp từ dữ liệu đã phát hành.'};
+ if(stage==='CONFLICT')return {tone:'conflict',chip:'XUNG ĐỘT',title:'Có nhiều phiên xếp lịch cùng cửa hàng và tuần',detail:'Tạm khóa chỉnh sửa cho đến khi xung đột phiên xếp lịch được xử lý.'};
+ return {tone:'none',chip:'CHƯA TẠO',title:'Chưa có phiên xếp lịch',detail:'Chọn cửa hàng và tuần, sau đó tạo hoặc mở một lịch nháp.'};
 }
 function structure(r){
  if(r.dataset.ui2SchedulingEnhanced==='1')return;

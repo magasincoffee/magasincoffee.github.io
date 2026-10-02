@@ -145,7 +145,7 @@ await check("ui2_011_today_has_no_writer_controls",async()=>{
  const text=await page.locator("#view-dashboard").innerText();
  const buttons=await page.locator("#view-dashboard button").allInnerTexts();
  if(buttons.some(x=>/Duyệt|Từ chối|Publish|Phát hành|Approve|Reject|Chốt|Thanh toán/i.test(x)))throw new Error(JSON.stringify(buttons));
- if(!text.includes("Mọi approve/review/publish vẫn diễn ra trong module canonical"))throw new Error(text);
+ if(!text.includes("Màn hình Hôm nay chỉ tổng hợp và điều hướng. Việc duyệt hoặc phát hành vẫn thực hiện tại đúng màn hình nghiệp vụ."))throw new Error(text);
  return JSON.stringify(buttons);
 });
 await context.close();

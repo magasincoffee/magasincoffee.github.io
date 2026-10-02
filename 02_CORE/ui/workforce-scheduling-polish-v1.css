@@ -1,19 +1,19 @@
 /* SCHED-07 — shared scheduling polish. Presentation-only: no scheduling authority/data changes. */
 :root{
-  --sched-brand:#16b7c5;
-  --sched-brand-strong:#0f8996;
+  --sched-brand:#0f8f9c;
+  --sched-brand-strong:#08747f;
   --sched-blue:#2f6fde;
-  --sched-ink:#102a43;
-  --sched-muted:#617793;
-  --sched-line:#dce5f0;
-  --sched-soft:#f4f8fc;
+  --sched-ink:#101828;
+  --sched-muted:#667085;
+  --sched-line:#eaecf0;
+  --sched-soft:#f9fafb;
   --sched-card:#ffffff;
-  --sched-ok:#23754a;
-  --sched-warn:#8a6500;
-  --sched-danger:#9a3838;
-  --sched-shadow:0 10px 30px rgba(16,42,67,.08);
+  --sched-ok:#217653;
+  --sched-warn:#8a5a00;
+  --sched-danger:#a33d32;
+  --sched-shadow:0 4px 16px rgba(16,24,40,.06);
   --sched-radius:16px;
-  --sched-focus:0 0 0 3px rgba(47,111,222,.24);
+  --sched-focus:0 0 0 3px rgba(47,111,222,.20);
 }
 
 .employee-schedule-engine,
@@ -109,9 +109,9 @@ html[data-scheduling-role="owner"] .nav button.active{
 }
 html[data-scheduling-role="manager"] .content,
 html[data-scheduling-role="owner"] .content{
-  max-width:1540px;
-  margin:0 auto;
-  width:100%;
+  max-width:none;
+  margin:0;
+  width:auto;
 }
 
 /* Employee */

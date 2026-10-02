@@ -256,21 +256,24 @@ body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .s
 }
 
 body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift.morning-yellow {
-  border-color: color-mix(in srgb, var(--m-color-warning) 32%, var(--m-border-default));
-  border-left-color: var(--m-color-warning);
-  background: var(--m-color-warning-soft);
+  border-color: var(--m-shift-morning-border);
+  border-left-color: var(--m-shift-morning-border);
+  background: var(--m-shift-morning-bg);
+  color: var(--m-shift-morning-text);
 }
 
 body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift.afternoon-red {
-  border-color: color-mix(in srgb, var(--m-color-danger) 24%, var(--m-border-default));
-  border-left-color: var(--m-color-danger);
-  background: var(--m-color-danger-soft);
+  border-color: var(--m-shift-afternoon-border);
+  border-left-color: var(--m-shift-afternoon-border);
+  background: var(--m-shift-afternoon-bg);
+  color: var(--m-shift-afternoon-text);
 }
 
 body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift.evening-cyan {
-  border-color: color-mix(in srgb, var(--m-color-info) 26%, var(--m-border-default));
-  border-left-color: var(--m-color-info);
-  background: var(--m-color-info-soft);
+  border-color: var(--m-shift-evening-border);
+  border-left-color: var(--m-shift-evening-border);
+  background: var(--m-shift-evening-bg);
+  color: var(--m-shift-evening-text);
 }
 
 body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-engine .shift-time {

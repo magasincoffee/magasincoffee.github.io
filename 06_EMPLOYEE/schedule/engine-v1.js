@@ -114,7 +114,7 @@ function paint(d){
   }
   const weekRows=state.rows.filter(isApproved);
   if(!weekRows.length){
-    days.innerHTML='<div data-schedule-empty="1" class="schedule-week-empty"><b>Tuần này chưa có ca được phát hành.</b><div style="margin-top:6px">Khi quản lý publish lịch, ca chính thức của bạn sẽ xuất hiện tại đây.</div></div>';
+    days.innerHTML='<div data-schedule-empty="1" class="schedule-week-empty"><b>Tuần này chưa có ca được phát hành.</b><div style="margin-top:6px">Khi quản lý phát hành lịch, ca chính thức của bạn sẽ xuất hiện tại đây.</div></div>';
     if(pill)pill.textContent='0 ca · '+label;updateNav(d);return;
   }
   days.replaceChildren(...C.date.weekDays(state.week).map((date,i)=>{

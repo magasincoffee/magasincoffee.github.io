@@ -60,8 +60,8 @@ test("SCHED-05 deprecated Owner demand/review engines are not active runtime aut
 test("SCHED-05 shared writer is role-aware but retains one canonical RPC set",async()=>{
   const writer=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   assert.match(writer,/actorRole=\(\)=>String\(window\.__MAGASIN_SCHEDULING_ACTOR__/);
-  assert.match(writer,/Owner Scheduling · Giám sát & can thiệp/);
-  assert.match(writer,/Owner không tạo lịch song song/);
+  assert.match(writer,/Giám sát xếp lịch/);
+  assert.match(writer,/không tạo lịch song song/);
   for(const rpc of [
     "get_manager_weekly_availability",
     "list_schedule_generations",
@@ -83,7 +83,7 @@ test("SCHED-05 store/week changes clear stale projections before server reload",
   assert.match(writer,/state\.assignments=\[\];state\.availability=\[\];state\.officialRows=\[\];state\.lastValidation=null;render\(\);status\('Đang tải dữ liệu cửa hàng đã chọn/);
   assert.match(writer,/Đang tải dữ liệu tuần đã chọn/);
   assert.match(writer,/function officialRowsHtml\(\)/);
-  assert.match(writer,/canonical work_schedules/);
+  assert.match(writer,/dữ liệu đã phát hành|lịch làm chính thức/i);
 });
 
 test("SCHED-05 OLD NEW inventory explicitly deprecates Owner parallel mutation UI",async()=>{

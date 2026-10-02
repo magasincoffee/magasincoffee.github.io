@@ -13,6 +13,14 @@ const DAYS=[
 ];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const hm=v=>String(v||'').slice(0,5);
+const minuteOf=v=>{const m=String(v||'').match(/^(\d{1,2}):(\d{2})/);return m?Number(m[1])*60+Number(m[2]):-1};
+const shiftBand=v=>{const m=minuteOf(v);return m>=300&&m<720?'morning':m>=720&&m<1020?'afternoon':m>=1020&&m<=1320?'evening':'neutral'};
+const bandClass=v=>'xsa-band-'+shiftBand(v);
+function applyBandClass(el,value){
+ if(!el)return;
+ el.classList.remove('xsa-band-morning','xsa-band-afternoon','xsa-band-evening','xsa-band-neutral');
+ el.classList.add(bandClass(value));
+}
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const state={week:null,stores:[],requirements:[],editing:false,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null};
 const mount=()=>document.getElementById('xstoreAutomationMount');
@@ -23,7 +31,79 @@ const configuredStoreCount=()=>state.stores.filter(s=>configuredStoreIds().has(S
 function ensureCss(){
  if(document.getElementById('xstore-auto-schedule-v1-css'))return;
  const s=document.createElement('style');s.id='xstore-auto-schedule-v1-css';
- s.textContent='.xsa{margin-top:14px;border:2px solid #69c7d2;border-radius:15px;background:linear-gradient(180deg,#f3fdff 0%,#fff 100%);padding:16px;box-shadow:0 8px 24px rgba(24,105,118,.08)}.xsa-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.xsa-head h4{margin:0;font-size:18px}.xsa-kicker{font-size:10px;font-weight:900;letter-spacing:.08em;color:#0b8190;text-transform:uppercase;margin-bottom:4px}.xsa-actions{display:flex;gap:8px;flex-wrap:wrap}.xsa-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.xsa-step{border:1px solid #cfe4e8;border-radius:10px;background:#fff;padding:10px}.xsa-step b{display:block;font-size:12px}.xsa-step span{display:block;margin-top:3px;font-size:10px;color:#667085}.xsa-step.ready{border-color:#9bd7ad;background:#f1fbf4}.xsa-step.warn{border-color:#efd28c;background:#fff9e8}.xsa-step.locked{border-color:#cbd5e1;background:#f8fafc}.xsa-summary{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.xsa-pill{font-size:10px;font-weight:900;padding:5px 8px;border-radius:999px;background:#eef5ff;color:#235dba}.xsa-pill.ok{background:#e7f5ec;color:#24724b}.xsa-pill.warn{background:#fff5d6;color:#825f00}.xsa-recurring-note{margin-top:12px;padding:10px 12px;border:1px solid #cfe4e8;border-radius:10px;background:#f7fcfd;color:#315b63;font-size:11px}.xsa-board-wrap{overflow:auto;margin-top:12px;border:1px solid #dce7ef;border-radius:11px;background:#fff}.xsa-board{width:100%;border-collapse:collapse;min-width:1180px}.xsa-board th,.xsa-board td{border-right:1px solid #eef2f6;border-bottom:1px solid #eef2f6;padding:8px;vertical-align:top}.xsa-board th{background:#f8fafc;color:#475467;font-size:10px;text-align:left;white-space:nowrap}.xsa-board th:first-child,.xsa-board td:first-child{position:sticky;left:0;z-index:2;background:#fff;min-width:150px}.xsa-store-name{font-size:11px;font-weight:900;color:#172b4d}.xsa-store-sub{font-size:9px;color:#667085;margin-top:3px}.xsa-cell{min-width:135px}.xsa-empty{font-size:10px;color:#98a2b3;padding:6px 2px}.xsa-block{display:block;margin:0 0 6px;padding:7px;border-radius:8px;background:#eef7ff;color:#174d82;font-size:10px;font-weight:900}.xsa-block-edit{display:grid;grid-template-columns:1fr 1fr 62px 30px;gap:4px;margin-bottom:6px;padding:6px;border:1px solid #d7e2ec;border-radius:8px;background:#fff}.xsa-block-edit input{width:100%;min-width:0;height:32px;box-sizing:border-box;border:1px solid #cad8e4;border-radius:6px;padding:0 5px;font-size:10px}.xsa-remove{height:32px;padding:0;border:1px solid #f0c7c7;border-radius:6px;background:#fff;color:#a33;cursor:pointer}.xsa-add-block{width:100%;height:30px;border:1px dashed #9cb7c7;border-radius:7px;background:#f8fcff;color:#296271;font-size:10px;font-weight:900;cursor:pointer}.xsa-editor-actions{display:flex;justify-content:flex-end;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}.xsa-status{margin-top:10px;padding:9px 11px;border-radius:9px;background:#eef6ff;color:#235dba;font-size:11px;white-space:pre-wrap}.xsa-status.ok{background:#e8f5ed;color:#23754a}.xsa-status.error{background:#fbeaea;color:#9a3838}@media(max-width:900px){.xsa-flow{grid-template-columns:1fr}.xsa-actions{width:100%}.xsa-actions .btn{flex:1}}';
+ s.textContent=`
+.xsa{
+  margin-top:var(--m-space-4,16px);
+  border:1px solid var(--m-border-default,#EAECF0);
+  border-radius:var(--m-radius-xl,16px);
+  background:var(--m-color-surface,#fff);
+  padding:var(--m-space-4,16px);
+  box-shadow:var(--m-shadow-sm,0 1px 2px rgba(16,24,40,.06));
+  color:var(--m-color-neutral-950,#101828);
+  font-family:var(--m-font-sans,"Segoe UI",Roboto,Arial,sans-serif)
+}
+.xsa *{box-sizing:border-box}
+.xsa-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.xsa-head h4{margin:0;font-size:18px;line-height:26px;font-weight:700;color:var(--m-color-neutral-950,#101828)}
+.xsa-kicker{font-size:11px;line-height:16px;font-weight:700;letter-spacing:.02em;color:var(--m-color-brand-700,#08747F);margin-bottom:4px}
+.xsa-actions{display:flex;gap:8px;flex-wrap:wrap}
+.xsa-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.xsa-step{border:1px solid var(--m-border-default,#EAECF0);border-radius:12px;background:var(--m-color-neutral-50,#F9FAFB);padding:12px}
+.xsa-step b{display:block;font-size:13px;line-height:18px}
+.xsa-step span{display:block;margin-top:4px;font-size:12px;line-height:18px;color:var(--m-color-neutral-500,#667085)}
+.xsa-step.ready{border-color:#B7DFC5;background:var(--m-color-success-soft,#ECFDF3)}
+.xsa-step.warn{border-color:#E8D194;background:var(--m-color-warning-soft,#FFFAEB)}
+.xsa-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.xsa-pill{font-size:12px;line-height:18px;font-weight:700;padding:5px 9px;border-radius:999px;background:var(--m-color-info-soft,#EFF6FF);color:var(--m-color-info,#2F6FDE)}
+.xsa-pill.ok{background:var(--m-color-success-soft,#ECFDF3);color:var(--m-color-success,#217653)}
+.xsa-pill.warn{background:var(--m-color-warning-soft,#FFFAEB);color:var(--m-color-warning,#8A5A00)}
+.xsa-recurring-note{margin-top:14px;padding:11px 13px;border:1px solid var(--m-border-default,#EAECF0);border-radius:10px;background:var(--m-color-neutral-50,#F9FAFB);color:var(--m-color-neutral-700,#344054);font-size:12px;line-height:18px}
+.xsa-board-wrap{overflow:auto;margin-top:12px;border:1px solid var(--m-border-default,#EAECF0);border-radius:12px;background:#fff;overscroll-behavior-x:contain;scrollbar-gutter:stable}
+.xsa-board{width:100%;border-collapse:collapse;min-width:1160px;table-layout:fixed}
+.xsa-board th,.xsa-board td{border-right:1px solid var(--m-color-neutral-200,#EAECF0);border-bottom:1px solid var(--m-color-neutral-200,#EAECF0);padding:8px;vertical-align:top}
+.xsa-board th{background:var(--m-color-neutral-50,#F9FAFB);color:var(--m-color-neutral-700,#344054);font-size:11px;line-height:16px;text-align:left;white-space:nowrap}
+.xsa-board th:first-child,.xsa-board td:first-child{position:sticky;left:0;z-index:2;background:#fff;width:180px;min-width:180px}
+.xsa-store-name{font-size:12px;line-height:18px;font-weight:700;color:var(--m-color-neutral-950,#101828)}
+.xsa-store-sub{font-size:11px;line-height:16px;color:var(--m-color-neutral-500,#667085);margin-top:2px}
+.xsa-cell{width:140px;min-width:140px}
+.xsa-empty{font-size:12px;color:var(--m-color-neutral-500,#667085);padding:7px 2px}
+.xsa-block{display:block;margin:0 0 6px;padding:8px;border:1px solid var(--m-border-default,#EAECF0);border-radius:8px;font-size:12px;line-height:18px;font-weight:700}
+.xsa-block-edit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin-bottom:7px;padding:7px;border:1px solid var(--m-border-default,#EAECF0);border-radius:9px}
+.xsa-band-morning{background:var(--m-shift-morning-bg,#FFF4CC)!important;border-color:var(--m-shift-morning-border,#E7B84B)!important;color:var(--m-shift-morning-text,#6B5100)!important}
+.xsa-band-afternoon{background:var(--m-shift-afternoon-bg,#FDE7E7)!important;border-color:var(--m-shift-afternoon-border,#E39C9C)!important;color:var(--m-shift-afternoon-text,#8A2C2C)!important}
+.xsa-band-evening{background:var(--m-shift-evening-bg,#E8F3FF)!important;border-color:var(--m-shift-evening-border,#9EC7F1)!important;color:var(--m-shift-evening-text,#235DBA)!important}
+.xsa-band-neutral{background:#fff!important;color:var(--m-color-neutral-950,#101828)!important}
+.xsa-band-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.xsa-band-legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;line-height:16px;color:var(--m-color-neutral-700,#344054)}
+.xsa-band-dot{width:12px;height:12px;border-radius:4px;border:1px solid transparent;flex:0 0 auto}
+.xsa-band-dot.morning{background:var(--m-shift-morning-bg,#FFF4CC);border-color:var(--m-shift-morning-border,#E7B84B)}
+.xsa-band-dot.afternoon{background:var(--m-shift-afternoon-bg,#FDE7E7);border-color:var(--m-shift-afternoon-border,#E39C9C)}
+.xsa-band-dot.evening{background:var(--m-shift-evening-bg,#E8F3FF);border-color:var(--m-shift-evening-border,#9EC7F1)}
+.xsa-block-edit input,.xsa-block-edit select{width:100%;min-width:0;height:38px;border:1px solid var(--m-color-neutral-300,#D0D5DD);border-radius:8px;padding:0 7px;background:#fff;color:var(--m-color-neutral-950,#101828);font:inherit;font-size:12px}
+.xsa-block-edit input[data-xsa-f="target_headcount"]{grid-column:1/2}
+.xsa-block-edit .xsa-remove{grid-column:2/3}
+.xsa-block-edit .magasin-time-select{width:100%!important;min-width:0!important;max-width:100%!important}
+.xsa-remove{height:38px;padding:0 10px;border:1px solid #F0C7C7;border-radius:8px;background:#fff;color:var(--m-color-danger,#A33D32);cursor:pointer;font-size:16px}
+.xsa-add-block{width:100%;min-height:38px;border:1px dashed #9CB7C7;border-radius:8px;background:#fff;color:var(--m-color-brand-700,#08747F);font-size:12px;font-weight:700;cursor:pointer}
+.xsa-editor-actions{display:flex;justify-content:flex-end;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.xsa-status{margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--m-color-info-soft,#EFF6FF);color:#235DBA;font-size:12px;line-height:18px;white-space:pre-wrap}
+.xsa-status.ok{background:var(--m-color-success-soft,#ECFDF3);color:var(--m-color-success,#217653)}
+.xsa-status.error{background:var(--m-color-danger-soft,#FEF3F2);color:var(--m-color-danger,#A33D32)}
+@media(max-width:1024px){
+ .xsa-flow{grid-template-columns:1fr}
+ .xsa-actions{width:100%}
+ .xsa-actions .btn{flex:1 1 180px;min-height:44px}
+ .xsa-board{min-width:1100px}
+}
+@media(max-width:600px){
+ .xsa{padding:12px}
+ .xsa-head{gap:12px}
+ .xsa-actions{display:grid;grid-template-columns:1fr;width:100%}
+ .xsa-actions .btn{width:100%}
+ .xsa-editor-actions{display:grid;grid-template-columns:1fr}
+ .xsa-editor-actions .btn{width:100%;min-height:44px}
+}
+`;
  document.head.appendChild(s);
 }
 
@@ -48,10 +128,10 @@ function cellHtml(store,day){
  const rows=cellRows(store.id,day.id);
  const attr=esc(String(store.id)+'-'+day.id);
  if(!state.editing){
-  return '<td class="xsa-cell" data-xsa-cell="'+attr+'">'+(rows.length?rows.map(({r})=>'<span class="xsa-block">'+esc(hm(r.start_time))+'–'+esc(hm(r.end_time))+' · '+esc(r.target_headcount)+' người</span>').join(''):'<div class="xsa-empty">—</div>')+'</td>';
+  return '<td class="xsa-cell" data-xsa-cell="'+attr+'">'+(rows.length?rows.map(({r})=>'<span class="xsa-block '+bandClass(r.start_time)+'">'+esc(hm(r.start_time))+'–'+esc(hm(r.end_time))+' · '+esc(r.target_headcount)+' người</span>').join(''):'<div class="xsa-empty">—</div>')+'</td>';
  }
  const editors=rows.map(({r,index})=>
-  '<div class="xsa-block-edit" data-xsa-block="'+index+'">'
+  '<div class="xsa-block-edit '+bandClass(r.start_time)+'" data-xsa-block="'+index+'">'
    +'<input type="time" aria-label="Bắt đầu" data-xsa-f="start_time" value="'+esc(r.start_time)+'">'
    +'<input type="time" aria-label="Kết thúc" data-xsa-f="end_time" value="'+esc(r.end_time)+'">'
    +'<input type="number" min="1" max="20" step="1" aria-label="Số người" data-xsa-f="target_headcount" value="'+esc(r.target_headcount||1)+'">'
@@ -89,17 +169,17 @@ function render(){
   '<span class="xsa-pill '+(storeCount===totalStores&&totalStores?'ok':'warn')+'">'+storeCount+'/'+totalStores+' CN đã cấu hình</span>'
  ];
  if(state.unconfiguredEmployeeCount)summary.push('<span class="xsa-pill warn">'+state.unconfiguredEmployeeCount+' NV chưa có ưu tiên CN</span>');
- if(state.assignmentCount!==null)summary.push('<span class="xsa-pill ok">'+state.assignmentCount+' ca Robot đã xếp</span>');
+ if(state.assignmentCount!==null)summary.push('<span class="xsa-pill ok">'+state.assignmentCount+' ca đã được xếp tự động</span>');
  m.innerHTML='<section class="xsa">'
-  +'<div class="xsa-head"><div><div class="xsa-kicker">Workforce · Cross-store</div><h4>NHU CẦU NHÂN SỰ HÀNG TUẦN</h4><div class="muted" style="margin-top:5px">Cấu hình một lần theo cửa hàng × thứ trong tuần × khung giờ × số người. Giá trị được dùng lại cho các tuần sau cho đến khi Quản lý chỉnh và lưu.</div></div>'
-  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaStaff">Thiết lập ưu tiên nhân viên</button><button class="btn" type="button" id="xsaConfig">'+(state.editing?'Đang chỉnh':'Chỉnh nhu cầu tuần mẫu')+'</button><button class="btn primary" type="button" id="xsaAuto"'+(!complete||state.loading||state.busy?' disabled':'')+'>Tạo DRAFT tự động</button></div></div>'
-  +'<div class="xsa-flow"><div class="xsa-step '+(priorityReady?'ready':'warn')+'"><b>1. Store Priority</b><span>'+(priorityReady?'Đã sẵn sàng':'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa được gán ưu tiên CN')+'</span></div>'
-  +'<div class="xsa-step '+(requirementsReady?'ready':'warn')+'"><b>2. Nhu cầu nhân sự recurring</b><span>'+(requirementsReady?'Đang dùng cấu hình cố định hàng tuần':'Chưa có cấu hình; Quản lý cần nhập dữ liệu thực tế')+'</span></div>'
-  +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>3. Auto Schedule</b><span>'+(complete?'Sẵn sàng project tuần mẫu recurring vào tuần đang chọn và tạo DRAFT':'Cần cấu hình recurring staffing cho đủ phạm vi cửa hàng trước khi chạy Robot')+'</span></div></div>'
+  +'<div class="xsa-head"><div><div class="xsa-kicker">Nhân sự · Nhiều cửa hàng</div><h4>Nhu cầu nhân sự hàng tuần</h4><div class="muted" style="margin-top:5px">Cấu hình một lần theo cửa hàng × thứ trong tuần × khung giờ × số người. Giá trị được dùng lại cho các tuần sau cho đến khi Quản lý chỉnh và lưu.</div></div>'
+  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaStaff">Thiết lập ưu tiên nhân viên</button><button class="btn" type="button" id="xsaConfig">'+(state.editing?'Đang chỉnh':'Chỉnh nhu cầu hàng tuần')+'</button><button class="btn primary" type="button" id="xsaAuto"'+(!complete||state.loading||state.busy?' disabled':'')+'>Tạo lịch nháp tự động</button></div></div>'
+  +'<div class="xsa-flow"><div class="xsa-step '+(priorityReady?'ready':'warn')+'"><b>1. Ưu tiên cửa hàng</b><span>'+(priorityReady?'Đã sẵn sàng':'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa được gán ưu tiên CN')+'</span></div>'
+  +'<div class="xsa-step '+(requirementsReady?'ready':'warn')+'"><b>2. Nhu cầu nhân sự hàng tuần</b><span>'+(requirementsReady?'Đang dùng cấu hình cố định hàng tuần':'Chưa có cấu hình; Quản lý cần nhập dữ liệu thực tế')+'</span></div>'
+  +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>3. Xếp lịch tự động</b><span>'+(complete?'Sẵn sàng áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp':'Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động')+'</span></div></div>'
   +'<div class="xsa-summary">'+summary.join('')+'</div>'
-  +'<div class="xsa-recurring-note"><b>Tuần mẫu cố định:</b> không chọn ngày lịch và không cần nhập lại mỗi tuần. Hệ thống không tự đoán số người.</div>'
+  +'<div class="xsa-recurring-note"><b>Cấu hình cố định hàng tuần:</b> không chọn ngày lịch và không cần nhập lại mỗi tuần. Hệ thống không tự đoán số người.<div class="xsa-band-legend" aria-label="Quy ước màu khung giờ"><span><i class="xsa-band-dot morning"></i>05:00–12:00 · Vàng</span><span><i class="xsa-band-dot afternoon"></i>12:00–17:00 · Đỏ nhạt</span><span><i class="xsa-band-dot evening"></i>17:00–22:00 · Xanh dương nhạt</span></div></div>'
   +boardHtml()
-  +(state.editing?'<div class="xsa-editor-actions"><button class="btn" type="button" id="xsaCancel">Hủy thay đổi</button><button class="btn primary" type="button" id="xsaSave">Lưu cấu hình tuần mẫu</button></div>':'')
+  +(state.editing?'<div class="xsa-editor-actions"><button class="btn" type="button" id="xsaCancel">Hủy thay đổi</button><button class="btn primary" type="button" id="xsaSave">Lưu nhu cầu hàng tuần</button></div>':'')
   +shortagesHtml()
   +(state.message?'<div class="xsa-status '+esc(state.messageType)+'">'+esc(state.message)+'</div>':'')
   +'</section>';
@@ -141,7 +221,7 @@ async function loadRequirements(){
   state.requirements=(Array.isArray(q.data)?q.data:[]).map(normalizeRequirement);
   state.loaded=true;state.message='';state.messageType='';
  }catch(e){
-  state.requirements=[];state.loaded=false;state.message='Không tải được cấu hình nhu cầu hàng tuần: '+String(e?.message||e?.code||'UNKNOWN');state.messageType='error';
+  console.warn('[XSTORE_STAFFING_LOAD]',e);state.requirements=[];state.loaded=false;state.message='Không tải được nhu cầu nhân sự hàng tuần. Vui lòng tải lại và thử lại.';state.messageType='error';
  }finally{state.loading=false;render()}
 }
 
@@ -163,7 +243,7 @@ async function saveRequirements(){
   state.editing=false;state.loaded=false;
   await loadRequirements();
   state.message='Đã lưu '+Number(q.data?.requirement_count??payload.length)+' khung nhu cầu hàng tuần. Cấu hình này được dùng lại cho mọi tuần cho đến khi bạn chỉnh và lưu.';state.messageType='ok';render();
- }catch(e){state.message='Lưu cấu hình nhu cầu thất bại: '+String(e?.message||e?.code||'UNKNOWN');state.messageType='error';render()}
+ }catch(e){console.warn('[XSTORE_STAFFING_SAVE]',e);state.message='Không thể lưu nhu cầu nhân sự lúc này. Vui lòng kiểm tra dữ liệu và thử lại.';state.messageType='error';render()}
  finally{state.busy=false;render()}
 }
 
@@ -181,7 +261,7 @@ async function autoSchedule(){
  if(state.busy)return;
  if(!state.week)return setMessage('Chưa xác định tuần cần xếp lịch.','error');
  const complete=state.requirements.length>0&&state.stores.length>0&&configuredStoreCount()===state.stores.length;
- if(!complete)return setMessage('Cần cấu hình nhu cầu recurring cho đủ phạm vi cửa hàng trước khi chạy Robot.','error');
+ if(!complete)return setMessage('Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động.','error');
  state.busy=true;state.shortages=[];state.assignmentCount=null;render();
  try{
   let result;
@@ -189,7 +269,7 @@ async function autoSchedule(){
   catch(e){
    const raw=String(e?.message||e?.code||e||'');
    if(!raw.includes('EXISTING_DRAFT_REQUIRES_CONFIRMATION'))throw e;
-   if(!confirm('Tuần này đã có bản nháp. Xếp tự động sẽ thay thế các assignment DRAFT hiện tại của các cửa hàng trong phạm vi. Lịch đã duyệt/phát hành không bị thay đổi. Tiếp tục?')){
+   if(!confirm('Tuần này đã có bản nháp. Xếp tự động sẽ thay thế các ca trong lịch nháp hiện tại của các cửa hàng trong phạm vi. Lịch đã duyệt/phát hành không bị thay đổi. Tiếp tục?')){
     state.message='Đã giữ nguyên bản nháp hiện tại.';state.messageType='';return;
    }
    result=await callAuto(true);
@@ -197,23 +277,31 @@ async function autoSchedule(){
   state.assignmentCount=Number(result.assignment_count||0);
   state.shortages=Array.isArray(result.shortages)?result.shortages:[];
   state.message=state.shortages.length
-   ? 'Robot đã project nhu cầu tuần mẫu và tạo DRAFT nhưng còn '+state.shortages.length+' khung thiếu người. Quản lý cần kiểm tra và chỉnh trước khi duyệt.'
-   : 'Robot đã project nhu cầu tuần mẫu recurring vào tuần đang chọn và tạo DRAFT. Quản lý hãy kiểm tra/chỉnh sửa trước khi duyệt và phát hành.';
+   ? 'Hệ thống đã áp dụng nhu cầu hàng tuần và tạo lịch nháp nhưng còn '+state.shortages.length+' khung thiếu người. Quản lý cần kiểm tra và chỉnh trước khi duyệt.'
+   : 'Hệ thống đã áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp. Quản lý hãy kiểm tra, chỉnh sửa trước khi duyệt và phát hành.';
   state.messageType=state.shortages.length?'':'ok';
   setTimeout(()=>window.MAGASIN_CROSS_STORE_MASTER?.refresh?.(),0);
  }catch(e){
   const raw=String(e?.message||e?.code||e||'UNKNOWN');
-  const friendly=raw.includes('STAFFING_REQUIREMENT_INCOMPLETE')?'Chưa cấu hình nhu cầu recurring cho đủ các cửa hàng.'
-   :raw.includes('OFFICIAL_WEEK_ALREADY_EXISTS')?'Tuần này đã có lịch chính thức; Robot không được ghi đè.'
-   :raw.includes('NON_DRAFT_GENERATION_EXISTS')?'Có lịch đã duyệt/phát hành trong tuần; hãy xử lý lịch hiện tại trước khi chạy Robot.'
-   :raw.includes('STAFFING_REQUIREMENT_EMPTY')?'Chưa có nhu cầu recurring để Robot xếp.'
-   :'Xếp tự động thất bại: '+raw;
+  const friendly=raw.includes('STAFFING_REQUIREMENT_INCOMPLETE')?'Chưa cấu hình nhu cầu nhân sự cho đủ các cửa hàng.'
+   :raw.includes('OFFICIAL_WEEK_ALREADY_EXISTS')?'Tuần này đã có lịch chính thức; hệ thống không được ghi đè.'
+   :raw.includes('NON_DRAFT_GENERATION_EXISTS')?'Có lịch đã duyệt hoặc phát hành trong tuần; hãy xử lý lịch hiện tại trước khi xếp tự động.'
+   :raw.includes('STAFFING_REQUIREMENT_EMPTY')?'Chưa có nhu cầu nhân sự hàng tuần để xếp lịch tự động.'
+   :'Không thể xếp lịch tự động lúc này. Vui lòng kiểm tra dữ liệu và thử lại.';
   state.message=friendly;state.messageType='error';
  }finally{state.busy=false;render()}
 }
 
 function bind(){
  const m=mount();if(!m)return;
+ if(m.dataset.xsaBandBound!=='1'){
+  m.dataset.xsaBandBound='1';
+  m.addEventListener('change',e=>{
+   const field=e.target?.closest?.('[data-xsa-f="start_time"]');
+   if(!field)return;
+   applyBandClass(field.closest('[data-xsa-block]'),field.value);
+  });
+ }
  m.querySelector('#xsaStaff')?.addEventListener('click',()=>document.querySelector('[data-view="staff"]')?.click());
  m.querySelector('#xsaConfig')?.addEventListener('click',()=>{if(state.editing)syncFromDom();state.editing=!state.editing;state.message='';state.messageType='';render()});
  m.querySelector('#xsaCancel')?.addEventListener('click',()=>{state.editing=false;state.loaded=false;void loadRequirements()});
