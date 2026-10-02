@@ -9,6 +9,7 @@ const cutover=read("07_DATABASE/migrations/20261001175825_xstore_c04_recurring_a
 const ui=read("05_MANAGER/Workforce/cross-store-auto-schedule-v1.js");
 const master=read("05_MANAGER/Workforce/cross-store-master-v1.js");
 const engine=read("05_MANAGER/Workforce/engine-v1.js");
+const managerScheduling=read("05_MANAGER/Workforce/manager-scheduling-ui2-v1.js");
 
 test("C03 recurring Manager board remains canonical staffing editor",()=>{
  assert.match(recurring,/workforce_recurring_staffing_requirements/);
@@ -43,6 +44,20 @@ test("SCHED-UI-002 separates weekly operation from recurring scheduling setup wi
  assert.match(ui,/Phần chỉnh sửa vẫn dùng màn hình Nhân viên hiện có/);
  assert.equal((ui.match(/replace_workforce_recurring_staffing_requirements_v1/g)||[]).length,1);
  assert.doesNotMatch(ui,/replace_.*priority|insert_.*priority/i);
+});
+
+test("SCHED-UI-003 exposes one guided next-action workflow and locks Auto Schedule until prerequisites are complete",()=>{
+ for(const label of ["Chuẩn bị","Tạo lịch nháp","Chỉnh lịch","Kiểm tra","Duyệt & phát hành","Việc cần làm tiếp theo"])assert.ok(ui.includes(label),label);
+ assert.match(ui,/id="xsaNextAction"/);
+ assert.match(ui,/data-xsa-next-action/);
+ assert.doesNotMatch(ui,/xsa-flow|xsa-step/);
+ assert.match(ui,/if\(!priorityReady\)return setMessage\('Cần thiết lập ưu tiên cửa hàng cho tất cả nhân viên trước khi xếp lịch tự động\.'/);
+ assert.match(ui,/if\(!complete\)return setMessage\('Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động\.'/);
+ assert.match(ui,/scheduleApi\(\)\?\.validate\?\.\(\)/);
+ assert.match(ui,/scheduleApi\(\)\?\.review\?\.\(\)/);
+ assert.match(ui,/scheduleApi\(\)\?\.publish\?\.\(\)/);
+ assert.doesNotMatch(managerScheduling,/msu2-stage-rail/);
+ assert.match(managerScheduling,/magasin:manager-scheduling-ui-state/);
 });
 
 test("C04 Robot projects recurring weekday blocks directly into target week",()=>{
