@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 READY / SCHED-UI-011→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 READY / SCHED-UI-012→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -165,8 +165,8 @@ Owner/release chain:
 | SCHED-UI-007 | Employee availability CTA + editor UX | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-011 | Responsive/mobile scheduling redesign | **BLOCKED BY 010** |
+| SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-011 | Responsive/mobile scheduling redesign | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-012 | Accessibility, states and Vietnamese copy hardening | **BLOCKED BY 011** |
 | SCHED-UI-013 | Focused regression tests for changed scheduling contracts | **BLOCKED BY 012** |
 | SCHED-UI-014 | Integrated cross-role browser qualification on release branch | **BLOCKED BY 013** |
@@ -570,6 +570,24 @@ Required:
 - old bookmarks remain safe;
 - unauthorized access remains denied.
 
+Completion evidence — 2026-10-03:
+
+- implementation completed on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `ca3e1155374f178de2a21fc81b1402eb23ef2954`;
+- Auth role routing now prefers clean role entrypoints for Owner, Store Manager and Staff/Employee while preserving fail-closed role handling;
+- Manager, Employee and Owner navigation/cross-links prefer canonical visible URLs, including `/manager/`, `/manager/scheduling/`, `/manager/schedule/`, `/manager/#tasks`, `/employee/`, `/employee/schedule/`, `/employee/attendance/`, `/employee/payroll/`, `/owner/`, and `/owner/scheduling/`;
+- numbered Manager, Employee and Owner entrypoints remain compatibility bridges and migrate old bookmarks to clean canonical URLs after role validation without replacing the existing numbered runtimes;
+- Manager route ownership was hardened so the canonical bridge is the single browser-history owner and late shell/bootstrap updates cannot revert the active view; Manager Task legacy entry also seeds `#tasks` into the preserved runtime;
+- Employee clean-route rewriting is scoped to app roots so standalone inner-runtime fixtures remain stable;
+- unauthorized/wrong-role access remains denied or redirected to the existing role-unavailable/Auth flow;
+- dedicated SCHED-UI-010 static contract passed in UI2 Cross Role Acceptance PR run `37073201522`;
+- dedicated `Run SCHED-UI-010 Auth/navigation compatibility gate` passed in UI2 Cross Role Acceptance PR run `37073201522`, job `111057180770`, step 17, covering clean routes, back/forward/reload, numbered-bookmark migration and unauthorized-role denial;
+- Manager Task deep-link browser smoke passed in SOP Task Tests PR run `37073201516`, job `111057180595`, step 7, verifying stable `/manager/#tasks` after bootstrap;
+- Owner Control Tower browser E2E passed in PR run `37073201490`, job `111057180612`, step 7;
+- successful exact-head durable CI: Procurement QA Robot PR `37073201537`, SOP Task Tests PR `37073201516`, AUTH-PROD Regression Contract PR `37073201553`, Auth Password Reset Hotfix PR `37073201489`, UI2 Cross Role Acceptance PR `37073201522`, People Shift Day-10 Tests PR `37073201482`, Owner Control Tower Tests PR `37073201490`, and UI2 Cross Role Acceptance push `37073196648`;
+- PR remains open and unmerged; no production merge/release was performed;
+- no Owner input is required to close this technical task.
+
 ## 18. SCHED-UI-011 — Responsive/mobile scheduling redesign
 
 Required widths:
@@ -841,7 +859,9 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-009 = DONE / VERIFIED`
 
-`SCHED-UI-010 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-010 = DONE / VERIFIED`
+
+`SCHED-UI-011 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
