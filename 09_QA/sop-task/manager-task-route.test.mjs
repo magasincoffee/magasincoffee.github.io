@@ -18,6 +18,8 @@ for (const forbidden of [".insert(", ".update(", ".upsert(", ".delete(", ".rpc("
 }
 
 assert.match(runtime, /manager-route-bridge-v1\.js/);
+assert.match(runtime, /allowedRouteHash=new Set\(\['dashboard','staff','workforce','schedule','tasks','kpi','swap','attendance','academy','settings','payroll-self-check'\]\)/);
+assert.match(route, /manager-runtime-v1\.html\?v=20260918-task-route1#tasks/);
 assert.match(bridge, /const PREFIX='\/05_MANAGER'/);
 assert.match(bridge, /tasks:'Cong-viec'/);
 assert.match(bridge, /return '\/manager\/#'\+key/);
