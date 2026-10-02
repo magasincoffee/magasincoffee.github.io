@@ -31,6 +31,7 @@ async function newContext(browser,width,height=980){
  await ctx.route("**/04_OWNER/Procurement/procurement-v2-orders.js*",route=>route.fulfill({status:200,contentType:"application/javascript",body:""}));
  await ctx.route("**/04_OWNER/Procurement/procurement-v2-boot.js*",route=>route.fulfill({status:200,contentType:"application/javascript",path:"09_QA/owner-control-tower/ui2-015-procurement-boot-mock.js"}));
  await ctx.route("**/05_MANAGER/runtime/manager-shell-v1.html*",route=>route.fulfill({status:200,contentType:"text/html",path:"09_QA/owner-control-tower/ui2-015-manager-shell-fixture.html"}));
+ await ctx.route("**/05_MANAGER/Workforce/manager-context-v1.js*",route=>route.fulfill({status:200,contentType:"application/javascript",path:"09_QA/owner-control-tower/ui2-015-manager-context-mock.js"}));
  await ctx.route("**/05_MANAGER/Workforce/draft-publish-v1.js*",route=>route.fulfill({status:200,contentType:"application/javascript",path:"09_QA/owner-control-tower/ui2-015-writer-mock.js"}));
  await ctx.route("**/02_CORE/security/security-runtime.js*",route=>route.fulfill({status:200,contentType:"application/javascript",body:""}));
  return ctx;
@@ -72,7 +73,13 @@ async function workforceAllowed(browser,width){
  const runtime=page.frameLocator("#app");
  const frame=runtime.frameLocator("#app");
  await frame.locator("#magasinUiV2Shell").waitFor({state:"attached",timeout:10000});
- await frame.locator("#ownerSchedulingScope").waitFor({state:"visible",timeout:10000});
+ await frame.locator('#ownerSchedulingOverview[data-owner-overview-state="ready"]').waitFor({state:"visible",timeout:10000});
+ const cards=await frame.locator("[data-owner-store-open]").count();
+ if(cards!==4)throw new Error("Owner overview cards="+cards);
+ const overviewText=await frame.locator("#ownerSchedulingOverview").innerText();
+ for(const code of ["CN1","CN2","CN3","CN4"])if(!overviewText.includes(code))throw new Error("Missing "+code+" in Owner overview");
+ await frame.locator('[data-owner-store-open="store-a"]').click();
+ await frame.locator("#ownerSchedulingDetailHeader").waitFor({state:"visible",timeout:10000});
  await frame.locator(".msd[data-scheduling-actor='OWNER']").waitFor({state:"visible",timeout:10000});
  return {...opened,runtime,frame};
 }
@@ -127,18 +134,18 @@ try{
     viewport:innerWidth,
     doc:document.documentElement.scrollWidth,
     active:document.querySelector('.m-shell-v2-nav__item[aria-current="page"]')?.dataset.shellKey,
-    context:!!document.querySelector('[data-owner-module-context="workforce"]'),
+    detail:!!document.querySelector('#ownerSchedulingDetailHeader:not([hidden])'),
     finance:!!document.querySelector('[data-owner-finance-reserved]'),
     financeLinks:document.querySelectorAll('[data-owner-finance-reserved] a').length,
     duplicateLegacy:document.querySelectorAll('.sidebar:not(.m-shell-v2-sidebar)').length,
-    minControl:Math.min(...[...document.querySelectorAll('.m-shell-v2-menu,.m-shell-v2-nav__item,.owner-module-context a,.tabs button')].filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&r.height>0}).map(el=>el.getBoundingClientRect().height))
+    minControl:Math.min(...[...document.querySelectorAll('.m-shell-v2-menu,.m-shell-v2-nav__item,.oso-back,.tabs button')].filter(el=>{const r=el.getBoundingClientRect();return r.width>0&&r.height>0}).map(el=>el.getBoundingClientRect().height))
    }));
-   if(metrics.doc>metrics.viewport+1||metrics.active!=="workforce"||!metrics.context||!metrics.finance||metrics.financeLinks!==0||metrics.duplicateLegacy!==1)throw new Error(JSON.stringify(metrics));
+   if(metrics.doc>metrics.viewport+1||metrics.active!=="workforce"||!metrics.detail||!metrics.finance||metrics.financeLinks!==0||metrics.duplicateLegacy!==1)throw new Error(JSON.stringify(metrics));
    if(width<=768&&metrics.minControl<43.5)throw new Error(JSON.stringify(metrics));
    return JSON.stringify(metrics);
   });
   await check("ui2_015_workforce_"+width+"_focus",async()=>{
-   const ev=await focusEvidence(workforce.frame.locator("#ownerSchedulingScope a").first());
+   const ev=await focusEvidence(workforce.frame.locator("[data-owner-overview-back]"));
    if(ev.outline==="none"||(width<=768&&ev.height<43.5))throw new Error(JSON.stringify(ev));
    return JSON.stringify(ev);
   });
