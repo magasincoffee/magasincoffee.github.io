@@ -60,10 +60,10 @@
 
   const route = profile => {
     const role = String(profile.role || '').toUpperCase();
-    if (role === 'OWNER') location.replace('/04_OWNER/');
+    if (role === 'OWNER') location.replace('/owner/');
     else if (role === 'ACCOUNTANT') location.replace('/nhap-hang/');
-    else if (role === 'STORE_MANAGER') location.replace('/05_MANAGER/');
-    else if (['STAFF', 'EMPLOYEE'].includes(role)) location.replace('/06_EMPLOYEE/');
+    else if (role === 'STORE_MANAGER') location.replace('/manager/');
+    else if (['STAFF', 'EMPLOYEE'].includes(role)) location.replace('/employee/');
     else location.replace('/03_PLATFORM/01_AUTH/role-unavailable.html');
   };
 
