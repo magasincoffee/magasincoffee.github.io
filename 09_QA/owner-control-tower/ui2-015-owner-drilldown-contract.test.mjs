@@ -18,7 +18,7 @@ const friendly=read("nhap-hang/index.html");
 test("UI2-015 keeps Owner shared route inventory limited to accepted runtime destinations",()=>{
   const ownerBlock=shellJs.match(/const OWNER_NAV = Object\.freeze\(\{[\s\S]*?\n  \}\);/)?.[0]||"";
   assert.ok(ownerBlock);
-  for(const route of ["/04_OWNER/","/04_OWNER/ControlTower/","/04_OWNER/Workforce/","/nhap-hang/","/04_OWNER/Access/"])assert.ok(ownerBlock.includes(route),route);
+  for(const route of ["/owner/","/04_OWNER/ControlTower/","/owner/scheduling/","/nhap-hang/","/04_OWNER/Access/"])assert.ok(ownerBlock.includes(route),route);
   assert.doesNotMatch(ownerBlock,/Finance|Tài chính|\/04_OWNER\/Finance/i);
   assert.equal(fs.existsSync("04_OWNER/Finance"),false);
 });
