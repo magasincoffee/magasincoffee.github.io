@@ -51,10 +51,10 @@ test("UI2-012 hierarchy makes context source board and publish progression expli
   for(const token of [
     "Cửa hàng đang xếp",
     "Tuần vận hành · Asia/Ho_Chi_Minh",
-    "Phiên nháp",
-    "Nguồn vào",
-    "Bảng nháp 7 ngày",
-    "Tiến trình phát hành"
+    "Thao tác phụ · lịch nháp",
+    "Nguồn tham khảo",
+    "Lịch nháp đang chỉnh",
+    "Bước cuối · duyệt và phát hành"
   ])assert.ok(ui.includes(token),token);
   for(const id of ["msdStore","msdStart","msdReload","msdSave","msdValidate","msdReview","msdPublish"])assert.ok(ui.includes(id),id);
   assert.match(ui,/Bảng lịch nháp 7 ngày; có thể cuộn ngang ở màn hình hẹp/);
