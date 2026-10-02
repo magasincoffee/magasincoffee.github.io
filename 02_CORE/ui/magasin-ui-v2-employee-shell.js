@@ -107,7 +107,8 @@
     const top = topWindow();
     try {
       const path = String(top.location.pathname || '').toLowerCase();
-      if (path.startsWith('/employee') || path.startsWith('/06_employee')) {
+      const numberedRoot = path === '/06_employee' || path === '/06_employee/';
+      if (path.startsWith('/employee') || numberedRoot) {
         const next = cleanRouteFor(key);
         const current = String(top.location.pathname || '') + String(top.location.hash || '');
         if (current !== next) top.history.pushState(top.history.state, '', next);
