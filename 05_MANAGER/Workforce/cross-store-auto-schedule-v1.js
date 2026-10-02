@@ -163,7 +163,7 @@ function workflowModel(priorityReady,staffingReady){
  if(!state.week){
   model={...model,action:'blocked',label:'Chưa thể tạo lịch',title:'Chưa xác định tuần xếp lịch',reason:'Hệ thống cần xác định tuần vận hành trước khi tiếp tục.',disabled:true};
  }else if(!priorityReady){
-  model={...model,action:'setup-priority',label:'Thiết lập ưu tiên cửa hàng',title:'Hoàn thiện ưu tiên cửa hàng',reason:'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa có ưu tiên cửa hàng. Auto Schedule chưa được phép chạy.',disabled:false};
+  model={...model,action:'setup-priority',label:'Thiết lập ưu tiên cửa hàng',title:'Hoàn thiện ưu tiên cửa hàng',reason:'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa có ưu tiên cửa hàng. Chưa thể tạo lịch nháp tự động.',disabled:false};
  }else if(!staffingReady){
   model={...model,action:'setup-requirements',label:'Thiết lập nhu cầu nhân sự',title:'Hoàn thiện nhu cầu nhân sự cố định',reason:'Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi tạo lịch nháp tự động.',disabled:false};
  }else if(stage==='CONFLICT'){
