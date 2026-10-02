@@ -4,6 +4,10 @@ on:
   push:
     paths:
       - '02_CORE/ui/**'
+      - '02_CORE/navigation/**'
+      - 'manager/**'
+      - 'employee/**'
+      - 'owner/**'
       - '03_PLATFORM/01_AUTH/**'
       - '04_OWNER/**'
       - '05_MANAGER/**'
@@ -17,6 +21,10 @@ on:
   pull_request:
     paths:
       - '02_CORE/ui/**'
+      - '02_CORE/navigation/**'
+      - 'manager/**'
+      - 'employee/**'
+      - 'owner/**'
       - '03_PLATFORM/01_AUTH/**'
       - '04_OWNER/**'
       - '05_MANAGER/**'
@@ -126,6 +134,12 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8769
           QA_OUT: qa-artifacts/ui2-cross-role
         run: node 09_QA/ui2-cross-role/ui2-017-cold-reload-closure-browser.mjs
+
+      - name: Run SCHED-UI-009 clean route browser gate
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+          QA_OUT: qa-artifacts/ui2-cross-role
+        run: node 09_QA/ui2-cross-role/sched-ui-009-clean-routes-browser.mjs
 
       - name: Build UI2-016 cross-role matrix
         env:
