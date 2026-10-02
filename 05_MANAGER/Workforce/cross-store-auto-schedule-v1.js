@@ -22,7 +22,7 @@ function applyBandClass(el,value){
  el.classList.add(bandClass(value));
 }
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
-const state={week:null,stores:[],requirements:[],editing:false,editorCell:null,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null};
+const state={week:null,stores:[],requirements:[],editing:false,editorCell:null,surface:'week',setupFocus:null,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null};
 const mount=()=>document.getElementById('xstoreAutomationMount');
 const validBlock=r=>r.store_id&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&r.start_time&&r.end_time&&Number(r.target_headcount)>0;
 const configuredStoreIds=()=>new Set(state.requirements.filter(validBlock).map(r=>String(r.store_id)));
@@ -47,6 +47,18 @@ function ensureCss(){
 .xsa-head h4{margin:0;font-size:18px;line-height:26px;font-weight:700;color:var(--m-color-neutral-950,#101828)}
 .xsa-kicker{font-size:11px;line-height:16px;font-weight:700;letter-spacing:.02em;color:var(--m-color-brand-700,#08747F);margin-bottom:4px}
 .xsa-actions{display:flex;gap:8px;flex-wrap:wrap}
+.xsa-ia-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:4px;border:1px solid var(--m-border-default,#EAECF0);border-radius:12px;background:var(--m-color-neutral-50,#F9FAFB);width:max-content;max-width:100%}
+.xsa-ia-nav button{min-height:40px;border:0;border-radius:9px;background:transparent;color:var(--m-color-neutral-700,#344054);padding:0 14px;font-size:12px;font-weight:800;cursor:pointer}
+.xsa-ia-nav button[aria-selected="true"]{background:#fff;color:var(--m-color-neutral-950,#101828);box-shadow:0 1px 3px rgba(16,24,40,.10)}
+.xsa-surface{min-width:0}
+.xsa-week-note{margin-top:12px;padding:10px 12px;border:1px solid #d8e5f4;border-radius:10px;background:#F7FBFF;color:var(--m-color-neutral-700,#344054);font-size:12px;line-height:18px}
+.xsa-inline-link{display:inline-flex;align-items:center;min-height:34px;margin-top:8px;border:1px solid var(--m-color-neutral-300,#D0D5DD);border-radius:8px;background:#fff;color:var(--m-color-brand-700,#08747F);padding:0 10px;font-size:11px;font-weight:800;cursor:pointer}
+.xsa-setup-grid{display:grid;gap:12px;margin-top:14px}
+.xsa-setup-card{border:1px solid var(--m-border-default,#EAECF0);border-radius:12px;background:#fff;padding:13px}
+.xsa-setup-card.targeted{border-color:#9EC7F1;box-shadow:0 0 0 3px rgba(47,111,222,.08)}
+.xsa-setup-card h5{margin:0;font-size:14px;line-height:20px;color:var(--m-color-neutral-950,#101828)}
+.xsa-setup-card p{margin:4px 0 0;font-size:12px;line-height:18px;color:var(--m-color-neutral-500,#667085)}
+.xsa-setup-card .xsa-actions{margin-top:10px}
 .xsa-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
 .xsa-step{border:1px solid var(--m-border-default,#EAECF0);border-radius:12px;background:var(--m-color-neutral-50,#F9FAFB);padding:12px}
 .xsa-step b{display:block;font-size:13px;line-height:18px}
@@ -193,27 +205,51 @@ function render(){
  const priorityReady=state.unconfiguredEmployeeCount===0;
  const requirementsReady=state.requirements.length>0;
  const complete=requirementsReady&&totalStores>0&&storeCount===totalStores;
+ const surface=state.surface==='setup'?'setup':'week';
  const summary=[
   '<span class="xsa-pill">'+state.requirements.length+' khung cố định</span>',
   '<span class="xsa-pill '+(storeCount===totalStores&&totalStores?'ok':'warn')+'">'+storeCount+'/'+totalStores+' CN đã cấu hình</span>'
  ];
  if(state.unconfiguredEmployeeCount)summary.push('<span class="xsa-pill warn">'+state.unconfiguredEmployeeCount+' NV chưa có ưu tiên CN</span>');
  if(state.assignmentCount!==null)summary.push('<span class="xsa-pill ok">'+state.assignmentCount+' ca đã được xếp tự động</span>');
- m.innerHTML='<section class="xsa">'
-  +'<div class="xsa-head"><div><div class="xsa-kicker">Nhân sự · Nhiều cửa hàng</div><h4>Nhu cầu nhân sự hàng tuần</h4><div class="muted" style="margin-top:5px">Cấu hình một lần theo cửa hàng × thứ trong tuần × khung giờ × số người. Giá trị được dùng lại cho các tuần sau cho đến khi Quản lý chỉnh và lưu.</div></div>'
-  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaStaff">Thiết lập ưu tiên nhân viên</button><button class="btn" type="button" id="xsaConfig">Chỉnh nhu cầu hàng tuần</button><button class="btn primary" type="button" id="xsaAuto"'+(!complete||state.loading||state.busy?' disabled':'')+'>Tạo lịch nháp tự động</button></div></div>'
-  +'<div class="xsa-flow"><div class="xsa-step '+(priorityReady?'ready':'warn')+'"><b>1. Ưu tiên cửa hàng</b><span>'+(priorityReady?'Đã sẵn sàng':'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa được gán ưu tiên CN')+'</span></div>'
-  +'<div class="xsa-step '+(requirementsReady?'ready':'warn')+'"><b>2. Nhu cầu nhân sự hàng tuần</b><span>'+(requirementsReady?'Đang dùng cấu hình cố định hàng tuần':'Chưa có cấu hình; Quản lý cần nhập dữ liệu thực tế')+'</span></div>'
-  +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>3. Xếp lịch tự động</b><span>'+(complete?'Sẵn sàng áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp':'Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động')+'</span></div></div>'
+
+ const nav='<div class="xsa-ia-nav" role="tablist" aria-label="Khu vực xếp lịch">'
+  +'<button type="button" role="tab" data-xsa-nav="week" aria-selected="'+(surface==='week')+'">Lập lịch tuần</button>'
+  +'<button type="button" role="tab" data-xsa-nav="setup" aria-selected="'+(surface==='setup')+'">Thiết lập xếp lịch</button>'
+  +'</div>';
+
+ const weekSurface='<div class="xsa-surface" data-xsa-surface="week">'
+  +'<div class="xsa-head"><div><div class="xsa-kicker">Vận hành tuần</div><h4>Lập lịch tuần</h4><div class="muted" style="margin-top:5px">Tạo lịch nháp cho tuần đang chọn từ dữ liệu đã thiết lập. Bạn không cần đọc lại bảng nhu cầu cố định mỗi tuần.</div></div>'
+  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaSetupOpen">Thiết lập xếp lịch</button><button class="btn primary" type="button" id="xsaAuto"'+(!complete||state.loading||state.busy?' disabled':'')+'>Tạo lịch nháp tự động</button></div></div>'
+  +'<div class="xsa-flow">'
+  +'<div class="xsa-step '+(priorityReady?'ready':'warn')+'"><b>1. Ưu tiên cửa hàng</b><span>'+(priorityReady?'Đã sẵn sàng':'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa được gán ưu tiên cửa hàng')+'</span><button class="xsa-inline-link" type="button" data-xsa-go-setup="priority">'+(priorityReady?'Xem thiết lập':'Thiết lập ưu tiên cửa hàng')+'</button></div>'
+  +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>2. Nhu cầu nhân sự cố định</b><span>'+(complete?'Đã có cấu hình cho '+storeCount+'/'+totalStores+' cửa hàng':'Cần hoàn thiện nhu cầu nhân sự cố định cho các cửa hàng')+'</span><button class="xsa-inline-link" type="button" data-xsa-go-setup="requirements">'+(complete?'Xem thiết lập':'Thiết lập nhu cầu nhân sự')+'</button></div>'
+  +'<div class="xsa-step '+(complete?'ready':'warn')+'"><b>3. Tạo lịch nháp</b><span>'+(complete?'Sẵn sàng áp dụng cấu hình cố định vào tuần đang chọn':'Hoàn thiện nhu cầu nhân sự trước khi tạo lịch nháp tự động')+'</span></div>'
+  +'</div>'
   +'<div class="xsa-summary">'+summary.join('')+'</div>'
-  +'<div class="xsa-recurring-note"><b>Cấu hình cố định hàng tuần:</b> không chọn ngày lịch và không cần nhập lại mỗi tuần. Hệ thống không tự đoán số người.<div class="xsa-band-legend" aria-label="Quy ước màu khung giờ"><span><i class="xsa-band-dot morning"></i>05:00–12:00 · Vàng</span><span><i class="xsa-band-dot afternoon"></i>12:00–17:00 · Đỏ nhạt</span><span><i class="xsa-band-dot evening"></i>17:00–22:00 · Xanh dương nhạt</span></div></div>'
-  +'<div class="xsa-workspace'+(state.editing?' has-editor':'')+'">'+boardHtml()+editorHtml()+'</div>'
+  +'<div class="xsa-week-note">Nhu cầu nhân sự cố định và ưu tiên cửa hàng nằm trong <b>Thiết lập xếp lịch</b>. Chỉ quay lại đó khi cần thay đổi cấu hình.</div>'
   +shortagesHtml()
   +(state.message?'<div class="xsa-status '+esc(state.messageType)+'">'+esc(state.message)+'</div>':'')
-  +'</section>';
+  +'</div>';
+
+ const priorityTarget=state.setupFocus==='priority'?' targeted':'';
+ const requirementTarget=state.setupFocus==='requirements'?' targeted':'';
+ const setupSurface='<div class="xsa-surface" data-xsa-surface="setup">'
+  +'<div class="xsa-head"><div><div class="xsa-kicker">Cấu hình dùng lại</div><h4>Thiết lập xếp lịch</h4><div class="muted" style="margin-top:5px">Quản lý ưu tiên cửa hàng và nhu cầu nhân sự cố định tại đây. Những thiết lập này được dùng lại cho các tuần sau cho đến khi bạn thay đổi.</div></div>'
+  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaWeekOpen">← Lập lịch tuần</button></div></div>'
+  +'<div class="xsa-setup-grid">'
+  +'<section class="xsa-setup-card'+priorityTarget+'" data-xsa-setup-section="priority" tabindex="-1"><h5>Ưu tiên cửa hàng</h5><p>'+(priorityReady?'Tất cả nhân viên hiện đã có ưu tiên cửa hàng.':'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa có ưu tiên cửa hàng.')+' Phần chỉnh sửa vẫn dùng màn hình Nhân viên hiện có.</p><div class="xsa-actions"><button class="btn" type="button" id="xsaStaff">Mở ưu tiên cửa hàng</button></div></section>'
+  +'<section class="xsa-setup-card'+requirementTarget+'" data-xsa-setup-section="requirements" tabindex="-1"><div class="xsa-head"><div><h5>Nhu cầu nhân sự cố định hàng tuần</h5><p>Cấu hình một lần theo cửa hàng × thứ trong tuần × khung giờ × số người; không chọn ngày lịch và không cần nhập lại mỗi tuần.</p></div><div class="xsa-actions"><button class="btn" type="button" id="xsaConfig">Chỉnh nhu cầu hàng tuần</button></div></div>'
+  +'<div class="xsa-summary">'+summary.join('')+'</div>'
+  +'<div class="xsa-recurring-note"><b>Cấu hình cố định hàng tuần:</b> hệ thống không tự đoán số người.<div class="xsa-band-legend" aria-label="Quy ước màu khung giờ"><span><i class="xsa-band-dot morning"></i>05:00–12:00 · Vàng</span><span><i class="xsa-band-dot afternoon"></i>12:00–17:00 · Đỏ nhạt</span><span><i class="xsa-band-dot evening"></i>17:00–22:00 · Xanh dương nhạt</span></div></div>'
+  +'<div class="xsa-workspace'+(state.editing?' has-editor':'')+'">'+boardHtml()+editorHtml()+'</div>'
+  +'</section></div>'
+  +(state.message?'<div class="xsa-status '+esc(state.messageType)+'">'+esc(state.message)+'</div>':'')
+  +'</div>';
+
+ m.innerHTML='<section class="xsa" data-xsa-active-surface="'+surface+'">'+nav+(surface==='setup'?setupSurface:weekSurface)+'</section>';
  bind();
 }
-
 function syncFromDom(){
  const m=mount();if(!m)return;
  m.querySelectorAll('[data-xsa-block]').forEach(block=>{
@@ -330,6 +366,16 @@ function bind(){
    applyBandClass(field.closest('[data-xsa-block]'),field.value);
   });
  }
+ const openSurface=(surface,focus=null)=>{
+  if(state.editing&&state.surface==='setup')syncFromDom();
+  state.surface=surface==='setup'?'setup':'week';
+  state.setupFocus=focus;
+  render();
+ };
+ m.querySelectorAll('[data-xsa-nav]').forEach(b=>b.addEventListener('click',()=>openSurface(b.dataset.xsaNav)));
+ m.querySelector('#xsaSetupOpen')?.addEventListener('click',()=>openSurface('setup'));
+ m.querySelector('#xsaWeekOpen')?.addEventListener('click',()=>openSurface('week'));
+ m.querySelectorAll('[data-xsa-go-setup]').forEach(b=>b.addEventListener('click',()=>openSurface('setup',b.dataset.xsaGoSetup||null)));
  m.querySelector('#xsaStaff')?.addEventListener('click',()=>document.querySelector('[data-view="staff"]')?.click());
  m.querySelector('#xsaConfig')?.addEventListener('click',()=>{
   const first=m.querySelector('[data-xsa-open-store]');
@@ -355,8 +401,12 @@ function bind(){
  m.querySelectorAll('[data-xsa-remove]').forEach(b=>b.addEventListener('click',()=>{
   syncFromDom();state.requirements.splice(Number(b.dataset.xsaRemove),1);render();
  }));
+ if(state.surface==='setup'&&state.setupFocus){
+  const focus=state.setupFocus;state.setupFocus=null;
+  const target=m.querySelector('[data-xsa-setup-section="'+focus+'"]');
+  if(target)setTimeout(()=>{target.focus({preventScroll:true});target.scrollIntoView?.({block:'nearest'});},0);
+ }
 }
-
 async function onMaster(detail={}){
  const nextWeek=detail.week||null;
  const weekChanged=String(nextWeek||'')!==String(state.week||'');
