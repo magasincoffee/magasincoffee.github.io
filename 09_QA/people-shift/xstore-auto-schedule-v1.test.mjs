@@ -20,16 +20,20 @@ test("C03 recurring Manager board remains canonical staffing editor",()=>{
  assert.match(ui,/Lưu nhu cầu hàng tuần/);
 });
 
-test("SCHED-UI-001 keeps the recurring weekly grid scan-only and edits one store/day in a dedicated panel",()=>{
+test("SCHED-UI-001 keeps one-store-day editing while SCHED-UI-011 makes phone setup card-first",()=>{
  assert.match(ui,/xsa-cell-open/);
  assert.match(ui,/xsa-workspace\.has-editor/);
  assert.match(ui,/xsa-editor-panel/);
  assert.match(ui,/data-xsa-open-store/);
+ assert.match(ui,/data-xsa-day-label/);
  assert.doesNotMatch(ui,/xsa-block-edit/);
  for(const label of ["Bắt đầu","Kết thúc","Số người","Xóa khung","+ Thêm khung","Hủy thay đổi","Lưu nhu cầu hàng tuần"])assert.ok(ui.includes(label),label);
  assert.match(ui,/start_time:''/);
  assert.match(ui,/end_time:''/);
- assert.match(ui,/@media\(max-width:760px\)[\s\S]*\.xsa-editor-panel\{position:fixed;left:0;right:0;bottom:0/);
+ assert.match(ui,/@media\(max-width:760px\)[\s\S]*\.xsa-editor-panel\{position:static;order:-1/);
+ assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.xsa-board thead\{display:none\}/);
+ assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.xsa-board tr\{display:grid;grid-template-columns:1fr/);
+ assert.doesNotMatch(ui,/@media\(max-width:760px\)[\s\S]*\.xsa-editor-panel\{position:fixed/);
 });
 
 test("SCHED-UI-002 separates weekly operation from recurring scheduling setup without adding another writer",()=>{
