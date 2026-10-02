@@ -27,6 +27,9 @@ test("SCHED-UI-011 recurring staffing becomes phone cards with inline editor",as
   assert.ok(auto.includes(".xsa-board tr{display:grid;grid-template-columns:1fr"));
   assert.ok(auto.includes(".xsa-cell-open::before{content:attr(data-xsa-day-label)"));
   assert.ok(auto.includes(".xsa-editor-panel{position:static;order:-1"));
+  assert.ok(auto.includes(".xsa-setup-card{min-width:0;max-width:100%"));
+  assert.ok(auto.includes(".xsa-board-wrap{width:100%;max-width:100%;min-width:0;overflow:auto"));
+  assert.ok(auto.includes(".xsa-workspace{display:block;width:100%;max-width:100%;min-width:0}"));
   assert.ok(auto.includes("data-xsa-day-label="));
   assert.ok(auto.includes("matchMedia?.('(max-width:760px)')"));
 });
