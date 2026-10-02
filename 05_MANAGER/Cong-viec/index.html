@@ -19,7 +19,7 @@
     if(!C)throw Error('Shared Core chưa sẵn sàng.');
     const p=await C.supabase.requireActive();
     const role=String(p.role||'').toUpperCase();
-    if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/06_EMPLOYEE/');return}
+    if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/employee/');return}
     const f=document.getElementById('app');
     f.src='/05_MANAGER/runtime/manager-runtime-v1.html?v=20260918-task-route1';
     f.hidden=false;
