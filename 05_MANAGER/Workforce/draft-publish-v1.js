@@ -147,7 +147,7 @@ async function resumeOnly(){
   state.lastValidation=null;
   if(runs.length>1){
    state.generationId=null;state.generationStatus='CONFLICT';state.generationOrigin=null;state.assignments=[];state.officialRows=[];
-   render();status('Có nhiều phiên xếp lịch cùng hoạt động cho cửa hàng/tuần này. Hệ thống đã khóa thao tác để tránh ghi đè.','error');return;
+   render();status('Có nhiều bản nháp cùng hoạt động cho cửa hàng và tuần này. Thao tác tạm khóa để tránh ghi đè.','error');return;
   }
   if(runs.length===1){
    const run=runs[0];
