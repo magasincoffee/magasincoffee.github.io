@@ -47,7 +47,8 @@ for(const width of [1440,1024,768,390]){
     viewport:innerWidth,expected,
     scrollWidth:html.scrollWidth,clientWidth:html.clientWidth,
     stage:root?.dataset.ui2SchedulingState,
-    hierarchy:[".msu2-context-bar",".msu2-stage-rail",".msu2-state-banner",".msd-source",".msd-board-wrap",".msd-downstream"].every(sel=>!!root?.querySelector(sel)),
+    hierarchy:[".msu2-context-bar",".msu2-state-banner",".msd-source",".msd-board-wrap",".msd-downstream"].every(sel=>!!root?.querySelector(sel)),
+    duplicateStepper:root?.querySelectorAll(".msu2-stage-rail").length||0,
     touchMin:controls.length?Math.min(...controls.map(x=>x.getBoundingClientRect().height)):0,
     focusOutline:getComputedStyle(focused).outlineStyle,
     focusShadow:getComputedStyle(focused).boxShadow,
@@ -57,7 +58,7 @@ for(const width of [1440,1024,768,390]){
     emptyDays:root?.querySelectorAll(".msd-day .msd-empty").length||0
    };
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
-   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5)throw new Error(JSON.stringify(metric));
+   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
    if(expected===768&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet board scroll: "+JSON.stringify(metric));
    return JSON.stringify(metric);
