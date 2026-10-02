@@ -19,10 +19,6 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msu2-draft-actions{display:flex;gap:8px;justify-content:flex-end;align-items:end;margin-top:10px}
 .msu2-draft-actions .btn{min-height:40px}
 .msu2-draft-actions #msdSave{min-width:150px}
-.msu2-stage-rail{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px!important;margin-top:14px!important}
-.msu2-stage-rail .msd-pill{display:flex;align-items:center;justify-content:center;min-height:36px;text-align:center;border:1px solid #dce5f0;background:#f8fafc;color:#667085}
-.msu2-stage-rail .msd-pill.msd-warning{border-color:#f2d58a;background:#fff8e1;color:#805b08}
-.msu2-stage-rail .msd-pill.msd-ok{border-color:#b7dfc5;background:#edf8f1;color:#256d43}
 .msu2-state-banner{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-top:10px;padding:12px 14px;border:1px solid #d8e1ea;border-radius:12px;background:#fff}
 .msu2-state-copy{display:grid;gap:3px}.msu2-state-copy strong{font-size:13px;color:#101828}.msu2-state-copy span{font-size:11px;line-height:17px;color:#667085}
 .msu2-state-chip{flex:0 0 auto;padding:6px 9px;border-radius:999px;background:#f2f4f7;color:#475467;font-size:10px;font-weight:900;letter-spacing:.05em}
@@ -72,8 +68,6 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 }
 @media(max-width:520px){
  .msd-ui2-012 .msu2-title h2{font-size:22px;line-height:28px}
- .msu2-stage-rail{grid-template-columns:repeat(2,minmax(0,1fr))}
- .msu2-stage-rail .msd-pill:last-child{grid-column:1/-1}
  .msu2-state-banner{display:grid}
  .msu2-state-chip{justify-self:start}
  .msd-ui2-012 .msd-source-list{grid-template-columns:1fr}
@@ -129,16 +123,13 @@ function structure(r){
   head.append(context,draftActions);
  }
  const summaries=[...r.querySelectorAll(':scope > .msd-summary')];
- if(summaries[0]){
-  summaries[0].classList.add('msu2-stage-rail');
-  summaries[0].setAttribute('role','list');
-  summaries[0].querySelectorAll('.msd-pill').forEach(x=>x.setAttribute('role','listitem'));
-  const banner=document.createElement('div');
-  banner.className='msu2-state-banner';
-  banner.innerHTML='<div class="msu2-state-copy"><strong></strong><span></span></div><span class="msu2-state-chip"></span>';
-  summaries[0].after(banner);
- }
- if(summaries[1])summaries[1].classList.add('msu2-state-summary');
+ if(summaries[0])summaries[0].remove();
+ const banner=document.createElement('div');
+ banner.className='msu2-state-banner';
+ banner.innerHTML='<div class="msu2-state-copy"><strong></strong><span></span></div><span class="msu2-state-chip"></span>';
+ head?.after(banner);
+ const supportingSummary=r.querySelector(':scope > .msd-summary');
+ if(supportingSummary)supportingSummary.classList.add('msu2-state-summary');
 
  const source=r.querySelector('.msd-source');
  const sourceTitle=source?.querySelector(':scope > b');
@@ -162,6 +153,7 @@ function structure(r){
  const status=r.querySelector('#msdStatus');
  if(status){status.setAttribute('role','status');status.setAttribute('aria-live','polite')}
 }
+let lastSchedulingSignal='';
 function sync(){
  const r=root();if(!r)return false;
  injectCss();structure(r);
@@ -184,6 +176,11 @@ function sync(){
   for(const id of ['msdStart','msdSave','msdValidate','msdReview','msdPublish']){
    const el=r.querySelector('#'+id);if(el){el.disabled=true;el.setAttribute('aria-disabled','true')}
   }
+ }
+ const signal=[stage,busy?1:0,String(state.lastValidation||''),Number(state.assignments?.length||0)].join('|');
+ if(signal!==lastSchedulingSignal){
+  lastSchedulingSignal=signal;
+  document.dispatchEvent(new CustomEvent('magasin:manager-scheduling-ui-state',{detail:{stage,busy,lastValidation:state.lastValidation||null,assignmentCount:Number(state.assignments?.length||0)}}));
  }
  return true;
 }
