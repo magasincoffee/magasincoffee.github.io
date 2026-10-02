@@ -151,13 +151,47 @@ if(autoCall?.args?.p_algorithm_version!=="XSTORE_GLOBAL_RECURRING_V1")throw new 
 autoText=(await page.locator(".xsa").innerText()).replace(/\s+/g," ");
 if(!autoText.includes("áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp"))throw new Error(autoText);
 
+for(const width of [1440,1024,768,430,390,360]){
+ await page.setViewportSize({width,height:width<=430?844:1000});
+ await page.goto(FIXTURE+"?week=2026-10-12",{waitUntil:"networkidle"});
+ await page.locator(".xsa").waitFor();
+ await page.locator('[data-xsa-nav="setup"]').click();
+ await page.waitForFunction(()=>document.querySelector('.xsa')?.dataset.xsaActiveSurface==="setup");
+ const metric=await page.evaluate(expected=>{
+  const html=document.documentElement,wrap=document.querySelector(".xsa-board-wrap"),board=document.querySelector(".xsa-board");
+  const row=board?.querySelector("tbody tr"),head=board?.querySelector("thead"),cell=document.querySelector('[data-xsa-cell="s1-1"] .xsa-cell-open');
+  const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return !el.disabled&&!el.hidden&&s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};
+  const controls=[...document.querySelectorAll(".xsa button,.xsa input,.xsa select")].filter(visible);
+  return {
+   expected,scrollWidth:html.scrollWidth,clientWidth:html.clientWidth,
+   boardScroll:wrap?.scrollWidth||0,boardClient:wrap?.clientWidth||0,
+   boardDisplay:board?getComputedStyle(board).display:"",
+   rowDisplay:row?getComputedStyle(row).display:"",
+   headDisplay:head?getComputedStyle(head).display:"",
+   cellHeight:cell?.getBoundingClientRect().height||0,
+   cellLabel:cell?.getAttribute("data-xsa-day-label")||"",
+   touchMin:controls.length?Math.min(...controls.map(x=>x.getBoundingClientRect().height)):0
+  };
+ },width);
+ if(metric.scrollWidth>metric.clientWidth+1)throw new Error("recurring setup page overflow: "+JSON.stringify(metric));
+ if(width<=1024&&metric.touchMin<43.5)throw new Error("recurring setup touch target: "+JSON.stringify(metric));
+ if(width<=430&&(metric.boardDisplay!=="block"||metric.rowDisplay!=="grid"||metric.headDisplay!=="none"||metric.boardScroll>metric.boardClient+1||metric.cellHeight<63.5||!metric.cellLabel.includes("Thứ Hai")))throw new Error("phone recurring cards: "+JSON.stringify(metric));
+ if((width===768||width===1024)&&metric.boardScroll<=metric.boardClient)throw new Error("tablet recurring board should scroll internally: "+JSON.stringify(metric));
+ if(width===1440&&metric.boardScroll>metric.boardClient+1)throw new Error("desktop recurring board should fit: "+JSON.stringify(metric));
+}
+
 await page.setViewportSize({width:390,height:844});
+await page.goto(FIXTURE+"?week=2026-10-12",{waitUntil:"networkidle"});
+await page.locator(".xsa").waitFor();
 await page.locator('[data-xsa-nav="setup"]').click();
 await page.locator('[data-xsa-cell="s1-1"] .xsa-cell-open').click();
 const mobileEditor=page.locator(".xsa-editor-panel");
 await mobileEditor.waitFor();
-const mobileBox=await mobileEditor.boundingBox();
-if(!mobileBox||mobileBox.width<380||mobileBox.x>2)throw new Error("mobile editor is not a full-width sheet: "+JSON.stringify(mobileBox));
+const mobileState=await mobileEditor.evaluate(el=>{
+ const r=el.getBoundingClientRect(),actions=[...el.querySelectorAll("button")].filter(x=>getComputedStyle(x).display!=="none");
+ return {position:getComputedStyle(el).position,width:r.width,viewport:innerWidth,scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth,minAction:actions.length?Math.min(...actions.map(x=>x.getBoundingClientRect().height)):0};
+});
+if(mobileState.position==="fixed"||mobileState.position==="sticky"||mobileState.width>mobileState.viewport+1||mobileState.scroll>mobileState.client+1||mobileState.minAction<43.5)throw new Error("mobile recurring editor must be inline and unobstructed: "+JSON.stringify(mobileState));
 await mobileEditor.locator("#xsaCancel").click();
 await page.waitForFunction(()=>!document.querySelector(".xsa-editor-panel"));
 
@@ -173,4 +207,4 @@ if(errors.length)throw new Error(errors.join("\n"));
 
 await page.screenshot({path:path.join(OUT,"xstore-recurring-stable-editor.png"),fullPage:true});
 await browser.close();
-console.log("XSTORE_RECURRING_STABLE_EDITOR_BROWSER=PASS");
+console.log("SCHED_UI_011_RECURRING_RESPONSIVE=PASS");\nconsole.log("XSTORE_RECURRING_STABLE_EDITOR_BROWSER=PASS");
