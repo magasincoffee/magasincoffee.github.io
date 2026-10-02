@@ -39,7 +39,7 @@ const rawState = {
 
 const SECTION_ROUTE = Object.freeze({
   payables: "/nhap-hang/",
-  workforce: "/04_OWNER/Workforce/"
+  workforce: "/owner/scheduling/"
 });
 
 let refreshPromise = null;
