@@ -18,9 +18,11 @@ test("SCHED-UI-010 numbered roots consume bounded canonical markers without repl
   const owner=await read("04_OWNER/index.html");
   const ownerScheduling=await read("04_OWNER/Workforce/index.html");
   assert.match(manager,/manager-scheduling/);
+  assert.match(manager,/location\.pathname==='\/05_MANAGER\/'/);
   assert.match(manager,/history\.replaceState/);
   assert.match(manager,/manager-runtime-v1\.html\?v=20261002-sched-ui-005/);
   assert.match(employee,/employee-attendance/);
+  assert.match(employee,/location\.pathname==='\/06_EMPLOYEE\/'/);
   assert.match(employee,/history\.replaceState/);
   assert.match(employee,/employee-runtime-v1\.html\?v=20261003-sched-ui-007/);
   assert.match(owner,/owner-root/);
@@ -37,6 +39,8 @@ test("SCHED-UI-010 navigation prefers clean paths while keeping legacy path read
   assert.match(managerRoute,/\/manager\/scheduling\//);
   assert.match(managerRoute,/\/manager\/schedule\//);
   assert.match(managerRoute,/LEGACY_PREFIX='\/05_MANAGER'/);
+  assert.match(managerRoute,/ancestorBridgeOwnsUrl/);
+  assert.match(managerRoute,/MAGASIN_MANAGER_ROUTE_BRIDGE_V1/);
   for(const p of ["/employee/schedule/","/employee/attendance/","/employee/payroll/"])assert.ok(employeeShell.includes(p),p);
   assert.ok(globalShell.includes("['overview', '⌂', 'Tổng quan', '/owner/']"));
   assert.ok(globalShell.includes("['workforce', '▦', 'Nhân sự', '/owner/scheduling/']"));
