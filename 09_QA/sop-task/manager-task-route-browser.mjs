@@ -75,13 +75,13 @@ for (let i = 0; i < 40; i++) {
 }
 assert.ok(shell, "canonical Manager shell frame must load");
 await page.waitForURL(url=>url.pathname==="/manager/"&&url.hash==="#tasks",{timeout:10000});
-
-let taskActive = false;
-for (let i = 0; i < 50; i++) {
-  taskActive = await shell.locator("#view-tasks").evaluate(el => el.classList.contains("active"));
-  if (taskActive) break;
-  await page.waitForTimeout(100);
-}
+await shell.locator("#view-tasks.active").waitFor({state:"attached",timeout:10000});
+await page.waitForTimeout(800);
+const taskActive = await shell.locator("#view-tasks").evaluate(el => el.classList.contains("active"));
+const stableUrl = new URL(page.url());
+assert.equal(stableUrl.pathname, "/manager/");
+assert.equal(stableUrl.hash, "#tasks");
+assert.equal(taskActive, true, "Task route must remain active after bootstrap settles");
 
 const runtimeFrame = page.frames().find(f => f.url().includes("/05_MANAGER/runtime/manager-runtime-v1.html"));
 const heading = await shell.locator("#view-tasks h2").first().textContent();
