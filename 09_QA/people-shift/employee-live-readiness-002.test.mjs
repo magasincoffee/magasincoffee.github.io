@@ -23,7 +23,7 @@ test("EMLIVE-002 attendance keeps authority but hides implementation jargon",()=
 test("EMLIVE-002 runtime cache points browsers at the reconciled Schedule and Attendance assets",()=>{
   const runtime=read("06_EMPLOYEE/runtime/employee-runtime-v1.html");
   const index=read("06_EMPLOYEE/index.html");
-  assert.match(runtime,/schedule\/engine-v1\.js\?v=20260930-emlive002/);
+  assert.match(runtime,/schedule\/engine-v1\.js\?v=(?:20260930-emlive002|20261002-sched-ui-006)/);
   assert.match(runtime,/attendance\/engine-v1\.js\?v=20260930-emlive002/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive002|20260930-emlive003|20261001-ui-unified1)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive002|20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006)/);
 });
