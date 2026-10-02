@@ -92,6 +92,7 @@ function ensureCss(){
 .xsa-workspace>.xsa-board-wrap{margin-top:12px}
 .xsa-cell{width:140px;min-width:140px;padding:0!important}
 .xsa-cell-open{display:block;width:100%;min-height:72px;padding:8px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.xsa button:focus-visible,.xsa input:focus-visible,.xsa select:focus-visible,.xsa-editor-panel:focus-visible{outline:2px solid var(--m-color-info,#2F6FDE);outline-offset:2px}
 .xsa-cell-open:hover,.xsa-cell-open:focus-visible{background:#F8FBFE;outline:2px solid var(--m-color-info,#2F6FDE);outline-offset:-2px}
 .xsa-cell-open[aria-expanded="true"]{background:#F4F9FF;box-shadow:inset 0 0 0 2px #9EC7F1}
 .xsa-empty{font-size:12px;color:var(--m-color-neutral-500,#667085);padding:7px 2px}
@@ -185,7 +186,7 @@ function workflowModel(priorityReady,staffingReady){
  }else if(!staffingReady){
   model={...model,action:'setup-requirements',label:'Thiết lập nhu cầu nhân sự',title:'Hoàn thiện nhu cầu nhân sự cố định',reason:'Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi tạo lịch nháp tự động.',disabled:false};
  }else if(stage==='CONFLICT'){
-  model={...model,current:4,action:'blocked',label:'Đang khóa thao tác',title:'Cần xử lý xung đột phiên xếp lịch',reason:'Có nhiều phiên xếp lịch cùng cửa hàng và tuần. Các thao tác tạo/duyệt/phát hành đang bị khóa an toàn.',disabled:true};
+  model={...model,current:4,action:'blocked',label:'Đang khóa thao tác',title:'Cần xử lý nhiều bản nháp cùng tuần',reason:'Có nhiều bản nháp cho cùng cửa hàng và tuần. Các thao tác tạo, duyệt và phát hành tạm khóa để tránh ghi đè.',disabled:true};
  }else if(stage==='NONE'){
   model={...model,current:2,action:'auto',label:'Tạo lịch nháp tự động',title:'Tạo lịch nháp',reason:'Dữ liệu chuẩn bị đã sẵn sàng. Hệ thống sẽ áp dụng cấu hình cố định vào tuần đang chọn.',disabled:false};
  }else if(stage==='DRAFT'&&validation==='VALID'){
@@ -224,7 +225,7 @@ function cellHtml(store,day){
  const selected=state.editing&&String(state.editorCell?.storeId||'')===String(store.id)&&Number(state.editorCell?.day||0)===Number(day.id);
  const label='Chỉnh '+String(store.code||store.name||'cửa hàng')+' · '+day.name;
  return '<td class="xsa-cell" data-xsa-cell="'+attr+'"><button class="xsa-cell-open" type="button" data-xsa-open-store="'+esc(store.id)+'" data-xsa-open-day="'+day.id+'" data-xsa-day-label="'+esc(day.label+' · '+day.name)+'" aria-label="'+esc(label)+'" aria-expanded="'+(selected?'true':'false')+'">'
-  +(rows.length?rows.map(({r})=>'<span class="xsa-block '+bandClass(r.start_time)+'">'+esc(hm(r.start_time))+'–'+esc(hm(r.end_time))+' · '+esc(r.target_headcount)+' người</span>').join(''):'<span class="xsa-empty">—</span>')
+  +(rows.length?rows.map(({r})=>'<span class="xsa-block '+bandClass(r.start_time)+'">'+esc(hm(r.start_time))+'–'+esc(hm(r.end_time))+' · '+esc(r.target_headcount)+' người</span>').join(''):'<span class="xsa-empty">Chưa cấu hình</span>')
   +'</button></td>';
 }
 
@@ -246,11 +247,11 @@ function editorHtml(){
    +'<label class="xsa-field"><span>Bắt đầu</span><input type="time" aria-label="Bắt đầu" data-xsa-f="start_time" value="'+esc(r.start_time)+'"></label>'
    +'<label class="xsa-field"><span>Kết thúc</span><input type="time" aria-label="Kết thúc" data-xsa-f="end_time" value="'+esc(r.end_time)+'"></label>'
    +'<label class="xsa-field"><span>Số người</span><input type="number" min="1" max="20" step="1" aria-label="Số người" data-xsa-f="target_headcount" value="'+esc(r.target_headcount||1)+'"></label>'
-   +'<button class="xsa-remove" type="button" data-xsa-remove="'+index+'">Xóa khung</button>'
+   +'<button class="xsa-remove" type="button" data-xsa-remove="'+index+'" aria-label="Xóa khung giờ '+esc(day.name)+' của '+esc(store.code||store.name||'cửa hàng')+'">Xóa khung giờ này</button>'
   +'</div>'
  ).join('');
- return '<aside class="xsa-editor-panel" role="dialog" aria-label="Chỉnh nhu cầu nhân sự '+esc(day.name)+'">'
-  +'<div class="xsa-editor-head"><div><div class="xsa-kicker">Chỉnh một ngày</div><h5>'+esc(store.code)+' · '+esc(store.name)+'</h5><p>'+esc(day.name)+' · Cấu hình cố định hàng tuần</p></div></div>'
+ return '<aside class="xsa-editor-panel" role="region" aria-labelledby="xsaEditorTitle" tabindex="-1">'
+  +'<div class="xsa-editor-head"><div><div class="xsa-kicker">Chỉnh một ngày</div><h5 id="xsaEditorTitle">'+esc(store.code)+' · '+esc(store.name)+'</h5><p>'+esc(day.name)+' · Cấu hình cố định hàng tuần</p></div></div>'
   +(blocks||'<div class="xsa-empty">Chưa có khung giờ cho ngày này.</div>')
   +'<button class="xsa-add-block" type="button" id="xsaAddBlock">+ Thêm khung</button>'
   +'<div class="xsa-editor-actions"><button class="btn" type="button" id="xsaCancel">Hủy thay đổi</button><button class="btn primary" type="button" id="xsaSave">Lưu nhu cầu hàng tuần</button></div>'
@@ -275,6 +276,9 @@ function render(){
  const complete=requirementsReady&&totalStores>0&&storeCount===totalStores;
  const workflow=workflowModel(priorityReady,complete);
  const surface=state.surface==='setup'?'setup':'week';
+ const liveMessage=state.loading?'Đang tải nhu cầu nhân sự hàng tuần…':state.busy?'Đang xử lý thay đổi…':state.message;
+ const liveType=(state.loading||state.busy)?'':state.messageType;
+ const liveHtml=liveMessage?'<div class="xsa-status '+esc(liveType)+'" role="'+(liveType==='error'?'alert':'status')+'" aria-live="'+(liveType==='error'?'assertive':'polite')+'">'+esc(liveMessage)+'</div>':'';
  const summary=[
   '<span class="xsa-pill">'+state.requirements.length+' khung cố định</span>',
   '<span class="xsa-pill '+(storeCount===totalStores&&totalStores?'ok':'warn')+'">'+storeCount+'/'+totalStores+' CN đã cấu hình</span>'
@@ -283,32 +287,32 @@ function render(){
  if(state.assignmentCount!==null)summary.push('<span class="xsa-pill ok">'+state.assignmentCount+' ca đã được xếp tự động</span>');
 
  const nav='<div class="xsa-ia-nav" role="tablist" aria-label="Khu vực xếp lịch">'
-  +'<button type="button" role="tab" data-xsa-nav="week" aria-selected="'+(surface==='week')+'">Lập lịch tuần</button>'
-  +'<button type="button" role="tab" data-xsa-nav="setup" aria-selected="'+(surface==='setup')+'">Thiết lập xếp lịch</button>'
+  +'<button id="xsaTabWeek" type="button" role="tab" data-xsa-nav="week" aria-controls="xsaSurfaceWeek" aria-selected="'+(surface==='week')+'" tabindex="'+(surface==='week'?'0':'-1')+'">Lập lịch tuần</button>'
+  +'<button id="xsaTabSetup" type="button" role="tab" data-xsa-nav="setup" aria-controls="xsaSurfaceSetup" aria-selected="'+(surface==='setup')+'" tabindex="'+(surface==='setup'?'0':'-1')+'">Thiết lập xếp lịch</button>'
   +'</div>';
 
- const weekSurface='<div class="xsa-surface" data-xsa-surface="week">'
+ const weekSurface='<div id="xsaSurfaceWeek" class="xsa-surface" data-xsa-surface="week" role="tabpanel" aria-labelledby="xsaTabWeek">'
   +'<div class="xsa-head"><div><div class="xsa-kicker">Vận hành tuần</div><h4>Lập lịch tuần</h4><div class="muted" style="margin-top:5px">Theo một luồng duy nhất từ chuẩn bị đến phát hành. Cấu hình cố định chỉ cần mở khi có thay đổi.</div></div>'
   +'<div class="xsa-actions"><button class="btn" type="button" id="xsaSetupOpen">Thiết lập xếp lịch</button></div></div>'
   +workflowHtml(workflow,summary)
   +'<div class="xsa-week-note">Các số lượng phía trên chỉ là thông tin hỗ trợ. Hãy dùng <b>Việc cần làm tiếp theo</b> làm hành động chính cho trạng thái hiện tại.</div>'
   +shortagesHtml()
-  +(state.message?'<div class="xsa-status '+esc(state.messageType)+'">'+esc(state.message)+'</div>':'')
+  +liveHtml
   +'</div>';
 
  const priorityTarget=state.setupFocus==='priority'?' targeted':'';
  const requirementTarget=state.setupFocus==='requirements'?' targeted':'';
- const setupSurface='<div class="xsa-surface" data-xsa-surface="setup">'
+ const setupSurface='<div id="xsaSurfaceSetup" class="xsa-surface" data-xsa-surface="setup" role="tabpanel" aria-labelledby="xsaTabSetup">'
   +'<div class="xsa-head"><div><div class="xsa-kicker">Cấu hình dùng lại</div><h4>Thiết lập xếp lịch</h4><div class="muted" style="margin-top:5px">Quản lý ưu tiên cửa hàng và nhu cầu nhân sự cố định tại đây. Những thiết lập này được dùng lại cho các tuần sau cho đến khi bạn thay đổi.</div></div>'
   +'<div class="xsa-actions"><button class="btn" type="button" id="xsaWeekOpen">← Lập lịch tuần</button></div></div>'
   +'<div class="xsa-setup-grid">'
   +'<section class="xsa-setup-card'+priorityTarget+'" data-xsa-setup-section="priority" tabindex="-1"><h5>Ưu tiên cửa hàng</h5><p>'+(priorityReady?'Tất cả nhân viên hiện đã có ưu tiên cửa hàng.':'Còn '+state.unconfiguredEmployeeCount+' nhân viên chưa có ưu tiên cửa hàng.')+' Phần chỉnh sửa vẫn dùng màn hình Nhân viên hiện có.</p><div class="xsa-actions"><button class="btn" type="button" id="xsaStaff">Mở ưu tiên cửa hàng</button></div></section>'
   +'<section class="xsa-setup-card'+requirementTarget+'" data-xsa-setup-section="requirements" tabindex="-1"><div class="xsa-head"><div><h5>Nhu cầu nhân sự cố định hàng tuần</h5><p>Cấu hình một lần theo cửa hàng × thứ trong tuần × khung giờ × số người; không chọn ngày lịch và không cần nhập lại mỗi tuần.</p></div><div class="xsa-actions"><button class="btn" type="button" id="xsaConfig">Chỉnh nhu cầu hàng tuần</button></div></div>'
   +'<div class="xsa-summary">'+summary.join('')+'</div>'
-  +'<div class="xsa-recurring-note"><b>Cấu hình cố định hàng tuần:</b> hệ thống không tự đoán số người.<div class="xsa-band-legend" aria-label="Quy ước màu khung giờ"><span><i class="xsa-band-dot morning"></i>05:00–12:00 · Vàng</span><span><i class="xsa-band-dot afternoon"></i>12:00–17:00 · Đỏ nhạt</span><span><i class="xsa-band-dot evening"></i>17:00–22:00 · Xanh dương nhạt</span></div></div>'
+  +'<div class="xsa-recurring-note"><b>Cấu hình cố định hàng tuần:</b> hệ thống không tự đoán số người.<div class="xsa-band-legend" aria-label="Khung giờ nhân sự"><span><i class="xsa-band-dot morning" aria-hidden="true"></i>Ca sáng · 05:00–12:00</span><span><i class="xsa-band-dot afternoon" aria-hidden="true"></i>Ca chiều · 12:00–17:00</span><span><i class="xsa-band-dot evening" aria-hidden="true"></i>Ca tối · 17:00–22:00</span></div></div>'
   +'<div class="xsa-workspace'+(state.editing?' has-editor':'')+'">'+boardHtml()+editorHtml()+'</div>'
   +'</section></div>'
-  +(state.message?'<div class="xsa-status '+esc(state.messageType)+'">'+esc(state.message)+'</div>':'')
+  +liveHtml
   +'</div>';
 
  m.innerHTML='<section class="xsa" data-xsa-active-surface="'+surface+'">'+nav+(surface==='setup'?setupSurface:weekSurface)+'</section>';
@@ -368,8 +372,10 @@ async function saveRequirements(){
   }));
   const q=await client().rpc('replace_workforce_recurring_staffing_requirements_v1',{p_requirements:payload});
   if(q.error)throw q.error;
+  const restore={storeId:String(state.editorCell?.storeId||''),day:Number(state.editorCell?.day||0)};
   state.editing=false;state.editorCell=null;state.loaded=false;
   await loadRequirements();
+  setTimeout(()=>[...(mount()?.querySelectorAll('[data-xsa-open-store]')||[])].find(x=>String(x.dataset.xsaOpenStore||'')===restore.storeId&&Number(x.dataset.xsaOpenDay||0)===restore.day)?.focus(),0);
   state.message='Đã lưu '+Number(q.data?.requirement_count??payload.length)+' khung nhu cầu hàng tuần. Cấu hình này được dùng lại cho mọi tuần cho đến khi bạn chỉnh và lưu.';state.messageType='ok';render();
  }catch(e){console.warn('[XSTORE_STAFFING_SAVE]',e);state.message='Không thể lưu nhu cầu nhân sự lúc này. Vui lòng kiểm tra dữ liệu và thử lại.';state.messageType='error';render()}
  finally{state.busy=false;render()}
@@ -439,7 +445,18 @@ function bind(){
   state.setupFocus=focus;
   render();
  };
- m.querySelectorAll('[data-xsa-nav]').forEach(b=>b.addEventListener('click',()=>openSurface(b.dataset.xsaNav)));
+ m.querySelectorAll('[data-xsa-nav]').forEach(b=>{
+  b.addEventListener('click',()=>openSurface(b.dataset.xsaNav));
+  b.addEventListener('keydown',e=>{
+   if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+   e.preventDefault();
+   const tabs=[...m.querySelectorAll('[data-xsa-nav]')],i=tabs.indexOf(b);
+   const next=e.key==='Home'?tabs[0]:e.key==='End'?tabs[tabs.length-1]:tabs[(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length];
+   const target=next?.dataset?.xsaNav||'week';
+   openSurface(target);
+   setTimeout(()=>mount()?.querySelector('[data-xsa-nav="'+target+'"]')?.focus(),0);
+  });
+ });
  m.querySelector('#xsaSetupOpen')?.addEventListener('click',()=>openSurface('setup'));
  m.querySelector('#xsaWeekOpen')?.addEventListener('click',()=>openSurface('week'));
  m.querySelectorAll('[data-xsa-go-setup]').forEach(b=>b.addEventListener('click',()=>openSurface('setup',b.dataset.xsaGoSetup||null)));
@@ -455,9 +472,19 @@ function bind(){
   state.editing=true;
   state.editorCell={storeId:b.dataset.xsaOpenStore||'',day:Number(b.dataset.xsaOpenDay||0)};
   state.message='';state.messageType='';render();
-  if(window.matchMedia?.('(max-width:760px)').matches)setTimeout(()=>m.querySelector('.xsa-editor-panel')?.scrollIntoView?.({block:'start'}),0);
+  setTimeout(()=>{
+   const editor=mount()?.querySelector('.xsa-editor-panel');
+   editor?.focus({preventScroll:true});
+   if(window.matchMedia?.('(max-width:760px)').matches)editor?.scrollIntoView?.({block:'start'});
+  },0);
  }));
- m.querySelector('#xsaCancel')?.addEventListener('click',()=>{state.editing=false;state.editorCell=null;state.loaded=false;void loadRequirements()});
+ m.querySelector('#xsaCancel')?.addEventListener('click',()=>{
+  const restore={storeId:String(state.editorCell?.storeId||''),day:Number(state.editorCell?.day||0)};
+  state.editing=false;state.editorCell=null;state.loaded=false;
+  void loadRequirements().finally(()=>setTimeout(()=>{
+   [...(mount()?.querySelectorAll('[data-xsa-open-store]')||[])].find(x=>String(x.dataset.xsaOpenStore||'')===restore.storeId&&Number(x.dataset.xsaOpenDay||0)===restore.day)?.focus();
+  },0));
+ });
  m.querySelector('#xsaSave')?.addEventListener('click',saveRequirements);
  m.querySelector('#xsaNextAction')?.addEventListener('click',async e=>{
   const action=e.currentTarget?.dataset?.xsaNextAction||'';
@@ -476,7 +503,9 @@ function bind(){
   render();
  });
  m.querySelectorAll('[data-xsa-remove]').forEach(b=>b.addEventListener('click',()=>{
-  syncFromDom();state.requirements.splice(Number(b.dataset.xsaRemove),1);render();
+  syncFromDom();state.requirements.splice(Number(b.dataset.xsaRemove),1);
+  state.message='Đã bỏ khung giờ khỏi thay đổi đang chỉnh. Bấm “Lưu nhu cầu hàng tuần” để lưu thay đổi.';state.messageType='';
+  render();
  }));
  if(state.surface==='setup'&&state.setupFocus){
   const focus=state.setupFocus;state.setupFocus=null;
