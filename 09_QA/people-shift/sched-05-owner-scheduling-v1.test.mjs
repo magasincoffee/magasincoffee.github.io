@@ -16,7 +16,8 @@ test("SCHED-05 Owner runtime reuses the canonical Manager scheduling writer",asy
   assert.doesNotMatch(runtime,/\/04_OWNER\/Workforce\/01-demand\/engine-v1\.js/);
   assert.doesNotMatch(runtime,/\/04_OWNER\/Workforce\/02-review\/engine-v1\.js/);
   assert.doesNotMatch(runtime,/\/04_OWNER\/Workforce\/03-publish\/engine-v1\.js/);
-  assert.match(runtime,/owner-scheduling-overview-v1\.js\?v=20261003-sched-ui-008/);\n  assert.doesNotMatch(runtime,/cross-store-master-v1\.js/);
+  assert.match(runtime,/owner-scheduling-overview-v1\.js\?v=20261003-sched-ui-008/);
+  assert.doesNotMatch(runtime,/cross-store-master-v1\.js/);
   assert.match(runtime,/Lập lịch tuần/);
   assert.doesNotMatch(runtime,/Enterprise oversight|One canonical writer|No direct table DML|Availability/);
   assert.match(index,/owner-workforce-runtime\.html\?v=20261003-sched-ui-008/);
