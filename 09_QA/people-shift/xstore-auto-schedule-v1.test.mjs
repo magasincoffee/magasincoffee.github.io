@@ -37,8 +37,9 @@ test("SCHED-UI-002 separates weekly operation from recurring scheduling setup wi
  for(const label of ["Lập lịch tuần","Thiết lập xếp lịch","Ưu tiên cửa hàng","Nhu cầu nhân sự cố định hàng tuần"])assert.ok(ui.includes(label),label);
  assert.match(ui,/data-xsa-nav="week"/);
  assert.match(ui,/data-xsa-nav="setup"/);
- assert.match(ui,/data-xsa-go-setup="priority"/);
- assert.match(ui,/data-xsa-go-setup="requirements"/);
+ assert.match(ui,/action:'setup-priority'/);
+ assert.match(ui,/action:'setup-requirements'/);
+ assert.match(ui,/data-xsa-next-action/);
  assert.match(ui,/data-xsa-setup-section="priority"/);
  assert.match(ui,/data-xsa-setup-section="requirements"/);
  assert.match(ui,/Phần chỉnh sửa vẫn dùng màn hình Nhân viên hiện có/);
