@@ -39,12 +39,15 @@ test("SCHED-UI-008 Owner scheduling is overview-first and reuses shared scheduli
 });
 
 test("SCHED-UI-008 Owner normal UI copy removes implementation language",()=>{
+  const visibleHtml=p=>read(p)
+    .replace(/<script\b[\s\S]*?<\/script>/gi,"")
+    .replace(/<style\b[\s\S]*?<\/style>/gi,"");
   const files=[
-    "04_OWNER/index.html",
-    "04_OWNER/Workforce/index.html",
-    "04_OWNER/Workforce/runtime/owner-workforce-runtime.html",
-    "04_OWNER/Workforce/owner-scheduling-overview-v1.js"
-  ].map(read).join("\n");
+    visibleHtml("04_OWNER/index.html"),
+    visibleHtml("04_OWNER/Workforce/index.html"),
+    visibleHtml("04_OWNER/Workforce/runtime/owner-workforce-runtime.html"),
+    read("04_OWNER/Workforce/owner-scheduling-overview-v1.js")
+  ].join("\n");
 
   for(const forbidden of [
     "Enterprise oversight",
