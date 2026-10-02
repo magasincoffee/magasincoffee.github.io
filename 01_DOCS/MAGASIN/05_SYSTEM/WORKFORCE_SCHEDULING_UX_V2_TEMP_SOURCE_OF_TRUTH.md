@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 READY / SCHED-UI-009→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 READY / SCHED-UI-010→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -163,8 +163,8 @@ Owner/release chain:
 | SCHED-UI-005 | Shared canonical time-band classifier | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-006 | Employee official schedule time-band integration | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-007 | Employee availability CTA + editor UX | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **BLOCKED BY 008** |
+| SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **BLOCKED BY 009** |
 | SCHED-UI-011 | Responsive/mobile scheduling redesign | **BLOCKED BY 010** |
 | SCHED-UI-012 | Accessibility, states and Vietnamese copy hardening | **BLOCKED BY 011** |
@@ -498,6 +498,19 @@ Use Vietnamese UX copy.
 
 Do not create an Owner-specific scheduling writer.
 
+Completion evidence — 2026-10-03:
+
+- implementation continued on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `36489c0c80665015864ca39fc545463bd0fa783e`;
+- Owner scheduling is overview-first: CN1–CN4 are shown before detail, with per-store readiness/state derived through the existing scheduling readers;
+- selecting a store opens the shared Manager scheduling surface through the existing shared scheduling component/API; no Owner-specific scheduling writer, schema, RPC, or parallel mutation authority was introduced;
+- normal Owner scheduling UX uses Vietnamese operational copy and removes the specified technical labels/phrases from normal presentation;
+- shared scheduling detail and tabs remain hidden before store selection, with explicit keyboard focus and mobile-safe controls on the overview/drill-down path;
+- historical SCHED-01, SCHED-02, SCHED-05, SCHED-07, UI2-015, UI2-016, and UI2-017 regression contracts were advanced to the overview-first Owner presentation while retaining canonical reader/writer and role-authority assertions;
+- successful exact-head durable CI: Procurement QA Robot PR `37064009841`, SOP Task Tests PR `37064010017`, AUTH-PROD Regression Contract PR `37064009849`, UI2 Cross Role Acceptance PR `37064009850`, People Shift Day-10 Tests PR `37064010001`, Owner Control Tower Tests PR `37064010013`, UI2 Cross Role Acceptance push `37064004875`, People Shift Day-10 Tests push `37064004912`;
+- PR remains open and unmerged; no production-impacting product code from this task was merged to `main`;
+- no Owner input is required to close this technical task.
+
 ## 16. SCHED-UI-009 — Canonical clean route scaffolding
 
 Create safe user-facing route entrypoints:
@@ -809,10 +822,12 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-007 = DONE / VERIFIED`
 
-`SCHED-UI-008 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-008 = DONE / VERIFIED`
+
+`SCHED-UI-009 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
 Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
 
-Do not execute SCHED-UI-009 or later before SCHED-UI-008 is complete.
+Do not execute SCHED-UI-010 or later before SCHED-UI-009 is complete.
