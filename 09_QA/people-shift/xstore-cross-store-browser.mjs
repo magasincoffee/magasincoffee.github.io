@@ -116,6 +116,9 @@ autoCall=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==
 if(autoCall?.args?.p_week_start!=="2026-10-12")throw new Error("next-week projection mismatch: "+JSON.stringify(autoCall));
 if(autoCall?.args?.p_algorithm_version!=="XSTORE_GLOBAL_RECURRING_V1")throw new Error(JSON.stringify(autoCall));
 
+autoText=(await page.locator(".xsa").innerText()).replace(/\s+/g," ");
+if(!autoText.includes("áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp"))throw new Error(autoText);
+
 await page.setViewportSize({width:390,height:844});
 await page.locator('[data-xsa-cell="s1-1"] .xsa-cell-open').click();
 const mobileEditor=page.locator(".xsa-editor-panel");
@@ -133,8 +136,6 @@ for(const forbidden of ["list_cross_store_staffing_requirements_v1","replace_cro
  if(rpcNames.includes(forbidden))throw new Error("forbidden RPC "+forbidden);
 }
 
-autoText=(await page.locator(".xsa").innerText()).replace(/\s+/g," ");
-if(!autoText.includes("áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp"))throw new Error(autoText);
 if(errors.length)throw new Error(errors.join("\n"));
 
 await page.screenshot({path:path.join(OUT,"xstore-recurring-stable-editor.png"),fullPage:true});
