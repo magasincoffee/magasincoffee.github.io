@@ -128,15 +128,30 @@ function ensureCss(){
  .xsa-actions .btn{flex:1 1 180px;min-height:44px}
  .xsa-board{min-width:1100px}
 }
+@media(max-width:1024px){
+ .xsa button,.xsa input,.xsa select{min-height:44px}
+}
 @media(max-width:760px){
- .xsa-workspace{display:block}
- .xsa-editor-panel{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:50;width:100%;max-height:86vh;overflow:auto;margin:0;padding:16px;border-radius:18px 18px 0 0;box-shadow:0 -12px 36px rgba(16,24,40,.18)}
+ .xsa-workspace,.xsa-workspace.has-editor{display:flex;flex-direction:column;gap:12px}
+ .xsa-editor-panel{position:static;order:-1;left:auto;right:auto;bottom:auto;top:auto;z-index:auto;width:100%;max-height:none;overflow:visible;margin:0;padding:14px;border-radius:14px;box-shadow:0 4px 16px rgba(16,24,40,.06)}
 }
 @media(max-width:600px){
  .xsa{padding:12px}
  .xsa-head{gap:12px}
  .xsa-actions{display:grid;grid-template-columns:1fr;width:100%}
  .xsa-actions .btn{width:100%}
+ .xsa-ia-nav{display:grid;grid-template-columns:1fr 1fr;width:100%}
+ .xsa-ia-nav button{min-height:44px;padding:0 10px}
+ .xsa-board-wrap{overflow:visible;border:0;background:transparent;scrollbar-gutter:auto}
+ .xsa-board{display:block;width:100%;min-width:0;border-collapse:separate}
+ .xsa-board thead{display:none}
+ .xsa-board tbody{display:grid;gap:12px}
+ .xsa-board tr{display:grid;grid-template-columns:1fr;gap:8px;padding:12px;border:1px solid var(--m-border-default,#EAECF0);border-radius:12px;background:#fff;box-shadow:0 2px 10px rgba(16,24,40,.04)}
+ .xsa-board td,.xsa-board th{display:block;border:0;padding:0}
+ .xsa-board th:first-child,.xsa-board td:first-child{position:static;left:auto;z-index:auto;width:auto;min-width:0;padding:0 0 8px!important;border-bottom:1px solid var(--m-border-default,#EAECF0)!important;background:transparent}
+ .xsa-cell{width:auto;min-width:0;padding:0!important}
+ .xsa-cell-open{min-height:64px;padding:10px;border:1px solid var(--m-border-default,#EAECF0);border-radius:10px;background:#fff}
+ .xsa-cell-open::before{content:attr(data-xsa-day-label);display:block;margin-bottom:6px;color:var(--m-color-neutral-500,#667085);font-size:10px;line-height:14px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
  .xsa-editor-actions{display:grid;grid-template-columns:1fr}
  .xsa-editor-actions .btn{width:100%;min-height:44px}
 }
@@ -205,7 +220,7 @@ function cellHtml(store,day){
  const attr=esc(String(store.id)+'-'+day.id);
  const selected=state.editing&&String(state.editorCell?.storeId||'')===String(store.id)&&Number(state.editorCell?.day||0)===Number(day.id);
  const label='Chỉnh '+String(store.code||store.name||'cửa hàng')+' · '+day.name;
- return '<td class="xsa-cell" data-xsa-cell="'+attr+'"><button class="xsa-cell-open" type="button" data-xsa-open-store="'+esc(store.id)+'" data-xsa-open-day="'+day.id+'" aria-label="'+esc(label)+'" aria-expanded="'+(selected?'true':'false')+'">'
+ return '<td class="xsa-cell" data-xsa-cell="'+attr+'"><button class="xsa-cell-open" type="button" data-xsa-open-store="'+esc(store.id)+'" data-xsa-open-day="'+day.id+'" data-xsa-day-label="'+esc(day.label+' · '+day.name)+'" aria-label="'+esc(label)+'" aria-expanded="'+(selected?'true':'false')+'">'
   +(rows.length?rows.map(({r})=>'<span class="xsa-block '+bandClass(r.start_time)+'">'+esc(hm(r.start_time))+'–'+esc(hm(r.end_time))+' · '+esc(r.target_headcount)+' người</span>').join(''):'<span class="xsa-empty">—</span>')
   +'</button></td>';
 }
@@ -437,6 +452,7 @@ function bind(){
   state.editing=true;
   state.editorCell={storeId:b.dataset.xsaOpenStore||'',day:Number(b.dataset.xsaOpenDay||0)};
   state.message='';state.messageType='';render();
+  if(window.matchMedia?.('(max-width:760px)').matches)setTimeout(()=>m.querySelector('.xsa-editor-panel')?.scrollIntoView?.({block:'start'}),0);
  }));
  m.querySelector('#xsaCancel')?.addEventListener('click',()=>{state.editing=false;state.editorCell=null;state.loaded=false;void loadRequirements()});
  m.querySelector('#xsaSave')?.addEventListener('click',saveRequirements);
