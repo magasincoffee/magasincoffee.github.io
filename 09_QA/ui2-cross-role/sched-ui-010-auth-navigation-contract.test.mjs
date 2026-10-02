@@ -33,6 +33,7 @@ test("SCHED-UI-010 numbered roots consume bounded canonical markers without repl
 
 test("SCHED-UI-010 navigation prefers clean paths while keeping legacy path readers",async()=>{
   const managerRoute=await read("05_MANAGER/runtime/compat/router/manager-route-state-v2.js");
+  const managerRuntime=await read("05_MANAGER/runtime/manager-runtime-v1.html");
   const managerBridge=await read("05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js");
   const employeeShell=await read("02_CORE/ui/magasin-ui-v2-employee-shell.js");
   const globalShell=await read("02_CORE/ui/magasin-ui-v2-shell.js");
@@ -42,6 +43,8 @@ test("SCHED-UI-010 navigation prefers clean paths while keeping legacy path read
   assert.match(managerRoute,/LEGACY_PREFIX='\/05_MANAGER'/);
   assert.match(managerRoute,/ancestorBridgeOwnsUrl/);
   assert.match(managerRoute,/MAGASIN_MANAGER_ROUTE_BRIDGE_V1/);
+  assert.match(managerRuntime,/['"]tasks['"]/);
+  assert.match(managerRuntime,/['"]settings['"]/);
   assert.match(managerRoute,/if\(ancestorBridgeOwnsUrl\(\)\)return/);
   assert.match(managerBridge,/routeBridgeObserverBound/);
   assert.match(managerBridge,/active&&active!==wanted/);
