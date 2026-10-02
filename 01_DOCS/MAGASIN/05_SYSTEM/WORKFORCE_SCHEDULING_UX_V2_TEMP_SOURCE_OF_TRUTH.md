@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 READY / SCHED-UI-010→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 READY / SCHED-UI-011→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -164,8 +164,8 @@ Owner/release chain:
 | SCHED-UI-006 | Employee official schedule time-band integration | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-007 | Employee availability CTA + editor UX | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **BLOCKED BY 009** |
+| SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-011 | Responsive/mobile scheduling redesign | **BLOCKED BY 010** |
 | SCHED-UI-012 | Accessibility, states and Vietnamese copy hardening | **BLOCKED BY 011** |
 | SCHED-UI-013 | Focused regression tests for changed scheduling contracts | **BLOCKED BY 012** |
@@ -533,6 +533,21 @@ At this task:
 - direct links and reload must resolve;
 - no Auth cutover yet unless required by the scaffold.
 
+Completion evidence — 2026-10-03:
+
+- implementation continued on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `cfec0e5d62c17da7b29bc4cd21da18375f96a040`;
+- clean guarded entrypoints exist for `/manager/`, `/manager/scheduling/`, `/manager/schedule/`, `/employee/`, `/employee/schedule/`, `/employee/attendance/`, `/employee/payroll/`, `/owner/`, and `/owner/scheduling/`;
+- all clean routes delegate to preserved numbered implementations through one allowlisted shared route adapter; no duplicate Manager, Employee, Owner, scheduling runtime, or scheduling writer was introduced;
+- route guards remain fail-closed: logged-out access returns to Auth and wrong-role access resolves to the existing role-unavailable path;
+- direct clean-route HTTP entry and repeat direct reload were qualified by the SCHED-UI-009 browser gate;
+- Auth role routing was intentionally not migrated in this task and remains reserved for SCHED-UI-010;
+- SCHED-UI-009 static contract and browser gate were added to the UI2 Cross Role workflow, including workflow path coverage for the new clean route directories and shared route adapter;
+- exact-head SCHED-UI-009 clean route browser step passed in UI2 Cross Role Acceptance PR run `37065482177`, job `111032131471`, step 16;
+- successful exact-head durable CI: Procurement QA Robot PR `37065482015`, SOP Task Tests PR `37065481937`, AUTH-PROD Regression Contract PR `37065481936`, Owner Control Tower Tests PR `37065482287`, UI2 Cross Role Acceptance PR `37065482177`, People Shift Day-10 Tests PR `37065482003`, UI2 Cross Role Acceptance push `37065475077`;
+- PR remains open and unmerged; no production-impacting product code from this task was merged to `main`;
+- no Owner input is required to close this technical task.
+
 ## 17. SCHED-UI-010 — Auth/navigation migration + compatibility
 
 Update:
@@ -824,10 +839,12 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-008 = DONE / VERIFIED`
 
-`SCHED-UI-009 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-009 = DONE / VERIFIED`
+
+`SCHED-UI-010 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
 Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
 
-Do not execute SCHED-UI-010 or later before SCHED-UI-009 is complete.
+Do not execute SCHED-UI-011 or later before SCHED-UI-010 is complete.
