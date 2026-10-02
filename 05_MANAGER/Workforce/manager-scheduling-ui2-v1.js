@@ -217,7 +217,7 @@ function boot(){
  if(!p){setTimeout(boot,80);return}
  sync();
  const observer=new MutationObserver(()=>sync());
- observer.observe(p,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-busy','class']});
+ observer.observe(p,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-busy']});
  window.MAGASIN_MANAGER_SCHEDULING_UI2_012={refresh:sync};
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
