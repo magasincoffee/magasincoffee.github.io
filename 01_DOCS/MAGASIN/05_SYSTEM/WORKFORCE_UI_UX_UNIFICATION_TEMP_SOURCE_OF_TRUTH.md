@@ -3,7 +3,7 @@
 **Track ID:** `WORKFORCE_UI_UX_UNIFICATION_V1`  
 **Lifecycle:** TEMPORARY — delete this file after WUI-009 completes.  
 **Created:** 2026-10-01  
-**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 DONE / WUI-004 DONE / WUI-005 DONE / WUI-006 READY / WUI-007→009 BLOCKED BY ORDER  
+**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 DONE / WUI-004 DONE / WUI-005 DONE / WUI-006 DONE / WUI-007 READY / WUI-008→009 BLOCKED BY ORDER  
 **Repository:** `magasincoffee/magasincoffee.github.io`
 
 ## 0. Authority boundary
@@ -225,8 +225,8 @@ PR #363 remains open. Merge and exact-main qualification remain reserved for `WU
 | WUI-003 | Manager + Employee layout foundation acceptance | Prove full remaining viewport usage, correct sidebar/main relationship, contained board scrolling, responsive/touch behavior | **DONE / ACCEPTANCE GREEN** |
 | WUI-004 | Typography / palette / time-band visual acceptance | Prove one font/palette foundation and yellow/red/light-blue start-time rule across all required scheduling surfaces | **DONE / ACCEPTANCE GREEN** |
 | WUI-005 | Vietnamese UX copy acceptance | Remove user-visible technical/mixed-language terms from primary Manager/Employee Workforce surfaces; keep internal identifiers internal | **DONE / ACCEPTANCE GREEN** |
-| WUI-006 | Cross-role browser regression | Run bounded Manager + Employee browser regression for navigation, scheduling, time editor, colors, reload and responsive states | **READY / NEXT AUTHORITATIVE TASK** |
-| WUI-007 | PR merge + exact-main qualification | PR #363 or superseding PR green → merge → exact-main source/UI2/People Shift/SOP/Auth/Owner/Pages gates green | **BLOCKED BY WUI-006** |
+| WUI-006 | Cross-role browser regression | Run bounded Manager + Employee browser regression for navigation, scheduling, time editor, colors, reload and responsive states | **DONE / ACCEPTANCE GREEN** |
+| WUI-007 | PR merge + exact-main qualification | PR #363 or superseding PR green → merge → exact-main source/UI2/People Shift/SOP/Auth/Owner/Pages gates green | **READY / NEXT AUTHORITATIVE TASK** |
 | WUI-008 | Production-safe UI acceptance | Verify deployed Manager + Employee UI, cache cutover, no stale 05:00 reset, Vietnamese copy and color rule; no business data fabricated | **BLOCKED BY WUI-007** |
 | WUI-009 | Closure evidence + TEMP cleanup | Write permanent acceptance evidence, verify primary XSTORE SOT unchanged, then delete this TEMP SOT in the closure PR | **BLOCKED BY WUI-008** |
 
@@ -485,6 +485,23 @@ DONE evidence:
 - UI2 cross-role browser gate green;
 - no console/page errors from changed UI assets.
 
+WUI-006 closure:
+
+- accepted PR #363 head: `9c4a4ccbeaa420c12b335c89c4d52dbee370c354`;
+- People Shift Day-10 Tests PR run `36959280988`, job `110689129792` — SUCCESS;
+- UI2 Cross Role Acceptance PR run `36959280994`, job `110689129556` — SUCCESS;
+- People Shift artifact `11206584841` and UI2 artifact `11207601281` are present and not expired at acceptance time;
+- `SCHED_04_MANAGER_SCHEDULING_BROWSER=PASS`, `MANAGER_WORKFORCE_CANONICAL_BROWSER=PASS`, `XSTORE_RECURRING_STABLE_EDITOR_BROWSER=PASS`, `EMPLOYEE_PUBLISHED_WEEKLY_SCHEDULE_BROWSER=PASS`, `SCHED_07_UI_RESPONSIVE=PASS`;
+- add/remove/save/reload and recurring target-week reuse remain green;
+- four-store weekly projection contract remains single-reader/no-second-writer and store switching clears stale projections before reload;
+- Employee schedule direct navigation/back/reload and target-week reader behavior remain green;
+- TASK-108 cold/reload closure is green across 9 suites;
+- UI2 Manager scheduling matrix remains green at `1440/1024/768/390`; Employee representative responsive coverage remains green at `360/390/430/768/1440`;
+- browser diagnostics for changed Workforce surfaces report zero unhandled page/console/request/5xx errors;
+- durable acceptance evidence: `01_DOCS/MAGASIN/05_SYSTEM/WUI_006_CROSS_ROLE_BROWSER_ACCEPTANCE.md`;
+- no production business data, staffing demand, Store Priority value, schema, RPC authority, auth boundary or scheduling authority was changed;
+- next task: `WUI-007`.
+
 ### WUI-007 — PR merge + exact-main qualification
 
 Before merge:
@@ -630,4 +647,6 @@ Do not compress the estimate by skipping exact-main or production verification.
 
 `WUI-005` is **DONE**.
 
-`WUI-006` is the only authoritative next executable task. Do not execute WUI-007 or later tasks before WUI-006 is complete.
+`WUI-006` is **DONE**.
+
+`WUI-007` is the only authoritative next executable task. Do not execute WUI-008 or later tasks before WUI-007 is complete.
