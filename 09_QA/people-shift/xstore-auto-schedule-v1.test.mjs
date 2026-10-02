@@ -31,6 +31,20 @@ test("SCHED-UI-001 keeps the recurring weekly grid scan-only and edits one store
  assert.match(ui,/@media\(max-width:760px\)[\s\S]*\.xsa-editor-panel\{position:fixed;left:0;right:0;bottom:0/);
 });
 
+test("SCHED-UI-002 separates weekly operation from recurring scheduling setup without adding another writer",()=>{
+ assert.match(ui,/surface:'week'/);
+ for(const label of ["Lập lịch tuần","Thiết lập xếp lịch","Ưu tiên cửa hàng","Nhu cầu nhân sự cố định hàng tuần"])assert.ok(ui.includes(label),label);
+ assert.match(ui,/data-xsa-nav="week"/);
+ assert.match(ui,/data-xsa-nav="setup"/);
+ assert.match(ui,/data-xsa-go-setup="priority"/);
+ assert.match(ui,/data-xsa-go-setup="requirements"/);
+ assert.match(ui,/data-xsa-setup-section="priority"/);
+ assert.match(ui,/data-xsa-setup-section="requirements"/);
+ assert.match(ui,/Phần chỉnh sửa vẫn dùng màn hình Nhân viên hiện có/);
+ assert.equal((ui.match(/replace_workforce_recurring_staffing_requirements_v1/g)||[]).length,1);
+ assert.doesNotMatch(ui,/replace_.*priority|insert_.*priority/i);
+});
+
 test("C04 Robot projects recurring weekday blocks directly into target week",()=>{
  assert.match(cutover,/from public\.workforce_recurring_staffing_requirements req/);
  assert.match(cutover,/p_week_start \+ \(req\.day_of_week::integer - 1\)/);
@@ -54,7 +68,7 @@ test("C04 Manager UI calls recurring Robot and still never publishes",()=>{
  assert.doesNotMatch(ui,/Chờ C04|Đang tạm khóa đến XSTORE-C04/);
  assert.doesNotMatch(ui,/publish_schedule_generation|review_schedule_generation/);
  assert.match(master,/Hệ thống chỉ tạo lịch nháp; Quản lý vẫn kiểm tra, chỉnh sửa và phát hành/);
- assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261001-xstore-c04|20261001-ui-unified1|20261002-sched-ui-001)/);
+ assert.match(engine,/cross-store-auto-schedule-v1\\.js\\?v=(?:20261001-xstore-c04|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002)/);
 });
 
 test("historical XSTORE-007 date-bound implementation remains evidence only",()=>{
