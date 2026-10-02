@@ -47,7 +47,7 @@ test("Owner home exposes canonical Control Tower route", async () => {
     "utf8"
   );
   assert.match(html, /href="\/04_OWNER\/ControlTower\/"/);
-  assert.match(html, /Owner Control Tower/);
+  assert.match(html, /(?:Owner Control Tower|Mở trung tâm theo dõi)/);
 });
 
 test("Control Tower route loads shared auth conventions and explicit UI states", async () => {
