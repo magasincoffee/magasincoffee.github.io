@@ -3,7 +3,7 @@
 **Track ID:** `WORKFORCE_UI_UX_UNIFICATION_V1`  
 **Lifecycle:** TEMPORARY — delete this file after WUI-009 completes.  
 **Created:** 2026-10-01  
-**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 DONE / WUI-004 READY / WUI-005→009 BLOCKED BY ORDER  
+**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 DONE / WUI-004 DONE / WUI-005 READY / WUI-006→009 BLOCKED BY ORDER  
 **Repository:** `magasincoffee/magasincoffee.github.io`
 
 ## 0. Authority boundary
@@ -223,8 +223,8 @@ PR #363 remains open. Merge and exact-main qualification remain reserved for `WU
 | WUI-001 | Regression triage + contract reconciliation | Classify every current PR #363 failure; update only stale expectations; fix real regressions if any; no safety/authority weakening | **DONE / PR #363 QUALIFICATION GREEN** |
 | WUI-002 | Recurring staffing editor state acceptance | Prove existing time/headcount survives +Khung/remove/save/reload/week change; new block starts empty; no 05:00 reset | **DONE / ACCEPTANCE GREEN** |
 | WUI-003 | Manager + Employee layout foundation acceptance | Prove full remaining viewport usage, correct sidebar/main relationship, contained board scrolling, responsive/touch behavior | **DONE / ACCEPTANCE GREEN** |
-| WUI-004 | Typography / palette / time-band visual acceptance | Prove one font/palette foundation and yellow/red/light-blue start-time rule across all required scheduling surfaces | **READY / NEXT AUTHORITATIVE TASK** |
-| WUI-005 | Vietnamese UX copy acceptance | Remove user-visible technical/mixed-language terms from primary Manager/Employee Workforce surfaces; keep internal identifiers internal | **BLOCKED BY WUI-004** |
+| WUI-004 | Typography / palette / time-band visual acceptance | Prove one font/palette foundation and yellow/red/light-blue start-time rule across all required scheduling surfaces | **DONE / ACCEPTANCE GREEN** |
+| WUI-005 | Vietnamese UX copy acceptance | Remove user-visible technical/mixed-language terms from primary Manager/Employee Workforce surfaces; keep internal identifiers internal | **READY / NEXT AUTHORITATIVE TASK** |
 | WUI-006 | Cross-role browser regression | Run bounded Manager + Employee browser regression for navigation, scheduling, time editor, colors, reload and responsive states | **BLOCKED BY WUI-005** |
 | WUI-007 | PR merge + exact-main qualification | PR #363 or superseding PR green → merge → exact-main source/UI2/People Shift/SOP/Auth/Owner/Pages gates green | **BLOCKED BY WUI-006** |
 | WUI-008 | Production-safe UI acceptance | Verify deployed Manager + Employee UI, cache cutover, no stale 05:00 reset, Vietnamese copy and color rule; no business data fabricated | **BLOCKED BY WUI-007** |
@@ -391,6 +391,22 @@ DONE evidence:
 - static color-token contract green;
 - browser test proves live class transition;
 - Employee published schedule contract still green.
+
+WUI-004 closure:
+
+- accepted PR #363 head: `b257b16f3f1490c4189215d185fd90b80b386990`;
+- People Shift Day-10 Tests run `36884997422`, job `110445912700` — SUCCESS;
+- static evidence: `WORKFORCE_UI_UNIFIED_V1=PASS`;
+- typography/palette contract and `shift colors follow one visual rule across Manager and Employee scheduling` — PASS;
+- canonical background tokens remain `#FFF4CC`, `#FDE7E7`, `#E8F3FF`;
+- recurring staffing, Manager DRAFT/official projection, four-store overview and Employee published schedule are wired to the shared time-band system;
+- browser evidence: `XSTORE_RECURRING_STABLE_EDITOR_BROWSER=PASS` with live morning → afternoon → evening class transitions at the required boundaries;
+- boundary acceptance: `07:00` morning, `12:00` afternoon, `17:00` evening, empty recurring start neutral;
+- Employee schedule regressions remain green: `SCHED_03_EMPLOYEE_SCHEDULE_CONTRACT=PASS`, `UI2_007_EMPLOYEE_SCHEDULE_CONTRACT=PASS`, `EMPLOYEE_PUBLISHED_WEEKLY_SCHEDULE_BROWSER=PASS`;
+- durable artifact: `11174261324`;
+- durable acceptance evidence: `01_DOCS/MAGASIN/05_SYSTEM/WUI_004_VISUAL_TIME_BAND_ACCEPTANCE.md`;
+- no production business data, schema, RPC authority or scheduling authority was changed;
+- next task: `WUI-005`.
 
 ### WUI-005 — Vietnamese UX copy acceptance
 
@@ -595,4 +611,6 @@ Do not compress the estimate by skipping exact-main or production verification.
 
 `WUI-003` is **DONE**.
 
-`WUI-004` is the only authoritative next executable task. Do not execute WUI-005 or later tasks before WUI-004 is complete.
+`WUI-004` is **DONE**.
+
+`WUI-005` is the only authoritative next executable task. Do not execute WUI-006 or later tasks before WUI-005 is complete.
