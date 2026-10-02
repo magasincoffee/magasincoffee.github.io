@@ -7,9 +7,9 @@ const BASE="f98cfb15a47bbb66ad39c71348bb2668cf174364";
 
 test("UI2-017 role routing contract remains canonical",()=>{
   const auth=read("03_PLATFORM/01_AUTH/auth-runtime-v2.js");
-  assert.match(auth,/role === 'OWNER'\) location\.replace\('\/04_OWNER\/'\)/);
-  assert.match(auth,/\['STAFF', 'EMPLOYEE'\]\.includes\(role\)\) location\.replace\('\/06_EMPLOYEE\/'\)/);
-  assert.match(auth,/role === 'STORE_MANAGER'\) location\.replace\('\/05_MANAGER\/'\)/);
+  assert.match(auth,/role === 'OWNER'\) location\.replace\('\/owner\/'\)/);
+  assert.match(auth,/\['STAFF', 'EMPLOYEE'\]\.includes\(role\)\) location\.replace\('\/employee\/'\)/);
+  assert.match(auth,/role === 'STORE_MANAGER'\) location\.replace\('\/manager\/'\)/);
   assert.match(auth,/else location\.replace\('\/03_PLATFORM\/01_AUTH\/role-unavailable\.html'\)/);
   const employee=read("06_EMPLOYEE/index.html");
   const manager=read("05_MANAGER/index.html");
