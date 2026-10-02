@@ -82,13 +82,16 @@ test("UI2-012 explicitly represents NONE DRAFT REVIEWED PUBLISHED CONFLICT and b
   assert.match(ui,/el\.disabled=true/);
 });
 
-test("UI2-012 responsive contract contains board scrolling touch targets and focus-visible affordances",()=>{
+test("UI2-012 responsive contract keeps tablet board scroll and stacks phone draft days",()=>{
   assert.match(ui,/@media\(max-width:1100px\)/);
   assert.match(ui,/@media\(max-width:1024px\)/);
-  assert.match(ui,/@media\(max-width:520px\)/);
+  assert.match(ui,/@media\(max-width:600px\)/);
   assert.match(ui,/min-height:44px/);
   assert.match(ui,/overflow-x:auto/);
   assert.match(ui,/overscroll-behavior-x:contain/);
+  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-board-wrap\{overflow:visible;scrollbar-gutter:auto\}/);
+  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-board\{grid-template-columns:1fr;min-width:0;width:100%;gap:10px\}/);
+  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-day-title\{position:static\}/);
   assert.match(ui,/:focus-visible/);
   assert.match(ui,/outline:2px solid/);
 });
