@@ -56,6 +56,7 @@ function ensureShell(d){
     '<div class="schedule-notice" role="status" aria-live="polite"></div>'+
     '<div class="days" aria-live="polite"></div>'+
     '<div class="schedule-availability"><div><strong>Thời gian có thể làm không phải lịch chính thức</strong><p>Đây chỉ là thời gian bạn có thể nhận ca. Ca chỉ trở thành lịch làm khi đã được quản lý phát hành và xuất hiện ở phía trên.</p></div><button type="button" data-schedule-availability>Đăng ký thời gian có thể làm</button></div>';
+  globalThis.MAGASIN_EMPLOYEE?.availability?.syncLauncher?.(d);
   return panel;
 }
 function identity(d){
