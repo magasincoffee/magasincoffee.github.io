@@ -2,571 +2,656 @@
 
 **Track:** WORKFORCE_SCHEDULING_UX_V2  
 **Task prefix:** SCHED-UI  
-**Lifecycle:** TEMPORARY — delete this file only after SCHED-UI-009 closes and permanent acceptance exists.  
+**Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
-**Status:** SCHED-UI-000 BLOCKED / OWNER DESIGN SESSION REQUIRED / SCHED-UI-001→009 BLOCKED BY ORDER
+**Design approval date:** 2026-10-02  
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 READY / SCHED-UI-002→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
-This TEMP SOT owns only the Scheduling UX V2 correction track described here.
+This TEMP SOT is the sole task-state authority for the Scheduling UX V2 implementation track.
 
-It does **not** replace:
+It combines:
+
+- **Cách A** — implementation planning/task decomposition;
+- **Cách B** — Owner-approved UX/design lock.
+
+Durable design authority:
+
+`WORKFORCE_SCHEDULING_UX_V2_DESIGN_LOCK.md`
+
+This SOT does **not** replace:
 
 1. `WORKFORCE_CROSS_STORE_SCHEDULING_TEMP_SOURCE_OF_TRUTH.md`
-   - owns XSTORE scheduling business authority, recurring staffing authority, Store Priority semantics, Auto Schedule business behavior and XSTORE-011 real-data acceptance;
+   - owns XSTORE scheduling business authority, recurring staffing semantics, Store Priority semantics, Auto Schedule business behavior and XSTORE-011;
 
 2. `PRODUCTION_RELEASE_GOVERNANCE_V1_SOURCE_OF_TRUTH.md`
-   - owns Preview/Staging, Owner approval, exact RC freeze, 00:00 Asia/Ho_Chi_Minh release window, rollback and production-smoke rules;
+   - owns Preview/Staging, Owner approval, exact RC freeze, 00:00 Asia/Ho_Chi_Minh release, rollback and production smoke;
 
-3. existing Auth / Employee Registration / Workforce canonical authorities outside this UX scope.
+3. Auth / Employee Registration / Workforce canonical authorities outside this UX scope.
 
-If this UX SOT conflicts with XSTORE business semantics, XSTORE wins.
+If this SOT conflicts with XSTORE business semantics, XSTORE wins.
 
-If this UX SOT conflicts with production-delivery rules, Production Release Governance wins.
+If this SOT conflicts with production release governance, Production Release Governance wins.
 
-This track may change presentation, navigation, visual hierarchy and route presentation. It must not invent new staffing/business authority.
+## 1. Owner-approved design decisions
 
-## 1. Why this track exists
+The Owner approved the proposed Scheduling UX V2 direction on 2026-10-02.
 
-The Owner reviewed the live Scheduling experience on 2026-10-02 and identified six production UX problems.
+Locked decisions:
 
-### Owner issue 1 — recurring staffing time blocks are hard to read
+- recurring staffing weekly grid stays as a scan/read surface;
+- editing a staffing day moves to a wide dedicated editor instead of cramped controls inside 140px cells;
+- Manager separates `Lập lịch tuần` from `Thiết lập xếp lịch`;
+- Manager uses one visible guided workflow instead of multiple competing progress systems;
+- one primary next action per state;
+- shared time-band rule:
+  - `05:00 <= start < 12:00` → yellow;
+  - `12:00 <= start < 17:00` → light red;
+  - `17:00 <= start <= 22:00` → light blue;
+  - invalid/outside range → neutral;
+- Employee registration may still default to `06:00–12:00`, but a real 05:00 shift is yellow;
+- Employee next-week availability registration becomes a prominent primary scheduling action;
+- availability remains distinct from official published schedule;
+- current immediate-save behavior remains; no fake final-submit step;
+- Owner uses the same scheduling truth/components as Manager, with overview-first enterprise scope;
+- Owner-facing technical language such as canonical/writer/DML/Enterprise/DRAFT/Validate/Review/Publish is removed from normal UI;
+- canonical visible routes:
+  - `/manager/`
+  - `/manager/scheduling/`
+  - `/manager/schedule/`
+  - `/employee/`
+  - `/employee/schedule/`
+  - `/employee/attendance/`
+  - `/employee/payroll/`
+  - `/owner/`
+  - `/owner/scheduling/`
+- numbered implementation folders may remain internally during compatibility cutover;
+- mobile gets deliberate card/accordion layouts rather than compressed desktop grids.
 
-Current recurring staffing cells are too narrow.
+## 2. Original Owner-reported problems
 
-Observed problems:
+This track must close all six:
 
-- start/end time values are visually truncated;
-- controls are crowded;
-- start/end/headcount/delete do not scan as one clear row;
-- multiple time blocks in one day become difficult to read quickly.
+1. recurring staffing time controls are clipped/hard to read;
+2. Auto Schedule information hierarchy is confusing;
+3. Employee scheduling colors are not consistently visible;
+4. Employee availability registration is too easy to miss;
+5. user-facing URLs expose `04_` / `05_` / `06_` implementation paths;
+6. Owner scheduling is not yet visually/language synchronized.
 
-Required outcome:
+Additional issue found during source audit:
 
-A Manager/Owner can read each staffing block immediately as:
+7. Owner scheduling still exposes developer/system terminology.
 
-`Bắt đầu → Kết thúc → Số người → Xóa`
+## 3. Hard safety boundaries
 
-without clipped time text or ambiguous controls.
-
-### Owner issue 2 — Auto Schedule flow is visually confusing
-
-The current Auto Schedule area exposes too many status cards/actions at once.
-
-The user cannot quickly answer:
-
-- What step am I on?
-- What must I do first?
-- Why is Auto Schedule unavailable?
-- What is the single next action?
-- When am I editing a draft versus checking versus approving/publishing?
-
-Required outcome:
-
-Scheduling must behave like a guided workflow with one clearly dominant next action and explicit prerequisites.
-
-### Owner issue 3 — employee schedule does not visibly share the time-band system
-
-Manager and Employee schedule-related surfaces are not visually consistent enough.
-
-The Owner currently requests time bands described as:
-
-- 06:00–12:00;
-- 12:00–17:00;
-- 17:00–22:00.
-
-However, the previously accepted WUI rule used:
-
-- 05:00–12:00;
-- 12:00–17:00;
-- 17:00–22:00.
-
-This is an **intentional unresolved design/business presentation boundary**.
-
-Do not guess the 05:00–06:00 treatment.
-
-SCHED-UI-000 must obtain an explicit Owner decision and then define one shared rule for Manager + Employee + Owner.
-
-### Owner issue 4 — Employee availability registration is too easy to miss
-
-The current “Đăng ký thời gian có thể làm” experience is visually secondary and may require scrolling/searching.
-
-Required outcome:
-
-Employees should immediately see:
-
-- whether next-week registration is open;
-- the target week;
-- whether they have registered;
-- one clear CTA to register or edit;
-- the weekly status without needing to hunt through the page.
-
-### Owner issue 5 — production URL exposes internal numbered directories
-
-Visible URLs such as:
-
-- `/06_EMPLOYEE/`;
-- `/05_MANAGER/`;
-- `/04_OWNER/`;
-
-look like implementation structure rather than production product routes.
-
-Required outcome:
-
-Expose professional canonical role routes without numeric/internal folder prefixes.
-
-Candidate route family to be confirmed in SCHED-UI-000:
-
-- `/employee/`;
-- `/manager/`;
-- `/owner/`.
-
-Old numbered paths must remain compatible/redirected until route regression proves the new canonical paths are safe.
-
-### Owner issue 6 — Owner scheduling view must be synchronized
-
-Owner scheduling presentation must use the same scheduling language and visual system as Manager/Employee where the underlying semantics are the same.
-
-Required outcome:
-
-Owner sees the same:
-
-- shift/time-band meaning;
-- workflow-state language;
-- week/date presentation;
-- published/draft distinction;
-- scheduling visual hierarchy;
-
-without creating a second scheduling authority.
-
-## 2. Non-goals / hard safety boundaries
-
-This UX track must not fabricate or decide:
+The robot must not fabricate or decide:
 
 - Store Priority values;
 - real recurring staffing demand;
 - staffing headcount;
 - employee availability;
-- draft schedule assignments;
+- draft assignments;
 - official schedules;
 - payroll/attendance truth;
-- real Owner/Manager business decisions.
+- other real Owner/Manager business values.
 
-Do not alter schema/RPC/RLS/business authority merely to simplify UI.
+Do not change schema/RPC/RLS/business authority merely for UI convenience.
 
-If a UX requirement cannot be implemented safely without changing business authority:
+Do not create production business data for visual acceptance.
 
-`STATUS=BLOCKED`
+Use fixtures/mocks/staging/read-only data where appropriate.
 
-and return to the relevant business SOT.
+Do not merge production-impacting product work to `main` before the release task.
 
-Do not perform Owner-visible production changes directly on `main`.
+## 4. Overnight robot execution model
 
-Do not use production as the first visual acceptance environment.
+The Owner intends to run the robot continuously overnight.
 
-## 3. Design-first rule
+Therefore the task plan is designed so **Owner-only decision gates are near the end**.
 
-The Owner explicitly chose:
+Execution rules:
 
-1. **Cách A first:** create the authoritative implementation plan;
-2. **Cách B second:** review/propose the actual visual redesign.
+1. execute one task ID at a time;
+2. after completion, update this SOT with concrete evidence;
+3. expose exactly one next authoritative executable task;
+4. continue through SCHED-UI-001→015 without asking the Owner for ordinary visual preferences already resolved by the Design Lock;
+5. if a new non-critical Owner preference appears, append it to `DEFERRED_OWNER_QUEUE` and continue independent work;
+6. do not invent a choice if it changes business authority, security, data integrity or irreversible production semantics;
+7. those critical cases may still BLOCK immediately;
+8. normal Owner visual acceptance is intentionally deferred to SCHED-UI-016;
+9. no production release occurs without Owner Preview approval.
 
-Therefore no product task SCHED-UI-001 or later may execute before SCHED-UI-000 is completed.
+Default machine continuation after each completed technical task:
 
-SCHED-UI-000 is the design-lock session corresponding to “Cách B”.
+`NEXT_TASK_ID=<next task>`  
+`CHECK_AFTER_SECONDS=0`
 
-The design lock must define the visible behavior before robot implementation starts.
+## 5. Deferred Owner queue
 
-## 4. Planned product architecture
+Current deferred items:
 
-The implementation should converge on:
+- **OWNER-GATE-001:** inspect integrated Preview and approve/request changes — handled by SCHED-UI-016.
 
-### Manager
+No other Owner decision is currently unresolved.
 
-- recurring staffing editor optimized for readable weekly scanning;
-- guided scheduling workflow;
-- prerequisites shown near the action they block;
-- one primary action per step;
-- consistent time-band visuals.
+If the robot discovers another non-critical preference question:
 
-### Employee
+- record `OWNER-DEFERRED-###`;
+- document the exact question and the implementation-safe default used;
+- continue only if the default is already supported by the Design Lock and does not change business authority;
+- surface the queue in SCHED-UI-016.
 
-- schedule/availability hierarchy that makes next-week availability registration immediately visible;
-- same shift-color semantics as Manager/Owner;
-- professional canonical URL.
+## 6. Task graph
 
-### Owner
+Primary technical chain:
 
-- shared scheduling visual vocabulary;
-- oversight/editing surfaces aligned with Manager semantics;
-- no duplicate scheduling truth.
+`000 → 001 → 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009 → 010 → 011 → 012 → 013 → 014 → 015`
 
-### Routing
+Owner/release chain:
 
-Visible browser routes should be separated from implementation folder names.
+`015 → 016 → 017 → 018 → 019`
 
-The underlying repository may retain internal numbered directories if required for compatibility, but the user-facing route should not expose those names after SCHED-UI-005 is accepted.
+| Task | Scope | Current state |
+|---|---|---|
+| SCHED-UI-000 | Owner-approved Design Lock / Cách B | **DONE / OWNER APPROVED** |
+| SCHED-UI-001 | Recurring staffing readable view + dedicated editor | **READY / NEXT AUTHORITATIVE TASK** |
+| SCHED-UI-002 | Manager information architecture: Lập lịch tuần vs Thiết lập xếp lịch | **BLOCKED BY 001** |
+| SCHED-UI-003 | Guided Auto Schedule “next action” workflow | **BLOCKED BY 002** |
+| SCHED-UI-004 | Draft → edit → check → approve → publish visual simplification | **BLOCKED BY 003** |
+| SCHED-UI-005 | Shared canonical time-band classifier | **BLOCKED BY 004** |
+| SCHED-UI-006 | Employee official schedule time-band integration | **BLOCKED BY 005** |
+| SCHED-UI-007 | Employee availability CTA + editor UX | **BLOCKED BY 006** |
+| SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **BLOCKED BY 007** |
+| SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **BLOCKED BY 008** |
+| SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **BLOCKED BY 009** |
+| SCHED-UI-011 | Responsive/mobile scheduling redesign | **BLOCKED BY 010** |
+| SCHED-UI-012 | Accessibility, states and Vietnamese copy hardening | **BLOCKED BY 011** |
+| SCHED-UI-013 | Focused regression tests for changed scheduling contracts | **BLOCKED BY 012** |
+| SCHED-UI-014 | Integrated cross-role browser qualification on release branch | **BLOCKED BY 013** |
+| SCHED-UI-015 | Preview/Staging build + automated RC qualification packet | **BLOCKED BY 014** |
+| SCHED-UI-016 | Deferred Owner Preview review / all Owner-only questions | **DEFERRED OWNER GATE / BLOCKED BY 015** |
+| SCHED-UI-017 | Apply Owner corrections if any + freeze exact RC | **BLOCKED BY 016** |
+| SCHED-UI-018 | Midnight production release | **BLOCKED BY 017 / RELEASE WINDOW** |
+| SCHED-UI-019 | Production smoke + permanent acceptance + TEMP deletion | **BLOCKED BY 018** |
 
-## 5. Task order and authoritative state
+## 7. SCHED-UI-000 — Design Lock
 
-Tasks execute strictly in this order:
+**DONE / OWNER APPROVED**
 
-`SCHED-UI-000 → 001 → 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009`
+Durable artifact:
 
-Only one task may execute per robot/chat execution turn unless this SOT explicitly changes that rule.
+`WORKFORCE_SCHEDULING_UX_V2_DESIGN_LOCK.md`
 
-| Task | Scope | Required result | Current state |
-|---|---|---|---|
-| SCHED-UI-000 | Owner design lock / Cách B | Visual hierarchy, time-band boundary, canonical route naming and cross-role scheduling presentation explicitly approved | **BLOCKED / OWNER DESIGN SESSION REQUIRED** |
-| SCHED-UI-001 | Recurring staffing block legibility | Full readable start/end/headcount controls; no clipped times; stable add/remove/save behavior preserved | **BLOCKED BY SCHED-UI-000** |
-| SCHED-UI-002 | Guided Auto Schedule workflow | Clear step flow, explicit prerequisites, one dominant next CTA, reduced status noise | **BLOCKED BY ORDER** |
-| SCHED-UI-003 | Shared time-band visual system | Manager + Employee + Owner use the one Owner-approved boundary/color contract | **BLOCKED BY ORDER** |
-| SCHED-UI-004 | Employee availability CTA prominence | Registration state/week/action visible and prominent on Employee schedule | **BLOCKED BY ORDER** |
-| SCHED-UI-005 | Professional canonical routes | New clean role URLs with safe compatibility redirects and route regression | **BLOCKED BY ORDER** |
-| SCHED-UI-006 | Owner scheduling parity | Owner scheduling visuals/state language aligned without new scheduling authority | **BLOCKED BY ORDER** |
-| SCHED-UI-007 | Integrated Preview + cross-role QA | Exact candidate available in Preview/Staging; required QA green; no production mutation | **BLOCKED BY ORDER** |
-| SCHED-UI-008 | Owner acceptance + RC freeze + midnight release | Owner approves exact RC SHA; rollback recorded; release only in approved 00:00 window | **BLOCKED BY SCHED-UI-007 / OWNER APPROVAL / RELEASE WINDOW** |
-| SCHED-UI-009 | Production smoke + permanent acceptance + TEMP cleanup | Exact-main green; permanent evidence written; this TEMP SOT deleted | **BLOCKED BY SCHED-UI-008** |
+No product code changed in SCHED-UI-000.
 
-## 6. SCHED-UI-000 — Owner design lock / Cách B
+## 8. SCHED-UI-001 — Recurring staffing readable view + dedicated editor
 
-This task is intentionally interactive.
+Problem:
 
-Do not let a robot invent the final design.
+Current day cells are ~140px wide and directly contain two time controls plus headcount/delete, causing clipped time values.
 
-Required Owner decisions:
+Implement:
 
-### A. Recurring staffing row design
-
-Lock:
-
-- card/row structure;
-- minimum readable width for time controls;
-- labels for `Bắt đầu`, `Kết thúc`, `Số người`;
-- add/remove interaction;
-- desktop/mobile presentation;
-- how multiple blocks in one day stack.
-
-### B. Guided Auto Schedule layout
-
-Lock the exact flow and information hierarchy for:
-
-1. staffing prerequisites;
-2. draft creation;
-3. Manager editing;
-4. conflict validation;
-5. review/approval;
-6. publish.
-
-Decide what is:
-
-- primary CTA;
-- secondary CTA;
-- status only;
-- blocking warning;
-- expandable detail.
-
-### C. Time-band rule
-
-Resolve the explicit conflict:
-
-Prior accepted:
-- `05:00 <= start < 12:00` morning.
-
-Latest Owner request:
-- `06:00–12:00` morning.
-
-Owner must state what happens to a shift starting from `05:00` to before `06:00`.
-
-After lock, one rule must be used everywhere.
-
-### D. Employee registration prominence
-
-Lock:
-
-- top-of-page placement;
-- card/banner design;
-- registration-open badge;
-- target-week display;
-- CTA wording;
-- completed/empty/closed states.
-
-### E. Canonical URLs
-
-Confirm the visible route names.
-
-Default proposal:
-
-- `/employee/`;
-- `/manager/`;
-- `/owner/`.
-
-Do not cut over until Owner confirms route naming.
-
-### F. Owner scheduling presentation
-
-Lock what Owner sees versus Manager:
-
-- shared components;
-- read/edit actions;
-- oversight-only information;
-- what must remain role-specific.
-
-### Required durable artifact
-
-Create:
-
-`01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_SCHEDULING_UX_V2_DESIGN_LOCK.md`
-
-SCHED-UI-000 becomes DONE only after Owner-approved decisions are recorded there.
-
-## 7. SCHED-UI-001 — Recurring staffing block legibility
-
-Scope:
-
-- Manager recurring staffing weekly board;
-- Owner equivalent if it uses the same editor component.
-
-Required acceptance:
-
-- start time fully visible;
-- end time fully visible;
-- headcount fully visible;
-- labels or structure make each field unambiguous;
-- delete control cannot be mistaken for another input;
-- no horizontal clipping at supported widths;
+- keep store × weekday weekly scan table in view mode;
+- render compact blocks as `05:00–08:00 · 1 người`;
+- clicking/selecting a store/day opens a dedicated editor;
+- desktop editor uses side/detail panel with full-width controls;
+- mobile uses full-width sheet/panel;
+- clear labels: Bắt đầu / Kết thúc / Số người / Xóa;
 - multiple blocks stack predictably;
-- existing values are preserved when adding/removing another block;
-- new block still starts with blank start/end values;
-- no regression to the historic empty → 05:00 bug;
-- save/reload/week reuse still passes.
+- `+ Thêm khung`;
+- save/cancel actions separated from destructive action.
 
-No business-value creation is allowed for visual acceptance.
+Regression requirements:
 
-## 8. SCHED-UI-002 — Guided Auto Schedule workflow
+- existing values survive add/remove;
+- new block start/end blank;
+- no empty → 05:00 regression;
+- save/reload/week reuse green;
+- no real business values invented.
 
-Replace the current visually noisy presentation with the Owner-approved guided workflow from SCHED-UI-000.
+## 9. SCHED-UI-002 — Manager scheduling information architecture
 
-Required acceptance:
+Separate normal weekly operation from recurring configuration.
 
-- user always knows the current step;
-- one clearly dominant next action;
-- disabled actions explain why;
-- prerequisites are adjacent to the blocked action;
-- “Ưu tiên cửa hàng”, “Nhu cầu nhân sự”, draft state and publish state are not mixed as equal competing cards;
-- draft/edit/check/review/publish are visually distinct;
-- no technical implementation terms in normal user copy;
-- existing XSTORE business semantics remain unchanged;
-- no Auto Schedule call executes without required business inputs.
+Required UI structure:
 
-## 9. SCHED-UI-003 — Shared time-band visual system
+### Lập lịch tuần
 
-Apply one approved time-band classification to scheduling-relevant surfaces across:
+Default operational surface.
 
-- Manager recurring staffing;
-- Manager draft scheduling;
-- Manager official schedule;
-- Manager four-store overview;
-- Employee published schedule;
-- Employee availability registration where a registered time block is visualized;
-- Owner scheduling/oversight surfaces.
+### Thiết lập xếp lịch
 
-Required acceptance:
+Contains:
 
-- one helper/contract where practical instead of divergent role-local rules;
-- same time → same visual meaning across roles;
-- neutral state for empty/invalid start time;
-- boundary tests include the Owner-approved 05:00/06:00 decision, 12:00 and 17:00;
-- accessibility/contrast remains readable.
-
-Do not execute until SCHED-UI-000 resolves the morning boundary.
-
-## 10. SCHED-UI-004 — Employee availability CTA prominence
-
-Required acceptance:
-
-- Employee can see next-week registration state without hunting through the page;
-- target week is visible;
-- open/closed registration status is visible;
-- primary CTA is visually dominant;
-- registered state changes CTA to an edit/review action;
-- weekly registration summary remains visible;
-- mobile layout keeps the CTA reachable;
-- the UI clearly distinguishes “thời gian có thể làm” from “lịch làm chính thức”;
-- no employee availability authority change.
-
-## 11. SCHED-UI-005 — Professional canonical routes
-
-Goal:
-
-Hide numbered implementation directories from the user-facing URL.
-
-Required acceptance:
-
-- Owner-approved canonical role URLs exist;
-- role entrypoints and deep links resolve correctly;
-- old numbered paths remain safe compatibility redirects during cutover;
-- no redirect loops;
-- Auth role routing targets canonical user-facing paths;
-- Manager/Employee/Owner internal navigation uses canonical paths;
-- reload/direct-link/back-forward behavior passes;
-- production entrypoints remain fail-closed for unauthorized roles;
-- Pages deployment supports the route shape;
-- old compatibility paths may be removed only after route evidence proves they are no longer required.
-
-This task changes route presentation, not role authority.
-
-## 12. SCHED-UI-006 — Owner scheduling parity
-
-Required acceptance:
-
-- Owner scheduling uses the same approved time-band contract;
-- same scheduling states use the same Vietnamese labels;
-- week navigation/date representation is consistent;
-- published/draft/review concepts are not redefined for Owner;
-- Owner does not create a parallel scheduling writer;
-- XSTORE remains the business-authority source;
-- role-specific Owner oversight may remain richer than Manager, but shared concepts must look and mean the same.
-
-## 13. SCHED-UI-007 — Integrated Preview + cross-role QA
-
-This is the first full integrated candidate.
+- ưu tiên cửa hàng;
+- nhu cầu nhân sự cố định hàng tuần.
 
 Requirements:
 
-- non-production release branch;
-- real Preview/Staging URL or equivalent isolated browser target;
-- exact candidate SHA recorded;
-- no production business mutation merely for Preview;
-- fixture/mock/staging data used where needed;
-- Manager + Employee + Owner reviewed together;
-- desktop/mobile responsive checks;
-- route checks;
-- time-band boundary checks;
-- recurring editor regression;
-- Auto Schedule guided-flow regression;
-- Employee availability CTA regression.
+- weekly scheduling must not force the Manager to read the recurring configuration board every week;
+- prerequisites may link the Manager directly to the relevant setup section;
+- no second business writer;
+- existing XSTORE semantics preserved.
 
-Required gates where path-relevant include:
+## 10. SCHED-UI-003 — Guided Auto Schedule next-action workflow
+
+Replace competing progress/status cards with one visible workflow:
+
+1. Chuẩn bị
+2. Tạo lịch nháp
+3. Chỉnh lịch
+4. Kiểm tra
+5. Duyệt & phát hành
+
+Required:
+
+- one `Việc cần làm tiếp theo` block;
+- one primary CTA;
+- disabled action explains the blocker;
+- summary counts are supporting metadata only;
+- no duplicate stepper from another module;
+- no Auto Schedule execution when prerequisites are incomplete;
+- technical state may remain internal.
+
+## 11. SCHED-UI-004 — Draft/review/publish visual simplification
+
+Preserve business state machine but simplify user presentation.
+
+Required:
+
+- draft editing clearly separated from source availability;
+- store/week selector remains discoverable;
+- reload/reopen/save are secondary controls;
+- conflict results appear next to resolution action;
+- REVIEWED state maps to user-facing `Đã duyệt`;
+- PUBLISHED maps to `Đã phát hành`;
+- final step exposes `Duyệt lịch` then `Phát hành lịch` as appropriate;
+- idempotent existing behavior preserved.
+
+## 12. SCHED-UI-005 — Shared canonical time-band classifier
+
+Current source contains divergent implementations:
+
+- Manager local helpers classify from 05:00;
+- shared core currently classifies all values before 12:00 as morning.
+
+Implement one canonical classifier:
+
+- 05:00–<12:00 morning;
+- 12:00–<17:00 afternoon;
+- 17:00–22:00 evening;
+- otherwise neutral.
+
+Migrate scheduling callers where practical.
+
+Required tests:
+
+- 04:59 neutral;
+- 05:00 morning;
+- 11:59 morning;
+- 12:00 afternoon;
+- 16:59 afternoon;
+- 17:00 evening;
+- 22:00 evening;
+- >22:00 neutral;
+- blank/invalid neutral.
+
+## 13. SCHED-UI-006 — Employee official schedule time-band integration
+
+Required:
+
+- published shifts visibly use canonical shared colors;
+- full time remains readable;
+- same time gives same color as Manager/Owner;
+- empty week remains neutral;
+- desktop/tablet/mobile acceptance;
+- existing schedule reader/RPC/state machine unchanged unless necessary for shared presentation helper.
+
+## 14. SCHED-UI-007 — Employee availability CTA + editor UX
+
+Promote next-week registration to the top scheduling action when relevant.
+
+Required CTA states:
+
+- no saved intervals → `Đăng ký ngay`;
+- saved → `Xem / sửa đăng ký`;
+- closed → `Xem thời gian đã đăng ký`.
+
+Required editor behavior:
+
+- keep immediate-save authority;
+- remove misleading final-submit semantics;
+- replace unnecessary `Xong` concept with clear close/back behavior;
+- weekly saved intervals receive canonical band colors;
+- open/closed/read-only states obvious;
+- distinguish `Thời gian có thể làm` from `Lịch làm chính thức`;
+- mobile CTA visible without hunting through the page.
+
+## 15. SCHED-UI-008 — Owner scheduling parity + language cleanup
+
+Owner entry:
+
+- overview CN1–CN4 first;
+- each store indicates scheduling readiness/state;
+- selecting a store opens shared Manager scheduling concepts/components.
+
+Remove normal user-facing technical text:
+
+- Enterprise oversight;
+- canonical;
+- writer;
+- direct table DML;
+- untranslated Availability;
+- DRAFT / Validate / Review / Publish labels.
+
+Use Vietnamese UX copy.
+
+Do not create an Owner-specific scheduling writer.
+
+## 16. SCHED-UI-009 — Canonical clean route scaffolding
+
+Create safe user-facing route entrypoints:
+
+- `/manager/`
+- `/manager/scheduling/`
+- `/manager/schedule/`
+- `/employee/`
+- `/employee/schedule/`
+- `/employee/attendance/`
+- `/employee/payroll/`
+- `/owner/`
+- `/owner/scheduling/`
+
+At this task:
+
+- scaffold canonical routes;
+- preserve numbered internal implementations;
+- route guards stay fail-closed;
+- direct links and reload must resolve;
+- no Auth cutover yet unless required by the scaffold.
+
+## 17. SCHED-UI-010 — Auth/navigation migration + compatibility
+
+Update:
+
+- Auth role routing;
+- Manager navigation;
+- Employee navigation;
+- Owner navigation;
+- cross-links.
+
+Canonical visible URLs become preferred.
+
+Old numbered entrypoints remain compatibility redirects/bridges during this track.
+
+Required:
+
+- no redirect loop;
+- authenticated role separation preserved;
+- back/forward/reload green;
+- old bookmarks remain safe;
+- unauthorized access remains denied.
+
+## 18. SCHED-UI-011 — Responsive/mobile scheduling redesign
+
+Required widths:
+
+- representative phone ~360/390/430;
+- tablet ~768/1024;
+- desktop ~1440 and wide.
+
+Rules:
+
+- no page-level horizontal overflow;
+- recurring staffing editing becomes card/panel on phone;
+- draft schedule becomes readable stacked/day layout where needed;
+- 44px minimum touch targets for primary interactive controls;
+- sticky/fixed UI must not cover actions;
+- desktop may use internal board scroll only where necessary.
+
+## 19. SCHED-UI-012 — Accessibility, states and Vietnamese copy
+
+Audit all changed scheduling surfaces for:
+
+- focus-visible;
+- keyboard reachability;
+- disabled reason text;
+- loading;
+- empty;
+- error;
+- success;
+- destructive action clarity;
+- color-independent labels;
+- Vietnamese user language.
+
+No normal user-facing:
+
+- canonical;
+- RPC;
+- writer;
+- DML;
+- server;
+- implementation-state jargon.
+
+## 20. SCHED-UI-013 — Focused regression hardening
+
+Add/update tests covering:
+
+- recurring editor add/remove/save/reload;
+- no clipped-time DOM contract where testable;
+- shared time-band boundaries;
+- employee schedule bands;
+- employee availability CTA states;
+- availability immediate-save semantics;
+- Owner copy/overview contract;
+- canonical routes;
+- old-route compatibility;
+- Auth route destinations;
+- responsive overflow/touch targets;
+- cold reload/back-forward.
+
+Do not weaken existing authority/security tests to make the UI pass.
+
+## 21. SCHED-UI-014 — Integrated cross-role browser qualification
+
+Use exact candidate branch/head.
+
+Qualify together:
+
+- Manager recurring staffing;
+- Manager guided weekly scheduling;
+- Auto Schedule prerequisites;
+- draft/edit/check/review/publish;
+- Employee official schedule;
+- Employee availability registration;
+- Owner overview/drill-down;
+- canonical routes;
+- old compatibility routes;
+- representative responsive widths;
+- console/page/request/5xx diagnostics.
+
+No production merge.
+
+## 22. SCHED-UI-015 — Preview/Staging + automated RC qualification packet
+
+Create a real pre-production inspection target under Production Release Governance.
+
+Required packet:
+
+- release ID;
+- branch;
+- PR;
+- exact candidate SHA;
+- Preview/Staging URL or equivalent isolated browser target;
+- required workflow run IDs/conclusions;
+- known limitations;
+- deferred Owner queue;
+- current production rollback SHA candidate;
+- planned 00:00 release window.
+
+Required gates where path-relevant:
 
 - Validate MAGASIN GitHub Pages source;
 - UI2 Cross Role Acceptance;
-- People Shift Day-10 Tests;
+- People Shift Day-10;
 - SOP Task Tests;
 - AUTH-PROD Regression Contract;
-- Auth Password Reset Hotfix;
-- Owner Control Tower Tests;
-- Procurement QA Robot if affected;
-- domain-specific XSTORE regression.
-
-Do not merge the product candidate to `main` in this task.
+- Auth Password Reset;
+- Owner Control Tower;
+- Procurement only if affected;
+- XSTORE/domain-specific regression.
 
 Successful result:
 
-`PREVIEW_READY / OWNER_REVIEW`
+`PREVIEW_READY / OWNER_REVIEW_REQUIRED`
 
-## 14. SCHED-UI-008 — Owner acceptance + RC freeze + midnight release
+Robot stops only at the Owner gate after all possible technical work is complete.
 
-This task is governed by:
+## 23. SCHED-UI-016 — Deferred Owner Preview review
+
+**This is intentionally near the end.**
+
+Present to Owner:
+
+- Preview URL;
+- Manager flow;
+- Employee flow;
+- Owner flow;
+- canonical URLs;
+- mobile behavior;
+- deferred Owner queue, if any;
+- release summary.
+
+Possible result:
+
+- `APPROVED`
+- `CHANGES_REQUESTED`
+
+Do not release without explicit Owner approval of the Preview/exact candidate.
+
+## 24. SCHED-UI-017 — Owner corrections + exact RC freeze
+
+If Owner requested changes:
+
+- implement corrections off main;
+- rerun affected QA;
+- update Preview;
+- return to Owner review if visible behavior materially changed.
+
+When approved:
+
+- freeze exact RC SHA;
+- record all green gates;
+- record rollback production SHA;
+- prepare release packet.
+
+No silent change after freeze.
+
+## 25. SCHED-UI-018 — Midnight production release
+
+Governed by:
 
 `PRODUCTION_RELEASE_GOVERNANCE_V1_SOURCE_OF_TRUTH.md`
 
-Before release:
+Normal window:
 
-- Owner has inspected Preview;
-- all requested corrections are complete;
-- exact RC SHA is frozen;
-- required QA is green;
-- current production rollback SHA is recorded;
-- release packet exists;
-- release window is 00:00 Asia/Ho_Chi_Minh unless Owner explicitly authorizes another window in that release conversation.
+`00:00 Asia/Ho_Chi_Minh`
 
-If Owner requests another change:
+Before merge:
 
-`STATUS=BLOCKED / CHANGES_REQUESTED`
+- confirm RC unchanged;
+- confirm required gates green;
+- confirm rollback SHA;
+- confirm production baseline has not unexpectedly moved;
+- merge/deploy exact approved candidate.
 
-and return to Preview; previous approval is invalid.
+No unreviewed “small fix” may be bundled.
 
-At release:
+## 26. SCHED-UI-019 — Production smoke + permanent acceptance + TEMP cleanup
 
-- verify RC SHA unchanged;
-- merge exact approved candidate with expected-head guard where supported;
-- do not bundle unreviewed changes.
+Verify exact-main:
 
-## 15. SCHED-UI-009 — Production smoke + closure
+- Pages source;
+- Pages deployment;
+- Manager scheduling;
+- Employee schedule/availability;
+- Owner scheduling;
+- canonical routes;
+- compatibility routes;
+- Auth routing;
+- affected QA;
+- console/page/request/5xx;
+- no unexpected business mutation.
 
-After production deployment:
-
-- verify exact-main SHA;
-- Pages source validation green;
-- Pages deployment green;
-- affected cross-role gates green;
-- smoke Manager scheduling;
-- smoke Employee schedule/availability;
-- smoke Owner scheduling;
-- verify canonical routes;
-- verify old compatibility routes behave as designed;
-- verify no console/page/request/5xx regression;
-- verify no unexpected business mutation.
-
-Create permanent acceptance:
+Create:
 
 `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_SCHEDULING_UX_V2_ACCEPTANCE_2026_10_02.md`
 
-Permanent evidence must record:
+Permanent acceptance records:
 
-- the six Owner-reported problems;
-- final Owner-approved design decisions;
+- original 6 Owner issues + discovered technical-language issue;
+- final design;
 - final time-band rule;
-- canonical routes;
-- Preview/RC SHA;
-- Owner acceptance;
+- canonical route map;
+- Preview URL;
+- Owner approval;
+- RC SHA;
 - rollback SHA;
 - production merge SHA;
 - workflow/run IDs;
-- production-safe smoke evidence;
-- confirmation that XSTORE business authority was not replaced.
+- production smoke;
+- confirmation XSTORE business authority was not replaced.
 
-Then:
+Then delete this TEMP SOT in the same closure PR and verify permanent evidence on main.
 
-1. reconcile any durable rule into canonical Workforce docs if required;
-2. delete this TEMP SOT in the same closure PR;
-3. verify permanent evidence exists on `main`;
-4. verify this TEMP SOT no longer exists;
-5. verify XSTORE SOT remains authoritative for XSTORE-011 unless that separate track has independently closed.
+## 27. Robot discovery/execution protocol
 
-## 16. Robot execution protocol
+### Discovery
 
-For task discovery:
+Re-read this file from the beginning.
 
-- re-read this file from the beginning;
-- use this SOT as the sole task-state authority for WORKFORCE_SCHEDULING_UX_V2;
-- also read Production Release Governance before any Preview/RC/release task;
-- read XSTORE SOT before any change that could affect scheduling business semantics.
+Use this file as the sole task-state authority for `WORKFORCE_SCHEDULING_UX_V2`.
 
-Do not select a task that is blocked by order.
+Identify exactly one executable task ID.
 
-Do not execute a different task from the requested task ID.
+### Execution
 
-Before declaring a product task complete:
+For a supplied task ID:
 
-- verify concrete code/browser evidence;
-- update this SOT;
-- use branch → PR;
-- do not merge production-impacting product work to `main` before SCHED-UI-008.
+- validate against live SOT;
+- execute only that task;
+- verify concrete completion evidence;
+- update SOT;
+- use branch/PR;
+- keep production-impacting product work off main until SCHED-UI-018.
 
-Documentation-only SOT/evidence updates may follow the release-governance documentation exception.
+### Status semantics
 
-## 17. Current authoritative next state
+- `READY` — task can execute now;
+- `RUNNING` — durable CI/preview process genuinely still running;
+- `COMPLETE` — task evidence verified and SOT updated;
+- `BLOCKED` — only for real unresolved dependency/authority issue;
+- `DONE` — entire track closed.
 
-Cách A is complete when this TEMP SOT is merged and indexed.
+### Owner deferral rule
 
-Current product execution state after plan creation:
+Do not stop technical work for preferences already answered by the Design Lock.
 
-`SCHED-UI-000 BLOCKED / OWNER DESIGN SESSION REQUIRED`
+Do not repeatedly ask the Owner questions during SCHED-UI-001→015.
 
-Reason:
+Collect non-critical new Owner-only questions for SCHED-UI-016.
 
-The Owner explicitly wants Cách B after Cách A, and Cách B must resolve the visual design and the 05:00 versus 06:00 morning boundary before robot implementation.
+## 28. Current authoritative next state
 
-Do not execute SCHED-UI-001 or later until SCHED-UI-000 is DONE.
+`SCHED-UI-000 = DONE / OWNER APPROVED`
+
+`SCHED-UI-001 = READY / NEXT AUTHORITATIVE TASK`
+
+All later technical tasks remain blocked by dependency until their predecessor closes.
+
+Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
+
+Do not execute SCHED-UI-002 or later before SCHED-UI-001 is complete.
