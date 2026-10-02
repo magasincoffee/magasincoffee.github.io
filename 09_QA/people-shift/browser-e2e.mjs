@@ -105,6 +105,7 @@ try {
   });
 
   await check("employee_availability_registration", async () => {
+    await employee.locator('body[data-employee-availability-engine="1"]').waitFor();
     const availabilityCta=employee.locator("[data-schedule-availability]").first();
     await availabilityCta.filter({ hasText: "Đăng ký ngay" }).waitFor();
     await availabilityCta.click();
