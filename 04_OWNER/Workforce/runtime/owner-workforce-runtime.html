@@ -49,7 +49,7 @@ function prepareOwnerSurface(d){
   if(tabs)tabs.innerHTML='<button class="active" data-tab="publish" aria-current="page">Lập lịch tuần</button>';
   const demand=view.querySelector('#panel-demand');if(demand){demand.replaceChildren();demand.classList.remove('active');demand.hidden=true}
   const review=view.querySelector('#panel-review');if(review){review.replaceChildren();review.classList.remove('active');review.hidden=true}
-  const publish=view.querySelector('#panel-publish');if(publish){publish.hidden=false;publish.classList.add('active');publish.innerHTML='<section class="card"><div class="muted">Đang tải khu vực lập lịch…</div></section>'}
+  const publish=view.querySelector('#panel-publish');if(publish){publish.hidden=true;publish.classList.add('active');publish.innerHTML='<section class="card"><div class="muted">Đang tải khu vực lập lịch…</div></section>'}
   return !!publish;
 }
 async function boot(){
