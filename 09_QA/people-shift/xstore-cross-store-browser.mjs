@@ -32,17 +32,25 @@ for(const forbidden of ["Nhu cầu nhân sự recurring","Auto Schedule","Tạo 
 if(await page.locator("#xsaAuto").isDisabled())throw new Error("automatic draft should be enabled with complete staffing");
 if(await page.locator(".xsa-board tbody tr").count()!==4)throw new Error("recurring board must expose 4 stores");
 
-await page.locator("#xsaConfig").click();
 const cell=page.locator('[data-xsa-cell="s1-1"]');
+await cell.locator(".xsa-cell-open").click();
+const editor=page.locator(".xsa-editor-panel");
+await editor.waitFor();
 await page.waitForFunction(()=>{
- const el=document.querySelector('[data-xsa-cell="s1-1"] [data-xsa-f="start_time"]');
+ const el=document.querySelector('.xsa-editor-panel [data-xsa-f="start_time"]');
  return el?.tagName==="SELECT" && el.dataset.magasinTimePicker==="1";
 });
+const editorText=(await editor.innerText()).replace(/\s+/g," ");
+for(const label of ["Bắt đầu","Kết thúc","Số người","Xóa khung","+ Thêm khung","Hủy thay đổi","Lưu nhu cầu hàng tuần"]){
+ if(!editorText.includes(label))throw new Error("missing editor label "+label+" in "+editorText);
+}
+const editorBox=await editor.boundingBox();
+if(!editorBox||editorBox.width<340)throw new Error("desktop editor is not a wide dedicated panel: "+JSON.stringify(editorBox));
 
-const starts=cell.locator('[data-xsa-f="start_time"]');
-const ends=cell.locator('[data-xsa-f="end_time"]');
-const heads=cell.locator('[data-xsa-f="target_headcount"]');
-const firstBlock=cell.locator('.xsa-block-edit').first();
+const starts=editor.locator('[data-xsa-f="start_time"]');
+const ends=editor.locator('[data-xsa-f="end_time"]');
+const heads=editor.locator('[data-xsa-f="target_headcount"]');
+const firstBlock=editor.locator('.xsa-editor-block').first();
 if(!(await firstBlock.getAttribute('class')).includes('xsa-band-morning'))throw new Error("06:00 block should be yellow/morning");
 await starts.first().selectOption("12:00");
 if(!(await firstBlock.getAttribute('class')).includes('xsa-band-afternoon'))throw new Error("12:00 block should be red/afternoon");
@@ -52,10 +60,10 @@ await starts.first().selectOption("07:00");
 await ends.first().selectOption("12:00");
 await heads.first().fill("3");
 
-await cell.locator("[data-xsa-add-store='s1'][data-xsa-add-day='1']").click();
-await page.waitForFunction(()=>document.querySelectorAll('[data-xsa-cell="s1-1"] .xsa-block-edit').length===2);
+await editor.locator("#xsaAddBlock").click();
+await page.waitForFunction(()=>document.querySelectorAll('.xsa-editor-panel .xsa-editor-block').length===2);
 await page.waitForFunction(()=>{
- const els=[...document.querySelectorAll('[data-xsa-cell="s1-1"] [data-xsa-f="start_time"]')];
+ const els=[...document.querySelectorAll('.xsa-editor-panel [data-xsa-f="start_time"]')];
  return els.length===2 && els.every(x=>x.tagName==="SELECT");
 });
 
@@ -67,9 +75,9 @@ if(await ends.nth(1).inputValue()!=="")throw new Error("new block end must be em
 const newStartLabel=await starts.nth(1).locator("option:checked").innerText();
 if(newStartLabel!=="Chọn giờ")throw new Error("new block should prompt Chọn giờ: "+newStartLabel);
 
-await cell.locator("[data-xsa-remove]").nth(1).click();
-await page.waitForFunction(()=>document.querySelectorAll('[data-xsa-cell="s1-1"] .xsa-block-edit').length===1);
-await page.waitForFunction(()=>document.querySelector('[data-xsa-cell="s1-1"] [data-xsa-f="start_time"]')?.tagName==="SELECT");
+await editor.locator("[data-xsa-remove]").nth(1).click();
+await page.waitForFunction(()=>document.querySelectorAll('.xsa-editor-panel .xsa-editor-block').length===1);
+await page.waitForFunction(()=>document.querySelector('.xsa-editor-panel [data-xsa-f="start_time"]')?.tagName==="SELECT");
 if(await starts.first().inputValue()!=="07:00"||await ends.first().inputValue()!=="12:00"||await heads.first().inputValue()!=="3"){
  throw new Error("existing block changed after removing temporary block");
 }
@@ -107,6 +115,15 @@ await page.waitForFunction(()=>globalThis.__XSTORE_QA.calls.some(x=>x.name==="au
 autoCall=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_v1").at(-1));
 if(autoCall?.args?.p_week_start!=="2026-10-12")throw new Error("next-week projection mismatch: "+JSON.stringify(autoCall));
 if(autoCall?.args?.p_algorithm_version!=="XSTORE_GLOBAL_RECURRING_V1")throw new Error(JSON.stringify(autoCall));
+
+await page.setViewportSize({width:390,height:844});
+await page.locator('[data-xsa-cell="s1-1"] .xsa-cell-open').click();
+const mobileEditor=page.locator(".xsa-editor-panel");
+await mobileEditor.waitFor();
+const mobileBox=await mobileEditor.boundingBox();
+if(!mobileBox||mobileBox.width<380||mobileBox.x>2)throw new Error("mobile editor is not a full-width sheet: "+JSON.stringify(mobileBox));
+await mobileEditor.locator("#xsaCancel").click();
+await page.waitForFunction(()=>!document.querySelector(".xsa-editor-panel"));
 
 const rpcNames=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.map(x=>x.name));
 for(const n of ["get_manager_accessible_stores","get_cross_store_weekly_plan_v1","get_cross_store_weekly_availability_v1","list_workforce_recurring_staffing_requirements_v1","auto_generate_cross_store_schedule_v1"]){
