@@ -117,3 +117,67 @@ After Wave 1, continue with:
 6. final repository tree + CI/deploy verification.
 
 This audit is a cleanup record, not a new project authority. Existing project SOTs retain their own scope and precedence.
+
+
+## Wave 2 — dead runtime/routes/workflow cleanup
+
+Wave 2 was audited after Wave 1 merged to `main @ db3a03b9c8425404b42c2784969a9a758d93bd78`.
+
+### A. Auth runtime version cleanup
+
+The active Auth entrypoint `03_PLATFORM/01_AUTH/index.html` loads only:
+
+`03_PLATFORM/01_AUTH/auth-runtime-v2.js`
+
+AUTH-PROD QA also reads `auth-runtime-v2.js`; no current Auth SOT/closure evidence requires `auth-runtime-v1.js` as an active source file.
+
+Wave 2 removes:
+
+- `03_PLATFORM/01_AUTH/auth-runtime-v1.js`.
+
+The Procurement QA path trigger is corrected from the removed v1 file to the active `auth-runtime-v2.js`.
+
+### B. Remove legacy Manager demand source
+
+Canonical Manager Workforce `engine-v1.js` does not load `demand-v1.js`.
+
+The existing Manager canonical QA explicitly classified it as legacy and asserted that the canonical engine does not load it. Wave 2 converts that QA from “keep a legacy file around and inspect it” to “prove the legacy file is absent while canonical modules remain loaded”.
+
+Wave 2 removes:
+
+- `05_MANAGER/Workforce/demand-v1.js`.
+
+This does not alter the active recurring staffing authority or XSTORE SOT.
+
+### C. Remove dead Manager route stubs
+
+A complete audit of current Manager HTML entrypoints found exactly three stale route stubs:
+
+- `05_MANAGER/Academy/index.html`;
+- `05_MANAGER/KPI/index.html`;
+- `05_MANAGER/Cai-dat/index.html`.
+
+All three were byte-identical and still attempted to load `/manager-v13-runtime.html`, which is no longer part of the production tree. The current canonical Manager route allowlist does not expose those legacy direct routes.
+
+Wave 2 removes those three dead route stubs rather than preserving broken entrypoints.
+
+### D. Remove expired one-time Night Run workflow
+
+`.github/workflows/night-run-hard-stop.yml` was a dated hard-stop workflow for the 2026-09-19 night-run window. Its guard is tied to that historical window and it still declares `contents: write`.
+
+The historical evidence remains in documentation/Git history. The expired executable workflow is removed from the active workflow set.
+
+### E. Deployment validator cleanup
+
+After Wave 1 removed `99_LEGACY`, the Pages validation workflow no longer needs `--exclude-dir=99_LEGACY`; that stale exclusion is removed.
+
+### Wave 2 safety boundary
+
+Retained intentionally:
+
+- active Auth `auth-runtime-v2.js`;
+- active Manager routes and current runtime chain;
+- the three Manager compat files still loaded by production;
+- current XSTORE recurring staffing implementation;
+- active EMPREG/XSTORE TEMP SOTs;
+- all migrations and canonical QA/evidence.

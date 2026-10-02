@@ -109,14 +109,12 @@ test("TASK-094 Manager board delegates create/resume and validation idempotency 
   assert.match(draft,/state\.lastValidation=q\.data\?\.valid\?'VALID':'INVALID'/);
 });
 
-test("Legacy demand stays isolated from canonical direct scheduling path",async()=>{
-  const [demand,engine]=await Promise.all([
-    read("05_MANAGER/Workforce/demand-v1.js"),
-    read("05_MANAGER/Workforce/engine-v1.js")
-  ]);
-  assert.match(demand,/get_workforce_staffing_requirements/);
-  assert.match(demand,/OWNER_ONLY/);
-  assert.doesNotMatch(demand,/replace_schedule_generation_assignments/);
+test("Legacy demand source is removed from canonical Manager tree",async()=>{
+  await assert.rejects(
+    fs.access(new URL("../../05_MANAGER/Workforce/demand-v1.js",import.meta.url)),
+    error=>error?.code==="ENOENT"
+  );
+  const engine=await read("05_MANAGER/Workforce/engine-v1.js");
   assert.equal(engine.includes("demand-v1.js"),false,"legacy demand must not load in canonical Manager flow");
   for(const file of ["manager-context-v1.js","review-v1.js","draft-publish-v1.js","official-v1.js"])assert.equal(engine.includes(file),true,file);
 });
