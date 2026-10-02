@@ -10,7 +10,7 @@ test("EMLIVE-001 active Employee shell exposes only production-ready surfaces",(
   assert.doesNotMatch(app,/data-view="settings"|id="view-settings"/);
   assert.doesNotMatch(app,/avatarInput|openAvatarPicker\(|previewAvatar\(/);
   assert.match(app,/Mỗi khoảng được lưu ngay khi bấm Đăng ký; không có bước gửi cuối/);
-  assert.match(app,/>Xong<\/button>/);
+  assert.doesNotMatch(app,/>Xong<\/button>/);\n  assert.match(app,/data-availability-close="back">← Về lịch làm<\/button>/);
   assert.match(app,/Để đổi mật khẩu, hãy đăng xuất rồi chọn “Quên mật khẩu\?”/);
   assert.doesNotMatch(app,/Supabase Auth/);
 });
@@ -21,7 +21,7 @@ test("EMLIVE-001 availability is immediately authoritative and not fake-finalize
   assert.match(engine,/getRows:\(\)=>state\.rows\.slice\(\)/);
   assert.match(engine,/Mỗi khoảng có hiệu lực ngay khi được lưu/);
   assert.doesNotMatch(engine,/Đã hoàn thành đăng ký lịch làm/);
-  assert.match(engine,/emitAvailabilityState\(\);\n  close\(\);/);
+  assert.doesNotMatch(engine,/function finish\(|finishQuickRegistration/);\n  assert.match(engine,/wire\(x,'#weeklyRegistrationPanel \[data-availability-close="back"\]',close\)/);
 });
 
 test("EMLIVE-001 Today reflects canonical saved availability rows",()=>{
