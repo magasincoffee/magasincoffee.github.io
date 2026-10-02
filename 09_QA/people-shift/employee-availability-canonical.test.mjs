@@ -131,6 +131,7 @@ test("SCHED-UI-007 availability UX uses exact CTA states, immediate-save languag
   assert.match(engine,/Mỗi khoảng có hiệu lực ngay khi được lưu|Mỗi khoảng được lưu ngay/);
   assert.match(engine,/C\.time\.shiftKind/);
   assert.match(engine,/data-time-band/);
+  assert.match(engine,/wire\(x,'\[data-schedule-availability\]',open\)/);
   assert.match(css,/data-time-band="morning"/);
   assert.match(css,/data-time-band="afternoon"/);
   assert.match(css,/data-time-band="evening"/);

@@ -222,6 +222,7 @@ function wire(x,selector,fn){
 function bind(){
   const x=d();if(!x?.body||x.body.dataset.employeeAvailabilityEngine==='1')return;
   x.body.dataset.employeeAvailabilityEngine='1';
+  wire(x,'[data-schedule-availability]',open);
   wire(x,'#weeklyRegistrationPanel [data-availability-close="header"]',close);
   wire(x,'#weeklyRegistrationPanel button[onclick="quickRegister()"]',register);
   wire(x,'#weeklyRegistrationPanel [data-availability-close="back"]',close);

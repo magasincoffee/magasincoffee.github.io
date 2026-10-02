@@ -37,6 +37,31 @@ await check("sched_ui_007_empty_state_uses_primary_register_now_cta",async()=>{
   return JSON.stringify(cta);
 });
 
+await check("sched_ui_007_primary_cta_opens_editor_and_back_closes",async()=>{
+  const cta=employee.locator("[data-schedule-availability]");
+  await cta.click();
+  await employee.locator("#weeklyRegistrationPanel.open[aria-hidden='false']").waitFor();
+  const opened=await employee.locator("#weeklyRegistrationPanel").evaluate(p=>({open:p.classList.contains("open"),hidden:p.getAttribute("aria-hidden")}));
+  if(!opened.open||opened.hidden!=="false")throw new Error(JSON.stringify(opened));
+  await employee.locator("[data-availability-close='back']").click();
+  await employee.locator("#weeklyRegistrationPanel").waitFor({state:"hidden"});
+  const closed=await employee.locator("#weeklyRegistrationPanel").evaluate(p=>({open:p.classList.contains("open"),hidden:p.getAttribute("aria-hidden")}));
+  if(closed.open||closed.hidden!=="true")throw new Error(JSON.stringify(closed));
+  return "primary CTA opens editor; back closes without final-submit semantics";
+});
+
+await check("sched_ui_007_mobile_cta_is_visible_without_horizontal_hunt",async()=>{
+  await page.setViewportSize({width:390,height:844});
+  const cta=employee.locator("[data-schedule-availability]");
+  await cta.scrollIntoViewIfNeeded();
+  const visible=await cta.isVisible();
+  const rect=await cta.boundingBox();
+  const metrics=await employee.locator("html").evaluate(el=>({clientWidth:el.clientWidth,scrollWidth:el.scrollWidth}));
+  if(!visible||!rect||metrics.scrollWidth>metrics.clientWidth+1||rect.x<0||rect.x+rect.width>metrics.clientWidth+1)throw new Error(JSON.stringify({visible,rect,metrics}));
+  await page.setViewportSize({width:1200,height:900});
+  return JSON.stringify({visible,rect,metrics});
+});
+
 await check("next_week_dates_are_exact_monday_to_sunday",async()=>{
   const values=await employee.locator("#quickRegDay option").evaluateAll(opts=>opts.map(o=>o.value));
   const expected=["2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-03","2026-10-04"];
