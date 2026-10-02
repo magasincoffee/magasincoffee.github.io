@@ -26,8 +26,8 @@ test("SCHED-04 keeps exactly one canonical Manager scheduling writer surface",as
   assert.match(draft,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
   assert.doesNotMatch(draft,/client\(\)\.from\(|sb\.from\(|supabase[^\n]*\.from\(/);
   assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1)/);
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003)/);
-  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003)#workforce/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004)/);
+  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004)#workforce/);
   assert.doesNotMatch(legacy,/publish_schedule_generation|replace_schedule_generation_assignments|create_schedule_generation/);
 });
 
@@ -72,4 +72,26 @@ test("SCHED-04 Manager shell no longer contains fake schedule truth",async()=>{
   assert.match(shell,/Đang tải bảng xếp lịch…/);
   assert.match(shell,/Đang tải lịch làm chính thức…/);
   assert.doesNotMatch(shell,/Trắng · CN2|Mai Chi · CN2|Coverage<\/b><span>96%/);
+});
+
+
+test("SCHED-UI-004 presentation separates source/draft, demotes draft utilities, and stages final actions",async()=>{
+  const ui=await read("05_MANAGER/Workforce/manager-scheduling-ui2-v1.js");
+  for(const token of [
+    "Nguồn tham khảo",
+    "Lịch nháp đang chỉnh",
+    "Thao tác phụ · lịch nháp",
+    "Bước cuối · duyệt và phát hành",
+    "Cần xử lý xung đột phiên xếp lịch",
+    "Tải lại trạng thái"
+  ]) assert.match(ui,new RegExp(token),token);
+  assert.match(ui,/dataset\.msu2Section='availability-source'/);
+  assert.match(ui,/dataset\.msu2Section='draft-editor'/);
+  assert.match(ui,/classList\.remove\('primary'\)/);
+  assert.match(ui,/if\(stage==='DRAFT'\)/);
+  assert.match(ui,/if\(review\)review\.classList\.add\('primary'\)/);
+  assert.match(ui,/else if\(stage==='REVIEWED'\)/);
+  assert.match(ui,/if\(publish\)publish\.classList\.add\('primary'\)/);
+  assert.match(ui,/status\.parentElement!==downstream/);
+  assert.doesNotMatch(ui,/\.rpc\(/);
 });
