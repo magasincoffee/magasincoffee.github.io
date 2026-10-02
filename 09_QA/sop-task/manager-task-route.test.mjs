@@ -20,7 +20,8 @@ for (const forbidden of [".insert(", ".update(", ".upsert(", ".delete(", ".rpc("
 assert.match(runtime, /manager-route-bridge-v1\.js/);
 assert.match(bridge, /const PREFIX='\/05_MANAGER'/);
 assert.match(bridge, /tasks:'Cong-viec'/);
-assert.match(bridge, /clickView\(routeView\(\)\)/);
+assert.match(bridge, /return '\/manager\/#'\+key/);
+assert.match(bridge, /syncFromLocation\(true\)/);
 assert.match(routeState, /const LEGACY_PREFIX='\/05_MANAGER'/);
 assert.match(routeState, /tasks:'Cong-viec'/);
 assert.match(routeState, /'\/manager\/scheduling\/'/);
