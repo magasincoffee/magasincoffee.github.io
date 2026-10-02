@@ -27,7 +27,16 @@ await check("sched03_mobile_current_week_is_official_self_only",async()=>{
   if(rows.length!==2||rows.some(r=>r.status!=="APPROVED")||rows.some(r=>!["sch-today","sch-future"].includes(r.schedule_id)))throw new Error(JSON.stringify(rows));
   if(text.includes("sch-today")||text.includes("sch-future")||text.includes("sch-other")||text.includes("sch-draft")||text.includes("APPROVED")||text.includes("DRAFT"))throw new Error(text);
   for(const expected of ["Lịch làm chính thức","Đã phát hành","CN1","CN2","06:00–12:00","17:00–22:00"])if(!text.includes(expected))throw new Error("missing "+expected+": "+text);
-  return "2 own APPROVED rows; ids/status backend values not exposed";
+  const bands=await employee.locator(".shift").evaluateAll(rows=>rows.map(x=>({band:x.dataset.timeBand,time:x.querySelector(".shift-time")?.textContent||"",bg:getComputedStyle(x).backgroundColor})));
+  if(bands.length!==2||bands[0].band!=="morning"||bands[1].band!=="evening")throw new Error(JSON.stringify(bands));
+  if(bands[0].time!=="06:00–12:00"||bands[1].time!=="17:00–22:00")throw new Error(JSON.stringify(bands));
+  const tokenColors=await employee.locator("body").evaluate(()=>{
+    const root=getComputedStyle(document.documentElement);
+    const resolve=value=>{const probe=document.createElement("div");probe.style.background=value;document.body.appendChild(probe);const out=getComputedStyle(probe).backgroundColor;probe.remove();return out};
+    return {morning:resolve(root.getPropertyValue("--m-shift-morning-bg").trim()),evening:resolve(root.getPropertyValue("--m-shift-evening-bg").trim())};
+  });
+  if(bands[0].bg!==tokenColors.morning||bands[1].bg!==tokenColors.evening)throw new Error(JSON.stringify({bands,tokenColors}));
+  return "2 own APPROVED rows; canonical morning/evening token colors; full time readable";
 });
 
 await check("sched03_availability_is_explicitly_not_official_schedule",async()=>{
@@ -93,13 +102,35 @@ await check("sched03_current_next_navigation_and_reload_are_deterministic",async
   if(state.week!=="2026-09-28"||JSON.stringify(state.rows)!==JSON.stringify(["sch-next"])||state.rpc-before!==1)throw new Error(JSON.stringify(state));
   const current=await employee.locator('[data-schedule-week="next"]').getAttribute("aria-current");
   if(current!=="true")throw new Error("next week not marked current");
-  return JSON.stringify(state);
+  const nextCard=employee.locator('[data-schedule-id="sch-next"]');
+  const nextBand=await nextCard.getAttribute("data-time-band");
+  const nextTime=(await nextCard.locator(".shift-time").innerText()).trim();
+  if(nextBand!=="afternoon"||nextTime!=="12:00–17:00")throw new Error(JSON.stringify({nextBand,nextTime}));
+  return JSON.stringify({...state,nextBand,nextTime});
 });
 
 await check("sched03_mobile_390_has_no_horizontal_overflow",async()=>{
   const m=await employee.locator("body").evaluate(el=>({scroll:el.scrollWidth,client:el.clientWidth}));
   if(m.scroll>m.client+2)throw new Error(JSON.stringify(m));
   return m.client+"px fits";
+});
+
+const tablet=await context.newPage();
+await tablet.setViewportSize({width:820,height:900});
+await tablet.goto(BASE+"/09_QA/people-shift/sched-03-employee-schedule-ui-fixture.html",{waitUntil:"networkidle"});
+const tabletEmployee=tablet.frameLocator("#employeeApp");
+await tabletEmployee.locator(".employee-schedule-engine").waitFor();
+await check("sched03_tablet_820_canonical_bands_and_empty_week_are_neutral",async()=>{
+  await tabletEmployee.locator(".shift").first().waitFor();
+  const fit=await tabletEmployee.locator("body").evaluate(el=>({scroll:el.scrollWidth,client:el.clientWidth}));
+  const cols=await tabletEmployee.locator(".days").evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(" ").filter(Boolean).length);
+  const bands=await tabletEmployee.locator(".shift").evaluateAll(rows=>rows.map(x=>x.dataset.timeBand));
+  if(fit.scroll>fit.client+2||cols!==2||JSON.stringify(bands)!==JSON.stringify(["morning","evening"]))throw new Error(JSON.stringify({fit,cols,bands}));
+  await tabletEmployee.locator('[data-schedule-week="prev"]').click();
+  await tabletEmployee.locator("[data-schedule-empty='1']").waitFor();
+  const empty={shifts:await tabletEmployee.locator(".shift").count(),bands:await tabletEmployee.locator("[data-time-band]").count(),text:(await tabletEmployee.locator("[data-schedule-empty='1']").innerText()).replace(/\s+/g," ")};
+  if(empty.shifts!==0||empty.bands!==0||!empty.text.includes("chưa có ca được phát hành"))throw new Error(JSON.stringify(empty));
+  return JSON.stringify({fit,cols,bands,empty});
 });
 
 const desktop=await context.newPage();
@@ -130,6 +161,7 @@ await check("sched03_browser_diagnostics",async()=>{
 });
 
 await page.screenshot({path:path.join(OUT,"sched-03-employee-schedule-mobile.png"),fullPage:true});
+await tablet.screenshot({path:path.join(OUT,"sched-03-employee-schedule-tablet.png"),fullPage:true});
 await desktop.screenshot({path:path.join(OUT,"sched-03-employee-schedule-desktop.png"),fullPage:true});
 await browser.close();
 fs.writeFileSync(path.join(OUT,"sched-03-employee-schedule-report.json"),JSON.stringify(report,null,2));
