@@ -97,7 +97,7 @@ test("UI2-011 cache chain remains preserved when later Manager UI tasks advance 
   const managerShellV="20261001-ui-unified1";
   const ownerShellV="20260927-ui2-016";
   const managerV="20260927-ui2-013";
-  const managerEntryV="20261002-sched-ui-004";
+  const managerEntryV="20261002-sched-ui-005";
   const ownerEntryV="20260927-ui2-016";
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
