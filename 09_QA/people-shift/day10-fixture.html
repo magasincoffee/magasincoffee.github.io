@@ -71,10 +71,15 @@
   };
   const time5 = (value) => String(value || '').slice(0,5);
   const shiftKind = (value) => {
-    const m = minutes(value);
-    if (m < 720) return 'morning';
-    if (m < 1020) return 'afternoon';
-    return 'evening';
+    const x=time5(value);
+    if(!/^\d{2}:\d{2}$/.test(x))return 'neutral';
+    const [h,mm]=x.split(':').map(Number);
+    if(!Number.isInteger(h)||!Number.isInteger(mm)||h<0||h>23||mm<0||mm>59)return 'neutral';
+    const m=h*60+mm;
+    if(m>=300&&m<720)return 'morning';
+    if(m>=720&&m<1020)return 'afternoon';
+    if(m>=1020&&m<=1320)return 'evening';
+    return 'neutral';
   };
   const escapeHtml = (value) => String(value ?? '')
     .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
