@@ -141,6 +141,12 @@ jobs:
           QA_OUT: qa-artifacts/ui2-cross-role
         run: node 09_QA/ui2-cross-role/sched-ui-009-clean-routes-browser.mjs
 
+      - name: Run SCHED-UI-010 Auth/navigation compatibility gate
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+          QA_OUT: qa-artifacts/ui2-cross-role
+        run: node 09_QA/ui2-cross-role/sched-ui-010-auth-navigation-browser.mjs
+
       - name: Build UI2-016 cross-role matrix
         env:
           QA_ROOT: qa-artifacts
