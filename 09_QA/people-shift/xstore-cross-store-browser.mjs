@@ -151,6 +151,7 @@ if(autoCall?.args?.p_algorithm_version!=="XSTORE_GLOBAL_RECURRING_V1")throw new 
 autoText=(await page.locator(".xsa").innerText()).replace(/\s+/g," ");
 if(!autoText.includes("áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp"))throw new Error(autoText);
 
+const rpcNamesBeforeResponsive=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.map(x=>x.name));
 for(const width of [1440,1024,768,430,390,360]){
  await page.setViewportSize({width,height:width<=430?844:1000});
  await page.goto(FIXTURE+"?week=2026-10-12",{waitUntil:"networkidle"});
@@ -195,7 +196,8 @@ if(mobileState.position==="fixed"||mobileState.position==="sticky"||mobileState.
 await mobileEditor.locator("#xsaCancel").click();
 await page.waitForFunction(()=>!document.querySelector(".xsa-editor-panel"));
 
-const rpcNames=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.map(x=>x.name));
+const rpcNamesAfterResponsive=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.map(x=>x.name));
+const rpcNames=[...new Set([...rpcNamesBeforeResponsive,...rpcNamesAfterResponsive])];
 for(const n of ["get_manager_accessible_stores","get_cross_store_weekly_plan_v1","get_cross_store_weekly_availability_v1","list_workforce_recurring_staffing_requirements_v1","auto_generate_cross_store_schedule_v1"]){
  if(!rpcNames.includes(n))throw new Error("missing RPC "+n);
 }
