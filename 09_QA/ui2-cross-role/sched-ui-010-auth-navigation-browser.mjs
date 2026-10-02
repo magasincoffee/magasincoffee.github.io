@@ -77,9 +77,11 @@ try{
     const context=await contextFor(legacy.role);
     const page=await context.newPage();
     await page.goto(BASE+legacy.path,{waitUntil:"domcontentloaded"});
+    await page.waitForURL(url=>url.pathname===legacy.want,{timeout:10000});
     await page.locator("#app").waitFor({state:"attached",timeout:10000});
     if(new URL(page.url()).pathname!==legacy.want)throw new Error("legacy bookmark did not migrate cleanly: "+page.url());
     await page.reload({waitUntil:"domcontentloaded"});
+    await page.waitForURL(url=>url.pathname===legacy.want,{timeout:10000});
     await context.close();
   }
 
