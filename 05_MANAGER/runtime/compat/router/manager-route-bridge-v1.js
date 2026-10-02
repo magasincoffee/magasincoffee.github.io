@@ -74,6 +74,24 @@
       if(!view||applying) return;
       setRoute(view,false);
     },true);
+    const sidebar=doc.querySelector('.sidebar');
+    if(sidebar&&!doc.documentElement.dataset.routeBridgeObserverBound){
+      doc.documentElement.dataset.routeBridgeObserverBound='1';
+      let scheduled=false;
+      const reconcile=()=>{
+        scheduled=false;
+        if(applying)return;
+        const wanted=routeView();
+        const active=sidebar.querySelector('[data-view].active')?.dataset.view||'';
+        if(active&&active!==wanted)clickView(wanted);
+      };
+      const observer=new MutationObserver(()=>{
+        if(scheduled)return;
+        scheduled=true;
+        setTimeout(reconcile,0);
+      });
+      observer.observe(sidebar,{subtree:true,attributes:true,attributeFilter:['class']});
+    }
     syncFromLocation(true);
   }
   function bind(){
