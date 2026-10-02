@@ -3,7 +3,7 @@
 **Track ID:** `WORKFORCE_UI_UX_UNIFICATION_V1`  
 **Lifecycle:** TEMPORARY — delete this file after WUI-009 completes.  
 **Created:** 2026-10-01  
-**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 DONE / WUI-004 DONE / WUI-005 DONE / WUI-006 DONE / WUI-007 DONE / WUI-008 READY / WUI-009 BLOCKED BY ORDER  
+**Status:** WUI-001 DONE / WUI-002 DONE / WUI-003 DONE / WUI-004 DONE / WUI-005 DONE / WUI-006 DONE / WUI-007 DONE / WUI-008 DONE / WUI-009 READY  
 **Repository:** `magasincoffee/magasincoffee.github.io`
 
 ## 0. Authority boundary
@@ -227,8 +227,8 @@ PR #363 remains open. Merge and exact-main qualification remain reserved for `WU
 | WUI-005 | Vietnamese UX copy acceptance | Remove user-visible technical/mixed-language terms from primary Manager/Employee Workforce surfaces; keep internal identifiers internal | **DONE / ACCEPTANCE GREEN** |
 | WUI-006 | Cross-role browser regression | Run bounded Manager + Employee browser regression for navigation, scheduling, time editor, colors, reload and responsive states | **DONE / ACCEPTANCE GREEN** |
 | WUI-007 | PR merge + exact-main qualification | PR #363 or superseding PR green → merge → exact-main source/UI2/People Shift/SOP/Auth/Owner/Pages gates green | **DONE / EXACT-MAIN GREEN** |
-| WUI-008 | Production-safe UI acceptance | Verify deployed Manager + Employee UI, cache cutover, no stale 05:00 reset, Vietnamese copy and color rule; no business data fabricated | **READY / NEXT AUTHORITATIVE TASK** |
-| WUI-009 | Closure evidence + TEMP cleanup | Write permanent acceptance evidence, verify primary XSTORE SOT unchanged, then delete this TEMP SOT in the closure PR | **BLOCKED BY WUI-008** |
+| WUI-008 | Production-safe UI acceptance | Verify deployed Manager + Employee UI, cache cutover, no stale 05:00 reset, Vietnamese copy and color rule; no business data fabricated | **DONE / PRODUCTION-SAFE GREEN** |
+| WUI-009 | Closure evidence + TEMP cleanup | Write permanent acceptance evidence, verify primary XSTORE SOT unchanged, then delete this TEMP SOT in the closure PR | **READY / NEXT AUTHORITATIVE TASK** |
 
 Execution order is strict:
 
@@ -567,6 +567,24 @@ Use existing real production state only. Do not create Store Priority, staffing 
 
 If production has no data for a specific visual state, verify that state through the already-green browser fixture and record production as `NO_REAL_DATA_TO_RENDER`, not as failure and not by fabricating data.
 
+WUI-008 closure:
+
+- production-safe verification date: 2026-10-02;
+- qualified product exact-main remains `d11c0b9905ad702e637d8d3329419bef7300b231`; subsequent main commit `199d0652163cb691f9ae2b407279ae9e4481d112` changed only WUI-007 evidence/SOT;
+- read-only production browser run `df2e14a4-5314-49f3-8e65-a37135ee7823`; no login and no state-changing control used;
+- Manager direct runtime rendered full desktop shell with right-side main workspace using the remaining viewport; primary visible guidance was Vietnamese;
+- live deployed Manager/Employee shared tokens are `#FFF4CC`, `#FDE7E7`, `#E8F3FF` with canonical shared font stack;
+- live Manager shell CSS has `width:auto`, `max-width:none` and sidebar-offset main/content rules;
+- live Employee shell CSS has a `208px` desktop rail, `width:auto`, `max-width:none` and rail-offset main;
+- live time-picker code uses `Chọn giờ` and no empty → `05:00` fallback;
+- live recurring editor calls `syncFromDom()` before add/remove and creates new blocks with empty start/end values;
+- live Employee schedule CSS/engine use the same morning/afternoon/evening shift tokens and Vietnamese published-schedule copy;
+- authenticated recurring/Employee schedule business states were not rendered because no authenticated production browser profile was available; these states are explicitly `NO_REAL_DATA_TO_RENDER`;
+- protected data-dependent states rely only on exact-main fixture evidence already green in People Shift run `36963178766` and UI2 run `36963178685`;
+- no Store Priority value, staffing demand, draft assignment, official schedule, staffing headcount or other production business data was created, modified or inferred;
+- durable acceptance evidence: `01_DOCS/MAGASIN/05_SYSTEM/WUI_008_PRODUCTION_SAFE_UI_ACCEPTANCE.md`;
+- next task: `WUI-009`.
+
 ### WUI-009 — Closure evidence + TEMP cleanup
 
 Create permanent evidence:
@@ -669,4 +687,6 @@ Do not compress the estimate by skipping exact-main or production verification.
 
 `WUI-007` is **DONE**.
 
-`WUI-008` is the only authoritative next executable task. Do not execute WUI-009 before WUI-008 is complete.
+`WUI-008` is **DONE**.
+
+`WUI-009` is the only authoritative next executable task.
