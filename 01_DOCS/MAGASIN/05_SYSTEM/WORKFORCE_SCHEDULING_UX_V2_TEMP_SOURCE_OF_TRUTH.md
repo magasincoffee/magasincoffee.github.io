@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 READY / SCHED-UI-006→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 READY / SCHED-UI-007→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -160,8 +160,8 @@ Owner/release chain:
 | SCHED-UI-002 | Manager information architecture: Lập lịch tuần vs Thiết lập xếp lịch | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-003 | Guided Auto Schedule “next action” workflow | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-004 | Draft → edit → check → approve → publish visual simplification | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-005 | Shared canonical time-band classifier | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-006 | Employee official schedule time-band integration | **BLOCKED BY 005** |
+| SCHED-UI-005 | Shared canonical time-band classifier | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-006 | Employee official schedule time-band integration | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-007 | Employee availability CTA + editor UX | **BLOCKED BY 006** |
 | SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **BLOCKED BY 007** |
 | SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **BLOCKED BY 008** |
@@ -371,6 +371,27 @@ Required tests:
 - 22:00 evening;
 - >22:00 neutral;
 - blank/invalid neutral.
+
+Completion evidence — 2026-10-02:
+
+- implementation continued on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `77ac194d421fc07b6435784f2af2bc17baf79111`;
+- `MAGASIN_CORE.time.shiftKind()` is now the canonical classifier and Shared Core advanced to version `1.2.2`;
+- canonical boundaries are enforced exactly: 05:00–<12:00 morning, 12:00–<17:00 afternoon, 17:00–22:00 evening, otherwise neutral;
+- blank, malformed and out-of-range values fail neutral instead of being coerced into a visual band;
+- Manager draft/publish, recurring staffing Auto Schedule, and cross-store master surfaces delegate to the shared canonical helper rather than maintaining local minute-threshold classifiers;
+- Manager runtime loads Shared Core before the Workforce scheduling engine and waits for both Supabase and `MAGASIN_CORE.time.shiftKind` before scheduling modules load;
+- Manager runtime/entry and affected scheduling asset cache chain advanced to `20261002-sched-ui-005` without changing unchanged presentation assets unnecessarily;
+- QA fixtures were aligned so Manager/XSTORE browser qualification uses the canonical Shared Core classifier instead of a divergent local mock;
+- dedicated contract `09_QA/people-shift/sched-ui-005-time-band-contract.test.mjs` verifies 04:59 neutral, 05:00 morning, 11:59 morning, 12:00 afternoon, 16:59 afternoon, 17:00 evening, 22:00 evening, 22:01 neutral, blank/invalid neutral, and 24:00 neutral;
+- durable job log records `SCHED_UI_005_TIME_BAND_CONTRACT=PASS`;
+- `SOP Task Tests` PR run `37023817893`: SUCCESS;
+- `UI2 Cross Role Acceptance` PR run `37023818090`: SUCCESS;
+- `People Shift Day-10 Tests` PR run `37023817728`: SUCCESS;
+- `UI2 Cross Role Acceptance` push run `37023811128`: SUCCESS;
+- job-level qualification on the verified exact head includes UI2-016 static contract, Manager responsive matrix, UI2-017 cold reload closure gate, People Shift regression tests, SCHED-01 three-role scheduling browser smoke, and XSTORE four-store master browser E2E: SUCCESS;
+- PR remains open and unmerged; no production-impacting product code from this task was merged to `main`;
+- no Owner input is required to close this technical task.
 
 ## 13. SCHED-UI-006 — Employee official schedule time-band integration
 
@@ -729,10 +750,12 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-004 = DONE / VERIFIED`
 
-`SCHED-UI-005 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-005 = DONE / VERIFIED`
+
+`SCHED-UI-006 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
 Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
 
-Do not execute SCHED-UI-006 or later before SCHED-UI-005 is complete.
+Do not execute SCHED-UI-007 or later before SCHED-UI-006 is complete.
