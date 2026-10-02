@@ -138,7 +138,7 @@ test("unified asset cache chain reaches both Manager and Employee entry points",
   "review-v1.js?v=20261001-ui-unified1",
   "draft-publish-v1.js?v=20261001-ui-unified1",
   "cross-store-master-v1.js?v=20261001-ui-unified1",
-  "cross-store-auto-schedule-v1.js?v=20261002-sched-ui-001",
+  "cross-store-auto-schedule-v1.js?v=20261002-sched-ui-002",
   "manager-scheduling-ui2-v1.js?v=20261001-ui-unified1",
   "official-v1.js?v=20261001-ui-unified1",
   "ui-consolidation-v1.js?v=20261001-ui-unified1"
@@ -149,7 +149,7 @@ test("unified asset cache chain reaches both Manager and Employee entry points",
   "magasin-ui-v2-shell.css?v=20261001-ui-unified1",
   "magasin-ui-v2-shell.js?v=20261001-ui-unified1",
   "app-time-picker-24h.js?v=20261001-ui-unified1",
-  "engine-v1.js?v=20261002-sched-ui-001"
+  "engine-v1.js?v=20261002-sched-ui-002"
  ])assert.ok(managerRuntime.includes(token),token);
  assert.ok(employeeRuntime.includes("employee-v40.html?ui=20261001-ui-unified1&runtime=engine"));
  assert.ok(employeeRuntime.includes("dashboard/engine-v1.js?v=20261001-ui-unified1"));
