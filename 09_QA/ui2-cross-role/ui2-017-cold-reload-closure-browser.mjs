@@ -94,7 +94,7 @@ async function iframeSrc(page,id="app"){
 }
 
 for(const spec of [
-  {role:"EMPLOYEE",target:"/06_EMPLOYEE/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261002-sched-ui-006"},
+  {role:"EMPLOYEE",target:"/06_EMPLOYEE/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261003-sched-ui-007"},
   {role:"STORE_MANAGER",label:"MANAGER",target:"/05_MANAGER/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261002-sched-ui-005"},
   {role:"OWNER",target:"/04_OWNER/",runtime:null}
 ]){
@@ -121,7 +121,7 @@ for(const spec of [
 }
 
 for(const spec of [
-  {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261002-sched-ui-006"},
+  {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261003-sched-ui-007"},
   {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261002-sched-ui-005"}
 ]){
   const context=await newContext(spec.role,(spec.label||spec.role)==="MANAGER"?1024:390);
