@@ -23,14 +23,22 @@ if(await page.locator(".xsm-store").count()!==4)throw new Error("expected 4 stor
 const auto=page.locator(".xsa");
 await auto.waitFor();
 let autoText=(await auto.innerText()).replace(/\s+/g," ");
-for(const token of ["Nhu cầu nhân sự hàng tuần","2. Nhu cầu nhân sự hàng tuần","3. Xếp lịch tự động","5 khung cố định","4/4 CN đã cấu hình","Tạo lịch nháp tự động"]){
+for(const token of ["Lập lịch tuần","Thiết lập xếp lịch","1. Ưu tiên cửa hàng","2. Nhu cầu nhân sự cố định","3. Tạo lịch nháp","5 khung cố định","4/4 CN đã cấu hình","Tạo lịch nháp tự động"]){
  if(!autoText.includes(token))throw new Error("missing "+token+" in "+autoText);
 }
 for(const forbidden of ["Nhu cầu nhân sự recurring","Auto Schedule","Tạo DRAFT","Store Priority","Robot"]){
  if(autoText.includes(forbidden))throw new Error("technical copy leaked: "+forbidden+" in "+autoText);
 }
+if((await auto.getAttribute("data-xsa-active-surface"))!=="week")throw new Error("weekly operation must be the default surface");
+if(await page.locator(".xsa-board").count())throw new Error("recurring board must not be forced into the default weekly surface");
 if(await page.locator("#xsaAuto").isDisabled())throw new Error("automatic draft should be enabled with complete staffing");
-if(await page.locator(".xsa-board tbody tr").count()!==4)throw new Error("recurring board must expose 4 stores");
+await page.locator('[data-xsa-go-setup="requirements"]').click();
+await page.waitForFunction(()=>document.querySelector('.xsa')?.dataset.xsaActiveSurface==="setup");
+const setupText=(await auto.innerText()).replace(/\s+/g," ");
+for(const token of ["Thiết lập xếp lịch","Ưu tiên cửa hàng","Nhu cầu nhân sự cố định hàng tuần","Mở ưu tiên cửa hàng","Chỉnh nhu cầu hàng tuần"]){
+ if(!setupText.includes(token))throw new Error("missing setup token "+token+" in "+setupText);
+}
+if(await page.locator(".xsa-board tbody tr").count()!==4)throw new Error("recurring board must expose 4 stores inside setup");
 
 const cell=page.locator('[data-xsa-cell="s1-1"]');
 await cell.locator(".xsa-cell-open").click();
@@ -94,6 +102,9 @@ if(!persisted.some(r=>r.store_id==="s1"&&Number(r.day_of_week)===1&&r.start_time
  throw new Error("edited recurring requirement not persisted");
 }
 
+await page.locator("#xsaWeekOpen").click();
+await page.waitForFunction(()=>document.querySelector('.xsa')?.dataset.xsaActiveSurface==="week");
+if(await page.locator(".xsa-board").count())throw new Error("recurring board leaked back into weekly operation");
 await page.locator("#xsaAuto").click();
 await page.waitForFunction(()=>globalThis.__XSTORE_QA.calls.some(x=>x.name==="auto_generate_cross_store_schedule_v1"));
 let autoCall=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_v1").at(-1));
@@ -103,13 +114,19 @@ if(autoCall?.args?.p_replace_existing!==false)throw new Error(JSON.stringify(aut
 
 await page.reload({waitUntil:"networkidle"});
 await page.locator(".xsa").waitFor();
+if((await page.locator(".xsa").getAttribute("data-xsa-active-surface"))!=="week")throw new Error("reload must return to weekly operation");
+if(await page.locator(".xsa-board").count())throw new Error("reload exposed recurring setup by default");
+await page.locator('[data-xsa-nav="setup"]').click();
 const reloadedCell=(await page.locator('[data-xsa-cell="s1-1"]').innerText()).replace(/\s+/g," ");
 if(!reloadedCell.includes("07:00–12:00 · 3 người"))throw new Error("recurring edit did not survive reload: "+reloadedCell);
 
 await page.goto(FIXTURE+"?week=2026-10-12",{waitUntil:"networkidle"});
 await page.locator(".xsa").waitFor();
+if(await page.locator(".xsa-board").count())throw new Error("next week should also open on weekly operation");
+await page.locator('[data-xsa-nav="setup"]').click();
 const nextWeekCell=(await page.locator('[data-xsa-cell="s1-1"]').innerText()).replace(/\s+/g," ");
 if(!nextWeekCell.includes("07:00–12:00 · 3 người"))throw new Error("recurring config not reused in next week: "+nextWeekCell);
+await page.locator("#xsaWeekOpen").click();
 await page.locator("#xsaAuto").click();
 await page.waitForFunction(()=>globalThis.__XSTORE_QA.calls.some(x=>x.name==="auto_generate_cross_store_schedule_v1"));
 autoCall=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_v1").at(-1));
@@ -120,6 +137,7 @@ autoText=(await page.locator(".xsa").innerText()).replace(/\s+/g," ");
 if(!autoText.includes("áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp"))throw new Error(autoText);
 
 await page.setViewportSize({width:390,height:844});
+await page.locator('[data-xsa-nav="setup"]').click();
 await page.locator('[data-xsa-cell="s1-1"] .xsa-cell-open').click();
 const mobileEditor=page.locator(".xsa-editor-panel");
 await mobileEditor.waitFor();
