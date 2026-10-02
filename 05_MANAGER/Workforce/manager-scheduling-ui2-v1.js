@@ -12,6 +12,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msd-ui2-012 .msu2-title .muted{max-width:760px;font-size:12px;line-height:18px}
 .msu2-context-bar{display:grid;grid-template-columns:minmax(240px,.8fr) minmax(360px,1.2fr);gap:10px}
 .msu2-control-group,.msu2-draft-actions{border:1px solid #dfe5ec;border-radius:12px;background:#fff;padding:10px}
+.msu2-draft-actions{background:#fbfcfe}.msu2-draft-actions .btn{background:#fff;color:#475467;border-color:#d0d5dd;box-shadow:none}.msu2-draft-actions .btn:hover{background:#f8fafc}.msu2-draft-actions .btn.primary{background:#fff;color:#475467;border-color:#d0d5dd;box-shadow:none}
 .msu2-control-label,.msu2-section-kicker{display:block;margin-bottom:5px;color:#667085;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
 .msu2-control-group .btn{width:100%;min-width:0}
 .msu2-week-controls{display:grid;grid-template-columns:42px minmax(112px,1fr) 42px auto;gap:6px;align-items:center}
@@ -30,7 +31,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msu2-state-summary{display:flex!important;gap:7px!important;flex-wrap:wrap!important;margin-top:10px!important}
 .msd-ui2-012 .msd-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:12px}
 .msd-ui2-012 .msd-source,.msd-ui2-012 .msd-board-wrap{padding:14px;border-radius:13px;border-color:#dfe5ec;box-shadow:0 1px 2px rgba(16,24,40,.03)}
-.msd-ui2-012 .msd-source{background:#fbfdff}
+.msd-ui2-012 .msd-source{background:#fbfdff;border-style:dashed}.msd-ui2-012 .msd-board-wrap{background:#fff;border-width:2px}.msu2-section-help{margin:2px 0 10px;color:#667085;font-size:11px;line-height:17px}
 .msd-ui2-012 .msd-source-list{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,260px);grid-template-columns:none;gap:8px;max-height:none;overflow-x:auto;overflow-y:hidden;padding-bottom:3px;scrollbar-gutter:stable}
 .msd-ui2-012 .msd-source-row{min-width:0;background:#fff}
 .msd-ui2-012 .msd-board-wrap{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-gutter:stable}
@@ -42,8 +43,10 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msd-ui2-012 .msd-input{height:38px}
 .msd-ui2-012 .msd-empty{min-height:72px;display:grid;place-items:center;border:1px dashed #dce5f0;border-radius:9px;margin:6px;color:#667085;background:#fff}
 .msd-ui2-012 .msd-downstream{margin-top:12px;padding:14px;border:1px solid #dfe5ec;border-radius:13px;background:#fff}
-.msd-ui2-012 .msd-downstream .msd-actions{gap:8px}
-.msd-ui2-012 .msd-downstream .btn{min-width:140px}
+.msd-ui2-012 .msd-downstream .msd-actions{gap:8px;align-items:center}.msd-ui2-012 .msd-downstream .btn{min-width:140px}
+.msu2-final-action{font-weight:800}.msu2-final-action.primary{box-shadow:0 1px 2px rgba(16,24,40,.08)}
+.msu2-conflict-resolution{display:none;align-items:flex-start;justify-content:space-between;gap:12px;margin-top:10px;padding:10px 12px;border:1px solid #efc0bc;border-radius:10px;background:#fff8f7}.msu2-conflict-resolution strong{display:block;color:#912018;font-size:12px}.msu2-conflict-resolution span{display:block;margin-top:3px;color:#667085;font-size:11px;line-height:17px}.msu2-conflict-resolution .btn{flex:0 0 auto;min-width:150px}.msu2-conflict-resolution[data-visible="1"]{display:flex}
+.msd-ui2-012 .msd-downstream #msdStatus{margin-top:10px}
 .msd-ui2-012 #msdStatus{role:status}
 .msd-ui2-012 .msd-status{border:1px solid #d8e5f4}
 .msd-ui2-012 .msd-status.error{border-color:#efc0bc}.msd-ui2-012 .msd-status.ok{border-color:#badfc8}
@@ -117,8 +120,8 @@ function structure(r){
   weekGroup.appendChild(weekControls);
   context.append(storeGroup,weekGroup);
 
-  const draftActions=group('msu2-draft-actions','Phiên nháp');
-  for(const id of ['msdStart','msdReload','msdSave']){const el=actions.querySelector('#'+id);if(el)draftActions.appendChild(el)}
+  const draftActions=group('msu2-draft-actions','Thao tác phụ · lịch nháp');
+  for(const id of ['msdStart','msdReload','msdSave']){const el=actions.querySelector('#'+id);if(el){el.classList.remove('primary');el.classList.add('msu2-secondary-action');draftActions.appendChild(el)}}
   actions.remove();
   head.append(context,draftActions);
  }
@@ -134,12 +137,16 @@ function structure(r){
  const source=r.querySelector('.msd-source');
  const sourceTitle=source?.querySelector(':scope > b');
  if(sourceTitle&&!source.querySelector(':scope > .msu2-section-kicker')){
-  const k=document.createElement('span');k.className='msu2-section-kicker';k.textContent='Nguồn vào';sourceTitle.before(k);
+  const k=document.createElement('span');k.className='msu2-section-kicker';k.textContent='Nguồn tham khảo';sourceTitle.before(k);
+  const h=document.createElement('div');h.className='msu2-section-help';h.textContent='Dữ liệu nhân viên có thể làm chỉ là nguồn để thêm ca; chỉnh sửa lịch được thực hiện ở bảng nháp bên dưới.';sourceTitle.after(h);
+  source.dataset.msu2Section='availability-source';
  }
  const board=r.querySelector('.msd-board-wrap');
  const boardTitle=board?.querySelector(':scope > b');
  if(boardTitle&&!board.querySelector(':scope > .msu2-section-kicker')){
-  const k=document.createElement('span');k.className='msu2-section-kicker';k.textContent='Bảng nháp 7 ngày';boardTitle.before(k);
+  const k=document.createElement('span');k.className='msu2-section-kicker';k.textContent='Lịch nháp đang chỉnh';boardTitle.before(k);
+  const h=document.createElement('div');h.className='msu2-section-help';h.textContent='Đây là vùng chỉnh sửa ca của tuần đang chọn. Lưu bản nháp trước khi kiểm tra và duyệt.';boardTitle.after(h);
+  board.dataset.msu2Section='draft-editor';
  }
  if(board){
   board.tabIndex=0;
@@ -148,10 +155,14 @@ function structure(r){
  }
  const downstream=r.querySelector('.msd-downstream');
  if(downstream&&!downstream.querySelector(':scope > .msu2-section-kicker')){
-  const k=document.createElement('span');k.className='msu2-section-kicker';k.textContent='Tiến trình phát hành';downstream.prepend(k);
+  const k=document.createElement('span');k.className='msu2-section-kicker';k.textContent='Bước cuối · duyệt và phát hành';downstream.prepend(k);
+ }
+ if(downstream&&!downstream.querySelector('.msu2-conflict-resolution')){
+  const conflict=document.createElement('div');conflict.className='msu2-conflict-resolution';conflict.innerHTML='<div><strong>Cần xử lý xung đột phiên xếp lịch</strong><span>Giữ nguyên dữ liệu hiện tại. Sau khi phiên trùng được xử lý, tải lại trạng thái để tiếp tục.</span></div><button class="btn" type="button" data-msu2-conflict-reload>Tải lại trạng thái</button>';downstream.appendChild(conflict);
+  conflict.querySelector('[data-msu2-conflict-reload]')?.addEventListener('click',()=>r.querySelector('#msdReload')?.click());
  }
  const status=r.querySelector('#msdStatus');
- if(status){status.setAttribute('role','status');status.setAttribute('aria-live','polite')}
+ if(status){status.setAttribute('role','status');status.setAttribute('aria-live','polite');if(downstream&&status.parentElement!==downstream)downstream.appendChild(status)}
 }
 let lastSchedulingSignal='';
 function sync(){
@@ -172,11 +183,27 @@ function sync(){
   if(detail&&detail.textContent!==model.detail)detail.textContent=model.detail;
   if(chip&&chip.textContent!==model.chip)chip.textContent=model.chip;
  }
- if(stage==='CONFLICT'){
+ const validate=r.querySelector('#msdValidate'),review=r.querySelector('#msdReview'),publish=r.querySelector('#msdPublish');
+ for(const el of [validate,review,publish])if(el){el.classList.remove('primary','msu2-final-action');el.hidden=false}
+ if(validate)validate.classList.add('msu2-final-action');
+ if(review)review.classList.add('msu2-final-action');
+ if(publish)publish.classList.add('msu2-final-action');
+ if(stage==='DRAFT'){
+  if(review)review.classList.add('primary');
+  if(publish)publish.hidden=true;
+ }else if(stage==='REVIEWED'){
+  if(validate)validate.hidden=true;
+  if(review)review.hidden=true;
+  if(publish)publish.classList.add('primary');
+ }else if(stage==='PUBLISHED'||stage==='NONE'){
+  if(validate)validate.hidden=true;if(review)review.hidden=true;if(publish)publish.hidden=true;
+ }else if(stage==='CONFLICT'){
   for(const id of ['msdStart','msdSave','msdValidate','msdReview','msdPublish']){
    const el=r.querySelector('#'+id);if(el){el.disabled=true;el.setAttribute('aria-disabled','true')}
   }
+  if(validate)validate.hidden=true;if(review)review.hidden=true;if(publish)publish.hidden=true;
  }
+ const conflict=r.querySelector('.msu2-conflict-resolution');if(conflict)conflict.dataset.visible=stage==='CONFLICT'?'1':'0';
  const signal=[stage,busy?1:0,String(state.lastValidation||''),Number(state.assignments?.length||0)].join('|');
  if(signal!==lastSchedulingSignal){
   lastSchedulingSignal=signal;
