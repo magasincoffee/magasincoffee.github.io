@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 READY / SCHED-UI-012→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 DONE / SCHED-UI-012 READY / SCHED-UI-013→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -166,8 +166,8 @@ Owner/release chain:
 | SCHED-UI-008 | Owner overview/drill-down scheduling parity + language cleanup | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-011 | Responsive/mobile scheduling redesign | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-012 | Accessibility, states and Vietnamese copy hardening | **BLOCKED BY 011** |
+| SCHED-UI-011 | Responsive/mobile scheduling redesign | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-012 | Accessibility, states and Vietnamese copy hardening | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-013 | Focused regression tests for changed scheduling contracts | **BLOCKED BY 012** |
 | SCHED-UI-014 | Integrated cross-role browser qualification on release branch | **BLOCKED BY 013** |
 | SCHED-UI-015 | Preview/Staging build + automated RC qualification packet | **BLOCKED BY 014** |
@@ -605,6 +605,24 @@ Rules:
 - sticky/fixed UI must not cover actions;
 - desktop may use internal board scroll only where necessary.
 
+Completion evidence — 2026-10-03:
+
+- implementation completed on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `6b967461fc03f0ac39ca763d8ef72478b8a7a446`;
+- representative widths qualified: phone `360/390/430`, tablet `768/1024`, desktop `1440+`;
+- Manager draft scheduling stacks to one-day/one-column presentation on phone, retains contained internal board scrolling on tablet, and restores the seven-day board on desktop;
+- recurring staffing setup becomes store/day cards on phone with an inline, non-fixed editor; tablet retains a contained internal board scroll and desktop remains non-overflowing;
+- primary scheduling controls meet the `44px` touch-target contract at tablet/phone sizes;
+- page-level horizontal overflow is prevented across the required responsive widths, including the corrected recurring staffing containment path at `1024px`;
+- sticky/fixed scheduling UI no longer covers phone actions; recurring editor is inline at phone widths;
+- responsive browser qualification preserves required XSTORE RPC evidence across fixture reloads without weakening required/forbidden RPC contracts;
+- `SCHED_UI_011_RESPONSIVE_CONTRACT=PASS`;
+- `SCHED_UI_011_RECURRING_RESPONSIVE=PASS` and `XSTORE_RECURRING_STABLE_EDITOR_BROWSER=PASS` in People Shift Day-10 PR run `37078473617`, job `111073547870`, step 35;
+- `SCHED_UI_011_DRAFT_RESPONSIVE=PASS` and `UI2_012_MANAGER_SCHEDULING_BROWSER=PASS` in People Shift Day-10 PR run `37078473617`, job `111073547870`, and UI2 Cross Role Acceptance PR run `37078473647`, job `111073548127`, step 13;
+- successful exact-head durable CI: Procurement QA Robot PR `37078473752`, Auth Password Reset Hotfix PR `37078473684`, SOP Task Tests PR `37078473610`, AUTH-PROD Regression Contract PR `37078473701`, Owner Control Tower Tests PR `37078473750`, UI2 Cross Role Acceptance PR `37078473647`, People Shift Day-10 Tests PR `37078473617`, UI2 Cross Role Acceptance push `37078470138`, and People Shift Day-10 Tests push `37078470243`;
+- PR remains open and unmerged; no production merge/release was performed;
+- no Owner input is required to close this technical task.
+
 ## 19. SCHED-UI-012 — Accessibility, states and Vietnamese copy
 
 Audit all changed scheduling surfaces for:
@@ -861,7 +879,9 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-010 = DONE / VERIFIED`
 
-`SCHED-UI-011 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-011 = DONE / VERIFIED`
+
+`SCHED-UI-012 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
