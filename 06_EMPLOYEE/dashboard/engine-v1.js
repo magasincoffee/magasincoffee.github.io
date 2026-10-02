@@ -170,7 +170,7 @@ function renderQueue(x,snapshot){
   if(!availabilitySettled&&registration==='REGISTRATION_OPEN'){
     actions.unshift({icon:'＋',title:'Thời gian có thể làm tuần sau',detail:'Đang kiểm tra các khoảng thời gian đã lưu. Đây không phải lịch làm chính thức.',label:'Mở đăng ký',action:'availability'});
   }else if(availabilitySettled&&registration==='REGISTRATION_OPEN'&&availabilityRows.length){
-    actions.unshift({icon:'✓',title:'Thời gian có thể làm tuần sau đã được lưu',detail:availabilityRows.length+' khoảng · '+availabilityDays+' ngày đã lưu. Bạn có thể sửa trước khi đăng ký đóng.',label:'Xem / sửa đăng ký',action:'availability'});
+    actions.unshift({icon:'✓',title:'Thời gian có thể làm tuần sau đã được lưu',detail:'Thời gian có thể làm tuần sau đã được lưu: '+availabilityRows.length+' khoảng · '+availabilityDays+' ngày. Bạn có thể sửa trước khi đăng ký đóng.',label:'Xem / sửa đăng ký',action:'availability'});
   }else if(availabilitySettled&&registration==='REGISTRATION_OPEN'){
     actions.unshift({icon:'＋',title:'Đăng ký thời gian có thể làm tuần sau',detail:'Chưa có khoảng thời gian nào được lưu. Quản lý dùng dữ liệu này để xếp lịch; đây chưa phải lịch làm chính thức.',label:'Đăng ký ngay',action:'availability',variant:'primary'});
   }else if(availabilitySettled&&registration==='REGISTRATION_CLOSED'){
