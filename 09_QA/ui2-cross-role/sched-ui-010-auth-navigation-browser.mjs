@@ -70,15 +70,15 @@ try{
   }
 
   for(const legacy of [
-    {path:"/05_MANAGER/#workforce",role:"STORE_MANAGER",want:"/05_MANAGER/"},
-    {path:"/06_EMPLOYEE/#attendance",role:"EMPLOYEE",want:"/06_EMPLOYEE/"},
-    {path:"/04_OWNER/Workforce/",role:"OWNER",want:"/04_OWNER/Workforce/"}
+    {path:"/05_MANAGER/#workforce",role:"STORE_MANAGER",want:"/manager/scheduling/"},
+    {path:"/06_EMPLOYEE/#attendance",role:"EMPLOYEE",want:"/employee/attendance/"},
+    {path:"/04_OWNER/Workforce/",role:"OWNER",want:"/owner/scheduling/"}
   ]){
     const context=await contextFor(legacy.role);
     const page=await context.newPage();
     await page.goto(BASE+legacy.path,{waitUntil:"domcontentloaded"});
     await page.locator("#app").waitFor({state:"attached",timeout:10000});
-    if(new URL(page.url()).pathname!==legacy.want)throw new Error("legacy bookmark changed unexpectedly: "+page.url());
+    if(new URL(page.url()).pathname!==legacy.want)throw new Error("legacy bookmark did not migrate cleanly: "+page.url());
     await page.reload({waitUntil:"domcontentloaded"});
     await context.close();
   }
