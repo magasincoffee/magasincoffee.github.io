@@ -165,7 +165,7 @@ try {
     await page.fill('#username', 'qa@example.com');
     await page.fill('#password', 'NewPassword123');
     await page.click('#loginForm button[type="submit"]');
-    await page.waitForURL('**/04_OWNER/**');
+    await page.waitForURL('**/owner/**');
     const loginAudit = await page.evaluate(() => JSON.parse(localStorage.getItem('__auth_mock_audit')));
     assert.equal(loginAudit.signIn, 1);
     assert.equal(loginAudit.password, 'NewPassword123');
