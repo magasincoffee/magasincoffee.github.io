@@ -23,7 +23,7 @@ if(await page.locator(".xsm-store").count()!==4)throw new Error("expected 4 stor
 const auto=page.locator(".xsa");
 await auto.waitFor();
 let autoText=(await auto.innerText()).replace(/\s+/g," ");
-for(const token of ["Lập lịch tuần","Thiết lập xếp lịch","1. Ưu tiên cửa hàng","2. Nhu cầu nhân sự cố định","3. Tạo lịch nháp","5 khung cố định","4/4 CN đã cấu hình","Tạo lịch nháp tự động"]){
+for(const token of ["Lập lịch tuần","Thiết lập xếp lịch","1. Chuẩn bị","2. Tạo lịch nháp","3. Chỉnh lịch","4. Kiểm tra","5. Duyệt & phát hành","Việc cần làm tiếp theo","Hoàn thiện ưu tiên cửa hàng","5 khung cố định","4/4 CN đã cấu hình"]){
  if(!autoText.includes(token))throw new Error("missing "+token+" in "+autoText);
 }
 for(const forbidden of ["Nhu cầu nhân sự recurring","Auto Schedule","Tạo DRAFT","Store Priority","Robot"]){
@@ -31,8 +31,19 @@ for(const forbidden of ["Nhu cầu nhân sự recurring","Auto Schedule","Tạo 
 }
 if((await auto.getAttribute("data-xsa-active-surface"))!=="week")throw new Error("weekly operation must be the default surface");
 if(await page.locator(".xsa-board").count())throw new Error("recurring board must not be forced into the default weekly surface");
-if(await page.locator("#xsaAuto").isDisabled())throw new Error("automatic draft should be enabled with complete staffing");
-await page.locator('[data-xsa-go-setup="requirements"]').click();
+const blockedAction=page.locator('#xsaNextAction[data-xsa-next-action="setup-priority"]');
+await blockedAction.waitFor();
+const beforePriorityRpc=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_v1").length);
+if(beforePriorityRpc!==0)throw new Error("Auto Schedule ran before Store Priority prerequisites were complete");
+await page.evaluate(async()=>{
+ const row=globalThis.__XSTORE_QA.availability.find(x=>x.user_id==="e3");
+ row.priority_store_ids=["s1"];row.priority_store_codes=["CN1"];
+ await globalThis.MAGASIN_CROSS_STORE_MASTER.refresh();
+});
+await page.waitForFunction(()=>document.querySelector('#xsaNextAction')?.dataset.xsaNextAction==="auto");
+autoText=(await auto.innerText()).replace(/\s+/g," ");
+if(!autoText.includes("Tạo lịch nháp tự động"))throw new Error(autoText);
+await page.locator("#xsaSetupOpen").click();
 await page.waitForFunction(()=>document.querySelector('.xsa')?.dataset.xsaActiveSurface==="setup");
 const setupText=(await auto.innerText()).replace(/\s+/g," ");
 for(const token of ["Thiết lập xếp lịch","Ưu tiên cửa hàng","Nhu cầu nhân sự cố định hàng tuần","Mở ưu tiên cửa hàng","Chỉnh nhu cầu hàng tuần"]){
@@ -105,7 +116,7 @@ if(!persisted.some(r=>r.store_id==="s1"&&Number(r.day_of_week)===1&&r.start_time
 await page.locator("#xsaWeekOpen").click();
 await page.waitForFunction(()=>document.querySelector('.xsa')?.dataset.xsaActiveSurface==="week");
 if(await page.locator(".xsa-board").count())throw new Error("recurring board leaked back into weekly operation");
-await page.locator("#xsaAuto").click();
+await page.locator('#xsaNextAction[data-xsa-next-action="auto"]').click();
 await page.waitForFunction(()=>globalThis.__XSTORE_QA.calls.some(x=>x.name==="auto_generate_cross_store_schedule_v1"));
 let autoCall=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_v1").at(-1));
 if(autoCall?.args?.p_week_start!=="2026-10-05")throw new Error(JSON.stringify(autoCall));
@@ -127,7 +138,7 @@ await page.locator('[data-xsa-nav="setup"]').click();
 const nextWeekCell=(await page.locator('[data-xsa-cell="s1-1"]').innerText()).replace(/\s+/g," ");
 if(!nextWeekCell.includes("07:00–12:00 · 3 người"))throw new Error("recurring config not reused in next week: "+nextWeekCell);
 await page.locator("#xsaWeekOpen").click();
-await page.locator("#xsaAuto").click();
+await page.locator('#xsaNextAction[data-xsa-next-action="auto"]').click();
 await page.waitForFunction(()=>globalThis.__XSTORE_QA.calls.some(x=>x.name==="auto_generate_cross_store_schedule_v1"));
 autoCall=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_v1").at(-1));
 if(autoCall?.args?.p_week_start!=="2026-10-12")throw new Error("next-week projection mismatch: "+JSON.stringify(autoCall));
