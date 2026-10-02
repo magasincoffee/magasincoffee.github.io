@@ -120,7 +120,7 @@ try {
     await employee.locator("#weeklyRegistrationPanel button", { hasText: "Đăng ký" }).click();
     await employee.locator("#quickRegMsg").filter({ hasText: "Đã lưu khoảng thời gian có thể làm." }).waitFor();
     await employee.locator(".week-summary").filter({ hasText: "Thời gian có thể làm" }).waitFor();
-    await employee.locator("[data-schedule-availability]").filter({ hasText: "Xem / sửa đăng ký" }).waitFor();
+    await employee.locator("[data-schedule-availability]").filter({ hasText: "Xem / sửa đăng ký" }).first().waitFor();
 
     const saved = await page.evaluate(() =>
       globalThis.__PEOPLE_SHIFT_QA.state.availability.map((row) => ({
