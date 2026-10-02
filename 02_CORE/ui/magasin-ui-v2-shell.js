@@ -30,9 +30,9 @@
 
   const OWNER_NAV = Object.freeze({
     primary: Object.freeze([
-      ['overview', '⌂', 'Tổng quan', '/04_OWNER/'],
+      ['overview', '⌂', 'Tổng quan', '/owner/'],
       ['attention', '!', 'Cần chú ý', '/04_OWNER/ControlTower/'],
-      ['workforce', '▦', 'Nhân sự', '/04_OWNER/Workforce/'],
+      ['workforce', '▦', 'Nhân sự', '/owner/scheduling/'],
       ['procurement', '□', 'Mua hàng', '/nhap-hang/'],
       ['access', '⌘', 'Phân quyền', '/04_OWNER/Access/']
     ]),
@@ -95,6 +95,8 @@
 
   const ownerKeyFromPath = path => {
     const p = String(path || '/').toLowerCase();
+    if (p.startsWith('/owner/scheduling')) return 'workforce';
+    if (p === '/owner' || p.startsWith('/owner/')) return 'overview';
     if (p.startsWith('/04_owner/controltower')) return 'attention';
     if (p.startsWith('/04_owner/workforce')) return 'workforce';
     if (p.startsWith('/nhap-hang') || p.startsWith('/04_owner/procurement')) return 'procurement';
