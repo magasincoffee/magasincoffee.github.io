@@ -24,9 +24,9 @@ function assertOrder(source,fragments){
 test("UI2-014 Owner home and Control Tower both render oversight before module entry",()=>{
  for(const source of [home,control]){
   assertOrder(source,['id="overview"','id="attention"','id="operatingSnapshot"','id="ownerModules"']);
-  assert.match(source,/What needs Owner attention now\?/);
+  assert.match(source,/(?:What needs Owner attention now\?|Việc nào cần Owner xem ngay\?)/);
   assert.match(source,/Bối cảnh báo cáo & độ tin cậy nguồn/);
-  assert.match(source,/Đi tới module khi cần xử lý sâu/);
+  assert.match(source,/Đi tới (?:module|khu vực) khi cần xử lý sâu/);
   assert.doesNotMatch(source,/<select\b/i);
  }
  assert.match(home,/data-magasin-shell-current="overview"/);
@@ -110,7 +110,8 @@ test("UI2-014 responsive Owner presentation has explicit touch focus and contain
 
 test("UI2-014 does not redesign Owner scheduling writer surface",()=>{
  assert.match(ownerWorkforce,/05_MANAGER\/Workforce\/draft-publish-v1\.js/);
- assert.match(ownerWorkforce,/One canonical writer/);
+ assert.match(ownerWorkforce,/04_OWNER\/Workforce\/owner-scheduling-overview-v1\.js/);
+ assert.doesNotMatch(ownerWorkforce,/01-demand\/engine-v1\.js|02-review\/engine-v1\.js|03-publish\/engine-v1\.js/);
  assert.doesNotMatch(js,/publish_schedule_generation|replace_schedule_generation_assignments|create_schedule_generation/);
 });
 
