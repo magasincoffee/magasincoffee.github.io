@@ -58,8 +58,10 @@ Hiện có ba TEMP Source of Truth còn hoạt động trong thư mục này:
 
 3. `WORKFORCE_SCHEDULING_UX_V2_TEMP_SOURCE_OF_TRUTH.md`
    - Track: `WORKFORCE_SCHEDULING_UX_V2`
-   - Status: `SCHED-UI-000 BLOCKED / OWNER DESIGN SESSION REQUIRED`
+   - Status: `SCHED-UI-000 DONE / SCHED-UI-001 READY / OWNER REVIEW DEFERRED TO SCHED-UI-016`
+   - Design lock: `WORKFORCE_SCHEDULING_UX_V2_DESIGN_LOCK.md` — Owner approved 2026-10-02.
    - Chỉ sở hữu Scheduling UX V2: recurring staffing readability, guided Auto Schedule UX, cross-role time-band presentation, Employee availability CTA, professional role URLs và Owner scheduling parity.
+   - Robot có thể chạy chuỗi kỹ thuật SCHED-UI-001→015 liên tục; Owner Preview gate được dời tới SCHED-UI-016.
    - Không thay thế XSTORE business authority và phải tuân `PRODUCTION_RELEASE_GOVERNANCE_V1_SOURCE_OF_TRUTH.md`.
 
 Không coi evidence/plan/acceptance của track đã đóng là task queue đang chạy.
