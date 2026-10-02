@@ -115,3 +115,38 @@ test("availability remains capability input rather than official schedule assign
   const c=JSON.parse(contract);
   assert.equal(c.invariants.find(x=>x.id==="WF-INV-001")?.rule,"AVAILABILITY_IS_CAPABILITY_NOT_OFFICIAL_ASSIGNMENT");
 });
+
+
+test("SCHED-UI-007 availability UX uses exact CTA states, immediate-save language and no final-submit concept",async()=>{
+  const [app,engine,dashboard,css]=await Promise.all([
+    read("06_EMPLOYEE/app/employee-v40.html"),
+    read("06_EMPLOYEE/availability/engine-v1.js"),
+    read("06_EMPLOYEE/dashboard/engine-v1.js"),
+    read("02_CORE/ui/magasin-ui-v2-employee-secondary.css")
+  ]);
+  for(const label of ["Đăng ký ngay","Xem / sửa đăng ký","Xem thời gian đã đăng ký"])assert.ok(engine.includes(label)||dashboard.includes(label),label);
+  assert.doesNotMatch(app,/>\s*Xong\s*</);
+  assert.doesNotMatch(app,/finishQuickRegistration/);
+  assert.match(app,/data-availability-close="back">← Về lịch làm/);
+  assert.match(engine,/Mỗi khoảng có hiệu lực ngay khi được lưu|Mỗi khoảng được lưu ngay/);
+  assert.match(engine,/C\.time\.shiftKind/);
+  assert.match(engine,/data-time-band/);
+  assert.match(css,/data-time-band="morning"/);
+  assert.match(css,/data-time-band="afternoon"/);
+  assert.match(css,/data-time-band="evening"/);
+  assert.match(css,/data-time-band="neutral"/);
+});
+
+test("SCHED-UI-007 promotes availability ahead of the official weekly grid while keeping the concepts distinct",async()=>{
+  const [app,dashboard]=await Promise.all([
+    read("06_EMPLOYEE/app/employee-v40.html"),
+    read("06_EMPLOYEE/dashboard/engine-v1.js")
+  ]);
+  const scheduleStart=app.indexOf('id="view-schedule"');
+  const availabilityStart=app.indexOf('class="employee-schedule-secondary',scheduleStart);
+  const officialStart=app.indexOf('class="panel schedule-main-panel"',scheduleStart);
+  assert.ok(scheduleStart>=0&&availabilityStart>scheduleStart&&officialStart>availabilityStart);
+  assert.match(app,/không phải lịch làm chính thức/i);
+  assert.match(app,/Lịch làm của tôi/);
+  assert.match(dashboard,/actions\.unshift\(\{[\s\S]*?label:'Đăng ký ngay'/);
+});

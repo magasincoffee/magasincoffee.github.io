@@ -168,40 +168,13 @@ function renderQueue(x,snapshot){
   const availabilityDays=new Set(availabilityRows.map(r=>String(r?.work_date||'').slice(0,10)).filter(Boolean)).size;
   const availabilitySettled=!['idle','loading'].includes(String(availabilityState));
   if(!availabilitySettled&&registration==='REGISTRATION_OPEN'){
-    actions.push({
-      icon:'＋',
-      title:'Thời gian có thể làm tuần sau',
-      detail:'Đang kiểm tra các khoảng thời gian đã lưu.',
-      label:'Mở đăng ký',
-      action:'availability'
-    });
+    actions.unshift({icon:'＋',title:'Thời gian có thể làm tuần sau',detail:'Đang kiểm tra các khoảng thời gian đã lưu. Đây không phải lịch làm chính thức.',label:'Mở đăng ký',action:'availability'});
+  }else if(availabilitySettled&&registration==='REGISTRATION_OPEN'&&availabilityRows.length){
+    actions.unshift({icon:'✓',title:'Thời gian có thể làm tuần sau',detail:availabilityRows.length+' khoảng · '+availabilityDays+' ngày đã lưu. Bạn có thể sửa trước khi đăng ký đóng.',label:'Xem / sửa đăng ký',action:'availability'});
   }else if(availabilitySettled&&registration==='REGISTRATION_OPEN'){
-    if(availabilityRows.length){
-      actions.push({
-        icon:'✓',
-        title:'Thời gian có thể làm tuần sau đã được lưu',
-        detail:availabilityRows.length+' khoảng · '+availabilityDays+' ngày. Bạn có thể xem hoặc sửa trước khi đăng ký đóng.',
-        label:'Xem / sửa',
-        action:'availability'
-      });
-    }else{
-      actions.push({
-        icon:'＋',
-        title:'Đăng ký thời gian có thể làm tuần sau',
-        detail:'Chưa có khoảng thời gian nào được lưu. Đây là dữ liệu để Quản lý xếp lịch, chưa phải lịch chính thức.',
-        label:'Đăng ký',
-        action:'availability',
-        variant:'primary'
-      });
-    }
-  }else if(availabilitySettled&&registration==='REGISTRATION_CLOSED'&&availabilityRows.length){
-    actions.push({
-      icon:'✓',
-      title:'Đăng ký tuần sau đã đóng',
-      detail:'Đã lưu '+availabilityRows.length+' khoảng · '+availabilityDays+' ngày. Hiện chỉ có thể xem.',
-      label:'Xem',
-      action:'availability'
-    });
+    actions.unshift({icon:'＋',title:'Đăng ký thời gian có thể làm tuần sau',detail:'Chưa có khoảng thời gian nào được lưu. Quản lý dùng dữ liệu này để xếp lịch; đây chưa phải lịch làm chính thức.',label:'Đăng ký ngay',action:'availability',variant:'primary'});
+  }else if(availabilitySettled&&registration==='REGISTRATION_CLOSED'){
+    actions.unshift({icon:'✓',title:'Thời gian có thể làm tuần sau',detail:availabilityRows.length?('Đã lưu '+availabilityRows.length+' khoảng · '+availabilityDays+' ngày. Đăng ký đã đóng và hiện chỉ có thể xem.'):'Đăng ký đã đóng. Không có khoảng thời gian nào được lưu.',label:'Xem thời gian đã đăng ký',action:'availability'});
   }
   if(snapshot.state?.notice){
     actions.push({icon:'!',title:'Lịch vừa có thay đổi',detail:String(snapshot.state.notice),label:'Xem lịch',action:'route:schedule'});

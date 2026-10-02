@@ -31,6 +31,12 @@ await check("single_canonical_engine_initialized_for_next_week",async()=>{
   return JSON.stringify(api);
 });
 
+await check("sched_ui_007_empty_state_uses_primary_register_now_cta",async()=>{
+  const cta=await employee.locator("[data-schedule-availability]").evaluate(b=>({label:b.textContent.trim(),state:b.dataset.availabilityCtaState,cls:b.className}));
+  if(cta.label!=="Đăng ký ngay"||cta.state!=="empty"||!cta.cls.includes("m-button--primary"))throw new Error(JSON.stringify(cta));
+  return JSON.stringify(cta);
+});
+
 await check("next_week_dates_are_exact_monday_to_sunday",async()=>{
   const values=await employee.locator("#quickRegDay option").evaluateAll(opts=>opts.map(o=>o.value));
   const expected=["2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-03","2026-10-04"];
@@ -67,6 +73,16 @@ await check("multiple_valid_windows_same_day_are_preserved",async()=>{
   const rows=await page.evaluate(()=>globalThis.__EMPLOYEE_AVAILABILITY_QA.rows.length);
   if(count!==2||rows!==2)throw new Error(JSON.stringify({count,rows}));
   return "2 windows on 2026-09-28";
+});
+
+await check("sched_ui_007_saved_state_and_canonical_time_bands",async()=>{
+  const result=await employee.locator("body").evaluate(body=>({
+    cta:body.querySelector("[data-schedule-availability]")?.textContent?.trim(),
+    state:body.querySelector("[data-schedule-availability]")?.dataset?.availabilityCtaState,
+    bands:[...body.querySelectorAll(".miniShift")].map(x=>({band:x.dataset.timeBand,text:x.textContent}))
+  }));
+  if(result.cta!=="Xem / sửa đăng ký"||result.state!=="saved"||result.bands.length!==2||result.bands[0].band!=="morning"||result.bands[1].band!=="evening")throw new Error(JSON.stringify(result));
+  return JSON.stringify(result);
 });
 
 await check("frame_reload_preserves_same_week_rows_without_resubmit",async()=>{
@@ -127,14 +143,16 @@ await check("sunday_is_readable_but_all_employee_writes_are_closed",async()=>{
     policy:globalThis.MAGASIN_EMPLOYEE.availability.getPolicy(),
     saveDisabled:document.getElementById("employeeApp").contentDocument.getElementById("saveReg").disabled,
     msg:document.getElementById("employeeApp").contentDocument.getElementById("quickRegMsg").textContent,
-    shifts:document.getElementById("employeeApp").contentDocument.querySelectorAll(".miniShift").length
+    shifts:document.getElementById("employeeApp").contentDocument.querySelectorAll(".miniShift").length,
+    cta:document.getElementById("employeeApp").contentDocument.querySelector("[data-schedule-availability]")?.textContent?.trim(),
+    ctaState:document.getElementById("employeeApp").contentDocument.querySelector("[data-schedule-availability]")?.dataset?.availabilityCtaState
   }));
   await page.evaluate(()=>document.getElementById("employeeApp").contentDocument.getElementById("saveReg").click());
   const after=await page.evaluate(()=>({
     save:globalThis.__EMPLOYEE_AVAILABILITY_QA.calls.filter(x=>x.name==="save_my_availability").length,
     del:globalThis.__EMPLOYEE_AVAILABILITY_QA.calls.filter(x=>x.name==="delete_my_availability").length
   }));
-  if(result.policy.registration!=="REGISTRATION_CLOSED"||result.policy.targetWeek!=="2026-09-28"||!result.saveDisabled||!result.msg.includes("đã đóng")||result.shifts!==1)throw new Error(JSON.stringify(result));
+  if(result.policy.registration!=="REGISTRATION_CLOSED"||result.policy.targetWeek!=="2026-09-28"||!result.saveDisabled||!result.msg.includes("đã đóng")||result.shifts!==1||result.cta!=="Xem thời gian đã đăng ký"||result.ctaState!=="closed")throw new Error(JSON.stringify(result));
   if(after.save!==before.save||after.del!==before.del)throw new Error(JSON.stringify({before,after}));
   return JSON.stringify(result.policy);
 });

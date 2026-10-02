@@ -90,7 +90,17 @@ body[data-magasin-employee-shell-v2] #view-swap input:focus{
   box-shadow:0 0 0 4px rgba(47,111,218,.16);
 }
 
-/* Availability stays secondary to Schedule. */
+/* Availability is the prominent next-week scheduling action while official Schedule remains the authoritative work schedule. */
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-secondary{
+  margin-top:0;
+  margin-bottom:16px;
+}
+
+body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-secondary[data-availability-cta-state="empty"]{
+  border-color:color-mix(in srgb,var(--m-color-brand-600,#2f6fda) 42%,var(--m-border-default,#dbe4ef));
+  background:color-mix(in srgb,var(--m-color-brand-50,#eff6ff) 68%,#fff);
+}
+
 body[data-magasin-employee-shell-v2] .employee-availability-launch{
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
@@ -187,6 +197,12 @@ body[data-magasin-employee-shell-v2] .employee-availability-panel .mini{
 body[data-magasin-employee-shell-v2] .employee-availability-panel .miniShift{
   overflow-wrap:anywhere;
 }
+
+body[data-magasin-employee-shell-v2] .employee-availability-panel .miniShift[data-time-band="morning"]{border:1px solid var(--m-shift-morning-border,#ead36b);background:var(--m-shift-morning-bg,#fff7c2);color:var(--m-shift-morning-text,#6f5700)}
+body[data-magasin-employee-shell-v2] .employee-availability-panel .miniShift[data-time-band="afternoon"]{border:1px solid var(--m-shift-afternoon-border,#efaaaa);background:var(--m-shift-afternoon-bg,#ffe2e2);color:var(--m-shift-afternoon-text,#8b3030)}
+body[data-magasin-employee-shell-v2] .employee-availability-panel .miniShift[data-time-band="evening"]{border:1px solid var(--m-shift-evening-border,#9bd6e5);background:var(--m-shift-evening-bg,#dff6fb);color:var(--m-shift-evening-text,#175d6d)}
+body[data-magasin-employee-shell-v2] .employee-availability-panel .miniShift[data-time-band="neutral"]{border:1px solid var(--m-border-default,#dbe4ef);background:var(--m-color-neutral-50,#f8fafc);color:var(--m-color-neutral-700,#42556d)}
+body[data-magasin-employee-shell-v2] .employee-availability-panel[data-availability-readonly="true"] .employee-availability-form{opacity:.58}
 
 body[data-magasin-employee-shell-v2] .employee-availability-panel [data-av-delete]{
   min-width:44px;
