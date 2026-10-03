@@ -123,9 +123,9 @@ test("shift colors follow one visual rule across Manager and Employee scheduling
  ])assert.ok(tokens.includes(token),token);
  for(const src of [auto,master,draft])assert.match(src,/MAGASIN_CORE\?\.time\?\.shiftKind\?\.\(v\)\|\|'neutral'/);
  assert.match(auto,/xsa-band-morning/);
- assert.match(auto,/05:00–12:00 · Vàng/);
- assert.match(auto,/12:00–17:00 · Đỏ nhạt/);
- assert.match(auto,/17:00–22:00 · Xanh dương nhạt/);
+ assert.match(auto,/Ca sáng · 05:00–12:00/);
+ assert.match(auto,/Ca chiều · 12:00–17:00/);
+ assert.match(auto,/Ca tối · 17:00–22:00/);
  assert.match(master,/xsm-band-morning/);
  assert.match(draft,/msd-band-morning/);
  assert.match(employeeScheduleCss,/var\(--m-shift-morning-bg\)/);
