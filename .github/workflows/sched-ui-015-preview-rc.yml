@@ -1,0 +1,278 @@
+name: SCHED-UI-015 Preview RC Qualification
+
+on:
+  push:
+    branches:
+      - 'preview/sched-ui-015-rel-20261003-01'
+    paths:
+      - '.github/workflows/sched-ui-015-preview-rc.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: sched-ui-015-preview-rc
+  cancel-in-progress: true
+
+jobs:
+  preview-rc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RELEASE_ID: REL-20261003-01
+      PRODUCT_BRANCH: sched-ui-001-recurring-editor
+      PRODUCT_PR: '381'
+      CANDIDATE_SHA: c00c29ba45e31a5ee0ce76722f6210ac22064021
+      ROLLBACK_SHA: 1ff161f3cb97a54e502560314b791c1cd7d16524
+      PLANNED_RELEASE_WINDOW: '2026-10-04 00:00 Asia/Ho_Chi_Minh'
+      QA_BASE_URL: http://127.0.0.1:8771
+      QA_OUT: qa-artifacts/sched-ui-015
+
+    steps:
+      - name: Checkout exact Release Candidate
+        uses: actions/checkout@v4
+        with:
+          ref: c00c29ba45e31a5ee0ce76722f6210ac22064021
+          fetch-depth: 0
+
+      - name: Verify exact candidate SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$CANDIDATE_SHA"
+          echo "SCHED_UI_015_CANDIDATE_SHA=$actual"
+
+      - name: Validate MAGASIN GitHub Pages source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -e .nojekyll || { echo 'Missing .nojekyll'; exit 1; }
+          required=(
+            index.html
+            02_CORE/shared/shared-core-v1.js
+            03_PLATFORM/01_AUTH/index.html
+            04_OWNER/index.html
+            04_OWNER/Workforce/index.html
+            04_OWNER/Procurement/index.html
+            05_MANAGER/index.html
+            06_EMPLOYEE/index.html
+            07_DATABASE/migrations/20260915183000_procurement_accounting_v1.sql
+            07_DATABASE/migrations/20260915190000_procurement_base_unit_lock_v1.sql
+            07_DATABASE/migrations/20260915210000_procurement_integrity_hardening_v2.sql
+          )
+          for f in "${required[@]}"; do
+            test -s "$f" || { echo "Missing required production file: $f"; exit 1; }
+          done
+          if grep -RIn --exclude-dir=.git --exclude='*.md' 'magasincoffee/noibo' 02_CORE 03_PLATFORM 04_OWNER 05_MANAGER 06_EMPLOYEE; then
+            echo 'Production runtime still references deprecated magasincoffee/noibo.'
+            exit 1
+          fi
+          node --check 02_CORE/shared/shared-core-v1.js
+          if [ -f 09_QA/procurement/static-audit.mjs ]; then
+            node 09_QA/procurement/static-audit.mjs 04_OWNER/Procurement/index.html
+          fi
+          echo "SCHED_UI_015_PAGES_SOURCE_VALIDATION=PASS"
+
+      - name: Verify required exact-head workflow evidence
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request
+          repo=os.environ["GITHUB_REPOSITORY"]
+          token=os.environ["GITHUB_TOKEN"]
+          candidate=os.environ["CANDIDATE_SHA"]
+          runs={
+            "UI2 Cross Role Acceptance":37094932202,
+            "People Shift Day-10 Tests":37094932204,
+            "SOP Task Tests":37094932203,
+            "AUTH-PROD Regression Contract":37094932358,
+            "Auth Password Reset Hotfix":37094932198,
+            "Owner Control Tower Tests":37094932239,
+            "Procurement QA Robot":37094932201,
+          }
+          out=[]
+          for expected,run_id in runs.items():
+            req=urllib.request.Request(
+              f"https://api.github.com/repos/{repo}/actions/runs/{run_id}",
+              headers={"Authorization":f"Bearer {token}","Accept":"application/vnd.github+json"}
+            )
+            with urllib.request.urlopen(req) as r:
+              data=json.load(r)
+            row={"name":data["name"],"run_id":run_id,"status":data["status"],"conclusion":data["conclusion"],"head_sha":data["head_sha"]}
+            out.append(row)
+            if data["name"]!=expected or data["status"]!="completed" or data["conclusion"]!="success" or data["head_sha"]!=candidate:
+              raise SystemExit("Required gate mismatch: "+json.dumps(row))
+          os.makedirs("qa-artifacts/sched-ui-015",exist_ok=True)
+          with open("qa-artifacts/sched-ui-015/required-workflows.json","w",encoding="utf-8") as f:
+            json.dump(out,f,indent=2)
+          print("SCHED_UI_015_REQUIRED_WORKFLOWS=PASS")
+          PY
+
+      - name: Build isolated Preview artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, shutil
+          target="preview-site"
+          if os.path.exists(target):
+            shutil.rmtree(target)
+          os.makedirs(target)
+          paths=[
+            ".nojekyll","index.html","02_CORE","03_PLATFORM","04_OWNER","05_MANAGER","06_EMPLOYEE",
+            "08_INTEGRATIONS","manager","employee","owner","nhap-hang"
+          ]
+          for p in paths:
+            if not os.path.exists(p):
+              continue
+            dst=os.path.join(target,p)
+            if os.path.isdir(p):
+              shutil.copytree(p,dst)
+            else:
+              os.makedirs(os.path.dirname(dst) or target,exist_ok=True)
+              shutil.copy2(p,dst)
+          with open(os.path.join(target,"PREVIEW_TARGET_README.md"),"w",encoding="utf-8") as f:
+            f.write(
+              "# SCHED-UI-015 isolated Preview target\n\n"
+              f"- Release: {os.environ['RELEASE_ID']}\n"
+              f"- Product branch: {os.environ['PRODUCT_BRANCH']}\n"
+              f"- PR: #{os.environ['PRODUCT_PR']}\n"
+              f"- Exact candidate SHA: {os.environ['CANDIDATE_SHA']}\n"
+              "- Production mutation: NONE\n"
+              "- Business data: fixture/mock only during automated qualification\n"
+            )
+          PY
+          test -s preview-site/index.html
+          echo "SCHED_UI_015_PREVIEW_ARTIFACT_BUILD=PASS"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start isolated candidate browser target
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-artifacts/sched-ui-015
+          nohup python3 -m http.server 8771 --bind 127.0.0.1 > /tmp/sched-ui-015-http.log 2>&1 &
+          echo $! > /tmp/sched-ui-015-http.pid
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -fsS http://127.0.0.1:8771/09_QA/people-shift/xstore-cross-store-browser-fixture.html > /dev/null &&                curl -fsS http://127.0.0.1:8771/04_OWNER/ > /dev/null &&                curl -fsS http://127.0.0.1:8771/03_PLATFORM/01_AUTH/ > /dev/null; then
+              echo "SCHED_UI_015_ISOLATED_BROWSER_TARGET=READY"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/sched-ui-015-http.log || true
+          exit 1
+
+      - name: Run exact-candidate integrated browser qualification
+        env:
+          SCHED_UI_014_CANDIDATE_SHA: c00c29ba45e31a5ee0ce76722f6210ac22064021
+        run: node 09_QA/ui2-cross-role/sched-ui-014-integrated-qualification.mjs
+
+      - name: Build automated RC qualification packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-artifacts/sched-ui-015
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          cat > qa-artifacts/sched-ui-015/REL-20261003-01_RC_PACKET.md <<EOF
+          # REL-20261003-01 — SCHED-UI V2 Preview / RC Qualification Packet
+
+          - Release ID: `REL-20261003-01`
+          - Product branch: `sched-ui-001-recurring-editor`
+          - Product PR: `#381`
+          - Exact candidate SHA: `c00c29ba45e31a5ee0ce76722f6210ac22064021`
+          - Preview/Staging equivalent target: ${run_url}
+          - Isolated browser target used by automation: `http://127.0.0.1:8771` inside this GitHub Actions job
+          - Preview artifact: `sched-ui-015-preview-site-${GITHUB_RUN_ID}`
+          - RC evidence artifact: `sched-ui-015-rc-packet-${GITHUB_RUN_ID}`
+          - Production rollback SHA candidate: `1ff161f3cb97a54e502560314b791c1cd7d16524`
+          - Planned normal release window: `2026-10-04 00:00 Asia/Ho_Chi_Minh`; if Owner approval/freeze is not complete before then, use the next eligible 00:00 window.
+          - Database/RPC staging: not applicable; PR #381 contains no `07_DATABASE`, migration, RPC, RLS or Supabase changes.
+          - Production mutation during Preview: none.
+
+          ## Required exact-candidate workflow evidence
+
+          | Gate | Run ID | Conclusion |
+          |---|---:|---|
+          | Validate MAGASIN GitHub Pages source | ${GITHUB_RUN_ID} / this job step | success required |
+          | UI2 Cross Role Acceptance | 37094932202 | success |
+          | People Shift Day-10 Tests | 37094932204 | success |
+          | SOP Task Tests | 37094932203 | success |
+          | AUTH-PROD Regression Contract | 37094932358 | success |
+          | Auth Password Reset Hotfix | 37094932198 | success |
+          | Owner Control Tower Tests | 37094932239 | success |
+          | Procurement QA Robot | 37094932201 | success |
+          | XSTORE/domain-specific regression | ${GITHUB_RUN_ID} / integrated qualification | success required |
+
+          ## Known limitations
+
+          - This release uses the SOT-authorized equivalent isolated browser target rather than a public hosted staging URL.
+          - The downloadable Preview artifact is exact-candidate static content; automated browser acceptance runs against the exact candidate checkout with fixture/mock business data.
+          - Owner-facing approval remains intentionally deferred to SCHED-UI-016. No technical failure is being deferred.
+
+          ## Deferred Owner queue
+
+          SCHED-UI-016 must review:
+          - Manager recurring + guided weekly flow;
+          - Employee official schedule + availability;
+          - Owner overview/drill-down;
+          - canonical URLs and compatibility behavior;
+          - mobile/responsive behavior;
+          - release summary and exact candidate SHA.
+
+          ## Automated result
+
+          Valid only when this workflow concludes `success`.
+
+          `PREVIEW_READY / OWNER_REVIEW_REQUIRED`
+          EOF
+          cat > qa-artifacts/sched-ui-015/REL-20261003-01_RC_PACKET.json <<EOF
+          {
+            "release_id":"REL-20261003-01",
+            "product_branch":"sched-ui-001-recurring-editor",
+            "pr":381,
+            "candidate_sha":"c00c29ba45e31a5ee0ce76722f6210ac22064021",
+            "preview_equivalent_target":"${run_url}",
+            "preview_artifact":"sched-ui-015-preview-site-${GITHUB_RUN_ID}",
+            "rollback_sha":"1ff161f3cb97a54e502560314b791c1cd7d16524",
+            "planned_release_window":"2026-10-04 00:00 Asia/Ho_Chi_Minh",
+            "database_rpc_staging":"not_applicable_no_backend_changes",
+            "result":"PREVIEW_READY / OWNER_REVIEW_REQUIRED"
+          }
+          EOF
+          echo "SCHED_UI_015_RC_PACKET=PASS"
+          echo "PREVIEW_READY / OWNER_REVIEW_REQUIRED"
+
+      - name: Upload isolated Preview site
+        uses: actions/upload-artifact@v4
+        with:
+          name: sched-ui-015-preview-site-${{ github.run_id }}
+          path: preview-site/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload RC qualification packet and browser evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sched-ui-015-rc-packet-${{ github.run_id }}
+          path: qa-artifacts/sched-ui-015/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Final Preview readiness marker
+        run: |
+          echo "SCHED_UI_015_PREVIEW_RC=PREVIEW_READY_OWNER_REVIEW_REQUIRED"
