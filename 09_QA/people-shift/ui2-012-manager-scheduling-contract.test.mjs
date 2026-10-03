@@ -98,8 +98,8 @@ test("UI2-012 responsive contract keeps tablet board scroll and stacks phone dra
 
 test("UI2-012 Manager asset cache chain advances while Owner runtime remains on its existing path",()=>{
   const v="20260927-ui2-012";
-  const managerV="20261002-sched-ui-005";
-  const managerEntryV="20261002-sched-ui-005";
+  const managerV="20261003-sched-ui-017";
+  const managerEntryV="20261003-sched-ui-017";
   assert.ok(runtime.includes("engine-v1.js?v="+managerV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
