@@ -94,7 +94,7 @@ test("SCHED-UI-013 canonical Auth destinations and old-route compatibility remai
   const c=files.authContract,b=files.authBrowser,r=files.cleanRoutes;
   for(const path of ["/owner/","/manager/","/employee/","/manager/schedule/","/employee/attendance/","/owner/scheduling/"])assert.ok(c.includes(path)||r.includes(path),path);
   assert.ok(c.includes('role-unavailable\\.html'),'Auth contract must retain role-unavailable fail-closed assertion');
-  assert.match(c,/LEGACY_PREFIX='\/05_MANAGER'/);
+  assert.ok(c.includes("LEGACY_PREFIX='\\/05_MANAGER'"),"Auth navigation contract must retain the legacy Manager prefix assertion");
   assert.match(b,/\/05_MANAGER\/#workforce/);
   assert.match(b,/\/06_EMPLOYEE\/#attendance/);
   assert.match(b,/\/04_OWNER\/Workforce\//);
