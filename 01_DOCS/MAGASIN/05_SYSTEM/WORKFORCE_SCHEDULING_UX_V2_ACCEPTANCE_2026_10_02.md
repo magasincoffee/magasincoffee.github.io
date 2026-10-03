@@ -125,6 +125,7 @@ Product PR:
 Corrected Preview / isolated acceptance evidence:
 
 - Preview run: `37134994384`;
+- Preview/equivalent isolated target: `https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/37134994384`;
 - Preview artifact: `sched-ui-017-preview-site-37134994384` / artifact `11278591594`;
 - RC/evidence artifact: `sched-ui-017-rc-packet-37134994384` / artifact `11278571703`.
 
@@ -174,6 +175,7 @@ Exact production-merge scheduling/auth gates:
 Dedicated SCHED-UI-019 production smoke:
 
 - workflow run: `37139658007`;
+- production smoke evidence URL: `https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/37139658007`;
 - job: `production-smoke` / `111251269665`;
 - conclusion: SUCCESS;
 - evidence artifact: `sched-ui-019-production-smoke-37139658007`;
