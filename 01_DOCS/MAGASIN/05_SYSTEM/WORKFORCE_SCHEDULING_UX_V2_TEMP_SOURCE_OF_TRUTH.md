@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 DONE / SCHED-UI-012 DONE / SCHED-UI-013 READY / SCHED-UI-014→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 DONE / SCHED-UI-012 DONE / SCHED-UI-013 DONE / SCHED-UI-014 READY / SCHED-UI-015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -168,8 +168,8 @@ Owner/release chain:
 | SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-011 | Responsive/mobile scheduling redesign | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-012 | Accessibility, states and Vietnamese copy hardening | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-013 | Focused regression tests for changed scheduling contracts | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-014 | Integrated cross-role browser qualification on release branch | **BLOCKED BY 013** |
+| SCHED-UI-013 | Focused regression tests for changed scheduling contracts | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-014 | Integrated cross-role browser qualification on release branch | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-015 | Preview/Staging build + automated RC qualification packet | **BLOCKED BY 014** |
 | SCHED-UI-016 | Deferred Owner Preview review / all Owner-only questions | **DEFERRED OWNER GATE / BLOCKED BY 015** |
 | SCHED-UI-017 | Apply Owner corrections if any + freeze exact RC | **BLOCKED BY 016** |
@@ -683,6 +683,21 @@ Add/update tests covering:
 
 Do not weaken existing authority/security tests to make the UI pass.
 
+Completion evidence — 2026-10-03:
+
+- focused regression hardening completed on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `9b093608d4521e9c55bdd6cd0ed2907da50c83b3`;
+- added aggregate focused regression contract covering recurring add/remove/save/reload, shared time-band boundaries, Employee schedule bands, Employee availability CTA/immediate-save semantics, Owner overview/copy authority, canonical routes, old-route compatibility, Auth destinations, responsive overflow/touch targets, and cold reload/back-forward;
+- recurring browser qualification now fails if visible recurring time text is clipped at representative responsive widths and preserves the existing recurring add/remove/save/reload lifecycle evidence;
+- `SCHED_UI_013_FOCUSED_REGRESSION_CONTRACT=PASS` in People Shift Day-10 PR run `37094311373`, job `111120980794`, and UI2 Cross Role Acceptance PR run `37094311438`, job `111120981243`;
+- `SCHED_UI_013_RECURRING_EDITOR_REGRESSION=PASS`, `SCHED_UI_011_RECURRING_RESPONSIVE=PASS`, and `XSTORE_RECURRING_STABLE_EDITOR_BROWSER=PASS` in People Shift Day-10 PR run `37094311373`;
+- `SCHED_03_EMPLOYEE_SCHEDULE_UI=PASS` and `EMPLOYEE_AVAILABILITY_CANONICAL_BROWSER=PASS` verified Employee official schedule bands, availability CTA states, immediate-save semantics and reload/delete behavior;
+- `SCHED_UI_010_AUTH_NAVIGATION_BROWSER=PASS` and `UI2_017_COLD_RELOAD_CLOSURE=PASS` verified canonical/compatibility routes plus reload/back-forward behavior;
+- all exact-head durable CI succeeded: Procurement QA Robot PR `37094311358`, Auth Password Reset Hotfix PR `37094311351`, SOP Task Tests PR `37094311359`, Owner Control Tower Tests PR `37094311315`, AUTH-PROD Regression Contract PR `37094311339`, UI2 Cross Role Acceptance PR `37094311438`, People Shift Day-10 Tests PR `37094311373`, UI2 Cross Role Acceptance push `37094308833`, and People Shift Day-10 Tests push `37094308840`;
+- existing authority/security and fail-closed tests were preserved; no product authority was weakened to satisfy UI qualification;
+- PR remains open and unmerged; no production merge/release was performed;
+- no Owner input is required to close this technical task.
+
 ## 21. SCHED-UI-014 — Integrated cross-role browser qualification
 
 Use exact candidate branch/head.
@@ -900,7 +915,9 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-012 = DONE / VERIFIED`
 
-`SCHED-UI-013 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-013 = DONE / VERIFIED`
+
+`SCHED-UI-014 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
