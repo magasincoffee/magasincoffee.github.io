@@ -47,6 +47,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Confirm UI2 closure baseline is historical
         run: |
@@ -146,6 +147,13 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8769
           QA_OUT: qa-artifacts/ui2-cross-role
         run: node 09_QA/ui2-cross-role/sched-ui-010-auth-navigation-browser.mjs
+
+      - name: Run SCHED-UI-014 exact-head integrated cross-role qualification
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+          QA_OUT: qa-artifacts/ui2-cross-role
+          SCHED_UI_014_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node 09_QA/ui2-cross-role/sched-ui-014-integrated-qualification.mjs
 
       - name: Build UI2-016 cross-role matrix
         env:
