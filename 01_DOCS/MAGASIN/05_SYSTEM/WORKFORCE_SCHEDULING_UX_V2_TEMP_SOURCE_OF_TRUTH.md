@@ -863,7 +863,7 @@ Completion evidence — 2026-10-03:
 - Owner explicitly approved the corrected SCHED-UI-017 local review after checking the candidate with real MAGASIN authentication and role/data reads; the local review guard blocked production data mutations;
 - exact frozen RC SHA: `1f6f6cf0646aba66e9f73fab123f87a182cb17c1`;
 - PR `#381` remains open/unmerged and its head is exactly the frozen RC SHA;
-- production rollback/main baseline at freeze: `7007ed773fe37a25950f819278eec080811a6412`;
+- production product baseline at freeze: `7007ed773fe37a25950f819278eec080811a6412`; post-freeze authority-only commits are permitted only when their diff from this baseline is confined to this SOT file;
 - exact-head required workflows on the frozen RC are all GREEN:
   - `Auth Password Reset Hotfix` run `37134581020`: SUCCESS;
   - `SOP Task Tests` run `37134581077`: SUCCESS;
@@ -887,10 +887,11 @@ Frozen release inputs from SCHED-UI-017:
 
 - approved RC SHA: `1f6f6cf0646aba66e9f73fab123f87a182cb17c1`;
 - approved product PR: `#381`;
-- rollback/main baseline at freeze: `7007ed773fe37a25950f819278eec080811a6412`;
+- product baseline at freeze: `7007ed773fe37a25950f819278eec080811a6412`;
+- immediately before merge, set the rollback SHA to the then-current `main` only after proving all post-freeze drift from the product baseline is confined to this SOT file; any other main drift is unexpected and blocks release;
 - corrected Preview run: `37134994384`;
 - Owner approval: recorded 2026-10-03;
-- any RC SHA drift or unexpected production baseline drift invalidates the release and requires stop/re-review.
+- any RC SHA drift, any product-code drift on `main`, or any post-freeze change outside this SOT file invalidates the release and requires stop/re-review.
 
 Governed by:
 
