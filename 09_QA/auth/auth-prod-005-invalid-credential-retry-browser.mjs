@@ -8,13 +8,14 @@ const mockSdk = String.raw`
   const user = { id: 'active-retry-user', email: 'active@example.test' };
   const session = { access_token: 'mock', refresh_token: 'mock', user };
   let attempts = 0;
+  let currentSession = null;
 
   window.supabase = {
     createClient() {
       return {
         auth: {
           onAuthStateChange() { return { data: { subscription: { unsubscribe() {} } } }; },
-          async getSession() { return { data: { session: null }, error: null }; },
+          async getSession() { return { data: { session: currentSession }, error: null }; },
           async signInWithPassword({ password }) {
             attempts += 1;
             await new Promise(resolve => setTimeout(resolve, 25));
@@ -22,6 +23,7 @@ const mockSdk = String.raw`
               return { data: { user: null, session: null }, error: { code: 'invalid_credentials' } };
             }
             localStorage.setItem('__auth_prod_005_retry_attempts', String(attempts));
+            currentSession = session;
             return { data: { user, session }, error: null };
           },
           async signOut() { return { error: null }; },
@@ -83,7 +85,7 @@ try {
 
   await password.fill('correct-password');
   await submit.click();
-  await page.waitForURL('**/04_OWNER/**', { timeout: 10_000 });
+  await page.waitForURL('**/owner/**', { timeout: 10_000 });
 
   const attempts = await page.evaluate(() =>
     Number(localStorage.getItem('__auth_prod_005_retry_attempts') || '0')

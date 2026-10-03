@@ -7,7 +7,7 @@ const DAYS=['T2','T3','T4','T5','T6','T7','CN'];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const hm=v=>String(v||'').slice(0,5);
 const minuteOf=v=>{const s=hm(v);return Number(s.slice(0,2))*60+Number(s.slice(3,5))};
-const shiftBand=v=>{const m=minuteOf(v);return m>=300&&m<720?'morning':m>=720&&m<1020?'afternoon':m>=1020&&m<=1320?'evening':'neutral'};
+const shiftBand=v=>window.MAGASIN_CORE?.time?.shiftKind?.(v)||'neutral';
 const bandClass=v=>'xsm-band-'+shiftBand(v);
 const toDate=s=>new Date(String(s).slice(0,10)+'T00:00:00Z');
 const add=(s,n)=>{const d=toDate(s);d.setUTCDate(d.getUTCDate()+Number(n||0));return d.toISOString().slice(0,10)};

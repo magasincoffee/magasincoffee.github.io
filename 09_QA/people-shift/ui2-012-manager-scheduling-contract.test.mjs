@@ -16,8 +16,8 @@ const rpc=s=>[...s.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 const rpcSet=s=>[...new Set(rpc(s))].sort();
 
 test("UI2-012 is a Manager-only presentation layer over the existing canonical scheduling writer",()=>{
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1)/);
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1)/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004)/);
   assert.match(ui,/\.msd\[data-scheduling-actor="MANAGER"\]/);
   assert.match(ui,/dataset\.ui2ScheduleBoard='1'/);
   assert.match(ui,/classList\.add\('msd-ui2-012'\)/);
@@ -51,51 +51,60 @@ test("UI2-012 hierarchy makes context source board and publish progression expli
   for(const token of [
     "Cửa hàng đang xếp",
     "Tuần vận hành · Asia/Ho_Chi_Minh",
-    "Phiên nháp",
-    "Nguồn vào",
-    "Bảng nháp 7 ngày",
-    "Tiến trình phát hành"
+    "Thao tác phụ · lịch nháp",
+    "Nguồn tham khảo",
+    "Lịch nháp đang chỉnh",
+    "Bước cuối · duyệt và phát hành"
   ])assert.ok(ui.includes(token),token);
   for(const id of ["msdStore","msdStart","msdReload","msdSave","msdValidate","msdReview","msdPublish"])assert.ok(ui.includes(id),id);
   assert.match(ui,/Bảng lịch nháp 7 ngày; có thể cuộn ngang ở màn hình hẹp/);
-  assert.match(ui,/msu2-stage-rail/);
+  assert.doesNotMatch(ui,/msu2-stage-rail/);
+  assert.match(ui,/magasin:manager-scheduling-ui-state/);
   assert.match(ui,/msu2-state-banner/);
+  assert.match(ui,/Nguồn tham khảo/);
+  assert.match(ui,/Lịch nháp đang chỉnh/);
+  assert.match(ui,/Thao tác phụ · lịch nháp/);
+  assert.match(ui,/Bước cuối · duyệt và phát hành/);
+  assert.match(ui,/msu2-conflict-resolution/);
 });
 
 test("UI2-012 explicitly represents NONE DRAFT REVIEWED PUBLISHED CONFLICT and busy states",()=>{
   for(const state of ["NONE","DRAFT","REVIEWED","PUBLISHED","CONFLICT"])assert.ok(ui.includes(state),state);
   for(const copy of [
-    "Chưa có phiên xếp lịch",
+    "Chưa có lịch nháp",
     "Đang soạn lịch tuần",
     "Đã duyệt · chờ phát hành",
     "Đã phát hành",
-    "Có nhiều phiên xếp lịch cùng cửa hàng và tuần",
+    "Có nhiều bản nháp cùng cửa hàng và tuần",
     "Đang cập nhật dữ liệu"
   ])assert.ok(ui.includes(copy),copy);
   assert.match(ui,/if\(stage==='CONFLICT'\)/);
   assert.match(ui,/el\.disabled=true/);
 });
 
-test("UI2-012 responsive contract contains board scrolling touch targets and focus-visible affordances",()=>{
+test("UI2-012 responsive contract keeps tablet board scroll and stacks phone draft days",()=>{
   assert.match(ui,/@media\(max-width:1100px\)/);
   assert.match(ui,/@media\(max-width:1024px\)/);
-  assert.match(ui,/@media\(max-width:520px\)/);
+  assert.match(ui,/@media\(max-width:600px\)/);
   assert.match(ui,/min-height:44px/);
   assert.match(ui,/overflow-x:auto/);
   assert.match(ui,/overscroll-behavior-x:contain/);
+  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-board-wrap\{overflow:visible;scrollbar-gutter:auto\}/);
+  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-board\{grid-template-columns:1fr;min-width:0;width:100%;gap:10px\}/);
+  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-day-title\{position:static\}/);
   assert.match(ui,/:focus-visible/);
   assert.match(ui,/outline:2px solid/);
 });
 
 test("UI2-012 Manager asset cache chain advances while Owner runtime remains on its existing path",()=>{
   const v="20260927-ui2-012";
-  const managerV="20261001-ui-unified1";
-  const managerEntryV="20261001-ui-unified1";
+  const managerV="20261003-sched-ui-017";
+  const managerEntryV="20261003-sched-ui-017";
   assert.ok(runtime.includes("engine-v1.js?v="+managerV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
   assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerV+"#workforce"));
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004)/);
   assert.doesNotMatch(ownerRuntime,new RegExp(managerV));
 });
 

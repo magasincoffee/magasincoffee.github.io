@@ -137,7 +137,7 @@ try{
 
   {
     const {context,page}=await open('/03_PLATFORM/01_AUTH/?scenario=active-boot');
-    await page.waitForURL('**/04_OWNER/**',{waitUntil:'commit'});
+    await page.waitForURL('**/owner/**',{waitUntil:'commit'});
     await context.close();
   }
 

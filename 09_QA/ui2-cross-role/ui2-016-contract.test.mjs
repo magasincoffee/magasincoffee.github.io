@@ -27,7 +27,7 @@ test("UI2-016 Manager Today Scheduling Operations use 1024 touch breakpoints",()
   ]) assert.match(read(p),/@media\(max-width:1024px\)/,p);
   const engine=read("05_MANAGER/Workforce/engine-v1.js");
   assert.ok(engine.includes("ui-consolidation-v1.js?v=20261001-ui-unified1"));
-  assert.ok(engine.includes("manager-scheduling-ui2-v1.js?v=20261001-ui-unified1"));
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005)/);
   assert.ok(engine.includes("manager-operations-ui2-v1.js?v=20260927-ui2-016"));
 });
 
@@ -58,11 +58,11 @@ test("UI2-016 shell cache chain is bumped without moving the Owner path",()=>{
     assert.doesNotMatch(owner,/20261001-ui-unified1/,p);
   }
 
-  assert.match(read("05_MANAGER/index.html"),/manager-runtime-v1\.html\?v=20261001-ui-unified1/);
+  assert.match(read("05_MANAGER/index.html"),/manager-runtime-v1\.html\?v=(?:20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017)/);
   assert.match(managerRuntime,/manager-shell-v1\.html\?v=20261001-ui-unified1&host=manager/);
   assert.match(read("04_OWNER/Workforce/runtime/owner-workforce-runtime.html"),/manager-shell-v1\.html\?v=20260927-ui2-016&host=owner/);
   assert.match(read("05_MANAGER/runtime/manager-shell-v1.html"),/manager-ui-shell-v2\.js\?v=20260927-ui2-016/);
-  assert.match(read("04_OWNER/Workforce/index.html"),/owner-workforce-runtime\.html\?v=20260927-ui2-016/);
+  assert.match(read("04_OWNER/Workforce/index.html"),/owner-workforce-runtime\.html\?v=20261003-sched-ui-008/);
 });
 
 test("UI2-016 Finance boundary remains no-runtime/no-route",()=>{

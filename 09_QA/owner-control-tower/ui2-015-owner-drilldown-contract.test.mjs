@@ -18,7 +18,7 @@ const friendly=read("nhap-hang/index.html");
 test("UI2-015 keeps Owner shared route inventory limited to accepted runtime destinations",()=>{
   const ownerBlock=shellJs.match(/const OWNER_NAV = Object\.freeze\(\{[\s\S]*?\n  \}\);/)?.[0]||"";
   assert.ok(ownerBlock);
-  for(const route of ["/04_OWNER/","/04_OWNER/ControlTower/","/04_OWNER/Workforce/","/nhap-hang/","/04_OWNER/Access/"])assert.ok(ownerBlock.includes(route),route);
+  for(const route of ["/owner/","/04_OWNER/ControlTower/","/owner/scheduling/","/nhap-hang/","/04_OWNER/Access/"])assert.ok(ownerBlock.includes(route),route);
   assert.doesNotMatch(ownerBlock,/Finance|Tài chính|\/04_OWNER\/Finance/i);
   assert.equal(fs.existsSync("04_OWNER/Finance"),false);
 });
@@ -34,18 +34,17 @@ test("UI2-015 Finance is explicit reserved presentation with no route or fabrica
 });
 
 test("UI2-015 Workforce keeps canonical scheduling writer and adds only Owner presentation context",()=>{
-  assert.match(workforceIndex,/owner-workforce-runtime\.html\?v=20260927-ui2-016/);
+  assert.match(workforceIndex,/owner-workforce-runtime\.html\?v=20261003-sched-ui-008/);
   assert.match(workforceIndex,/id="loading"/);
   assert.match(workforceIndex,/id="denied"/);
   assert.match(workforceIndex,/requireActive/);
   assert.match(workforceIndex,/hasRole\(p,\['OWNER'\]\)/);
   assert.match(workforceRuntime,/magasin-owner-drilldown-v1\.css\?v=20260927-ui2-015/);
   assert.match(workforceRuntime,/magasin-owner-drilldown-v1\.js\?v=20260927-ui2-015/);
-  assert.match(workforceRuntime,/ownerModuleContext='workforce'/);
-  assert.match(workforceRuntime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-mer003)/);
-  assert.match(workforceRuntime,/\/05_MANAGER\/Workforce\/cross-store-master-v1\.js\?v=(?:20260928-xstore005|20260929-mer003)/);
+  assert.match(workforceRuntime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=20261003-sched-ui-008/);
+  assert.match(workforceRuntime,/\/04_OWNER\/Workforce\/owner-scheduling-overview-v1\.js\?v=20261003-sched-ui-008/);
+  assert.doesNotMatch(workforceRuntime,/cross-store-master-v1\.js/);
   assert.match(workforceRuntime,/manager-context-v1\.js\?v=20260929-mer003/);
-  assert.match(workforceRuntime,/One canonical writer/);
   assert.doesNotMatch(workforceRuntime,/auto_generate_schedule_generation|upsert_workforce_staffing_requirement|manager_update_employee_availability/);
 });
 

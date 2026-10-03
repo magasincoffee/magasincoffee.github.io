@@ -37,28 +37,19 @@ function prepareOwnerSurface(d){
   d.defaultView.__MAGASIN_SCHEDULING_ACTOR__='OWNER';
   ownerCss(d);
   d.querySelector('.sidebar [data-view="workforce"]')?.click();
-  d.getElementById('pageTitle')&&(d.getElementById('pageTitle').textContent='Owner Scheduling');
-  d.getElementById('pageSub')&&(d.getElementById('pageSub').textContent='Giám sát toàn hệ thống · can thiệp theo cửa hàng khi cần');
+  d.getElementById('pageTitle')&&(d.getElementById('pageTitle').textContent='Xếp lịch nhân sự');
+  d.getElementById('pageSub')&&(d.getElementById('pageSub').textContent='Tổng quan các cửa hàng trước, chọn cửa hàng để lập lịch tuần');
   const heading=view.querySelector(':scope > .row h2');
-  if(heading)heading.textContent='Owner Scheduling';
+  if(heading)heading.textContent='Xếp lịch nhân sự';
   const sub=view.querySelector(':scope > .row .muted');
-  if(sub)sub.textContent='Enterprise oversight trên cùng canonical scheduling truth với Manager.';
+  if(sub)sub.textContent='Theo dõi trạng thái từng cửa hàng và mở chi tiết lập lịch khi cần.';
   const badge=view.querySelector(':scope > .row .badge');
-  if(badge)badge.textContent='Enterprise oversight';
-  let scope=view.querySelector('#ownerSchedulingScope');
-  if(!scope){
-    scope=d.createElement('section');
-    scope.id='ownerSchedulingScope';
-    scope.className='owner-sched-scope owner-module-context';
-    scope.dataset.ownerModuleContext='workforce';
-    scope.innerHTML='<div class="owner-module-context__row"><div><span class="owner-module-eyebrow">OWNER WORKSPACE · WORKFORCE</span><strong class="owner-module-title">Giám sát & can thiệp theo cửa hàng</strong><span class="owner-module-copy">Owner có thể chọn cửa hàng, xem Availability, bản nháp và lịch chính thức. Mọi thao tác vẫn dùng cùng DRAFT → Validate → Review → Publish và cùng work_schedules; không có Owner writer riêng.</span><div class="owner-sched-tags owner-module-meta"><i>Enterprise scope</i><i>Selected-store control</i><i>One canonical writer</i><i>No direct table DML</i></div></div><div class="owner-module-actions"><a href="/04_OWNER/" target="_top">← Overview</a><a href="/04_OWNER/ControlTower/" target="_top">Attention Center</a></div></div>';
-    view.querySelector('.tabs')?.before(scope);
-  }
+  if(badge)badge.textContent='Chủ cửa hàng';
   const tabs=view.querySelector('.tabs');
-  if(tabs)tabs.innerHTML='<button class="active" data-tab="publish" aria-current="page">Lịch & can thiệp</button>';
+  if(tabs)tabs.innerHTML='<button class="active" data-tab="publish" aria-current="page">Lập lịch tuần</button>';
   const demand=view.querySelector('#panel-demand');if(demand){demand.replaceChildren();demand.classList.remove('active');demand.hidden=true}
   const review=view.querySelector('#panel-review');if(review){review.replaceChildren();review.classList.remove('active');review.hidden=true}
-  const publish=view.querySelector('#panel-publish');if(publish){publish.hidden=false;publish.classList.add('active');publish.innerHTML='<section class="card"><div class="muted">Đang tải Owner Scheduling canonical…</div></section>'}
+  const publish=view.querySelector('#panel-publish');if(publish){publish.hidden=true;publish.classList.add('active');publish.innerHTML='<section class="card"><div class="muted">Đang tải khu vực lập lịch…</div></section>'}
   return !!publish;
 }
 async function boot(){
@@ -84,8 +75,8 @@ async function boot(){
     let tries=0;while(!prepareOwnerSurface(d)&&tries++<80)await new Promise(r=>setTimeout(r,100));
     if(!d.querySelector('#panel-publish'))throw new Error('OWNER_SCHEDULING_PANEL_NOT_READY');
     await load(d,'/05_MANAGER/Workforce/manager-context-v1.js?v=20260929-mer003');
-    await load(d,'/05_MANAGER/Workforce/draft-publish-v1.js?v=20260929-mer003');
-    await load(d,'/05_MANAGER/Workforce/cross-store-master-v1.js?v=20260929-mer003');
+    await load(d,'/05_MANAGER/Workforce/draft-publish-v1.js?v=20261003-sched-ui-008');
+    await load(d,'/04_OWNER/Workforce/owner-scheduling-overview-v1.js?v=20261003-sched-ui-008');
     setTimeout(()=>{if(![...d.scripts].some(x=>(x.src||'').includes('security-runtime.js'))){const s=d.createElement('script');s.src='/02_CORE/security/security-runtime.js?v=20260903-owner-workforce1';s.async=true;(d.body||d.documentElement).appendChild(s)}},300);
   }catch(e){console.error('Owner Scheduling runtime failed',e)}
 }

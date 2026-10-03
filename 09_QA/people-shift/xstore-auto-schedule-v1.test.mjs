@@ -9,6 +9,7 @@ const cutover=read("07_DATABASE/migrations/20261001175825_xstore_c04_recurring_a
 const ui=read("05_MANAGER/Workforce/cross-store-auto-schedule-v1.js");
 const master=read("05_MANAGER/Workforce/cross-store-master-v1.js");
 const engine=read("05_MANAGER/Workforce/engine-v1.js");
+const managerScheduling=read("05_MANAGER/Workforce/manager-scheduling-ui2-v1.js");
 
 test("C03 recurring Manager board remains canonical staffing editor",()=>{
  assert.match(recurring,/workforce_recurring_staffing_requirements/);
@@ -17,6 +18,51 @@ test("C03 recurring Manager board remains canonical staffing editor",()=>{
  assert.doesNotMatch(ui,/list_cross_store_staffing_requirements_v1|replace_cross_store_staffing_requirements_v1/);
  assert.doesNotMatch(ui,/data-xsa-f="work_date"|type="date"/);
  assert.match(ui,/Lưu nhu cầu hàng tuần/);
+});
+
+test("SCHED-UI-001 keeps one-store-day editing while SCHED-UI-011 makes phone setup card-first",()=>{
+ assert.match(ui,/xsa-cell-open/);
+ assert.match(ui,/xsa-workspace\.has-editor/);
+ assert.match(ui,/xsa-editor-panel/);
+ assert.match(ui,/data-xsa-open-store/);
+ assert.match(ui,/data-xsa-day-label/);
+ assert.doesNotMatch(ui,/xsa-block-edit/);
+ for(const label of ["Bắt đầu","Kết thúc","Số người","Xóa khung","+ Thêm khung","Hủy thay đổi","Lưu nhu cầu hàng tuần"])assert.ok(ui.includes(label),label);
+ assert.match(ui,/start_time:''/);
+ assert.match(ui,/end_time:''/);
+ assert.match(ui,/@media\(max-width:760px\)[\s\S]*\.xsa-editor-panel\{position:static;order:-1/);
+ assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.xsa-board thead\{display:none\}/);
+ assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.xsa-board tr\{display:grid;grid-template-columns:1fr/);
+ assert.doesNotMatch(ui,/@media\(max-width:760px\)[\s\S]*\.xsa-editor-panel\{position:fixed/);
+});
+
+test("SCHED-UI-002 separates weekly operation from recurring scheduling setup without adding another writer",()=>{
+ assert.match(ui,/surface:'week'/);
+ for(const label of ["Lập lịch tuần","Thiết lập xếp lịch","Ưu tiên cửa hàng","Nhu cầu nhân sự cố định hàng tuần"])assert.ok(ui.includes(label),label);
+ assert.match(ui,/data-xsa-nav="week"/);
+ assert.match(ui,/data-xsa-nav="setup"/);
+ assert.match(ui,/action:'setup-priority'/);
+ assert.match(ui,/action:'setup-requirements'/);
+ assert.match(ui,/data-xsa-next-action/);
+ assert.match(ui,/data-xsa-setup-section="priority"/);
+ assert.match(ui,/data-xsa-setup-section="requirements"/);
+ assert.match(ui,/Phần chỉnh sửa vẫn dùng màn hình Nhân viên hiện có/);
+ assert.equal((ui.match(/replace_workforce_recurring_staffing_requirements_v1/g)||[]).length,1);
+ assert.doesNotMatch(ui,/replace_.*priority|insert_.*priority/i);
+});
+
+test("SCHED-UI-003 exposes one guided next-action workflow and locks Auto Schedule until prerequisites are complete",()=>{
+ for(const label of ["Chuẩn bị","Tạo lịch nháp","Chỉnh lịch","Kiểm tra","Duyệt & phát hành","Việc cần làm tiếp theo"])assert.ok(ui.includes(label),label);
+ assert.match(ui,/id="xsaNextAction"/);
+ assert.match(ui,/data-xsa-next-action/);
+ assert.doesNotMatch(ui,/xsa-flow|xsa-step/);
+ assert.match(ui,/if\(!priorityReady\)return setMessage\('Cần thiết lập ưu tiên cửa hàng cho tất cả nhân viên trước khi xếp lịch tự động\.'/);
+ assert.match(ui,/if\(!complete\)return setMessage\('Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động\.'/);
+ assert.match(ui,/scheduleApi\(\)\?\.validate\?\.\(\)/);
+ assert.match(ui,/scheduleApi\(\)\?\.review\?\.\(\)/);
+ assert.match(ui,/scheduleApi\(\)\?\.publish\?\.\(\)/);
+ assert.doesNotMatch(managerScheduling,/msu2-stage-rail/);
+ assert.match(managerScheduling,/magasin:manager-scheduling-ui-state/);
 });
 
 test("C04 Robot projects recurring weekday blocks directly into target week",()=>{
@@ -42,7 +88,7 @@ test("C04 Manager UI calls recurring Robot and still never publishes",()=>{
  assert.doesNotMatch(ui,/Chờ C04|Đang tạm khóa đến XSTORE-C04/);
  assert.doesNotMatch(ui,/publish_schedule_generation|review_schedule_generation/);
  assert.match(master,/Hệ thống chỉ tạo lịch nháp; Quản lý vẫn kiểm tra, chỉnh sửa và phát hành/);
- assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261001-xstore-c04|20261001-ui-unified1)/);
+ assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261001-xstore-c04|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-005)/);
 });
 
 test("historical XSTORE-007 date-bound implementation remains evidence only",()=>{

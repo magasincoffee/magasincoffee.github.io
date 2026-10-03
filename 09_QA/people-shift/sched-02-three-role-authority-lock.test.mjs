@@ -109,7 +109,7 @@ test('SCHED-02 revoked Owner legacy authority stays inactive after SCHED-05 UI c
   assert.match(ownerReview,/manager_update_employee_availability/);
   assert.match(migration,/manager_update_employee_availability[\s\S]*DEPRECATED/i);
   assert.match(migration,/auto_generate_schedule_generation[\s\S]*DEPRECATED AS ACTIVE WRITER/i);
-  assert.match(ownerRuntime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-mer003)/);
+  assert.match(ownerRuntime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-mer003|20261003-sched-ui-008)/);
   assert.match(ownerRuntime,/manager-context-v1\.js\?v=20260929-mer003/);
   assert.doesNotMatch(ownerRuntime,/02-review\/engine-v1\.js|03-publish\/engine-v1\.js|01-demand\/engine-v1\.js/);
   assert.match(ownerPublish,/compatibility wrapper/);

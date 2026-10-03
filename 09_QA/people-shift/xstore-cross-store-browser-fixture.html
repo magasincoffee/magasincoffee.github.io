@@ -14,10 +14,12 @@ const plan=[
  {plan_source:'DRAFT',store_id:'s1',store_code:'CN1',store_name:'MAGASIN COFFEE CN1',user_id:'e1',employee_name:'Như Huỳnh',work_date:'2026-10-05',start_time:'06:00',end_time:'12:00',row_status:'DRAFT'},
  {plan_source:'OFFICIAL',store_id:'s3',store_code:'CN3',store_name:'MAGASIN COFFEE CN3',user_id:'e2',employee_name:'Mai Chi',work_date:'2026-10-06',start_time:'17:00',end_time:'22:00',row_status:'APPROVED'}
 ];
+let priorityConfigured=false;
+try{priorityConfigured=localStorage.getItem('xstore-c05-priority-e3')==='1'}catch(_){}
 const availability=[
  {availability_id:'a1',user_id:'e1',employee_name:'Như Huỳnh',work_date:'2026-10-05',start_time:'06:00',end_time:'12:00',priority_store_ids:['s3','s2','s4','s1'],priority_store_codes:['CN3','CN2','CN4','CN1']},
  {availability_id:'a2',user_id:'e2',employee_name:'Mai Chi',work_date:'2026-10-06',start_time:'17:00',end_time:'22:00',priority_store_ids:['s1','s3'],priority_store_codes:['CN1','CN3']},
- {availability_id:'a3',user_id:'e3',employee_name:'Chưa cấu hình',work_date:'2026-10-07',start_time:'12:00',end_time:'17:00',priority_store_ids:[],priority_store_codes:[]}
+ {availability_id:'a3',user_id:'e3',employee_name:'Chưa cấu hình',work_date:'2026-10-07',start_time:'12:00',end_time:'17:00',priority_store_ids:priorityConfigured?['s1']:[],priority_store_codes:priorityConfigured?['CN1']:[]}
 ];
 const defaultRequirements=[
  {requirement_id:'r1',store_id:'s1',store_code:'CN1',store_name:'MAGASIN COFFEE CN1',day_of_week:1,start_time:'06:00',end_time:'12:00',target_headcount:2},
@@ -66,6 +68,7 @@ window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
 document.addEventListener('magasin:manager-schedule-open',e=>opens.push(e.detail));
 })();
 </script>
+<script src="/02_CORE/shared/shared-core-v1.js?v=20261002-sched-ui-005"></script>
 <script src="/02_CORE/ui/app-time-picker-24h.js"></script>
 <script src="/05_MANAGER/Workforce/cross-store-master-v1.js"></script>
 <script src="/05_MANAGER/Workforce/cross-store-auto-schedule-v1.js"></script>

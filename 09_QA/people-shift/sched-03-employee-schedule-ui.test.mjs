@@ -15,6 +15,16 @@ test("SCHED-03 has one canonical Employee schedule reader",()=>{
   assert.match(schedule,/toUpperCase\(\)==='APPROVED'/);
 });
 
+test("SCHED-UI-006 maps Employee published shifts through canonical four-state bands",()=>{
+  assert.match(schedule,/C\.time\.shiftKind\(r\.start_time\)/);
+  assert.match(schedule,/const bandClass=k=>k==='morning'\?'morning-yellow':k==='afternoon'\?'afternoon-red':k==='evening'\?'evening-cyan':'band-neutral'/);
+  assert.match(schedule,/dataset\.timeBand=k/);
+  assert.match(schedule,/var\(--m-shift-morning-bg,#FFF4CC\)/);
+  assert.match(schedule,/var\(--m-shift-afternoon-bg,#FDE7E7\)/);
+  assert.match(schedule,/var\(--m-shift-evening-bg,#E8F3FF\)/);
+  assert.match(schedule,/\.shift\.band-neutral/);
+});
+
 test("SCHED-03 presents official schedule separately from employee availability input",()=>{
   assert.match(schedule,/Lịch làm chính thức/);
   assert.match(schedule,/Thời gian có thể làm không phải lịch chính thức/);
@@ -66,10 +76,12 @@ test("SCHED-03 mobile-first layout has skeleton empty retry and no forced horizo
 
 test("SCHED-03 keeps one active Employee runtime path",()=>{
   assert.equal((runtime.match(/\/06_EMPLOYEE\/schedule\/engine-v1\.js/g)||[]).length,1);
-  assert.match(runtime,/schedule\/engine-v1\.js\?v=(?:20260926-ui2-008|20260930-emlive002)/);
+  assert.match(runtime,/schedule\/engine-v1\.js\?v=(?:20260926-ui2-008|20260930-emlive002|20261002-sched-ui-006|20261003-sched-ui-007)/);
+  assert.match(runtime,/shared-core-v1\.js\?v=20261002-sched-ui-005/);
+  assert.match(index,/shared-core-v1\.js\?v=20261003-sched-ui-010/);
   assert.match(runtime,/attendance\/engine-v1\.js\?v=(?:20260923-sched03|20260930-emlive002)/);
   assert.match(runtime,/swap\/engine-v1\.js\?v=20260926-ui2-008/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002|20260930-emlive003|20261001-ui-unified1)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002|20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007)/);
 });
 
 console.log("SCHED_03_EMPLOYEE_SCHEDULE_CONTRACT=PASS");

@@ -11,7 +11,7 @@ const monday=k=>{const d=dateOnlyUtc(k||dateKey()),day=d.getUTCDay()||7;d.setUTC
 const weekDays=k=>Array.from({length:7},(_,i)=>addDays(k,i));
 const formatDate=k=>{const p=String(k).slice(0,10).split('-');return `${p[2]}/${p[1]}`};
 const time5=v=>String(v||'').slice(0,5),minutes=v=>{const x=time5(v);return Number(x.slice(0,2))*60+Number(x.slice(3,5))};
-const shiftKind=start=>{const m=minutes(start);return m<720?'morning':m<1020?'afternoon':'evening'};
+const shiftKind=start=>{const x=time5(start);if(!/^\d{2}:\d{2}$/.test(x))return 'neutral';const [h,mm]=x.split(':').map(Number);if(!Number.isInteger(h)||!Number.isInteger(mm)||h<0||h>23||mm<0||mm>59)return 'neutral';const m=h*60+mm;return m>=300&&m<720?'morning':m>=720&&m<1020?'afternoon':m>=1020&&m<=1320?'evening':'neutral'};
 const escapeHtml=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
 const roleLabel={OWNER:'Chủ hệ thống',ACCOUNTANT:'Kế toán',STORE_MANAGER:'Quản lý cửa hàng',MANAGER:'Quản lý',INVENTORY_MANAGER:'Quản lý kho',EMPLOYEE:'Nhân viên',STAFF:'Nhân viên'};
 let client=null;
@@ -25,5 +25,5 @@ const accessible=async()=>{const q=await getSupabase().rpc('get_manager_accessib
 const activeStores=async()=>{const q=await getSupabase().from('stores').select('id,code,name,status').eq('status','ACTIVE').order('code');if(q.error)throw q.error;return Array.isArray(q.data)?q.data:[]};
 const rpc=(name,args)=>getSupabase().rpc(name,args);
 const ui={toast:(message,type='info')=>{let e=document.getElementById('sharedCoreToast');if(!e){e=document.createElement('div');e.id='sharedCoreToast';e.style.cssText='position:fixed;right:18px;bottom:18px;z-index:99999;max-width:380px;padding:12px 14px;border-radius:10px;background:#10213b;color:#fff;font:600 13px/1.4 system-ui,sans-serif;box-shadow:0 10px 30px rgba(16,33,59,.2)';document.body.appendChild(e)}e.textContent=message;e.dataset.type=type;e.hidden=false;clearTimeout(e._t);e._t=setTimeout(()=>e.hidden=true,3500)},setLoading:(e,on=true)=>{if(!e)return;e.toggleAttribute('aria-busy',on);e.style.opacity=on?'.65':'1';e.style.pointerEvents=on?'none':''}};
-global.MAGASIN_CORE={version:'1.2.1',TZ,DAYS,date:{dateKey,localDate,addDays,monday,weekDays,formatDate},time:{time5,minutes,shiftKind},security:{escapeHtml},roles:{label:roleLabel,hasRole},supabase:{create,get:getSupabase,getSession,getProfile,requireActive,rpc},stores:{accessible,active:activeStores},ui};
+global.MAGASIN_CORE={version:'1.2.2',TZ,DAYS,date:{dateKey,localDate,addDays,monday,weekDays,formatDate},time:{time5,minutes,shiftKind},security:{escapeHtml},roles:{label:roleLabel,hasRole},supabase:{create,get:getSupabase,getSession,getProfile,requireActive,rpc},stores:{accessible,active:activeStores},ui};
 })(globalThis);})();

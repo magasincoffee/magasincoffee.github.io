@@ -145,7 +145,7 @@ try{
   const items=await page.locator("#attentionList .attention-item").evaluateAll(rows=>rows.map(r=>({key:r.dataset.attentionKey,text:r.innerText,href:r.querySelector("a")?.getAttribute("href")||null})));
   const pay=items.find(x=>x.key==="payables-overdue");
   const work=items.find(x=>x.key==="workforce-attention");
-  if(pay?.href!=="/nhap-hang/"||work?.href!=="/04_OWNER/Workforce/")throw new Error(JSON.stringify(items));
+  if(pay?.href!=="/nhap-hang/"||work?.href!=="/owner/scheduling/")throw new Error(JSON.stringify(items));
   if(items.some(x=>/severity|priority|deadline|chủ sở hữu/i.test(x.text)))throw new Error(JSON.stringify(items));
   return JSON.stringify(items);
  });

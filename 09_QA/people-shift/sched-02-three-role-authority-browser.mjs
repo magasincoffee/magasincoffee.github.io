@@ -79,14 +79,19 @@ try{
   const owner=await context.newPage();
   await check('owner_store_switch_reads_same_canonical_truth_without_cross_store_stale_rows',async()=>{
     await owner.goto(base+'/09_QA/people-shift/sched-05-owner-scheduling-fixture.html');
-    await owner.locator('.msd').waitFor();
+    await owner.locator('#ownerSchedulingOverview[data-owner-overview-state="ready"]').waitFor();
+    if(await owner.locator('#panel-publish').isVisible())throw new Error('Owner detail visible before store selection');
+    await owner.locator('[data-owner-store-open="store-a"]').click();
+    await owner.locator('.msd[data-scheduling-actor="OWNER"]').waitFor();
     await owner.locator('#msdStore').selectOption('store-b');
     await owner.locator('#panel-publish').filter({hasText:'Chi CN2'}).waitFor();
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error(text);
     const calls=await owner.evaluate(()=>globalThis.__SCHED05_OWNER_QA.calls);
     if(calls.some(x=>x.kind==='from'))throw new Error('direct table call');
-    return 'Owner store-b canonical writer read; no stale store-a projection';
+    const names=calls.map(x=>x.name).filter(Boolean);
+    for(const name of ['get_manager_weekly_availability','list_schedule_generations'])if(!names.includes(name))throw new Error('missing canonical reader '+name);
+    return 'Owner overview → store-a detail → store-b canonical read; no stale store-a projection';
   });
 
   console.log(JSON.stringify({marker:'SCHED_02_THREE_ROLE_AUTHORITY_BROWSER=PASS',checks},null,2));

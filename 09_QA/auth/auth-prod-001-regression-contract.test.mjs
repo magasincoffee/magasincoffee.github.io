@@ -80,10 +80,10 @@ test('AUTH-PROD D3: Auth boot explicitly distinguishes ACTIVE, PENDING and INACT
 test('AUTH-PROD baseline: username/email resolution and role routes remain canonical', () => {
   assert.match(authRuntime, /normalized\.includes\(["']@["']\)/);
   assert.match(authRuntime, /sb\.rpc\(["']resolve_login_email["']/);
-  assert.match(authRuntime, /role\s*===\s*["']OWNER["'][\s\S]*\/04_OWNER\//);
+  assert.match(authRuntime, /role\s*===\s*["']OWNER["'][\s\S]*\/owner\//);
   assert.match(authRuntime, /role\s*===\s*["']ACCOUNTANT["'][\s\S]*\/nhap-hang\//);
-  assert.match(authRuntime, /\[['"]STAFF['"],\s*['"]EMPLOYEE['"]\]\.includes\(role\)[\s\S]*\/06_EMPLOYEE\//);
-  assert.match(authRuntime, /\/05_MANAGER\//);
+  assert.match(authRuntime, /\[['"]STAFF['"],\s*['"]EMPLOYEE['"]\]\.includes\(role\)[\s\S]*\/employee\//);
+  assert.match(authRuntime, /\/manager\//);
 });
 
 test('AUTH-PROD D4: credential failure path remains separate from authorization mutation', () => {

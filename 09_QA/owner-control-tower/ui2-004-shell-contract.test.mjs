@@ -42,9 +42,9 @@ test("Owner nav contains only traced active destinations", () => {
   const ownerBlock = shellJs.match(/const OWNER_NAV = Object\.freeze\(\{[\s\S]*?\n  \}\);/)?.[0] || "";
   assert.ok(ownerBlock);
   for (const route of [
-    "/04_OWNER/",
+    "/owner/",
     "/04_OWNER/ControlTower/",
-    "/04_OWNER/Workforce/",
+    "/owner/scheduling/",
     "/nhap-hang/",
     "/04_OWNER/Access/"
   ]) {
@@ -81,7 +81,8 @@ test("Owner Workforce uses shared Owner shell without creating a parallel writer
   assert.match(ownerWorkforce, /magasin-ui-v2-shell\.js/);
   assert.match(ownerWorkforce, /role:'OWNER'/);
   assert.match(ownerWorkforce, /05_MANAGER\/Workforce\/draft-publish-v1\.js/);
-  assert.match(ownerWorkforce, /One canonical writer/);
+  assert.match(ownerWorkforce, /04_OWNER\/Workforce\/owner-scheduling-overview-v1\.js/);
+  assert.doesNotMatch(ownerWorkforce, /01-demand\/engine-v1\.js|02-review\/engine-v1\.js|03-publish\/engine-v1\.js/);
   assert.doesNotMatch(ownerWorkforce, /manager-ui-shell-v3\.js/);
 });
 

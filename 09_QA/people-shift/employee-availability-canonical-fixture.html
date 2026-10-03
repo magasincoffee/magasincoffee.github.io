@@ -20,7 +20,8 @@
     security:{escapeHtml:v=>String(v??"")},
     time:{
       time5:v=>String(v??"").slice(0,5),
-      minutes:v=>{const s=String(v||"00:00").slice(0,5);return Number(s.slice(0,2))*60+Number(s.slice(3,5))}
+      minutes:v=>{const s=String(v||"00:00").slice(0,5);return Number(s.slice(0,2))*60+Number(s.slice(3,5))},
+      shiftKind:v=>{const s=String(v||"").slice(0,5);if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(s))return "neutral";const m=Number(s.slice(0,2))*60+Number(s.slice(3,5));if(m>=300&&m<720)return "morning";if(m>=720&&m<1020)return "afternoon";if(m>=1020&&m<=1320)return "evening";return "neutral"}
     },
     date:{
       dateKey:()=>qa.today,
@@ -68,17 +69,22 @@
   };
 
   const srcdoc=`<!doctype html><html lang="vi"><body>
-    <button id="openReg" onclick="openWeeklyRegistration()">Đăng ký lịch làm</button>
-    <div id="weeklyRegistrationPanel">
-      <button id="closeReg" onclick="closeWeeklyRegistration()">Đóng</button>
-      <select id="quickRegDay"></select>
-      <select id="quickRegStart"></select>
-      <select id="quickRegEnd"></select>
-      <button id="saveReg" onclick="quickRegister()">Đăng ký</button>
-      <div id="quickRegMsg"></div>
-      <div class="week-summary"></div>
-      <button id="finishReg" onclick="finishQuickRegistration()">Hoàn thành đăng ký lịch làm</button>
-    </div>
+    <section class="employee-schedule-secondary" data-availability-cta-state="loading">
+      <div id="availabilityActionHint"></div>
+      <span id="availabilityWeekLabel"></span>
+      <span id="availabilityPolicyLabel"></span>
+      <button id="availabilityPrimaryCta" data-schedule-availability data-availability-cta-state="loading">Đang kiểm tra đăng ký…</button>
+      <div id="weeklyRegistrationPanel" data-availability-state="idle" data-availability-readonly="false" aria-hidden="true">
+        <button id="closeReg" data-availability-close="header">Đóng</button>
+        <select id="quickRegDay"></select>
+        <select id="quickRegStart"></select>
+        <select id="quickRegEnd"></select>
+        <button id="saveReg" onclick="quickRegister()">Đăng ký</button>
+        <div id="quickRegMsg"></div>
+        <div class="week-summary"></div>
+        <button id="backReg" data-availability-close="back">← Về lịch làm</button>
+      </div>
+    </section>
   </body></html>`;
   qa.frameSrcdoc=srcdoc;
   const frame=document.getElementById("employeeApp");

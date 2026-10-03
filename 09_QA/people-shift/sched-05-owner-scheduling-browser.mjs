@@ -24,17 +24,42 @@ async function selectStore(id){
 }
 try{
   await page.goto(`${BASE}/09_QA/people-shift/sched-05-owner-scheduling-fixture.html`,{waitUntil:"networkidle"});
+  await page.locator('#ownerSchedulingOverview[data-owner-overview-state="ready"]').waitFor();
+
+  await check("owner_overview_lists_cn1_cn4_before_detail",async()=>{
+    const cards=await page.locator("[data-owner-store-open]").evaluateAll(nodes=>nodes.map(n=>({
+      id:n.getAttribute("data-owner-store-open"),
+      text:n.innerText,
+      state:n.querySelector(".oso-state")?.textContent||""
+    })));
+    if(cards.length!==4)throw new Error(JSON.stringify(cards));
+    for(const [id,code] of [["store-a","CN1"],["store-b","CN2"],["store-c","CN3"],["store-d","CN4"]]){
+      const card=cards.find(x=>x.id===id);
+      if(!card||!card.text.includes(code)||!card.state.includes("Sẵn sàng xếp lịch"))throw new Error(JSON.stringify({id,code,cards}));
+    }
+    const overviewText=await page.locator("#ownerSchedulingOverview").innerText();
+    for(const forbidden of ["Enterprise oversight","canonical","writer","direct table DML","Availability","DRAFT","Validate","Review","Publish"]){
+      if(overviewText.includes(forbidden))throw new Error("technical copy visible: "+forbidden);
+    }
+    if(await page.locator("#panel-publish").isVisible())throw new Error("shared detail visible before store selection");
+    return "CN1–CN4 overview first · all readiness states visible";
+  });
+
+  await page.locator('[data-owner-store-open="store-a"]').click();
   await page.locator("#panel-publish .msd").waitFor();
 
-  await check("owner_surface_is_enterprise_oversight_on_shared_writer",async()=>{
+  await check("owner_selected_store_opens_shared_manager_scheduling_surface",async()=>{
     const s=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
     const text=await page.locator("#panel-publish").innerText();
     const options=await page.locator("#msdStore option").allTextContents();
     if(s.storeId!=="store-a"||s.stores.length!==4)throw new Error(JSON.stringify(s));
-    if(options.length!==4||!text.includes("Giám sát xếp lịch")||!text.includes("không tạo lịch song song"))throw new Error(JSON.stringify({options,text}));
+    if(options.length!==4||!text.includes("Giám sát xếp lịch")||!text.includes("Thời gian nhân viên có thể làm"))throw new Error(JSON.stringify({options,text}));
+    for(const forbidden of ["Enterprise oversight","canonical","writer","direct table DML","Availability","DRAFT","Validate","Review","Publish"]){
+      if(text.includes(forbidden))throw new Error("technical copy visible: "+forbidden);
+    }
     const actor=await page.locator(".msd").getAttribute("data-scheduling-actor");
     if(actor!=="OWNER")throw new Error("actor="+actor);
-    return "4 active stores · OWNER actor · shared canonical surface";
+    return "OWNER actor · shared Manager scheduling surface";
   });
 
   await check("owner_store_switch_isolates_availability_draft_and_official_state",async()=>{

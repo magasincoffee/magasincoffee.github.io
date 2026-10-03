@@ -47,14 +47,16 @@ test("24h time picker preserves business field attributes and never defaults a n
 
 test("Manager recurring staffing editor is compact responsive and uses the shared design foundation",()=>{
  assert.match(auto,/font-family:var\(--m-font-sans/);
- assert.match(auto,/grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)/);
- assert.match(auto,/\.magasin-time-select\{width:100%!important;min-width:0!important/);
+ assert.match(auto,/xsa-workspace\.has-editor/);
+ assert.match(auto,/grid-template-columns:minmax\(0,1fr\) minmax\(360px,420px\)/);
+ assert.match(auto,/\.xsa-editor-block \.magasin-time-select\{width:100%!important;min-width:0!important/);
  assert.match(auto,/table-layout:fixed/);
- assert.match(auto,/@media\(max-width:1024px\)/);
+ assert.match(auto,/@media\(max-width:760px\)/);
  for(const copy of [
-  "Nhu cầu nhân sự hàng tuần",
+  "Lập lịch tuần",
+  "Thiết lập xếp lịch",
+  "Nhu cầu nhân sự cố định hàng tuần",
   "Ưu tiên cửa hàng",
-  "Xếp lịch tự động",
   "Tạo lịch nháp tự động",
   "Lưu nhu cầu hàng tuần"
  ])assert.ok(auto.includes(copy),copy);
@@ -119,11 +121,11 @@ test("shift colors follow one visual rule across Manager and Employee scheduling
   "--m-shift-afternoon-bg: #FDE7E7",
   "--m-shift-evening-bg: #E8F3FF"
  ])assert.ok(tokens.includes(token),token);
- assert.match(auto,/m>=300&&m<720\?'morning':m>=720&&m<1020\?'afternoon':m>=1020&&m<=1320\?'evening'/);
+ for(const src of [auto,master,draft])assert.match(src,/MAGASIN_CORE\?\.time\?\.shiftKind\?\.\(v\)\|\|'neutral'/);
  assert.match(auto,/xsa-band-morning/);
- assert.match(auto,/05:00–12:00 · Vàng/);
- assert.match(auto,/12:00–17:00 · Đỏ nhạt/);
- assert.match(auto,/17:00–22:00 · Xanh dương nhạt/);
+ assert.match(auto,/Ca sáng · 05:00–12:00/);
+ assert.match(auto,/Ca chiều · 12:00–17:00/);
+ assert.match(auto,/Ca tối · 17:00–22:00/);
  assert.match(master,/xsm-band-morning/);
  assert.match(draft,/msd-band-morning/);
  assert.match(employeeScheduleCss,/var\(--m-shift-morning-bg\)/);
@@ -134,11 +136,11 @@ test("shift colors follow one visual rule across Manager and Employee scheduling
 
 test("unified asset cache chain reaches both Manager and Employee entry points",()=>{
  for(const token of [
-  "review-v1.js?v=20261001-ui-unified1",
-  "draft-publish-v1.js?v=20261001-ui-unified1",
-  "cross-store-master-v1.js?v=20261001-ui-unified1",
-  "cross-store-auto-schedule-v1.js?v=20261001-ui-unified1",
-  "manager-scheduling-ui2-v1.js?v=20261001-ui-unified1",
+  "review-v1.js?v=20261003-sched-ui-017",
+  "draft-publish-v1.js?v=20261002-sched-ui-005",
+  "cross-store-master-v1.js?v=20261002-sched-ui-005",
+  "cross-store-auto-schedule-v1.js?v=20261002-sched-ui-005",
+  "manager-scheduling-ui2-v1.js?v=20261002-sched-ui-004",
   "official-v1.js?v=20261001-ui-unified1",
   "ui-consolidation-v1.js?v=20261001-ui-unified1"
  ])assert.ok(managerEngine.includes(token),token);
@@ -148,10 +150,12 @@ test("unified asset cache chain reaches both Manager and Employee entry points",
   "magasin-ui-v2-shell.css?v=20261001-ui-unified1",
   "magasin-ui-v2-shell.js?v=20261001-ui-unified1",
   "app-time-picker-24h.js?v=20261001-ui-unified1",
-  "engine-v1.js?v=20261001-ui-unified1"
+  "engine-v1.js?v=20261003-sched-ui-017"
  ])assert.ok(managerRuntime.includes(token),token);
- assert.ok(employeeRuntime.includes("employee-v40.html?ui=20261001-ui-unified1&runtime=engine"));
- assert.ok(employeeRuntime.includes("dashboard/engine-v1.js?v=20261001-ui-unified1"));
+ assert.ok(employeeRuntime.includes("employee-v40.html?ui=20261003-sched-ui-007&runtime=engine"));
+ assert.ok(employeeRuntime.includes("shared-core-v1.js?v=20261002-sched-ui-005"));
+ assert.ok(employeeRuntime.includes("schedule/engine-v1.js?v=20261002-sched-ui-006"));
+ assert.ok(employeeRuntime.includes("dashboard/engine-v1.js?v=20261003-sched-ui-007"));
  assert.ok(employeeApp.includes("magasin-ui-v2-tokens.css?v=20261001-ui-unified1"));
  assert.ok(employeeApp.includes("magasin-ui-v2-employee-shell.css?v=20261001-ui-unified1"));
 });

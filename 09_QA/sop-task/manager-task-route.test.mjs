@@ -9,7 +9,7 @@ const routeState = fs.readFileSync(new URL("../../05_MANAGER/runtime/compat/rout
 assert.match(route, /\/02_CORE\/shared\/shared-core-v1\.js/);
 assert.match(route, /C\.supabase\.requireActive\(\)/);
 assert.match(route, /\['STAFF','EMPLOYEE'\]\.includes\(role\)/);
-assert.match(route, /location\.replace\('\/06_EMPLOYEE\/'\)/);
+assert.match(route, /location\.replace\('\/employee\/'\)/);
 assert.match(route, /\/05_MANAGER\/runtime\/manager-runtime-v1\.html/);
 assert.doesNotMatch(route, /manager-v13-runtime\.html/);
 
@@ -18,12 +18,21 @@ for (const forbidden of [".insert(", ".update(", ".upsert(", ".delete(", ".rpc("
 }
 
 assert.match(runtime, /manager-route-bridge-v1\.js/);
+assert.match(runtime, /allowedRouteHash=new Set\(\['dashboard','staff','workforce','schedule','tasks','kpi','swap','attendance','academy','settings','payroll-self-check'\]\)/);
+assert.match(route, /manager-runtime-v1\.html\?v=20260918-task-route1#tasks/);
 assert.match(bridge, /const PREFIX='\/05_MANAGER'/);
 assert.match(bridge, /tasks:'Cong-viec'/);
-assert.match(bridge, /clickView\(routeView\(\)\)/);
-assert.match(routeState, /const PREFIX='\/05_MANAGER'/);
-assert.match(routeState, /tasks: 'Cong-viec'/);
-assert.doesNotMatch(routeState, /`\/manager\//);
-assert.doesNotMatch(routeState, /'\/manager\//);
+assert.match(bridge, /return '\/manager\/#'\+key/);
+assert.match(bridge, /syncFromLocation\(true\)/);
+assert.match(bridge, /routeBridgeObserverBound/);
+assert.match(bridge, /active&&active!==wanted/);
+assert.match(routeState, /const LEGACY_PREFIX='\/05_MANAGER'/);
+assert.match(routeState, /ancestorBridgeOwnsUrl/);
+assert.match(routeState, /MAGASIN_MANAGER_ROUTE_BRIDGE_V1/);
+assert.match(routeState, /function setRoute\(view,replace\)\{if\(ancestorBridgeOwnsUrl\(\)\)return;/);
+assert.match(routeState, /tasks:'Cong-viec'/);
+assert.match(routeState, /'\/manager\/scheduling\/'/);
+assert.match(routeState, /'\/manager\/schedule\/'/);
+assert.match(routeState, /'\/manager\/#'/);
 
 console.log("PASS Manager Task deep-link canonical route contract");

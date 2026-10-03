@@ -99,7 +99,7 @@ test("TASK-094 Manager board delegates create/resume and validation idempotency 
   const resume=draft.slice(resumeStart,resumeEnd);
   assert.match(resume,/runs\.length>1/);
   assert.match(resume,/generationStatus='CONFLICT'/);
-  assert.match(resume,/khóa thao tác/);
+  assert.match(resume,/Thao tác tạm khóa/);
 
   assert.match(draft,/MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY/);
   assert.match(draft,/AVAILABILITY_MISMATCH/);
@@ -155,7 +155,7 @@ test("SCHED-04 Manager UI hides technical generation identity and raw backend di
 
 test("SCHED-04 legacy Lich-lam route wraps canonical Workforce surface only",async()=>{
   const legacy=await read("05_MANAGER/Lich-lam/index.html");
-  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1)#workforce/);
+  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017)#workforce/);
   assert.doesNotMatch(legacy,/manager-v13-runtime/);
   assert.doesNotMatch(legacy,/draft-publish-v1\.js/);
 });

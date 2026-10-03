@@ -57,16 +57,29 @@
     try { return normalize(target?.location?.hash || ''); } catch (_) { return ''; }
   };
 
+  const routeOf = target => {
+    try {
+      const path = String(target?.location?.pathname || '').toLowerCase().replace(/\/+$/, '') || '/';
+      if (path === '/employee/schedule') return 'schedule';
+      if (path === '/employee/attendance') return 'attendance';
+      if (path === '/employee/payroll') return 'payroll';
+      if (path === '/employee') {
+        const key = hashOf(target);
+        return CANONICAL.has(key) ? key : 'dashboard';
+      }
+      const key = hashOf(target);
+      return CANONICAL.has(key) ? key : '';
+    } catch (_) { return ''; }
+  };
+
   const canonicalFromHistory = () => {
     for (const target of [topWindow(), parentWindow(), window]) {
-      const key = hashOf(target);
+      const key = routeOf(target);
       if (CANONICAL.has(key)) return key;
     }
     return 'dashboard';
   };
 
-  // Capture the requested deep link before any legacy DOMContentLoaded bootstrap
-  // can render its default dashboard view.
   const initialRequestedRoute = canonicalFromHistory();
 
   const replaceHash = (target, view) => {
@@ -77,6 +90,15 @@
     } catch (_) {}
   };
 
+  const cleanRouteFor = view => {
+    const key = normalize(view);
+    if (key === 'schedule') return '/employee/schedule/';
+    if (key === 'attendance') return '/employee/attendance/';
+    if (key === 'payroll') return '/employee/payroll/';
+    if (key === 'dashboard') return '/employee/';
+    return '/employee/#' + key;
+  };
+
   const pushCanonicalRoute = view => {
     const key = normalize(view);
     if (!CANONICAL.has(key) || applyingRoute) return;
@@ -84,7 +106,15 @@
 
     const top = topWindow();
     try {
-      if (normalize(top.location.hash) !== key) top.location.hash = key;
+      const path = String(top.location.pathname || '').toLowerCase();
+      const numberedRoot = path === '/06_employee' || path === '/06_employee/';
+      if (path.startsWith('/employee') || numberedRoot) {
+        const next = cleanRouteFor(key);
+        const current = String(top.location.pathname || '') + String(top.location.hash || '');
+        if (current !== next) top.history.pushState(top.history.state, '', next);
+      } else if (normalize(top.location.hash) !== key) {
+        top.location.hash = key;
+      }
     } catch (_) {}
 
     const parent = parentWindow();

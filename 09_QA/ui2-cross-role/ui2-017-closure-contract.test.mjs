@@ -7,20 +7,20 @@ const BASE="f98cfb15a47bbb66ad39c71348bb2668cf174364";
 
 test("UI2-017 role routing contract remains canonical",()=>{
   const auth=read("03_PLATFORM/01_AUTH/auth-runtime-v2.js");
-  assert.match(auth,/role === 'OWNER'\) location\.replace\('\/04_OWNER\/'\)/);
-  assert.match(auth,/\['STAFF', 'EMPLOYEE'\]\.includes\(role\)\) location\.replace\('\/06_EMPLOYEE\/'\)/);
-  assert.match(auth,/role === 'STORE_MANAGER'\) location\.replace\('\/05_MANAGER\/'\)/);
+  assert.match(auth,/role === 'OWNER'\) location\.replace\('\/owner\/'\)/);
+  assert.match(auth,/\['STAFF', 'EMPLOYEE'\]\.includes\(role\)\) location\.replace\('\/employee\/'\)/);
+  assert.match(auth,/role === 'STORE_MANAGER'\) location\.replace\('\/manager\/'\)/);
   assert.match(auth,/else location\.replace\('\/03_PLATFORM\/01_AUTH\/role-unavailable\.html'\)/);
   const employee=read("06_EMPLOYEE/index.html");
   const manager=read("05_MANAGER/index.html");
-  assert.match(employee,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002|20260930-emlive003|20261001-ui-unified1)/);
-  assert.match(manager,/manager-runtime-v1\.html\?v=(?:20260927-ui2-016|20260928-xstore006|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1)/);
+  assert.match(employee,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002|20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007)/);
+  assert.match(manager,/manager-runtime-v1\.html\?v=(?:20260927-ui2-016|20260928-xstore006|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017)/);
 });
 
 test("UI2-017 exact UI2-016 cache chain remains canonical",()=>{
   const engine=read("05_MANAGER/Workforce/engine-v1.js");
   assert.ok(engine.includes("ui-consolidation-v1.js?v=20261001-ui-unified1"));
-  assert.ok(engine.includes("manager-scheduling-ui2-v1.js?v=20261001-ui-unified1"));
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004)/);
   assert.ok(engine.includes("manager-operations-ui2-v1.js?v=20260927-ui2-016"));
   assert.match(read("05_MANAGER/runtime/manager-runtime-v1.html"),/manager-shell-v1\.html\?v=20261001-ui-unified1/);
   assert.match(read("05_MANAGER/runtime/manager-shell-v1.html"),/manager-ui-shell-v2\.js\?v=20260927-ui2-016/);

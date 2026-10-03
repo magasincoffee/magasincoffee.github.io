@@ -74,13 +74,14 @@ for (let i = 0; i < 40; i++) {
   await page.waitForTimeout(100);
 }
 assert.ok(shell, "canonical Manager shell frame must load");
-
-let taskActive = false;
-for (let i = 0; i < 50; i++) {
-  taskActive = await shell.locator("#view-tasks").evaluate(el => el.classList.contains("active"));
-  if (taskActive) break;
-  await page.waitForTimeout(100);
-}
+await page.waitForURL(url=>url.pathname==="/manager/"&&url.hash==="#tasks",{timeout:10000});
+await shell.locator("#view-tasks.active").waitFor({state:"attached",timeout:10000});
+await page.waitForTimeout(800);
+const taskActive = await shell.locator("#view-tasks").evaluate(el => el.classList.contains("active"));
+const stableUrl = new URL(page.url());
+assert.equal(stableUrl.pathname, "/manager/");
+assert.equal(stableUrl.hash, "#tasks");
+assert.equal(taskActive, true, "Task route must remain active after bootstrap settles");
 
 const runtimeFrame = page.frames().find(f => f.url().includes("/05_MANAGER/runtime/manager-runtime-v1.html"));
 const heading = await shell.locator("#view-tasks h2").first().textContent();
@@ -105,7 +106,7 @@ await page.screenshot({ path: path.join(outDir, "manager-task-route.png"), fullP
 fs.writeFileSync(path.join(outDir, "manager-task-route-result.json"), JSON.stringify(debug, null, 2));
 console.log("TASK_ROUTE_DEBUG " + JSON.stringify(debug));
 
-assert.equal(taskActive, true, "Task view must become active from /05_MANAGER/Cong-viec/");
+assert.equal(taskActive, true, "Task view must remain active when the numbered bookmark migrates to /manager/#tasks");
 assert.equal(heading?.trim(), "Công việc");
 assert.equal(await shell.locator('#view-tasks [data-task-quality="NOT_CONNECTED"]').innerText(), "CHƯA KẾT NỐI");
 assert.equal(await shell.locator('#view-tasks [data-task-source-state="NOT_CONNECTED"]').count(), 1);
@@ -113,10 +114,14 @@ assert.equal(await shell.locator('#view-tasks [data-modal="Giao việc"]').count
 for (const prototype of ["Kiểm tra tồn hàng cuối ca","Vệ sinh máy dập nắp","Checklist mở ca","Kiểm tra thiết bị đầu ca"]) {
   assert.equal(await shell.getByText(prototype, { exact:true }).count(), 0, `prototype Task row leaked: ${prototype}`);
 }
-assert.equal(new URL(page.url()).pathname, "/05_MANAGER/Cong-viec/");
+{
+  const visible=new URL(page.url());
+  assert.equal(visible.pathname, "/manager/");
+  assert.equal(visible.hash, "#tasks");
+}
 assert.deepEqual(diagnostics.legacyRuntimeRequests, [], "legacy Manager runtime must never be requested");
 assert.deepEqual(diagnostics.pageErrors, [], "unexpected page errors");
 assert.deepEqual(diagnostics.http5xx, [], "unexpected HTTP 5xx");
 
 await browser.close();
-console.log("PASS Manager Task canonical deep-link browser smoke");
+console.log("PASS Manager Task numbered-bookmark → clean-route browser smoke");

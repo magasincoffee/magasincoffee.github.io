@@ -12,10 +12,13 @@
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20260927-ui2-016">
 <script defer src="/02_CORE/ui/magasin-ui-v2-shell.js?v=20260928-auth-prod-005-owner-logout"></script>
+<script>
+(()=>{const token=String(new URLSearchParams(location.search).get('canonical')||'');if(token&&token!=='owner-root'){location.replace('/03_PLATFORM/01_AUTH/role-unavailable.html');return}if(token==='owner-root'||location.pathname==='/04_OWNER/')history.replaceState({},document.title,'/owner/');})();
+</script>
 </head>
 <body data-magasin-ui-v2 data-magasin-shell-v2 data-magasin-shell-role="owner" data-magasin-shell-mode="standalone" data-magasin-shell-current="overview">
 <div id="loading" class="screen" aria-live="polite">
-  <div class="message"><div class="eyebrow">MAGASIN OWNER</div><h2>Đang kiểm tra quyền Owner…</h2><p>Overview chỉ tải canonical read models sau khi xác thực Owner đang hoạt động.</p></div>
+  <div class="message"><div class="eyebrow">MAGASIN OWNER</div><h2>Đang kiểm tra quyền Owner…</h2><p>Tổng quan chỉ tải dữ liệu sau khi xác thực Owner đang hoạt động.</p></div>
 </div>
 <div id="denied" class="screen hidden">
   <div class="message"><div class="eyebrow">ACCESS</div><h2>Không có quyền truy cập</h2><p id="deniedText">Chỉ Owner được mở Control Tower.</p><div class="message-actions"><a class="back" href="/03_PLATFORM/01_AUTH/">Về đăng nhập</a></div></div>
@@ -25,8 +28,8 @@
   <header class="owner-hero">
     <div>
       <div class="eyebrow">MAGASIN BUSINESS OS · OWNER</div>
-      <h1>Owner Overview</h1>
-      <p class="subtitle">Enterprise oversight trước drill-down: nguồn nào đáng tin, điều gì cần chú ý ngay, rồi mới đi vào module.</p>
+      <h1>Tổng quan vận hành</h1>
+      <p class="subtitle">Xem nhanh tình hình toàn bộ cửa hàng, việc cần chú ý và đi vào từng khu vực khi cần xử lý.</p>
     </div>
     <div class="top-actions">
       <span id="ownerIdentity" class="owner-chip">OWNER</span>
@@ -36,19 +39,19 @@
 
   <section id="overview" class="oversight-section" data-owner-section="overview" aria-labelledby="overviewTitle">
     <div class="section-heading">
-      <div><span class="section-kicker">OVERVIEW</span><h2 id="overviewTitle">Bối cảnh báo cáo & độ tin cậy nguồn</h2></div>
+      <div><span class="section-kicker">TỔNG QUAN</span><h2 id="overviewTitle">Bối cảnh báo cáo & độ tin cậy nguồn</h2></div>
       <span id="overallState" class="overall-state" data-state="idle">Chưa tải</span>
     </div>
 
     <div class="context" aria-label="Bối cảnh cross-store">
       <div class="context-card"><span class="label">Ngày báo cáo</span><strong id="reportingDate">—</strong></div>
-      <div class="context-card"><span class="label">Phạm vi</span><strong id="branchScope">ALL</strong><small>Enterprise scope hiện tại; không tạo store selector khi canonical snapshot chỉ có ALL.</small></div>
+      <div class="context-card"><span class="label">Phạm vi</span><strong id="branchScope">Tất cả</strong><small>Phạm vi cửa hàng hiện có theo quyền Owner.</small></div>
       <div class="context-card"><span class="label">Lần làm mới UI</span><strong id="refreshedAt">—</strong></div>
     </div>
 
     <div class="source-panel">
       <div class="source-panel-head">
-        <div><h3>Nguồn & chất lượng dữ liệu</h3><p>Freshness và quality được hiển thị trước các metric; GAP / NOT CONNECTED không được trình bày như số 0 đáng tin.</p></div>
+        <div><h3>Nguồn & chất lượng dữ liệu</h3><p>Độ mới và chất lượng dữ liệu được hiển thị trước các chỉ số; dữ liệu chưa kết nối không được trình bày như số 0 đáng tin.</p></div>
       </div>
       <div id="qualityList" class="quality-list"></div>
     </div>
@@ -56,17 +59,17 @@
 
   <section id="attention" class="attention-section" data-owner-section="attention" aria-labelledby="attentionTitle">
     <div class="section-heading attention-heading">
-      <div><span class="section-kicker">ATTENTION CENTER</span><h2 id="attentionTitle">What needs Owner attention now?</h2><p>Chỉ factual exceptions hoặc source-quality gaps từ normalized snapshot; không gán severity, owner hay deadline giả.</p><a class="section-route" href="/04_OWNER/ControlTower/">Owner Control Tower →</a></div>
+      <div><span class="section-kicker">CẦN CHÚ Ý</span><h2 id="attentionTitle">Việc nào cần Owner xem ngay?</h2><p>Chỉ hiển thị các ngoại lệ và khoảng trống dữ liệu có căn cứ; không tự gán mức độ, người phụ trách hay hạn xử lý.</p><a class="section-route" href="/04_OWNER/ControlTower/">Mở trung tâm theo dõi →</a></div>
       <span id="attentionCount" class="attention-count">—</span>
     </div>
-    <div id="attentionLoading" class="attention-empty hidden" role="status">Đang làm mới canonical sources…</div>
+    <div id="attentionLoading" class="attention-empty hidden" role="status">Đang làm mới nguồn dữ liệu…</div>
     <div id="attentionList" class="attention-list" aria-live="polite"></div>
     <div id="noAttention" class="attention-empty hidden">Không có factual exception từ các nguồn đang đủ tin cậy.</div>
   </section>
 
   <section id="operatingSnapshot" class="oversight-section" aria-labelledby="snapshotTitle">
     <div class="section-heading">
-      <div><span class="section-kicker">OPERATING SNAPSHOT</span><h2 id="snapshotTitle">Cross-store read models</h2><p>Metric giữ nguyên quality semantics của từng nguồn; dấu “—” nghĩa là không có số đủ tin cậy.</p></div>
+      <div><span class="section-kicker">TÌNH HÌNH VẬN HÀNH</span><h2 id="snapshotTitle">Tổng hợp các cửa hàng</h2><p>Các chỉ số giữ nguyên trạng thái chất lượng của từng nguồn; dấu “—” nghĩa là chưa có số đủ tin cậy.</p></div>
     </div>
 
     <div class="metrics-grid">
@@ -95,7 +98,7 @@
           <div class="mini"><span class="label">Chưa xử lý</span><strong id="workforceUnresolved">—</strong></div>
         </div>
         <div id="workforceMeta" class="meta"></div>
-        <div class="actions"><a href="/04_OWNER/Workforce/">Mở Workforce →</a></div>
+        <div class="actions"><a href="/owner/scheduling/">Mở Workforce →</a></div>
       </article>
 
       <article class="metric-card compact">
@@ -117,16 +120,16 @@
 
   <section id="ownerModules" class="module-entry-section" aria-labelledby="modulesTitle">
     <div class="section-heading">
-      <div><span class="section-kicker">DRILL-DOWN</span><h2 id="modulesTitle">Đi tới module khi cần xử lý sâu</h2><p>Module entry là bước sau Overview và Attention Center, không còn là landing architecture chính.</p></div>
+      <div><span class="section-kicker">KHU VỰC CHI TIẾT</span><h2 id="modulesTitle">Đi tới khu vực khi cần xử lý sâu</h2><p>Bắt đầu từ tổng quan, sau đó mở đúng khu vực cần xử lý.</p></div>
     </div>
     <div class="module-grid">
-      <a class="module-card" href="/04_OWNER/Workforce/"><strong>Workforce</strong><span>Lịch, staffing và nghiệp vụ Workforce hiện có.</span><b>Mở module →</b></a>
+      <a class="module-card" href="/owner/scheduling/"><strong>Nhân sự & lịch làm</strong><span>Xem trạng thái xếp lịch từng cửa hàng và mở chi tiết lập lịch tuần.</span><b>Mở khu vực →</b></a>
       <a class="module-card" href="/nhap-hang/"><strong>Mua hàng & Công nợ</strong><span>Đơn nhập, nhà cung cấp, công nợ và báo cáo mua hàng.</span><b>Mở module →</b></a>
       <a class="module-card" href="/04_OWNER/Access/"><strong>Phân quyền</strong><span>Quản lý quyền tài khoản nội bộ.</span><b>Mở module →</b></a>
     </div>
   </section>
 
-  <div class="notice">Owner Overview chỉ đọc. Source unavailable phải giữ GAP / NOT CONNECTED semantics; UI không tự tạo KPI, writer, store scope hay business transition.</div>
+  <div class="notice">Tổng quan Owner chỉ đọc. Khi nguồn dữ liệu chưa sẵn sàng, giao diện giữ trạng thái chưa có dữ liệu thay vì tự tạo số liệu hoặc thay đổi nghiệp vụ.</div>
 </main>
 <script type="module" src="/04_OWNER/ControlTower/control-tower-v1.js?v=20260927-ui2-014"></script>
 </body>
