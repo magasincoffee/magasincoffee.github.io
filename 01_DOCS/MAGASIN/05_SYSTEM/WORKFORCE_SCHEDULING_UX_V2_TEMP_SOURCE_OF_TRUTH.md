@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 DONE / SCHED-UI-012 DONE / SCHED-UI-013 DONE / SCHED-UI-014 DONE / SCHED-UI-015 DONE / SCHED-UI-016 BLOCKED / OWNER REVIEW REQUIRED / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 DONE / SCHED-UI-012 DONE / SCHED-UI-013 DONE / SCHED-UI-014 DONE / SCHED-UI-015 DONE / SCHED-UI-016 DONE — CHANGES_REQUESTED / SCHED-UI-017 READY — OWNER CORRECTION REQUIRED / SCHED-UI-018→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -132,7 +132,8 @@ Default machine continuation after each completed technical task:
 
 Current deferred items:
 
-- **OWNER-GATE-001:** inspect integrated Preview and approve/request changes — handled by SCHED-UI-016.
+- **OWNER-GATE-001:** integrated Preview review completed on 2026-10-03 with result `CHANGES_REQUESTED`.
+- **OWNER-CORRECTION-001:** Manager scheduling overview at `/manager/scheduling/`, specifically the `Đăng ký thời gian có thể làm` cross-employee weekly overview shown in the Owner review, does not visibly follow the locked shared time-band colors. Implement in SCHED-UI-017, rebuild Preview, then return the corrected visible surface to Owner review before release.
 
 No other Owner decision is currently unresolved.
 
@@ -171,9 +172,9 @@ Owner/release chain:
 | SCHED-UI-013 | Focused regression tests for changed scheduling contracts | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-014 | Integrated cross-role browser qualification on release branch | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-015 | Preview/Staging build + automated RC qualification packet | **DONE / VERIFIED / PREVIEW_READY** |
-| SCHED-UI-016 | Deferred Owner Preview review / all Owner-only questions | **BLOCKED / OWNER REVIEW REQUIRED / NEXT AUTHORITATIVE GATE** |
-| SCHED-UI-017 | Apply Owner corrections if any + freeze exact RC | **BLOCKED BY 016** |
-| SCHED-UI-018 | Midnight production release | **BLOCKED BY 017 / RELEASE WINDOW** |
+| SCHED-UI-016 | Deferred Owner Preview review / all Owner-only questions | **DONE / CHANGES_REQUESTED / OWNER-CORRECTION-001 RECORDED** |
+| SCHED-UI-017 | Apply Owner corrections if any + freeze exact RC | **READY / NEXT AUTHORITATIVE TASK** |
+| SCHED-UI-018 | Midnight production release | **BLOCKED BY 017 + OWNER RE-REVIEW / RELEASE WINDOW** |
 | SCHED-UI-019 | Production smoke + permanent acceptance + TEMP deletion | **BLOCKED BY 018** |
 
 ## 7. SCHED-UI-000 — Design Lock
@@ -813,9 +814,33 @@ Possible result:
 - `APPROVED`
 - `CHANGES_REQUESTED`
 
-Do not release without explicit Owner approval of the Preview/exact candidate.
+Owner review result — 2026-10-03:
+
+- result: `CHANGES_REQUESTED`;
+- Owner generally approved the integrated Scheduling UX V2 direction;
+- one visible correction remains before final approval: the Manager scheduling overview at `/manager/scheduling/`, tab/surface `Đăng ký thời gian có thể làm`, currently presents employee availability cards with effectively uniform styling instead of the locked shared time-band colors;
+- this correction is `OWNER-CORRECTION-001` and is executable under SCHED-UI-017;
+- after the corrected Preview is rebuilt, return this visible Manager surface to Owner review because the change is materially visible.
+
+Do not release without explicit Owner approval of the corrected Preview/exact candidate.
 
 ## 24. SCHED-UI-017 — Owner corrections + exact RC freeze
+
+**Current state: READY — NEXT AUTHORITATIVE TASK**
+
+Required correction for this cycle — `OWNER-CORRECTION-001`:
+
+- target the Manager scheduling overview at `/manager/scheduling/`, specifically the cross-employee weekly `Đăng ký thời gian có thể làm` cards visible in the 2026-10-03 Owner Preview review;
+- apply the existing shared canonical start-time classifier to these Manager overview cards; do not add another local/divergent classifier;
+- visible color mapping must be:
+  - `05:00 <= start < 12:00` → yellow;
+  - `12:00 <= start < 17:00` → light red;
+  - `17:00 <= start <= 22:00` → light blue;
+  - invalid/outside range → neutral;
+- classification is by **start time**, consistent with the locked shared rule; therefore a cross-band availability such as `06:00–22:00` is a morning/yellow card, while `12:00–22:00` is light red and `17:00–22:00` is light blue;
+- preserve readable time/name text, accessibility, mobile behavior and all existing scheduling/business authority;
+- add or extend regression coverage proving Manager overview rendering for representative morning/afternoon/evening boundaries and at least one cross-band interval;
+- verify the corrected surface in the integrated browser qualification and produce a new exact-candidate Preview for Owner re-review.
 
 If Owner requested changes:
 
@@ -961,10 +986,14 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-015 = DONE / VERIFIED / PREVIEW_READY`
 
-`SCHED-UI-016 = BLOCKED / OWNER REVIEW REQUIRED / NEXT AUTHORITATIVE GATE`
+`SCHED-UI-016 = DONE / CHANGES_REQUESTED / OWNER-CORRECTION-001 RECORDED`
 
-All later technical tasks remain blocked by release order until Owner review is resolved.
+`SCHED-UI-017 = READY / NEXT AUTHORITATIVE TASK`
 
-Owner approval is now required at SCHED-UI-016 before RC freeze or production release.
+`SCHED-UI-018 = BLOCKED BY 017 + OWNER RE-REVIEW / RELEASE WINDOW`
+
+`SCHED-UI-019 = BLOCKED BY 018`
+
+Robot must execute only SCHED-UI-017 next: apply OWNER-CORRECTION-001 off main, rerun affected qualification, rebuild the exact-candidate Preview, then return the materially changed Manager surface to Owner for explicit re-review before any production release.
 
 Do not execute SCHED-UI-011 or later before SCHED-UI-010 is complete.
