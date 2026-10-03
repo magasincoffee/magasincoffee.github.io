@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 DONE / SCHED-UI-012 READY / SCHED-UI-013→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 DONE / SCHED-UI-012 DONE / SCHED-UI-013 READY / SCHED-UI-014→015 BLOCKED BY DEPENDENCY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -167,8 +167,8 @@ Owner/release chain:
 | SCHED-UI-009 | Canonical clean role/deep-route scaffolding | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-010 | Auth/navigation migration + old-route compatibility | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-011 | Responsive/mobile scheduling redesign | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-012 | Accessibility, states and Vietnamese copy hardening | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-013 | Focused regression tests for changed scheduling contracts | **BLOCKED BY 012** |
+| SCHED-UI-012 | Accessibility, states and Vietnamese copy hardening | **DONE / VERIFIED ON PR #381** |
+| SCHED-UI-013 | Focused regression tests for changed scheduling contracts | **READY / NEXT AUTHORITATIVE TASK** |
 | SCHED-UI-014 | Integrated cross-role browser qualification on release branch | **BLOCKED BY 013** |
 | SCHED-UI-015 | Preview/Staging build + automated RC qualification packet | **BLOCKED BY 014** |
 | SCHED-UI-016 | Deferred Owner Preview review / all Owner-only questions | **DEFERRED OWNER GATE / BLOCKED BY 015** |
@@ -647,6 +647,23 @@ No normal user-facing:
 - server;
 - implementation-state jargon.
 
+Completion evidence — 2026-10-03:
+
+- implementation completed on branch `sched-ui-001-recurring-editor` / PR `#381`;
+- verified exact head: `3a7d2c10817510001c342b277f324d1593a7df89`;
+- recurring staffing now has keyboard-reachable tab navigation, focus-visible treatment, explicit loading/error/success live regions, explicit empty copy, clear destructive wording, focus restoration, and color-independent `Ca sáng / Ca chiều / Ca tối` labels;
+- Manager draft/publish scheduling now exposes disabled-action reason text, accessible week navigation labels, clearer destructive copy, live status semantics, and user-facing `bản nháp / lịch nháp` language instead of implementation-state wording;
+- Manager scheduling state banner uses accessible live status semantics and user-facing conflict/busy wording;
+- Owner scheduling overview now includes explicit loading, empty, retryable error and focus-return behavior without creating a parallel scheduling writer;
+- Employee schedule temporarily disabled actions now explain the reason while current shift state is revalidated;
+- changed normal-user scheduling surfaces were qualified against prohibited implementation jargon: `canonical`, `RPC`, `writer`, `DML`, `server`;
+- `SCHED_UI_012_ACCESSIBILITY_COPY_CONTRACT=PASS` in People Shift Day-10 PR run `37092582111`, job `111115856027`, and UI2 Cross Role Acceptance PR run `37092582118`, job `111115856095`;
+- `UI2_012_MANAGER_SCHEDULING_BROWSER=PASS` on both exact-head PR runs after aligning NONE/busy/conflict copy and waiting for settled published state before idempotent retry;
+- Employee schedule UI browser, Manager scheduling browser, Owner scheduling browser, responsive qualification and full People Shift Day-10 browser E2E all passed on exact head;
+- successful exact-head durable CI: Procurement QA Robot PR `37092582097`, Auth Password Reset Hotfix PR `37092582110`, SOP Task Tests PR `37092582109`, Owner Control Tower Tests PR `37092582128`, AUTH-PROD Regression Contract PR `37092582117`, UI2 Cross Role Acceptance PR `37092582118`, People Shift Day-10 Tests PR `37092582111`, UI2 Cross Role Acceptance push `37092578746`, and People Shift Day-10 Tests push `37092578770`;
+- PR remains open and unmerged; no production merge/release was performed;
+- no Owner input is required to close this technical task.
+
 ## 20. SCHED-UI-013 — Focused regression hardening
 
 Add/update tests covering:
@@ -881,7 +898,9 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-011 = DONE / VERIFIED`
 
-`SCHED-UI-012 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-012 = DONE / VERIFIED`
+
+`SCHED-UI-013 = READY / NEXT AUTHORITATIVE TASK`
 
 All later technical tasks remain blocked by dependency until their predecessor closes.
 
