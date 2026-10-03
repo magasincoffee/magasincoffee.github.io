@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 DONE / SCHED-UI-012 DONE / SCHED-UI-013 DONE / SCHED-UI-014 DONE / SCHED-UI-015 READY / SCHED-UI-016 DEFERRED OWNER GATE / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 DONE / SCHED-UI-012 DONE / SCHED-UI-013 DONE / SCHED-UI-014 DONE / SCHED-UI-015 DONE / SCHED-UI-016 BLOCKED / OWNER REVIEW REQUIRED / SCHED-UI-017→019 BLOCKED BY RELEASE ORDER
 
 ## 0. Authority and precedence
 
@@ -170,8 +170,8 @@ Owner/release chain:
 | SCHED-UI-012 | Accessibility, states and Vietnamese copy hardening | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-013 | Focused regression tests for changed scheduling contracts | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-014 | Integrated cross-role browser qualification on release branch | **DONE / VERIFIED ON PR #381** |
-| SCHED-UI-015 | Preview/Staging build + automated RC qualification packet | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-016 | Deferred Owner Preview review / all Owner-only questions | **DEFERRED OWNER GATE / BLOCKED BY 015** |
+| SCHED-UI-015 | Preview/Staging build + automated RC qualification packet | **DONE / VERIFIED / PREVIEW_READY** |
+| SCHED-UI-016 | Deferred Owner Preview review / all Owner-only questions | **BLOCKED / OWNER REVIEW REQUIRED / NEXT AUTHORITATIVE GATE** |
 | SCHED-UI-017 | Apply Owner corrections if any + freeze exact RC | **BLOCKED BY 016** |
 | SCHED-UI-018 | Midnight production release | **BLOCKED BY 017 / RELEASE WINDOW** |
 | SCHED-UI-019 | Production smoke + permanent acceptance + TEMP deletion | **BLOCKED BY 018** |
@@ -767,6 +767,32 @@ Successful result:
 
 Robot stops only at the Owner gate after all possible technical work is complete.
 
+Completion evidence — 2026-10-03:
+
+- release ID: `REL-20261003-01`;
+- product branch: `sched-ui-001-recurring-editor`;
+- product PR: `#381`;
+- exact product candidate SHA: `c00c29ba45e31a5ee0ce76722f6210ac22064021`;
+- isolated preview-infrastructure branch: `preview/sched-ui-015-rel-20261003-01`;
+- Preview/RC workflow run: `37095865407`, job `111125539606`, conclusion `success`;
+- equivalent isolated Preview target/evidence: GitHub Actions run `37095865407` plus downloadable artifact `sched-ui-015-preview-site-37095865407` (artifact ID `11264047273`);
+- RC packet/evidence artifact: `sched-ui-015-rc-packet-37095865407` (artifact ID `11264441792`);
+- exact candidate verification marker: `SCHED_UI_015_CANDIDATE_SHA=c00c29ba45e31a5ee0ce76722f6210ac22064021`;
+- GitHub Pages source qualification: `SCHED_UI_015_PAGES_SOURCE_VALIDATION=PASS`;
+- required exact-head workflow evidence: `SCHED_UI_015_REQUIRED_WORKFLOWS=PASS`;
+- isolated Preview artifact build: `SCHED_UI_015_PREVIEW_ARTIFACT_BUILD=PASS`;
+- isolated browser target: `SCHED_UI_015_ISOLATED_BROWSER_TARGET=READY`;
+- exact-candidate integrated cross-role browser qualification: `SCHED_UI_014_INTEGRATED_CROSS_ROLE_BROWSER=PASS`;
+- RC packet marker: `SCHED_UI_015_RC_PACKET=PASS`;
+- final automated result: `PREVIEW_READY / OWNER_REVIEW_REQUIRED` and `SCHED_UI_015_PREVIEW_RC=PREVIEW_READY_OWNER_REVIEW_REQUIRED`;
+- exact-head required workflows recorded by the RC packet were successful: UI2 Cross Role Acceptance `37094932202`; People Shift Day-10 Tests `37094932204`; SOP Task Tests `37094932203`; AUTH-PROD Regression Contract `37094932358`; Auth Password Reset Hotfix `37094932198`; Owner Control Tower Tests `37094932239`; Procurement QA Robot `37094932201`;
+- current production rollback SHA candidate recorded at qualification time: `1ff161f3cb97a54e502560314b791c1cd7d16524`;
+- PR #381 has no `07_DATABASE`, migration, RPC, RLS or Supabase changes, so dedicated backend staging is not applicable for this candidate;
+- planned normal release window: `2026-10-04 00:00 Asia/Ho_Chi_Minh`; if Owner approval / RC freeze is not complete before that window, use the next eligible 00:00 window;
+- known limitation: this track uses the SOT-authorized equivalent isolated browser target and downloadable exact-candidate Preview artifact rather than a public hosted staging URL;
+- deferred Owner queue for SCHED-UI-016: Manager recurring/guided weekly flow; Employee official schedule/availability; Owner overview/drill-down; canonical URLs/compatibility; mobile/responsive behavior; exact candidate/release summary;
+- no production business truth was mutated during Preview qualification; no production merge/release occurred.
+
 ## 23. SCHED-UI-016 — Deferred Owner Preview review
 
 **This is intentionally near the end.**
@@ -933,10 +959,12 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-014 = DONE / VERIFIED`
 
-`SCHED-UI-015 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-015 = DONE / VERIFIED / PREVIEW_READY`
 
-All later technical tasks remain blocked by dependency until their predecessor closes.
+`SCHED-UI-016 = BLOCKED / OWNER REVIEW REQUIRED / NEXT AUTHORITATIVE GATE`
 
-Owner approval is intentionally deferred to SCHED-UI-016 after Preview and automated qualification are complete.
+All later technical tasks remain blocked by release order until Owner review is resolved.
+
+Owner approval is now required at SCHED-UI-016 before RC freeze or production release.
 
 Do not execute SCHED-UI-011 or later before SCHED-UI-010 is complete.
