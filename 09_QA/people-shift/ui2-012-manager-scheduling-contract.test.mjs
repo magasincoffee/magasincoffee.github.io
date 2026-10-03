@@ -71,11 +71,11 @@ test("UI2-012 hierarchy makes context source board and publish progression expli
 test("UI2-012 explicitly represents NONE DRAFT REVIEWED PUBLISHED CONFLICT and busy states",()=>{
   for(const state of ["NONE","DRAFT","REVIEWED","PUBLISHED","CONFLICT"])assert.ok(ui.includes(state),state);
   for(const copy of [
-    "Chưa có phiên xếp lịch",
+    "Chưa có lịch nháp",
     "Đang soạn lịch tuần",
     "Đã duyệt · chờ phát hành",
     "Đã phát hành",
-    "Có nhiều phiên xếp lịch cùng cửa hàng và tuần",
+    "Có nhiều bản nháp cùng cửa hàng và tuần",
     "Đang cập nhật dữ liệu"
   ])assert.ok(ui.includes(copy),copy);
   assert.match(ui,/if\(stage==='CONFLICT'\)/);
