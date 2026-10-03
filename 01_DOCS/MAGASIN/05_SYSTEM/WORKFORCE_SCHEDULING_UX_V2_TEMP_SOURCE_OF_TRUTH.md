@@ -173,8 +173,8 @@ Owner/release chain:
 | SCHED-UI-014 | Integrated cross-role browser qualification on release branch | **DONE / VERIFIED ON PR #381** |
 | SCHED-UI-015 | Preview/Staging build + automated RC qualification packet | **DONE / VERIFIED / PREVIEW_READY** |
 | SCHED-UI-016 | Deferred Owner Preview review / all Owner-only questions | **DONE / CHANGES_REQUESTED / OWNER-CORRECTION-001 RECORDED** |
-| SCHED-UI-017 | Apply Owner corrections if any + freeze exact RC | **READY / NEXT AUTHORITATIVE TASK** |
-| SCHED-UI-018 | Midnight production release | **BLOCKED BY 017 + OWNER RE-REVIEW / RELEASE WINDOW** |
+| SCHED-UI-017 | Apply Owner corrections if any + freeze exact RC | **DONE / VERIFIED / OWNER APPROVED / RC FROZEN** |
+| SCHED-UI-018 | Midnight production release | **READY / NEXT AUTHORITATIVE TASK · EXECUTE ONLY IN ELIGIBLE 00:00 RELEASE WINDOW** |
 | SCHED-UI-019 | Production smoke + permanent acceptance + TEMP deletion | **BLOCKED BY 018** |
 
 ## 7. SCHED-UI-000 — Design Lock
@@ -826,7 +826,7 @@ Do not release without explicit Owner approval of the corrected Preview/exact ca
 
 ## 24. SCHED-UI-017 — Owner corrections + exact RC freeze
 
-**Current state: READY — NEXT AUTHORITATIVE TASK**
+**Current state: DONE / VERIFIED / OWNER APPROVED / RC FROZEN**
 
 Required correction for this cycle — `OWNER-CORRECTION-001`:
 
@@ -858,7 +858,39 @@ When approved:
 
 No silent change after freeze.
 
+Completion evidence — 2026-10-03:
+
+- Owner explicitly approved the corrected SCHED-UI-017 local review after checking the candidate with real MAGASIN authentication and role/data reads; the local review guard blocked production data mutations;
+- exact frozen RC SHA: `1f6f6cf0646aba66e9f73fab123f87a182cb17c1`;
+- PR `#381` remains open/unmerged and its head is exactly the frozen RC SHA;
+- production rollback/main baseline at freeze: `7007ed773fe37a25950f819278eec080811a6412`;
+- exact-head required workflows on the frozen RC are all GREEN:
+  - `Auth Password Reset Hotfix` run `37134581020`: SUCCESS;
+  - `SOP Task Tests` run `37134581077`: SUCCESS;
+  - `Owner Control Tower Tests` run `37134581043`: SUCCESS;
+  - `AUTH-PROD Regression Contract` run `37134581106`: SUCCESS;
+  - `UI2 Cross Role Acceptance` run `37134581060`: SUCCESS;
+  - `People Shift Day-10 Tests` run `37134581111`: SUCCESS;
+  - `Procurement QA Robot` run `37134581109`: SUCCESS;
+- integrated exact-head cross-role/browser qualification inside `UI2 Cross Role Acceptance` is GREEN;
+- corrected exact-candidate Preview run `37134994384`: SUCCESS;
+- Preview artifact: `sched-ui-017-preview-site-37134994384` (artifact id `11278591594`);
+- RC/evidence artifact: `sched-ui-017-rc-packet-37134994384` (artifact id `11278571703`);
+- OWNER-CORRECTION-001 is accepted: Manager `Đăng ký thời gian có thể làm` uses the canonical start-time band mapping, including the cross-band start-time rule;
+- RC is now frozen. No code, test, cache-token or release-packet change may be added to this RC without returning to Owner review.
+
 ## 25. SCHED-UI-018 — Midnight production release
+
+**Current state: READY — NEXT AUTHORITATIVE TASK · RELEASE ONLY IN ELIGIBLE 00:00 ASIA/HO_CHI_MINH WINDOW**
+
+Frozen release inputs from SCHED-UI-017:
+
+- approved RC SHA: `1f6f6cf0646aba66e9f73fab123f87a182cb17c1`;
+- approved product PR: `#381`;
+- rollback/main baseline at freeze: `7007ed773fe37a25950f819278eec080811a6412`;
+- corrected Preview run: `37134994384`;
+- Owner approval: recorded 2026-10-03;
+- any RC SHA drift or unexpected production baseline drift invalidates the release and requires stop/re-review.
 
 Governed by:
 
@@ -988,12 +1020,12 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-016 = DONE / CHANGES_REQUESTED / OWNER-CORRECTION-001 RECORDED`
 
-`SCHED-UI-017 = READY / NEXT AUTHORITATIVE TASK`
+`SCHED-UI-017 = DONE / VERIFIED / OWNER APPROVED / RC FROZEN`
 
-`SCHED-UI-018 = BLOCKED BY 017 + OWNER RE-REVIEW / RELEASE WINDOW`
+`SCHED-UI-018 = READY / NEXT AUTHORITATIVE TASK / EXECUTE ONLY IN ELIGIBLE 00:00 RELEASE WINDOW`
 
 `SCHED-UI-019 = BLOCKED BY 018`
 
-Robot must execute only SCHED-UI-017 next: apply OWNER-CORRECTION-001 off main, rerun affected qualification, rebuild the exact-candidate Preview, then return the materially changed Manager surface to Owner for explicit re-review before any production release.
+Robot must execute only SCHED-UI-018 next, and only in an eligible `00:00 Asia/Ho_Chi_Minh` production release window. Before merge/deploy, re-confirm the frozen RC SHA, all required GREEN gates, rollback SHA and unchanged production baseline. Merge/deploy only the exact Owner-approved candidate; do not bundle any unreviewed fix.
 
 Do not execute SCHED-UI-011 or later before SCHED-UI-010 is complete.
