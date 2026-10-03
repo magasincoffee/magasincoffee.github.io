@@ -82,7 +82,7 @@ test("SCHED-UI-004 presentation separates source/draft, demotes draft utilities,
     "Lịch nháp đang chỉnh",
     "Thao tác phụ · lịch nháp",
     "Bước cuối · duyệt và phát hành",
-    "Cần xử lý xung đột phiên xếp lịch",
+    "Cần xử lý nhiều bản nháp cùng tuần",
     "Tải lại trạng thái"
   ]) assert.match(ui,new RegExp(token),token);
   assert.match(ui,/dataset\.msu2Section='availability-source'/);
