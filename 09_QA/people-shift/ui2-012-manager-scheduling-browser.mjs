@@ -90,6 +90,31 @@ const page=await context.newPage();attachDiagnostics(page);
 await page.goto(BASE+"/09_QA/people-shift/ui2-012-manager-scheduling-fixture.html",{waitUntil:"networkidle",timeout:20000});
 const frame=await managerFrame(page);
 
+await frame.waitForFunction(()=>!!globalThis.MAGASIN_MANAGER_AVAILABILITY?.refresh);
+await frame.evaluate(async()=>{
+ const morning=globalThis.__MW31_QA.availability.find(x=>x.availability_id==="av-1");
+ if(!morning)throw new Error("SCHED_UI_017_MORNING_FIXTURE_MISSING");
+ morning.end_time="22:00";
+ await globalThis.MAGASIN_MANAGER_AVAILABILITY.refresh();
+});
+await check("sched_ui_017_manager_availability_start_time_bands",async()=>{
+ const cards=await frame.locator("#panel-review .mwr3-shift").evaluateAll(nodes=>nodes.map(n=>({
+  text:n.querySelector(".mwr3-time")?.textContent?.trim()||"",
+  band:n.dataset.timeBand||"",
+  classes:[...n.classList],
+  background:getComputedStyle(n).backgroundColor
+ })));
+ const byText=Object.fromEntries(cards.map(x=>[x.text,x]));
+ const expected={"06:00–22:00":"morning","12:00–17:00":"afternoon","17:00–22:00":"evening"};
+ for(const [time,band] of Object.entries(expected)){
+  const card=byText[time];
+  if(!card||card.band!==band||!card.classes.includes("mwr3-band-"+band))throw new Error(JSON.stringify({time,band,card,cards}));
+ }
+ const backgrounds=Object.keys(expected).map(time=>byText[time].background);
+ if(new Set(backgrounds).size!==3)throw new Error("time-band backgrounds are not visibly distinct: "+JSON.stringify({backgrounds,cards}));
+ return JSON.stringify({expected,backgrounds});
+});
+
 await check("ui2_012_none_context_and_empty_day_state",async()=>{
  const state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
  const ui=await frame.locator(".msd-ui2-012").evaluate(r=>({stage:r.dataset.ui2SchedulingState,chip:r.querySelector(".msu2-state-chip")?.textContent,text:r.innerText,emptyDays:r.querySelectorAll(".msd-day .msd-empty").length}));
