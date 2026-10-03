@@ -5,7 +5,7 @@
 **Lifecycle:** TEMPORARY — delete only after SCHED-UI-019 closes and permanent acceptance exists.  
 **Owner report date:** 2026-10-02  
 **Design approval date:** 2026-10-02  
-**Status:** SCHED-UI-000 DONE / SCHED-UI-001 DONE / SCHED-UI-002 DONE / SCHED-UI-003 DONE / SCHED-UI-004 DONE / SCHED-UI-005 DONE / SCHED-UI-006 DONE / SCHED-UI-007 DONE / SCHED-UI-008 DONE / SCHED-UI-009 DONE / SCHED-UI-010 DONE / SCHED-UI-011 DONE / SCHED-UI-012 DONE / SCHED-UI-013 DONE / SCHED-UI-014 DONE / SCHED-UI-015 DONE / SCHED-UI-016 DONE — CHANGES_REQUESTED / SCHED-UI-017 READY — OWNER CORRECTION REQUIRED / SCHED-UI-018→019 BLOCKED BY RELEASE ORDER
+**Status:** SCHED-UI-000→018 DONE / SCHED-UI-019 READY — PRODUCTION SMOKE + PERMANENT ACCEPTANCE + TEMP CLEANUP
 
 ## 0. Authority and precedence
 
@@ -174,8 +174,8 @@ Owner/release chain:
 | SCHED-UI-015 | Preview/Staging build + automated RC qualification packet | **DONE / VERIFIED / PREVIEW_READY** |
 | SCHED-UI-016 | Deferred Owner Preview review / all Owner-only questions | **DONE / CHANGES_REQUESTED / OWNER-CORRECTION-001 RECORDED** |
 | SCHED-UI-017 | Apply Owner corrections if any + freeze exact RC | **DONE / VERIFIED / OWNER APPROVED / RC FROZEN** |
-| SCHED-UI-018 | Midnight production release | **READY / NEXT AUTHORITATIVE TASK · EXECUTE ONLY IN ELIGIBLE 00:00 RELEASE WINDOW** |
-| SCHED-UI-019 | Production smoke + permanent acceptance + TEMP deletion | **BLOCKED BY 018** |
+| SCHED-UI-018 | Midnight production release | **DONE / VERIFIED / DEPLOYED** |
+| SCHED-UI-019 | Production smoke + permanent acceptance + TEMP deletion | **READY / NEXT AUTHORITATIVE TASK** |
 
 ## 7. SCHED-UI-000 — Design Lock
 
@@ -881,7 +881,7 @@ Completion evidence — 2026-10-03:
 
 ## 25. SCHED-UI-018 — Midnight production release
 
-**Current state: READY — NEXT AUTHORITATIVE TASK · RELEASE ONLY IN ELIGIBLE 00:00 ASIA/HO_CHI_MINH WINDOW**
+**Current state: DONE / VERIFIED / DEPLOYED**
 
 Frozen release inputs from SCHED-UI-017:
 
@@ -910,6 +910,21 @@ Before merge:
 - merge/deploy exact approved candidate.
 
 No unreviewed “small fix” may be bundled.
+
+Completion evidence — 2026-10-04:
+
+- release executed inside the approved `00:00 Asia/Ho_Chi_Minh` production window;
+- frozen Owner-approved RC remained unchanged at `1f6f6cf0646aba66e9f73fab123f87a182cb17c1`;
+- pre-merge product baseline drift check proved all post-freeze changes on `main` were confined to this SOT file;
+- rollback SHA recorded immediately before merge: `3835ddd7461ec188a14339634e2e0058470ad061`;
+- PR `#381` was merged with expected-head guard against the exact frozen RC;
+- production merge SHA: `cb2371b997c4bd8e6d0526553ced9d62a1c9175a`;
+- PR `#381` is closed/merged and reports head SHA exactly `1f6f6cf0646aba66e9f73fab123f87a182cb17c1`;
+- GitHub Pages build/deployment run `37138925970`: COMPLETED / SUCCESS;
+- Pages jobs `build`, `report-build-status`, and `deploy` all completed successfully;
+- before this SOT evidence update, `main` was verified exactly at production merge SHA `cb2371b997c4bd8e6d0526553ced9d62a1c9175a`;
+- no unreviewed code/config/migration change was bundled into the release;
+- production smoke and permanent acceptance remain owned by SCHED-UI-019 and were not executed in SCHED-UI-018.
 
 ## 26. SCHED-UI-019 — Production smoke + permanent acceptance + TEMP cleanup
 
@@ -1023,10 +1038,10 @@ Collect non-critical new Owner-only questions for SCHED-UI-016.
 
 `SCHED-UI-017 = DONE / VERIFIED / OWNER APPROVED / RC FROZEN`
 
-`SCHED-UI-018 = READY / NEXT AUTHORITATIVE TASK / EXECUTE ONLY IN ELIGIBLE 00:00 RELEASE WINDOW`
+`SCHED-UI-018 = DONE / VERIFIED / DEPLOYED`
 
-`SCHED-UI-019 = BLOCKED BY 018`
+`SCHED-UI-019 = READY / NEXT AUTHORITATIVE TASK`
 
-Robot must execute only SCHED-UI-018 next, and only in an eligible `00:00 Asia/Ho_Chi_Minh` production release window. Before merge/deploy, re-confirm the frozen RC SHA, all required GREEN gates, rollback SHA and unchanged production baseline. Merge/deploy only the exact Owner-approved candidate; do not bundle any unreviewed fix.
+Robot must execute only SCHED-UI-019 next: verify exact-main production smoke/read-only behavior, create permanent acceptance evidence, remove this TEMP SOT in the same closure flow, and verify permanent evidence on main.
 
 Do not execute SCHED-UI-011 or later before SCHED-UI-010 is complete.
