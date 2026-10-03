@@ -52,7 +52,7 @@ test("SCHED-UI-013 recurring editor regression locks add remove save reload and 
     'recurring time text clipped',
     'SCHED_UI_013_RECURRING_EDITOR_REGRESSION=PASS'
   ])assert.ok(x.includes(token),token);
-  assert.match(x,/replace_cross_store_recurring_staffing_requirements_v1/);
+  assert.match(x,/replace_workforce_recurring_staffing_requirements_v1/);
   assert.match(x,/p_requirements/);
   assert.doesNotMatch(x,/p_week_start[^\n]*p_requirements/);
 });
@@ -61,7 +61,7 @@ test("SCHED-UI-013 shared time-band boundaries and Employee published schedule b
   const t=files.timeBands,e=files.employeeSchedule,b=files.employeeScheduleBrowser;
   for(const token of ['["05:00","morning"]','["11:59","morning"]','["12:00","afternoon"]','["16:59","afternoon"]','["17:00","evening"]','["22:00","evening"]'])assert.ok(t.includes(token),token);
   assert.match(t,/fail neutral/);
-  assert.match(e,/dataset\.timeBand=k/);
+  assert.ok(e.includes('dataset\\.timeBand=k'),'Employee schedule source test must keep dataset.timeBand contract');
   assert.match(e,/band-neutral/);
   assert.match(b,/bands\[0\]\.band!=="morning"/);
   assert.match(b,/bands\[1\]\.band!=="evening"/);
@@ -93,7 +93,7 @@ test("SCHED-UI-013 Owner overview copy and shared-writer authority stay guarded"
 test("SCHED-UI-013 canonical Auth destinations and old-route compatibility remain executable",()=>{
   const c=files.authContract,b=files.authBrowser,r=files.cleanRoutes;
   for(const path of ["/owner/","/manager/","/employee/","/manager/schedule/","/employee/attendance/","/owner/scheduling/"])assert.ok(c.includes(path)||r.includes(path),path);
-  assert.match(c,/role-unavailable\.html/);
+  assert.ok(c.includes('role-unavailable\\.html'),'Auth contract must retain role-unavailable fail-closed assertion');
   assert.match(c,/LEGACY_PREFIX='\/05_MANAGER'/);
   assert.match(b,/\/05_MANAGER\/#workforce/);
   assert.match(b,/\/06_EMPLOYEE\/#attendance/);
