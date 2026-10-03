@@ -20,7 +20,7 @@ test("SCHED-UI-010 numbered roots consume bounded canonical markers without repl
   assert.match(manager,/manager-scheduling/);
   assert.match(manager,/location\.pathname==='\/05_MANAGER\/'/);
   assert.match(manager,/history\.replaceState/);
-  assert.match(manager,/manager-runtime-v1\.html\?v=20261002-sched-ui-005/);
+  assert.match(manager,/manager-runtime-v1\.html\?v=20261003-sched-ui-017/);
   assert.match(employee,/employee-attendance/);
   assert.match(employee,/location\.pathname==='\/06_EMPLOYEE\/'/);
   assert.match(employee,/history\.replaceState/);
