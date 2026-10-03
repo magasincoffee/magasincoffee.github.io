@@ -99,7 +99,7 @@ test("TASK-094 Manager board delegates create/resume and validation idempotency 
   const resume=draft.slice(resumeStart,resumeEnd);
   assert.match(resume,/runs\.length>1/);
   assert.match(resume,/generationStatus='CONFLICT'/);
-  assert.match(resume,/khóa thao tác/);
+  assert.match(resume,/Thao tác tạm khóa/);
 
   assert.match(draft,/MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY/);
   assert.match(draft,/AVAILABILITY_MISMATCH/);
