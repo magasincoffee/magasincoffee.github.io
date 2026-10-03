@@ -114,6 +114,12 @@ await check("sched_ui_017_manager_availability_start_time_bands",async()=>{
  if(new Set(backgrounds).size!==3)throw new Error("time-band backgrounds are not visibly distinct: "+JSON.stringify({backgrounds,cards}));
  return JSON.stringify({expected,backgrounds});
 });
+await frame.evaluate(async()=>{
+ const morning=globalThis.__MW31_QA.availability.find(x=>x.availability_id==="av-1");
+ if(!morning)throw new Error("SCHED_UI_017_MORNING_FIXTURE_MISSING_ON_RESTORE");
+ morning.end_time="12:00";
+ await globalThis.MAGASIN_MANAGER_AVAILABILITY.refresh();
+});
 
 await check("ui2_012_none_context_and_empty_day_state",async()=>{
  const state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
