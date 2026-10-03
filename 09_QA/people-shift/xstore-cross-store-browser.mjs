@@ -171,10 +171,15 @@ for(const width of [1440,1024,768,430,390,360]){
    headDisplay:head?getComputedStyle(head).display:"",
    cellHeight:cell?.getBoundingClientRect().height||0,
    cellLabel:cell?.getAttribute("data-xsa-day-label")||"",
+   clippedTimeBlocks:[...document.querySelectorAll(".xsa-block")].filter(el=>{
+    const s=getComputedStyle(el),r=el.getBoundingClientRect();
+    return r.width>0&&r.height>0&&s.visibility!=="hidden"&&s.display!=="none"&&(el.scrollWidth>el.clientWidth+1||el.scrollHeight>el.clientHeight+1);
+   }).map(el=>el.textContent.trim()),
    touchMin:controls.length?Math.min(...controls.map(x=>x.getBoundingClientRect().height)):0
   };
  },width);
  if(metric.scrollWidth>metric.clientWidth+1)throw new Error("recurring setup page overflow: "+JSON.stringify(metric));
+ if(metric.clippedTimeBlocks.length)throw new Error("recurring time text clipped: "+JSON.stringify(metric));
  if(width<=1024&&metric.touchMin<43.5)throw new Error("recurring setup touch target: "+JSON.stringify(metric));
  if(width<=430&&(metric.boardDisplay!=="block"||metric.rowDisplay!=="grid"||metric.headDisplay!=="none"||metric.boardScroll>metric.boardClient+1||metric.cellHeight<63.5||!metric.cellLabel.includes("Thứ 2")))throw new Error("phone recurring cards: "+JSON.stringify(metric));
  if((width===768||width===1024)&&metric.boardScroll<=metric.boardClient)throw new Error("tablet recurring board should scroll internally: "+JSON.stringify(metric));
@@ -209,5 +214,6 @@ if(errors.length)throw new Error(errors.join("\n"));
 
 await page.screenshot({path:path.join(OUT,"xstore-recurring-stable-editor.png"),fullPage:true});
 await browser.close();
+console.log("SCHED_UI_013_RECURRING_EDITOR_REGRESSION=PASS");
 console.log("SCHED_UI_011_RECURRING_RESPONSIVE=PASS");
 console.log("XSTORE_RECURRING_STABLE_EDITOR_BROWSER=PASS");
