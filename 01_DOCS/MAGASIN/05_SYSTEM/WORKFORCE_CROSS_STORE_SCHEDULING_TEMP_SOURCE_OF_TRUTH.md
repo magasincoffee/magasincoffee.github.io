@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→016 DONE / EXACT-MAIN GREEN / XSTORE-017 READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→017 DONE / EXACT-MAIN GREEN / XSTORE-018 READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -344,8 +344,8 @@ Out of scope unless explicitly added later:
 | XSTORE-014 | Auto Schedule interval composition | Auto Schedule composes compatible employee intervals into continuous coverage instead of requiring one employee to cover the whole requirement block; still DRAFT-only | **DONE / EXACT-MAIN GREEN** |
 | XSTORE-015 | Manager manual Availability override + employee picker | Manager/Owner may manually assign an ACTIVE store-eligible employee even without matching Availability; save DRAFT succeeds with an explicit warning/audit marker | **DONE / EXACT-MAIN GREEN** |
 | XSTORE-016 | Scheduling information architecture + branch accordion | Weekly global header only; CN1–CN4 become collapsible branch sections; branch identity and editable DRAFT stay in the same section; four-store overview is secondary/collapsible | **DONE / EXACT-MAIN GREEN** |
-| XSTORE-017 | Inline shortage visualization + direct resolution | Show shortage directly in the exact day/time cell using a dedicated warning color; click shortage to open filtered candidate flow and remove warning immediately when coverage is restored | **READY / NEXT TASK** |
-| XSTORE-018 | Supplemental employee pool semantics | Replace “Nguồn tham khảo” with actionable employee groups: chưa được xếp / còn thời gian có thể xếp / không đăng ký nhưng có thể điều động | **PENDING XSTORE-017** |
+| XSTORE-017 | Inline shortage visualization + direct resolution | Show shortage directly in the exact day/time cell using a dedicated warning color; click shortage to open filtered candidate flow and remove warning immediately when coverage is restored | **DONE / EXACT-MAIN GREEN** |
+| XSTORE-018 | Supplemental employee pool semantics | Replace “Nguồn tham khảo” with actionable employee groups: chưa được xếp / còn thời gian có thể xếp / không đăng ký nhưng có thể điều động | **READY / NEXT TASK** |
 | XSTORE-019 | Unified workflow integration + regression qualification | Integrate global summary, per-store edit/save, manual override, shortage recalculation, Validate/Review/Publish; static/browser/security/Postgres/exact-RC gates GREEN | **PENDING XSTORE-018** |
 | XSTORE-020 | Live production acceptance + permanent reconciliation | Owner/Manager runs real target week end-to-end, confirms CN1–CN4 UX and coverage, then reconcile permanent docs and resume/close XSTORE-011 | **PENDING XSTORE-019** |
 
@@ -372,8 +372,8 @@ XSTORE-001 DONE
 → XSTORE-014 DONE / exact-main green / interval-composed Auto Schedule
 → XSTORE-015 DONE / exact-main green / Manager Availability override + all eligible employee picker
 → XSTORE-016 DONE / exact-main green / scheduling information architecture + CN accordion
-→ XSTORE-017 READY / inline shortage cells + direct resolution
-→ XSTORE-018 / supplemental employee pool
+→ XSTORE-017 DONE / exact-main green / inline shortage cells + direct resolution
+→ XSTORE-018 READY / supplemental employee pool
 → XSTORE-019 / integrated regression + exact-RC qualification
 → XSTORE-020 / live production acceptance + permanent reconciliation
 → XSTORE-011 RESUME / final live closure + TEMP SOT deletion
@@ -1114,7 +1114,7 @@ Machine handoff:
 MAGASIN_TASK_CONTROL_V1
 STATUS=READY
 TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-017
+NEXT_TASK_ID=XSTORE-018
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -1269,6 +1269,47 @@ Browser/regression proof:
 - People Shift and UI2 cross-role/cold-reload regressions pass on exact main.
 
 XSTORE-017 is now the sole next executable task and owns inline shortage cells + direct supplement action. XSTORE-011 remains paused until XSTORE-013→020 are complete.
+
+## 6.0.14 XSTORE-017 inline shortage cells + direct supplement acceptance — 2026-10-05
+
+XSTORE-017 is **DONE / EXACT-MAIN GREEN**.
+
+Implementation:
+- PR #389 renders exact staffing shortages directly inside the affected branch day/time cell;
+- shortage warning uses a dedicated purple/indigo visual token distinct from the canonical morning/afternoon/evening time-band colors;
+- every shortage card includes visible text plus icon/status semantics so accessibility does not depend on color alone;
+- **+ Bổ sung người** opens the existing canonical Manager manual-assignment path prefilled to the exact shortage date/time instead of introducing a second writer;
+- unsaved DRAFT edits recalculate shortage locally from the canonical recurring staffing requirements plus current DRAFT assignments;
+- after save/reload, shortage is re-read from server authority through `list_cross_store_staffing_shortages_v1`;
+- fully repaired coverage removes the inline warning immediately;
+- the old detailed global “Cần xử lý” shortage list is replaced by concise branch guidance so the shortage is not duplicated away from its schedule cell;
+- legacy People Shift, UI2, SCHED-01/SCHED-05 and cache-lineage fixtures were reconciled to the legitimate XSTORE-017 read-only readers without weakening Store Priority, overlap, role/scope or publish safeguards;
+- no production business data was fabricated.
+
+Implementation PR #389:
+- final implementation / repair head `7cb312530089db49ae4ec9085538c7ed883c424e`;
+- squash merge / executable main `2e6d42d2f4055078c6346ba1f570e75037d1b7cf`.
+
+Exact-main gates for `2e6d42d2f4055078c6346ba1f570e75037d1b7cf`:
+- XSTORE-017 Inline Shortage QA run `37226307710` = **SUCCESS**;
+- XSTORE-016 Scheduling IA QA run `37226307733` = **SUCCESS**;
+- XSTORE-015 Manager Override QA run `37226307811` = **SUCCESS**;
+- People Shift Day-10 Tests run `37226307692` = **SUCCESS**;
+- UI2 Cross Role Acceptance run `37226307723` = **SUCCESS**;
+- Validate MAGASIN GitHub Pages source run `37226307751` = **SUCCESS**;
+- Pages build/deployment run `37226307392` = **SUCCESS**.
+
+Browser/regression proof:
+- exact shortage interval appears in the correct day cell;
+- warning token is visually distinct and includes non-color status text/icon semantics;
+- direct supplement action preselects the exact shortage date/start/end;
+- full Availability coverage removes the warning;
+- partial coverage recalculates to only the remaining exact interval;
+- save refreshes shortage from server authority;
+- Manager/Owner branch switching, DRAFT save, Validate → Review → Publish and employee schedule regressions remain green;
+- desktop/mobile XSTORE-017 browser checks remain green.
+
+XSTORE-018 is now the sole next executable task and owns the actionable supplemental employee pool. XSTORE-011 remains paused until XSTORE-013→020 are complete.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
