@@ -445,7 +445,7 @@ function bind(){
  p.querySelector('#msdOfficial')?.addEventListener('click',()=>document.querySelector('.sidebar [data-view="schedule"], [data-view="schedule"]')?.click());
  p.querySelectorAll('[data-add-av]').forEach(b=>b.addEventListener('click',()=>addFromAvailability(b.dataset.addAv)));
  p.querySelector('#msdManualAdd')?.addEventListener('click',addManualAssignment);
- p.querySelectorAll('[data-msd-row] select[data-f]').forEach(el=>el.addEventListener('change',()=>{state.dirty=true;render();status('Có thay đổi chưa lưu. Bấm “Lưu bản nháp” trước khi chuyển chi nhánh hoặc duyệt.')}))
+ p.querySelectorAll('[data-msd-row] select[data-f]').forEach(el=>el.addEventListener('change',()=>{syncRowsFromDom();state.dirty=true;render();status('Có thay đổi chưa lưu. Bấm “Lưu bản nháp” trước khi chuyển chi nhánh hoặc duyệt.')}))
  p.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{syncRowsFromDom();state.assignments.splice(Number(b.dataset.remove),1);state.dirty=true;render();status('Đã bỏ ca khỏi lịch nháp. Bấm “Lưu bản nháp” để lưu thay đổi.')}))
 }
 async function openDirect(detail={}){
