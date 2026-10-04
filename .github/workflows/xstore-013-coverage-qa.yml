@@ -1,0 +1,264 @@
+name: XSTORE-013 Coverage QA
+
+on:
+  push:
+    paths:
+      - '07_DATABASE/migrations/20261004220500_xstore_013_continuous_coverage_shortage_v1.sql'
+      - '09_QA/people-shift/xstore-013-coverage-shortage-v1.test.mjs'
+      - '.github/workflows/xstore-013-coverage-qa.yml'
+  pull_request:
+    paths:
+      - '07_DATABASE/migrations/20261004220500_xstore_013_continuous_coverage_shortage_v1.sql'
+      - '09_QA/people-shift/xstore-013-coverage-shortage-v1.test.mjs'
+      - '.github/workflows/xstore-013-coverage-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres17-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: xstore_qa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d xstore_qa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: xstore_qa
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run XSTORE-013 static contract regression
+        run: node --test 09_QA/people-shift/xstore-013-coverage-shortage-v1.test.mjs
+
+      - name: Install PostgreSQL client
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+
+      - name: Build isolated Workforce coverage fixture
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create schema if not exists auth;
+
+          do $roles$
+          begin
+            if not exists(select 1 from pg_roles where rolname='anon') then create role anon; end if;
+            if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated; end if;
+          end
+          $roles$;
+
+          create table public.profiles(
+            id uuid primary key,
+            status text,
+            role text
+          );
+
+          create table public.stores(
+            id uuid primary key,
+            code text not null,
+            status text not null
+          );
+
+          create table public.workforce_recurring_staffing_requirements(
+            id uuid primary key,
+            store_id uuid not null,
+            day_of_week smallint not null,
+            start_time time not null,
+            end_time time not null,
+            target_headcount integer not null
+          );
+
+          create table public.schedule_generation_runs(
+            id uuid primary key,
+            store_id uuid not null,
+            week_start date not null,
+            status text not null
+          );
+
+          create table public.schedule_generation_assignments(
+            id uuid primary key,
+            generation_id uuid not null,
+            user_id uuid not null,
+            store_id uuid not null,
+            work_date date not null,
+            start_time time not null,
+            end_time time not null
+          );
+
+          create or replace function auth.uid()
+          returns uuid
+          language sql
+          stable
+          as $$ select '11111111-1111-1111-1111-111111111111'::uuid $$;
+
+          create or replace function public.current_user_role()
+          returns text
+          language sql
+          stable
+          as $$ select 'OWNER'::text $$;
+
+          create or replace function public.can_access_store(p_store_id uuid)
+          returns boolean
+          language sql
+          stable
+          as $$ select true $$;
+
+          insert into public.profiles(id,status,role)
+          values ('11111111-1111-1111-1111-111111111111','ACTIVE','OWNER');
+
+          insert into public.stores(id,code,status)
+          values ('33333333-3333-3333-3333-333333333333','CN1','ACTIVE');
+
+          insert into public.workforce_recurring_staffing_requirements(
+            id,store_id,day_of_week,start_time,end_time,target_headcount
+          ) values (
+            '44444444-4444-4444-4444-444444444444',
+            '33333333-3333-3333-3333-333333333333',
+            1,time '06:00',time '12:00',1
+          );
+
+          insert into public.schedule_generation_runs(id,store_id,week_start,status)
+          values (
+            '55555555-5555-5555-5555-555555555555',
+            '33333333-3333-3333-3333-333333333333',
+            date '2026-10-05','DRAFT'
+          );
+          SQL
+
+      - name: Apply exact XSTORE-013 migration
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 \
+            -f 07_DATABASE/migrations/20261004220500_xstore_013_continuous_coverage_shortage_v1.sql
+
+      - name: Prove split coverage, exact gaps, headcount and adjacent boundaries
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          do $test$
+          declare
+            v_count integer;
+            v_start time;
+            v_end time;
+            v_assigned integer;
+            v_missing integer;
+          begin
+            -- Adjacent split shifts from different employees fully cover 06:00-12:00.
+            select count(*) into v_count
+            from public.evaluate_workforce_coverage_shortages_v1(
+              time '06:00',time '12:00',1,
+              '[{"user_id":"A","start_time":"06:00","end_time":"09:00"},
+                {"user_id":"B","start_time":"09:00","end_time":"12:00"}]'::jsonb
+            );
+            if v_count<>0 then raise exception 'ADJACENT_SPLIT_SHIFTS_NOT_FULLY_COVERED'; end if;
+
+            -- Only the real 08:00-08:30 gap is returned.
+            select shortage_start,shortage_end,assigned_headcount,missing_headcount
+              into v_start,v_end,v_assigned,v_missing
+            from public.evaluate_workforce_coverage_shortages_v1(
+              time '06:00',time '12:00',1,
+              '[{"user_id":"A","start_time":"06:00","end_time":"08:00"},
+                {"user_id":"B","start_time":"08:30","end_time":"12:00"}]'::jsonb
+            );
+            if v_start<>time '08:00' or v_end<>time '08:30'
+               or v_assigned<>0 or v_missing<>1 then
+              raise exception 'EXACT_GAP_WRONG: %-% assigned=% missing=%',v_start,v_end,v_assigned,v_missing;
+            end if;
+
+            -- Headcount=2 is checked at every boundary; only 08:00-09:00 is one person short.
+            select shortage_start,shortage_end,assigned_headcount,missing_headcount
+              into v_start,v_end,v_assigned,v_missing
+            from public.evaluate_workforce_coverage_shortages_v1(
+              time '06:00',time '12:00',2,
+              '[{"user_id":"A","start_time":"06:00","end_time":"12:00"},
+                {"user_id":"B","start_time":"06:00","end_time":"08:00"},
+                {"user_id":"C","start_time":"09:00","end_time":"12:00"}]'::jsonb
+            );
+            if v_start<>time '08:00' or v_end<>time '09:00'
+               or v_assigned<>1 or v_missing<>1 then
+              raise exception 'HEADCOUNT_BOUNDARY_WRONG: %-% assigned=% missing=%',v_start,v_end,v_assigned,v_missing;
+            end if;
+
+            -- One employee is never double-counted when their intervals overlap.
+            select count(*),min(shortage_start),max(shortage_end),min(assigned_headcount),min(missing_headcount)
+              into v_count,v_start,v_end,v_assigned,v_missing
+            from public.evaluate_workforce_coverage_shortages_v1(
+              time '06:00',time '12:00',2,
+              '[{"user_id":"A","start_time":"06:00","end_time":"10:00"},
+                {"user_id":"A","start_time":"08:00","end_time":"12:00"}]'::jsonb
+            );
+            if v_count<>1 or v_start<>time '06:00' or v_end<>time '12:00'
+               or v_assigned<>1 or v_missing<>1 then
+              raise exception 'EMPLOYEE_DEDUP_WRONG: count=% %-% assigned=% missing=%',v_count,v_start,v_end,v_assigned,v_missing;
+            end if;
+
+            raise notice 'XSTORE_013_PURE_INTERVAL_ENGINE=PASS';
+          end
+          $test$;
+          SQL
+
+      - name: Prove bounded recurring shortage reader uses exact interval
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          insert into public.schedule_generation_assignments(
+            id,generation_id,user_id,store_id,work_date,start_time,end_time
+          ) values
+          (
+            '66666666-6666-6666-6666-666666666666',
+            '55555555-5555-5555-5555-555555555555',
+            '77777777-7777-7777-7777-777777777777',
+            '33333333-3333-3333-3333-333333333333',
+            date '2026-10-05',time '06:00',time '08:00'
+          ),
+          (
+            '88888888-8888-8888-8888-888888888888',
+            '55555555-5555-5555-5555-555555555555',
+            '99999999-9999-9999-9999-999999999999',
+            '33333333-3333-3333-3333-333333333333',
+            date '2026-10-05',time '08:30',time '12:00'
+          );
+
+          do $test$
+          declare
+            v_count integer;
+            v_start time;
+            v_end time;
+            v_missing integer;
+          begin
+            select count(*),min(shortage_start),max(shortage_end),min(missing_headcount)
+              into v_count,v_start,v_end,v_missing
+            from public.list_cross_store_staffing_shortages_v1(date '2026-10-05');
+
+            if v_count<>1 or v_start<>time '08:00' or v_end<>time '08:30' or v_missing<>1 then
+              raise exception 'BOUNDED_READER_WRONG: count=% %-% missing=%',v_count,v_start,v_end,v_missing;
+            end if;
+
+            raise notice 'XSTORE_013_POSTGRES17_COVERAGE=PASS';
+          end
+          $test$;
+          SQL
