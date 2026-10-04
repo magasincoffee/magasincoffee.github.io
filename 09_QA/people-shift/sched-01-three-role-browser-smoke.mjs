@@ -24,7 +24,7 @@ try {
     if(text.includes('Không tải được Workforce Publish')||text.includes('ambiguous'))throw new Error(text);
     if(!text.includes('An CN1')||!text.includes('Giám sát xếp lịch'))throw new Error('Owner shared scheduling detail missing');
     const calls=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.map(x=>x.name));
-    for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
+    for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_employee_workforce_profiles_v1','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
     return 'overview CN1–CN4 → shared store-a detail · '+calls.join(',');
   });
 
@@ -47,7 +47,7 @@ try {
     const text=await manager.locator('#panel-publish').innerText();
     if(!text.includes('Xếp tự động toàn hệ thống')||!text.includes('THAO TÁC PHỤ · LỊCH NHÁP')||!text.includes('LỊCH NHÁP ĐANG CHỈNH')||!text.includes('Tạo bản nháp'))throw new Error(text);
     const calls=await manager.evaluate(()=>window.__MW31_QA.calls.map(x=>x.name).filter(Boolean));
-    for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
+    for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_employee_workforce_profiles_v1','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
     await manager.locator('#msdStart').click();
     await manager.waitForFunction(()=>window.__MW31_QA.calls.some(x=>x.name==='get_schedule_generation_assignments'));
     return 'manager direct availability→draft read path';

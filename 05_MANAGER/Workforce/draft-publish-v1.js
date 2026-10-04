@@ -26,10 +26,10 @@ const actorCopy=()=>actorRole()==='OWNER'
  : {title:'Xếp lịch 4 cửa hàng',subtitle:'Xếp tự động toàn hệ thống → Quản lý chỉnh sửa → Kiểm tra → Duyệt → Phát hành.',source:'Thời gian có thể làm là lúc nhân viên có thể nhận ca; ưu tiên cửa hàng do Quản lý thiết lập trong hồ sơ nhân viên.'};
 const timeOptions=selected=>{let out='';for(let m=300;m<=1320;m+=30){const v=`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;out+=`<option value="${v}"${v===hm(selected)?' selected':''}>${v}</option>`}return out};
 const css=`<style id="manager-schedule-draft-editor-css">
-.msd{margin-top:0;min-width:0;max-width:100%;overflow:hidden}.msd-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.msd-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.msd-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.msd-pill{font-size:11px;font-weight:800;padding:5px 8px;border-radius:999px;background:#eef5ff;color:#235dba}.msd-warning{background:#fff6d8;color:#876900}.msd-ok{background:#e8f5ed;color:#23754a}.msd-layout{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,2fr);gap:12px;margin-top:14px;min-width:0;max-width:100%}.msd-source,.msd-board-wrap{border:1px solid var(--border);border-radius:13px;background:#fff;padding:12px;min-width:0;max-width:100%}.msd-board-wrap{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}.msd-source-list{display:grid;gap:8px;margin-top:10px;max-height:620px;overflow:auto}.msd-source-row{padding:10px;border:1px solid #d8e5ef;border-radius:10px;background:#f8fcfd}.msd-source-time{font-weight:800;color:#0f4778}.msd-source-name{font-weight:800;margin-top:3px}.msd-source-meta{font-size:11px;color:var(--muted);margin-top:3px}.msd-source-row .btn{margin-top:8px;width:100%}.msd-board{display:grid;grid-template-columns:repeat(7,minmax(190px,1fr));gap:9px;min-width:1386px;width:max-content}.msd-day{border:1px solid #dce5f0;border-radius:11px;min-height:230px;overflow:hidden}.msd-day-title{padding:9px;background:#f8fafd;border-bottom:1px solid #eef2f6;display:flex;justify-content:space-between}.msd-card{margin:8px;padding:9px;border:1px solid #cadce9;border-radius:9px;background:#fff}.msd-band-morning{background:var(--m-shift-morning-bg,#FFF4CC)!important;border-color:var(--m-shift-morning-border,#E7B84B)!important}.msd-band-afternoon{background:var(--m-shift-afternoon-bg,#FDE7E7)!important;border-color:var(--m-shift-afternoon-border,#E39C9C)!important}.msd-band-evening{background:var(--m-shift-evening-bg,#E8F3FF)!important;border-color:var(--m-shift-evening-border,#9EC7F1)!important}.msd-band-neutral{background:#fff!important}.msd-field{display:grid;gap:4px;margin-top:6px}.msd-field label{font-size:10px;font-weight:800;color:var(--muted)}.msd-input{height:35px;border:1px solid #ccd9e4;border-radius:8px;background:#fff;padding:0 7px;color:var(--text);min-width:0;width:100%}.msd-time-row{display:grid;grid-template-columns:1fr 1fr;gap:5px}.msd-meta{font-size:10px;color:var(--muted);margin-top:4px}.msd-empty{padding:20px 10px;text-align:center;color:var(--muted);font-size:12px}.msd-status{margin-top:12px;padding:10px 12px;border-radius:10px;background:#eef6ff;color:#235dba;font-size:12px;white-space:pre-wrap}.msd-status.error{background:#fbeaea;color:#9a3838}.msd-status.ok{background:#e8f5ed;color:#23754a}.msd-official-grid{display:grid;gap:8px;margin-top:10px}.msd-official-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 10px;border:1px solid #d7e6dc;border-radius:10px;background:#fff}.msd-official-name{font-weight:800}.msd-official-meta{font-size:11px;color:var(--muted);margin-top:3px}.msd-downstream{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}.msd-downstream summary{cursor:pointer;font-weight:700;color:var(--muted)}@media(max-width:980px){.msd-head{flex-direction:column;min-width:0}.msd-head .msd-actions{max-width:100%}.msd-layout{grid-template-columns:minmax(0,1fr);width:100%}.msd-source{min-width:0}.msd-board-wrap{width:100%}.msd-board{grid-template-columns:repeat(7,minmax(220px,1fr));min-width:1594px}}
+.msd{margin-top:0;min-width:0;max-width:100%;overflow:hidden}.msd-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.msd-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.msd-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.msd-pill{font-size:11px;font-weight:800;padding:5px 8px;border-radius:999px;background:#eef5ff;color:#235dba}.msd-warning{background:#fff6d8;color:#876900}.msd-ok{background:#e8f5ed;color:#23754a}.msd-layout{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,2fr);gap:12px;margin-top:14px;min-width:0;max-width:100%}.msd-source,.msd-board-wrap{border:1px solid var(--border);border-radius:13px;background:#fff;padding:12px;min-width:0;max-width:100%}.msd-board-wrap{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}.msd-source-list{display:grid;gap:8px;margin-top:10px;max-height:620px;overflow:auto}.msd-source-row{padding:10px;border:1px solid #d8e5ef;border-radius:10px;background:#f8fcfd}.msd-source-time{font-weight:800;color:#0f4778}.msd-source-name{font-weight:800;margin-top:3px}.msd-source-meta{font-size:11px;color:var(--muted);margin-top:3px}.msd-source-row .btn{margin-top:8px;width:100%}.msd-manual-picker{padding:10px;border:1px solid #c7d7eb;border-radius:10px;background:#f8fbff}.msd-manual-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:6px;margin-top:8px}.msd-manual-picker .btn{margin-top:8px;width:100%}.msd-source-separator{margin:12px 0 6px;font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase}.msd-override{display:inline-block;padding:3px 6px;border-radius:999px;background:#fff2cc;color:#7a5300;font-weight:800}@media(max-width:700px){.msd-manual-grid{grid-template-columns:1fr 1fr}}.msd-board{display:grid;grid-template-columns:repeat(7,minmax(190px,1fr));gap:9px;min-width:1386px;width:max-content}.msd-day{border:1px solid #dce5f0;border-radius:11px;min-height:230px;overflow:hidden}.msd-day-title{padding:9px;background:#f8fafd;border-bottom:1px solid #eef2f6;display:flex;justify-content:space-between}.msd-card{margin:8px;padding:9px;border:1px solid #cadce9;border-radius:9px;background:#fff}.msd-band-morning{background:var(--m-shift-morning-bg,#FFF4CC)!important;border-color:var(--m-shift-morning-border,#E7B84B)!important}.msd-band-afternoon{background:var(--m-shift-afternoon-bg,#FDE7E7)!important;border-color:var(--m-shift-afternoon-border,#E39C9C)!important}.msd-band-evening{background:var(--m-shift-evening-bg,#E8F3FF)!important;border-color:var(--m-shift-evening-border,#9EC7F1)!important}.msd-band-neutral{background:#fff!important}.msd-field{display:grid;gap:4px;margin-top:6px}.msd-field label{font-size:10px;font-weight:800;color:var(--muted)}.msd-input{height:35px;border:1px solid #ccd9e4;border-radius:8px;background:#fff;padding:0 7px;color:var(--text);min-width:0;width:100%}.msd-time-row{display:grid;grid-template-columns:1fr 1fr;gap:5px}.msd-meta{font-size:10px;color:var(--muted);margin-top:4px}.msd-empty{padding:20px 10px;text-align:center;color:var(--muted);font-size:12px}.msd-status{margin-top:12px;padding:10px 12px;border-radius:10px;background:#eef6ff;color:#235dba;font-size:12px;white-space:pre-wrap}.msd-status.error{background:#fbeaea;color:#9a3838}.msd-status.ok{background:#e8f5ed;color:#23754a}.msd-official-grid{display:grid;gap:8px;margin-top:10px}.msd-official-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 10px;border:1px solid #d7e6dc;border-radius:10px;background:#fff}.msd-official-name{font-weight:800}.msd-official-meta{font-size:11px;color:var(--muted);margin-top:3px}.msd-downstream{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}.msd-downstream summary{cursor:pointer;font-weight:700;color:var(--muted)}@media(max-width:980px){.msd-head{flex-direction:column;min-width:0}.msd-head .msd-actions{max-width:100%}.msd-layout{grid-template-columns:minmax(0,1fr);width:100%}.msd-source{min-width:0}.msd-board-wrap{width:100%}.msd-board{grid-template-columns:repeat(7,minmax(220px,1fr));min-width:1594px}}
 </style>`;
 
-let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignments:[],availability:[],officialRows:[],generationStatus:'NONE',generationOrigin:null,duplicateDrafts:0,lastValidation:null,busy:false};
+let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignments:[],availability:[],eligibleEmployees:[],officialRows:[],generationStatus:'NONE',generationOrigin:null,duplicateDrafts:0,lastValidation:null,busy:false};
 const panel=()=>document.querySelector('#panel-publish');
 function client(){const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw new Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()}
 function ensurePolish(){
@@ -69,6 +69,7 @@ function errorText(e){
   ['ASSIGNMENT_STORE_MISMATCH','Có ca không thuộc cửa hàng đang xếp lịch.'],
   ['STORE_NOT_ALLOWED','Tài khoản không có quyền xếp lịch cho cửa hàng này.'],
   ['STORE_NOT_ACTIVE','Cửa hàng hiện không hoạt động.'],
+  ['MANAGER_AVAILABILITY_OVERRIDE','Quản lý điều động ngoài thời gian đăng ký.'],
   ['AVAILABILITY_MISMATCH','Có ca nằm ngoài thời gian nhân viên đã đăng ký có thể làm.'],
   ['OFFICIAL_SCHEDULE_OVERLAP','Có ca bị trùng với lịch chính thức hiện hữu.'],
   ['ASSIGNMENT_PAYLOAD_MALFORMED','Dữ liệu ca làm chưa hợp lệ.'],
@@ -87,12 +88,31 @@ const codeLabel=code=>errorText({message:String(code||'')});
 function activate(){const view=document.querySelector('#view-workforce');if(!view)return;view.querySelectorAll('.tabs button[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab==='publish'));view.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-publish'))}
 const availTypeOk=r=>['AVAILABLE','PREFERRED'].includes(String(r.availability_type||'').toUpperCase());
 const availCovers=(r,a)=>String(r.work_date).slice(0,10)===String(a.work_date).slice(0,10)&&mins(r.start_time)<=mins(a.start_time)&&mins(r.end_time)>=mins(a.end_time)&&availTypeOk(r);
+function employeeName(r){return r?.employee_name||r?.full_name||r?.username||r?.user_id||r?.employee_id||'Nhân viên'}
+function priorityForStore(r){
+ const ids=Array.isArray(r?.priority_store_ids)?r.priority_store_ids.map(String):[];
+ const i=ids.indexOf(String(state.storeId||''));
+ return i>=0?i+1:999;
+}
+function profileCandidate(r,a){
+ const userId=r.employee_id||r.user_id;
+ const probe={...a,user_id:userId};
+ const availabilityMatch=state.availability.some(x=>String(x.user_id)===String(userId)&&availCovers(x,probe));
+ return {user_id:userId,employee_name:employeeName(r),username:r.username||'',priority_store_ids:r.priority_store_ids||[],priority:priorityForStore(r),availability_match:availabilityMatch};
+}
 function candidates(a){
  const map=new Map();
- for(const r of state.availability){if(!r.user_id||!availCovers(r,a))continue;if(!map.has(String(r.user_id)))map.set(String(r.user_id),r)}
+ for(const r of state.eligibleEmployees){
+  const x=profileCandidate(r,a);
+  if(x.user_id&&!map.has(String(x.user_id)))map.set(String(x.user_id),x);
+ }
  const current=state.assignments.find(x=>String(x.id||'')===String(a.id||''))||a;
- if(current.user_id&&!map.has(String(current.user_id)))map.set(String(current.user_id),{user_id:current.user_id,employee_name:current.employee_name||current.full_name||current.username||'Nhân viên hiện tại',preferred_store_code:current.store_code||''});
- return [...map.values()];
+ if(current.user_id&&!map.has(String(current.user_id)))map.set(String(current.user_id),{user_id:current.user_id,employee_name:current.employee_name||current.full_name||current.username||'Nhân viên hiện tại',priority:999,availability_match:state.availability.some(x=>String(x.user_id)===String(current.user_id)&&availCovers(x,current))});
+ return [...map.values()].sort((x,y)=>Number(y.availability_match)-Number(x.availability_match)||Number(x.priority)-Number(y.priority)||String(x.employee_name).localeCompare(String(y.employee_name),'vi'));
+}
+function assignmentMeta(a){
+ if(String(a.warning||'').toUpperCase()==='MANAGER_AVAILABILITY_OVERRIDE')return '<span class="msd-override">Quản lý điều động ngoài thời gian đăng ký</span>';
+ return 'Ca trong bản nháp · chưa phải lịch chính thức.';
 }
 function cleanAssignment(a){return{
  user_id:a.user_id,
@@ -120,6 +140,17 @@ async function loadAvailability(){
  if(q.error)throw q.error;
  state.availability=(Array.isArray(q.data)?q.data:[]).filter(availTypeOk);
 }
+async function loadEligibleEmployees(){
+ if(!state.storeId){state.eligibleEmployees=[];return}
+ const q=await client().rpc('list_employee_workforce_profiles_v1');
+ if(q.error)throw q.error;
+ state.eligibleEmployees=(Array.isArray(q.data)?q.data:[]).filter(r=>
+  String(r.profile_status||'').toUpperCase()==='ACTIVE'
+  && ['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())
+  && Array.isArray(r.priority_store_ids)
+  && r.priority_store_ids.map(String).includes(String(state.storeId))
+ );
+}
 async function listGenerations(){
  if(!state.storeId||!state.week)return [];
  const q=await client().rpc('list_schedule_generations',{p_store_id:state.storeId,p_week_start:state.week});
@@ -142,7 +173,7 @@ async function resumeOnly(){
  if(state.busy)return;
  state.busy=true;
  try{
-  await loadAvailability();
+  await Promise.all([loadAvailability(),loadEligibleEmployees()]);
   const runs=await listGenerations();
   state.duplicateDrafts=Math.max(0,runs.length-1);
   state.lastValidation=null;
@@ -179,7 +210,7 @@ async function startOrResume(){
   if(listed.error)throw listed.error;
   const run=(Array.isArray(listed.data)?listed.data:[]).find(x=>String(x.id)===String(state.generationId));
   state.generationOrigin=run?.algorithm_version||'MANAGER_DIRECT_V1';
-  await Promise.all([loadAvailability(),loadDraftAssignments()]);
+  await Promise.all([loadAvailability(),loadEligibleEmployees(),loadDraftAssignments()]);
   render();status('Đã mở đúng một bản nháp cho cửa hàng và tuần đã chọn.','ok');
  }catch(e){
   const raw=String(e?.message||e?.code||e||'');
@@ -192,9 +223,21 @@ async function startOrResume(){
   render();status('Không thể mở bản nháp. '+errorText(e),'error');
  } finally{state.busy=false;lockControls(false)}
 }
+function manualPickerHtml(){
+ if(!state.eligibleEmployees.length)return '<div class="msd-empty">Không có nhân viên ACTIVE nào đủ Store Priority cho cửa hàng này.</div>';
+ const days=Array.from({length:7},(_,i)=>add(state.week,i));
+ const options=state.eligibleEmployees
+  .slice()
+  .sort((a,b)=>priorityForStore(a)-priorityForStore(b)||String(employeeName(a)).localeCompare(String(employeeName(b)),'vi'))
+  .map(r=>'<option value="'+esc(r.employee_id)+'">'+esc(employeeName(r))+' · Ưu tiên '+esc(priorityForStore(r))+'</option>')
+  .join('');
+ return '<div class="msd-manual-picker"><div class="msd-source-name">Điều động thủ công</div><div class="msd-source-meta">Chỉ nhân viên ACTIVE có Store Priority tại '+esc(selectedStore()?.code||'cửa hàng đã chọn')+'. Nếu ca nằm ngoài Availability, hệ thống sẽ tự gắn cảnh báo và audit marker.</div><div class="msd-manual-grid"><select class="msd-input" id="msdManualEmployee" aria-label="Nhân viên">'+options+'</select><select class="msd-input" id="msdManualDate" aria-label="Ngày">'+days.map((d,i)=>'<option value="'+esc(d)+'">'+DAYS[i]+' · '+d.slice(8,10)+'/'+d.slice(5,7)+'</option>').join('')+'</select><select class="msd-input" id="msdManualStart" aria-label="Bắt đầu">'+timeOptions('06:00')+'</select><select class="msd-input" id="msdManualEnd" aria-label="Kết thúc">'+timeOptions('12:00')+'</select></div><button class="btn" type="button" id="msdManualAdd"'+(state.generationId&&state.generationStatus==='DRAFT'?'':' disabled')+'>+ Thêm ca thủ công</button></div>';
+}
 function sourceHtml(){
- if(!state.availability.length)return '<div class="msd-empty">Không có thời gian có thể làm phù hợp cho cửa hàng và tuần này.</div>';
- return '<div class="msd-source-list">'+state.availability.map((r,i)=>`<div class="msd-source-row ${bandClass(r.start_time)}"><div class="msd-source-time">${esc(String(r.work_date).slice(0,10))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</div><div class="msd-source-name">${esc(r.employee_name||r.username||r.user_id)}</div><div class="msd-source-meta">Có thể xếp tại ${esc(selectedStore()?.code||'cửa hàng đã chọn')}</div><button class="btn" type="button" data-add-av="${i}"${state.generationId&&state.generationStatus==='DRAFT'?'':' disabled'}>+ Thêm vào lịch nháp</button></div>`).join('')+'</div>';
+ const availabilityHtml=state.availability.length
+  ? '<div class="msd-source-list">'+state.availability.map((r,i)=>`<div class="msd-source-row ${bandClass(r.start_time)}"><div class="msd-source-time">${esc(String(r.work_date).slice(0,10))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</div><div class="msd-source-name">${esc(r.employee_name||r.username||r.user_id)}</div><div class="msd-source-meta">Đã đăng ký Availability · có thể xếp tại ${esc(selectedStore()?.code||'cửa hàng đã chọn')}</div><button class="btn" type="button" data-add-av="${i}"${state.generationId&&state.generationStatus==='DRAFT'?'':' disabled'}>+ Thêm theo đăng ký</button></div>`).join('')+'</div>'
+  : '<div class="msd-empty">Không có Availability đã đăng ký cho cửa hàng/tuần này. Quản lý vẫn có thể điều động thủ công nhân viên đủ Store Priority.</div>';
+ return manualPickerHtml()+'<div class="msd-source-separator">Thời gian nhân viên có thể làm · Availability đã đăng ký</div>'+availabilityHtml;
 }
 function officialRowsHtml(){
  if(!state.officialRows.length)return '<div class="msd-empty">Chưa có ca chính thức cho cửa hàng/tuần này.</div>';
@@ -204,7 +247,7 @@ function officialRowsHtml(){
 function boardHtml(){
  const days=Array.from({length:7},(_,i)=>add(state.week,i)),map=Object.fromEntries(days.map(d=>[d,[]]));
  state.assignments.forEach((a,i)=>{const k=String(a.work_date).slice(0,10);if(map[k])map[k].push({a,i})});
- return `<div class="msd-board">${days.map((day,di)=>`<div class="msd-day"><div class="msd-day-title"><b>${DAYS[di]}</b><span>${day.slice(8,10)}/${day.slice(5,7)}</span></div>${map[day].length?map[day].map(({a,i})=>{const cs=candidates(a);return `<div class="msd-card ${bandClass(a.start_time)}" data-msd-row="${i}"><div class="msd-field"><label>Nhân viên</label><select class="msd-input" data-f="user_id">${cs.map(r=>`<option value="${esc(r.user_id)}"${String(r.user_id)===String(a.user_id)?' selected':''}>${esc(r.employee_name||r.username||r.user_id)}</option>`).join('')}</select></div><div class="msd-time-row"><div class="msd-field"><label>Bắt đầu</label><select class="msd-input" data-f="start_time">${timeOptions(a.start_time)}</select></div><div class="msd-field"><label>Kết thúc</label><select class="msd-input" data-f="end_time">${timeOptions(a.end_time)}</select></div></div><div class="msd-meta">Ca trong bản nháp · chưa phải lịch chính thức.</div><button class="btn" data-remove="${i}" type="button" aria-label="Bỏ ca khỏi lịch nháp" style="margin-top:7px;width:100%">Bỏ ca khỏi lịch nháp</button></div>`}).join(''):'<div class="msd-empty">Chưa có ca</div>'}</div>`).join('')}</div>`;
+ return `<div class="msd-board">${days.map((day,di)=>`<div class="msd-day"><div class="msd-day-title"><b>${DAYS[di]}</b><span>${day.slice(8,10)}/${day.slice(5,7)}</span></div>${map[day].length?map[day].map(({a,i})=>{const cs=candidates(a);return `<div class="msd-card ${bandClass(a.start_time)}" data-msd-row="${i}"><div class="msd-field"><label>Nhân viên</label><select class="msd-input" data-f="user_id">${cs.map(r=>`<option value="${esc(r.user_id)}"${String(r.user_id)===String(a.user_id)?' selected':''}>${esc(r.employee_name||r.username||r.user_id)} · ${r.availability_match?'trong đăng ký':'ngoài đăng ký'}${Number(r.priority)<999?' · ƯT '+esc(r.priority):''}</option>`).join('')}</select></div><div class="msd-time-row"><div class="msd-field"><label>Bắt đầu</label><select class="msd-input" data-f="start_time">${timeOptions(a.start_time)}</select></div><div class="msd-field"><label>Kết thúc</label><select class="msd-input" data-f="end_time">${timeOptions(a.end_time)}</select></div></div><div class="msd-meta">${assignmentMeta(a)}</div><button class="btn" data-remove="${i}" type="button" aria-label="Bỏ ca khỏi lịch nháp" style="margin-top:7px;width:100%">Bỏ ca khỏi lịch nháp</button></div>`}).join(''):'<div class="msd-empty">Chưa có ca</div>'}</div>`).join('')}</div>`;
 }
 function render(){
  const p=panel();if(!p)return;
@@ -223,7 +266,7 @@ function render(){
  const officialAction=actorRole()==='OWNER'?'':'<div class="msd-actions" style="margin-top:8px"><button class="btn primary" id="msdOfficial" type="button">Mở lịch chính thức</button></div>';
  const officialHtml=stage==='PUBLISHED'?'<div class="msd-status ok" role="status" aria-live="polite"><b>Lịch chính thức đã phát hành</b><br>'+state.officialRows.length+' ca chính thức đang hiển thị bên dưới.'+officialRowsHtml()+officialAction+'</div>':'';
  const actionHelp=stage==='NONE'?'Tạo hoặc mở lịch nháp để thêm ca, lưu và kiểm tra.':stage==='DRAFT'&&state.assignments.length===0?'Bản nháp đang rỗng. Hãy dùng “Tạo lịch nháp tự động” ở luồng tuần trước khi kiểm tra hoặc duyệt.':stage==='DRAFT'?'Bạn có thể chỉnh ca, lưu bản nháp rồi kiểm tra trước khi duyệt.':stage==='REVIEWED'?'Lịch đã duyệt nên phần chỉnh sửa bị khóa; bước tiếp theo là phát hành.':stage==='PUBLISHED'?'Lịch đã phát hành nên các thao tác chỉnh sửa bị khóa.':'Có nhiều bản nháp cho cùng cửa hàng và tuần; thao tác tạm khóa cho đến khi dữ liệu được xử lý.';
- p.innerHTML=`<section class="card msd" data-scheduling-actor="${esc(actorRole())}"><div class="msd-head"><div><h2 style="margin:0">${esc(copy.title)}</h2><div class="muted" style="margin-top:5px">${esc(copy.subtitle)}</div></div><div class="msd-actions"><select class="btn" id="msdStore" aria-label="Cửa hàng">${state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId)?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}</select><button class="btn" type="button" data-msd-week="prev" aria-label="Tuần trước"${busy}>←</button><button class="btn" type="button" data-msd-week="target"${busy}>Tuần sau</button><button class="btn" type="button" data-msd-week="next" aria-label="Tuần kế tiếp"${busy}>→</button><span class="badge blue">${esc(state.week||'—')}</span><button class="btn" type="button" id="msdStart" aria-describedby="msdActionHelp"${busy+(stage==='REVIEWED'||stage==='PUBLISHED'?' disabled aria-disabled="true"':'')}>${state.generationId?'Mở lại bản nháp':'Tạo bản nháp'}</button><button class="btn" type="button" id="msdReload"${busy}>Tải lại</button><button class="btn primary" type="button" id="msdSave" aria-describedby="msdActionHelp"${busy+(stage==='DRAFT'?'':' disabled aria-disabled="true"')}>Lưu bản nháp</button></div></div>${stepHtml}<div class="msd-summary"><span class="msd-pill">${esc(store?.code||'—')}</span><span class="msd-pill">${state.availability.length} đăng ký thời gian</span><span class="msd-pill">${state.assignments.length} ca trong lịch đang xếp</span><span class="msd-pill ${stage==='PUBLISHED'?'msd-ok':stage==='CONFLICT'?'msd-warning':''}">${stage==='NONE'?'CHƯA TẠO':stage==='DRAFT'?'BẢN NHÁP':stage==='REVIEWED'?'ĐÃ DUYỆT':stage==='PUBLISHED'?'ĐÃ PHÁT HÀNH':'CẦN XỬ LÝ'}</span>${state.duplicateDrafts?`<span class="msd-pill msd-warning">Có nhiều bản nháp cùng cửa hàng và tuần · thao tác đang tạm khóa</span>`:''}</div><div id="xstoreMasterMount"></div><div class="msd-layout"><div class="msd-source"><b>Thời gian nhân viên có thể làm</b><div class="muted" style="margin-top:4px">${esc(copy.source)}</div>${sourceHtml()}</div><div class="msd-board-wrap"><b>Lịch đang xếp · Thứ Hai → Chủ Nhật</b><div class="muted" style="margin:4px 0 10px">Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp.</div>${boardHtml()}</div></div><div class="msd-downstream"><div class="muted" style="margin-bottom:4px">Sau khi lưu bản nháp: kiểm tra xung đột → duyệt → phát hành.</div><div id="msdActionHelp" class="muted" style="margin-bottom:8px">${esc(actionHelp)}</div><div class="msd-actions"><button class="btn" type="button" id="msdValidate" aria-describedby="msdActionHelp"${busy+(!state.generationId||stage==='PUBLISHED'||state.assignments.length===0?' disabled aria-disabled="true"':'')}>Kiểm tra xung đột</button><button class="btn" type="button" id="msdReview" aria-describedby="msdActionHelp"${busy+(stage==='DRAFT'&&state.assignments.length>0?'':' disabled aria-disabled="true"')}>Duyệt lịch</button><button class="btn primary" type="button" id="msdPublish" aria-describedby="msdActionHelp"${busy+(stage==='REVIEWED'&&state.assignments.length>0?'':' disabled aria-disabled="true"')}>Phát hành</button></div></div>${officialHtml}<div id="msdStatus" class="msd-status" role="status" aria-live="polite">${state.generationId?(stage==='PUBLISHED'?'Lịch chính thức đã sẵn sàng.':stage==='REVIEWED'?'Lịch đã duyệt; kiểm tra lần cuối rồi phát hành.':'Bản nháp sẵn sàng chỉnh sửa.'):'Chọn cửa hàng/tuần rồi tạo hoặc mở bản nháp.'}</div></section>`;
+ p.innerHTML=`<section class="card msd" data-scheduling-actor="${esc(actorRole())}"><div class="msd-head"><div><h2 style="margin:0">${esc(copy.title)}</h2><div class="muted" style="margin-top:5px">${esc(copy.subtitle)}</div></div><div class="msd-actions"><select class="btn" id="msdStore" aria-label="Cửa hàng">${state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId)?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}</select><button class="btn" type="button" data-msd-week="prev" aria-label="Tuần trước"${busy}>←</button><button class="btn" type="button" data-msd-week="target"${busy}>Tuần sau</button><button class="btn" type="button" data-msd-week="next" aria-label="Tuần kế tiếp"${busy}>→</button><span class="badge blue">${esc(state.week||'—')}</span><button class="btn" type="button" id="msdStart" aria-describedby="msdActionHelp"${busy+(stage==='REVIEWED'||stage==='PUBLISHED'?' disabled aria-disabled="true"':'')}>${state.generationId?'Mở lại bản nháp':'Tạo bản nháp'}</button><button class="btn" type="button" id="msdReload"${busy}>Tải lại</button><button class="btn primary" type="button" id="msdSave" aria-describedby="msdActionHelp"${busy+(stage==='DRAFT'?'':' disabled aria-disabled="true"')}>Lưu bản nháp</button></div></div>${stepHtml}<div class="msd-summary"><span class="msd-pill">${esc(store?.code||'—')}</span><span class="msd-pill">${state.availability.length} đăng ký thời gian</span><span class="msd-pill">${state.assignments.length} ca trong lịch đang xếp</span><span class="msd-pill ${stage==='PUBLISHED'?'msd-ok':stage==='CONFLICT'?'msd-warning':''}">${stage==='NONE'?'CHƯA TẠO':stage==='DRAFT'?'BẢN NHÁP':stage==='REVIEWED'?'ĐÃ DUYỆT':stage==='PUBLISHED'?'ĐÃ PHÁT HÀNH':'CẦN XỬ LÝ'}</span>${state.duplicateDrafts?`<span class="msd-pill msd-warning">Có nhiều bản nháp cùng cửa hàng và tuần · thao tác đang tạm khóa</span>`:''}</div><div id="xstoreMasterMount"></div><div class="msd-layout"><div class="msd-source"><b>Nhân viên đủ điều kiện xếp ca</b><div class="muted" style="margin-top:4px">${state.eligibleEmployees.length} nhân viên ACTIVE có Store Priority tại cửa hàng đã chọn. Availability là trạng thái hỗ trợ; Quản lý có thể điều động thủ công ngoài đăng ký với cảnh báo rõ ràng.</div>${sourceHtml()}</div><div class="msd-board-wrap"><b>Lịch đang xếp · Thứ Hai → Chủ Nhật</b><div class="muted" style="margin:4px 0 10px">Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp.</div>${boardHtml()}</div></div><div class="msd-downstream"><div class="muted" style="margin-bottom:4px">Sau khi lưu bản nháp: kiểm tra xung đột → duyệt → phát hành.</div><div id="msdActionHelp" class="muted" style="margin-bottom:8px">${esc(actionHelp)}</div><div class="msd-actions"><button class="btn" type="button" id="msdValidate" aria-describedby="msdActionHelp"${busy+(!state.generationId||stage==='PUBLISHED'||state.assignments.length===0?' disabled aria-disabled="true"':'')}>Kiểm tra xung đột</button><button class="btn" type="button" id="msdReview" aria-describedby="msdActionHelp"${busy+(stage==='DRAFT'&&state.assignments.length>0?'':' disabled aria-disabled="true"')}>Duyệt lịch</button><button class="btn primary" type="button" id="msdPublish" aria-describedby="msdActionHelp"${busy+(stage==='REVIEWED'&&state.assignments.length>0?'':' disabled aria-disabled="true"')}>Phát hành</button></div></div>${officialHtml}<div id="msdStatus" class="msd-status" role="status" aria-live="polite">${state.generationId?(stage==='PUBLISHED'?'Lịch chính thức đã sẵn sàng.':stage==='REVIEWED'?'Lịch đã duyệt; kiểm tra lần cuối rồi phát hành.':'Bản nháp sẵn sàng chỉnh sửa.'):'Chọn cửa hàng/tuần rồi tạo hoặc mở bản nháp.'}</div></section>`;
  bind();
 }
 function syncRowsFromDom(){
@@ -236,6 +279,23 @@ function addFromAvailability(index){
  const duplicate=state.assignments.some(a=>String(a.user_id)===String(candidate.user_id)&&String(a.work_date).slice(0,10)===candidate.work_date&&hm(a.start_time)===candidate.start_time&&hm(a.end_time)===candidate.end_time);
  if(duplicate)return status('Ca này đã có trong lịch nháp.','error');
  state.assignments.push(candidate);render();status('Đã thêm ca vào lịch nháp. Bấm “Lưu bản nháp” để lưu thay đổi.');
+}
+function addManualAssignment(){
+ if(!state.generationId||state.generationStatus!=='DRAFT')return status('Hãy tạo/mở lịch nháp trước.','error');
+ const p=panel();
+ const userId=p?.querySelector('#msdManualEmployee')?.value||'';
+ const workDate=p?.querySelector('#msdManualDate')?.value||'';
+ const startTime=p?.querySelector('#msdManualStart')?.value||'';
+ const endTime=p?.querySelector('#msdManualEnd')?.value||'';
+ if(!userId||!workDate||!startTime||!endTime||mins(endTime)<=mins(startTime))return status('Hãy chọn nhân viên, ngày và khung giờ hợp lệ.','error');
+ const profile=state.eligibleEmployees.find(r=>String(r.employee_id)===String(userId));
+ if(!profile)return status('Nhân viên không còn đủ điều kiện Store Priority cho cửa hàng này.','error');
+ const candidate={id:null,generation_id:state.generationId,user_id:userId,employee_name:employeeName(profile),store_id:state.storeId,store_code:selectedStore()?.code||'',work_date:workDate,start_time:hm(startTime),end_time:hm(endTime),skill_code:null,skill_level:0,score:0,warning:null,status:'DRAFT',note:'MANAGER_MANUAL_PICKER_V1'};
+ const hasAvailability=state.availability.some(r=>String(r.user_id)===String(userId)&&availCovers(r,candidate));
+ if(!hasAvailability){candidate.warning='MANAGER_AVAILABILITY_OVERRIDE';candidate.note='MANAGER_MANUAL_PICKER_V1 | MANAGER_AVAILABILITY_OVERRIDE'}
+ state.assignments.push(candidate);
+ render();
+ status(hasAvailability?'Đã thêm ca thủ công trong Availability. Bấm “Lưu bản nháp” để lưu.':'Đã thêm ca ngoài Availability. Khi lưu, hệ thống sẽ gắn cảnh báo “Quản lý điều động ngoài thời gian đăng ký”.');
 }
 async function save(){
  if(state.busy||!state.generationId||state.generationStatus!=='DRAFT')return;
@@ -305,8 +365,8 @@ async function publish(){
 }
 function bind(){
  const p=panel();if(!p)return;
- p.querySelector('#msdStore')?.addEventListener('change',async e=>{state.storeId=e.target.value||null;state.generationId=null;state.generationStatus='NONE';state.assignments=[];state.availability=[];state.officialRows=[];state.lastValidation=null;render();status('Đang tải dữ liệu cửa hàng đã chọn…');await resumeOnly()});
- p.querySelectorAll('[data-msd-week]').forEach(b=>b.addEventListener('click',async()=>{const a=b.dataset.msdWeek;state.week=a==='prev'?add(state.week,-7):a==='next'?add(state.week,7):targetWeek();state.generationId=null;state.generationStatus='NONE';state.assignments=[];state.availability=[];state.officialRows=[];state.lastValidation=null;render();status('Đang tải dữ liệu tuần đã chọn…');await resumeOnly()}));
+ p.querySelector('#msdStore')?.addEventListener('change',async e=>{state.storeId=e.target.value||null;state.generationId=null;state.generationStatus='NONE';state.assignments=[];state.availability=[];state.officialRows=[];state.eligibleEmployees=[];state.lastValidation=null;render();status('Đang tải dữ liệu cửa hàng đã chọn…');await resumeOnly()});
+ p.querySelectorAll('[data-msd-week]').forEach(b=>b.addEventListener('click',async()=>{const a=b.dataset.msdWeek;state.week=a==='prev'?add(state.week,-7):a==='next'?add(state.week,7):targetWeek();state.generationId=null;state.generationStatus='NONE';state.assignments=[];state.availability=[];state.officialRows=[];state.eligibleEmployees=[];state.lastValidation=null;render();status('Đang tải dữ liệu tuần đã chọn…');await resumeOnly()}));
  p.querySelector('#msdStart')?.addEventListener('click',startOrResume);
  p.querySelector('#msdReload')?.addEventListener('click',resumeOnly);
  p.querySelector('#msdSave')?.addEventListener('click',save);
@@ -315,6 +375,7 @@ function bind(){
  p.querySelector('#msdPublish')?.addEventListener('click',publish);
  p.querySelector('#msdOfficial')?.addEventListener('click',()=>document.querySelector('.sidebar [data-view="schedule"], [data-view="schedule"]')?.click());
  p.querySelectorAll('[data-add-av]').forEach(b=>b.addEventListener('click',()=>addFromAvailability(b.dataset.addAv)));
+ p.querySelector('#msdManualAdd')?.addEventListener('click',addManualAssignment);
  p.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{syncRowsFromDom();state.assignments.splice(Number(b.dataset.remove),1);render();status('Đã bỏ ca khỏi lịch nháp. Bấm “Lưu bản nháp” để lưu thay đổi.')}))
 }
 async function openDirect(detail={}){
@@ -332,6 +393,6 @@ async function boot(){
 }
 document.addEventListener('magasin:manager-schedule-open',e=>openDirect(e.detail));
 document.addEventListener('magasin:owner-schedule-open',e=>openDirect(e.detail));
-window.MAGASIN_MANAGER_SCHEDULE_DRAFT={openDirect,startOrResume,refresh:resumeOnly,validate,save,review,publish,getState:()=>({...state,stores:state.stores.map(x=>({...x})),assignments:state.assignments.map(x=>({...x})),availability:state.availability.map(x=>({...x}))})};
+window.MAGASIN_MANAGER_SCHEDULE_DRAFT={openDirect,startOrResume,refresh:resumeOnly,validate,save,review,publish,getState:()=>({...state,stores:state.stores.map(x=>({...x})),assignments:state.assignments.map(x=>({...x})),availability:state.availability.map(x=>({...x})),eligibleEmployees:state.eligibleEmployees.map(x=>({...x}))})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

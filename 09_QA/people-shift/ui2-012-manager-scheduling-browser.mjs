@@ -233,7 +233,7 @@ await check("ui2_012_store_and_week_navigation_clear_stale_projection_then_reloa
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-c"&&!s.busy});
  let state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
  let text=await frame.locator("#panel-publish").innerText();
- if(state.generationStatus!=="NONE"||state.assignments.length||state.availability.length||state.officialRows.length||!text.includes("Không có thời gian có thể làm")||text.includes("Nhân viên QA 1"))throw new Error(JSON.stringify({state,text}));
+ if(state.generationStatus!=="NONE"||state.assignments.length||state.availability.length||state.eligibleEmployees.length||state.officialRows.length||!text.includes("Không có nhân viên ACTIVE nào đủ Store Priority")||!text.includes("Không có Availability đã đăng ký")||text.includes("Nhân viên QA 1"))throw new Error(JSON.stringify({state,text}));
  await frame.locator("#msdStore").selectOption("store-a");
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-a"&&!s.busy&&s.generationStatus==="PUBLISHED"});
  await frame.locator('[data-msd-week="next"]').click();

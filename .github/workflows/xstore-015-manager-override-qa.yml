@@ -1,0 +1,341 @@
+name: XSTORE-015 Manager Override QA
+
+on:
+  push:
+    paths:
+      - '07_DATABASE/migrations/20261004224500_xstore_015_manager_availability_override_v1.sql'
+      - '05_MANAGER/Workforce/draft-publish-v1.js'
+      - '05_MANAGER/Workforce/engine-v1.js'
+      - '09_QA/people-shift/xstore-015-manager-availability-override-v1.test.mjs'
+      - '.github/workflows/xstore-015-manager-override-qa.yml'
+  pull_request:
+    paths:
+      - '07_DATABASE/migrations/20261004224500_xstore_015_manager_availability_override_v1.sql'
+      - '05_MANAGER/Workforce/draft-publish-v1.js'
+      - '05_MANAGER/Workforce/engine-v1.js'
+      - '09_QA/people-shift/xstore-015-manager-availability-override-v1.test.mjs'
+      - '.github/workflows/xstore-015-manager-override-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres17-manager-override:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: xstore_qa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d xstore_qa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: xstore_qa
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check Manager editor syntax
+        run: node --check 05_MANAGER/Workforce/draft-publish-v1.js
+
+      - name: Run XSTORE-015 static contract regression
+        run: node --test 09_QA/people-shift/xstore-015-manager-availability-override-v1.test.mjs
+
+      - name: Install PostgreSQL client
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+
+      - name: Build isolated Manager override fixture
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create extension if not exists pgcrypto;
+          create schema if not exists auth;
+
+          do $roles$
+          begin
+            if not exists(select 1 from pg_roles where rolname='anon') then create role anon; end if;
+            if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated; end if;
+          end
+          $roles$;
+
+          create table public.profiles(
+            id uuid primary key,
+            status text,
+            role text,
+            full_name text,
+            username text
+          );
+
+          create table public.stores(
+            id uuid primary key,
+            code text not null,
+            status text not null
+          );
+
+          create table public.employee_store_priorities(
+            employee_id uuid not null,
+            store_id uuid not null,
+            priority integer not null,
+            primary key(employee_id,store_id)
+          );
+
+          create table public.employee_availability(
+            id uuid primary key default gen_random_uuid(),
+            user_id uuid not null,
+            work_date date not null,
+            availability_type text not null,
+            start_time time not null,
+            end_time time not null
+          );
+
+          create table public.schedule_generation_runs(
+            id uuid primary key,
+            store_id uuid not null,
+            week_start date not null,
+            week_end date not null,
+            status text not null,
+            total_hours numeric default 0,
+            created_at timestamptz not null default now(),
+            updated_at timestamptz not null default now()
+          );
+
+          create table public.schedule_generation_assignments(
+            id uuid primary key default gen_random_uuid(),
+            generation_id uuid not null,
+            user_id uuid not null,
+            store_id uuid not null,
+            work_date date not null,
+            start_time time not null,
+            end_time time not null,
+            skill_code text,
+            skill_level integer default 0,
+            score numeric default 0,
+            warning text,
+            status text not null default 'DRAFT',
+            note text
+          );
+
+          create table public.work_schedules(
+            id uuid primary key default gen_random_uuid(),
+            user_id uuid not null,
+            store_id uuid not null,
+            work_date date not null,
+            start_time time not null,
+            end_time time not null,
+            status text not null
+          );
+
+          create or replace function auth.uid()
+          returns uuid language sql stable
+          as $$ select '11111111-1111-1111-1111-111111111111'::uuid $$;
+
+          create or replace function public.current_user_role()
+          returns text language sql stable
+          as $$ select 'OWNER'::text $$;
+
+          create or replace function public.can_access_store(p_store_id uuid)
+          returns boolean language sql stable
+          as $$ select true $$;
+
+          insert into public.profiles(id,status,role,full_name,username) values
+          ('11111111-1111-1111-1111-111111111111','ACTIVE','OWNER','Owner','owner'),
+          ('30000000-0000-0000-0000-000000000001','ACTIVE','STAFF','Nhân viên A','a'),
+          ('30000000-0000-0000-0000-000000000002','ACTIVE','STAFF','Nhân viên B','b');
+
+          insert into public.stores(id,code,status)
+          values ('20000000-0000-0000-0000-000000000001','CN1','ACTIVE');
+
+          insert into public.employee_store_priorities(employee_id,store_id,priority)
+          values ('30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001',1);
+
+          insert into public.schedule_generation_runs(id,store_id,week_start,week_end,status)
+          values (
+            '40000000-0000-0000-0000-000000000001',
+            '20000000-0000-0000-0000-000000000001',
+            date '2026-10-05',date '2026-10-11','DRAFT'
+          );
+          SQL
+
+      - name: Apply exact XSTORE-015 migration
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 -f 07_DATABASE/migrations/20261004224500_xstore_015_manager_availability_override_v1.sql
+
+      - name: Prove manual out-of-Availability DRAFT persists warning and validates
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          do $test$
+          declare
+            v_count integer;
+            v_warning text;
+            v_note text;
+            v_validation jsonb;
+          begin
+            v_count:=public.replace_schedule_generation_assignments(
+              '40000000-0000-0000-0000-000000000001',
+              '[{
+                "user_id":"30000000-0000-0000-0000-000000000001",
+                "store_id":"20000000-0000-0000-0000-000000000001",
+                "work_date":"2026-10-05",
+                "start_time":"06:00",
+                "end_time":"09:00",
+                "status":"DRAFT",
+                "note":"MANAGER_MANUAL_PICKER_V1"
+              }]'::jsonb
+            );
+
+            if v_count<>1 then raise exception 'MANUAL_OVERRIDE_WRITE_COUNT_WRONG: %',v_count; end if;
+
+            select warning,note into v_warning,v_note
+            from public.schedule_generation_assignments
+            where generation_id='40000000-0000-0000-0000-000000000001';
+
+            if v_warning<>'MANAGER_AVAILABILITY_OVERRIDE'
+               or position('MANAGER_AVAILABILITY_OVERRIDE' in coalesce(v_note,''))=0 then
+              raise exception 'OVERRIDE_AUDIT_MARKER_NOT_PERSISTED: warning=% note=%',v_warning,v_note;
+            end if;
+
+            v_validation:=public.validate_schedule_generation_v1(
+              '40000000-0000-0000-0000-000000000001'
+            );
+
+            if not (v_validation->>'valid')::boolean
+               or (v_validation->>'violation_count')::integer<>0
+               or (v_validation->>'warning_count')::integer<>1
+               or (v_validation->'warnings'->0->>'code')<>'MANAGER_AVAILABILITY_OVERRIDE' then
+              raise exception 'OVERRIDE_VALIDATION_WRONG: %',v_validation;
+            end if;
+
+            raise notice 'XSTORE_015_MANUAL_OVERRIDE_WARNING=PASS';
+          end
+          $test$;
+          SQL
+
+      - name: Prove warning remains valid at REVIEWED validation stage
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          update public.schedule_generation_runs
+             set status='REVIEWED'
+           where id='40000000-0000-0000-0000-000000000001';
+
+          do $test$
+          declare v_validation jsonb;
+          begin
+            v_validation:=public.validate_schedule_generation_v1(
+              '40000000-0000-0000-0000-000000000001'
+            );
+            if not (v_validation->>'valid')::boolean
+               or (v_validation->>'warning_count')::integer<>1 then
+              raise exception 'REVIEWED_OVERRIDE_NOT_VALID: %',v_validation;
+            end if;
+            raise notice 'XSTORE_015_REVIEWED_WARNING=PASS';
+          end
+          $test$;
+
+          update public.schedule_generation_runs
+             set status='DRAFT'
+           where id='40000000-0000-0000-0000-000000000001';
+          SQL
+
+      - name: Prove Store Priority remains hard-blocked
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          do $test$
+          begin
+            begin
+              perform public.replace_schedule_generation_assignments(
+                '40000000-0000-0000-0000-000000000001',
+                '[{
+                  "user_id":"30000000-0000-0000-0000-000000000002",
+                  "store_id":"20000000-0000-0000-0000-000000000001",
+                  "work_date":"2026-10-05",
+                  "start_time":"09:00",
+                  "end_time":"12:00",
+                  "status":"DRAFT"
+                }]'::jsonb
+              );
+              raise exception 'STORE_PRIORITY_BYPASS_UNEXPECTEDLY_SUCCEEDED';
+            exception
+              when others then
+                if position('STORE_NOT_ELIGIBLE' in sqlerrm)=0 then
+                  raise;
+                end if;
+            end;
+
+            if not exists(
+              select 1
+              from public.schedule_generation_assignments
+              where generation_id='40000000-0000-0000-0000-000000000001'
+                and user_id='30000000-0000-0000-0000-000000000001'
+                and warning='MANAGER_AVAILABILITY_OVERRIDE'
+            ) then
+              raise exception 'FAILED_WRITE_DID_NOT_ROLL_BACK_SAFELY';
+            end if;
+
+            raise notice 'XSTORE_015_STORE_PRIORITY_HARD_BLOCK=PASS';
+          end
+          $test$;
+          SQL
+
+      - name: Prove untagged non-manual Availability bypass still fails validation
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          delete from public.schedule_generation_assignments
+          where generation_id='40000000-0000-0000-0000-000000000001';
+
+          insert into public.schedule_generation_assignments(
+            generation_id,user_id,store_id,work_date,start_time,end_time,
+            warning,status,note
+          ) values(
+            '40000000-0000-0000-0000-000000000001',
+            '30000000-0000-0000-0000-000000000001',
+            '20000000-0000-0000-0000-000000000001',
+            date '2026-10-05',time '12:00',time '15:00',
+            null,'DRAFT','NON_MANUAL_TEST'
+          );
+
+          do $test$
+          declare v_validation jsonb;
+          begin
+            v_validation:=public.validate_schedule_generation_v1(
+              '40000000-0000-0000-0000-000000000001'
+            );
+
+            if (v_validation->>'valid')::boolean
+               or not exists(
+                 select 1
+                 from jsonb_array_elements(v_validation->'violations') x
+                 where x->>'code'='AVAILABILITY_MISMATCH'
+               ) then
+              raise exception 'UNTAGGED_BYPASS_NOT_BLOCKED: %',v_validation;
+            end if;
+
+            raise notice 'XSTORE_015_NON_MANUAL_BYPASS_BLOCKED=PASS';
+          end
+          $test$;
+          SQL
