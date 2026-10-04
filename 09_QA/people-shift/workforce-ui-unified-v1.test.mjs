@@ -137,9 +137,9 @@ test("shift colors follow one visual rule across Manager and Employee scheduling
 test("unified asset cache chain reaches both Manager and Employee entry points",()=>{
  for(const token of [
   "review-v1.js?v=20261003-sched-ui-017",
-  "draft-publish-v1.js?v=20261002-sched-ui-005",
-  "cross-store-master-v1.js?v=20261002-sched-ui-005",
-  "cross-store-auto-schedule-v1.js?v=20261002-sched-ui-005",
+  "draft-publish-v1.js?v=20261004-xstore-012",
+  "cross-store-master-v1.js?v=20261004-xstore-012",
+  "cross-store-auto-schedule-v1.js?v=20261004-xstore-012",
   "manager-scheduling-ui2-v1.js?v=20261002-sched-ui-004",
   "official-v1.js?v=20261001-ui-unified1",
   "ui-consolidation-v1.js?v=20261001-ui-unified1"
