@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→014 DONE / EXACT-MAIN GREEN / XSTORE-015 READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→015 DONE / EXACT-MAIN GREEN / XSTORE-016 READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -342,8 +342,8 @@ Out of scope unless explicitly added later:
 | XSTORE-012 | Empty DRAFT production hotfix | Empty DRAFT routes back to Auto Schedule; zero-assignment generation fails validation/review/publish; regression + production release | **DONE / RELEASED / EXACT-MAIN GREEN** |
 | XSTORE-013 | Coverage semantics + shortage interval engine | Staffing Requirement means continuous required coverage; multiple employees may combine to cover one requirement; shortage output must identify exact uncovered intervals | **DONE / EXACT-MAIN GREEN** |
 | XSTORE-014 | Auto Schedule interval composition | Auto Schedule composes compatible employee intervals into continuous coverage instead of requiring one employee to cover the whole requirement block; still DRAFT-only | **DONE / EXACT-MAIN GREEN** |
-| XSTORE-015 | Manager manual Availability override + employee picker | Manager/Owner may manually assign an ACTIVE store-eligible employee even without matching Availability; save DRAFT succeeds with an explicit warning/audit marker | **READY / NEXT TASK** |
-| XSTORE-016 | Scheduling information architecture + branch accordion | Weekly global header only; CN1–CN4 become collapsible branch sections; branch identity and editable DRAFT stay in the same section; four-store overview is secondary/collapsible | **PENDING XSTORE-015** |
+| XSTORE-015 | Manager manual Availability override + employee picker | Manager/Owner may manually assign an ACTIVE store-eligible employee even without matching Availability; save DRAFT succeeds with an explicit warning/audit marker | **DONE / EXACT-MAIN GREEN** |
+| XSTORE-016 | Scheduling information architecture + branch accordion | Weekly global header only; CN1–CN4 become collapsible branch sections; branch identity and editable DRAFT stay in the same section; four-store overview is secondary/collapsible | **READY / NEXT TASK** |
 | XSTORE-017 | Inline shortage visualization + direct resolution | Show shortage directly in the exact day/time cell using a dedicated warning color; click shortage to open filtered candidate flow and remove warning immediately when coverage is restored | **PENDING XSTORE-016** |
 | XSTORE-018 | Supplemental employee pool semantics | Replace “Nguồn tham khảo” with actionable employee groups: chưa được xếp / còn thời gian có thể xếp / không đăng ký nhưng có thể điều động | **PENDING XSTORE-017** |
 | XSTORE-019 | Unified workflow integration + regression qualification | Integrate global summary, per-store edit/save, manual override, shortage recalculation, Validate/Review/Publish; static/browser/security/Postgres/exact-RC gates GREEN | **PENDING XSTORE-018** |
@@ -370,8 +370,8 @@ XSTORE-001 DONE
 → XSTORE-012 DONE / empty-DRAFT production repair released
 → XSTORE-013 DONE / exact-main green / continuous coverage + exact shortage intervals
 → XSTORE-014 DONE / exact-main green / interval-composed Auto Schedule
-→ XSTORE-015 READY / Manager Availability override + all eligible employee picker
-→ XSTORE-016 / scheduling information architecture + CN accordion
+→ XSTORE-015 DONE / exact-main green / Manager Availability override + all eligible employee picker
+→ XSTORE-016 READY / scheduling information architecture + CN accordion
 → XSTORE-017 / inline shortage cells + direct resolution
 → XSTORE-018 / supplemental employee pool
 → XSTORE-019 / integrated regression + exact-RC qualification
@@ -410,7 +410,8 @@ Current execution boundary:
 - Owner has approved the Scheduling V3 architecture in section 6.0.9 below;
 - XSTORE-013 is **DONE / EXACT-MAIN GREEN**;
 - XSTORE-014 is **DONE / EXACT-MAIN GREEN**;
-- **XSTORE-015 is the sole next executable task**;
+- XSTORE-015 is **DONE / EXACT-MAIN GREEN**;
+- **XSTORE-016 is the sole next executable task**;
 - XSTORE-011 is intentionally **PAUSED** until XSTORE-013→020 are completed, because publishing a real week before correcting continuous coverage, manual override and Manager UX would accept superseded behavior;
 - no task may relax cross-store overlap, ACTIVE employee, store eligibility, official overlap or other existing hard safety boundaries;
 - Store Priority remains a hard eligibility boundary in this track: Manager may override Availability, but may not assign an employee to a store absent from that employee's Store Priority profile;
@@ -1113,7 +1114,7 @@ Machine handoff:
 MAGASIN_TASK_CONTROL_V1
 STATUS=READY
 TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-015
+NEXT_TASK_ID=XSTORE-016
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -1187,7 +1188,49 @@ PostgreSQL exact-main proof:
 - cross-store overlap remains fail-closed = PASS;
 - exact XSTORE-013 coverage primitive + XSTORE-014 migration apply cleanly on PostgreSQL 17 = PASS.
 
-XSTORE-015 is now the sole next executable task and owns Manager manual Availability override + full eligible employee picker. XSTORE-011 remains paused until XSTORE-013→020 are complete.
+XSTORE-015 is complete and exact-main green. XSTORE-016 is now the sole next executable task and owns the scheduling information architecture + branch accordion editor. XSTORE-011 remains paused until XSTORE-013→020 are complete.
+
+
+## 6.0.12 XSTORE-015 Manager Availability override + eligible employee picker acceptance — 2026-10-04
+
+XSTORE-015 is **DONE / EXACT-MAIN GREEN**.
+
+Implementation:
+- migration `20261004224500_xstore_015_manager_availability_override_v1.sql` replaces the canonical DRAFT writer/validator contract for explicit Manager/Owner Availability override;
+- canonical audit marker is `MANAGER_AVAILABILITY_OVERRIDE`;
+- human-facing warning is **Quản lý điều động ngoài thời gian đăng ký**;
+- the Manager picker reads the full canonical ACTIVE scheduling-eligible employee pool and filters by Store Priority for the selected store;
+- registered Availability is ranking/status metadata for manual selection rather than the only candidate source;
+- an explicit out-of-Availability manual DRAFT is server-tagged with the override marker and remains warning-only through validation;
+- untagged Availability mismatch remains a hard validation violation;
+- Store Priority, ACTIVE/role eligibility, generation/store/week integrity, same/cross-store overlap, official schedule overlap, max/day rules and reviewed/published overwrite protection remain fail-closed;
+- Auto Schedule remains strictly Availability-bound and DRAFT-only;
+- Manager/Owner final review/publish authority is unchanged.
+
+Implementation PR #387:
+- final implementation / repair head `d252e5b56c1f83f50a8fe4a0c90b271a37dfb09d`;
+- merge / executable main `21921175b8160a920993c80ef074616c159a5e12`.
+
+Exact-main gates for `21921175b8160a920993c80ef074616c159a5e12`:
+- XSTORE-015 Manager Override QA run `37217850100` = **SUCCESS**;
+- People Shift Day-10 Tests run `37217850095` = **SUCCESS**;
+- UI2 Cross Role Acceptance run `37217850098` = **SUCCESS**;
+- Validate MAGASIN GitHub Pages source run `37217850084` = **SUCCESS**;
+- Pages build/deployment run `37217849367` = **SUCCESS**.
+
+PostgreSQL exact-main proof:
+- explicit manual out-of-Availability DRAFT persists `MANAGER_AVAILABILITY_OVERRIDE` and validates with warning-only = PASS;
+- warning remains valid at REVIEWED validation stage = PASS;
+- employee outside Store Priority remains hard-blocked = PASS;
+- untagged non-manual Availability bypass remains `AVAILABILITY_MISMATCH` violation = PASS.
+
+Browser/regression proof:
+- Manager/Owner employee pool loads through `list_employee_workforce_profiles_v1`;
+- legacy fixtures were reconciled to the canonical Store Priority employee reader;
+- registered Availability add path, DRAFT save, Validate → Review → Publish, employee approved schedule projection and cross-role responsive gates all pass;
+- no production business data was fabricated.
+
+XSTORE-016 is now the sole next executable task and owns the scheduling information architecture + CN1–CN4 branch accordion editor. XSTORE-011 remains paused until XSTORE-013→020 are complete.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
