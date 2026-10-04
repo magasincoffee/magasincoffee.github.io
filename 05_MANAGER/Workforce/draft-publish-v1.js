@@ -237,7 +237,7 @@ function sourceHtml(){
  const availabilityHtml=state.availability.length
   ? '<div class="msd-source-list">'+state.availability.map((r,i)=>`<div class="msd-source-row ${bandClass(r.start_time)}"><div class="msd-source-time">${esc(String(r.work_date).slice(0,10))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</div><div class="msd-source-name">${esc(r.employee_name||r.username||r.user_id)}</div><div class="msd-source-meta">Đã đăng ký Availability · có thể xếp tại ${esc(selectedStore()?.code||'cửa hàng đã chọn')}</div><button class="btn" type="button" data-add-av="${i}"${state.generationId&&state.generationStatus==='DRAFT'?'':' disabled'}>+ Thêm theo đăng ký</button></div>`).join('')+'</div>'
   : '<div class="msd-empty">Không có Availability đã đăng ký cho cửa hàng/tuần này. Quản lý vẫn có thể điều động thủ công nhân viên đủ Store Priority.</div>';
- return manualPickerHtml()+'<div class="msd-source-separator">Availability đã đăng ký</div>'+availabilityHtml;
+ return manualPickerHtml()+'<div class="msd-source-separator">Thời gian nhân viên có thể làm · Availability đã đăng ký</div>'+availabilityHtml;
 }
 function officialRowsHtml(){
  if(!state.officialRows.length)return '<div class="msd-empty">Chưa có ca chính thức cho cửa hàng/tuần này.</div>';
@@ -295,7 +295,7 @@ function addManualAssignment(){
  if(!hasAvailability){candidate.warning='MANAGER_AVAILABILITY_OVERRIDE';candidate.note='MANAGER_MANUAL_PICKER_V1 | MANAGER_AVAILABILITY_OVERRIDE'}
  state.assignments.push(candidate);
  render();
- status(hasAvailability?'Đã thêm ca thủ công trong Availability. Bấm “Lưu bản nháp” để lưu.':'Đã thêm ca ngoài Availability. Khi lưu, server sẽ gắn cảnh báo “Quản lý điều động ngoài thời gian đăng ký”.');
+ status(hasAvailability?'Đã thêm ca thủ công trong Availability. Bấm “Lưu bản nháp” để lưu.':'Đã thêm ca ngoài Availability. Khi lưu, hệ thống sẽ gắn cảnh báo “Quản lý điều động ngoài thời gian đăng ký”.');
 }
 async function save(){
  if(state.busy||!state.generationId||state.generationStatus!=='DRAFT')return;
@@ -365,8 +365,8 @@ async function publish(){
 }
 function bind(){
  const p=panel();if(!p)return;
- p.querySelector('#msdStore')?.addEventListener('change',async e=>{state.storeId=e.target.value||null;state.generationId=null;state.generationStatus='NONE';state.assignments=[];state.availability=[];state.eligibleEmployees=[];state.officialRows=[];state.lastValidation=null;render();status('Đang tải dữ liệu cửa hàng đã chọn…');await resumeOnly()});
- p.querySelectorAll('[data-msd-week]').forEach(b=>b.addEventListener('click',async()=>{const a=b.dataset.msdWeek;state.week=a==='prev'?add(state.week,-7):a==='next'?add(state.week,7):targetWeek();state.generationId=null;state.generationStatus='NONE';state.assignments=[];state.availability=[];state.eligibleEmployees=[];state.officialRows=[];state.lastValidation=null;render();status('Đang tải dữ liệu tuần đã chọn…');await resumeOnly()}));
+ p.querySelector('#msdStore')?.addEventListener('change',async e=>{state.storeId=e.target.value||null;state.generationId=null;state.generationStatus='NONE';state.assignments=[];state.availability=[];state.officialRows=[];state.eligibleEmployees=[];state.lastValidation=null;render();status('Đang tải dữ liệu cửa hàng đã chọn…');await resumeOnly()});
+ p.querySelectorAll('[data-msd-week]').forEach(b=>b.addEventListener('click',async()=>{const a=b.dataset.msdWeek;state.week=a==='prev'?add(state.week,-7):a==='next'?add(state.week,7):targetWeek();state.generationId=null;state.generationStatus='NONE';state.assignments=[];state.availability=[];state.officialRows=[];state.eligibleEmployees=[];state.lastValidation=null;render();status('Đang tải dữ liệu tuần đã chọn…');await resumeOnly()}));
  p.querySelector('#msdStart')?.addEventListener('click',startOrResume);
  p.querySelector('#msdReload')?.addEventListener('click',resumeOnly);
  p.querySelector('#msdSave')?.addEventListener('click',save);
