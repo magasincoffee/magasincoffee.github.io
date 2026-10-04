@@ -76,6 +76,7 @@ function errorText(e){
   ['ASSIGNMENT_EMPLOYEE_NOT_FOUND','Không tìm thấy nhân viên hợp lệ cho ca làm.'],
   ['GENERATION_NOT_DRAFT','Lịch không còn ở trạng thái bản nháp nên không thể chỉnh sửa.'],
   ['GENERATION_MUST_BE_REVIEWED','Lịch cần được duyệt trước khi phát hành.'],
+  ['EMPTY_GENERATION','Lịch nháp chưa có ca nào. Hãy tạo lịch nháp tự động trước.'],
   ['GENERATION_VALIDATION_FAILED','Lịch còn xung đột nên chưa thể duyệt.'],
   ['ASSIGNMENT_VALIDATION_FAILED','Lịch còn xung đột nên chưa thể lưu bản nháp.']
  ];
