@@ -82,7 +82,7 @@ test("UI2-013 responsive presentation contract is operations-first and touch key
 test("UI2-013 preserves Today getState compatibility and does not redesign scheduling",()=>{
  for(const api of ["MAGASIN_MANAGER_SHIFT_CHANGE","MAGASIN_MANAGER_ATTENDANCE_REVIEW","MAGASIN_MANAGER_STAFF_PROJECTION","MAGASIN_MANAGER_PAYROLL_SELF_CHECK"])assert.ok(today.includes(api),api);
  for(const source of [swap,attendance,staff,payroll])assert.match(source,/getState:/);
- assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004)/);
+ assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016)/);
  assert.doesNotMatch(ui,/msd-ui2-012|Bảng nháp 7 ngày|publish_schedule_generation/);
 });
 
