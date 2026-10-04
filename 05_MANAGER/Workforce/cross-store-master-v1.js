@@ -56,12 +56,14 @@ async function refresh(){
   const stores=(Array.isArray(storesQ.data)?storesQ.data:[]).filter(s=>s?.id&&String(s.status||'ACTIVE').toUpperCase()==='ACTIVE');
   const plan=Array.isArray(planQ.data)?planQ.data:[];
   const availability=Array.isArray(avQ.data)?avQ.data:[];
+  const globalDraftCount=plan.filter(r=>String(r.plan_source||'').toUpperCase()==='DRAFT').length;
+  const globalOfficialCount=plan.filter(r=>String(r.plan_source||'').toUpperCase()==='OFFICIAL').length;
   const unconfigured=new Set(availability.filter(a=>!Array.isArray(a.priority_store_ids)||!a.priority_store_ids.length).map(a=>String(a.user_id))).size;
   const current=mount();if(!current)return;
   current.dataset.xstoreReady='1';
   current.innerHTML='<section class="xsm"><div class="xsm-head"><div><h3>Tổng lịch 4 cửa hàng</h3><div class="muted" style="margin-top:4px">Một tuần vận hành chung · xem CN1–CN4 cùng lúc. Hệ thống chỉ tạo lịch nháp; Quản lý vẫn kiểm tra, chỉnh sửa và phát hành.</div></div><div class="xsm-summary"><span class="xsm-badge">'+esc(week)+'</span><span class="xsm-badge">'+availability.length+' đăng ký thời gian</span>'+(unconfigured?'<span class="xsm-badge xsm-warn">'+unconfigured+' nhân viên chưa có ưu tiên cửa hàng</span>':'')+'</div></div><div id="xstoreAutomationMount"></div><div class="xsm-stores">'+stores.map(s=>storeHtml(s,plan,availability,week)).join('')+'</div></section>';
   current.querySelectorAll('[data-xsm-open]').forEach(b=>b.addEventListener('click',()=>document.dispatchEvent(new CustomEvent('magasin:manager-schedule-open',{detail:{storeId:b.dataset.xsmOpen,week}}))));
-  document.dispatchEvent(new CustomEvent('magasin:xstore-master-rendered',{detail:{week,stores:stores.map(s=>({...s})),availabilityCount:availability.length,unconfiguredEmployeeCount:unconfigured}}));
+  document.dispatchEvent(new CustomEvent('magasin:xstore-master-rendered',{detail:{week,stores:stores.map(s=>({...s})),availabilityCount:availability.length,unconfiguredEmployeeCount:unconfigured,globalDraftCount,globalOfficialCount}}));
  }catch(e){
   console.warn('[XSTORE_MASTER_LOAD]',e);const current=mount();if(current)current.innerHTML='<div class="xsm-loading">Không tải được tổng lịch 4 cửa hàng. Vui lòng tải lại và thử lại.</div>';
  }finally{
