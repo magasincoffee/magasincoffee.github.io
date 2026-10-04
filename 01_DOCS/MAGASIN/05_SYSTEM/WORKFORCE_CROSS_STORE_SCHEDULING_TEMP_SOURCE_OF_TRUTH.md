@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-011 RESUMED FOR LIVE AUTO-SCHEDULE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013 READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -338,8 +338,16 @@ Out of scope unless explicitly added later:
 | XSTORE-C03 | Manager weekly staffing board UX | Replace row-based weekly/date input with CN1–CN4 Monday→Sunday staffing board; edit once, save, reuse until changed | **DONE / EXACT-MAIN GREEN** |
 | XSTORE-C04 | Auto Schedule recurring projection | Auto Schedule projects the saved recurring template into the requested calendar week without creating a second staffing truth | **DONE / EXACT-MAIN GREEN / LIVE CUTOVER VERIFIED** |
 | XSTORE-C05 | Regression + production-safe correction acceptance | Prove persistence across weeks, Manager edit/save, Robot projection, security, browser/reload and exact-main gates; no fake staffing/schedule business data | **DONE / EXACT-MAIN GREEN / PRODUCTION-SAFE ACCEPTANCE** |
-| XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **RESUMED / OWNER LIVE AUTO-SCHEDULE NEXT** |
+| XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **PAUSED / RESUME AFTER XSTORE-020** |
 | XSTORE-012 | Empty DRAFT production hotfix | Empty DRAFT routes back to Auto Schedule; zero-assignment generation fails validation/review/publish; regression + production release | **DONE / RELEASED / EXACT-MAIN GREEN** |
+| XSTORE-013 | Coverage semantics + shortage interval engine | Staffing Requirement means continuous required coverage; multiple employees may combine to cover one requirement; shortage output must identify exact uncovered intervals | **READY / NEXT TASK** |
+| XSTORE-014 | Auto Schedule interval composition | Auto Schedule composes compatible employee intervals into continuous coverage instead of requiring one employee to cover the whole requirement block; still DRAFT-only | **PENDING XSTORE-013** |
+| XSTORE-015 | Manager manual Availability override + employee picker | Manager/Owner may manually assign an ACTIVE store-eligible employee even without matching Availability; save DRAFT succeeds with an explicit warning/audit marker | **PENDING XSTORE-014** |
+| XSTORE-016 | Scheduling information architecture + branch accordion | Weekly global header only; CN1–CN4 become collapsible branch sections; branch identity and editable DRAFT stay in the same section; four-store overview is secondary/collapsible | **PENDING XSTORE-015** |
+| XSTORE-017 | Inline shortage visualization + direct resolution | Show shortage directly in the exact day/time cell using a dedicated warning color; click shortage to open filtered candidate flow and remove warning immediately when coverage is restored | **PENDING XSTORE-016** |
+| XSTORE-018 | Supplemental employee pool semantics | Replace “Nguồn tham khảo” with actionable employee groups: chưa được xếp / còn thời gian có thể xếp / không đăng ký nhưng có thể điều động | **PENDING XSTORE-017** |
+| XSTORE-019 | Unified workflow integration + regression qualification | Integrate global summary, per-store edit/save, manual override, shortage recalculation, Validate/Review/Publish; static/browser/security/Postgres/exact-RC gates GREEN | **PENDING XSTORE-018** |
+| XSTORE-020 | Live production acceptance + permanent reconciliation | Owner/Manager runs real target week end-to-end, confirms CN1–CN4 UX and coverage, then reconcile permanent docs and resume/close XSTORE-011 | **PENDING XSTORE-019** |
 
 ## 5. Recommended execution order
 
@@ -359,7 +367,16 @@ XSTORE-001 DONE
 → XSTORE-C03 DONE / Manager weekly staffing board UX
 → XSTORE-C04 DONE / Auto Schedule recurring projection
 → XSTORE-C05 DONE / exact-main green / production-safe acceptance
-→ XSTORE-011 BLOCKED / Owner must enter real Store Priority + recurring staffing configuration
+→ XSTORE-012 DONE / empty-DRAFT production repair released
+→ XSTORE-013 READY / continuous coverage + exact shortage intervals
+→ XSTORE-014 / interval-composed Auto Schedule
+→ XSTORE-015 / Manager Availability override + all eligible employee picker
+→ XSTORE-016 / scheduling information architecture + CN accordion
+→ XSTORE-017 / inline shortage cells + direct resolution
+→ XSTORE-018 / supplemental employee pool
+→ XSTORE-019 / integrated regression + exact-RC qualification
+→ XSTORE-020 / live production acceptance + permanent reconciliation
+→ XSTORE-011 RESUME / final live closure + TEMP SOT deletion
 ```
 
 Do not jump to the Robot before profile authority, Availability semantics and cross-store manual scheduling are proven.
@@ -387,13 +404,15 @@ Owner-approved final operating semantics as of 2026-10-01:
 - existing `XSTORE_V1` date-bound rows and legacy template structures are migration/reconciliation inputs only until XSTORE-C01 locks the final canonical authority.
 
 Current execution boundary:
-- XSTORE-001→010 are implemented and remain historical accepted implementation lineage;
-- XSTORE-C01→C05 are **DONE**; XSTORE-011 is **BLOCKED pending Owner/Manager business input**;
-- accepted executable main for XSTORE-007→010: `2429183e30dcc3760327e70a3e8a62019d13d2b0`;
-- acceptance evidence: `05_SYSTEM/XSTORE_007_010_STAFFING_AUTO_DRAFT_ACCEPTANCE.md`;
-- production currently has 0 Store Priority rows and 0 `XSTORE_V1` Staffing Requirement rows; management must enter real business values;
-- no Store Priority, staffing demand, draft assignment or official schedule was fabricated during implementation;
-- XSTORE-011 remains open until a real Manager-configured week is exercised end-to-end and accepted.\n- Live preflight on 2026-09-30 reconfirmed: Store Priority rows = 0, XSTORE_V1 Staffing Requirement rows = 0, draft assignments = 0, official schedules = 0.\n- Preflight evidence: `05_SYSTEM/XSTORE_011_LIVE_PREFLIGHT_EVIDENCE_2026_09_30.md`.\n- Current gate is `XSTORE-011 BLOCKED`; Owner/Manager must first enter real Store Priority values and real recurring staffing configuration. Do not infer or fabricate either input.
+- XSTORE-001→010 and XSTORE-C01→C05 remain accepted implementation lineage;
+- XSTORE-012 is **DONE / RELEASED / EXACT-MAIN GREEN**;
+- real Store Priority and recurring staffing business inputs now exist and have already been exercised during the XSTORE-012 production investigation;
+- Owner has approved the Scheduling V3 architecture in section 6.0.9 below;
+- **XSTORE-013 is the sole next executable task**;
+- XSTORE-011 is intentionally **PAUSED** until XSTORE-013→020 are completed, because publishing a real week before correcting continuous coverage, manual override and Manager UX would accept superseded behavior;
+- no task may relax cross-store overlap, ACTIVE employee, store eligibility, official overlap or other existing hard safety boundaries;
+- Store Priority remains a hard eligibility boundary in this track: Manager may override Availability, but may not assign an employee to a store absent from that employee's Store Priority profile;
+- Auto Schedule must continue to create DRAFT only; Manager/Owner remains final review/publish authority.
 
 ## 6.0.1 XSTORE-C01 recurring staffing architecture lock — 2026-10-01
 
@@ -671,6 +690,432 @@ Manager opens target week 2026-10-05
 
 Do not mark XSTORE-011 complete until the real Manager-approved schedule is published and final permanent-doc reconciliation/temp cleanup is complete.
 
+## 6.0.9 Scheduling V3 architecture lock — Owner approved 2026-10-04
+
+This section is the **authoritative temporary implementation contract** for XSTORE-013→020.
+
+### A. Staffing Requirement means continuous operating coverage
+
+A recurring Staffing Requirement such as:
+
+```text
+CN1 · Monday · 06:00–12:00 · target_headcount=1
+```
+
+means:
+
+> At every moment inside 06:00–12:00, at least one eligible employee must be present at that store.
+
+It does **not** mean one employee must personally work the entire 06:00–12:00 block.
+
+Valid coverage example:
+
+```text
+Requirement: 06:00–12:00 · need 1
+A:           06:00–09:00
+B:           09:00–12:00
+Result:      FULLY COVERED
+```
+
+Invalid coverage example:
+
+```text
+Requirement: 06:00–12:00 · need 1
+A:           06:00–08:00
+B:           08:30–12:00
+Result:      SHORTAGE 08:00–08:30 · missing 1
+```
+
+For target headcount 2, every instant inside the requirement must have at least 2 active assignments.
+
+The scheduler/shortage engine must therefore operate on interval coverage, not whole-block employee matching.
+
+### B. Auto Schedule interval composition
+
+Auto Schedule must:
+- read recurring Staffing Requirement + Employee Availability + Store Priority;
+- consider CN1–CN4 globally;
+- compose multiple compatible employee availability intervals to satisfy one requirement when necessary;
+- preserve all existing overlap/day/store/official hard safety rules;
+- prefer higher Store Priority and reasonable shift continuity;
+- avoid unnecessary fragmentation when equivalent full coverage can be produced with fewer/cleaner shifts;
+- return exact uncovered intervals, target, assigned coverage and missing headcount;
+- create DRAFT only;
+- never automatically Review or Publish.
+
+Auto Schedule must continue to respect registered Availability. The Availability override in section C is Manager-only.
+
+### C. Manager manual Availability override
+
+Availability is a planning input, not a hard prohibition on Manager manual assignment.
+
+Manager/Owner may manually select an employee who did not register the selected time when real operations require calling/dispatching that person.
+
+Canonical rule:
+
+```text
+Auto Schedule + Availability mismatch     => NOT ELIGIBLE for automatic assignment
+Manager manual + Availability mismatch    => ALLOWED DRAFT + explicit warning/audit
+```
+
+Manager employee selection must not be availability-only.
+
+For the selected store and interval, the picker should classify employees:
+
+1. **Đã đăng ký phù hợp** — registered Availability covers the interval.
+2. **Còn thời gian có thể xếp** — employee has Availability remaining around existing assignments.
+3. **Có thể điều động thủ công** — no matching Availability, but ACTIVE + store-eligible + no hard conflict.
+4. **Không thể chọn** — hard conflict or hard authority failure.
+
+When Manager manually assigns outside Availability:
+- DRAFT save succeeds;
+- assignment receives a canonical warning/audit marker such as `MANAGER_AVAILABILITY_OVERRIDE`;
+- UI shows a human label such as **“Quản lý điều động ngoài thời gian đăng ký”**;
+- Validate/Review/Publish treat the Availability mismatch as a warning only for this explicit Manager override;
+- non-manual writers may not silently bypass Availability.
+
+### D. Hard blocks that remain fail-closed
+
+The new manual flexibility must **not** weaken these boundaries:
+
+- employee must exist and be ACTIVE;
+- employee role must be scheduling-eligible;
+- target store must be present in the employee's management-owned Store Priority profile;
+- assignment must be inside the target week;
+- end time must be after start time;
+- same employee may not overlap within the same store;
+- same employee may not overlap across different stores;
+- assignment may not overlap official schedule truth;
+- max assignment/day and other accepted hard Workforce safety rules remain enforced;
+- REVIEWED/PUBLISHED/official state cannot be silently overwritten.
+
+**Store Priority override is NOT approved in XSTORE-013→020.**
+Manager may override Availability only. A store absent from Store Priority remains `STORE_NOT_ELIGIBLE`.
+
+### E. Scheduling page information architecture
+
+The Manager scheduling page must follow this hierarchy:
+
+```text
+GLOBAL WEEK HEADER
+→ BRANCH DRAFT ACCORDIONS
+→ ACTIVE BRANCH EDITOR + INLINE SHORTAGES
+→ EMPLOYEES AVAILABLE TO SUPPLEMENT
+→ COLLAPSIBLE FOUR-STORE OVERVIEW
+→ VALIDATE / REVIEW / PUBLISH
+```
+
+#### Global week header
+
+The top of the page contains only system-wide weekly context.
+
+Example:
+
+```text
+XẾP LỊCH TUẦN 05/10–11/10/2026
+
+4 cửa hàng · 87 ca nháp · 7 khoảng thiếu người · Chưa phát hành
+
+[Tạo lịch tự động] [Kiểm tra] [Duyệt] [Phát hành]
+```
+
+Do not place the CN1/CN2/CN3/CN4 selector in the global header.
+
+#### Branch DRAFT accordion
+
+Each store is a collapsible row.
+
+Example:
+
+```text
+▶ CN1 · 24 ca · thiếu 2 khoảng
+▶ CN2 · 22 ca · đủ nhân sự
+▶ CN3 · 20 ca · thiếu 1 khoảng
+▼ CN4 · 21 ca · đủ nhân sự
+```
+
+Only the branch being edited needs to be expanded.
+
+Inside CN4:
+
+```text
+CN4 · MAGASIN COFFEE CN4
+LỊCH NHÁP ĐANG CHỈNH
+Tuần 05/10–11/10/2026
+
+T2 | T3 | T4 | T5 | T6 | T7 | CN
+...
+[Lưu thay đổi]
+```
+
+The branch selector/context and its editor must remain in the same visual block.
+
+### F. Inline shortage visualization
+
+Do not create a separate long **“Cần xử lý”** list above the calendar.
+
+A shortage must appear directly inside the affected day/time cell.
+
+Example:
+
+```text
+⚠ THIẾU 1 NHÂN VIÊN
+06:00–08:00
+Nhu cầu: 2
+Đã xếp: 1
+[+ Bổ sung người]
+```
+
+Shortage calculation must use the exact uncovered interval. If only 08:00–09:00 is uncovered inside a 06:00–12:00 requirement, show 08:00–09:00, not the entire requirement block.
+
+When Manager restores sufficient coverage, the shortage card must disappear immediately after local recalculation/save refresh.
+
+#### Time colors
+
+Existing canonical assignment colors remain:
+
+- `05:00–<12:00` → yellow;
+- `12:00–<17:00` → light red;
+- `17:00–22:00` → light blue.
+
+Shortage uses a **dedicated high-salience warning color** distinct from all three time-band colors. Use the purple/indigo warning family with accessible contrast, plus:
+- warning icon;
+- explicit **THIẾU N NHÂN VIÊN** text.
+
+Never communicate shortage by color alone.
+
+### G. “Nguồn tham khảo” is removed
+
+The current technical label **Nguồn tham khảo / Thời gian nhân viên có thể làm** is superseded.
+
+Use an actionable section:
+
+**NHÂN VIÊN CÓ THỂ BỔ SUNG**
+
+Classify rows/cards by real Manager action:
+
+#### 1. Chưa được xếp ca nào
+Employee registered Availability but has no DRAFT assignment in the target week/available interval.
+
+#### 2. Còn thời gian có thể xếp
+Employee already has an assignment, but part of registered Availability remains unused.
+
+Example:
+
+```text
+Đăng ký: 06:00–17:00
+Đã xếp: 06:00–12:00
+Còn có thể xếp: 12:00–17:00
+```
+
+#### 3. Có thể điều động thủ công
+Employee has no matching Availability but is ACTIVE, store-eligible and free of hard conflicts.
+
+When Manager clicks **+ Bổ sung người** on a shortage cell, filter/rank this pool for the exact store/date/time shortage:
+
+```text
+1. registered and matching
+2. registered with remaining usable time
+3. manual dispatch candidate
+4. hard-conflict employees unavailable/disabled
+```
+
+### H. Four-store overview becomes secondary
+
+The large four-store matrix must not sit between store selection and the editable DRAFT.
+
+Replace it with a collapsed secondary section:
+
+```text
+▶ TỔNG QUAN 4 CỬA HÀNG
+```
+
+Expand only when Manager explicitly wants enterprise overview.
+
+### I. Canonical Manager workflow
+
+```text
+Open target week
+→ Auto Schedule
+→ see CN1–CN4 accordion summaries
+→ open only the branch needing review
+→ inspect/edit shifts in that branch
+→ shortage appears directly in exact calendar cell
+→ click + Bổ sung người
+→ choose matching / remaining / manual-dispatch employee
+→ save DRAFT
+→ recalculated shortage disappears when covered
+→ Validate hard conflicts
+→ Review
+→ Publish
+```
+
+Availability override warnings may remain visible through Validate/Review/Publish but do not block those transitions when the override was explicitly created by Manager/Owner and no hard rule is violated.
+
+### J. Robot task plan and acceptance gates
+
+#### XSTORE-013 — Continuous coverage + exact shortage engine
+
+Scope:
+- implement reusable interval-coverage evaluation for recurring requirement blocks;
+- calculate exact uncovered sub-intervals and missing headcount;
+- preserve current recurring requirement authority;
+- do not change Auto Schedule assignment composition yet except where required to expose/test coverage primitives.
+
+Acceptance:
+- split shifts can fully satisfy one requirement;
+- a real time gap yields only that gap as shortage;
+- target_headcount > 1 is evaluated at every interval boundary;
+- deterministic SQL/unit regression covers boundaries and adjacent intervals;
+- no production business data fabricated.
+
+#### XSTORE-014 — Interval-composed Auto Schedule
+
+Scope:
+- update `auto_generate_cross_store_schedule_v1` to use continuous coverage instead of full-block candidate coverage;
+- combine multiple employee intervals when required;
+- preserve Store Priority, cross-store overlap, official overlap and DRAFT-only authority;
+- minimize unnecessary fragmentation when feasible.
+
+Acceptance:
+- the 06:00–09:00 + 09:00–12:00 case can satisfy a 06:00–12:00 requirement;
+- no gap/overlap corruption;
+- shortages returned as exact uncovered intervals;
+- Auto Schedule still rejects employees outside registered Availability;
+- four-store global safety remains fail-closed.
+
+#### XSTORE-015 — Manager Availability override + full eligible employee picker
+
+Scope:
+- Manager manual picker reads all ACTIVE employees eligible for the selected store;
+- matching Availability is ranking/status metadata, not the only candidate source;
+- DRAFT writer tags explicit manual out-of-Availability assignment;
+- validator converts that tagged Availability mismatch to warning;
+- existing hard conflicts remain violations.
+
+Acceptance:
+- Manager can save out-of-Availability DRAFT;
+- warning survives reload;
+- Validate/Review/Publish can proceed with warning and no hard violations;
+- Auto Schedule remains Availability-bound;
+- employee outside Store Priority remains blocked.
+
+#### XSTORE-016 — Scheduling IA + branch accordion editor
+
+Scope:
+- global header contains week/global summary/actions only;
+- remove global branch selector from header;
+- CN1–CN4 DRAFTs become accordion rows;
+- active branch editor is rendered inside its branch;
+- four-store master moves to collapsed secondary overview;
+- preserve Tabler/shared UI conventions and responsive behavior.
+
+Acceptance:
+- Manager never needs to remember a branch selected far above the editor;
+- only one branch editor is open at a time unless explicit product behavior says otherwise;
+- switching branches preserves unsaved-change safety;
+- mobile/desktop browser gates pass.
+
+#### XSTORE-017 — Inline shortage cells + direct supplement action
+
+Scope:
+- render exact shortage cards inside affected calendar day/time cells;
+- use dedicated shortage warning token distinct from the 3 time-band colors;
+- provide **+ Bổ sung người** from shortage card;
+- locally/authoritatively recalculate shortage after edit/save.
+
+Acceptance:
+- exact shortage interval is visually colocated with the affected schedule;
+- shortage is not duplicated in a separate long “Cần xử lý” list;
+- fully repaired coverage removes the warning;
+- accessibility does not depend on color alone.
+
+#### XSTORE-018 — Supplemental employee pool
+
+Scope:
+- remove “Nguồn tham khảo” wording;
+- derive and show:
+  - Chưa được xếp ca nào;
+  - Còn thời gian có thể xếp;
+  - Có thể điều động thủ công;
+- shortage action filters/ranks the pool to exact branch/date/time.
+
+Acceptance:
+- already-assigned employee is not mislabeled “Chưa được xếp”;
+- remaining availability is computed after DRAFT assignments;
+- manual candidates are clearly marked;
+- hard-conflict candidates cannot be selected.
+
+#### XSTORE-019 — Unified workflow integration + RC qualification
+
+Scope:
+- integrate XSTORE-013→018 with global summary and canonical Validate→Review→Publish;
+- remove/hide superseded scheduling UI paths without creating parallel writers;
+- add regression for exact runtime cache versions and reload behavior;
+- backend migration tests on isolated PostgreSQL;
+- browser cross-role/responsive/pages qualification;
+- create exact RC and rollback evidence.
+
+Required gates:
+- People Shift GREEN;
+- UI2 Cross Role GREEN;
+- Pages source validation GREEN;
+- Pages build/deployment GREEN;
+- new XSTORE coverage/manual-override/browser tests GREEN;
+- isolated backend migration proof GREEN;
+- no production release before exact-RC Owner approval under production release governance.
+
+#### XSTORE-020 — Live production acceptance + canonical reconciliation
+
+Scope:
+- after Owner approves exact RC, release using production governance;
+- live target-week Auto Schedule;
+- Manager confirms branch accordion, exact shortages and supplemental employee flow;
+- exercise a real Manager manual Availability override only if actually needed;
+- Validate→Review→Publish real approved schedule;
+- reconcile proven rules into permanent Workforce docs;
+- resume/finalize XSTORE-011;
+- delete this TEMP SOT only after closure evidence is complete.
+
+### K. Robot execution control
+
+The robot must execute tasks in strict order:
+
+```text
+XSTORE-013
+→ XSTORE-014
+→ XSTORE-015
+→ XSTORE-016
+→ XSTORE-017
+→ XSTORE-018
+→ XSTORE-019
+→ XSTORE-020
+→ resume XSTORE-011 closure
+```
+
+Rules:
+- one authoritative task per execution turn;
+- re-read this TEMP SOT before validating any task ID;
+- do not skip a PENDING dependency;
+- do not invent new business rules when the task can proceed from this locked architecture;
+- if a real Owner decision is required, mark the current task BLOCKED and record the exact decision required in this SOT;
+- implementation must occur on non-production branch/PR;
+- production-impacting work follows `PRODUCTION_RELEASE_GOVERNANCE_V1_SOURCE_OF_TRUTH.md`;
+- do not merge/release when required gates are red;
+- after every merge, verify exact-main evidence before advancing the task status;
+- update this TEMP SOT after each completed task so the next robot/chat can derive state from source alone.
+
+Machine handoff:
+
+```text
+MAGASIN_TASK_CONTROL_V1
+STATUS=READY
+TASK_ID=NONE
+NEXT_TASK_ID=XSTORE-013
+CHECK_AFTER_SECONDS=0
+END_MAGASIN_TASK_CONTROL_V1
+```
+
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
 Accepted executable main:
@@ -752,17 +1197,23 @@ This track is complete only when:
 5. Owner/authorized scheduling management can review CN1–CN4 together;
 6. manual cross-store assignment is safe and validated;
 7. recurring weekly staffing-requirement semantics are implemented: Manager configures once by store/weekday/time/headcount and the saved configuration persists until explicitly changed;
-8. Auto Schedule generates a reviewable four-store DRAFT only;
-9. Manager can edit, validate and publish through the canonical scheduling path;
-10. full relevant regression/E2E/security/reload checks are green;
-11. permanent canonical Workforce docs/state contain the proven final rules;
-12. **this TEMP Source of Truth is deleted**.
+8. Auto Schedule generates a reviewable four-store DRAFT only and can compose multiple employee intervals into continuous requirement coverage;
+9. shortage output identifies exact uncovered time intervals/headcount and is rendered directly in the affected branch calendar cell;
+10. Manager can manually assign an ACTIVE store-eligible employee outside registered Availability with an explicit warning/audit marker;
+11. Availability override does not relax Store Priority, overlap, ACTIVE employee, official schedule or other hard safety rules;
+12. Manager scheduling UX uses global week header + CN1–CN4 accordions + colocated branch editor + actionable supplemental employee pool;
+13. “Nguồn tham khảo” is removed from the canonical scheduling UX;
+14. Manager can edit, validate and publish through the canonical scheduling path;
+15. full relevant regression/E2E/security/reload checks are green;
+16. XSTORE-020 real production acceptance is complete;
+17. permanent canonical Workforce docs/state contain the proven final rules;
+18. **this TEMP Source of Truth is deleted**.
 
 ## 8. Closure rule
 
 Do not leave this temporary file as a second permanent source of truth.
 
-At XSTORE-011, only after XSTORE-C01→C05 are complete and the corrected recurring model is exact-main green:
+At final closure, only after XSTORE-C01→C05, XSTORE-012 and XSTORE-013→020 are complete and the corrected Scheduling V3 model is exact-main/live accepted:
 - Manager sets real Store Priority values for employees;
 - Manager configures the real recurring weekly staffing template for CN1–CN4 once (weekday/time/headcount), and verifies it persists/reuses across target weeks;
 - Manager runs Auto Schedule and reviews any shortages;
