@@ -16,7 +16,7 @@ const rpc=s=>[...s.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 const rpcSet=s=>[...new Set(rpc(s))].sort();
 
 test("UI2-012 is a Manager-only presentation layer over the existing canonical scheduling writer",()=>{
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005)/);
+  assert.match(engine,/draft-publish-v1\\.js\\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012)/);
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004)/);
   assert.match(ui,/\.msd\[data-scheduling-actor="MANAGER"\]/);
   assert.match(ui,/dataset\.ui2ScheduleBoard='1'/);
