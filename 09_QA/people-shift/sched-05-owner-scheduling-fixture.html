@@ -96,6 +96,19 @@
         if(!stores.some(s=>s.id===args.p_store_id))return err("STORE_NOT_ALLOWED");
         return {data:storeAvailability(args.p_store_id,args.p_week_start),error:null};
       }
+      if(name==="list_employee_workforce_profiles_v1"){
+        return {data:Object.keys(people).map(id=>{
+          const storeId=availability.find(x=>x.user_id===id)?.preferred_store_id||null;
+          return {
+            employee_id:id,
+            full_name:people[id],
+            username:id,
+            profile_status:peopleMeta[id]?.status||"INACTIVE",
+            employee_role:peopleMeta[id]?.role||"STAFF",
+            priority_store_ids:storeId?[storeId]:[]
+          };
+        }),error:null};
+      }
       if(name==="list_schedule_generations"){
         if(!stores.some(s=>s.id===args.p_store_id))return err("STORE_NOT_ALLOWED");
         const g=state.generations.get(key(args.p_store_id,args.p_week_start));
