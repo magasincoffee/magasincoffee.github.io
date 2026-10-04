@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013 READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013 DONE / EXACT-MAIN GREEN / XSTORE-014 READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -340,8 +340,8 @@ Out of scope unless explicitly added later:
 | XSTORE-C05 | Regression + production-safe correction acceptance | Prove persistence across weeks, Manager edit/save, Robot projection, security, browser/reload and exact-main gates; no fake staffing/schedule business data | **DONE / EXACT-MAIN GREEN / PRODUCTION-SAFE ACCEPTANCE** |
 | XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **PAUSED / RESUME AFTER XSTORE-020** |
 | XSTORE-012 | Empty DRAFT production hotfix | Empty DRAFT routes back to Auto Schedule; zero-assignment generation fails validation/review/publish; regression + production release | **DONE / RELEASED / EXACT-MAIN GREEN** |
-| XSTORE-013 | Coverage semantics + shortage interval engine | Staffing Requirement means continuous required coverage; multiple employees may combine to cover one requirement; shortage output must identify exact uncovered intervals | **READY / NEXT TASK** |
-| XSTORE-014 | Auto Schedule interval composition | Auto Schedule composes compatible employee intervals into continuous coverage instead of requiring one employee to cover the whole requirement block; still DRAFT-only | **PENDING XSTORE-013** |
+| XSTORE-013 | Coverage semantics + shortage interval engine | Staffing Requirement means continuous required coverage; multiple employees may combine to cover one requirement; shortage output must identify exact uncovered intervals | **DONE / EXACT-MAIN GREEN** |
+| XSTORE-014 | Auto Schedule interval composition | Auto Schedule composes compatible employee intervals into continuous coverage instead of requiring one employee to cover the whole requirement block; still DRAFT-only | **READY / NEXT TASK** |
 | XSTORE-015 | Manager manual Availability override + employee picker | Manager/Owner may manually assign an ACTIVE store-eligible employee even without matching Availability; save DRAFT succeeds with an explicit warning/audit marker | **PENDING XSTORE-014** |
 | XSTORE-016 | Scheduling information architecture + branch accordion | Weekly global header only; CN1–CN4 become collapsible branch sections; branch identity and editable DRAFT stay in the same section; four-store overview is secondary/collapsible | **PENDING XSTORE-015** |
 | XSTORE-017 | Inline shortage visualization + direct resolution | Show shortage directly in the exact day/time cell using a dedicated warning color; click shortage to open filtered candidate flow and remove warning immediately when coverage is restored | **PENDING XSTORE-016** |
@@ -368,8 +368,8 @@ XSTORE-001 DONE
 → XSTORE-C04 DONE / Auto Schedule recurring projection
 → XSTORE-C05 DONE / exact-main green / production-safe acceptance
 → XSTORE-012 DONE / empty-DRAFT production repair released
-→ XSTORE-013 READY / continuous coverage + exact shortage intervals
-→ XSTORE-014 / interval-composed Auto Schedule
+→ XSTORE-013 DONE / exact-main green / continuous coverage + exact shortage intervals
+→ XSTORE-014 READY / interval-composed Auto Schedule
 → XSTORE-015 / Manager Availability override + all eligible employee picker
 → XSTORE-016 / scheduling information architecture + CN accordion
 → XSTORE-017 / inline shortage cells + direct resolution
@@ -408,7 +408,8 @@ Current execution boundary:
 - XSTORE-012 is **DONE / RELEASED / EXACT-MAIN GREEN**;
 - real Store Priority and recurring staffing business inputs now exist and have already been exercised during the XSTORE-012 production investigation;
 - Owner has approved the Scheduling V3 architecture in section 6.0.9 below;
-- **XSTORE-013 is the sole next executable task**;
+- XSTORE-013 is **DONE / EXACT-MAIN GREEN**;
+- **XSTORE-014 is the sole next executable task**;
 - XSTORE-011 is intentionally **PAUSED** until XSTORE-013→020 are completed, because publishing a real week before correcting continuous coverage, manual override and Manager UX would accept superseded behavior;
 - no task may relax cross-store overlap, ACTIVE employee, store eligibility, official overlap or other existing hard safety boundaries;
 - Store Priority remains a hard eligibility boundary in this track: Manager may override Availability, but may not assign an employee to a store absent from that employee's Store Priority profile;
@@ -1111,10 +1112,46 @@ Machine handoff:
 MAGASIN_TASK_CONTROL_V1
 STATUS=READY
 TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-013
+NEXT_TASK_ID=XSTORE-014
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
+
+## 6.0.10 XSTORE-013 continuous coverage + exact shortage engine acceptance — 2026-10-04
+
+XSTORE-013 is **DONE / EXACT-MAIN GREEN**.
+
+Implementation:
+- migration `20261004220500_xstore_013_continuous_coverage_shortage_v1.sql` adds reusable `evaluate_workforce_coverage_shortages_v1(...)`;
+- coverage is evaluated at every assignment boundary;
+- adjacent split shifts from different employees may jointly satisfy one requirement;
+- shortage output returns only exact uncovered intervals with assigned and missing headcount;
+- one employee is deduplicated across overlapping assignment rows;
+- bounded `list_cross_store_staffing_shortages_v1(date)` reads canonical recurring staffing requirements plus current DRAFT/REVIEWED assignments;
+- recurring staffing authority remains unchanged;
+- Auto Schedule assignment composition remains unchanged and is owned by XSTORE-014;
+- no production business data was fabricated.
+
+Implementation PR #385:
+- initial implementation head `39975814fb5ac335fabb702e8b50441c9f2e518b`;
+- repair head `12da2320cf300400c94f3a5175010e0735e6cf8d`;
+- merge / executable main `1d8b750de7cde569017b810959f725c7bbd2d530`.
+
+Exact-main gates for `1d8b750de7cde569017b810959f725c7bbd2d530`:
+- XSTORE-013 Coverage QA run `37211610254` = **SUCCESS**;
+- People Shift Day-10 Tests run `37211610355` = **SUCCESS**;
+- UI2 Cross Role Acceptance run `37211610085` = **SUCCESS**;
+- Validate MAGASIN GitHub Pages source run `37211610198` = **SUCCESS**;
+- Pages build/deployment run `37211609496` = **SUCCESS**.
+
+PostgreSQL exact-main proof:
+- adjacent split coverage = PASS;
+- exact 08:00–08:30 gap detection = PASS;
+- target_headcount > 1 boundary evaluation = PASS;
+- overlapping rows for the same employee are deduplicated = PASS;
+- bounded recurring shortage reader exact-interval test = PASS.
+
+XSTORE-014 is now the sole next executable task and owns interval-composed Auto Schedule. XSTORE-011 remains paused until XSTORE-013→020 are complete.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
