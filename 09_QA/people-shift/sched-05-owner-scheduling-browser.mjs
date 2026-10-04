@@ -53,7 +53,7 @@ try{
     const text=await page.locator("#panel-publish").innerText();
     const options=await page.locator("#msdStore option").allTextContents();
     if(s.storeId!=="store-a"||s.stores.length!==4||s.eligibleEmployees.length!==2)throw new Error(JSON.stringify(s));
-    if(options.length!==4||!text.includes("Giám sát xếp lịch")||!text.includes("Thời gian nhân viên có thể làm"))throw new Error(JSON.stringify({options,text}));
+    if(options.length!==4||!text.includes("Giám sát xếp lịch")||!text.includes("Nhân viên đủ điều kiện xếp ca"))throw new Error(JSON.stringify({options,text}));
     for(const forbidden of ["Enterprise oversight","canonical","writer","direct table DML","DRAFT","Validate","Review","Publish"]){
       if(text.includes(forbidden))throw new Error("technical copy visible: "+forbidden);
     }
