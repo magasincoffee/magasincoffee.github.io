@@ -265,10 +265,7 @@ function editorHtml(){
 
 function shortagesHtml(){
  if(!state.shortages.length)return '';
- return '<div class="xsa-status">'+state.shortages.slice(0,12).map(x=>{
-  const store=state.stores.find(s=>String(s.id)===String(x.store_id||''));
-  return esc((x.store_code||store?.code||'CN')+' · '+String(x.work_date||'').slice(0,10)+' · '+hm(x.start_time)+'–'+hm(x.end_time)+' · thiếu '+Number(x.missing||0));
- }).join('<br>')+'</div>';
+ return '<div class="xsa-status" role="status" aria-live="polite"><b>'+state.shortages.length+' khoảng thiếu người cần xử lý.</b><br>Mở chi nhánh tương ứng bên dưới để xem shortage ngay trong ô ngày/giờ và bổ sung người trực tiếp.</div>';
 }
 
 function render(){
