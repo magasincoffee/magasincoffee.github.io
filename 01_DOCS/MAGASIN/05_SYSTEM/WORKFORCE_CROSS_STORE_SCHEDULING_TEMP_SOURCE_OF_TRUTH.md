@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-011 RESUMED / XSTORE-012 EMPTY-DRAFT HOTFIX IN DEVELOPMENT  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-011 RESUMED FOR LIVE AUTO-SCHEDULE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -338,8 +338,8 @@ Out of scope unless explicitly added later:
 | XSTORE-C03 | Manager weekly staffing board UX | Replace row-based weekly/date input with CN1–CN4 Monday→Sunday staffing board; edit once, save, reuse until changed | **DONE / EXACT-MAIN GREEN** |
 | XSTORE-C04 | Auto Schedule recurring projection | Auto Schedule projects the saved recurring template into the requested calendar week without creating a second staffing truth | **DONE / EXACT-MAIN GREEN / LIVE CUTOVER VERIFIED** |
 | XSTORE-C05 | Regression + production-safe correction acceptance | Prove persistence across weeks, Manager edit/save, Robot projection, security, browser/reload and exact-main gates; no fake staffing/schedule business data | **DONE / EXACT-MAIN GREEN / PRODUCTION-SAFE ACCEPTANCE** |
-| XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **RESUMED / BLOCKED BY XSTORE-012** |
-| XSTORE-012 | Empty DRAFT production hotfix | Empty DRAFT must route back to Auto Schedule; zero-assignment generation must fail validation/review/publish; regression + RC qualification | **IN DEVELOPMENT / RELEASE GOVERNANCE APPLIES** |
+| XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **RESUMED / OWNER LIVE AUTO-SCHEDULE NEXT** |
+| XSTORE-012 | Empty DRAFT production hotfix | Empty DRAFT routes back to Auto Schedule; zero-assignment generation fails validation/review/publish; regression + production release | **DONE / RELEASED / EXACT-MAIN GREEN** |
 
 ## 5. Recommended execution order
 
@@ -624,6 +624,52 @@ Release authority:
 - backend migration requires isolated/staging proof before production;
 - exact RC SHA, rollback SHA, green QA and Owner approval are required before release;
 - normal release window remains 00:00 Asia/Ho_Chi_Minh unless Owner explicitly authorizes a same-conversation exception after reviewing the exact RC.
+
+## 6.0.8 XSTORE-012 emergency production release — 2026-10-04
+
+XSTORE-012 is **DONE / RELEASED / EXACT-MAIN GREEN**.
+
+Owner explicitly approved emergency release before the normal 00:00 Asia/Ho_Chi_Minh window for exact RC:
+
+`abd9c973f9a7f7fa84dbf1da57fa8439597a113c`
+
+Release evidence:
+
+- PR #383 merged with expected-head guard;
+- production merge/main SHA: `308401f914034795c23412076446e976af2538fe`;
+- rollback baseline: `883ee6eda6e2d769d8a0da47ddb2eb43af12e740`;
+- production migration `xstore_012_empty_draft_validation_guard_v1` applied successfully;
+- production validator definition contains `EMPTY_GENERATION`;
+- Validate MAGASIN GitHub Pages source run `37195716193` = **SUCCESS**;
+- XSTORE-012 Backend Hotfix QA run `37195716109` = **SUCCESS**;
+- UI2 Cross Role Acceptance run `37195716148` = **SUCCESS**;
+- People Shift Day-10 Tests run `37195716156` = **SUCCESS**;
+- Pages build/deployment run `37195715408` = **SUCCESS**.
+
+Production-safe smoke:
+
+- an authenticated Owner-context transaction called the exact production Auto Schedule for target week `2026-10-05 → 2026-10-11` with replacement enabled;
+- inside the transaction Auto Schedule produced **87 DRAFT assignments across all 4 stores**;
+- the transaction produced **0 official schedule rows**;
+- the transaction was rolled back;
+- after rollback production returned to the pre-smoke state: **0 draft assignments, 1 pre-existing empty target-week generation, 0 official rows**.
+
+This proves the repaired production path can now move the existing empty DRAFT back through Auto Schedule without persisting test business truth.
+
+Next XSTORE-011 live action:
+
+```text
+Manager opens target week 2026-10-05
+→ guided action shows Tạo lịch nháp tự động for the empty DRAFT
+→ Manager runs Auto Schedule
+→ review the generated CN1–CN4 DRAFT and shortages
+→ edit as needed
+→ Validate
+→ Review
+→ Publish
+```
+
+Do not mark XSTORE-011 complete until the real Manager-approved schedule is published and final permanent-doc reconciliation/temp cleanup is complete.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
