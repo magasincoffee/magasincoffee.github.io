@@ -53,9 +53,9 @@ test("SCHED-UI-005 Manager runtime loads Shared Core before scheduling engine",(
   assert.ok(runtime.indexOf(coreToken)<runtime.indexOf(engineToken));
   assert.match(runtime,/MAGASIN_CORE\?\.time\?\.shiftKind/);
   for(const token of [
-    "draft-publish-v1.js?v=20261002-sched-ui-005",
-    "cross-store-master-v1.js?v=20261002-sched-ui-005",
-    "cross-store-auto-schedule-v1.js?v=20261002-sched-ui-005"
+    "draft-publish-v1.js?v=20261004-xstore-012",
+    "cross-store-master-v1.js?v=20261004-xstore-012",
+    "cross-store-auto-schedule-v1.js?v=20261004-xstore-012"
   ])assert.ok(engine.includes(token),token);
 });
 

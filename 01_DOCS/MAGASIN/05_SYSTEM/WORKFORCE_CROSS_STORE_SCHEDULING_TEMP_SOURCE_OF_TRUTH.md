@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-011 BLOCKED / OWNER INPUT REQUIRED  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-011 RESUMED / XSTORE-012 EMPTY-DRAFT HOTFIX IN DEVELOPMENT  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -338,7 +338,8 @@ Out of scope unless explicitly added later:
 | XSTORE-C03 | Manager weekly staffing board UX | Replace row-based weekly/date input with CN1–CN4 Monday→Sunday staffing board; edit once, save, reuse until changed | **DONE / EXACT-MAIN GREEN** |
 | XSTORE-C04 | Auto Schedule recurring projection | Auto Schedule projects the saved recurring template into the requested calendar week without creating a second staffing truth | **DONE / EXACT-MAIN GREEN / LIVE CUTOVER VERIFIED** |
 | XSTORE-C05 | Regression + production-safe correction acceptance | Prove persistence across weeks, Manager edit/save, Robot projection, security, browser/reload and exact-main gates; no fake staffing/schedule business data | **DONE / EXACT-MAIN GREEN / PRODUCTION-SAFE ACCEPTANCE** |
-| XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **BLOCKED / OWNER INPUT REQUIRED** |
+| XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **RESUMED / BLOCKED BY XSTORE-012** |
+| XSTORE-012 | Empty DRAFT production hotfix | Empty DRAFT must route back to Auto Schedule; zero-assignment generation must fail validation/review/publish; regression + RC qualification | **IN DEVELOPMENT / RELEASE GOVERNANCE APPLIES** |
 
 ## 5. Recommended execution order
 
@@ -580,6 +581,49 @@ Canonical blocker evidence:
 After the two business inputs exist in production, XSTORE-011 resumes with real Auto Schedule → Manager review/edit → Validate → Review → Publish, then permanent-document reconciliation and deletion of this TEMP SOT.
 
 No Store Priority, staffing demand, draft assignment or official schedule was fabricated during this blocked attempt.
+
+## 6.0.7 XSTORE-012 empty-DRAFT production blocker — 2026-10-04
+
+XSTORE-012 is **IN DEVELOPMENT / PRODUCTION RELEASE NOT YET AUTHORIZED**.
+
+Owner resumed XSTORE-011 with real production inputs. Direct production reconciliation for target week `2026-10-05 → 2026-10-11` found:
+
+- recurring staffing requirements = 103 blocks across 4 stores, total target headcount = 120;
+- Availability = 100 rows from 17 employees;
+- Store Priority = 98 rows across 26 employees and all 4 stores;
+- current target-week generation = one CN1 `DRAFT` created by `MANAGER_DIRECT_V1`;
+- target-week generation assignments = 0;
+- official `work_schedules` rows = 0;
+- pre-scheduler eligibility check found 96/103 staffing blocks with at least one eligible employee; therefore a completely empty schedule is not explained by missing Availability alone.
+
+Production defect:
+
+```text
+existing empty DRAFT
+→ guided workflow treats DRAFT as already generated
+→ Auto Schedule action is skipped
+→ zero-assignment validator produces zero violations
+→ empty schedule can appear VALID
+→ Review/Publish can become reachable
+```
+
+Required repair:
+
+1. four-store master must expose persisted global DRAFT/official row counts to the guided workflow;
+2. `DRAFT + globalDraftCount = 0` must route back to **Tạo lịch nháp tự động**;
+3. browser Validate / Review / Publish controls must fail closed when the selected generation has zero assignments;
+4. `validate_schedule_generation_v1` must return `EMPTY_GENERATION` for a zero-assignment generation;
+5. existing Review and Publish RPCs remain canonical and inherit the server guard through their existing validator call;
+6. changed runtime assets must receive a new cache-busting version;
+7. regression coverage must prove the empty-DRAFT recovery and server fail-closed contract.
+
+Release authority:
+
+- this is production-impacting and must follow `PRODUCTION_RELEASE_GOVERNANCE_V1_SOURCE_OF_TRUTH.md`;
+- development occurs only on a non-production branch;
+- backend migration requires isolated/staging proof before production;
+- exact RC SHA, rollback SHA, green QA and Owner approval are required before release;
+- normal release window remains 00:00 Asia/Ho_Chi_Minh unless Owner explicitly authorizes a same-conversation exception after reviewing the exact RC.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
