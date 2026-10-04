@@ -73,7 +73,7 @@ for(const width of [1440,390]){
  const frame=await managerFrame(page);
  await frame.evaluate(async()=>{
   globalThis.__MW31_QA.setAccessibleStores(["store-a","store-c"]);
-  await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.refresh();
+  await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.openDirect({storeId:"store-a"});
  });
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().stores.length===2);
 
