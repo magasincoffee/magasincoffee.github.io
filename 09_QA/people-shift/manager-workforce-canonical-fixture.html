@@ -45,6 +45,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
     {availability_id:"av-2",user_id:"u-2",employee_name:people["u-2"],username:"qa2",work_date:"2026-09-28",start_time:"12:00",end_time:"17:00",preferred_store_id:"store-a",preferred_store_code:"CN-QA-A",availability_type:"PREFERRED"},
     {availability_id:"av-3",user_id:"u-3",employee_name:people["u-3"],username:"qa3",work_date:"2026-09-29",start_time:"17:00",end_time:"22:00",preferred_store_id:"store-a",preferred_store_code:"CN-QA-A",availability_type:"AVAILABLE"}
   ];
+  const staffingRequirements=[];
   const state={
     generation:null,
     competing:[],
@@ -71,7 +72,30 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
     };
   }
   const min=v=>Number(String(v||"00:00").slice(0,2))*60+Number(String(v||"00:00").slice(3,5));
+  const hm=v=>String(v||"").slice(0,5);
   const err=message=>({data:null,error:{message}});
+  function shortageRows(weekStart){
+    const out=[];
+    const addDay=n=>{const d=new Date(weekStart+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+    const active=state.generation&&["DRAFT","REVIEWED"].includes(state.generation.status)?state.assignments:[];
+    for(const r of staffingRequirements){
+      const day=Number(r.day_of_week||0);if(day<1||day>7)continue;
+      const workDate=addDay(day-1),start=min(r.start_time),end=min(r.end_time),target=Number(r.target_headcount||0);
+      if(end<=start||target<1)continue;
+      const overlaps=active.filter(a=>a.store_id===r.store_id&&a.work_date===workDate&&min(a.end_time)>start&&min(a.start_time)<end).map((a,i)=>({user_id:String(a.user_id||("row-"+i)),start:Math.max(start,min(a.start_time)),end:Math.min(end,min(a.end_time))}));
+      const bounds=[start,end,...overlaps.flatMap(a=>[a.start,a.end])].sort((a,b)=>a-b).filter((x,i,a)=>i===0||x!==a[i-1]);
+      for(let i=0;i<bounds.length-1;i++){
+        const a=bounds[i],b=bounds[i+1];if(b<=a)continue;
+        const assigned=new Set(overlaps.filter(x=>x.start<=a&&x.end>=b).map(x=>x.user_id)).size;
+        if(assigned>=target)continue;
+        const row={requirement_id:r.requirement_id||r.id||"req",store_id:r.store_id,store_code:r.store_code||"CN-QA-A",work_date:workDate,shortage_start:String(Math.floor(a/60)).padStart(2,"0")+":"+String(a%60).padStart(2,"0"),shortage_end:String(Math.floor(b/60)).padStart(2,"0")+":"+String(b%60).padStart(2,"0"),target_headcount:target,assigned_headcount:assigned,missing_headcount:target-assigned};
+        const prev=out.at(-1);
+        if(prev&&prev.requirement_id===row.requirement_id&&prev.work_date===row.work_date&&hm(prev.shortage_end)===hm(row.shortage_start)&&prev.assigned_headcount===row.assigned_headcount&&prev.missing_headcount===row.missing_headcount)prev.shortage_end=row.shortage_end;
+        else out.push(row);
+      }
+    }
+    return out;
+  }
   function canonicalValidation(assignments=state.assignments){
     const violations=[];
     const gen=state.generation;
@@ -147,7 +171,8 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
         const end=new Date(args.p_week_start+"T00:00:00Z");end.setUTCDate(end.getUTCDate()+6);const to=end.toISOString().slice(0,10);
         return {data:availability.filter(x=>x.work_date>=args.p_week_start&&x.work_date<=to).map(x=>({...x,priority_store_ids:[x.preferred_store_id]})),error:null};
       }
-      if(name==="list_workforce_recurring_staffing_requirements_v1")return {data:[],error:null};
+      if(name==="list_workforce_recurring_staffing_requirements_v1")return {data:staffingRequirements.map(x=>({...x})),error:null};
+      if(name==="list_cross_store_staffing_shortages_v1")return {data:shortageRows(args.p_week_start),error:null};
       if(name==="list_schedule_generations"){
         const rows=[];
         if(state.generation&&state.generation.store_id===args.p_store_id&&state.generation.week_start===args.p_week_start)rows.push({...state.generation});
@@ -235,7 +260,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
     },
     from(name){calls.push({kind:"from",name});throw new Error("Direct table access forbidden:"+name)}
   };
-  window.__MW31_QA={calls,state,store,store2,availability,people,peopleMeta,canonicalValidation,rpc:(name,args)=>api.rpc(name,args),setPersonStatus:(id,status)=>{if(peopleMeta[id])peopleMeta[id].status=status},setPersonRole:(id,role)=>{if(peopleMeta[id])peopleMeta[id].role=role},setCompeting:(rows)=>{state.competing=Array.isArray(rows)?rows:[]},setDelay:(ms)=>{state.delayMs=Math.max(0,Number(ms)||0)},setRpcError:(name,message)=>{if(message)state.rpcErrors[name]=String(message);else delete state.rpcErrors[name]},setAccessibleStores:(ids)=>{accessibleStores.splice(0,accessibleStores.length,...(Array.isArray(ids)?ids:[]).map(id=>id==="store-c"?store2:store).filter((x,i,a)=>a.indexOf(x)===i))}};
+  window.__MW31_QA={calls,state,store,store2,availability,people,peopleMeta,canonicalValidation,rpc:(name,args)=>api.rpc(name,args),setPersonStatus:(id,status)=>{if(peopleMeta[id])peopleMeta[id].status=status},setPersonRole:(id,role)=>{if(peopleMeta[id])peopleMeta[id].role=role},setCompeting:(rows)=>{state.competing=Array.isArray(rows)?rows:[]},setDelay:(ms)=>{state.delayMs=Math.max(0,Number(ms)||0)},setRpcError:(name,message)=>{if(message)state.rpcErrors[name]=String(message);else delete state.rpcErrors[name]},setAccessibleStores:(ids)=>{accessibleStores.splice(0,accessibleStores.length,...(Array.isArray(ids)?ids:[]).map(id=>id==="store-c"?store2:store).filter((x,i,a)=>a.indexOf(x)===i))},setStaffingRequirements:(rows)=>{staffingRequirements.splice(0,staffingRequirements.length,...(Array.isArray(rows)?rows:[]).map(x=>({...x})))}};
 
   window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
     version:"QA",
