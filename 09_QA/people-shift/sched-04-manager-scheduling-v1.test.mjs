@@ -80,7 +80,7 @@ test("SCHED-UI-004 presentation separates source/draft, demotes draft utilities,
   for(const token of [
     "Nguồn tham khảo",
     "Lịch nháp đang chỉnh",
-    "Thao tác phụ · lịch nháp",
+    "Tuần vận hành · Asia/Ho_Chi_Minh",
     "Bước cuối · duyệt và phát hành",
     "Cần xử lý nhiều bản nháp cùng tuần",
     "Tải lại trạng thái"
