@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→015 DONE / EXACT-MAIN GREEN / XSTORE-016 READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→016 DONE / EXACT-MAIN GREEN / XSTORE-017 READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -343,8 +343,8 @@ Out of scope unless explicitly added later:
 | XSTORE-013 | Coverage semantics + shortage interval engine | Staffing Requirement means continuous required coverage; multiple employees may combine to cover one requirement; shortage output must identify exact uncovered intervals | **DONE / EXACT-MAIN GREEN** |
 | XSTORE-014 | Auto Schedule interval composition | Auto Schedule composes compatible employee intervals into continuous coverage instead of requiring one employee to cover the whole requirement block; still DRAFT-only | **DONE / EXACT-MAIN GREEN** |
 | XSTORE-015 | Manager manual Availability override + employee picker | Manager/Owner may manually assign an ACTIVE store-eligible employee even without matching Availability; save DRAFT succeeds with an explicit warning/audit marker | **DONE / EXACT-MAIN GREEN** |
-| XSTORE-016 | Scheduling information architecture + branch accordion | Weekly global header only; CN1–CN4 become collapsible branch sections; branch identity and editable DRAFT stay in the same section; four-store overview is secondary/collapsible | **READY / NEXT TASK** |
-| XSTORE-017 | Inline shortage visualization + direct resolution | Show shortage directly in the exact day/time cell using a dedicated warning color; click shortage to open filtered candidate flow and remove warning immediately when coverage is restored | **PENDING XSTORE-016** |
+| XSTORE-016 | Scheduling information architecture + branch accordion | Weekly global header only; CN1–CN4 become collapsible branch sections; branch identity and editable DRAFT stay in the same section; four-store overview is secondary/collapsible | **DONE / EXACT-MAIN GREEN** |
+| XSTORE-017 | Inline shortage visualization + direct resolution | Show shortage directly in the exact day/time cell using a dedicated warning color; click shortage to open filtered candidate flow and remove warning immediately when coverage is restored | **READY / NEXT TASK** |
 | XSTORE-018 | Supplemental employee pool semantics | Replace “Nguồn tham khảo” with actionable employee groups: chưa được xếp / còn thời gian có thể xếp / không đăng ký nhưng có thể điều động | **PENDING XSTORE-017** |
 | XSTORE-019 | Unified workflow integration + regression qualification | Integrate global summary, per-store edit/save, manual override, shortage recalculation, Validate/Review/Publish; static/browser/security/Postgres/exact-RC gates GREEN | **PENDING XSTORE-018** |
 | XSTORE-020 | Live production acceptance + permanent reconciliation | Owner/Manager runs real target week end-to-end, confirms CN1–CN4 UX and coverage, then reconcile permanent docs and resume/close XSTORE-011 | **PENDING XSTORE-019** |
@@ -371,8 +371,8 @@ XSTORE-001 DONE
 → XSTORE-013 DONE / exact-main green / continuous coverage + exact shortage intervals
 → XSTORE-014 DONE / exact-main green / interval-composed Auto Schedule
 → XSTORE-015 DONE / exact-main green / Manager Availability override + all eligible employee picker
-→ XSTORE-016 READY / scheduling information architecture + CN accordion
-→ XSTORE-017 / inline shortage cells + direct resolution
+→ XSTORE-016 DONE / exact-main green / scheduling information architecture + CN accordion
+→ XSTORE-017 READY / inline shortage cells + direct resolution
 → XSTORE-018 / supplemental employee pool
 → XSTORE-019 / integrated regression + exact-RC qualification
 → XSTORE-020 / live production acceptance + permanent reconciliation
@@ -1114,7 +1114,7 @@ Machine handoff:
 MAGASIN_TASK_CONTROL_V1
 STATUS=READY
 TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-016
+NEXT_TASK_ID=XSTORE-017
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -1230,7 +1230,45 @@ Browser/regression proof:
 - registered Availability add path, DRAFT save, Validate → Review → Publish, employee approved schedule projection and cross-role responsive gates all pass;
 - no production business data was fabricated.
 
-XSTORE-016 is now the sole next executable task and owns the scheduling information architecture + CN1–CN4 branch accordion editor. XSTORE-011 remains paused until XSTORE-013→020 are complete.
+XSTORE-016 is complete and exact-main green. XSTORE-017 is now the sole next executable task and owns inline shortage visualization + direct resolution. XSTORE-011 remains paused until XSTORE-013→020 are complete.
+
+## 6.0.13 XSTORE-016 scheduling IA + branch accordion acceptance — 2026-10-05
+
+XSTORE-016 is **DONE / EXACT-MAIN GREEN**.
+
+Implementation:
+- PR #388 moved the Manager/Owner scheduling information architecture to one global weekly header plus CN1–CN4 branch accordions;
+- the old global branch selector was removed;
+- exactly one branch editor is active at a time and is colocated with its branch identity;
+- branch/week navigation preserves unsaved-change safety through an explicit discard confirmation;
+- Auto Schedule remains a global weekly operation outside the branch editor and four-store master;
+- the four-store master is now a collapsed secondary overview instead of sitting between branch selection and DRAFT editing;
+- Manager scheduling UI2 was reconciled to the accordion topology without creating a second writer;
+- DRAFT row edits sync DOM values before rerender so edited employee/time values persist into the canonical save payload;
+- the global Auto Schedule container is responsive with border-box sizing and does not create page overflow;
+- legacy People Shift/UI2 browser regressions and fixtures were reconciled to the canonical XSTORE-016 topology;
+- no production business data was fabricated.
+
+Implementation PR #388:
+- final implementation / repair head `4ca577a3ae799ff4237d047071df093deec5585d`;
+- merge / executable main `8e55e0c2e9b9ee15d5577014a107b8c1d545e814`.
+
+Exact-main gates for `8e55e0c2e9b9ee15d5577014a107b8c1d545e814`:
+- XSTORE-016 Scheduling IA QA run `37222094775` = **SUCCESS**;
+- XSTORE-015 Manager Override QA run `37222094944` = **SUCCESS**;
+- People Shift Day-10 Tests run `37222094840` = **SUCCESS**;
+- UI2 Cross Role Acceptance run `37222094773` = **SUCCESS**;
+- Validate MAGASIN GitHub Pages source run `37222094835` = **SUCCESS**;
+- Pages build/deployment run `37222094131` = **SUCCESS**.
+
+Browser/regression proof:
+- branch accordion desktop/mobile coverage passes at 1440px and 390px;
+- exactly one branch editor is open and the global `#msdStore` selector is absent;
+- unsaved branch switching is guarded and preserves DRAFT safety;
+- XSTORE recurring setup remains responsive with no page horizontal overflow;
+- People Shift and UI2 cross-role/cold-reload regressions pass on exact main.
+
+XSTORE-017 is now the sole next executable task and owns inline shortage cells + direct supplement action. XSTORE-011 remains paused until XSTORE-013→020 are complete.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
