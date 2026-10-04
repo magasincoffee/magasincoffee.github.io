@@ -23,7 +23,7 @@ function applyBandClass(el,value){
 }
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const scheduleApi=()=>window.MAGASIN_MANAGER_SCHEDULE_DRAFT;
-const state={week:null,stores:[],requirements:[],editing:false,editorCell:null,surface:'week',setupFocus:null,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null};
+const state={week:null,stores:[],requirements:[],editing:false,editorCell:null,surface:'week',setupFocus:null,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null,globalDraftCount:null,globalOfficialCount:null};
 const mount=()=>document.getElementById('xstoreAutomationMount');
 const validBlock=r=>r.store_id&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&r.start_time&&r.end_time&&Number(r.target_headcount)>0;
 const configuredStoreIds=()=>new Set(state.requirements.filter(validBlock).map(r=>String(r.store_id)));
@@ -178,6 +178,8 @@ function workflowModel(priorityReady,staffingReady){
  const scheduling=scheduleApi()?.getState?.()||{};
  const stage=String(scheduling.generationStatus||'NONE').toUpperCase();
  const validation=String(scheduling.lastValidation||'').toUpperCase();
+ const localAssignmentCount=Number(scheduling.assignments?.length||0);
+ const globalDraftCount=state.globalDraftCount===null?localAssignmentCount:Number(state.globalDraftCount||0);
  let model={stage,validation,current:1,doneAll:false,action:'setup-priority',label:'Thiết lập ưu tiên cửa hàng',title:'Hoàn thiện dữ liệu chuẩn bị',reason:'Cần có ưu tiên cửa hàng và nhu cầu nhân sự cố định trước khi tạo lịch nháp.',disabled:false};
  if(!state.week){
   model={...model,action:'blocked',label:'Chưa thể tạo lịch',title:'Chưa xác định tuần xếp lịch',reason:'Hệ thống cần xác định tuần vận hành trước khi tiếp tục.',disabled:true};
@@ -189,6 +191,8 @@ function workflowModel(priorityReady,staffingReady){
   model={...model,current:4,action:'blocked',label:'Đang khóa thao tác',title:'Cần xử lý nhiều bản nháp cùng tuần',reason:'Có nhiều bản nháp cho cùng cửa hàng và tuần. Các thao tác tạo, duyệt và phát hành tạm khóa để tránh ghi đè.',disabled:true};
  }else if(stage==='NONE'){
   model={...model,current:2,action:'auto',label:'Tạo lịch nháp tự động',title:'Tạo lịch nháp',reason:'Dữ liệu chuẩn bị đã sẵn sàng. Hệ thống sẽ áp dụng cấu hình cố định vào tuần đang chọn.',disabled:false};
+ }else if(stage==='DRAFT'&&globalDraftCount===0){
+  model={...model,current:2,action:'auto',label:'Tạo lịch nháp tự động',title:'Bản nháp đang rỗng',reason:'Tuần này đã có vỏ bản nháp nhưng chưa có ca nào. Hãy chạy xếp lịch tự động để tạo ca trước khi kiểm tra hoặc duyệt.',disabled:false};
  }else if(stage==='DRAFT'&&validation==='VALID'){
   model={...model,current:5,action:'review',label:'Duyệt lịch',title:'Duyệt lịch đã kiểm tra',reason:'Lịch đã qua kiểm tra xung đột. Bước tiếp theo là duyệt trước khi phát hành.',disabled:false};
  }else if(stage==='DRAFT'){
@@ -411,6 +415,7 @@ async function autoSchedule(){
    result=await callAuto(true);
   }
   state.assignmentCount=Number(result.assignment_count||0);
+  state.globalDraftCount=state.assignmentCount;
   state.shortages=Array.isArray(result.shortages)?result.shortages:[];
   state.message=state.shortages.length
    ? 'Hệ thống đã áp dụng nhu cầu hàng tuần và tạo lịch nháp nhưng còn '+state.shortages.length+' khung thiếu người. Quản lý cần kiểm tra và chỉnh trước khi duyệt.'
@@ -517,9 +522,12 @@ async function onMaster(detail={}){
  const nextWeek=detail.week||null;
  const weekChanged=String(nextWeek||'')!==String(state.week||'');
  state.week=nextWeek;
- if(weekChanged){state.assignmentCount=null;state.shortages=[];state.message='';state.messageType=''}
+ if(weekChanged){state.assignmentCount=null;state.shortages=[];state.message='';state.messageType='';state.globalDraftCount=null;state.globalOfficialCount=null}
  state.stores=Array.isArray(detail.stores)?detail.stores.map(x=>({...x})):[];
  state.unconfiguredEmployeeCount=Number(detail.unconfiguredEmployeeCount||0);
+ state.globalDraftCount=Number(detail.globalDraftCount||0);
+ state.globalOfficialCount=Number(detail.globalOfficialCount||0);
+ state.assignmentCount=state.globalDraftCount;
  render();
  if(!state.loaded)await loadRequirements();
 }
