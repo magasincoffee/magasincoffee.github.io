@@ -19,7 +19,7 @@ async function managerFrame(page){
  const frame=await handle?.contentFrame();
  if(!frame)throw new Error("XSTORE_016_MANAGER_FRAME_MISSING");
  await frame.locator(".msd-ui2-012[data-ui2-schedule-board='1']").waitFor({timeout:10000});
- await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT?.getState?.().stores?.length===4);
+ await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT?.getState?.().stores?.length>=1);
  return frame;
 }
 
@@ -40,8 +40,10 @@ for(const width of [1440,390]){
    const overview=root.querySelector(".msd-global-overview");
    const auto=root.querySelector("#xstoreAutomationMount");
    const head=root.querySelector(".msd-head");
+   const state=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();
    const metric={
     expected,
+    expectedBranches:state.stores.length,
     branches:branches.length,
     expanded:expanded.length,
     panels:panels.length,
@@ -53,7 +55,7 @@ for(const width of [1440,390]){
     scrollWidth:document.documentElement.scrollWidth,
     clientWidth:document.documentElement.clientWidth
    };
-   if(metric.branches!==4||metric.expanded!==1||metric.panels!==1||metric.hasGlobalSelector||metric.overviewOpen||metric.autoInsideOverview||metric.weekControls!==3||metric.branchActionsInHead!==0)throw new Error(JSON.stringify(metric));
+   if(metric.branches!==metric.expectedBranches||metric.branches<1||metric.expanded!==1||metric.panels!==1||metric.hasGlobalSelector||metric.overviewOpen||metric.autoInsideOverview||metric.weekControls!==3||metric.branchActionsInHead!==0)throw new Error(JSON.stringify(metric));
    if(metric.scrollWidth>metric.clientWidth+2)throw new Error("page overflow "+JSON.stringify(metric));
    return JSON.stringify(metric);
   },width);
@@ -69,6 +71,11 @@ for(const width of [1440,390]){
  const page=await context.newPage();attach(page);
  await page.goto(BASE+"/09_QA/people-shift/ui2-012-manager-scheduling-fixture.html",{waitUntil:"networkidle",timeout:20000});
  const frame=await managerFrame(page);
+ await frame.evaluate(async()=>{
+  globalThis.__MW31_QA.setAccessibleStores(["store-a","store-c"]);
+  await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.refresh();
+ });
+ await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().stores.length===2);
 
  await frame.locator("#msdStart").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().generationStatus==="DRAFT");
@@ -78,7 +85,7 @@ for(const width of [1440,390]){
  await check("xstore_016_unsaved_branch_switch_can_be_cancelled",async()=>{
   let message="";
   page.once("dialog",async dialog=>{message=dialog.message();await dialog.dismiss()});
-  await frame.locator('[data-msd-branch="store-b"]').click();
+  await frame.locator('[data-msd-branch="store-c"]').click();
   await frame.waitForTimeout(100);
   const state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
   if(state.storeId!=="store-a"||state.dirty!==true||!message.includes("thay đổi chưa lưu"))throw new Error(JSON.stringify({state,message}));
@@ -90,8 +97,8 @@ for(const width of [1440,390]){
  await check("xstore_016_unsaved_branch_switch_can_be_confirmed",async()=>{
   let message="";
   page.once("dialog",async dialog=>{message=dialog.message();await dialog.accept()});
-  await frame.locator('[data-msd-branch="store-b"]').click();
-  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-b"&&!s.busy&&s.dirty===false});
+  await frame.locator('[data-msd-branch="store-c"]').click();
+  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-c"&&!s.busy&&s.dirty===false});
   const state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
   const expanded=await frame.locator('[data-msd-branch][aria-expanded="true"]').count();
   const panels=await frame.locator(".msd-branch-panel").count();
