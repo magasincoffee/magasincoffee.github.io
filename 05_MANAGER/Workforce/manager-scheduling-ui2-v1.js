@@ -130,8 +130,6 @@ function structure(r){
   actions.remove();
   head.append(context);
  }
- const summaries=[...r.querySelectorAll(':scope > .msd-summary')];
- if(summaries[0])summaries[0].remove();
  const banner=document.createElement('div');
  banner.className='msu2-state-banner';
  banner.setAttribute('role','status');
@@ -140,6 +138,7 @@ function structure(r){
  head?.after(banner);
  const supportingSummary=r.querySelector(':scope > .msd-summary');
  if(supportingSummary)supportingSummary.classList.add('msu2-state-summary');
+ for(const id of ['msdStart','msdReload','msdSave']){const el=r.querySelector('#'+id);if(el){el.classList.remove('primary');el.classList.add('msu2-secondary-action')}}
 
  const source=r.querySelector('.msd-source');
  const sourceTitle=source?.querySelector(':scope > b');
