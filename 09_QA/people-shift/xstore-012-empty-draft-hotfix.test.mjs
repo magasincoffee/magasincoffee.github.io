@@ -47,11 +47,10 @@ test("XSTORE-012 backend guard automatically protects review and publish",()=>{
  assert.match(publishGate,/publish_schedule_generation[\s\S]*validate_schedule_generation_v1\(p_generation_id\)/);
 });
 
-test("XSTORE-012 cache lineage remains intact while newer draft editor revisions may advance",()=>{
- assert.ok(engine.includes("draft-publish-v1.js?v=20261004-xstore-015"),"draft-publish-v1.js");
- for(const asset of ["cross-store-master-v1.js","cross-store-auto-schedule-v1.js"]){
-  assert.ok(engine.includes(asset+"?v=20261004-xstore-012"),asset);
- }
+test("XSTORE-012 cache lineage remains intact while newer scheduling IA revisions may advance",()=>{
+ assert.match(engine,/draft-publish-v1\.js\?v=20261004-xstore-01[56]/);
+ assert.match(engine,/cross-store-master-v1\.js\?v=(?:20261004-xstore-012|20261004-xstore-016)/);
+ assert.ok(engine.includes("cross-store-auto-schedule-v1.js?v=20261004-xstore-012"),"cross-store-auto-schedule-v1.js");
 });
 
 console.log("XSTORE_012_EMPTY_DRAFT_HOTFIX=PASS");
