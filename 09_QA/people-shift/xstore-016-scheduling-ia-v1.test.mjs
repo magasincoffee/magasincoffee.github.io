@@ -32,11 +32,10 @@ test("XSTORE-016 keeps global week/actions separate from branch-local editor act
 });
 
 test("XSTORE-016 moves Auto Schedule global and four-store master to collapsed secondary overview",()=>{
-  const auto=draft.indexOf('id="xstoreAutomationMount"');
-  const branches=draft.indexOf("branchRowsHtml(stage");
-  const overview=draft.indexOf("msd-global-overview");
-  assert.ok(auto>=0&&branches>=0&&overview>=0);
-  assert.ok(auto<branches,"Auto Schedule must render before branch accordion");
+  assert.ok(
+    draft.includes("globalSummary+'<div id=\"xstoreAutomationMount\"></div>'+branchRowsHtml(stage,stepHtml,officialHtml,actionHelp)+'<details class=\"msd-global-overview\">"),
+    "render order must be global Auto Schedule → branch accordion → collapsed overview"
+  );
   assert.match(draft,/<details class="msd-global-overview">/);
   assert.match(draft,/Tổng quan 4 cửa hàng · thông tin tham khảo/);
   assert.doesNotMatch(master,/id="xstoreAutomationMount"/);
