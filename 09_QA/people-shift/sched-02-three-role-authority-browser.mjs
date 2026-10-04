@@ -83,7 +83,7 @@ try{
     if(await owner.locator('#panel-publish').isVisible())throw new Error('Owner detail visible before store selection');
     await owner.locator('[data-owner-store-open="store-a"]').click();
     await owner.locator('.msd[data-scheduling-actor="OWNER"]').waitFor();
-    await owner.locator('#msdStore').selectOption('store-b');
+    await owner.locator('[data-msd-branch="store-b"]').click();
     await owner.locator('#panel-publish').filter({hasText:'Chi CN2'}).waitFor();
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error(text);
