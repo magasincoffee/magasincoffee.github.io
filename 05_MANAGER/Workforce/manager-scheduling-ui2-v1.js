@@ -10,7 +10,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msd-ui2-012 .msd-head{display:grid;gap:14px;align-items:stretch}
 .msd-ui2-012 .msu2-title h2{font-size:25px;line-height:32px;color:#101828;letter-spacing:-.01em}
 .msd-ui2-012 .msu2-title .muted{max-width:760px;font-size:12px;line-height:18px}
-.msu2-context-bar{display:grid;grid-template-columns:minmax(240px,.8fr) minmax(360px,1.2fr);gap:10px}
+.msu2-context-bar{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
 .msu2-control-group,.msu2-draft-actions{border:1px solid #dfe5ec;border-radius:12px;background:#fff;padding:10px}
 .msu2-draft-actions{background:#fbfcfe}.msu2-draft-actions .btn{background:#fff;color:#475467;border-color:#d0d5dd;box-shadow:none}.msu2-draft-actions .btn:hover{background:#f8fafc}.msu2-draft-actions .btn.primary{background:#fff;color:#475467;border-color:#d0d5dd;box-shadow:none}
 .msu2-control-label,.msu2-section-kicker{display:block;margin-bottom:5px;color:#667085;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
@@ -106,7 +106,7 @@ function stageModel(state,busy){
  if(stage==='REVIEWED')return {tone:'reviewed',chip:'ĐÃ DUYỆT',title:'Đã duyệt · chờ phát hành',detail:'Lịch nháp đã được duyệt. Bước tiếp theo là phát hành lịch làm chính thức.'};
  if(stage==='PUBLISHED')return {tone:'published',chip:'ĐÃ PHÁT HÀNH',title:'Đã phát hành',detail:'Lịch làm chính thức đã sẵn sàng để xem bên dưới.'};
  if(stage==='CONFLICT')return {tone:'conflict',chip:'CẦN XỬ LÝ',title:'Có nhiều bản nháp cùng cửa hàng và tuần',detail:'Tạm khóa chỉnh sửa để tránh ghi đè. Tải lại sau khi dữ liệu trùng được xử lý.'};
- return {tone:'none',chip:'CHƯA TẠO',title:'Chưa có lịch nháp',detail:'Chọn cửa hàng và tuần, sau đó tạo hoặc mở một lịch nháp.'};
+ return {tone:'none',chip:'CHƯA TẠO',title:'Chưa có lịch nháp',detail:'Mở chi nhánh cần xếp ngay bên dưới, sau đó tạo hoặc mở lịch nháp của chi nhánh đó.'};
 }
 function structure(r){
  if(r.dataset.ui2SchedulingEnhanced==='1')return;
@@ -119,25 +119,17 @@ function structure(r){
  const actions=head?.querySelector(':scope > .msd-actions');
  if(head&&actions){
   const context=document.createElement('div');context.className='msu2-context-bar';
-  const storeGroup=group('msu2-control-group','Cửa hàng đang xếp');
   const weekGroup=group('msu2-control-group','Tuần vận hành · Asia/Ho_Chi_Minh');
   const weekControls=document.createElement('div');weekControls.className='msu2-week-controls';
-  const store=actions.querySelector('#msdStore');
   const weekButtons=[...actions.querySelectorAll('[data-msd-week]')];
   const badge=actions.querySelector('.badge');
-  if(store)storeGroup.appendChild(store);
   for(const b of weekButtons)weekControls.appendChild(b);
   if(badge)weekControls.appendChild(badge);
   weekGroup.appendChild(weekControls);
-  context.append(storeGroup,weekGroup);
-
-  const draftActions=group('msu2-draft-actions','Thao tác phụ · lịch nháp');
-  for(const id of ['msdStart','msdReload','msdSave']){const el=actions.querySelector('#'+id);if(el){el.classList.remove('primary');el.classList.add('msu2-secondary-action');draftActions.appendChild(el)}}
+  context.append(weekGroup);
   actions.remove();
-  head.append(context,draftActions);
+  head.append(context);
  }
- const summaries=[...r.querySelectorAll(':scope > .msd-summary')];
- if(summaries[0])summaries[0].remove();
  const banner=document.createElement('div');
  banner.className='msu2-state-banner';
  banner.setAttribute('role','status');
@@ -146,6 +138,7 @@ function structure(r){
  head?.after(banner);
  const supportingSummary=r.querySelector(':scope > .msd-summary');
  if(supportingSummary)supportingSummary.classList.add('msu2-state-summary');
+ for(const id of ['msdStart','msdReload','msdSave']){const el=r.querySelector('#'+id);if(el){el.classList.remove('primary');el.classList.add('msu2-secondary-action')}}
 
  const source=r.querySelector('.msd-source');
  const sourceTitle=source?.querySelector(':scope > b');

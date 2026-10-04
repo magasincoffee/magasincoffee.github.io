@@ -91,7 +91,7 @@ test("TASK-094 Manager board delegates create/resume and validation idempotency 
   const createEnd=draft.indexOf("function sourceHtml()",createStart);
   const create=draft.slice(createStart,createEnd);
   assert.match(create,/create_schedule_generation/);
-  assert.match(create,/Đã mở đúng một bản nháp cho cửa hàng và tuần đã chọn/);
+  assert.match(create,/Đã mở đúng một bản nháp cho chi nhánh và tuần đã chọn/);
   assert.doesNotMatch(create,/if\(drafts\.length\)\{/);
 
   const resumeStart=draft.indexOf("async function resumeOnly()");

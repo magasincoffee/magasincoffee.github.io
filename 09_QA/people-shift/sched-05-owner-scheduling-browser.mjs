@@ -16,7 +16,7 @@ page.on("requestfailed",r=>report.request_failures.push(`FAILED ${r.method()} ${
 page.on("response",r=>{if(r.status()>=500)report.request_failures.push(`HTTP ${r.status()} ${r.url()}`)});
 
 async function selectStore(id){
-  await page.locator("#msdStore").selectOption(id);
+  await page.locator('[data-msd-branch="'+id+'"]').click();
   await page.waitForFunction(expected=>{
     const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();
     return s.storeId===expected&&s.busy===false;
@@ -51,9 +51,9 @@ try{
   await check("owner_selected_store_opens_shared_manager_scheduling_surface",async()=>{
     const s=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
     const text=await page.locator("#panel-publish").innerText();
-    const options=await page.locator("#msdStore option").allTextContents();
+    const branches=await page.locator("[data-msd-branch]").allTextContents();
     if(s.storeId!=="store-a"||s.stores.length!==4||s.eligibleEmployees.length!==2)throw new Error(JSON.stringify(s));
-    if(options.length!==4||!text.includes("Giám sát xếp lịch")||!text.includes("Nhân viên đủ điều kiện xếp ca"))throw new Error(JSON.stringify({options,text}));
+    if(branches.length!==4||await page.locator("#msdStore").count()!==0||!text.includes("Giám sát xếp lịch")||!text.includes("Nhân viên đủ điều kiện xếp ca"))throw new Error(JSON.stringify({branches,text}));
     for(const forbidden of ["Enterprise oversight","canonical","writer","direct table DML","DRAFT","Validate","Review","Publish"]){
       if(text.includes(forbidden))throw new Error("technical copy visible: "+forbidden);
     }

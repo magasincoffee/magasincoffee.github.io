@@ -34,6 +34,7 @@ function ensureCss(){
  const s=document.createElement('style');s.id='xstore-auto-schedule-v1-css';
  s.textContent=`
 .xsa{
+  box-sizing:border-box;
   width:100%;
   max-width:100%;
   min-width:0;

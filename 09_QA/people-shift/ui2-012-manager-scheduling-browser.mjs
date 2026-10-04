@@ -228,13 +228,13 @@ await check("ui2_012_official_schedule_entry_delegates_to_existing_route",async(
 
 await check("ui2_012_store_and_week_navigation_clear_stale_projection_then_reload",async()=>{
  await frame.evaluate(async()=>{globalThis.__MW31_QA.setAccessibleStores(["store-a","store-c"]);await globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.openDirect({storeId:"store-a",week:"2026-09-28"})});
- await frame.waitForFunction(()=>document.querySelectorAll("#msdStore option").length===2&&!globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy);
- await frame.locator("#msdStore").selectOption("store-c");
+ await frame.waitForFunction(()=>document.querySelectorAll("[data-msd-branch]").length===2&&!globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy);
+ await frame.locator('[data-msd-branch="store-c"]').click();
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-c"&&!s.busy});
  let state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
  let text=await frame.locator("#panel-publish").innerText();
  if(state.generationStatus!=="NONE"||state.assignments.length||state.availability.length||state.eligibleEmployees.length||state.officialRows.length||!text.includes("Không có nhân viên ACTIVE nào đủ Store Priority")||!text.includes("Không có Availability đã đăng ký")||text.includes("Nhân viên QA 1"))throw new Error(JSON.stringify({state,text}));
- await frame.locator("#msdStore").selectOption("store-a");
+ await frame.locator('[data-msd-branch="store-a"]').click();
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-a"&&!s.busy&&s.generationStatus==="PUBLISHED"});
  await frame.locator('[data-msd-week="next"]').click();
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.week==="2026-10-05"&&!s.busy});
