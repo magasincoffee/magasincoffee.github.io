@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-011 RESUMED FOR LIVE AUTO-SCHEDULE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013 IN DEVELOPMENT / XSTORE-011 RESUMED  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -340,6 +340,7 @@ Out of scope unless explicitly added later:
 | XSTORE-C05 | Regression + production-safe correction acceptance | Prove persistence across weeks, Manager edit/save, Robot projection, security, browser/reload and exact-main gates; no fake staffing/schedule business data | **DONE / EXACT-MAIN GREEN / PRODUCTION-SAFE ACCEPTANCE** |
 | XSTORE-011 | Canonical reconciliation + temp cleanup | Real Manager configuration using the corrected recurring weekly model → Auto Schedule → review/edit → Validate → Review → Publish → permanent-doc reconciliation → delete TEMP SOT | **RESUMED / OWNER LIVE AUTO-SCHEDULE NEXT** |
 | XSTORE-012 | Empty DRAFT production hotfix | Empty DRAFT routes back to Auto Schedule; zero-assignment generation fails validation/review/publish; regression + production release | **DONE / RELEASED / EXACT-MAIN GREEN** |
+| XSTORE-013 | Manager manual availability override | Manager can save a DRAFT using any ACTIVE employee eligible for the selected store even when the employee did not register that time; mismatch becomes an explicit warning/audit marker rather than a blocking error; employee picker is no longer availability-only | **IN DEVELOPMENT / RELEASE GOVERNANCE APPLIES** |
 
 ## 5. Recommended execution order
 
@@ -670,6 +671,45 @@ Manager opens target week 2026-10-05
 ```
 
 Do not mark XSTORE-011 complete until the real Manager-approved schedule is published and final permanent-doc reconciliation/temp cleanup is complete.
+
+## 6.0.9 XSTORE-013 Manager manual availability override — Owner rule 2026-10-04
+
+Owner clarified the real operating rule after live use:
+
+- Employee Availability is an input for Auto Schedule and a planning signal, **not a hard prohibition against Manager manual assignment**.
+- When a store is short-staffed, Manager may contact an employee who did not register that time and place that employee into the DRAFT manually.
+- The Manager employee picker must therefore not be limited to employees whose Availability fully covers the selected interval.
+- Manual DRAFT save must succeed when Availability is absent or does not cover the manually selected interval, provided all other hard safety rules remain valid.
+- Availability mismatch must remain visible as an explicit warning/audit fact so Manager understands the assignment was an override.
+- Auto Schedule itself continues to respect registered Availability; this exception is for Manager/Owner manual editing only.
+
+Canonical safety split:
+
+```text
+HARD BLOCKS
+- inactive / invalid employee
+- store not allowed by the management-owned Store Priority profile
+- invalid interval / outside target week
+- same-person overlap, including cross-store overlap
+- overlap with official schedule
+- max assignment/day and other existing hard safety rules
+
+MANAGER OVERRIDE / WARNING
+- no Availability registered for that interval
+- selected interval extends outside registered Availability
+```
+
+Required implementation:
+
+1. Manager/Owner manual employee dropdown includes all ACTIVE employees eligible for the selected store, not only Availability-matching employees.
+2. Employees whose registered Availability covers the interval should be labeled as available; others remain selectable and are labeled as outside/no registration.
+3. `replace_schedule_generation_assignments` automatically tags a manual out-of-Availability row with `MANAGER_AVAILABILITY_OVERRIDE`.
+4. `validate_schedule_generation_v1` treats the tagged Availability mismatch as a warning, not a violation.
+5. Review/Publish remain canonical and still fail on all hard conflicts.
+6. Auto Schedule is unchanged and continues to require Availability.
+7. Regression must prove that an out-of-Availability Manager assignment can save/review/publish while overlap/store-eligibility failures still fail closed.
+
+Release governance remains mandatory. No production release without exact-RC qualification and Owner approval.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
