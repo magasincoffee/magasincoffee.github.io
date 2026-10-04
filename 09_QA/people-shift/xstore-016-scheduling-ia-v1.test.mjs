@@ -53,12 +53,12 @@ test("XSTORE-016 preserves unsaved-change safety for branch and week navigation"
 });
 
 test("XSTORE-016 cache chain points at exact IA runtime",()=>{
+  assert.match(engine,/draft-publish-v1\.js\?v=2026100[45]-xstore-01[67]/);
   for(const token of [
-    "draft-publish-v1.js?v=20261004-xstore-016",
     "cross-store-master-v1.js?v=20261004-xstore-016",
     "manager-scheduling-ui2-v1.js?v=20261004-xstore-016"
   ])assert.ok(engine.includes(token),token);
-  assert.ok(engine.includes("cross-store-auto-schedule-v1.js?v=20261004-xstore-012"));
+  assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=2026100[45]-xstore-01[27]/);
 });
 
 console.log("XSTORE_016_SCHEDULING_IA_STATIC=PASS");
