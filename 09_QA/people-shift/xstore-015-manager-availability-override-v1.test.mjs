@@ -60,7 +60,7 @@ test("Manager picker reads full canonical eligible employee pool",()=>{
 });
 
 test("runtime cache retains XSTORE-015 Manager editor behavior through later IA revision",()=>{
-  assert.match(engine,/draft-publish-v1\.js\?v=20261004-xstore-01[56]/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20261004-xstore-015|20261004-xstore-016|20261005-xstore-017)/);
 });
 
 test("Auto Schedule remains Availability-bound and never gains override marker",()=>{

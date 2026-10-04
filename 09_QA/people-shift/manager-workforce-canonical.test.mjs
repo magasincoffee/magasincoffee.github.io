@@ -139,7 +139,7 @@ test("SCHED-04 reload resumes DRAFT REVIEWED or PUBLISHED through one canonical 
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   assert.match(draft,/async function listGenerations\(\)/);
   assert.match(draft,/\['DRAFT','REVIEWED','PUBLISHED'\]/);
-  assert.match(draft,/if\(state\.generationStatus==='PUBLISHED'\)await loadOfficialRows\(\)/);
+  assert.match(draft,/if\(state\.generationStatus==='PUBLISHED'\)\{await loadOfficialRows\(\)/);
   assert.match(draft,/get_manager_weekly_schedule/);
   assert.match(draft,/officialRows/);
 });

@@ -35,9 +35,13 @@ try {
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error('cross-store stale content: '+text);
     const calls=await owner.evaluate(before=>window.__SCHED05_OWNER_QA.calls.slice(before),before);
-    const scoped=calls.filter(x=>['get_manager_weekly_availability','list_schedule_generations'].includes(x.name));
-    if(scoped.length<2||scoped.some(x=>x.args.p_store_id!=='store-b'))throw new Error(JSON.stringify(calls));
-    return 'store-b scoped reload';
+    const storeScoped=calls.filter(x=>x?.args&&Object.prototype.hasOwnProperty.call(x.args,'p_store_id'));
+    if(!storeScoped.some(x=>x.name==='get_manager_weekly_availability'))throw new Error('missing store-b availability reload: '+JSON.stringify(calls));
+    if(storeScoped.some(x=>x.args.p_store_id!=='store-b'))throw new Error('cross-store RPC scope leak: '+JSON.stringify(calls));
+    const allowedUnscoped=new Set(['list_employee_workforce_profiles_v1','list_workforce_recurring_staffing_requirements_v1']);
+    const unexpected=calls.filter(x=>!Object.prototype.hasOwnProperty.call(x?.args||{},'p_store_id')&&!allowedUnscoped.has(x.name));
+    if(unexpected.length)throw new Error('unexpected unscoped reload RPC: '+JSON.stringify(unexpected));
+    return 'store-b scoped reload · '+calls.map(x=>x.name).join(',');
   });
 
   const manager=await context.newPage();
