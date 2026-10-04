@@ -81,7 +81,8 @@ test("SCHED-05 shared writer is role-aware but retains one canonical RPC set",as
 
 test("SCHED-05 store/week changes clear stale projections before server reload",async()=>{
   const writer=await read("05_MANAGER/Workforce/draft-publish-v1.js");
-  assert.match(writer,/state\.assignments=\[\];state\.availability=\[\];state\.officialRows=\[\];state\.eligibleEmployees=\[\];state\.lastValidation=null;render\(\);status\('Đang tải dữ liệu cửa hàng đã chọn/);
+  assert.match(writer,/function resetBranchProjection\(\)[\s\S]*state\.assignments=\[\];state\.availability=\[\];state\.eligibleEmployees=\[\];state\.officialRows=\[\];state\.lastValidation=null;state\.dirty=false/);
+  assert.match(writer,/resetBranchProjection\(\);render\(\);status\('Đang tải lịch của chi nhánh đã mở/);
   assert.match(writer,/Đang tải dữ liệu tuần đã chọn/);
   assert.match(writer,/function officialRowsHtml\(\)/);
   assert.match(writer,/dữ liệu đã phát hành|lịch làm chính thức/i);
