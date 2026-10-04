@@ -39,7 +39,7 @@ test("XSTORE-016 moves Auto Schedule global and four-store master to collapsed s
   assert.match(draft,/<details class="msd-global-overview">/);
   assert.match(draft,/Tổng quan 4 cửa hàng · thông tin tham khảo/);
   assert.doesNotMatch(master,/id="xstoreAutomationMount"/);
-  assert.match(master,/Tổng quan lịch 4 cửa hàng/);
+  assert.match(master,/Tổng lịch 4 cửa hàng · tổng quan/);
 });
 
 test("XSTORE-016 preserves unsaved-change safety for branch and week navigation",()=>{
