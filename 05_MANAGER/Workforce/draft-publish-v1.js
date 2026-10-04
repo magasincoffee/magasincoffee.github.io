@@ -26,7 +26,7 @@ const actorCopy=()=>actorRole()==='OWNER'
  : {title:'Xếp lịch 4 cửa hàng',subtitle:'Xếp tự động toàn hệ thống → Quản lý chỉnh sửa → Kiểm tra → Duyệt → Phát hành.',source:'Thời gian có thể làm là lúc nhân viên có thể nhận ca; ưu tiên cửa hàng do Quản lý thiết lập trong hồ sơ nhân viên.'};
 const timeOptions=selected=>{let out='';for(let m=300;m<=1320;m+=30){const v=`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;out+=`<option value="${v}"${v===hm(selected)?' selected':''}>${v}</option>`}return out};
 const css=`<style id="manager-schedule-draft-editor-css">
-.msd{margin-top:0;min-width:0;max-width:100%;overflow:hidden}.msd-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.msd-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.msd-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.msd-pill{font-size:11px;font-weight:800;padding:5px 8px;border-radius:999px;background:#eef5ff;color:#235dba}.msd-warning{background:#fff6d8;color:#876900}.msd-ok{background:#e8f5ed;color:#23754a}.msd-layout{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,2fr);gap:12px;margin-top:14px;min-width:0;max-width:100%}.msd-source,.msd-board-wrap{border:1px solid var(--border);border-radius:13px;background:#fff;padding:12px;min-width:0;max-width:100%}.msd-board-wrap{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}.msd-source-list{display:grid;gap:8px;margin-top:10px;max-height:620px;overflow:auto}.msd-source-row{padding:10px;border:1px solid #d8e5ef;border-radius:10px;background:#f8fcfd}.msd-source-time{font-weight:800;color:#0f4778}.msd-source-name{font-weight:800;margin-top:3px}.msd-source-meta{font-size:11px;color:var(--muted);margin-top:3px}.msd-source-row .btn{margin-top:8px;width:100%}.msd-manual-picker{padding:10px;border:1px solid #c7d7eb;border-radius:10px;background:#f8fbff}.msd-manual-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:6px;margin-top:8px}.msd-manual-picker .btn{margin-top:8px;width:100%}.msd-source-separator{margin:12px 0 6px;font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase}.msd-override{display:inline-block;padding:3px 6px;border-radius:999px;background:#fff2cc;color:#7a5300;font-weight:800}@media(max-width:700px){.msd-manual-grid{grid-template-columns:1fr 1fr}}.msd-board{display:grid;grid-template-columns:repeat(7,minmax(190px,1fr));gap:9px;min-width:1386px;width:max-content}.msd-day{border:1px solid #dce5f0;border-radius:11px;min-height:230px;overflow:hidden}.msd-day-title{padding:9px;background:#f8fafd;border-bottom:1px solid #eef2f6;display:flex;justify-content:space-between}.msd-card{margin:8px;padding:9px;border:1px solid #cadce9;border-radius:9px;background:#fff}.msd-band-morning{background:var(--m-shift-morning-bg,#FFF4CC)!important;border-color:var(--m-shift-morning-border,#E7B84B)!important}.msd-band-afternoon{background:var(--m-shift-afternoon-bg,#FDE7E7)!important;border-color:var(--m-shift-afternoon-border,#E39C9C)!important}.msd-band-evening{background:var(--m-shift-evening-bg,#E8F3FF)!important;border-color:var(--m-shift-evening-border,#9EC7F1)!important}.msd-band-neutral{background:#fff!important}.msd-field{display:grid;gap:4px;margin-top:6px}.msd-field label{font-size:10px;font-weight:800;color:var(--muted)}.msd-input{height:35px;border:1px solid #ccd9e4;border-radius:8px;background:#fff;padding:0 7px;color:var(--text);min-width:0;width:100%}.msd-time-row{display:grid;grid-template-columns:1fr 1fr;gap:5px}.msd-meta{font-size:10px;color:var(--muted);margin-top:4px}.msd-empty{padding:20px 10px;text-align:center;color:var(--muted);font-size:12px}.msd-status{margin-top:12px;padding:10px 12px;border-radius:10px;background:#eef6ff;color:#235dba;font-size:12px;white-space:pre-wrap}.msd-status.error{background:#fbeaea;color:#9a3838}.msd-status.ok{background:#e8f5ed;color:#23754a}.msd-official-grid{display:grid;gap:8px;margin-top:10px}.msd-official-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 10px;border:1px solid #d7e6dc;border-radius:10px;background:#fff}.msd-official-name{font-weight:800}.msd-official-meta{font-size:11px;color:var(--muted);margin-top:3px}.msd-downstream{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}.msd-downstream summary{cursor:pointer;font-weight:700;color:var(--muted)}@media(max-width:980px){.msd-head{flex-direction:column;min-width:0}.msd-head .msd-actions{max-width:100%}.msd-layout{grid-template-columns:minmax(0,1fr);width:100%}.msd-source{min-width:0}.msd-board-wrap{width:100%}.msd-board{grid-template-columns:repeat(7,minmax(220px,1fr));min-width:1594px}}
+.msd{margin-top:0;min-width:0;max-width:100%;overflow:hidden}.msd-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.msd-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.msd-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.msd-pill{font-size:11px;font-weight:800;padding:5px 8px;border-radius:999px;background:#eef5ff;color:#235dba}.msd-warning{background:#fff6d8;color:#876900}.msd-ok{background:#e8f5ed;color:#23754a}.msd-layout{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,2fr);gap:12px;margin-top:14px;min-width:0;max-width:100%}.msd-source,.msd-board-wrap{border:1px solid var(--border);border-radius:13px;background:#fff;padding:12px;min-width:0;max-width:100%}.msd-board-wrap{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}.msd-source-list{display:grid;gap:8px;margin-top:10px;max-height:620px;overflow:auto}.msd-source-row{padding:10px;border:1px solid #d8e5ef;border-radius:10px;background:#f8fcfd}.msd-source-time{font-weight:800;color:#0f4778}.msd-source-name{font-weight:800;margin-top:3px}.msd-source-meta{font-size:11px;color:var(--muted);margin-top:3px}.msd-source-row .btn{margin-top:8px;width:100%}.msd-manual-picker{padding:10px;border:1px solid #c7d7eb;border-radius:10px;background:#f8fbff}.msd-manual-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:6px;margin-top:8px}.msd-manual-picker .btn{margin-top:8px;width:100%}.msd-source-separator{margin:12px 0 6px;font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase}.msd-override{display:inline-block;padding:3px 6px;border-radius:999px;background:#fff2cc;color:#7a5300;font-weight:800}@media(max-width:700px){.msd-manual-grid{grid-template-columns:1fr 1fr}}.msd-board{display:grid;grid-template-columns:repeat(7,minmax(190px,1fr));gap:9px;min-width:1386px;width:max-content}.msd-day{border:1px solid #dce5f0;border-radius:11px;min-height:230px;overflow:hidden}.msd-day-title{padding:9px;background:#f8fafd;border-bottom:1px solid #eef2f6;display:flex;justify-content:space-between}.msd-card{margin:8px;padding:9px;border:1px solid #cadce9;border-radius:9px;background:#fff}.msd-shortage-card{margin:8px;padding:10px;border:2px solid #8b5cf6;border-radius:10px;background:#f3efff;color:#4c1d95}.msd-shortage-head{display:flex;align-items:center;gap:6px;font-weight:900}.msd-shortage-icon{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:999px;background:#6d28d9;color:#fff;font-size:12px}.msd-shortage-time{margin-top:5px;font-size:13px;font-weight:900}.msd-shortage-meta{margin-top:3px;font-size:10px;color:#5b21b6}.msd-shortage-card .btn{margin-top:8px;width:100%;border-color:#7c3aed;color:#5b21b6;background:#fff}.msd-source-target{margin:0 0 10px;padding:9px 10px;border:2px solid #8b5cf6;border-radius:10px;background:#f7f3ff;color:#4c1d95;font-size:11px}.msd-source-target .btn{margin-top:7px}.msd-band-morning{background:var(--m-shift-morning-bg,#FFF4CC)!important;border-color:var(--m-shift-morning-border,#E7B84B)!important}.msd-band-afternoon{background:var(--m-shift-afternoon-bg,#FDE7E7)!important;border-color:var(--m-shift-afternoon-border,#E39C9C)!important}.msd-band-evening{background:var(--m-shift-evening-bg,#E8F3FF)!important;border-color:var(--m-shift-evening-border,#9EC7F1)!important}.msd-band-neutral{background:#fff!important}.msd-field{display:grid;gap:4px;margin-top:6px}.msd-field label{font-size:10px;font-weight:800;color:var(--muted)}.msd-input{height:35px;border:1px solid #ccd9e4;border-radius:8px;background:#fff;padding:0 7px;color:var(--text);min-width:0;width:100%}.msd-time-row{display:grid;grid-template-columns:1fr 1fr;gap:5px}.msd-meta{font-size:10px;color:var(--muted);margin-top:4px}.msd-empty{padding:20px 10px;text-align:center;color:var(--muted);font-size:12px}.msd-status{margin-top:12px;padding:10px 12px;border-radius:10px;background:#eef6ff;color:#235dba;font-size:12px;white-space:pre-wrap}.msd-status.error{background:#fbeaea;color:#9a3838}.msd-status.ok{background:#e8f5ed;color:#23754a}.msd-official-grid{display:grid;gap:8px;margin-top:10px}.msd-official-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:9px 10px;border:1px solid #d7e6dc;border-radius:10px;background:#fff}.msd-official-name{font-weight:800}.msd-official-meta{font-size:11px;color:var(--muted);margin-top:3px}.msd-downstream{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}.msd-downstream summary{cursor:pointer;font-weight:700;color:var(--muted)}@media(max-width:980px){.msd-head{flex-direction:column;min-width:0}.msd-head .msd-actions{max-width:100%}.msd-layout{grid-template-columns:minmax(0,1fr);width:100%}.msd-source{min-width:0}.msd-board-wrap{width:100%}.msd-board{grid-template-columns:repeat(7,minmax(220px,1fr));min-width:1594px}}
 
 .msd-branches{display:grid;gap:10px;margin-top:12px}
 .msd-branch{border:1px solid #dfe5ec;border-radius:13px;background:#fff;overflow:hidden}
@@ -52,7 +52,7 @@ const css=`<style id="manager-schedule-draft-editor-css">
 
 </style>`;
 
-let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignments:[],availability:[],eligibleEmployees:[],officialRows:[],generationStatus:'NONE',generationOrigin:null,duplicateDrafts:0,lastValidation:null,busy:false,dirty:false};
+let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignments:[],availability:[],eligibleEmployees:[],requirements:[],shortages:[],shortageSource:'NONE',supplementTarget:null,officialRows:[],generationStatus:'NONE',generationOrigin:null,duplicateDrafts:0,lastValidation:null,busy:false,dirty:false};
 const panel=()=>document.querySelector('#panel-publish');
 function client(){const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw new Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()}
 function ensurePolish(){
@@ -117,6 +117,35 @@ function priorityForStore(r){
  const i=ids.indexOf(String(state.storeId||''));
  return i>=0?i+1:999;
 }
+
+function activeRequirements(){
+ return state.requirements.filter(r=>String(r.store_id||'')===String(state.storeId||'')&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&mins(r.end_time)>mins(r.start_time)&&Number(r.target_headcount)>0);
+}
+function recalculateShortagesLocal(){
+ if(!state.generationId||!['DRAFT','REVIEWED'].includes(String(state.generationStatus||'').toUpperCase())){state.shortages=[];state.shortageSource='NONE';return state.shortages}
+ const out=[];
+ for(const r of activeRequirements()){
+  const workDate=add(state.week,Number(r.day_of_week)-1),start=mins(r.start_time),end=mins(r.end_time),target=Number(r.target_headcount||0);
+  const overlaps=state.assignments.filter(a=>String(a.work_date).slice(0,10)===workDate&&mins(a.end_time)>mins(a.start_time)&&mins(a.start_time)<end&&start<mins(a.end_time)).map((a,i)=>({
+   user_id:String(a.user_id||('__row_'+i)),
+   start:Math.max(start,mins(a.start_time)),
+   end:Math.min(end,mins(a.end_time))
+  }));
+  const boundaries=[start,end,...overlaps.flatMap(a=>[a.start,a.end])].filter(x=>Number.isFinite(x)&&x>=start&&x<=end).sort((a,b)=>a-b).filter((x,i,a)=>i===0||x!==a[i-1]);
+  for(let i=0;i<boundaries.length-1;i++){
+   const segStart=boundaries[i],segEnd=boundaries[i+1];if(segEnd<=segStart)continue;
+   const assigned=new Set(overlaps.filter(a=>a.start<=segStart&&a.end>=segEnd).map(a=>a.user_id)).size;
+   if(assigned>=target)continue;
+   const shortage={requirement_id:r.requirement_id||r.id||null,store_id:state.storeId,store_code:selectedStore()?.code||r.store_code||'',work_date:workDate,shortage_start:`${String(Math.floor(segStart/60)).padStart(2,'0')}:${String(segStart%60).padStart(2,'0')}`,shortage_end:`${String(Math.floor(segEnd/60)).padStart(2,'0')}:${String(segEnd%60).padStart(2,'0')}`,target_headcount:target,assigned_headcount:assigned,missing_headcount:target-assigned};
+   const prev=out.at(-1);
+   if(prev&&String(prev.requirement_id||'')===String(shortage.requirement_id||'')&&prev.work_date===shortage.work_date&&hm(prev.shortage_end)===hm(shortage.shortage_start)&&Number(prev.assigned_headcount)===assigned&&Number(prev.missing_headcount)===target-assigned)prev.shortage_end=shortage.shortage_end;
+   else out.push(shortage);
+  }
+ }
+ state.shortages=out;state.shortageSource='LOCAL';
+ if(state.supplementTarget&&!out.some(x=>x.work_date===state.supplementTarget.work_date&&hm(x.shortage_start)===hm(state.supplementTarget.shortage_start)&&hm(x.shortage_end)===hm(state.supplementTarget.shortage_end)))state.supplementTarget=null;
+ return out;
+}
 function profileCandidate(r,a){
  const userId=r.employee_id||r.user_id;
  const probe={...a,user_id:userId};
@@ -174,6 +203,19 @@ async function loadEligibleEmployees(){
   && r.priority_store_ids.map(String).includes(String(state.storeId))
  );
 }
+async function loadRequirements(){
+ const q=await client().rpc('list_workforce_recurring_staffing_requirements_v1',{});
+ if(q.error)throw q.error;
+ state.requirements=Array.isArray(q.data)?q.data.map(x=>({...x})):[];
+}
+async function loadAuthoritativeShortages(){
+ if(!state.generationId||!['DRAFT','REVIEWED'].includes(String(state.generationStatus||'').toUpperCase())){state.shortages=[];state.shortageSource='NONE';return}
+ const q=await client().rpc('list_cross_store_staffing_shortages_v1',{p_week_start:state.week});
+ if(q.error)throw q.error;
+ state.shortages=(Array.isArray(q.data)?q.data:[]).filter(x=>String(x.store_id||'')===String(state.storeId||'')).map(x=>({...x,shortage_start:hm(x.shortage_start),shortage_end:hm(x.shortage_end)}));
+ state.shortageSource='SERVER';
+ if(state.supplementTarget&&!state.shortages.some(x=>x.work_date===state.supplementTarget.work_date&&hm(x.shortage_start)===hm(state.supplementTarget.shortage_start)&&hm(x.shortage_end)===hm(state.supplementTarget.shortage_end)))state.supplementTarget=null;
+}
 async function listGenerations(){
  if(!state.storeId||!state.week)return [];
  const q=await client().rpc('list_schedule_generations',{p_store_id:state.storeId,p_week_start:state.week});
@@ -196,12 +238,12 @@ async function resumeOnly(){
  if(state.busy)return;
  state.busy=true;
  try{
-  await Promise.all([loadAvailability(),loadEligibleEmployees()]);
+  await Promise.all([loadAvailability(),loadEligibleEmployees(),loadRequirements()]);
   const runs=await listGenerations();
   state.duplicateDrafts=Math.max(0,runs.length-1);
   state.lastValidation=null;
   if(runs.length>1){
-   state.generationId=null;state.generationStatus='CONFLICT';state.generationOrigin=null;state.assignments=[];state.officialRows=[];
+   state.generationId=null;state.generationStatus='CONFLICT';state.generationOrigin=null;state.assignments=[];state.shortages=[];state.shortageSource='NONE';state.supplementTarget=null;state.officialRows=[];
    render();status('Có nhiều bản nháp cùng hoạt động cho cửa hàng và tuần này. Thao tác tạm khóa để tránh ghi đè.','error');return;
   }
   if(runs.length===1){
@@ -210,9 +252,9 @@ async function resumeOnly(){
    state.generationStatus=String(run.status||'DRAFT').toUpperCase();
    state.generationOrigin=run.algorithm_version||'MANAGER_DIRECT_V1';
    await loadDraftAssignments();
-   if(state.generationStatus==='PUBLISHED')await loadOfficialRows(); else state.officialRows=[];
+   if(state.generationStatus==='PUBLISHED'){await loadOfficialRows();state.shortages=[];state.shortageSource='NONE'}else{state.officialRows=[];await loadAuthoritativeShortages()}
   }else{
-   state.generationId=null;state.generationStatus='NONE';state.generationOrigin=null;state.assignments=[];state.officialRows=[];
+   state.generationId=null;state.generationStatus='NONE';state.generationOrigin=null;state.assignments=[];state.shortages=[];state.shortageSource='NONE';state.supplementTarget=null;state.officialRows=[];
   }
   state.dirty=false;render();
   if(state.generationStatus==='PUBLISHED')status('Lịch đã phát hành. Dữ liệu chính thức đã được tải lại từ hệ thống.','ok');
@@ -233,7 +275,8 @@ async function startOrResume(){
   if(listed.error)throw listed.error;
   const run=(Array.isArray(listed.data)?listed.data:[]).find(x=>String(x.id)===String(state.generationId));
   state.generationOrigin=run?.algorithm_version||'MANAGER_DIRECT_V1';
-  await Promise.all([loadAvailability(),loadEligibleEmployees(),loadDraftAssignments()]);
+  await Promise.all([loadAvailability(),loadEligibleEmployees(),loadRequirements(),loadDraftAssignments()]);
+  await loadAuthoritativeShortages();
   state.dirty=false;render();status('Đã mở đúng một bản nháp cho chi nhánh và tuần đã chọn.','ok');
  }catch(e){
   const raw=String(e?.message||e?.code||e||'');
@@ -248,19 +291,22 @@ async function startOrResume(){
 }
 function manualPickerHtml(){
  if(!state.eligibleEmployees.length)return '<div class="msd-empty">Không có nhân viên ACTIVE nào đủ Store Priority cho cửa hàng này.</div>';
- const days=Array.from({length:7},(_,i)=>add(state.week,i));
+ const days=Array.from({length:7},(_,i)=>add(state.week,i)),target=state.supplementTarget;
+ const selectedDate=target?.work_date||days[0],selectedStart=hm(target?.shortage_start||'06:00'),selectedEnd=hm(target?.shortage_end||'12:00');
  const options=state.eligibleEmployees
   .slice()
   .sort((a,b)=>priorityForStore(a)-priorityForStore(b)||String(employeeName(a)).localeCompare(String(employeeName(b)),'vi'))
   .map(r=>'<option value="'+esc(r.employee_id)+'">'+esc(employeeName(r))+' · Ưu tiên '+esc(priorityForStore(r))+'</option>')
   .join('');
- return '<div class="msd-manual-picker"><div class="msd-source-name">Điều động thủ công</div><div class="msd-source-meta">Chỉ nhân viên ACTIVE có Store Priority tại '+esc(selectedStore()?.code||'cửa hàng đã chọn')+'. Nếu ca nằm ngoài Availability, hệ thống sẽ tự gắn cảnh báo và audit marker.</div><div class="msd-manual-grid"><select class="msd-input" id="msdManualEmployee" aria-label="Nhân viên">'+options+'</select><select class="msd-input" id="msdManualDate" aria-label="Ngày">'+days.map((d,i)=>'<option value="'+esc(d)+'">'+DAYS[i]+' · '+d.slice(8,10)+'/'+d.slice(5,7)+'</option>').join('')+'</select><select class="msd-input" id="msdManualStart" aria-label="Bắt đầu">'+timeOptions('06:00')+'</select><select class="msd-input" id="msdManualEnd" aria-label="Kết thúc">'+timeOptions('12:00')+'</select></div><button class="btn" type="button" id="msdManualAdd"'+(state.generationId&&state.generationStatus==='DRAFT'?'':' disabled')+'>+ Thêm ca thủ công</button></div>';
+ return '<div class="msd-manual-picker" id="msdManualPicker"><div class="msd-source-name">Điều động thủ công</div><div class="msd-source-meta">Chỉ nhân viên ACTIVE có Store Priority tại '+esc(selectedStore()?.code||'cửa hàng đã chọn')+'. Nếu ca nằm ngoài Availability, hệ thống sẽ tự gắn cảnh báo và audit marker.</div><div class="msd-manual-grid"><select class="msd-input" id="msdManualEmployee" aria-label="Nhân viên">'+options+'</select><select class="msd-input" id="msdManualDate" aria-label="Ngày">'+days.map((d,i)=>'<option value="'+esc(d)+'"'+(d===selectedDate?' selected':'')+'>'+DAYS[i]+' · '+d.slice(8,10)+'/'+d.slice(5,7)+'</option>').join('')+'</select><select class="msd-input" id="msdManualStart" aria-label="Bắt đầu">'+timeOptions(selectedStart)+'</select><select class="msd-input" id="msdManualEnd" aria-label="Kết thúc">'+timeOptions(selectedEnd)+'</select></div><button class="btn" type="button" id="msdManualAdd"'+(state.generationId&&state.generationStatus==='DRAFT'?'':' disabled')+'>+ Thêm ca thủ công</button></div>';
 }
 function sourceHtml(){
+ const target=state.supplementTarget;
+ const targetHtml=target?'<div class="msd-source-target" role="status"><b>Đang bổ sung cho khoảng thiếu:</b> '+esc(target.work_date)+' · '+esc(hm(target.shortage_start))+'–'+esc(hm(target.shortage_end))+' · thiếu '+esc(target.missing_headcount)+' người.<br>Ngày và giờ đã được điền sẵn ở phần điều động thủ công.<br><button class="btn" type="button" data-msd-supplement-clear>Hủy chọn khoảng thiếu</button></div>':'';
  const availabilityHtml=state.availability.length
   ? '<div class="msd-source-list">'+state.availability.map((r,i)=>`<div class="msd-source-row ${bandClass(r.start_time)}"><div class="msd-source-time">${esc(String(r.work_date).slice(0,10))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</div><div class="msd-source-name">${esc(r.employee_name||r.username||r.user_id)}</div><div class="msd-source-meta">Đã đăng ký Availability · có thể xếp tại ${esc(selectedStore()?.code||'cửa hàng đã chọn')}</div><button class="btn" type="button" data-add-av="${i}"${state.generationId&&state.generationStatus==='DRAFT'?'':' disabled'}>+ Thêm theo đăng ký</button></div>`).join('')+'</div>'
   : '<div class="msd-empty">Không có Availability đã đăng ký cho cửa hàng/tuần này. Quản lý vẫn có thể điều động thủ công nhân viên đủ Store Priority.</div>';
- return manualPickerHtml()+'<div class="msd-source-separator">Thời gian nhân viên có thể làm · Availability đã đăng ký</div>'+availabilityHtml;
+ return targetHtml+manualPickerHtml()+'<div class="msd-source-separator">Thời gian nhân viên có thể làm · Availability đã đăng ký</div>'+availabilityHtml;
 }
 function officialRowsHtml(){
  if(!state.officialRows.length)return '<div class="msd-empty">Chưa có ca chính thức cho cửa hàng/tuần này.</div>';
@@ -268,9 +314,14 @@ function officialRowsHtml(){
  return '<div class="msd-official-grid">'+rows.map(r=>`<div class="msd-official-row ${bandClass(r.start_time)}"><div><div class="msd-official-name">${esc(r.employee_name||r.username||'Nhân viên')}</div><div class="msd-official-meta">${esc(String(r.work_date).slice(0,10))} · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))} · ${esc(r.store_code||selectedStore()?.code||'')}</div></div><span class="msd-pill msd-ok">ĐÃ PHÁT HÀNH</span></div>`).join('')+'</div>';
 }
 function boardHtml(){
- const days=Array.from({length:7},(_,i)=>add(state.week,i)),map=Object.fromEntries(days.map(d=>[d,[]]));
+ const days=Array.from({length:7},(_,i)=>add(state.week,i)),map=Object.fromEntries(days.map(d=>[d,[]])),shortageMap=Object.fromEntries(days.map(d=>[d,[]]));
  state.assignments.forEach((a,i)=>{const k=String(a.work_date).slice(0,10);if(map[k])map[k].push({a,i})});
- return `<div class="msd-board">${days.map((day,di)=>`<div class="msd-day"><div class="msd-day-title"><b>${DAYS[di]}</b><span>${day.slice(8,10)}/${day.slice(5,7)}</span></div>${map[day].length?map[day].map(({a,i})=>{const cs=candidates(a);return `<div class="msd-card ${bandClass(a.start_time)}" data-msd-row="${i}"><div class="msd-field"><label>Nhân viên</label><select class="msd-input" data-f="user_id">${cs.map(r=>`<option value="${esc(r.user_id)}"${String(r.user_id)===String(a.user_id)?' selected':''}>${esc(r.employee_name||r.username||r.user_id)} · ${r.availability_match?'trong đăng ký':'ngoài đăng ký'}${Number(r.priority)<999?' · ƯT '+esc(r.priority):''}</option>`).join('')}</select></div><div class="msd-time-row"><div class="msd-field"><label>Bắt đầu</label><select class="msd-input" data-f="start_time">${timeOptions(a.start_time)}</select></div><div class="msd-field"><label>Kết thúc</label><select class="msd-input" data-f="end_time">${timeOptions(a.end_time)}</select></div></div><div class="msd-meta">${assignmentMeta(a)}</div><button class="btn" data-remove="${i}" type="button" aria-label="Bỏ ca khỏi lịch nháp" style="margin-top:7px;width:100%">Bỏ ca khỏi lịch nháp</button></div>`}).join(''):'<div class="msd-empty">Chưa có ca</div>'}</div>`).join('')}</div>`;
+ state.shortages.forEach((s,i)=>{const k=String(s.work_date).slice(0,10);if(shortageMap[k])shortageMap[k].push({s,i})});
+ return `<div class="msd-board">${days.map((day,di)=>{
+  const assignments=map[day].map(({a,i})=>{const cs=candidates(a);return `<div class="msd-card ${bandClass(a.start_time)}" data-msd-row="${i}"><div class="msd-field"><label>Nhân viên</label><select class="msd-input" data-f="user_id">${cs.map(r=>`<option value="${esc(r.user_id)}"${String(r.user_id)===String(a.user_id)?' selected':''}>${esc(r.employee_name||r.username||r.user_id)} · ${r.availability_match?'trong đăng ký':'ngoài đăng ký'}${Number(r.priority)<999?' · ƯT '+esc(r.priority):''}</option>`).join('')}</select></div><div class="msd-time-row"><div class="msd-field"><label>Bắt đầu</label><select class="msd-input" data-f="start_time">${timeOptions(a.start_time)}</select></div><div class="msd-field"><label>Kết thúc</label><select class="msd-input" data-f="end_time">${timeOptions(a.end_time)}</select></div></div><div class="msd-meta">${assignmentMeta(a)}</div><button class="btn" data-remove="${i}" type="button" aria-label="Bỏ ca khỏi lịch nháp" style="margin-top:7px;width:100%">Bỏ ca khỏi lịch nháp</button></div>`}).join('');
+  const shortages=shortageMap[day].map(({s,i})=>`<div class="msd-shortage-card" data-msd-shortage="${i}" role="status" aria-label="Thiếu nhân sự ${esc(hm(s.shortage_start))} đến ${esc(hm(s.shortage_end))}"><div class="msd-shortage-head"><span class="msd-shortage-icon" aria-hidden="true">!</span><span>Thiếu ${esc(s.missing_headcount)} người</span></div><div class="msd-shortage-time">${esc(hm(s.shortage_start))}–${esc(hm(s.shortage_end))}</div><div class="msd-shortage-meta">Cần ${esc(s.target_headcount)} · hiện có ${esc(s.assigned_headcount)} · ${state.shortageSource==='LOCAL'?'đang tính theo thay đổi chưa lưu':'đã đối chiếu hệ thống'}</div><button class="btn" type="button" data-msd-supplement="${i}">+ Bổ sung người</button></div>`).join('');
+  return `<div class="msd-day" data-msd-date="${day}"><div class="msd-day-title"><b>${DAYS[di]}</b><span>${day.slice(8,10)}/${day.slice(5,7)}</span></div>${assignments||(!shortages?'<div class="msd-empty">Chưa có ca</div>':'')}${shortages}</div>`;
+ }).join('')}</div>`;
 }
 function stageLabel(stage){
  return stage==='DRAFT'?'LỊCH NHÁP':stage==='REVIEWED'?'ĐÃ DUYỆT':stage==='PUBLISHED'?'ĐÃ PHÁT HÀNH':stage==='CONFLICT'?'CẦN XỬ LÝ':'CHƯA TẠO';
@@ -281,7 +332,7 @@ function confirmDiscardChanges(){
 }
 function resetBranchProjection(){
  state.generationId=null;state.generationStatus='NONE';state.generationOrigin=null;state.duplicateDrafts=0;
- state.assignments=[];state.availability=[];state.eligibleEmployees=[];state.officialRows=[];state.lastValidation=null;state.dirty=false;
+ state.assignments=[];state.availability=[];state.eligibleEmployees=[];state.requirements=[];state.shortages=[];state.shortageSource='NONE';state.supplementTarget=null;state.officialRows=[];state.lastValidation=null;state.dirty=false;
 }
 function branchRowsHtml(stage,stepHtml,officialHtml,actionHelp){
  return '<div class="msd-branches" role="region" aria-label="Lịch nháp theo chi nhánh">'+state.stores.map(s=>{
@@ -291,7 +342,7 @@ function branchRowsHtml(stage,stepHtml,officialHtml,actionHelp){
   const dirty=open&&state.dirty?'<span class="msd-pill msd-dirty-note">CHƯA LƯU</span>':'';
   const body=open?'<div class="msd-branch-panel" id="'+esc(panelId)+'">'
    +stepHtml
-   +'<div class="msd-summary"><span class="msd-pill">'+esc(s.code||'—')+'</span><span class="msd-pill">'+state.availability.length+' đăng ký thời gian</span><span class="msd-pill">'+state.assignments.length+' ca trong lịch đang xếp</span><span class="msd-pill '+(stage==='PUBLISHED'?'msd-ok':stage==='CONFLICT'?'msd-warning':'')+'">'+stageLabel(stage)+'</span>'+dirty+(state.duplicateDrafts?'<span class="msd-pill msd-warning">Có nhiều bản nháp cùng chi nhánh và tuần · thao tác đang tạm khóa</span>':'')+'</div>'
+   +'<div class="msd-summary"><span class="msd-pill">'+esc(s.code||'—')+'</span><span class="msd-pill">'+state.availability.length+' đăng ký thời gian</span><span class="msd-pill">'+state.assignments.length+' ca trong lịch đang xếp</span>'+(state.shortages.length?'<span class="msd-pill msd-shortage-pill">'+state.shortages.length+' khoảng thiếu cần xử lý</span>':'')+'<span class="msd-pill '+(stage==='PUBLISHED'?'msd-ok':stage==='CONFLICT'?'msd-warning':'')+'">'+stageLabel(stage)+'</span>'+dirty+(state.duplicateDrafts?'<span class="msd-pill msd-warning">Có nhiều bản nháp cùng chi nhánh và tuần · thao tác đang tạm khóa</span>':'')+'</div>'
    +'<div class="msd-actions msu2-draft-actions msd-branch-actions"><button class="btn" type="button" id="msdStart" aria-describedby="msdActionHelp"'+(stage==='REVIEWED'||stage==='PUBLISHED'?' disabled aria-disabled="true"':'')+'>'+(state.generationId?'Mở lại bản nháp':'Tạo bản nháp')+'</button><button class="btn" type="button" id="msdReload">Tải lại</button><button class="btn primary" type="button" id="msdSave" aria-describedby="msdActionHelp"'+(stage==='DRAFT'?'':' disabled aria-disabled="true"')+'>Lưu bản nháp</button></div>'
    +'<div class="msd-layout"><div class="msd-source"><b>Nhân viên đủ điều kiện xếp ca</b><div class="muted" style="margin-top:4px">'+state.eligibleEmployees.length+' nhân viên ACTIVE có Store Priority tại chi nhánh này. Availability là trạng thái hỗ trợ; Quản lý có thể điều động thủ công ngoài đăng ký với cảnh báo rõ ràng.</div>'+sourceHtml()+'</div><div class="msd-board-wrap"><b>Lịch đang xếp · Thứ Hai → Chủ Nhật</b><div class="muted" style="margin:4px 0 10px">Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp.</div>'+boardHtml()+'</div></div>'
    +'<div class="msd-downstream"><div class="muted" style="margin-bottom:4px">Sau khi lưu bản nháp: kiểm tra xung đột → duyệt → phát hành.</div><div id="msdActionHelp" class="muted" style="margin-bottom:8px">'+esc(actionHelp)+'</div><div class="msd-actions"><button class="btn" type="button" id="msdValidate" aria-describedby="msdActionHelp"'+(!state.generationId||stage==='PUBLISHED'||state.assignments.length===0||state.dirty?' disabled aria-disabled="true"':'')+'>Kiểm tra xung đột</button><button class="btn" type="button" id="msdReview" aria-describedby="msdActionHelp"'+(stage==='DRAFT'&&state.assignments.length>0&&!state.dirty?'':' disabled aria-disabled="true"')+'>Duyệt lịch</button><button class="btn primary" type="button" id="msdPublish" aria-describedby="msdActionHelp"'+(stage==='REVIEWED'&&state.assignments.length>0&&!state.dirty?'':' disabled aria-disabled="true"')+'>Phát hành</button></div></div>'
@@ -332,7 +383,7 @@ function addFromAvailability(index){
  const candidate={id:null,generation_id:state.generationId,user_id:r.user_id,employee_name:r.employee_name||r.username,store_id:state.storeId,store_code:r.preferred_store_code||selectedStore()?.code||'',work_date:String(r.work_date).slice(0,10),start_time:hm(r.start_time),end_time:hm(r.end_time),skill_code:null,skill_level:0,score:0,warning:null,status:'DRAFT',note:'MANAGER_DIRECT_FROM_AVAILABILITY'};
  const duplicate=state.assignments.some(a=>String(a.user_id)===String(candidate.user_id)&&String(a.work_date).slice(0,10)===candidate.work_date&&hm(a.start_time)===candidate.start_time&&hm(a.end_time)===candidate.end_time);
  if(duplicate)return status('Ca này đã có trong lịch nháp.','error');
- state.assignments.push(candidate);state.dirty=true;render();status('Đã thêm ca vào lịch nháp. Bấm “Lưu bản nháp” để lưu thay đổi.');
+ state.assignments.push(candidate);state.dirty=true;state.supplementTarget=null;recalculateShortagesLocal();render();status('Đã thêm ca vào lịch nháp. Bấm “Lưu bản nháp” để lưu thay đổi.');
 }
 function addManualAssignment(){
  if(!state.generationId||state.generationStatus!=='DRAFT')return status('Hãy tạo/mở lịch nháp trước.','error');
@@ -347,10 +398,16 @@ function addManualAssignment(){
  const candidate={id:null,generation_id:state.generationId,user_id:userId,employee_name:employeeName(profile),store_id:state.storeId,store_code:selectedStore()?.code||'',work_date:workDate,start_time:hm(startTime),end_time:hm(endTime),skill_code:null,skill_level:0,score:0,warning:null,status:'DRAFT',note:'MANAGER_MANUAL_PICKER_V1'};
  const hasAvailability=state.availability.some(r=>String(r.user_id)===String(userId)&&availCovers(r,candidate));
  if(!hasAvailability){candidate.warning='MANAGER_AVAILABILITY_OVERRIDE';candidate.note='MANAGER_MANUAL_PICKER_V1 | MANAGER_AVAILABILITY_OVERRIDE'}
- state.assignments.push(candidate);state.dirty=true;
+ state.assignments.push(candidate);state.dirty=true;state.supplementTarget=null;recalculateShortagesLocal();
  render();
  status(hasAvailability?'Đã thêm ca thủ công trong Availability. Bấm “Lưu bản nháp” để lưu.':'Đã thêm ca ngoài Availability. Khi lưu, hệ thống sẽ gắn cảnh báo “Quản lý điều động ngoài thời gian đăng ký”.');
 }
+function openSupplement(index){
+ const target=state.shortages[Number(index)];if(!target)return;
+ state.supplementTarget={...target};render();
+ setTimeout(()=>{const picker=panel()?.querySelector('#msdManualPicker');picker?.scrollIntoView?.({block:'nearest'});panel()?.querySelector('#msdManualEmployee')?.focus()},0);
+}
+function clearSupplement(){state.supplementTarget=null;render()}
 async function save(){
  if(state.busy||!state.generationId||state.generationStatus!=='DRAFT')return;
  syncRowsFromDom();
@@ -360,7 +417,7 @@ async function save(){
   const payload=state.assignments.map(cleanAssignment);
   const q=await client().rpc('replace_schedule_generation_assignments',{p_generation_id:state.generationId,p_assignments:payload});
   if(q.error)throw q.error;
-  await loadDraftAssignments();state.dirty=false;state.lastValidation=null;state.officialRows=[];render();status(`Đã lưu ${Number(q.data??payload.length)} ca vào bản nháp. Hãy kiểm tra xung đột trước khi duyệt.`,'ok');
+  await loadDraftAssignments();await loadAuthoritativeShortages();state.dirty=false;state.lastValidation=null;state.officialRows=[];render();status(`Đã lưu ${Number(q.data??payload.length)} ca vào bản nháp. Hãy kiểm tra xung đột trước khi duyệt.`,'ok');
  }catch(e){status('Lưu lịch nháp thất bại: '+errorText(e),'error')}
  finally{state.busy=false;lockControls(false)}
 }
@@ -445,8 +502,10 @@ function bind(){
  p.querySelector('#msdOfficial')?.addEventListener('click',()=>document.querySelector('.sidebar [data-view="schedule"], [data-view="schedule"]')?.click());
  p.querySelectorAll('[data-add-av]').forEach(b=>b.addEventListener('click',()=>addFromAvailability(b.dataset.addAv)));
  p.querySelector('#msdManualAdd')?.addEventListener('click',addManualAssignment);
- p.querySelectorAll('[data-msd-row] select[data-f]').forEach(el=>el.addEventListener('change',()=>{syncRowsFromDom();state.dirty=true;render();status('Có thay đổi chưa lưu. Bấm “Lưu bản nháp” trước khi chuyển chi nhánh hoặc duyệt.')}))
- p.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{syncRowsFromDom();state.assignments.splice(Number(b.dataset.remove),1);state.dirty=true;render();status('Đã bỏ ca khỏi lịch nháp. Bấm “Lưu bản nháp” để lưu thay đổi.')}))
+ p.querySelectorAll('[data-msd-supplement]').forEach(b=>b.addEventListener('click',()=>openSupplement(b.dataset.msdSupplement)));
+ p.querySelector('[data-msd-supplement-clear]')?.addEventListener('click',clearSupplement);
+ p.querySelectorAll('[data-msd-row] select[data-f]').forEach(el=>el.addEventListener('change',()=>{syncRowsFromDom();state.dirty=true;recalculateShortagesLocal();render();status('Có thay đổi chưa lưu. Bấm “Lưu bản nháp” trước khi chuyển chi nhánh hoặc duyệt.')}))
+ p.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{syncRowsFromDom();state.assignments.splice(Number(b.dataset.remove),1);state.dirty=true;recalculateShortagesLocal();render();status('Đã bỏ ca khỏi lịch nháp. Bấm “Lưu bản nháp” để lưu thay đổi.')}))
 }
 async function openDirect(detail={}){
  activate();
@@ -470,6 +529,6 @@ async function boot(){
 }
 document.addEventListener('magasin:manager-schedule-open',e=>openDirect(e.detail));
 document.addEventListener('magasin:owner-schedule-open',e=>openDirect(e.detail));
-window.MAGASIN_MANAGER_SCHEDULE_DRAFT={openDirect,startOrResume,refresh:resumeOnly,validate,save,review,publish,getState:()=>({...state,stores:state.stores.map(x=>({...x})),assignments:state.assignments.map(x=>({...x})),availability:state.availability.map(x=>({...x})),eligibleEmployees:state.eligibleEmployees.map(x=>({...x}))})};
+window.MAGASIN_MANAGER_SCHEDULE_DRAFT={openDirect,startOrResume,refresh:resumeOnly,validate,save,review,publish,getState:()=>({...state,stores:state.stores.map(x=>({...x})),assignments:state.assignments.map(x=>({...x})),availability:state.availability.map(x=>({...x})),eligibleEmployees:state.eligibleEmployees.map(x=>({...x})),requirements:state.requirements.map(x=>({...x})),shortages:state.shortages.map(x=>({...x})),supplementTarget:state.supplementTarget?{...state.supplementTarget}:null})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
