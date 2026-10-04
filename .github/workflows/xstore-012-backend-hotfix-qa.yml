@@ -1,0 +1,234 @@
+name: XSTORE-012 Backend Hotfix QA
+
+on:
+  push:
+    paths:
+      - '07_DATABASE/migrations/20261004173000_xstore_012_empty_draft_validation_guard_v1.sql'
+      - '.github/workflows/xstore-012-backend-hotfix-qa.yml'
+  pull_request:
+    paths:
+      - '07_DATABASE/migrations/20261004173000_xstore_012_empty_draft_validation_guard_v1.sql'
+      - '.github/workflows/xstore-012-backend-hotfix-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres17-isolated-validator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: xstore_qa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d xstore_qa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: xstore_qa
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+
+      - name: Build isolated Workforce validator fixture
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create schema if not exists auth;
+
+          do $roles$
+          begin
+            if not exists(select 1 from pg_roles where rolname='anon') then create role anon; end if;
+            if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated; end if;
+          end
+          $roles$;
+
+          create table public.schedule_generation_runs(
+            id uuid primary key,
+            store_id uuid,
+            week_start date not null,
+            week_end date not null,
+            algorithm_version text,
+            status text not null,
+            total_hours numeric,
+            estimated_cost numeric,
+            coverage_score numeric,
+            skill_coverage_score numeric,
+            created_by uuid,
+            created_at timestamptz default now(),
+            published_at timestamptz,
+            updated_at timestamptz default now(),
+            reviewed_by uuid,
+            reviewed_at timestamptz,
+            published_by uuid
+          );
+
+          create table public.profiles(
+            id uuid primary key,
+            status text,
+            role text
+          );
+
+          create table public.stores(
+            id uuid primary key,
+            status text
+          );
+
+          create table public.schedule_generation_assignments(
+            id uuid primary key,
+            generation_id uuid not null,
+            user_id uuid not null,
+            store_id uuid not null,
+            work_date date not null,
+            start_time time not null,
+            end_time time not null,
+            skill_code text,
+            skill_level integer,
+            score numeric,
+            warning text,
+            status text,
+            note text
+          );
+
+          create table public.work_schedules(
+            id uuid primary key,
+            user_id uuid not null,
+            store_id uuid not null,
+            work_date date not null,
+            start_time time not null,
+            end_time time not null,
+            status text not null
+          );
+
+          create table public.employee_availability(
+            id uuid primary key,
+            user_id uuid not null,
+            work_date date not null,
+            start_time time not null,
+            end_time time not null,
+            availability_type text not null
+          );
+
+          create or replace function auth.uid()
+          returns uuid
+          language sql
+          stable
+          as $$ select '11111111-1111-1111-1111-111111111111'::uuid $$;
+
+          create or replace function public.current_user_role()
+          returns text
+          language sql
+          stable
+          as $$ select 'OWNER'::text $$;
+
+          create or replace function public.can_access_store(p_store_id uuid)
+          returns boolean
+          language sql
+          stable
+          as $$ select true $$;
+
+          insert into public.profiles(id,status,role) values
+            ('11111111-1111-1111-1111-111111111111','ACTIVE','OWNER'),
+            ('22222222-2222-2222-2222-222222222222','ACTIVE','STAFF');
+
+          insert into public.stores(id,status)
+          values ('33333333-3333-3333-3333-333333333333','ACTIVE');
+
+          insert into public.schedule_generation_runs(
+            id,store_id,week_start,week_end,algorithm_version,status
+          ) values (
+            '44444444-4444-4444-4444-444444444444',
+            '33333333-3333-3333-3333-333333333333',
+            date '2026-10-05',
+            date '2026-10-11',
+            'XSTORE_GLOBAL_RECURRING_V1',
+            'DRAFT'
+          );
+          SQL
+
+      - name: Apply exact XSTORE-012 migration in isolated PostgreSQL 17
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1             -f 07_DATABASE/migrations/20261004173000_xstore_012_empty_draft_validation_guard_v1.sql
+
+      - name: Prove empty fails and one valid assignment passes
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          do $test$
+          declare
+            v jsonb;
+          begin
+            select public.validate_schedule_generation_v1(
+              '44444444-4444-4444-4444-444444444444'::uuid
+            ) into v;
+
+            if coalesce((v->>'valid')::boolean,true) then
+              raise exception 'EMPTY_GENERATION_WAS_ACCEPTED: %',v;
+            end if;
+
+            if not exists(
+              select 1
+              from jsonb_array_elements(v->'violations') e
+              where e->>'code'='EMPTY_GENERATION'
+            ) then
+              raise exception 'EMPTY_GENERATION_CODE_MISSING: %',v;
+            end if;
+
+            if (v->>'assignment_count')::integer <> 0 then
+              raise exception 'EMPTY_ASSIGNMENT_COUNT_WRONG: %',v;
+            end if;
+
+            insert into public.employee_availability(
+              id,user_id,work_date,start_time,end_time,availability_type
+            ) values (
+              '55555555-5555-5555-5555-555555555555',
+              '22222222-2222-2222-2222-222222222222',
+              date '2026-10-05',time '06:00',time '12:00','AVAILABLE'
+            );
+
+            insert into public.schedule_generation_assignments(
+              id,generation_id,user_id,store_id,work_date,start_time,end_time,status
+            ) values (
+              '66666666-6666-6666-6666-666666666666',
+              '44444444-4444-4444-4444-444444444444',
+              '22222222-2222-2222-2222-222222222222',
+              '33333333-3333-3333-3333-333333333333',
+              date '2026-10-05',time '06:00',time '12:00','DRAFT'
+            );
+
+            select public.validate_schedule_generation_v1(
+              '44444444-4444-4444-4444-444444444444'::uuid
+            ) into v;
+
+            if not coalesce((v->>'valid')::boolean,false) then
+              raise exception 'VALID_ASSIGNMENT_REJECTED: %',v;
+            end if;
+
+            if (v->>'assignment_count')::integer <> 1 then
+              raise exception 'VALID_ASSIGNMENT_COUNT_WRONG: %',v;
+            end if;
+
+            raise notice 'XSTORE_012_POSTGRES17_ISOLATED_VALIDATOR=PASS';
+          end
+          $test$;
+          SQL
