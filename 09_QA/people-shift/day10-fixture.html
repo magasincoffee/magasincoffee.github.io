@@ -142,6 +142,20 @@
           };
         }
 
+        if (name === 'list_employee_workforce_profiles_v1') {
+          return {
+            data: [{
+              employee_id: employee.id,
+              full_name: employee.full_name,
+              username: employee.username,
+              profile_status: employee.status,
+              employee_role: employee.role,
+              priority_store_ids: [store.id]
+            }],
+            error: null
+          };
+        }
+
         if (name === 'get_my_availability') {
           const end = addDays(args.p_week_start, 6);
           return {
