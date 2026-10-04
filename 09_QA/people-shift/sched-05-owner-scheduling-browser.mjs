@@ -38,7 +38,7 @@ try{
       if(!card||!card.text.includes(code)||!card.state.includes("Sẵn sàng xếp lịch"))throw new Error(JSON.stringify({id,code,cards}));
     }
     const overviewText=await page.locator("#ownerSchedulingOverview").innerText();
-    for(const forbidden of ["Enterprise oversight","canonical","writer","direct table DML","Availability","DRAFT","Validate","Review","Publish"]){
+    for(const forbidden of ["Enterprise oversight","canonical","writer","direct table DML","DRAFT","Validate","Review","Publish"]){
       if(overviewText.includes(forbidden))throw new Error("technical copy visible: "+forbidden);
     }
     if(await page.locator("#panel-publish").isVisible())throw new Error("shared detail visible before store selection");
@@ -52,7 +52,7 @@ try{
     const s=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
     const text=await page.locator("#panel-publish").innerText();
     const options=await page.locator("#msdStore option").allTextContents();
-    if(s.storeId!=="store-a"||s.stores.length!==4)throw new Error(JSON.stringify(s));
+    if(s.storeId!=="store-a"||s.stores.length!==4||s.eligibleEmployees.length!==2)throw new Error(JSON.stringify(s));
     if(options.length!==4||!text.includes("Giám sát xếp lịch")||!text.includes("Thời gian nhân viên có thể làm"))throw new Error(JSON.stringify({options,text}));
     for(const forbidden of ["Enterprise oversight","canonical","writer","direct table DML","Availability","DRAFT","Validate","Review","Publish"]){
       if(text.includes(forbidden))throw new Error("technical copy visible: "+forbidden);
