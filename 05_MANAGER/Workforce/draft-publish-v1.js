@@ -291,7 +291,7 @@ async function resumeOnly(){
   state.duplicateDrafts=Math.max(0,runs.length-1);
   state.lastValidation=null;
   if(runs.length>1){
-   state.generationId=null;state.generationStatus='CONFLICT';state.generationOrigin=null;state.assignments=[];state.shortages=[];state.shortageSource='NONE';state.supplementTarget=null;state.officialRows=[];
+   state.generationId=null;state.generationStatus='CONFLICT';state.generationOrigin=null;state.assignments=[];state.shortages=[];state.shortageSource='NONE';state.supplementTarget=null;state.candidateDrawerOpen=false;state.officialRows=[];
    render();status('Có nhiều bản nháp cùng hoạt động cho cửa hàng và tuần này. Thao tác tạm khóa để tránh ghi đè.','error');return;
   }
   if(runs.length===1){
@@ -302,7 +302,7 @@ async function resumeOnly(){
    await loadDraftAssignments();
    if(state.generationStatus==='PUBLISHED'){await loadOfficialRows();state.shortages=[];state.shortageSource='NONE'}else{state.officialRows=[];await loadAuthoritativeShortages()}
   }else{
-   state.generationId=null;state.generationStatus='NONE';state.generationOrigin=null;state.assignments=[];state.shortages=[];state.shortageSource='NONE';state.supplementTarget=null;state.officialRows=[];
+   state.generationId=null;state.generationStatus='NONE';state.generationOrigin=null;state.assignments=[];state.shortages=[];state.shortageSource='NONE';state.supplementTarget=null;state.candidateDrawerOpen=false;state.officialRows=[];
   }
   state.dirty=false;render();
   if(state.generationStatus==='PUBLISHED')status('Lịch đã phát hành. Dữ liệu chính thức đã được tải lại từ hệ thống.','ok');

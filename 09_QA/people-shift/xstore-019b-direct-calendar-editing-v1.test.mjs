@@ -84,10 +84,11 @@ test("XSTORE-019B time slots avoid global button sizing, overflow interception, 
   assert.match(draft,/function finishPointerGesture\(\)[\s\S]*g\.currentMinutes===g\.startMinutes\)return/);
 });
 
-test("XSTORE-019B confines calendar hitboxes and disables resize interception while editor is open",()=>{
+test("XSTORE-019B confines calendar hitboxes while the newer candidate drawer stays isolated above the workspace",()=>{
   assert.match(draft,/\.msd-calendar-primary\{[^}]*position:relative[^}]*z-index:1[^}]*isolation:isolate/);
   assert.match(draft,/\.msd-calendar-primary \.msd-board-wrap\{[^}]*contain:paint/);
-  assert.match(draft,/\.msd-people-secondary\{[^}]*position:relative[^}]*z-index:2[^}]*isolation:isolate/);
+  assert.match(draft,/\.msd-people-overlay\{[^}]*position:fixed[^}]*z-index:1200/);
+  assert.match(draft,/\.msd-people-secondary\{[^}]*position:relative[^}]*z-index:1[^}]*isolation:isolate/);
   assert.match(draft,/\.msd-direct-card:has\(\.msd-card-editor\[open\]\) \.msd-resize-handle\{[^}]*pointer-events:none[^}]*opacity:0/);
 });
 

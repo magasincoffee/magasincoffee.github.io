@@ -30,13 +30,14 @@ test("XSTORE-019A keeps exactly one selected-store editor with compact store nav
   assert.doesNotMatch(ui,/Cửa hàng đang xếp/);
 });
 
-test("XSTORE-019A makes the calendar primary and moves employees to a collapsed secondary region",()=>{
+test("XSTORE-019A keeps the calendar primary while XSTORE-019C moves candidates to an on-demand overlay",()=>{
   assert.ok(
     draft.includes("calendar+people+downstream"),
-    "calendar must render before the employee helper region"
+    "calendar must remain the primary workspace before any on-demand candidate UI"
   );
-  assert.match(draft,/<section class="msd-people-secondary"/);
-  assert.match(draft,/Danh sách ứng viên chỉ xuất hiện khi xử lý một khoảng thiếu/);
+  assert.match(draft,/const people=candidateDrawerHtml\(\)/);
+  assert.match(draft,/\.msd-people-overlay\{[^}]*position:fixed[^}]*z-index:1200/);
+  assert.match(draft,/id="msdOpenCandidateDrawer"/);
   assert.match(draft,/target\?supplementalPoolHtml\(\):''/);
   assert.match(draft,/max-height:calc\(100vh - 330px\)/);
   assert.match(draft,/overflow:auto/);

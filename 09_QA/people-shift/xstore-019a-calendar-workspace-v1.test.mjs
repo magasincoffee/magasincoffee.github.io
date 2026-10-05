@@ -32,11 +32,13 @@ test("XSTORE-019A sticky headers never block calendar-adjacent controls and mobi
   assert.match(draft,/@media\(max-width:700px\)[\s\S]*\.msd-store-switch\{min-height:44px\}/);
 });
 
-test("XSTORE-019A makes employee candidate lists conditional and keeps them after the calendar",()=>{
+test("XSTORE-019A calendar stays primary while XSTORE-019C supersedes the secondary candidate region with an on-demand drawer",()=>{
   assert.ok(draft.includes("calendar+people+downstream"));
+  assert.match(draft,/const people=candidateDrawerHtml\(\)/);
+  assert.match(draft,/candidateDrawerOpen:false/);
+  assert.match(draft,/id="msdOpenCandidateDrawer"/);
+  assert.match(draft,/data-msd-candidate-overlay/);
   assert.match(draft,/target\?supplementalPoolHtml\(\):''/);
-  assert.match(draft,/Danh sách ứng viên chỉ xuất hiện khi xử lý một khoảng thiếu/);
-  assert.match(draft,/class="msd-people-secondary"/);
 });
 
 test("XSTORE-019A preserves exact shortage and secondary four-store overview",()=>{
