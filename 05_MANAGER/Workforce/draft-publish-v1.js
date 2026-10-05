@@ -75,7 +75,7 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-time-scale{display:grid;grid-template-rows:repeat(34,22px);font-size:9px;color:#667085}
 .msd-time-scale span{border-top:1px solid #eef2f6;padding-top:1px}
 .msd-slot-grid{display:grid;grid-template-rows:repeat(34,22px);position:relative;min-width:0}
-.msd-time-slot{grid-column:1;border:0;border-top:1px solid #eef2f6;background:transparent;min-height:0;height:100%;box-sizing:border-box;line-height:0;padding:0;text-align:left;cursor:crosshair;appearance:none}
+.msd-time-slot{grid-column:1;border:0;border-top:1px solid #eef2f6;background:transparent;min-height:0;height:auto;align-self:stretch;box-sizing:border-box;line-height:0;padding:0;text-align:left;cursor:crosshair;appearance:none}
 .msd-time-slot:hover,.msd-time-slot:focus-visible{background:#f2f7ff;outline:2px solid #84adff;outline-offset:-2px}
 .msd-shift-layer{position:absolute;inset:0;pointer-events:none}
 .msd-direct-card{position:absolute;left:2px;right:2px;min-height:34px;padding:7px 8px;border:1px solid #cadce9;border-radius:8px;box-shadow:0 1px 2px rgba(16,24,40,.08);overflow:auto;pointer-events:auto;cursor:grab}
@@ -734,6 +734,7 @@ function applyEditorRow(index,row){
 }
 function finishPointerGesture(){
  const g=calendarPointerGesture;calendarPointerGesture=null;if(!g)return;
+ if(g.currentMinutes===g.startMinutes)return;
  const a=Math.min(g.startMinutes,g.currentMinutes),b=Math.max(g.startMinutes,g.currentMinutes)+calendarSlotMinutes;
  calendarSuppressClickUntil=Date.now()+250;openCalendarCreate(g.date,timeFromMinutes(a),timeFromMinutes(Math.min(calendarSlotEnd,b)));
 }
