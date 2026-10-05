@@ -56,7 +56,7 @@ test("XSTORE-016 cache chain points at exact IA runtime",()=>{
   assert.match(engine,/draft-publish-v1\.js\?v=2026100[45]-xstore-01[678]/);
   for(const token of [
     "cross-store-master-v1.js?v=20261004-xstore-016",
-    "manager-scheduling-ui2-v1.js?v=20261004-xstore-016"
+    "manager-scheduling-ui2-v1.js?v=20261005-xstore-018"
   ])assert.ok(engine.includes(token),token);
   assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=2026100[45]-xstore-01[27]/);
 });
