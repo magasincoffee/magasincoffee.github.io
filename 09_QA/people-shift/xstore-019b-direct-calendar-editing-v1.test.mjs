@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const draft=fs.readFileSync("05_MANAGER/Workforce/draft-publish-v1.js","utf8");
+const fixture=fs.readFileSync("09_QA/people-shift/manager-workforce-canonical-fixture.html","utf8");
 const rpc=s=>[...s.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 const rpcSet=s=>[...new Set(rpc(s))].sort();
 
@@ -78,6 +79,14 @@ test("XSTORE-019B confines calendar hitboxes and disables resize interception wh
   assert.match(draft,/\.msd-calendar-primary \.msd-board-wrap\{[^}]*contain:paint/);
   assert.match(draft,/\.msd-people-secondary\{[^}]*position:relative[^}]*z-index:2[^}]*isolation:isolate/);
   assert.match(draft,/\.msd-direct-card:has\(\.msd-card-editor\[open\]\) \.msd-resize-handle\{[^}]*pointer-events:none[^}]*opacity:0/);
+});
+
+test("XSTORE-019B QA fixture mirrors explicit Manager Availability override as warning-only",()=>{
+  assert.match(fixture,/const violations=\[\],warnings=\[\]/);
+  assert.match(fixture,/MANAGER_AVAILABILITY_OVERRIDE/);
+  assert.match(fixture,/AVAILABILITY_MISMATCH/);
+  assert.match(fixture,/warning_count:uniqueWarnings\.length/);
+  assert.match(fixture,/valid:unique\.length===0/);
 });
 
 test("XSTORE-019B preserves canonical time-band classes and availability override audit",()=>{

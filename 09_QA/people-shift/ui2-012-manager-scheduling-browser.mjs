@@ -65,7 +65,8 @@ for(const width of [1440,1024,768,430,390,360]){
     boardColumns:root?.querySelector(".msd-board")?getComputedStyle(root.querySelector(".msd-board")).gridTemplateColumns.split(" ").filter(Boolean).length:0,
     dayTitlePosition:root?.querySelector(".msd-day-title")?getComputedStyle(root.querySelector(".msd-day-title")).position:"",
     dayCount:root?.querySelectorAll(".msd-day").length||0,
-    emptyDays:root?.querySelectorAll(".msd-day .msd-empty").length||0,
+    timelineDays:root?.querySelectorAll(".msd-day-timeline").length||0,
+    slotCount:root?.querySelectorAll("[data-msd-slot-date][data-msd-slot-time]").length||0,
     sourceRole:root?.querySelector(".msd-source")?.dataset.msu2Section||"",
     draftRole:root?.querySelector(".msd-board-wrap")?.dataset.msu2Section||"",
     draftUtilityPrimary:root?.querySelectorAll(".msu2-draft-actions .primary").length||0,
@@ -74,7 +75,7 @@ for(const width of [1440,1024,768,430,390,360]){
     publishHidden:root?.querySelector("#msdPublish")?.hidden||false
    };
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
-   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5||metric.sourceRole!=="supplemental-employee-pool"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
+   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.timelineDays!==7||metric.slotCount<238||metric.sourceRole!=="supplemental-employee-pool"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
    if(expected<=430&&(metric.boardScrollHeight<=metric.boardClientHeight||metric.dayTitlePosition!=="sticky"))throw new Error("phone calendar must keep all seven days in one calendar workspace and own internal time scrolling: "+JSON.stringify(metric));
    if((expected===768||expected===1024)&&(metric.boardColumns!==7||metric.boardScrollHeight<=metric.boardClientHeight))throw new Error("tablet calendar must keep seven days and own internal time scrolling: "+JSON.stringify(metric));
@@ -131,9 +132,9 @@ await frame.evaluate(async()=>{
 
 await check("ui2_012_none_context_and_empty_day_state",async()=>{
  const state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
- const ui=await frame.locator(".msd-ui2-012").evaluate(r=>({stage:r.dataset.ui2SchedulingState,chip:r.querySelector(".msu2-state-chip")?.textContent,text:r.innerText,emptyDays:r.querySelectorAll(".msd-day .msd-empty").length}));
- if(state.generationStatus!=="NONE"||ui.stage!=="NONE"||ui.chip!=="CHƯA TẠO"||!ui.text.includes("Chưa có lịch nháp")||ui.emptyDays!==7)throw new Error(JSON.stringify({state,ui}));
- return JSON.stringify({stage:ui.stage,emptyDays:ui.emptyDays});
+ const ui=await frame.locator(".msd-ui2-012").evaluate(r=>({stage:r.dataset.ui2SchedulingState,chip:r.querySelector(".msu2-state-chip")?.textContent,text:r.innerText,timelineDays:r.querySelectorAll(".msd-day-timeline").length,slotCount:r.querySelectorAll("[data-msd-slot-date][data-msd-slot-time]").length}));
+ if(state.generationStatus!=="NONE"||ui.stage!=="NONE"||ui.chip!=="CHƯA TẠO"||!ui.text.includes("Chưa có lịch nháp")||ui.timelineDays!==7||ui.slotCount<238)throw new Error(JSON.stringify({state,ui}));
+ return JSON.stringify({stage:ui.stage,timelineDays:ui.timelineDays,slotCount:ui.slotCount});
 });
 
 await frame.evaluate(async()=>{
