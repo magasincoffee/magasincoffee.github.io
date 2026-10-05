@@ -79,7 +79,8 @@ for(const width of [1440,390]){
 
  await frame.locator("#msdStart").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().generationStatus==="DRAFT");
- await frame.locator(".msd-source-row").first().locator("[data-add-av]").click();
+ await frame.locator("#msdManualEmployee").selectOption("u-1");
+ await frame.locator("#msdManualAdd").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().dirty===true);
 
  await check("xstore_016_unsaved_branch_switch_can_be_cancelled",async()=>{
