@@ -22,6 +22,13 @@ async function selectStore(id){
     return s.storeId===expected&&s.busy===false;
   },id);
 }
+async function addManualAssignment(userId,workDate,startTime,endTime){
+  await page.locator("#msdManualEmployee").selectOption(userId);
+  await page.locator("#msdManualDate").selectOption(workDate);
+  await page.locator("#msdManualStart").selectOption(startTime);
+  await page.locator("#msdManualEnd").selectOption(endTime);
+  await page.locator("#msdManualAdd").click();
+}
 try{
   await page.goto(`${BASE}/09_QA/people-shift/sched-05-owner-scheduling-fixture.html`,{waitUntil:"networkidle"});
   await page.locator('#ownerSchedulingOverview[data-owner-overview-state="ready"]').waitFor();
@@ -89,8 +96,8 @@ try{
   });
 
   await check("owner_full_canonical_draft_validate_review_publish_flow",async()=>{
-    await page.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
-    await page.locator(".msd-source-row").nth(1).locator("[data-add-av]").click();
+    await addManualAssignment("a-1","2026-09-28","06:00","12:00");
+    await addManualAssignment("a-2","2026-09-28","12:00","17:00");
     await page.locator("#msdSave").click();
     await page.waitForFunction(()=>globalThis.__SCHED05_OWNER_QA.calls.some(x=>x.name==="replace_schedule_generation_assignments")&&globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false);
     await page.locator("#msdValidate").click();
@@ -138,7 +145,7 @@ try{
   await check("owner_stale_publish_is_server_revalidated_and_returns_to_draft",async()=>{
     await page.locator("#msdStart").click();
     await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().generationStatus==="DRAFT");
-    await page.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
+    await addManualAssignment("b-1","2026-09-29","06:00","12:00");
     const beforeReplace=await page.evaluate(()=>globalThis.__SCHED05_OWNER_QA.calls.filter(x=>x.name==="replace_schedule_generation_assignments").length);
     await page.locator("#msdSave").click();
     await page.waitForFunction(before=>globalThis.__SCHED05_OWNER_QA.calls.filter(x=>x.name==="replace_schedule_generation_assignments").length>before&&globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false,beforeReplace);
