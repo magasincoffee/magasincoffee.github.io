@@ -79,7 +79,9 @@ await frame.waitForFunction(()=>{
  return s.dirty===true&&s.shortageSource==="LOCAL"&&s.shortages.length===0;
 });
 
+await frame.locator('[data-msd-open-editor="0"]').click();
 await frame.locator('[data-msd-row="0"] [data-f="end_time"]').selectOption("08:00");
+await frame.locator('[data-msd-row="0"] [data-msd-apply-edit="0"]').click();
 await frame.waitForFunction(()=>{
  const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();
  return s.shortageSource==="LOCAL"&&s.shortages.length===1&&s.shortages[0].shortage_start==="08:00"&&s.shortages[0].shortage_end==="12:00";
@@ -91,7 +93,9 @@ await check("xstore_017_dirty_edit_recalculates_exact_local_shortage",async()=>{
  return JSON.stringify({shortage:state.shortages[0],text});
 });
 
+await frame.locator('[data-msd-open-editor="0"]').click();
 await frame.locator('[data-msd-row="0"] [data-f="end_time"]').selectOption("12:00");
+await frame.locator('[data-msd-row="0"] [data-msd-apply-edit="0"]').click();
 await frame.waitForFunction(()=>{
  const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();
  return s.shortageSource==="LOCAL"&&s.shortages.length===0;
