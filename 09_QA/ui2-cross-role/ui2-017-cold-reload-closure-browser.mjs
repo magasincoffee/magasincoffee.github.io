@@ -95,7 +95,7 @@ async function iframeSrc(page,id="app"){
 
 for(const spec of [
   {role:"EMPLOYEE",target:"/employee/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261003-sched-ui-007"},
-  {role:"STORE_MANAGER",label:"MANAGER",target:"/manager/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261003-sched-ui-017"},
+  {role:"STORE_MANAGER",label:"MANAGER",target:"/manager/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261005-xstore-019"},
   {role:"OWNER",target:"/owner/",runtime:null}
 ]){
   const context=await newContext(spec.role);
@@ -122,7 +122,7 @@ for(const spec of [
 
 for(const spec of [
   {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261003-sched-ui-007"},
-  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261003-sched-ui-017"}
+  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261005-xstore-019"}
 ]){
   const context=await newContext(spec.role,(spec.label||spec.role)==="MANAGER"?1024:390);
   await context.addInitScript(()=>sessionStorage.setItem("__ui2_logged","1"));
@@ -162,7 +162,7 @@ for(const spec of [
   await page.reload({waitUntil:"domcontentloaded"});
   const hardReload=await iframeSrc(page);
   await check("ui2_017_owner_workforce_cold_hard_reload",async()=>{
-    const expected="/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261003-sched-ui-008";
+    const expected="/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261005-xstore-019";
     const detail={cold,hardReload,url:page.url()};
     if(cold!==expected||hardReload!==expected)throw new Error(JSON.stringify(detail));
     return JSON.stringify(detail);
@@ -174,12 +174,12 @@ const assetSpecs=[
   ["/02_CORE/ui/magasin-ui-v2-shell.css?v=20261001-ui-unified1","--m-control-touch-height"],
   ["/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260927-ui2-016","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/ui-consolidation-v1.js?v=20261001-ui-unified1","@media(max-width:1024px)"],
-  ["/05_MANAGER/Workforce/manager-scheduling-ui2-v1.js?v=20261005-xstore-018","@media(max-width:1024px)"],
+  ["/05_MANAGER/Workforce/manager-scheduling-ui2-v1.js?v=20261005-xstore-019","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/manager-operations-ui2-v1.js?v=20260927-ui2-016","@media(max-width:1024px)"],
-  ["/05_MANAGER/Workforce/engine-v1.js?v=20261003-sched-ui-017","manager-scheduling-ui2-v1.js?v=20261005-xstore-018"],
+  ["/05_MANAGER/Workforce/engine-v1.js?v=20261005-xstore-019","manager-scheduling-ui2-v1.js?v=20261005-xstore-019"],
   ["/05_MANAGER/runtime/manager-shell-v1.html?v=20261001-ui-unified1","manager-ui-shell-v2.js?v=20260927-ui2-016"],
-  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261003-sched-ui-017","manager-shell-v1.html?v=20261001-ui-unified1"],
-  ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261003-sched-ui-008","owner-scheduling-overview-v1.js?v=20261003-sched-ui-008"]
+  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261005-xstore-019","manager-shell-v1.html?v=20261001-ui-unified1"],
+  ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261005-xstore-019","owner-scheduling-overview-v1.js?v=20261005-xstore-019"]
 ];
 for(const [url,marker] of assetSpecs){
   await check("ui2_017_cache_asset_"+url.split("?")[0].replaceAll("/","_"),async()=>{
@@ -204,12 +204,18 @@ await check("ui2_017_no_stale_ui2_016_cache_chain",async()=>{
       "manager-shell-v1.html?v=20260927-ui2-011-correction1",
       "manager-shell-v1.html?v=20260927-ui2-016",
       "engine-v1.js?v=20260927-ui2-013",
-      "engine-v1.js?v=20260929-mer005"
+      "engine-v1.js?v=20260929-mer005",
+      "engine-v1.js?v=20261003-sched-ui-017",
+      "draft-publish-v1.js?v=20261005-xstore-018",
+      "manager-scheduling-ui2-v1.js?v=20261005-xstore-018"
     ]],
     ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html",[
       "manager-shell-v1.html?v=20260927-ui2-011-correction1",
       "magasin-ui-v2-shell.css?v=20260925-ui2-004",
-      "20261001-ui-unified1"
+      "20261001-ui-unified1",
+      "owner-workforce-runtime.html?v=20261003-sched-ui-008",
+      "draft-publish-v1.js?v=20261003-sched-ui-008",
+      "owner-scheduling-overview-v1.js?v=20261003-sched-ui-008"
     ]]
   ];
   const stale=[];
@@ -218,7 +224,7 @@ await check("ui2_017_no_stale_ui2_016_cache_chain",async()=>{
     for(const token of forbidden)if(body.includes(token))stale.push({url,token});
   }
   if(stale.length)throw new Error(JSON.stringify(stale));
-  return "Manager/Employee cache remains current and Owner scheduling entry uses the SCHED-UI-008 cache chain";
+  return "Manager/Owner scheduling cache chain is frozen to XSTORE-019 and legacy scheduling cache tokens are absent";
 });
 
 await browser.close();
