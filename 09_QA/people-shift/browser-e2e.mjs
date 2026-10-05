@@ -138,7 +138,7 @@ try {
 
   await check("owner_draft_requires_registered_availability", async () => {
     await page.locator("#msdReload").click();
-    await page.locator("#msdManualEmployee option", { hasText: "Nhân viên QA" }).waitFor();
+    await page.waitForFunction(() => Array.from(document.querySelectorAll("#msdManualEmployee option")).some(option => option.value === "employee-qa"));
     const registered = await page.evaluate(() => globalThis.__PEOPLE_SHIFT_QA.state.availability[0]);
     if (!registered?.work_date) throw new Error("registered availability missing");
     await page.locator("#msdStart").click();
