@@ -58,11 +58,11 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-workspace-state{flex:0 0 auto;padding:5px 8px;border-radius:999px;background:#eef5ff;color:#235dba;font-size:10px;font-weight:900}
 .msd-workspace-body{padding:10px;min-width:0}
 .msd-workspace .msd-summary{margin:0 0 8px}
-.msd-calendar-primary{min-width:0}
-.msd-calendar-primary .msd-board-wrap{max-height:calc(100vh - 330px);min-height:360px;overflow:auto;overscroll-behavior:contain;border-width:1px}
+.msd-calendar-primary{min-width:0;position:relative;z-index:1;isolation:isolate}
+.msd-calendar-primary .msd-board-wrap{max-height:calc(100vh - 330px);min-height:360px;overflow:auto;overscroll-behavior:contain;border-width:1px;contain:paint}
 .msd-calendar-primary .msd-board{grid-template-columns:repeat(7,minmax(0,1fr));min-width:0;width:100%;align-items:start}
 .msd-calendar-primary .msd-day-title{position:sticky;top:0;z-index:2;pointer-events:none}
-.msd-people-secondary{margin-top:10px;border:1px solid #dfe5ec;border-radius:12px;background:#fbfcfe;overflow:hidden}
+.msd-people-secondary{position:relative;z-index:2;isolation:isolate;margin-top:10px;border:1px solid #dfe5ec;border-radius:12px;background:#fbfcfe;overflow:hidden}
 .msd-people-secondary .msd-source{border:0;border-radius:0;background:#fbfcfe}
 .msd-people-secondary .msd-pool{margin-top:10px}
 .msd-workspace-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
@@ -84,7 +84,7 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-direct-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.msd-direct-actions .btn{min-height:28px;padding:4px 7px;font-size:9px}
 .msd-resize-handle{position:absolute;left:0;right:0;height:8px;border:0;background:transparent;cursor:ns-resize;padding:0}.msd-resize-handle.start{top:-1px}.msd-resize-handle.end{bottom:-1px}.msd-resize-handle:hover,.msd-resize-handle:focus-visible{background:rgba(47,111,222,.18);outline:1px solid #2f6fde}
 .msd-card-editor{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(52,64,84,.25)}
-.msd-card-editor summary{cursor:pointer;font-size:10px;font-weight:900}.msd-direct-card:has(.msd-card-editor[open]){z-index:20;min-height:260px;height:auto!important;overflow:visible}.msd-card-editor .msd-manual-grid{grid-template-columns:1.3fr 1fr 1fr 1fr;margin-top:6px}.msd-card-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.msd-card-editor-actions .btn{min-height:32px}
+.msd-card-editor summary{cursor:pointer;font-size:10px;font-weight:900}.msd-direct-card:has(.msd-card-editor[open]){z-index:20;min-height:260px;height:auto!important;overflow:visible}.msd-direct-card:has(.msd-card-editor[open]) .msd-resize-handle{pointer-events:none;opacity:0}.msd-card-editor .msd-manual-grid{grid-template-columns:1.3fr 1fr 1fr 1fr;margin-top:6px}.msd-card-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.msd-card-editor-actions .btn{min-height:32px}
 .msd-calendar-create{margin:6px;padding:8px;border:2px solid #2f6fde;border-radius:9px;background:#f7fbff}.msd-calendar-create b{font-size:11px}.msd-calendar-create .msd-manual-grid{grid-template-columns:1.3fr 1fr 1fr;margin-top:6px}.msd-calendar-create-actions{display:flex;gap:6px;margin-top:7px}.msd-calendar-create-actions .btn{min-height:34px}
 @media(max-width:700px){.msd-day-timeline{grid-template-columns:38px minmax(0,1fr)}.msd-time-scale,.msd-slot-grid{grid-template-rows:repeat(34,24px)}.msd-card-editor .msd-manual-grid,.msd-calendar-create .msd-manual-grid{grid-template-columns:1fr}.msd-direct-actions .btn{min-height:34px}}
 
