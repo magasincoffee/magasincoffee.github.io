@@ -89,8 +89,10 @@ try{
   });
 
   await check("owner_full_canonical_draft_validate_review_publish_flow",async()=>{
-    await page.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
-    await page.locator(".msd-source-row").nth(1).locator("[data-add-av]").click();
+    await page.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+    await page.locator(".msd-pool-details .msd-source-row").nth(0).locator("[data-add-av]").click();
+    await page.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+    await page.locator(".msd-pool-details .msd-source-row").nth(1).locator("[data-add-av]").click();
     await page.locator("#msdSave").click();
     await page.waitForFunction(()=>globalThis.__SCHED05_OWNER_QA.calls.some(x=>x.name==="replace_schedule_generation_assignments")&&globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false);
     await page.locator("#msdValidate").click();
@@ -138,7 +140,8 @@ try{
   await check("owner_stale_publish_is_server_revalidated_and_returns_to_draft",async()=>{
     await page.locator("#msdStart").click();
     await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().generationStatus==="DRAFT");
-    await page.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
+    await page.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+    await page.locator(".msd-pool-details .msd-source-row").nth(0).locator("[data-add-av]").click();
     const beforeReplace=await page.evaluate(()=>globalThis.__SCHED05_OWNER_QA.calls.filter(x=>x.name==="replace_schedule_generation_assignments").length);
     await page.locator("#msdSave").click();
     await page.waitForFunction(before=>globalThis.__SCHED05_OWNER_QA.calls.filter(x=>x.name==="replace_schedule_generation_assignments").length>before&&globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false,beforeReplace);
