@@ -100,8 +100,7 @@ test("UI2-012 responsive contract keeps tablet board scroll and stacks phone dra
   assert.match(ui,/outline:2px solid/);
 });
 
-test("UI2-012 Manager asset cache chain advances while Owner runtime remains on its existing path",()=>{
-  const v="20260927-ui2-012";
+test("UI2-012 Manager presentation remains Manager-only while Owner reuses the canonical XSTORE-019 writer",()=>{
   const managerV="20261005-xstore-019";
   const managerEntryV="20261005-xstore-019";
   assert.ok(runtime.includes("engine-v1.js?v="+managerV));
@@ -109,7 +108,8 @@ test("UI2-012 Manager asset cache chain advances while Owner runtime remains on 
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
   assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerV+"#workforce"));
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261005-xstore-019)/);
-  assert.doesNotMatch(ownerRuntime,new RegExp(managerV));
+  assert.ok(ownerRuntime.includes("/05_MANAGER/Workforce/draft-publish-v1.js?v="+managerV));
+  assert.doesNotMatch(ownerRuntime,/manager-scheduling-ui2-v1\.js/);
 });
 
 test("UI2-012 bounded browser gate is integrated into the existing People Shift Day-10 gate",()=>{
