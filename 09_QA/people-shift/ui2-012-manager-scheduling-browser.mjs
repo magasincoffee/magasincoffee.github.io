@@ -31,8 +31,10 @@ for(const width of [1440,1024,768,430,390,360]){
 
  await frame.locator("#msdStart").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().generationStatus==="DRAFT");
- await frame.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
- await frame.locator(".msd-source-row").nth(1).locator("[data-add-av]").click();
+ await frame.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+ await frame.locator(".msd-pool-details .msd-source-row").nth(0).locator("[data-add-av]").click();
+ await frame.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+ await frame.locator(".msd-pool-details .msd-source-row").nth(1).locator("[data-add-av]").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
 
  await check("ui2_012_"+width+"_hierarchy_no_page_overflow_touch_focus",async()=>{
@@ -146,8 +148,10 @@ await check("ui2_012_busy_locks_controls_during_canonical_start",async()=>{
 });
 
 await check("ui2_012_assignment_add_edit_remove_save_delegates_to_existing_writer",async()=>{
- await frame.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
- await frame.locator(".msd-source-row").nth(1).locator("[data-add-av]").click();
+ await frame.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+ await frame.locator(".msd-pool-details .msd-source-row").nth(0).locator("[data-add-av]").click();
+ await frame.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+ await frame.locator(".msd-pool-details .msd-source-row").nth(1).locator("[data-add-av]").click();
  const first=frame.locator("[data-msd-row='0']");
  await first.locator('[data-f="user_id"]').selectOption("u-3");
  await first.locator('[data-f="start_time"]').selectOption("06:30");
@@ -164,7 +168,8 @@ await check("ui2_012_assignment_add_edit_remove_save_delegates_to_existing_write
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false);
  const removed=await frame.evaluate(()=>globalThis.__MW31_QA.state.assignments.length);
  if(removed!==1)throw new Error("removed="+removed);
- await frame.locator(".msd-source-row").filter({hasText:"Nhân viên QA 2"}).locator("[data-add-av]").click();
+ await frame.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+ await frame.locator(".msd-pool-details .msd-source-row").filter({hasText:"Nhân viên QA 2"}).locator("[data-add-av]").click();
  await frame.locator("#msdSave").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false&&globalThis.__MW31_QA.state.assignments.length===2);
  return JSON.stringify({firstSave:firstSave.length,afterRemove:removed,final:2});
