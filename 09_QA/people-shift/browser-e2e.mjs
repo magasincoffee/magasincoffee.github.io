@@ -142,7 +142,15 @@ try {
     const registered = await page.evaluate(() => globalThis.__PEOPLE_SHIFT_QA.state.availability[0]);
     if (!registered?.work_date) throw new Error("registered availability missing");
     await page.locator("#msdStart").click();
-    await page.waitForFunction(() => globalThis.__PEOPLE_SHIFT_QA.state.generation?.status === "DRAFT");
+    await page.waitForFunction(() => {
+      const controller = globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT?.getState?.();
+      const addButton = document.querySelector("#msdManualAdd");
+      return globalThis.__PEOPLE_SHIFT_QA.state.generation?.status === "DRAFT" &&
+        controller?.generationId &&
+        controller?.generationStatus === "DRAFT" &&
+        addButton &&
+        addButton.disabled === false;
+    });
     await page.locator("#msdManualEmployee").selectOption("employee-qa");
     await page.locator("#msdManualDate").selectOption(registered.work_date);
     await page.locator("#msdManualStart").selectOption("06:00");
