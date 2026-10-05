@@ -36,8 +36,9 @@ test("XSTORE-017 renders accessible inline shortage cards in exact calendar cell
   assert.match(draft,/#f3efff/i);
 });
 
-test("XSTORE-017 supplement action prefills the existing manual picker without inventing a second writer",()=>{
-  assert.match(draft,/function openSupplement\(index\)/);
+test("XSTORE-017 supplement action still targets exact shortage while XSTORE-019C routes it through the on-demand candidate drawer",()=>{
+  assert.match(draft,/function openSupplement\(index,sourceWrap=null\)/);
+  assert.match(draft,/openCandidateDrawer\(target,sourceWrap\)/);
   assert.match(draft,/supplementTarget/);
   assert.match(draft,/selectedDate=target\?\.work_date/);
   assert.match(draft,/selectedStart=hm\(target\?\.shortage_start/);
