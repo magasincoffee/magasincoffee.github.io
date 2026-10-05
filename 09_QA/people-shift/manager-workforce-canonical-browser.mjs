@@ -89,9 +89,12 @@ await check("manager_adds_two_assignments_from_availability",async()=>{
 
 await check("manager_edits_time_then_remove_and_add_again",async()=>{
   const first=page.locator('[data-msd-row="0"]');
+  await first.locator('[data-msd-open-editor="0"]').click();
   await first.locator('[data-f="start_time"]').selectOption("06:30");
   await first.locator('[data-f="end_time"]').selectOption("11:30");
-  await page.locator('[data-msd-row="1"] [data-remove]').click();
+  await first.locator('[data-msd-apply-edit="0"]').click();
+  await page.waitForFunction(()=>{const a=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0];return a?.start_time==="06:30"&&a?.end_time==="11:30"});
+  await page.locator('[data-msd-row="1"] [data-msd-remove-direct="1"]').first().click();
   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===1);
   await addManualAssignment("u-2","2026-09-28","12:00","17:00");
   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
