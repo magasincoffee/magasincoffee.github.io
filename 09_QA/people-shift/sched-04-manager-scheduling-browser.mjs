@@ -36,8 +36,10 @@ try{
   });
 
   await check("manager_builds_and_saves_draft_from_availability",async()=>{
-    await page.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
-    await page.locator(".msd-source-row").nth(1).locator("[data-add-av]").click();
+    await page.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+    await page.locator(".msd-pool-details .msd-source-row").nth(0).locator("[data-add-av]").click();
+    await page.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+    await page.locator(".msd-pool-details .msd-source-row").nth(1).locator("[data-add-av]").click();
     await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
     await page.locator("#msdSave").click();
     await page.waitForFunction(()=>globalThis.__MW31_QA.calls.some(x=>x.name==="replace_schedule_generation_assignments"));
