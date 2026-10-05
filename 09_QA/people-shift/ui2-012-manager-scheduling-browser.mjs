@@ -61,6 +61,7 @@ for(const width of [1440,1024,768,430,390,360]){
     focusShadow:getComputedStyle(focused).boxShadow,
     focusedId:focused?.id||"",
     boardScroll:wrap?.scrollWidth||0,boardClient:wrap?.clientWidth||0,
+    boardScrollHeight:wrap?.scrollHeight||0,boardClientHeight:wrap?.clientHeight||0,
     boardColumns:root?.querySelector(".msd-board")?getComputedStyle(root.querySelector(".msd-board")).gridTemplateColumns.split(" ").filter(Boolean).length:0,
     dayTitlePosition:root?.querySelector(".msd-day-title")?getComputedStyle(root.querySelector(".msd-day-title")).position:"",
     dayCount:root?.querySelectorAll(".msd-day").length||0,
@@ -75,8 +76,8 @@ for(const width of [1440,1024,768,430,390,360]){
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
    if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5||metric.sourceRole!=="supplemental-employee-pool"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
-   if(expected<=430&&(metric.boardColumns!==7||metric.boardScroll<=metric.boardClient||metric.dayTitlePosition!=="sticky"))throw new Error("phone calendar must keep seven days inside internal scroll: "+JSON.stringify(metric));
-   if((expected===768||expected===1024)&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet calendar scroll: "+JSON.stringify(metric));
+   if(expected<=430&&(metric.boardColumns!==7||metric.boardScrollHeight<=metric.boardClientHeight||metric.dayTitlePosition!=="sticky"))throw new Error("phone calendar must keep seven days and own internal time scrolling: "+JSON.stringify(metric));
+   if((expected===768||expected===1024)&&(metric.boardColumns!==7||metric.boardScrollHeight<=metric.boardClientHeight))throw new Error("tablet calendar must keep seven days and own internal time scrolling: "+JSON.stringify(metric));
    if(expected===1440&&(metric.boardColumns!==7||metric.boardScroll>metric.boardClient+1))throw new Error("desktop calendar should fit seven days: "+JSON.stringify(metric));
    return JSON.stringify(metric);
   },width);
