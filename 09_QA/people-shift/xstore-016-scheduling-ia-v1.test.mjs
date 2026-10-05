@@ -35,8 +35,9 @@ test("XSTORE-019A makes the calendar primary and moves employees to a collapsed 
     draft.includes("calendar+people+downstream"),
     "calendar must render before the employee helper region"
   );
-  assert.match(draft,/<details class="msd-people-secondary">/);
-  assert.match(draft,/Vùng này chỉ mở khi cần thêm\/bổ sung người/);
+  assert.match(draft,/<section class="msd-people-secondary"/);
+  assert.match(draft,/Danh sách ứng viên chỉ xuất hiện khi xử lý một khoảng thiếu/);
+  assert.match(draft,/target\?supplementalPoolHtml\(\):''/);
   assert.match(draft,/max-height:calc\(100vh - 330px\)/);
   assert.match(draft,/overflow:auto/);
   assert.match(draft,/grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
