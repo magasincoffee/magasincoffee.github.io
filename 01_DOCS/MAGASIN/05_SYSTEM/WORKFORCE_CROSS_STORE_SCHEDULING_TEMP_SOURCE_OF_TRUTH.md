@@ -1114,7 +1114,7 @@ Machine handoff:
 MAGASIN_TASK_CONTROL_V1
 STATUS=READY
 TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-018
+NEXT_TASK_ID=XSTORE-019
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -1310,6 +1310,47 @@ Browser/regression proof:
 - desktop/mobile XSTORE-017 browser checks remain green.
 
 XSTORE-018 is now the sole next executable task and owns the actionable supplemental employee pool. XSTORE-011 remains paused until XSTORE-013→020 are complete.
+
+## 6.0.15 XSTORE-018 supplemental employee pool acceptance — 2026-10-05
+
+XSTORE-018 is **DONE / EXACT-MAIN GREEN**.
+
+Implementation:
+- PR #391 removes the old “Nguồn tham khảo” scheduling wording and replaces it with an actionable supplemental employee pool;
+- the pool derives and displays **Chưa được xếp ca nào**, **Còn thời gian có thể xếp** and **Có thể điều động thủ công** from canonical four-store schedule/Availability authority;
+- the shortage action filters candidates to the exact branch/date/time and ranks Availability-covered candidates before Manager manual-override candidates;
+- employees already assigned in the week are not mislabeled as unassigned;
+- remaining Availability is recalculated after current DRAFT assignments;
+- manual candidates outside Availability are explicitly marked for Manager override/audit semantics;
+- cross-store overlap, official-schedule overlap and max-two-per-day hard conflicts remain non-selectable;
+- the existing canonical Manager DRAFT writer remains the only scheduling mutation path;
+- People Shift Day-10 and legacy regression fixtures were reconciled to the current read-only weekly-plan reader and canonical manual picker without weakening production validation;
+- no production business data was fabricated.
+
+Implementation PR #391:
+- final implementation / repair head `c462aa7ccdcbaf9c73f783122b51261c68c344b5`;
+- squash merge / executable main `083a025159873993aa8afc647795950f0ed5e196`.
+
+Exact-main gates for `083a025159873993aa8afc647795950f0ed5e196`:
+- XSTORE-018 Supplemental Pool QA run `37260372281` = **SUCCESS**;
+- XSTORE-017 Inline Shortage QA run `37260372257` = **SUCCESS**;
+- XSTORE-016 Scheduling IA QA run `37260372271` = **SUCCESS**;
+- XSTORE-015 Manager Override QA run `37260372276` = **SUCCESS**;
+- People Shift Day-10 Tests run `37260372287` = **SUCCESS**;
+- UI2 Cross Role Acceptance run `37260372932` = **SUCCESS**;
+- Validate MAGASIN GitHub Pages source run `37260372229` = **SUCCESS**;
+- Pages build/deployment run `37260371800` = **SUCCESS**.
+
+Browser/regression proof:
+- the three actionable supplemental groups render without the retired reference wording;
+- exact-shortage ranking clearly separates Availability-covered and manual-override candidates;
+- an employee with an existing DRAFT assignment moves out of the unassigned group and shows only remaining Availability;
+- hard-conflict candidates are visibly blocked from selection;
+- save continues through `replace_schedule_generation_assignments` and refreshes the canonical weekly plan/shortage readers;
+- People Shift canonical create → manual add → save → Validate → Review → Publish regression is green;
+- desktop/mobile supplemental-pool browser checks remain green.
+
+XSTORE-019 is now the sole next executable task and owns unified workflow integration + RC qualification. XSTORE-011 remains paused until XSTORE-013→020 are complete.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
