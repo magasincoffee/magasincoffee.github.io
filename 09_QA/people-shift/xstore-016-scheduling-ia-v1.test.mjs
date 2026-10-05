@@ -8,57 +8,64 @@ const master=read("05_MANAGER/Workforce/cross-store-master-v1.js");
 const ui=read("05_MANAGER/Workforce/manager-scheduling-ui2-v1.js");
 const engine=read("05_MANAGER/Workforce/engine-v1.js");
 
-test("XSTORE-016 removes the global branch selector and renders branch accordion rows",()=>{
+test("XSTORE-016 historical accordion is superseded by XSTORE-019A single-store workspace",()=>{
   assert.doesNotMatch(draft,/id="msdStore"/);
-  assert.match(draft,/data-msd-branch/);
-  assert.match(draft,/msd-branches/);
-  assert.match(draft,/msd-branch-panel/);
-  assert.match(draft,/aria-expanded/);
-  assert.match(draft,/Editor lịch nháp nằm ngay trong chi nhánh này/);
+  assert.match(draft,/function storeSwitcherHtml\(\)/);
+  assert.match(draft,/function singleStoreWorkspaceHtml\(/);
+  assert.match(draft,/msd-store-switcher/);
+  assert.match(draft,/data-msd-active-store/);
+  assert.match(draft,/msd-calendar-primary/);
+  assert.doesNotMatch(draft,/function branchRowsHtml\(/);
 });
 
-test("XSTORE-016 keeps global week/actions separate from branch-local editor actions",()=>{
-  assert.match(draft,/msd-global-actions/);
-  assert.match(draft,/data-msd-week="prev"/);
-  assert.match(draft,/data-msd-week="target"/);
-  assert.match(draft,/data-msd-week="next"/);
-  assert.match(draft,/msd-branch-actions/);
+test("XSTORE-019A keeps exactly one selected-store editor with compact store navigation",()=>{
+  assert.match(draft,/data-msd-branch/);
+  assert.match(draft,/aria-pressed/);
+  assert.match(draft,/Một cửa hàng · một lịch tuần/);
+  assert.match(draft,/chỉ hiển thị cửa hàng đang chọn/);
   assert.match(draft,/id="msdStart"/);
   assert.match(draft,/id="msdReload"/);
   assert.match(draft,/id="msdSave"/);
   assert.doesNotMatch(ui,/actions\.querySelector\('#msdStore'\)/);
   assert.doesNotMatch(ui,/Cửa hàng đang xếp/);
-  assert.match(ui,/Tuần vận hành · Asia\/Ho_Chi_Minh/);
 });
 
-test("XSTORE-016 moves Auto Schedule global and four-store master to collapsed secondary overview",()=>{
+test("XSTORE-019A makes the calendar primary and moves employees to a collapsed secondary region",()=>{
   assert.ok(
-    draft.includes("globalSummary+'<div id=\"xstoreAutomationMount\"></div>'+branchRowsHtml(stage,stepHtml,officialHtml,actionHelp)+'<details class=\"msd-global-overview\">"),
-    "render order must be global Auto Schedule → branch accordion → collapsed overview"
+    draft.includes("calendar+people+downstream"),
+    "calendar must render before the employee helper region"
   );
+  assert.match(draft,/<details class="msd-people-secondary">/);
+  assert.match(draft,/Vùng này chỉ mở khi cần thêm\/bổ sung người/);
+  assert.match(draft,/max-height:calc\(100vh - 330px\)/);
+  assert.match(draft,/overflow:auto/);
+  assert.match(draft,/grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
+});
+
+test("XSTORE-019A preserves global Auto Schedule and collapsed four-store overview",()=>{
+  assert.match(draft,/id="xstoreAutomationMount"/);
   assert.match(draft,/<details class="msd-global-overview">/);
-  assert.match(draft,/Tổng quan 4 cửa hàng · thông tin tham khảo/);
+  assert.match(draft,/Tổng quan 4 cửa hàng · mở khi cần/);
   assert.doesNotMatch(master,/id="xstoreAutomationMount"/);
   assert.match(master,/Tổng lịch 4 cửa hàng · tổng quan/);
 });
 
-test("XSTORE-016 preserves unsaved-change safety for branch and week navigation",()=>{
+test("XSTORE-019A preserves unsaved-change safety for store and week navigation",()=>{
   assert.match(draft,/dirty:false/);
   assert.match(draft,/function confirmDiscardChanges\(\)/);
   assert.match(draft,/Chi nhánh hiện tại có thay đổi chưa lưu/);
   assert.match(draft,/state\.dirty=true/);
   assert.match(draft,/if\(!confirmDiscardChanges\(\)\)return/);
   assert.match(draft,/state\.dirty=false/);
-  assert.match(draft,/Hãy lưu các thay đổi của lịch nháp trước khi kiểm tra/);
 });
 
-test("XSTORE-016 cache chain points at exact IA runtime",()=>{
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:2026100[45]-xstore-01[678]|20261005-xstore-019)/);
+test("XSTORE-019A keeps the existing canonical runtime chain",()=>{
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:2026100[45]-xstore-01[6789]|20261005-xstore-019)/);
   for(const token of [
     "cross-store-master-v1.js?v=20261005-xstore-019",
     "manager-scheduling-ui2-v1.js?v=20261005-xstore-019"
   ])assert.ok(engine.includes(token),token);
-  assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:2026100[45]-xstore-01[27]|20261005-xstore-019)/);
+  assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:2026100[45]-xstore-01[279]|20261005-xstore-019)/);
 });
 
-console.log("XSTORE_016_SCHEDULING_IA_STATIC=PASS");
+console.log("XSTORE_016_SUPERSESSION_019A_STATIC=PASS");
