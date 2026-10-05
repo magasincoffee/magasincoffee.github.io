@@ -344,7 +344,7 @@ function supplementalPoolHtml(){
  const pool=supplementalPool(),target=state.supplementTarget;
  const intro=target
   ?'Đang lọc cho '+esc(target.work_date)+' · '+esc(hm(target.shortage_start))+'–'+esc(hm(target.shortage_end))+'. Người đã có ca trùng giờ bị loại khỏi lựa chọn.'
-  :'Danh sách được tính từ Store Priority, Availability và các ca đang có trong DRAFT tuần này.';
+  :'Danh sách được tính từ Store Priority, Availability và các ca đang có trong lịch nháp tuần này.';
  return '<div class="msd-pool" id="msdSupplementalPool"><div class="muted">'+intro+'</div>'
   +poolGroupHtml('Chưa được xếp ca nào',pool.unassigned,'unassigned')
   +poolGroupHtml('Còn thời gian có thể xếp',pool.remaining,'remaining')
@@ -459,7 +459,7 @@ function addManualAssignment(){
  if(!userId||!workDate||!startTime||!endTime||mins(endTime)<=mins(startTime))return status('Hãy chọn nhân viên, ngày và khung giờ hợp lệ.','error');
  const profile=state.eligibleEmployees.find(r=>String(r.employee_id||r.user_id)===String(userId));
  if(!profile)return status('Nhân viên không còn đủ điều kiện Store Priority cho cửa hàng này.','error');
- if(hasDraftConflict(userId,workDate,startTime,endTime))return status('Nhân viên đã có ca DRAFT trùng khung giờ này nên không thể chọn.','error');
+ if(hasDraftConflict(userId,workDate,startTime,endTime))return status('Nhân viên đã có ca trong lịch nháp trùng khung giờ này nên không thể chọn.','error');
  const candidate={id:null,generation_id:state.generationId,user_id:userId,employee_name:employeeName(profile),store_id:state.storeId,store_code:selectedStore()?.code||'',work_date:workDate,start_time:hm(startTime),end_time:hm(endTime),skill_code:null,skill_level:0,score:0,warning:null,status:'DRAFT',note:'MANAGER_MANUAL_PICKER_V1'};
  const hasAvailability=state.availability.some(r=>String(r.user_id)===String(userId)&&availCovers(r,candidate));
  if(!hasAvailability){candidate.warning='MANAGER_AVAILABILITY_OVERRIDE';candidate.note='MANAGER_MANUAL_PICKER_V1 | MANAGER_AVAILABILITY_OVERRIDE'}
