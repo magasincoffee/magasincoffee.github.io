@@ -84,7 +84,7 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-direct-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.msd-direct-actions .btn{min-height:28px;padding:4px 7px;font-size:9px}
 .msd-resize-handle{position:absolute;left:0;right:0;height:8px;border:0;background:transparent;cursor:ns-resize;padding:0}.msd-resize-handle.start{top:-1px}.msd-resize-handle.end{bottom:-1px}.msd-resize-handle:hover,.msd-resize-handle:focus-visible{background:rgba(47,111,222,.18);outline:1px solid #2f6fde}
 .msd-card-editor{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(52,64,84,.25)}
-.msd-card-editor summary{cursor:pointer;font-size:10px;font-weight:900}.msd-card-editor .msd-manual-grid{grid-template-columns:1.3fr 1fr 1fr 1fr;margin-top:6px}.msd-card-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.msd-card-editor-actions .btn{min-height:32px}
+.msd-card-editor summary{cursor:pointer;font-size:10px;font-weight:900}.msd-direct-card:has(.msd-card-editor[open]){z-index:20;min-height:260px;height:auto!important;overflow:visible}.msd-card-editor .msd-manual-grid{grid-template-columns:1.3fr 1fr 1fr 1fr;margin-top:6px}.msd-card-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.msd-card-editor-actions .btn{min-height:32px}
 .msd-calendar-create{margin:6px;padding:8px;border:2px solid #2f6fde;border-radius:9px;background:#f7fbff}.msd-calendar-create b{font-size:11px}.msd-calendar-create .msd-manual-grid{grid-template-columns:1.3fr 1fr 1fr;margin-top:6px}.msd-calendar-create-actions{display:flex;gap:6px;margin-top:7px}.msd-calendar-create-actions .btn{min-height:34px}
 @media(max-width:700px){.msd-day-timeline{grid-template-columns:38px minmax(0,1fr)}.msd-time-scale,.msd-slot-grid{grid-template-rows:repeat(34,24px)}.msd-card-editor .msd-manual-grid,.msd-calendar-create .msd-manual-grid{grid-template-columns:1fr}.msd-direct-actions .btn{min-height:34px}}
 
@@ -502,9 +502,9 @@ function applyAssignmentMutation(index,patch,successText='Đã cập nhật ca t
  const next={...current,...patch};
  next.work_date=String(next.work_date||'').slice(0,10);next.start_time=hm(next.start_time);next.end_time=hm(next.end_time);
  const profile=state.eligibleEmployees.find(r=>String(r.employee_id||r.user_id)===String(next.user_id));
- if(!profile)return status('Nhân viên không còn ACTIVE hoặc không còn Store Priority tại cửa hàng này.','error'),false;
+ if(!profile){render();status('Nhân viên không còn ACTIVE hoặc không còn Store Priority tại cửa hàng này.','error');return false}
  const conflict=hardConflictFor(next.user_id,next.work_date,next.start_time,next.end_time,i);
- if(conflict)return status('Không thể cập nhật ca: '+conflict.reason,'error'),false;
+ if(conflict){render();status('Không thể cập nhật ca: '+conflict.reason,'error');return false}
  next.employee_name=employeeName(profile);next.store_id=state.storeId;next.store_code=selectedStore()?.code||next.store_code||'';next.status='DRAFT';
  refreshAssignmentWarning(next);
  state.assignments[i]=next;state.dirty=true;state.lastValidation=null;state.calendarCreate=null;recalculateShortagesLocal();render();status(successText+' Bấm “Lưu bản nháp” để lưu thay đổi.');
@@ -661,7 +661,6 @@ function openSupplement(index){
 function clearSupplement(){state.supplementTarget=null;render()}
 async function save(){
  if(state.busy||!state.generationId||state.generationStatus!=='DRAFT')return;
- syncRowsFromDom();
  for(const a of state.assignments){if(!a.user_id||mins(a.end_time)<=mins(a.start_time)){status('Có ca thiếu nhân viên hoặc giờ kết thúc không sau giờ bắt đầu.','error');return}}
  state.busy=true;lockControls(true);status('Đang lưu lịch nháp…');
  try{
