@@ -6,11 +6,15 @@ on:
       - '07_DATABASE/migrations/20261004220500_xstore_013_continuous_coverage_shortage_v1.sql'
       - '09_QA/people-shift/xstore-013-coverage-shortage-v1.test.mjs'
       - '.github/workflows/xstore-013-coverage-qa.yml'
+      - '09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs'
+      - '.github/workflows/xstore-019-unified-rc-qa.yml'
   pull_request:
     paths:
       - '07_DATABASE/migrations/20261004220500_xstore_013_continuous_coverage_shortage_v1.sql'
       - '09_QA/people-shift/xstore-013-coverage-shortage-v1.test.mjs'
       - '.github/workflows/xstore-013-coverage-qa.yml'
+      - '09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs'
+      - '.github/workflows/xstore-019-unified-rc-qa.yml'
   workflow_dispatch:
 
 permissions:
