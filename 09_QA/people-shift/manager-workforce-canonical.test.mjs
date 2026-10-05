@@ -66,11 +66,12 @@ test("Direct save only persists DRAFT and does not auto validate review or publi
   assert.match(save,/Hãy kiểm tra xung đột trước khi duyệt/);
 });
 
-test("Manager direct board supports source availability plus add remove edit save and resume",async()=>{
+test("Manager direct board supports actionable supplemental pool plus add remove edit save and resume",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
-  assert.match(draft,/Thời gian nhân viên có thể làm/);
+  for(const label of ["Chưa được xếp ca nào","Còn thời gian có thể xếp","Có thể điều động thủ công"])assert.match(draft,new RegExp(label),label);
   assert.match(draft,/Lịch đang xếp · Thứ Hai → Chủ Nhật/);
-  assert.match(draft,/data-add-av/);
+  assert.match(draft,/data-msd-pool-user/);
+  assert.match(draft,/get_cross_store_weekly_plan_v1/);
   assert.match(draft,/data-remove/);
   assert.match(draft,/data-f="start_time"/);
   assert.match(draft,/data-f="end_time"/);
