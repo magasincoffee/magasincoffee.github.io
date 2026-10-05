@@ -24,7 +24,7 @@ test("XSTORE-018 computes remaining Availability after DRAFT assignments",()=>{
 test("XSTORE-018 shortage target filters exact interval and blocks known DRAFT overlap",()=>{
   assert.match(draft,/target\?hasDraftConflict\(userId,target\.work_date,target\.shortage_start,target\.shortage_end\):false/);
   assert.match(draft,/out\.blocked\.push\(entry\)/);
-  assert.match(draft,/Người có ca DRAFT trùng đúng khoảng thiếu nên không thể chọn|nhân viên đang có ca DRAFT trùng đúng khoảng thiếu nên không thể chọn/i);
+  assert.match(draft,/nhân viên đang có ca trùng đúng khoảng thiếu nên không thể chọn/i);
   assert.match(draft,/if\(hasDraftConflict\(userId,workDate,startTime,endTime\)\)return status/);
 });
 
