@@ -138,10 +138,17 @@ try {
 
   await check("owner_draft_requires_registered_availability", async () => {
     await page.locator("#msdReload").click();
-    await page.locator(".msd-source-row").filter({ hasText: "Nhân viên QA" }).waitFor();
+    await page.locator("#msdManualEmployee option", { hasText: "Nhân viên QA" }).waitFor();
+    const registered = await page.evaluate(() => globalThis.__PEOPLE_SHIFT_QA.state.availability[0]);
+    if (!registered?.work_date) throw new Error("registered availability missing");
     await page.locator("#msdStart").click();
     await page.waitForFunction(() => globalThis.__PEOPLE_SHIFT_QA.state.generation?.status === "DRAFT");
-    await page.locator(".msd-source-row").filter({ hasText: "Nhân viên QA" }).locator("[data-add-av]").click();
+    await page.locator("#msdManualEmployee").selectOption("employee-qa");
+    await page.locator("#msdManualDate").selectOption(registered.work_date);
+    await page.locator("#msdManualStart").selectOption("06:00");
+    await page.locator("#msdManualEnd").selectOption("12:00");
+    await page.locator("#msdManualAdd").click();
+    await page.waitForFunction(() => globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length === 1);
     await page.locator("#msdSave").click();
     await page.waitForFunction(() =>
       globalThis.__PEOPLE_SHIFT_QA.calls.some(call => call.name === "replace_schedule_generation_assignments") &&
@@ -156,10 +163,10 @@ try {
     if (
       state.status !== "DRAFT" ||
       state.weekStart !== "2026-09-21" ||
-      state.assignmentDate !== "2026-09-21" ||
+      state.assignmentDate !== registered.work_date ||
       state.assignments !== 1
     ) {
-      throw new Error(JSON.stringify(state));
+      throw new Error(JSON.stringify({state,registered}));
     }
     return JSON.stringify(state);
   });
