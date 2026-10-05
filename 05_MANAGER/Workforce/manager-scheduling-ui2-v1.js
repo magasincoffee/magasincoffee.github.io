@@ -34,7 +34,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msd-ui2-012 .msd-source{background:#fbfdff;border-style:dashed}.msd-ui2-012 .msd-board-wrap{background:#fff;border-width:2px}.msu2-section-help{margin:2px 0 10px;color:#667085;font-size:11px;line-height:17px}
 .msd-ui2-012 .msd-source-list{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,260px);grid-template-columns:none;gap:8px;max-height:none;overflow-x:auto;overflow-y:hidden;padding-bottom:3px;scrollbar-gutter:stable}
 .msd-ui2-012 .msd-source-row{min-width:0;background:#fff}
-.msd-ui2-012 .msd-board-wrap{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-gutter:stable}
+.msd-ui2-012 .msd-board-wrap{overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;max-height:calc(100vh - 330px)}
 .msd-ui2-012 .msd-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;min-width:0;width:100%}
 .msd-ui2-012 .msd-day{min-width:0;border-radius:10px;background:#fcfdff}
 .msd-ui2-012 .msd-day-title{position:sticky;left:0;padding:9px 8px;background:#f4f7fb}
@@ -77,10 +77,10 @@ const css=`<style id="manager-scheduling-ui2-012-css">
  .msu2-draft-actions #msdSave{grid-column:auto}
  .msd-ui2-012 .msd-source,.msd-ui2-012 .msd-board-wrap,.msd-ui2-012 .msd-downstream{padding:12px}
  .msd-ui2-012 .msd-source-list{grid-template-columns:1fr}
- .msd-ui2-012 .msd-board-wrap{overflow:visible;scrollbar-gutter:auto}
- .msd-ui2-012 .msd-board{grid-template-columns:1fr;min-width:0;width:100%;gap:10px}
- .msd-ui2-012 .msd-day{min-height:0;width:100%}
- .msd-ui2-012 .msd-day-title{position:static}
+ .msd-ui2-012 .msd-board-wrap{overflow:auto;scrollbar-gutter:stable;max-height:62vh}
+ .msd-ui2-012 .msd-board{grid-template-columns:repeat(7,minmax(150px,1fr));min-width:1080px;width:max-content;gap:6px}
+ .msd-ui2-012 .msd-day{min-height:220px;min-width:0}
+ .msd-ui2-012 .msd-day-title{position:sticky;top:0;z-index:2}
  .msd-ui2-012 .msd-time-row{grid-template-columns:1fr}
  .msd-ui2-012 .msd-downstream .msd-actions{grid-template-columns:1fr}
  .msd-ui2-012 .msd-downstream #msdPublish{grid-column:auto}
