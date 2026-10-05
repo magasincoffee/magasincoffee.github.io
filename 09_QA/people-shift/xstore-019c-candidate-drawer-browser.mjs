@@ -48,8 +48,17 @@ await check("xstore_019c_primary_calendar_has_no_persistent_candidate_pool",asyn
  return JSON.stringify(metric);
 });
 
-await frame.evaluate(()=>{const w=document.querySelector(".msd-board-wrap");if(w){w.scrollTop=260;w.scrollLeft=Math.min(140,Math.max(0,w.scrollWidth-w.clientWidth))}});
-const before=await frame.evaluate(()=>{const w=document.querySelector(".msd-board-wrap");return {left:w.scrollLeft,top:w.scrollTop,width:w.clientWidth}});
+await frame.evaluate(()=>{
+ const w=document.querySelector(".msd-board-wrap");
+ const action=document.querySelector('[data-msd-date="2026-09-28"] [data-msd-supplement]');
+ if(w&&action){
+   action.scrollIntoView({block:"center",inline:"nearest"});
+   w.scrollTop=Math.max(0,w.scrollTop-24);
+   w.scrollLeft=Math.min(140,Math.max(0,w.scrollWidth-w.clientWidth));
+ }
+});
+const before=await frame.evaluate(()=>{const w=document.querySelector(".msd-board-wrap");const a=document.querySelector('[data-msd-date="2026-09-28"] [data-msd-supplement]')?.getBoundingClientRect();const r=w?.getBoundingClientRect();return {left:w.scrollLeft,top:w.scrollTop,width:w.clientWidth,actionVisible:!!(a&&r&&a.top>=r.top&&a.bottom<=r.bottom)}});
+if(!before.actionVisible)throw new Error("XSTORE_019C_SHORTAGE_ACTION_NOT_VISIBLE_BEFORE_OPEN "+JSON.stringify(before));
 await frame.locator('[data-msd-date="2026-09-28"] [data-msd-supplement]').click();
 await frame.locator("[data-msd-candidate-overlay]").waitFor();
 
@@ -70,6 +79,8 @@ await frame.waitForFunction(()=>!globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getSt
 await check("xstore_019c_close_restores_calendar_context_and_full_width",async()=>{
  const after=await frame.evaluate(()=>{const w=document.querySelector(".msd-board-wrap");return {left:w.scrollLeft,top:w.scrollTop,width:w.clientWidth,drawer:document.querySelectorAll("[data-msd-candidate-overlay]").length}});
  if(after.drawer!==0||after.width!==before.width||Math.abs(after.left-before.left)>2||Math.abs(after.top-before.top)>2)throw new Error(JSON.stringify({before,after}));
+ const snapshot=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().calendarViewport);
+ if(Math.abs(snapshot.left-before.left)>2||Math.abs(snapshot.top-before.top)>2)throw new Error("drawer snapshot drift "+JSON.stringify({before,snapshot}));
  return JSON.stringify({before,after});
 });
 

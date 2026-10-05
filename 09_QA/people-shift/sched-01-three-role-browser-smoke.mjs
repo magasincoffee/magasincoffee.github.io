@@ -36,8 +36,9 @@ try {
   await check('owner_store_switch_reloads_same_canonical_read_path_without_leak',async()=>{
     const before=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.length);
     await owner.locator('[data-msd-branch="store-b"]').click();
-    await owner.locator('#panel-publish').filter({hasText:'Chi CN2'}).waitFor();
+    await owner.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT?.getState?.().storeId==="store-b"&&!globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy);
     const text=await owner.locator('#panel-publish').innerText();
+    if(!text.includes("CN2")||!text.includes("163 Nguyễn Văn Cừ"))throw new Error("store-b identity missing: "+text);
     if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error('cross-store stale content: '+text);
     const calls=await owner.evaluate(before=>window.__SCHED05_OWNER_QA.calls.slice(before),before);
     const storeScoped=calls.filter(x=>x?.args&&Object.prototype.hasOwnProperty.call(x.args,'p_store_id'));
