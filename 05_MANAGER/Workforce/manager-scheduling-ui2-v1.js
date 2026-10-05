@@ -143,9 +143,9 @@ function structure(r){
  const source=r.querySelector('.msd-source');
  const sourceTitle=source?.querySelector(':scope > b');
  if(sourceTitle&&!source.querySelector(':scope > .msu2-section-kicker')){
-  const k=document.createElement('span');k.className='msu2-section-kicker';k.textContent='Nguồn tham khảo';sourceTitle.before(k);
-  const h=document.createElement('div');h.className='msu2-section-help';h.textContent='Dữ liệu nhân viên có thể làm chỉ là nguồn để thêm ca; chỉnh sửa lịch được thực hiện ở bảng nháp bên dưới.';sourceTitle.after(h);
-  source.dataset.msu2Section='availability-source';
+  const k=document.createElement('span');k.className='msu2-section-kicker';k.textContent='Nhóm nhân sự bổ sung';sourceTitle.before(k);
+  const h=document.createElement('div');h.className='msu2-section-help';h.textContent='Nhân viên được chia theo trạng thái chưa có ca, còn Availability sau khi trừ lịch nháp, hoặc có thể điều động thủ công. Khi xử lý thiếu người, danh sách được lọc đúng chi nhánh/ngày/giờ.';sourceTitle.after(h);
+  source.dataset.msu2Section='supplemental-employee-pool';
  }
  const board=r.querySelector('.msd-board-wrap');
  const boardTitle=board?.querySelector(':scope > b');
