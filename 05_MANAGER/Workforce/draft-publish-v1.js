@@ -343,13 +343,13 @@ function poolGroupHtml(title,rows,kind){
 function supplementalPoolHtml(){
  const pool=supplementalPool(),target=state.supplementTarget;
  const intro=target
-  ?'Đang lọc cho '+esc(target.work_date)+' · '+esc(hm(target.shortage_start))+'–'+esc(hm(target.shortage_end))+'. Người có ca DRAFT trùng giờ đã bị loại khỏi lựa chọn.'
+  ?'Đang lọc cho '+esc(target.work_date)+' · '+esc(hm(target.shortage_start))+'–'+esc(hm(target.shortage_end))+'. Người đã có ca trùng giờ bị loại khỏi lựa chọn.'
   :'Danh sách được tính từ Store Priority, Availability và các ca đang có trong DRAFT tuần này.';
  return '<div class="msd-pool" id="msdSupplementalPool"><div class="muted">'+intro+'</div>'
   +poolGroupHtml('Chưa được xếp ca nào',pool.unassigned,'unassigned')
   +poolGroupHtml('Còn thời gian có thể xếp',pool.remaining,'remaining')
   +poolGroupHtml('Có thể điều động thủ công',pool.manual,'manual')
-  +(target&&pool.blocked.length?'<div class="msd-pool-blocked">'+pool.blocked.length+' nhân viên đang có ca DRAFT trùng đúng khoảng thiếu nên không thể chọn.</div>':'')
+  +(target&&pool.blocked.length?'<div class="msd-pool-blocked">'+pool.blocked.length+' nhân viên đang có ca trùng đúng khoảng thiếu nên không thể chọn.</div>':'')
   +'</div>';
 }
 function manualPickerHtml(){
@@ -362,7 +362,7 @@ function manualPickerHtml(){
   .sort((a,b)=>Number(a.manual_override)-Number(b.manual_override)||Number(a.priority)-Number(b.priority)||String(a.employee_name).localeCompare(String(b.employee_name),'vi'))
   .map(r=>'<option value="'+esc(r.user_id)+'">'+esc(r.employee_name)+' · Ưu tiên '+esc(r.priority)+(r.manual_override?' · điều động thủ công':'')+'</option>')
   .join('');
- return '<div class="msd-manual-picker" id="msdManualPicker"><div class="msd-source-name">Điều động thủ công</div><div class="msd-source-meta">Chỉ nhân viên ACTIVE có Store Priority tại '+esc(selectedStore()?.code||'cửa hàng đã chọn')+'. Người có ca DRAFT trùng khung giờ đang chọn sẽ bị chặn; server tiếp tục kiểm tra toàn bộ hard conflict khi lưu.</div><div class="msd-manual-grid"><select class="msd-input" id="msdManualEmployee" aria-label="Nhân viên">'+options+'</select><select class="msd-input" id="msdManualDate" aria-label="Ngày">'+days.map((d,i)=>'<option value="'+esc(d)+'"'+(d===selectedDate?' selected':'')+'>'+DAYS[i]+' · '+d.slice(8,10)+'/'+d.slice(5,7)+'</option>').join('')+'</select><select class="msd-input" id="msdManualStart" aria-label="Bắt đầu">'+timeOptions(selectedStart)+'</select><select class="msd-input" id="msdManualEnd" aria-label="Kết thúc">'+timeOptions(selectedEnd)+'</select></div><button class="btn" type="button" id="msdManualAdd"'+(state.generationId&&state.generationStatus==='DRAFT'&&options?'':' disabled')+'>+ Thêm ca thủ công</button></div>';
+ return '<div class="msd-manual-picker" id="msdManualPicker"><div class="msd-source-name">Điều động thủ công</div><div class="msd-source-meta">Chỉ nhân viên ACTIVE có Store Priority tại '+esc(selectedStore()?.code||'cửa hàng đã chọn')+'. Người đã có ca trùng khung giờ đang chọn sẽ bị chặn; hệ thống tiếp tục kiểm tra toàn bộ xung đột chặn khi lưu.</div><div class="msd-manual-grid"><select class="msd-input" id="msdManualEmployee" aria-label="Nhân viên">'+options+'</select><select class="msd-input" id="msdManualDate" aria-label="Ngày">'+days.map((d,i)=>'<option value="'+esc(d)+'"'+(d===selectedDate?' selected':'')+'>'+DAYS[i]+' · '+d.slice(8,10)+'/'+d.slice(5,7)+'</option>').join('')+'</select><select class="msd-input" id="msdManualStart" aria-label="Bắt đầu">'+timeOptions(selectedStart)+'</select><select class="msd-input" id="msdManualEnd" aria-label="Kết thúc">'+timeOptions(selectedEnd)+'</select></div><button class="btn" type="button" id="msdManualAdd"'+(state.generationId&&state.generationStatus==='DRAFT'&&options?'':' disabled')+'>+ Thêm ca thủ công</button></div>';
 }
 function sourceHtml(){
  const target=state.supplementTarget;
@@ -370,7 +370,7 @@ function sourceHtml(){
  const availabilityHtml=state.availability.length
   ? '<div class="msd-source-list">'+state.availability.map((r,i)=>'<div class="msd-source-row '+bandClass(r.start_time)+'"><div class="msd-source-time">'+esc(String(r.work_date).slice(0,10))+' · '+esc(hm(r.start_time))+'–'+esc(hm(r.end_time))+'</div><div class="msd-source-name">'+esc(r.employee_name||r.username||r.user_id)+'</div><div class="msd-source-meta">Availability đã đăng ký</div><button class="btn" type="button" data-add-av="'+i+'"'+(state.generationId&&state.generationStatus==='DRAFT'?'':' disabled')+'>+ Thêm theo đăng ký</button></div>').join('')+'</div>'
   : '<div class="msd-empty">Không có Availability đã đăng ký trong tuần này.</div>';
- return targetHtml+supplementalPoolHtml()+manualPickerHtml()+'<details class="msd-pool-details"><summary>Chi tiết Availability đã đăng ký</summary>'+availabilityHtml+'</details>';
+ return targetHtml+supplementalPoolHtml()+manualPickerHtml()+'<details class="msd-pool-details"><summary>Thời gian nhân viên có thể làm · chi tiết đăng ký</summary>'+availabilityHtml+'</details>';
 }
 function officialRowsHtml(){
  if(!state.officialRows.length)return '<div class="msd-empty">Chưa có ca chính thức cho cửa hàng/tuần này.</div>';
