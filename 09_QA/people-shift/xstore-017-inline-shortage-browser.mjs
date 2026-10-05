@@ -73,7 +73,8 @@ await check("xstore_017_direct_supplement_prefills_exact_shortage_interval",asyn
  return JSON.stringify(values);
 });
 
-await frame.locator('.msd-source-row [data-add-av]').first().click();
+await frame.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+await frame.locator('.msd-pool-details .msd-source-row [data-add-av]').first().click();
 await frame.waitForFunction(()=>{
  const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();
  return s.dirty===true&&s.shortageSource==="LOCAL"&&s.shortages.length===0;
