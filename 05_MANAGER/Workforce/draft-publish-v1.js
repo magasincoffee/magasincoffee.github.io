@@ -53,7 +53,7 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-store-switch{flex:0 0 auto;min-height:38px;padding:0 13px;border:1px solid #d0d5dd;border-radius:999px;background:#fff;color:#344054;font-weight:800;cursor:pointer}
 .msd-store-switch[aria-pressed="true"]{border-color:#84adff;background:#eff6ff;color:#175cd3;box-shadow:0 0 0 2px rgba(47,111,222,.08)}
 .msd-workspace{border:1px solid #dfe5ec;border-radius:14px;background:#fff;min-width:0;overflow:hidden}
-.msd-workspace-toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 12px;border-bottom:1px solid #e4e7ec;background:rgba(255,255,255,.97);backdrop-filter:blur(6px)}
+.msd-workspace-toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 12px;border-bottom:1px solid #e4e7ec;background:rgba(255,255,255,.97);backdrop-filter:blur(6px);pointer-events:none}
 .msd-workspace-title{display:grid;gap:2px;min-width:0}.msd-workspace-title b{font-size:15px}.msd-workspace-title span{font-size:11px;color:#667085}
 .msd-workspace-state{flex:0 0 auto;padding:5px 8px;border-radius:999px;background:#eef5ff;color:#235dba;font-size:10px;font-weight:900}
 .msd-workspace-body{padding:10px;min-width:0}
@@ -563,7 +563,7 @@ function directCardHtml(a,i,days){
 function timelineHtml(day,assignments){
  const slots=[];for(let m=calendarSlotStart;m<calendarSlotEnd;m+=calendarSlotMinutes)slots.push(m);
  const scale=slots.map(m=>'<span>'+((m%60===0)?esc(timeFromMinutes(m)):'')+'</span>').join('');
- const slotButtons=slots.map((m,si)=>'<button class="msd-time-slot" type="button" data-msd-slot-date="'+esc(day)+'" data-msd-slot-time="'+esc(timeFromMinutes(m))+'" style="grid-row:'+(si+1)+'" aria-label="Tạo hoặc thả ca '+esc(timeFromMinutes(m))+'"></button>').join('');
+ const slotButtons=slots.map((m,si)=>'<div class="msd-time-slot" role="button" tabindex="0" data-msd-slot-date="'+esc(day)+'" data-msd-slot-time="'+esc(timeFromMinutes(m))+'" style="grid-row:'+(si+1)+'" aria-label="Tạo hoặc thả ca '+esc(timeFromMinutes(m))+'"></div>').join('');
  const cards=assignments.map(({a,i})=>directCardHtml(a,i,calendarDays())).join('');
  return '<div class="msd-day-timeline"><div class="msd-time-scale" aria-hidden="true">'+scale+'</div><div class="msd-slot-grid">'+slotButtons+'<div class="msd-shift-layer">'+cards+'</div></div></div>';
 }
@@ -785,6 +785,7 @@ function bind(){
  p.querySelectorAll('[data-msd-open-editor]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const d=b.closest('[data-msd-row]')?.querySelector('.msd-card-editor');if(d)d.open=!d.open}));
  p.querySelectorAll('[data-msd-slot-date]').forEach(slot=>{
   slot.addEventListener('click',()=>{if(Date.now()<calendarSuppressClickUntil)return;openCalendarCreate(slot.dataset.msdSlotDate,slot.dataset.msdSlotTime,timeFromMinutes(Math.min(calendarSlotEnd,mins(slot.dataset.msdSlotTime)+60)))});
+  slot.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&state.generationStatus==='DRAFT'){e.preventDefault();openCalendarCreate(slot.dataset.msdSlotDate,slot.dataset.msdSlotTime,timeFromMinutes(Math.min(calendarSlotEnd,mins(slot.dataset.msdSlotTime)+60)))}});
   slot.addEventListener('pointerdown',e=>{if(e.button!==0||state.generationStatus!=='DRAFT')return;calendarPointerGesture={date:slot.dataset.msdSlotDate,startMinutes:mins(slot.dataset.msdSlotTime),currentMinutes:mins(slot.dataset.msdSlotTime)}});
   slot.addEventListener('pointerenter',()=>{if(calendarPointerGesture&&calendarPointerGesture.date===slot.dataset.msdSlotDate)calendarPointerGesture.currentMinutes=mins(slot.dataset.msdSlotTime)});
   slot.addEventListener('dragover',e=>{if(calendarDragGesture)e.preventDefault()});
