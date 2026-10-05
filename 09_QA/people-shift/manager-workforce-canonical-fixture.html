@@ -51,6 +51,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
     competing:[],
     assignments:[],
     official:[],
+    crossStorePlan:[],
     swapPending:true,
     givePending:true,
     createCount:0,
@@ -166,7 +167,44 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
           priority_store_ids:["store-a"]
         })),error:null};
       }
-      if(name==="get_cross_store_weekly_plan_v1")return {data:[],error:null};
+      if(name==="get_cross_store_weekly_plan_v1"){
+        const rows=state.crossStorePlan.map(x=>({...x}));
+        if(state.generation&&["DRAFT","REVIEWED"].includes(state.generation.status)){
+          rows.push(...state.assignments.map(x=>({
+            plan_source:"DRAFT",
+            generation_id:state.generation.id,
+            generation_status:state.generation.status,
+            assignment_id:x.id,
+            schedule_id:null,
+            store_id:x.store_id,
+            store_code:x.store_code||"CN-QA-A",
+            store_name:"Cửa hàng QA A",
+            user_id:x.user_id,
+            employee_name:x.employee_name||people[x.user_id]||"Nhân viên QA",
+            work_date:x.work_date,
+            start_time:x.start_time,
+            end_time:x.end_time,
+            row_status:"DRAFT"
+          })));
+        }
+        rows.push(...state.official.filter(x=>["PENDING","APPROVED"].includes(x.status)).map(x=>({
+          plan_source:"OFFICIAL",
+          generation_id:x.source_generation_id||null,
+          generation_status:"PUBLISHED",
+          assignment_id:x.source_generation_assignment_id||null,
+          schedule_id:x.schedule_id,
+          store_id:x.store_id,
+          store_code:x.store_code||"CN-QA-A",
+          store_name:x.store_name||"Cửa hàng QA A",
+          user_id:x.user_id,
+          employee_name:x.employee_name||people[x.user_id]||"Nhân viên QA",
+          work_date:x.work_date,
+          start_time:x.start_time,
+          end_time:x.end_time,
+          row_status:x.status
+        })));
+        return {data:rows,error:null};
+      }
       if(name==="get_cross_store_weekly_availability_v1"){
         const end=new Date(args.p_week_start+"T00:00:00Z");end.setUTCDate(end.getUTCDate()+6);const to=end.toISOString().slice(0,10);
         return {data:availability.filter(x=>x.work_date>=args.p_week_start&&x.work_date<=to).map(x=>({...x,priority_store_ids:[x.preferred_store_id]})),error:null};
@@ -260,7 +298,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
     },
     from(name){calls.push({kind:"from",name});throw new Error("Direct table access forbidden:"+name)}
   };
-  window.__MW31_QA={calls,state,store,store2,availability,people,peopleMeta,canonicalValidation,rpc:(name,args)=>api.rpc(name,args),setPersonStatus:(id,status)=>{if(peopleMeta[id])peopleMeta[id].status=status},setPersonRole:(id,role)=>{if(peopleMeta[id])peopleMeta[id].role=role},setCompeting:(rows)=>{state.competing=Array.isArray(rows)?rows:[]},setDelay:(ms)=>{state.delayMs=Math.max(0,Number(ms)||0)},setRpcError:(name,message)=>{if(message)state.rpcErrors[name]=String(message);else delete state.rpcErrors[name]},setAccessibleStores:(ids)=>{accessibleStores.splice(0,accessibleStores.length,...(Array.isArray(ids)?ids:[]).map(id=>id==="store-c"?store2:store).filter((x,i,a)=>a.indexOf(x)===i))},setStaffingRequirements:(rows)=>{staffingRequirements.splice(0,staffingRequirements.length,...(Array.isArray(rows)?rows:[]).map(x=>({...x})))}};
+  window.__MW31_QA={calls,state,store,store2,availability,people,peopleMeta,canonicalValidation,rpc:(name,args)=>api.rpc(name,args),setPersonStatus:(id,status)=>{if(peopleMeta[id])peopleMeta[id].status=status},setPersonRole:(id,role)=>{if(peopleMeta[id])peopleMeta[id].role=role},setCompeting:(rows)=>{state.competing=Array.isArray(rows)?rows:[]},setDelay:(ms)=>{state.delayMs=Math.max(0,Number(ms)||0)},setRpcError:(name,message)=>{if(message)state.rpcErrors[name]=String(message);else delete state.rpcErrors[name]},setAccessibleStores:(ids)=>{accessibleStores.splice(0,accessibleStores.length,...(Array.isArray(ids)?ids:[]).map(id=>id==="store-c"?store2:store).filter((x,i,a)=>a.indexOf(x)===i))},setStaffingRequirements:(rows)=>{staffingRequirements.splice(0,staffingRequirements.length,...(Array.isArray(rows)?rows:[]).map(x=>({...x})))},setCrossStorePlan:(rows)=>{state.crossStorePlan=Array.isArray(rows)?rows.map(x=>({...x})):[]}};
 
   window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
     version:"QA",
