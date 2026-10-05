@@ -141,7 +141,8 @@ try {
     await page.locator(".msd-source-row").filter({ hasText: "Nhân viên QA" }).waitFor();
     await page.locator("#msdStart").click();
     await page.waitForFunction(() => globalThis.__PEOPLE_SHIFT_QA.state.generation?.status === "DRAFT");
-    await page.locator(".msd-source-row").filter({ hasText: "Nhân viên QA" }).locator("[data-add-av]").click();
+    await page.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+    await page.locator(".msd-pool-details .msd-source-row").filter({ hasText: "Nhân viên QA" }).locator("[data-add-av]").click();
     await page.locator("#msdSave").click();
     await page.waitForFunction(() =>
       globalThis.__PEOPLE_SHIFT_QA.calls.some(call => call.name === "replace_schedule_generation_assignments") &&
