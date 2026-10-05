@@ -53,7 +53,7 @@ test("XSTORE-016 preserves unsaved-change safety for branch and week navigation"
 });
 
 test("XSTORE-016 cache chain points at exact IA runtime",()=>{
-  assert.match(engine,/draft-publish-v1\.js\?v=2026100[45]-xstore-01[678]/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:2026100[45]-xstore-01[678]|20261005-xstore-019)/);
   for(const token of [
     "cross-store-master-v1.js?v=20261005-xstore-019",
     "manager-scheduling-ui2-v1.js?v=20261005-xstore-019"
