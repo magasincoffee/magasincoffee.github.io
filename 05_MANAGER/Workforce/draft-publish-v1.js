@@ -394,7 +394,7 @@ function supplementalPoolHtml(){
   ? 'Đã lọc theo '+String(target.work_date).slice(0,10)+' · '+hm(target.shortage_start)+'–'+hm(target.shortage_end)+' tại '+(selectedStore()?.code||'chi nhánh đang mở')+'.'
   : 'Bấm “+ Bổ sung người” tại một khoảng thiếu để lọc và xếp hạng ứng viên đúng chi nhánh, ngày và giờ.';
  return '<div class="msd-source-separator">Nhóm nhân sự bổ sung</div><div class="msd-source-meta">'+esc(intro)+'</div><div class="msd-pool">'
-  +poolGroupHtml('unassigned','Chưa được xếp ca nào','Nhân viên chưa có DRAFT/REVIEWED nào trong tuần.',groups.unassigned,target)
+  +poolGroupHtml('unassigned','Chưa được xếp ca nào','Nhân viên chưa có ca đang xếp hoặc ca đã duyệt nào trong tuần.',groups.unassigned,target)
   +poolGroupHtml('remaining','Còn thời gian có thể xếp','Availability còn lại sau khi trừ các ca DRAFT/REVIEWED đã xếp.',groups.remaining,target)
   +poolGroupHtml('manual','Có thể điều động thủ công','Nhân viên đủ Store Priority nhưng khoảng cần bổ sung nằm ngoài Availability; khi thêm sẽ có cảnh báo/audit marker.',groups.manual,target)
   +(target&&groups.blocked.length?poolGroupHtml('blocked','Không thể chọn do xung đột','Ứng viên bị khóa vì trùng ca hoặc đã đủ giới hạn ca trong ngày.',groups.blocked,target,true):'')
