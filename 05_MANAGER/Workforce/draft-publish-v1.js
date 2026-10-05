@@ -474,17 +474,17 @@ function sourceHtml(){
  const targetHtml=target?'<div class="msd-source-target" role="status"><b>Đang bổ sung cho khoảng thiếu:</b> '+esc(target.work_date)+' · '+esc(hm(target.shortage_start))+'–'+esc(hm(target.shortage_end))+' · thiếu '+esc(target.missing_headcount)+' người.<br>Pool bên dưới đã lọc theo đúng ngày/giờ và kiểm tra xung đột toàn 4 cửa hàng.<br><button class="btn" type="button" data-msd-supplement-clear>Hủy chọn khoảng thiếu</button></div>':'';
  return targetHtml+(target?supplementalPoolHtml():'')+manualPickerHtml();
 }
-function rememberCalendarViewport(){
- const wrap=panel()?.querySelector('.msd-board-wrap');
- if(wrap)state.calendarViewport={left:wrap.scrollLeft,top:wrap.scrollTop};
+function rememberCalendarViewport(wrap=null){
+ const target=wrap||panel()?.querySelector('.msd-board-wrap');
+ if(target)state.calendarViewport={left:target.scrollLeft,top:target.scrollTop};
 }
 function restoreCalendarViewport(){
  const v=state.calendarViewport||{left:0,top:0};
  requestAnimationFrame(()=>{const wrap=panel()?.querySelector('.msd-board-wrap');if(wrap){wrap.scrollLeft=Number(v.left||0);wrap.scrollTop=Number(v.top||0)}});
 }
-function openCandidateDrawer(target=null){
+function openCandidateDrawer(target=null,sourceWrap=null){
  if(!draftEditable())return false;
- rememberCalendarViewport();
+ rememberCalendarViewport(sourceWrap);
  state.supplementTarget=target?{...target}:null;
  state.candidateDrawerOpen=true;
  render();restoreCalendarViewport();
@@ -681,9 +681,9 @@ function addManualAssignment(){
  render();restoreCalendarViewport();
  status(hasAvailability?'Đã thêm ca thủ công trong Availability. Bấm “Lưu bản nháp” để lưu.':'Đã thêm ca ngoài Availability. Khi lưu, hệ thống sẽ gắn cảnh báo “Quản lý điều động ngoài thời gian đăng ký”.');
 }
-function openSupplement(index){
+function openSupplement(index,sourceWrap=null){
  const target=state.shortages[Number(index)];if(!target)return false;
- return openCandidateDrawer(target);
+ return openCandidateDrawer(target,sourceWrap);
 }
 function clearSupplement(){return closeCandidateDrawer()}
 async function save(){
@@ -804,7 +804,7 @@ function bind(){
  p.querySelector('#msdOpenCandidateDrawer')?.addEventListener('click',()=>openCandidateDrawer(null));
  p.querySelector('[data-msd-candidate-close]')?.addEventListener('click',closeCandidateDrawer);
  p.querySelector('#msdManualAdd')?.addEventListener('click',addManualAssignment);
- p.querySelectorAll('[data-msd-supplement]').forEach(b=>b.addEventListener('click',()=>openSupplement(b.dataset.msdSupplement)));
+ p.querySelectorAll('[data-msd-supplement]').forEach(b=>b.addEventListener('click',()=>openSupplement(b.dataset.msdSupplement,b.closest('.msd-board-wrap'))));
  p.querySelectorAll('[data-msd-pool-user]').forEach(b=>b.addEventListener('click',()=>addSupplementCandidate(b.dataset.msdPoolUser)));
  p.querySelector('[data-msd-supplement-clear]')?.addEventListener('click',clearSupplement);
  p.querySelector('#msdCalendarCreateCommit')?.addEventListener('click',commitCalendarCreate);

@@ -97,7 +97,7 @@ await check("xstore_019c_manual_outside_availability_keeps_audit_marker_and_repa
  return JSON.stringify({user:a.user_id,warning:a.warning,shortages:s.shortages.length});
 });
 
-await frame.locator('[data-msd-row="0"] [data-msd-remove-direct="0"]').click();
+await frame.locator('[data-msd-row="0"] .msd-direct-actions [data-msd-remove-direct="0"]').click();
 await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().shortages.length===1);
 await frame.locator('[data-msd-date="2026-09-28"] [data-msd-supplement]').click();
 await frame.locator('[data-msd-pool-group="unassigned"] [data-msd-pool-user="u-1"]').click();

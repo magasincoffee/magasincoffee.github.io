@@ -16,7 +16,8 @@ test("XSTORE-019C removes the persistent employee pool and renders an on-demand 
 test("XSTORE-019C opens candidate UI only from explicit add or shortage actions",()=>{
   assert.match(draft,/id="msdOpenCandidateDrawer"/);
   assert.match(draft,/msdOpenCandidateDrawer'\)\?\.addEventListener\('click',\(\)=>openCandidateDrawer\(null\)\)/);
-  assert.match(draft,/function openSupplement\(index\)[\s\S]*openCandidateDrawer\(target\)/);
+  assert.match(draft,/function openSupplement\(index,sourceWrap=null\)[\s\S]*openCandidateDrawer\(target,sourceWrap\)/);
+  assert.match(draft,/openSupplement\(b\.dataset\.msdSupplement,b\.closest\('\.msd-board-wrap'\)\)/);
   assert.match(draft,/data-msd-supplement/);
   assert.match(draft,/data-msd-candidate-close/);
 });
@@ -32,8 +33,8 @@ test("XSTORE-019C keeps exact target ranking, manual override audit and hard-con
 });
 
 test("XSTORE-019C preserves calendar context while drawer opens and closes",()=>{
-  assert.match(draft,/function rememberCalendarViewport\(\)/);
-  assert.match(draft,/calendarViewport=\{left:wrap\.scrollLeft,top:wrap\.scrollTop\}/);
+  assert.match(draft,/function rememberCalendarViewport\(wrap=null\)/);
+  assert.match(draft,/calendarViewport=\{left:target\.scrollLeft,top:target\.scrollTop\}/);
   assert.match(draft,/function restoreCalendarViewport\(\)/);
   assert.match(draft,/wrap\.scrollLeft=Number\(v\.left\|\|0\)/);
   assert.match(draft,/wrap\.scrollTop=Number\(v\.top\|\|0\)/);
