@@ -157,8 +157,11 @@ await check("ui2_012_assignment_add_edit_remove_save_delegates_to_existing_write
  await addManualAssignment(frame,"u-1");
  await addManualAssignment(frame,"u-2","2026-09-28","12:00","17:00");
  const first=frame.locator("[data-msd-row='0']");
+ await first.locator('[data-msd-open-editor="0"]').click();
  await first.locator('[data-f="start_time"]').selectOption("06:30");
  await first.locator('[data-f="end_time"]').selectOption("11:30");
+ await first.locator('[data-msd-apply-edit="0"]').click();
+ await frame.waitForFunction(()=>{const a=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0];return a?.start_time==="06:30"&&a?.end_time==="11:30"});
  await frame.locator("#msdSave").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false&&globalThis.__MW31_QA.calls.some(x=>x.name==="replace_schedule_generation_assignments"));
  const firstSave=await frame.evaluate(()=>{
@@ -166,7 +169,7 @@ await check("ui2_012_assignment_add_edit_remove_save_delegates_to_existing_write
   return calls.at(-1)?.args?.p_assignments||[];
  });
  if(firstSave.length!==2||firstSave[0].user_id!=="u-1"||firstSave[0].start_time!=="06:30"||firstSave[0].end_time!=="11:30")throw new Error(JSON.stringify(firstSave));
- await frame.locator("[data-msd-row='1'] [data-remove]").click();
+ await frame.locator("[data-msd-row='1'] [data-msd-remove-direct='1']").first().click();
  await frame.locator("#msdSave").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false);
  const removed=await frame.evaluate(()=>globalThis.__MW31_QA.state.assignments.length);
