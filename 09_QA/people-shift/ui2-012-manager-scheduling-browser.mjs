@@ -20,8 +20,11 @@ async function managerFrame(page){
  await frame.locator(".msd-ui2-012[data-ui2-schedule-board='1']").waitFor({timeout:10000});
  return frame;
 }
-async function addManualAssignment(frame,userId){
+async function addManualAssignment(frame,userId,workDate="2026-09-28",startTime="06:00",endTime="12:00"){
  await frame.locator("#msdManualEmployee").selectOption(userId);
+ await frame.locator("#msdManualDate").selectOption(workDate);
+ await frame.locator("#msdManualStart").selectOption(startTime);
+ await frame.locator("#msdManualEnd").selectOption(endTime);
  await frame.locator("#msdManualAdd").click();
 }
 
@@ -36,7 +39,7 @@ for(const width of [1440,1024,768,430,390,360]){
  await frame.locator("#msdStart").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().generationStatus==="DRAFT");
  await addManualAssignment(frame,"u-1");
- await addManualAssignment(frame,"u-2");
+ await addManualAssignment(frame,"u-2","2026-09-28","12:00","17:00");
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
 
  await check("ui2_012_"+width+"_hierarchy_no_page_overflow_touch_focus",async()=>{
@@ -151,9 +154,8 @@ await check("ui2_012_busy_locks_controls_during_canonical_start",async()=>{
 
 await check("ui2_012_assignment_add_edit_remove_save_delegates_to_existing_writer",async()=>{
  await addManualAssignment(frame,"u-1");
- await addManualAssignment(frame,"u-2");
+ await addManualAssignment(frame,"u-2","2026-09-28","12:00","17:00");
  const first=frame.locator("[data-msd-row='0']");
- await first.locator('[data-f="user_id"]').selectOption("u-3");
  await first.locator('[data-f="start_time"]').selectOption("06:30");
  await first.locator('[data-f="end_time"]').selectOption("11:30");
  await frame.locator("#msdSave").click();
@@ -162,24 +164,24 @@ await check("ui2_012_assignment_add_edit_remove_save_delegates_to_existing_write
   const calls=globalThis.__MW31_QA.calls.filter(x=>x.name==="replace_schedule_generation_assignments");
   return calls.at(-1)?.args?.p_assignments||[];
  });
- if(firstSave.length!==2||firstSave[0].user_id!=="u-3"||firstSave[0].start_time!=="06:30"||firstSave[0].end_time!=="11:30")throw new Error(JSON.stringify(firstSave));
+ if(firstSave.length!==2||firstSave[0].user_id!=="u-1"||firstSave[0].start_time!=="06:30"||firstSave[0].end_time!=="11:30")throw new Error(JSON.stringify(firstSave));
  await frame.locator("[data-msd-row='1'] [data-remove]").click();
  await frame.locator("#msdSave").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false);
  const removed=await frame.evaluate(()=>globalThis.__MW31_QA.state.assignments.length);
  if(removed!==1)throw new Error("removed="+removed);
- await addManualAssignment(frame,"u-2");
+ await addManualAssignment(frame,"u-2","2026-09-28","12:00","17:00");
  await frame.locator("#msdSave").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false&&globalThis.__MW31_QA.state.assignments.length===2);
  return JSON.stringify({firstSave:firstSave.length,afterRemove:removed,final:2});
 });
 
 await check("ui2_012_validation_failure_and_rpc_error_are_explicit",async()=>{
- await frame.evaluate(()=>globalThis.__MW31_QA.setPersonStatus("u-3","INACTIVE"));
+ await frame.evaluate(()=>globalThis.__MW31_QA.setPersonStatus("u-1","INACTIVE"));
  await frame.locator("#msdValidate").click();
  await frame.locator("#msdStatus").filter({hasText:"Nhân viên đã ngừng hoạt động"}).waitFor();
  const invalid=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().lastValidation);
- await frame.evaluate(()=>{globalThis.__MW31_QA.setPersonStatus("u-3","ACTIVE");globalThis.__MW31_QA.setRpcError("validate_schedule_generation_v1","QA_VALIDATE_RPC_ERROR")});
+ await frame.evaluate(()=>{globalThis.__MW31_QA.setPersonStatus("u-1","ACTIVE");globalThis.__MW31_QA.setRpcError("validate_schedule_generation_v1","QA_VALIDATE_RPC_ERROR")});
  await frame.locator("#msdValidate").click();
  await frame.locator("#msdStatus").filter({hasText:"Không thể kiểm tra lịch."}).waitFor();
  const errorText=await frame.locator("#msdStatus").innerText();
