@@ -488,11 +488,10 @@ function openCandidateDrawer(target=null){
  state.supplementTarget=target?{...target}:null;
  state.candidateDrawerOpen=true;
  render();restoreCalendarViewport();
- setTimeout(()=>panel()?.querySelector(target?'[data-msd-pool-user]:not([disabled])':'#msdManualEmployee')?.focus(),0);
+ setTimeout(()=>panel()?.querySelector(target?'[data-msd-pool-user]:not([disabled])':'#msdManualEmployee')?.focus({preventScroll:true}),0);
  return true;
 }
 function closeCandidateDrawer(){
- rememberCalendarViewport();
  state.candidateDrawerOpen=false;state.supplementTarget=null;
  render();restoreCalendarViewport();
  return true;

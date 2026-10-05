@@ -22,7 +22,12 @@ try {
     await owner.locator('.msd[data-scheduling-actor="OWNER"]').waitFor();
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('Không tải được Workforce Publish')||text.includes('ambiguous'))throw new Error(text);
-    if(!text.includes('An CN1')||!text.includes('Giám sát xếp lịch'))throw new Error('Owner shared scheduling detail missing');
+    const candidateUi=await owner.locator('#panel-publish').evaluate(r=>({
+      drawer:r.querySelectorAll('[data-msd-candidate-overlay]').length,
+      trigger:!!r.querySelector('#msdOpenCandidateDrawer'),
+      triggerDisabled:r.querySelector('#msdOpenCandidateDrawer')?.disabled===true
+    }));
+    if(!text.includes('Giám sát xếp lịch')||!text.includes('CN1')||candidateUi.drawer!==0||!candidateUi.trigger||!candidateUi.triggerDisabled||text.includes('An CN1'))throw new Error('Owner shared scheduling detail missing: '+JSON.stringify(candidateUi));
     const calls=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.map(x=>x.name));
     for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_employee_workforce_profiles_v1','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
     return 'overview CN1–CN4 → shared store-a detail · '+calls.join(',');

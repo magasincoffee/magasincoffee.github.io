@@ -38,6 +38,9 @@ test("XSTORE-019C preserves calendar context while drawer opens and closes",()=>
   assert.match(draft,/wrap\.scrollLeft=Number\(v\.left\|\|0\)/);
   assert.match(draft,/wrap\.scrollTop=Number\(v\.top\|\|0\)/);
   assert.match(draft,/function closeCandidateDrawer\(\)[\s\S]*candidateDrawerOpen=false[\s\S]*restoreCalendarViewport\(\)/);
+  const closeBody=draft.match(/function closeCandidateDrawer\(\)\{([\s\S]*?)\n\}/)?.[1]||"";
+  assert.doesNotMatch(closeBody,/rememberCalendarViewport\(\)/);
+  assert.match(draft,/focus\(\{preventScroll:true\}\)/);
 });
 
 test("XSTORE-019C keeps one canonical DRAFT writer",()=>{
