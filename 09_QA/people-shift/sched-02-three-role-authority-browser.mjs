@@ -29,7 +29,8 @@ try{
   });
 
   await check('manager_stale_publish_is_server_revalidated',async()=>{
-    await manager.locator('.msd-source-row').nth(0).locator('[data-add-av]').click();
+    await manager.locator(".msd-pool-details").evaluate(el=>{el.open=true});
+    await manager.locator('.msd-pool-details .msd-source-row').nth(0).locator('[data-add-av]').click();
     await manager.locator('#msdSave').click();
     await manager.waitForFunction(()=>globalThis.__MW31_QA.state.assignments.length===1);
     await manager.evaluate(async()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.review());
