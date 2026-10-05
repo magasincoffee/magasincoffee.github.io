@@ -65,7 +65,7 @@ for(const width of [1440,390]){
    };
    if(metric.stores!==metric.expectedStores||metric.stores<1||metric.selected!==1||metric.workspaces!==1||metric.activeStore!==metric.stateStore||metric.branchPanels!==0||metric.dayCount!==7||metric.peopleOpen||metric.overviewOpen||metric.autoInsideOverview)throw new Error(JSON.stringify(metric));
    if(metric.pageScrollWidth>metric.pageClientWidth+2)throw new Error("page overflow "+JSON.stringify(metric));
-   if(expected<=400&&metric.boardScrollWidth<=metric.boardClientWidth)throw new Error("mobile calendar should scroll inside workspace "+JSON.stringify(metric));
+   if(expected<=400&&metric.boardScrollHeight<=metric.boardClientHeight)throw new Error("mobile calendar must own internal time scrolling "+JSON.stringify(metric));
    return JSON.stringify(metric);
   },width);
  });
