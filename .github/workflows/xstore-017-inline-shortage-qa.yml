@@ -10,6 +10,7 @@ on:
       - '09_QA/people-shift/xstore-017-inline-shortage-v1.test.mjs'
       - '09_QA/people-shift/xstore-017-inline-shortage-browser.mjs'
       - '.github/workflows/xstore-017-inline-shortage-qa.yml'
+      - '09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs'
   pull_request:
     paths:
       - '05_MANAGER/Workforce/draft-publish-v1.js'
@@ -19,6 +20,7 @@ on:
       - '09_QA/people-shift/xstore-017-inline-shortage-v1.test.mjs'
       - '09_QA/people-shift/xstore-017-inline-shortage-browser.mjs'
       - '.github/workflows/xstore-017-inline-shortage-qa.yml'
+      - '09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs'
   workflow_dispatch:
 
 permissions:
