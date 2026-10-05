@@ -948,8 +948,6 @@ The previous PR #392 exact RC `1301678dbf6ffeef88cd5ced59ffa1c10d6bfae4` is **no
 
 ### J. Robot task plan and acceptance gates
 
-### J. Robot task plan and acceptance gates
-
 #### XSTORE-013 — Continuous coverage + exact shortage engine
 
 Scope:
@@ -1216,7 +1214,7 @@ CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
 
-## 6.0.10 XSTORE-013 continuous coverage + exact shortage engine acceptance## 6.0.10 XSTORE-013 continuous coverage + exact shortage engine acceptance — 2026-10-04
+## 6.0.10 XSTORE-013 continuous coverage + exact shortage engine acceptance — 2026-10-04
 
 XSTORE-013 is **DONE / EXACT-MAIN GREEN**.
 
