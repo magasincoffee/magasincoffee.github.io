@@ -20,7 +20,7 @@ test("SCHED-UI-010 numbered roots consume bounded canonical markers without repl
   assert.match(manager,/manager-scheduling/);
   assert.match(manager,/location\.pathname==='\/05_MANAGER\/'/);
   assert.match(manager,/history\.replaceState/);
-  assert.match(manager,/manager-runtime-v1\.html\?v=20261003-sched-ui-017/);
+  assert.match(manager,/manager-runtime-v1\.html\?v=(?:20261003-sched-ui-017|20261005-xstore-019)/);
   assert.match(employee,/employee-attendance/);
   assert.match(employee,/location\.pathname==='\/06_EMPLOYEE\/'/);
   assert.match(employee,/history\.replaceState/);
@@ -28,7 +28,7 @@ test("SCHED-UI-010 numbered roots consume bounded canonical markers without repl
   assert.match(owner,/owner-root/);
   assert.match(owner,/history\.replaceState\([^\n]*\/owner\//);
   assert.match(ownerScheduling,/owner-scheduling/);
-  assert.match(ownerScheduling,/owner-workforce-runtime\.html\?v=20261003-sched-ui-008/);
+  assert.match(ownerScheduling,/owner-workforce-runtime\.html\?v=(?:20261003-sched-ui-008|20261005-xstore-019)/);
 });
 
 test("SCHED-UI-010 navigation prefers clean paths while keeping legacy path readers",async()=>{
