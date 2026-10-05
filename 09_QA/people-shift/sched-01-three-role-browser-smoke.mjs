@@ -49,7 +49,7 @@ try {
     await manager.goto(base+'/09_QA/people-shift/manager-workforce-canonical-fixture.html');
     await manager.locator('.msd').waitFor();
     const text=await manager.locator('#panel-publish').innerText();
-    if(!text.includes('Xếp tự động toàn hệ thống')||!text.includes('LỊCH NHÁP ĐANG CHỈNH')||!text.includes('Tạo bản nháp')||!text.includes('Mở từng chi nhánh để chỉnh lịch'))throw new Error(text);
+    if(!text.includes('Xếp lịch theo cửa hàng')||!text.includes('LỊCH NHÁP ĐANG CHỈNH')||!text.includes('Tạo bản nháp')||!text.includes('Một cửa hàng · một lịch tuần'))throw new Error(text);
     const calls=await manager.evaluate(()=>window.__MW31_QA.calls.map(x=>x.name).filter(Boolean));
     for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_employee_workforce_profiles_v1','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
     await manager.locator('#msdStart').click();
