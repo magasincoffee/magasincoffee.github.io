@@ -29,7 +29,11 @@ try{
   });
 
   await check('manager_stale_publish_is_server_revalidated',async()=>{
-    await manager.locator('.msd-source-row').nth(0).locator('[data-add-av]').click();
+    await manager.locator('#msdManualEmployee').selectOption('u-1');
+    await manager.locator('#msdManualDate').selectOption('2026-09-28');
+    await manager.locator('#msdManualStart').selectOption('06:00');
+    await manager.locator('#msdManualEnd').selectOption('12:00');
+    await manager.locator('#msdManualAdd').click();
     await manager.locator('#msdSave').click();
     await manager.waitForFunction(()=>globalThis.__MW31_QA.state.assignments.length===1);
     await manager.evaluate(async()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.review());
