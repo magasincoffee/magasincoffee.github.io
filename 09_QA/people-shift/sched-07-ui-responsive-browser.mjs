@@ -573,18 +573,20 @@ await page.locator('[data-owner-store-open="store-a"]').click();
 await page.locator("#panel-publish .msd").waitFor();
 await check("sched07_owner_uses_same_polish_with_owner_overview_context",async()=>{
   const state=await page.evaluate(()=>{
-    const html=document.documentElement,overview=document.querySelector("#ownerSchedulingOverview"),detail=document.querySelector("#ownerSchedulingDetailHeader"),branch=document.querySelector('[data-msd-branch][aria-expanded="true"]');
+    const html=document.documentElement,overview=document.querySelector("#ownerSchedulingOverview"),detail=document.querySelector("#ownerSchedulingDetailHeader"),storeSwitch=document.querySelector('[data-msd-branch][aria-pressed="true"]'),workspace=document.querySelector(".msd-workspace"),calendar=document.querySelector(".msd-calendar-primary");
     return {
       role:html.dataset.schedulingRole,
       css:!!document.getElementById("workforce-scheduling-polish-v1-css"),
       overview:!!overview,
       detailVisible:!!detail&&!detail.hidden,
       detailRadius:detail?getComputedStyle(detail).borderRadius:null,
-      branchHeight:branch?.getBoundingClientRect().height||0,
+      storeSwitchHeight:storeSwitch?.getBoundingClientRect().height||0,
+      workspace:!!workspace,
+      calendar:!!calendar,
       scroll:html.scrollWidth,client:html.clientWidth
     };
   });
-  if(state.role!=="owner"||!state.css||!state.overview||!state.detailVisible||state.branchHeight<43.5||state.scroll>state.client+2)throw new Error(JSON.stringify(state));
+  if(state.role!=="owner"||!state.css||!state.overview||!state.detailVisible||state.storeSwitchHeight<43.5||!state.workspace||!state.calendar||state.scroll>state.client+2)throw new Error(JSON.stringify(state));
   return JSON.stringify(state);
 });
 
