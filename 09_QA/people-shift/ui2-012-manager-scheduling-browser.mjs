@@ -21,6 +21,7 @@ async function managerFrame(page){
  return frame;
 }
 async function addManualAssignment(frame,userId,workDate="2026-09-28",startTime="06:00",endTime="12:00"){
+ if(await frame.locator("#msdManualEmployee").count()===0)await frame.locator("#msdOpenCandidateDrawer").click();
  await frame.locator("#msdManualEmployee").selectOption(userId);
  await frame.locator("#msdManualDate").selectOption(workDate);
  await frame.locator("#msdManualStart").selectOption(startTime);
@@ -55,7 +56,7 @@ for(const width of [1440,1024,768,430,390,360]){
     viewport:innerWidth,expected,
     scrollWidth:html.scrollWidth,clientWidth:html.clientWidth,
     stage:root?.dataset.ui2SchedulingState,
-    hierarchy:[".msu2-context-bar",".msu2-state-banner",".msd-source",".msd-board-wrap",".msd-downstream"].every(sel=>!!root?.querySelector(sel)),
+    hierarchy:[".msu2-context-bar",".msu2-state-banner",".msd-board-wrap",".msd-downstream"].every(sel=>!!root?.querySelector(sel)),
     duplicateStepper:root?.querySelectorAll(".msu2-stage-rail").length||0,
     touchMin:controls.length?Math.min(...controls.map(x=>x.getBoundingClientRect().height)):0,
     resizeFallback,
@@ -69,7 +70,8 @@ for(const width of [1440,1024,768,430,390,360]){
     dayCount:root?.querySelectorAll(".msd-day").length||0,
     timelineDays:root?.querySelectorAll(".msd-day-timeline").length||0,
     slotCount:root?.querySelectorAll("[data-msd-slot-date][data-msd-slot-time]").length||0,
-    sourceRole:root?.querySelector(".msd-source")?.dataset.msu2Section||"",
+    candidateTrigger:!!root?.querySelector("#msdOpenCandidateDrawer"),
+    drawerHidden:!root?.querySelector("[data-msd-candidate-overlay]"),
     draftRole:root?.querySelector(".msd-board-wrap")?.dataset.msu2Section||"",
     draftUtilityPrimary:root?.querySelectorAll(".msu2-draft-actions .primary").length||0,
     reviewVisible:!root?.querySelector("#msdReview")?.hidden,
@@ -77,7 +79,7 @@ for(const width of [1440,1024,768,430,390,360]){
     publishHidden:root?.querySelector("#msdPublish")?.hidden||false
    };
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
-   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||!metric.resizeFallback||metric.dayCount!==7||metric.timelineDays!==7||metric.slotCount<238||metric.sourceRole!=="supplemental-employee-pool"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
+   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||!metric.resizeFallback||metric.dayCount!==7||metric.timelineDays!==7||metric.slotCount<238||!metric.candidateTrigger||!metric.drawerHidden||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
    if(expected<=430&&(metric.boardScrollHeight<=metric.boardClientHeight||metric.dayTitlePosition!=="sticky"))throw new Error("phone calendar must keep all seven days in one calendar workspace and own internal time scrolling: "+JSON.stringify(metric));
    if((expected===768||expected===1024)&&(metric.boardColumns!==7||metric.boardScrollHeight<=metric.boardClientHeight))throw new Error("tablet calendar must keep seven days and own internal time scrolling: "+JSON.stringify(metric));

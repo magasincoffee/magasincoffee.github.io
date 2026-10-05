@@ -8,6 +8,7 @@ fs.mkdirSync(OUT,{recursive:true});
 const report={status:"PASS",checks:[],page_errors:[],console_errors:[],request_failures:[]};
 const check=async(name,fn)=>{try{report.checks.push({name,status:"PASS",detail:String(await fn()??"")})}catch(e){report.checks.push({name,status:"FAIL",detail:String(e?.message||e)});report.status="FAIL"}};
 const addManualAssignment=async(userId,workDate,startTime,endTime)=>{
+  if(await page.locator("#msdManualEmployee").count()===0)await page.locator("#msdOpenCandidateDrawer").click();
   await page.locator("#msdManualEmployee").selectOption(userId);
   await page.locator("#msdManualDate").selectOption(workDate);
   await page.locator("#msdManualStart").selectOption(startTime);
@@ -54,10 +55,12 @@ await check("canonical_direct_flow_does_not_call_staffing_demand_or_robot",async
 
 await check("manager_sees_next_week_availability_before_draft",async()=>{
   const candidates=await page.locator("#panel-publish [data-msd-pool-candidate]").count();
-  const text=await page.locator("#panel-publish .msd-source").innerText();
+  const drawer=await page.locator("#panel-publish [data-msd-candidate-overlay]").count();
+  const addButton=await page.locator("#panel-publish #msdOpenCandidateDrawer").count();
+  const text=await page.locator("#panel-publish").innerText();
   const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
-  if(candidates!==0||st.availability.length!==3||st.eligibleEmployees.length!==3||st.generationId!==null||!text.includes("Thêm / bổ sung nhân viên")||text.includes("Chưa được xếp ca nào · 3"))throw new Error(JSON.stringify({candidates,availability:st.availability.length,eligibleEmployees:st.eligibleEmployees.length,generationId:st.generationId,text}));
-  return "canonical availability loaded; supplemental pool remains hidden until shortage action";
+  if(candidates!==0||drawer!==0||addButton!==1||st.availability.length!==3||st.eligibleEmployees.length!==3||st.generationId!==null||text.includes("Nhóm nhân sự bổ sung"))throw new Error(JSON.stringify({candidates,drawer,addButton,availability:st.availability.length,eligibleEmployees:st.eligibleEmployees.length,generationId:st.generationId,text}));
+  return "canonical availability loaded; candidate drawer is absent until an add/edit/shortage action";
 });
 
 await check("double_click_create_is_bounded_and_uses_manager_direct_primitive",async()=>{
