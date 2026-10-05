@@ -43,8 +43,8 @@ test("SCHED-04 active generation reload covers DRAFT REVIEWED PUBLISHED and publ
 test("SCHED-04 UX distinguishes availability draft validation review and official publish",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   for(const label of ["Thời gian có thể làm","Bản nháp","Kiểm tra","Duyệt","Phát hành"])assert.match(draft,new RegExp(label),label);
-  assert.match(draft,/Xếp tự động toàn hệ thống → Quản lý chỉnh sửa → Kiểm tra → Duyệt → Phát hành/);
-  assert.match(draft,/Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp/);
+  assert.match(draft,/Chọn một cửa hàng để xem toàn bộ tuần, chỉnh bản nháp rồi Kiểm tra → Duyệt → Phát hành/);
+  assert.match(draft,/Một cửa hàng · một lịch tuần/);
   assert.doesNotMatch(draft,/Không hiển thị ID kỹ thuật/);
   assert.match(draft,/Mở lịch chính thức/);
   assert.doesNotMatch(draft,/Generation \$\{esc\(state\.generationId/);
