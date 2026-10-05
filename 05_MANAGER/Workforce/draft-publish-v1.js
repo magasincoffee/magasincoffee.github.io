@@ -61,7 +61,7 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-calendar-primary{min-width:0}
 .msd-calendar-primary .msd-board-wrap{max-height:calc(100vh - 330px);min-height:360px;overflow:auto;overscroll-behavior:contain;border-width:1px}
 .msd-calendar-primary .msd-board{grid-template-columns:repeat(7,minmax(0,1fr));min-width:0;width:100%;align-items:start}
-.msd-calendar-primary .msd-day-title{position:sticky;top:0;z-index:2}
+.msd-calendar-primary .msd-day-title{position:sticky;top:0;z-index:2;pointer-events:none}
 .msd-people-secondary{margin-top:10px;border:1px solid #dfe5ec;border-radius:12px;background:#fbfcfe;overflow:hidden}
 .msd-people-secondary .msd-source{border:0;border-radius:0;background:#fbfcfe}
 .msd-people-secondary .msd-pool{margin-top:10px}
@@ -69,7 +69,7 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-workspace-actions .btn{min-height:38px}
 .msd-downstream{margin-top:10px}
 @media(max-width:1100px){.msd-calendar-primary .msd-board{grid-template-columns:repeat(7,minmax(150px,1fr));min-width:1080px;width:max-content}.msd-calendar-primary .msd-board-wrap{overflow:auto}}
-@media(max-width:700px){.msd-workspace-toolbar{align-items:flex-start}.msd-workspace-body{padding:8px}.msd-calendar-primary .msd-board-wrap{max-height:62vh;min-height:420px}.msd-store-switch{min-height:42px}.msd-workspace-actions{display:grid;grid-template-columns:1fr 1fr}.msd-workspace-actions .btn{width:100%;min-height:44px}}
+@media(max-width:700px){.msd-workspace-toolbar{align-items:flex-start}.msd-workspace-body{padding:8px}.msd-calendar-primary .msd-board-wrap{max-height:62vh;min-height:420px}.msd-store-switch{min-height:44px}.msd-workspace-actions{display:grid;grid-template-columns:1fr 1fr}.msd-workspace-actions .btn{width:100%;min-height:44px}}
 @media(max-width:600px){.msd-branch-toggle{align-items:flex-start}.msd-branch-panel{padding:10px}.msd-branch-actions{display:grid;grid-template-columns:1fr}.msd-branch-actions .btn{width:100%}}
 
 </style>`;
