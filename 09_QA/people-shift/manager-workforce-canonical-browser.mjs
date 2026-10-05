@@ -55,8 +55,9 @@ await check("canonical_direct_flow_does_not_call_staffing_demand_or_robot",async
 await check("manager_sees_next_week_availability_before_draft",async()=>{
   const candidates=await page.locator("#panel-publish [data-msd-pool-candidate]").count();
   const text=await page.locator("#panel-publish .msd-source").innerText();
-  if(candidates!==3||!text.includes("Chưa được xếp ca nào · 3")||!text.includes("Nhân viên QA 1")||!text.includes("06:00–12:00")||!text.includes("CN-QA-A"))throw new Error(text);
-  return "3 supplemental-pool candidates with remaining availability";
+  const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
+  if(candidates!==0||st.availability.length!==3||st.eligibleEmployees.length!==3||st.generationId!==null||!text.includes("Thêm / bổ sung nhân viên")||text.includes("Chưa được xếp ca nào · 3"))throw new Error(JSON.stringify({candidates,availability:st.availability.length,eligibleEmployees:st.eligibleEmployees.length,generationId:st.generationId,text}));
+  return "canonical availability loaded; supplemental pool remains hidden until shortage action";
 });
 
 await check("double_click_create_is_bounded_and_uses_manager_direct_primitive",async()=>{
