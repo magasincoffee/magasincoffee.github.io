@@ -27,6 +27,11 @@ test("XSTORE-019A keeps all seven days visible in the primary calendar and confi
   assert.match(ui,/@media\(max-width:600px\)[\s\S]*grid-template-columns:repeat\(7,minmax\(150px,1fr\)\)/);
 });
 
+test("XSTORE-019A sticky headers never block calendar-adjacent controls and mobile store switches are touchable",()=>{
+  assert.match(draft,/\.msd-calendar-primary \.msd-day-title\{position:sticky;top:0;z-index:2;pointer-events:none\}/);
+  assert.match(draft,/@media\(max-width:700px\)[\s\S]*\.msd-store-switch\{min-height:44px\}/);
+});
+
 test("XSTORE-019A makes employee candidate lists conditional and keeps them after the calendar",()=>{
   assert.ok(draft.includes("calendar+people+downstream"));
   assert.match(draft,/target\?supplementalPoolHtml\(\):''/);
