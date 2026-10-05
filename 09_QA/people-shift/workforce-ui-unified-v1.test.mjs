@@ -94,7 +94,7 @@ test("primary user guidance is Vietnamese while internal status/RPC identifiers 
   "Thời gian có thể làm → Lịch nháp → Kiểm tra → Duyệt → Phát hành",
   "Việc cần xử lý",
   "Công việc / Quy trình",
-  "Nhóm nhân sự bổ sung",
+  "Thêm / bổ sung nhân viên",
   "Lịch làm chính thức"
  ])assert.ok(shellJs.includes(copy)||today.includes(copy)||draft.includes(copy),copy);
  assert.doesNotMatch(today,/Action Center|Task \/ SOP canonical|Không có route canonical/);
