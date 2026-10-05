@@ -54,6 +54,12 @@ test("XSTORE-019B save consumes guarded state and keeps one canonical writer",()
   assert.doesNotMatch(draft,/client\(\)\.from\(|sb\.from\(|insert\s+into\s+work_schedules/i);
 });
 
+test("XSTORE-019B gives short shifts a dedicated drag grip outside edit/delete controls",()=>{
+  assert.match(draft,/class="msd-move-grip" draggable="true" data-msd-move-handle/);
+  assert.match(draft,/\.msd-move-grip\{[^}]*cursor:grab[^}]*touch-action:none/);
+  assert.match(draft,/data-msd-drag-index/);
+});
+
 test("XSTORE-019B keeps accessible keyboard touch fallback alongside drag gestures",()=>{
   assert.match(draft,/data-f="work_date"/);
   assert.match(draft,/data-f="start_time"/);

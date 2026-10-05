@@ -109,7 +109,7 @@ await check("019b_hard_overlap_edit_fails_closed_and_reverts_ui",async()=>{
   });
 });
 
-const moveCard=page.locator('[data-msd-drag-index="0"]');
+const moveCard=page.locator('[data-msd-row="0"] [data-msd-move-handle="0"]');
 const thursday1400=page.locator('[data-msd-slot-date="2026-10-01"][data-msd-slot-time="14:00"]');
 await moveCard.dragTo(thursday1400);
 await page.waitForFunction(()=>{const a=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0];return a?.work_date==="2026-10-01"&&a.start_time==="14:00"&&a.end_time==="15:00"});
