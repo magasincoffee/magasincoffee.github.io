@@ -49,7 +49,8 @@ for(const width of [1440,1024,768,430,390,360]){
   return frame.evaluate(expected=>{
    const html=document.documentElement,root=document.querySelector(".msd-ui2-012"),wrap=root?.querySelector(".msd-board-wrap"),focused=document.activeElement;
    const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return !el.hidden&&s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};
-   const controls=[...root.querySelectorAll("button,select")].filter(visible);
+   const controls=[...root.querySelectorAll("button:not(.msd-resize-handle),select")].filter(visible);
+   const resizeFallback=!!root.querySelector('.msd-card-editor [data-f="start_time"]')&&!!root.querySelector('.msd-card-editor [data-f="end_time"]');
    const metric={
     viewport:innerWidth,expected,
     scrollWidth:html.scrollWidth,clientWidth:html.clientWidth,
@@ -57,6 +58,7 @@ for(const width of [1440,1024,768,430,390,360]){
     hierarchy:[".msu2-context-bar",".msu2-state-banner",".msd-source",".msd-board-wrap",".msd-downstream"].every(sel=>!!root?.querySelector(sel)),
     duplicateStepper:root?.querySelectorAll(".msu2-stage-rail").length||0,
     touchMin:controls.length?Math.min(...controls.map(x=>x.getBoundingClientRect().height)):0,
+    resizeFallback,
     focusOutline:getComputedStyle(focused).outlineStyle,
     focusShadow:getComputedStyle(focused).boxShadow,
     focusedId:focused?.id||"",
@@ -75,7 +77,7 @@ for(const width of [1440,1024,768,430,390,360]){
     publishHidden:root?.querySelector("#msdPublish")?.hidden||false
    };
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
-   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.timelineDays!==7||metric.slotCount<238||metric.sourceRole!=="supplemental-employee-pool"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
+   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||!metric.resizeFallback||metric.dayCount!==7||metric.timelineDays!==7||metric.slotCount<238||metric.sourceRole!=="supplemental-employee-pool"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
    if(expected<=430&&(metric.boardScrollHeight<=metric.boardClientHeight||metric.dayTitlePosition!=="sticky"))throw new Error("phone calendar must keep all seven days in one calendar workspace and own internal time scrolling: "+JSON.stringify(metric));
    if((expected===768||expected===1024)&&(metric.boardColumns!==7||metric.boardScrollHeight<=metric.boardClientHeight))throw new Error("tablet calendar must keep seven days and own internal time scrolling: "+JSON.stringify(metric));
