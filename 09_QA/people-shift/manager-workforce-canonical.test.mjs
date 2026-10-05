@@ -72,7 +72,7 @@ test("Manager direct board supports actionable supplemental pool plus add remove
   assert.match(draft,/Lịch tuần · Thứ Hai → Chủ Nhật/);
   assert.match(draft,/data-msd-pool-user/);
   assert.match(draft,/get_cross_store_weekly_plan_v1/);
-  assert.match(draft,/data-remove/);
+  assert.match(draft,/data-msd-remove-direct/);
   assert.match(draft,/data-f="start_time"/);
   assert.match(draft,/data-f="end_time"/);
   assert.match(draft,/id="msdSave"/);
