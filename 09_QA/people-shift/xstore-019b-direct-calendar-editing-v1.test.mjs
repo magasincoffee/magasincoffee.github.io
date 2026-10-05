@@ -63,6 +63,13 @@ test("XSTORE-019B keeps accessible keyboard touch fallback alongside drag gestur
   assert.match(draft,/@media\(max-width:700px\)[\s\S]*min-height:34px/);
 });
 
+test("XSTORE-019B time slots avoid global button sizing and keep keyboard activation",()=>{
+  assert.match(draft,/<div class="msd-time-slot" role="button" tabindex="0"/);
+  assert.doesNotMatch(draft,/<button class="msd-time-slot"/);
+  assert.match(draft,/slot\.addEventListener\('keydown',[\s\S]*e\.key==='Enter'[\s\S]*e\.key===' '/);
+  assert.match(draft,/\.msd-workspace-toolbar\{[^}]*pointer-events:none/);
+});
+
 test("XSTORE-019B preserves canonical time-band classes and availability override audit",()=>{
   assert.match(draft,/msd-band-morning/);
   assert.match(draft,/msd-band-afternoon/);
