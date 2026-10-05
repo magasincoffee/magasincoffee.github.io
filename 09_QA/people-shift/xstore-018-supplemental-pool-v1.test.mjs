@@ -5,10 +5,13 @@ import fs from "node:fs";
 const read=p=>fs.readFileSync(p,"utf8");
 const draft=read("05_MANAGER/Workforce/draft-publish-v1.js");
 const engine=read("05_MANAGER/Workforce/engine-v1.js");
+const ui=read("05_MANAGER/Workforce/manager-scheduling-ui2-v1.js");
 
 test("XSTORE-018 exposes the three actionable supplemental employee groups",()=>{
   for(const label of ["Chưa được xếp ca nào","Còn thời gian có thể xếp","Có thể điều động thủ công"])assert.ok(draft.includes(label),label);
-  assert.doesNotMatch(draft,/Nguồn tham khảo/);
+  assert.doesNotMatch(draft,/Nguồn tham khảo/i);
+  assert.doesNotMatch(ui,/Nguồn tham khảo/i);
+  assert.match(ui,/Nhân sự có thể bổ sung/);
   assert.match(draft,/function supplementalPool\(\)/);
   assert.match(draft,/assigned\.length===0&&exact/);
   assert.match(draft,/assigned\.length>0&&exact/);
@@ -46,6 +49,7 @@ test("XSTORE-018 pool action reuses the canonical manual picker",()=>{
 
 test("XSTORE-018 cache chain points at supplemental-pool runtime",()=>{
   assert.ok(engine.includes("draft-publish-v1.js?v=20261005-xstore-018"));
+  assert.ok(engine.includes("manager-scheduling-ui2-v1.js?v=20261005-xstore-018"));
 });
 
 console.log("XSTORE_018_SUPPLEMENTAL_POOL_STATIC=PASS");
