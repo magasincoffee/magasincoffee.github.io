@@ -60,7 +60,7 @@ try{
     const text=await page.locator("#panel-publish").innerText();
     const branches=await page.locator("[data-msd-branch]").allTextContents();
     if(s.storeId!=="store-a"||s.stores.length!==4||s.eligibleEmployees.length!==2)throw new Error(JSON.stringify(s));
-    if(branches.length!==4||await page.locator("#msdStore").count()!==0||!text.includes("Giám sát xếp lịch")||!text.includes("Nhân viên đủ điều kiện xếp ca"))throw new Error(JSON.stringify({branches,text}));
+    if(branches.length!==4||await page.locator("#msdStore").count()!==0||!text.includes("Giám sát xếp lịch")||!text.includes("Một cửa hàng · một lịch tuần")||!text.includes("Thêm / bổ sung nhân viên")||text.includes("Nhân viên đủ điều kiện xếp ca"))throw new Error(JSON.stringify({branches,text}));
     for(const forbidden of ["Enterprise oversight","canonical","writer","direct table DML","DRAFT","Validate","Review","Publish"]){
       if(text.includes(forbidden))throw new Error("technical copy visible: "+forbidden);
     }
