@@ -75,8 +75,8 @@ async function boot(){
     let tries=0;while(!prepareOwnerSurface(d)&&tries++<80)await new Promise(r=>setTimeout(r,100));
     if(!d.querySelector('#panel-publish'))throw new Error('OWNER_SCHEDULING_PANEL_NOT_READY');
     await load(d,'/05_MANAGER/Workforce/manager-context-v1.js?v=20260929-mer003');
-    await load(d,'/05_MANAGER/Workforce/draft-publish-v1.js?v=20261003-sched-ui-008');
-    await load(d,'/04_OWNER/Workforce/owner-scheduling-overview-v1.js?v=20261003-sched-ui-008');
+    await load(d,'/05_MANAGER/Workforce/draft-publish-v1.js?v=20261005-xstore-019');
+    await load(d,'/04_OWNER/Workforce/owner-scheduling-overview-v1.js?v=20261005-xstore-019');
     setTimeout(()=>{if(![...d.scripts].some(x=>(x.src||'').includes('security-runtime.js'))){const s=d.createElement('script');s.src='/02_CORE/security/security-runtime.js?v=20260903-owner-workforce1';s.async=true;(d.body||d.documentElement).appendChild(s)}},300);
   }catch(e){console.error('Owner Scheduling runtime failed',e)}
 }
