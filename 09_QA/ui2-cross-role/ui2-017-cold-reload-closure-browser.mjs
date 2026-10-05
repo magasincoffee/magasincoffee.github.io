@@ -174,9 +174,9 @@ const assetSpecs=[
   ["/02_CORE/ui/magasin-ui-v2-shell.css?v=20261001-ui-unified1","--m-control-touch-height"],
   ["/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260927-ui2-016","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/ui-consolidation-v1.js?v=20261001-ui-unified1","@media(max-width:1024px)"],
-  ["/05_MANAGER/Workforce/manager-scheduling-ui2-v1.js?v=20261004-xstore-016","@media(max-width:1024px)"],
+  ["/05_MANAGER/Workforce/manager-scheduling-ui2-v1.js?v=20261005-xstore-018","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/manager-operations-ui2-v1.js?v=20260927-ui2-016","@media(max-width:1024px)"],
-  ["/05_MANAGER/Workforce/engine-v1.js?v=20261003-sched-ui-017","manager-scheduling-ui2-v1.js?v=20261004-xstore-016"],
+  ["/05_MANAGER/Workforce/engine-v1.js?v=20261003-sched-ui-017","manager-scheduling-ui2-v1.js?v=20261005-xstore-018"],
   ["/05_MANAGER/runtime/manager-shell-v1.html?v=20261001-ui-unified1","manager-ui-shell-v2.js?v=20260927-ui2-016"],
   ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261003-sched-ui-017","manager-shell-v1.html?v=20261001-ui-unified1"],
   ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261003-sched-ui-008","owner-scheduling-overview-v1.js?v=20261003-sched-ui-008"]

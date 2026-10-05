@@ -7,6 +7,13 @@ const OUT=process.env.QA_OUT||"qa-artifacts/people-shift";
 fs.mkdirSync(OUT,{recursive:true});
 const report={status:"PASS",checks:[],page_errors:[],console_errors:[],request_failures:[]};
 const check=async(name,fn)=>{try{report.checks.push({name,status:"PASS",detail:String(await fn()??"")})}catch(e){report.checks.push({name,status:"FAIL",detail:String(e?.message||e)});report.status="FAIL"}};
+const addManualAssignment=async(userId,workDate,startTime,endTime)=>{
+  await page.locator("#msdManualEmployee").selectOption(userId);
+  await page.locator("#msdManualDate").selectOption(workDate);
+  await page.locator("#msdManualStart").selectOption(startTime);
+  await page.locator("#msdManualEnd").selectOption(endTime);
+  await page.locator("#msdManualAdd").click();
+};
 
 const browserInstance=await chromium.launch({headless:true});
 const page=await browserInstance.newPage({locale:"vi-VN",timezoneId:"Asia/Ho_Chi_Minh",viewport:{width:1440,height:1000}});
@@ -46,10 +53,10 @@ await check("canonical_direct_flow_does_not_call_staffing_demand_or_robot",async
 });
 
 await check("manager_sees_next_week_availability_before_draft",async()=>{
-  const rows=await page.locator("#panel-publish .msd-source-row").count();
+  const candidates=await page.locator("#panel-publish [data-msd-pool-candidate]").count();
   const text=await page.locator("#panel-publish .msd-source").innerText();
-  if(rows!==3||!text.includes("Nhân viên QA 1")||!text.includes("2026-09-28")||!text.includes("CN-QA-A"))throw new Error(text);
-  return "3 availability rows";
+  if(candidates!==3||!text.includes("Chưa được xếp ca nào · 3")||!text.includes("Nhân viên QA 1")||!text.includes("06:00–12:00")||!text.includes("CN-QA-A"))throw new Error(text);
+  return "3 supplemental-pool candidates with remaining availability";
 });
 
 await check("double_click_create_is_bounded_and_uses_manager_direct_primitive",async()=>{
@@ -70,26 +77,26 @@ await check("double_click_create_is_bounded_and_uses_manager_direct_primitive",a
 });
 
 await check("manager_adds_two_assignments_from_availability",async()=>{
-  await page.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
-  await page.locator(".msd-card").waitFor();
-  await page.locator(".msd-source-row").nth(1).locator("[data-add-av]").click();
+  await addManualAssignment("u-1","2026-09-28","06:00","12:00");
+  await page.locator('[data-msd-row="0"]').waitFor();
+  await addManualAssignment("u-2","2026-09-28","12:00","17:00");
   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
   const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
   if(st.assignments[0].user_id!=="u-1"||st.assignments[1].user_id!=="u-2")throw new Error(JSON.stringify(st.assignments));
-  return "u-1 + u-2";
+  return "u-1 + u-2 through canonical manual picker";
 });
 
 await check("manager_edits_time_then_remove_and_add_again",async()=>{
-  const first=page.locator(".msd-card").nth(0);
+  const first=page.locator('[data-msd-row="0"]');
   await first.locator('[data-f="start_time"]').selectOption("06:30");
   await first.locator('[data-f="end_time"]').selectOption("11:30");
-  await page.locator(".msd-card").nth(1).locator("[data-remove]").click();
+  await page.locator('[data-msd-row="1"] [data-remove]').click();
   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===1);
-  await page.locator(".msd-source-row").nth(1).locator("[data-add-av]").click();
+  await addManualAssignment("u-2","2026-09-28","12:00","17:00");
   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
   const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
   if(st.assignments[0].start_time!=="06:30"||st.assignments[0].end_time!=="11:30"||st.assignments[1].user_id!=="u-2")throw new Error(JSON.stringify(st.assignments));
-  return "edit + remove + add";
+  return "edit + remove + add through canonical manual picker";
 });
 
 await check("save_persists_draft_only_no_auto_review_publish_or_official_schedule",async()=>{

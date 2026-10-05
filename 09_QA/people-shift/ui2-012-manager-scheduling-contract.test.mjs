@@ -16,8 +16,8 @@ const rpc=s=>[...s.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 const rpcSet=s=>[...new Set(rpc(s))].sort();
 
 test("UI2-012 is a Manager-only presentation layer over the existing canonical scheduling writer",()=>{
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012|20261004-xstore-015|20261004-xstore-016|20261005-xstore-017)/);
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016)/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012|20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018)/);
   assert.match(ui,/\.msd\[data-scheduling-actor="MANAGER"\]/);
   assert.match(ui,/dataset\.ui2ScheduleBoard='1'/);
   assert.match(ui,/classList\.add\('msd-ui2-012'\)/);
@@ -31,6 +31,7 @@ test("UI2-012 preserves the canonical Manager scheduling RPC inventory and write
   assert.match(draft,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
   assert.deepEqual(rpcSet(draft),[
     "create_schedule_generation",
+    "get_cross_store_weekly_plan_v1",
     "get_manager_weekly_availability",
     "get_manager_weekly_schedule",
     "get_schedule_generation_assignments",
@@ -53,7 +54,7 @@ test("UI2-012 preserves the canonical Manager scheduling RPC inventory and write
 test("UI2-012 hierarchy keeps global week context and branch-local authoring progression explicit",()=>{
   for(const token of [
     "Tuần vận hành · Asia/Ho_Chi_Minh",
-    "Nguồn tham khảo",
+    "Nhóm nhân sự bổ sung",
     "Lịch nháp đang chỉnh",
     "Bước cuối · duyệt và phát hành"
   ])assert.ok(ui.includes(token),token);
@@ -65,7 +66,7 @@ test("UI2-012 hierarchy keeps global week context and branch-local authoring pro
   assert.doesNotMatch(ui,/msu2-stage-rail/);
   assert.match(ui,/magasin:manager-scheduling-ui-state/);
   assert.match(ui,/msu2-state-banner/);
-  assert.match(ui,/Nguồn tham khảo/);
+  assert.match(ui,/Nhóm nhân sự bổ sung/);
   assert.match(ui,/Lịch nháp đang chỉnh/);
   assert.match(ui,/Bước cuối · duyệt và phát hành/);
   assert.match(ui,/msu2-conflict-resolution/);
@@ -107,7 +108,7 @@ test("UI2-012 Manager asset cache chain advances while Owner runtime remains on 
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
   assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerV+"#workforce"));
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018)/);
   assert.doesNotMatch(ownerRuntime,new RegExp(managerV));
 });
 

@@ -7,6 +7,13 @@ const OUT=process.env.QA_OUT||"qa-artifacts/people-shift";
 fs.mkdirSync(OUT,{recursive:true});
 const report={status:"PASS",checks:[],page_errors:[],console_errors:[],request_failures:[]};
 const check=async(name,fn)=>{try{report.checks.push({name,status:"PASS",detail:String(await fn()??"")})}catch(e){report.status="FAIL";report.checks.push({name,status:"FAIL",detail:String(e?.stack||e)});throw e}};
+const addManualAssignment=async(userId,workDate,startTime,endTime)=>{
+  await page.locator("#msdManualEmployee").selectOption(userId);
+  await page.locator("#msdManualDate").selectOption(workDate);
+  await page.locator("#msdManualStart").selectOption(startTime);
+  await page.locator("#msdManualEnd").selectOption(endTime);
+  await page.locator("#msdManualAdd").click();
+};
 
 const browserInstance=await chromium.launch({headless:true});
 const page=await browserInstance.newPage({locale:"vi-VN",timezoneId:"Asia/Ho_Chi_Minh",viewport:{width:1440,height:1000}});
@@ -36,8 +43,8 @@ try{
   });
 
   await check("manager_builds_and_saves_draft_from_availability",async()=>{
-    await page.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
-    await page.locator(".msd-source-row").nth(1).locator("[data-add-av]").click();
+    await addManualAssignment("u-1","2026-09-28","06:00","12:00");
+    await addManualAssignment("u-2","2026-09-28","12:00","17:00");
     await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
     await page.locator("#msdSave").click();
     await page.waitForFunction(()=>globalThis.__MW31_QA.calls.some(x=>x.name==="replace_schedule_generation_assignments"));

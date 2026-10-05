@@ -20,6 +20,13 @@ async function managerFrame(page){
  await frame.locator(".msd-ui2-012[data-ui2-schedule-board='1']").waitFor({timeout:10000});
  return frame;
 }
+async function addManualAssignment(frame,userId,workDate="2026-09-28",startTime="06:00",endTime="12:00"){
+ await frame.locator("#msdManualEmployee").selectOption(userId);
+ await frame.locator("#msdManualDate").selectOption(workDate);
+ await frame.locator("#msdManualStart").selectOption(startTime);
+ await frame.locator("#msdManualEnd").selectOption(endTime);
+ await frame.locator("#msdManualAdd").click();
+}
 
 const browser=await chromium.launch({headless:true});
 
@@ -31,8 +38,8 @@ for(const width of [1440,1024,768,430,390,360]){
 
  await frame.locator("#msdStart").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().generationStatus==="DRAFT");
- await frame.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
- await frame.locator(".msd-source-row").nth(1).locator("[data-add-av]").click();
+ await addManualAssignment(frame,"u-1");
+ await addManualAssignment(frame,"u-2","2026-09-28","12:00","17:00");
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
 
  await check("ui2_012_"+width+"_hierarchy_no_page_overflow_touch_focus",async()=>{
@@ -66,7 +73,7 @@ for(const width of [1440,1024,768,430,390,360]){
     publishHidden:root?.querySelector("#msdPublish")?.hidden||false
    };
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
-   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5||metric.sourceRole!=="availability-source"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
+   if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5||metric.sourceRole!=="supplemental-employee-pool"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
    if(expected<=430&&(metric.boardColumns!==1||metric.boardScroll>metric.boardClient+1||metric.dayTitlePosition==="fixed"||metric.dayTitlePosition==="sticky"))throw new Error("phone draft board must stack without overlay/scroll: "+JSON.stringify(metric));
    if((expected===768||expected===1024)&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet board scroll: "+JSON.stringify(metric));
@@ -146,10 +153,9 @@ await check("ui2_012_busy_locks_controls_during_canonical_start",async()=>{
 });
 
 await check("ui2_012_assignment_add_edit_remove_save_delegates_to_existing_writer",async()=>{
- await frame.locator(".msd-source-row").nth(0).locator("[data-add-av]").click();
- await frame.locator(".msd-source-row").nth(1).locator("[data-add-av]").click();
+ await addManualAssignment(frame,"u-1");
+ await addManualAssignment(frame,"u-2","2026-09-28","12:00","17:00");
  const first=frame.locator("[data-msd-row='0']");
- await first.locator('[data-f="user_id"]').selectOption("u-3");
  await first.locator('[data-f="start_time"]').selectOption("06:30");
  await first.locator('[data-f="end_time"]').selectOption("11:30");
  await frame.locator("#msdSave").click();
@@ -158,24 +164,24 @@ await check("ui2_012_assignment_add_edit_remove_save_delegates_to_existing_write
   const calls=globalThis.__MW31_QA.calls.filter(x=>x.name==="replace_schedule_generation_assignments");
   return calls.at(-1)?.args?.p_assignments||[];
  });
- if(firstSave.length!==2||firstSave[0].user_id!=="u-3"||firstSave[0].start_time!=="06:30"||firstSave[0].end_time!=="11:30")throw new Error(JSON.stringify(firstSave));
+ if(firstSave.length!==2||firstSave[0].user_id!=="u-1"||firstSave[0].start_time!=="06:30"||firstSave[0].end_time!=="11:30")throw new Error(JSON.stringify(firstSave));
  await frame.locator("[data-msd-row='1'] [data-remove]").click();
  await frame.locator("#msdSave").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false);
  const removed=await frame.evaluate(()=>globalThis.__MW31_QA.state.assignments.length);
  if(removed!==1)throw new Error("removed="+removed);
- await frame.locator(".msd-source-row").filter({hasText:"Nhân viên QA 2"}).locator("[data-add-av]").click();
+ await addManualAssignment(frame,"u-2","2026-09-28","12:00","17:00");
  await frame.locator("#msdSave").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy===false&&globalThis.__MW31_QA.state.assignments.length===2);
  return JSON.stringify({firstSave:firstSave.length,afterRemove:removed,final:2});
 });
 
 await check("ui2_012_validation_failure_and_rpc_error_are_explicit",async()=>{
- await frame.evaluate(()=>globalThis.__MW31_QA.setPersonStatus("u-3","INACTIVE"));
+ await frame.evaluate(()=>globalThis.__MW31_QA.setPersonStatus("u-1","INACTIVE"));
  await frame.locator("#msdValidate").click();
  await frame.locator("#msdStatus").filter({hasText:"Nhân viên đã ngừng hoạt động"}).waitFor();
  const invalid=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().lastValidation);
- await frame.evaluate(()=>{globalThis.__MW31_QA.setPersonStatus("u-3","ACTIVE");globalThis.__MW31_QA.setRpcError("validate_schedule_generation_v1","QA_VALIDATE_RPC_ERROR")});
+ await frame.evaluate(()=>{globalThis.__MW31_QA.setPersonStatus("u-1","ACTIVE");globalThis.__MW31_QA.setRpcError("validate_schedule_generation_v1","QA_VALIDATE_RPC_ERROR")});
  await frame.locator("#msdValidate").click();
  await frame.locator("#msdStatus").filter({hasText:"Không thể kiểm tra lịch."}).waitFor();
  const errorText=await frame.locator("#msdStatus").innerText();
@@ -233,7 +239,7 @@ await check("ui2_012_store_and_week_navigation_clear_stale_projection_then_reloa
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-c"&&!s.busy});
  let state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
  let text=await frame.locator("#panel-publish").innerText();
- if(state.generationStatus!=="NONE"||state.assignments.length||state.availability.length||state.eligibleEmployees.length||state.officialRows.length||!text.includes("Không có nhân viên ACTIVE nào đủ Store Priority")||!text.includes("Không có Availability đã đăng ký")||text.includes("Nhân viên QA 1"))throw new Error(JSON.stringify({state,text}));
+ if(state.generationStatus!=="NONE"||state.assignments.length||state.availability.length||state.eligibleEmployees.length||state.officialRows.length||!text.includes("Không có nhân viên ACTIVE nào đủ Store Priority")||text.includes("Nhân viên QA 1"))throw new Error(JSON.stringify({state,text}));
  await frame.locator('[data-msd-branch="store-a"]').click();
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return s.storeId==="store-a"&&!s.busy&&s.generationStatus==="PUBLISHED"});
  await frame.locator('[data-msd-week="next"]').click();

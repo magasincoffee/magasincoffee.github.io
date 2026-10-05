@@ -38,7 +38,7 @@ try {
     const storeScoped=calls.filter(x=>x?.args&&Object.prototype.hasOwnProperty.call(x.args,'p_store_id'));
     if(!storeScoped.some(x=>x.name==='get_manager_weekly_availability'))throw new Error('missing store-b availability reload: '+JSON.stringify(calls));
     if(storeScoped.some(x=>x.args.p_store_id!=='store-b'))throw new Error('cross-store RPC scope leak: '+JSON.stringify(calls));
-    const allowedUnscoped=new Set(['list_employee_workforce_profiles_v1','list_workforce_recurring_staffing_requirements_v1']);
+    const allowedUnscoped=new Set(['list_employee_workforce_profiles_v1','list_workforce_recurring_staffing_requirements_v1','get_cross_store_weekly_plan_v1']);
     const unexpected=calls.filter(x=>!Object.prototype.hasOwnProperty.call(x?.args||{},'p_store_id')&&!allowedUnscoped.has(x.name));
     if(unexpected.length)throw new Error('unexpected unscoped reload RPC: '+JSON.stringify(unexpected));
     return 'store-b scoped reload · '+calls.map(x=>x.name).join(',');

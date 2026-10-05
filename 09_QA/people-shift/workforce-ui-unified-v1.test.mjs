@@ -94,7 +94,7 @@ test("primary user guidance is Vietnamese while internal status/RPC identifiers 
   "Thời gian có thể làm → Lịch nháp → Kiểm tra → Duyệt → Phát hành",
   "Việc cần xử lý",
   "Công việc / Quy trình",
-  "Thời gian nhân viên có thể làm",
+  "Nhóm nhân sự bổ sung",
   "Lịch làm chính thức"
  ])assert.ok(shellJs.includes(copy)||today.includes(copy)||draft.includes(copy),copy);
  assert.doesNotMatch(today,/Action Center|Task \/ SOP canonical|Không có route canonical/);
@@ -137,10 +137,10 @@ test("shift colors follow one visual rule across Manager and Employee scheduling
 test("unified asset cache chain reaches both Manager and Employee entry points",()=>{
  for(const token of [
   "review-v1.js?v=20261003-sched-ui-017",
-  "draft-publish-v1.js?v=20261005-xstore-017",
+  "draft-publish-v1.js?v=20261005-xstore-018",
   "cross-store-master-v1.js?v=20261004-xstore-016",
   "cross-store-auto-schedule-v1.js?v=20261005-xstore-017",
-  "manager-scheduling-ui2-v1.js?v=20261004-xstore-016",
+  "manager-scheduling-ui2-v1.js?v=20261005-xstore-018",
   "official-v1.js?v=20261001-ui-unified1",
   "ui-consolidation-v1.js?v=20261001-ui-unified1"
  ])assert.ok(managerEngine.includes(token),token);
