@@ -18,7 +18,7 @@ const ownerRuntime=read("04_OWNER/Workforce/runtime/owner-workforce-runtime.html
 const coldReload=read("09_QA/ui2-cross-role/ui2-017-cold-reload-closure-browser.mjs");
 
 const RC="20261005-xstore-019";
-const RC_QUALIFICATION="POST_CANONICAL_PATH_REPAIR_2";
+const RC_QUALIFICATION="POST_UI2_015_REPAIR_3";
 const forbiddenWriters=[
   "replace_schedule_generation_assignments",
   "validate_schedule_generation_v1",
@@ -94,5 +94,5 @@ test("XSTORE-019 cold reload regression explicitly rejects stale pre-RC scheduli
   ]) assert.ok(coldReload.includes(token),"missing stale-token guard: "+token);
 });
 
-assert.equal(RC_QUALIFICATION,"POST_CANONICAL_PATH_REPAIR_2");
+assert.equal(RC_QUALIFICATION,"POST_UI2_015_REPAIR_3");
 console.log("XSTORE_019_UNIFIED_RC_STATIC=PASS");
