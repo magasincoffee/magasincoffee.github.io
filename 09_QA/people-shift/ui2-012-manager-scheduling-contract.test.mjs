@@ -51,7 +51,7 @@ test("UI2-012 preserves the canonical Manager scheduling RPC inventory and write
   assert.match(draft,/timeZone:'Asia\/Ho_Chi_Minh'/);
 });
 
-test("UI2-012 hierarchy keeps global week context and branch-local authoring progression explicit",()=>{
+test("UI2-012 hierarchy keeps global week context and XSTORE-019A single-store authoring explicit",()=>{
   for(const token of [
     "Tuần vận hành · Asia/Ho_Chi_Minh",
     "Nhóm nhân sự bổ sung",
@@ -61,6 +61,8 @@ test("UI2-012 hierarchy keeps global week context and branch-local authoring pro
   for(const id of ["msdStart","msdReload","msdSave","msdValidate","msdReview","msdPublish"])assert.ok(ui.includes(id),id);
   assert.doesNotMatch(draft,/id="msdStore"/);
   assert.match(draft,/data-msd-branch/);
+  assert.match(draft,/msd-store-switcher/);
+  assert.match(draft,/msd-calendar-primary/);
   assert.match(draft,/msd-global-overview/);
   assert.match(ui,/Bảng lịch nháp 7 ngày; có thể cuộn ngang ở màn hình hẹp/);
   assert.doesNotMatch(ui,/msu2-stage-rail/);
@@ -86,16 +88,15 @@ test("UI2-012 explicitly represents NONE DRAFT REVIEWED PUBLISHED CONFLICT and b
   assert.match(ui,/el\.disabled=true/);
 });
 
-test("UI2-012 responsive contract keeps tablet board scroll and stacks phone draft days",()=>{
+test("UI2-012 responsive contract keeps seven days inside the calendar workspace",()=>{
   assert.match(ui,/@media\(max-width:1100px\)/);
   assert.match(ui,/@media\(max-width:1024px\)/);
   assert.match(ui,/@media\(max-width:600px\)/);
   assert.match(ui,/min-height:44px/);
-  assert.match(ui,/overflow-x:auto/);
-  assert.match(ui,/overscroll-behavior-x:contain/);
-  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-board-wrap\{overflow:visible;scrollbar-gutter:auto\}/);
-  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-board\{grid-template-columns:1fr;min-width:0;width:100%;gap:10px\}/);
-  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-day-title\{position:static\}/);
+  assert.match(ui,/\.msd-ui2-012 \.msd-board-wrap\{overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;max-height:calc\(100vh - 330px\)\}/);
+  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-board-wrap\{overflow:auto;scrollbar-gutter:stable;max-height:62vh\}/);
+  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-board\{grid-template-columns:repeat\(7,minmax\(150px,1fr\)\);min-width:1080px;width:max-content;gap:6px\}/);
+  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-day-title\{position:sticky;top:0;z-index:2\}/);
   assert.match(ui,/:focus-visible/);
   assert.match(ui,/outline:2px solid/);
 });
