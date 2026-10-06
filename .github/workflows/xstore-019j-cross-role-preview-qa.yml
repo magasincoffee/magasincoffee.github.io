@@ -1,0 +1,86 @@
+name: XSTORE-019J Cross-Role UI Preview QA
+on:
+  push:
+    paths:
+      - '09_QA/xstore-019j/**'
+      - '.github/workflows/xstore-019j-cross-role-preview-qa.yml'
+  pull_request:
+    paths:
+      - '09_QA/xstore-019j/**'
+      - '.github/workflows/xstore-019j-cross-role-preview-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cross-role-ui-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Static and syntax qualification
+        run: |
+          node --check 09_QA/xstore-019j/xstore-019j-preview-browser.mjs
+          node --test 09_QA/xstore-019j/xstore-019j-preview-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-019g-manager-five-board-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-019h-employee-mobile-presentation-v1.test.mjs
+          node --test 09_QA/owner-control-tower/xstore-019i-owner-strategy-v1.test.mjs
+      - name: Record exact preview SHA and targets
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/xstore-019j
+          cat > qa-artifacts/xstore-019j/preview-manifest.json <<EOF
+          {"task":"XSTORE-019J","commit_sha":"$GITHUB_SHA","branch":"$GITHUB_REF_NAME","production_writes":false,"targets":{"index":"/09_QA/xstore-019j/index.html","manager":"/09_QA/xstore-019j/manager-preview.html","employee":"/09_QA/xstore-019j/employee-preview.html","owner":"/09_QA/xstore-019j/owner-preview.html"},"gate":"OWNER UI IMPLEMENTATION APPROVAL REQUIRED"}
+          EOF
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start exact-head preview server
+        shell: bash
+        run: |
+          nohup python3 -m http.server 8787 --bind 127.0.0.1 > /tmp/xstore019j-http.log 2>&1 &
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -fsS http://127.0.0.1:8787/09_QA/xstore-019j/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/xstore019j-http.log || true
+          exit 1
+      - name: Manager five-board browser qualification
+        env:
+          QA_BASE_URL: http://127.0.0.1:8787
+          QA_OUT: qa-artifacts/xstore-019j/manager
+        run: node 09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs
+      - name: Employee mobile browser qualification
+        env:
+          QA_BASE_URL: http://127.0.0.1:8787
+          QA_OUT: qa-artifacts/xstore-019j/employee
+        run: node 09_QA/people-shift/xstore-019h-employee-mobile-presentation-browser.mjs
+      - name: Owner strategy browser qualification
+        env:
+          QA_BASE_URL: http://127.0.0.1:8787
+          QA_OUT: qa-artifacts/xstore-019j/owner
+        run: node 09_QA/owner-control-tower/xstore-019i-owner-strategy-browser.mjs
+      - name: Cross-role preview responsive accessibility reload
+        env:
+          QA_BASE_URL: http://127.0.0.1:8787
+          QA_OUT: qa-artifacts/xstore-019j
+        run: node 09_QA/xstore-019j/xstore-019j-preview-browser.mjs
+      - name: Accepted cold reload cache closure
+        env:
+          QA_BASE_URL: http://127.0.0.1:8787
+          QA_OUT: qa-artifacts/xstore-019j/cold-reload
+        run: node 09_QA/ui2-cross-role/ui2-017-cold-reload-closure-browser.mjs
+      - name: Upload exact preview packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xstore-019j-cross-role-preview-${{ github.run_id }}
+          path: qa-artifacts/xstore-019j/
+          if-no-files-found: error
+          retention-days: 30
