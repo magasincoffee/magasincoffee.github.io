@@ -188,7 +188,8 @@ async function persistRange(id,day,start,end,successCopy){
   try{
     const q=await C.supabase.rpc('save_my_availability',{p_availability_id:id||null,p_work_date:day,p_start_time:start,p_end_time:end,p_availability_type:'AVAILABLE',p_preferred_store_id:null,p_note:null});
     if(q.error)throw q.error;C.ui.toast(id?'Đã cập nhật thời gian có thể làm.':'Đã lưu thời gian có thể làm.','success');
-    const ok=await load();resetEditorMode();if(ok)setUiState('success',successCopy||(id?'Đã cập nhật khoảng thời gian trực tiếp trên lịch.':'Đã lưu khoảng thời gian có thể làm. Mỗi khoảng có hiệu lực ngay khi được lưu.'));return ok;
+    resetEditorMode();
+    const ok=await load();if(ok)setUiState('success',successCopy||(id?'Đã cập nhật khoảng thời gian trực tiếp trên lịch.':'Đã lưu khoảng thời gian có thể làm. Mỗi khoảng có hiệu lực ngay khi được lưu.'));return ok;
   }catch(_){setUiState('error',id?'Không thể cập nhật thời gian có thể làm. Vui lòng thử lại.':'Đăng ký thất bại. Vui lòng thử lại.',true);return false}
   finally{state.savePending=false;applyRegistrationState(x)}
 }
@@ -210,9 +211,9 @@ function bindCalendar(box){
     slot.addEventListener('drop',e=>{if(state.calendarDrag&&!closed){e.preventDefault();void applyCalendarDrop(slot.dataset.avSlotDate,slot.dataset.avSlotTime)}});
   });
   box.querySelectorAll('[data-av-card]').forEach(card=>{
-    card.addEventListener('click',e=>{if(e.target.closest('[data-av-delete],[data-av-resize-start],[data-av-resize-end]'))return;const row=findRow(card.dataset.avCard);if(row)selectEditor(row.id,String(row.work_date).slice(0,10),hm(row.start_time),hm(row.end_time),true)});
+    card.addEventListener('click',e=>{if(closed||state.savePending||e.target.closest('[data-av-delete],[data-av-resize-start],[data-av-resize-end]'))return;const row=findRow(card.dataset.avCard);if(row)selectEditor(row.id,String(row.work_date).slice(0,10),hm(row.start_time),hm(row.end_time),true)});
     card.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();card.click()}});
-    card.addEventListener('dragstart',e=>{if(closed||e.target.closest('[data-av-resize-start],[data-av-resize-end]'))return;state.calendarDrag={id:card.dataset.avCard,mode:'move'};e.dataTransfer?.setData('text/plain','availability-move')});
+    card.addEventListener('dragstart',e=>{if(closed||state.savePending||e.target.closest('[data-av-resize-start],[data-av-resize-end]')){e.preventDefault();return}state.calendarDrag={id:card.dataset.avCard,mode:'move'};e.dataTransfer?.setData('text/plain','availability-move')});
     card.addEventListener('dragend',()=>{state.calendarDrag=null});
   });
   box.querySelectorAll('[data-av-resize-start]').forEach(handle=>handle.addEventListener('dragstart',e=>{if(closed){e.preventDefault();return}e.stopPropagation();state.calendarDrag={id:handle.dataset.avResizeStart,mode:'resize-start'};e.dataTransfer?.setData('text/plain','availability-resize-start')}));
