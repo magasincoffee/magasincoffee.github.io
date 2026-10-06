@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019D DONE / EXACT-HEAD GREEN / XSTORE-019E READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019E DONE / EXACT-HEAD GREEN / XSTORE-019F READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -351,8 +351,8 @@ Out of scope unless explicitly added later:
 | XSTORE-019B | Direct calendar shift editing | Add/edit/move/resize/delete/duplicate DRAFT shifts directly on the weekly calendar while preserving canonical writer and hard safety | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019C | On-demand employee drawer + shortage resolution | Employee candidates appear only when Manager requests add/supplement; exact store/day/time filtering and canonical ranking/manual override semantics | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019D | Employee Availability calendar parity | Employee registers weekly time-only Availability directly on a calendar using the same visual/time interaction model | **DONE / EXACT-HEAD GREEN** |
-| XSTORE-019E | Owner calendar parity + responsive workspace | Owner reuses the same single-store calendar workflow; optimize desktop/mobile viewport and preserve role authority | **READY / NEXT TASK** |
-| XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **PENDING XSTORE-019E** |
+| XSTORE-019E | Owner calendar parity + responsive workspace | Owner reuses the same single-store calendar workflow; optimize desktop/mobile viewport and preserve role authority | **DONE / EXACT-HEAD GREEN** |
+| XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **READY / NEXT TASK** |
 | XSTORE-020 | Live production acceptance + permanent reconciliation | Only after Owner approves the new exact RC; release via production governance, run real target-week acceptance, reconcile permanent docs and resume XSTORE-011 closure | **PENDING OWNER APPROVAL AFTER XSTORE-019F** |
 
 ## 5. Recommended execution order
@@ -385,8 +385,8 @@ XSTORE-001 DONE
 → XSTORE-019B DONE / exact-head GREEN / direct shift editing
 → XSTORE-019C DONE / exact-head GREEN / on-demand employee drawer + shortage resolution
 → XSTORE-019D DONE / exact-head GREEN / Employee Availability calendar
-→ XSTORE-019E READY / Owner parity + responsive workspace
-→ XSTORE-019F / integrated qualification + new exact RC
+→ XSTORE-019E DONE / exact-head GREEN / Owner parity + responsive workspace
+→ XSTORE-019F READY / integrated qualification + new exact RC
 → OWNER APPROVAL OF NEW EXACT RC
 → XSTORE-020 / midnight production release + live acceptance + reconciliation
 → XSTORE-011 RESUME / final live closure + TEMP SOT deletion
@@ -1178,11 +1178,7 @@ Scope:
 The robot must execute remaining tasks in strict order:
 
 ```text
-XSTORE-019B
-→ XSTORE-019C
-→ XSTORE-019D
-→ XSTORE-019E
-→ XSTORE-019F
+XSTORE-019F
 → OWNER APPROVAL OF NEW EXACT RC
 → XSTORE-020
 → resume XSTORE-011 closure
@@ -1208,7 +1204,7 @@ Machine handoff:
 MAGASIN_TASK_CONTROL_V1
 STATUS=READY
 TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-019E
+NEXT_TASK_ID=XSTORE-019F
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -1678,6 +1674,55 @@ Observed non-XSTORE smoke:
 PR #392 remains open and must **not** be merged or released yet. XSTORE-019F plus explicit Owner approval remain the release gate.
 
 The next authoritative executable task is **XSTORE-019E**. XSTORE-019D must not be re-executed unless a future regression explicitly reopens it.
+
+## 6.0.21 XSTORE-019E Owner parity + responsive workspace acceptance — 2026-10-06
+
+XSTORE-019E is **DONE / EXACT-HEAD GREEN**.
+
+Implementation branch / PR:
+- PR #392: `xstore-019-unified-rc-v1`;
+- exact accepted head: `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52`;
+- production merge/release: **NOT PERFORMED**.
+
+Accepted result:
+- Owner scheduling reuses the same selected-store calendar workspace and the same canonical DRAFT writer as Manager; no separate Owner scheduling writer/RPC path was introduced;
+- Owner runtime explicitly identifies the actor as `OWNER` while loading the shared Manager scheduling runtime/presentation;
+- selected store, week/status context and scheduling actions remain together in one sticky workspace toolbar;
+- desktop/laptop preserves the seven-day calendar and selected-store context without page-level horizontal overflow;
+- narrow/mobile view keeps the same seven-day mental model and moves horizontal scrolling inside the primary calendar workspace instead of stacking days into page sprawl;
+- candidate selection remains a bounded fixed overlay/side panel and does not widen the document;
+- canonical DRAFT persistence remains `replace_schedule_generation_assignments`; Validate → Review → Publish authority is unchanged;
+- no database/schema/migration, auth/RBAC/session or backend RPC authority change was introduced;
+- PR #392 remains open and unmerged.
+
+Repair / strategy evidence:
+- XSTORE-019E changed only shared scheduling UI/layout, Owner runtime composition and QA contracts;
+- the accepted responsive regression was reconciled to the locked calendar-first architecture: mobile keeps seven day columns in an internally scrollable calendar instead of reverting to the superseded one-column stacked-day behavior;
+- the dedicated XSTORE-019E workflow explicitly runs the accepted `sched-07-ui-responsive-browser.mjs` regression in addition to static/shared scheduling contracts and Owner/Manager browser acceptance.
+
+Exact-head terminal GREEN evidence for `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52`:
+- XSTORE-019E Owner Parity Responsive QA run `37417545280` → **SUCCESS**;
+- XSTORE-019 Unified RC QA run `37417545219` → **SUCCESS**;
+- People Shift Day-10 Tests run `37417545254` → **SUCCESS**;
+- UI2 Cross Role Acceptance run `37417545225` → **SUCCESS**;
+- Owner Control Tower Tests run `37417545297` → **SUCCESS**;
+- XSTORE-019A Calendar Workspace QA run `37417545174` → **SUCCESS**;
+- XSTORE-019B Direct Calendar Editing QA run `37417545272` → **SUCCESS**;
+- XSTORE-019C Candidate Drawer QA run `37417545206` → **SUCCESS**;
+- XSTORE-019D Employee Availability Calendar QA run `37417545178` → **SUCCESS**;
+- XSTORE-013 Coverage QA run `37417545167` → **SUCCESS**;
+- XSTORE-014 Interval Auto Schedule QA run `37417545210` → **SUCCESS**;
+- XSTORE-015 Manager Override QA run `37417545214` → **SUCCESS**;
+- XSTORE-016 Scheduling IA QA run `37417545226` → **SUCCESS**;
+- XSTORE-017 Inline Shortage QA run `37417545256` → **SUCCESS**;
+- XSTORE-018 Supplemental Pool QA run `37417545332` → **SUCCESS**;
+- SOP Task Tests run `37417545253` → **SUCCESS**;
+- Procurement QA Robot run `37417545330` → **SUCCESS**.
+
+Observed non-XSTORE smoke:
+- AUTH-PROD Regression Contract run `37417545232` completed with failure. XSTORE-019E did not touch auth/RBAC/session or backend auth/RPC paths, so this failure is not used as XSTORE-019E acceptance evidence and remains owned by the AUTH-PROD track.
+
+PR #392 must **not** be merged or released yet. XSTORE-019F is now the sole next executable task and owns integrated qualification, new exact RC freeze, rollback packet and Owner preview. Explicit Owner approval remains required after XSTORE-019F before XSTORE-020 production release.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
