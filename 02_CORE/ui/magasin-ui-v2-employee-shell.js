@@ -311,7 +311,8 @@
       if (!link) return;
       const view = normalize(link.dataset.view);
       const fromDrawer = !!link.closest('.drawer');
-      const shouldPushRoute = CANONICAL.has(view) && !applyingRoute;
+      const isPrimarySource = link.classList.contains('employee-v2-primary-source');
+      const shouldPushRoute = fromDrawer && !isPrimarySource && CANONICAL.has(view) && !applyingRoute;
       setTimeout(() => {
         setPrimaryActive(view);
         if (shouldPushRoute) pushCanonicalRoute(view);

@@ -82,7 +82,8 @@ test("Payroll remains engine-injected and shell delegates to its existing source
   assert.ok(js.includes("const sourceLink = view =>"));
   assert.ok(js.includes("activateSourceView"));
   assert.ok(js.includes("const fromDrawer = !!link.closest('.drawer')"));
-  assert.ok(js.includes("const shouldPushRoute = CANONICAL.has(view) && !applyingRoute"));
+  assert.ok(js.includes("const isPrimarySource = link.classList.contains('employee-v2-primary-source')"));
+  assert.ok(js.includes("const shouldPushRoute = fromDrawer && !isPrimarySource && CANONICAL.has(view) && !applyingRoute"));
   assert.ok(js.includes("if (shouldPushRoute) pushCanonicalRoute(view)"));
   assert.ok(js.includes("if (fromDrawer) closeSecondaryDrawer()"));
 });
