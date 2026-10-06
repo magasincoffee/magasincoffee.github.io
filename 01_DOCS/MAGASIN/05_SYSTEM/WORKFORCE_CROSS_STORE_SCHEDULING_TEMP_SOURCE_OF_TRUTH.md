@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019H DONE / PRIOR RC INVALIDATED BY OWNER UX V4 / XSTORE-019I READY / UI-FIRST REMEDIATION ACTIVE / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019I DONE / PRIOR RC INVALIDATED BY OWNER UX V4 / XSTORE-019J READY / UI-FIRST REMEDIATION ACTIVE / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -355,8 +355,8 @@ Out of scope unless explicitly added later:
 | XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **DONE / HISTORICAL RC INVALIDATED BY OWNER UX V4** |
 | XSTORE-019G | Manager five-board UI implementation | Presentation-first implementation of the Owner-approved 5-board Manager workflow; no new backend authority or production wiring | **DONE / PRESENTATION-FIRST GREEN** |
 | XSTORE-019H | Employee mobile-first UI implementation | Mobile-first Employee home, flexible time registration, personal schedule, attendance and profile surfaces; presentation-first | **DONE / PRESENTATION-FIRST GREEN** |
-| XSTORE-019I | Owner strategy/P&L UI implementation | Owner home becomes strategy/revenue/cost/profit/cash-flow/forecast dashboard rather than an expanded Manager surface; presentation-first | **READY** |
-| XSTORE-019J | Cross-role UI-only preview qualification | Integrate G→I with fixtures/read-only data, responsive/browser QA and local/preview review target; stop before business-data wiring | **PENDING / OWNER UI IMPLEMENTATION REVIEW GATE** |
+| XSTORE-019I | Owner strategy/P&L UI implementation | Owner home becomes strategy/revenue/cost/profit/cash-flow/forecast dashboard rather than an expanded Manager surface; presentation-first | **DONE / PRESENTATION-FIRST GREEN** |
+| XSTORE-019J | Cross-role UI-only preview qualification | Integrate G→I with fixtures/read-only data, responsive/browser QA and local/preview review target; stop before business-data wiring | **READY / OWNER UI IMPLEMENTATION REVIEW GATE AFTER GREEN** |
 | XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **PENDING / AFTER UI GATE** |
 | XSTORE-019L | Employee flexible Availability + attendance wiring | Wire free start/end multi-interval Availability and published-schedule attendance semantics; outside-schedule/manual-time attendance requires Manager confirmation | **PENDING / AFTER UI GATE** |
 | XSTORE-019M | Manager five-board workflow integration | Wire Prepare→Create Draft→Edit→Check→Approve/Publish to canonical scheduling state; Check is read-only same-calendar review for one selected store | **PENDING / AFTER UI GATE** |
@@ -398,8 +398,8 @@ XSTORE-001 DONE
 → XSTORE-019F DONE / historical RC qualified, then invalidated by Owner UX V4 decisions on 2026-10-06
 → XSTORE-019G DONE / presentation-first GREEN / Manager five-board UI
 → XSTORE-019H DONE / presentation-first GREEN / Employee mobile-first UI
-→ XSTORE-019I READY / Owner strategy + P&L presentation-first UI
-→ XSTORE-019J / integrated UI-only preview qualification
+→ XSTORE-019I DONE / presentation-first GREEN / Owner strategy + P&L UI
+→ XSTORE-019J READY / integrated UI-only preview qualification
 → OWNER UI IMPLEMENTATION REVIEW GATE / approve rendered UI before live data/logic wiring
 → XSTORE-019K / FULL_TIME + PART_TIME authority and scheduling ranking
 → XSTORE-019L / flexible Employee Availability + attendance integration
@@ -1554,7 +1554,7 @@ Machine handoff:
 MAGASIN_TASK_CONTROL_V1
 STATUS=READY
 TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-019I
+NEXT_TASK_ID=XSTORE-019J
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -2225,6 +2225,42 @@ Observed non-XSTORE smoke:
 - AUTH-PROD Regression Contract run `37519893959` completed with failure. XSTORE-019H is presentation-first and does not change Auth/RBAC/session/backend-auth authority, so that failure is not an XSTORE-019H acceptance gate.
 
 The next authoritative executable task is **XSTORE-019I**.
+
+## 6.0.25 XSTORE-019I Owner strategy/P&L presentation acceptance — 2026-10-07
+
+XSTORE-019I is **DONE / PRESENTATION-FIRST GREEN**.
+
+Implementation branch / PR:
+- PR #392: `xstore-019-unified-rc-v1`;
+- implementation commit: `26f8433271e1cc3f5f218465d018144fcb1e1d55`;
+- current exact PR head: `a4d8f814c639b445b319437407c91fb449c0fb1e`;
+- production merge/release: **NOT PERFORMED**;
+- PR remains DRAFT / DO NOT MERGE;
+- no XSTORE-019I/Owner presentation file changed after the accepted implementation commit.
+
+Accepted result:
+- Owner home is strategy/business-performance first and is not an expanded Manager scheduling screen;
+- primary strategy surfaces cover revenue, costs, profit, margin, cash flow, target progress, revenue/profit trend, store comparison, product/category performance, customer trends, alerts/opportunities and forecast/targets;
+- Workforce remains a compact strategic summary with scheduling available only as a secondary operational route;
+- desktop is the primary layout with a useful mobile summary at phone width;
+- presentation uses fixture/read-only strategy data only before XSTORE-019N data integration;
+- unavailable production financial metrics render as `—` with explicit source-quality copy rather than fabricated zero/P&L values;
+- production revenue is only surfaced when the existing Control Tower source quality is trusted;
+- no new RPC, database/schema/migration, RLS, auth/session authority, scheduling writer or financial-data persistence path was introduced.
+
+Exact-head evidence for `a4d8f814c639b445b319437407c91fb449c0fb1e`:
+- XSTORE-019I Owner Strategy Presentation QA run `37519893972` → **SUCCESS**;
+  - strategy presentation syntax → SUCCESS;
+  - XSTORE-019I static contracts → SUCCESS;
+  - impacted Owner Control Tower contracts → SUCCESS;
+  - desktop 1440 and mobile 390 browser acceptance → SUCCESS;
+  - artifact `xstore-019i-owner-strategy-37519893972` retained;
+- Owner Control Tower Tests run `37519893791` → **SUCCESS**;
+- XSTORE-019J Cross-Role UI Preview run `37519893924` → **SUCCESS** and re-exercised the Owner strategy browser path on the same exact head; this evidence does not advance XSTORE-019J task state.
+
+XSTORE-019I is presentation-only. Authoritative financial data wiring remains owned by XSTORE-019N after the Owner UI implementation gate.
+
+This acceptance closes **only XSTORE-019I**. The next authoritative executable task is **XSTORE-019J**.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
