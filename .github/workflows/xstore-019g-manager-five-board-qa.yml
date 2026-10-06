@@ -26,6 +26,7 @@ jobs:
       - name: XSTORE-019G static and impacted contracts
         run: |
           node --check 05_MANAGER/Workforce/draft-publish-v1.js
+          node --check 05_MANAGER/Workforce/cross-store-auto-schedule-v1.js
           node --check 05_MANAGER/Workforce/manager-five-board-v4.js
           node --check 09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs
           node --test 09_QA/people-shift/xstore-019g-manager-five-board-v1.test.mjs
@@ -51,7 +52,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: xstore-019g-manager-five-board-\${{ github.run_id }}
+          name: xstore-019g-manager-five-board-${{ github.run_id }}
           path: qa-artifacts/xstore-019g/
           if-no-files-found: warn
           retention-days: 30
