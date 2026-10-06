@@ -480,7 +480,8 @@ function rememberCalendarViewport(wrap=null){
 }
 function restoreCalendarViewport(){
  const v=state.calendarViewport||{left:0,top:0};
- requestAnimationFrame(()=>{const wrap=panel()?.querySelector('.msd-board-wrap');if(wrap){wrap.scrollLeft=Number(v.left||0);wrap.scrollTop=Number(v.top||0)}});
+ const apply=()=>{const wrap=panel()?.querySelector('.msd-board-wrap');if(wrap){wrap.scrollLeft=Number(v.left||0);wrap.scrollTop=Number(v.top||0)}};
+ apply();requestAnimationFrame(apply);
 }
 function openCandidateDrawer(target=null,sourceWrap=null){
  if(!draftEditable())return false;
