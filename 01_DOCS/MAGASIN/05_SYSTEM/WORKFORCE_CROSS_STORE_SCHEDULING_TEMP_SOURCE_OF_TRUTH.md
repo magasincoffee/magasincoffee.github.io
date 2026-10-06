@@ -2076,14 +2076,16 @@ PR #392 must **not** be merged or released yet. XSTORE-019F is now the sole next
 
 ## 6.0.22 XSTORE-019F integrated RC qualification acceptance — 2026-10-06
 
-XSTORE-019F is **DONE / RC_READY / EXACT-HEAD GREEN**.
+XSTORE-019F was **DONE / RC_READY / EXACT-HEAD GREEN at qualification time**.
 
-Release candidate:
+**Post-qualification supersession — Owner UX V4, 2026-10-06:** the Owner subsequently approved materially different Manager/Employee/Owner UI requirements. Therefore the XSTORE-019F exact RC is **historical evidence only / production candidate invalidated**. The authoritative next task is XSTORE-019G.
+
+Historical release candidate:
 - PR #392: `xstore-019-unified-rc-v1`;
-- exact frozen RC SHA: `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52`;
+- historical exact RC SHA: `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52`;
 - previous rejected RC `1301678dbf6ffeef88cd5ced59ffa1c10d6bfae4` remains invalid and must not be released;
 - production merge/release: **NOT PERFORMED**;
-- next gate: **explicit Owner approval of this exact RC SHA**.
+- current next gate: **XSTORE-019G→019J UI-first implementation, then Owner UI implementation review**.
 
 Integrated impact classification:
 - XSTORE-019A→019E changes are Workforce scheduling/calendar/shared UI/runtime/QA changes;
@@ -2123,13 +2125,13 @@ Owner preview / browser evidence:
 Non-applicable external smoke:
 - AUTH-PROD Regression Contract run `37417545232` completed with failure, but XSTORE-019A→019E did not touch Auth/RBAC/session/backend-auth paths. It is not an XSTORE-019F required gate under the path-impact policy and does not invalidate this RC qualification.
 
-Release packet rules:
-- PR #392 remains open and unmerged;
-- exact RC SHA must remain `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52` through Owner review;
-- any branch code/config change invalidates this RC and requires affected QA + renewed Owner approval;
-- qualification-time production rollback baseline is recorded in the PR #392 RC packet and must be revalidated immediately before the production release window;
-- XSTORE-020 remains blocked until Owner explicitly approves this exact RC SHA;
-- after approval, production governance still requires the 00:00 Asia/Ho_Chi_Minh release window unless Owner explicitly grants a same-conversation exception.
+Historical release packet rules:
+- PR #392 remains open, unmerged and DRAFT;
+- `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52` must **not** be approved, merged or released as the final candidate;
+- new XSTORE-019G→019N implementation commits supersede this historical exact RC and require affected QA;
+- XSTORE-019O must freeze a replacement exact RC + rollback packet;
+- XSTORE-020 remains unavailable until XSTORE-019O is GREEN and Owner explicitly approves that replacement exact RC;
+- production governance still requires the 00:00 Asia/Ho_Chi_Minh release window unless Owner explicitly grants a same-conversation exception.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
