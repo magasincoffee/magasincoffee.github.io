@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019B DONE / EXACT-HEAD GREEN / XSTORE-019C READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019C DONE / EXACT-HEAD GREEN / XSTORE-019D READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -349,8 +349,8 @@ Out of scope unless explicitly added later:
 | XSTORE-019 | Previous unified RC qualification | PR #392 exact RC `1301678dbf6ffeef88cd5ced59ffa1c10d6bfae4` passed automation but was explicitly rejected by Owner for scheduling display/interaction architecture; do not merge this RC | **CHANGES_REQUESTED / RC INVALIDATED** |
 | XSTORE-019A | Manager single-store calendar workspace | Calendar-first weekly workspace; only one selected store is open; remove branch accordion stack and long always-visible employee pool | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019B | Direct calendar shift editing | Add/edit/move/resize/delete/duplicate DRAFT shifts directly on the weekly calendar while preserving canonical writer and hard safety | **DONE / EXACT-HEAD GREEN** |
-| XSTORE-019C | On-demand employee drawer + shortage resolution | Employee candidates appear only when Manager requests add/supplement; exact store/day/time filtering and canonical ranking/manual override semantics | **READY / NEXT TASK** |
-| XSTORE-019D | Employee Availability calendar parity | Employee registers weekly time-only Availability directly on a calendar using the same visual/time interaction model | **PENDING XSTORE-019C** |
+| XSTORE-019C | On-demand employee drawer + shortage resolution | Employee candidates appear only when Manager requests add/supplement; exact store/day/time filtering and canonical ranking/manual override semantics | **DONE / EXACT-HEAD GREEN** |
+| XSTORE-019D | Employee Availability calendar parity | Employee registers weekly time-only Availability directly on a calendar using the same visual/time interaction model | **READY / NEXT TASK** |
 | XSTORE-019E | Owner calendar parity + responsive workspace | Owner reuses the same single-store calendar workflow; optimize desktop/mobile viewport and preserve role authority | **PENDING XSTORE-019D** |
 | XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **PENDING XSTORE-019E** |
 | XSTORE-020 | Live production acceptance + permanent reconciliation | Only after Owner approves the new exact RC; release via production governance, run real target-week acceptance, reconcile permanent docs and resume XSTORE-011 closure | **PENDING OWNER APPROVAL AFTER XSTORE-019F** |
@@ -383,8 +383,8 @@ XSTORE-001 DONE
 → XSTORE-019 CHANGES_REQUESTED / RC 1301678d... invalidated by Owner
 → XSTORE-019A DONE / exact-head GREEN / single-store calendar workspace
 → XSTORE-019B DONE / exact-head GREEN / direct shift editing
-→ XSTORE-019C READY / on-demand employee drawer + shortage resolution
-→ XSTORE-019D / Employee Availability calendar
+→ XSTORE-019C DONE / exact-head GREEN / on-demand employee drawer + shortage resolution
+→ XSTORE-019D READY / Employee Availability calendar
 → XSTORE-019E / Owner parity + responsive workspace
 → XSTORE-019F / integrated qualification + new exact RC
 → OWNER APPROVAL OF NEW EXACT RC
@@ -1208,7 +1208,7 @@ Machine handoff:
 MAGASIN_TASK_CONTROL_V1
 STATUS=READY
 TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-019C
+NEXT_TASK_ID=XSTORE-019D
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -1559,7 +1559,68 @@ Exact-head terminal GREEN evidence:
 
 PR #392 remains open and must **not** be merged or released yet. XSTORE-019F plus explicit Owner approval remain the release gate.
 
-The next authoritative executable task is **XSTORE-019C**. XSTORE-019B must not be re-executed unless a future regression explicitly reopens it.
+XSTORE-019C was the next authoritative task after this acceptance and is now accepted in §6.0.19. XSTORE-019B must not be re-executed unless a future regression explicitly reopens it.
+
+
+## 6.0.19 XSTORE-019C on-demand employee drawer + shortage resolution acceptance — 2026-10-06
+
+XSTORE-019C is **DONE / EXACT-HEAD GREEN**.
+
+Implementation branch / PR:
+- PR #392: `xstore-019-unified-rc-v1`;
+- exact accepted head: `ed88004a0aa4bffc9deabed7ad6152a5de243415`;
+- production merge/release: **NOT PERFORMED**.
+
+Accepted result:
+- the always-visible supplemental employee pool is removed from the primary scheduling workspace;
+- Manager/Owner opens the candidate UI only from explicit add or exact-shortage actions;
+- exact-shortage `+ Bổ sung nhân viên` scopes the candidate set to the selected store/date/time and preserves registered / remaining / manual-dispatch / hard-conflict grouping;
+- manual out-of-Availability selection retains `MANAGER_AVAILABILITY_OVERRIDE`;
+- hard-conflict candidates remain non-selectable;
+- candidate selection updates the current DRAFT and recalculates inline shortage state without introducing a second writer;
+- `replace_schedule_generation_assignments` remains the canonical DRAFT persistence writer;
+- closing the candidate drawer restores the same calendar viewport immediately and re-applies it on the next animation frame so the calendar does not jump to the top or flash through a stale scroll position;
+- Manager/Owner canonical Validate → Review → Publish authority and backend/RPC boundaries remain unchanged;
+- PR #392 remains open and unmerged.
+
+Repair evidence:
+- stale XSTORE-017 persistent-picker contract was reconciled to the XSTORE-019C on-demand drawer authority;
+- SCHED-02 and SCHED-05 browser flows were reconciled to open the candidate drawer before interacting with manual employee controls;
+- People Shift Day-10 owner flow was reconciled to create/open DRAFT before opening the candidate drawer;
+- the candidate-drawer workflow path filter now includes its XSTORE-017 dependency contract;
+- repeated calendar-context failures were resolved by changing runtime strategy from frame-only restore to immediate restore plus animation-frame re-apply;
+- no backend schema/RPC authority change and no production business data mutation were introduced.
+
+Exact-head terminal GREEN evidence for `ed88004a0aa4bffc9deabed7ad6152a5de243415`:
+- XSTORE-019C Candidate Drawer QA push run `37408701575` → **SUCCESS**;
+- XSTORE-019C Candidate Drawer QA PR run `37408705641` → **SUCCESS**;
+- People Shift Day-10 Tests push run `37408701377` → **SUCCESS**;
+- People Shift Day-10 Tests PR run `37408705496` → **SUCCESS**;
+- UI2 Cross Role Acceptance push run `37408701424` → **SUCCESS**;
+- UI2 Cross Role Acceptance PR run `37408705492` → **SUCCESS**;
+- XSTORE-019 Unified RC QA push run `37408701430` → **SUCCESS**;
+- XSTORE-019 Unified RC QA PR run `37408705502` → **SUCCESS**;
+- XSTORE-019A Calendar Workspace QA push run `37408701428` → **SUCCESS**;
+- XSTORE-019A Calendar Workspace QA PR run `37408705485` → **SUCCESS**;
+- XSTORE-019B Direct Calendar Editing QA push run `37408701387` → **SUCCESS**;
+- XSTORE-019B Direct Calendar Editing QA PR run `37408705638` → **SUCCESS**;
+- XSTORE-013 Coverage QA PR run `37408705494` → **SUCCESS**;
+- XSTORE-014 Interval Auto Schedule QA PR run `37408705495` → **SUCCESS**;
+- XSTORE-015 Manager Override QA push run `37408701371` → **SUCCESS**;
+- XSTORE-015 Manager Override QA PR run `37408705505` → **SUCCESS**;
+- XSTORE-016 Scheduling IA QA push run `37408701395` → **SUCCESS**;
+- XSTORE-016 Scheduling IA QA PR run `37408705786` → **SUCCESS**;
+- XSTORE-017 Inline Shortage QA push run `37408701444` → **SUCCESS**;
+- XSTORE-017 Inline Shortage QA PR run `37408705482` → **SUCCESS**;
+- XSTORE-018 Supplemental Pool QA push run `37408701344` → **SUCCESS**;
+- XSTORE-018 Supplemental Pool QA PR run `37408705471` → **SUCCESS**;
+- Owner Control Tower Tests PR run `37408705647` → **SUCCESS**;
+- SOP Task Tests PR run `37408705477` → **SUCCESS**;
+- Procurement QA Robot PR run `37408705490` → **SUCCESS**.
+
+PR #392 remains open and must **not** be merged or released yet. XSTORE-019F plus explicit Owner approval remain the release gate.
+
+The next authoritative executable task is **XSTORE-019D**. XSTORE-019C must not be re-executed unless a future regression explicitly reopens it.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
