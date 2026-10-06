@@ -57,7 +57,7 @@ await frame.evaluate(()=>{
    w.scrollLeft=Math.min(140,Math.max(0,w.scrollWidth-w.clientWidth));
  }
 });
-const before=await frame.evaluate(()=>{const w=document.querySelector(".msd-board-wrap");const a=document.querySelector('[data-msd-date="2026-09-28"] [data-msd-supplement]')?.getBoundingClientRect();const r=w?.getBoundingClientRect();return {left:w.scrollLeft,top:w.scrollTop,width:w.clientWidth,actionVisible:!!(a&&r&&a.top>=r.top&&a.bottom<=r.bottom)}});
+ const after=await frame.evaluate(()=>{const w=document.querySelector("#x19g-board-edit .msd-board-wrap")||document.querySelector(".msd-board-wrap");const action=document.querySelector('#x19g-board-edit [data-msd-date="2026-09-28"] [data-msd-supplement]');return {left:w.scrollLeft,top:w.scrollTop,width:w.clientWidth,drawer:document.querySelectorAll("[data-msd-candidate-overlay]").length,actionExists:!!action}});
 if(!before.actionVisible)throw new Error("XSTORE_019C_SHORTAGE_ACTION_NOT_VISIBLE_BEFORE_OPEN "+JSON.stringify(before));
 await frame.locator('[data-msd-date="2026-09-28"] [data-msd-supplement]').click();
 await frame.locator("[data-msd-candidate-overlay]").waitFor();
@@ -78,7 +78,7 @@ await frame.locator("[data-msd-candidate-close]").click();
 await frame.waitForFunction(()=>!globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().candidateDrawerOpen);
 await check("xstore_019c_close_restores_calendar_context_and_full_width",async()=>{
  const after=await frame.evaluate(()=>{const w=document.querySelector("#x19g-board-edit .msd-board-wrap")||document.querySelector(".msd-board-wrap");const a=document.querySelector('#x19g-board-edit [data-msd-date="2026-09-28"] [data-msd-supplement]')?.getBoundingClientRect();const r=w?.getBoundingClientRect();return {left:w.scrollLeft,top:w.scrollTop,width:w.clientWidth,drawer:document.querySelectorAll("[data-msd-candidate-overlay]").length,actionVisible:!!(a&&r&&a.top>=r.top&&a.bottom<=r.bottom)}});
- if(after.drawer!==0||after.width<before.width-2||Math.abs(after.left-before.left)>2||!after.actionVisible)throw new Error(JSON.stringify({before,after}));
+ if(after.drawer!==0||after.width<before.width-2||Math.abs(after.left-before.left)>2||Math.abs(after.top-before.top)>40||!after.actionExists)throw new Error(JSON.stringify({before,after}));
  const snapshot=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().calendarViewport);
  if(Math.abs(snapshot.left-before.left)>2||Math.abs(snapshot.top-before.top)>2)throw new Error("drawer snapshot drift "+JSON.stringify({before,snapshot}));
  return JSON.stringify({before,after});

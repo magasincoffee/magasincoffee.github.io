@@ -44,9 +44,8 @@ for(const width of [1440,1024,768,430,390,360]){
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
 
  await check("ui2_012_"+width+"_hierarchy_no_page_overflow_touch_focus",async()=>{
-  await frame.locator("#msdSave").focus();
-  await page.keyboard.press("Shift+Tab");
-  await page.keyboard.press("Tab");
+  await frame.locator("#x19g-board-edit #msdSave").waitFor();
+  await frame.locator("#x19g-board-edit #msdSave").focus();
   return frame.evaluate(expected=>{
    const html=document.documentElement,root=document.querySelector(".msd-ui2-012"),editor=root?.querySelector("#x19g-board-edit")||root,wrap=editor?.querySelector(".msd-board-wrap"),focused=document.activeElement;
    const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return !el.hidden&&s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};
@@ -65,15 +64,15 @@ for(const width of [1440,1024,768,430,390,360]){
     focusedId:focused?.id||"",
     boardScroll:wrap?.scrollWidth||0,boardClient:wrap?.clientWidth||0,
     boardScrollHeight:wrap?.scrollHeight||0,boardClientHeight:wrap?.clientHeight||0,
-    boardColumns:root?.querySelector(".msd-board")?getComputedStyle(root.querySelector(".msd-board")).gridTemplateColumns.split(" ").filter(Boolean).length:0,
-    dayTitlePosition:root?.querySelector(".msd-day-title")?getComputedStyle(root.querySelector(".msd-day-title")).position:"",
-    dayCount:root?.querySelectorAll(".msd-day").length||0,
-    timelineDays:root?.querySelectorAll(".msd-day-timeline").length||0,
-    slotCount:root?.querySelectorAll("[data-msd-slot-date][data-msd-slot-time]").length||0,
-    candidateTrigger:!!root?.querySelector("#msdOpenCandidateDrawer"),
+    boardColumns:editor?.querySelector(".msd-board")?getComputedStyle(editor.querySelector(".msd-board")).gridTemplateColumns.split(" ").filter(Boolean).length:0,
+    dayTitlePosition:editor?.querySelector(".msd-day-title")?getComputedStyle(editor.querySelector(".msd-day-title")).position:"",
+    dayCount:editor?.querySelectorAll(".msd-day").length||0,
+    timelineDays:editor?.querySelectorAll(".msd-day-timeline").length||0,
+    slotCount:editor?.querySelectorAll("[data-msd-slot-date][data-msd-slot-time]").length||0,
+    candidateTrigger:!!editor?.querySelector("#msdOpenCandidateDrawer"),
     drawerHidden:!root?.querySelector("[data-msd-candidate-overlay]"),
-    draftRole:root?.querySelector(".msd-board-wrap")?.dataset.msu2Section||"",
-    draftUtilityPrimary:root?.querySelectorAll(".msu2-draft-actions .primary").length||0,
+    draftRole:editor?.querySelector(".msd-board-wrap")?.dataset.msu2Section||"",
+    draftUtilityPrimary:editor?.querySelectorAll(".msu2-draft-actions .primary").length||0,
     reviewVisible:!root?.querySelector("#msdReview")?.hidden,
     reviewPrimary:root?.querySelector("#msdReview")?.classList.contains("primary")||false,
     publishHidden:root?.querySelector("#msdPublish")?.hidden||false

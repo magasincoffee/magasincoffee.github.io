@@ -31,7 +31,8 @@ try{
     const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
     const text=await page.locator("#panel-publish").innerText();
     if(st.storeId!=="store-a"||st.week!=="2026-09-28"||st.generationId!==null)throw new Error(JSON.stringify(st));
-    if(!text.includes("Xếp lịch theo cửa hàng")||!text.includes("Một cửa hàng · một lịch tuần")||!text.includes("CN-QA-A"))throw new Error(text);
+    for(const label of ["Chuẩn bị","Tạo lịch nháp","Chỉnh lịch","Kiểm tra","Duyệt & phát hành"])if(!text.includes(label))throw new Error(text);
+    if(!text.includes("Một cửa hàng · một lịch tuần")||!text.includes("CN-QA-A")||!text.includes("Tuần 2026-09-28"))throw new Error(text);
     return "store-a · 2026-09-28 · no draft on read";
   });
 
