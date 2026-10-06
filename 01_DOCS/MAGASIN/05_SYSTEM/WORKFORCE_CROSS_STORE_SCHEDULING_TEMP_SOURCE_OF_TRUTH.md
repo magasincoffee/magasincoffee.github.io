@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019E DONE / EXACT-HEAD GREEN / XSTORE-019F READY / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / NEW EXACT RC READY / OWNER APPROVAL REQUIRED BEFORE XSTORE-020 / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -352,8 +352,8 @@ Out of scope unless explicitly added later:
 | XSTORE-019C | On-demand employee drawer + shortage resolution | Employee candidates appear only when Manager requests add/supplement; exact store/day/time filtering and canonical ranking/manual override semantics | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019D | Employee Availability calendar parity | Employee registers weekly time-only Availability directly on a calendar using the same visual/time interaction model | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019E | Owner calendar parity + responsive workspace | Owner reuses the same single-store calendar workflow; optimize desktop/mobile viewport and preserve role authority | **DONE / EXACT-HEAD GREEN** |
-| XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **READY / NEXT TASK** |
-| XSTORE-020 | Live production acceptance + permanent reconciliation | Only after Owner approves the new exact RC; release via production governance, run real target-week acceptance, reconcile permanent docs and resume XSTORE-011 closure | **PENDING OWNER APPROVAL AFTER XSTORE-019F** |
+| XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **DONE / RC_READY / EXACT-HEAD GREEN** |
+| XSTORE-020 | Live production acceptance + permanent reconciliation | Only after Owner approves the new exact RC; release via production governance, run real target-week acceptance, reconcile permanent docs and resume XSTORE-011 closure | **BLOCKED / OWNER APPROVAL OF EXACT RC REQUIRED** |
 
 ## 5. Recommended execution order
 
@@ -386,9 +386,9 @@ XSTORE-001 DONE
 → XSTORE-019C DONE / exact-head GREEN / on-demand employee drawer + shortage resolution
 → XSTORE-019D DONE / exact-head GREEN / Employee Availability calendar
 → XSTORE-019E DONE / exact-head GREEN / Owner parity + responsive workspace
-→ XSTORE-019F READY / integrated qualification + new exact RC
-→ OWNER APPROVAL OF NEW EXACT RC
-→ XSTORE-020 / midnight production release + live acceptance + reconciliation
+→ XSTORE-019F DONE / RC_READY / exact-head GREEN
+→ OWNER APPROVAL OF NEW EXACT RC REQUIRED
+→ XSTORE-020 BLOCKED UNTIL APPROVAL / midnight production release + live acceptance + reconciliation
 → XSTORE-011 RESUME / final live closure + TEMP SOT deletion
 ```
 
@@ -1202,9 +1202,9 @@ Machine handoff:
 
 ```text
 MAGASIN_TASK_CONTROL_V1
-STATUS=READY
-TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-019F
+STATUS=BLOCKED
+TASK_ID=XSTORE-020
+NEXT_TASK_ID=NONE
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -1723,6 +1723,63 @@ Observed non-XSTORE smoke:
 - AUTH-PROD Regression Contract run `37417545232` completed with failure. XSTORE-019E did not touch auth/RBAC/session or backend auth/RPC paths, so this failure is not used as XSTORE-019E acceptance evidence and remains owned by the AUTH-PROD track.
 
 PR #392 must **not** be merged or released yet. XSTORE-019F is now the sole next executable task and owns integrated qualification, new exact RC freeze, rollback packet and Owner preview. Explicit Owner approval remains required after XSTORE-019F before XSTORE-020 production release.
+
+## 6.0.22 XSTORE-019F integrated RC qualification acceptance — 2026-10-06
+
+XSTORE-019F is **DONE / RC_READY / EXACT-HEAD GREEN**.
+
+Release candidate:
+- PR #392: `xstore-019-unified-rc-v1`;
+- exact frozen RC SHA: `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52`;
+- previous rejected RC `1301678dbf6ffeef88cd5ced59ffa1c10d6bfae4` remains invalid and must not be released;
+- production merge/release: **NOT PERFORMED**;
+- next gate: **explicit Owner approval of this exact RC SHA**.
+
+Integrated impact classification:
+- XSTORE-019A→019E changes are Workforce scheduling/calendar/shared UI/runtime/QA changes;
+- no new database schema, migration, RLS, Auth/RBAC/session or backend RPC contract was introduced by XSTORE-019A→019E;
+- therefore no new backend migration proof is required for XSTORE-019F itself;
+- existing isolated PostgreSQL compatibility gates for XSTORE-013, XSTORE-014 and XSTORE-015 were rerun on the exact RC head and remain GREEN.
+
+Exact-head required gate evidence for `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52`:
+- XSTORE-019 Unified RC QA run `37417545219` → **SUCCESS**;
+  - unified scheduling runtime syntax = PASS;
+  - RC Pages source structure = PASS;
+  - exact cache + cold reload qualification = PASS;
+  - supplemental-pool browser regression = PASS;
+  - exact-head integrated cross-role qualification = PASS;
+- XSTORE-019A Calendar Workspace QA run `37417545174` → **SUCCESS**;
+- XSTORE-019B Direct Calendar Editing QA run `37417545272` → **SUCCESS**;
+- XSTORE-019C Candidate Drawer QA run `37417545206` → **SUCCESS**;
+- XSTORE-019D Employee Availability Calendar QA run `37417545178` → **SUCCESS**;
+- XSTORE-019E Owner Parity Responsive QA run `37417545280` → **SUCCESS**;
+- XSTORE-013 Coverage QA run `37417545167` → **SUCCESS** including isolated PostgreSQL 17 proof;
+- XSTORE-014 Interval Auto Schedule QA run `37417545210` → **SUCCESS** including isolated PostgreSQL 17 proof;
+- XSTORE-015 Manager Override QA run `37417545214` → **SUCCESS** including isolated PostgreSQL 17 proof;
+- XSTORE-016 Scheduling IA QA run `37417545226` → **SUCCESS**;
+- XSTORE-017 Inline Shortage QA run `37417545256` → **SUCCESS**;
+- XSTORE-018 Supplemental Pool QA run `37417545332` → **SUCCESS**;
+- People Shift Day-10 Tests run `37417545254` → **SUCCESS**;
+- UI2 Cross Role Acceptance run `37417545225` → **SUCCESS**;
+- Owner Control Tower Tests run `37417545297` → **SUCCESS**;
+- SOP Task Tests run `37417545253` → **SUCCESS**;
+- Procurement QA Robot run `37417545330` → **SUCCESS**.
+
+Owner preview / browser evidence:
+- exact-head browser evidence is retained in XSTORE-019 Unified RC artifact `xstore-019-unified-rc-37417545219`;
+- Owner/Manager responsive evidence is retained in XSTORE-019E artifact `xstore-019e-owner-parity-responsive-37417545280`;
+- these exact-head browser artifacts are the pre-production review target for the Owner under the production-governance allowance for equivalent browser acceptance evidence.
+
+Non-applicable external smoke:
+- AUTH-PROD Regression Contract run `37417545232` completed with failure, but XSTORE-019A→019E did not touch Auth/RBAC/session/backend-auth paths. It is not an XSTORE-019F required gate under the path-impact policy and does not invalidate this RC qualification.
+
+Release packet rules:
+- PR #392 remains open and unmerged;
+- exact RC SHA must remain `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52` through Owner review;
+- any branch code/config change invalidates this RC and requires affected QA + renewed Owner approval;
+- qualification-time production rollback baseline is recorded in the PR #392 RC packet and must be revalidated immediately before the production release window;
+- XSTORE-020 remains blocked until Owner explicitly approves this exact RC SHA;
+- after approval, production governance still requires the 00:00 Asia/Ho_Chi_Minh release window unless Owner explicitly grants a same-conversation exception.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
