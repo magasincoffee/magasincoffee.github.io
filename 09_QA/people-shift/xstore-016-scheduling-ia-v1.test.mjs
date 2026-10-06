@@ -67,7 +67,7 @@ test("XSTORE-019A keeps the existing canonical runtime chain",()=>{
     "cross-store-master-v1.js?v=20261005-xstore-019",
     "manager-scheduling-ui2-v1.js?v=20261005-xstore-019"
   ])assert.ok(engine.includes(token),token);
-  assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:2026100[45]-xstore-01[279]|20261005-xstore-019)/);
+  assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:2026100[45]-xstore-01[279]|20261005-xstore-019|20261006-xstore-019g-r1)/);
 });
 
 console.log("XSTORE_016_SUPERSESSION_019A_STATIC=PASS");

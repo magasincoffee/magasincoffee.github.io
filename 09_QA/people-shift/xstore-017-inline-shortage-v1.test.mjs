@@ -54,7 +54,7 @@ test("XSTORE-017 removes the duplicate detailed shortage list from Auto Schedule
 
 test("XSTORE-017 cache chain points at inline-shortage runtime",()=>{
   assert.ok(engine.includes("draft-publish-v1.js?v=20261005-xstore-019"));
-  assert.ok(engine.includes("cross-store-auto-schedule-v1.js?v=20261005-xstore-019"));
+  assert.ok(engine.includes("cross-store-auto-schedule-v1.js?v=20261006-xstore-019g-r1"));
 });
 
 console.log("XSTORE_017_INLINE_SHORTAGE_STATIC=PASS");

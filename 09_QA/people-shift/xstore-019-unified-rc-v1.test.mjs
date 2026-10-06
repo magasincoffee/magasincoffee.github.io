@@ -18,6 +18,8 @@ const ownerRuntime=read("04_OWNER/Workforce/runtime/owner-workforce-runtime.html
 const coldReload=read("09_QA/ui2-cross-role/ui2-017-cold-reload-closure-browser.mjs");
 
 const RC="20261005-xstore-019";
+const X19G_AUTO="20261006-xstore-019g-r1";
+const X19G_FIVE="20261006-xstore-019g-r2";
 const RC_QUALIFICATION="POST_UI2_015_REPAIR_3";
 const forbiddenWriters=[
   "replace_schedule_generation_assignments",
@@ -26,7 +28,7 @@ const forbiddenWriters=[
   "publish_schedule_generation"
 ];
 
-test("XSTORE-019 freezes Manager and Owner runtime cache chain to one RC lineage",()=>{
+test("XSTORE-019 keeps canonical RC entrypoints while XSTORE-019G uses bounded task cache-busts",()=>{
   assert.ok(managerEntry.includes("/05_MANAGER/runtime/manager-runtime-v1.html?v="+RC));
   assert.ok(managerWorkforceEntry.includes("/05_MANAGER/runtime/manager-runtime-v1.html?v="+RC));
   assert.ok(managerRuntime.includes("/05_MANAGER/Workforce/engine-v1.js?v="+RC));
@@ -34,10 +36,11 @@ test("XSTORE-019 freezes Manager and Owner runtime cache chain to one RC lineage
     "review-v1.js?v="+RC,
     "draft-publish-v1.js?v="+RC,
     "cross-store-master-v1.js?v="+RC,
-    "cross-store-auto-schedule-v1.js?v="+RC,
     "manager-scheduling-ui2-v1.js?v="+RC,
     "ui-consolidation-v1.js?v="+RC
   ]) assert.ok(engine.includes(asset),asset);
+  assert.ok(engine.includes("cross-store-auto-schedule-v1.js?v="+X19G_AUTO));
+  assert.ok(engine.includes("manager-five-board-v4.js?v="+X19G_FIVE));
   assert.ok(ownerEntry.includes("/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v="+RC));
   assert.ok(ownerRuntime.includes("/05_MANAGER/Workforce/draft-publish-v1.js?v="+RC));
   assert.ok(ownerRuntime.includes("/04_OWNER/Workforce/owner-scheduling-overview-v1.js?v="+RC));
