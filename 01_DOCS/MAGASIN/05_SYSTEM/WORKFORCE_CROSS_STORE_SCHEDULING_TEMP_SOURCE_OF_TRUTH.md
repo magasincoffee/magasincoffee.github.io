@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019I DONE / PRIOR RC INVALIDATED BY OWNER UX V4 / XSTORE-019J READY / UI-FIRST REMEDIATION ACTIVE / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019J DONE / PRIOR RC INVALIDATED BY OWNER UX V4 / OWNER UI IMPLEMENTATION APPROVAL REQUIRED / XSTORE-019K BLOCKED UNTIL OWNER APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -356,8 +356,8 @@ Out of scope unless explicitly added later:
 | XSTORE-019G | Manager five-board UI implementation | Presentation-first implementation of the Owner-approved 5-board Manager workflow; no new backend authority or production wiring | **DONE / PRESENTATION-FIRST GREEN** |
 | XSTORE-019H | Employee mobile-first UI implementation | Mobile-first Employee home, flexible time registration, personal schedule, attendance and profile surfaces; presentation-first | **DONE / PRESENTATION-FIRST GREEN** |
 | XSTORE-019I | Owner strategy/P&L UI implementation | Owner home becomes strategy/revenue/cost/profit/cash-flow/forecast dashboard rather than an expanded Manager surface; presentation-first | **DONE / PRESENTATION-FIRST GREEN** |
-| XSTORE-019J | Cross-role UI-only preview qualification | Integrate G→I with fixtures/read-only data, responsive/browser QA and local/preview review target; stop before business-data wiring | **READY / OWNER UI IMPLEMENTATION REVIEW GATE AFTER GREEN** |
-| XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **PENDING / AFTER UI GATE** |
+| XSTORE-019J | Cross-role UI-only preview qualification | Integrate G→I with fixtures/read-only data, responsive/browser QA and local/preview review target; stop before business-data wiring | **DONE / EXACT PREVIEW GREEN / OWNER APPROVAL REQUIRED** |
+| XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **BLOCKED / OWNER UI IMPLEMENTATION APPROVAL REQUIRED** |
 | XSTORE-019L | Employee flexible Availability + attendance wiring | Wire free start/end multi-interval Availability and published-schedule attendance semantics; outside-schedule/manual-time attendance requires Manager confirmation | **PENDING / AFTER UI GATE** |
 | XSTORE-019M | Manager five-board workflow integration | Wire Prepare→Create Draft→Edit→Check→Approve/Publish to canonical scheduling state; Check is read-only same-calendar review for one selected store | **PENDING / AFTER UI GATE** |
 | XSTORE-019N | Owner strategic data integration | Wire Owner strategic dashboard to existing authorized revenue/cost/profit/customer/store/product aggregates without turning Owner home into scheduling operations | **PENDING / AFTER UI GATE** |
@@ -399,9 +399,9 @@ XSTORE-001 DONE
 → XSTORE-019G DONE / presentation-first GREEN / Manager five-board UI
 → XSTORE-019H DONE / presentation-first GREEN / Employee mobile-first UI
 → XSTORE-019I DONE / presentation-first GREEN / Owner strategy + P&L UI
-→ XSTORE-019J READY / integrated UI-only preview qualification
-→ OWNER UI IMPLEMENTATION REVIEW GATE / approve rendered UI before live data/logic wiring
-→ XSTORE-019K / FULL_TIME + PART_TIME authority and scheduling ranking
+→ XSTORE-019J DONE / exact preview GREEN / cross-role UI-only qualification
+→ OWNER UI IMPLEMENTATION REVIEW GATE / APPROVAL REQUIRED before live data/logic wiring
+→ XSTORE-019K BLOCKED UNTIL OWNER APPROVAL / FULL_TIME + PART_TIME authority and scheduling ranking
 → XSTORE-019L / flexible Employee Availability + attendance integration
 → XSTORE-019M / Manager five-board canonical workflow integration
 → XSTORE-019N / Owner strategic data integration
@@ -1552,9 +1552,9 @@ Machine handoff:
 
 ```text
 MAGASIN_TASK_CONTROL_V1
-STATUS=READY
-TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-019J
+STATUS=BLOCKED
+TASK_ID=XSTORE-019K
+NEXT_TASK_ID=NONE
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -2261,6 +2261,52 @@ Exact-head evidence for `a4d8f814c639b445b319437407c91fb449c0fb1e`:
 XSTORE-019I is presentation-only. Authoritative financial data wiring remains owned by XSTORE-019N after the Owner UI implementation gate.
 
 This acceptance closes **only XSTORE-019I**. The next authoritative executable task is **XSTORE-019J**.
+
+## 6.0.26 XSTORE-019J cross-role UI preview qualification acceptance — 2026-10-07
+
+XSTORE-019J is **DONE / EXACT PREVIEW GREEN**.
+
+Implementation branch / PR:
+- PR #392: `xstore-019-unified-rc-v1`;
+- preview implementation commit: `6fb5b4acf01d8b433154cee676db58c8e88686fa`;
+- repair/final exact preview commit: `a4d8f814c639b445b319437407c91fb449c0fb1e`;
+- production merge/release: **NOT PERFORMED**;
+- PR remains DRAFT / DO NOT MERGE.
+
+Accepted preview targets:
+- index: `/09_QA/xstore-019j/index.html`;
+- Manager: `/09_QA/xstore-019j/manager-preview.html`;
+- Employee: `/09_QA/xstore-019j/employee-preview.html`;
+- Owner: `/09_QA/xstore-019j/owner-preview.html`;
+- all preview surfaces use deterministic fixtures/read-only presentation and introduce no production writer.
+
+Exact-head evidence for `a4d8f814c639b445b319437407c91fb449c0fb1e`:
+- XSTORE-019J Cross-Role UI Preview QA run `37519893924` → **SUCCESS**;
+  - static/syntax qualification for J + G/H/I presentation contracts → SUCCESS;
+  - exact preview SHA + target manifest → SUCCESS;
+  - Manager five-board browser qualification → SUCCESS;
+  - Employee mobile browser qualification → SUCCESS;
+  - Owner strategy browser qualification → SUCCESS;
+  - cross-role responsive/accessibility/reload qualification → SUCCESS;
+  - accepted cold-reload cache closure → SUCCESS;
+  - exact preview packet upload → SUCCESS;
+- artifact `xstore-019j-cross-role-preview-37519893924` (artifact id `11437849958`) retained with digest `sha256:bbc79b9e8d8bf1be98a3a93f04718b12be01e56ff98076b679809e1273275050`.
+
+Required rendered outcome is present:
+- Manager five-board UI rendered from the accepted Manager fixture;
+- Employee mobile-first UI rendered from the accepted Employee fixture;
+- Owner strategy/P&L presentation rendered from the accepted Owner strategy surface;
+- exact preview commit SHA is recorded;
+- no new live production writes, schema/RPC/business authority or production release occurred.
+
+### OWNER UI IMPLEMENTATION APPROVAL GATE — ACTIVE
+
+Per the Owner-locked XSTORE-019J contract:
+- **OWNER UI IMPLEMENTATION APPROVAL REQUIRED**;
+- XSTORE-019K is **BLOCKED** until Owner explicitly approves the rendered Manager, Employee and Owner UI implementation represented by exact preview commit `a4d8f814c639b445b319437407c91fb449c0fb1e`;
+- this is **not** production RC approval;
+- do not execute XSTORE-019K, XSTORE-019L, XSTORE-019M, XSTORE-019N or XSTORE-019O until this UI implementation gate is approved;
+- after explicit Owner approval, XSTORE-019K becomes the next authoritative executable task.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
