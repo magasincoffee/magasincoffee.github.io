@@ -9,6 +9,7 @@ on:
       - '09_QA/people-shift/sched-05-owner-scheduling-fixture.html'
       - '09_QA/people-shift/xstore-019e-owner-parity-responsive-v1.test.mjs'
       - '09_QA/people-shift/xstore-019e-owner-parity-responsive-browser.mjs'
+      - '09_QA/people-shift/sched-07-ui-responsive-browser.mjs'
       - '.github/workflows/xstore-019e-owner-parity-responsive-qa.yml'
   pull_request:
     paths:
@@ -19,6 +20,7 @@ on:
       - '09_QA/people-shift/sched-05-owner-scheduling-fixture.html'
       - '09_QA/people-shift/xstore-019e-owner-parity-responsive-v1.test.mjs'
       - '09_QA/people-shift/xstore-019e-owner-parity-responsive-browser.mjs'
+      - '09_QA/people-shift/sched-07-ui-responsive-browser.mjs'
       - '.github/workflows/xstore-019e-owner-parity-responsive-qa.yml'
   workflow_dispatch:
 permissions:
@@ -40,6 +42,7 @@ jobs:
           node --check 05_MANAGER/Workforce/draft-publish-v1.js
           node --check 05_MANAGER/Workforce/manager-scheduling-ui2-v1.js
           node --check 09_QA/people-shift/xstore-019e-owner-parity-responsive-browser.mjs
+          node --check 09_QA/people-shift/sched-07-ui-responsive-browser.mjs
       - name: Run XSTORE-019E static parity contracts
         run: node --test 09_QA/people-shift/xstore-019e-owner-parity-responsive-v1.test.mjs
       - name: Run existing shared scheduling contracts
@@ -68,6 +71,11 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8784
           QA_OUT: qa-artifacts/xstore-019e
         run: node 09_QA/people-shift/xstore-019e-owner-parity-responsive-browser.mjs
+      - name: Run accepted responsive regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8784
+          QA_OUT: qa-artifacts/xstore-019e
+        run: node 09_QA/people-shift/sched-07-ui-responsive-browser.mjs
       - name: Upload XSTORE-019E evidence
         if: always()
         uses: actions/upload-artifact@v4
