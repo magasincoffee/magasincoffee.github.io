@@ -384,6 +384,19 @@ html[data-scheduling-role="owner"] .content{
     width:100% !important;
     gap:10px;
   }
+  /* XSTORE-019E: the primary scheduling calendar stays one seven-day board.
+     Narrow screens scroll inside the calendar instead of stacking days into page sprawl. */
+  #view-workforce .msd .msd-calendar-primary .msd-board-wrap{
+    max-width:100%;
+    overflow:auto !important;
+    overscroll-behavior:contain;
+  }
+  #view-workforce .msd .msd-calendar-primary .msd-board{
+    grid-template-columns:repeat(7,minmax(150px,1fr)) !important;
+    min-width:1080px !important;
+    width:max-content !important;
+    gap:6px;
+  }
   #view-workforce .msd-day{
     min-height:0;
   }

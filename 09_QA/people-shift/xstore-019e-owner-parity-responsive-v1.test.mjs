@@ -42,6 +42,12 @@ test("XSTORE-019E laptop keeps seven columns while narrow screens scroll inside 
   assert.match(writer,/\.msd-calendar-primary \.msd-board-wrap\{[^}]*overflow:auto;overscroll-behavior:contain/);
 });
 
+test("XSTORE-019E canonical polish cannot collapse the primary mobile calendar into page-stacked days",async()=>{
+  const polish=await read("02_CORE/ui/workforce-scheduling-polish-v1.css");
+  assert.match(polish,/@media \(max-width:720px\)[\s\S]*\.msd-calendar-primary \.msd-board-wrap\{[\s\S]*overflow:auto !important/);
+  assert.match(polish,/@media \(max-width:720px\)[\s\S]*\.msd-calendar-primary \.msd-board\{[\s\S]*grid-template-columns:repeat\(7,minmax\(150px,1fr\)\) !important[\s\S]*min-width:1080px !important/);
+});
+
 test("XSTORE-019E candidate picker remains bounded overlay and not page-sprawl layout",async()=>{
   const writer=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   assert.match(writer,/\.msd-people-overlay\{position:fixed;inset:0;[^}]*max-width:100vw;overflow:hidden/);

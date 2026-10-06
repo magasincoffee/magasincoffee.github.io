@@ -16,7 +16,7 @@ test("SCHED-UI-011 phone draft schedule stays inside one scrollable seven-day ca
 
 test("SCHED-UI-011 tablet keeps overflow contained inside scheduling board",async()=>{
   const ui=await read("05_MANAGER/Workforce/manager-scheduling-ui2-v1.js");
-  assert.ok(ui.includes("@media(max-width:1100px)"));
+  assert.ok(ui.includes("@media(max-width:900px)"));
   assert.ok(ui.includes("grid-template-columns:repeat(7,minmax(156px,1fr));min-width:1128px;width:max-content"));
   assert.ok(ui.includes(".msd-ui2-012 .msd-board-wrap{overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;max-height:calc(100vh - 330px)}"));
 });

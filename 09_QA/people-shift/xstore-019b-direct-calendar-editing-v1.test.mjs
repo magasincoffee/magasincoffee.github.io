@@ -80,7 +80,8 @@ test("XSTORE-019B time slots avoid global button sizing, overflow interception, 
   assert.match(draft,/\.msd-time-slot\{[^}]*height:auto[^}]*align-self:stretch/);
   assert.doesNotMatch(draft,/\.msd-time-slot\{[^}]*height:100%/);
   assert.match(draft,/slot\.addEventListener\('keydown',[\s\S]*e\.key==='Enter'[\s\S]*e\.key===' '/);
-  assert.match(draft,/\.msd-workspace-toolbar\{[^}]*pointer-events:none/);
+  assert.match(draft,/\.msd-workspace-toolbar\{[^}]*pointer-events:auto/);
+  assert.match(draft,/msd-workspace-toolbar"[\s\S]*msd-workspace-context[\s\S]*\+draftActions/);
   assert.match(draft,/function finishPointerGesture\(\)[\s\S]*g\.currentMinutes===g\.startMinutes\)return/);
 });
 
