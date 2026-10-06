@@ -1,0 +1,68 @@
+name: XSTORE-019I Owner Strategy Presentation QA
+on:
+  push:
+    paths:
+      - '04_OWNER/index.html'
+      - '04_OWNER/strategy-presentation-v4.css'
+      - '04_OWNER/strategy-presentation-v4.js'
+      - '09_QA/owner-control-tower/xstore-019i-owner-strategy-v1.test.mjs'
+      - '09_QA/owner-control-tower/xstore-019i-owner-strategy-browser.mjs'
+      - '.github/workflows/xstore-019i-owner-strategy-qa.yml'
+  pull_request:
+    paths:
+      - '04_OWNER/index.html'
+      - '04_OWNER/strategy-presentation-v4.css'
+      - '04_OWNER/strategy-presentation-v4.js'
+      - '09_QA/owner-control-tower/xstore-019i-owner-strategy-v1.test.mjs'
+      - '09_QA/owner-control-tower/xstore-019i-owner-strategy-browser.mjs'
+      - '.github/workflows/xstore-019i-owner-strategy-qa.yml'
+permissions:
+  contents: read
+jobs:
+  owner-strategy-presentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax check strategy presentation
+        run: |
+          node --check 04_OWNER/strategy-presentation-v4.js
+          node --check 09_QA/owner-control-tower/xstore-019i-owner-strategy-browser.mjs
+      - name: Run XSTORE-019I static contracts
+        run: node --test 09_QA/owner-control-tower/xstore-019i-owner-strategy-v1.test.mjs
+      - name: Run impacted Owner Control Tower contracts
+        run: node --test 09_QA/owner-control-tower/*.test.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start exact-head QA server
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/xstore-019i
+          nohup python3 -m http.server 8785 --bind 127.0.0.1 > /tmp/xstore019i-http.log 2>&1 &
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -fsS http://127.0.0.1:8785/04_OWNER/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/xstore019i-http.log || true
+          exit 1
+      - name: Run XSTORE-019I desktop and mobile browser acceptance
+        env:
+          QA_BASE_URL: http://127.0.0.1:8785
+          QA_OUT: qa-artifacts/xstore-019i
+        run: node 09_QA/owner-control-tower/xstore-019i-owner-strategy-browser.mjs
+      - name: Upload XSTORE-019I evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xstore-019i-owner-strategy-${{ github.run_id }}
+          path: qa-artifacts/xstore-019i/
+          if-no-files-found: warn
+          retention-days: 30
