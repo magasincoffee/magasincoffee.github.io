@@ -52,8 +52,9 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-store-switcher{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:2px 0 4px;scrollbar-width:thin}
 .msd-store-switch{flex:0 0 auto;min-height:38px;padding:0 13px;border:1px solid #d0d5dd;border-radius:999px;background:#fff;color:#344054;font-weight:800;cursor:pointer}
 .msd-store-switch[aria-pressed="true"]{border-color:#84adff;background:#eff6ff;color:#175cd3;box-shadow:0 0 0 2px rgba(47,111,222,.08)}
-.msd-workspace{border:1px solid #dfe5ec;border-radius:14px;background:#fff;min-width:0;overflow:hidden}
-.msd-workspace-toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 12px;border-bottom:1px solid #e4e7ec;background:rgba(255,255,255,.97);backdrop-filter:blur(6px);pointer-events:none}
+.msd-workspace{border:1px solid #dfe5ec;border-radius:14px;background:#fff;min-width:0;max-width:100%;overflow:clip}
+.msd-workspace-toolbar{position:sticky;top:0;z-index:6;display:grid;gap:8px;align-items:stretch;padding:10px 12px;border-bottom:1px solid #e4e7ec;background:rgba(255,255,255,.97);backdrop-filter:blur(6px);pointer-events:auto}
+.msd-workspace-context{display:flex;justify-content:space-between;gap:12px;align-items:center;min-width:0}
 .msd-workspace-title{display:grid;gap:2px;min-width:0}.msd-workspace-title b{font-size:15px}.msd-workspace-title span{font-size:11px;color:#667085}
 .msd-workspace-state{flex:0 0 auto;padding:5px 8px;border-radius:999px;background:#eef5ff;color:#235dba;font-size:10px;font-weight:900}
 .msd-workspace-body{padding:10px;min-width:0}
@@ -62,18 +63,18 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-calendar-primary .msd-board-wrap{max-height:calc(100vh - 330px);min-height:360px;overflow:auto;overscroll-behavior:contain;border-width:1px;contain:paint}
 .msd-calendar-primary .msd-board{grid-template-columns:repeat(7,minmax(0,1fr));min-width:0;width:100%;align-items:start}
 .msd-calendar-primary .msd-day-title{position:sticky;top:0;z-index:2;pointer-events:none}
-.msd-people-overlay{position:fixed;inset:0;z-index:1200;display:flex;justify-content:flex-end;background:rgba(16,24,40,.28);backdrop-filter:blur(1px)}
-.msd-people-secondary{position:relative;z-index:1;isolation:isolate;width:min(460px,94vw);height:100%;max-height:100vh;border-left:1px solid #dfe5ec;background:#fbfcfe;overflow:auto;box-shadow:-12px 0 28px rgba(16,24,40,.14)}
+.msd-people-overlay{position:fixed;inset:0;z-index:1200;display:flex;justify-content:flex-end;max-width:100vw;overflow:hidden;background:rgba(16,24,40,.28);backdrop-filter:blur(1px)}
+.msd-people-secondary{position:relative;z-index:1;isolation:isolate;width:min(460px,94vw);height:100%;max-height:100vh;border-left:1px solid #dfe5ec;background:#fbfcfe;overflow:auto;overscroll-behavior:contain;box-shadow:-12px 0 28px rgba(16,24,40,.14)}
 .msd-people-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-bottom:1px solid #e4e7ec;background:rgba(255,255,255,.98)}
 .msd-people-head b{font-size:14px}.msd-people-head .btn{min-height:38px}
 .msd-people-secondary .msd-source{border:0;border-radius:0;background:#fbfcfe;padding:12px}
 .msd-people-secondary .msd-pool{margin-top:10px}
 @media(max-width:700px){.msd-people-secondary{width:100vw;max-width:100vw}.msd-people-head .btn{min-height:44px}}
-.msd-workspace-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.msd-workspace-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:0}
 .msd-workspace-actions .btn{min-height:38px}
 .msd-downstream{margin-top:10px}
-@media(max-width:1100px){.msd-calendar-primary .msd-board{grid-template-columns:repeat(7,minmax(150px,1fr));min-width:1080px;width:max-content}.msd-calendar-primary .msd-board-wrap{overflow:auto}}
-@media(max-width:700px){.msd-workspace-toolbar{align-items:flex-start}.msd-workspace-body{padding:8px}.msd-calendar-primary .msd-board-wrap{max-height:62vh;min-height:420px}.msd-store-switch{min-height:44px}.msd-workspace-actions{display:grid;grid-template-columns:1fr 1fr}.msd-workspace-actions .btn{width:100%;min-height:44px}}
+@media(max-width:900px){.msd-calendar-primary .msd-board{grid-template-columns:repeat(7,minmax(150px,1fr));min-width:1080px;width:max-content}.msd-calendar-primary .msd-board-wrap{overflow:auto}}
+@media(max-width:700px){.msd-workspace-context{align-items:flex-start}.msd-workspace-body{padding:8px}.msd-calendar-primary .msd-board-wrap{max-height:62vh;min-height:420px}.msd-store-switch{min-height:44px}.msd-workspace-actions{display:grid;grid-template-columns:1fr 1fr}.msd-workspace-actions .btn{width:100%;min-height:44px}}
 @media(max-width:600px){.msd-branch-toggle{align-items:flex-start}.msd-branch-panel{padding:10px}.msd-branch-actions{display:grid;grid-template-columns:1fr}.msd-branch-actions .btn{width:100%}}
 .msd-day-timeline{display:grid;grid-template-columns:44px minmax(0,1fr);gap:6px;padding:6px;position:relative}
 .msd-time-scale{display:grid;grid-template-rows:repeat(34,22px);font-size:9px;color:#667085}
@@ -637,7 +638,7 @@ function singleStoreWorkspaceHtml(stage,officialHtml,actionHelp){
  const people=candidateDrawerHtml();
  const downstream='<div class="msd-downstream"><div class="muted" style="margin-bottom:4px">Sau khi lưu bản nháp: kiểm tra xung đột → duyệt → phát hành.</div><div id="msdActionHelp" class="muted" style="margin-bottom:8px">'+esc(actionHelp)+'</div><div class="msd-actions"><button class="btn" type="button" id="msdValidate" aria-describedby="msdActionHelp"'+(!state.generationId||stage==='PUBLISHED'||state.assignments.length===0||state.dirty?' disabled aria-disabled="true"':'')+'>Kiểm tra xung đột</button><button class="btn" type="button" id="msdReview" aria-describedby="msdActionHelp"'+(stage==='DRAFT'&&state.assignments.length>0&&!state.dirty?'':' disabled aria-disabled="true"')+'>Duyệt lịch</button><button class="btn primary" type="button" id="msdPublish" aria-describedby="msdActionHelp"'+(stage==='REVIEWED'&&state.assignments.length>0&&!state.dirty?'':' disabled aria-disabled="true"')+'>Phát hành</button></div></div>';
  const stateText=state.dirty?'Có thay đổi chưa lưu. Bấm “Lưu bản nháp” trước khi chuyển cửa hàng, tuần, kiểm tra hoặc duyệt.':state.generationId?(stage==='PUBLISHED'?'Lịch chính thức đã sẵn sàng.':stage==='REVIEWED'?'Lịch đã duyệt; kiểm tra lần cuối rồi phát hành.':'Bản nháp sẵn sàng chỉnh sửa.'):'Tạo hoặc mở bản nháp cho cửa hàng đang chọn.';
- return '<div class="msd-single-store">'+storeSwitcherHtml()+'<section class="msd-workspace" data-msd-active-store="'+esc(s.id)+'"><div class="msd-workspace-toolbar"><div class="msd-workspace-title"><b>'+esc(s.code)+' · '+esc(s.name)+'</b><span>Tuần '+esc(state.week||'—')+' · chỉ hiển thị cửa hàng đang chọn</span></div><span class="msd-workspace-state">'+stageLabel(stage)+'</span></div><div class="msd-workspace-body">'+summary+draftActions+calendar+people+downstream+officialHtml+'<div id="msdStatus" class="msd-status" role="status" aria-live="polite">'+stateText+'</div></div></section></div>';
+ return '<div class="msd-single-store">'+storeSwitcherHtml()+'<section class="msd-workspace" data-msd-active-store="'+esc(s.id)+'"><div class="msd-workspace-toolbar"><div class="msd-workspace-context"><div class="msd-workspace-title"><b>'+esc(s.code)+' · '+esc(s.name)+'</b><span>Tuần '+esc(state.week||'—')+' · chỉ hiển thị cửa hàng đang chọn</span></div><span class="msd-workspace-state">'+stageLabel(stage)+'</span></div>'+draftActions+'</div><div class="msd-workspace-body">'+summary+calendar+people+downstream+officialHtml+'<div id="msdStatus" class="msd-status" role="status" aria-live="polite">'+stateText+'</div></div></section></div>';
 }
 function render(){
  const p=panel();if(!p)return;

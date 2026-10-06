@@ -3,7 +3,7 @@ if(window.__MAGASIN_MANAGER_SCHEDULING_UI2_012__)return;
 window.__MAGASIN_MANAGER_SCHEDULING_UI2_012__=true;
 
 const PANEL='#panel-publish';
-const root=()=>document.querySelector(PANEL+' .msd[data-scheduling-actor="MANAGER"]');
+const root=()=>document.querySelector(PANEL+' .msd[data-scheduling-actor="MANAGER"], '+PANEL+' .msd[data-scheduling-actor="OWNER"]');
 const scheduleApi=()=>window.MAGASIN_MANAGER_SCHEDULE_DRAFT;
 const css=`<style id="manager-scheduling-ui2-012-css">
 .msd.msd-ui2-012{overflow:hidden;background:transparent;box-shadow:none}
@@ -52,7 +52,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msd-ui2-012 .msd-status.error{border-color:#efc0bc}.msd-ui2-012 .msd-status.ok{border-color:#badfc8}
 .msd-ui2-012 .msd-official-row{min-height:48px}
 .msd-ui2-012 button:focus-visible,.msd-ui2-012 select:focus-visible,.msd-ui2-012 input:focus-visible,.msd-ui2-012 .msd-board-wrap:focus-visible{outline:2px solid #2f6fde!important;outline-offset:2px!important}
-@media(max-width:1100px){
+@media(max-width:900px){
  .msd-ui2-012 .msd-board{grid-template-columns:repeat(7,minmax(156px,1fr));min-width:1128px;width:max-content}
 }
 @media(max-width:1024px){
