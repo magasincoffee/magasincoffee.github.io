@@ -44,8 +44,9 @@ for(const width of [1440,1024,768,430,390,360]){
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
 
  await check("ui2_012_"+width+"_hierarchy_no_page_overflow_touch_focus",async()=>{
-  await frame.locator("#x19g-board-edit #msdSave").waitFor();
-  await frame.locator("#x19g-board-edit #msdSave").focus();
+  await frame.locator("#x19g-board-edit #msdReload").waitFor();
+  await frame.locator("#x19g-board-edit #msdReload").focus();
+  await page.keyboard.press("Tab");
   return frame.evaluate(expected=>{
    const html=document.documentElement,root=document.querySelector(".msd-ui2-012"),editor=root?.querySelector("#x19g-board-edit")||root,wrap=editor?.querySelector(".msd-board-wrap"),focused=document.activeElement;
    const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return !el.hidden&&s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};
