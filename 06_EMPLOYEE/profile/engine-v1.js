@@ -1,10 +1,11 @@
 (()=>{'use strict';
 const C=globalThis.MAGASIN_CORE;if(!C)return;
 const host=()=>document.getElementById('employeeApp'),doc=()=>host()?.contentDocument||null;
-const IDS=['profileFullName','profileUsername','profilePhone','profileRole','profileStatus','profilePrimaryStore','profileStorePriority','profileLevel','profileJoinDate'];
+const IDS=['profileFullName','profileUsername','profilePhone','profileRole','profileEmploymentType','profileStatus','profilePrimaryStore','profileStorePriority','profileLevel','profileJoinDate'];
 let state={loading:false,error:null,row:null,ready:false};
 const roleText=v=>({STAFF:'Nhân viên',EMPLOYEE:'Nhân viên'}[String(v||'').toUpperCase()]||String(v||'—'));
 const statusText=v=>({ACTIVE:'Đang hoạt động',PENDING:'Chờ duyệt',INACTIVE:'Ngưng hoạt động'}[String(v||'').toUpperCase()]||String(v||'—'));
+const employmentTypeText=v=>({FULL_TIME:'Full-time',PART_TIME:'Part-time'}[String(v||'').toUpperCase()]||'Chưa cấu hình');
 const safeCode=e=>{const s=String(e?.message||e?.code||'PROFILE_REQUEST_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PROFILE_REQUEST_FAILED'};
 const validProjectionRow=r=>!!r&&!!String(r.employee_id||'').trim()&&['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())&&String(r.profile_status||'').toUpperCase()==='ACTIVE';
 function el(id){return doc()?.getElementById(id)||null}
