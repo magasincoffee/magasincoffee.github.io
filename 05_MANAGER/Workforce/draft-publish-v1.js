@@ -155,6 +155,7 @@ function activate(){const view=document.querySelector('#view-workforce');if(!vie
 const availTypeOk=r=>['AVAILABLE','PREFERRED'].includes(String(r.availability_type||'').toUpperCase());
 const availCovers=(r,a)=>String(r.work_date).slice(0,10)===String(a.work_date).slice(0,10)&&mins(r.start_time)<=mins(a.start_time)&&mins(r.end_time)>=mins(a.end_time)&&availTypeOk(r);
 function employeeName(r){return r?.employee_name||r?.full_name||r?.username||r?.user_id||r?.employee_id||'Nhân viên'}
+function employmentTypeLabel(v){const t=String(v||'').toUpperCase();return t==='FULL_TIME'?'Full-time':t==='PART_TIME'?'Part-time':'Chưa cấu hình'}
 function priorityForStore(r){
  const ids=Array.isArray(r?.priority_store_ids)?r.priority_store_ids.map(String):[];
  const i=ids.indexOf(String(state.storeId||''));
@@ -423,10 +424,11 @@ function poolRowHtml(item,target,blocked=false){
  const availabilityTag=item.targetAvailable?'<span class="msd-pool-tag">Trong thời gian còn trống</span>':'<span class="msd-pool-tag manual">Điều động thủ công · ngoài Availability</span>';
  const assignedTag=item.unassigned?'<span class="msd-pool-tag">Chưa có ca trong tuần</span>':'<span class="msd-pool-tag">'+esc(item.week_assigned)+' ca đã xếp</span>';
  const blockedTag=blocked?'<span class="msd-pool-tag blocked">'+esc(item.conflict?.reason||'Có xung đột')+'</span>':'';
+ const employmentTag='<span class="msd-pool-tag x19g-employment" data-employment-type="'+esc(String(item.profile?.employment_type||'').toUpperCase())+'">Loại việc làm: '+esc(employmentTypeLabel(item.profile?.employment_type))+'</span>';
  const action=target
   ? '<button class="btn" type="button" data-msd-pool-user="'+esc(item.user_id)+'"'+(blocked||!state.generationId||state.generationStatus!=='DRAFT'?' disabled aria-disabled="true"':'')+'>'+(item.targetAvailable?'+ Xếp vào khoảng thiếu':'+ Điều động thủ công')+'</button>'
   : '';
- return '<div class="msd-pool-row'+(blocked?' blocked':'')+'" data-msd-pool-candidate="'+esc(item.user_id)+'"><div class="msd-source-name">'+esc(item.employee_name)+' · Ưu tiên '+esc(item.priority)+'</div><div class="msd-source-meta">'+(remain?'Thời gian còn có thể xếp: '+esc(remain):'Không còn Availability trống trong tuần.')+'</div><div class="msd-pool-tags">'+assignedTag+availabilityTag+blockedTag+'</div>'+action+'</div>';
+ return '<div class="msd-pool-row'+(blocked?' blocked':'')+'" data-msd-pool-candidate="'+esc(item.user_id)+'"><div class="msd-source-name">'+esc(item.employee_name)+' · Ưu tiên '+esc(item.priority)+'</div><div class="msd-source-meta">'+(remain?'Thời gian còn có thể xếp: '+esc(remain):'Không còn Availability trống trong tuần.')+'</div><div class="msd-pool-tags">'+employmentTag+assignedTag+availabilityTag+blockedTag+'</div>'+action+'</div>';
 }
 function poolGroupHtml(key,title,help,items,target,blocked=false){
  return '<section class="msd-pool-group" data-msd-pool-group="'+esc(key)+'"><h3>'+esc(title)+' · '+items.length+'</h3><div class="msd-pool-help">'+esc(help)+'</div>'+(items.length?'<div class="msd-pool-list">'+items.map(x=>poolRowHtml(x,target,blocked)).join('')+'</div>':'<div class="msd-empty">Không có nhân viên trong nhóm này.</div>')+'</section>';
@@ -466,7 +468,7 @@ function manualPickerHtml(){
  const options=state.eligibleEmployees
   .slice()
   .sort((a,b)=>priorityForStore(a)-priorityForStore(b)||String(employeeName(a)).localeCompare(String(employeeName(b)),'vi'))
-  .map(r=>{const conflict=target?hardConflictFor(r.employee_id,selectedDate,selectedStart,selectedEnd):null;return '<option value="'+esc(r.employee_id)+'"'+(conflict?' disabled':'')+'>'+esc(employeeName(r))+' · Ưu tiên '+esc(priorityForStore(r))+(conflict?' · '+esc(conflict.reason):'')+'</option>'})
+  .map(r=>{const conflict=target?hardConflictFor(r.employee_id,selectedDate,selectedStart,selectedEnd):null;return '<option value="'+esc(r.employee_id)+'"'+(conflict?' disabled':'')+'>'+esc(employeeName(r))+' · '+esc(employmentTypeLabel(r.employment_type))+' · Ưu tiên '+esc(priorityForStore(r))+(conflict?' · '+esc(conflict.reason):'')+'</option>'})
   .join('');
  return '<div class="msd-manual-picker" id="msdManualPicker"><div class="msd-source-name">Điều động thủ công theo giờ tự chọn</div><div class="msd-source-meta">Chỉ nhân viên ACTIVE có Store Priority tại '+esc(selectedStore()?.code||'cửa hàng đã chọn')+'. Hệ thống chặn trùng ca/giới hạn ca trước khi thêm và gắn cảnh báo nếu nằm ngoài Availability.</div><div class="msd-manual-grid"><select class="msd-input" id="msdManualEmployee" aria-label="Nhân viên">'+options+'</select><select class="msd-input" id="msdManualDate" aria-label="Ngày">'+days.map((d,i)=>'<option value="'+esc(d)+'"'+(d===selectedDate?' selected':'')+'>'+DAYS[i]+' · '+d.slice(8,10)+'/'+d.slice(5,7)+'</option>').join('')+'</select><select class="msd-input" id="msdManualStart" aria-label="Bắt đầu">'+timeOptions(selectedStart)+'</select><select class="msd-input" id="msdManualEnd" aria-label="Kết thúc">'+timeOptions(selectedEnd)+'</select></div><button class="btn" type="button" id="msdManualAdd"'+(state.generationId&&state.generationStatus==='DRAFT'?'':' disabled')+'>+ Thêm ca thủ công</button></div>';
 }

@@ -168,6 +168,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
           username:id,
           profile_status:peopleMeta[id]?.status||"INACTIVE",
           employee_role:peopleMeta[id]?.role||"STAFF",
+          employment_type:id==="u-1"?"FULL_TIME":id==="u-2"?"PART_TIME":null,
           priority_store_ids:["store-a"]
         })),error:null};
       }
