@@ -34,7 +34,7 @@ test("UI2-009 loads one namespaced Employee People presentation layer and keeps 
   for(const marker of [
     'magasin-ui-v2-employee-today.css?v=20260925-ui2-006',
     'magasin-ui-v2-employee-schedule.css?v=20261001-ui-unified1',
-    'magasin-ui-v2-employee-secondary.css?v=20261003-sched-ui-007'
+    'magasin-ui-v2-employee-secondary.css?v=20261006-xstore-019d'
   ])assert.ok(app.includes(marker),marker);
 });
 
@@ -96,7 +96,7 @@ test("UI2-009 direct route/back/reload authority stays delegated to the existing
   assert.match(runtime,/E\.attendance\?\.refresh\?\.\(\)/);
   assert.match(runtime,/E\.profileProjection\?\.refresh\?\.\(\)/);
   assert.match(runtime,/E\.payrollSelfCheck\?\.refresh\?\.\(\)/);
-  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007)&runtime=engine/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d)&runtime=engine/);
 });
 
 console.log("UI2_009_EMPLOYEE_PEOPLE_CONTRACT=PASS");
