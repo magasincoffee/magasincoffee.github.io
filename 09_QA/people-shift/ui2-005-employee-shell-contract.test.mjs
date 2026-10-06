@@ -81,6 +81,8 @@ test("Payroll remains engine-injected and shell delegates to its existing source
   assert.ok(payroll.includes("get_my_payroll_self_check_v1"));
   assert.ok(js.includes("const sourceLink = view =>"));
   assert.ok(js.includes("activateSourceView"));
+  assert.ok(js.includes("const fromDrawer = !!link.closest('.drawer')"));
+  assert.ok(js.includes("if (fromDrawer) closeSecondaryDrawer()"));
 });
 
 test("deep-link bootstrap preserves the initially requested canonical route", () => {

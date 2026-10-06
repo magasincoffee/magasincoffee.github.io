@@ -310,7 +310,11 @@
       const link = event.target.closest?.('.nav [data-view]');
       if (!link) return;
       const view = normalize(link.dataset.view);
-      setTimeout(() => setPrimaryActive(view), 0);
+      const fromDrawer = !!link.closest('.drawer');
+      setTimeout(() => {
+        setPrimaryActive(view);
+        if (fromDrawer) closeSecondaryDrawer();
+      }, 0);
     }, true);
   };
 
