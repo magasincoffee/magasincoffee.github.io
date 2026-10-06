@@ -139,7 +139,7 @@ test("unified asset cache chain reaches both Manager and Employee entry points",
   "review-v1.js?v=20261005-xstore-019",
   "draft-publish-v1.js?v=20261005-xstore-019",
   "cross-store-master-v1.js?v=20261005-xstore-019",
-  "cross-store-auto-schedule-v1.js?v=20261005-xstore-019",
+  "cross-store-auto-schedule-v1.js?v=20261006-xstore-019g-r1",
   "manager-scheduling-ui2-v1.js?v=20261005-xstore-019",
   "official-v1.js?v=20261001-ui-unified1",
   "ui-consolidation-v1.js?v=20261005-xstore-019"

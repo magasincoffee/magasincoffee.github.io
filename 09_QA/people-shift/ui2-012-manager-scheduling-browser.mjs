@@ -48,10 +48,10 @@ for(const width of [1440,1024,768,430,390,360]){
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Tab");
   return frame.evaluate(expected=>{
-   const html=document.documentElement,root=document.querySelector(".msd-ui2-012"),wrap=root?.querySelector(".msd-board-wrap"),focused=document.activeElement;
+   const html=document.documentElement,root=document.querySelector(".msd-ui2-012"),editor=root?.querySelector("#x19g-board-edit")||root,wrap=editor?.querySelector(".msd-board-wrap"),focused=document.activeElement;
    const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return !el.hidden&&s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};
    const controls=[...root.querySelectorAll("button:not(.msd-resize-handle),select")].filter(visible);
-   const resizeFallback=!!root.querySelector('.msd-card-editor [data-f="start_time"]')&&!!root.querySelector('.msd-card-editor [data-f="end_time"]');
+   const resizeFallback=!!editor.querySelector('.msd-card-editor [data-f="start_time"]')&&!!editor.querySelector('.msd-card-editor [data-f="end_time"]');
    const metric={
     viewport:innerWidth,expected,
     scrollWidth:html.scrollWidth,clientWidth:html.clientWidth,
@@ -136,7 +136,7 @@ await frame.evaluate(async()=>{
 
 await check("ui2_012_none_context_and_empty_day_state",async()=>{
  const state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
- const ui=await frame.locator(".msd-ui2-012").evaluate(r=>({stage:r.dataset.ui2SchedulingState,chip:r.querySelector(".msu2-state-chip")?.textContent,text:r.innerText,timelineDays:r.querySelectorAll(".msd-day-timeline").length,slotCount:r.querySelectorAll("[data-msd-slot-date][data-msd-slot-time]").length}));
+ const ui=await frame.locator(".msd-ui2-012").evaluate(r=>{const editor=r.querySelector("#x19g-board-edit")||r;return {stage:r.dataset.ui2SchedulingState,chip:r.querySelector(".msu2-state-chip")?.textContent,text:r.innerText,timelineDays:editor.querySelectorAll(".msd-day-timeline").length,slotCount:editor.querySelectorAll("[data-msd-slot-date][data-msd-slot-time]").length}});
  if(state.generationStatus!=="NONE"||ui.stage!=="NONE"||ui.chip!=="CHƯA TẠO"||!ui.text.includes("Chưa có lịch nháp")||ui.timelineDays!==7||ui.slotCount<238)throw new Error(JSON.stringify({state,ui}));
  return JSON.stringify({stage:ui.stage,timelineDays:ui.timelineDays,slotCount:ui.slotCount});
 });
