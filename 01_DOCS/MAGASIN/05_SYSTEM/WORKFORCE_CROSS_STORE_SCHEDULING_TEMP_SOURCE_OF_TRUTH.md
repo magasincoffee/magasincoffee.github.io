@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / NEW EXACT RC READY / OWNER APPROVAL REQUIRED BEFORE XSTORE-020 / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / PRIOR RC INVALIDATED BY OWNER UX V4 / XSTORE-019G READY / UI-FIRST REMEDIATION ACTIVE / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -352,8 +352,17 @@ Out of scope unless explicitly added later:
 | XSTORE-019C | On-demand employee drawer + shortage resolution | Employee candidates appear only when Manager requests add/supplement; exact store/day/time filtering and canonical ranking/manual override semantics | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019D | Employee Availability calendar parity | Employee registers weekly time-only Availability directly on a calendar using the same visual/time interaction model | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019E | Owner calendar parity + responsive workspace | Owner reuses the same single-store calendar workflow; optimize desktop/mobile viewport and preserve role authority | **DONE / EXACT-HEAD GREEN** |
-| XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **DONE / RC_READY / EXACT-HEAD GREEN** |
-| XSTORE-020 | Live production acceptance + permanent reconciliation | Only after Owner approves the new exact RC; release via production governance, run real target-week acceptance, reconcile permanent docs and resume XSTORE-011 closure | **BLOCKED / OWNER APPROVAL OF EXACT RC REQUIRED** |
+| XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **DONE / HISTORICAL RC INVALIDATED BY OWNER UX V4** |
+| XSTORE-019G | Manager five-board UI implementation | Presentation-first implementation of the Owner-approved 5-board Manager workflow; no new backend authority or production wiring | **READY** |
+| XSTORE-019H | Employee mobile-first UI implementation | Mobile-first Employee home, flexible time registration, personal schedule, attendance and profile surfaces; presentation-first | **PENDING** |
+| XSTORE-019I | Owner strategy/P&L UI implementation | Owner home becomes strategy/revenue/cost/profit/cash-flow/forecast dashboard rather than an expanded Manager surface; presentation-first | **PENDING** |
+| XSTORE-019J | Cross-role UI-only preview qualification | Integrate G→I with fixtures/read-only data, responsive/browser QA and local/preview review target; stop before business-data wiring | **PENDING / OWNER UI IMPLEMENTATION REVIEW GATE** |
+| XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **PENDING / AFTER UI GATE** |
+| XSTORE-019L | Employee flexible Availability + attendance wiring | Wire free start/end multi-interval Availability and published-schedule attendance semantics; outside-schedule/manual-time attendance requires Manager confirmation | **PENDING / AFTER UI GATE** |
+| XSTORE-019M | Manager five-board workflow integration | Wire Prepare→Create Draft→Edit→Check→Approve/Publish to canonical scheduling state; Check is read-only same-calendar review for one selected store | **PENDING / AFTER UI GATE** |
+| XSTORE-019N | Owner strategic data integration | Wire Owner strategic dashboard to existing authorized revenue/cost/profit/customer/store/product aggregates without turning Owner home into scheduling operations | **PENDING / AFTER UI GATE** |
+| XSTORE-019O | Integrated qualification + replacement exact RC | Full cross-role/browser/security/cache/backend-impact qualification; freeze replacement RC and Owner production-review packet | **PENDING** |
+| XSTORE-020 | Live production acceptance + permanent reconciliation | Only after Owner approves the replacement exact RC from XSTORE-019O; release via production governance, run real acceptance, reconcile permanent docs and resume XSTORE-011 closure | **PAUSED / WAITING FOR XSTORE-019G→019O** |
 
 ## 5. Recommended execution order
 
@@ -386,13 +395,23 @@ XSTORE-001 DONE
 → XSTORE-019C DONE / exact-head GREEN / on-demand employee drawer + shortage resolution
 → XSTORE-019D DONE / exact-head GREEN / Employee Availability calendar
 → XSTORE-019E DONE / exact-head GREEN / Owner parity + responsive workspace
-→ XSTORE-019F DONE / RC_READY / exact-head GREEN
-→ OWNER APPROVAL OF NEW EXACT RC REQUIRED
-→ XSTORE-020 BLOCKED UNTIL APPROVAL / midnight production release + live acceptance + reconciliation
+→ XSTORE-019F DONE / historical RC qualified, then invalidated by Owner UX V4 decisions on 2026-10-06
+→ XSTORE-019G READY / Manager five-board presentation-first UI
+→ XSTORE-019H / Employee mobile-first presentation-first UI
+→ XSTORE-019I / Owner strategy + P&L presentation-first UI
+→ XSTORE-019J / integrated UI-only preview qualification
+→ OWNER UI IMPLEMENTATION REVIEW GATE / approve rendered UI before live data/logic wiring
+→ XSTORE-019K / FULL_TIME + PART_TIME authority and scheduling ranking
+→ XSTORE-019L / flexible Employee Availability + attendance integration
+→ XSTORE-019M / Manager five-board canonical workflow integration
+→ XSTORE-019N / Owner strategic data integration
+→ XSTORE-019O / integrated qualification + replacement exact RC
+→ OWNER APPROVAL OF REPLACEMENT EXACT RC REQUIRED
+→ XSTORE-020 / midnight production release + live acceptance + reconciliation
 → XSTORE-011 RESUME / final live closure + TEMP SOT deletion
 ```
 
-XSTORE-019A→019F are implementation tasks and must continue automatically without Owner input unless a genuinely new business decision is required. The robot must not stop merely because the previous PR #392 RC was rejected; that rejection is already resolved by this locked architecture.
+XSTORE-019G→019J are UI-first implementation/qualification tasks and must continue automatically without Owner input under the locked UX V4 decisions below. The robot must stop after XSTORE-019J only for Owner review of the rendered UI implementation before any new live data/logic wiring. After that UI approval, XSTORE-019K→019O continue automatically unless a genuinely new business decision is required. The prior XSTORE-019F exact RC is historical evidence only and must not be merged or released.
 
 ## 6. Current Owner boundary
 
@@ -407,7 +426,7 @@ Already approved:
 
 Staffing Requirement semantics from XSTORE-007 are now **historical implementation state and must be corrected before final acceptance**.
 
-Owner-approved final operating semantics as of 2026-10-01:
+Owner-approved final operating semantics as of 2026-10-01, extended by UX V4 decisions on 2026-10-06:
 
 - Manager/Owner configures a recurring weekly requirement as **store + weekday + start time + end time + target headcount**;
 - the configuration is saved once and reused for later weeks until management edits and saves it;
@@ -1156,6 +1175,209 @@ Required gates before `RC_READY`:
 - branch source/cache/reload qualification GREEN;
 - exact RC SHA + rollback SHA recorded.
 
+#### XSTORE-019G — Manager five-board presentation-first UI
+
+Owner-locked information architecture:
+1. **Chuẩn bị**
+2. **Tạo lịch nháp**
+3. **Chỉnh lịch**
+4. **Kiểm tra**
+5. **Duyệt & phát hành**
+
+Scope:
+- implement the five boards as the only primary Manager scheduling sections;
+- step navigation is functional navigation/scroll/open state, not decorative chips;
+- move recurring weekly staffing requirement into **Chuẩn bị** and make it collapsible by default after configuration;
+- remove/merge redundant floating status/settings/header boxes;
+- every board contains its own clear title, purpose and relevant actions;
+- **Chỉnh lịch** remains the dominant selected-store weekly calendar;
+- employee add/supplement uses a clear on-demand drawer with employee name, employment type, Availability/eligibility and action;
+- do not add new RPC/schema/business authority in this task.
+
+Acceptance:
+- Manager can understand the workflow from the five board titles alone;
+- recurring staffing configuration can be collapsed/expanded;
+- no duplicated “draft/status/settings” chrome consumes primary screen space;
+- selected-store/week context remains visible;
+- desktop/laptop/mobile responsive QA passes with fixture/read-only data.
+
+#### XSTORE-019H — Employee mobile-first presentation-first UI
+
+Canonical Employee navigation:
+1. Trang chủ
+2. Đăng ký lịch làm
+3. Lịch của tôi
+4. Chấm công
+5. Hồ sơ & thông tin
+
+Scope:
+- mobile-first is mandatory; desktop is secondary;
+- weekly work registration is **not locked to morning/afternoon/night shifts**;
+- Employee chooses exact start/end time and may register multiple intervals in one day;
+- morning/afternoon/night/all-day/day-off controls are optional quick presets only and remain editable;
+- assigned/published schedule is visually distinct from Availability;
+- attendance screen shows published shift context plus actual attendance time;
+- profile surfaces management-owned employment type as Full-time or Part-time without allowing Employee self-change;
+- presentation-first only; no new business-data writer in this task.
+
+Acceptance:
+- primary actions fit normal phone widths without page-level horizontal scrolling;
+- Employee can visually add one or multiple exact time ranges/day;
+- quick presets never prevent exact time editing;
+- “Lịch của tôi” clearly distinguishes published/approved work from registration;
+- attendance UI clearly separates normal published-shift attendance from outside-schedule requests.
+
+#### XSTORE-019I — Owner strategy/P&L presentation-first UI
+
+Owner is **not an expanded Manager role** on the home experience.
+
+Primary Owner information:
+- system revenue;
+- costs;
+- estimated/authoritative profit where available;
+- margin;
+- cash flow where available;
+- store comparison;
+- product/category performance;
+- customer trends;
+- strategic alerts/opportunities;
+- forecast and targets.
+
+Workforce on Owner home is summary/strategic only. Operational scheduling remains a secondary authorized surface, not the Owner dashboard center.
+
+Scope:
+- implement desktop-first strategic dashboard plus useful mobile summary;
+- reuse existing Tabler/shared tokens;
+- use fixture/read-only values until authoritative data sources are wired in XSTORE-019N;
+- do not fabricate or persist production financial truth;
+- do not duplicate Manager scheduling controls into Owner home.
+
+Acceptance:
+- Owner can answer “revenue/profit trend, which store/product is weak/strong, what needs attention, progress to target” from the primary dashboard;
+- operational scheduling is not the dominant Owner home content;
+- mobile shows top KPIs, trends, store comparison and alerts cleanly.
+
+#### XSTORE-019J — Cross-role UI-only preview qualification
+
+Scope:
+- integrate XSTORE-019G→019I on a non-production branch;
+- use deterministic fixtures or read-only production access only;
+- no new live production writes;
+- run responsive/browser/accessibility/static/cache/reload checks;
+- produce local/preview targets for Manager, Employee and Owner.
+
+Required outcome:
+- Manager five-board UI rendered;
+- Employee mobile-first UI rendered;
+- Owner strategic dashboard rendered;
+- exact preview commit SHA recorded;
+- Owner can review the real rendered implementation before data/logic wiring.
+
+Gate:
+- after GREEN, stop with **OWNER UI IMPLEMENTATION APPROVAL REQUIRED**;
+- do not execute XSTORE-019K until Owner approves the rendered UI implementation;
+- this is a UI implementation gate, not production RC approval.
+
+#### XSTORE-019K — Employment type authority + Full-time scheduling priority
+
+Canonical model:
+```text
+role = EMPLOYEE
+employment_type = FULL_TIME | PART_TIME
+```
+
+Rules:
+- employment type is management-owned; Employee cannot self-change it;
+- Full-time/Part-time is not a replacement for RBAC role;
+- scheduler ranking considers employment type only **after** ACTIVE/store eligibility/Availability/hard-conflict checks;
+- canonical automatic preference is eligible FULL_TIME first, then eligible PART_TIME;
+- Store Priority and other existing ranking/safety remain authoritative;
+- a Full-time employee outside Availability/hard eligibility must not displace an eligible Part-time employee.
+
+Acceptance:
+- schema/profile/RPC/UI authority is explicit and auditable;
+- Employee self-write is denied;
+- deterministic scheduling tests prove Full-time preference without weakening hard constraints;
+- drawer/profile shows employment type clearly.
+
+#### XSTORE-019L — Flexible Employee Availability + attendance integration
+
+Availability rules:
+- exact start/end times;
+- one or multiple intervals/day;
+- presets are convenience only;
+- time-only, no Employee store selection;
+- management-owned Store Priority remains separate.
+
+Attendance rules:
+- attendance tied to a **published schedule** records actual server time directly and does **not** require Manager approval merely because the employee is early/late or leaves early/late;
+- schedule time and actual attendance time remain separate facts;
+- lateness/early-leave/late-leave are derived statuses, not schedule rewrites;
+- attendance outside a published schedule, manual backdated time, or manual alternate time creates a Manager-confirmation request;
+- approval/rejection audit is retained.
+
+Acceptance:
+- published-shift check-in/check-out is direct;
+- lateness is visible without an approval queue;
+- outside-schedule/manual-time attendance is pending Manager confirmation;
+- exact-time Availability and multiple intervals persist correctly;
+- mobile regression covers the complete flow.
+
+#### XSTORE-019M — Manager five-board canonical workflow integration
+
+Scope:
+- connect Board 1→5 to existing canonical scheduling state/writers;
+- Board 1 reads recurring staffing configuration, Store Priority readiness and Availability readiness;
+- Board 2 creates/reopens DRAFT;
+- Board 3 performs canonical direct calendar editing and employee supplementation;
+- Board 4 is **read-only review using the same selected-store calendar visual as Board 3**;
+- Board 4 selects exactly one CN1/CN2/CN3/CN4 at a time and overlays/confirms shortage/conflict results;
+- Board 4 must show actual dynamic shift times (for example 06:00–14:00, 14:00–22:00); do not summarize the review into three fixed time bands;
+- Board 5 exposes Review/Publish only when canonical validation permits it.
+
+Acceptance:
+- one selected store review is visually equivalent to the edited calendar but non-mutating;
+- conflict/shortage issues link back to the affected calendar location;
+- no separate scheduling truth/writer;
+- canonical Validate→Review→Publish remains authoritative.
+
+#### XSTORE-019N — Owner strategic data integration
+
+Scope:
+- connect Owner dashboard to existing authorized data sources/contracts for revenue/store/product/customer/cost/profit aggregates where they already exist;
+- Sapo-derived revenue must remain traceable to its canonical ingestion/data authority;
+- financial metrics with incomplete authority must be labelled unavailable/estimated rather than fabricated;
+- workforce remains strategic summary;
+- scheduling operational detail remains secondary.
+
+Acceptance:
+- each KPI has a known source/definition;
+- no client-side invented P&L;
+- role/security scope remains Owner-only where required;
+- empty/loading/error states are explicit;
+- responsive Owner dashboard remains stable.
+
+#### XSTORE-019O — Integrated qualification + replacement exact RC
+
+Scope:
+- integrate XSTORE-019G→019N;
+- run affected Manager/Employee/Owner browser, responsive, security, scheduling, attendance, RBAC, cache/reload and backend proofs;
+- rerun compatible XSTORE-013→018 gates where affected;
+- rerun People Shift + UI2 Cross Role + Owner Control Tower or their current canonical successors;
+- freeze a **replacement exact RC**;
+- record rollback SHA;
+- prepare Owner production review packet;
+- do not production merge.
+
+Required gates before replacement `RC_READY`:
+- Manager five-board workflow GREEN;
+- Employee mobile-first Availability/schedule/attendance GREEN;
+- FULL_TIME/PART_TIME authority + priority GREEN;
+- Owner strategic dashboard source-contract checks GREEN;
+- relevant security/RBAC/backend proofs GREEN;
+- exact-head cache/reload/browser gates GREEN;
+- exact RC SHA + rollback SHA recorded.
+
 #### XSTORE-020 — Live production acceptance + canonical reconciliation
 
 Scope:
@@ -1173,13 +1395,138 @@ Scope:
 - resume/finalize XSTORE-011;
 - delete this TEMP SOT only after closure evidence is complete.
 
+### L. Owner-approved role experience UX V4 — 2026-10-06
+
+This section supersedes conflicting UI assumptions in earlier sections while preserving proven scheduling/business authorities unless explicitly changed below.
+
+#### L1. Manager = five-board scheduling workflow
+
+The canonical Manager scheduling page contains exactly five primary work boards:
+1. **Chuẩn bị**
+2. **Tạo lịch nháp**
+3. **Chỉnh lịch**
+4. **Kiểm tra**
+5. **Duyệt & phát hành**
+
+The five-step header is real navigation. Each step maps to one board.
+
+**Chuẩn bị**
+- store/week context;
+- Availability/priority/readiness summaries;
+- recurring weekly staffing requirement is located here;
+- recurring staffing requirement is collapsible/expandable and normally collapsed once configured because it changes infrequently.
+
+**Tạo lịch nháp**
+- creates or reopens DRAFT;
+- shows concise creation result;
+- does not mix the full editor into this board.
+
+**Chỉnh lịch**
+- selected-store calendar is the main editing surface;
+- exact shift times are visible;
+- shortage stays in the affected time range;
+- employee picker is on-demand and must show enough employee context to make a decision.
+
+**Kiểm tra**
+- same calendar visual/mental model as **Chỉnh lịch**;
+- one selected store at a time: CN1/CN2/CN3/CN4;
+- read-only review;
+- shows canonical conflict/shortage/warning results;
+- must represent actual shift intervals, including irregular times such as 06:00–14:00 or 14:00–22:00;
+- do not collapse the review into fixed “morning/afternoon/night” rows.
+
+**Duyệt & phát hành**
+- final summary;
+- Review/Publish only through canonical authority.
+
+#### L2. Employee = mobile-first
+
+Employee UX is designed primarily for phones.
+
+Canonical primary surfaces:
+- Trang chủ;
+- Đăng ký lịch làm;
+- Lịch của tôi;
+- Chấm công;
+- Hồ sơ & thông tin.
+
+Availability registration:
+- no fixed-shift lock;
+- exact start/end time;
+- multiple intervals/day allowed;
+- quick presets may exist but are editable convenience only.
+
+Attendance:
+- published-schedule attendance records actual time directly with no Manager approval requirement for ordinary early/late/early-leave/late-leave deviations;
+- actual attendance must never silently rewrite the published schedule time;
+- outside-published-schedule attendance or manually selected/backdated alternate time requires Manager confirmation.
+
+#### L3. Employee employment type
+
+Full-time/Part-time is an employment classification, not a top-level RBAC role.
+
+```text
+role = EMPLOYEE
+employment_type = FULL_TIME | PART_TIME
+```
+
+Management controls employment type.
+
+Automatic scheduling priority:
+```text
+hard eligibility + Availability + Store Priority + no conflict
+→ prefer eligible FULL_TIME
+→ then eligible PART_TIME
+→ continue canonical ranking/tie-breaks
+```
+
+Full-time preference cannot bypass Availability, ACTIVE/store eligibility, overlap, official schedule, Store Priority or other hard constraints.
+
+#### L4. Owner = strategy and financial performance
+
+Owner home is not “Manager with more controls”.
+
+Primary Owner concerns:
+- revenue;
+- costs;
+- profit/loss and margin where authoritative;
+- cash flow where authoritative;
+- store/product/customer performance;
+- trend comparison;
+- strategic alerts/opportunities;
+- forecasts and targets.
+
+Workforce appears as strategic aggregate only. Authorized scheduling remains accessible as a secondary operational surface when needed.
+
+#### L5. UI-first implementation gate
+
+Owner explicitly requires the rendered UI to be implemented/reviewed **before** new data/logic linking.
+
+Therefore:
+- XSTORE-019G→019J are presentation/preview first;
+- XSTORE-019J must produce reviewable rendered Manager/Employee/Owner UI;
+- robot stops at the Owner UI implementation review gate;
+- only after Owner approves that rendered implementation may XSTORE-019K→019N connect new authority/data/logic;
+- XSTORE-019O creates the replacement RC.
+
+The XSTORE-019F exact RC `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52` is therefore **invalidated as a production release candidate** by these later Owner-approved UX V4 requirements. It remains historical QA evidence only and must not be merged/released as the final candidate.
+
 ### K. Robot execution control
 
 The robot must execute remaining tasks in strict order:
 
 ```text
-XSTORE-019F
-→ OWNER APPROVAL OF NEW EXACT RC
+XSTORE-019G
+→ XSTORE-019H
+→ XSTORE-019I
+→ XSTORE-019J
+→ OWNER UI IMPLEMENTATION APPROVAL
+→ XSTORE-019K
+→ XSTORE-019L
+→ XSTORE-019M
+→ XSTORE-019N
+→ XSTORE-019O
+→ OWNER APPROVAL OF REPLACEMENT EXACT RC
 → XSTORE-020
 → resume XSTORE-011 closure
 ```
@@ -1187,14 +1534,17 @@ XSTORE-019F
 Rules:
 - one authoritative task per execution turn;
 - re-read this TEMP SOT before validating any task ID;
-- XSTORE-019A→019F are executable without further Owner input under the locked calendar-first architecture;
-- do not stop on the old PR #392 Owner gate; that RC was rejected and is no longer a valid release candidate;
+- XSTORE-019G→019J are presentation-first and must not introduce new production business-data writes;
+- XSTORE-019G→019J execute continuously without Owner input under UX V4;
+- stop after XSTORE-019J only for **Owner UI implementation approval** of the actual rendered interfaces;
+- after that approval, XSTORE-019K→019O execute continuously unless a genuinely new business decision is required;
 - do not invent new business rules;
 - if a genuinely new Owner decision is required, mark the current task BLOCKED and record the exact decision required in this SOT;
 - implementation must occur on a non-production branch/PR;
-- PR #392 / branch `xstore-019-unified-rc-v1` may be reused for the remediation chain if the robot keeps the PR state/body synchronized and treats every implementation commit as invalidating the previous RC SHA;
+- PR #392 / branch `xstore-019-unified-rc-v1` may be reused only if its body/state clearly marks all earlier RC SHAs invalidated and every implementation commit triggers affected QA;
+- the historical XSTORE-019F RC `e581cf1e41d3ff3d7afe55c7900a1ec2f817df52` is **DO NOT RELEASE**;
 - production-impacting work follows `PRODUCTION_RELEASE_GOVERNANCE_V1_SOURCE_OF_TRUTH.md`;
-- do not merge/release before XSTORE-019F is GREEN and Owner explicitly approves the new exact RC;
+- do not merge/release before XSTORE-019O is GREEN and Owner explicitly approves its replacement exact RC;
 - after production merge, verify exact-main evidence before advancing XSTORE-020;
 - update this TEMP SOT after each completed task so the next robot/chat can derive state from source alone.
 
@@ -1202,9 +1552,9 @@ Machine handoff:
 
 ```text
 MAGASIN_TASK_CONTROL_V1
-STATUS=BLOCKED
-TASK_ID=XSTORE-020
-NEXT_TASK_ID=NONE
+STATUS=READY
+TASK_ID=NONE
+NEXT_TASK_ID=XSTORE-019G
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -1866,14 +2216,20 @@ This track is complete only when:
 9. shortage output identifies exact uncovered time intervals/headcount and is rendered directly in the affected branch calendar cell;
 10. Manager can manually assign an ACTIVE store-eligible employee outside registered Availability with an explicit warning/audit marker;
 11. Availability override does not relax Store Priority, overlap, ACTIVE employee, official schedule or other hard safety rules;
-12. Manager scheduling UX is calendar-first: one selected store workspace, direct calendar shift editing, inline shortages and an on-demand employee drawer/picker; no stacked CN1–CN4 accordion editor and no long always-visible employee pool;
-13. “Nguồn tham khảo” is removed from the canonical scheduling UX;
-14. Manager/Owner can add, edit, move, resize and delete DRAFT shifts directly on the calendar, then Validate/Review/Publish through the canonical scheduling path;
-15. full relevant regression/E2E/security/reload checks are green;
-16. Employee weekly Availability uses the same calendar interaction model while remaining time-only and Store Priority remains management-owned;
-17. XSTORE-020 real production acceptance is complete;
-18. permanent canonical Workforce docs/state contain the proven final rules;
-19. **this TEMP Source of Truth is deleted**.
+12. Manager scheduling UX uses exactly five primary boards: Chuẩn bị → Tạo lịch nháp → Chỉnh lịch → Kiểm tra → Duyệt & phát hành;
+13. recurring weekly staffing requirement lives in Chuẩn bị and can be collapsed/expanded;
+14. Manager Chỉnh lịch is calendar-first: one selected store workspace, direct calendar shift editing, inline shortages and an on-demand employee drawer/picker;
+15. Manager Kiểm tra is a read-only same-calendar review of one selected store and supports actual irregular shift intervals rather than fixed three-band summaries;
+16. “Nguồn tham khảo” is removed from the canonical scheduling UX;
+17. Employee UX is mobile-first; weekly Availability supports exact start/end and multiple intervals/day without fixed-shift lock;
+18. published-schedule attendance records actual time directly without Manager approval solely for early/late deviations, while outside-schedule/manual-time attendance requires Manager confirmation;
+19. employment type is management-owned `FULL_TIME|PART_TIME`, separate from `EMPLOYEE` RBAC role, and eligible Full-time staff rank before eligible Part-time staff without bypassing hard constraints;
+20. Owner home is strategy/financial-performance first rather than an expanded Manager screen;
+21. Owner strategic KPIs use known authorized source definitions and never fabricate production P&L;
+22. full relevant regression/E2E/security/reload checks are green;
+23. XSTORE-020 real production acceptance is complete;
+24. permanent canonical Workforce docs/state contain the proven final rules;
+25. **this TEMP Source of Truth is deleted**.
 
 ## 8. Closure rule
 
