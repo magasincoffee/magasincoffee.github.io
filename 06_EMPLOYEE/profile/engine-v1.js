@@ -49,6 +49,7 @@ function render(){
   setValue('profileUsername',r.username);
   setValue('profilePhone',r.phone);
   setValue('profileRole',roleText(r.employee_role));
+  setValue('profileEmploymentType',employmentTypeText(r.employment_type));
   setValue('profileStatus',statusText(r.profile_status));
   const priorityCodes=Array.isArray(r.priority_store_codes)?r.priority_store_codes.filter(Boolean):[];
   setValue('profilePrimaryStore',r.primary_store_code?(r.primary_store_code+(r.primary_store_name?' · '+r.primary_store_name:'')):'Chưa được thiết lập');
