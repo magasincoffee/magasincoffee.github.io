@@ -311,8 +311,10 @@
       if (!link) return;
       const view = normalize(link.dataset.view);
       const fromDrawer = !!link.closest('.drawer');
+      const shouldPushRoute = CANONICAL.has(view) && !applyingRoute;
       setTimeout(() => {
         setPrimaryActive(view);
+        if (shouldPushRoute) pushCanonicalRoute(view);
         if (fromDrawer) closeSecondaryDrawer();
       }, 0);
     }, true);
