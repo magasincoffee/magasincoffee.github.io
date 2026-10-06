@@ -76,6 +76,10 @@ await check("xstore_019c_shortage_opens_exact_scoped_ranked_drawer",async()=>{
 
 await frame.locator("[data-msd-candidate-close]").click();
 await frame.waitForFunction(()=>!globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().candidateDrawerOpen);
+await frame.waitForFunction(()=>{
+ const edit=document.querySelector("#x19g-board-edit");
+ return !!edit?.querySelector(".msd-single-store")&&!!edit.querySelector('[data-msd-date="2026-09-28"] [data-msd-supplement]');
+});
 await check("xstore_019c_close_restores_calendar_context_and_full_width",async()=>{
  const after=await frame.evaluate(()=>{const w=document.querySelector("#x19g-board-edit .msd-board-wrap")||document.querySelector(".msd-board-wrap");const action=document.querySelector('#x19g-board-edit [data-msd-date="2026-09-28"] [data-msd-supplement]');return {left:w.scrollLeft,top:w.scrollTop,width:w.clientWidth,drawer:document.querySelectorAll("[data-msd-candidate-overlay]").length,actionExists:!!action}});
  if(after.drawer!==0||after.width<before.width-2||Math.abs(after.left-before.left)>2||Math.abs(after.top-before.top)>40||!after.actionExists)throw new Error(JSON.stringify({before,after}));
