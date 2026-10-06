@@ -232,16 +232,17 @@ body[data-magasin-employee-shell-v2] .availability-calendar-timeline{display:gri
 body[data-magasin-employee-shell-v2] .availability-calendar-slot{grid-column:1;z-index:1;width:100%;min-height:44px!important;height:44px;padding:2px 6px;border:0;border-bottom:1px solid #edf1f5;background:transparent;color:#7b8798;text-align:left;font-size:10px;cursor:pointer}
 body[data-magasin-employee-shell-v2] .availability-calendar-slot:nth-of-type(2n){border-bottom-color:#dbe4ef}
 body[data-magasin-employee-shell-v2] .availability-calendar-slot:not(:disabled):hover,body[data-magasin-employee-shell-v2] .availability-calendar-slot:not(:disabled):focus-visible{background:#eef8f3;outline:2px solid #318b64;outline-offset:-2px}
-body[data-magasin-employee-shell-v2] .availability-calendar-card{grid-column:1;z-index:3;position:relative;align-self:stretch;min-width:0;min-height:44px;margin:2px 4px 2px 42px;padding:6px 50px 6px 16px;border-style:dashed!important;border-width:2px!important;border-radius:10px;box-shadow:0 2px 7px rgba(23,93,109,.13);overflow:hidden;cursor:grab}
+body[data-magasin-employee-shell-v2] .availability-calendar-card{grid-column:1;z-index:3;position:relative;align-self:stretch;min-width:0;min-height:44px;margin:2px 4px 2px 42px;padding:6px 94px 6px 16px;border-style:dashed!important;border-width:2px!important;border-radius:10px;box-shadow:0 2px 7px rgba(23,93,109,.13);overflow:hidden;cursor:grab}
 body[data-magasin-employee-shell-v2] .availability-calendar-card:active{cursor:grabbing}
-body[data-magasin-employee-shell-v2] .availability-calendar-card::after{content:"CÓ THỂ LÀM";position:absolute;right:48px;bottom:3px;padding:1px 4px;border-radius:999px;background:rgba(255,255,255,.78);color:currentColor;font-size:8px;font-weight:900;letter-spacing:.02em}
+body[data-magasin-employee-shell-v2] .availability-calendar-card::after{content:"CÓ THỂ LÀM";position:absolute;right:92px;bottom:3px;padding:1px 4px;border-radius:999px;background:rgba(255,255,255,.78);color:currentColor;font-size:8px;font-weight:900;letter-spacing:.02em}
 body[data-magasin-employee-shell-v2] .availability-card-copy{display:grid;gap:1px;min-width:0;pointer-events:none}
 body[data-magasin-employee-shell-v2] .availability-card-copy b{font-size:11px;white-space:nowrap}
 body[data-magasin-employee-shell-v2] .availability-card-copy span{font-size:9px;font-weight:700;opacity:.86}
+body[data-magasin-employee-shell-v2] .availability-card-edit{position:absolute;right:44px;top:0;z-index:5;width:44px;min-width:44px;height:44px;min-height:44px!important;margin:0!important;padding:0!important;border:0;border-left:1px solid rgba(23,38,60,.12);border-radius:0!important;background:rgba(255,255,255,.8);color:#245b88;font-size:11px;font-weight:900;cursor:pointer}
 body[data-magasin-employee-shell-v2] .availability-card-delete{position:absolute;right:0;top:0;z-index:5;width:44px;min-width:44px;height:44px;min-height:44px!important;margin:0!important;padding:0!important;border:0;border-left:1px solid rgba(23,38,60,.12);border-radius:0 8px 8px 0!important;background:rgba(255,255,255,.72);color:#8b3030;font-size:20px;font-weight:900;cursor:pointer}
 body[data-magasin-employee-shell-v2] .availability-resize-handle{position:absolute;top:0;z-index:5;width:12px;min-width:12px;height:44px;min-height:44px!important;padding:0;border:0;background:rgba(23,38,60,.08);cursor:ew-resize}
 body[data-magasin-employee-shell-v2] .availability-resize-start{left:0}
-body[data-magasin-employee-shell-v2] .availability-resize-end{right:44px}
+body[data-magasin-employee-shell-v2] .availability-resize-end{right:88px}
 body[data-magasin-employee-shell-v2] .availability-calendar-card:focus-visible{outline:3px solid #2f6fde;outline-offset:2px}
 body[data-magasin-employee-shell-v2] .employee-availability-panel[data-availability-readonly="true"] .availability-calendar-card{cursor:default;opacity:.84}
 body[data-magasin-employee-shell-v2] .employee-availability-panel[data-availability-readonly="true"] .availability-calendar-slot{cursor:default}
