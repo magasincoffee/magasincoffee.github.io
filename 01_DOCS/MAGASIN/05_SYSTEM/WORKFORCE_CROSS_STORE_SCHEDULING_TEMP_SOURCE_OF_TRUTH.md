@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / PRIOR RC INVALIDATED BY OWNER UX V4 / XSTORE-019G READY / UI-FIRST REMEDIATION ACTIVE / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019G DONE / PRIOR RC INVALIDATED BY OWNER UX V4 / XSTORE-019H READY / UI-FIRST REMEDIATION ACTIVE / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -353,8 +353,8 @@ Out of scope unless explicitly added later:
 | XSTORE-019D | Employee Availability calendar parity | Employee registers weekly time-only Availability directly on a calendar using the same visual/time interaction model | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019E | Owner calendar parity + responsive workspace | Owner reuses the same single-store calendar workflow; optimize desktop/mobile viewport and preserve role authority | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **DONE / HISTORICAL RC INVALIDATED BY OWNER UX V4** |
-| XSTORE-019G | Manager five-board UI implementation | Presentation-first implementation of the Owner-approved 5-board Manager workflow; no new backend authority or production wiring | **READY** |
-| XSTORE-019H | Employee mobile-first UI implementation | Mobile-first Employee home, flexible time registration, personal schedule, attendance and profile surfaces; presentation-first | **PENDING** |
+| XSTORE-019G | Manager five-board UI implementation | Presentation-first implementation of the Owner-approved 5-board Manager workflow; no new backend authority or production wiring | **DONE / PRESENTATION-FIRST GREEN** |
+| XSTORE-019H | Employee mobile-first UI implementation | Mobile-first Employee home, flexible time registration, personal schedule, attendance and profile surfaces; presentation-first | **READY** |
 | XSTORE-019I | Owner strategy/P&L UI implementation | Owner home becomes strategy/revenue/cost/profit/cash-flow/forecast dashboard rather than an expanded Manager surface; presentation-first | **PENDING** |
 | XSTORE-019J | Cross-role UI-only preview qualification | Integrate G→I with fixtures/read-only data, responsive/browser QA and local/preview review target; stop before business-data wiring | **PENDING / OWNER UI IMPLEMENTATION REVIEW GATE** |
 | XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **PENDING / AFTER UI GATE** |
@@ -396,8 +396,8 @@ XSTORE-001 DONE
 → XSTORE-019D DONE / exact-head GREEN / Employee Availability calendar
 → XSTORE-019E DONE / exact-head GREEN / Owner parity + responsive workspace
 → XSTORE-019F DONE / historical RC qualified, then invalidated by Owner UX V4 decisions on 2026-10-06
-→ XSTORE-019G READY / Manager five-board presentation-first UI
-→ XSTORE-019H / Employee mobile-first presentation-first UI
+→ XSTORE-019G DONE / presentation-first GREEN / Manager five-board UI
+→ XSTORE-019H READY / Employee mobile-first presentation-first UI
 → XSTORE-019I / Owner strategy + P&L presentation-first UI
 → XSTORE-019J / integrated UI-only preview qualification
 → OWNER UI IMPLEMENTATION REVIEW GATE / approve rendered UI before live data/logic wiring
@@ -1554,7 +1554,7 @@ Machine handoff:
 MAGASIN_TASK_CONTROL_V1
 STATUS=READY
 TASK_ID=NONE
-NEXT_TASK_ID=XSTORE-019G
+NEXT_TASK_ID=XSTORE-019H
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -2132,6 +2132,55 @@ Historical release packet rules:
 - XSTORE-019O must freeze a replacement exact RC + rollback packet;
 - XSTORE-020 remains unavailable until XSTORE-019O is GREEN and Owner explicitly approves that replacement exact RC;
 - production governance still requires the 00:00 Asia/Ho_Chi_Minh release window unless Owner explicitly grants a same-conversation exception.
+
+## 6.0.23 XSTORE-019G Manager five-board presentation acceptance — 2026-10-07
+
+XSTORE-019G is **DONE / PRESENTATION-FIRST GREEN**.
+
+Implementation branch / PR:
+- PR #392: `xstore-019-unified-rc-v1`;
+- production merge/release: **NOT PERFORMED**;
+- PR remains DRAFT / DO NOT MERGE;
+- historical XSTORE-019F RCs remain invalidated and are not release candidates.
+
+Accepted implementation lineage:
+- `60047a657b43cbea1d37e01e670b8502ab1afd92` — initial Manager five-board presentation;
+- `1e376a461add0fd3f00bad3158f6134c48aa6b26` — Auto Schedule late-subscriber hydration repair;
+- `7bbf4f003bb2ee176e3da4dfceb8378e287df63e` — five-board rerender/read-only review stabilization;
+- `6015109461324631594d92203c1674409d29b849` → `5e9dae164c90a089f073afc60dd7439d0d00becd` — regression/cache/focus/drawer alignment without changing the locked five-board business contract.
+
+Accepted result:
+- Manager scheduling exposes exactly five primary boards: **Chuẩn bị → Tạo lịch nháp → Chỉnh lịch → Kiểm tra → Duyệt & phát hành**;
+- the five-step header is functional navigation rather than decorative progress text;
+- recurring weekly staffing requirement is located in **Chuẩn bị**, is collapsible, and defaults open only when configuration is absent;
+- **Tạo lịch nháp** contains draft creation/reopen controls and concise draft status rather than the full editor;
+- **Chỉnh lịch** retains the selected-store weekly calendar as the dominant editing surface and preserves the on-demand candidate drawer;
+- **Kiểm tra** reuses the same seven-day calendar mental model as a non-mutating clone, preserving actual shift intervals rather than fixed time-band summaries;
+- **Duyệt & phát hành** reuses existing Validate → Review → Publish controls/authority;
+- employment type shown in candidate context is presentation-only; XSTORE-019G introduces no employment-type writer;
+- no new schema, migration, RPC, RLS, auth/session authority or production business-data write was introduced.
+
+Current-head regression evidence:
+- current PR head `a4d8f814c639b445b319437407c91fb449c0fb1e` still contains the accepted XSTORE-019G Manager implementation unchanged by later Employee/Owner/preview commits;
+- XSTORE-019J Cross-Role UI Preview run `37519893924` → **SUCCESS** on that exact head;
+  - **Static and syntax qualification** → SUCCESS and includes `xstore-019g-manager-five-board-v1.test.mjs`;
+  - **Manager five-board browser qualification** → SUCCESS and runs `xstore-019g-manager-five-board-browser.mjs`;
+  - **Cross-role preview responsive accessibility reload** → SUCCESS;
+  - **Accepted cold reload cache closure** → SUCCESS;
+- XSTORE-019 Unified RC QA run `37519893909` → **SUCCESS**;
+- People Shift Day-10 Tests run `37519893812` → **SUCCESS**;
+- UI2 Cross Role Acceptance run `37519894108` → **SUCCESS**;
+- XSTORE-019A Calendar Workspace QA run `37519894173` → **SUCCESS**;
+- XSTORE-019B Direct Calendar Editing QA run `37519893999` → **SUCCESS**;
+- XSTORE-019C Candidate Drawer QA run `37519893965` → **SUCCESS**;
+- XSTORE-018 Supplemental Pool QA run `37519894004` → **SUCCESS**.
+
+Observed non-XSTORE smoke:
+- AUTH-PROD Regression Contract run `37519893959` completed with failure. XSTORE-019G does not change Auth/RBAC/session/backend-auth paths, so this failure is outside XSTORE-019G impact and is not used as its acceptance gate.
+
+Later commits already present on PR #392 are not accepted or advanced by this XSTORE-019G record. This section closes **only XSTORE-019G** under the SOT task boundary.
+
+The next authoritative executable task is **XSTORE-019H**.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
