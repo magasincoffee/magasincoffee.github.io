@@ -47,7 +47,7 @@ test("SCHED-UI-005 Manager runtime loads Shared Core before scheduling engine",(
   const runtime=read("05_MANAGER/runtime/manager-runtime-v1.html");
   const engine=read("05_MANAGER/Workforce/engine-v1.js");
   const coreToken="/02_CORE/shared/shared-core-v1.js?v=20261002-sched-ui-005";
-  const engineToken="/05_MANAGER/Workforce/engine-v1.js?v=20261007-xstore-019g-visual2";
+  const engineToken="/05_MANAGER/Workforce/engine-v1.js?v=20261007-xstore-019g-visual3";
   assert.ok(runtime.includes(coreToken));
   assert.ok(runtime.includes(engineToken));
   assert.ok(runtime.indexOf(coreToken)<runtime.indexOf(engineToken));
