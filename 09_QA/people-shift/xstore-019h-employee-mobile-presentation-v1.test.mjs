@@ -49,8 +49,8 @@ test("XSTORE-019H employment type is management-owned read-only presentation",()
 
 test("XSTORE-019H cache chain reaches exact Employee presentation candidate",()=>{
  assert.match(runtime,/employee-v40\.html\?ui=20261007-xstore-019h-visual2&runtime=engine/);
- assert.match(runtime,/profile\/engine-v1\.js\?v=20261007-xstore-019h-visual2/);
+ assert.match(runtime,/profile\/engine-v1\.js\?v=20261006-xstore-019h/);
  assert.match(index,/employee-runtime-v1\.html\?v=20261007-xstore-019h-visual2/);
- assert.match(app,/employee-shell\.js\?v=20261007-xstore-019h-visual2/);
+ assert.match(app,/employee-shell\.js\?v=20261006-xstore-019h/);
 });
 console.log("XSTORE_019H_EMPLOYEE_MOBILE_PRESENTATION_STATIC=PASS");

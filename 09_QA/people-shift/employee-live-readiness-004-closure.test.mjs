@@ -45,11 +45,11 @@ test("EMLIVE-004 keeps canonical Employee read authority unchanged",()=>{
 });
 
 test("EMLIVE-004 keeps the accepted EMLIVE-003 runtime and user-facing semantics",()=>{
-  assert.match(runtime,/employee-v40\.html\?ui=(?:20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h)&runtime=engine/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual2)&runtime=engine/);
   assert.match(runtime,/profile\/engine-v1\.js\?v=(?:20260930-emlive003|20261006-xstore-019h)/);
   assert.match(runtime,/payroll\/engine-v1\.js\?v=20260930-emlive003/);
   assert.match(runtime,/notification\/engine-v1\.js\?v=20260930-emlive003/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual2)/);
   assert.match(profile,/Không thể tải thông tin cá nhân lúc này\. Hãy thử lại\./);
   assert.match(payroll,/Không thể tải thông tin lương lúc này/);
   assert.match(notification,/Không thể tải thông báo lúc này/);
