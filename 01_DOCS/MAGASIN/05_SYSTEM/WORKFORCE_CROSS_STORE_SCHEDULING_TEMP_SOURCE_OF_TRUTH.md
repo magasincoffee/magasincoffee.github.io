@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J READY FOR AUTHENTICATED REAL-LOCAL REQUALIFICATION / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J CHANGES_REQUESTED — OWNER-APPROVED MANAGER CALENDAR WORKSPACE UX CORRECTION REQUIRED BEFORE REAL-LOCAL REQUALIFICATION / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -222,6 +222,107 @@ Until that re-approval:
 - PR #392 remains DRAFT / DO NOT MERGE;
 - historical XSTORE-019G→019J GREEN results must not be interpreted as current visual acceptance.
 
+## 0.5 Owner correction — 2026-10-07 — Manager calendar workspace controls + scroll ergonomics
+
+Owner reviewed the **actual authenticated local Manager scheduling page** after the week-selector repair and approved a further UX correction for **Bước 3 — Chỉnh lịch** and **Bước 4 — Kiểm tra**.
+
+This correction is **authoritative for XSTORE-019J** and must be implemented before Owner is asked to re-approve the Manager UI.
+
+### A. Branch selector belongs to the calendar workspace
+
+The CN1/CN2/CN3/CN4 selector must no longer sit far above the active calendar as an isolated control.
+
+Canonical placement:
+
+```text
+CHỈNH LỊCH
+
+[CN1] [CN2] [CN3] [CN4]   [Tuần ...]   [LỊCH NHÁP]   [Kiểm tra lịch →]
+LỊCH NHÁP ĐANG CHỈNH
+────────────────────────────────────────────────────────
+weekly calendar
+```
+
+Requirements:
+- place the active branch selector **immediately above / in the same control strip as** `LỊCH NHÁP ĐANG CHỈNH`;
+- changing branch updates the calendar below without forcing the Manager to scroll back to an earlier section;
+- retain one selected-store editing workspace; do not reintroduce four simultaneous editable calendars;
+- collapse redundant branch/week descriptive text where possible so the control strip stays compact;
+- preserve canonical role/store authority and current scheduling data semantics.
+
+### B. Bước 4 — Kiểm tra must be directly reachable from the calendar
+
+The scheduling board is long. The Manager must not need to scroll back through the page to find Bước 4.
+
+Requirements:
+- add a visible primary action such as **`Kiểm tra lịch`** / **`Tiếp tục → Kiểm tra`** in the calendar control strip;
+- this action navigates to / activates canonical **Bước 4 — Kiểm tra** without changing the five-step workflow semantics;
+- the same action may be repeated at the bottom of the calendar for convenience;
+- Bước 4 remains the canonical read-only review step; this correction does not merge Chỉnh lịch and Kiểm tra into one authority state.
+
+### C. Sticky calendar command strip
+
+The calendar command strip should remain available while the Manager works through a long schedule.
+
+The compact strip should contain, when applicable:
+- branch selector;
+- selected week / week navigation;
+- current draft status;
+- direct **Kiểm tra lịch** action.
+
+Desktop behavior:
+- use sticky positioning inside the scheduling workspace where technically safe;
+- avoid requiring repeated long vertical travel merely to change branch/week or enter review;
+- do not obscure calendar rows or global navigation.
+
+### D. Employee shift card readability
+
+The current shift cards must not require a horizontal scrollbar to understand basic assignment information.
+
+Minimum visible hierarchy:
+1. employee name — up to two lines when needed;
+2. complete shift time range, e.g. `06:00–10:00`;
+3. compact secondary status/badge when relevant, e.g. `Full-time` / `Part-time`, `Lịch nháp`, warning state.
+
+Requirements:
+- full employee name must remain readable without being hidden by an internal horizontal scrollbar;
+- the complete start/end time must remain visible;
+- secondary text may wrap or truncate only after primary name/time information is preserved;
+- remove per-card horizontal scrollbars;
+- preserve drag/edit affordances without letting them consume the primary information area.
+
+### E. Minimize horizontal scrolling
+
+Canonical goal: **no nested scroll-inside-scroll interaction** for normal schedule editing.
+
+Desktop:
+- when the viewport has sufficient width, Monday→Sunday should fit in the primary calendar workspace without a horizontal scrollbar;
+- use responsive widths, compact spacing and card wrapping before introducing horizontal scrolling;
+- if horizontal overflow is unavoidable at a narrower desktop/tablet width, there must be **one calendar-level overflow/navigation mechanism**, not independent horizontal scrollbars inside day columns or employee cards.
+
+Narrow/mobile:
+- do not squeeze seven unreadable day columns into the viewport;
+- use a controlled day-window pattern such as **1 day or 3 days at a time with previous/next navigation**, or another single calendar-level responsive mechanism that achieves the same usability outcome;
+- page-level horizontal overflow is not accepted.
+
+### F. Acceptance / regression requirements for XSTORE-019J
+
+Robot must verify on the **actual authenticated local Manager application**, not fixture-only DOM:
+
+- branch selector is colocated with the active `LỊCH NHÁP ĐANG CHỈNH` workspace;
+- branch can be changed without scrolling back to the old Step-3 header;
+- week controls remain visible and functional;
+- `Kiểm tra lịch` is directly reachable from the active calendar workspace and enters canonical Bước 4;
+- employee shift cards expose readable employee name + full time range without per-card horizontal scroll;
+- no nested horizontal scrollbar exists in normal desktop editing;
+- seven-day desktop layout is usable at normal Manager desktop widths;
+- narrow layout uses one controlled calendar-level navigation/overflow model and has no page-level horizontal overflow;
+- existing direct edit, shortage, candidate picker, draft, validate/review/publish and authority contracts remain intact;
+- relevant targeted Manager scheduling QA and required regressions are GREEN;
+- fresh real-local screenshots/evidence are captured for Owner review.
+
+This is a **presentation/interaction correction only** unless implementation proves a minimal state-sync repair is necessary. It must not weaken RBAC, store scope, scheduling validation, cross-store conflict checks or publication authority.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
@@ -423,7 +524,7 @@ Out of scope unless explicitly added later:
 | XSTORE-019G | Manager five-board UI implementation | Rework the real Manager UI to match the Owner-approved Manager mockup while preserving the locked five-board workflow and authority | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
 | XSTORE-019H | Employee mobile-first UI implementation | Rework the real Employee UI to match the Owner-approved mobile mockup while preserving flexible-time and attendance semantics | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
 | XSTORE-019I | Owner strategy/P&L UI implementation | Rework the real Owner dashboard to match the Owner-approved desktop/mobile strategy mockup without fabricating financial truth | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
-| XSTORE-019J | Cross-role UI-only preview qualification | Requalify G→I on the authenticated real local app, compare against repository mockups, capture desktop/mobile evidence and stop for Owner approval | **READY / AUTHENTICATED REAL-LOCAL REQUALIFICATION** |
+| XSTORE-019J | Authenticated real-local UI requalification + Owner-requested Manager calendar workspace UX correction | Implement §0.5 on the candidate branch, preserve five-step authority, then requalify Manager/Employee/Owner on the authenticated real local app against repository mockups and fresh Owner review evidence | **CHANGES_REQUESTED / MANAGER UX CORRECTION REQUIRED / OWNER RE-APPROVAL PENDING** |
 | XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **BLOCKED / OWNER UI IMPLEMENTATION RE-APPROVAL REQUIRED** |
 | XSTORE-019L | Employee flexible Availability + attendance wiring | Wire free start/end multi-interval Availability and published-schedule attendance semantics; outside-schedule/manual-time attendance requires Manager confirmation | **PENDING / AFTER UI GATE** |
 | XSTORE-019M | Manager five-board workflow integration | Wire Prepare→Create Draft→Edit→Check→Approve/Publish to canonical scheduling state; Check is read-only same-calendar review for one selected store | **PENDING / AFTER UI GATE** |
@@ -466,7 +567,7 @@ XSTORE-001 DONE
 → XSTORE-019G DONE / Manager visual-fidelity remediation / exact-head GREEN
 → XSTORE-019H DONE / Employee visual-fidelity remediation / exact-head GREEN
 → XSTORE-019I DONE / Owner strategy-dashboard visual-fidelity remediation / exact-head GREEN
-→ XSTORE-019J READY / authenticated real-local cross-role visual requalification
+→ XSTORE-019J CHANGES_REQUESTED / implement §0.5 Manager calendar workspace UX correction, then authenticated real-local cross-role visual requalification
 → OWNER UI IMPLEMENTATION RE-APPROVAL REQUIRED
 → XSTORE-019K BLOCKED UNTIL OWNER RE-APPROVAL / FULL_TIME + PART_TIME authority and scheduling ranking
 → XSTORE-019L / flexible Employee Availability + attendance integration
@@ -1324,25 +1425,39 @@ Acceptance:
 - operational scheduling is not the dominant Owner home content;
 - mobile shows top KPIs, trends, store comparison and alerts cleanly.
 
-#### XSTORE-019J — Cross-role UI-only preview qualification
+#### XSTORE-019J — Authenticated real-local cross-role qualification + Manager calendar workspace UX correction
 
 Scope:
-- integrate XSTORE-019G→019I on a non-production branch;
-- use deterministic fixtures or read-only production access only;
+- integrate XSTORE-019G→019I on the current non-production RC branch;
+- implement the Owner-approved Manager scheduling correction in §0.5 before requesting re-approval;
+- qualify the **actual authenticated local application** using the real Supabase auth flow, not fixture-only preview surfaces;
+- use deterministic fixtures/read-only data only where needed for non-authoritative display evidence;
 - no new live production writes;
 - run responsive/browser/accessibility/static/cache/reload checks;
-- produce local/preview targets for Manager, Employee and Owner.
+- preserve canonical five-step workflow and all current scheduling/security authority.
 
-Required outcome:
-- Manager five-board UI rendered;
+Manager-specific required outcome:
+- CN1/CN2/CN3/CN4 selector is colocated with the active `LỊCH NHÁP ĐANG CHỈNH` workspace;
+- selected week / week controls remain visible and functional in the same working context;
+- direct `Kiểm tra lịch` / `Tiếp tục → Kiểm tra` action is available from the active calendar without requiring long reverse scrolling;
+- calendar command strip remains accessible during long editing, preferably sticky where safe;
+- employee shift cards show readable employee name + complete shift time without internal horizontal scrollbar;
+- nested horizontal scrolling is removed;
+- desktop calendar is seven-day readable when space allows; narrow layouts use one controlled calendar-level navigation/overflow model;
+- direct editing, shortages, candidate picker and canonical review/publish contracts remain intact.
+
+Cross-role required outcome:
+- Manager five-board UI rendered from the authenticated real local app after the §0.5 correction;
 - Employee mobile-first UI rendered;
 - Owner strategic dashboard rendered;
-- exact preview commit SHA recorded;
+- fresh desktop/mobile evidence captured;
+- exact candidate commit SHA recorded;
 - Owner can review the real rendered implementation before data/logic wiring.
 
 Gate:
-- after GREEN, stop with **OWNER UI IMPLEMENTATION APPROVAL REQUIRED**;
-- do not execute XSTORE-019K until Owner approves the rendered UI implementation;
+- after technical GREEN, stop with **OWNER UI IMPLEMENTATION APPROVAL REQUIRED**;
+- technical/fixture/browser GREEN does not equal Owner approval;
+- do not execute XSTORE-019K until Owner explicitly approves the rendered UI implementation;
 - this is a UI implementation gate, not production RC approval.
 
 #### XSTORE-019K — Employment type authority + Full-time scheduling priority
@@ -2585,6 +2700,29 @@ Acceptance state after repair:
 - XSTORE-019J remains the current authoritative task until authenticated real-local cross-role review is completed;
 - XSTORE-019K and later tasks remain **BLOCKED** until explicit Owner UI implementation re-approval.
 
+## 6.0.32 XSTORE-019J Owner real-local Manager review correction — branch controls, Step 4 access and scroll ergonomics — 2026-10-07
+
+Owner review state: **CHANGES_REQUESTED / NOT APPROVED / XSTORE-019J REMAINS OPEN**.
+
+After the week-selector repair, Owner reviewed the authenticated real-local Manager scheduling surface again and approved the UX contract now recorded in §0.5.
+
+Authoritative correction:
+- move CN1/CN2/CN3/CN4 selection into the active calendar workspace immediately above / with `LỊCH NHÁP ĐANG CHỈNH`;
+- keep selected week/week navigation and current draft state available in the same compact working context;
+- add a direct `Kiểm tra lịch` / `Tiếp tục → Kiểm tra` action from that workspace so a long board does not require reverse scrolling to reach Bước 4;
+- keep canonical Bước 4 read-only review semantics; do not merge workflow authority states;
+- improve employee shift-card information hierarchy so name + full time range are readable;
+- remove per-card/nested horizontal scrollbars;
+- minimize calendar-level horizontal scrolling; desktop should fit seven days when width allows, while narrow layouts use one controlled calendar-level navigation/overflow model;
+- preserve all current business/security/data authority and existing scheduling functions.
+
+Acceptance state:
+- this Owner decision **supersedes asking for UI approval on the current repaired candidate**;
+- current technical GREEN evidence remains useful regression history but is not acceptance of this newly required UX;
+- Robot must implement §0.5 on the current RC candidate, run targeted/required regressions, reopen the actual authenticated local Manager application, capture fresh evidence and return for Owner review;
+- **XSTORE-019J remains the single authoritative executable task**;
+- XSTORE-019K and later tasks remain **BLOCKED** until explicit Owner UI implementation re-approval.
+
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
 Accepted executable main:
@@ -2684,6 +2822,11 @@ This track is complete only when:
 23. XSTORE-020 real production acceptance is complete;
 24. permanent canonical Workforce docs/state contain the proven final rules;
 25. **this TEMP Source of Truth is deleted**.
+26. Manager branch selection is colocated with the active draft calendar workspace rather than requiring travel back to an earlier Step-3 control.
+27. Manager can enter canonical Bước 4 — Kiểm tra directly from the active calendar workspace without long reverse scrolling.
+28. Employee shift cards expose readable employee name and complete time range without per-card horizontal scroll.
+29. normal desktop schedule editing has no nested horizontal scrollbars and presents the seven-day week without horizontal scrolling when viewport width is sufficient.
+30. narrow schedule layouts use one controlled calendar-level navigation/overflow model and do not create page-level horizontal overflow.
 
 ## 8. Closure rule
 
