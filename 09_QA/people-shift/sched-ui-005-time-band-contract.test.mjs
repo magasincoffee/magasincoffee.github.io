@@ -47,12 +47,12 @@ test("SCHED-UI-005 Manager runtime loads Shared Core before scheduling engine",(
   const runtime=read("05_MANAGER/runtime/manager-runtime-v1.html");
   const engine=read("05_MANAGER/Workforce/engine-v1.js");
   const coreToken="/02_CORE/shared/shared-core-v1.js?v=20261002-sched-ui-005";
-  const engineToken="/05_MANAGER/Workforce/engine-v1.js?v=20261007-xstore-019j-workspace2";
+  const engineToken="/05_MANAGER/Workforce/engine-v1.js?v=20261007-xstore-019j-cluster1";
   assert.ok(runtime.includes(coreToken));
   assert.ok(runtime.includes(engineToken));
   assert.ok(runtime.indexOf(coreToken)<runtime.indexOf(engineToken));
   assert.match(runtime,/MAGASIN_CORE\?\.time\?\.shiftKind/);
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:20261004-xstore-016|20261005-xstore-017|20261005-xstore-018|20261005-xstore-019|20261007-xstore-019j-workspace2)/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20261004-xstore-016|20261005-xstore-017|20261005-xstore-018|20261005-xstore-019|20261007-xstore-019j-cluster1)/);
   assert.ok(engine.includes("cross-store-master-v1.js?v=20261007-xstore-019j-weekfix1"));
   assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261004-xstore-012|20261005-xstore-017|20261005-xstore-019|20261006-xstore-019g-r1)/);
 });

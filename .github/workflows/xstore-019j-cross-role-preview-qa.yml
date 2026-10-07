@@ -2,10 +2,26 @@ name: XSTORE-019J Cross-Role UI Preview QA
 on:
   push:
     paths:
+      - '05_MANAGER/Workforce/draft-publish-v1.js'
+      - '05_MANAGER/Workforce/engine-v1.js'
+      - '05_MANAGER/runtime/manager-runtime-v1.html'
+      - '05_MANAGER/index.html'
+      - '05_MANAGER/Workforce/index.html'
+      - '05_MANAGER/Lich-lam/index.html'
+      - '09_QA/people-shift/xstore-019g-manager-five-board-v1.test.mjs'
+      - '09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs'
       - '09_QA/xstore-019j/**'
       - '.github/workflows/xstore-019j-cross-role-preview-qa.yml'
   pull_request:
     paths:
+      - '05_MANAGER/Workforce/draft-publish-v1.js'
+      - '05_MANAGER/Workforce/engine-v1.js'
+      - '05_MANAGER/runtime/manager-runtime-v1.html'
+      - '05_MANAGER/index.html'
+      - '05_MANAGER/Workforce/index.html'
+      - '05_MANAGER/Lich-lam/index.html'
+      - '09_QA/people-shift/xstore-019g-manager-five-board-v1.test.mjs'
+      - '09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs'
       - '09_QA/xstore-019j/**'
       - '.github/workflows/xstore-019j-cross-role-preview-qa.yml'
   workflow_dispatch:
@@ -25,6 +41,8 @@ jobs:
           node-version: '20'
       - name: Static and syntax qualification
         run: |
+          node --check 05_MANAGER/Workforce/draft-publish-v1.js
+          node --check 09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs
           node --check 09_QA/xstore-019j/xstore-019j-preview-browser.mjs
           node --test 09_QA/xstore-019j/xstore-019j-preview-v1.test.mjs
           node --test 09_QA/people-shift/xstore-019g-manager-five-board-v1.test.mjs

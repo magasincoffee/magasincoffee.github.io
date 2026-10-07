@@ -83,10 +83,17 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-time-slot{grid-column:1;border:0;border-top:1px solid #eef2f6;background:transparent;min-height:0;height:auto;align-self:stretch;box-sizing:border-box;line-height:0;padding:0;text-align:left;cursor:crosshair;appearance:none}
 .msd-time-slot:hover,.msd-time-slot:focus-visible{background:#f2f7ff;outline:2px solid #84adff;outline-offset:-2px}
 .msd-shift-layer{position:absolute;inset:0;pointer-events:none}
-.msd-direct-card{position:absolute;left:2px;right:2px;min-height:34px;padding:7px 8px;border:1px solid #cadce9;border-radius:8px;box-shadow:0 1px 2px rgba(16,24,40,.08);overflow:auto;pointer-events:auto;cursor:grab}
+.msd-direct-card{position:absolute;left:2px;right:2px;min-height:34px;padding:7px 8px;border:1px solid #cadce9;border-radius:8px;box-shadow:0 1px 2px rgba(16,24,40,.08);overflow:hidden;pointer-events:auto;cursor:grab}
 .msd-direct-card:active{cursor:grabbing}.msd-direct-card[aria-grabbed="true"]{opacity:.72}
 .msd-direct-head{display:flex;justify-content:space-between;gap:6px;align-items:flex-start}.msd-move-grip{display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;min-width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,.72);font-size:12px;font-weight:900;line-height:1;cursor:grab;user-select:none;touch-action:none}.msd-move-grip:active{cursor:grabbing}.msd-direct-name{font-weight:900;font-size:11px}.msd-direct-time{font-size:10px;font-weight:800;white-space:nowrap}
 .msd-direct-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.msd-direct-actions .btn{min-height:28px;padding:4px 7px;font-size:9px}
+.msd-shift-cluster{position:absolute;left:2px;right:2px;min-width:0;padding:7px 8px;border:1px solid #cadce9;border-radius:9px;box-shadow:0 1px 2px rgba(16,24,40,.08);overflow:hidden;pointer-events:auto;z-index:4}
+.msd-shift-cluster:has(.msd-card-editor[open]),.msd-shift-cluster:has(.msd-cluster-overflow[open]){height:auto!important;overflow:visible;z-index:24}
+.msd-cluster-head{display:flex;align-items:center;justify-content:space-between;gap:7px;padding-bottom:5px;border-bottom:1px solid rgba(52,64,84,.16);font-size:10px;font-weight:900;line-height:1.2}.msd-cluster-head span{white-space:nowrap}.msd-cluster-list{display:grid;gap:3px;padding-top:4px;min-width:0}
+.msd-cluster-row{display:grid;grid-template-columns:16px minmax(0,1fr) auto;grid-template-areas:"grip name meta" "grip exact edit" "editor editor editor";gap:1px 5px;align-items:center;min-width:0;padding:3px 0;border-bottom:1px solid rgba(52,64,84,.10);cursor:grab}.msd-cluster-row:last-child{border-bottom:0}.msd-cluster-row:active{cursor:grabbing}.msd-cluster-row[aria-grabbed="true"]{opacity:.72}
+.msd-cluster-move-grip{grid-area:grip;display:inline-flex;align-items:center;justify-content:center;width:16px;height:22px;border-radius:5px;background:rgba(255,255,255,.72);font-size:11px;font-weight:900;cursor:grab;user-select:none}.msd-cluster-name{grid-area:name;min-width:0;font-size:10px;font-weight:900;line-height:1.25;white-space:normal;overflow-wrap:anywhere}.msd-cluster-meta{grid-area:meta;display:flex;gap:3px;align-items:center;justify-content:flex-end;min-width:0}.msd-cluster-exact{grid-area:exact;font-size:9px;font-weight:800;white-space:nowrap}.msd-cluster-exact:empty{display:none}.msd-cluster-edit{grid-area:edit;min-height:24px!important;padding:2px 6px!important;font-size:8.5px!important}.msd-cluster-badge{display:inline-flex;align-items:center;min-height:18px;padding:2px 5px;border-radius:999px;background:rgba(255,255,255,.72);font-size:8px;font-weight:900;white-space:nowrap}.msd-cluster-badge.warning{background:#fff2cc;color:#7a5300}.msd-cluster-editor{grid-area:editor;min-width:0}.msd-cluster-editor>summary{display:none}.msd-cluster-editor .msd-manual-grid{grid-template-columns:1fr 1fr!important}.msd-cluster-editor .msd-card-editor-actions{grid-template-columns:1fr 1fr}
+.msd-cluster-overflow{margin-top:2px}.msd-cluster-overflow>summary{list-style:none;cursor:pointer;padding:4px 0;color:#2563eb;font-size:9px;font-weight:900}.msd-cluster-overflow>summary::-webkit-details-marker{display:none}.msd-cluster-overflow[open]>summary{margin-bottom:2px}.msd-cluster-overflow .msd-cluster-row{padding-left:0}
+.x19g-review .msd-cluster-edit,.x19g-review .msd-cluster-move-grip,.x19g-review .msd-cluster-editor{display:none!important}.x19g-review .msd-cluster-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name meta" "exact exact";cursor:default}
 .msd-resize-handle{position:absolute;left:auto;right:4px;width:28px;height:8px;min-height:8px!important;border:0;background:transparent;cursor:ns-resize;padding:0;z-index:3}.msd-resize-handle.start{top:-1px}.msd-resize-handle.end{bottom:-1px}.msd-resize-handle:hover,.msd-resize-handle:focus-visible{background:rgba(47,111,222,.18);outline:1px solid #2f6fde}
 .msd-card-editor{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(52,64,84,.25)}
 .msd-card-editor summary{cursor:pointer;font-size:10px;font-weight:900}.msd-direct-card:has(.msd-card-editor[open]){z-index:20;min-height:260px;height:auto!important;overflow:visible}.msd-direct-card:has(.msd-card-editor[open]) .msd-resize-handle{pointer-events:none;opacity:0}.msd-card-editor .msd-manual-grid{grid-template-columns:1.3fr 1fr 1fr 1fr;margin-top:6px}.msd-card-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}.msd-card-editor-actions .btn{min-height:32px}
@@ -596,11 +603,34 @@ function directCardHtml(a,i,days){
  const start=clampMinutes(mins(a.start_time)),end=clampMinutes(mins(a.end_time)),top=((start-calendarSlotStart)/(calendarSlotEnd-calendarSlotStart))*100,height=Math.max(3,((end-start)/(calendarSlotEnd-calendarSlotStart))*100);
  return '<article class="msd-direct-card '+bandClass(a.start_time)+'" data-msd-row="'+i+'" data-msd-drag-index="'+i+'" draggable="true" tabindex="0" style="top:'+top+'%;height:'+height+'%" aria-label="'+esc(employeeName(a))+' '+esc(hm(a.start_time))+' đến '+esc(hm(a.end_time))+'"><button class="msd-resize-handle start" type="button" draggable="true" data-msd-resize-start="'+i+'" aria-label="Kéo để đổi giờ bắt đầu"></button><div class="msd-direct-head"><span class="msd-move-grip" draggable="true" data-msd-move-handle="'+i+'" title="Kéo để di chuyển ca" aria-hidden="true">↕</span><div class="msd-direct-name">'+esc(employeeName(a))+'</div><div class="msd-direct-time">'+esc(hm(a.start_time))+'–'+esc(hm(a.end_time))+'</div></div><div class="msd-meta">'+assignmentMeta(a)+'</div><div class="msd-direct-actions"><button class="btn" type="button" data-msd-open-editor="'+i+'">Chỉnh</button><button class="btn" type="button" data-msd-remove-direct="'+i+'">Xóa</button></div>'+editorHtml(a,i,days)+'<button class="msd-resize-handle end" type="button" draggable="true" data-msd-resize-end="'+i+'" aria-label="Kéo để đổi giờ kết thúc"></button></article>';
 }
+function assignmentEmploymentBadge(a){
+ const p=state.eligibleEmployees.find(r=>String(r.employee_id||r.user_id||'')===String(a.user_id||''));
+ const t=String(a.employment_type||p?.employment_type||'').toUpperCase();
+ return t==='FULL_TIME'?'<span class="msd-cluster-badge">FT</span>':t==='PART_TIME'?'<span class="msd-cluster-badge">PT</span>':'';
+}
+function groupOverlappingAssignments(assignments){
+ const sorted=[...assignments].sort((x,y)=>mins(x.a.start_time)-mins(y.a.start_time)||mins(x.a.end_time)-mins(y.a.end_time)||x.i-y.i),groups=[];
+ for(const row of sorted){
+  const start=clampMinutes(mins(row.a.start_time)),end=clampMinutes(mins(row.a.end_time));if(end<=start)continue;
+  const g=groups.at(-1);
+  if(!g||start>=g.end)groups.push({start,end,items:[row]});
+  else{g.start=Math.min(g.start,start);g.end=Math.max(g.end,end);g.items.push(row)}
+ }
+ return groups;
+}
+function clusterRowHtml(row,cluster,days){
+ const a=row.a,i=row.i,exact=mins(a.start_time)===cluster.start&&mins(a.end_time)===cluster.end?'':hm(a.start_time)+'–'+hm(a.end_time),warning=String(a.warning||'').toUpperCase()==='MANAGER_AVAILABILITY_OVERRIDE'?'<span class="msd-cluster-badge warning">Ngoài Availability</span>':'';
+ return '<div class="msd-cluster-row" data-msd-row="'+i+'" data-msd-drag-index="'+i+'" draggable="true" tabindex="0" aria-label="'+esc(employeeName(a))+' '+esc(hm(a.start_time))+' đến '+esc(hm(a.end_time))+'"><span class="msd-cluster-move-grip" draggable="true" data-msd-move-handle="'+i+'" title="Kéo để di chuyển ca" aria-hidden="true">↕</span><div class="msd-cluster-name">'+esc(employeeName(a))+'</div><div class="msd-cluster-meta">'+assignmentEmploymentBadge(a)+warning+'</div><div class="msd-cluster-exact">'+esc(exact)+'</div><button class="btn msd-cluster-edit" type="button" data-msd-open-editor="'+i+'">Chỉnh</button><div class="msd-cluster-editor">'+editorHtml(a,i,days)+'</div></div>';
+}
+function shiftClusterHtml(cluster,days){
+ const count=cluster.items.length,top=((cluster.start-calendarSlotStart)/(calendarSlotEnd-calendarSlotStart))*100,height=Math.max(3,((cluster.end-cluster.start)/(calendarSlotEnd-calendarSlotStart))*100),minHeight=count>3?156:count===3?132:104,direct=cluster.items.slice(0,3),overflow=cluster.items.slice(3),start=timeFromMinutes(cluster.start),end=timeFromMinutes(cluster.end);
+ return '<section class="msd-shift-cluster '+bandClass(start)+'" data-msd-cluster-size="'+count+'" style="top:'+top+'%;height:max('+height+'%,'+minHeight+'px)" aria-label="Nhóm ca '+esc(start)+' đến '+esc(end)+' · '+count+' người"><div class="msd-cluster-head"><span>'+esc(start)+'–'+esc(end)+'</span><span>'+count+' người</span></div><div class="msd-cluster-list">'+direct.map(row=>clusterRowHtml(row,cluster,days)).join('')+(overflow.length?'<details class="msd-cluster-overflow"><summary>+'+overflow.length+' nhân viên</summary>'+overflow.map(row=>clusterRowHtml(row,cluster,days)).join('')+'</details>':'')+'</div></section>';
+}
 function timelineHtml(day,assignments){
  const slots=[];for(let m=calendarSlotStart;m<calendarSlotEnd;m+=calendarSlotMinutes)slots.push(m);
  const scale=slots.map(m=>'<span>'+((m%60===0)?esc(timeFromMinutes(m)):'')+'</span>').join('');
  const slotButtons=slots.map((m,si)=>'<div class="msd-time-slot" role="button" tabindex="0" data-msd-slot-date="'+esc(day)+'" data-msd-slot-time="'+esc(timeFromMinutes(m))+'" style="grid-row:'+(si+1)+'" aria-label="Tạo hoặc thả ca '+esc(timeFromMinutes(m))+'"></div>').join('');
- const cards=assignments.map(({a,i})=>directCardHtml(a,i,calendarDays())).join('');
+ const days=calendarDays(),cards=groupOverlappingAssignments(assignments).map(group=>group.items.length===1?directCardHtml(group.items[0].a,group.items[0].i,days):shiftClusterHtml(group,days)).join('');
  return '<div class="msd-day-timeline"><div class="msd-time-scale" aria-hidden="true">'+scale+'</div><div class="msd-slot-grid">'+slotButtons+'<div class="msd-shift-layer">'+cards+'</div></div></div>';
 }
 function boardHtml(){
