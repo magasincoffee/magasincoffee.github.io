@@ -73,6 +73,10 @@ for(const width of widths){
     return JSON.stringify(state);
   });
 
+  await employee.locator('[data-employee-primary-view="schedule"]').click();
+  await employee.locator("#view-schedule.active").waitFor({timeout:10000});
+  await employee.locator("#weeklyRegistrationPanel:not(.open)").waitFor({state:"attached",timeout:10000});
+
   await employee.locator('[data-schedule-id="sch-fri-am"] [data-schedule-action="swap"]').click();
   await employee.locator("#view-swap.active").waitFor({timeout:10000});
   await employee.locator('#view-swap[data-swap-mode="swap"][data-swap-eligibility="eligible"]').waitFor({timeout:10000});
@@ -152,6 +156,9 @@ for(const width of widths){
     });
 
     await check("ui2_008_swap_give_state_matrix_delegation_error_retry_submit",async()=>{
+      await employee.locator('[data-employee-primary-view="schedule"]').click();
+      await employee.locator("#view-schedule.active").waitFor({timeout:10000});
+      await employee.locator("#weeklyRegistrationPanel:not(.open)").waitFor({state:"attached",timeout:10000});
       await employee.locator('[data-schedule-id="sch-fri-am"] [data-schedule-action="swap"]').click();
       await employee.locator('#view-swap[data-swap-mode="swap"][data-swap-eligibility="eligible"]').waitFor();
       await employee.locator("#employeeSwapReason").fill("Đổi ca UI2-008 QA");
