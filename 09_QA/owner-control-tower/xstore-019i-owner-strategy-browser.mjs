@@ -10,7 +10,7 @@ const fixture={
  revenueMix:[{label:"Đồ uống",value:57},{label:"Bánh & đồ ăn",value:23},{label:"Khác",value:13},{label:"Dịch vụ",value:7}],
  costMix:[{label:"Nguyên vật liệu",value:42},{label:"Nhân sự",value:28},{label:"Vận hành",value:19},{label:"Khác",value:11}],
  stores:[{label:"CN1",value:45200000,share:92},{label:"CN2",value:32700000,share:70},{label:"CN3",value:28300000,share:61},{label:"CN4",value:21800000,share:47}],
- products:[{label:"Cà phê sữa",value:"18,2 tr"},{"label:"Trà đào cam sả",value:"15,9 tr"},{label:"Bạc xỉu",value:"13,1 tr"}],
+ products:[{label:"Cà phê sữa",value:"18,2 tr"},{label:"Trà đào cam sả",value:"15,9 tr"},{label:"Bạc xỉu",value:"13,1 tr"}],
  customers:[{label:"Khách quay lại",value:"+9%"},{label:"Giá trị đơn trung bình",value:"+6%"},{label:"Khách mới",value:"+4%"}],
  alerts:[{label:"CN2 biên lợi nhuận giảm",value:"Xem xét"},{label:"Chi phí NVL tăng",value:"Theo dõi"},{label:"Cà phê sữa tăng tốt",value:"Cơ hội"}],
  forecast:[{label:"Dự báo tháng",value:"154 triệu"},{label:"Mục tiêu tháng",value:"160 triệu"},{label:"Tiến độ",value:"82%"}]
