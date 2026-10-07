@@ -125,3 +125,210 @@ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .x19h-
 @media(min-width:601px) and (max-width:1023px){
  body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .x19h-home-registration{margin-top:8px}
 }
+
+
+/* XSTORE-019H VISUAL3 OWNER-MOCKUP FIDELITY
+ * Mobile-only presentation refinement against repository-approved Employee mockup.
+ * Business data, writers, RPCs and attendance/schedule authority remain unchanged.
+ */
+@media(max-width:600px){
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"]{
+  --x19h-blue:#0b78ff;
+  --x19h-soft:#f5f8fc;
+  --x19h-card:#fff;
+  --x19h-line:#e5eaf1;
+  --x19h-text:#101828;
+  --x19h-muted:#667085;
+  background:var(--x19h-soft)!important;
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .app{background:var(--x19h-soft)!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .app-header{
+  min-height:48px!important;height:48px!important;padding:4px 10px!important;border:0!important;background:#fff!important;
+  box-shadow:none!important;backdrop-filter:none!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .header-menu{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .header-user-text{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .header-left{gap:0!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .header-page-title{
+  font-size:18px!important;line-height:22px!important;font-weight:850!important;letter-spacing:-.02em!important;color:#111827!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .header-right{gap:6px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .header-icon{
+  width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;border:0!important;background:transparent!important;font-size:15px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .header-avatar{
+  width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;border:0!important;font-size:12px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"][data-x19h-primary-view="dashboard"] .header-left{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"][data-x19h-primary-view="dashboard"] .app-header{justify-content:flex-end!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"]:not([data-x19h-primary-view="dashboard"]) .header-avatar{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .main{
+  padding:4px 10px calc(76px + var(--m-safe-bottom))!important;background:var(--x19h-soft)!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .page-view{background:transparent!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .panel,
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .m-card{
+  border:1px solid var(--x19h-line)!important;border-radius:14px!important;background:#fff!important;box-shadow:0 1px 2px rgba(16,24,40,.025)!important
+ }
+
+ /* Home */
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-intro{padding:2px 2px 8px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-greeting{font-size:17px!important;line-height:21px!important;font-weight:850!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-context{font-size:9.5px!important;line-height:1.35!important;color:#7b8494!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-layout{gap:8px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-card{padding:11px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-card__kicker{font-size:9px!important;letter-spacing:.02em!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-card__title{font-size:14px!important;line-height:18px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-card--shift{background:#fffdf7!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-card--shift[data-x19h-band="morning"]{background:#fff9e8!important;border-color:#f2d489!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-card--shift[data-x19h-band="afternoon"]{background:#fff3f3!important;border-color:#efc4c4!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-card--shift[data-x19h-band="evening"]{background:#f1f7ff!important;border-color:#bfd9f5!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-shift-time{font-size:22px!important;line-height:24px!important;letter-spacing:-.03em!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-shift-store,
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-shift-date,
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-shift-note{font-size:9.5px!important;line-height:1.35!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .x19h-home-shift-actions{gap:6px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .x19h-home-shift-actions .m-button{min-height:40px!important;border-radius:9px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .x19h-home-registration{padding:10px 11px!important;gap:8px!important;background:#f4f8ff!important;border-color:#cfe0f5!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .x19h-home-registration>.m-button{min-height:40px!important;border-radius:9px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-queue{padding:10px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-source-note{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-action{padding:8px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-week{margin-top:8px!important;padding:10px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-week-grid{gap:3px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-day{padding:5px 2px!important;border-radius:7px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="dashboard"] #view-dashboard .employee-today-shortcuts{display:none!important}
+
+ /* Registration */
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] #view-schedule{padding-bottom:2px}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] #availabilityWeekLabel{
+  min-height:25px!important;padding:4px 8px!important;border:0!important;background:#f3f6fa!important;color:#4b5565!important;font-size:9px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] #weeklyRegistrationPanel>.employee-secondary-head{margin-bottom:5px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] #weeklyRegistrationPanel>.employee-secondary-head h3{font-size:14px!important;margin:0!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] #weeklyRegistrationPanel>.employee-secondary-head .employee-secondary-note{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .employee-availability-form{
+  margin-top:6px!important;padding:8px!important;gap:6px!important;border-radius:10px!important;background:#fff!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .employee-availability-form .field label{font-size:9px!important;margin-bottom:3px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .employee-availability-form select{min-height:40px!important;height:40px!important;border-radius:8px!important;font-size:11px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .employee-availability-form #saveReg{min-height:40px!important;border-radius:9px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .x19h-availability-presets{margin:6px 0!important;padding:8px!important;background:#f8faff!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .x19h-preset-copy strong{font-size:11px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .x19h-preset-copy span{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .x19h-preset-buttons{grid-template-columns:1fr 1fr!important;gap:5px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .x19h-preset-buttons button{min-height:40px!important;padding:5px!important;font-size:9px!important;border-radius:8px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .employee-availability-state{margin:5px 0!important;padding:7px 8px!important;border-radius:8px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-calendar-help{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-calendar-wrap{border-radius:10px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-calendar-day{grid-template-columns:48px minmax(0,1fr)!important;min-height:54px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-calendar-day>header{
+  min-height:54px!important;padding:4px!important;background:#fafbfc!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-calendar-day>header b{font-size:10px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-calendar-day>header span{font-size:7.5px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-calendar-day>header .x19h-day-add{
+  width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;border-radius:8px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-calendar-timeline{min-height:54px!important;padding:5px!important;gap:4px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-calendar-card{
+  min-height:40px!important;padding:6px 82px 6px 8px!important;border-radius:7px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-card-edit,
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-card-delete{
+  width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .availability-card-edit{right:40px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="availability"] .employee-availability-actions{display:none!important}
+
+ /* Published schedule */
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .schedule-hero,
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .schedule-context{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .schedule-week-nav{
+  display:grid!important;grid-template-columns:40px 1fr 40px!important;gap:5px!important;margin:2px 0 6px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .schedule-week-nav button{
+  min-height:38px!important;height:38px!important;padding:4px 7px!important;border-radius:8px!important;font-size:9px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .schedule-statusline{margin:4px 0 7px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .days{
+  display:grid!important;grid-template-columns:1fr!important;gap:5px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .day{
+  display:grid!important;grid-template-columns:54px minmax(0,1fr)!important;gap:5px!important;min-height:56px!important;padding:6px!important;border-radius:10px!important;box-shadow:none!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .day-head{
+  grid-column:1!important;grid-row:1 / span 20!important;display:grid!important;align-content:center!important;justify-items:center!important;margin:0!important;padding:2px!important;border-right:1px solid #eef1f5!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .dow{font-size:11px!important;line-height:14px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .date{font-size:8px!important;margin-top:1px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .today-tag{font-size:7px!important;padding:2px 4px!important;margin-top:2px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .shift,
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .schedule-day-empty{
+  grid-column:2!important;margin:0!important;min-height:40px!important;padding:6px 8px!important;border-radius:8px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .shift-time{font-size:11px!important;line-height:14px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .shift-store{font-size:8.5px!important;line-height:11px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="schedule"] #view-schedule .employee-schedule-engine .shift-status{font-size:7px!important;padding:1px 4px!important}
+
+ /* Attendance */
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] .x19h-attendance-modes{
+  display:flex!important;gap:5px!important;margin:0 0 6px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] .x19h-attendance-mode{
+  flex:1 1 0!important;padding:6px!important;border-radius:9px!important;background:#fff!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] .x19h-attendance-mode strong{display:block!important;margin-top:3px!important;font-size:9px!important;line-height:1.2!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] .x19h-attendance-mode p{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] .x19h-mode-badge{padding:3px 5px!important;font-size:8px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .employee-people-intro{padding:0!important;margin-bottom:5px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .employee-people-intro .employee-people-eyebrow,
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .employee-people-intro p{display:none!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .employee-people-intro h2{font-size:14px!important;margin:0!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .attendance-week-nav{
+  display:grid!important;grid-template-columns:1fr 1fr 1fr!important;gap:4px!important;margin:4px 0 6px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .attendance-week-nav .m-button{
+  min-height:36px!important;padding:4px!important;font-size:8.5px!important;border-radius:8px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .employee-attendance-shift{
+  padding:9px!important;border:1px solid #f1d18a!important;border-radius:10px!important;background:#fff9e7!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .employee-attendance-shift strong{font-size:15px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .attendance-form-grid{gap:6px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .field label{font-size:9px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .m-input,
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .m-select{min-height:40px!important;border-radius:8px!important;font-size:11px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .attendance-actions{
+  display:grid!important;grid-template-columns:1fr!important;gap:5px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance #employeeAttendanceSubmit{width:100%!important;min-height:42px!important;border-radius:9px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .attendance-help{font-size:8.5px!important;line-height:1.35!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .employee-attendance-history{margin-top:7px!important;padding:9px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .employee-attendance-history .section-title{font-size:14px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="attendance"] #view-attendance .employee-attendance-history-table{font-size:9px!important}
+
+ /* Profile */
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="profile"] #view-profile .profile-layout{gap:7px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="profile"] #view-profile .panel{padding:10px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="profile"] #view-profile .profile-grid{gap:9px!important;margin-top:8px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="profile"] #view-profile .profile-avatar{width:70px!important;height:70px!important;font-size:24px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="profile"] #view-profile .profile-fields{gap:6px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="profile"] #view-profile .field label{font-size:9px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-primary-view="profile"] #view-profile .field input{height:38px!important;font-size:11px!important}
+
+ /* Bottom nav */
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .employee-v2-primary-nav{
+  min-height:66px!important;padding:3px max(5px,var(--m-safe-right)) max(3px,var(--m-safe-bottom)) max(5px,var(--m-safe-left))!important;
+  border-top:1px solid #e6eaf0!important;background:#fff!important;box-shadow:0 -1px 8px rgba(16,24,40,.045)!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .employee-v2-primary-nav__item{
+  min-height:56px!important;padding:2px 1px!important;border-radius:8px!important;color:#667085!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .employee-v2-primary-nav__icon{
+  width:26px!important;height:26px!important;line-height:26px!important;font-size:14px!important
+ }
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .employee-v2-primary-nav__item[data-active="true"] .employee-v2-primary-nav__icon{background:var(--x19h-blue)!important;color:#fff!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .employee-v2-primary-nav__item[data-active="true"] .employee-v2-primary-nav__label{color:#0b63d1!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .employee-v2-primary-nav__label{font-size:8px!important;line-height:9px!important;font-weight:750!important}
+}

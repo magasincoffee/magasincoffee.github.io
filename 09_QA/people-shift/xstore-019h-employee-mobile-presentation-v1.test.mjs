@@ -28,8 +28,8 @@ test("XSTORE-019H presentation remains writer-free and exact time editing stays 
  assert.doesNotThrow(()=>new Function(presentation));
  assert.doesNotMatch(presentation,/\.rpc\(|\.from\(|createClient\(|\.insert\(|\.update\(|\.delete\(/);
  for(const token of ["05:00","12:00","17:00","22:00","quickRegStart","quickRegEnd","Bạn vẫn có thể chỉnh giờ chính xác"])assert.ok(presentation.includes(token),token);
- assert.match(app,/employee-presentation-v4\.js\?v=20261007-xstore-019h-visual2/);
- assert.match(app,/magasin-ui-v2-employee-presentation-v4\.css\?v=20261007-xstore-019h-visual2/);
+ assert.match(app,/employee-presentation-v4\.js\?v=20261007-xstore-019h-visual3/);
+ assert.match(app,/magasin-ui-v2-employee-presentation-v4\.css\?v=20261007-xstore-019h-visual3/);
 });
 
 test("XSTORE-019H visually separates Availability, published schedule and attendance paths",()=>{
@@ -38,7 +38,7 @@ test("XSTORE-019H visually separates Availability, published schedule and attend
  assert.match(presentation,/Theo lịch đã phát hành/);
  assert.match(presentation,/Ngoài lịch phát hành/);
  assert.match(presentation,/quản lý xác nhận/);
- assert.match(shellCss,/grid-template-columns:\s*repeat\(5,/);for(const marker of ['approved-mobile','x19h-home-registration','x19h-day-add','x19hRegistrationView'])assert.ok(presentation.includes(marker),marker);for(const marker of ['XSTORE-019H VISUAL2 OWNER-APPROVED MOBILE FIDELITY','grid-template-columns:1fr!important','availability-calendar-slot{display:none!important','employee-v2-primary-nav__item[data-active="true"]','#availabilityWeekLabel{display:inline-flex!important','x19h-preset-buttons button{min-height:44px','employee-availability-form select{min-height:44px','employee-availability-actions .m-button{width:100%;min-height:44px'])assert.ok(presentationCss.includes(marker),marker);
+ assert.match(shellCss,/grid-template-columns:\s*repeat\(5,/);for(const marker of ['owner-mockup-v3','x19h-home-registration','x19h-day-add','x19hRegistrationView','x19hPrimaryView','syncDashboardBand','compactScheduleDays'])assert.ok(presentation.includes(marker),marker);for(const marker of ['XSTORE-019H VISUAL3 OWNER-MOCKUP FIDELITY','data-x19h-primary-view="dashboard"','grid-template-columns:54px minmax(0,1fr)','employee-today-shortcuts{display:none!important','x19h-attendance-mode p{display:none!important','employee-v2-primary-nav__item[data-active="true"]'])assert.ok(presentationCss.includes(marker),marker);
 });
 
 test("XSTORE-019H employment type is management-owned read-only presentation",()=>{
@@ -50,10 +50,10 @@ test("XSTORE-019H employment type is management-owned read-only presentation",()
 });
 
 test("XSTORE-019H cache chain reaches exact Employee presentation candidate",()=>{
- assert.match(runtime,/employee-v40\.html\?ui=20261007-xstore-019h-visual2&runtime=engine/);
+ assert.match(runtime,/employee-v40\.html\?ui=20261007-xstore-019h-visual3&runtime=engine/);
  assert.match(runtime,/profile\/engine-v1\.js\?v=20261006-xstore-019h/);
- assert.match(index,/employee-runtime-v1\.html\?v=20261007-xstore-019h-visual2/);
- assert.match(app,/employee-shell\.js\?v=20261006-xstore-019h/);
+ assert.match(index,/employee-runtime-v1\.html\?v=20261007-xstore-019h-visual3/);
+ assert.match(app,/employee-shell\.js\?v=20261007-xstore-019h-visual3/);
 });
 test("XSTORE-019H regression flow returns to published schedule before swap/give actions",()=>{
  const first=secondaryBrowser.indexOf('ui2_008_availability_"+width+"_existing_values_and_context');

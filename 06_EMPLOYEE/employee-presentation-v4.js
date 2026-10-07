@@ -12,9 +12,14 @@ function setHeader(title,sub){const h=byId('headerPageTitle'),s=byId('pageSub');
 function syncHeader(){
  const schedule=byId('view-schedule'),panel=byId('weeklyRegistrationPanel'),open=!!panel?.classList.contains('open');
  document.body.dataset.x19hRegistrationView=open?'1':'0';
- if(!schedule?.classList.contains('active'))return;
- if(open)setHeader('Đăng ký lịch tuần','Chọn ngày và giờ bạn có thể làm');
- else setHeader('Lịch của tôi','Lịch làm chính thức đã được phát hành');
+ const active=document.querySelector('.page-view.active[id^="view-"]');
+ let primary=active?.id?.replace(/^view-/,'')||'dashboard';
+ if(primary==='schedule'&&open)primary='availability';
+ document.body.dataset.x19hPrimaryView=primary;
+ if(schedule?.classList.contains('active')){
+  if(open)setHeader('Đăng ký lịch tuần','Chọn ngày và giờ bạn có thể làm');
+  else setHeader('Lịch của tôi','Lịch làm chính thức đã được phát hành');
+ }
 }
 function ensureSourceMarkers(){
  document.querySelector('#view-schedule .employee-schedule-secondary')?.setAttribute('data-x19h-source','availability');
@@ -56,7 +61,8 @@ function ensureDashboardActions(){
  if(layout&&!layout.querySelector('[data-x19h-home-registration]')){
   const card=document.createElement('section');card.className='m-card x19h-home-registration';card.dataset.x19hHomeRegistration='1';
   card.innerHTML='<div><span class="x19h-home-registration-icon" aria-hidden="true">▣</span><div><strong>Đăng ký lịch tuần</strong><span>Chọn ngày và giờ bạn có thể làm cho tuần kế tiếp.</span></div></div><button type="button" class="m-button m-button--primary" data-x19h-route="availability">Đăng ký ngay →</button>';
-  layout.appendChild(card);
+  const shift=layout.querySelector('.employee-today-card--shift');
+  if(shift)shift.insertAdjacentElement('afterend',card);else layout.prepend(card);
  }
 }
 function ensureWeekListActions(){
@@ -75,8 +81,31 @@ function observeWeekList(){
  box.dataset.x19hObserved='1';new MutationObserver(()=>queueMicrotask(ensureWeekListActions)).observe(box,{childList:true,subtree:true});
  ensureWeekListActions();
 }
+function syncDashboardBand(){
+ const card=byId('view-dashboard')?.querySelector('.employee-today-card--shift');if(!card)return;
+ const text=card.querySelector('.employee-today-shift-time')?.textContent||'';
+ const m=text.match(/(\d{2}):(\d{2})/);if(!m){delete card.dataset.x19hBand;return}
+ const min=Number(m[1])*60+Number(m[2]);
+ card.dataset.x19hBand=min<720?'morning':min<1020?'afternoon':'evening';
+}
+function compactScheduleDays(){
+ const names=['T2','T3','T4','T5','T6','T7','CN'];
+ document.querySelectorAll('#view-schedule .employee-schedule-engine .day').forEach((day,i)=>{
+  const d=day.querySelector('.dow');if(!d)return;
+  if(!d.dataset.x19hFullLabel)d.dataset.x19hFullLabel=d.textContent.trim();
+  d.textContent=names[i]||d.textContent;
+  d.setAttribute('title',d.dataset.x19hFullLabel);
+ });
+}
+function observeVisualSurfaces(){
+ const dashboard=byId('view-dashboard'),schedule=byId('view-schedule');
+ const refresh=()=>{syncDashboardBand();compactScheduleDays();syncHeader()};
+ if(dashboard)new MutationObserver(refresh).observe(dashboard,{childList:true,subtree:true,characterData:true});
+ if(schedule)new MutationObserver(refresh).observe(schedule,{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-hidden']});
+ refresh();
+}
 function bind(){
- document.body.dataset.x19hEmployeePresentation='1';document.body.dataset.x19hVisual='approved-mobile';ensureSourceMarkers();ensurePresets();ensureAttendanceGuide();ensureDashboardActions();observeWeekList();syncHeader();
+ document.body.dataset.x19hEmployeePresentation='1';document.body.dataset.x19hVisual='owner-mockup-v3';ensureSourceMarkers();ensurePresets();ensureAttendanceGuide();ensureDashboardActions();observeWeekList();observeVisualSurfaces();syncHeader();
  const panel=byId('weeklyRegistrationPanel');if(panel&&!panel.dataset.x19hModeObserved){panel.dataset.x19hModeObserved='1';new MutationObserver(()=>{syncHeader();ensureWeekListActions()}).observe(panel,{attributes:true,attributeFilter:['class','aria-hidden']})}
  document.addEventListener('click',e=>{
    const preset=e.target.closest?.('[data-x19h-preset]');if(preset){e.preventDefault();applyPreset(preset.dataset.x19hPreset);return}
@@ -86,5 +115,5 @@ function bind(){
  },true);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
-window.MAGASIN_EMPLOYEE_PRESENTATION_V4=Object.freeze({version:'20261007-xstore-019h-visual2',applyPreset,syncHeader,PRESETS});
+window.MAGASIN_EMPLOYEE_PRESENTATION_V4=Object.freeze({version:'20261007-xstore-019h-visual3',applyPreset,syncHeader,PRESETS});
 })();
