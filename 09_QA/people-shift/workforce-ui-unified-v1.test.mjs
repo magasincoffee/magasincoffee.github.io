@@ -150,7 +150,7 @@ test("unified asset cache chain reaches both Manager and Employee entry points",
   "magasin-ui-v2-shell.css?v=20261001-ui-unified1",
   "magasin-ui-v2-shell.js?v=20261001-ui-unified1",
   "app-time-picker-24h.js?v=20261001-ui-unified1",
-  "engine-v1.js?v=20261005-xstore-019"
+  "engine-v1.js?v=20261007-xstore-019g-visual1"
  ])assert.ok(managerRuntime.includes(token),token);
  assert.ok(employeeRuntime.includes("employee-v40.html?ui=20261006-xstore-019h&runtime=engine"));
  assert.ok(employeeRuntime.includes("shared-core-v1.js?v=20261002-sched-ui-005"));

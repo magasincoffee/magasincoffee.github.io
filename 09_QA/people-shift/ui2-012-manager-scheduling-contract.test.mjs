@@ -103,11 +103,11 @@ test("UI2-012 responsive contract keeps seven days inside the calendar workspace
 
 test("UI2-012 presentation is shared while Owner and Manager retain the canonical XSTORE-019 writer",()=>{
   const managerV="20261005-xstore-019";
-  const managerEntryV="20261005-xstore-019";
-  assert.ok(runtime.includes("engine-v1.js?v="+managerV));
+  const managerEntryV="20261007-xstore-019g-visual1";
+  assert.ok(runtime.includes("engine-v1.js?v="+managerEntryV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
-  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
-  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerV+"#workforce"));
+  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
+  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerEntryV+"#workforce"));
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261005-xstore-019)/);
   assert.ok(ownerRuntime.includes("/05_MANAGER/Workforce/draft-publish-v1.js?v="+managerV));
   assert.match(ownerRuntime,/\/05_MANAGER\/Workforce\/manager-scheduling-ui2-v1\.js\?v=20261006-xstore-019e/);

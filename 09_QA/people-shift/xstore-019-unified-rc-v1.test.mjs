@@ -19,7 +19,8 @@ const coldReload=read("09_QA/ui2-cross-role/ui2-017-cold-reload-closure-browser.
 
 const RC="20261005-xstore-019";
 const X19G_AUTO="20261006-xstore-019g-r1";
-const X19G_FIVE="20261006-xstore-019g-r2";
+const X19G_FIVE="20261007-xstore-019g-r3";
+const MANAGER_VISUAL="20261007-xstore-019g-visual1";
 const RC_QUALIFICATION="POST_UI2_015_REPAIR_3";
 const forbiddenWriters=[
   "replace_schedule_generation_assignments",
@@ -29,9 +30,9 @@ const forbiddenWriters=[
 ];
 
 test("XSTORE-019 keeps canonical RC entrypoints while XSTORE-019G uses bounded task cache-busts",()=>{
-  assert.ok(managerEntry.includes("/05_MANAGER/runtime/manager-runtime-v1.html?v="+RC));
-  assert.ok(managerWorkforceEntry.includes("/05_MANAGER/runtime/manager-runtime-v1.html?v="+RC));
-  assert.ok(managerRuntime.includes("/05_MANAGER/Workforce/engine-v1.js?v="+RC));
+  assert.ok(managerEntry.includes("/05_MANAGER/runtime/manager-runtime-v1.html?v="+MANAGER_VISUAL));
+  assert.ok(managerWorkforceEntry.includes("/05_MANAGER/runtime/manager-runtime-v1.html?v="+MANAGER_VISUAL));
+  assert.ok(managerRuntime.includes("/05_MANAGER/Workforce/engine-v1.js?v="+MANAGER_VISUAL));
   for(const asset of [
     "review-v1.js?v="+RC,
     "draft-publish-v1.js?v="+RC,
@@ -44,7 +45,7 @@ test("XSTORE-019 keeps canonical RC entrypoints while XSTORE-019G uses bounded t
   assert.ok(ownerEntry.includes("/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v="+RC));
   assert.ok(ownerRuntime.includes("/05_MANAGER/Workforce/draft-publish-v1.js?v="+RC));
   assert.ok(ownerRuntime.includes("/04_OWNER/Workforce/owner-scheduling-overview-v1.js?v="+RC));
-  assert.ok(coldReload.includes("/05_MANAGER/runtime/manager-runtime-v1.html?v="+RC));
+  assert.ok(coldReload.includes("/05_MANAGER/runtime/manager-runtime-v1.html?v="+MANAGER_VISUAL));
   assert.ok(coldReload.includes("/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v="+RC));
 });
 
