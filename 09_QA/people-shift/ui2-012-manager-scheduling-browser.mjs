@@ -66,6 +66,8 @@ for(const width of [1440,1024,768,430,390,360]){
     boardScroll:wrap?.scrollWidth||0,boardClient:wrap?.clientWidth||0,
     boardScrollHeight:wrap?.scrollHeight||0,boardClientHeight:wrap?.clientHeight||0,
     boardColumns:editor?.querySelector(".msd-board")?getComputedStyle(editor.querySelector(".msd-board")).gridTemplateColumns.split(" ").filter(Boolean).length:0,
+    visibleDays:[...editor?.querySelectorAll(".msd-day")||[]].filter(x=>getComputedStyle(x).display!=="none").length,
+    dayNavVisible:!!editor?.querySelector(".x19g-command-day-nav")&&getComputedStyle(editor.querySelector(".x19g-command-day-nav")).display!=="none",
     dayTitlePosition:editor?.querySelector(".msd-day-title")?getComputedStyle(editor.querySelector(".msd-day-title")).position:"",
     dayCount:editor?.querySelectorAll(".msd-day").length||0,
     timelineDays:editor?.querySelectorAll(".msd-day-timeline").length||0,
@@ -81,8 +83,8 @@ for(const width of [1440,1024,768,430,390,360]){
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
    if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||!metric.resizeFallback||metric.dayCount!==7||metric.timelineDays!==7||metric.slotCount<238||!metric.candidateTrigger||!metric.drawerHidden||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
-   if(expected<=430&&(metric.boardScrollHeight<=metric.boardClientHeight||metric.dayTitlePosition!=="sticky"))throw new Error("phone calendar must keep all seven days in one calendar workspace and own internal time scrolling: "+JSON.stringify(metric));
-   if((expected===768||expected===1024)&&(metric.boardColumns!==7||metric.boardScrollHeight<=metric.boardClientHeight))throw new Error("tablet calendar must keep seven days and own internal time scrolling: "+JSON.stringify(metric));
+   if(expected<=900&&(metric.visibleDays!==1||!metric.dayNavVisible||metric.boardScroll>metric.boardClient+1))throw new Error("narrow calendar must use one controlled day window without horizontal overflow: "+JSON.stringify(metric));
+   if(expected===1024&&(metric.boardColumns!==7||metric.boardScroll>metric.boardClient+1))throw new Error("desktop-width calendar should fit seven days without horizontal overflow: "+JSON.stringify(metric));
    if(expected===1440&&(metric.boardColumns!==7||metric.boardScroll>metric.boardClient+1))throw new Error("desktop calendar should fit seven days: "+JSON.stringify(metric));
    return JSON.stringify(metric);
   },width);
