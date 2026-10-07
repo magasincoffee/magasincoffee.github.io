@@ -19,6 +19,11 @@ const publishableKey = 'sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx';
 const allowedActiveRoute = /\/(?:04_OWNER|05_MANAGER|06_EMPLOYEE|nhap-hang)(?:\/|$)/;
 
 async function resolveEmail(loginName) {
+  const normalized = String(loginName || '').trim();
+  if (normalized.includes('@')) {
+    assert.match(normalized, /@/, 'ACTIVE credential email must be an email address');
+    return normalized.toLowerCase();
+  }
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/resolve_login_email`, {
     method: 'POST',
     headers: {
@@ -26,7 +31,7 @@ async function resolveEmail(loginName) {
       Authorization: `Bearer ${publishableKey}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ p_username: loginName })
+    body: JSON.stringify({ p_username: normalized })
   });
   assert.equal(response.status, 200, 'username resolver must return HTTP 200');
   const value = await response.json();

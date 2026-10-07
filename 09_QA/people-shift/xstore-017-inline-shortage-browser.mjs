@@ -55,7 +55,7 @@ await check("xstore_017_server_shortage_is_colocated_in_exact_day_cell",async()=
  const text=(await card.innerText()).replace(/\s+/g," ");
  if(!text.includes("Thiếu 1 người")||!text.includes("06:00–12:00")||!text.includes("+ Bổ sung người"))throw new Error(text);
  const style=await card.evaluate(el=>({background:getComputedStyle(el).backgroundColor,borderLeft:getComputedStyle(el).borderLeftColor,role:el.getAttribute("role"),label:el.getAttribute("aria-label"),iconHidden:el.querySelector(".msd-shortage-icon")?.getAttribute("aria-hidden"),inline:!!el.closest(".msd-slot-grid")}));
- if(style.background!=="rgb(255, 240, 240)"||style.borderLeft!=="rgb(239, 68, 68)"||style.role!=="status"||!String(style.label).includes("Thiếu nhân sự")||style.iconHidden!=="true"||!style.inline)throw new Error(JSON.stringify(style));
+ if(style.background!=="rgb(238, 242, 255)"||style.borderLeft!=="rgb(99, 102, 241)"||style.role!=="status"||!String(style.label).includes("Thiếu nhân sự")||style.iconHidden!=="true"||!style.inline)throw new Error(JSON.stringify(style));
  return JSON.stringify({text,style});
 });
 
