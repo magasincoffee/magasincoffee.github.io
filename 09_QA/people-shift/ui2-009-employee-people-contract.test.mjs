@@ -96,7 +96,7 @@ test("UI2-009 direct route/back/reload authority stays delegated to the existing
   assert.match(runtime,/E\.attendance\?\.refresh\?\.\(\)/);
   assert.match(runtime,/E\.profileProjection\?\.refresh\?\.\(\)/);
   assert.match(runtime,/E\.payrollSelfCheck\?\.refresh\?\.\(\)/);
-  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h)&runtime=engine/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual2)&runtime=engine/);
 });
 
 console.log("UI2_009_EMPLOYEE_PEOPLE_CONTRACT=PASS");

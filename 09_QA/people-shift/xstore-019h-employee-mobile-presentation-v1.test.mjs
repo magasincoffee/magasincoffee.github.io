@@ -6,6 +6,7 @@ const shell=read("02_CORE/ui/magasin-ui-v2-employee-shell.js");
 const shellCss=read("02_CORE/ui/magasin-ui-v2-employee-shell.css");
 const app=read("06_EMPLOYEE/app/employee-v40.html");
 const presentation=read("06_EMPLOYEE/employee-presentation-v4.js");
+const presentationCss=read("02_CORE/ui/magasin-ui-v2-employee-presentation-v4.css");
 const profile=read("06_EMPLOYEE/profile/engine-v1.js");
 const runtime=read("06_EMPLOYEE/runtime/employee-runtime-v1.html");
 const index=read("06_EMPLOYEE/index.html");
@@ -25,8 +26,8 @@ test("XSTORE-019H presentation remains writer-free and exact time editing stays 
  assert.doesNotThrow(()=>new Function(presentation));
  assert.doesNotMatch(presentation,/\.rpc\(|\.from\(|createClient\(|\.insert\(|\.update\(|\.delete\(/);
  for(const token of ["05:00","12:00","17:00","22:00","quickRegStart","quickRegEnd","Bạn vẫn có thể chỉnh giờ chính xác"])assert.ok(presentation.includes(token),token);
- assert.match(app,/employee-presentation-v4\.js\?v=20261006-xstore-019h/);
- assert.match(app,/magasin-ui-v2-employee-presentation-v4\.css\?v=20261006-xstore-019h/);
+ assert.match(app,/employee-presentation-v4\.js\?v=20261007-xstore-019h-visual2/);
+ assert.match(app,/magasin-ui-v2-employee-presentation-v4\.css\?v=20261007-xstore-019h-visual2/);
 });
 
 test("XSTORE-019H visually separates Availability, published schedule and attendance paths",()=>{
@@ -35,7 +36,7 @@ test("XSTORE-019H visually separates Availability, published schedule and attend
  assert.match(presentation,/Theo lịch đã phát hành/);
  assert.match(presentation,/Ngoài lịch phát hành/);
  assert.match(presentation,/quản lý xác nhận/);
- assert.match(shellCss,/grid-template-columns:\s*repeat\(5,/);
+ assert.match(shellCss,/grid-template-columns:\s*repeat\(5,/);for(const marker of ['approved-mobile','x19h-home-registration','x19h-day-add','x19hRegistrationView'])assert.ok(presentation.includes(marker),marker);for(const marker of ['XSTORE-019H VISUAL2 OWNER-APPROVED MOBILE FIDELITY','grid-template-columns:1fr!important','availability-calendar-slot{display:none!important','employee-v2-primary-nav__item[data-active="true"]'])assert.ok(presentationCss.includes(marker),marker);
 });
 
 test("XSTORE-019H employment type is management-owned read-only presentation",()=>{
@@ -47,9 +48,9 @@ test("XSTORE-019H employment type is management-owned read-only presentation",()
 });
 
 test("XSTORE-019H cache chain reaches exact Employee presentation candidate",()=>{
- assert.match(runtime,/employee-v40\.html\?ui=20261006-xstore-019h&runtime=engine/);
- assert.match(runtime,/profile\/engine-v1\.js\?v=20261006-xstore-019h/);
- assert.match(index,/employee-runtime-v1\.html\?v=20261006-xstore-019h/);
- assert.match(app,/employee-shell\.js\?v=20261006-xstore-019h/);
+ assert.match(runtime,/employee-v40\.html\?ui=20261007-xstore-019h-visual2&runtime=engine/);
+ assert.match(runtime,/profile\/engine-v1\.js\?v=20261007-xstore-019h-visual2/);
+ assert.match(index,/employee-runtime-v1\.html\?v=20261007-xstore-019h-visual2/);
+ assert.match(app,/employee-shell\.js\?v=20261007-xstore-019h-visual2/);
 });
 console.log("XSTORE_019H_EMPLOYEE_MOBILE_PRESENTATION_STATIC=PASS");

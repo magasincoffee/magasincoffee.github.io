@@ -2,17 +2,18 @@
 if(window.__MAGASIN_EMPLOYEE_PRESENTATION_V4__)return;
 window.__MAGASIN_EMPLOYEE_PRESENTATION_V4__=true;
 const PRESETS=Object.freeze({
- morning:{label:'Sáng',start:'05:00',end:'12:00'},
- afternoon:{label:'Chiều',start:'12:00',end:'17:00'},
- evening:{label:'Tối',start:'17:00',end:'22:00'},
+ morning:{label:'Ca sáng',start:'05:00',end:'12:00'},
+ afternoon:{label:'Ca chiều',start:'12:00',end:'17:00'},
+ evening:{label:'Ca tối',start:'17:00',end:'22:00'},
  all:{label:'Cả ngày',start:'05:00',end:'22:00'}
 });
 const byId=id=>document.getElementById(id);
 function setHeader(title,sub){const h=byId('headerPageTitle'),s=byId('pageSub');if(h)h.textContent=title;if(s)s.textContent=sub}
 function syncHeader(){
- const schedule=byId('view-schedule'),panel=byId('weeklyRegistrationPanel');
+ const schedule=byId('view-schedule'),panel=byId('weeklyRegistrationPanel'),open=!!panel?.classList.contains('open');
+ document.body.dataset.x19hRegistrationView=open?'1':'0';
  if(!schedule?.classList.contains('active'))return;
- if(panel?.classList.contains('open'))setHeader('Đăng ký lịch làm','Chọn chính xác ngày và giờ có thể làm');
+ if(open)setHeader('Đăng ký lịch tuần','Chọn ngày và giờ bạn có thể làm');
  else setHeader('Lịch của tôi','Lịch làm chính thức đã được phát hành');
 }
 function ensureSourceMarkers(){
@@ -38,14 +39,52 @@ function ensureAttendanceGuide(){
  box.innerHTML='<article class="x19h-attendance-mode" data-x19h-attendance-path="published"><span class="x19h-mode-badge">Theo lịch đã phát hành</span><strong>Chấm công ca đã được xếp</strong><p>Chọn ca chính thức và nhập giờ bắt đầu/kết thúc thực tế. Luồng hiện có tiếp tục xử lý theo authority chấm công canonical.</p></article><article class="x19h-attendance-mode" data-x19h-attendance-path="outside"><span class="x19h-mode-badge warning">Ngoài lịch phát hành</span><strong>Cần quản lý xác nhận</strong><p>Nếu bạn làm ngoài lịch đã phát hành, đây là trường hợp riêng và phải được quản lý xác nhận; màn hình này không tự biến thời gian ngoài lịch thành ca chính thức.</p></article>';
  view.prepend(box);
 }
+function routePrimary(key){
+ const b=document.querySelector('[data-employee-primary-view="'+key+'"]');
+ if(b){b.click();return true}
+ if(key==='availability'){globalThis.parent?.MAGASIN_EMPLOYEE?.availability?.open?.();return true}
+ return false;
+}
+function ensureDashboardActions(){
+ const shift=byId('view-dashboard')?.querySelector('.employee-today-card--shift');
+ if(shift&&!shift.querySelector('[data-x19h-home-shift-actions]')){
+  const a=document.createElement('div');a.className='x19h-home-shift-actions';a.dataset.x19hHomeShiftActions='1';
+  a.innerHTML='<button type="button" class="m-button m-button--primary" data-x19h-route="attendance">◷ Chấm công vào ca</button><button type="button" class="m-button m-button--secondary" data-x19h-route="schedule">▦ Xem lịch tuần</button>';
+  shift.appendChild(a);
+ }
+ const layout=byId('view-dashboard')?.querySelector('.employee-today-layout');
+ if(layout&&!layout.querySelector('[data-x19h-home-registration]')){
+  const card=document.createElement('section');card.className='m-card x19h-home-registration';card.dataset.x19hHomeRegistration='1';
+  card.innerHTML='<div><span class="x19h-home-registration-icon" aria-hidden="true">▣</span><div><strong>Đăng ký lịch tuần</strong><span>Chọn ngày và giờ bạn có thể làm cho tuần kế tiếp.</span></div></div><button type="button" class="m-button m-button--primary" data-x19h-route="availability">Đăng ký ngay →</button>';
+  layout.appendChild(card);
+ }
+}
+function ensureWeekListActions(){
+ const panel=byId('weeklyRegistrationPanel');if(!panel)return;
+ panel.querySelectorAll('.availability-calendar-day').forEach(day=>{
+  const header=day.querySelector(':scope > header'),date=day.dataset.avDay||'';
+  if(header&&!header.querySelector('[data-x19h-day-add]')){
+   const b=document.createElement('button');b.type='button';b.className='x19h-day-add';b.dataset.x19hDayAdd=date;b.setAttribute('aria-label','Thêm giờ cho '+(header.textContent||date));b.textContent='+';
+   header.appendChild(b);
+  }
+  day.dataset.x19hHasRanges=day.querySelector('.availability-calendar-card')?'1':'0';
+ });
+}
+function observeWeekList(){
+ const box=byId('weeklyRegistrationPanel')?.querySelector('.week-summary');if(!box||box.dataset.x19hObserved)return;
+ box.dataset.x19hObserved='1';new MutationObserver(()=>queueMicrotask(ensureWeekListActions)).observe(box,{childList:true,subtree:true});
+ ensureWeekListActions();
+}
 function bind(){
- document.body.dataset.x19hEmployeePresentation='1';ensureSourceMarkers();ensurePresets();ensureAttendanceGuide();syncHeader();
- const panel=byId('weeklyRegistrationPanel');if(panel&&!panel.dataset.x19hObserved){panel.dataset.x19hObserved='1';new MutationObserver(syncHeader).observe(panel,{attributes:true,attributeFilter:['class','aria-hidden']})}
+ document.body.dataset.x19hEmployeePresentation='1';document.body.dataset.x19hVisual='approved-mobile';ensureSourceMarkers();ensurePresets();ensureAttendanceGuide();ensureDashboardActions();observeWeekList();syncHeader();
+ const panel=byId('weeklyRegistrationPanel');if(panel&&!panel.dataset.x19hModeObserved){panel.dataset.x19hModeObserved='1';new MutationObserver(()=>{syncHeader();ensureWeekListActions()}).observe(panel,{attributes:true,attributeFilter:['class','aria-hidden']})}
  document.addEventListener('click',e=>{
    const preset=e.target.closest?.('[data-x19h-preset]');if(preset){e.preventDefault();applyPreset(preset.dataset.x19hPreset);return}
+   const add=e.target.closest?.('[data-x19h-day-add]');if(add){e.preventDefault();const day=byId('quickRegDay');if(day){day.value=add.dataset.x19hDayAdd;day.dispatchEvent(new Event('change',{bubbles:true}))}byId('quickRegStart')?.focus?.({preventScroll:true});byId('weeklyRegistrationPanel')?.querySelector('.employee-availability-form')?.scrollIntoView?.({behavior:'smooth',block:'center'});return}
+   const route=e.target.closest?.('[data-x19h-route]');if(route){e.preventDefault();routePrimary(route.dataset.x19hRoute);return}
    if(e.target.closest?.('[data-employee-primary-view],.nav [data-view]'))setTimeout(syncHeader,0);
  },true);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
-window.MAGASIN_EMPLOYEE_PRESENTATION_V4=Object.freeze({version:'20261006-xstore-019h',applyPreset,syncHeader,PRESETS});
+window.MAGASIN_EMPLOYEE_PRESENTATION_V4=Object.freeze({version:'20261007-xstore-019h-visual2',applyPreset,syncHeader,PRESETS});
 })();
