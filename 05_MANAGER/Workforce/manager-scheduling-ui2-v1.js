@@ -53,7 +53,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msd-ui2-012 .msd-official-row{min-height:48px}
 .msd-ui2-012 button:focus-visible,.msd-ui2-012 select:focus-visible,.msd-ui2-012 input:focus-visible,.msd-ui2-012 .msd-board-wrap:focus-visible{outline:2px solid #2f6fde!important;outline-offset:2px!important}
 @media(max-width:900px){
- .msd-ui2-012 .msd-board{grid-template-columns:repeat(7,minmax(156px,1fr));min-width:1128px;width:max-content}
+ .msd-ui2-012 .msd-board{grid-template-columns:minmax(0,1fr);min-width:0;width:100%;max-width:100%}
 }
 @media(max-width:1024px){
  .msu2-context-bar{grid-template-columns:minmax(0,1fr)}
@@ -78,7 +78,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
  .msd-ui2-012 .msd-source,.msd-ui2-012 .msd-board-wrap,.msd-ui2-012 .msd-downstream{padding:12px}
  .msd-ui2-012 .msd-source-list{grid-template-columns:1fr}
  .msd-ui2-012 .msd-board-wrap{overflow:auto;scrollbar-gutter:stable;max-height:62vh}
- .msd-ui2-012 .msd-board{grid-template-columns:repeat(7,minmax(150px,1fr));min-width:1080px;width:max-content;gap:6px}
+ .msd-ui2-012 .msd-board{grid-template-columns:minmax(0,1fr);min-width:0;width:100%;max-width:100%;gap:6px}
  .msd-ui2-012 .msd-day{min-height:220px;min-width:0}
  .msd-ui2-012 .msd-day-title{position:sticky;top:0;z-index:2}
  .msd-ui2-012 .msd-time-row{grid-template-columns:1fr}
