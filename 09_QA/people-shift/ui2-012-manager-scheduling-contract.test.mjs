@@ -16,7 +16,7 @@ const rpc=s=>[...s.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 const rpcSet=s=>[...new Set(rpc(s))].sort();
 
 test("UI2-012 presentation layer is shared by Manager and Owner over the existing canonical scheduling writer",()=>{
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012|20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018|20261005-xstore-019)/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012|20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018|20261005-xstore-019|20261007-xstore-019j-workspace2)/);
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261005-xstore-019)/);
   assert.match(ui,/data-scheduling-actor="MANAGER"[\s\S]*data-scheduling-actor="OWNER"/);
   assert.match(ui,/dataset\.ui2ScheduleBoard='1'/);
@@ -103,7 +103,7 @@ test("UI2-012 responsive contract keeps seven days inside the calendar workspace
 
 test("UI2-012 presentation is shared while Owner and Manager retain the canonical XSTORE-019 writer",()=>{
   const managerV="20261005-xstore-019";
-  const managerEntryV="20261007-xstore-019j-weekfix1";
+  const managerEntryV="20261007-xstore-019j-workspace2";
   assert.ok(runtime.includes("engine-v1.js?v="+managerEntryV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerEntryV));

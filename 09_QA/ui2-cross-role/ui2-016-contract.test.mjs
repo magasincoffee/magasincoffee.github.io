@@ -58,7 +58,7 @@ test("UI2-016 shell cache chain is bumped without moving the Owner path",()=>{
     assert.doesNotMatch(owner,/20261001-ui-unified1/,p);
   }
 
-  assert.match(read("05_MANAGER/index.html"),/manager-runtime-v1\.html\?v=(?:20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017|20261005-xstore-019|20261007-xstore-019g-visual1|20261007-xstore-019g-visual3|20261007-xstore-019j-weekfix1)/);
+  assert.match(read("05_MANAGER/index.html"),/manager-runtime-v1\.html\?v=(?:20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017|20261005-xstore-019|20261007-xstore-019g-visual1|20261007-xstore-019g-visual3|20261007-xstore-019j-weekfix1|20261007-xstore-019j-workspace2)/);
   assert.match(managerRuntime,/manager-shell-v1\.html\?v=20261001-ui-unified1&host=manager/);
   assert.match(read("04_OWNER/Workforce/runtime/owner-workforce-runtime.html"),/manager-shell-v1\.html\?v=20260927-ui2-016&host=owner/);
   assert.match(read("05_MANAGER/runtime/manager-shell-v1.html"),/manager-ui-shell-v2\.js\?v=20260927-ui2-016/);

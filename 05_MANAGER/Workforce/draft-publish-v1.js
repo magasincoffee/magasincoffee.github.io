@@ -105,7 +105,7 @@ function ensurePolish(){
  const link=d.createElement('link');
  link.id='workforce-scheduling-polish-v1-css';
  link.rel='stylesheet';
- link.href='/02_CORE/ui/workforce-scheduling-polish-v1.css?v=20261001-ui-unified1';
+ link.href='/02_CORE/ui/workforce-scheduling-polish-v1.css?v=20261007-xstore-019j-workspace2';
  d.head.appendChild(link);
 }
 function status(text,type=''){const e=panel()?.querySelector('#msdStatus');if(!e)return;e.className='msd-status'+(type?' '+type:'');e.setAttribute('role',type==='error'?'alert':'status');e.setAttribute('aria-live',type==='error'?'assertive':'polite');e.textContent=text||''}
