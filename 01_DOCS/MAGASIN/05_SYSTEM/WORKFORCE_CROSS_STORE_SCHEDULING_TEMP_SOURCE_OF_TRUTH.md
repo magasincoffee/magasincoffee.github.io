@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019J DONE / PRIOR RC INVALIDATED BY OWNER UX V4 / OWNER UI IMPLEMENTATION APPROVAL REQUIRED / XSTORE-019K BLOCKED UNTIL OWNER APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / XSTORE-019G→019J VISUAL ACCEPTANCE REJECTED BY OWNER / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G READY FOR VISUAL-FIDELITY REMEDIATION / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -154,6 +154,73 @@ The legacy table `staffing_requirement_templates` demonstrates an earlier recurr
 Do **not** execute XSTORE-011 real-data acceptance using the current weekly/date-bound staffing input.
 
 Complete XSTORE-C01→C05 first. Only then may XSTORE-011 resume.
+
+## 0.4 Owner correction — 2026-10-07 — approved mockups are visual authority
+
+Owner reviewed the **actual authenticated local application** after XSTORE-019J and explicitly rejected the rendered Manager, Employee and Owner interfaces because they did **not** visually match the mockups that had already been approved.
+
+This decision **supersedes the visual-acceptance conclusions** recorded for XSTORE-019G, XSTORE-019H, XSTORE-019I and XSTORE-019J. Their previous automated QA remains historical technical evidence only; it is **not** proof of Owner UI acceptance.
+
+### Canonical visual authority files
+
+These repository images are the authoritative visual contract for the remediation:
+
+- **Manager:** `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019_OWNER_APPROVED_MANAGER.webp`
+- **Employee:** `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019_OWNER_APPROVED_EMPLOYEE.webp`
+- **Owner:** `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019_OWNER_APPROVED_OWNER.webp`
+- index/readme: `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/README.md`
+
+The repository images are compressed copies of the screenshots reaffirmed by Owner on 2026-10-07. They are **not inspiration or optional references**. Robot/chat must inspect the relevant role image before changing the corresponding role UI.
+
+### Fidelity rule
+
+Implementation must preserve the canonical business/security/data authority already locked in this SOT while matching the approved mockup as closely as practical in:
+
+- information hierarchy and section ordering;
+- navigation model;
+- card/panel composition;
+- spacing, density and alignment;
+- typography scale/weight;
+- color treatment and state emphasis;
+- icon/button placement and prominence;
+- responsive behavior;
+- desktop/mobile composition shown by the mockup;
+- role-specific mental model and primary actions.
+
+Values visible in the mockups are **illustrative UI content**, not production data authority. Do not fabricate revenue, P&L, attendance, schedule or other business truth merely to match a screenshot.
+
+If a literal visual detail conflicts with canonical security/business/data rules, preserve the canonical rule and reproduce the same visual intent without weakening authority.
+
+### Real-local review requirement
+
+A QA fixture alone cannot satisfy this gate.
+
+Before XSTORE-019J may become GREEN again:
+1. run the actual application locally from the candidate branch;
+2. open the canonical login page;
+3. authenticate through the real Supabase auth flow;
+4. route to the actual Manager / Employee / Owner application surface by role;
+5. verify the rendered role UI against the corresponding authoritative mockup;
+6. capture fresh desktop/mobile evidence from the actual local app, not only isolated QA fixtures;
+7. Owner must explicitly approve the resulting rendered UI.
+
+Automated tests must not declare visual acceptance merely because required labels, DOM nodes or route names exist.
+
+### Remediation order
+
+```text
+XSTORE-019G — Manager visual fidelity against approved Manager mockup
+→ XSTORE-019H — Employee visual fidelity against approved Employee mockup
+→ XSTORE-019I — Owner visual fidelity against approved Owner mockup
+→ XSTORE-019J — authenticated real-local cross-role visual requalification
+→ OWNER UI IMPLEMENTATION RE-APPROVAL
+→ XSTORE-019K
+```
+
+Until that re-approval:
+- XSTORE-019K and later business-data/logic wiring remain blocked;
+- PR #392 remains DRAFT / DO NOT MERGE;
+- historical XSTORE-019G→019J GREEN results must not be interpreted as current visual acceptance.
 
 ## 1. Purpose
 
@@ -353,11 +420,11 @@ Out of scope unless explicitly added later:
 | XSTORE-019D | Employee Availability calendar parity | Employee registers weekly time-only Availability directly on a calendar using the same visual/time interaction model | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019E | Owner calendar parity + responsive workspace | Owner reuses the same single-store calendar workflow; optimize desktop/mobile viewport and preserve role authority | **DONE / EXACT-HEAD GREEN** |
 | XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **DONE / HISTORICAL RC INVALIDATED BY OWNER UX V4** |
-| XSTORE-019G | Manager five-board UI implementation | Presentation-first implementation of the Owner-approved 5-board Manager workflow; no new backend authority or production wiring | **DONE / PRESENTATION-FIRST GREEN** |
-| XSTORE-019H | Employee mobile-first UI implementation | Mobile-first Employee home, flexible time registration, personal schedule, attendance and profile surfaces; presentation-first | **DONE / PRESENTATION-FIRST GREEN** |
-| XSTORE-019I | Owner strategy/P&L UI implementation | Owner home becomes strategy/revenue/cost/profit/cash-flow/forecast dashboard rather than an expanded Manager surface; presentation-first | **DONE / PRESENTATION-FIRST GREEN** |
-| XSTORE-019J | Cross-role UI-only preview qualification | Integrate G→I with fixtures/read-only data, responsive/browser QA and local/preview review target; stop before business-data wiring | **DONE / EXACT PREVIEW GREEN / OWNER APPROVAL REQUIRED** |
-| XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **BLOCKED / OWNER UI IMPLEMENTATION APPROVAL REQUIRED** |
+| XSTORE-019G | Manager five-board UI implementation | Rework the real Manager UI to match the Owner-approved Manager mockup while preserving the locked five-board workflow and authority | **READY / VISUAL-FIDELITY REMEDIATION** |
+| XSTORE-019H | Employee mobile-first UI implementation | Rework the real Employee UI to match the Owner-approved mobile mockup while preserving flexible-time and attendance semantics | **PENDING / AFTER XSTORE-019G VISUAL REMEDIATION** |
+| XSTORE-019I | Owner strategy/P&L UI implementation | Rework the real Owner dashboard to match the Owner-approved desktop/mobile strategy mockup without fabricating financial truth | **PENDING / AFTER XSTORE-019H VISUAL REMEDIATION** |
+| XSTORE-019J | Cross-role UI-only preview qualification | Requalify G→I on the authenticated real local app, compare against repository mockups, capture desktop/mobile evidence and stop for Owner approval | **PENDING / REQUALIFY AFTER XSTORE-019G→019I** |
+| XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **BLOCKED / OWNER UI IMPLEMENTATION RE-APPROVAL REQUIRED** |
 | XSTORE-019L | Employee flexible Availability + attendance wiring | Wire free start/end multi-interval Availability and published-schedule attendance semantics; outside-schedule/manual-time attendance requires Manager confirmation | **PENDING / AFTER UI GATE** |
 | XSTORE-019M | Manager five-board workflow integration | Wire Prepare→Create Draft→Edit→Check→Approve/Publish to canonical scheduling state; Check is read-only same-calendar review for one selected store | **PENDING / AFTER UI GATE** |
 | XSTORE-019N | Owner strategic data integration | Wire Owner strategic dashboard to existing authorized revenue/cost/profit/customer/store/product aggregates without turning Owner home into scheduling operations | **PENDING / AFTER UI GATE** |
@@ -396,12 +463,12 @@ XSTORE-001 DONE
 → XSTORE-019D DONE / exact-head GREEN / Employee Availability calendar
 → XSTORE-019E DONE / exact-head GREEN / Owner parity + responsive workspace
 → XSTORE-019F DONE / historical RC qualified, then invalidated by Owner UX V4 decisions on 2026-10-06
-→ XSTORE-019G DONE / presentation-first GREEN / Manager five-board UI
-→ XSTORE-019H DONE / presentation-first GREEN / Employee mobile-first UI
-→ XSTORE-019I DONE / presentation-first GREEN / Owner strategy + P&L UI
-→ XSTORE-019J DONE / exact preview GREEN / cross-role UI-only qualification
-→ OWNER UI IMPLEMENTATION REVIEW GATE / APPROVAL REQUIRED before live data/logic wiring
-→ XSTORE-019K BLOCKED UNTIL OWNER APPROVAL / FULL_TIME + PART_TIME authority and scheduling ranking
+→ XSTORE-019G READY / Manager visual-fidelity remediation against approved mockup
+→ XSTORE-019H / Employee visual-fidelity remediation against approved mobile mockup
+→ XSTORE-019I / Owner strategy-dashboard visual-fidelity remediation against approved desktop/mobile mockup
+→ XSTORE-019J / authenticated real-local cross-role visual requalification
+→ OWNER UI IMPLEMENTATION RE-APPROVAL REQUIRED
+→ XSTORE-019K BLOCKED UNTIL OWNER RE-APPROVAL / FULL_TIME + PART_TIME authority and scheduling ranking
 → XSTORE-019L / flexible Employee Availability + attendance integration
 → XSTORE-019M / Manager five-board canonical workflow integration
 → XSTORE-019N / Owner strategic data integration
@@ -411,7 +478,7 @@ XSTORE-001 DONE
 → XSTORE-011 RESUME / final live closure + TEMP SOT deletion
 ```
 
-XSTORE-019G→019J are UI-first implementation/qualification tasks and must continue automatically without Owner input under the locked UX V4 decisions below. The robot must stop after XSTORE-019J only for Owner review of the rendered UI implementation before any new live data/logic wiring. After that UI approval, XSTORE-019K→019O continue automatically unless a genuinely new business decision is required. The prior XSTORE-019F exact RC is historical evidence only and must not be merged or released.
+XSTORE-019G→019J are reopened as visual-fidelity remediation/qualification tasks under the Owner-approved mockups in §0.4. They continue in order without inventing new business rules, but XSTORE-019J must qualify the **actual authenticated local app**, not fixture-only preview surfaces. The robot must stop after XSTORE-019J for explicit Owner UI re-approval before any new live data/logic wiring. Only after that re-approval may XSTORE-019K→019O continue automatically unless a genuinely new business decision is required. The prior XSTORE-019F exact RC and prior XSTORE-019G→019J visual GREEN conclusions are historical evidence only and must not be merged/released or treated as current visual acceptance.
 
 ## 6. Current Owner boundary
 
@@ -1552,9 +1619,9 @@ Machine handoff:
 
 ```text
 MAGASIN_TASK_CONTROL_V1
-STATUS=BLOCKED
-TASK_ID=XSTORE-019K
-NEXT_TASK_ID=NONE
+STATUS=READY
+TASK_ID=NONE
+NEXT_TASK_ID=XSTORE-019G
 CHECK_AFTER_SECONDS=0
 END_MAGASIN_TASK_CONTROL_V1
 ```
@@ -2307,6 +2374,24 @@ Per the Owner-locked XSTORE-019J contract:
 - this is **not** production RC approval;
 - do not execute XSTORE-019K, XSTORE-019L, XSTORE-019M, XSTORE-019N or XSTORE-019O until this UI implementation gate is approved;
 - after explicit Owner approval, XSTORE-019K becomes the next authoritative executable task.
+
+## 6.0.27 Owner visual review correction — mockup fidelity rejection — 2026-10-07
+
+The Owner opened the **actual authenticated local application** after XSTORE-019J and found that the rendered Manager, Employee and Owner interfaces did not match the previously approved mockups.
+
+Therefore:
+- the visual acceptance statements in XSTORE-019G/H/I/J acceptance records are **SUPERSEDED**;
+- runs `37519893924`, `37519894002`, `37519893972` and related historical GREEN evidence remain valid only for their tested technical contracts;
+- they do **not** prove visual fidelity to the Owner-approved mockups;
+- XSTORE-019G is reopened as the next executable visual-remediation task;
+- XSTORE-019H and XSTORE-019I follow in order;
+- XSTORE-019J must be rerun using the authenticated real-local app and the repository mockups;
+- XSTORE-019K remains blocked until explicit Owner UI re-approval.
+
+Authoritative mockups:
+- Manager: `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019_OWNER_APPROVED_MANAGER.webp`
+- Employee: `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019_OWNER_APPROVED_EMPLOYEE.webp`
+- Owner: `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019_OWNER_APPROVED_OWNER.webp`
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
