@@ -242,5 +242,3 @@ add("diagnostics_expected_navigation_aborts","PASS",JSON.stringify({count:report
 fs.writeFileSync(path.join(OUT,"ui2-017-cold-reload-closure-report.json"),JSON.stringify(report,null,2));
 console.log("UI2_017_COLD_RELOAD_CLOSURE="+report.status);
 if(report.status!=="PASS")process.exitCode=1;
-
-[executed on device: DESKTOP-H4A16IL (6ad5bbb0-9757-406c-928d-b9e2843a655c)]
