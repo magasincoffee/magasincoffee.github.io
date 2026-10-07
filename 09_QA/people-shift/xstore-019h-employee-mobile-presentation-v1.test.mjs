@@ -36,7 +36,7 @@ test("XSTORE-019H visually separates Availability, published schedule and attend
  assert.match(presentation,/Theo lịch đã phát hành/);
  assert.match(presentation,/Ngoài lịch phát hành/);
  assert.match(presentation,/quản lý xác nhận/);
- assert.match(shellCss,/grid-template-columns:\s*repeat\(5,/);for(const marker of ['approved-mobile','x19h-home-registration','x19h-day-add','x19hRegistrationView'])assert.ok(presentation.includes(marker),marker);for(const marker of ['XSTORE-019H VISUAL2 OWNER-APPROVED MOBILE FIDELITY','grid-template-columns:1fr!important','availability-calendar-slot{display:none!important','employee-v2-primary-nav__item[data-active="true"]'])assert.ok(presentationCss.includes(marker),marker);
+ assert.match(shellCss,/grid-template-columns:\s*repeat\(5,/);for(const marker of ['approved-mobile','x19h-home-registration','x19h-day-add','x19hRegistrationView'])assert.ok(presentation.includes(marker),marker);for(const marker of ['XSTORE-019H VISUAL2 OWNER-APPROVED MOBILE FIDELITY','grid-template-columns:1fr!important','availability-calendar-slot{display:none!important','employee-v2-primary-nav__item[data-active="true"]','#availabilityWeekLabel{display:inline-flex!important','x19h-preset-buttons button{min-height:44px','employee-availability-form select{min-height:44px','employee-availability-actions .m-button{width:100%;min-height:44px'])assert.ok(presentationCss.includes(marker),marker);
 });
 
 test("XSTORE-019H employment type is management-owned read-only presentation",()=>{
