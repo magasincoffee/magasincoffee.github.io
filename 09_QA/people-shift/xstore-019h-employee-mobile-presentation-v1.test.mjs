@@ -10,6 +10,7 @@ const presentationCss=read("02_CORE/ui/magasin-ui-v2-employee-presentation-v4.cs
 const profile=read("06_EMPLOYEE/profile/engine-v1.js");
 const runtime=read("06_EMPLOYEE/runtime/employee-runtime-v1.html");
 const index=read("06_EMPLOYEE/index.html");
+const secondaryBrowser=read("09_QA/people-shift/ui2-008-employee-secondary-browser.mjs");
 
 test("XSTORE-019H primary Employee navigation is exactly Owner-locked five items",()=>{
  const block=shell.match(/const PRIMARY = Object\.freeze\(\[[\s\S]*?\n  \]\);/)?.[0]||"";
@@ -53,4 +54,15 @@ test("XSTORE-019H cache chain reaches exact Employee presentation candidate",()=
  assert.match(index,/employee-runtime-v1\.html\?v=20261007-xstore-019h-visual2/);
  assert.match(app,/employee-shell\.js\?v=20261006-xstore-019h/);
 });
+test("XSTORE-019H regression flow returns to published schedule before swap/give actions",()=>{
+ const first=secondaryBrowser.indexOf('ui2_008_availability_"+width+"_existing_values_and_context');
+ const firstSchedule=secondaryBrowser.indexOf('data-employee-primary-view="schedule"',first);
+ const firstSwap=secondaryBrowser.indexOf('data-schedule-action="swap"',first);
+ assert.ok(first>=0&&firstSchedule>first&&firstSwap>firstSchedule,"responsive flow must leave Availability before swap");
+ const matrix=secondaryBrowser.indexOf('ui2_008_swap_give_state_matrix_delegation_error_retry_submit');
+ const matrixSchedule=secondaryBrowser.indexOf('data-employee-primary-view="schedule"',matrix);
+ const matrixSwap=secondaryBrowser.indexOf('data-schedule-action="swap"',matrix);
+ assert.ok(matrix>=0&&matrixSchedule>matrix&&matrixSwap>matrixSchedule,"390px state matrix must leave Availability before swap/give");
+});
+
 console.log("XSTORE_019H_EMPLOYEE_MOBILE_PRESENTATION_STATIC=PASS");
