@@ -181,10 +181,11 @@ for(const width of widths){
   await secondaryPage.goto(BASE+"/09_QA/people-shift/ui2-008-employee-secondary-fixture.html",{waitUntil:"networkidle",timeout:20000});
   const employee=secondaryPage.frameLocator("#employeeApp");
   await employee.locator("#view-schedule.active [data-schedule-id='sch-fri-am']").waitFor({timeout:10000});
-  await employee.locator(".employee-schedule-secondary [data-schedule-availability]").click();
+  await employee.locator('[data-employee-primary-view="availability"]').click();
   await employee.locator("#weeklyRegistrationPanel.open").waitFor({state:"visible",timeout:10000});
   const availabilityShot=path.join(ACCEPT,`availability-${width}.png`);await employee.locator("#view-schedule").screenshot({path:availabilityShot});report.screenshots.push(availabilityShot);
-  await employee.locator("#weeklyRegistrationPanel .employee-secondary-head button").click();
+  await employee.locator('[data-employee-primary-view="schedule"]').click();
+  await employee.locator("#view-schedule.active").waitFor({timeout:10000});
   await employee.locator('[data-schedule-id="sch-fri-am"] [data-schedule-action="swap"]').click();
   await employee.locator('#view-swap[data-swap-mode="swap"][data-swap-eligibility="eligible"]').waitFor({timeout:10000});
   const swapShot=path.join(ACCEPT,`swap-${width}.png`);await employee.locator("#view-swap").screenshot({path:swapShot});report.screenshots.push(swapShot);

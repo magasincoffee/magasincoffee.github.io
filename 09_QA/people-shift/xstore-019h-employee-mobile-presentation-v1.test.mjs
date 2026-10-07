@@ -11,6 +11,7 @@ const profile=read("06_EMPLOYEE/profile/engine-v1.js");
 const runtime=read("06_EMPLOYEE/runtime/employee-runtime-v1.html");
 const index=read("06_EMPLOYEE/index.html");
 const secondaryBrowser=read("09_QA/people-shift/ui2-008-employee-secondary-browser.mjs");
+const phoneAcceptance=read("09_QA/people-shift/ui2-010-employee-phone-acceptance.mjs");
 
 test("XSTORE-019H primary Employee navigation is exactly Owner-locked five items",()=>{
  const block=shell.match(/const PRIMARY = Object\.freeze\(\[[\s\S]*?\n  \]\);/)?.[0]||"";
@@ -63,6 +64,12 @@ test("XSTORE-019H regression flow returns to published schedule before swap/give
  const matrixSchedule=secondaryBrowser.indexOf('data-employee-primary-view="schedule"',matrix);
  const matrixSwap=secondaryBrowser.indexOf('data-schedule-action="swap"',matrix);
  assert.ok(matrix>=0&&matrixSchedule>matrix&&matrixSwap>matrixSchedule,"390px state matrix must leave Availability before swap/give");
+});
+
+test("XSTORE-019H phone acceptance uses canonical primary navigation for Availability",()=>{
+ assert.match(phoneAcceptance,/data-employee-primary-view="availability"/);
+ assert.match(phoneAcceptance,/data-employee-primary-view="schedule"/);
+ assert.doesNotMatch(phoneAcceptance,/employee-schedule-secondary \[data-schedule-availability\]/);
 });
 
 console.log("XSTORE_019H_EMPLOYEE_MOBILE_PRESENTATION_STATIC=PASS");
