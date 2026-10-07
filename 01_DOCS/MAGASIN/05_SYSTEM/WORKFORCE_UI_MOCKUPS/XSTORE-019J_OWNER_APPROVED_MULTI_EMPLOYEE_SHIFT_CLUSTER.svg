@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1774" height="887" viewBox="0 0 1774 887">
+<style>
+text{font-family:Arial,Helvetica,sans-serif;fill:#172033}.muted{fill:#667085}.day{fill:#f8fafc;stroke:#d9e2ec}.grid{stroke:#e8edf3;stroke-width:1}.cluster{fill:#fff8db;stroke:#f2bf46;stroke-width:1.4}.single{fill:#fff0f2;stroke:#f5a1ad;stroke-width:1.4}.head{font-size:15px;font-weight:700}.small{font-size:12px}.tiny{font-size:10px}.name{font-size:12px;font-weight:600}.badgeft{fill:#dff7e8;stroke:#83d3a4}.badgept{fill:#ffe4ec;stroke:#ef9eb7}.pill{fill:#eef5ff}.blue{fill:#2563eb}.divider{stroke:#ecdca6}
+</style>
+<rect width="1774" height="887" fill="#fff"/>
+<rect x="22" y="24" width="28" height="28" rx="9" class="pill"/><text x="36" y="43" text-anchor="middle" class="head blue">4</text>
+<text x="62" y="45" font-size="20" font-weight="700">Kiểm tra</text>
+<text x="62" y="69" class="small muted">Xem lại cùng lịch tuần ở chế độ chỉ đọc.</text>
+<rect x="20" y="91" width="1734" height="760" rx="14" fill="#fff" stroke="#dce4ec"/>
+<text x="34" y="120" class="small muted">Cùng lịch tuần và giờ ca thực tế như Bước 3.</text>
+<text x="34" y="154" class="head muted">LỊCH NHÁP ĐANG CHỈNH</text>
+<text x="34" y="184" font-size="18" font-weight="700">Lịch tuần · Thứ Hai → Chủ Nhật</text>
+<text x="34" y="214" class="small muted">Nhiều nhân viên cùng/overlap khung giờ được gom thành một Shift Cluster. Không có scrollbar trong card.</text>
+<rect x="1650" y="104" width="82" height="30" rx="15" class="pill"/><text x="1691" y="124" text-anchor="middle" class="small blue" font-weight="700">CHỈ ĐỌC</text>
+<g id="days">
+<rect x="32" y="240" width="236" height="585" rx="8" class="day"/><rect x="276" y="240" width="236" height="585" rx="8" class="day"/><rect x="520" y="240" width="236" height="585" rx="8" class="day"/><rect x="764" y="240" width="236" height="585" rx="8" class="day"/><rect x="1008" y="240" width="236" height="585" rx="8" class="day"/><rect x="1252" y="240" width="236" height="585" rx="8" class="day"/><rect x="1496" y="240" width="236" height="585" rx="8" class="day"/>
+</g>
+<g class="head"><text x="44" y="270">T2</text><text x="288" y="270">T3</text><text x="532" y="270">T4</text><text x="776" y="270">T5</text><text x="1020" y="270">T6</text><text x="1264" y="270">T7</text><text x="1508" y="270">CN</text></g>
+<g class="small muted"><text x="220" y="270">12/10</text><text x="464" y="270">13/10</text><text x="708" y="270">14/10</text><text x="952" y="270">15/10</text><text x="1196" y="270">16/10</text><text x="1440" y="270">17/10</text><text x="1684" y="270">18/10</text></g>
+<g class="tiny muted">
+<text x="40" y="310">05:00</text><text x="40" y="370">06:00</text><text x="40" y="430">07:00</text><text x="40" y="490">08:00</text><text x="40" y="550">09:00</text><text x="40" y="610">10:00</text><text x="40" y="670">11:00</text><text x="40" y="730">12:00</text>
+<text x="284" y="310">05:00</text><text x="284" y="370">06:00</text><text x="284" y="430">07:00</text><text x="284" y="490">08:00</text><text x="284" y="550">09:00</text><text x="284" y="610">10:00</text><text x="284" y="670">11:00</text><text x="284" y="730">12:00</text>
+<text x="528" y="310">05:00</text><text x="528" y="370">06:00</text><text x="528" y="430">07:00</text><text x="528" y="490">08:00</text><text x="528" y="550">09:00</text><text x="528" y="610">10:00</text><text x="528" y="670">11:00</text><text x="528" y="730">12:00</text>
+<text x="772" y="310">05:00</text><text x="772" y="370">06:00</text><text x="772" y="430">07:00</text><text x="772" y="490">08:00</text><text x="772" y="550">09:00</text><text x="772" y="610">10:00</text><text x="772" y="670">11:00</text><text x="772" y="730">12:00</text>
+<text x="1016" y="310">05:00</text><text x="1016" y="370">06:00</text><text x="1016" y="430">07:00</text><text x="1016" y="490">08:00</text><text x="1016" y="550">09:00</text><text x="1016" y="610">10:00</text><text x="1016" y="670">11:00</text><text x="1016" y="730">12:00</text>
+<text x="1260" y="310">05:00</text><text x="1260" y="370">06:00</text><text x="1260" y="430">07:00</text><text x="1260" y="490">08:00</text><text x="1260" y="550">09:00</text><text x="1260" y="610">10:00</text><text x="1260" y="670">11:00</text><text x="1260" y="730">12:00</text>
+<text x="1504" y="310">05:00</text><text x="1504" y="370">06:00</text><text x="1504" y="430">07:00</text><text x="1504" y="490">08:00</text><text x="1504" y="550">09:00</text><text x="1504" y="610">10:00</text><text x="1504" y="670">11:00</text><text x="1504" y="730">12:00</text>
+</g>
+<!-- T3 cluster: 3 people -->
+<rect x="324" y="360" width="176" height="230" rx="10" class="cluster"/><text x="338" y="384" class="head">06:00–10:00</text><text x="486" y="384" text-anchor="end" class="small" font-weight="700">3 người</text>
+<line x1="336" y1="397" x2="488" y2="397" class="divider"/>
+<text x="338" y="426" class="name">Nguyễn Thị Kim Uyên</text><rect x="452" y="408" width="30" height="20" rx="7" class="badgeft"/><text x="467" y="422" text-anchor="middle" class="tiny">FT</text>
+<text x="338" y="472" class="name">Nguyễn Thùy Trang</text><rect x="452" y="454" width="30" height="20" rx="7" class="badgeft"/><text x="467" y="468" text-anchor="middle" class="tiny">FT</text>
+<text x="338" y="518" class="name">Đỗ Ngọc Thảo</text><rect x="452" y="500" width="30" height="20" rx="7" class="badgept"/><text x="467" y="514" text-anchor="middle" class="tiny">PT</text>
+<!-- T4 larger cluster with +N -->
+<rect x="568" y="360" width="176" height="310" rx="10" class="cluster"/><text x="582" y="384" class="head">06:00–12:00</text><text x="730" y="384" text-anchor="end" class="small" font-weight="700">5 người</text>
+<line x1="580" y1="397" x2="732" y2="397" class="divider"/>
+<text x="582" y="426" class="name">Nguyễn Thị Kim Uyên</text><rect x="696" y="408" width="30" height="20" rx="7" class="badgeft"/><text x="711" y="422" text-anchor="middle" class="tiny">FT</text>
+<text x="582" y="472" class="name">Nguyễn Thùy Trang</text><rect x="696" y="454" width="30" height="20" rx="7" class="badgeft"/><text x="711" y="468" text-anchor="middle" class="tiny">FT</text>
+<text x="582" y="518" class="name">Trần Vương Bảo Ngọc</text><rect x="696" y="500" width="30" height="20" rx="7" class="badgept"/><text x="711" y="514" text-anchor="middle" class="tiny">PT</text>
+<text x="582" y="560" class="small blue" font-weight="700">+2 nhân viên</text>
+<!-- T5 cluster: 2 people -->
+<rect x="812" y="360" width="176" height="250" rx="10" class="cluster"/><text x="826" y="384" class="head">06:00–12:00</text><text x="974" y="384" text-anchor="end" class="small" font-weight="700">2 người</text>
+<line x1="824" y1="397" x2="976" y2="397" class="divider"/>
+<text x="826" y="426" class="name">Nguyễn Thùy Trang</text><rect x="940" y="408" width="30" height="20" rx="7" class="badgeft"/><text x="955" y="422" text-anchor="middle" class="tiny">FT</text>
+<text x="826" y="472" class="name">Trần Vương Bảo Ngọc</text><rect x="940" y="454" width="30" height="20" rx="7" class="badgept"/><text x="955" y="468" text-anchor="middle" class="tiny">PT</text>
+<!-- CN cluster -->
+<rect x="1544" y="360" width="176" height="250" rx="10" class="cluster"/><text x="1558" y="384" class="head">06:00–12:00</text><text x="1706" y="384" text-anchor="end" class="small" font-weight="700">3 người</text>
+<line x1="1556" y1="397" x2="1708" y2="397" class="divider"/>
+<text x="1558" y="426" class="name">Nguyễn Thị Kim Uyên</text><text x="1558" y="472" class="name">Nguyễn Thùy Trang</text><text x="1558" y="518" class="name">Đỗ Ngọc Thảo</text>
+<!-- single examples -->
+<rect x="80" y="720" width="176" height="90" rx="10" class="single"/><text x="94" y="745" class="head">12:00–14:00</text><text x="242" y="745" text-anchor="end" class="small" font-weight="700">1 người</text><text x="94" y="780" class="name">Nguyễn Thùy Trang</text>
+<rect x="812" y="720" width="176" height="90" rx="10" class="single"/><text x="826" y="745" class="head">12:00–14:00</text><text x="974" y="745" text-anchor="end" class="small" font-weight="700">1 người</text><text x="826" y="780" class="name">Trần Vương Bảo Ngọc</text>
+</svg>
