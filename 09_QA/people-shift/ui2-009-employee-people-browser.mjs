@@ -31,12 +31,14 @@ async function surfaceMetrics(f,viewSelector,focusSelector,width){
 function validateMetrics(m){if(m.viewport!==m.expectedWidth||m.scrollWidth>m.clientWidth+1||m.minTarget<43.5||m.focusOutline==='none'||m.collision)throw new Error(JSON.stringify(m));return JSON.stringify(m)}
 
 async function openSecondaryPayroll(f){
-  const menu=f.locator('.header-menu');
-  await menu.click();
-  const link=f.locator('.drawer .nav [data-view="payroll"]');
+  const profile=f.locator('[data-employee-primary-view="profile"]');
+  await profile.click();
+  await f.locator('#view-profile.active').waitFor({timeout:10000});
+  const link=f.locator('[data-x19h-profile-actions] [data-x19h-route="payroll"]');
   await link.waitFor({state:'visible',timeout:10000});
   await link.click();
   await f.locator('#view-payroll.active').waitFor({timeout:10000});
+  if(await profile.getAttribute('aria-current')!=='page')throw new Error('payroll parent is not profile');
 }
 
 for(const width of widths){

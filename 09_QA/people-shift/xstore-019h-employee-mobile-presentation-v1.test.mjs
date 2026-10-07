@@ -44,6 +44,13 @@ test("XSTORE-019H visually separates Availability, published schedule and attend
  assert.match(shellCss,/grid-template-columns:\s*repeat\(5,/);for(const marker of ['owner-mockup-v3','x19h-home-registration','x19h-day-add','x19hRegistrationView','x19hPrimaryView','syncDashboardBand','compactScheduleDays'])assert.ok(presentation.includes(marker),marker);for(const marker of ['XSTORE-019H VISUAL3 OWNER-MOCKUP FIDELITY','data-x19h-primary-view="dashboard"','grid-template-columns:54px minmax(0,1fr)','employee-today-shortcuts{display:none!important','x19h-attendance-mode p{display:none!important','employee-v2-primary-nav__item[data-active="true"]'])assert.ok(presentationCss.includes(marker),marker);
 });
 
+test("XSTORE-019H keeps payroll reachable from visible Profile without adding a sixth primary tab",()=>{
+ assert.match(presentation,/data-x19h-profile-actions/);
+ assert.match(presentation,/data-x19h-route="payroll"/);
+ assert.match(presentation,/MAGASIN_EMPLOYEE_UI_V2_SHELL/);
+ assert.match(presentation,/Xem thông tin lương/);
+});
+
 test("XSTORE-019H employment type is management-owned read-only presentation",()=>{
  assert.match(app,/id="profileEmploymentType" readonly/);
  assert.match(app,/do quản lý thiết lập; nhân viên chỉ xem/);

@@ -58,7 +58,24 @@ function routePrimary(key){
  const b=document.querySelector('[data-employee-primary-view="'+key+'"]');
  if(b){b.click();return true}
  if(key==='availability'){globalThis.parent?.MAGASIN_EMPLOYEE?.availability?.open?.();return true}
+ if(['payroll','swap','notice'].includes(key)){
+  const shell=globalThis.MAGASIN_EMPLOYEE_UI_V2_SHELL;
+  if(shell?.activate){shell.activate(key);return true}
+  const source=document.querySelector('.drawer .nav [data-view="'+CSS.escape(key)+'"]');
+  if(source){source.click();return true}
+ }
  return false;
+}
+function ensureProfileActions(){
+ const layout=byId('view-profile')?.querySelector('.profile-layout');
+ if(!layout||layout.querySelector('[data-x19h-profile-actions]'))return;
+ const panel=document.createElement('section');
+ panel.className='panel x19h-profile-actions';
+ panel.dataset.x19hProfileActions='1';
+ panel.setAttribute('aria-label','Tiện ích nhân viên');
+ panel.innerHTML='<h2>Tiện ích nhân viên</h2><div class="muted">Xem thông tin lương của chính tài khoản này.</div><button type="button" class="m-button m-button--secondary btn secondary" style="margin-top:12px;min-height:44px" data-x19h-route="payroll">₫ Xem thông tin lương</button>';
+ const security=layout.querySelector('.security-link-panel');
+ if(security)security.insertAdjacentElement('beforebegin',panel);else layout.appendChild(panel);
 }
 function ensureDashboardActions(){
  const shift=byId('view-dashboard')?.querySelector('.employee-today-card--shift');
@@ -116,7 +133,7 @@ function observeVisualSurfaces(){
  refresh();
 }
 function bind(){
- document.body.dataset.x19hEmployeePresentation='1';document.body.dataset.x19hVisual='owner-mockup-v3';ensureSourceMarkers();ensurePresets();ensureAttendanceGuide();ensureDashboardActions();observeWeekList();observeVisualSurfaces();syncHeader();
+ document.body.dataset.x19hEmployeePresentation='1';document.body.dataset.x19hVisual='owner-mockup-v3';ensureSourceMarkers();ensurePresets();ensureAttendanceGuide();ensureDashboardActions();ensureProfileActions();observeWeekList();observeVisualSurfaces();syncHeader();
  const panel=byId('weeklyRegistrationPanel');if(panel&&!panel.dataset.x19hModeObserved){panel.dataset.x19hModeObserved='1';new MutationObserver(()=>{syncHeader();ensureWeekListActions()}).observe(panel,{attributes:true,attributeFilter:['class','aria-hidden']})}
  document.addEventListener('click',e=>{
    const preset=e.target.closest?.('[data-x19h-preset]');if(preset){e.preventDefault();applyPreset(preset.dataset.x19hPreset);return}
