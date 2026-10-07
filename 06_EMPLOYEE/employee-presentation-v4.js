@@ -22,8 +22,18 @@ function syncHeader(){
  }
 }
 function ensureSourceMarkers(){
- document.querySelector('#view-schedule .employee-schedule-secondary')?.setAttribute('data-x19h-source','availability');
- document.querySelector('#view-schedule .schedule-main-panel')?.setAttribute('data-x19h-source','published');
+ const availability=document.querySelector('#view-schedule .employee-schedule-secondary');
+ const published=document.querySelector('#view-schedule .schedule-main-panel');
+ if(availability){
+  availability.setAttribute('data-x19h-source','availability');
+  availability.setAttribute('data-x19h-source-label','Thời gian có thể làm · dữ liệu đăng ký, không phải lịch chính thức');
+  availability.setAttribute('aria-label','Thời gian có thể làm · dữ liệu đăng ký, không phải lịch chính thức');
+ }
+ if(published){
+  published.setAttribute('data-x19h-source','published');
+  published.setAttribute('data-x19h-source-label','Lịch làm chính thức đã phát hành');
+  published.setAttribute('aria-label','Lịch làm chính thức đã phát hành');
+ }
 }
 function ensurePresets(){
  const panel=byId('weeklyRegistrationPanel'),form=panel?.querySelector('.employee-availability-form');if(!panel||!form||panel.querySelector('[data-x19h-presets]'))return;

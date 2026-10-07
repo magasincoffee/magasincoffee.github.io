@@ -35,6 +35,9 @@ test("XSTORE-019H presentation remains writer-free and exact time editing stays 
 test("XSTORE-019H visually separates Availability, published schedule and attendance paths",()=>{
  assert.match(presentation,/data-x19h-source','availability'/);
  assert.match(presentation,/data-x19h-source','published'/);
+ assert.match(presentation,/data-x19h-source-label','Lịch làm chính thức đã phát hành'/);
+ assert.match(presentation,/data-x19h-source-label','Thời gian có thể làm/);
+ assert.match(presentation,/aria-label','Lịch làm chính thức đã phát hành'/);
  assert.match(presentation,/Theo lịch đã phát hành/);
  assert.match(presentation,/Ngoài lịch phát hành/);
  assert.match(presentation,/quản lý xác nhận/);

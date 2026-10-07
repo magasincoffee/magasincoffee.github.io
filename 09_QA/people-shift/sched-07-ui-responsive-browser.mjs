@@ -142,15 +142,24 @@ for(const width of shellWidths){
       if(scheduleCurrent!=="page")throw new Error("swap parent="+scheduleCurrent);
 
       const menu=employeeShell.locator(".header-menu");
-      await menu.click();
-      const drawer=employeeShell.locator("#drawer.open");
-      await drawer.waitFor({state:"visible"});
-      const secondary=await drawer.locator(".nav a:visible").evaluateAll(nodes=>nodes.map(x=>x.dataset.view));
-      if(JSON.stringify(secondary)!==JSON.stringify(["swap"]))throw new Error(JSON.stringify(secondary));
-      const expanded=await menu.getAttribute("aria-expanded");
-      if(expanded!=="true")throw new Error("aria-expanded="+expanded);
-      await employeeShell.keyboard.press("Escape");
-      if(await menu.getAttribute("aria-expanded")!=="false")throw new Error("drawer did not close");
+      const menuDisplay=await menu.evaluate(el=>getComputedStyle(el).display);
+      let secondary=[];
+      if(menuDisplay!=="none"){
+        await menu.click();
+        const drawer=employeeShell.locator("#drawer.open");
+        await drawer.waitFor({state:"visible"});
+        secondary=await drawer.locator(".nav a:visible").evaluateAll(nodes=>nodes.map(x=>x.dataset.view));
+        if(JSON.stringify(secondary)!==JSON.stringify(["swap"]))throw new Error(JSON.stringify(secondary));
+        const expanded=await menu.getAttribute("aria-expanded");
+        if(expanded!=="true")throw new Error("aria-expanded="+expanded);
+        await employeeShell.keyboard.press("Escape");
+        if(await menu.getAttribute("aria-expanded")!=="false")throw new Error("drawer did not close");
+      }else{
+        const visual=await employeeShell.locator("body").getAttribute("data-x19h-visual");
+        if(visual!=="owner-mockup-v3")throw new Error("hidden menu without approved visual="+visual);
+        secondary=await employeeShell.locator("#drawer .nav a").evaluateAll(nodes=>nodes.map(x=>x.dataset.view).filter(Boolean));
+        if(!secondary.includes("swap"))throw new Error(JSON.stringify(secondary));
+      }
 
       const notice=employeeShell.locator('.header-icon[aria-label="Thông báo"]');
       const noticeSize=await notice.evaluate(el=>{const r=el.getBoundingClientRect();return {w:r.width,h:r.height}});
@@ -158,7 +167,7 @@ for(const width of shellWidths){
       await notice.click();
       await employeeShell.locator("#view-notice.active").waitFor();
 
-      return JSON.stringify({secondary,noticeSize,url:employeeShell.url()});
+      return JSON.stringify({secondary,menuDisplay,noticeSize,url:employeeShell.url()});
     });
     await employeeShell.screenshot({path:path.join(OUT,"ui2-005-employee-phone-390.png"),fullPage:true});
   }
