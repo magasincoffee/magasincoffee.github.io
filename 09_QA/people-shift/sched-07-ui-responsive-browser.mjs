@@ -560,20 +560,23 @@ await scheduleV2Desktop.close();
 
 await page.goto(BASE+"/09_QA/people-shift/manager-workforce-canonical-fixture.html",{waitUntil:"networkidle"});
 await page.locator("#panel-publish .msd").waitFor();
-await check("sched07_manager_mobile_keeps_seven_day_board_inside_internal_scroll",async()=>{
+await check("sched07_manager_mobile_uses_controlled_day_window_without_horizontal_scroll",async()=>{
   const state=await page.evaluate(()=>{
-    const html=document.documentElement,board=document.querySelector(".msd-board"),wrap=document.querySelector(".msd-calendar-primary .msd-board-wrap"),btn=document.querySelector("#msdStart");
+    const html=document.documentElement,board=document.querySelector(".msd-board"),wrap=document.querySelector(".msd-calendar-primary .msd-board-wrap"),btn=document.querySelector("#msdStart"),nav=document.querySelector(".x19g-command-day-nav");
+    const days=[...board.querySelectorAll(":scope > .msd-day")];
     return {
       role:html.dataset.schedulingRole,
       css:!!document.getElementById("workforce-scheduling-polish-v1-css"),
       cols:getComputedStyle(board).gridTemplateColumns.split(" ").filter(Boolean).length,
       minWidth:getComputedStyle(board).minWidth,
+      visibleDays:days.filter(x=>getComputedStyle(x).display!=="none").length,
+      dayNavVisible:!!nav&&getComputedStyle(nav).display!=="none",
       buttonHeight:btn.getBoundingClientRect().height,
       wrapScroll:wrap?.scrollWidth||0,wrapClient:wrap?.clientWidth||0,
       scroll:html.scrollWidth,client:html.clientWidth
     };
   });
-  if(state.role!=="manager"||!state.css||state.cols!==7||parseFloat(state.minWidth)<1079||state.buttonHeight<43.5||state.wrapScroll<=state.wrapClient||state.scroll>state.client+2)throw new Error(JSON.stringify(state));
+  if(state.role!=="manager"||!state.css||state.cols!==1||parseFloat(state.minWidth)>1||state.visibleDays!==1||!state.dayNavVisible||state.buttonHeight<43.5||state.wrapScroll>state.wrapClient+2||state.scroll>state.client+2)throw new Error(JSON.stringify(state));
   return JSON.stringify(state);
 });
 
