@@ -23,10 +23,11 @@ for(const width of widths){
   const employee=page.frameLocator("#employeeApp");
   await employee.locator("#view-schedule.active").waitFor({timeout:10000});
   await employee.locator('[data-schedule-id="sch-fri-am"]').waitFor({timeout:10000});
-  await employee.locator("#availabilityWeekLabel").waitFor({timeout:10000});
+  await employee.locator("#availabilityWeekLabel").waitFor({state:"attached",timeout:10000});
 
-  await employee.locator(".employee-schedule-secondary [data-schedule-availability]").click();
+  await employee.locator('[data-employee-primary-view="availability"]').click();
   await employee.locator("#weeklyRegistrationPanel.open").waitFor({state:"visible",timeout:10000});
+  await employee.locator("#availabilityWeekLabel").waitFor({state:"visible",timeout:10000});
 
   await check("ui2_008_availability_"+width+"_responsive_touch_focus_safe_area",async()=>{
     const save=employee.locator("#saveReg");
@@ -109,7 +110,7 @@ for(const width of widths){
     await check("ui2_008_availability_state_matrix_submit_error_retry_readonly",async()=>{
       await employee.locator("[data-swap-return-schedule]").click();
       await employee.locator("#view-schedule.active").waitFor();
-      await employee.locator(".employee-schedule-secondary [data-schedule-availability]").click();
+      await employee.locator('[data-employee-primary-view="availability"]').click();
 
       await page.evaluate(async()=>{
         globalThis.__UI2_008_QA.state.today="2026-09-27";
