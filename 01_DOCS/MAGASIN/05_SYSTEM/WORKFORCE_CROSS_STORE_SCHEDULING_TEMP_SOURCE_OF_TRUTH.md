@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J REOPENED — OWNER-APPROVED MULTI-EMPLOYEE SHIFT CLUSTER (§0.6) MUST BE IMPLEMENTED + REQUALIFIED / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J CHANGES_REQUESTED — §0.5 + §0.6 + FULL OWNER-MOCKUP VISUAL-FIDELITY REMEDIATION REQUIRED; TECHNICAL GREEN ALONE IS NOT ACCEPTANCE / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -433,6 +433,109 @@ Robot must prove:
 
 This Owner correction supersedes the prior request to stop at the existing `724c507b...` candidate for approval. XSTORE-019J is **reopened for implementation** and is the single next executable task. XSTORE-019K remains blocked until the new grouped-calendar implementation is requalified and explicitly approved by Owner.
 
+## 0.7 Owner correction — 2026-10-07 — approved mockup fidelity is a hard implementation gate
+
+Owner rechecked the **actual local Manager application** after the Shift Cluster code/cache candidate was technically GREEN and explicitly rejected the rendered UI because it still did not match the already-approved Manager mockup closely enough.
+
+This is **CHANGES_REQUESTED**, not an Owner-input block. Robot must continue executing **XSTORE-019J**.
+
+### A. Verified root cause and candidate correction
+
+Durable audit findings:
+- the local review checkout had initially remained on historical head `724c507b76872f861cd1e77109ef650ecd936557`, so the browser was still loading the older `workspace2` renderer;
+- after syncing local to the newer candidate and hard-reloading, the application loaded the newer Shift Cluster cache lineage but the overall Manager scheduling composition still materially differed from the approved mockup;
+- PR #392 had been created from an older base and did not contain the Owner-approved visual authority files that already existed on `main`;
+- prior CI GREEN proved DOM/contracts/functionality but did **not** prove visual fidelity to the approved image.
+
+The Owner-approved visual authority files are now explicitly required in the candidate branch. Visual-authority sync commit:
+- `326fe4d238bd5d31b95c0a90d17982ce0fdea590`
+
+Required visual files:
+- `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019_OWNER_APPROVED_MANAGER.webp`
+- `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019_OWNER_APPROVED_EMPLOYEE.webp`
+- `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019_OWNER_APPROVED_OWNER.webp`
+- `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019J_OWNER_APPROVED_MULTI_EMPLOYEE_SHIFT_CLUSTER.svg`
+- `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/README.md`
+
+Robot must treat these files as implementation input, not optional documentation.
+
+### B. Manager implementation must follow the approved mockup, not merely preserve old panels
+
+The real Manager scheduling page must be remediated toward the approved visual composition and information density.
+
+Required hierarchy:
+1. compact page title/context and the five-step workflow;
+2. **Bước 1 — Chuẩn bị** with compact system metrics and recurring staffing-demand presentation matching the approved mockup structure;
+3. **Bước 2 — Tạo lịch nháp** with clear primary draft action/state;
+4. **Bước 3 — Chỉnh lịch** as the dominant working area:
+   - selected branch + selected week + DRAFT state in one compact working context;
+   - seven-day calendar at normal desktop width;
+   - employee information readable without card-level horizontal scrolling;
+   - on-demand supplement/candidate interaction remains secondary to the calendar;
+   - shared/overlapping employees use the §0.6 Shift Cluster composition;
+5. **Bước 4 — Kiểm tra** reuses the same calendar composition in strictly read-only mode and is directly reachable from the active workspace;
+6. **Bước 5 — Duyệt & phát hành** remains the final canonical authority step.
+
+Do not preserve oversized historical sections or repeated explanatory copy merely because existing tests accept them when those sections conflict with the approved mockup's hierarchy/density.
+
+### C. Shift Cluster visual fidelity remains mandatory
+
+For overlapping employees, the rendered real calendar must visibly resemble the approved Shift Cluster contract:
+- one grouped container for the overlapping window;
+- header = cluster time range + people count;
+- employee rows underneath;
+- exact employee time shown when it differs from the cluster range;
+- FT/PT and warning/audit state are secondary;
+- first 3 rows + `+N nhân viên` when more than 3;
+- no parallel cramped cards and no internal horizontal scrollbar.
+
+### D. Real-local visual QA is mandatory
+
+Fixture-only DOM GREEN or static contract GREEN is insufficient.
+
+Before returning XSTORE-019J for Owner approval, Robot must:
+- sync the local review checkout to the **exact current candidate head**;
+- verify the active runtime/cache lineage matches that exact head;
+- hard reload/reopen the real route so cached historical assets cannot satisfy the review;
+- use the actual authenticated local Manager application;
+- capture fresh desktop screenshots of the full five-step flow and focused Bước 3/Bước 4 calendar;
+- capture a fresh narrow/mobile Manager screenshot for the controlled responsive calendar mechanism;
+- compare the rendered screenshots directly against the repository mockups and record visible deviations;
+- repair material hierarchy/layout/density deviations before asking Owner to review again.
+
+Visual QA must explicitly cover:
+- top-level five-step composition;
+- Bước 1 density and recurring staffing presentation;
+- Bước 2 draft action/state;
+- Bước 3 branch/week/calendar composition;
+- Shift Cluster presentation;
+- Bước 4 same-calendar read-only presentation;
+- direct Bước 3 → Bước 4 access;
+- absence of nested/card horizontal scrollbars.
+
+### E. CI and acceptance policy
+
+Existing functional gates remain mandatory:
+- direct edit;
+- shortage;
+- candidate drawer;
+- Availability override;
+- Validate;
+- Review;
+- Publish;
+- cross-role/UI2/People Shift regressions.
+
+But these gates are **necessary, not sufficient**.
+
+XSTORE-019J may not return `BLOCKED / OWNER_REQUIRED` merely because functional CI is GREEN while the actual rendered application still materially differs from the approved mockups.
+
+Correct state until the visual remediation is implemented and requalified:
+- **XSTORE-019J = CHANGES_REQUESTED / EXECUTABLE**;
+- **XSTORE-019K = BLOCKED**;
+- Owner review is requested only after fresh exact-candidate authenticated real-local visual evidence is ready.
+
+No new scheduling writer/RPC, RBAC relaxation, or business-authority change is authorized by this visual correction.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
@@ -634,7 +737,7 @@ Out of scope unless explicitly added later:
 | XSTORE-019G | Manager five-board UI implementation | Rework the real Manager UI to match the Owner-approved Manager mockup while preserving the locked five-board workflow and authority | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
 | XSTORE-019H | Employee mobile-first UI implementation | Rework the real Employee UI to match the Owner-approved mobile mockup while preserving flexible-time and attendance semantics | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
 | XSTORE-019I | Owner strategy/P&L UI implementation | Rework the real Owner dashboard to match the Owner-approved desktop/mobile strategy mockup without fabricating financial truth | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
-| XSTORE-019J | Authenticated real-local UI requalification + Owner-requested Manager calendar workspace UX correction | Implement §0.5 + §0.6 on the candidate branch, including grouped multi-employee Shift Clusters, preserve five-step authority, then requalify Manager/Employee/Owner on the authenticated real local app against repository mockups and fresh Owner review evidence | **CHANGES_REQUESTED / SHIFT CLUSTER IMPLEMENTATION REQUIRED / OWNER RE-APPROVAL PENDING** |
+| XSTORE-019J | Authenticated real-local UI requalification + Owner-requested Manager calendar workspace UX correction | Implement §0.5 + §0.6 and §0.7 on the candidate branch; treat repository mockups as hard visual authority, render grouped multi-employee Shift Clusters, preserve five-step authority, then requalify the exact candidate on the authenticated real local app with fresh screenshot comparison before Owner review | **CHANGES_REQUESTED / EXECUTABLE / OWNER-MOCKUP VISUAL-FIDELITY REMEDIATION REQUIRED / OWNER RE-APPROVAL PENDING** |
 | XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **BLOCKED / OWNER UI IMPLEMENTATION RE-APPROVAL REQUIRED** |
 | XSTORE-019L | Employee flexible Availability + attendance wiring | Wire free start/end multi-interval Availability and published-schedule attendance semantics; outside-schedule/manual-time attendance requires Manager confirmation | **PENDING / AFTER UI GATE** |
 | XSTORE-019M | Manager five-board workflow integration | Wire Prepare→Create Draft→Edit→Check→Approve/Publish to canonical scheduling state; Check is read-only same-calendar review for one selected store | **PENDING / AFTER UI GATE** |
@@ -2920,6 +3023,29 @@ Current authoritative state:
 - rerun targeted Manager calendar QA, impacted scheduling regressions and required cross-role gates;
 - then reopen the authenticated real-local application for fresh Owner review;
 - XSTORE-019K remains blocked until explicit Owner UI implementation approval.
+
+## 6.0.35 XSTORE-019J Owner visual-fidelity rejection after exact-candidate local audit — 2026-10-07
+
+Owner review state: **CHANGES_REQUESTED / EXECUTABLE / NOT READY FOR APPROVAL**.
+
+Verified local audit:
+- local review initially ran historical head `724c507b76872f861cd1e77109ef650ecd936557`;
+- local checkout was then synchronized to exact candidate `dae2ee839f99eb1d12ca4ac68b232ba887a60890`;
+- runtime/cache lineage changed from `workspace2` to `cluster1`;
+- a hard reload confirmed the newer runtime was active;
+- despite that correction, the Manager scheduling page still materially differed from the Owner-approved Manager mockup in hierarchy, density and calendar composition;
+- therefore the discrepancy is not only browser cache/stale checkout: additional visual implementation work is required.
+
+Repository audit:
+- current `main` contained the approved visual files while the PR #392 branch did not;
+- those visual authority files were synchronized into PR #392 in commit `326fe4d238bd5d31b95c0a90d17982ce0fdea590`;
+- Robot must use those files directly during XSTORE-019J implementation and visual requalification.
+
+Acceptance consequence:
+- prior exact-head functional CI evidence remains useful regression evidence but does not equal visual acceptance;
+- XSTORE-019J remains executable until §0.7 is satisfied;
+- XSTORE-019K remains blocked;
+- Owner must not be asked to approve again until fresh authenticated exact-candidate screenshots demonstrate the approved composition.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
