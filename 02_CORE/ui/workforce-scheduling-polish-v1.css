@@ -397,6 +397,20 @@ html[data-scheduling-role="owner"] .content{
     width:max-content !important;
     gap:6px;
   }
+  /* XSTORE-019J: Manager five-board narrow mode owns one controlled day window.
+     This selector intentionally outranks the legacy XSTORE-019E seven-day mobile rule above
+     without changing Owner/non-five-board scheduling presentation. */
+  #view-workforce .msd .x19g-shell .msd-calendar-primary .msd-board-wrap{
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    scrollbar-gutter:auto;
+  }
+  #view-workforce .msd .x19g-shell .msd-calendar-primary .msd-board{
+    grid-template-columns:minmax(0,1fr) !important;
+    min-width:0 !important;
+    width:100% !important;
+    max-width:100% !important;
+  }
   #view-workforce .msd-day{
     min-height:0;
   }
