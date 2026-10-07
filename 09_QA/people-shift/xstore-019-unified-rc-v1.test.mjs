@@ -19,8 +19,8 @@ const coldReload=read("09_QA/ui2-cross-role/ui2-017-cold-reload-closure-browser.
 
 const RC="20261005-xstore-019";
 const X19G_AUTO="20261006-xstore-019g-r1";
-const X19G_FIVE="20261007-xstore-019j-workspace2";
-const MANAGER_VISUAL="20261007-xstore-019j-cluster1";
+const X19G_FIVE="20261007-xstore-019j-visual3";
+const MANAGER_VISUAL="20261007-xstore-019j-visual3";
 const MASTER_VISUAL="20261007-xstore-019j-weekfix1";
 const RC_QUALIFICATION="POST_UI2_015_REPAIR_3";
 const forbiddenWriters=[
@@ -36,7 +36,7 @@ test("XSTORE-019 keeps canonical RC entrypoints while XSTORE-019G uses bounded t
   assert.ok(managerRuntime.includes("/05_MANAGER/Workforce/engine-v1.js?v="+MANAGER_VISUAL));
   for(const asset of [
     "review-v1.js?v="+RC,
-    "draft-publish-v1.js?v="+MANAGER_VISUAL,
+    "draft-publish-v1.js?v=20261007-xstore-019j-cluster1",
     "cross-store-master-v1.js?v="+MASTER_VISUAL,
     "manager-scheduling-ui2-v1.js?v="+RC,
     "ui-consolidation-v1.js?v="+RC
