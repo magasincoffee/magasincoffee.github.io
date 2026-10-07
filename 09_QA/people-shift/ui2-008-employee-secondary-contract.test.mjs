@@ -109,11 +109,11 @@ test("UI2-005 shell UI2-006 Today UI2-007 Schedule remain present and runtime ca
   for(const label of ["Trang chủ","Đăng ký lịch làm","Lịch của tôi","Chấm công","Hồ sơ & thông tin"])assert.ok(shell.includes("'"+label+"'"));
   assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-today.css?v=20260925-ui2-006"));
   assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-schedule.css?v=20261001-ui-unified1"));
-  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual2)&runtime=engine/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3)&runtime=engine/);
   assert.match(runtime,/schedule\/engine-v1\.js\?v=(?:20260926-ui2-008|20260930-emlive002|20261002-sched-ui-006)/);
-  assert.match(runtime,/availability\/engine-v1\.js\?v=(?:20260926-ui2-008|20260928-xstore003|20260930-emlive001|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual2)/);
+  assert.match(runtime,/availability\/engine-v1\.js\?v=(?:20260926-ui2-008|20260928-xstore003|20260930-emlive001|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3)/);
   assert.match(runtime,/swap\/engine-v1\.js\?v=20260926-ui2-008/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002|20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual2)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002|20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3)/);
 });
 
 console.log("UI2_008_EMPLOYEE_SECONDARY_CONTRACT=PASS");

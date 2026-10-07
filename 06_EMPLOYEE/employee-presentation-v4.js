@@ -93,8 +93,9 @@ function compactScheduleDays(){
  document.querySelectorAll('#view-schedule .employee-schedule-engine .day').forEach((day,i)=>{
   const d=day.querySelector('.dow');if(!d)return;
   if(!d.dataset.x19hFullLabel)d.dataset.x19hFullLabel=d.textContent.trim();
-  d.textContent=names[i]||d.textContent;
-  d.setAttribute('title',d.dataset.x19hFullLabel);
+  const label=names[i]||d.textContent;
+  if(d.textContent!==label)d.textContent=label;
+  if(d.getAttribute('title')!==d.dataset.x19hFullLabel)d.setAttribute('title',d.dataset.x19hFullLabel);
  });
 }
 function observeVisualSurfaces(){

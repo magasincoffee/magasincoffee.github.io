@@ -49,6 +49,7 @@ test("XSTORE-019H employment type is management-owned read-only presentation",()
  assert.match(profile,/profileEmploymentType/);
 });
 
+test("XSTORE-019H compact day labels are observer-idempotent",()=>{assert.match(presentation,/if\(d\.textContent!==label\)d\.textContent=label/);});
 test("XSTORE-019H cache chain reaches exact Employee presentation candidate",()=>{
  assert.match(runtime,/employee-v40\.html\?ui=20261007-xstore-019h-visual3&runtime=engine/);
  assert.match(runtime,/profile\/engine-v1\.js\?v=20261006-xstore-019h/);
