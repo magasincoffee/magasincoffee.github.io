@@ -7,8 +7,9 @@ These repository images are the **visual authority** for the XSTORE-019G→XSTOR
 | Manager | `XSTORE-019_OWNER_APPROVED_MANAGER.webp` | XSTORE-019G |
 | Employee | `XSTORE-019_OWNER_APPROVED_EMPLOYEE.webp` | XSTORE-019H |
 | Owner | `XSTORE-019_OWNER_APPROVED_OWNER.webp` | XSTORE-019I |
+| Manager multi-employee schedule | `XSTORE-019J_OWNER_APPROVED_MULTI_EMPLOYEE_SHIFT_CLUSTER.svg` | XSTORE-019J |
 
-The files are compressed repository copies of the screenshots explicitly reaffirmed by Owner on 2026-10-07. Their visual composition, hierarchy and responsive intent are authoritative.
+The role files are compressed repository copies of screenshots explicitly reaffirmed by Owner on 2026-10-07. The XSTORE-019J Shift Cluster SVG transcribes the additional Owner-approved calendar design for multiple employees sharing/overlapping the same time range. Their visual composition, hierarchy and responsive intent are authoritative.
 
 Rules:
 - inspect the relevant role image before editing that role UI;
@@ -19,3 +20,10 @@ Rules:
 - fixture-only QA cannot close the visual gate;
 - XSTORE-019J must requalify the actual locally served application through the canonical login and real role routing;
 - explicit Owner UI re-approval is mandatory before XSTORE-019K.
+
+Additional XSTORE-019J rule:
+- when multiple employees share or overlap a calendar time window, the approved visual contract is a grouped **Shift Cluster**, not parallel cramped employee cards;
+- the cluster header exposes the time range and people count;
+- show up to 3 employee rows directly, then `+N nhân viên` for overflow;
+- no per-card horizontal scrollbar is allowed;
+- Bước 3 uses the cluster interactively; Bước 4 reuses the same composition read-only.
