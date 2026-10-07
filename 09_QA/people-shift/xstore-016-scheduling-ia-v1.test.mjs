@@ -64,7 +64,7 @@ test("XSTORE-019A preserves unsaved-change safety for store and week navigation"
 test("XSTORE-019A keeps the existing canonical runtime chain",()=>{
   assert.match(engine,/draft-publish-v1\.js\?v=(?:2026100[45]-xstore-01[6789]|20261005-xstore-019)/);
   for(const token of [
-    "cross-store-master-v1.js?v=20261005-xstore-019",
+    "cross-store-master-v1.js?v=20261007-xstore-019j-weekfix1",
     "manager-scheduling-ui2-v1.js?v=20261005-xstore-019"
   ])assert.ok(engine.includes(token),token);
   assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:2026100[45]-xstore-01[279]|20261005-xstore-019|20261006-xstore-019g-r1)/);

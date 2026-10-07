@@ -95,7 +95,7 @@ async function iframeSrc(page,id="app"){
 
 for(const spec of [
   {role:"EMPLOYEE",target:"/employee/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261007-xstore-019h-visual3"},
-  {role:"STORE_MANAGER",label:"MANAGER",target:"/manager/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261007-xstore-019g-visual3"},
+  {role:"STORE_MANAGER",label:"MANAGER",target:"/manager/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261007-xstore-019j-weekfix1"},
   {role:"OWNER",target:"/owner/",runtime:null}
 ]){
   const context=await newContext(spec.role);
@@ -122,7 +122,7 @@ for(const spec of [
 
 for(const spec of [
   {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261007-xstore-019h-visual3"},
-  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261007-xstore-019g-visual3"}
+  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261007-xstore-019j-weekfix1"}
 ]){
   const context=await newContext(spec.role,(spec.label||spec.role)==="MANAGER"?1024:390);
   await context.addInitScript(()=>sessionStorage.setItem("__ui2_logged","1"));
@@ -176,9 +176,9 @@ const assetSpecs=[
   ["/05_MANAGER/Workforce/ui-consolidation-v1.js?v=20261005-xstore-019","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/manager-scheduling-ui2-v1.js?v=20261005-xstore-019","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/manager-operations-ui2-v1.js?v=20260927-ui2-016","@media(max-width:1024px)"],
-  ["/05_MANAGER/Workforce/engine-v1.js?v=20261007-xstore-019g-visual3","manager-scheduling-ui2-v1.js?v=20261005-xstore-019"],
+  ["/05_MANAGER/Workforce/engine-v1.js?v=20261007-xstore-019j-weekfix1","manager-scheduling-ui2-v1.js?v=20261005-xstore-019"],
   ["/05_MANAGER/runtime/manager-shell-v1.html?v=20261001-ui-unified1","manager-ui-shell-v2.js?v=20260927-ui2-016"],
-  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261007-xstore-019g-visual3","manager-shell-v1.html?v=20261001-ui-unified1"],
+  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261007-xstore-019j-weekfix1","manager-shell-v1.html?v=20261001-ui-unified1"],
   ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261005-xstore-019","owner-scheduling-overview-v1.js?v=20261005-xstore-019"]
 ];
 for(const [url,marker] of assetSpecs){
