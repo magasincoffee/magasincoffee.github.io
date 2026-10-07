@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J §0.5 IMPLEMENTED + EXACT-HEAD TECHNICAL GREEN — BLOCKED AT OWNER AUTHENTICATED REAL-LOCAL REVIEW / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J REOPENED — OWNER-APPROVED MULTI-EMPLOYEE SHIFT CLUSTER (§0.6) MUST BE IMPLEMENTED + REQUALIFIED / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -323,6 +323,116 @@ Robot must verify on the **actual authenticated local Manager application**, not
 
 This is a **presentation/interaction correction only** unless implementation proves a minimal state-sync repair is necessary. It must not weaken RBAC, store scope, scheduling validation, cross-store conflict checks or publication authority.
 
+## 0.6 Owner correction — 2026-10-07 — multi-employee Shift Cluster calendar contract
+
+Owner reviewed the real Manager weekly calendar behavior for cases where multiple employees occupy the same or overlapping time range and explicitly rejected the current cramped parallel-card behavior.
+
+Owner approved the grouped **Shift Cluster** layout as the authoritative calendar presentation for XSTORE-019J.
+
+Authoritative visual contract:
+- `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019J_OWNER_APPROVED_MULTI_EMPLOYEE_SHIFT_CLUSTER.svg`
+
+This rule applies to both:
+- **Bước 3 — Chỉnh lịch**;
+- **Bước 4 — Kiểm tra**.
+
+### A. Group employees by shared/overlapping time window
+
+Do not render multiple narrow employee cards side-by-side inside one day/time region when that makes names/times unreadable.
+
+Canonical model:
+
+```text
+shared / overlapping time window
+→ one Shift Cluster
+→ cluster header = time range + people count
+→ employee rows inside the cluster
+```
+
+Example:
+
+```text
+06:00–12:00                         3 người
+Nguyễn Thị Kim Uyên                    FT
+Nguyễn Thùy Trang                      FT
+Đỗ Ngọc Thảo                           PT
+```
+
+### B. Density rule
+
+Canonical display:
+- 1 employee → normal single assignment card;
+- 2–3 employees in the same/overlapping window → one Shift Cluster with each employee listed directly;
+- more than 3 employees → show the first 3 employee rows, then a compact `+N nhân viên` disclosure row;
+- clicking/opening the disclosure may use the existing scoped drawer/overlay pattern;
+- never create an internal horizontal scrollbar merely to expose names or times.
+
+### C. Overlap does not require identical employee times
+
+When employee intervals overlap but are not identical, the cluster may represent the union/overlap window while each employee row preserves that employee's own exact start/end time when needed.
+
+Example:
+
+```text
+06:00–12:00 · 2 người
+
+Nguyễn Kim Uyên      06:00–10:00
+Nguyễn Thùy Trang    08:00–12:00
+```
+
+Do not collapse or rewrite underlying assignment times. This is a presentation grouping only.
+
+### D. Information hierarchy inside the cluster
+
+Primary:
+1. cluster time range;
+2. people count;
+3. employee full name;
+4. employee exact time when different from the cluster header.
+
+Secondary:
+- Full-time / Part-time;
+- DRAFT / warning / manual Availability override state when relevant.
+
+Repeated explanatory text such as “Ca trong bản nháp · chưa phải lịch chính thức” must not consume large space inside every employee row. A shared cluster/header status is preferred.
+
+### E. Interaction semantics
+
+**Bước 3 — Chỉnh lịch**
+- cluster is interactive;
+- open cluster/detail to edit an employee assignment;
+- add/supplement/remove employee through the existing canonical DRAFT mutation flow;
+- direct shift editing, shortage recalculation and candidate drawer remain intact.
+
+**Bước 4 — Kiểm tra**
+- reuse the same grouped visual composition;
+- strictly read-only;
+- no mutation authority is introduced;
+- exact warnings/shortages/conflicts remain visible.
+
+### F. Color and safety
+
+- preserve canonical morning / afternoon / evening time-band colors;
+- shortage remains visually distinct in the canonical warning family;
+- grouping must not weaken cross-store overlap, ACTIVE employee, Store Priority, Availability override audit, official schedule overlap, validation or publish authority;
+- no second scheduling writer/RPC is allowed.
+
+### G. Acceptance for XSTORE-019J
+
+Robot must prove:
+- no employee assignment card contains a horizontal scrollbar;
+- 2, 3 and >3 employee overlap cases render as grouped Shift Clusters;
+- `+N nhân viên` appears for overflow beyond the direct-row limit;
+- employee names remain readable;
+- exact times remain available;
+- seven-day desktop layout remains usable;
+- narrow layout keeps the single calendar-level responsive mechanism from §0.5;
+- Bước 3 remains editable and Bước 4 remains read-only;
+- direct edit / shortage / candidate drawer / Validate / Review / Publish regressions remain GREEN;
+- fresh authenticated real-local Manager evidence is captured after implementation.
+
+This Owner correction supersedes the prior request to stop at the existing `724c507b...` candidate for approval. XSTORE-019J is **reopened for implementation** and is the single next executable task. XSTORE-019K remains blocked until the new grouped-calendar implementation is requalified and explicitly approved by Owner.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
@@ -524,7 +634,7 @@ Out of scope unless explicitly added later:
 | XSTORE-019G | Manager five-board UI implementation | Rework the real Manager UI to match the Owner-approved Manager mockup while preserving the locked five-board workflow and authority | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
 | XSTORE-019H | Employee mobile-first UI implementation | Rework the real Employee UI to match the Owner-approved mobile mockup while preserving flexible-time and attendance semantics | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
 | XSTORE-019I | Owner strategy/P&L UI implementation | Rework the real Owner dashboard to match the Owner-approved desktop/mobile strategy mockup without fabricating financial truth | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
-| XSTORE-019J | Authenticated real-local UI requalification + Owner-requested Manager calendar workspace UX correction | Implement §0.5 on the candidate branch, preserve five-step authority, then requalify Manager/Employee/Owner on the authenticated real local app against repository mockups and fresh Owner review evidence | **CHANGES_REQUESTED / MANAGER UX CORRECTION REQUIRED / OWNER RE-APPROVAL PENDING** |
+| XSTORE-019J | Authenticated real-local UI requalification + Owner-requested Manager calendar workspace UX correction | Implement §0.5 + §0.6 on the candidate branch, including grouped multi-employee Shift Clusters, preserve five-step authority, then requalify Manager/Employee/Owner on the authenticated real local app against repository mockups and fresh Owner review evidence | **CHANGES_REQUESTED / SHIFT CLUSTER IMPLEMENTATION REQUIRED / OWNER RE-APPROVAL PENDING** |
 | XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **BLOCKED / OWNER UI IMPLEMENTATION RE-APPROVAL REQUIRED** |
 | XSTORE-019L | Employee flexible Availability + attendance wiring | Wire free start/end multi-interval Availability and published-schedule attendance semantics; outside-schedule/manual-time attendance requires Manager confirmation | **PENDING / AFTER UI GATE** |
 | XSTORE-019M | Manager five-board workflow integration | Wire Prepare→Create Draft→Edit→Check→Approve/Publish to canonical scheduling state; Check is read-only same-calendar review for one selected store | **PENDING / AFTER UI GATE** |
@@ -567,7 +677,7 @@ XSTORE-001 DONE
 → XSTORE-019G DONE / Manager visual-fidelity remediation / exact-head GREEN
 → XSTORE-019H DONE / Employee visual-fidelity remediation / exact-head GREEN
 → XSTORE-019I DONE / Owner strategy-dashboard visual-fidelity remediation / exact-head GREEN
-→ XSTORE-019J CHANGES_REQUESTED / implement §0.5 Manager calendar workspace UX correction, then authenticated real-local cross-role visual requalification
+→ XSTORE-019J CHANGES_REQUESTED / implement §0.5 workspace ergonomics + §0.6 multi-employee Shift Cluster, then authenticated real-local cross-role visual requalification
 → OWNER UI IMPLEMENTATION RE-APPROVAL REQUIRED
 → XSTORE-019K BLOCKED UNTIL OWNER RE-APPROVAL / FULL_TIME + PART_TIME authority and scheduling ranking
 → XSTORE-019L / flexible Employee Availability + attendance integration
@@ -2784,6 +2894,32 @@ Until that happens:
 - technical GREEN does not equal Owner approval;
 - **XSTORE-019K and later tasks remain blocked**;
 - after explicit Owner UI implementation approval, XSTORE-019J may close and XSTORE-019K becomes the next authoritative executable task.
+
+## 6.0.34 XSTORE-019J Owner calendar review correction — multi-employee Shift Cluster approved — 2026-10-07
+
+Owner reviewed a concrete visual mockup for the case where multiple employees share/overlap one calendar time window and explicitly approved the grouped layout.
+
+Authoritative decision:
+- use one grouped **Shift Cluster** instead of multiple cramped parallel employee cards;
+- header shows shared time range + people count;
+- show up to 3 employee rows directly;
+- overflow uses `+N nhân viên`;
+- no per-card horizontal scrollbar;
+- preserve individual exact times when assignments differ;
+- Bước 3 uses the grouped cluster interactively;
+- Bước 4 reuses the same composition read-only.
+
+Visual contract:
+`01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_UI_MOCKUPS/XSTORE-019J_OWNER_APPROVED_MULTI_EMPLOYEE_SHIFT_CLUSTER.svg`
+
+This decision supersedes the prior XSTORE-019J state that was blocked only on Owner review of exact candidate `724c507b76872f861cd1e77109ef650ecd936557`.
+
+Current authoritative state:
+- XSTORE-019J is **REOPENED / READY FOR IMPLEMENTATION**;
+- implement §0.6 on PR #392 / `xstore-019-unified-rc-v1`;
+- rerun targeted Manager calendar QA, impacted scheduling regressions and required cross-role gates;
+- then reopen the authenticated real-local application for fresh Owner review;
+- XSTORE-019K remains blocked until explicit Owner UI implementation approval.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
