@@ -2544,6 +2544,47 @@ Per §0.4, this automated/exact-head GREEN closes the **XSTORE-019I remediation 
 
 The next authoritative executable task is **XSTORE-019J**.
 
+
+## 6.0.31 XSTORE-019J Owner real-local Manager review correction — week selector rejection and repair — 2026-10-07
+
+Owner review state: **CHANGES_REQUESTED / NOT APPROVED / XSTORE-019J REMAINS OPEN**.
+
+Owner opened the actual authenticated local Manager application at `/manager/scheduling/` and explicitly rejected the rendered scheduling surface because it displayed **“Chưa xác định tuần xếp lịch”** without a visible place to choose/change the scheduling week. This is authoritative real-local visual/interaction evidence under §0.4 and must not be overridden by fixture/DOM GREEN.
+
+Root cause and repair:
+- the canonical scheduling week controls already existed in `.msu2-context-bar`, but the XSTORE-019G five-board presentation moved/hidden the context bar such that the Owner could not see or operate the week selector;
+- `cross-store-master-v1.js` could also enter its refresh path before scheduling week initialization, set `data-xstore-loading=1`, return on missing week and retain that loading latch, preventing a later initialization retry;
+- repair commit `d16b3cb948169a67c5ca23e0b9134f7656b216ee` exposes a persistent **TUẦN XẾP LỊCH** strip directly below the five-step workflow, reusing the canonical `← / Tuần này / →` controls, updates the selected-week label from canonical schedule state, and clears the cross-store loading latch so week initialization can retry;
+- cache/test closure commit `634ba1dd1b50ab919b3eaa4a5be627d6ec9bed69` advances all active Manager entry/runtime cache lineage to `20261007-xstore-019j-weekfix1` and updates impacted regression contracts without changing scheduling authority;
+- PR #392 remains **DRAFT / DO NOT MERGE** and production merge/release remains **NOT PERFORMED**.
+
+Repair evidence:
+- local Manager week-selector browser regression → **PASS**: visible week strip, three canonical controls, state changed from week `2026-09-28` to `2026-10-05` when the next-week control was used;
+- XSTORE-019G Manager Five-Board QA run `37586217311` on behavior commit `d16b3cb948169a67c5ca23e0b9134f7656b216ee` → **SUCCESS**;
+- exact-head `634ba1dd1b50ab919b3eaa4a5be627d6ec9bed69`:
+  - XSTORE-019J Cross-Role UI Preview QA run `37586766154` → **SUCCESS**;
+  - XSTORE-019 Unified RC QA run `37586766263` → **SUCCESS**;
+  - UI2 Cross Role Acceptance run `37586766543` → **SUCCESS**;
+  - People Shift Day-10 Tests run `37586766592` → **SUCCESS**;
+  - XSTORE-019B Direct Calendar Editing QA run `37586766390` → **SUCCESS**;
+  - XSTORE-019C Candidate Drawer QA run `37586766156` → **SUCCESS**;
+  - XSTORE-019H Employee Mobile Presentation QA run `37586766176` → **SUCCESS**;
+  - XSTORE-019I Owner Strategy Presentation QA run `37586766197` → **SUCCESS**;
+  - XSTORE-019E Owner Parity Responsive QA run `37586766214` → **SUCCESS**;
+  - Owner Control Tower Tests run `37586766323` → **SUCCESS**;
+  - XSTORE-018 Supplemental Pool QA run `37586766164` → **SUCCESS**.
+
+Observed non-XSTORE smoke:
+- AUTH-PROD Regression Contract run `37586766212` failed only in `auth-prod-active-production-smoke` with the pre-existing signature **username resolver returned object where one email string was expected**; `auth-prod-red-contract` remained **SUCCESS**.
+- XSTORE-019J week-selector repair changes Manager presentation/cache/retry behavior only and does not modify Auth/RBAC/session/backend-auth authority.
+
+Acceptance state after repair:
+- automated and browser gates are GREEN for the repaired candidate;
+- this does **not** satisfy Owner UI approval;
+- Owner must refresh/reopen the actual authenticated local Manager application and explicitly approve the repaired Manager scheduling surface;
+- XSTORE-019J remains the current authoritative task until authenticated real-local cross-role review is completed;
+- XSTORE-019K and later tasks remain **BLOCKED** until explicit Owner UI implementation re-approval.
+
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
 Accepted executable main:
