@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J CHANGES_REQUESTED — OWNER-APPROVED MANAGER CALENDAR WORKSPACE UX CORRECTION REQUIRED BEFORE REAL-LOCAL REQUALIFICATION / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J §0.5 IMPLEMENTED + EXACT-HEAD TECHNICAL GREEN — BLOCKED AT OWNER AUTHENTICATED REAL-LOCAL REVIEW / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -2722,6 +2722,68 @@ Acceptance state:
 - Robot must implement §0.5 on the current RC candidate, run targeted/required regressions, reopen the actual authenticated local Manager application, capture fresh evidence and return for Owner review;
 - **XSTORE-019J remains the single authoritative executable task**;
 - XSTORE-019K and later tasks remain **BLOCKED** until explicit Owner UI implementation re-approval.
+
+## 6.0.33 XSTORE-019J §0.5 implementation technical qualification + authenticated real-local Owner gate — 2026-10-07
+
+Current state: **TECHNICAL GREEN / OWNER AUTHENTICATED REAL-LOCAL REVIEW REQUIRED / XSTORE-019J NOT COMPLETE**.
+
+Exact candidate:
+- PR #392 branch `xstore-019-unified-rc-v1`;
+- exact candidate head `724c507b76872f861cd1e77109ef650ecd936557`;
+- production merge/release: **NOT PERFORMED**;
+- PR remains **DRAFT / DO NOT MERGE**.
+
+Implemented §0.5 correction on the candidate:
+- CN1/CN2/CN3/CN4 selection is colocated in the active Edit-calendar command strip;
+- selected week/week navigation and current DRAFT state are available in the same compact working context;
+- direct **Kiểm tra lịch** action enters canonical Bước 4 without changing five-step workflow authority;
+- the calendar command strip is sticky on desktop where safe;
+- employee shift cards preserve readable employee name + complete time range and remove per-card horizontal scrolling;
+- normal desktop uses the seven-day workspace without nested horizontal scroll;
+- narrow layout uses one controlled one-day calendar navigation model and avoids page-level/calendar-level horizontal overflow;
+- existing direct edit, shortage, candidate drawer, DRAFT writer, Validate/Review/Publish and role/store authority contracts are unchanged.
+
+Exact-head durable regression evidence for `724c507b76872f861cd1e77109ef650ecd936557`:
+- XSTORE-019J Cross-Role UI Preview QA run `37610857140` → **SUCCESS**;
+  - Manager five-board browser qualification → SUCCESS, including command-strip colocation, direct Check access, desktop seven-day no-horizontal-scroll, shift-card readability and narrow controlled day navigation;
+  - Employee mobile browser qualification → SUCCESS;
+  - Owner strategy browser qualification → SUCCESS;
+  - responsive/accessibility/reload qualification → SUCCESS;
+  - cold-reload cache closure → SUCCESS;
+  - artifact `xstore-019j-cross-role-preview-37610857140`, artifact id `11477681719`, digest `sha256:250e0c690fcb0f6c53118e228cfd06f4cf784d6dfe5e3df5772bdcd99a153e6e`;
+- XSTORE-019 Unified RC QA run `37610857298` → **SUCCESS**;
+- UI2 Cross Role Acceptance run `37610857238` → **SUCCESS**;
+- People Shift Day-10 Tests run `37610857534` → **SUCCESS**;
+- XSTORE-019B Direct Calendar Editing QA run `37610857146` → **SUCCESS**;
+- XSTORE-019C Candidate Drawer QA run `37610857504` → **SUCCESS**;
+- XSTORE-019D Employee Availability Calendar QA run `37610857120` → **SUCCESS**;
+- XSTORE-019E Owner Parity Responsive QA run `37610857368` → **SUCCESS**;
+- XSTORE-019H Employee Mobile Presentation QA run `37610857536` → **SUCCESS**;
+- XSTORE-019I Owner Strategy Presentation QA run `37610857111` → **SUCCESS**;
+- XSTORE-013/014/015/016/017/018 compatibility QA on this SHA → **SUCCESS**;
+- Owner Control Tower, SOP Task Tests and Procurement QA Robot on this SHA → **SUCCESS**.
+
+Observed external auth smoke:
+- AUTH-PROD Regression Contract run `37610857315` completed with failure only in `auth-prod-active-production-smoke`; `auth-prod-red-contract` remained **SUCCESS**.
+- XSTORE-019J changed Manager scheduling presentation/cache/test contracts, not Auth/RBAC/session/backend-auth authority; this separate credential-smoke failure is not an XSTORE-019J technical acceptance gate.
+
+Authenticated real-local attempt:
+- local working copy on `DESKTOP-H4A16IL` was synchronized to exact candidate `724c507b76872f861cd1e77109ef650ecd936557`;
+- the actual application was served locally from that checkout and the canonical Manager route was opened;
+- the available automation Chrome profile had no active Supabase application session, so the real app correctly redirected to canonical `/03_PLATFORM/01_AUTH/`;
+- the production Manager route in the same automation profile likewise redirected to canonical login;
+- no Owner/Manager/Employee credentials were guessed, extracted, fabricated or embedded to bypass the real auth flow.
+
+Therefore the remaining gate is genuine Owner input, not additional autonomous code work:
+1. authenticate the actual local candidate through the real Supabase auth flow;
+2. review the real rendered Manager correction and cross-role Manager/Employee/Owner surfaces;
+3. explicitly approve or request changes.
+
+Until that happens:
+- **XSTORE-019J remains BLOCKED at Owner authenticated real-local review/approval**;
+- technical GREEN does not equal Owner approval;
+- **XSTORE-019K and later tasks remain blocked**;
+- after explicit Owner UI implementation approval, XSTORE-019J may close and XSTORE-019K becomes the next authoritative executable task.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
