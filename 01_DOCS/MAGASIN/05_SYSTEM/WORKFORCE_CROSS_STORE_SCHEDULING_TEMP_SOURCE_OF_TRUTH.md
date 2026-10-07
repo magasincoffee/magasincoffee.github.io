@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019H VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019I READY FOR VISUAL-FIDELITY REMEDIATION / XSTORE-019J PENDING / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J READY FOR AUTHENTICATED REAL-LOCAL REQUALIFICATION / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -422,8 +422,8 @@ Out of scope unless explicitly added later:
 | XSTORE-019F | Integrated RC qualification + Owner preview packet | Exact-head regression/browser/backend/cache qualification; freeze new RC and prepare Owner review without production merge | **DONE / HISTORICAL RC INVALIDATED BY OWNER UX V4** |
 | XSTORE-019G | Manager five-board UI implementation | Rework the real Manager UI to match the Owner-approved Manager mockup while preserving the locked five-board workflow and authority | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
 | XSTORE-019H | Employee mobile-first UI implementation | Rework the real Employee UI to match the Owner-approved mobile mockup while preserving flexible-time and attendance semantics | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
-| XSTORE-019I | Owner strategy/P&L UI implementation | Rework the real Owner dashboard to match the Owner-approved desktop/mobile strategy mockup without fabricating financial truth | **READY / VISUAL-FIDELITY REMEDIATION** |
-| XSTORE-019J | Cross-role UI-only preview qualification | Requalify G→I on the authenticated real local app, compare against repository mockups, capture desktop/mobile evidence and stop for Owner approval | **PENDING / REQUALIFY AFTER XSTORE-019G→019I** |
+| XSTORE-019I | Owner strategy/P&L UI implementation | Rework the real Owner dashboard to match the Owner-approved desktop/mobile strategy mockup without fabricating financial truth | **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN** |
+| XSTORE-019J | Cross-role UI-only preview qualification | Requalify G→I on the authenticated real local app, compare against repository mockups, capture desktop/mobile evidence and stop for Owner approval | **READY / AUTHENTICATED REAL-LOCAL REQUALIFICATION** |
 | XSTORE-019K | Employment type + scheduling priority authority | Add management-owned FULL_TIME/PART_TIME employment type separate from EMPLOYEE role and use it as a scheduling ranking preference after hard eligibility | **BLOCKED / OWNER UI IMPLEMENTATION RE-APPROVAL REQUIRED** |
 | XSTORE-019L | Employee flexible Availability + attendance wiring | Wire free start/end multi-interval Availability and published-schedule attendance semantics; outside-schedule/manual-time attendance requires Manager confirmation | **PENDING / AFTER UI GATE** |
 | XSTORE-019M | Manager five-board workflow integration | Wire Prepare→Create Draft→Edit→Check→Approve/Publish to canonical scheduling state; Check is read-only same-calendar review for one selected store | **PENDING / AFTER UI GATE** |
@@ -465,8 +465,8 @@ XSTORE-001 DONE
 → XSTORE-019F DONE / historical RC qualified, then invalidated by Owner UX V4 decisions on 2026-10-06
 → XSTORE-019G DONE / Manager visual-fidelity remediation / exact-head GREEN
 → XSTORE-019H DONE / Employee visual-fidelity remediation / exact-head GREEN
-→ XSTORE-019I READY / Owner strategy-dashboard visual-fidelity remediation against approved desktop/mobile mockup
-→ XSTORE-019J / authenticated real-local cross-role visual requalification
+→ XSTORE-019I DONE / Owner strategy-dashboard visual-fidelity remediation / exact-head GREEN
+→ XSTORE-019J READY / authenticated real-local cross-role visual requalification
 → OWNER UI IMPLEMENTATION RE-APPROVAL REQUIRED
 → XSTORE-019K BLOCKED UNTIL OWNER RE-APPROVAL / FULL_TIME + PART_TIME authority and scheduling ranking
 → XSTORE-019L / flexible Employee Availability + attendance integration
@@ -2498,6 +2498,51 @@ Observed non-XSTORE smoke:
 Per §0.4, this automated/exact-head GREEN closes the **XSTORE-019H remediation task only**. It is not final Owner cross-role UI approval; that remains XSTORE-019J on the actual authenticated local application followed by explicit Owner UI re-approval.
 
 The next authoritative executable task is **XSTORE-019I**.
+
+## 6.0.30 XSTORE-019I Owner visual-fidelity remediation acceptance — 2026-10-07
+
+XSTORE-019I is **DONE / VISUAL-FIDELITY REMEDIATION GREEN / EXACT-HEAD GREEN**.
+
+Implementation branch / PR:
+- PR #392: `xstore-019-unified-rc-v1`;
+- exact accepted PR head: `33c85f231a832e96d8455301b6f743b09fc0ee49`;
+- Owner visual-fidelity implementation commit: `7dd917c18605274fbe43fc13616de4b8c5c4fc78`;
+- exact-head QA fixture syntax closure commit: `33c85f231a832e96d8455301b6f743b09fc0ee49`;
+- production merge/release: **NOT PERFORMED**;
+- PR remains **DRAFT / DO NOT MERGE**;
+- this record closes only XSTORE-019I and does not execute XSTORE-019J.
+
+Accepted remediation result:
+- the authoritative Owner mockup in §0.4 was inspected and used as the visual contract;
+- Owner home is strategy/business-performance first rather than an expanded Manager scheduling workspace;
+- the primary desktop hierarchy now matches the approved mockup intent with a compact Owner greeting, top KPI strip, revenue/profit trend, revenue mix, operating-cost mix, branch comparison, top products, customer trends, alerts/opportunities, forecast/targets and a secondary Workforce summary;
+- mobile keeps the high-value KPI, trend, branch, product and alert surfaces while reducing secondary density instead of reproducing the full desktop operations page;
+- existing Control Tower factual/data-quality surfaces remain available below the strategy dashboard and retain their existing read-only contracts;
+- unavailable production financial truth remains `—` and is never fabricated; sanitized fixture values are used only by QA/browser evidence;
+- Workforce scheduling remains a secondary authorized route and is not the dominant Owner home experience;
+- no new RPC, schema, migration, RLS, auth/session authority, scheduling writer or financial-data persistence path was introduced by XSTORE-019I.
+
+Exact-head durable evidence for `33c85f231a832e96d8455301b6f743b09fc0ee49`:
+- XSTORE-019I Owner Strategy Presentation QA run `37571503111` → **SUCCESS**;
+  - strategy presentation syntax → SUCCESS;
+  - XSTORE-019I static contracts → SUCCESS;
+  - impacted Owner Control Tower contracts → SUCCESS;
+  - desktop 1440 and mobile 390 browser acceptance → SUCCESS;
+  - approved mockup hierarchy/density checks → SUCCESS;
+  - artifact `xstore-019i-owner-strategy-37571503111`, artifact id `11461075979`, digest `sha256:1799682c00453e8c8e110645d0a562e1957f71ab285eed51ab72f6daaaf65a56`, retained;
+- XSTORE-019E Owner Parity Responsive QA run `37571506987` → **SUCCESS**;
+- UI2 Cross Role Acceptance run `37571506985` → **SUCCESS**;
+- People Shift Day-10 Tests run `37571506979` → **SUCCESS**;
+- XSTORE-019 Unified RC QA run `37571506929` → **SUCCESS**;
+- XSTORE-019J Cross-Role UI Preview QA run `37571506931` → **SUCCESS** as impacted preview evidence only; it does not advance XSTORE-019J task state.
+
+Observed non-XSTORE smoke:
+- AUTH-PROD Regression Contract run `37571506909` completed with failure only in `auth-prod-active-production-smoke`; its `auth-prod-red-contract` job was **SUCCESS**.
+- XSTORE-019I changes are Owner presentation/QA only and do not change Auth/RBAC/session/backend-auth authority, so that separate production credential smoke is outside the XSTORE-019I acceptance gate.
+
+Per §0.4, this automated/exact-head GREEN closes the **XSTORE-019I remediation task only**. Final cross-role visual acceptance still belongs to XSTORE-019J on the actual authenticated local application, followed by explicit Owner UI implementation re-approval.
+
+The next authoritative executable task is **XSTORE-019J**.
 
 ## 6.1 XSTORE-001→006 implementation acceptance — 2026-09-28
 
