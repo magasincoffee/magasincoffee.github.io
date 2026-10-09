@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J CHANGES_REQUESTED — §0.5 + §0.6 + §0.8 SLIDE-OVER EDITOR + FULL OWNER-MOCKUP VISUAL-FIDELITY REMEDIATION REQUIRED; TECHNICAL GREEN ALONE IS NOT ACCEPTANCE / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J CHANGES_REQUESTED — §0.5 + §0.6 + §0.8 SLIDE-OVER EDITOR + §0.9 COMPACT WEEK GRID + FULL OWNER-MOCKUP VISUAL-FIDELITY REMEDIATION REQUIRED; TECHNICAL GREEN ALONE IS NOT ACCEPTANCE / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -554,6 +554,20 @@ Owner reviewed the real local scheduling application and explicitly approved a *
 Targeted browser and local-authenticated QA must prove: (a) click shift edit opens the right-side editor, (b) underlying calendar dimensions do not change before/after opening, (c) editing an overlapping Shift Cluster member targets the correct single assignment, (d) close/Escape and re-render do not lose or misroute draft changes, (e) Step-4 detail is genuinely read-only, (f) direct Step-3 → Step-4 remains available, (g) responsive calendar/window remains usable, and (h) all impacted scheduling, authority, regression, and visual-fidelity gates are GREEN. Capture fresh exact-candidate authenticated screenshots for Owner review.
 
 This is a presentation/interaction correction **inside existing XSTORE-019J**, not authorization to run XSTORE-019K or to merge PR #392. Until proven and Owner re-approved, XSTORE-019J remains **CHANGES_REQUESTED / EXECUTABLE** and the PR stays **DRAFT / DO NOT MERGE**.
+
+## 0.9 Owner correction — 2026-10-09 — Step 3/4 weekly presentation must match compact staffing matrix
+
+Owner compared fresh screenshots of (a) the compact recurring staffing matrix with CN1–CN4 rows and seven weekday columns, and (b) the old seven-column **vertical hourly timeline** in Step 3, and explicitly rejected the latter as still the old interface. This is another **CHANGES_REQUESTED / EXECUTABLE** correction within XSTORE-019J. Merely adding the right-side drawer (§0.8) does not satisfy this requirement.
+
+Required canonical implementation:
+- Bước 3 and Bước 4 must **visually use the compact seven-weekday matrix idiom shown by the existing weekly staffing presentation**, not the tall 05:00–22:00 hourly ruler with vertically sized cards.
+- Maintain the canonical **one selected branch/week at a time** in the Step-3 editing workspace: retain the 4-branch selector above the grid and show selected branch context rather than silently mixing employees/stores into an editable 4-branch writer.
+- Put actual assignments in concise colored day cells ordered by exact start time: **full employee name and individual time interval must remain legible**; overlapping employees use the approved Shift Cluster grouping with each individual accessible.
+- Inline shortages remain conspicuous in their day; adding a missing employee and creating a manual day shift remain available through the existing authenticated/canonical actions.
+- Bước 3 uses §0.8 right slide-over edit/detail with no underlying calendar resize; Bước 4 uses the **same compact matrix layout** and an on-demand **read-only** slide-over. Validate → Review → Publish authority, security, and data writers must not change.
+- Normal desktop must show all seven days without an internal horizontal timeline scrollbar. Narrow/mobile must use the existing one-day controlled navigation model, without a tall empty hourly area.
+- Do not call the work complete until fresh **authenticated real-local** screenshots and interaction evidence show that Steps 3/4 no longer resemble the hourly timeline, reproduce the compact-week visual hierarchy, and match the approved design closely enough for Owner re-review.
+- This is a UI correction of existing **XSTORE-019J**, not a new task and not permission to merge PR #392 or advance XSTORE-019K. Preserve DRAFT/DO NOT MERGE until technical and Owner gates.
 
 ## 1. Purpose
 
@@ -3171,6 +3185,7 @@ This track is complete only when:
 29. normal desktop schedule editing has no nested horizontal scrollbars and presents the seven-day week without horizontal scrolling when viewport width is sufficient.
 30. narrow schedule layouts use one controlled calendar-level navigation/overflow model and do not create page-level horizontal overflow.
 31. Step-3 shift editing uses an on-demand right-side slide-over without resizing the underlying calendar, while Step 4 offers matching read-only shift/cluster detail.
+32. Steps 3/4 use the compact weekly grid of real employee shifts and shortage chips, not the old tall hourly timeline; both share the same visual geometry.
 
 ## 8. Closure rule
 
