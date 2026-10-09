@@ -158,7 +158,7 @@ function x19jShowSlide(sh,mode,source,trigger){
   origin=editor.parentElement;const wrap=document.createElement('div');wrap.className='x19g-drawer-editor';wrap.dataset.msdRow=row.dataset.msdRow||'';
   editor.open=true;wrap.appendChild(editor);content.appendChild(wrap);
  }
- sh.appendChild(pane);x19jSlide={pane,editor,origin,trigger,context};
+ document.body.appendChild(pane);x19jSlide={pane,editor,origin,trigger,context};
  close.addEventListener('click',x19jCloseSlide);
  (isReadOnly?close:pane.querySelector('.msd-input')||close).focus({preventScroll:true});
  return true;
