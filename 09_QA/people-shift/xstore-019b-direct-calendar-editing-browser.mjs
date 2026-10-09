@@ -25,8 +25,8 @@ await page.locator("#msdStart").click();
 await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().generationStatus==="DRAFT");
 
 await check("019b_click_empty_calendar_slot_opens_direct_create",async()=>{
-  const slot=page.locator('[data-msd-slot-date="2026-09-28"][data-msd-slot-time="06:00"]');
-  await slot.click();
+  const add=page.locator('[data-x19g-board="edit"] .msd-day[data-msd-date="2026-09-28"] .x19j-day-add');
+  await add.click();
   await page.locator("#msdCalendarCreateEmployee").waitFor();
   const state=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
   if(!state.calendarCreate||state.calendarCreate.work_date!=="2026-09-28"||state.calendarCreate.start_time!=="06:00"||state.calendarCreate.end_time!=="07:00")throw new Error(JSON.stringify(state.calendarCreate));
@@ -48,11 +48,11 @@ await check("019b_direct_create_mutates_draft_only_before_save",async()=>{
 });
 
 await page.locator('[data-msd-open-editor="0"]').click();
-const row0=page.locator('[data-msd-row="0"]');
-await row0.locator('[data-f="work_date"]').selectOption("2026-09-29");
-await row0.locator('[data-f="start_time"]').selectOption("12:00");
-await row0.locator('[data-f="end_time"]').selectOption("13:00");
-await row0.locator('[data-msd-apply-edit="0"]').click();
+const drawer0=page.locator('[data-x19g-drawer="edit"]');
+await drawer0.locator('[data-f="work_date"]').selectOption("2026-09-29");
+await drawer0.locator('[data-f="start_time"]').selectOption("12:00");
+await drawer0.locator('[data-f="end_time"]').selectOption("13:00");
+await drawer0.locator('[data-msd-apply-edit="0"]').click();
 await page.waitForFunction(()=>{const a=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0];return a?.work_date==="2026-09-29"&&a.start_time==="12:00"&&a.end_time==="13:00"});
 
 await check("019b_keyboard_fallback_edits_day_time_and_band",async()=>{
@@ -65,8 +65,8 @@ await check("019b_keyboard_fallback_edits_day_time_and_band",async()=>{
 });
 
 await page.locator('[data-msd-open-editor="0"]').click();
-await page.locator('[data-msd-copy-date="0"]').selectOption("2026-09-30");
-await page.locator('[data-msd-duplicate="0"]').click();
+await page.locator('[data-x19g-drawer="edit"] [data-msd-copy-date="0"]').selectOption("2026-09-30");
+await page.locator('[data-x19g-drawer="edit"] [data-msd-duplicate="0"]').click();
 await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
 
 await check("019b_duplicate_is_explicit_and_still_unsaved",async()=>{
@@ -91,11 +91,11 @@ await check("019b_first_save_uses_single_canonical_writer",async()=>{
 });
 
 await page.locator('[data-msd-open-editor="1"]').click();
-const row1=page.locator('[data-msd-row="1"]');
-await row1.locator('[data-f="work_date"]').selectOption("2026-09-29");
-await row1.locator('[data-f="start_time"]').selectOption("12:00");
-await row1.locator('[data-f="end_time"]').selectOption("13:00");
-await row1.locator('[data-msd-apply-edit="1"]').click();
+const drawer1=page.locator('[data-x19g-drawer="edit"]');
+await drawer1.locator('[data-f="work_date"]').selectOption("2026-09-29");
+await drawer1.locator('[data-f="start_time"]').selectOption("12:00");
+await drawer1.locator('[data-f="end_time"]').selectOption("13:00");
+await drawer1.locator('[data-msd-apply-edit="1"]').click();
 await page.waitForTimeout(80);
 
 await check("019b_hard_overlap_edit_fails_closed_and_reverts_ui",async()=>{
@@ -103,41 +103,35 @@ await check("019b_hard_overlap_edit_fails_closed_and_reverts_ui",async()=>{
     const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();
     const status=document.querySelector("#msdStatus")?.textContent||"";
     const row=document.querySelector('[data-msd-row="1"]');
-    const date=row?.querySelector('[data-f="work_date"]')?.value||"";
+    const date=document.querySelector('[data-x19g-drawer="edit"] [data-f="work_date"]')?.value||row?.querySelector('[data-f="work_date"]')?.value||"";
     if(s.assignments[1].work_date!=="2026-09-30"||date!=="2026-09-30"||!status.includes("Không thể cập nhật ca"))throw new Error(JSON.stringify({assignment:s.assignments[1],date,status}));
     return status;
   });
 });
 
-const moveCard=page.locator('[data-msd-row="0"] [data-msd-move-handle="0"]');
-const thursday1400=page.locator('[data-msd-slot-date="2026-10-01"][data-msd-slot-time="14:00"]');
-await moveCard.dragTo(thursday1400);
+await page.keyboard.press("Escape");
+await page.locator('[data-msd-open-editor="0"]').click();
+const moveDrawer=page.locator('[data-x19g-drawer="edit"]');
+await moveDrawer.locator('[data-f="work_date"]').selectOption("2026-10-01");
+await moveDrawer.locator('[data-f="start_time"]').selectOption("14:00");
+await moveDrawer.locator('[data-f="end_time"]').selectOption("15:00");
+await moveDrawer.locator('[data-msd-apply-edit="0"]').click();
 await page.waitForFunction(()=>{const a=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0];return a?.work_date==="2026-10-01"&&a.start_time==="14:00"&&a.end_time==="15:00"});
-
-await check("019b_drag_moves_shift_and_preserves_duration",async()=>{
-  return page.evaluate(()=>{
-    const a=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0];
-    if(a.work_date!=="2026-10-01"||a.start_time!=="14:00"||a.end_time!=="15:00")throw new Error(JSON.stringify(a));
-    return JSON.stringify(a);
-  });
+await check("019j_compact_day_editor_moves_shift_without_drag",async()=>{
+ const a=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0]);
+ if(a.work_date!=="2026-10-01"||a.start_time!=="14:00"||a.end_time!=="15:00")throw new Error(JSON.stringify(a));
+ return JSON.stringify(a);
 });
-
-const resizeEnd=page.locator('[data-msd-resize-end="0"]');
-const thursday1530=page.locator('[data-msd-slot-date="2026-10-01"][data-msd-slot-time="15:30"]');
-await resizeEnd.dragTo(thursday1530);
-await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0]?.end_time==="16:00");
-
-const resizeStart=page.locator('[data-msd-resize-start="0"]');
-const thursday1300=page.locator('[data-msd-slot-date="2026-10-01"][data-msd-slot-time="13:00"]');
-await resizeStart.dragTo(thursday1300);
-await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0]?.start_time==="13:00");
-
-await check("019b_drag_handles_resize_start_and_end",async()=>{
-  return page.evaluate(()=>{
-    const a=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0];
-    if(a.start_time!=="13:00"||a.end_time!=="16:00")throw new Error(JSON.stringify(a));
-    return JSON.stringify(a);
-  });
+await page.locator('[data-msd-open-editor="0"]').click();
+const sizeDrawer=page.locator('[data-x19g-drawer="edit"]');
+await sizeDrawer.locator('[data-f="start_time"]').selectOption("13:00");
+await sizeDrawer.locator('[data-f="end_time"]').selectOption("16:00");
+await sizeDrawer.locator('[data-msd-apply-edit="0"]').click();
+await page.waitForFunction(()=>{const a=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0];return a?.start_time==="13:00"&&a.end_time==="16:00"});
+await check("019j_compact_drawer_changes_start_end",async()=>{
+ const a=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0]);
+ if(a.start_time!=="13:00"||a.end_time!=="16:00")throw new Error(JSON.stringify(a));
+ return JSON.stringify(a);
 });
 
 await page.locator('[data-msd-remove-direct="1"]').first().click();
