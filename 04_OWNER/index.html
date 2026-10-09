@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/02_CORE/shared/shared-core-v1.js?v=20260927-ui2-014"></script>
 <link rel="stylesheet" href="/04_OWNER/ControlTower/control-tower-v1.css?v=20260927-ui2-014">
-<link rel="stylesheet" href="/04_OWNER/strategy-presentation-v4.css?v=20261007-xstore-019i-visual2">
+<link rel="stylesheet" href="/04_OWNER/strategy-presentation-v4.css?v=20261009-xstore-019j-owner3">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20260927-ui2-016">
@@ -51,6 +51,8 @@
         <span id="strategySourceMode" class="strategy-source-mode">READ-ONLY</span>
       </div>
     </div>
+
+    <div id="strategyDataNotice" class="strategy-data-notice" role="status" hidden></div>
 
     <div class="strategy-kpis" aria-label="KPI chiến lược">
       <article class="strategy-kpi" data-tone="blue"><span>Doanh thu</span><strong id="strategyRevenue">—</strong><small id="strategyRevenueMeta">Chưa có dữ liệu đủ tin cậy</small></article>
@@ -207,6 +209,6 @@
   <div class="notice">Tổng quan Owner chỉ đọc. Khi nguồn dữ liệu chưa sẵn sàng, giao diện giữ trạng thái chưa có dữ liệu thay vì tự tạo số liệu hoặc thay đổi nghiệp vụ.</div>
 </main>
 <script type="module" src="/04_OWNER/ControlTower/control-tower-v1.js?v=20260927-ui2-014"></script>
-<script type="module" src="/04_OWNER/strategy-presentation-v4.js?v=20261007-xstore-019i-visual2"></script>
+<script type="module" src="/04_OWNER/strategy-presentation-v4.js?v=20261009-xstore-019j-owner3"></script>
 </body>
 </html>

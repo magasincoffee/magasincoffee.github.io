@@ -11,6 +11,7 @@ on:
       - '09_QA/people-shift/xstore-019g-manager-five-board-v1.test.mjs'
       - '09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs'
       - '09_QA/xstore-019j/**'
+      - '09_QA/owner-control-tower/xstore-019j-owner-data-integrity-browser.mjs'
       - '06_EMPLOYEE/availability/**'
       - '06_EMPLOYEE/app/employee-v40.html'
       - '06_EMPLOYEE/runtime/employee-runtime-v1.html'
@@ -28,6 +29,7 @@ on:
       - '09_QA/people-shift/xstore-019g-manager-five-board-v1.test.mjs'
       - '09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs'
       - '09_QA/xstore-019j/**'
+      - '09_QA/owner-control-tower/xstore-019j-owner-data-integrity-browser.mjs'
       - '06_EMPLOYEE/availability/**'
       - '06_EMPLOYEE/app/employee-v40.html'
       - '06_EMPLOYEE/runtime/employee-runtime-v1.html'
@@ -99,6 +101,10 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8787
           QA_OUT: qa-artifacts/xstore-019j/owner
         run: node 09_QA/owner-control-tower/xstore-019i-owner-strategy-browser.mjs
+      - name: Owner null-vs-zero and readable mobile source integrity
+        env:
+          QA_BASE_URL: http://127.0.0.1:8787
+        run: node 09_QA/owner-control-tower/xstore-019j-owner-data-integrity-browser.mjs
       - name: Cross-role preview responsive accessibility reload
         env:
           QA_BASE_URL: http://127.0.0.1:8787
