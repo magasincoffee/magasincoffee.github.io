@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J CHANGES_REQUESTED — §0.5 + §0.6 + FULL OWNER-MOCKUP VISUAL-FIDELITY REMEDIATION REQUIRED; TECHNICAL GREEN ALONE IS NOT ACCEPTANCE / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J CHANGES_REQUESTED — §0.5 + §0.6 + §0.8 SLIDE-OVER EDITOR + FULL OWNER-MOCKUP VISUAL-FIDELITY REMEDIATION REQUIRED; TECHNICAL GREEN ALONE IS NOT ACCEPTANCE / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -535,6 +535,25 @@ Correct state until the visual remediation is implemented and requalified:
 - Owner review is requested only after fresh exact-candidate authenticated real-local visual evidence is ready.
 
 No new scheduling writer/RPC, RBAC relaxation, or business-authority change is authorized by this visual correction.
+
+## 0.8 Owner correction — 2026-10-09 — calendar-first slide-over editor for Steps 3 and 4
+
+Owner reviewed the real local scheduling application and explicitly approved a **right-side slide-over detail/editor** rather than expanding editing forms inside a calendar cell or keeping a permanently wide form column. This decision is **authoritative within XSTORE-019J** and supplements §0.5–§0.7.
+
+### Required interaction and layout
+
+- **Bước 3 — Chỉnh lịch:** the selected-store seven-day calendar is the dominant, full-width working surface at standard desktop widths. Clicking **Chỉnh** on an individual shift (including a shift within a Shift Cluster) opens an **on-demand slide-over drawer anchored to the right viewport edge** without reflowing, narrowing, resizing or horizontally scrolling the underlying calendar.
+- Reuse existing canonical edit capabilities in the drawer: employee, exact start/end, work date, save/update, duplicate and remove with existing role/scope, draft and conflict validation intact. Do **not** create a second independent scheduling writer or edit authority.
+- Close button, Escape, and selection switching must work. Visible focus, accessible drawer labeling, and responsive mobile width are required. Do not leave an open editor attached to stale store/week/assignment after a state refresh.
+- The original in-card expanded form must no longer appear within the small calendar cell when the side drawer is used. Shift Cluster retains readable grouped rows and individual controls. Candidate/supplement workflows remain available but secondary to the calendar.
+- **Bước 4 — Kiểm tra:** show the same calendar geometry and Shift Cluster grouping in **read-only** state. Selecting a shift/cluster opens a matching right-side **read-only detail drawer**, not an editable form. This action must not expose any update/delete/duplicate writer or relax Validate → Review → Publish.
+- No permanent editor column should consume normal calendar width. Supplemental and review summaries may be collapsed or placed below the primary calendar. Desktop seven-day readability, mobile controlled day window, and no nested horizontal scroll remain mandatory.
+
+### Acceptance for XSTORE-019J
+
+Targeted browser and local-authenticated QA must prove: (a) click shift edit opens the right-side editor, (b) underlying calendar dimensions do not change before/after opening, (c) editing an overlapping Shift Cluster member targets the correct single assignment, (d) close/Escape and re-render do not lose or misroute draft changes, (e) Step-4 detail is genuinely read-only, (f) direct Step-3 → Step-4 remains available, (g) responsive calendar/window remains usable, and (h) all impacted scheduling, authority, regression, and visual-fidelity gates are GREEN. Capture fresh exact-candidate authenticated screenshots for Owner review.
+
+This is a presentation/interaction correction **inside existing XSTORE-019J**, not authorization to run XSTORE-019K or to merge PR #392. Until proven and Owner re-approved, XSTORE-019J remains **CHANGES_REQUESTED / EXECUTABLE** and the PR stays **DRAFT / DO NOT MERGE**.
 
 ## 1. Purpose
 
@@ -3151,6 +3170,7 @@ This track is complete only when:
 28. Employee shift cards expose readable employee name and complete time range without per-card horizontal scroll.
 29. normal desktop schedule editing has no nested horizontal scrollbars and presents the seven-day week without horizontal scrolling when viewport width is sufficient.
 30. narrow schedule layouts use one controlled calendar-level navigation/overflow model and do not create page-level horizontal overflow.
+31. Step-3 shift editing uses an on-demand right-side slide-over without resizing the underlying calendar, while Step 4 offers matching read-only shift/cluster detail.
 
 ## 8. Closure rule
 
