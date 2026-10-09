@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J MANAGER SCHEDULING STEP-3/4 UI OWNER-APPROVED 2026-10-09 ON LOCAL RC; FULL CROSS-ROLE / EXACT-MAIN ACCEPTANCE STILL OPEN / XSTORE-019K BLOCKED UNTIL FULL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J MANAGER SCHEDULING UI OWNER-APPROVED 2026-10-09; EMPLOYEE/OWNER AUTHENTICATED REAL-LOCAL VISUAL REQUALIFICATION WAIT_OWNER_AUTHENTICATION / BLOCKED; EXACT-MAIN ACCEPTANCE OPEN / XSTORE-019K BLOCKED UNTIL FULL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -580,6 +580,18 @@ Durable reviewed RC reference:
 - This evidence establishes a successful **Manager UI acceptance milestone**; it does not prove untriggered gates, production deployment, exact-main verification, or acceptance of another role's rendered UI.
 
 **Scope boundary and task control:** `XSTORE-019J` remains **OPEN / EXECUTABLE** until the rest of §0.4's authenticated real-local Manager/Employee/Owner cross-role evidence and Owner UI implementation re-approval are adequately recorded, all SOT-required release checks are satisfied, and exact-main acceptance is justified. The Manager calendar visuals from §0.8–§0.9 must not be reopened as unapproved absent a specific new defect or Owner change request. `XSTORE-019K` remains **BLOCKED** pending the full cross-role UI gate. PR #392 stays **DRAFT / DO NOT MERGE** pending its normal release authorization. No real DRAFT/Review/Publish action is authorized by this conversational UI approval.
+
+## 0.11 Real-local Employee/Owner auth requalification — 2026-10-09 — OWNER LOGIN REQUIRED
+
+Following the Owner's approval of the **Manager calendar UI only** (§0.10) and instruction to proceed, a new **read-only** real-local access check was executed on **DESKTOP-H4A16IL** using the exact PR #392 candidate `7a3e419995b0d87f5d4d74aa2f884d1d43a4977c` served at `http://127.0.0.1:8791/`.
+
+**Observed facts, not fixture assumptions:**
+- Local Employee entry `/employee/` served successfully (HTTP 200), but navigation in an isolated Chrome review profile ended at canonical `/03_PLATFORM/01_AUTH/` with page title `MAGASIN · Đăng nhập`, not an authenticated Employee UI. A previous employee-authenticated screenshot set exists under `D:\MAGASIN_UI_EVIDENCE\xstore-019j\actual\`, but its recorded candidate SHA was `33c85f231a832e96d8455301b6f743b09fc0ee49` and **cannot qualify the current candidate**.
+- Local Owner entry `/owner/` served successfully (HTTP 200), but navigation in a separate isolated Chrome review profile also ended at canonical `/03_PLATFORM/01_AUTH/`; the real Owner strategy page was therefore not inspectable. Do not claim Owner visual approval from its existing fixture QA.
+- Both review Chrome sessions were launched using isolated profiles/ports 9333 (Employee) and 9334 (Owner); both CDP endpoints were responsive (HTTP 200) after navigation. No credentials, authentication tokens, session records or production business data were read, copied, guessed, injected or changed. Screenshots of the login boundary were saved locally as `employee-current-local-20261009.png` and `owner-current-local-20261009.png`.
+- The local checkout remained on exact RC SHA `7a3e419995b0d87f5d4d74aa2f884d1d43a4977c`. All 12 GitHub Actions runs launched for that SHA previously completed **SUCCESS** (as recorded in §0.10). Technical GREEN does not substitute for real authenticated visual comparison or approval.
+
+**Gate disposition:** `XSTORE-019J` has a **completed/approved Manager scheduling UI sub-gate**. Its outstanding **authenticated Employee and Owner real-local review gate is WAIT_OWNER_AUTHENTICATION / BLOCKED for Owner action**. Resume exactly the same XSTORE-019J after Owner logs into the Employee and Owner review sessions via the canonical app sign-in UI; capture and compare real desktop/mobile role screens with §0.4 approved images, repair any identified deviations under normal QA, and obtain explicit Owner cross-role UI approval. Do not require Manager calendar reapproval absent a new concrete defect. Do not bypass Supabase auth or fabricate operational financial/workforce values to imitate reference images. `XSTORE-019K` remains blocked; PR #392 remains DRAFT / DO NOT MERGE; no real scheduling Publish is authorized.
 
 ## 1. Purpose
 
