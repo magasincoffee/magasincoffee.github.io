@@ -103,7 +103,7 @@ test("UI2-012 responsive contract keeps seven days inside the calendar workspace
 
 test("UI2-012 presentation is shared while Owner and Manager retain the canonical XSTORE-019 writer",()=>{
   const managerV="20261005-xstore-019";
-  const managerEntryV="20261009-xstore-019j-slide1";
+  const managerEntryV="20261009-xstore-019j-compact3";
   assert.ok(runtime.includes("engine-v1.js?v="+managerEntryV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerEntryV));

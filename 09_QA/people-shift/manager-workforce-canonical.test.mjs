@@ -156,7 +156,7 @@ test("SCHED-04 Manager UI hides technical generation identity and raw backend di
 
 test("SCHED-04 legacy Lich-lam route wraps canonical Workforce surface only",async()=>{
   const legacy=await read("05_MANAGER/Lich-lam/index.html");
-  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017|20261005-xstore-019|20261007-xstore-019g-visual1|20261007-xstore-019g-visual3|20261007-xstore-019j-weekfix1|20261007-xstore-019j-workspace2|20261007-xstore-019j-cluster1|20261007-xstore-019j-visual3|20261007-xstore-019j-visual4|20261009-xstore-019j-slide1)#workforce/);
+  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017|20261005-xstore-019|20261007-xstore-019g-visual1|20261007-xstore-019g-visual3|20261007-xstore-019j-weekfix1|20261007-xstore-019j-workspace2|20261007-xstore-019j-cluster1|20261007-xstore-019j-visual3|20261007-xstore-019j-visual4|20261009-xstore-019j-compact3)#workforce/);
   assert.doesNotMatch(legacy,/manager-v13-runtime/);
   assert.doesNotMatch(legacy,/draft-publish-v1\.js/);
 });

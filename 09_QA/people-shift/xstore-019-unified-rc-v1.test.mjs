@@ -19,8 +19,8 @@ const coldReload=read("09_QA/ui2-cross-role/ui2-017-cold-reload-closure-browser.
 
 const RC="20261005-xstore-019";
 const X19G_AUTO="20261006-xstore-019g-r1";
-const X19G_FIVE="20261009-xstore-019j-slide1";
-const MANAGER_VISUAL="20261009-xstore-019j-slide1";
+const X19G_FIVE="20261009-xstore-019j-compact3";
+const MANAGER_VISUAL="20261009-xstore-019j-compact3";
 const MASTER_VISUAL="20261007-xstore-019j-weekfix1";
 const RC_QUALIFICATION="POST_UI2_015_REPAIR_3";
 const forbiddenWriters=[
