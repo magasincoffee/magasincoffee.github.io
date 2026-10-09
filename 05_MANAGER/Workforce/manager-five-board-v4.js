@@ -31,6 +31,33 @@ function css(){
 .x19g-edit-layout{display:grid;grid-template-columns:minmax(0,4.35fr) minmax(190px,.65fr);gap:10px;align-items:start}.x19g-edit-main{min-width:0}.x19g-supplement-rail{position:sticky;top:64px}.x19g-supplement-list{display:grid;gap:4px}.x19g-person-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:5px;align-items:center;padding:6px 7px;border:1px solid #edf1f5;border-radius:6px;background:#fff}.x19g-person-row strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}.x19g-person-row span{padding:2px 5px;border-radius:999px;background:#f2f4f7;color:#475467;font-size:8px;font-weight:900}.x19g-person-action{min-height:26px!important;padding:0 7px!important;border:1px solid #bfdbfe!important;border-radius:5px!important;background:#eff6ff!important;color:#1d4ed8!important;font-size:8px!important;font-weight:900!important}.x19g-supplement-action{margin-top:8px}.x19g-supplement-action .btn{width:100%!important;min-height:34px!important;padding:0 8px!important;font-size:9.5px!important}
 .x19g-check-layout{display:grid;grid-template-columns:minmax(0,4.35fr) minmax(190px,.65fr);gap:10px;align-items:start}.x19g-check-rail{position:sticky;top:64px}.x19g-check-rail .x19g-check-action{width:100%;margin-top:9px}.x19g-review{padding:6px!important}.x19g-review-head{min-height:30px;margin-bottom:5px!important}.x19g-board[data-x19g-board="publish"] .x19g-publish-layout{grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:7px 9px;border:1px solid var(--x19-line);border-radius:8px;background:#fbfcfe}
 .x19g-board[data-x19g-board="edit"] .msd-shift-cluster,.x19g-review .msd-shift-cluster{border-width:1px!important;border-radius:6px!important;box-shadow:none!important;padding:4px!important;overflow:hidden!important}.x19g-board[data-x19g-board="edit"] .msd-cluster-head,.x19g-review .msd-cluster-head{display:grid!important;grid-template-columns:minmax(0,1fr)!important;justify-items:start!important;gap:1px!important;padding-bottom:3px!important;font-size:8px!important;line-height:1.1!important}.x19g-board[data-x19g-board="edit"] .msd-cluster-head span,.x19g-review .msd-cluster-head span{white-space:nowrap!important}.x19g-board[data-x19g-board="edit"] .msd-cluster-row{grid-template-columns:14px minmax(0,1fr)!important;grid-template-areas:"grip name" "grip exact" "meta meta" "edit edit" "editor editor"!important;gap:1px 3px!important;padding:3px 0!important}.x19g-review .msd-cluster-row{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"name" "exact" "meta"!important;gap:1px!important;padding:3px 0!important}.x19g-board[data-x19g-board="edit"] .msd-cluster-name,.x19g-review .msd-cluster-name{font-size:8.5px!important;line-height:1.2!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;hyphens:none!important}.x19g-board[data-x19g-board="edit"] .msd-cluster-exact,.x19g-review .msd-cluster-exact{font-size:7.5px!important;line-height:1.15!important;white-space:nowrap!important}.x19g-board[data-x19g-board="edit"] .msd-cluster-meta,.x19g-review .msd-cluster-meta{justify-content:flex-start!important;flex-wrap:wrap!important;gap:2px!important}.x19g-board[data-x19g-board="edit"] .msd-cluster-move-grip{width:14px!important;height:18px!important;font-size:9px!important}.x19g-board[data-x19g-board="edit"] .msd-cluster-edit{justify-self:start!important;min-height:20px!important;padding:1px 5px!important;font-size:7.5px!important}.x19g-board[data-x19g-board="edit"] .msd-cluster-badge,.x19g-review .msd-cluster-badge{min-height:16px!important;padding:1px 4px!important;font-size:7.5px!important}
+
+/* XSTORE-019J Owner 2026-10-09: keep the seven-day calendar full width.
+   Detail/edit controls open in a fixed slide-over and never resize the board. */
+.x19g-edit-layout,.x19g-check-layout{grid-template-columns:minmax(0,1fr)!important}
+.x19g-supplement-rail,.x19g-check-rail{position:static!important;top:auto!important;border-left:0!important;border-top:1px solid var(--x19-line)!important;padding:10px 0 0!important;margin-top:10px!important}
+.x19g-board[data-x19g-board="edit"] .msd-card-editor{display:none!important}
+.x19g-side-drawer{position:fixed;inset:0 0 0 auto;z-index:4000;width:min(430px,94vw);box-sizing:border-box;display:flex;flex-direction:column;padding:0;background:#fff;color:#172033;border-left:1px solid #d4dfec;box-shadow:-16px 0 34px rgba(16,24,40,.23);animation:x19g-slide-in .16s ease-out;overflow:hidden}
+@keyframes x19g-slide-in{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.x19g-side-head{display:flex;gap:12px;align-items:start;justify-content:space-between;padding:18px 18px 14px;border-bottom:1px solid #e8edf3;background:#f8faff}
+.x19g-side-head h3{font-size:17px!important;margin:0 0 4px!important;line-height:1.35!important;color:#15243b!important}
+.x19g-side-head p{margin:0;color:#667085;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.x19g-side-close{flex:0 0 auto;min-height:34px!important;padding:4px 10px!important}
+.x19g-side-content{min-height:0;overflow-y:auto;padding:18px;overscroll-behavior:contain;display:grid;gap:12px;align-content:start}
+.x19g-side-content .msd-card-editor{display:block!important;position:static!important;overflow:visible!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:#fff!important}
+.x19g-side-content .msd-card-editor>summary{display:none!important}
+.x19g-side-content .msd-manual-grid{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;width:100%!important}
+.x19g-side-content .msd-input{display:block;width:100%!important;min-height:43px!important;font-size:13px!important}
+.x19g-side-content .msd-card-editor-actions{display:grid!important;grid-template-columns:1fr 1fr;gap:9px!important;margin-top:16px}
+.x19g-side-content .msd-card-editor-actions>*{min-width:0!important}
+.x19g-side-content .msd-card-editor-actions [data-msd-apply-edit]{grid-column:1/-1;background:#2563eb!important;color:#fff!important}
+.x19g-detail-row{display:grid;gap:4px;padding:12px;border:1px solid #e9edf3;border-radius:8px;background:#f8fafc}
+.x19g-detail-row b{font-size:13px;color:#111827}.x19g-detail-row span{font-size:12px;color:#475467}
+.x19g-review .msd-calendar-primary{pointer-events:auto!important}
+.x19g-review .msd-direct-card,.x19g-review .msd-cluster-row,.x19g-review .msd-cluster-head{pointer-events:auto!important;cursor:pointer}
+.x19g-review .msd-direct-card:focus-visible,.x19g-review .msd-cluster-row:focus-visible,.x19g-review .msd-cluster-head:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+@media(max-width:600px){.x19g-side-drawer{width:100vw;max-width:100vw}.x19g-side-content{padding:14px}}
+
 @media(max-width:1180px){.x19g-prepare-layout,.x19g-edit-layout,.x19g-check-layout{grid-template-columns:1fr}.x19g-prepare-side,.x19g-supplement-rail,.x19g-check-rail{position:static;padding:9px 0 0;border-left:0;border-top:1px solid var(--x19-line)}}
 @media(max-width:1024px){.x19g-week-strip{grid-template-columns:1fr}.x19g-week-actions .msu2-week-controls{grid-template-columns:44px minmax(112px,1fr) 44px}.x19g-week-actions .msu2-week-controls .badge{grid-column:1/-1}.x19g-calendar-command{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.x19g-command-status{justify-self:start}.x19g-check-action{justify-self:end}#panel-publish .msd[data-scheduling-actor="MANAGER"] button:not(.msd-resize-handle),#panel-publish .msd[data-scheduling-actor="MANAGER"] select{min-height:44px!important;height:auto!important}.x19g-ready{grid-template-columns:repeat(2,minmax(0,1fr))}.x19g-draft-layout,.x19g-publish-layout{grid-template-columns:1fr}.x19g-nav{display:flex;overflow-x:auto}.x19g-nav button{flex:0 0 150px}.x19g-hero{grid-template-columns:1fr}.x19g-hero-actions{justify-content:flex-start}}\
 @media(max-width:900px){
@@ -82,6 +109,7 @@ function syncDayWindow(sh,delta=0){
 }
 function sync(sh){
  const r=root(),s=sched(),a=auto();if(!r||!sh)return;alignShortages(r);const ac=active(s);
+ if(x19jSlide&&(!x19jSlide.pane.isConnected||x19jSlide.context.store!==String(s.storeId||'')||x19jSlide.context.week!==String(s.week||'')))x19jCloseSlide();
  sh.querySelectorAll('[data-x19g-nav]').forEach(b=>b.setAttribute('aria-current',b.dataset.x19gNav===ac?'step':'false'));
  const selected=(Array.isArray(s.stores)?s.stores:[]).find(x=>String(x.id)===String(s.storeId||'')),pressed=r.querySelector('.msd-store-switch[aria-pressed="true"]'),wt=r.querySelector('.msd-workspace-title'),store=selected?.code||selected?.name||pressed?.textContent?.trim()||'Cửa hàng chưa chọn',subtitle=sh.querySelector('[data-x19g-subtitle]');if(subtitle)subtitle.textContent=store+' · Tuần '+(s.week||'—')+' · Asia/Ho_Chi_Minh';
  const branchSlot=sh.querySelector('[data-x19g-branch-actions]'),branchControls=r.querySelector('.msd-store-switcher');if(branchControls&&branchSlot&&!branchSlot.contains(branchControls))branchSlot.appendChild(branchControls);
@@ -92,9 +120,77 @@ function sync(sh){
  const det=sh.querySelector('[data-x19g-staff]');if(det&&a.loaded===true&&det.dataset.defaulted!=='1'){det.dataset.defaulted='1';det.open=true}if(det?.open){const setup=det.querySelector('#xsaSetupOpen');if(setup&&det.dataset.setup!=='1'){det.dataset.setup='1';setTimeout(()=>setup.click(),0)}}else if(det)delete det.dataset.setup;
  syncSupplementRail(sh,s,r);syncCheckRail(sh,s);
  const slot=sh.querySelector('[data-x19g-start]'),start=r.querySelector('#msdStart');if(start&&slot&&!slot.contains(start)){start.style.display='';slot.appendChild(start)}const autoBtn=r.querySelector('[data-xsa-next-action="auto"]');if(autoBtn&&slot&&!slot.contains(autoBtn))slot.appendChild(autoBtn);const ds=sh.querySelector('[data-x19g-draft-status]'),st=String(s.generationStatus||'NONE').toUpperCase();if(ds)ds.textContent=st==='NONE'?'Chưa có lịch nháp cho cửa hàng/tuần đang chọn.':st==='DRAFT'?'Đã có lịch nháp · '+Number(s.assignments?.length||0)+' ca. Chuyển sang Bước 3 để chỉnh trực tiếp trên lịch.':'Trạng thái hiện tại: '+st+'.';const commandStatus=sh.querySelector('[data-x19g-command-status]');if(commandStatus)commandStatus.textContent=st==='DRAFT'?'LỊCH NHÁP':st==='REVIEWED'?'ĐÃ DUYỆT':st==='PUBLISHED'?'ĐÃ PHÁT HÀNH':st==='CONFLICT'?'CẦN XỬ LÝ':'CHƯA TẠO';syncDayWindow(sh,0);
- const rv=sh.querySelector('[data-x19g-review]'),cal=r.querySelector('[data-x19g-board="edit"] .msd-calendar-primary')||r.querySelector('.msd-calendar-primary');if(rv&&cal){const sig=[String(s.storeId||''),String(s.week||''),String(s.generationStatus||''),(Array.isArray(s.assignments)?s.assignments:[]).map(x=>[x.id||'',x.user_id||'',x.work_date||'',x.start_time||'',x.end_time||'',x.warning||''].join('~')).join('|'),(Array.isArray(s.shortages)?s.shortages:[]).map(x=>[x.requirement_id||'',x.work_date||'',x.shortage_start||'',x.shortage_end||'',x.missing_headcount||0].join('~')).join('|')].join('::');if(rv.dataset.sig!==sig){rv.dataset.sig=sig;rv.replaceChildren();const h=document.createElement('div');h.className='x19g-review-head';h.innerHTML='<span>Cùng lịch tuần và giờ ca thực tế như Bước 3.</span><span class="x19g-readonly">CHỈ ĐỌC</span>';rv.append(h,clone(cal))}syncDayWindow(sh,0)}
+ const rv=sh.querySelector('[data-x19g-review]'),cal=r.querySelector('[data-x19g-board="edit"] .msd-calendar-primary')||r.querySelector('.msd-calendar-primary');if(rv&&cal){const sig=[String(s.storeId||''),String(s.week||''),String(s.generationStatus||''),(Array.isArray(s.assignments)?s.assignments:[]).map(x=>[x.id||'',x.user_id||'',x.work_date||'',x.start_time||'',x.end_time||'',x.warning||''].join('~')).join('|'),(Array.isArray(s.shortages)?s.shortages:[]).map(x=>[x.requirement_id||'',x.work_date||'',x.shortage_start||'',x.shortage_end||'',x.missing_headcount||0].join('~')).join('|')].join('::');if(rv.dataset.sig!==sig){rv.dataset.sig=sig;rv.replaceChildren();const h=document.createElement('div');h.className='x19g-review-head';h.innerHTML='<span>Cùng lịch tuần và giờ ca thực tế như Bước 3.</span><span class="x19g-readonly">CHỈ ĐỌC</span>';rv.append(h,clone(cal));rv.querySelectorAll('.msd-direct-card,.msd-cluster-row,.msd-cluster-head').forEach(n=>{n.tabIndex=0;n.setAttribute('role','button');n.setAttribute('aria-label','Xem chi tiết '+(n.getAttribute('aria-label')||n.textContent.trim().slice(0,90)))})}syncDayWindow(sh,0)}
  const pub=sh.querySelector('[data-x19g-publish]'),down=r.querySelector('.msd-workspace-body>.msd-downstream')||r.querySelector('.msd-downstream');if(down&&pub&&!pub.contains(down)){down.style.display='';pub.appendChild(down)}const ps=sh.querySelector('[data-x19g-publish-status]');if(ps)ps.textContent='Trạng thái '+st+' · kiểm tra '+(String(s.lastValidation||'').toUpperCase()||'CHƯA CHẠY')+'. Validate → Review → Publish giữ nguyên authority hiện có.';
 }
+
+let x19jSlide=null;
+function x19jCloseSlide(){
+ const prior=x19jSlide;if(!prior)return;
+ x19jSlide=null;
+ if(prior.editor&&prior.origin?.isConnected){prior.editor.open=false;prior.origin.appendChild(prior.editor)}
+ prior.pane.remove();
+ if(prior.trigger?.isConnected)prior.trigger.focus({preventScroll:true});
+}
+function x19jShowSlide(sh,mode,source,trigger){
+ x19jCloseSlide();
+ const row=source?.closest?.('[data-msd-row]')||source;
+ const isReadOnly=mode==='check',info=row?.getAttribute?.('aria-label')||'Chi tiết ca làm';
+ const pane=document.createElement('aside');pane.className='x19g-side-drawer';pane.dataset.x19gDrawer=mode;
+ pane.setAttribute('role','dialog');pane.setAttribute('aria-modal','false');
+ pane.setAttribute('aria-label',isReadOnly?'Xem chi tiết lịch (chỉ đọc)':'Chỉnh sửa ca làm');
+ const head=document.createElement('header');head.className='x19g-side-head';
+ const heading=document.createElement('div');const h=document.createElement('h3');h.textContent=isReadOnly?'Chi tiết ca · Chỉ đọc':'Chỉnh sửa ca';
+ const subtitle=document.createElement('p');subtitle.textContent=info;heading.append(h,subtitle);
+ const close=document.createElement('button');close.type='button';close.className='btn x19g-side-close';close.textContent='Đóng ×';close.dataset.x19gDrawerClose='1';head.append(heading,close);
+ const content=document.createElement('div');content.className='x19g-side-content';pane.append(head,content);
+ const ss=sched(),context={store: String(ss.storeId||''),week:String(ss.week||'')};
+ let editor=null,origin=null;
+ if(isReadOnly){
+  const parts=source?.classList?.contains('msd-shift-cluster')?[...source.querySelectorAll('.msd-cluster-row')]:[row];
+  parts.forEach(item=>{const block=document.createElement('div');block.className='x19g-detail-row';
+   const name=document.createElement('b');name.textContent=item?.getAttribute?.('aria-label')||item?.querySelector?.('.msd-direct-name,.msd-cluster-name')?.textContent||info;
+   const extra=document.createElement('span');extra.textContent=item?.querySelector?.('.msd-meta,.msd-cluster-meta')?.textContent?.trim()||'Lịch xem trước · Không cho phép chỉnh sửa';
+   block.append(name,extra);content.appendChild(block);
+  });
+ }else{
+  editor=row?.querySelector?.('.msd-card-editor');if(!editor)return false;
+  origin=editor.parentElement;const wrap=document.createElement('div');wrap.className='x19g-drawer-editor';wrap.dataset.msdRow=row.dataset.msdRow||'';
+  editor.open=true;wrap.appendChild(editor);content.appendChild(wrap);
+ }
+ sh.appendChild(pane);x19jSlide={pane,editor,origin,trigger,context};
+ close.addEventListener('click',x19jCloseSlide);
+ (isReadOnly?close:pane.querySelector('.msd-input')||close).focus({preventScroll:true});
+ return true;
+}
+function x19jInstallSlideEvents(r,sh){
+ if(r.dataset.x19gSlideBound==='1')return;r.dataset.x19gSlideBound='1';
+ r.addEventListener('click',e=>{
+  const t=e.target;if(!(t instanceof Element))return;
+  if(t.closest('[data-x19g-drawer-close]'))return;
+  if(t.closest('[data-x19g-nav],[data-msd-week],[data-msd-branch]')){x19jCloseSlide();return}
+  const edit=t.closest('[data-msd-open-editor]');
+  if(edit&&edit.closest('[data-x19g-board="edit"]')){
+   e.preventDefault();e.stopImmediatePropagation();
+   x19jShowSlide(sh,'edit',edit.closest('[data-msd-row]'),edit);return;
+  }
+  const area=t.closest('[data-x19g-board="check"] .x19g-review');
+  if(area){
+   const selection=t.closest('.msd-cluster-row,.msd-direct-card,.msd-cluster-head');
+   if(!selection)return;
+   e.preventDefault();e.stopPropagation();
+   const cluster=selection.classList.contains('msd-cluster-head')?selection.closest('.msd-shift-cluster'):null;
+   x19jShowSlide(sh,'check',cluster||selection,selection);
+  }
+ },true);
+ r.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  const row=e.target?.closest?.('[data-x19g-board="check"] .msd-direct-card,[data-x19g-board="check"] .msd-cluster-row,[data-x19g-board="check"] .msd-cluster-head');
+  if(!row)return;e.preventDefault();x19jShowSlide(sh,'check',row.classList.contains('msd-cluster-head')?row.closest('.msd-shift-cluster'):row,row);
+ },true);
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&x19jSlide){e.preventDefault();x19jCloseSlide()}},true);
+
 function enhance(){
  css();const r=root();if(!r)return false;const view=r.closest('#view-workforce');if(view)view.classList.add('x19g-manager-view');const existing=r.querySelector('.x19g-shell');if(r.dataset.x19g==='1'&&existing){sync(existing);return true}if(r.dataset.x19g==='1'&&!existing)delete r.dataset.x19g;
  const hd=r.querySelector('.msd-head'),am=r.querySelector('#xstoreAutomationMount'),single=r.querySelector('.msd-single-store'),ov=r.querySelector('.msd-global-overview');if(!hd||!single)return false;hd.setAttribute('aria-hidden','true');r.dataset.x19g='1';
@@ -106,7 +202,7 @@ function enhance(){
  const editBody=bs.edit.querySelector('.x19g-body'),command=document.createElement('div');command.className='x19g-calendar-command';command.dataset.x19gCommand='1';command.setAttribute('aria-label','Điều khiển lịch nháp đang chỉnh');command.innerHTML='<div class="x19g-command-branches" data-x19g-branch-actions></div><div class="x19g-command-week"><span class="x19g-command-week-label" data-x19g-week-label>Chưa chọn tuần</span><div data-x19g-week-actions></div></div><span class="x19g-command-status" data-x19g-command-status>CHƯA TẠO</span><button class="btn x19g-check-action" type="button" data-x19g-go-check>Kiểm tra lịch →</button><div class="x19g-command-day-nav"><button class="btn" type="button" data-x19g-day="prev" aria-label="Ngày trước">←</button><span class="x19g-command-day-label" data-x19g-day-label>Ngày 1/7</span><button class="btn" type="button" data-x19g-day="next" aria-label="Ngày kế tiếp">→</button></div>';const bottomCheck=document.createElement('div');bottomCheck.className='x19g-check-bottom';bottomCheck.innerHTML='<button class="btn x19g-check-action" type="button" data-x19g-go-check>Tiếp tục → Kiểm tra</button>';const editLayout=document.createElement('div');editLayout.className='x19g-edit-layout';editLayout.innerHTML='<div class="x19g-edit-main"></div><aside class="x19g-supplement-rail" aria-label="Thêm hoặc bổ sung nhân viên"><h4 class="x19g-rail-title">Thêm / bổ sung nhân viên</h4><p class="x19g-rail-help">Nhân viên phù hợp theo cửa hàng/tuần. Mở danh sách khi cần bổ sung ca.</p><div class="x19g-supplement-list" data-x19g-supplement-list></div><div class="x19g-supplement-action" data-x19g-supplement-action></div></aside>';editBody.append(command,editLayout);editLayout.querySelector('.x19g-edit-main').append(single,bottomCheck);const goCheck=()=>{const target=sh.querySelector('#x19g-board-check');if(!target)return;target.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>target.focus({preventScroll:true}),180)};editBody.querySelectorAll('[data-x19g-go-check]').forEach(b=>b.addEventListener('click',goCheck));command.querySelectorAll('[data-x19g-day]').forEach(b=>b.addEventListener('click',()=>syncDayWindow(sh,b.dataset.x19gDay==='prev'?-1:1)));
  bs.check.querySelector('.x19g-body').innerHTML='<div class="x19g-check-layout"><div class="x19g-review" data-x19g-review></div><aside class="x19g-check-rail" aria-label="Kết quả kiểm tra lịch"><h4 class="x19g-rail-title">Kết quả kiểm tra</h4><p class="x19g-rail-help">Tóm tắt trạng thái của cùng lịch tuần ở chế độ chỉ đọc.</p><div class="x19g-rail-list" data-x19g-check-summary></div></aside></div>';
  bs.publish.querySelector('.x19g-body').innerHTML='<div class="x19g-publish-layout"><div class="x19g-status" data-x19g-publish-status></div><div data-x19g-publish></div></div>';
- sync(sh);return true;
+ x19jInstallSlideEvents(r,sh);sync(sh);return true;
 }
 let q=false;function schedule(){if(q)return;q=true;requestAnimationFrame(()=>{q=false;enhance()})}function boot(){if(enhance()){const p=document.querySelector(P);if(p)new MutationObserver(schedule).observe(p,{childList:true,subtree:true})}else setTimeout(boot,80)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
