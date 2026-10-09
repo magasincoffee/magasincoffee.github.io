@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J CHANGES_REQUESTED — §0.5 + §0.6 + §0.8 SLIDE-OVER EDITOR + §0.9 COMPACT WEEK GRID + FULL OWNER-MOCKUP VISUAL-FIDELITY REMEDIATION REQUIRED; TECHNICAL GREEN ALONE IS NOT ACCEPTANCE / XSTORE-019K BLOCKED UNTIL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J MANAGER SCHEDULING STEP-3/4 UI OWNER-APPROVED 2026-10-09 ON LOCAL RC; FULL CROSS-ROLE / EXACT-MAIN ACCEPTANCE STILL OPEN / XSTORE-019K BLOCKED UNTIL FULL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -568,6 +568,18 @@ Required canonical implementation:
 - Normal desktop must show all seven days without an internal horizontal timeline scrollbar. Narrow/mobile must use the existing one-day controlled navigation model, without a tall empty hourly area.
 - Do not call the work complete until fresh **authenticated real-local** screenshots and interaction evidence show that Steps 3/4 no longer resemble the hourly timeline, reproduce the compact-week visual hierarchy, and match the approved design closely enough for Owner re-review.
 - This is a UI correction of existing **XSTORE-019J**, not a new task and not permission to merge PR #392 or advance XSTORE-019K. Preserve DRAFT/DO NOT MERGE until technical and Owner gates.
+
+## 0.10 Owner acceptance — 2026-10-09 — Manager calendar UI approved (bounded scope)
+
+The Owner explicitly said **“Ok duyệt lịch của maganer”** after reviewing the real local Manager scheduling implementation and its compact weekly calendar correction. Treat this as **APPROVED for the Manager scheduling/calendar presentation**, especially Bước 3 — Chỉnh lịch and Bước 4 — Kiểm tra, including the compact seven-day composition from §0.9 and the on-demand right slide-over from §0.8. Do **not** reinterpret this as approval to publish an actual employee work schedule, create or modify operational assignments, or change role/store authority.
+
+Durable reviewed RC reference:
+- PR **#392**, branch `xstore-019-unified-rc-v1`, candidate HEAD `7a3e419995b0d87f5d4d74aa2f884d1d43a4977c` (Manager compact-week follow-up, day Add button hit-testing and cache closure);
+- Owner local preview on `DESKTOP-H4A16IL`, local Manager route `http://127.0.0.1:8791/05_MANAGER/`, served from that candidate and returning HTTP 200 in the implementation cycle; approval is based on Owner's real-local visual review, not fixture tests alone;
+- GitHub Actions for that exact SHA: **12/12 triggered workflow runs completed SUCCESS** at the acceptance check, including `XSTORE-019J Cross-Role UI Preview QA`, `XSTORE-019 Unified RC QA`, `UI2 Cross Role Acceptance`, `People Shift Day-10 Tests`, `XSTORE-019G Manager Five-Board QA`, XSTORE-013/014/015/016/017/018 compatibility tests and SOP QA.
+- This evidence establishes a successful **Manager UI acceptance milestone**; it does not prove untriggered gates, production deployment, exact-main verification, or acceptance of another role's rendered UI.
+
+**Scope boundary and task control:** `XSTORE-019J` remains **OPEN / EXECUTABLE** until the rest of §0.4's authenticated real-local Manager/Employee/Owner cross-role evidence and Owner UI implementation re-approval are adequately recorded, all SOT-required release checks are satisfied, and exact-main acceptance is justified. The Manager calendar visuals from §0.8–§0.9 must not be reopened as unapproved absent a specific new defect or Owner change request. `XSTORE-019K` remains **BLOCKED** pending the full cross-role UI gate. PR #392 stays **DRAFT / DO NOT MERGE** pending its normal release authorization. No real DRAFT/Review/Publish action is authorized by this conversational UI approval.
 
 ## 1. Purpose
 
