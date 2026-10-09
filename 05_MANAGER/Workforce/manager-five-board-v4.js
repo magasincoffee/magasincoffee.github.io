@@ -109,7 +109,7 @@ function syncDayWindow(sh,delta=0){
 }
 function sync(sh){
  const r=root(),s=sched(),a=auto();if(!r||!sh)return;alignShortages(r);const ac=active(s);
- if(x19jSlide&&(!x19jSlide.pane.isConnected||x19jSlide.context.store!==String(s.storeId||'')||x19jSlide.context.week!==String(s.week||'')))x19jCloseSlide();
+ if(x19jSlide&&(!x19jSlide.pane.isConnected||(x19jSlide.origin&&!x19jSlide.origin.isConnected)||x19jSlide.context.store!==String(s.storeId||'')||x19jSlide.context.week!==String(s.week||'')))x19jCloseSlide();
  sh.querySelectorAll('[data-x19g-nav]').forEach(b=>b.setAttribute('aria-current',b.dataset.x19gNav===ac?'step':'false'));
  const selected=(Array.isArray(s.stores)?s.stores:[]).find(x=>String(x.id)===String(s.storeId||'')),pressed=r.querySelector('.msd-store-switch[aria-pressed="true"]'),wt=r.querySelector('.msd-workspace-title'),store=selected?.code||selected?.name||pressed?.textContent?.trim()||'Cửa hàng chưa chọn',subtitle=sh.querySelector('[data-x19g-subtitle]');if(subtitle)subtitle.textContent=store+' · Tuần '+(s.week||'—')+' · Asia/Ho_Chi_Minh';
  const branchSlot=sh.querySelector('[data-x19g-branch-actions]'),branchControls=r.querySelector('.msd-store-switcher');if(branchControls&&branchSlot&&!branchSlot.contains(branchControls))branchSlot.appendChild(branchControls);

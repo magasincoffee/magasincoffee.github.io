@@ -19,7 +19,7 @@ await check('shift card keeps employee name and full time readable without inter
 await check('Step 3 editing opens right slide-over without resizing seven-day calendar',async()=>{
  const cal=p.locator('[data-x19g-board="edit"] .msd-board'),before=await cal.evaluate(e=>e.getBoundingClientRect().width);
  await p.locator('[data-x19g-board="edit"] .msd-direct-card [data-msd-open-editor]').first().click();
- const drawer=p.locator('[data-x19g-drawer="edit"]');await drawer.waitFor({state:'visible'});
+ const drawer=p.locator('[data-x19g-drawer="edit"]');await drawer.waitFor({state:'visible'});await p.waitForFunction(()=>{const e=document.querySelector('[data-x19g-drawer]');return !!e&&Math.abs(e.getBoundingClientRect().right-innerWidth)<2},null,{timeout:2000});
  const state=await drawer.evaluate(e=>({position:getComputedStyle(e).position,right:Math.round(e.getBoundingClientRect().right),viewport:innerWidth,fields:e.querySelectorAll('[data-f]').length,apply:e.querySelectorAll('[data-msd-apply-edit]').length,editorOpen:e.querySelector('.msd-card-editor')?.open===true}));
  const after=await cal.evaluate(e=>e.getBoundingClientRect().width);
  if(state.position!=='fixed'||Math.abs(state.viewport-state.right)>2||state.fields!==4||state.apply!==1||!state.editorOpen||Math.abs(after-before)>2)throw Error(JSON.stringify({state,before,after}));
@@ -44,7 +44,7 @@ await check('check board is seven-day read-only clone',async()=>{await p.waitFor
 await check('Step 4 selects grouped shift details in a read-only slide-over',async()=>{
  const board=p.locator('[data-x19g-board="check"] .msd-board'),before=await board.evaluate(e=>e.getBoundingClientRect().width);
  await p.locator('[data-x19g-board="check"] .msd-cluster-row').first().click();
- const drawer=p.locator('[data-x19g-drawer="check"]');await drawer.waitFor({state:'visible'});
+ const drawer=p.locator('[data-x19g-drawer="check"]');await drawer.waitFor({state:'visible'});await p.waitForFunction(()=>{const e=document.querySelector('[data-x19g-drawer]');return !!e&&Math.abs(e.getBoundingClientRect().right-innerWidth)<2},null,{timeout:2000});
  const result=await drawer.evaluate(e=>({inputs:e.querySelectorAll('input,select,textarea,[data-msd-apply-edit],[data-msd-remove-direct]').length,title:e.querySelector('h3')?.textContent,content:e.textContent?.trim().slice(0,200)}));
  const after=await board.evaluate(e=>e.getBoundingClientRect().width);
  if(result.inputs!==0||!result.title?.includes('Chỉ đọc')||Math.abs(before-after)>2)throw Error(JSON.stringify({result,before,after}));
