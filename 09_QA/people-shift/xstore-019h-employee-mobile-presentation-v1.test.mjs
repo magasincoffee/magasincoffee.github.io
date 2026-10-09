@@ -61,9 +61,9 @@ test("XSTORE-019H employment type is management-owned read-only presentation",()
 
 test("XSTORE-019H compact day labels are observer-idempotent",()=>{assert.match(presentation,/if\(d\.textContent!==label\)d\.textContent=label/);});
 test("XSTORE-019H cache chain reaches exact Employee presentation candidate",()=>{
- assert.match(runtime,/employee-v40\.html\?ui=20261007-xstore-019h-visual3&runtime=engine/);
+ assert.match(runtime,/employee-v40\.html\?ui=20261009-x19j-paint1&runtime=engine/);
  assert.match(runtime,/profile\/engine-v1\.js\?v=20261006-xstore-019h/);
- assert.match(index,/employee-runtime-v1\.html\?v=20261007-xstore-019h-visual3/);
+ assert.match(index,/employee-runtime-v1\.html\?v=20261009-x19j-paint1/);
  assert.match(app,/employee-shell\.js\?v=20261007-xstore-019h-visual3/);
 });
 test("XSTORE-019H regression flow returns to published schedule before swap/give actions",()=>{

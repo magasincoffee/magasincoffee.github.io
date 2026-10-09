@@ -3,12 +3,12 @@ const C=globalThis.MAGASIN_CORE;if(!C)return;
 const host=()=>document.getElementById('employeeApp'),d=()=>host()?.contentDocument||null,esc=C.security.escapeHtml,hm=C.time.time5;
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/,TIME_RE=/^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const DAY_NAMES=['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ Nhật'];
-const SLOT_STEP=30,SLOT_LAST_START=23*60;
+const SLOT_STEP=30,SLOT_FIRST=5*60,SLOT_END=22*60,SLOT_LAST_START=SLOT_END-SLOT_STEP;
 const timeFromMinutes=value=>{const m=Math.max(0,Math.min(23*60+30,Number(value)||0));return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`};
-const calendarSlots=()=>Array.from({length:(SLOT_LAST_START/SLOT_STEP)+1},(_,i)=>i*SLOT_STEP);
+const calendarSlots=()=>Array.from({length:(SLOT_END-SLOT_FIRST)/SLOT_STEP},(_,i)=>SLOT_FIRST+i*SLOT_STEP);
 const rowId=row=>String(row?.id||'');
 const findRow=id=>state.rows.find(r=>rowId(r)===String(id||''))||null;
-let state={week:null,today:null,registration:'REGISTRATION_CLOSED',policyReason:'UNINITIALIZED',rows:[],savePending:false,deletePending:new Set(),editingId:null,calendarDrag:null,uiState:'idle'};
+let state={week:null,today:null,registration:'REGISTRATION_CLOSED',policyReason:'UNINITIALIZED',rows:[],savePending:false,deletePending:new Set(),editingId:null,calendarDrag:null,paintDraft:new Set(),paintPointer:null,paintDayIndex:0,loadVerified:false,uiState:'idle'};
 
 const options=sel=>{let s='';for(let m=0;m<1440;m+=30){const v=`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;s+=`<option value="${v}"${v===hm(sel)?' selected':''}>${v}</option>`}return s};
 const panel=x=>(x||d())?.getElementById('weeklyRegistrationPanel')||null;
@@ -44,7 +44,7 @@ function derivePolicy(){
 }
 function syncPolicy(){
   const p=derivePolicy();
-  const changed=state.week!==p.targetWeek;
+  const changed=state.week!==p.targetWeek;if(changed){state.paintDraft.clear();state.paintDayIndex=0;state.loadVerified=false}
   state.today=p.today;state.week=p.targetWeek;state.registration=p.registration;state.policyReason=p.reason;
   updateContext();
   return changed;
@@ -74,6 +74,7 @@ function setUiState(kind,text,retry=false){
   }
   if(msg&&text!=null)msg.textContent=String(text);
   if(button)button.hidden=!retry;
+  syncPaintUi(x);
 }
 function updateContext(){
   const x=d();if(!x)return;
@@ -86,6 +87,78 @@ function updateContext(){
   }
   if(p)p.dataset.availabilityReadonly=String(state.registration!=='REGISTRATION_OPEN');
   syncLauncher(x);
+}
+function savedCovers(date,minute){
+ return state.rows.some(r=>String(r.work_date).slice(0,10)===date&&C.time.minutes(hm(r.start_time))<minute+SLOT_STEP&&C.time.minutes(hm(r.end_time))>minute);
+}
+function paintKey(date,minute){return date+'|'+minute}
+function markPaintSlot(slot){
+ const date=slot.dataset.avSlotDate,minute=C.time.minutes(slot.dataset.avSlotTime);
+ const key=paintKey(date,minute),saved=savedCovers(date,minute);
+ slot.dataset.avSaved=String(saved);
+ slot.dataset.avStaged=String(state.paintDraft.has(key));
+ slot.setAttribute('aria-pressed',String(state.paintDraft.has(key)));
+ slot.disabled=state.registration!=='REGISTRATION_OPEN'||state.savePending||!state.loadVerified||state.uiState==='loading'||state.uiState==='submitting'||saved;
+ slot.title=saved?'Đã đăng ký · Chọn thẻ đã lưu để sửa':(state.paintDraft.has(key)?'Bỏ chọn ':'Chọn ')+slot.dataset.avSlotTime;
+}
+function syncPaintUi(x=d()){
+ if(!x)return;
+ const count=state.paintDraft.size,closed=state.registration!=='REGISTRATION_OPEN';
+ const pending=state.savePending||!state.loadVerified||state.uiState==='loading'||state.uiState==='submitting';
+ x.querySelectorAll('[data-av-slot]').forEach(markPaintSlot);
+ const save=x.querySelector('[data-av-paint-save]'),summary=x.querySelector('[data-av-paint-status]');
+ if(save){save.disabled=closed||pending||count===0;save.textContent=state.savePending?'Đang lưu…':count?'Lưu đăng ký · '+count+' ô giờ':'Lưu đăng ký';}
+ if(summary)summary.textContent=count?'Chưa lưu: '+count+' ô (30 phút/ô) · Chọn thêm hoặc chạm lại để bỏ chọn.':'Chạm hoặc kéo trên lịch để chọn giờ; vùng xanh chưa được lưu.';
+ const active=state.paintDayIndex;
+ x.querySelectorAll('[data-av-day]').forEach((day,i)=>day.dataset.avActiveDay=String(i===active));
+ const label=x.querySelector('[data-av-paint-day-label]');
+ if(label){const days=targetDays();label.textContent=DAY_NAMES[active]+(days[active]?' · '+C.date.formatDate(days[active]):'');}
+ x.querySelectorAll('[data-av-paint-prev],[data-av-paint-next]').forEach(btn=>{btn.disabled=(btn.hasAttribute('data-av-paint-prev')?active===0:active>=6)});
+}
+function togglePaintSlot(slot,selected){
+ const date=slot?.dataset?.avSlotDate,minute=C.time.minutes(slot?.dataset?.avSlotTime||'');
+ if(!date||!isTargetDate(date)||minute<SLOT_FIRST||minute>=SLOT_END||savedCovers(date,minute)||state.registration!=='REGISTRATION_OPEN'||state.savePending||!state.loadVerified||state.uiState==='loading'||state.uiState==='submitting')return false;
+ const key=paintKey(date,minute),on=selected===undefined?!state.paintDraft.has(key):selected;
+ if(on)state.paintDraft.add(key);else state.paintDraft.delete(key);
+ markPaintSlot(slot);syncPaintUi();return true;
+}
+function paintIntervals(){
+ const perDay=new Map();
+ for(const key of state.paintDraft){const [date,n]=key.split('|'),minute=Number(n);
+  if(!isTargetDate(date)||!Number.isInteger(minute)||minute<SLOT_FIRST||minute>=SLOT_END||minute%SLOT_STEP!==0||savedCovers(date,minute))continue;
+  if(!perDay.has(date))perDay.set(date,[]);perDay.get(date).push(minute);
+ }
+ const merged=[];
+ for(const [date,times] of [...perDay].sort(([a],[b])=>a.localeCompare(b))){
+  times.sort((a,b)=>a-b);let start=null,end=null;
+  for(const m of times){if(start===null){start=m;end=m+SLOT_STEP;continue}if(m===end){end+=SLOT_STEP;continue}
+   merged.push({date,start,end});start=m;end=m+SLOT_STEP;
+  }
+  if(start!==null)merged.push({date,start,end});
+ }
+ return merged;
+}
+async function savePaintDraft(){
+ const x=d();if(!x||state.registration!=='REGISTRATION_OPEN'||state.savePending||!state.loadVerified||!state.paintDraft.size)return false;
+ syncPolicy();if(state.registration!=='REGISTRATION_OPEN'){setUiState('readonly',closedMessage());return false}
+ const intervals=paintIntervals();if(!intervals.length){setUiState('error','Không có khoảng giờ mới hợp lệ để lưu.');syncPaintUi();return false}
+ state.savePending=true;state.paintPointer=null;setUiState('submitting','Đang lưu '+intervals.length+' khoảng thời gian…');applyRegistrationState(x);syncPaintUi(x);
+ let saved=0,failed=false;
+ for(const item of intervals){
+  try{
+   const q=await C.supabase.rpc('save_my_availability',{p_availability_id:null,p_work_date:item.date,p_start_time:timeFromMinutes(item.start),p_end_time:timeFromMinutes(item.end),p_availability_type:'AVAILABLE',p_preferred_store_id:null,p_note:null});
+   if(q.error)throw q.error;
+   for(let m=item.start;m<item.end;m+=SLOT_STEP)state.paintDraft.delete(paintKey(item.date,m));
+   saved++;
+  }catch(_){failed=true;break}
+ }
+ state.savePending=false;
+ // A fresh authoritative read reconciles a possible server-side write before an uncertain response.
+ const confirmed=await load();
+ if(!confirmed){setUiState('error','Không xác minh được các khoảng vừa lưu. Vui lòng tải lại trước khi thử tiếp.',true);syncPaintUi();return false}
+ if(failed){setUiState('error','Đã xác nhận '+saved+'/'+intervals.length+' khoảng. Còn '+state.paintDraft.size+' ô chưa lưu. Kiểm tra và thử lại.',true)}
+ else{setUiState('success','Đã lưu '+saved+' khoảng thời gian có thể làm; lịch đã đồng bộ với dữ liệu hiện tại.');C.ui.toast('Đã lưu đăng ký lịch tuần.','success')}
+ syncPaintUi();return !failed;
 }
 function renderDayOptions(x){
   const day=x?.getElementById('quickRegDay');if(!day)return;
@@ -108,6 +181,7 @@ function applyRegistrationState(x=d()){
   });
   const msg=x.getElementById('quickRegMsg');
   if(msg&&closed&&state.uiState!=='error')msg.textContent=closedMessage();
+   syncPaintUi(x);
 }
 
 function open(){
@@ -138,7 +212,7 @@ async function load(options={}){
   const weekChanged=syncPolicy();
   if(weekChanged)renderDayOptions(x);
   applyRegistrationState(x);
-  if(!options.preserveLoading)setUiState('loading','Đang làm mới thời gian có thể làm tuần sau…');
+  state.loadVerified=false;if(!options.preserveLoading)setUiState('loading','Đang làm mới thời gian có thể làm tuần sau…');
   if(!state.week){
     state.rows=[];renderSummary();
     setUiState('error','Không xác định được tuần đăng ký. Vui lòng tải lại trang.',true);
@@ -153,7 +227,8 @@ async function load(options={}){
     emitAvailabilityState();
     return false;
   }
-  state.rows=(Array.isArray(q.data)?q.data:[]).filter(r=>isTargetDate(r.work_date));
+  state.rows=(Array.isArray(q.data)?q.data:[]).filter(r=>isTargetDate(r.work_date));state.loadVerified=true;
+   for(const key of [...state.paintDraft]){const [date,minute]=key.split('|');if(savedCovers(date,Number(minute))||!isTargetDate(date))state.paintDraft.delete(key)}
   renderSummary();applyRegistrationState(x);
   setUiState('ready',state.registration==='REGISTRATION_OPEN'?'Đang mở đăng ký tuần kế tiếp.':'Đăng ký đã đóng. Các khoảng hiện có ở chế độ chỉ xem.');
   emitAvailabilityState();
@@ -205,11 +280,31 @@ async function applyCalendarDrop(date,time){
 function bindCalendar(box){
   const closed=state.registration!=='REGISTRATION_OPEN';
   box.querySelectorAll('[data-av-slot]').forEach(slot=>{
-    const openEditor=()=>{if(closed||state.savePending)return;const start=slot.dataset.avSlotTime,date=slot.dataset.avSlotDate,startMinutes=C.time.minutes(start),end=timeFromMinutes(Math.min(23*60+30,startMinutes+60));selectEditor(null,date,start,end,true);setUiState('ready','Đã chọn '+date+' · '+start+'–'+end+'. Điều chỉnh nếu cần rồi bấm Đăng ký.')};
-    slot.addEventListener('click',openEditor);slot.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openEditor()}});
-    slot.addEventListener('dragover',e=>{if(state.calendarDrag&&!closed)e.preventDefault()});
-    slot.addEventListener('drop',e=>{if(state.calendarDrag&&!closed){e.preventDefault();void applyCalendarDrop(slot.dataset.avSlotDate,slot.dataset.avSlotTime)}});
-  });
+     slot.addEventListener('click',e=>{if(slot.dataset.avPaintPointerClick==='1'){delete slot.dataset.avPaintPointerClick;return}togglePaintSlot(slot)});
+     slot.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();togglePaintSlot(slot)}});
+     slot.addEventListener('pointerdown',e=>{
+       if(e.button!==0||slot.disabled)return;
+       e.preventDefault();slot.dataset.avPaintPointerClick='1';
+       const date=slot.dataset.avSlotDate,minute=C.time.minutes(slot.dataset.avSlotTime),on=!state.paintDraft.has(paintKey(date,minute));
+       state.paintPointer={id:e.pointerId,date,on,visited:new Set()};
+       state.paintPointer.visited.add(minute);togglePaintSlot(slot,on);
+       box.setPointerCapture?.(e.pointerId);
+     });
+     slot.addEventListener('dragover',e=>{if(state.calendarDrag&&!closed)e.preventDefault()});
+     slot.addEventListener('drop',e=>{if(state.calendarDrag&&!closed){e.preventDefault();void applyCalendarDrop(slot.dataset.avSlotDate,slot.dataset.avSlotTime)}});
+   });
+   box.addEventListener('pointermove',e=>{
+     const current=state.paintPointer;if(!current||current.id!==e.pointerId)return;
+     const doc=box.ownerDocument,target=doc.elementFromPoint(e.clientX,e.clientY)?.closest?.('[data-av-slot]');
+     if(!target||target.dataset.avSlotDate!==current.date)return;
+     const minute=C.time.minutes(target.dataset.avSlotTime);if(current.visited.has(minute))return;
+     current.visited.add(minute);togglePaintSlot(target,current.on);
+   });
+   const finish=e=>{if(state.paintPointer?.id===e.pointerId){state.paintPointer=null;if(box.hasPointerCapture?.(e.pointerId))box.releasePointerCapture(e.pointerId)}};
+   box.addEventListener('pointerup',finish);box.addEventListener('pointercancel',finish);
+   box.querySelector('[data-av-paint-save]')?.addEventListener('click',()=>void savePaintDraft());
+   box.querySelector('[data-av-paint-prev]')?.addEventListener('click',()=>{state.paintDayIndex=Math.max(0,state.paintDayIndex-1);syncPaintUi()});
+   box.querySelector('[data-av-paint-next]')?.addEventListener('click',()=>{state.paintDayIndex=Math.min(6,state.paintDayIndex+1);syncPaintUi()});
   box.querySelectorAll('[data-av-card]').forEach(card=>{
     card.addEventListener('click',e=>{if(closed||state.savePending||e.target.closest('[data-av-edit],[data-av-delete],[data-av-resize-start],[data-av-resize-end]'))return;const row=findRow(card.dataset.avCard);if(row)selectEditor(row.id,String(row.work_date).slice(0,10),hm(row.start_time),hm(row.end_time),true)});
     card.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();card.click()}});
@@ -226,12 +321,13 @@ function renderSummary(){
   const days=targetDays(),closed=state.registration!=='REGISTRATION_OPEN',slots=calendarSlots();box.classList.add('availability-calendar-root');
   const dayHtml=days.map((k,i)=>{
     const rows=state.rows.filter(r=>String(r.work_date).slice(0,10)===k).sort((a,b)=>C.time.minutes(a.start_time)-C.time.minutes(b.start_time));
-    const slotHtml=slots.map((m,slotIndex)=>{const t=timeFromMinutes(m),label=t.endsWith(':00')?t:'';return `<button type="button" class="availability-calendar-slot" style="grid-row:${slotIndex+1}" data-av-slot data-av-slot-date="${esc(k)}" data-av-slot-time="${esc(t)}" aria-label="${esc(DAY_NAMES[i]+' '+C.date.formatDate(k)+' '+t)}"${closed?' disabled':''}><span>${esc(label)}</span></button>`}).join('');
-    const cardHtml=rows.map(r=>{const id=rowId(r),start=hm(r.start_time),end=hm(r.end_time),startLine=Math.floor(C.time.minutes(start)/SLOT_STEP)+1,endLine=Math.max(startLine+1,Math.ceil(C.time.minutes(end)/SLOT_STEP)+1),band=bandKind(start);return `<article class="miniShift availability-calendar-card" data-time-band="${esc(band)}" data-av-card="${esc(id)}" style="grid-row:${startLine}/${endLine}" tabindex="0" draggable="${closed?'false':'true'}" aria-label="Thời gian có thể làm ${esc(start)} đến ${esc(end)}"><button type="button" class="availability-resize-handle availability-resize-start" data-av-resize-start="${esc(id)}" draggable="${closed?'false':'true'}" aria-label="Kéo để đổi giờ bắt đầu"${closed?' disabled':''}></button><div class="availability-card-copy"><b>${esc(start)}–${esc(end)}</b><span>Thời gian có thể làm</span></div><button type="button" class="availability-card-edit" data-av-edit="${esc(id)}" aria-label="Sửa ${esc(start)}–${esc(end)}"${closed?' disabled':''}>Sửa</button><button type="button" class="availability-card-delete" data-av-delete="${esc(id)}" aria-label="Xóa ${esc(start)}–${esc(end)}"${closed?' disabled':''}>×</button><button type="button" class="availability-resize-handle availability-resize-end" data-av-resize-end="${esc(id)}" draggable="${closed?'false':'true'}" aria-label="Kéo để đổi giờ kết thúc"${closed?' disabled':''}></button></article>`}).join('');
-    return `<section class="availability-calendar-day" data-av-day="${esc(k)}"><header><b>${esc(DAY_NAMES[i])}</b><span>${esc(C.date.formatDate(k))}</span></header><div class="availability-calendar-timeline">${slotHtml}${cardHtml}</div></section>`;
+    const slotHtml=slots.map((m,slotIndex)=>{const t=timeFromMinutes(m),end=timeFromMinutes(m+SLOT_STEP),label=t+'–'+end,painted=state.paintDraft.has(paintKey(k,m)),saved=savedCovers(k,m);return `<button type="button" class="availability-calendar-slot" style="grid-row:${slotIndex+1}" data-av-slot data-av-slot-date="${esc(k)}" data-av-slot-time="${esc(t)}" data-av-saved="${saved}" data-av-staged="${painted}" aria-pressed="${painted}" aria-label="${esc(DAY_NAMES[i]+' '+C.date.formatDate(k)+' '+label+(painted?' đã chọn':''))}"${closed||saved?' disabled':''}><span>${esc(label)}</span></button>`}).join('');
+    const cardHtml=rows.filter(r=>C.time.minutes(hm(r.end_time))>SLOT_FIRST&&C.time.minutes(hm(r.start_time))<SLOT_END).map(r=>{const id=rowId(r),start=hm(r.start_time),end=hm(r.end_time),startLine=Math.floor((Math.max(SLOT_FIRST,C.time.minutes(start))-SLOT_FIRST)/SLOT_STEP)+1,endLine=Math.max(startLine+1,Math.ceil((Math.min(SLOT_END,C.time.minutes(end))-SLOT_FIRST)/SLOT_STEP)+1),band=bandKind(start);return `<article class="miniShift availability-calendar-card" data-time-band="${esc(band)}" data-av-card="${esc(id)}" style="grid-row:${startLine}/${endLine}" tabindex="0" draggable="${closed?'false':'true'}" aria-label="Đã đăng ký ${esc(start)} đến ${esc(end)}"><button type="button" class="availability-resize-handle availability-resize-start" data-av-resize-start="${esc(id)}" draggable="${closed?'false':'true'}" aria-label="Kéo để đổi giờ bắt đầu"${closed?' disabled':''}></button><div class="availability-card-copy"><b>${esc(start)}–${esc(end)}</b><span>Đã lưu · Có thể làm</span></div><button type="button" class="availability-card-edit" data-av-edit="${esc(id)}" aria-label="Sửa ${esc(start)}–${esc(end)}"${closed?' disabled':''}>Sửa</button><button type="button" class="availability-card-delete" data-av-delete="${esc(id)}" aria-label="Xóa ${esc(start)}–${esc(end)}"${closed?' disabled':''}>×</button><button type="button" class="availability-resize-handle availability-resize-end" data-av-resize-end="${esc(id)}" draggable="${closed?'false':'true'}" aria-label="Kéo để đổi giờ kết thúc"${closed?' disabled':''}></button></article>`}).join('');
+    const outside=rows.filter(r=>C.time.minutes(hm(r.end_time))<=SLOT_FIRST||C.time.minutes(hm(r.start_time))>=SLOT_END).map(r=>`<div class="availability-outside-row"><span>Đã lưu ngoài khung hiển thị · ${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</span><button type="button" data-av-edit="${esc(rowId(r))}">Sửa giờ</button><button type="button" data-av-delete="${esc(rowId(r))}">Xóa</button></div>`).join('');
+    return `<section class="availability-calendar-day" data-av-day="${esc(k)}" data-av-active-day="${i===state.paintDayIndex}"><header><b>${esc(DAY_NAMES[i])}</b><span>${esc(C.date.formatDate(k))}</span></header><div class="availability-calendar-timeline">${slotHtml}${cardHtml}</div>${outside}</section>`;
   }).join('');
-  box.innerHTML=`<div class="availability-calendar-help"><b>Lịch thời gian có thể làm</b><span>Chạm ô giờ để thêm. Chạm khoảng đã lưu để sửa. Trên máy tính có thể kéo khoảng để di chuyển và kéo mép để đổi giờ. Đây không phải lịch làm chính thức.</span></div><div class="availability-calendar-wrap" role="region" aria-label="Lịch đăng ký thời gian có thể làm tuần kế tiếp" tabindex="0"><div class="availability-calendar" data-availability-calendar>${dayHtml}</div></div>`;
-  bindCalendar(box);applyRegistrationState(x);
+  box.innerHTML=`<div class="availability-calendar-help"><b>Chọn thời gian có thể làm · 05:00–22:00</b><span>Chạm/chọn hoặc kéo qua những ô 30 phút để tô màu; chạm lại để bỏ. Chỉ lưu khi bấm Lưu đăng ký. Ô đã lưu được đánh dấu riêng và có thể sửa giờ chính xác. Đây không phải lịch làm chính thức.</span></div><nav class="availability-paint-day-nav" aria-label="Chọn ngày đăng ký"><button type="button" data-av-paint-prev aria-label="Ngày trước">←</button><strong data-av-paint-day-label></strong><button type="button" data-av-paint-next aria-label="Ngày sau">→</button></nav><div class="availability-calendar-wrap" role="region" aria-label="Lịch đăng ký 05 giờ đến 22 giờ tuần kế tiếp" tabindex="0"><div class="availability-calendar" data-availability-calendar>${dayHtml}</div></div><footer class="availability-paint-footer"><div data-av-paint-status role="status" aria-live="polite"></div><button class="m-button m-button--primary availability-paint-save" type="button" data-av-paint-save disabled>Lưu đăng ký</button></footer>`;
+   bindCalendar(box);applyRegistrationState(x);syncPaintUi(x);
 }
 
 async function register(event){
