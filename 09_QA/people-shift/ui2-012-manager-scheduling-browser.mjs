@@ -43,13 +43,14 @@ for(const width of [1440,1024,768,430,390,360]){
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);
 
  await check("ui2_012_"+width+"_hierarchy_no_page_overflow_touch_focus",async()=>{
-  await frame.locator("#msdSave").focus();
-  await page.keyboard.press("Shift+Tab");
+  await frame.locator("#x19g-board-edit #msdReload").waitFor();
+  await frame.locator("#x19g-board-edit #msdReload").focus();
   await page.keyboard.press("Tab");
   return frame.evaluate(expected=>{
-   const html=document.documentElement,root=document.querySelector(".msd-ui2-012"),wrap=root?.querySelector(".msd-board-wrap"),focused=document.activeElement;
+   const html=document.documentElement,root=document.querySelector(".msd-ui2-012"),editor=root?.querySelector("#x19g-board-edit")||root,wrap=editor?.querySelector(".msd-board-wrap"),focused=document.activeElement;
    const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return !el.hidden&&s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};
-   const controls=[...root.querySelectorAll("button,select")].filter(visible);
+   const controls=[...root.querySelectorAll("button:not(.msd-resize-handle),select")].filter(visible);
+   const resizeFallback=!!editor.querySelector('.msd-card-editor [data-f="start_time"]')&&!!editor.querySelector('.msd-card-editor [data-f="end_time"]');
    const metric={
     viewport:innerWidth,expected,
     scrollWidth:html.scrollWidth,clientWidth:html.clientWidth,
@@ -61,13 +62,18 @@ for(const width of [1440,1024,768,430,390,360]){
     focusShadow:getComputedStyle(focused).boxShadow,
     focusedId:focused?.id||"",
     boardScroll:wrap?.scrollWidth||0,boardClient:wrap?.clientWidth||0,
-    boardColumns:root?.querySelector(".msd-board")?getComputedStyle(root.querySelector(".msd-board")).gridTemplateColumns.split(" ").filter(Boolean).length:0,
-    dayTitlePosition:root?.querySelector(".msd-day-title")?getComputedStyle(root.querySelector(".msd-day-title")).position:"",
-    dayCount:root?.querySelectorAll(".msd-day").length||0,
-    emptyDays:root?.querySelectorAll(".msd-day .msd-empty").length||0,
-    sourceRole:root?.querySelector(".msd-source")?.dataset.msu2Section||"",
-    draftRole:root?.querySelector(".msd-board-wrap")?.dataset.msu2Section||"",
-    draftUtilityPrimary:root?.querySelectorAll(".msu2-draft-actions .primary").length||0,
+    boardScrollHeight:wrap?.scrollHeight||0,boardClientHeight:wrap?.clientHeight||0,
+    boardColumns:editor?.querySelector(".msd-board")?getComputedStyle(editor.querySelector(".msd-board")).gridTemplateColumns.split(" ").filter(Boolean).length:0,
+    visibleDays:[...editor?.querySelectorAll(".msd-day")||[]].filter(x=>getComputedStyle(x).display!=="none").length,
+    dayNavVisible:!!editor?.querySelector(".x19g-command-day-nav")&&getComputedStyle(editor.querySelector(".x19g-command-day-nav")).display!=="none",
+    dayTitlePosition:editor?.querySelector(".msd-day-title")?getComputedStyle(editor.querySelector(".msd-day-title")).position:"",
+    dayCount:editor?.querySelectorAll(".msd-day").length||0,
+    timelineDays:editor?.querySelectorAll(".msd-day-timeline").length||0,
+    slotCount:editor?.querySelectorAll("[data-msd-slot-date][data-msd-slot-time]").length||0,
+    candidateTrigger:!!editor?.querySelector("#msdOpenCandidateDrawer"),
+    drawerHidden:!root?.querySelector("[data-msd-candidate-overlay]"),
+    draftRole:editor?.querySelector(".msd-board-wrap")?.dataset.msu2Section||"",
+    draftUtilityPrimary:editor?.querySelectorAll(".msu2-draft-actions .primary").length||0,
     reviewVisible:!root?.querySelector("#msdReview")?.hidden,
     reviewPrimary:root?.querySelector("#msdReview")?.classList.contains("primary")||false,
     publishHidden:root?.querySelector("#msdPublish")?.hidden||false
@@ -75,9 +81,9 @@ for(const width of [1440,1024,768,430,390,360]){
    const focusVisible=metric.focusOutline!=="none"||metric.focusShadow!=="none";
    if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5||metric.sourceRole!=="supplemental-employee-pool"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
-   if(expected<=430&&(metric.boardColumns!==1||metric.boardScroll>metric.boardClient+1||metric.dayTitlePosition==="fixed"||metric.dayTitlePosition==="sticky"))throw new Error("phone draft board must stack without overlay/scroll: "+JSON.stringify(metric));
-   if((expected===768||expected===1024)&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet board scroll: "+JSON.stringify(metric));
-   if(expected===1440&&(metric.boardColumns!==7||metric.boardScroll>metric.boardClient+1))throw new Error("desktop draft board should fit seven days: "+JSON.stringify(metric));
+   if(expected<=900&&(metric.visibleDays!==1||!metric.dayNavVisible||metric.boardScroll>metric.boardClient+1))throw new Error("narrow calendar must use one controlled day window without horizontal overflow: "+JSON.stringify(metric));
+   if(expected===1024&&(metric.boardColumns!==7||metric.boardScroll>metric.boardClient+1))throw new Error("desktop-width calendar should fit seven days without horizontal overflow: "+JSON.stringify(metric));
+   if(expected===1440&&(metric.boardColumns!==7||metric.boardScroll>metric.boardClient+1))throw new Error("desktop calendar should fit seven days: "+JSON.stringify(metric));
    return JSON.stringify(metric);
   },width);
  });
@@ -130,9 +136,9 @@ await frame.evaluate(async()=>{
 
 await check("ui2_012_none_context_and_empty_day_state",async()=>{
  const state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
- const ui=await frame.locator(".msd-ui2-012").evaluate(r=>({stage:r.dataset.ui2SchedulingState,chip:r.querySelector(".msu2-state-chip")?.textContent,text:r.innerText,emptyDays:r.querySelectorAll(".msd-day .msd-empty").length}));
- if(state.generationStatus!=="NONE"||ui.stage!=="NONE"||ui.chip!=="CHƯA TẠO"||!ui.text.includes("Chưa có lịch nháp")||ui.emptyDays!==7)throw new Error(JSON.stringify({state,ui}));
- return JSON.stringify({stage:ui.stage,emptyDays:ui.emptyDays});
+ const ui=await frame.locator(".msd-ui2-012").evaluate(r=>{const editor=r.querySelector("#x19g-board-edit")||r;return {stage:r.dataset.ui2SchedulingState,chip:r.querySelector(".msu2-state-chip")?.textContent,text:r.innerText,timelineDays:editor.querySelectorAll(".msd-day-timeline").length,slotCount:editor.querySelectorAll("[data-msd-slot-date][data-msd-slot-time]").length}});
+ if(state.generationStatus!=="NONE"||ui.stage!=="NONE"||ui.chip!=="CHƯA TẠO"||!ui.text.includes("Chưa có lịch nháp")||ui.timelineDays!==7||ui.slotCount<238)throw new Error(JSON.stringify({state,ui}));
+ return JSON.stringify({stage:ui.stage,timelineDays:ui.timelineDays,slotCount:ui.slotCount});
 });
 
 await frame.evaluate(async()=>{

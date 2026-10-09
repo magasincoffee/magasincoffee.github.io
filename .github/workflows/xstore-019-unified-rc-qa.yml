@@ -1,0 +1,135 @@
+name: XSTORE-019 Unified RC QA
+
+on:
+  push:
+    paths:
+      - '04_OWNER/Workforce/**'
+      - '04_OWNER/index.html'
+      - '04_OWNER/strategy-presentation-v4.js'
+      - '04_OWNER/strategy-presentation-v4.css'
+      - '09_QA/owner-control-tower/xstore-019j-owner-data-integrity-browser.mjs'
+      - '05_MANAGER/index.html'
+      - '05_MANAGER/Workforce/**'
+      - '05_MANAGER/runtime/**'
+      - '09_QA/people-shift/xstore-01**'
+      - '06_EMPLOYEE/availability/**'
+      - '06_EMPLOYEE/app/employee-v40.html'
+      - '06_EMPLOYEE/runtime/employee-runtime-v1.html'
+      - '02_CORE/ui/magasin-ui-v2-employee-availability-paint-v1.css'
+      - '09_QA/people-shift/xstore-019d-employee-availability-calendar-browser.mjs'
+      - '09_QA/ui2-cross-role/**'
+      - '.github/workflows/xstore-019-unified-rc-qa.yml'
+  pull_request:
+    paths:
+      - '04_OWNER/Workforce/**'
+      - '04_OWNER/index.html'
+      - '04_OWNER/strategy-presentation-v4.js'
+      - '04_OWNER/strategy-presentation-v4.css'
+      - '09_QA/owner-control-tower/xstore-019j-owner-data-integrity-browser.mjs'
+      - '05_MANAGER/index.html'
+      - '05_MANAGER/Workforce/**'
+      - '05_MANAGER/runtime/**'
+      - '09_QA/people-shift/xstore-01**'
+      - '06_EMPLOYEE/availability/**'
+      - '06_EMPLOYEE/app/employee-v40.html'
+      - '06_EMPLOYEE/runtime/employee-runtime-v1.html'
+      - '02_CORE/ui/magasin-ui-v2-employee-availability-paint-v1.css'
+      - '09_QA/people-shift/xstore-019d-employee-availability-calendar-browser.mjs'
+      - '09_QA/ui2-cross-role/**'
+      - '.github/workflows/xstore-019-unified-rc-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unified-rc-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check unified scheduling runtime syntax
+        run: |
+          node --check 05_MANAGER/Workforce/draft-publish-v1.js
+          node --check 05_MANAGER/Workforce/cross-store-master-v1.js
+          node --check 05_MANAGER/Workforce/cross-store-auto-schedule-v1.js
+          node --check 05_MANAGER/Workforce/manager-scheduling-ui2-v1.js
+          node --check 04_OWNER/Workforce/owner-scheduling-overview-v1.js
+
+      - name: Run XSTORE-019 unified RC static contract
+        run: |
+          node --test 09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-015-manager-availability-override-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-016-scheduling-ia-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-017-inline-shortage-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-018-supplemental-pool-v1.test.mjs
+
+      - name: Validate RC Pages source structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -e .nojekyll
+          for f in 04_OWNER/Workforce/index.html 05_MANAGER/index.html 05_MANAGER/Workforce/index.html 05_MANAGER/Workforce/draft-publish-v1.js; do
+            test -s "$f" || { echo "Missing RC source: $f"; exit 1; }
+          done
+          if grep -RIn --exclude-dir=.git --exclude='*.md' 'magasincoffee/noibo' 04_OWNER 05_MANAGER; then
+            echo 'RC runtime references deprecated repository.'
+            exit 1
+          fi
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start exact-head RC QA server
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/xstore-019 qa-artifacts/ui2-cross-role qa-artifacts/people-shift qa-artifacts/control-tower
+          nohup python3 -m http.server 8779 --bind 127.0.0.1 > /tmp/xstore019-http.log 2>&1 &
+          echo $! > /tmp/xstore019-http.pid
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -fsS http://127.0.0.1:8779/05_MANAGER/Workforce/index.html > /dev/null && \
+               curl -fsS http://127.0.0.1:8779/04_OWNER/Workforce/index.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/xstore019-http.log || true
+          exit 1
+
+      - name: Run exact cache and cold reload qualification
+        env:
+          QA_BASE_URL: http://127.0.0.1:8779
+          QA_OUT: qa-artifacts/xstore-019
+        run: node 09_QA/ui2-cross-role/ui2-017-cold-reload-closure-browser.mjs
+
+      - name: Run supplemental-pool browser regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8779
+          QA_OUT: qa-artifacts/xstore-019
+        run: node 09_QA/people-shift/xstore-018-supplemental-pool-browser.mjs
+
+      - name: Run exact-head integrated cross-role qualification
+        env:
+          QA_BASE_URL: http://127.0.0.1:8779
+          QA_OUT: qa-artifacts/xstore-019
+          SCHED_UI_014_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node 09_QA/ui2-cross-role/sched-ui-014-integrated-qualification.mjs
+
+      - name: Upload XSTORE-019 RC evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xstore-019-unified-rc-${{ github.run_id }}
+          path: qa-artifacts/xstore-019/
+          if-no-files-found: warn
+          retention-days: 30

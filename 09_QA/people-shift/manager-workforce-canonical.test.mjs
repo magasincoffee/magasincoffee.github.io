@@ -69,10 +69,10 @@ test("Direct save only persists DRAFT and does not auto validate review or publi
 test("Manager direct board supports actionable supplemental pool plus add remove edit save and resume",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   for(const label of ["Chưa được xếp ca nào","Còn thời gian có thể xếp","Có thể điều động thủ công"])assert.match(draft,new RegExp(label),label);
-  assert.match(draft,/Lịch đang xếp · Thứ Hai → Chủ Nhật/);
+  assert.match(draft,/Lịch tuần · Thứ Hai → Chủ Nhật/);
   assert.match(draft,/data-msd-pool-user/);
   assert.match(draft,/get_cross_store_weekly_plan_v1/);
-  assert.match(draft,/data-remove/);
+  assert.match(draft,/data-msd-remove-direct/);
   assert.match(draft,/data-f="start_time"/);
   assert.match(draft,/data-f="end_time"/);
   assert.match(draft,/id="msdSave"/);
@@ -148,7 +148,7 @@ test("SCHED-04 reload resumes DRAFT REVIEWED or PUBLISHED through one canonical 
 test("SCHED-04 Manager UI hides technical generation identity and raw backend diagnostics",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   assert.doesNotMatch(draft,/Generation \$\{esc\(state\.generationId/);
-  assert.match(draft,/Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp/);
+  assert.match(draft,/Một cửa hàng · một lịch tuần/);
   assert.doesNotMatch(draft,/Không hiển thị ID kỹ thuật/);
   assert.doesNotMatch(draft,/hit\[1\]\+' \('\+hit\[0\]/);
   assert.match(draft,/Không thể hoàn tất thao tác\. Hãy tải lại dữ liệu và thử lại\./);
@@ -156,7 +156,7 @@ test("SCHED-04 Manager UI hides technical generation identity and raw backend di
 
 test("SCHED-04 legacy Lich-lam route wraps canonical Workforce surface only",async()=>{
   const legacy=await read("05_MANAGER/Lich-lam/index.html");
-  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017)#workforce/);
+  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017|20261005-xstore-019|20261007-xstore-019g-visual1|20261007-xstore-019g-visual3|20261007-xstore-019j-weekfix1|20261007-xstore-019j-workspace2|20261007-xstore-019j-cluster1|20261007-xstore-019j-visual3|20261007-xstore-019j-visual4|20261009-xstore-019j-compact3)#workforce/);
   assert.doesNotMatch(legacy,/manager-v13-runtime/);
   assert.doesNotMatch(legacy,/draft-publish-v1\.js/);
 });

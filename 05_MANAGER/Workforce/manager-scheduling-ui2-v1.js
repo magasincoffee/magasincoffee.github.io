@@ -3,7 +3,7 @@ if(window.__MAGASIN_MANAGER_SCHEDULING_UI2_012__)return;
 window.__MAGASIN_MANAGER_SCHEDULING_UI2_012__=true;
 
 const PANEL='#panel-publish';
-const root=()=>document.querySelector(PANEL+' .msd[data-scheduling-actor="MANAGER"]');
+const root=()=>document.querySelector(PANEL+' .msd[data-scheduling-actor="MANAGER"], '+PANEL+' .msd[data-scheduling-actor="OWNER"]');
 const scheduleApi=()=>window.MAGASIN_MANAGER_SCHEDULE_DRAFT;
 const css=`<style id="manager-scheduling-ui2-012-css">
 .msd.msd-ui2-012{overflow:hidden;background:transparent;box-shadow:none}
@@ -34,7 +34,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msd-ui2-012 .msd-source{background:#fbfdff;border-style:dashed}.msd-ui2-012 .msd-board-wrap{background:#fff;border-width:2px}.msu2-section-help{margin:2px 0 10px;color:#667085;font-size:11px;line-height:17px}
 .msd-ui2-012 .msd-source-list{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,260px);grid-template-columns:none;gap:8px;max-height:none;overflow-x:auto;overflow-y:hidden;padding-bottom:3px;scrollbar-gutter:stable}
 .msd-ui2-012 .msd-source-row{min-width:0;background:#fff}
-.msd-ui2-012 .msd-board-wrap{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-gutter:stable}
+.msd-ui2-012 .msd-board-wrap{overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;max-height:calc(100vh - 330px)}
 .msd-ui2-012 .msd-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;min-width:0;width:100%}
 .msd-ui2-012 .msd-day{min-width:0;border-radius:10px;background:#fcfdff}
 .msd-ui2-012 .msd-day-title{position:sticky;left:0;padding:9px 8px;background:#f4f7fb}
@@ -52,7 +52,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
 .msd-ui2-012 .msd-status.error{border-color:#efc0bc}.msd-ui2-012 .msd-status.ok{border-color:#badfc8}
 .msd-ui2-012 .msd-official-row{min-height:48px}
 .msd-ui2-012 button:focus-visible,.msd-ui2-012 select:focus-visible,.msd-ui2-012 input:focus-visible,.msd-ui2-012 .msd-board-wrap:focus-visible{outline:2px solid #2f6fde!important;outline-offset:2px!important}
-@media(max-width:1100px){
+@media(max-width:900px){
  .msd-ui2-012 .msd-board{grid-template-columns:repeat(7,minmax(156px,1fr));min-width:1128px;width:max-content}
 }
 @media(max-width:1024px){
@@ -61,7 +61,7 @@ const css=`<style id="manager-scheduling-ui2-012-css">
  .msu2-week-controls .badge{grid-column:1/-1}
  .msu2-draft-actions{display:grid;grid-template-columns:1fr 1fr;margin-top:8px}
  .msu2-draft-actions #msdSave{grid-column:1/-1;min-width:0}
- .msd-ui2-012 button,.msd-ui2-012 select{min-height:44px!important}
+ .msd-ui2-012 button:not(.msd-resize-handle),.msd-ui2-012 select{min-height:44px!important}
  .msu2-draft-actions .btn,.msu2-control-group .btn,.msu2-week-controls .btn,.msd-ui2-012 .msd-source-row .btn,.msd-ui2-012 .msd-downstream .btn{min-height:44px!important}
  .msd-ui2-012 .msd-input{min-height:44px!important;height:44px!important}
  .msd-ui2-012 .msd-source-list{grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
@@ -77,10 +77,10 @@ const css=`<style id="manager-scheduling-ui2-012-css">
  .msu2-draft-actions #msdSave{grid-column:auto}
  .msd-ui2-012 .msd-source,.msd-ui2-012 .msd-board-wrap,.msd-ui2-012 .msd-downstream{padding:12px}
  .msd-ui2-012 .msd-source-list{grid-template-columns:1fr}
- .msd-ui2-012 .msd-board-wrap{overflow:visible;scrollbar-gutter:auto}
- .msd-ui2-012 .msd-board{grid-template-columns:1fr;min-width:0;width:100%;gap:10px}
- .msd-ui2-012 .msd-day{min-height:0;width:100%}
- .msd-ui2-012 .msd-day-title{position:static}
+ .msd-ui2-012 .msd-board-wrap{overflow:auto;scrollbar-gutter:stable;max-height:62vh}
+ .msd-ui2-012 .msd-board{grid-template-columns:repeat(7,minmax(150px,1fr));min-width:1080px;width:max-content;gap:6px}
+ .msd-ui2-012 .msd-day{min-height:220px;min-width:0}
+ .msd-ui2-012 .msd-day-title{position:sticky;top:0;z-index:2}
  .msd-ui2-012 .msd-time-row{grid-template-columns:1fr}
  .msd-ui2-012 .msd-downstream .msd-actions{grid-template-columns:1fr}
  .msd-ui2-012 .msd-downstream #msdPublish{grid-column:auto}

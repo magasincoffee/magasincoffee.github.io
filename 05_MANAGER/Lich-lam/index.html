@@ -23,7 +23,7 @@
     if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/06_EMPLOYEE/');return}
     if(role!=='STORE_MANAGER'){location.replace('/03_PLATFORM/01_AUTH/role-unavailable.html');return}
     const f=document.getElementById('app');
-    f.src='/05_MANAGER/runtime/manager-runtime-v1.html?v=20261003-sched-ui-017#workforce';
+    f.src='/05_MANAGER/runtime/manager-runtime-v1.html?v=20261009-xstore-019j-compact3#workforce';
     f.hidden=false;
   }catch(e){
     console.error('Manager route access failed',e);

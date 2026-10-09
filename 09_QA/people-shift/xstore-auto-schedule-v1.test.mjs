@@ -88,7 +88,7 @@ test("C04 Manager UI calls recurring Robot and still never publishes",()=>{
  assert.doesNotMatch(ui,/Chờ C04|Đang tạm khóa đến XSTORE-C04/);
  assert.doesNotMatch(ui,/publish_schedule_generation|review_schedule_generation/);
  assert.match(master,/Hệ thống chỉ tạo lịch nháp; Quản lý vẫn kiểm tra, chỉnh sửa và phát hành/);
- assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261001-xstore-c04|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-005|20261004-xstore-012|20261005-xstore-017)/);
+ assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261001-xstore-c04|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-005|20261004-xstore-012|20261005-xstore-017|20261005-xstore-019|20261006-xstore-019g-r1)/);
 });
 
 test("historical XSTORE-007 date-bound implementation remains evidence only",()=>{

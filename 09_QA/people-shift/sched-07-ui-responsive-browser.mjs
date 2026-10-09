@@ -142,15 +142,24 @@ for(const width of shellWidths){
       if(scheduleCurrent!=="page")throw new Error("swap parent="+scheduleCurrent);
 
       const menu=employeeShell.locator(".header-menu");
-      await menu.click();
-      const drawer=employeeShell.locator("#drawer.open");
-      await drawer.waitFor({state:"visible"});
-      const secondary=await drawer.locator(".nav a:visible").evaluateAll(nodes=>nodes.map(x=>x.dataset.view));
-      if(JSON.stringify(secondary)!==JSON.stringify(["swap"]))throw new Error(JSON.stringify(secondary));
-      const expanded=await menu.getAttribute("aria-expanded");
-      if(expanded!=="true")throw new Error("aria-expanded="+expanded);
-      await employeeShell.keyboard.press("Escape");
-      if(await menu.getAttribute("aria-expanded")!=="false")throw new Error("drawer did not close");
+      const menuDisplay=await menu.evaluate(el=>getComputedStyle(el).display);
+      let secondary=[];
+      if(menuDisplay!=="none"){
+        await menu.click();
+        const drawer=employeeShell.locator("#drawer.open");
+        await drawer.waitFor({state:"visible"});
+        secondary=await drawer.locator(".nav a:visible").evaluateAll(nodes=>nodes.map(x=>x.dataset.view));
+        if(JSON.stringify(secondary)!==JSON.stringify(["swap"]))throw new Error(JSON.stringify(secondary));
+        const expanded=await menu.getAttribute("aria-expanded");
+        if(expanded!=="true")throw new Error("aria-expanded="+expanded);
+        await employeeShell.keyboard.press("Escape");
+        if(await menu.getAttribute("aria-expanded")!=="false")throw new Error("drawer did not close");
+      }else{
+        const visual=await employeeShell.locator("body").getAttribute("data-x19h-visual");
+        if(visual!=="owner-mockup-v3")throw new Error("hidden menu without approved visual="+visual);
+        secondary=await employeeShell.locator("#drawer .nav a").evaluateAll(nodes=>nodes.map(x=>x.dataset.view).filter(Boolean));
+        if(!secondary.includes("swap"))throw new Error(JSON.stringify(secondary));
+      }
 
       const notice=employeeShell.locator('.header-icon[aria-label="Thông báo"]');
       const noticeSize=await notice.evaluate(el=>{const r=el.getBoundingClientRect();return {w:r.width,h:r.height}});
@@ -158,7 +167,7 @@ for(const width of shellWidths){
       await notice.click();
       await employeeShell.locator("#view-notice.active").waitFor();
 
-      return JSON.stringify({secondary,noticeSize,url:employeeShell.url()});
+      return JSON.stringify({secondary,menuDisplay,noticeSize,url:employeeShell.url()});
     });
     await employeeShell.screenshot({path:path.join(OUT,"ui2-005-employee-phone-390.png"),fullPage:true});
   }
@@ -551,19 +560,22 @@ await scheduleV2Desktop.close();
 
 await page.goto(BASE+"/09_QA/people-shift/manager-workforce-canonical-fixture.html",{waitUntil:"networkidle"});
 await page.locator("#panel-publish .msd").waitFor();
-await check("sched07_manager_mobile_stacks_board_without_page_overflow",async()=>{
+await check("sched07_manager_mobile_uses_controlled_day_window_without_horizontal_scroll",async()=>{
   const state=await page.evaluate(()=>{
-    const html=document.documentElement,board=document.querySelector(".msd-board"),btn=document.querySelector("#msdStart");
+    const html=document.documentElement,board=document.querySelector(".msd-board"),wrap=document.querySelector(".msd-calendar-primary .msd-board-wrap"),btn=document.querySelector("#msdStart"),nav=document.querySelector(".x19g-command-day-nav");
+    const days=[...board.querySelectorAll(":scope > .msd-day")];
     return {
       role:html.dataset.schedulingRole,
       css:!!document.getElementById("workforce-scheduling-polish-v1-css"),
       cols:getComputedStyle(board).gridTemplateColumns.split(" ").filter(Boolean).length,
       minWidth:getComputedStyle(board).minWidth,
+      visibleDays:days.filter(x=>getComputedStyle(x).display!=="none").length,
+      dayNavVisible:!!nav&&getComputedStyle(nav).display!=="none",
       buttonHeight:btn.getBoundingClientRect().height,
       scroll:html.scrollWidth,client:html.clientWidth
     };
   });
-  if(state.role!=="manager"||!state.css||state.cols!==1||state.buttonHeight<43.5||state.scroll>state.client+2)throw new Error(JSON.stringify(state));
+  if(state.role!=="manager"||!state.css||state.cols!==1||parseFloat(state.minWidth)>1||state.visibleDays!==1||!state.dayNavVisible||state.buttonHeight<43.5||state.wrapScroll>state.wrapClient+2||state.scroll>state.client+2)throw new Error(JSON.stringify(state));
   return JSON.stringify(state);
 });
 

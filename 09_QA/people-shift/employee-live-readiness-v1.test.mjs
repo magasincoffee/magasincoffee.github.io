@@ -9,7 +9,8 @@ test("EMLIVE-001 active Employee shell exposes only production-ready surfaces",(
   assert.doesNotMatch(app,/data-view="inventory"|id="view-inventory"/);
   assert.doesNotMatch(app,/data-view="settings"|id="view-settings"/);
   assert.doesNotMatch(app,/avatarInput|openAvatarPicker\(|previewAvatar\(/);
-  assert.match(app,/Mỗi khoảng được lưu ngay khi bấm Đăng ký; không có bước gửi cuối/);
+  assert.match(app,/availability-paint-css/);
+  assert.match(read("06_EMPLOYEE/availability/engine-v1.js"),/function savePaintDraft\(/);
   assert.doesNotMatch(app,/>Xong<\/button>/);
   assert.match(app,/data-availability-close="back">← Về lịch làm<\/button>/);
   assert.match(app,/Để đổi mật khẩu, hãy đăng xuất rồi chọn “Quên mật khẩu\?”/);

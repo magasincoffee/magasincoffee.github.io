@@ -30,6 +30,17 @@ async function surfaceMetrics(f,viewSelector,focusSelector,width){
 }
 function validateMetrics(m){if(m.viewport!==m.expectedWidth||m.scrollWidth>m.clientWidth+1||m.minTarget<43.5||m.focusOutline==='none'||m.collision)throw new Error(JSON.stringify(m));return JSON.stringify(m)}
 
+async function openSecondaryPayroll(f){
+  const profile=f.locator('[data-employee-primary-view="profile"]');
+  await profile.click();
+  await f.locator('#view-profile.active').waitFor({timeout:10000});
+  const link=f.locator('[data-x19h-profile-actions] [data-x19h-route="payroll"]');
+  await link.waitFor({state:'visible',timeout:10000});
+  await link.click();
+  await f.locator('#view-payroll.active').waitFor({timeout:10000});
+  if(await profile.getAttribute('aria-current')!=='page')throw new Error('payroll parent is not profile');
+}
+
 for(const width of widths){
   const context=await browser.newContext({locale:'vi-VN',timezoneId:'Asia/Ho_Chi_Minh'});
   const page=await context.newPage();await page.setViewportSize({width,height:900});
@@ -62,13 +73,12 @@ for(const width of widths){
     const m=await surfaceMetrics(f,'#view-attendance','.attendance-week-nav button:first-child',width);validateMetrics(m);
     const text=await f.locator('#view-attendance').innerText();
     const legacyVisible=await f.locator('.legacy-attendance-report').isVisible().catch(()=>false);
-    if(legacyVisible||/Tổng tiền nhận|0đ\s*\/\s*giờ/.test(text)||!text.includes('cần được quản lý xác nhận trước khi dùng để tính lương')||!text.includes('Cần quản lý xem xét'))throw new Error(text);
+    if(legacyVisible||/Tổng tiền nhận|0đ\s*\/\s*giờ/.test(text)||!text.includes('Cần quản lý xác nhận')||!text.includes('Cần quản lý xem xét'))throw new Error(text);
     return JSON.stringify({...m,legacyVisible});
   });
   const attendanceShot=path.join(OUT,"ui2-009-attendance-"+width+".png");await f.locator('#view-attendance').screenshot({path:attendanceShot});report.screenshots.push(attendanceShot);
 
-  await f.locator('[data-employee-primary-view="payroll"]').click();
-  await f.locator('#view-payroll.active').waitFor({timeout:10000});
+  await openSecondaryPayroll(f);
   await f.locator('#employeePayrollRoot').filter({hasText:'Đã chốt'}).waitFor({timeout:10000});
   await check("ui2_009_payroll_"+width+"_phone_contract",async()=>{
     const m=await surfaceMetrics(f,'#view-payroll','#employeePayrollRefresh',width);validateMetrics(m);
@@ -91,7 +101,7 @@ for(const width of widths){
 
   if(width===390){
     await check('ui2_009_state_matrix_error_retry_stale_owner',async()=>{
-      await f.locator('[data-employee-primary-view="payroll"]').click();await f.locator('#view-payroll.active').waitFor();
+      await openSecondaryPayroll(f);
       await page.evaluate(()=>{globalThis.__UI2_009_QA.failPayroll(true);return globalThis.MAGASIN_EMPLOYEE.payrollSelfCheck.refresh()});
       await f.locator('#view-payroll[data-payroll-ui-state="error"] [data-payroll-retry]').waitFor({timeout:10000});
       await page.evaluate(()=>globalThis.__UI2_009_QA.failPayroll(false));await f.locator('[data-payroll-retry]').click();await f.locator('#view-payroll[data-payroll-ui-state="ready"]').waitFor();
@@ -112,7 +122,7 @@ for(const width of widths){
 
     await check('ui2_009_direct_route_back_reload_refreshes_canonical_truth',async()=>{
       await page.evaluate(()=>globalThis.__UI2_009_QA.restoreOwned());
-      await f.locator('[data-employee-primary-view="payroll"]').click();await f.locator('#view-payroll.active').waitFor();
+      await openSecondaryPayroll(f);
       await f.locator('[data-employee-primary-view="profile"]').click();await f.locator('#view-profile.active').waitFor();
       if(!page.url().endsWith('#profile'))throw new Error(page.url());
       await page.goBack();f=page.frameLocator('#employeeApp');await f.locator('#view-payroll.active').waitFor({timeout:10000});

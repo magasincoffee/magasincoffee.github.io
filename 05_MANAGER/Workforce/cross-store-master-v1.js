@@ -46,7 +46,7 @@ async function refresh(){
  pending=true;queued=false;ensureCss();m.dataset.xstoreLoading='1';m.innerHTML='<div class="xsm-loading">Đang tải tổng lịch CN1–CN4…</div>';
  try{
   const api=scheduleApi(),st=api?.getState?.()||{},week=st.week;
-  if(!week){m.innerHTML='<div class="xsm-loading">Chưa xác định tuần đang xếp lịch.</div>';return}
+  if(!week){delete m.dataset.xstoreLoading;m.innerHTML='<div class="xsm-loading">Chưa xác định tuần đang xếp lịch. Hãy chọn tuần ở phía trên.</div>';return}
   const [storesQ,planQ,avQ]=await Promise.all([
     client().rpc('get_manager_accessible_stores'),
     client().rpc('get_cross_store_weekly_plan_v1',{p_week_start:week}),
@@ -67,6 +67,7 @@ async function refresh(){
  }catch(e){
   console.warn('[XSTORE_MASTER_LOAD]',e);const current=mount();if(current)current.innerHTML='<div class="xsm-loading">Không tải được tổng lịch 4 cửa hàng. Vui lòng tải lại và thử lại.</div>';
  }finally{
+  const current=mount();if(current)delete current.dataset.xstoreLoading;
   pending=false;
   if(queued){queued=false;setTimeout(refresh,0)}
  }

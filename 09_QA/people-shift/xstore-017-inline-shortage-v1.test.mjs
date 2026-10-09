@@ -36,8 +36,9 @@ test("XSTORE-017 renders accessible inline shortage cards in exact calendar cell
   assert.match(draft,/#f3efff/i);
 });
 
-test("XSTORE-017 supplement action prefills the existing manual picker without inventing a second writer",()=>{
-  assert.match(draft,/function openSupplement\(index\)/);
+test("XSTORE-017 supplement action still targets exact shortage while XSTORE-019C routes it through the on-demand candidate drawer",()=>{
+  assert.match(draft,/function openSupplement\(index,sourceWrap=null\)/);
+  assert.match(draft,/openCandidateDrawer\(target,sourceWrap\)/);
   assert.match(draft,/supplementTarget/);
   assert.match(draft,/selectedDate=target\?\.work_date/);
   assert.match(draft,/selectedStart=hm\(target\?\.shortage_start/);
@@ -52,8 +53,8 @@ test("XSTORE-017 removes the duplicate detailed shortage list from Auto Schedule
 });
 
 test("XSTORE-017 cache chain points at inline-shortage runtime",()=>{
-  assert.ok(engine.includes("draft-publish-v1.js?v=20261005-xstore-018"));
-  assert.ok(engine.includes("cross-store-auto-schedule-v1.js?v=20261005-xstore-017"));
+  assert.ok(engine.includes("draft-publish-v1.js?v=20261007-xstore-019j-cluster1"));
+  assert.ok(engine.includes("cross-store-auto-schedule-v1.js?v=20261006-xstore-019g-r1"));
 });
 
 console.log("XSTORE_017_INLINE_SHORTAGE_STATIC=PASS");

@@ -1,0 +1,88 @@
+name: XSTORE-019C Candidate Drawer QA
+
+on:
+  push:
+    paths:
+      - '05_MANAGER/Workforce/draft-publish-v1.js'
+      - '05_MANAGER/Workforce/manager-scheduling-ui2-v1.js'
+      - '09_QA/people-shift/xstore-019c-candidate-drawer-v1.test.mjs'
+      - '09_QA/people-shift/xstore-019c-candidate-drawer-browser.mjs'
+      - '09_QA/people-shift/xstore-017-inline-shortage-v1.test.mjs'
+      - '09_QA/people-shift/ui2-012-manager-scheduling-browser.mjs'
+      - '09_QA/people-shift/manager-workforce-canonical-fixture.html'
+      - '.github/workflows/xstore-019c-candidate-drawer-qa.yml'
+  pull_request:
+    paths:
+      - '05_MANAGER/Workforce/draft-publish-v1.js'
+      - '05_MANAGER/Workforce/manager-scheduling-ui2-v1.js'
+      - '09_QA/people-shift/xstore-019c-candidate-drawer-v1.test.mjs'
+      - '09_QA/people-shift/xstore-019c-candidate-drawer-browser.mjs'
+      - '09_QA/people-shift/xstore-017-inline-shortage-v1.test.mjs'
+      - '09_QA/people-shift/ui2-012-manager-scheduling-browser.mjs'
+      - '09_QA/people-shift/manager-workforce-canonical-fixture.html'
+      - '.github/workflows/xstore-019c-candidate-drawer-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-drawer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Syntax check candidate drawer runtime and QA
+        run: |
+          node --check 05_MANAGER/Workforce/draft-publish-v1.js
+          node --check 09_QA/people-shift/xstore-019c-candidate-drawer-browser.mjs
+
+      - name: Run XSTORE-019C static contracts
+        run: |
+          node --test 09_QA/people-shift/xstore-019c-candidate-drawer-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-019b-direct-calendar-editing-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-018-supplemental-pool-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-017-inline-shortage-v1.test.mjs
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start exact-head QA server
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/xstore-019c
+          nohup python3 -m http.server 8781 --bind 127.0.0.1 > /tmp/xstore019c-http.log 2>&1 &
+          echo $! > /tmp/xstore019c-http.pid
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -fsS http://127.0.0.1:8781/09_QA/people-shift/manager-workforce-canonical-fixture.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/xstore019c-http.log || true
+          exit 1
+
+      - name: Run candidate drawer browser acceptance
+        env:
+          QA_BASE_URL: http://127.0.0.1:8781
+          QA_OUT: qa-artifacts/xstore-019c
+        run: node 09_QA/people-shift/xstore-019c-candidate-drawer-browser.mjs
+
+      - name: Upload XSTORE-019C evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xstore-019c-candidate-drawer-${{ github.run_id }}
+          path: qa-artifacts/xstore-019c/
+          if-no-files-found: warn
+          retention-days: 30
