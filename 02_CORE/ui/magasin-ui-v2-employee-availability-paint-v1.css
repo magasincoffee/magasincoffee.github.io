@@ -31,7 +31,7 @@ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .avail
 body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-paint-footer [data-av-paint-status]{min-width:0;font-size:11px;line-height:1.45;color:#475467}
 body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-paint-save{min-width:160px;min-height:46px!important;border-radius:9px!important;background:#1677ef!important;color:#fff!important;font-size:13px!important}
 body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-paint-save:disabled{opacity:.55;cursor:default}
-@media(max-width:760px){
+@media(max-width:900px){
  body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-paint-day-nav{display:flex!important;align-items:center;justify-content:space-between;gap:8px;margin:8px 0}
  body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-paint-day-nav strong{font-size:13px}
  body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-paint-day-nav button{min-width:46px;min-height:44px;border:1px solid #cfe0f5;border-radius:8px;background:#f3f8ff;color:#1d63ba;font-size:18px}
@@ -40,8 +40,8 @@ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .avail
  body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-calendar-day{display:none!important;border-right:0!important;scroll-snap-align:none!important}
  body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-calendar-day[data-av-active-day="true"]{display:block!important;width:100%!important}
  body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-calendar-day>header{min-height:40px!important}
- body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-calendar-timeline{grid-template-rows:repeat(34,minmax(43px,auto))!important}
- body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-calendar-slot{min-height:43px!important;height:43px!important;font-size:12px!important;justify-content:flex-start!important;padding-left:14px!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-calendar-timeline{grid-template-rows:repeat(34,minmax(44px,auto))!important}
+ body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-calendar-slot{min-height:44px!important;height:44px!important;font-size:12px!important;justify-content:flex-start!important;padding-left:14px!important}
  body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-calendar-card{margin:2px 2px 2px 126px!important;padding:6px!important}
  body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-paint-footer{grid-template-columns:1fr!important;gap:7px!important}
  body[data-magasin-employee-shell-v2][data-x19h-employee-presentation="1"] .availability-paint-save{width:100%!important}

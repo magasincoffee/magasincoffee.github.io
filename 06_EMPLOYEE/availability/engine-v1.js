@@ -153,7 +153,7 @@ async function savePaintDraft(){
   }catch(_){failed=true;break}
  }
  state.savePending=false;
- // A fresh authoritative read reconciles a possible server-side write before an uncertain response.
+ // Reload confirmed availability before allowing retry after an uncertain write response.
  const confirmed=await load();
  if(!confirmed){setUiState('error','Không xác minh được các khoảng vừa lưu. Vui lòng tải lại trước khi thử tiếp.',true);syncPaintUi();return false}
  if(failed){setUiState('error','Đã xác nhận '+saved+'/'+intervals.length+' khoảng. Còn '+state.paintDraft.size+' ô chưa lưu. Kiểm tra và thử lại.',true)}
