@@ -8,7 +8,7 @@ const browser=await chromium.launch({headless:true});
 const failures=[];
 
 for(const width of [1440,390]){
- for(const kind of ["missing","genuine-zero"]){
+ for(const kind of ["missing","genuine-zero","partial"]){
   const context=await browser.newContext({viewport:{width,height:width===390?844:960},locale:"vi-VN"});
   const page=await context.newPage();
   try{
@@ -21,6 +21,12 @@ for(const width of [1440,390]){
     if(kind==="genuine-zero")globalThis.__MAGASIN_OWNER_STRATEGY_READ_MODEL__={
      fixture:true,periodLabel:"Kiểm thử số không",revenue:0,cost:0,profit:0,margin:0,cashflow:0,targetProgress:0,
      revenueMix:[],costMix:[],trend:[],stores:[],products:[],customers:[],alerts:[],forecast:[]
+    };
+    if(kind==="partial")globalThis.__MAGASIN_OWNER_STRATEGY_READ_MODEL__={
+     fixture:true,revenue:10,cost:0,profit:0,margin:0,cashflow:0,targetProgress:0,
+     trend:[{label:"T2",revenue:null,profit:1}],
+     revenueMix:[{label:"Đồ uống",value:90},{label:"Khác",value:null}],
+     costMix:[],stores:[{label:"CN1",value:null}],products:[],customers:[],alerts:[],forecast:[]
     };
    },kind);
    await page.addScriptTag({content:strategyJS});
@@ -38,7 +44,10 @@ for(const width of [1440,390]){
      empty,chartHeight:Math.round(chart.getBoundingClientRect().height),
      layoutGap:gap,
      typography:{name:font(".strategy-kpi>span"),value:font(".strategy-kpi>strong"),subtitle:font(".strategy-kpi>small"),panel:font(".strategy-panel-head h3")},
-     ringCount:document.querySelectorAll(".strategy-donut-ring").length
+     ringCount:document.querySelectorAll(".strategy-donut-ring").length,
+     badTrend:!!document.querySelector("#strategyTrendBars .strategy-empty"),
+     missingBar:document.querySelectorAll("#strategyStoreComparison .strategy-value-unavailable").length,
+     mixIsEmpty:!!document.querySelector("#strategyRevenueMix .strategy-empty")
     };
    });
    const key="XSTORE_019J_OWNER_SOURCE_INTEGRITY_"+width+"_"+kind;
@@ -47,9 +56,12 @@ for(const width of [1440,390]){
    if(kind==="missing"){
     if(actual.metrics.some(v=>v!=="—")||actual.sourceState!=="incomplete"||!actual.noticeVisible||actual.empty<5||actual.chartHeight>160||actual.ringCount)
      throw Error(key+" missing-source-misrepresented "+JSON.stringify(actual));
-   }else{
+   }else if(kind==="genuine-zero"){
     if(actual.metrics.slice(0,4).some(v=>!v.includes("0"))||actual.metrics[4]!=="0%"||actual.sourceState!=="fixture"||actual.noticeVisible)
      throw Error(key+" real-zero-misrepresented "+JSON.stringify(actual));
+   }else{
+    if(!actual.badTrend||!actual.mixIsEmpty||actual.missingBar!==1||actual.ringCount)
+     throw Error(key+" partial-source-created-fake-chart "+JSON.stringify(actual));
    }
    console.log(key+"=PASS "+JSON.stringify(actual));
   }catch(err){
