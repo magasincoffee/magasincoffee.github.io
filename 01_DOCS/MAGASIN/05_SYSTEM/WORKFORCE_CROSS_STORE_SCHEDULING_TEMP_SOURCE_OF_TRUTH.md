@@ -3,7 +3,7 @@
 **Search key:** `WORKFORCE-CROSS-STORE`  
 **Track ID:** `WORKFORCE_CROSS_STORE_SCHEDULING_V1`  
 **Created:** 2026-09-28  
-**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J MANAGER SCHEDULING UI OWNER-APPROVED 2026-10-09; EMPLOYEE/OWNER AUTHENTICATED REAL-LOCAL VISUAL REQUALIFICATION WAIT_OWNER_AUTHENTICATION / BLOCKED; EXACT-MAIN ACCEPTANCE OPEN / XSTORE-019K BLOCKED UNTIL FULL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
+**Status:** XSTORE-001→010 IMPLEMENTED / EXACT-MAIN GREEN / XSTORE-C01→C05 DONE / XSTORE-012 RELEASED / XSTORE-013→018 DONE / XSTORE-019A→019F DONE / OWNER-APPROVED MOCKUPS ARE VISUAL AUTHORITY / XSTORE-019G→019I VISUAL-FIDELITY REMEDIATION DONE / EXACT-HEAD GREEN / XSTORE-019J MANAGER SCHEDULING UI OWNER-APPROVED 2026-10-09; EMPLOYEE AVAILABILITY DIRECT-CALENDAR PAINT CORRECTION §0.12 CHANGES_REQUESTED / EXECUTABLE; OTHER ROLE AUTHENTICATED REAL-LOCAL REVIEW STILL REQUIRED; EXACT-MAIN ACCEPTANCE OPEN / XSTORE-019K BLOCKED UNTIL FULL UI RE-APPROVAL / XSTORE-020 PAUSED UNTIL XSTORE-019G→019O + OWNER RC APPROVAL / XSTORE-011 PAUSED UNTIL XSTORE-013→020 COMPLETE  
 **Repository:** `magasincoffee/magasincoffee.github.io`  
 **Lifecycle:** TEMPORARY — delete this file after implementation is fully accepted and the proven rules are reconciled into canonical Workforce documentation.
 
@@ -592,6 +592,21 @@ Following the Owner's approval of the **Manager calendar UI only** (§0.10) and 
 - The local checkout remained on exact RC SHA `7a3e419995b0d87f5d4d74aa2f884d1d43a4977c`. All 12 GitHub Actions runs launched for that SHA previously completed **SUCCESS** (as recorded in §0.10). Technical GREEN does not substitute for real authenticated visual comparison or approval.
 
 **Gate disposition:** `XSTORE-019J` has a **completed/approved Manager scheduling UI sub-gate**. Its outstanding **authenticated Employee and Owner real-local review gate is WAIT_OWNER_AUTHENTICATION / BLOCKED for Owner action**. Resume exactly the same XSTORE-019J after Owner logs into the Employee and Owner review sessions via the canonical app sign-in UI; capture and compare real desktop/mobile role screens with §0.4 approved images, repair any identified deviations under normal QA, and obtain explicit Owner cross-role UI approval. Do not require Manager calendar reapproval absent a new concrete defect. Do not bypass Supabase auth or fabricate operational financial/workforce values to imitate reference images. `XSTORE-019K` remains blocked; PR #392 remains DRAFT / DO NOT MERGE; no real scheduling Publish is authorized.
+
+## 0.12 Owner correction — 2026-10-09 — Employee availability directly painted in operating-hours calendar
+
+Owner reviewed the **real Employee weekly Availability page** on the local 8791 candidate and explicitly requested faster direct in-calendar registration. This is a new **CHANGES_REQUESTED / EXECUTABLE sub-gate within XSTORE-019J**, superseding only the Employee registration surface; §0.10 Manager calendar approval remains intact.
+
+### Required user interaction and acceptance
+- On **Đăng ký lịch tuần**, show the operating-hours time axis **05:00–22:00** (30-minute selectable granularity; displayed slots 05:00 through 21:30). Do not waste space rendering 00:00–04:30 or 22:00–23:30. Existing saved exact-time rows outside that visual window, if any, must not be silently dropped or corrupted.
+- Employees tap a time block directly to toggle availability (the block must visibly change color before saving), or drag across consecutive blocks within a day to paint selection. Multiple days and disjoint intervals are allowed. A single prominent **Lưu đăng ký** action sits below the calendar, with selected-count/unsaved indication, explicit in-flight feedback and error/retry guidance.
+- Adjacent selected blocks per date must be coalesced into exact time intervals (inclusive start, exclusive end). Continue to support existing exact start/end editing, saved-interval changes and removal; do not hard-code three fixed shifts or force a store selection.
+- The draft is **not persisted** merely by painting a cell: only the user's explicit Save action may call canonical `save_my_availability`. Never auto-publish a shift, bypass target-week registration policy, duplicate saved intervals, or replace approved Manager scheduling authority.
+- On save, use existing authenticated Employee Availability RPC and return confirmed server rows. If partial failure occurs, retain only unsaved draft selections for correction/retry and show partial-success evidence; never silently report the entire week as saved. Block editing/Save when registration is closed, loading, or submit pending.
+- Mobile-first: fit a legible one-day time window with simple next/previous day selection and accessible keyboard/focus behavior. At normal desktop sizes the seven-day calendar is usable without page-level horizontal overflow; colors distinguish **staged/unsaved**, **persisted**, and unselected slots. Preserve Employee/Owner mockup visual hierarchy and direct entry to published schedule and attendance.
+- Targeted actual-browser QA must verify the 05:00–22:00 grid, multi-cell paint/toggle, cross-day drafts, interval coalescing, no RPC before Save, canonical persistence after Save, partial failure behavior, registration-closed read-only, and responsive UI. Then run all impacted Employee Availability, cross-role, release and exact-candidate gates. Fresh authenticated real-local Owner review remains mandatory.
+
+This implementation runs as **XSTORE-019J (Employee visual requalification correction)**, not a new SOT task or reopening of the previously DONE XSTORE-019D. Until targeted and required gates pass, the task stays **CHANGES_REQUESTED / EXECUTABLE**; after code QA it again awaits real Employee/Owner authenticated screenshots/Owner approval. `XSTORE-019K` stays blocked. PR #392 remains DRAFT / DO NOT MERGE. Do not deploy or modify real employee registrations without the employee explicitly saving them.
 
 ## 1. Purpose
 
@@ -3210,6 +3225,7 @@ This track is complete only when:
 30. narrow schedule layouts use one controlled calendar-level navigation/overflow model and do not create page-level horizontal overflow.
 31. Step-3 shift editing uses an on-demand right-side slide-over without resizing the underlying calendar, while Step 4 offers matching read-only shift/cluster detail.
 32. Steps 3/4 use the compact weekly grid of real employee shifts and shortage chips, not the old tall hourly timeline; both share the same visual geometry.
+33. Employee weekly Availability uses a 05:00–22:00 calendar with staged click/drag 30-minute cell coloring and an explicit bottom Save that persists merged intervals through canonical Employee RPC without auto-saving.
 
 ## 8. Closure rule
 
