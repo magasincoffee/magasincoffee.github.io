@@ -117,7 +117,7 @@ try {
     await employee.locator("#quickRegStart").selectOption("06:00");
     await employee.locator("#quickRegEnd").selectOption("12:00");
 
-    await employee.locator("#weeklyRegistrationPanel button", { hasText: "Đăng ký" }).click();
+    await employee.locator("#saveReg").click();
     await employee.locator("#quickRegMsg").filter({ hasText: "Đã lưu khoảng thời gian có thể làm." }).waitFor();
     await employee.locator(".week-summary").filter({ hasText: "Thời gian có thể làm" }).waitFor();
     await employee.locator("[data-schedule-availability]").filter({ hasText: "Xem / sửa đăng ký" }).first().waitFor();

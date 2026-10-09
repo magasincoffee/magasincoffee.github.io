@@ -8,6 +8,11 @@ on:
       - '05_MANAGER/Workforce/**'
       - '05_MANAGER/runtime/**'
       - '09_QA/people-shift/xstore-01**'
+      - '06_EMPLOYEE/availability/**'
+      - '06_EMPLOYEE/app/employee-v40.html'
+      - '06_EMPLOYEE/runtime/employee-runtime-v1.html'
+      - '02_CORE/ui/magasin-ui-v2-employee-availability-paint-v1.css'
+      - '09_QA/people-shift/xstore-019d-employee-availability-calendar-browser.mjs'
       - '09_QA/ui2-cross-role/**'
       - '.github/workflows/xstore-019-unified-rc-qa.yml'
   pull_request:
@@ -17,6 +22,11 @@ on:
       - '05_MANAGER/Workforce/**'
       - '05_MANAGER/runtime/**'
       - '09_QA/people-shift/xstore-01**'
+      - '06_EMPLOYEE/availability/**'
+      - '06_EMPLOYEE/app/employee-v40.html'
+      - '06_EMPLOYEE/runtime/employee-runtime-v1.html'
+      - '02_CORE/ui/magasin-ui-v2-employee-availability-paint-v1.css'
+      - '09_QA/people-shift/xstore-019d-employee-availability-calendar-browser.mjs'
       - '09_QA/ui2-cross-role/**'
       - '.github/workflows/xstore-019-unified-rc-qa.yml'
   workflow_dispatch:
