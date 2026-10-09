@@ -41,7 +41,7 @@ function css(){
 @keyframes x19g-slide-in{from{transform:translateX(100%)}to{transform:translateX(0)}}
 .x19g-side-head{display:flex;gap:12px;align-items:start;justify-content:space-between;padding:18px 18px 14px;border-bottom:1px solid #e8edf3;background:#f8faff}
 .x19g-side-head h3{font-size:17px!important;margin:0 0 4px!important;line-height:1.35!important;color:#15243b!important}
-.x19g-side-head p{margin:0;color:#667085;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.x19g-side-head p{margin:0;color:#667085;font-size:12px;line-height:1.45;word-break:break-word}
 .x19g-side-close{flex:0 0 auto;min-height:34px!important;padding:4px 10px!important}
 .x19g-side-content{min-height:0;overflow-y:auto;padding:18px;overscroll-behavior:contain;display:grid;gap:12px;align-content:start}
 .x19g-side-content .msd-card-editor{display:block!important;position:static!important;overflow:visible!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:#fff!important}
