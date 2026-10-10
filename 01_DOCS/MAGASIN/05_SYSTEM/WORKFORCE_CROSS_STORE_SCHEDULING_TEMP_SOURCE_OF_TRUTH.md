@@ -660,6 +660,21 @@ This subsection supersedes only the older XSTORE-019J conflict/Owner-visual-appr
 
 **Task control as of this evidence:** XSTORE-019J = **BLOCKED / REAL OWNER-ADMIN QA IDENTITY ACTION REQUIRED**, rather than merge-conflict blocked or visually unapproved; XSTORE-019K and subsequent work remain **BLOCKED**, PR #392 stays **DRAFT / DO NOT MERGE** until all subsequent task/release gates and explicit Owner replacement-RC approval. Exact-main checks must be verified at the canonical post-integration stage; never claim exact-main merely from 20/21 PR workflow results. Do not auto-resend a potentially ambiguous automation instruction or publish schedules.
 
+## 0.17 XSTORE-019J QA permission inventory — Owner report and read-only verification — 2026-10-10
+
+Owner clarified that **QA access had intentionally been disabled** and requested inspection/recovery. This is an authorized request to investigate, not evidence that any particular `profiles.id` or GitHub Actions credential has been conclusively matched.
+
+Read-only canonical Supabase MAGASIN-NOIBO verification (no secrets or identity identifiers collected in evidence):
+- `public.profiles` group counts at inspection: **2 ACTIVE ACCOUNTANT**, **1 ACTIVE OWNER**, **2 ACTIVE STORE_MANAGER**, **28 ACTIVE STAFF**, **3 INACTIVE STAFF**.
+- The one username matched by a *QA/test/procurement* name-pattern scan is an **ACTIVE ACCOUNTANT** profile with a corresponding `auth.users` row, confirmed email, prior login, no current ban and no soft deletion. This pattern scan **does not prove** the GitHub Actions secret `PROCUREMENT_QA_USERNAME` points to that profile. A different non-pattern username may have been disabled or replaced.
+- The exact failed workflow `auth-prod-active-production-smoke` did **not** fail on role/permission after login: it failed **before login** when `resolve_login_email` returned NULL for the secret-backed username. The actual resolver requires an exact case/whitespace-normalized match in `profiles.username` and an `auth.users` match (profile status ACTIVE or PENDING). Do not assume that granting an arbitrary QA role or changing `access_scope` will resolve a **missing username match**.
+- Workflow `.github/workflows/auth-prod-tests.yml` uses repository secret keys **`PROCUREMENT_QA_USERNAME` and `PROCUREMENT_QA_PASSWORD`**; it does not use repository secrets named `AUTH_PROD_ACTIVE_USERNAME` or `AUTH_PROD_ACTIVE_PASSWORD`. Secret values are non-retrievable through ordinary GitHub metadata, and were not accessed or printed.
+- No `profiles.status`, `profiles.role`, `access_scope`, Supabase Auth account, password, repository secret, workflow, business record or production schedule was modified in this inspection. There is **insufficient identity linkage** to safely reactivate a specific account.
+
+**Owner/authorized credential administration needed:** identify the exact QA identity intentionally disabled; either reactivate that *same* approved test account under canonical authorization or, if the credential is obsolete, set `PROCUREMENT_QA_USERNAME` and `PROCUREMENT_QA_PASSWORD` in repository Actions secrets to one approved existing ACTIVE QA identity (preserving any shared Procurement QA dependency). Do not paste credentials to ChatGPT, GitHub commits, PR comments or SOT. Then rerun failed credentialed AUTH-PROD smoke and verify valid active role routing, before requalifying the candidate. No bypass, fabricated identity, arbitrary role elevation or skipping the failed QA gate.
+
+**Task status:** XSTORE-019J **BLOCKED — exact QA identity/secret link unresolved**; XSTORE-019K BLOCKED; PR #392 remains DRAFT / DO NOT MERGE and XSTORE-020 cannot be released. Owner-approved Manager/Employee/Owner UI acceptance remains intact.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
