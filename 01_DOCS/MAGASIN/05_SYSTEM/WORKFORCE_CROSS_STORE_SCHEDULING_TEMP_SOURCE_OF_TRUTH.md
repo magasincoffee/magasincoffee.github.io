@@ -675,6 +675,18 @@ Read-only canonical Supabase MAGASIN-NOIBO verification (no secrets or identity 
 
 **Task status:** XSTORE-019J **BLOCKED — exact QA identity/secret link unresolved**; XSTORE-019K BLOCKED; PR #392 remains DRAFT / DO NOT MERGE and XSTORE-020 cannot be released. Owner-approved Manager/Employee/Owner UI acceptance remains intact.
 
+## 0.18 XSTORE-019J AUTH-PROD credential gate cleared — 2026-10-10
+
+Owner reports successful recovery of the QA account/credentials. GitHub's **actual rerun** of the same immutable PR candidate `014ea189a38c3d74b41226a84f9f77689672a324` verifies this recovery without reading/disclosing any credential:
+
+- `AUTH-PROD Regression Contract` run [`38027909972`](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38027909972), **attempt 2**, `completed/success`, updated `2026-10-10T13:10:13Z`;
+- Both `auth-prod-active-production-smoke` and `auth-prod-red-contract` latest-attempt jobs are `completed/success`;
+- Complete exact-PR-head list: **21/21 triggered workflows successful, 0 failed, 0 pending**, including XSTORE-019J, XSTORE-019 Unified RC, UI2 Cross Role and People Shift Day-10.
+
+This **supersedes the failed-auth blocking conclusion** recorded in §§0.16–0.17; the same credential recovery does not require creating a duplicate user or changing the resolver implementation. Do not log secrets or reactivate unrelated staff accounts.
+
+**Next task-state reconciliation gate:** XSTORE-019J's authentication check is GREEN, but its PR remains DRAFT/not merged and `main` received SOT-only commits after candidate head (GitHub compare showed PR ahead 188 / behind 3 at this check). Reconcile these authoritative documentation updates into the candidate without affecting Owner-approved UI, reverify post-refresh impacted QA and strict release governance, and document exact-candidate evidence before closing XSTORE-019J. Owner approved all three UI presentations already (§§0.10, 0.13, 0.15), so do not request redundant visual approval. **Do not merge or deploy prematurely; XSTORE-019K remains sequenced after XSTORE-019J.** Later XSTORE-019O replacement-RC approval and XSTORE-020 production gate remain independently required.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
