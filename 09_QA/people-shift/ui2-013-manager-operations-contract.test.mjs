@@ -95,7 +95,7 @@ test("UI2-013 complete Manager cache chain loads changed assets while Owner path
  assert.ok(runtime.includes("engine-v1.js?v="+entryV));
  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+entryV));
  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+entryV));
- assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+entryV+"#workforce"));
+ assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+entryV+"&x19l=1#workforce"));
  assert.doesNotMatch(ownerRuntime,new RegExp(v));
 });
 
