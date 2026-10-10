@@ -8,6 +8,10 @@ fs.mkdirSync(OUT,{recursive:true});
 const report={status:"PASS",checks:[],page_errors:[],console_errors:[],request_failures:[]};
 const check=async(name,fn)=>{try{report.checks.push({name,status:"PASS",detail:String(await fn()??"")})}catch(e){report.status="FAIL";report.checks.push({name,status:"FAIL",detail:String(e?.stack||e)});throw e}};
 const addManualAssignment=async(userId,workDate,startTime,endTime)=>{
+  if(!await page.locator('#msdManualEmployee').count()){
+    await page.locator('[data-x19g-nav]').filter({hasText:'Chỉnh lịch'}).click();
+    await page.locator('#msdOpenCandidateDrawer').click();
+  }
   await page.locator("#msdManualEmployee").selectOption(userId);
   await page.locator("#msdManualDate").selectOption(workDate);
   await page.locator("#msdManualStart").selectOption(startTime);
