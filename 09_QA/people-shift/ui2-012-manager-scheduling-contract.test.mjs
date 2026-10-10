@@ -106,7 +106,7 @@ test("UI2-012 presentation is shared while Owner and Manager retain the canonica
   assert.ok(runtime.includes("engine-v1.js?v="+managerEntryV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
   assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
-  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerEntryV+"#workforce"));
+  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerEntryV+"&x19l=1#workforce"));
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261005-xstore-019)/);
   assert.ok(ownerRuntime.includes("/05_MANAGER/Workforce/draft-publish-v1.js?v="+managerV));
   assert.match(ownerRuntime,/\/05_MANAGER\/Workforce\/manager-scheduling-ui2-v1\.js\?v=20261006-xstore-019e/);
