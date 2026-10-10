@@ -38,6 +38,7 @@
         calls.push({kind:'rpc',name,args:structuredClone(args||{})});
         if(state.mode==='error')return {data:null,error:{message:'PROFILE_INACTIVE'}};
         if(name==='get_my_employee_workforce_profile_v1')return {data:[structuredClone(row)],error:null};
+        if(name==='get_my_employee_employment_type_v1')return {data:'PART_TIME',error:null};
         return {data:null,error:{message:'UNEXPECTED_RPC'}};
       },
       from(name){calls.push({kind:'from',name});throw new Error('Direct table access forbidden')}

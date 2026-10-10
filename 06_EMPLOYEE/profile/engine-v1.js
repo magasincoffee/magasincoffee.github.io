@@ -65,6 +65,11 @@ async function refresh(){
   if(q.error){state.loading=false;state.row=null;state.error=safeCode(q.error);render();return}
   const row=Array.isArray(q.data)?q.data[0]:q.data;
   if(row&&!validProjectionRow(row)){state.loading=false;state.row=null;state.error='PROFILE_PROJECTION_INVALID';render();return}
+  if(row){
+    const t=await C.supabase.rpc('get_my_employee_employment_type_v1');
+    if(t.error&&!(['PGRST202'].includes(String(t.error.code||''))||/Could not find the function .*employment_type/i.test(String(t.error.message||'')))){state.loading=false;state.row=null;state.error=safeCode(t.error);render();return}
+    row.employment_type=t.error?null:(typeof t.data==='string'?t.data:null);
+  }
   state.loading=false;state.error=null;state.row=row||null;render();
 }
 function init(){

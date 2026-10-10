@@ -100,9 +100,10 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-calendar-create{margin:6px;padding:8px;border:2px solid #2f6fde;border-radius:9px;background:#f7fbff}.msd-calendar-create b{font-size:11px}.msd-calendar-create .msd-manual-grid{grid-template-columns:1.3fr 1fr 1fr;margin-top:6px}.msd-calendar-create-actions{display:flex;gap:6px;margin-top:7px}.msd-calendar-create-actions .btn{min-height:34px}
 @media(max-width:700px){.msd-day-timeline{grid-template-columns:38px minmax(0,1fr)}.msd-time-scale,.msd-slot-grid{grid-template-rows:repeat(34,24px)}.msd-card-editor .msd-manual-grid,.msd-calendar-create .msd-manual-grid{grid-template-columns:1fr}.msd-direct-actions .btn{min-height:34px}}
 
+.msd-pool-employment-editor{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;margin:5px 6px 5px 0}.msd-pool-employment-editor select{min-height:34px;min-width:115px;max-width:100%;font:inherit}
 </style>`;
 
-let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignments:[],availability:[],eligibleEmployees:[],weeklyPlan:[],requirements:[],shortages:[],shortageSource:'NONE',supplementTarget:null,candidateDrawerOpen:false,calendarViewport:{left:0,top:0},calendarCreate:null,officialRows:[],generationStatus:'NONE',generationOrigin:null,duplicateDrafts:0,lastValidation:null,busy:false,dirty:false};
+let sb=null,state={generationId:null,storeId:null,week:null,stores:[],assignments:[],availability:[],eligibleEmployees:[],weeklyPlan:[],requirements:[],shortages:[],shortageSource:'NONE',supplementTarget:null,candidateDrawerOpen:false,calendarViewport:{left:0,top:0},calendarCreate:null,officialRows:[],generationStatus:'NONE',generationOrigin:null,duplicateDrafts:0,lastValidation:null,busy:false,dirty:false,employmentTypeReady:false};
 const panel=()=>document.querySelector('#panel-publish');
 function client(){const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw new Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()}
 function ensurePolish(){
@@ -163,6 +164,9 @@ const availTypeOk=r=>['AVAILABLE','PREFERRED'].includes(String(r.availability_ty
 const availCovers=(r,a)=>String(r.work_date).slice(0,10)===String(a.work_date).slice(0,10)&&mins(r.start_time)<=mins(a.start_time)&&mins(r.end_time)>=mins(a.end_time)&&availTypeOk(r);
 function employeeName(r){return r?.employee_name||r?.full_name||r?.username||r?.user_id||r?.employee_id||'Nhân viên'}
 function employmentTypeLabel(v){const t=String(v||'').toUpperCase();return t==='FULL_TIME'?'Full-time':t==='PART_TIME'?'Part-time':'Chưa cấu hình'}
+function employmentTypeRank(v){const t=String(v||'').toUpperCase();return t==='FULL_TIME'?0:t==='PART_TIME'?1:2}
+function compareEligibleType(a,b){return employmentTypeRank(a.employment_type||a.profile?.employment_type)-employmentTypeRank(b.employment_type||b.profile?.employment_type)}
+function isMissingEmploymentRpc(e){return String(e?.code||'')==='PGRST202'||/Could not find the function .*employment_type/i.test(String(e?.message||''))}
 function priorityForStore(r){
  const ids=Array.isArray(r?.priority_store_ids)?r.priority_store_ids.map(String):[];
  const i=ids.indexOf(String(state.storeId||''));
@@ -201,7 +205,7 @@ function profileCandidate(r,a){
  const userId=r.employee_id||r.user_id;
  const probe={...a,user_id:userId};
  const availabilityMatch=state.availability.some(x=>String(x.user_id)===String(userId)&&availCovers(x,probe));
- return {user_id:userId,employee_name:employeeName(r),username:r.username||'',priority_store_ids:r.priority_store_ids||[],priority:priorityForStore(r),availability_match:availabilityMatch};
+ return {user_id:userId,employee_name:employeeName(r),username:r.username||'',priority_store_ids:r.priority_store_ids||[],priority:priorityForStore(r),availability_match:availabilityMatch,employment_type:r.employment_type||null};
 }
 function candidates(a){
  const map=new Map();
@@ -210,8 +214,8 @@ function candidates(a){
   if(x.user_id&&!map.has(String(x.user_id)))map.set(String(x.user_id),x);
  }
  const current=state.assignments.find(x=>String(x.id||'')===String(a.id||''))||a;
- if(current.user_id&&!map.has(String(current.user_id)))map.set(String(current.user_id),{user_id:current.user_id,employee_name:current.employee_name||current.full_name||current.username||'Nhân viên hiện tại',priority:999,availability_match:state.availability.some(x=>String(x.user_id)===String(current.user_id)&&availCovers(x,current))});
- return [...map.values()].sort((x,y)=>Number(y.availability_match)-Number(x.availability_match)||Number(x.priority)-Number(y.priority)||String(x.employee_name).localeCompare(String(y.employee_name),'vi'));
+ if(current.user_id&&!map.has(String(current.user_id)))map.set(String(current.user_id),{user_id:current.user_id,employee_name:current.employee_name||current.full_name||current.username||'Nhân viên hiện tại',priority:999,availability_match:state.availability.some(x=>String(x.user_id)===String(current.user_id)&&availCovers(x,current)),employment_type:null});
+ return [...map.values()].sort((x,y)=>Number(y.availability_match)-Number(x.availability_match)||compareEligibleType(x,y)||Number(x.priority)-Number(y.priority)||String(x.employee_name).localeCompare(String(y.employee_name),'vi'));
 }
 function assignmentMeta(a){
  if(String(a.warning||'').toUpperCase()==='MANAGER_AVAILABILITY_OVERRIDE')return '<span class="msd-override">Quản lý điều động ngoài thời gian đăng ký</span>';
@@ -253,12 +257,17 @@ async function loadEligibleEmployees(){
  if(!state.storeId){state.eligibleEmployees=[];return}
  const q=await client().rpc('list_employee_workforce_profiles_v1');
  if(q.error)throw q.error;
- state.eligibleEmployees=(Array.isArray(q.data)?q.data:[]).filter(r=>
-  String(r.profile_status||'').toUpperCase()==='ACTIVE'
-  && ['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())
-  && Array.isArray(r.priority_store_ids)
-  && r.priority_store_ids.map(String).includes(String(state.storeId))
- );
+  const approved=(Array.isArray(q.data)?q.data:[]).filter(r=>
+   String(r.profile_status||'').toUpperCase()==='ACTIVE'
+   && ['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())
+   && Array.isArray(r.priority_store_ids)
+   && r.priority_store_ids.map(String).includes(String(state.storeId))
+  );
+  const typeResult=await client().rpc('list_employee_employment_types_v1');
+  if(typeResult.error&&!isMissingEmploymentRpc(typeResult.error))throw typeResult.error;
+  state.employmentTypeReady=!typeResult.error&&Array.isArray(typeResult.data);
+  const types=new Map((state.employmentTypeReady?typeResult.data:[]).map(x=>[String(x.employee_id),x.employment_type]));
+  state.eligibleEmployees=approved.map(r=>({...r,employment_type:types.get(String(r.employee_id||r.user_id))||null}));
 }
 async function loadRequirements(){
  const q=await client().rpc('list_workforce_recurring_staffing_requirements_v1',{});
@@ -405,11 +414,12 @@ function poolCandidate(profile,target=state.supplementTarget){
   ? remaining.some(r=>String(r.work_date).slice(0,10)===targetDate&&mins(r.start_time)<=mins(targetStart)&&mins(r.end_time)>=mins(targetEnd))
   : remaining.length>0;
  const conflict=target?hardConflictFor(userId,targetDate,targetStart,targetEnd):null;
- return {profile,user_id:userId,employee_name:employeeName(profile),priority:priorityForStore(profile),week_assigned:draftRows.length,unassigned:draftRows.length===0,remaining,targetAvailable,conflict,manual:!targetAvailable&&!conflict};
+ return {profile,user_id:userId,employee_name:employeeName(profile),priority:priorityForStore(profile),employment_type:profile.employment_type,week_assigned:draftRows.length,unassigned:draftRows.length===0,remaining,targetAvailable,conflict,manual:!targetAvailable&&!conflict};
 }
 function supplementalPoolGroups(target=state.supplementTarget){
  const rows=state.eligibleEmployees.map(r=>poolCandidate(r,target)).sort((a,b)=>
   Number(Boolean(b.targetAvailable))-Number(Boolean(a.targetAvailable))
+  ||compareEligibleType(a,b)
   ||Number(a.priority)-Number(b.priority)
   ||String(a.employee_name).localeCompare(String(b.employee_name),'vi')
  );
@@ -432,10 +442,15 @@ function poolRowHtml(item,target,blocked=false){
  const assignedTag=item.unassigned?'<span class="msd-pool-tag">Chưa có ca trong tuần</span>':'<span class="msd-pool-tag">'+esc(item.week_assigned)+' ca đã xếp</span>';
  const blockedTag=blocked?'<span class="msd-pool-tag blocked">'+esc(item.conflict?.reason||'Có xung đột')+'</span>':'';
  const employmentTag='<span class="msd-pool-tag x19g-employment" data-employment-type="'+esc(String(item.profile?.employment_type||'').toUpperCase())+'">Loại việc làm: '+esc(employmentTypeLabel(item.profile?.employment_type))+'</span>';
+ const typeId=esc(String(item.user_id));
+ const selectedType=String(item.profile?.employment_type||'').toUpperCase();
+ const typeEditor=state.employmentTypeReady
+  ? '<label class="msd-pool-employment-editor">Phân loại nhân viên <select aria-label="Loại việc làm của '+esc(item.employee_name)+'" data-msd-employment-value="'+typeId+'"><option value="">Chọn loại</option><option value="FULL_TIME"'+(selectedType==='FULL_TIME'?' selected':'')+'>Full-time</option><option value="PART_TIME"'+(selectedType==='PART_TIME'?' selected':'')+'>Part-time</option></select></label><button class="btn" type="button" data-msd-set-employment="'+typeId+'">Lưu loại việc làm</button>'
+  : '<span class="msd-pool-tag">Chưa kết nối quản lý loại việc làm</span>';
  const action=target
   ? '<button class="btn" type="button" data-msd-pool-user="'+esc(item.user_id)+'"'+(blocked||!state.generationId||state.generationStatus!=='DRAFT'?' disabled aria-disabled="true"':'')+'>'+(item.targetAvailable?'+ Xếp vào khoảng thiếu':'+ Điều động thủ công')+'</button>'
   : '';
- return '<div class="msd-pool-row'+(blocked?' blocked':'')+'" data-msd-pool-candidate="'+esc(item.user_id)+'"><div class="msd-source-name">'+esc(item.employee_name)+' · Ưu tiên '+esc(item.priority)+'</div><div class="msd-source-meta">'+(remain?'Thời gian còn có thể xếp: '+esc(remain):'Không còn Availability trống trong tuần.')+'</div><div class="msd-pool-tags">'+employmentTag+assignedTag+availabilityTag+blockedTag+'</div>'+action+'</div>';
+ return '<div class="msd-pool-row'+(blocked?' blocked':'')+'" data-msd-pool-candidate="'+esc(item.user_id)+'"><div class="msd-source-name">'+esc(item.employee_name)+' · Ưu tiên '+esc(item.priority)+'</div><div class="msd-source-meta">'+(remain?'Thời gian còn có thể xếp: '+esc(remain):'Không còn Availability trống trong tuần.')+'</div><div class="msd-pool-tags">'+employmentTag+assignedTag+availabilityTag+blockedTag+'</div>'+typeEditor+action+'</div>';
 }
 function poolGroupHtml(key,title,help,items,target,blocked=false){
  return '<section class="msd-pool-group" data-msd-pool-group="'+esc(key)+'"><h3>'+esc(title)+' · '+items.length+'</h3><div class="msd-pool-help">'+esc(help)+'</div>'+(items.length?'<div class="msd-pool-list">'+items.map(x=>poolRowHtml(x,target,blocked)).join('')+'</div>':'<div class="msd-empty">Không có nhân viên trong nhóm này.</div>')+'</section>';
@@ -451,6 +466,19 @@ function supplementalPoolHtml(){
   +poolGroupHtml('manual','Có thể điều động thủ công','Nhân viên đủ Store Priority nhưng khoảng cần bổ sung nằm ngoài Availability; khi thêm sẽ có cảnh báo/audit marker.',groups.manual,target)
   +(target&&groups.blocked.length?poolGroupHtml('blocked','Không thể chọn do xung đột','Ứng viên bị khóa vì trùng ca hoặc đã đủ giới hạn ca trong ngày.',groups.blocked,target,true):'')
   +'</div>';
+}
+async function saveEmploymentType(userId,value){
+ if(state.busy||!state.employmentTypeReady)return;
+ if(!['FULL_TIME','PART_TIME'].includes(value))return status('Hãy chọn Full-time hoặc Part-time.','error');
+ if(!state.eligibleEmployees.some(r=>String(r.employee_id||r.user_id)===String(userId)))return status('Không tìm thấy nhân viên đủ quyền tại cửa hàng hiện tại.','error');
+ state.busy=true;lockControls(true);
+ try{
+  const q=await client().rpc('set_employee_employment_type_v1',{p_employee_id:userId,p_employment_type:value});
+  if(q.error)throw q.error;
+  state.eligibleEmployees=state.eligibleEmployees.map(r=>String(r.employee_id||r.user_id)===String(userId)?{...r,employment_type:value}:r);
+  render();status('Đã cập nhật loại việc làm. Hệ thống sẽ áp dụng ưu tiên từ lần tạo lịch nháp mới.','ok');
+ }catch(e){status('Không thể cập nhật loại việc làm: '+errorText(e),'error')}
+ finally{state.busy=false;lockControls(false)}
 }
 function addSupplementCandidate(userId){
  const target=state.supplementTarget;
@@ -474,7 +502,7 @@ function manualPickerHtml(){
  const selectedDate=target?.work_date||days[0],selectedStart=hm(target?.shortage_start||'06:00'),selectedEnd=hm(target?.shortage_end||'12:00');
  const options=state.eligibleEmployees
   .slice()
-  .sort((a,b)=>priorityForStore(a)-priorityForStore(b)||String(employeeName(a)).localeCompare(String(employeeName(b)),'vi'))
+  .sort((a,b)=>compareEligibleType(a,b)||priorityForStore(a)-priorityForStore(b)||String(employeeName(a)).localeCompare(String(employeeName(b)),'vi'))
   .map(r=>{const conflict=target?hardConflictFor(r.employee_id,selectedDate,selectedStart,selectedEnd):null;return '<option value="'+esc(r.employee_id)+'"'+(conflict?' disabled':'')+'>'+esc(employeeName(r))+' · '+esc(employmentTypeLabel(r.employment_type))+' · Ưu tiên '+esc(priorityForStore(r))+(conflict?' · '+esc(conflict.reason):'')+'</option>'})
   .join('');
  return '<div class="msd-manual-picker" id="msdManualPicker"><div class="msd-source-name">Điều động thủ công theo giờ tự chọn</div><div class="msd-source-meta">Chỉ nhân viên ACTIVE có Store Priority tại '+esc(selectedStore()?.code||'cửa hàng đã chọn')+'. Hệ thống chặn trùng ca/giới hạn ca trước khi thêm và gắn cảnh báo nếu nằm ngoài Availability.</div><div class="msd-manual-grid"><select class="msd-input" id="msdManualEmployee" aria-label="Nhân viên">'+options+'</select><select class="msd-input" id="msdManualDate" aria-label="Ngày">'+days.map((d,i)=>'<option value="'+esc(d)+'"'+(d===selectedDate?' selected':'')+'>'+DAYS[i]+' · '+d.slice(8,10)+'/'+d.slice(5,7)+'</option>').join('')+'</select><select class="msd-input" id="msdManualStart" aria-label="Bắt đầu">'+timeOptions(selectedStart)+'</select><select class="msd-input" id="msdManualEnd" aria-label="Kết thúc">'+timeOptions(selectedEnd)+'</select></div><button class="btn" type="button" id="msdManualAdd"'+(state.generationId&&state.generationStatus==='DRAFT'?'':' disabled')+'>+ Thêm ca thủ công</button></div>';
@@ -482,7 +510,8 @@ function manualPickerHtml(){
 function sourceHtml(){
  const target=state.supplementTarget;
  const targetHtml=target?'<div class="msd-source-target" role="status"><b>Đang bổ sung cho khoảng thiếu:</b> '+esc(target.work_date)+' · '+esc(hm(target.shortage_start))+'–'+esc(hm(target.shortage_end))+' · thiếu '+esc(target.missing_headcount)+' người.<br>Pool bên dưới đã lọc theo đúng ngày/giờ và kiểm tra xung đột toàn 4 cửa hàng.<br><button class="btn" type="button" data-msd-supplement-clear>Hủy chọn khoảng thiếu</button></div>':'';
- return targetHtml+(target?supplementalPoolHtml():'')+manualPickerHtml();
+ // The on-demand drawer is also the Manager employment-type administration surface.
+ return targetHtml+supplementalPoolHtml()+manualPickerHtml();
 }
 function rememberCalendarViewport(wrap=null){
  const target=wrap||panel()?.querySelector('.msd-board-wrap');
@@ -591,7 +620,7 @@ function commitCalendarCreate(){
 }
 function calendarCreateHtml(day){
  const d=state.calendarCreate;if(!d||d.work_date!==day)return '';
- const options=state.eligibleEmployees.slice().sort((a,b)=>priorityForStore(a)-priorityForStore(b)||String(employeeName(a)).localeCompare(String(employeeName(b)),'vi')).map(r=>'<option value="'+esc(r.employee_id||r.user_id)+'">'+esc(employeeName(r))+' · Ưu tiên '+esc(priorityForStore(r))+'</option>').join('');
+ const options=state.eligibleEmployees.slice().sort((a,b)=>compareEligibleType(a,b)||priorityForStore(a)-priorityForStore(b)||String(employeeName(a)).localeCompare(String(employeeName(b)),'vi')).map(r=>'<option value="'+esc(r.employee_id||r.user_id)+'">'+esc(employeeName(r))+' · Ưu tiên '+esc(priorityForStore(r))+'</option>').join('');
  return '<div class="msd-calendar-create" data-msd-calendar-create><b>Tạo ca trực tiếp · '+esc(hm(d.start_time))+'–'+esc(hm(d.end_time))+'</b><div class="msd-manual-grid"><select class="msd-input" id="msdCalendarCreateEmployee" aria-label="Nhân viên">'+options+'</select><select class="msd-input" id="msdCalendarCreateStart" aria-label="Bắt đầu">'+timeOptions(d.start_time)+'</select><select class="msd-input" id="msdCalendarCreateEnd" aria-label="Kết thúc">'+timeOptions(d.end_time)+'</select></div><div class="msd-calendar-create-actions"><button class="btn primary" id="msdCalendarCreateCommit" type="button">+ Thêm vào lịch nháp</button><button class="btn" id="msdCalendarCreateCancel" type="button">Hủy</button></div></div>';
 }
 function editorHtml(a,i,days){
@@ -840,6 +869,7 @@ function bind(){
  p.querySelector('#msdManualAdd')?.addEventListener('click',addManualAssignment);
  p.querySelectorAll('[data-msd-supplement]').forEach(b=>b.addEventListener('click',()=>openSupplement(b.dataset.msdSupplement,b.closest('.msd-board-wrap'))));
  p.querySelectorAll('[data-msd-pool-user]').forEach(b=>b.addEventListener('click',()=>addSupplementCandidate(b.dataset.msdPoolUser)));
+ p.querySelectorAll('[data-msd-set-employment]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.msdSetEmployment;const v=p.querySelector('[data-msd-employment-value="'+CSS.escape(id)+'"]')?.value;saveEmploymentType(id,v)}));
  p.querySelector('[data-msd-supplement-clear]')?.addEventListener('click',clearSupplement);
  p.querySelector('#msdCalendarCreateCommit')?.addEventListener('click',commitCalendarCreate);
  p.querySelector('#msdCalendarCreateCancel')?.addEventListener('click',()=>{state.calendarCreate=null;render();status('Đã hủy tạo ca trực tiếp.')});
