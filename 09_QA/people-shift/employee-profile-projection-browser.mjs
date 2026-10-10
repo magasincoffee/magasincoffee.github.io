@@ -33,9 +33,9 @@ try{
   await check("task101_browser_uses_self_rpc_only_and_no_direct_profile_table",async()=>{
     const calls=await page.evaluate(()=>globalThis.__TASK101_QA.calls);
     if(calls.some(x=>x.kind==="from"))throw new Error(JSON.stringify(calls));
-    const allowed=new Set(["get_my_employee_workforce_profile_v1"]);
+    const allowed=new Set(["get_my_employee_workforce_profile_v1","get_my_employee_employment_type_v1"]);
     if(calls.some(x=>x.kind==="rpc"&&!allowed.has(x.name)))throw new Error(JSON.stringify(calls));
-    return "one canonical Workforce Profile self RPC; 0 direct table calls";
+    return "canonical Workforce Profile + employment self-read RPCs; 0 direct table calls";
   });
 
   await check("task101_privacy_fields_not_rendered",async()=>{
