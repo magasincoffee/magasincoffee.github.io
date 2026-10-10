@@ -54,7 +54,8 @@ test("Employee canonical runtime retains TASK-099\/101\/104 engines and adds con
   for(const token of ["profile/engine-v1.js","payroll/engine-v1.js","attendance/engine-v1.js","workforce-ui-consolidation-v1.js"])assert.ok(runtime.includes(token),token);
   const attendance=read("06_EMPLOYEE/attendance/engine-v1.js");
   assert.match(attendance,/submit_manual_time_attendance_v1/);
-  assert.doesNotMatch(attendance,/clock_in_for_schedule|clock_out_attendance/);
+  assert.match(attendance,/clock_in_for_schedule/);
+  assert.match(attendance,/clock_out_attendance/);
   const ui=read("06_EMPLOYEE/workforce-ui-consolidation-v1.js");
   assert.match(ui,/attendance-report-wrap/);
   assert.match(ui,/Đổi \/ cho ca/);
