@@ -585,7 +585,7 @@ await page.locator('[data-owner-store-open="store-a"]').click();
 await page.locator("#panel-publish .msd").waitFor();
 await check("sched07_owner_uses_same_polish_with_owner_overview_context",async()=>{
   const state=await page.evaluate(()=>{
-    const html=document.documentElement,overview=document.querySelector("#ownerSchedulingOverview"),detail=document.querySelector("#ownerSchedulingDetailHeader"),branch=document.querySelector('[data-msd-branch][aria-expanded="true"]');
+    const html=document.documentElement,overview=document.querySelector("#ownerSchedulingOverview"),detail=document.querySelector("#ownerSchedulingDetailHeader"),branch=document.querySelector('[data-msd-branch][aria-pressed="true"]');
     return {
       role:html.dataset.schedulingRole,
       css:!!document.getElementById("workforce-scheduling-polish-v1-css"),

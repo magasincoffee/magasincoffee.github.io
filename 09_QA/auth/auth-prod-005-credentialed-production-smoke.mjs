@@ -35,7 +35,9 @@ async function resolveEmail(loginName) {
   });
   assert.equal(response.status, 200, 'username resolver must return HTTP 200');
   const value = await response.json();
-  assert.equal(typeof value, 'string', 'username resolver must return one email string');
+  const shape = value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value;
+  const keys = value && typeof value === 'object' && !Array.isArray(value) ? Object.keys(value).sort() : [];
+  assert.equal(typeof value, 'string', `username resolver must return one email string; response-shape=${shape}; field-names=${keys.join(',') || 'none'} (values withheld)`);
   assert.match(value, /@/, 'resolved login email must be an email address');
   return value;
 }

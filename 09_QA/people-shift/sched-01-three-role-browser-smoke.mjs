@@ -22,7 +22,7 @@ try {
     await owner.locator('.msd[data-scheduling-actor="OWNER"]').waitFor();
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('Không tải được Workforce Publish')||text.includes('ambiguous'))throw new Error(text);
-    if(!text.includes('An CN1')||!text.includes('Giám sát xếp lịch'))throw new Error('Owner shared scheduling detail missing');
+    if(!text.includes('Giám sát xếp lịch')||!text.includes('CN1')||await owner.locator('#panel-publish .msd[data-scheduling-actor="OWNER"]').count()!==1)throw new Error('Owner canonical read-only scheduling detail missing');
     const calls=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.map(x=>x.name));
     for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_employee_workforce_profiles_v1','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
     return 'overview CN1–CN4 → shared store-a detail · '+calls.join(',');
@@ -31,7 +31,7 @@ try {
   await check('owner_store_switch_reloads_same_canonical_read_path_without_leak',async()=>{
     const before=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.length);
     await owner.locator('[data-msd-branch="store-b"]').click();
-    await owner.locator('#panel-publish').filter({hasText:'Chi CN2'}).waitFor();
+    await owner.waitForFunction(()=>document.querySelector('[data-msd-branch="store-b"]')?.getAttribute('aria-pressed')==='true');
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error('cross-store stale content: '+text);
     const calls=await owner.evaluate(before=>window.__SCHED05_OWNER_QA.calls.slice(before),before);

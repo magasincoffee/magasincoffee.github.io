@@ -845,7 +845,7 @@ function bind(){
  p.querySelector('#msdCalendarCreateCancel')?.addEventListener('click',()=>{state.calendarCreate=null;render();status('Đã hủy tạo ca trực tiếp.')});
  p.querySelectorAll('[data-msd-apply-edit]').forEach(b=>b.addEventListener('click',()=>applyEditorRow(Number(b.dataset.msdApplyEdit),b.closest('[data-msd-row]'))));
  p.querySelectorAll('[data-msd-remove-direct]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();removeAssignmentDirect(Number(b.dataset.msdRemoveDirect))}));
- p.querySelectorAll('[data-msd-duplicate]').forEach(b=>b.addEventListener('click',()=>{const i=Number(b.dataset.msdDuplicate),sel=p.querySelector('[data-msd-copy-date="'+i+'"]');duplicateAssignmentDirect(i,sel?.value)}));
+ p.querySelectorAll('[data-msd-duplicate]').forEach(b=>b.addEventListener('click',()=>{const i=Number(b.dataset.msdDuplicate),selector='[data-msd-copy-date="'+i+'"]',sel=b.parentElement?.querySelector(selector)||b.closest('.msd-card-editor')?.querySelector(selector)||p.querySelector(selector);duplicateAssignmentDirect(i,sel?.value)}));
  p.querySelectorAll('[data-msd-open-editor]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const d=b.closest('[data-msd-row]')?.querySelector('.msd-card-editor');if(d)d.open=!d.open}));
  p.querySelectorAll('[data-msd-slot-date]').forEach(slot=>{
   slot.addEventListener('click',()=>{if(Date.now()<calendarSuppressClickUntil)return;openCalendarCreate(slot.dataset.msdSlotDate,slot.dataset.msdSlotTime,timeFromMinutes(Math.min(calendarSlotEnd,mins(slot.dataset.msdSlotTime)+60)))});

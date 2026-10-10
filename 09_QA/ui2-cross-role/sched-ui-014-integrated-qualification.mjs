@@ -30,10 +30,22 @@ const cases=[
     covers:["Manager recurring staffing","Auto Schedule prerequisites","responsive recurring widths"]
   },
   {
-    id:"manager-guided-week",
-    script:"09_QA/people-shift/ui2-012-manager-scheduling-browser.mjs",
-    markers:["UI2_012_MANAGER_SCHEDULING_BROWSER=PASS"],
-    covers:["Manager guided weekly scheduling","draft/edit/check/review/publish","Manager responsive widths","console/page/request/5xx diagnostics"]
+    id:"manager-canonical-transactional-schedule",
+    script:"09_QA/people-shift/manager-workforce-canonical-browser.mjs",
+    markers:["MANAGER_WORKFORCE_CANONICAL_BROWSER=PASS"],
+    covers:["Manager canonical store/week controls","save/validate/review/publish","idempotency and conflict rejection","role-scoped writer","console/page/request/5xx diagnostics"]
+  },
+  {
+    id:"manager-owner-approved-five-board",
+    script:"09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs",
+    markers:["XSTORE_019G_MANAGER_FIVE_BOARD_BROWSER=PASS"],
+    covers:["Owner-approved Manager five-step calendar","seven-day responsive layout","keyboard and drawer interactions"]
+  },
+  {
+    id:"manager-direct-calendar-editing",
+    script:"09_QA/people-shift/xstore-019b-direct-calendar-editing-browser.mjs",
+    markers:["XSTORE_019B_DIRECT_CALENDAR_BROWSER=PASS"],
+    covers:["direct click/create/duplicate/edit/delete","conflict fail-closed and writer-only save"]
   },
   {
     id:"employee-official-schedule",
@@ -113,9 +125,12 @@ for(const spec of cases){
 
 const requiredCoverage=[
   "Manager recurring staffing",
-  "Manager guided weekly scheduling",
+  "Manager canonical store/week controls",
+  "Owner-approved Manager five-step calendar",
+  "direct click/create/duplicate/edit/delete",
   "Auto Schedule prerequisites",
-  "draft/edit/check/review/publish",
+  "save/validate/review/publish",
+  "idempotency and conflict rejection",
   "Employee official schedule",
   "Employee availability registration",
   "Owner overview/drill-down",

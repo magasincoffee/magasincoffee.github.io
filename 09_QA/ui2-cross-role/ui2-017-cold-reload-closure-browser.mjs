@@ -162,7 +162,7 @@ for(const spec of [
   await page.reload({waitUntil:"domcontentloaded"});
   const hardReload=await iframeSrc(page);
   await check("ui2_017_owner_workforce_cold_hard_reload",async()=>{
-    const expected="/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261003-sched-ui-008";
+    const expected="/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261005-xstore-019";
     const detail={cold,hardReload,url:page.url()};
     if(cold!==expected||hardReload!==expected)throw new Error(JSON.stringify(detail));
     return JSON.stringify(detail);
