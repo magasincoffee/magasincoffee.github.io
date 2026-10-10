@@ -110,8 +110,22 @@ test("UI2-012 presentation is shared while Owner and Manager retain the canonica
   assert.match(ownerRuntime,/\/05_MANAGER\/Workforce\/manager-scheduling-ui2-v1\.js\?v=20261006-xstore-019e/);
 });
 
-test("UI2-012 bounded browser gate is integrated into the existing People Shift Day-10 gate",()=>{
-  assert.match(gate,/ui2-012-manager-scheduling-browser\.mjs/);
+test("XSTORE-019J approved Manager replacement retains equivalent or stronger Day-10 browser gates",()=>{
+  // Retain historical UI2-012 source contract above, but its old hourly
+  // browser projection has been superseded by the Owner-approved 5-step UI.
+  assert.doesNotMatch(gate,/await import\(["']\.\/ui2-012-manager-scheduling-browser\.mjs/);
+  for(const file of [
+    "manager-workforce-canonical-browser.mjs",
+    "xstore-019g-manager-five-board-browser.mjs",
+    "xstore-019b-direct-calendar-editing-browser.mjs"
+  ])assert.ok(gate.includes('await import("./'+file+'")'),file);
+  const canonical=read("09_QA/people-shift/manager-workforce-canonical-browser.mjs");
+  const visual=read("09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs");
+  const direct=read("09_QA/people-shift/xstore-019b-direct-calendar-editing-browser.mjs");
+  assert.match(canonical,/e2e05_review_publish_revalidation_and_idempotency/);
+  assert.match(canonical,/e2e03_out_of_week_wrong_store_and_availability_mismatch_fail_closed/);
+  assert.match(visual,/Owner-approved desktop calendar/);
+  assert.match(direct,/019b_hard_overlap_edit_fails_closed_and_reverts_ui/);
 });
 
 console.log("UI2_012_MANAGER_SCHEDULING_CONTRACT=PASS");
