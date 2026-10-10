@@ -168,6 +168,12 @@
           };
         }
 
+        // XSTORE-019K: Manager authority returns unconfigured employment type
+        // for this older in-memory Day-10 employee; never infer PART_TIME.
+        if (name === 'list_employee_employment_types_v1') {
+          return { data: [{ employee_id: employee.id, employment_type: null, updated_at: null }], error: null };
+        }
+
         if (name === 'get_my_availability') {
           const end = addDays(args.p_week_start, 6);
           return {
