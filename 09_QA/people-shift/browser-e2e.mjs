@@ -11,8 +11,16 @@ if(process.exitCode)throw new Error("UI2-010 Employee phone acceptance gate fail
 await import("./ui2-011-manager-shell-today-browser.mjs");
 if(process.exitCode)throw new Error("UI2-011 Manager shell Today browser gate failed");
 
-await import("./ui2-012-manager-scheduling-browser.mjs");
-if(process.exitCode)throw new Error("UI2-012 Manager scheduling browser gate failed");
+// XSTORE-019J: retain stronger browser business/visual gates instead of the
+// superseded UI2-012 hourly editor. Do not waive draft/publish/security checks.
+await import("./manager-workforce-canonical-browser.mjs");
+if(process.exitCode)throw new Error("Canonical Manager scheduling writer/review/publish gate failed");
+
+await import("./xstore-019g-manager-five-board-browser.mjs");
+if(process.exitCode)throw new Error("Owner-approved five-step Manager visual gate failed");
+
+await import("./xstore-019b-direct-calendar-editing-browser.mjs");
+if(process.exitCode)throw new Error("Manager direct calendar editing security gate failed");
 
 await import("./ui2-013-manager-operations-browser.mjs");
 if(process.exitCode)throw new Error("UI2-013 Manager operations browser gate failed");
