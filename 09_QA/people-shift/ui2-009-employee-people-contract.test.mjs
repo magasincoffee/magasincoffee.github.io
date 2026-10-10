@@ -79,7 +79,7 @@ test("UI2-009 Payroll remains parameterless self-check read-only with exact stat
 });
 
 test("UI2-009 Profile stays on existing operational projection allowlist and preserves security navigation",()=>{
-  assert.deepEqual(rpcs(profile),['get_my_employee_workforce_profile_v1']);
+  assert.deepEqual(rpcs(profile),['get_my_employee_workforce_profile_v1','get_my_employee_employment_type_v1']);
   for(const id of ['profileFullName','profileUsername','profilePhone','profileRole','profileStatus','profilePrimaryStore','profileStorePriority','profileLevel','profileJoinDate'])assert.ok(profile.includes("'"+id+"'")||app.includes('id="'+id+'"'),id);
   assert.match(app,/id="view-profile" class="page-view employee-profile-v2"/);
   assert.match(app,/Thông tin được đồng bộ từ hồ sơ nhân sự của bạn/);

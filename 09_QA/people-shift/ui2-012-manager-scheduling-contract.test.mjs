@@ -38,12 +38,14 @@ test("UI2-012 preserves the canonical Manager scheduling RPC inventory and write
     "get_manager_weekly_schedule",
     "get_schedule_generation_assignments",
     "list_cross_store_staffing_shortages_v1",
+    "list_employee_employment_types_v1",
     "list_employee_workforce_profiles_v1",
     "list_schedule_generations",
     "list_workforce_recurring_staffing_requirements_v1",
     "publish_schedule_generation",
     "replace_schedule_generation_assignments",
     "review_schedule_generation",
+    "set_employee_employment_type_v1",
     "validate_schedule_generation_v1"
   ]);
   assert.doesNotMatch(draft,/auto_generate_schedule_generation|get_workforce_staffing_requirements/);

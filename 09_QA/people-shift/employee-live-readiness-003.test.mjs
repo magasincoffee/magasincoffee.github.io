@@ -12,7 +12,7 @@ const index=read("06_EMPLOYEE/index.html");
 const acceptance=read("01_DOCS/MAGASIN/05_SYSTEM/EMPLOYEE_LIVE_READINESS_V1_ACCEPTANCE.md");
 
 test("EMLIVE-003 keeps Employee Notification Profile Payroll on canonical read authority",()=>{
-  assert.deepEqual([...profile.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(x=>x[1]),["get_my_employee_workforce_profile_v1"]);
+  assert.deepEqual([...profile.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(x=>x[1]),["get_my_employee_workforce_profile_v1","get_my_employee_employment_type_v1"]);
   assert.deepEqual([...payroll.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(x=>x[1]),["get_my_payroll_self_check_v1"]);
   assert.deepEqual([...notification.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(x=>x[1]),["list_my_notifications_v1"]);
   for(const src of [profile,payroll,notification]){

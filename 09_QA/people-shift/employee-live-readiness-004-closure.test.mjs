@@ -33,7 +33,7 @@ test("EMLIVE-004 removes temporary authority and preserves permanent acceptance 
 });
 
 test("EMLIVE-004 keeps canonical Employee read authority unchanged",()=>{
-  assert.deepEqual(rpcs(profile),["get_my_employee_workforce_profile_v1"]);
+  assert.deepEqual(rpcs(profile),["get_my_employee_workforce_profile_v1","get_my_employee_employment_type_v1"]);
   assert.deepEqual(rpcs(payroll),["get_my_payroll_self_check_v1"]);
   assert.deepEqual(rpcs(notification),["list_my_notifications_v1"]);
   for(const src of [profile,payroll,notification]){

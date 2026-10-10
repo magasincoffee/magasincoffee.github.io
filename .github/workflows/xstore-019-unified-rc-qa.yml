@@ -72,6 +72,12 @@ jobs:
           node --test 09_QA/people-shift/xstore-017-inline-shortage-v1.test.mjs
           node --test 09_QA/people-shift/xstore-018-supplemental-pool-v1.test.mjs
 
+      - name: Run XSTORE-019K employment authority and ranking contracts
+        run: |
+          node --check 06_EMPLOYEE/profile/engine-v1.js
+          node --test 09_QA/people-shift/xstore-019k-employment-priority-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-019g-manager-five-board-v1.test.mjs
+
       - name: Validate RC Pages source structure
         shell: bash
         run: |
@@ -117,6 +123,12 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8779
           QA_OUT: qa-artifacts/xstore-019
         run: node 09_QA/people-shift/xstore-018-supplemental-pool-browser.mjs
+
+      - name: Run XSTORE-019K manager employment-type browser and denial checks
+        env:
+          QA_BASE_URL: http://127.0.0.1:8779
+          QA_OUT: qa-artifacts/xstore-019
+        run: node 09_QA/people-shift/xstore-019k-employment-manager-browser.mjs
 
       - name: Run exact-head integrated cross-role qualification
         env:

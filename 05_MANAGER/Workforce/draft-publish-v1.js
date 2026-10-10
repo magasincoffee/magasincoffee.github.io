@@ -100,6 +100,7 @@ const css=`<style id="manager-schedule-draft-editor-css">
 .msd-calendar-create{margin:6px;padding:8px;border:2px solid #2f6fde;border-radius:9px;background:#f7fbff}.msd-calendar-create b{font-size:11px}.msd-calendar-create .msd-manual-grid{grid-template-columns:1.3fr 1fr 1fr;margin-top:6px}.msd-calendar-create-actions{display:flex;gap:6px;margin-top:7px}.msd-calendar-create-actions .btn{min-height:34px}
 @media(max-width:700px){.msd-day-timeline{grid-template-columns:38px minmax(0,1fr)}.msd-time-scale,.msd-slot-grid{grid-template-rows:repeat(34,24px)}.msd-card-editor .msd-manual-grid,.msd-calendar-create .msd-manual-grid{grid-template-columns:1fr}.msd-direct-actions .btn{min-height:34px}}
 
+.msd-employment-admin{margin-top:12px;padding:10px;border:1px solid #d8dfe8;border-radius:10px}.msd-employment-admin>p{font-size:11px;line-height:1.35}.msd-employment-admin-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:6px 0;border-bottom:1px solid #e6e9f0}.msd-employment-admin-row>b{min-width:90px;font-size:12px}
 .msd-pool-employment-editor{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;margin:5px 6px 5px 0}.msd-pool-employment-editor select{min-height:34px;min-width:115px;max-width:100%;font:inherit}
 </style>`;
 
@@ -442,15 +443,10 @@ function poolRowHtml(item,target,blocked=false){
  const assignedTag=item.unassigned?'<span class="msd-pool-tag">Chưa có ca trong tuần</span>':'<span class="msd-pool-tag">'+esc(item.week_assigned)+' ca đã xếp</span>';
  const blockedTag=blocked?'<span class="msd-pool-tag blocked">'+esc(item.conflict?.reason||'Có xung đột')+'</span>':'';
  const employmentTag='<span class="msd-pool-tag x19g-employment" data-employment-type="'+esc(String(item.profile?.employment_type||'').toUpperCase())+'">Loại việc làm: '+esc(employmentTypeLabel(item.profile?.employment_type))+'</span>';
- const typeId=esc(String(item.user_id));
- const selectedType=String(item.profile?.employment_type||'').toUpperCase();
- const typeEditor=state.employmentTypeReady
-  ? '<label class="msd-pool-employment-editor">Phân loại nhân viên <select aria-label="Loại việc làm của '+esc(item.employee_name)+'" data-msd-employment-value="'+typeId+'"><option value="">Chọn loại</option><option value="FULL_TIME"'+(selectedType==='FULL_TIME'?' selected':'')+'>Full-time</option><option value="PART_TIME"'+(selectedType==='PART_TIME'?' selected':'')+'>Part-time</option></select></label><button class="btn" type="button" data-msd-set-employment="'+typeId+'">Lưu loại việc làm</button>'
-  : '<span class="msd-pool-tag">Chưa kết nối quản lý loại việc làm</span>';
  const action=target
   ? '<button class="btn" type="button" data-msd-pool-user="'+esc(item.user_id)+'"'+(blocked||!state.generationId||state.generationStatus!=='DRAFT'?' disabled aria-disabled="true"':'')+'>'+(item.targetAvailable?'+ Xếp vào khoảng thiếu':'+ Điều động thủ công')+'</button>'
   : '';
- return '<div class="msd-pool-row'+(blocked?' blocked':'')+'" data-msd-pool-candidate="'+esc(item.user_id)+'"><div class="msd-source-name">'+esc(item.employee_name)+' · Ưu tiên '+esc(item.priority)+'</div><div class="msd-source-meta">'+(remain?'Thời gian còn có thể xếp: '+esc(remain):'Không còn Availability trống trong tuần.')+'</div><div class="msd-pool-tags">'+employmentTag+assignedTag+availabilityTag+blockedTag+'</div>'+typeEditor+action+'</div>';
+ return '<div class="msd-pool-row'+(blocked?' blocked':'')+'" data-msd-pool-candidate="'+esc(item.user_id)+'"><div class="msd-source-name">'+esc(item.employee_name)+' · Ưu tiên '+esc(item.priority)+'</div><div class="msd-source-meta">'+(remain?'Thời gian còn có thể xếp: '+esc(remain):'Không còn Availability trống trong tuần.')+'</div><div class="msd-pool-tags">'+employmentTag+assignedTag+availabilityTag+blockedTag+'</div>'+action+'</div>';
 }
 function poolGroupHtml(key,title,help,items,target,blocked=false){
  return '<section class="msd-pool-group" data-msd-pool-group="'+esc(key)+'"><h3>'+esc(title)+' · '+items.length+'</h3><div class="msd-pool-help">'+esc(help)+'</div>'+(items.length?'<div class="msd-pool-list">'+items.map(x=>poolRowHtml(x,target,blocked)).join('')+'</div>':'<div class="msd-empty">Không có nhân viên trong nhóm này.</div>')+'</section>';
@@ -507,11 +503,23 @@ function manualPickerHtml(){
   .join('');
  return '<div class="msd-manual-picker" id="msdManualPicker"><div class="msd-source-name">Điều động thủ công theo giờ tự chọn</div><div class="msd-source-meta">Chỉ nhân viên ACTIVE có Store Priority tại '+esc(selectedStore()?.code||'cửa hàng đã chọn')+'. Hệ thống chặn trùng ca/giới hạn ca trước khi thêm và gắn cảnh báo nếu nằm ngoài Availability.</div><div class="msd-manual-grid"><select class="msd-input" id="msdManualEmployee" aria-label="Nhân viên">'+options+'</select><select class="msd-input" id="msdManualDate" aria-label="Ngày">'+days.map((d,i)=>'<option value="'+esc(d)+'"'+(d===selectedDate?' selected':'')+'>'+DAYS[i]+' · '+d.slice(8,10)+'/'+d.slice(5,7)+'</option>').join('')+'</select><select class="msd-input" id="msdManualStart" aria-label="Bắt đầu">'+timeOptions(selectedStart)+'</select><select class="msd-input" id="msdManualEnd" aria-label="Kết thúc">'+timeOptions(selectedEnd)+'</select></div><button class="btn" type="button" id="msdManualAdd"'+(state.generationId&&state.generationStatus==='DRAFT'?'':' disabled')+'>+ Thêm ca thủ công</button></div>';
 }
+function employmentAdminHtml(){
+ if(!state.eligibleEmployees.length)return '';
+ const rows=state.eligibleEmployees.slice().sort((a,b)=>compareEligibleType(a,b)||priorityForStore(a)-priorityForStore(b)||String(employeeName(a)).localeCompare(String(employeeName(b)),'vi'))
+  .map(r=>{
+   const id=esc(String(r.employee_id||r.user_id)),name=esc(employeeName(r)),kind=String(r.employment_type||'').toUpperCase();
+   const current='<span class="msd-pool-tag x19g-employment">'+esc(employmentTypeLabel(kind))+'</span>';
+   const edit=state.employmentTypeReady
+    ? '<label class="msd-pool-employment-editor">Loại việc làm <select aria-label="Loại việc làm của '+name+'" data-msd-employment-value="'+id+'"><option value="">Chọn loại</option><option value="FULL_TIME"'+(kind==='FULL_TIME'?' selected':'')+'>Full-time</option><option value="PART_TIME"'+(kind==='PART_TIME'?' selected':'')+'>Part-time</option></select></label><button class="btn" type="button" data-msd-set-employment="'+id+'">Lưu loại việc làm</button>'
+    : '<span class="msd-pool-tag">Chờ cập nhật phân quyền loại việc làm</span>';
+   return '<div class="msd-employment-admin-row"><b>'+name+'</b>'+current+edit+'</div>';
+  }).join('');
+ return '<section class="msd-employment-admin" aria-label="Phân loại nhân viên"><h3>Phân loại nhân viên · quản lý</h3><p>Được phép chọn Full-time/Part-time cho nhân viên đủ điều kiện tại chi nhánh đang chọn. Không thay đổi lịch đã phát hành.</p>'+rows+'</section>';
+}
 function sourceHtml(){
  const target=state.supplementTarget;
- const targetHtml=target?'<div class="msd-source-target" role="status"><b>Đang bổ sung cho khoảng thiếu:</b> '+esc(target.work_date)+' · '+esc(hm(target.shortage_start))+'–'+esc(hm(target.shortage_end))+' · thiếu '+esc(target.missing_headcount)+' người.<br>Pool bên dưới đã lọc theo đúng ngày/giờ và kiểm tra xung đột toàn 4 cửa hàng.<br><button class="btn" type="button" data-msd-supplement-clear>Hủy chọn khoảng thiếu</button></div>':'';
- // The on-demand drawer is also the Manager employment-type administration surface.
- return targetHtml+supplementalPoolHtml()+manualPickerHtml();
+ const targetHtml=target?'<div class="msd-source-target" role="status"><b>Đang bổ sung cho khoảng thiếu:</b> '+esc(target.work_date)+' · '+hm(target.shortage_start)+'–'+hm(target.shortage_end)+' · thiếu '+esc(target.missing_headcount)+' người.<br>Pool bên dưới đã lọc theo đúng ngày/giờ và kiểm tra xung đột toàn 4 cửa hàng.<br><button class="btn" type="button" data-msd-supplement-clear>Hủy chọn khoảng thiếu</button></div>':'';
+ return targetHtml+(target?supplementalPoolHtml():'')+manualPickerHtml()+(!target?employmentAdminHtml():'');
 }
 function rememberCalendarViewport(wrap=null){
  const target=wrap||panel()?.querySelector('.msd-board-wrap');
