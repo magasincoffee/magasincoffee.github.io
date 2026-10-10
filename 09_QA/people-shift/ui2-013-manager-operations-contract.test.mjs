@@ -40,7 +40,7 @@ test("UI2-013 Swap Give preserves peer/recipient gates and existing approve reje
 });
 
 test("UI2-013 Attendance keeps canonical reader review state machine and explicit APPROVE ADJUST REJECT controls",()=>{
- assert.deepEqual(set(attendance),["list_manager_attendance_review_v1","review_attendance_v1"].sort());
+ assert.deepEqual(set(attendance),["list_manager_attendance_review_v1","review_attendance_v1","list_manager_outside_schedule_attendance_v1","review_outside_schedule_attendance_v1"].sort());
  for(const decision of ["APPROVE","ADJUST","REJECT"])assert.match(attendance,new RegExp('data-review="'+decision+'"'));
  assert.match(attendance,/\['NORMAL','NEEDS_REVIEW'\]/);
  assert.match(attendance,/p_confirmed_start:null,p_confirmed_end:null/);

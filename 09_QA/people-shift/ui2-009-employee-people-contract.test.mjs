@@ -38,23 +38,28 @@ test("UI2-009 loads one namespaced Employee People presentation layer and keeps 
   ])assert.ok(app.includes(marker),marker);
 });
 
-test("UI2-009 Attendance keeps exact Manual-Time canonical RPC inventory and payload boundary",()=>{
-  assert.deepEqual(rpcs(attendance),[
+test("XSTORE-019L extends UI2-009 with approved-clock and scoped exception RPC inventory",()=>{
+  assert.deepEqual([...new Set(rpcs(attendance))].sort(),[
     'list_my_approved_schedules_v2',
     'get_my_attendance_v2',
-    'submit_manual_time_attendance_v1'
-  ]);
+    'submit_manual_time_attendance_v1',
+    'get_my_store_priority_profile_v1',
+    'list_my_outside_schedule_attendance_v1',
+    'submit_outside_schedule_attendance_v1'
+  ].sort());
   assert.match(attendance,/p_week_start:requestedWeek/);
   assert.match(attendance,/p_from_date:requestedWeek,p_to_date:add\(requestedWeek,6\)/);
   assert.match(attendance,/p_schedule_id:selected\.schedule_id,p_actual_start:start,p_actual_end:end,p_note:note\|\|null/);
   assert.match(attendance,/CANONICAL_STATUSES=new Set\(\['SUBMITTED','NORMAL','NEEDS_REVIEW','APPROVED','ADJUSTED','REJECTED'\]\)/);
   assert.match(attendance,/RECONCILE_ERRORS/);
   assert.match(attendance,/ATTENDANCE_NOT_CURRENT_OWNER/);
-  assert.match(attendance,/Giờ bạn gửi cần được quản lý xác nhận trước khi dùng để tính lương/);
+  assert.match(attendance,/Khai báo giờ thủ công và ngoài lịch là yêu cầu riêng phải được xác nhận/);
   assert.match(attendance,/type="time" step="60"/);
   assert.match(attendance,/state\.submitting/);
   assertNoBrowserDml(attendance);
-  assert.doesNotMatch(attendance,/clock_in_for_schedule|clock_out_attendance|manual_attendance_from_schedule|auto_attendance_from_approved_schedules/);
+  assert.match(attendance,/clock_in_for_schedule/);
+  assert.match(attendance,/clock_out_attendance/);
+  assert.doesNotMatch(attendance,/manual_attendance_from_schedule|auto_attendance_from_approved_schedules/);
 });
 
 test("UI2-009 Attendance does not promote legacy income/report presentation as truth",()=>{

@@ -48,7 +48,7 @@ test("UI2-011 Today is an Action Center built only from existing read-only Manag
 
 test("UI2-011 modified domain hooks preserve exact existing RPC inventories",()=>{
   assert.deepEqual(rpc(swap),["list_shift_swap_requests_v1","list_shift_give_requests_v1"]);
-  assert.deepEqual(rpc(attendance),["list_manager_attendance_review_v1","review_attendance_v1"]);
+  assert.deepEqual(rpc(attendance),["list_manager_outside_schedule_attendance_v1","review_outside_schedule_attendance_v1","list_manager_attendance_review_v1","review_attendance_v1"]);
   assert.equal(rpc(today).length,0);
   assert.equal(rpc(shellV2).length,0);
   assert.match(swap,/getState:/);
