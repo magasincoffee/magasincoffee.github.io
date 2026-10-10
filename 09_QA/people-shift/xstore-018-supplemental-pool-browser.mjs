@@ -93,7 +93,9 @@ await frame.waitForFunction(()=>{
  return s.dirty===true&&s.assignments.length===1&&s.shortages.length===0;
 });
 
+await frame.locator('[data-msd-open-editor="0"]').click();
 await frame.locator('[data-msd-row="0"] [data-f="end_time"]').selectOption("08:00");
+await frame.locator('[data-msd-row="0"] [data-msd-apply-edit="0"]').click();
 await frame.waitForFunction(()=>{
  const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();
  return s.shortages.length===1&&s.shortages[0].shortage_start==="08:00"&&s.shortages[0].shortage_end==="12:00";

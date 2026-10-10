@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/02_CORE/shared/shared-core-v1.js?v=20260927-ui2-014"></script>
 <link rel="stylesheet" href="/04_OWNER/ControlTower/control-tower-v1.css?v=20260927-ui2-014">
+<link rel="stylesheet" href="/04_OWNER/strategy-presentation-v4.css?v=20261009-xstore-019j-owner3">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20260927-ui2-016">
@@ -16,7 +17,7 @@
 (()=>{const token=String(new URLSearchParams(location.search).get('canonical')||'');if(token&&token!=='owner-root'){location.replace('/03_PLATFORM/01_AUTH/role-unavailable.html');return}if(token==='owner-root'||location.pathname==='/04_OWNER/')history.replaceState({},document.title,'/owner/');})();
 </script>
 </head>
-<body data-magasin-ui-v2 data-magasin-shell-v2 data-magasin-shell-role="owner" data-magasin-shell-mode="standalone" data-magasin-shell-current="overview">
+<body data-magasin-ui-v2 data-magasin-shell-v2 data-magasin-shell-role="owner" data-magasin-shell-mode="standalone" data-magasin-shell-current="overview" data-x19i-visual="owner-mockup-v2">
 <div id="loading" class="screen" aria-live="polite">
   <div class="message"><div class="eyebrow">MAGASIN OWNER</div><h2>Đang kiểm tra quyền Owner…</h2><p>Tổng quan chỉ tải dữ liệu sau khi xác thực Owner đang hoạt động.</p></div>
 </div>
@@ -27,15 +28,91 @@
 <main id="app" class="owner-shell hidden">
   <header class="owner-hero">
     <div>
-      <div class="eyebrow">MAGASIN BUSINESS OS · OWNER</div>
-      <h1>Tổng quan vận hành</h1>
-      <p class="subtitle">Xem nhanh tình hình toàn bộ cửa hàng, việc cần chú ý và đi vào từng khu vực khi cần xử lý.</p>
+      <div class="eyebrow">MAGASIN COFFEE · OWNER</div>
+      <h1>Chào Owner!</h1>
+      <p class="subtitle">Tổng quan chiến lược, hiệu quả kinh doanh và những điểm cần quyết định.</p>
     </div>
     <div class="top-actions">
       <span id="ownerIdentity" class="owner-chip">OWNER</span>
       <button id="refreshControlTower" class="refresh-button" type="button">Làm mới</button>
     </div>
   </header>
+
+
+  <section id="strategyDashboard" class="strategy-dashboard" aria-labelledby="strategyTitle" data-strategy-state="loading" data-x19i-dashboard="owner-mockup-v2">
+    <div class="strategy-heading">
+      <div>
+        <span class="section-kicker">TỔNG QUAN OWNER</span>
+        <h2 id="strategyTitle">Tổng quan kinh doanh</h2>
+        <p>Ưu tiên doanh thu, lợi nhuận, chi nhánh, sản phẩm và cảnh báo. Dấu “—” nghĩa là chưa có nguồn authoritative/read-only đủ tin cậy.</p>
+      </div>
+      <div class="strategy-toolbar" aria-label="Ngữ cảnh báo cáo">
+        <span id="strategyPeriodLabel" class="strategy-period">Kỳ hiện tại</span>
+        <span id="strategySourceMode" class="strategy-source-mode">READ-ONLY</span>
+      </div>
+    </div>
+
+    <div id="strategyDataNotice" class="strategy-data-notice" role="status" hidden></div>
+
+    <div class="strategy-kpis" aria-label="KPI chiến lược">
+      <article class="strategy-kpi" data-tone="blue"><span>Doanh thu</span><strong id="strategyRevenue">—</strong><small id="strategyRevenueMeta">Chưa có dữ liệu đủ tin cậy</small></article>
+      <article class="strategy-kpi" data-tone="green"><span>Lợi nhuận</span><strong id="strategyProfit">—</strong><small id="strategyProfitMeta">Không suy diễn khi thiếu chi phí</small></article>
+      <article class="strategy-kpi" data-tone="amber"><span>Chi phí</span><strong id="strategyCost">—</strong><small id="strategyCostMeta">Chưa kết nối nguồn chi phí</small></article>
+      <article class="strategy-kpi" data-tone="cyan"><span>Dòng tiền</span><strong id="strategyCashflow">—</strong><small id="strategyCashflowMeta">Chưa kết nối nguồn dòng tiền</small></article>
+      <article class="strategy-kpi" data-tone="violet"><span>Biên lợi nhuận</span><strong id="strategyMargin">—</strong><small id="strategyMarginMeta">Chỉ hiển thị khi có nguồn hợp lệ</small></article>
+      <article class="strategy-kpi strategy-kpi-target"><span>Tiến độ mục tiêu</span><strong id="strategyTargetProgress">—</strong><small id="strategyTargetMeta">Chưa có mục tiêu authoritative</small></article>
+    </div>
+
+    <div class="strategy-grid">
+      <article class="strategy-panel strategy-trend-panel">
+        <div class="strategy-panel-head"><div><span>Xu hướng</span><h3>Doanh thu & lợi nhuận theo kỳ</h3></div><strong id="strategyTrendHeadline">—</strong></div>
+        <div class="strategy-chart-legend"><span><i class="legend-revenue"></i>Doanh thu</span><span><i class="legend-profit"></i>Lợi nhuận</span></div>
+        <div id="strategyTrendBars" class="strategy-trend-bars" aria-label="Xu hướng doanh thu và lợi nhuận"></div>
+      </article>
+
+      <article class="strategy-panel strategy-revenue-mix">
+        <div class="strategy-panel-head"><div><span>Cơ cấu</span><h3>Cơ cấu doanh thu</h3></div></div>
+        <div id="strategyRevenueMix" class="strategy-donut" aria-label="Cơ cấu doanh thu"></div>
+      </article>
+
+      <article class="strategy-panel strategy-store-panel">
+        <div class="strategy-panel-head"><div><span>Chi nhánh</span><h3>Doanh thu theo cửa hàng</h3></div></div>
+        <div id="strategyStoreComparison" class="strategy-list strategy-bar-list"></div>
+      </article>
+
+      <article class="strategy-panel strategy-cost-mix">
+        <div class="strategy-panel-head"><div><span>Chi phí</span><h3>Chi phí hoạt động</h3></div></div>
+        <div id="strategyCostMix" class="strategy-donut" aria-label="Cơ cấu chi phí"></div>
+      </article>
+
+      <article class="strategy-panel strategy-product-panel">
+        <div class="strategy-panel-head"><div><span>Sản phẩm</span><h3>Top sản phẩm bán chạy</h3></div></div>
+        <div id="strategyProductPerformance" class="strategy-list"></div>
+      </article>
+
+      <article class="strategy-panel strategy-customer-panel">
+        <div class="strategy-panel-head"><div><span>Khách hàng</span><h3>Xu hướng khách hàng</h3></div></div>
+        <div id="strategyCustomerTrends" class="strategy-list"></div>
+      </article>
+
+      <article class="strategy-panel strategy-alert-panel">
+        <div class="strategy-panel-head"><div><span>Cần chú ý</span><h3>Cảnh báo & cơ hội</h3></div></div>
+        <div id="strategyAlerts" class="strategy-list"></div>
+      </article>
+
+      <article class="strategy-panel strategy-forecast-panel">
+        <div class="strategy-panel-head"><div><span>Kế hoạch</span><h3>Dự báo & mục tiêu</h3></div><strong id="strategyTargetProgressMirror">—</strong></div>
+        <div id="strategyForecastTargets" class="strategy-list"></div>
+      </article>
+
+      <article class="strategy-panel strategy-workforce-summary">
+        <div class="strategy-panel-head"><div><span>Workforce</span><h3>Tóm tắt nhân sự</h3></div></div>
+        <div class="strategy-workforce-row"><span>Staffing gap</span><strong id="strategyWorkforceGap">—</strong></div>
+        <div class="strategy-workforce-row"><span>Chưa xử lý</span><strong id="strategyWorkforceUnresolved">—</strong></div>
+        <a href="/owner/scheduling/">Mở vận hành nhân sự →</a>
+      </article>
+    </div>
+  </section>
 
   <section id="overview" class="oversight-section" data-owner-section="overview" aria-labelledby="overviewTitle">
     <div class="section-heading">
@@ -132,5 +209,6 @@
   <div class="notice">Tổng quan Owner chỉ đọc. Khi nguồn dữ liệu chưa sẵn sàng, giao diện giữ trạng thái chưa có dữ liệu thay vì tự tạo số liệu hoặc thay đổi nghiệp vụ.</div>
 </main>
 <script type="module" src="/04_OWNER/ControlTower/control-tower-v1.js?v=20260927-ui2-014"></script>
+<script type="module" src="/04_OWNER/strategy-presentation-v4.js?v=20261009-xstore-019j-owner3"></script>
 </body>
 </html>

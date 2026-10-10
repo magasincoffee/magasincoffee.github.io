@@ -38,7 +38,7 @@ const css=`<style id="manager-attendance-review-v1-css">
 </style>`;
 
 let sb=null,busy=false;
-let state={stores:[],storeId:null,week:weekStart(),rows:[],loading:false,error:null,message:''};
+let state={stores:[],storeId:null,week:weekStart(),rows:[],loading:false,error:null,message:'',outsideOpen:false,outsideLoading:false,outsideRows:[],outsideError:null,outsideMessage:'',outsideBusy:false};
 const view=()=>document.querySelector('#view-attendance');
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const reviewed=r=>['APPROVED','ADJUSTED','REJECTED'].includes(String(r.status||'').toUpperCase());
@@ -51,15 +51,60 @@ function reviewedTable(rows){
 function pendingCard(r){
  return `<article class="mar-card" data-attendance-id="${esc(r.attendance_id)}"><div class="mar-card-head"><div><div class="mar-name">${esc(r.employee_name||'Nhân viên')}</div><div class="mar-meta">${esc(r.work_date)} · ${esc(r.store_code||r.store_name||'Cửa hàng')}</div>${r.note?`<div class="mar-meta">Ghi chú nhân viên: ${esc(r.note)}</div>`:''}</div><span class="badge yellow">${esc(statusText(r.status))}</span></div><div class="mar-times"><div><span>Lịch chính thức</span><strong>${esc(hm(r.planned_start))}–${esc(hm(r.planned_end))}</strong></div><div><span>Nhân viên khai</span><strong>${esc(hm(r.actual_start))}–${esc(hm(r.actual_end))}</strong></div><div><span>Confirmed work time</span><strong>Chưa có</strong></div></div><div class="mar-adjust"><label>Giờ xác nhận bắt đầu<input data-confirmed-start type="time" step="60" value="${esc(hm(r.actual_start))}"></label><label>Giờ xác nhận kết thúc<input data-confirmed-end type="time" step="60" value="${esc(hm(r.actual_end))}"></label></div><div class="mar-buttons"><button class="btn primary" data-review="APPROVE">Xác nhận actual</button><button class="btn" data-review="ADJUST">Xác nhận giờ đã điều chỉnh</button><button class="btn danger" data-review="REJECT">Từ chối bản ghi</button></div></article>`;
 }
+function outsidePanel(){
+  if(!state.outsideOpen)return '<section class="card" style="margin-top:14px"><button type="button" class="btn" id="marOutsideOpen">Yêu cầu chấm công ngoài lịch</button></section>';
+  const rows=state.outsideRows.map(r=>{
+    const pending=String(r.status)==='PENDING';
+    return '<article class="mar-card" data-outside-id="'+esc(r.request_id)+'"><div class="mar-card-head"><strong>'+esc(r.employee_name)+'</strong><span>'+esc(r.status)+'</span></div>'+
+      '<div class="mar-meta">'+esc(r.work_date)+' · '+esc(hm(r.actual_start))+'–'+esc(hm(r.actual_end))+'</div>'+
+      (r.note?'<div class="mar-meta">Giải trình: '+esc(r.note)+'</div>':'')+
+      (pending?'<div class="mar-adjust"><label>Giờ xác nhận bắt đầu<input type="time" step="60" data-outside-start value="'+esc(hm(r.actual_start))+'"></label><label>Giờ xác nhận kết thúc<input type="time" step="60" data-outside-end value="'+esc(hm(r.actual_end))+'"></label></div>'+
+       '<div class="mar-buttons"><button class="btn primary" data-outside-decision="APPROVE">Xác nhận yêu cầu</button><button class="btn danger" data-outside-decision="REJECT">Từ chối</button></div>':
+       '<div class="mar-meta">Đã xử lý · không tự tạo ca hoặc giờ công tính lương</div>')+'</article>';
+  }).join('');
+  return '<section class="card" style="margin-top:14px"><h3>Yêu cầu chấm công ngoài lịch</h3><p class="muted">Yêu cầu đặc biệt, quản lý duyệt rõ ràng. Việc duyệt chưa tự tạo lịch hoặc giờ công tính lương.</p>'+
+    '<button class="btn" id="marOutsideOpen">Làm mới yêu cầu</button>'+
+    (state.outsideLoading?'<div class="mar-state">Đang tải…</div>':state.outsideError?'<div class="mar-state error">'+esc(state.outsideError)+'</div>':
+      '<div class="mar-list">'+(rows||'<div class="mar-empty">Không có yêu cầu ngoài lịch.</div>')+'</div>')+
+    (state.outsideMessage?'<div class="mar-state">'+esc(state.outsideMessage)+'</div>':'')+'</section>';
+}
+async function loadOutside(){
+  if(!state.storeId)return;
+  state.outsideOpen=true;state.outsideLoading=true;state.outsideError=null;render();
+  try{
+    const q=await client().rpc('list_manager_outside_schedule_attendance_v1',{p_store_id:state.storeId,p_from_date:state.week,p_to_date:add(state.week,6)});
+    if(q.error)throw q.error;
+    state.outsideRows=Array.isArray(q.data)?q.data:[];
+  }catch(e){state.outsideRows=[];state.outsideError=errorText(e)}
+  finally{state.outsideLoading=false;render()}
+}
+async function actOutside(card,decision){
+  if(!card||state.outsideBusy)return;
+  const id=card.dataset.outsideId;
+  const start=card.querySelector('[data-outside-start]')?.value||null;
+  const end=card.querySelector('[data-outside-end]')?.value||null;
+  state.outsideBusy=true;card.querySelectorAll('button,input').forEach(el=>el.disabled=true);
+  try{
+    const q=await client().rpc('review_outside_schedule_attendance_v1',{p_request_id:id,p_decision:decision,
+      p_confirmed_start:decision==='APPROVE'?start:null,p_confirmed_end:decision==='APPROVE'?end:null});
+    if(q.error)throw q.error;
+    state.outsideMessage='Đã xử lý yêu cầu. Chưa cộng giờ công tính lương hoặc tạo lịch mới.';
+    await loadOutside();
+  }catch(e){state.outsideError=errorText(e);render()}
+  finally{state.outsideBusy=false}
+}
 function render(){
  const root=view();if(!root)return;
  if(!document.getElementById('manager-attendance-review-v1-css'))document.head.insertAdjacentHTML('beforeend',css);
  const pend=state.rows.filter(pending),done=state.rows.filter(reviewed);
  const storeOptions=state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId||'')?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('');
  root.innerHTML=`<div class="mar-shell"><div class="mar-head"><div><h2 style="margin:0">Review chấm công</h2><div class="muted" style="margin-top:5px">Raw attendance không phải giờ công xác nhận. Manager review explicit trước khi tạo confirmed work time.</div></div><div class="mar-actions"><select class="btn" id="marStore">${storeOptions||'<option value="">Không có cửa hàng được phép</option>'}</select><button class="btn" data-mar-week="prev">←</button><button class="btn" data-mar-week="today">Tuần này</button><button class="btn" data-mar-week="next">→</button><button class="btn" id="marRefresh">Làm mới</button></div></div><div class="mar-summary"><div><b>${pend.length}</b><span>Cần review</span></div><div><b>${done.filter(r=>r.status==='APPROVED'||r.status==='ADJUSTED').length}</b><span>Đã có confirmed work time</span></div><div><b>${done.filter(r=>r.status==='REJECTED').length}</b><span>Đã từ chối</span></div></div><section class="card"><div class="row" style="justify-content:space-between"><div><h3 style="margin:0">Chờ xử lý</h3><div class="muted" style="margin-top:4px">${esc(state.week)} → ${esc(add(state.week,6))}</div></div></div><div class="mar-list" style="margin-top:12px">${state.loading?'<div class="mar-empty">Đang tải attendance từ máy chủ…</div>':state.error?`<div class="mar-state error">${esc(state.error)}</div>`:pend.length?pend.map(pendingCard).join(''):'<div class="mar-empty">Không có attendance cần review.</div>'}</div><div id="marStatus" class="mar-state${state.error?' error':state.message?' ok':''}">${esc(state.error||state.message||'Server sẽ revalidate Manager scope, schedule owner và attendance state tại thời điểm review.')}</div></section><section class="card"><h3 style="margin-top:0">Đã review</h3>${reviewedTable(done)}</section></div>`;
- root.querySelector('#marStore')?.addEventListener('change',async e=>{state.storeId=e.target.value||null;await loadRows()});
+ root.insertAdjacentHTML('beforeend',outsidePanel());
+ root.querySelector('#marOutsideOpen')?.addEventListener('click',()=>loadOutside());
+ root.querySelectorAll('[data-outside-decision]').forEach(b=>b.addEventListener('click',()=>actOutside(b.closest('[data-outside-id]'),b.dataset.outsideDecision)));
+ root.querySelector('#marStore')?.addEventListener('change',async e=>{state.storeId=e.target.value||null;state.outsideOpen=false;state.outsideRows=[];await loadRows()});
  root.querySelector('#marRefresh')?.addEventListener('click',()=>loadRows());
- root.querySelectorAll('[data-mar-week]').forEach(b=>b.addEventListener('click',async()=>{const a=b.dataset.marWeek;state.week=a==='prev'?add(state.week,-7):a==='next'?add(state.week,7):weekStart();await loadRows()}));
+ root.querySelectorAll('[data-mar-week]').forEach(b=>b.addEventListener('click',async()=>{const a=b.dataset.marWeek;state.week=a==='prev'?add(state.week,-7):a==='next'?add(state.week,7):weekStart();state.outsideOpen=false;state.outsideRows=[];await loadRows()}));
  root.querySelectorAll('[data-review]').forEach(b=>b.addEventListener('click',()=>act(b.closest('[data-attendance-id]'),b.dataset.review)));
 }
 async function loadStores(){

@@ -23,6 +23,7 @@ async function selectStore(id){
   },id);
 }
 async function addManualAssignment(userId,workDate,startTime,endTime){
+  if(await page.locator("#msdManualEmployee").count()===0)await page.locator("#msdOpenCandidateDrawer").click();
   await page.locator("#msdManualEmployee").selectOption(userId);
   await page.locator("#msdManualDate").selectOption(workDate);
   await page.locator("#msdManualStart").selectOption(startTime);
@@ -60,7 +61,11 @@ try{
     const text=await page.locator("#panel-publish").innerText();
     const branches=await page.locator("[data-msd-branch]").allTextContents();
     if(s.storeId!=="store-a"||s.stores.length!==4||s.eligibleEmployees.length!==2)throw new Error(JSON.stringify(s));
-    if(branches.length!==4||await page.locator("#msdStore").count()!==0||!text.includes("Giám sát xếp lịch")||!text.includes("Nhân viên đủ điều kiện xếp ca"))throw new Error(JSON.stringify({branches,text}));
+    const candidateUi=await page.locator("#panel-publish").evaluate(root=>({
+      drawer:root.querySelectorAll("[data-msd-candidate-overlay]").length,
+      trigger:!!root.querySelector("#msdOpenCandidateDrawer")
+    }));
+    if(branches.length!==4||await page.locator("#msdStore").count()!==0||!text.includes("Giám sát xếp lịch")||!text.includes("Một cửa hàng · một lịch tuần")||!text.includes("+ Thêm nhân viên")||candidateUi.drawer!==0||!candidateUi.trigger||text.includes("Nhân viên đủ điều kiện xếp ca")||text.includes("Thêm / bổ sung nhân viên"))throw new Error(JSON.stringify({branches,candidateUi,text}));
     for(const forbidden of ["Enterprise oversight","canonical","writer","direct table DML","DRAFT","Validate","Review","Publish"]){
       if(text.includes(forbidden))throw new Error("technical copy visible: "+forbidden);
     }
@@ -71,18 +76,19 @@ try{
 
   await check("owner_store_switch_isolates_availability_draft_and_official_state",async()=>{
     const expected=[
-      ["store-b","Chi CN2",["An CN1","Dũng CN3","Em CN4"]],
-      ["store-c","Dũng CN3",["An CN1","Chi CN2","Em CN4"]],
-      ["store-d","Em CN4",["An CN1","Chi CN2","Dũng CN3"]],
-      ["store-a","An CN1",["Chi CN2","Dũng CN3","Em CN4"]]
+      ["store-b","CN2","Chi CN2",["An CN1","Dũng CN3","Em CN4"]],
+      ["store-c","CN3","Dũng CN3",["An CN1","Chi CN2","Em CN4"]],
+      ["store-d","CN4","Em CN4",["An CN1","Chi CN2","Dũng CN3"]],
+      ["store-a","CN1","An CN1",["Chi CN2","Dũng CN3","Em CN4"]]
     ];
-    for(const [id,want,forbidden] of expected){
+    for(const [id,code,want,forbidden] of expected){
       await selectStore(id);
       const text=await page.locator("#panel-publish").innerText();
-      if(!text.includes(want))throw new Error(id+" missing "+want+"\n"+text);
-      for(const x of forbidden)if(text.includes(x))throw new Error(id+" leaked "+x+"\n"+text);
       const s=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
-      if(s.storeId!==id||s.officialRows.length!==0||s.assignments.length!==0)throw new Error(JSON.stringify(s));
+      const availabilityNames=s.availability.map(x=>x.employee_name||x.username||x.user_id);
+      if(!text.includes(code)||!availabilityNames.includes(want))throw new Error(JSON.stringify({id,code,want,availabilityNames,text}));
+      for(const x of forbidden)if(availabilityNames.includes(x))throw new Error(id+" leaked availability "+x+" "+JSON.stringify(availabilityNames));
+      if(s.storeId!==id||s.officialRows.length!==0||s.assignments.length!==0||s.candidateDrawerOpen)throw new Error(JSON.stringify(s));
     }
     return "store-a/b/c/d switch clears stale projections before reload";
   });

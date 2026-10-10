@@ -1,10 +1,11 @@
 (()=>{'use strict';
 const C=globalThis.MAGASIN_CORE;if(!C)return;
 const host=()=>document.getElementById('employeeApp'),doc=()=>host()?.contentDocument||null;
-const IDS=['profileFullName','profileUsername','profilePhone','profileRole','profileStatus','profilePrimaryStore','profileStorePriority','profileLevel','profileJoinDate'];
+const IDS=['profileFullName','profileUsername','profilePhone','profileRole','profileEmploymentType','profileStatus','profilePrimaryStore','profileStorePriority','profileLevel','profileJoinDate'];
 let state={loading:false,error:null,row:null,ready:false};
 const roleText=v=>({STAFF:'Nhân viên',EMPLOYEE:'Nhân viên'}[String(v||'').toUpperCase()]||String(v||'—'));
 const statusText=v=>({ACTIVE:'Đang hoạt động',PENDING:'Chờ duyệt',INACTIVE:'Ngưng hoạt động'}[String(v||'').toUpperCase()]||String(v||'—'));
+const employmentTypeText=v=>({FULL_TIME:'Full-time',PART_TIME:'Part-time'}[String(v||'').toUpperCase()]||'Chưa cấu hình');
 const safeCode=e=>{const s=String(e?.message||e?.code||'PROFILE_REQUEST_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PROFILE_REQUEST_FAILED'};
 const validProjectionRow=r=>!!r&&!!String(r.employee_id||'').trim()&&['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())&&String(r.profile_status||'').toUpperCase()==='ACTIVE';
 function el(id){return doc()?.getElementById(id)||null}
@@ -48,6 +49,7 @@ function render(){
   setValue('profileUsername',r.username);
   setValue('profilePhone',r.phone);
   setValue('profileRole',roleText(r.employee_role));
+  setValue('profileEmploymentType',employmentTypeText(r.employment_type));
   setValue('profileStatus',statusText(r.profile_status));
   const priorityCodes=Array.isArray(r.priority_store_codes)?r.priority_store_codes.filter(Boolean):[];
   setValue('profilePrimaryStore',r.primary_store_code?(r.primary_store_code+(r.primary_store_name?' · '+r.primary_store_name:'')):'Chưa được thiết lập');
@@ -63,6 +65,11 @@ async function refresh(){
   if(q.error){state.loading=false;state.row=null;state.error=safeCode(q.error);render();return}
   const row=Array.isArray(q.data)?q.data[0]:q.data;
   if(row&&!validProjectionRow(row)){state.loading=false;state.row=null;state.error='PROFILE_PROJECTION_INVALID';render();return}
+  if(row){
+    const t=await C.supabase.rpc('get_my_employee_employment_type_v1');
+    if(t.error&&!(['PGRST202'].includes(String(t.error.code||''))||/Could not find the function .*employment_type/i.test(String(t.error.message||'')))){state.loading=false;state.row=null;state.error=safeCode(t.error);render();return}
+    row.employment_type=t.error?null:(typeof t.data==='string'?t.data:null);
+  }
   state.loading=false;state.error=null;state.row=row||null;render();
 }
 function init(){

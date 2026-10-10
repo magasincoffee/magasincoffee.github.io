@@ -12,13 +12,21 @@ const sched=read("people-shift/sched-07-ui-responsive-report.json");
 const secondary=read("people-shift/ui2-008-employee-secondary-report.json");
 const people=read("people-shift/ui2-009-employee-people-report.json");
 const m11=read("people-shift/ui2-011-manager-shell-today-report.json");
-const m12=read("people-shift/ui2-012-manager-scheduling-report.json");
+// XSTORE-019J: UI2-012's removed hourly editor is historical only. Retain
+// fresh browser evidence for the approved five-step board and canonical writer.
+const managerCanonical=read("people-shift/manager-workforce-canonical-report.json");
+const managerVisual=read("people-shift/xstore-019g-manager-five-board-report.json");
+const managerDirect=read("people-shift/xstore-019b-direct-calendar-report.json");
 const m13=read("people-shift/ui2-013-manager-operations-report.json");
 const o14=read("control-tower/ui2-014-owner-oversight-report.json");
 const o15=read("control-tower/ui2-015-owner-drilldown-report.json");
-for(const [n,r] of Object.entries({auth,sched,secondary,people,m11,m12,m13,o14,o15}))requirePass(n,r);
+for(const [n,r] of Object.entries({auth,sched,secondary,people,m11,managerCanonical,managerVisual,managerDirect,m13,o14,o15}))requirePass(n,r);
 
 const checks=(report,patterns)=>report.checks.filter(x=>patterns.some(p=>p.test(x.name))).map(x=>({name:x.name,status:x.status,detail:x.detail}));
+for(const [label,r] of Object.entries({managerCanonical,managerVisual,managerDirect})){
+  if(!Array.isArray(r.checks)||r.checks.length<2)throw new Error(label+" lacks independently executed browser checks");
+}
+
 const matrix={
   generated_at:new Date().toISOString(),
   status:"PASS",
@@ -36,7 +44,12 @@ const matrix={
     ]},
     {role:"Manager",viewports:[1440,1024,768,390],surfaces:["shell","Today","Scheduling","Swap-Give","Attendance","Employees","Payroll"],evidence:[
       ...checks(m11,[/ui2_011_(1440|1024|768|390)_shell_today_layout_focus_nav/]),
-      ...checks(m12,[/ui2_012_(1440|1024|768|390)_hierarchy_no_page_overflow_touch_focus/]),
+      // Canonical assignment security/review/publish, approved visual hierarchy,
+      // and direct create/edit/duplicate/delete overlap failure cases are all
+      // required; a historical UI2-012 screenshot cannot stand in for them.
+      ...checks(managerCanonical,[/.*/]),
+      ...checks(managerVisual,[/.*/]),
+      ...checks(managerDirect,[/.*/]),
       ...checks(m13,[/ui2_013_(1440|1024|768|390)_.*_(hierarchy_responsive|keyboard_focus)/])
     ]},
     {role:"Owner",viewports:[1280,768,390],surfaces:["Overview","Attention","Workforce","Procurement","Access","Finance unavailable"],evidence:[

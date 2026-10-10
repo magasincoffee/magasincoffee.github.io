@@ -11,8 +11,16 @@ if(process.exitCode)throw new Error("UI2-010 Employee phone acceptance gate fail
 await import("./ui2-011-manager-shell-today-browser.mjs");
 if(process.exitCode)throw new Error("UI2-011 Manager shell Today browser gate failed");
 
-await import("./ui2-012-manager-scheduling-browser.mjs");
-if(process.exitCode)throw new Error("UI2-012 Manager scheduling browser gate failed");
+// XSTORE-019J: retain stronger browser business/visual gates instead of the
+// superseded UI2-012 hourly editor. Do not waive draft/publish/security checks.
+await import("./manager-workforce-canonical-browser.mjs");
+if(process.exitCode)throw new Error("Canonical Manager scheduling writer/review/publish gate failed");
+
+await import("./xstore-019g-manager-five-board-browser.mjs");
+if(process.exitCode)throw new Error("Owner-approved five-step Manager visual gate failed");
+
+await import("./xstore-019b-direct-calendar-editing-browser.mjs");
+if(process.exitCode)throw new Error("Manager direct calendar editing security gate failed");
 
 await import("./ui2-013-manager-operations-browser.mjs");
 if(process.exitCode)throw new Error("UI2-013 Manager operations browser gate failed");
@@ -117,7 +125,7 @@ try {
     await employee.locator("#quickRegStart").selectOption("06:00");
     await employee.locator("#quickRegEnd").selectOption("12:00");
 
-    await employee.locator("#weeklyRegistrationPanel button", { hasText: "Đăng ký" }).click();
+    await employee.locator("#saveReg").click();
     await employee.locator("#quickRegMsg").filter({ hasText: "Đã lưu khoảng thời gian có thể làm." }).waitFor();
     await employee.locator(".week-summary").filter({ hasText: "Thời gian có thể làm" }).waitFor();
     await employee.locator("[data-schedule-availability]").filter({ hasText: "Xem / sửa đăng ký" }).first().waitFor();
@@ -138,19 +146,22 @@ try {
 
   await check("owner_draft_requires_registered_availability", async () => {
     await page.locator("#msdReload").click();
-    await page.waitForFunction(() => Array.from(document.querySelectorAll("#msdManualEmployee option")).some(option => option.value === "employee-qa"));
+    // The Owner-approved direct calendar shows the manual picker only on demand.
+    // Wait for server-backed availability after Reload, not a removed legacy picker.
+    await page.waitForFunction(() => globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT?.getState?.().availability?.some(row => row.user_id === "employee-qa"));
     const registered = await page.evaluate(() => globalThis.__PEOPLE_SHIFT_QA.state.availability[0]);
     if (!registered?.work_date) throw new Error("registered availability missing");
     await page.locator("#msdStart").click();
     await page.waitForFunction(() => {
       const controller = globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT?.getState?.();
-      const addButton = document.querySelector("#msdManualAdd");
+      const addButton = document.querySelector("#msdOpenCandidateDrawer");
       return globalThis.__PEOPLE_SHIFT_QA.state.generation?.status === "DRAFT" &&
         controller?.generationId &&
         controller?.generationStatus === "DRAFT" &&
         addButton &&
         addButton.disabled === false;
     });
+    await page.locator("#msdOpenCandidateDrawer").click();
     await page.locator("#msdManualEmployee").selectOption("employee-qa");
     await page.locator("#msdManualDate").selectOption(registered.work_date);
     await page.locator("#msdManualStart").selectOption("06:00");

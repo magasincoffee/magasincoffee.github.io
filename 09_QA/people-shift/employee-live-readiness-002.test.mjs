@@ -14,9 +14,11 @@ test("EMLIVE-002 schedule uses employee-facing availability language",()=>{
 test("EMLIVE-002 attendance keeps authority but hides implementation jargon",()=>{
   const attendance=read("06_EMPLOYEE/attendance/engine-v1.js");
   for(const rpc of ["list_my_approved_schedules_v2","get_my_attendance_v2","submit_manual_time_attendance_v1"]) assert.ok(attendance.includes(rpc),rpc);
-  assert.match(attendance,/Giờ bạn gửi cần được quản lý xác nhận trước khi dùng để tính lương/);
+  assert.match(attendance,/Khai báo giờ thủ công và ngoài lịch là yêu cầu riêng phải được xác nhận/);
+  assert.match(attendance,/Ca đã phát hành: chấm công trực tiếp bằng giờ máy chủ/);
   assert.match(attendance,/Trạng thái chấm công/);
-  assert.match(attendance,/Nếu ca vừa được cho\/đổi, lịch sẽ tự tải lại/);
+  assert.match(attendance,/Nếu ca vừa được cho\/đổi, hãy làm mới hoặc chuyển tuần để xem lịch hiện tại/);
+  assert.match(attendance,/nút chấm công bằng giờ máy chủ bên dưới/);
   assert.doesNotMatch(attendance,/payroll truth|Trạng thái canonical|canonical truth|Give\/Swap|Manual-time|chấm công canonical/);
 });
 
@@ -25,5 +27,5 @@ test("EMLIVE-002 runtime cache points browsers at the reconciled Schedule and At
   const index=read("06_EMPLOYEE/index.html");
   assert.match(runtime,/schedule\/engine-v1\.js\?v=(?:20260930-emlive002|20261002-sched-ui-006|20261003-sched-ui-007)/);
   assert.match(runtime,/attendance\/engine-v1\.js\?v=20260930-emlive002/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive002|20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive002|20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3|20261009-x19j-paint1)/);
 });

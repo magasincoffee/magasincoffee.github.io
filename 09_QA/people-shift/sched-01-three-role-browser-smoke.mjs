@@ -22,7 +22,7 @@ try {
     await owner.locator('.msd[data-scheduling-actor="OWNER"]').waitFor();
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('Không tải được Workforce Publish')||text.includes('ambiguous'))throw new Error(text);
-    if(!text.includes('An CN1')||!text.includes('Giám sát xếp lịch'))throw new Error('Owner shared scheduling detail missing');
+    if(!text.includes('Giám sát xếp lịch')||!text.includes('CN1')||await owner.locator('#panel-publish .msd[data-scheduling-actor="OWNER"]').count()!==1)throw new Error('Owner canonical read-only scheduling detail missing');
     const calls=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.map(x=>x.name));
     for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_employee_workforce_profiles_v1','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
     return 'overview CN1–CN4 → shared store-a detail · '+calls.join(',');
@@ -31,14 +31,14 @@ try {
   await check('owner_store_switch_reloads_same_canonical_read_path_without_leak',async()=>{
     const before=await owner.evaluate(()=>window.__SCHED05_OWNER_QA.calls.length);
     await owner.locator('[data-msd-branch="store-b"]').click();
-    await owner.locator('#panel-publish').filter({hasText:'Chi CN2'}).waitFor();
+    await owner.waitForFunction(()=>document.querySelector('[data-msd-branch="store-b"]')?.getAttribute('aria-pressed')==='true');
     const text=await owner.locator('#panel-publish').innerText();
     if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error('cross-store stale content: '+text);
     const calls=await owner.evaluate(before=>window.__SCHED05_OWNER_QA.calls.slice(before),before);
     const storeScoped=calls.filter(x=>x?.args&&Object.prototype.hasOwnProperty.call(x.args,'p_store_id'));
     if(!storeScoped.some(x=>x.name==='get_manager_weekly_availability'))throw new Error('missing store-b availability reload: '+JSON.stringify(calls));
     if(storeScoped.some(x=>x.args.p_store_id!=='store-b'))throw new Error('cross-store RPC scope leak: '+JSON.stringify(calls));
-    const allowedUnscoped=new Set(['list_employee_workforce_profiles_v1','list_workforce_recurring_staffing_requirements_v1','get_cross_store_weekly_plan_v1']);
+    const allowedUnscoped=new Set(['list_employee_workforce_profiles_v1','list_employee_employment_types_v1','list_workforce_recurring_staffing_requirements_v1','get_cross_store_weekly_plan_v1']);
     const unexpected=calls.filter(x=>!Object.prototype.hasOwnProperty.call(x?.args||{},'p_store_id')&&!allowedUnscoped.has(x.name));
     if(unexpected.length)throw new Error('unexpected unscoped reload RPC: '+JSON.stringify(unexpected));
     return 'store-b scoped reload · '+calls.map(x=>x.name).join(',');
@@ -49,7 +49,9 @@ try {
     await manager.goto(base+'/09_QA/people-shift/manager-workforce-canonical-fixture.html');
     await manager.locator('.msd').waitFor();
     const text=await manager.locator('#panel-publish').innerText();
-    if(!text.includes('Xếp tự động toàn hệ thống')||!text.includes('LỊCH NHÁP ĐANG CHỈNH')||!text.includes('Tạo bản nháp')||!text.includes('Mở từng chi nhánh để chỉnh lịch'))throw new Error(text);
+    const boardLabels=await manager.locator('[data-x19g-nav]').allTextContents();
+    for(const label of ['Chuẩn bị','Tạo lịch nháp','Chỉnh lịch','Kiểm tra','Duyệt & phát hành'])if(!boardLabels.some(x=>x.includes(label)))throw new Error('missing Manager UX V4 board '+label+'\n'+text);
+    if(!text.includes('CN-QA-A')||!text.includes('Tuần 2026-09-28'))throw new Error('missing selected store/week context\n'+text);
     const calls=await manager.evaluate(()=>window.__MW31_QA.calls.map(x=>x.name).filter(Boolean));
     for(const name of ['get_manager_accessible_stores','get_manager_weekly_availability','list_employee_workforce_profiles_v1','list_schedule_generations'])if(!calls.includes(name))throw new Error('missing '+name);
     await manager.locator('#msdStart').click();

@@ -1,0 +1,93 @@
+name: XSTORE-019D Employee Availability Calendar QA
+on:
+  push:
+    paths:
+      - '06_EMPLOYEE/availability/engine-v1.js'
+      - '06_EMPLOYEE/app/employee-v40.html'
+      - '06_EMPLOYEE/runtime/employee-runtime-v1.html'
+      - '06_EMPLOYEE/index.html'
+      - '02_CORE/ui/magasin-ui-v2-employee-secondary.css'
+      - '09_QA/people-shift/xstore-019d-employee-availability-calendar-v1.test.mjs'
+      - '09_QA/people-shift/xstore-019d-employee-availability-calendar-browser.mjs'
+      - '09_QA/people-shift/employee-availability-canonical.test.mjs'
+      - '09_QA/people-shift/employee-availability-canonical-browser.mjs'
+      - '09_QA/people-shift/employee-availability-canonical-fixture.html'
+      - '09_QA/people-shift/ui2-008-employee-secondary-contract.test.mjs'
+      - '09_QA/people-shift/ui2-008-employee-secondary-browser.mjs'
+      - '09_QA/people-shift/ui2-008-employee-secondary-fixture.html'
+      - '.github/workflows/xstore-019d-employee-availability-calendar-qa.yml'
+  pull_request:
+    paths:
+      - '06_EMPLOYEE/availability/engine-v1.js'
+      - '06_EMPLOYEE/app/employee-v40.html'
+      - '06_EMPLOYEE/runtime/employee-runtime-v1.html'
+      - '06_EMPLOYEE/index.html'
+      - '02_CORE/ui/magasin-ui-v2-employee-secondary.css'
+      - '09_QA/people-shift/xstore-019d-employee-availability-calendar-v1.test.mjs'
+      - '09_QA/people-shift/xstore-019d-employee-availability-calendar-browser.mjs'
+      - '09_QA/people-shift/employee-availability-canonical.test.mjs'
+      - '09_QA/people-shift/employee-availability-canonical-browser.mjs'
+      - '09_QA/people-shift/employee-availability-canonical-fixture.html'
+      - '09_QA/people-shift/ui2-008-employee-secondary-contract.test.mjs'
+      - '09_QA/people-shift/ui2-008-employee-secondary-browser.mjs'
+      - '09_QA/people-shift/ui2-008-employee-secondary-fixture.html'
+      - '.github/workflows/xstore-019d-employee-availability-calendar-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  employee-availability-calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax check Employee Availability runtime and QA
+        run: |
+          node --check 06_EMPLOYEE/availability/engine-v1.js
+          node --check 09_QA/people-shift/xstore-019d-employee-availability-calendar-browser.mjs
+      - name: Run XSTORE-019D static and canonical contracts
+        run: |
+          node --test 09_QA/people-shift/xstore-019d-employee-availability-calendar-v1.test.mjs
+          node --test 09_QA/people-shift/employee-availability-canonical.test.mjs
+          node --test 09_QA/people-shift/ui2-008-employee-secondary-contract.test.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start exact-head QA server
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/xstore-019d qa-artifacts/people-shift
+          nohup python3 -m http.server 8782 --bind 127.0.0.1 > /tmp/xstore019d-http.log 2>&1 &
+          for i in 1 2 3 4 5 6 7 8; do
+            if curl -fsS http://127.0.0.1:8782/09_QA/people-shift/ui2-008-employee-secondary-fixture.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/xstore019d-http.log || true
+          exit 1
+      - name: Run canonical Availability browser regression
+        env:
+          QA_BASE_URL: http://127.0.0.1:8782
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/employee-availability-canonical-browser.mjs
+      - name: Run XSTORE-019D direct calendar browser acceptance
+        env:
+          QA_BASE_URL: http://127.0.0.1:8782
+          QA_OUT: qa-artifacts/xstore-019d
+        run: node 09_QA/people-shift/xstore-019d-employee-availability-calendar-browser.mjs
+      - name: Upload XSTORE-019D evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xstore-019d-employee-availability-calendar-${{ github.run_id }}
+          path: |
+            qa-artifacts/xstore-019d/
+            qa-artifacts/people-shift/employee-availability-canonical*
+          if-no-files-found: warn
+          retention-days: 30

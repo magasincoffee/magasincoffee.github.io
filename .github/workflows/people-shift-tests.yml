@@ -202,6 +202,12 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/manager-attendance-review-browser.mjs
 
+      - name: Run XSTORE-019L direct/exception attendance browser QA
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/xstore-019l-attendance-browser.mjs
+
       - name: Run TASK-101 Employee profile projection browser E2E
         env:
           QA_BASE_URL: http://127.0.0.1:8767

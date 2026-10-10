@@ -8,6 +8,10 @@ fs.mkdirSync(OUT,{recursive:true});
 const report={status:"PASS",checks:[],page_errors:[],console_errors:[],request_failures:[]};
 const check=async(name,fn)=>{try{report.checks.push({name,status:"PASS",detail:String(await fn()??"")})}catch(e){report.status="FAIL";report.checks.push({name,status:"FAIL",detail:String(e?.stack||e)});throw e}};
 const addManualAssignment=async(userId,workDate,startTime,endTime)=>{
+  if(!await page.locator('#msdManualEmployee').count()){
+    await page.locator('[data-x19g-nav]').filter({hasText:'Chỉnh lịch'}).click();
+    await page.locator('#msdOpenCandidateDrawer').click();
+  }
   await page.locator("#msdManualEmployee").selectOption(userId);
   await page.locator("#msdManualDate").selectOption(workDate);
   await page.locator("#msdManualStart").selectOption(startTime);
@@ -30,7 +34,8 @@ try{
     const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
     const text=await page.locator("#panel-publish").innerText();
     if(st.storeId!=="store-a"||st.week!=="2026-09-28"||st.generationId!==null)throw new Error(JSON.stringify(st));
-    if(!text.includes("Xếp tự động toàn hệ thống")||!text.includes("CN-QA-A"))throw new Error(text);
+    for(const label of ["Chuẩn bị","Tạo lịch nháp","Chỉnh lịch","Kiểm tra","Duyệt & phát hành"])if(!text.includes(label))throw new Error(text);
+    if(!text.includes("Một cửa hàng · một lịch tuần")||!text.includes("CN-QA-A")||!text.includes("Tuần 2026-09-28"))throw new Error(text);
     return "store-a · 2026-09-28 · no draft on read";
   });
 

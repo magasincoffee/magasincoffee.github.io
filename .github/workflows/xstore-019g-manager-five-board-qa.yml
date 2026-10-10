@@ -1,0 +1,58 @@
+name: XSTORE-019G Manager Five-Board QA
+on:
+  push:
+    paths:
+      - '05_MANAGER/Workforce/engine-v1.js'
+      - '05_MANAGER/Workforce/draft-publish-v1.js'
+      - '05_MANAGER/Workforce/manager-five-board-v4.js'
+      - '09_QA/people-shift/manager-workforce-canonical-fixture.html'
+      - '09_QA/people-shift/xstore-019g-manager-five-board-v1.test.mjs'
+      - '09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs'
+      - '.github/workflows/xstore-019g-manager-five-board-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  manager-five-board:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: XSTORE-019G static and impacted contracts
+        run: |
+          node --check 05_MANAGER/Workforce/draft-publish-v1.js
+          node --check 05_MANAGER/Workforce/cross-store-auto-schedule-v1.js
+          node --check 05_MANAGER/Workforce/manager-five-board-v4.js
+          node --check 09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs
+          node --test 09_QA/people-shift/xstore-019g-manager-five-board-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-019b-direct-calendar-editing-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-019c-candidate-drawer-v1.test.mjs
+          node --test 09_QA/people-shift/xstore-018-supplemental-pool-v1.test.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start exact-head QA server
+        run: |
+          mkdir -p qa-artifacts/xstore-019g
+          nohup python3 -m http.server 8786 --bind 127.0.0.1 >/tmp/xstore019g-http.log 2>&1 &
+          for i in 1 2 3 4 5 6 7 8; do curl -fsS http://127.0.0.1:8786/09_QA/people-shift/manager-workforce-canonical-fixture.html >/dev/null && exit 0; sleep 1; done
+          cat /tmp/xstore019g-http.log || true; exit 1
+      - name: XSTORE-019G browser acceptance
+        env:
+          QA_BASE_URL: http://127.0.0.1:8786
+          QA_OUT: qa-artifacts/xstore-019g
+        run: node 09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xstore-019g-manager-five-board-${{ github.run_id }}
+          path: qa-artifacts/xstore-019g/
+          if-no-files-found: warn
+          retention-days: 30

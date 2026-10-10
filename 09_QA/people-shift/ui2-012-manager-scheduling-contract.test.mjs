@@ -15,16 +15,18 @@ const gate=read("09_QA/people-shift/browser-e2e.mjs");
 const rpc=s=>[...s.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 const rpcSet=s=>[...new Set(rpc(s))].sort();
 
-test("UI2-012 is a Manager-only presentation layer over the existing canonical scheduling writer",()=>{
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012|20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018)/);
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018)/);
-  assert.match(ui,/\.msd\[data-scheduling-actor="MANAGER"\]/);
+test("UI2-012 presentation layer is shared by Manager and Owner over the existing canonical scheduling writer",()=>{
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012|20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018|20261005-xstore-019|20261007-xstore-019j-workspace2|20261007-xstore-019j-cluster1)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261005-xstore-019)/);
+  assert.match(ui,/data-scheduling-actor="MANAGER"[\s\S]*data-scheduling-actor="OWNER"/);
   assert.match(ui,/dataset\.ui2ScheduleBoard='1'/);
   assert.match(ui,/classList\.add\('msd-ui2-012'\)/);
-  assert.doesNotMatch(ui,/OWNER|Owner Scheduling|enterprise oversight/i);
+  assert.match(ui,/data-scheduling-actor="OWNER"/);
+  assert.doesNotMatch(ui,/\.rpc\(/);
   assert.equal(rpc(ui).length,0);
   assert.doesNotMatch(ui,/createClient\s*\(|\.from\s*\(|\.(?:insert|update|delete|upsert)\s*\(/);
-  assert.doesNotMatch(ownerRuntime,/manager-scheduling-ui2-v1/);
+  assert.match(ownerRuntime,/manager-scheduling-ui2-v1/);
+  assert.match(ownerRuntime,/__MAGASIN_SCHEDULING_ACTOR__='OWNER'/);
 });
 
 test("UI2-012 preserves the canonical Manager scheduling RPC inventory and writer boundaries",()=>{
@@ -36,12 +38,14 @@ test("UI2-012 preserves the canonical Manager scheduling RPC inventory and write
     "get_manager_weekly_schedule",
     "get_schedule_generation_assignments",
     "list_cross_store_staffing_shortages_v1",
+    "list_employee_employment_types_v1",
     "list_employee_workforce_profiles_v1",
     "list_schedule_generations",
     "list_workforce_recurring_staffing_requirements_v1",
     "publish_schedule_generation",
     "replace_schedule_generation_assignments",
     "review_schedule_generation",
+    "set_employee_employment_type_v1",
     "validate_schedule_generation_v1"
   ]);
   assert.doesNotMatch(draft,/auto_generate_schedule_generation|get_workforce_staffing_requirements/);
@@ -86,34 +90,44 @@ test("UI2-012 explicitly represents NONE DRAFT REVIEWED PUBLISHED CONFLICT and b
   assert.match(ui,/el\.disabled=true/);
 });
 
-test("UI2-012 responsive contract keeps tablet board scroll and stacks phone draft days",()=>{
-  assert.match(ui,/@media\(max-width:1100px\)/);
-  assert.match(ui,/@media\(max-width:1024px\)/);
-  assert.match(ui,/@media\(max-width:600px\)/);
-  assert.match(ui,/min-height:44px/);
-  assert.match(ui,/overflow-x:auto/);
-  assert.match(ui,/overscroll-behavior-x:contain/);
-  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-board-wrap\{overflow:visible;scrollbar-gutter:auto\}/);
-  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-board\{grid-template-columns:1fr;min-width:0;width:100%;gap:10px\}/);
-  assert.match(ui,/@media\(max-width:600px\)[\s\S]*\.msd-ui2-012 \.msd-day-title\{position:static\}/);
+test("UI2-012 responsive contract follows approved narrow one-day calendar without page overflow",()=>{
+  const board=read("05_MANAGER/Workforce/manager-five-board-v4.js");
+  assert.match(board,/syncDayWindow/);
+  assert.match(board,/data-x19g-active-day/);
+  assert.match(board,/overflow-x:hidden!important/);
+  assert.match(board,/grid-template-columns:repeat\(7,minmax\(0,1fr\)\)!important/);
   assert.match(ui,/:focus-visible/);
   assert.match(ui,/outline:2px solid/);
 });
 
-test("UI2-012 Manager asset cache chain advances while Owner runtime remains on its existing path",()=>{
-  const v="20260927-ui2-012";
-  const managerV="20261003-sched-ui-017";
-  const managerEntryV="20261003-sched-ui-017";
-  assert.ok(runtime.includes("engine-v1.js?v="+managerV));
+test("UI2-012 presentation is shared while Owner and Manager retain the canonical XSTORE-019 writer",()=>{
+  const managerV="20261005-xstore-019";
+  const managerEntryV="20261009-xstore-019j-compact3";
+  assert.ok(runtime.includes("engine-v1.js?v="+managerEntryV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
-  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
-  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerV+"#workforce"));
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018)/);
-  assert.doesNotMatch(ownerRuntime,new RegExp(managerV));
+  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
+  assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+managerEntryV+"&x19l=1#workforce"));
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261005-xstore-019)/);
+  assert.ok(ownerRuntime.includes("/05_MANAGER/Workforce/draft-publish-v1.js?v="+managerV));
+  assert.match(ownerRuntime,/\/05_MANAGER\/Workforce\/manager-scheduling-ui2-v1\.js\?v=20261006-xstore-019e/);
 });
 
-test("UI2-012 bounded browser gate is integrated into the existing People Shift Day-10 gate",()=>{
-  assert.match(gate,/ui2-012-manager-scheduling-browser\.mjs/);
+test("XSTORE-019J approved Manager replacement retains equivalent or stronger Day-10 browser gates",()=>{
+  // Retain historical UI2-012 source contract above, but its old hourly
+  // browser projection has been superseded by the Owner-approved 5-step UI.
+  assert.doesNotMatch(gate,/await import\(["']\.\/ui2-012-manager-scheduling-browser\.mjs/);
+  for(const file of [
+    "manager-workforce-canonical-browser.mjs",
+    "xstore-019g-manager-five-board-browser.mjs",
+    "xstore-019b-direct-calendar-editing-browser.mjs"
+  ])assert.ok(gate.includes('await import("./'+file+'")'),file);
+  const canonical=read("09_QA/people-shift/manager-workforce-canonical-browser.mjs");
+  const visual=read("09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs");
+  const direct=read("09_QA/people-shift/xstore-019b-direct-calendar-editing-browser.mjs");
+  assert.match(canonical,/e2e05_review_publish_revalidation_and_idempotency/);
+  assert.match(canonical,/e2e03_out_of_week_wrong_store_and_availability_mismatch_fail_closed/);
+  assert.match(visual,/Owner-approved desktop calendar/);
+  assert.match(direct,/019b_hard_overlap_edit_fails_closed_and_reverts_ui/);
 });
 
 console.log("UI2_012_MANAGER_SCHEDULING_CONTRACT=PASS");

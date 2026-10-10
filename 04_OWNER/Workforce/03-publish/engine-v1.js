@@ -9,7 +9,7 @@ if(window.MAGASIN_MANAGER_SCHEDULE_DRAFT){
   document.dispatchEvent(new CustomEvent('magasin:owner-schedule-open',{detail:{}}));
   return;
 }
-const writerSrc='/05_MANAGER/Workforce/draft-publish-v1.js?v=20260929-mer003';
+const writerSrc='/05_MANAGER/Workforce/draft-publish-v1.js?v=20261005-xstore-019';
 const contextSrc='/05_MANAGER/Workforce/manager-context-v1.js?v=20260929-mer003';
 function loadWriter(){
   if([...document.scripts].some(s=>(s.src||'').includes('/05_MANAGER/Workforce/draft-publish-v1.js')))return;

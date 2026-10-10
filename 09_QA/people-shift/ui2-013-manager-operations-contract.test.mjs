@@ -40,7 +40,7 @@ test("UI2-013 Swap Give preserves peer/recipient gates and existing approve reje
 });
 
 test("UI2-013 Attendance keeps canonical reader review state machine and explicit APPROVE ADJUST REJECT controls",()=>{
- assert.deepEqual(set(attendance),["list_manager_attendance_review_v1","review_attendance_v1"].sort());
+ assert.deepEqual(set(attendance),["list_manager_attendance_review_v1","review_attendance_v1","list_manager_outside_schedule_attendance_v1","review_outside_schedule_attendance_v1"].sort());
  for(const decision of ["APPROVE","ADJUST","REJECT"])assert.match(attendance,new RegExp('data-review="'+decision+'"'));
  assert.match(attendance,/\['NORMAL','NEEDS_REVIEW'\]/);
  assert.match(attendance,/p_confirmed_start:null,p_confirmed_end:null/);
@@ -82,20 +82,20 @@ test("UI2-013 responsive presentation contract is operations-first and touch key
 test("UI2-013 preserves Today getState compatibility and does not redesign scheduling",()=>{
  for(const api of ["MAGASIN_MANAGER_SHIFT_CHANGE","MAGASIN_MANAGER_ATTENDANCE_REVIEW","MAGASIN_MANAGER_STAFF_PROJECTION","MAGASIN_MANAGER_PAYROLL_SELF_CHECK"])assert.ok(today.includes(api),api);
  for(const source of [swap,attendance,staff,payroll])assert.match(source,/getState:/);
- assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018)/);
+ assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261005-xstore-019)/);
  assert.doesNotMatch(ui,/msd-ui2-012|Bảng nháp 7 ngày|publish_schedule_generation/);
 });
 
 test("UI2-013 complete Manager cache chain loads changed assets while Owner path stays untouched",()=>{
  const v="20260927-ui2-013";
- const entryV="20261003-sched-ui-017";
+ const entryV="20261009-xstore-019j-compact3";
  assert.match(engine,/swap-approval-v1\.js\?v=20260929-mer003/);
  assert.match(engine,/payroll-self-check-v1\.js\?v=20260929-mer003/);
  assert.match(engine,/manager-operations-ui2-v1\.js\?v=20260927-ui2-016/);
  assert.ok(runtime.includes("engine-v1.js?v="+entryV));
  assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+entryV));
  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+entryV));
- assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+entryV+"#workforce"));
+ assert.ok(legacySchedule.includes("manager-runtime-v1.html?v="+entryV+"&x19l=1#workforce"));
  assert.doesNotMatch(ownerRuntime,new RegExp(v));
 });
 

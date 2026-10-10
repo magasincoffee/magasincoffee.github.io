@@ -8,6 +8,7 @@ fs.mkdirSync(OUT,{recursive:true});
 const report={status:"PASS",checks:[],page_errors:[],console_errors:[],request_failures:[]};
 const check=async(name,fn)=>{try{report.checks.push({name,status:"PASS",detail:String(await fn()??"")})}catch(e){report.checks.push({name,status:"FAIL",detail:String(e?.message||e)});report.status="FAIL"}};
 const addManualAssignment=async(userId,workDate,startTime,endTime)=>{
+  if(await page.locator("#msdManualEmployee").count()===0)await page.locator("#msdOpenCandidateDrawer").click();
   await page.locator("#msdManualEmployee").selectOption(userId);
   await page.locator("#msdManualDate").selectOption(workDate);
   await page.locator("#msdManualStart").selectOption(startTime);
@@ -54,9 +55,12 @@ await check("canonical_direct_flow_does_not_call_staffing_demand_or_robot",async
 
 await check("manager_sees_next_week_availability_before_draft",async()=>{
   const candidates=await page.locator("#panel-publish [data-msd-pool-candidate]").count();
-  const text=await page.locator("#panel-publish .msd-source").innerText();
-  if(candidates!==3||!text.includes("Chưa được xếp ca nào · 3")||!text.includes("Nhân viên QA 1")||!text.includes("06:00–12:00")||!text.includes("CN-QA-A"))throw new Error(text);
-  return "3 supplemental-pool candidates with remaining availability";
+  const drawer=await page.locator("#panel-publish [data-msd-candidate-overlay]").count();
+  const addButton=await page.locator("#panel-publish #msdOpenCandidateDrawer").count();
+  const text=await page.locator("#panel-publish").innerText();
+  const st=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
+  if(candidates!==0||drawer!==0||addButton!==1||st.availability.length!==3||st.eligibleEmployees.length!==3||st.generationId!==null||text.includes("Nhóm nhân sự bổ sung"))throw new Error(JSON.stringify({candidates,drawer,addButton,availability:st.availability.length,eligibleEmployees:st.eligibleEmployees.length,generationId:st.generationId,text}));
+  return "canonical availability loaded; candidate drawer is absent until an add/edit/shortage action";
 });
 
 await check("double_click_create_is_bounded_and_uses_manager_direct_primitive",async()=>{
@@ -88,9 +92,12 @@ await check("manager_adds_two_assignments_from_availability",async()=>{
 
 await check("manager_edits_time_then_remove_and_add_again",async()=>{
   const first=page.locator('[data-msd-row="0"]');
+  await first.locator('[data-msd-open-editor="0"]').click();
   await first.locator('[data-f="start_time"]').selectOption("06:30");
   await first.locator('[data-f="end_time"]').selectOption("11:30");
-  await page.locator('[data-msd-row="1"] [data-remove]').click();
+  await first.locator('[data-msd-apply-edit="0"]').click();
+  await page.waitForFunction(()=>{const a=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments[0];return a?.start_time==="06:30"&&a?.end_time==="11:30"});
+  await page.locator('[data-msd-row="1"] [data-msd-remove-direct="1"]').first().click();
   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===1);
   await addManualAssignment("u-2","2026-09-28","12:00","17:00");
   await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().assignments.length===2);

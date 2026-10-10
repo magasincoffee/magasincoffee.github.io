@@ -39,6 +39,12 @@ async function serverRpc(actor,name,args={}){
      if(modes.employeeProfile==='invalid')return {data:[{...workforceProfiles()[0],profile_status:'BROKEN'}],error:null};
      return {data:[workforceProfiles()[0]],error:null};
    }
+   // XSTORE-019K: model the independent management-owned employment self-read.
+   if(name==='get_my_employee_employment_type_v1'){
+     if(badArgs(args))return error('RPC_SIGNATURE_DENY');
+     if(modes.employeeProfile==='error')return error('PROFILE_INACTIVE');
+     return {data:null,error:null};
+   }
    if(name==='get_my_employee_profile_v1'){
      if(badArgs(args))return error('RPC_SIGNATURE_DENY');
      if(modes.employeeProfile==='error')return error('PROFILE_INACTIVE');

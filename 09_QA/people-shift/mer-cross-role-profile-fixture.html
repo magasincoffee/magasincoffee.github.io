@@ -46,6 +46,8 @@ body{font-family:system-ui;margin:0;padding:18px;background:#f6f8fb}
      return {data:{employee_id:'e1',store_ids:[...state.priority]},error:null};
    }
    if(name==='get_my_employee_workforce_profile_v1')return {data:[row()],error:null};
+   // XSTORE-019K adds a separate parameterless self-read; keep this fixture role-safe.
+   if(name==='get_my_employee_employment_type_v1')return {data:null,error:null};
    if(name==='get_cross_store_weekly_availability_v1')return {data:[{
      availability_id:'a1',work_date:'2026-10-05',start_time:'06:00',end_time:'12:00',
      user_id:'e1',employee_name:'MAI CHI',username:'mai.chi',

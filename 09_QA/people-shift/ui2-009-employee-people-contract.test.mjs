@@ -34,27 +34,32 @@ test("UI2-009 loads one namespaced Employee People presentation layer and keeps 
   for(const marker of [
     'magasin-ui-v2-employee-today.css?v=20260925-ui2-006',
     'magasin-ui-v2-employee-schedule.css?v=20261001-ui-unified1',
-    'magasin-ui-v2-employee-secondary.css?v=20261003-sched-ui-007'
+    'magasin-ui-v2-employee-secondary.css?v=20261006-xstore-019d'
   ])assert.ok(app.includes(marker),marker);
 });
 
-test("UI2-009 Attendance keeps exact Manual-Time canonical RPC inventory and payload boundary",()=>{
-  assert.deepEqual(rpcs(attendance),[
+test("XSTORE-019L extends UI2-009 with approved-clock and scoped exception RPC inventory",()=>{
+  assert.deepEqual([...new Set(rpcs(attendance))].sort(),[
     'list_my_approved_schedules_v2',
     'get_my_attendance_v2',
-    'submit_manual_time_attendance_v1'
-  ]);
+    'submit_manual_time_attendance_v1',
+    'get_my_store_priority_profile_v1',
+    'list_my_outside_schedule_attendance_v1',
+    'submit_outside_schedule_attendance_v1'
+  ].sort());
   assert.match(attendance,/p_week_start:requestedWeek/);
   assert.match(attendance,/p_from_date:requestedWeek,p_to_date:add\(requestedWeek,6\)/);
   assert.match(attendance,/p_schedule_id:selected\.schedule_id,p_actual_start:start,p_actual_end:end,p_note:note\|\|null/);
   assert.match(attendance,/CANONICAL_STATUSES=new Set\(\['SUBMITTED','NORMAL','NEEDS_REVIEW','APPROVED','ADJUSTED','REJECTED'\]\)/);
   assert.match(attendance,/RECONCILE_ERRORS/);
   assert.match(attendance,/ATTENDANCE_NOT_CURRENT_OWNER/);
-  assert.match(attendance,/Giờ bạn gửi cần được quản lý xác nhận trước khi dùng để tính lương/);
+  assert.match(attendance,/Khai báo giờ thủ công và ngoài lịch là yêu cầu riêng phải được xác nhận/);
   assert.match(attendance,/type="time" step="60"/);
   assert.match(attendance,/state\.submitting/);
   assertNoBrowserDml(attendance);
-  assert.doesNotMatch(attendance,/clock_in_for_schedule|clock_out_attendance|manual_attendance_from_schedule|auto_attendance_from_approved_schedules/);
+  assert.match(attendance,/clock_in_for_schedule/);
+  assert.match(attendance,/clock_out_attendance/);
+  assert.doesNotMatch(attendance,/manual_attendance_from_schedule|auto_attendance_from_approved_schedules/);
 });
 
 test("UI2-009 Attendance does not promote legacy income/report presentation as truth",()=>{
@@ -79,7 +84,7 @@ test("UI2-009 Payroll remains parameterless self-check read-only with exact stat
 });
 
 test("UI2-009 Profile stays on existing operational projection allowlist and preserves security navigation",()=>{
-  assert.deepEqual(rpcs(profile),['get_my_employee_workforce_profile_v1']);
+  assert.deepEqual(rpcs(profile),['get_my_employee_workforce_profile_v1','get_my_employee_employment_type_v1']);
   for(const id of ['profileFullName','profileUsername','profilePhone','profileRole','profileStatus','profilePrimaryStore','profileStorePriority','profileLevel','profileJoinDate'])assert.ok(profile.includes("'"+id+"'")||app.includes('id="'+id+'"'),id);
   assert.match(app,/id="view-profile" class="page-view employee-profile-v2"/);
   assert.match(app,/Thông tin được đồng bộ từ hồ sơ nhân sự của bạn/);
@@ -96,7 +101,7 @@ test("UI2-009 direct route/back/reload authority stays delegated to the existing
   assert.match(runtime,/E\.attendance\?\.refresh\?\.\(\)/);
   assert.match(runtime,/E\.profileProjection\?\.refresh\?\.\(\)/);
   assert.match(runtime,/E\.payrollSelfCheck\?\.refresh\?\.\(\)/);
-  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007)&runtime=engine/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3|20261009-x19j-paint1)&runtime=engine/);
 });
 
 console.log("UI2_009_EMPLOYEE_PEOPLE_CONTRACT=PASS");

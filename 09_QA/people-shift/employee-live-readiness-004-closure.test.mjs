@@ -33,7 +33,7 @@ test("EMLIVE-004 removes temporary authority and preserves permanent acceptance 
 });
 
 test("EMLIVE-004 keeps canonical Employee read authority unchanged",()=>{
-  assert.deepEqual(rpcs(profile),["get_my_employee_workforce_profile_v1"]);
+  assert.deepEqual(rpcs(profile),["get_my_employee_workforce_profile_v1","get_my_employee_employment_type_v1"]);
   assert.deepEqual(rpcs(payroll),["get_my_payroll_self_check_v1"]);
   assert.deepEqual(rpcs(notification),["list_my_notifications_v1"]);
   for(const src of [profile,payroll,notification]){
@@ -45,11 +45,11 @@ test("EMLIVE-004 keeps canonical Employee read authority unchanged",()=>{
 });
 
 test("EMLIVE-004 keeps the accepted EMLIVE-003 runtime and user-facing semantics",()=>{
-  assert.match(runtime,/employee-v40\.html\?ui=(?:20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007)&runtime=engine/);
-  assert.match(runtime,/profile\/engine-v1\.js\?v=20260930-emlive003/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3|20261009-x19j-paint1)&runtime=engine/);
+  assert.match(runtime,/profile\/engine-v1\.js\?v=(?:20260930-emlive003|20261006-xstore-019h)/);
   assert.match(runtime,/payroll\/engine-v1\.js\?v=20260930-emlive003/);
   assert.match(runtime,/notification\/engine-v1\.js\?v=20260930-emlive003/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3|20261009-x19j-paint1)/);
   assert.match(profile,/Không thể tải thông tin cá nhân lúc này\. Hãy thử lại\./);
   assert.match(payroll,/Không thể tải thông tin lương lúc này/);
   assert.match(notification,/Không thể tải thông báo lúc này/);
