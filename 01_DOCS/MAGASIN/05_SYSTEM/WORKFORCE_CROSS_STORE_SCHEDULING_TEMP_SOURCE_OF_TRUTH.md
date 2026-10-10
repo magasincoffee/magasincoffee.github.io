@@ -720,6 +720,19 @@ This **supersedes the failed-auth blocking conclusion** recorded in §§0.16–0
 
 **Safety invariants:** all AUTH-PROD, role/RBAC/RLS, Store Priority, ACTIVE employee, Availability, cross-store overlap, draft-only automation, canonical Validate→Review→Publish, Owner finance source-integrity and other hard gates remain mandatory. No fabricated data or extra authorization. Update temporary SOT status for each genuinely completed task and preserve CI evidence. PR #392 must remain non-merged and not released before item 3 Owner decision.
 
+## 0.21 XSTORE-019K read-only authority preflight — 2026-10-10
+
+**This is an implementation preflight, NOT an XSTORE-019K completion claim.** Following Owner authorization in §0.20, inspect the current source/production schema before implementing the next task. No production mutation was executed.
+
+Verified against canonical MAGASIN-NOIBO Supabase using read-only SQL:
+- `public.employee_constraints` **already has** `user_id`, `employment_type text NOT NULL`, `status`, `updated_at` and scheduling-hour constraints. `employment_type` has a legacy check permitting `PART_TIME`, `FULL_TIME`, `INTERN`, `OTHER`; its column default is `PART_TIME`. The table currently contains **zero rows** at this inspection. Therefore **do not infer** that any actual employee is Part-time, do not bulk-default/upsert all employees, and do not add a duplicate `profiles.employment_type` column. Owner-approved XSTORE-019K UI/writer should explicitly select only `FULL_TIME|PART_TIME` and distinguish unconfigured/legacy values.
+- Existing RLS policies: `employee_constraints_manager_write` permits authenticated OWNER or STORE_MANAGER; `employee_constraints_select` permits own row or those managerial roles. Preserve the canonical active-actor, store-scope, employee-eligibility and audit checks in any new writer; RLS alone is not proof of every business condition. Employee self-writes must fail closed.
+- The existing automatic scheduling RPC `auto_generate_cross_store_schedule_v1` selects ACTIVE eligible employees with Store Priority, time Availability, hard overlap/official schedule and per-day limits; its candidate `ORDER BY` currently uses candidate interval + `esp.priority`, **not employment type**. Implement FULL_TIME before PART_TIME only among hard-eligible candidates, retaining appropriate Store Priority and deterministic tie-break semantics. Unknown employment type must never be silently treated as confirmed Part-time.
+- Current `list_employee_workforce_profiles_v1` delegates to `employee_workforce_profile_projection_v1`, whose returned field list lacks `employment_type`; the UI already contains read-only employment labels and fixtures. Reconcile the canonical authorized reader before treating fixture values as production employment truth; do not break existing RPC return signatures without an explicit compatibility-safe migration plan.
+- Supabase CLI was not available on the connected desktop during preflight, so **no migration was generated/applied** in this pass. Any DDL or production deployment remains subject to migration review/CI and the explicit Owner RC + XSTORE-020 after-hours release gate.
+
+**Next executable task: XSTORE-019K.** Implement one coherent task on the Draft candidate branch with authorized employment-type write/read, audit, ranking, management selector, Employee read-only display, hard-negative security regression and real DB-migration compatibility verification; report exact-head evidence, then mark DONE only if actual required gates pass. Subsequent XSTORE-019L→O remain ordered as defined in §0.20.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
