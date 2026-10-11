@@ -1042,6 +1042,16 @@ No branch attribution, finance or scheduled work records were modified by this d
 
 **Remaining decisive gate:** Authenticated full-flow Manager/Employee/Owner acceptance on the actual candidate, plus schema/JWT/RLS/financial source/security/Owner release authority. An Owner-approved exact RC and maintenance window are needed before changing production; do not merge #392 or activate XSTORE-020 because of successful live login alone.
 
+## 0.38 XSTORE-019O three isolated real-auth local login entrypoints — 2026-10-11
+
+**User requested actual login to new XSTORE candidate instead of mockup, after signing in to the three old-production UI roles.** Status stays **XSTORE-019O IN PROGRESS / RC_NOT_READY**; PR #392 stays Draft and XSTORE-020 remains paused.
+
+- On authorized H4, served exact PR #392 code HEAD `9b0a4265b7dca0aef2cb4ef5c248128f9bf7c298` from isolated detached worktree `D:\MAGASIN_XSTORE_019O_CROSS_STORE_20261011`, using **three separate localhost origins**: `http://127.0.0.1:8788` (Owner), `http://127.0.0.1:8789` (Manager), `http://127.0.0.1:8790` (Employee). The root is the **real static application code**, and `/03_PLATFORM/01_AUTH/` is its real Supabase Auth login page, **not** the static preview `/09_QA/xstore-019j/`.
+- Real login screen at each origin responded HTTP **200**, contains `loginForm`/username/password fields and loads Supabase JS. Browser automation in fresh unauthenticated contexts: **6/6 PASS** (3 real login pages loading without JS exceptions or missing Supabase client, and 3 role-root protected routes redirecting to real login when no session). Local test file `_019o_real_login_page_smoke.mjs` at isolated worktree. **No passwords, existing cookies or session tokens were accessed; no sign-in was performed by automation.**
+- Launched all three actual login URLs using local **Chrome profile `Profile 3` display name `Toi123`**. Different localhost ports have independent session storage, allowing three roles to sign in concurrently without overwriting each other's stored Auth session even in the same Chrome profile. Existing sessions on `https://magasincoffee.github.io` are a separate web origin and **cannot be assumed or copied** into localhost.
+- All three server sockets are **loopback-only** (`127.0.0.1`), not reachable from the public internet or LAN by default. Their content is PR code, but the application's real Supabase client targets **production MAGASIN-NOIBO Auth/database**. This is **not an isolated fake backend**. During RC QA, use it for login, authorized read-only navigation and visual inspection only: **no draft creation, check-in/out, roster publication, supplier/order/payroll writes or production RPC mutation**.
+- Actual signed-in Owner/Manager/Employee roles must still be confirmed via each live browser context after the user enters their own valid credentials locally. The unauthenticated route tests do **not** satisfy §0.28.C.1–C.3, or full production-schema/JWT/RLS and P0 security gates. K/L migrations remain absent from production, so some candidate features relying on those RPCs may report unavailable until approved later. **Never sign off or merge merely because a login form renders.**
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
