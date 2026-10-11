@@ -25,6 +25,19 @@ begin
   if auth.uid() is null then return false; end if;
   if v_role='OWNER' then return true; end if;
   if v_role<>'STORE_MANAGER' then return false; end if;
+  -- Live Manager Store Priority writer validates only the NEW store set;
+  -- a partial-scope manager could otherwise rewrite another employee's
+  -- current priorities to a single accessible store, then terminate them.
+  -- Initial production admission therefore requires enterprise ALL scope.
+  -- Narrow-store lifecycle authority needs an immutable enrollment ledger
+  -- and a separately qualified migration; do not infer from mutable priorities.
+  if not exists(
+    select 1 from public.profiles p where p.id=auth.uid()
+      and exists(
+        select 1 from regexp_split_to_table(upper(coalesce(p.access_scope,'')),'[,; ]+') token
+        where token in ('ALL','*')
+      )
+  ) then return false; end if;
   if not exists(select 1 from public.employee_store_priorities esp
                 where esp.employee_id=p_employee_id and public.can_access_store(esp.store_id))
   then return false; end if;

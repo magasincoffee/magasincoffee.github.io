@@ -18,6 +18,11 @@ test('status RPC security definer and role, actor and all-store guard',()=>{
  assert.match(sql,/LIFECYCLE_NO_CHANGE/);
  assert.match(sql,/pg_advisory_xact_lock/);
 });
+test('partial-store Manager cannot offboard even after mutable priority scope rewrite',()=>{
+ assert.match(sql,/regexp_split_to_table\(upper\(coalesce\(p\.access_scope/);
+ assert.match(sql,/where token in \('ALL','\*'\)/);
+ assert.match(sql,/immutable enrollment ledger/);
+});
 test('cross-store full scope checks priorities plus official and generated assignments',()=>{
  for(const entity of ['employee_store_priorities','work_schedules','schedule_generation_assignments'])assert.match(sql,new RegExp('public\\.'+entity));
  assert.match(sql,/not coalesce\(public\.can_access_store/);
