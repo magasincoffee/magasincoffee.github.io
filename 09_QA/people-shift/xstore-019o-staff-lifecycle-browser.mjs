@@ -62,6 +62,7 @@ try{
  const staffAttempt=await page.evaluate(()=>globalThis.MAGASIN_MANAGER_WORKFORCE_CONTEXT.client().rpc('set_employee_lifecycle_status_v1',{p_employee_id:'u-2',p_new_status:'INACTIVE',p_reason:'Not authorized'}));
  assert.match(staffAttempt.error.message,/ROLE_NOT_ALLOWED/);
  await page.evaluate(async()=>{globalThis.__LIFECYCLE_QA.missing=true;await globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh()});
+ await page.locator('[data-msp-filter="ACTIVE"]').click();
  assert.equal(await page.locator('[data-msp-lifecycle-open="u-1"]').isDisabled(),true);
  assert.equal(await page.locator('[data-msp-delete]').count(),0);
  assert.deepEqual(errors,[]);
