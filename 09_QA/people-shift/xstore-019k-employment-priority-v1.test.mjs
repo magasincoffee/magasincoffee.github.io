@@ -5,6 +5,7 @@ import test from 'node:test';
 const sql=fs.readFileSync('07_DATABASE/migrations/20261010220000_xstore_019k_employment_type_priority_v1.sql','utf8');
 const scheduler=fs.readFileSync('05_MANAGER/Workforce/draft-publish-v1.js','utf8');
 const employee=fs.readFileSync('06_EMPLOYEE/profile/engine-v1.js','utf8');
+const staff=fs.readFileSync('05_MANAGER/Workforce/staff-projection-v1.js','utf8');
 
 test('canonical storage: no duplicate profile column; explicit FT/PT and no blanket migration backfill',()=>{
  assert.match(sql,/insert into public\.employee_constraints \(user_id, employment_type, status, updated_at\)/);
@@ -67,12 +68,17 @@ test('Manager candidate tie breakers: available before unavailable, FT before PT
  assert.match(scheduler,/Number\(Boolean\(b\.targetAvailable\)\)-Number\(Boolean\(a\.targetAvailable\)\)\s+\|\|compareEligibleType\(a,b\)\s+\|\|Number\(a\.priority\)-Number\(b\.priority\)/);
 });
 test('Manager and Employee presentation: explicit write and read-only, no direct table writer',()=>{
- assert.match(scheduler,/client\(\)\.rpc\('set_employee_employment_type_v1'/);
- assert.match(scheduler,/client\(\)\.rpc\('list_employee_employment_types_v1'/);
- assert.match(scheduler,/data-msd-set-employment/);
- assert.match(scheduler,/if\(!\['FULL_TIME','PART_TIME'\]\.includes\(value\)\)/);
+ assert.match(staff,/client\(\)\.rpc\('set_employee_employment_type_v1'/);
+ assert.match(staff,/client\(\)\.rpc\('list_employee_employment_types_v1'/);
+ assert.match(staff,/data-msp-employment/);
+ assert.match(staff,/data-msp-type-save/);
+ assert.match(staff,/EMPLOYMENT_TYPE_PERSISTENCE_NOT_VERIFIED/);
+ assert.match(staff,/if\(!\['FULL_TIME','PART_TIME'\]\.includes\(value\)\)/);
+ assert.doesNotMatch(scheduler,/data-msd-set-employment|employmentAdminHtml|set_employee_employment_type_v1/);
+ assert.match(scheduler,/list_employee_employment_types_v1/);
  assert.match(employee,/get_my_employee_employment_type_v1/);
  assert.match(employee,/setValue\('profileEmploymentType',employmentTypeText\(r\.employment_type\)\)/);
  assert.doesNotMatch(employee,/set_employee_employment_type_v1/);
  assert.doesNotMatch(scheduler,/\.from\(['"]employee_constraints['"]\)\.(insert|update|upsert)/);
+ assert.doesNotMatch(staff,/\.from\(['"]employee_constraints['"]\)\.(insert|update|upsert)/);
 });

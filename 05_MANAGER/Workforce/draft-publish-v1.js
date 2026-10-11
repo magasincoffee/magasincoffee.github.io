@@ -463,19 +463,6 @@ function supplementalPoolHtml(){
   +(target&&groups.blocked.length?poolGroupHtml('blocked','Không thể chọn do xung đột','Ứng viên bị khóa vì trùng ca hoặc đã đủ giới hạn ca trong ngày.',groups.blocked,target,true):'')
   +'</div>';
 }
-async function saveEmploymentType(userId,value){
- if(state.busy||!state.employmentTypeReady)return;
- if(!['FULL_TIME','PART_TIME'].includes(value))return status('Hãy chọn Full-time hoặc Part-time.','error');
- if(!state.eligibleEmployees.some(r=>String(r.employee_id||r.user_id)===String(userId)))return status('Không tìm thấy nhân viên đủ quyền tại cửa hàng hiện tại.','error');
- state.busy=true;lockControls(true);
- try{
-  const q=await client().rpc('set_employee_employment_type_v1',{p_employee_id:userId,p_employment_type:value});
-  if(q.error)throw q.error;
-  state.eligibleEmployees=state.eligibleEmployees.map(r=>String(r.employee_id||r.user_id)===String(userId)?{...r,employment_type:value}:r);
-  render();status('Đã cập nhật loại việc làm. Hệ thống sẽ áp dụng ưu tiên từ lần tạo lịch nháp mới.','ok');
- }catch(e){status('Không thể cập nhật loại việc làm: '+errorText(e),'error')}
- finally{state.busy=false;lockControls(false)}
-}
 function addSupplementCandidate(userId){
  const target=state.supplementTarget;
  if(!target)return status('Hãy chọn “+ Bổ sung người” tại một khoảng thiếu trước.','error');
@@ -503,23 +490,10 @@ function manualPickerHtml(){
   .join('');
  return '<div class="msd-manual-picker" id="msdManualPicker"><div class="msd-source-name">Điều động thủ công theo giờ tự chọn</div><div class="msd-source-meta">Chỉ nhân viên ACTIVE có Store Priority tại '+esc(selectedStore()?.code||'cửa hàng đã chọn')+'. Hệ thống chặn trùng ca/giới hạn ca trước khi thêm và gắn cảnh báo nếu nằm ngoài Availability.</div><div class="msd-manual-grid"><select class="msd-input" id="msdManualEmployee" aria-label="Nhân viên">'+options+'</select><select class="msd-input" id="msdManualDate" aria-label="Ngày">'+days.map((d,i)=>'<option value="'+esc(d)+'"'+(d===selectedDate?' selected':'')+'>'+DAYS[i]+' · '+d.slice(8,10)+'/'+d.slice(5,7)+'</option>').join('')+'</select><select class="msd-input" id="msdManualStart" aria-label="Bắt đầu">'+timeOptions(selectedStart)+'</select><select class="msd-input" id="msdManualEnd" aria-label="Kết thúc">'+timeOptions(selectedEnd)+'</select></div><button class="btn" type="button" id="msdManualAdd"'+(state.generationId&&state.generationStatus==='DRAFT'?'':' disabled')+'>+ Thêm ca thủ công</button></div>';
 }
-function employmentAdminHtml(){
- if(!state.eligibleEmployees.length)return '';
- const rows=state.eligibleEmployees.slice().sort((a,b)=>compareEligibleType(a,b)||priorityForStore(a)-priorityForStore(b)||String(employeeName(a)).localeCompare(String(employeeName(b)),'vi'))
-  .map(r=>{
-   const id=esc(String(r.employee_id||r.user_id)),name=esc(employeeName(r)),kind=String(r.employment_type||'').toUpperCase();
-   const current='<span class="msd-pool-tag x19g-employment">'+esc(employmentTypeLabel(kind))+'</span>';
-   const edit=state.employmentTypeReady
-    ? '<label class="msd-pool-employment-editor">Loại việc làm <select aria-label="Loại việc làm của '+name+'" data-msd-employment-value="'+id+'"><option value="">Chọn loại</option><option value="FULL_TIME"'+(kind==='FULL_TIME'?' selected':'')+'>Full-time</option><option value="PART_TIME"'+(kind==='PART_TIME'?' selected':'')+'>Part-time</option></select></label><button class="btn" type="button" data-msd-set-employment="'+id+'">Lưu loại việc làm</button>'
-    : '<span class="msd-pool-tag">Chờ cập nhật phân quyền loại việc làm</span>';
-   return '<div class="msd-employment-admin-row"><b>'+name+'</b>'+current+edit+'</div>';
-  }).join('');
- return '<section class="msd-employment-admin" aria-label="Phân loại nhân viên"><h3>Phân loại nhân viên · quản lý</h3><p>Được phép chọn Full-time/Part-time cho nhân viên đủ điều kiện tại chi nhánh đang chọn. Không thay đổi lịch đã phát hành.</p>'+rows+'</section>';
-}
 function sourceHtml(){
  const target=state.supplementTarget;
  const targetHtml=target?'<div class="msd-source-target" role="status"><b>Đang bổ sung cho khoảng thiếu:</b> '+esc(target.work_date)+' · '+hm(target.shortage_start)+'–'+hm(target.shortage_end)+' · thiếu '+esc(target.missing_headcount)+' người.<br>Pool bên dưới đã lọc theo đúng ngày/giờ và kiểm tra xung đột toàn 4 cửa hàng.<br><button class="btn" type="button" data-msd-supplement-clear>Hủy chọn khoảng thiếu</button></div>':'';
- return targetHtml+(target?supplementalPoolHtml():'')+manualPickerHtml()+(!target?employmentAdminHtml():'');
+ return targetHtml+(target?supplementalPoolHtml():'')+manualPickerHtml();
 }
 function rememberCalendarViewport(wrap=null){
  const target=wrap||panel()?.querySelector('.msd-board-wrap');
@@ -886,7 +860,7 @@ function bind(){
  p.querySelector('#msdManualAdd')?.addEventListener('click',addManualAssignment);
  p.querySelectorAll('[data-msd-supplement]').forEach(b=>b.addEventListener('click',()=>openSupplement(b.dataset.msdSupplement,b.closest('.msd-board-wrap'))));
  p.querySelectorAll('[data-msd-pool-user]').forEach(b=>b.addEventListener('click',()=>addSupplementCandidate(b.dataset.msdPoolUser)));
- p.querySelectorAll('[data-msd-set-employment]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.msdSetEmployment;const v=p.querySelector('[data-msd-employment-value="'+CSS.escape(id)+'"]')?.value;saveEmploymentType(id,v)}));
+
  p.querySelector('[data-msd-supplement-clear]')?.addEventListener('click',clearSupplement);
  p.querySelector('#msdCalendarCreateCommit')?.addEventListener('click',commitCalendarCreate);
  p.querySelector('#msdCalendarCreateCancel')?.addEventListener('click',()=>{state.calendarCreate=null;render();status('Đã hủy tạo ca trực tiếp.')});

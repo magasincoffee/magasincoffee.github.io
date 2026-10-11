@@ -9,6 +9,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
 <nav class="sidebar">
   <button data-view="workforce" class="active">Xếp lịch</button>
   <button data-view="schedule">Lịch làm</button>
+  <button data-view="staff">Nhân viên</button>
   <button data-view="swap">Đổi ca</button>
 </nav>
 <section id="view-workforce" class="view active">
@@ -23,6 +24,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
 </section>
 <section id="view-schedule" class="view"></section>
 <section id="view-swap" class="view"></section>
+<section id="view-staff" class="view"></section>
 <script>
 (() => {
   window.__MAGASIN_WORKFORCE_TODAY__="2026-09-27";
@@ -182,7 +184,7 @@ body{font:14px system-ui;margin:20px;color:var(--text)}.card{border:1px solid va
           profile_status:peopleMeta[id]?.status||"INACTIVE",
           employee_role:peopleMeta[id]?.role||"STAFF",
           employment_type:id==="u-1"?"FULL_TIME":id==="u-2"?"PART_TIME":null,
-          priority_store_ids:["store-a"]
+          priority_store_ids:["store-a"],priority_store_codes:["CN-QA-A"]
         })),error:null};
       }
       if(name==="get_cross_store_weekly_plan_v1"){

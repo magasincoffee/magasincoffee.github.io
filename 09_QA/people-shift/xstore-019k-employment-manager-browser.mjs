@@ -13,14 +13,19 @@ try{
   audit:globalThis.__MW31_QA.employmentTypeAudit.length
  }));
  assert.equal(before.type,'PART_TIME');
- await page.locator('#msdStart').click();
- await page.waitForFunction(()=>Boolean(globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT?.getState?.().generationId));
- await page.locator('#msdOpenCandidateDrawer').click();
- const selector=page.locator('[data-msd-employment-value="u-2"]');
+ await page.locator('[data-view="staff"]').click();
+ await page.locator('[data-msp-edit="u-2"]').waitFor({state:'visible',timeout:10000});
+ await page.locator('[data-msp-edit="u-2"]').click();
+ const selector=page.locator('[data-msp-employment]');
  await selector.waitFor({state:'visible',timeout:10000});
  await selector.selectOption('FULL_TIME');
- await page.locator('[data-msd-set-employment="u-2"]').click();
+ await page.locator('[data-msp-type-save]').click();
+ await page.waitForFunction(()=>globalThis.__MW31_QA.employmentTypes['u-2']==='FULL_TIME');
+ await page.waitForFunction(()=>document.querySelector('[data-msp-type-msg]')?.textContent?.includes('Đã lưu'));
+ await page.locator('[data-view="workforce"]').click();
+ await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.refresh());
  await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().eligibleEmployees.find(x=>x.employee_id==='u-2')?.employment_type==='FULL_TIME');
+ assert.equal(await page.locator('[data-msd-set-employment]').count(),0);
  const after=await page.evaluate(()=>({
   type:globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().eligibleEmployees.find(x=>x.employee_id==='u-2')?.employment_type,
   audit:globalThis.__MW31_QA.employmentTypeAudit.length,
@@ -30,7 +35,7 @@ try{
  assert.equal(after.audit,before.audit+1);
  assert.equal(after.calls.length,1);
  assert.equal(after.calls[0].args.p_employment_type,'FULL_TIME');
- console.log('[PASS] Manager UI saves FULL_TIME via scoped RPC and records audit');
+ console.log('[PASS] Manager staff information editor saves FULL_TIME through scoped RPC and audit');
  const denied=await page.evaluate(async()=>{
   globalThis.__MAGASIN_SCHEDULING_ACTOR__='STAFF';
   const q=await globalThis.__MW31_QA.rpc('set_employee_employment_type_v1',{p_employee_id:'u-2',p_employment_type:'PART_TIME'});
@@ -48,6 +53,13 @@ try{
  assert.equal(invalid.error,'EMPLOYMENT_TYPE_INVALID');
  assert.equal(invalid.type,'FULL_TIME');
  console.log('[PASS] Unsupported type fails closed');
+ await page.locator('[data-view="staff"]').click();
+ await page.evaluate(()=>globalThis.__MW31_QA.setRpcError('list_employee_employment_types_v1','Could not find the function public.list_employee_employment_types_v1'));
+ await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
+ await page.locator('[data-msp-edit="u-2"]').click();
+ assert.equal(await page.locator('[data-msp-type-save]').isDisabled(),true);
+ assert.equal(await page.locator('[data-msp-employment]').isDisabled(),true);
+ await page.evaluate(()=>globalThis.__MW31_QA.setRpcError('list_employee_employment_types_v1',null));
  assert.deepEqual(failures,[]);
  console.log('XSTORE_019K_EMPLOYMENT_MANAGER_BROWSER=PASS');
 }finally{await browser.close();}
