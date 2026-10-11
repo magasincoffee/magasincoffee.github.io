@@ -59,6 +59,7 @@ await frame.waitForFunction(()=>{
  const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();
  return s.generationStatus==="DRAFT"&&s.shortages.length===1&&s.weeklyPlan.length===2;
 });
+await frame.locator('#x19g-board-edit [data-msd-date="2026-09-28"] .msd-shortage-group > summary').click();
 await frame.locator('[data-msd-date="2026-09-28"] [data-msd-supplement]').click();
 
 await check("xstore_018_shows_three_actionable_groups_without_reference_wording",async()=>{
@@ -100,6 +101,7 @@ await frame.waitForFunction(()=>{
  const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();
  return s.shortages.length===1&&s.shortages[0].shortage_start==="08:00"&&s.shortages[0].shortage_end==="12:00";
 });
+await frame.locator('#x19g-board-edit [data-msd-date="2026-09-28"] .msd-shortage-group > summary').click();
 await frame.locator('[data-msd-date="2026-09-28"] [data-msd-supplement]').click();
 
 await check("xstore_018_moves_already_assigned_employee_to_remaining_availability_group",async()=>{
