@@ -48,6 +48,7 @@ await check("xstore_019c_primary_calendar_has_no_persistent_candidate_pool",asyn
  return JSON.stringify(metric);
 });
 
+await frame.locator('#x19g-board-edit [data-msd-date="2026-09-28"] .msd-shortage-group > summary').click();
 await frame.evaluate(()=>{
  const w=document.querySelector(".msd-board-wrap");
  const action=document.querySelector('[data-msd-date="2026-09-28"] [data-msd-supplement]');
@@ -88,6 +89,7 @@ await check("xstore_019c_close_restores_calendar_context_and_full_width",async()
  return JSON.stringify({before,after});
 });
 
+await frame.locator('#x19g-board-edit [data-msd-date="2026-09-28"] .msd-shortage-group > summary').click();
 await frame.locator('[data-msd-date="2026-09-28"] [data-msd-supplement]').click();
 const manualCandidate=frame.locator('[data-msd-pool-group="manual"] [data-msd-pool-user="u-3"]');
 await manualCandidate.waitFor();
@@ -103,6 +105,7 @@ await check("xstore_019c_manual_outside_availability_keeps_audit_marker_and_repa
 
 await frame.locator('[data-msd-row="0"] .msd-direct-actions [data-msd-remove-direct="0"]').click();
 await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().shortages.length===1);
+await frame.locator('#x19g-board-edit [data-msd-date="2026-09-28"] .msd-shortage-group > summary').click();
 await frame.locator('[data-msd-date="2026-09-28"] [data-msd-supplement]').click();
 await frame.locator('[data-msd-pool-group="unassigned"] [data-msd-pool-user="u-1"]').click();
 await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return !s.candidateDrawerOpen&&s.assignments.length===1&&s.shortages.length===0});
