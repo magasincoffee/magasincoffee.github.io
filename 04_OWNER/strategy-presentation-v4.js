@@ -1,5 +1,7 @@
+import {projectOwnerStrategicSnapshot} from "./owner-strategy-source-v1.mjs";
 const dash=document.getElementById("strategyDashboard");
 if(dash){
+ let canonicalSnapshot=null;
  const hasMetric=v=>v!==null&&v!==undefined&&v!==""&&typeof v!=="boolean"&&Number.isFinite(Number(v));
  const money=v=>hasMetric(v)?new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND",maximumFractionDigits:0}).format(Number(v)):"—";
  const pct=v=>hasMetric(v)?new Intl.NumberFormat("vi-VN",{maximumFractionDigits:1}).format(Number(v))+"%":"—";
@@ -44,16 +46,17 @@ if(dash){
   el.append(ring,legend)
  };
  const productionModel=()=>{
+   if(canonicalSnapshot)return projectOwnerStrategicSnapshot(canonicalSnapshot);
   const revenueQuality=document.getElementById("revenueQuality")?.dataset.quality||"NOT_CONNECTED";
   const revenueText=document.getElementById("revenueValue")?.textContent?.trim()||"—";
-  const trusted=["ACTUAL","ESTIMATE"].includes(revenueQuality)&&revenueText!=="—";
+  const trusted=revenueQuality==="ACTUAL"&&revenueText!=="—";
   return {fixture:false,periodLabel:"Kỳ hiện tại",revenueText:trusted?revenueText:"—",revenueMeta:trusted?("Nguồn "+revenueQuality+" từ Control Tower"):"Chưa có dữ liệu doanh thu đủ tin cậy",
    cost:null,profit:null,margin:null,cashflow:null,targetProgress:null,trend:[],stores:[],revenueMix:[],costMix:[],products:[],customers:[],alerts:[],forecast:[]};
  };
  const render=()=>{
   const fixture=globalThis.__MAGASIN_OWNER_STRATEGY_READ_MODEL__;
   const model=fixture&&fixture.fixture===true?fixture:productionModel();
-  const source=document.getElementById("strategySourceMode");if(source){source.dataset.mode=model.fixture?"fixture":"read-only";source.textContent=model.fixture?"FIXTURE READ-ONLY":"READ-ONLY"}
+  const source=document.getElementById("strategySourceMode");if(source){source.dataset.mode=model.fixture?"fixture":"read-only";source.textContent=model.fixture?"FIXTURE READ-ONLY":canonicalSnapshot?"CANONICAL READ-ONLY":"READ-ONLY"}
   const anyRevenue=model.revenueText&&model.revenueText!=="—"||hasMetric(model.revenue);
   const incomplete=!model.fixture&&!(anyRevenue&&hasMetric(model.cost)&&hasMetric(model.profit));
   dash.dataset.strategySources=model.fixture?"fixture":incomplete?"incomplete":"available";
@@ -70,11 +73,17 @@ if(dash){
   set("strategyTargetProgress",pct(model.targetProgress));set("strategyTargetProgressMirror",pct(model.targetProgress));set("strategyTargetMeta",hasMetric(model.targetProgress)?"Tiến độ theo mục tiêu read-only":"Chưa có mục tiêu authoritative");
   set("strategyTrendHeadline",model.trendHeadline||"—");renderTrend(model.trend);
   renderDonut("strategyRevenueMix",model.revenueMix,"doanh thu");renderDonut("strategyCostMix",model.costMix,"chi phí");
-  list("strategyStoreComparison",model.stores,money,true);list("strategyProductPerformance",model.products,v=>String(v??"—"));list("strategyCustomerTrends",model.customers,v=>String(v??"—"));list("strategyAlerts",model.alerts,v=>String(v??"—"));list("strategyForecastTargets",model.forecast,v=>String(v??"—"));
+  list("strategyStoreComparison",model.stores,money,true);list("strategyProductPerformance",model.products,v=>String(v??"—"));list("strategyCustomerTrends",model.customers,v=>String(v??"—"));list("strategyAlerts",model.alerts,v=>hasMetric(v)?money(v):String(v??"—"));list("strategyForecastTargets",model.forecast,v=>String(v??"—"));
   set("strategyWorkforceGap",document.getElementById("workforceGap")?.textContent?.trim()||count(model.workforceGap));
   set("strategyWorkforceUnresolved",document.getElementById("workforceUnresolved")?.textContent?.trim()||count(model.workforceUnresolved));
   dash.dataset.strategyState="ready";
  };
+ // Accept normalized snapshot only after canonical Owner access succeeds.
+ document.addEventListener('magasin:owner-strategy-snapshot',event=>{
+  if(!event.detail?.snapshot)return;
+  canonicalSnapshot=event.detail.snapshot;
+  render();
+ });
  const observer=new MutationObserver(()=>{if(document.body.dataset.ownerOverviewLoading==="false")render()});
  observer.observe(document.body,{attributes:true,attributeFilter:["data-owner-overview-loading"]});
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",render,{once:true});else render();
