@@ -903,8 +903,8 @@ async function boot(){
 }
 document.addEventListener('magasin:manager-schedule-open',e=>openDirect(e.detail));
 document.addEventListener('magasin:owner-schedule-open',e=>openDirect(e.detail));
-// An authenticated Manager updated canonical employee master data in the staff editor.
-// Re-read the server rather than trusting client event payloads; never rewrite a saved roster.
+// After a Manager updates employee information, reload classification from the trusted data source.
+// This refreshes displayed staffing labels only; published assignments remain unchanged.
 document.addEventListener('magasin:employment-type-saved',async()=>{
  if(!state.storeId||state.busy)return;
  try{await loadEligibleEmployees();if(panel())render()}catch(e){console.warn('[MANAGER_EMPLOYMENT_REFRESH]',e)}
