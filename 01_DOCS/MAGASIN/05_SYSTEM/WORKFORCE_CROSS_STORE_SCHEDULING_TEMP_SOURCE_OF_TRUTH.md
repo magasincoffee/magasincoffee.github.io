@@ -920,6 +920,27 @@ Verified against canonical MAGASIN-NOIBO Supabase using read-only SQL:
 
 **Next executable task remains XSTORE-019O**, with unresolved authenticated role smoke, full schema/JWT-RLS, source-quality remediation, independently governed SAPO security P0, final exact RC/rollback and Owner approval. Keep PR #392 Draft/unmerged, XSTORE-020 and 011 PAUSED.
 
+## 0.32 XSTORE-019O SAPO attribution root-cause dry-run diagnostics — 2026-10-11
+
+**Strictly READ-ONLY diagnosis** against actual MAGASIN-NOIBO; no function was executed to re-resolve orders, and no cashier/employee names or customer details were returned. `XSTORE-019O` remains **RC_NOT_READY**.
+
+Stored `resolve_sapo_order_branches(date)` contract was inspected without invocation. It matches SAPO `paid_at_local` to `attendance_source_sessions` on (a) `quality_status='VALID'`, (b) normalized employee name or an explicitly active SAPO alias, (c) identical local work date, (d) `start_time <= paid_time < end_time`, (e) non-NULL store, then attributes to a store only if the distinct matched store count is exactly one. The routine itself has the previously recorded unrestricted `anon` EXECUTE P0 and must not be used as a diagnostic shortcut.
+
+**Supporting production counts at 2026-10-11 inspection:** `attendance_source_sessions` = **287**, all 287 VALID with non-NULL store; `source_employee_aliases` = **0** (no active SAPO alias records). All **18,646** SAPO order rows have normalized cashier names and non-NULL `paid_at_local`.
+
+**October (existing paid_at_local October data):** Of **384** `UNRESOLVED` orders, all 384 have at least one VALID scoped attendance session on the same date, but only **59** have an exact normalized cashier-name match and the required time overlap; all 59 have **one unique matched store** and no cross-store match conflict in the SELECT-only diagnostic, yet remain persisted as `UNRESOLVED`. The other **325** have a same-day session but no matching normalized cashier name. This discrepancy may reflect stale resolution/materialization or other ingestion sequence details; **do not automatically assume it is safe to execute the resolver**.
+
+**September:** Of **5,821** `UNRESOLVED` orders, **2,368** have no VALID/store-scoped attendance session on the paid date, **3,387** have a same-day session but no matching normalized cashier name, and **66** have matching name/date but paid time outside that employee's validated session interval. **Zero** September unresolved orders met the complete exact date/name/time matching predicate in this read-only query. These three disjoint buckets add to 5,821. Historical August attribution remains separately incomplete as §0.31 records.
+
+**Controlled remediation prerequisites (no production mutation authorized):**
+1. Create a **read-only, date-bounded discrepancy/reconciliation report** across SAPO, validated attendance and alias authority without publishing employee names or order details in SOT; identify allowed identity mappings with Owner/Manager review, not fuzzy auto-writes.
+2. Audit why 59 October orders are eligible for a unique matching store but persisted `UNRESOLVED`; prove caller/date scope, idempotency, audit and rollback on an isolated database before any execution.
+3. Handle missing date sessions and mismatched time evidence as **unknown**, not fabricated branch attribution. Do not silently assign store by guess or by cashier name alone.
+4. Resolve direct resolver execution ACL P0 independently via PR #393 and validate preserved token-gated ingestion before any production reconciliation job.
+5. Only after explicit authorized change/reconciliation: revalidate `sapo_orders` quality and canonical daily revenue source lineage. Until then, Owner KPIs must fail closed and cannot claim complete per-store ACTUAL revenue or profit.
+
+No branch attribution, finance or scheduled work records were modified by this diagnostic. This source-quality gap does **not** authorize merging PR #392 or advancing XSTORE-020.
+ 
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
