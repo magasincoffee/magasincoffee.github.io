@@ -1024,6 +1024,24 @@ No branch attribution, finance or scheduled work records were modified by this d
 - **Do not request, copy or expose passwords/tokens to the chat.** When the user is needed for real role QA, use legitimate signed-in browser sessions with authorized roles; verify independently and do not infer authenticated acceptance from schema-only or synthetic results.
 
 
+## 0.37 XSTORE-019O production-versus-preview version mismatch and three-role login — 2026-10-11
+
+**Status remains XSTORE-019O IN PROGRESS / RC_NOT_READY; 019O release not authorized; XSTORE-020 PAUSED.** Owner reported signing in to the three canonical roles on 2026-10-11, but live UI still did not reflect the previously approved XSTORE-019J mockups. This symptom is **expected from branch/deployment separation**, not yet evidence of a login or cache defect.
+
+**Read-only deployed UI evidence from H4:**
+- The live `https://magasincoffee.github.io/05_MANAGER/Workforce/index.html`, `/05_MANAGER/runtime/manager-runtime-v1.html`, and `/04_OWNER/Workforce/index.html` returned HTTP **200** but do **not** contain the approved `20261009-xstore-019j-compact3` UI revision token. Their response includes `Cache-Control: max-age=600`; cache clearing alone cannot fetch code that is absent from published `main`.
+- The live `https://magasincoffee.github.io/09_QA/xstore-019j/manager-preview.html` returned **404**: preview paths are not deployed to `main`.
+- GitHub branch/content cross-check: `05_MANAGER/runtime/manager-runtime-v1.html` on `main` has content blob `c478a2fa1b56ca7189bbff5c38d1c26410cca858` (3470 bytes, no approved revision token); on Draft PR #392 branch `xstore-019-unified-rc-v1` content blob `e7ee807f6c55bc80ab139bc379b6c240399c2fcb` (3485 bytes, contains approved revision token). `09_QA/xstore-019j/index.html` exists only on Draft branch. PR #392 HEAD still `9b0a4265b7dca0aef2cb4ef5c248128f9bf7c298`, `draft=true`, `merged=false`.
+- **Conclusion:** Owner signing in to three roles on live origin confirms only live login (Owner report), **not actual authentication against the new Draft RC UI**. Do not mark §0.28.C.1–C.3 as done on that basis; production UI remaining old is expected until controlled XSTORE-020 release after approval.
+
+**Independent preview provided without altering real production:**
+- On authorized `DESKTOP-H4A16IL`, launched a **localhost-only** static preview HTTP server listening at `127.0.0.1:8788` from isolated exact PR HEAD worktree `D:\MAGASIN_XSTORE_019O_CROSS_STORE_20261011` (PID initially 2192). All four preview URLs `/09_QA/xstore-019j/index.html`, `manager-preview.html`, `employee-preview.html`, `owner-preview.html` returned HTTP **200**.
+- Re-ran `09_QA/xstore-019j/xstore-019j-preview-browser.mjs` with `QA_BASE_URL=http://127.0.0.1:8788`: **5/5 PASS** for 1440/390 preview index responsiveness and 390px Manager/Employee/Owner preview render+reload. Captured `qa-artifacts/xstore-019j-current-head-20261011/` screenshots and `xstore-019j-preview-report.json` on H4.
+- Confirmed local Chrome **Profile 3 = Toi123**, launched a new preview index window under that profile: `http://127.0.0.1:8788/09_QA/xstore-019j/index.html`. **This is a static UI preview with test fixtures, not authenticated production, a live-data route, or a substitute for three-role smoke.** Other Chrome profiles, tokens and production data were not manipulated.
+- The localhost preview server was intentionally left available **only on H4 loopback** for Owner visual inspection, not exposed over LAN/internet. May be stopped safely when no longer needed; no actual `main` deployment/production mutation occurred.
+
+**Remaining decisive gate:** Authenticated full-flow Manager/Employee/Owner acceptance on the actual candidate, plus schema/JWT/RLS/financial source/security/Owner release authority. An Owner-approved exact RC and maintenance window are needed before changing production; do not merge #392 or activate XSTORE-020 because of successful live login alone.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
