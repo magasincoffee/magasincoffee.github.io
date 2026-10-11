@@ -10,4 +10,14 @@ test('XSTORE-019J workspace cache chain and narrow Manager day-window outrank le
 test('XSTORE-019J Shift Cluster groups overlapping assignments as presentation-only UI',()=>{for(const x of ['groupOverlappingAssignments','shiftClusterHtml','clusterRowHtml','assignmentEmploymentBadge','msd-shift-cluster','data-msd-cluster-size','msd-cluster-overflow','slice(0,3)','slice(3)'])assert.ok(d.includes(x),x);assert.ok(d.includes('group.items.length===1?directCardHtml'));assert.ok(d.includes('overflow:hidden'));assert.match(d,/replace_schedule_generation_assignments/);assert.doesNotMatch(d,/insert\s+into\s+work_schedules/i);});
 test('XSTORE-019G auto schedule heals missed master rendered event',()=>{const a=r('05_MANAGER/Workforce/cross-store-auto-schedule-v1.js');assert.ok(a.includes('function hydrateFromMaster()'));assert.ok(a.includes('MAGASIN_CROSS_STORE_MASTER'));assert.ok(a.includes('queueMicrotask'));assert.ok(a.includes('master.refresh()'));assert.ok(a.indexOf("document.addEventListener('magasin:xstore-master-rendered'")<a.indexOf('hydrateFromMaster();'))});
 test('XSTORE-019G context remains display-only; later XSTORE-019K adds authorized manager RPC',()=>{assert.ok(d.includes('function employmentTypeLabel'));assert.ok(d.includes('x19g-employment'));assert.ok(d.includes('employment_type'));assert.ok(d.includes("client().rpc('set_employee_employment_type_v1'"));assert.ok(!d.includes(".from('employee_constraints')"));assert.ok(q.includes('employment_type:id==="u-1"?"FULL_TIME":id==="u-2"?"PART_TIME":null'))});
+test('XSTORE-019M check issue navigation stays mounted across MutationObserver sync',()=>{
+ const begin=f.indexOf('function syncCheckRail(sh,s){'),end=f.indexOf('function alignShortages(r){',begin);
+ assert.ok(begin>=0&&end>begin,'check rail renderer must exist');
+ const sync=f.slice(begin,end);
+ assert.ok(sync.includes('box.dataset.x19mCheckSignature===signature'),'identical shortage projection must skip DOM rebuild');
+ assert.ok(sync.indexOf('box.dataset.x19mCheckSignature===signature')<sync.indexOf('box.replaceChildren()'),'memoization must run before changing live issue links');
+ assert.ok(sync.includes('shortages.map(x=>'),'shortage fingerprint must include source data');
+ assert.ok(sync.includes('jumpToCalendarIssue(sh,x,i)'),'shortage link must preserve existing edit navigation');
+ assert.ok(!sync.includes('replace_schedule_generation_assignments'),'read-only check rail must not write schedule assignments');
+});
 console.log('XSTORE_019G_MANAGER_FIVE_BOARD_STATIC=PASS');
