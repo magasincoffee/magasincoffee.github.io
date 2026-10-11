@@ -147,6 +147,7 @@ declare
   v_candidate_start time without time zone;
   v_candidate_end time without time zone;
   v_iteration integer;
+  v_employment_pass integer;
 begin
   if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
   if v_role not in ('OWNER','STORE_MANAGER') then raise exception 'ROLE_NOT_ALLOWED'; end if;
@@ -237,9 +238,12 @@ begin
     );
   end loop;
 
-  -- XSTORE-014: satisfy recurring requirements by repeatedly filling exact
-  -- under-covered intervals. Candidates are clipped to each shortage interval.
-  for r in
+  -- XSTORE-019O: complete the full four-store/weekly FT allocation first.
+  -- Only then permit PT into actual remaining uncovered headcount/time.
+  -- Unknown employment types are not inferred or automatically assigned.
+  -- Keep XSTORE-014 clipped interval composition and hard eligibility checks.
+  for v_employment_pass in 0..1 loop
+    for r in
     select
       req.id,
       req.store_id,
@@ -327,6 +331,8 @@ begin
           where ea.work_date=r.work_date
             and ea.availability_type in ('AVAILABLE','PREFERRED')
             and p.status='ACTIVE'
+            and ((v_employment_pass=0 and ec.employment_type='FULL_TIME')
+              or (v_employment_pass=1 and ec.employment_type='PART_TIME'))
             and upper(coalesce(p.role,'')) in ('STAFF','EMPLOYEE')
             and ea.end_time>g.shortage_start
             and ea.start_time<g.shortage_end
@@ -479,6 +485,8 @@ begin
       and a.start_time<r.end_time
       and r.start_time<a.end_time;
 
+    -- Shortage reporting is final only after the PT residual pass.
+    if v_employment_pass=1 then
     for g in
       select shortage_start,shortage_end,assigned_headcount,missing_headcount
       from public.evaluate_workforce_coverage_shortages_v1(
@@ -500,6 +508,8 @@ begin
         'assigned',g.assigned_headcount,
         'missing',g.missing_headcount
       );
+    end loop;
+    end if;
     end loop;
   end loop;
 

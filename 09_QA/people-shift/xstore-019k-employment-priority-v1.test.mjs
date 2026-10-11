@@ -31,7 +31,7 @@ test('readers have independent authority, no backward incompatible MER return si
  assert.match(sql,/revoke all on public\.employee_employment_type_audit_v1 from public, anon, authenticated/);
  assert.match(sql,/alter table public\.employee_employment_type_audit_v1 enable row level security/);
 });
-test('cross-store auto DRAFT: same hard eligibility before ranking, FT ahead PT, unknown last',()=>{
+test('cross-store auto DRAFT: hard eligibility, global FT pass before PT-only residual pass',()=>{
  assert.match(sql,/ea\.availability_type in \('AVAILABLE','PREFERRED'\)/);
  assert.match(sql,/and p\.status='ACTIVE'/);
  assert.match(sql,/join public\.employee_store_priorities esp\s+on esp\.employee_id=p\.id and esp\.store_id=r\.store_id/);
@@ -43,6 +43,17 @@ test('cross-store auto DRAFT: same hard eligibility before ranking, FT ahead PT,
  assert.ok(hard<order,'hard eligibility evaluated in WHERE');
  assert.match(sql,/create or replace function public\.auto_generate_cross_store_schedule_v1/);
  assert.match(sql,/v_generation_ids jsonb/);
+});
+test('global two-pass execution: every FT window considered before PT, true gaps only, unknown excluded',()=>{
+ assert.match(sql,/v_employment_pass integer;/);
+ assert.match(sql,/for v_employment_pass in 0\.\.1 loop\s+for r in[\s\S]*?workforce_recurring_staffing_requirements req/);
+ assert.match(sql,/and \(\(v_employment_pass=0 and ec\.employment_type='FULL_TIME'\)\s+or \(v_employment_pass=1 and ec\.employment_type='PART_TIME'\)\)/);
+ assert.match(sql,/if v_employment_pass=1 then\s+for g in\s+select shortage_start,shortage_end,assigned_headcount,missing_headcount/);
+ assert.match(sql,/end loop;\s+end if;\s+end loop;\s+end loop;\s+update public\.schedule_generation_runs gr/);
+ assert.match(sql,/greatest\(g\.shortage_start,ea\.start_time\) as candidate_start/);
+ assert.match(sql,/least\(g\.shortage_end,ea\.end_time\) as candidate_end/);
+ assert.match(sql,/and not exists\(/); // overlap/official schedule guards must remain
+ assert.doesNotMatch(sql,/coalesce\(ec\.employment_type\s*,\s*'PART_TIME'\)/i);
 });
 test('Manager candidate tie breakers: available before unavailable, FT before PT, Store Priority retained',()=>{
  const rank=scheduler.match(/function employmentTypeRank\(v\)\{[^\n]+\}/)?.[0];
