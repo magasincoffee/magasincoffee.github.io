@@ -1073,6 +1073,19 @@ No branch attribution, finance or scheduled work records were modified by this d
 **Owner acceptance: PENDING / REJECTED UNTIL NEW REVIEW.** This is not a renewed approval, not RC_READY, not XSTORE-020 authorization. Follow original maintenance/security/data rules.
 
 
+## 0.40 XSTORE-019O Owner FT/PT settings placement — 2026-10-11
+
+**Owner follow-up decision after real Manager calendar review:** Owner explicitly confirms that the **new compact Manager weekly-calendar layout is correct**, and requests that **FT/PT classification be configured in the employee information/settings area by the Manager**, not inside scheduling. This is limited layout/workflow acceptance, NOT complete XSTORE-019O acceptance or approval to release. CURRENT_TASK_ID remains **XSTORE-019O IN PROGRESS / RC_NOT_READY**; historical XSTORE-019J stays closed, XSTORE-020 remains paused.
+
+**Canonical placement and functionality:**
+1. Use the existing **Manager → Nhân viên → Thiết lập thông tin** interface (canonical staff route **/05_MANAGER/#staff**, existing file **05_MANAGER/Workforce/staff-projection-v1.js**). The chosen employee's existing information editor, which already holds ordered Store Priority, must also contain **Loại nhân viên: Full-time (FT) / Part-time (PT)** with explicit **Lưu thông tin** feedback. Do not introduce a duplicate FT/PT management editor in the schedule/candidate drawer, and do not create a second staff directory.
+2. Scope reads and writes to authorized Manager/Owner roles and employees within the caller's server-side store/authority scope, using existing canonical **list_employee_employment_types_v1** and **set_employee_employment_type_v1** RPCs with audit. Employee may see their type in profile but must not change it. No unscoped table writes or client-only classification state.
+3. Until the official migration/RPC is released to production, display **Chưa phân loại** / **Chưa triển khai** truthfully and disable unavailable writes. Do not guess whether any real employee is FT/PT, and do not backfill the production workforce. Authorized Manager will classify employees explicitly after the approved controlled release.
+4. A saved, server-confirmed FT/PT choice must persist after reload and appear read-only in the Manager roster, scheduling Step 3/4 shift cards and clusters, employee selection drawer, and Employee profile. Scheduling remains a planning surface rather than an employee-master-data editor. Preserve the compact per-day shortage warnings, shift clusters, and other Owner-accepted layout.
+5. For subsequent automatic scheduling drafts, eligible FT is preferred ahead of eligible PT only after mandatory ACTIVE, Store Priority, Availability, conflict and other hard-eligibility constraints. Classification changes must never retroactively alter published rosters, attendance or payroll.
+6. Acceptance requires tests for legitimate Manager configuration, reload persistence, negative Employee/self/foreign-store mutation, missing-RPC fail-closed state, FT/PT read-only propagation, deterministic ranking and no schedule layout regression, plus necessary exact-head/three-role security/production-schema gates.
+7. Make changes under existing **XSTORE-019O / Draft PR #392** following the established SOT task and release policy; **DO NOT MERGE / DO NOT DEPLOY / NO PRODUCTION DDL** until the separately required release approval. This Owner placement decision does not authorize live employee data writes or XSTORE-020 execution.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
