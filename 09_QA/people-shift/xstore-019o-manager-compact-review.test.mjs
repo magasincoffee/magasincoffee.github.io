@@ -42,3 +42,15 @@ test('XSTORE-019O issues disclosure stays compact even with many shortages',()=>
  assert.match(boards,/\.x19o-employment-ft/);
  assert.match(boards,/\.x19o-employment-pt/);
 });
+
+test('XSTORE-019O day cells summarize deficits in one expandable warning, with actual intervals retained',()=>{
+ assert.match(draft,/const issues=shortageMap\[day\]/);
+ assert.match(draft,/issues\.reduce\(/);
+ assert.match(draft,/msd-shortage-group.*data-msd-shortage-group/);
+ assert.match(draft,/msd-shortage-group-list/);
+ assert.match(draft,/shortageCards/);
+ assert.match(draft,/data-msd-supplement/);
+ assert.match(boards,/target\.closest\('details\.msd-shortage-group'\)/);
+ assert.match(boards,/group\.open=true/);
+ assert.match(boards,/\.msd-shortage-group-list\{[^}]*max-height:180px/);
+});
