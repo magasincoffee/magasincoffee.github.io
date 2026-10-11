@@ -272,6 +272,9 @@ function render(snapshot, { loading = false } = {}) {
 
   renderQuality(snapshot);
   renderAttention(snapshot, { loading });
+  // XSTORE-019N: publish only normalized, Owner-authorized canonical read data.
+  // Never hand off raw RPC results, service credentials, or estimated P&L.
+  if (!loading) document.dispatchEvent(new CustomEvent('magasin:owner-strategy-snapshot', {detail:{snapshot}}));
 }
 
 function clearLoadedSectionsForRefresh() {
