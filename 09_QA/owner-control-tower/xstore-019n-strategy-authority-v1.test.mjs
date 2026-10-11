@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {projectOwnerStrategicSnapshot} from '../../04_OWNER/owner-strategy-source-v1.mjs';
+import {projectOwnerStrategicSnapshot,recordOwnerStrategicSnapshot,readOwnerStrategicSnapshot} from '../../04_OWNER/owner-strategy-source-v1.mjs';
 
 const good = () => ({
  context:{reportingDate:'2026-10-11',branchScope:'ALL',refreshedAt:'2026-10-11T01:00:00Z'},
@@ -41,10 +41,19 @@ test('XSTORE-019N handoff requires authenticated Control Tower normalized snapsh
  const source=fs.readFileSync('04_OWNER/strategy-presentation-v4.js','utf8');
  const adapter=fs.readFileSync('04_OWNER/ControlTower/control-tower-v1.js','utf8');
  assert.match(adapter,/new CustomEvent\('magasin:owner-strategy-snapshot'/);
- assert.match(adapter,/if \(!loading\)/);
+ assert.match(adapter,/recordOwnerStrategicSnapshot\(loading \? null : snapshot\)/);
+ assert.match(source,/readOwnerStrategicSnapshot\(\)/);
  assert.match(source,/projectOwnerStrategicSnapshot\(canonicalSnapshot\)/);
  assert.match(source,/event.detail\?\.snapshot/);
  assert.match(source,/fixture&&fixture.fixture===true/);
  assert.doesNotMatch(source,/\.from\(|\.insert\(|\.upsert\(|\.update\(|\.delete\(/);
+});
+test('XSTORE-019N stable trusted snapshot handoff clears on refresh',()=>{
+ recordOwnerStrategicSnapshot(null);
+ assert.equal(readOwnerStrategicSnapshot(),null);
+ const sample=good();recordOwnerStrategicSnapshot(sample);
+ assert.equal(projectOwnerStrategicSnapshot(readOwnerStrategicSnapshot()).revenue,12800000);
+ recordOwnerStrategicSnapshot(null);
+ assert.equal(projectOwnerStrategicSnapshot(readOwnerStrategicSnapshot()).revenue,null);
 });
 console.log('XSTORE_019N_OWNER_AUTHORITY_STATIC=PASS');
