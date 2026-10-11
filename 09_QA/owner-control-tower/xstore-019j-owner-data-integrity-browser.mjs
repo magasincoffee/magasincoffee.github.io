@@ -3,7 +3,7 @@ import {chromium} from "playwright";
 
 const BASE=process.env.QA_BASE_URL||"http://127.0.0.1:8787";
 const html=fs.readFileSync("04_OWNER/index.html","utf8").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"");
-const strategyJS=fs.readFileSync("04_OWNER/strategy-presentation-v4.js","utf8");
+const strategyModule='/04_OWNER/strategy-presentation-v4.js';
 const browser=await chromium.launch({headless:true});
 const failures=[];
 
@@ -29,7 +29,9 @@ for(const width of [1440,390]){
      costMix:[],stores:[{label:"CN1",value:null}],products:[],customers:[],alerts:[],forecast:[]
     };
    },kind);
-   await page.addScriptTag({content:strategyJS});
+   // Production strategy is an ES module (canonical snapshot import). Replay
+   // the real module after setContent rather than injecting it as classic JS.
+   await page.evaluate(async url=>{await import(url)},strategyModule+'?qa-source-integrity='+width+'-'+kind);
    const actual=await page.evaluate(()=>{
     const val=id=>document.getElementById(id)?.textContent.trim();
     const font=s=>Number.parseFloat(getComputedStyle(document.querySelector(s)).fontSize);
