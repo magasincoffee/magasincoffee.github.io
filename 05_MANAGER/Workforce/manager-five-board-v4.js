@@ -108,6 +108,18 @@ function css(){
 
  s.textContent+='\n.x19m-check-stores{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}.x19m-store-label{color:#475467;font-weight:800;font-size:11px}.x19m-store{min-height:35px!important;font-size:11px!important}.x19m-store[aria-pressed="true"]{border-color:#2563eb!important;background:#eff6ff!important;color:#1d4ed8!important}.x19m-issue-link{white-space:normal!important;text-align:right!important;font-size:10px!important;color:#9f1239!important;border-color:#fecdd3!important;background:#fff1f2!important;cursor:pointer!important}.x19m-issue-target{outline:3px solid #e11d48!important;outline-offset:3px!important}.x19m-issue-target:focus-visible,.x19m-issue-link:focus-visible{outline:2px solid #2563eb;outline-offset:3px}\n';
  s.textContent+=`
+/* One visible shortage warning per calendar day instead of N large cards. */
+.x19g-shell .msd-shortage-group{display:block!important;position:relative!important;inset:auto!important;margin:4px!important;min-width:0!important;border:1px solid #a5b4fc!important;border-left:3px solid #6366f1!important;border-radius:6px!important;background:#eef2ff!important;color:#3730a3!important}
+.x19g-shell .msd-shortage-group>summary{cursor:pointer!important;min-height:30px!important;list-style:none!important;padding:6px 5px!important;font-size:10px!important;line-height:1.4!important;font-weight:900!important;overflow-wrap:anywhere!important}
+.x19g-shell .msd-shortage-group>summary::-webkit-details-marker{display:none}
+.x19g-shell .msd-shortage-group>summary::after{content:" ▾";font-size:10px!important}
+.x19g-shell .msd-shortage-group[open]>summary::after{content:" ▴"}
+.x19g-shell .msd-shortage-group>summary:focus-visible{outline:2px solid #2563eb!important;outline-offset:2px}
+.x19g-shell .msd-shortage-group-list{display:grid!important;gap:4px!important;max-height:180px!important;overflow:auto!important;overscroll-behavior:contain!important;padding:4px!important;min-width:0!important}
+.x19g-shell .msd-shortage-group-list .msd-shortage-card{position:relative!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;display:grid!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:4px!important;overflow:visible!important}
+.x19g-shell .msd-shortage-group-list .msd-shortage-card .btn{font-size:9px!important;min-height:24px!important}
+`;
+ s.textContent+=`
 /* XSTORE-019O: reject long shortage lists and show honest employee classification on all shifts. */
 .x19g-shell .x19o-issue-details{border:1px solid #dbe3ec;border-radius:7px;background:#f8fafc;margin-top:6px;min-width:0}
 .x19g-shell .x19o-issue-details>summary{cursor:pointer;padding:10px 12px;color:#1d4ed8;font-size:11px;font-weight:800;list-style:revert}
@@ -164,6 +176,8 @@ function jumpToCalendarIssue(sh,issue,index){
  sh.dataset.x19gDayIndex=String(i);syncDayWindow(sh,0);
  edit.scrollIntoView({behavior:'auto',block:'start'});
  const target=days[i].querySelector('[data-msd-shortage="'+index+'"]')||days[i];
+ // The day's shortage details are collapsed by default, reveal before jumping.
+ const group=target.closest('details.msd-shortage-group');if(group)group.open=true;
  edit.querySelectorAll('.x19m-issue-target').forEach(x=>x.classList.remove('x19m-issue-target'));
  target.classList.add('x19m-issue-target');
  target.scrollIntoView({behavior:'auto',block:'nearest',inline:'nearest'});
