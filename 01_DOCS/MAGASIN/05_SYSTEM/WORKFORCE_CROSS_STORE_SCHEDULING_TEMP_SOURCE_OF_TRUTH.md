@@ -968,6 +968,25 @@ No branch attribution, finance or scheduled work records were modified by this d
 - **Owner check requirement today:** none for the above read-only/local work. An authorized login/session or Owner decision is required at the corresponding actual role acceptance or controlled production cutover gate. No production changes are authorized or executed by this note.
 
 
+## 0.34 XSTORE-019O cross-store outside-attendance conflict pre-release repair — 2026-10-11
+
+**Task remains XSTORE-019O IN PROGRESS / RC_NOT_READY.** This is a newly discovered, reproducible pre-release **cross-store attendance conflict** on 019L, repaired solely on existing **Draft workforce PR #392**; no production schema/data, shift, user account or payroll mutation was performed.
+
+**Root cause and reproduction:** Original migration `20261010234500_xstore_019l_outside_attendance_requests_v1.sql` checked overlapping `APPROVED` official shifts only when `work_schedules.store_id = p_store_id` on employee submission and `work_schedules.store_id = v_row.store_id` during manager review. Therefore an employee with a published 08:00–12:00 shift at CN2 could submit a 09:00–10:00 outside-schedule request at CN1; native PG17.11 synthetic fixture returned `PENDING` instead of denying. Reproducer `D:\MAGASIN_XSTORE_019K_PGTEST_20261010\xstore_019o_cross_store_repro.sql` ran inside an explicit transaction and executed `ROLLBACK` before exit. No real attendance was created.
+
+**Bounded repair on PR #392 (not a new 019L release or task boundary):**
+- Migration code commit [`b7e6256550404b8c77d3d462d3e7e39a015ec917`](https://github.com/magasincoffee/magasincoffee.github.io/commit/b7e6256550404b8c77d3d462d3e7e39a015ec917) removes the same-store filter from overlapping official `APPROVED` shift checks at **both** submission and Manager approval. Existing scoped actor/store role checks are preserved; no publication or payroll writer added.
+- Manager approval now serializes by employee/day using transaction-scoped `pg_advisory_xact_lock`, rejecting a second already-APPROVED outside-schedule interval overlapping the proposed confirmed time, regardless of store. Submissions still create only PENDING requests. This closes sequential/cross-store double-approval conflicts in the isolated migration proof and avoids concurrent review approvals based on stale snapshots.
+- Added 4 dedicated source contracts to `09_QA/people-shift/xstore-019o-cross-store-outside-attendance-v1.test.mjs` via commit [`9b0a4265b7dca0aef2cb4ef5c248128f9bf7c298`](https://github.com/magasincoffee/magasincoffee.github.io/commit/9b0a4265b7dca0aef2cb4ef5c248128f9bf7c298) on the **same Draft PR #392**.
+
+**Fresh H4 exact-head evidence on `9b0a4265b7dca0aef2cb4ef5c248128f9bf7c298`:**
+- Clean isolated detached worktree `D:\MAGASIN_XSTORE_019O_CROSS_STORE_20261011`, fetched verified PR HEAD; newly added four static source contracts **4/4 PASS**.
+- Full targeted static sweep of people-shift + ui2-cross-role + owner-control-tower `*.test.mjs`: **94 files / 554 tests PASS / 0 fail / exit 0**; log `D:\MAGASIN_XSTORE_019O_CROSS_STORE_20261011\_019o_exact_head_static_qa.log`.
+- Copy of the **exact PR HEAD migration SQL**, verified against the QA test SQL using matching SHA256 `0A499EBBC1FF24A852E3C3B172B982CF9E884FAF6613937FA78C43628B663E18`, executed on localhost-only native PG17.11 synthetic DB. Four behavioral scenarios **4/4 PASS**: reject submitting against published official shift at another store; reject Manager approval after an overlapping official shift at another store appears; reject second cross-store approved exception with same interval; preserve legitimate disjoint PENDING submission without payroll confirmation. Test runner and report: `D:\MAGASIN_XSTORE_019K_PGTEST_20261010\xstore_019o_cross_store_regression.mjs` and `xstore_019o_cross_store_report.json`. Each scenario used transaction `ROLLBACK`. PostgreSQL test service was stopped after QA.
+- New exact PR HEAD CI **must** be verified from GitHub Actions on `9b0a4265...` before claiming complete workflow GREEN. Earlier `3b5c884f` 22/22 CI success **cannot** be inherited by a new code/test commit.
+
+**Not resolved:** Real authenticated three-role browser and signed JWT/RLS tests; full production-schema K→L/migration/rollback proof; SAPO P0 direct resolver privileges in independent Draft PR #393; reconciled Owner revenue and real Full-time/Part-time employee classification; exact RC freeze and Owner after-hours approval. Do not merge/deploy or declare `RC_READY` based on isolated evidence.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
