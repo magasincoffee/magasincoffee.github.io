@@ -59,7 +59,15 @@ try{
  await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
  await page.locator('[data-msp-edit="u-2"]').click();
  assert.equal(await page.locator('[data-msp-type-save]').isDisabled(),true);
- assert.equal(await page.locator('[data-msp-employment]').isDisabled(),true);
+ assert.equal(await page.locator('[data-msp-employment]').isEnabled(),true);
+ const saveCallsBeforePreview=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==='set_employee_employment_type_v1').length);
+ await page.locator('[data-msp-employment]').selectOption('PART_TIME');
+ assert.match(await page.locator('[data-msp-type-msg]').innerText(),/CHƯA LƯU/);
+ assert.equal(await page.locator('[data-msp-type-save]').isDisabled(),true);
+ assert.equal(await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==='set_employee_employment_type_v1').length),saveCallsBeforePreview);
+ await page.locator('[data-msp-cancel]').click();
+ await page.locator('[data-msp-edit="u-2"]').click();
+ assert.equal(await page.locator('[data-msp-employment]').inputValue(),'');
  await page.evaluate(()=>globalThis.__MW31_QA.setRpcError('list_employee_employment_types_v1',null));
  assert.deepEqual(failures,[]);
  console.log('XSTORE_019K_EMPLOYMENT_MANAGER_BROWSER=PASS');

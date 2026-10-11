@@ -72,6 +72,9 @@ test('Manager and Employee presentation: explicit write and read-only, no direct
  assert.match(staff,/client\(\)\.rpc\('list_employee_employment_types_v1'/);
  assert.match(staff,/data-msp-employment/);
  assert.match(staff,/data-msp-type-save/);
+ assert.match(staff,/CHƯA LƯU: cần triển khai chức năng FT\/PT trên database/);
+ assert.match(staff,/if\(state\.employmentTypeReady\)return/);
+ assert.doesNotMatch(staff,/\+\(typeReady\?'':' disabled'\)\+'><option value="">Chưa phân loại/);
  assert.match(staff,/EMPLOYMENT_TYPE_PERSISTENCE_NOT_VERIFIED/);
  assert.match(staff,/if\(!\['FULL_TIME','PART_TIME'\]\.includes\(value\)\)/);
  assert.doesNotMatch(scheduler,/data-msd-set-employment|employmentAdminHtml|set_employee_employment_type_v1/);
