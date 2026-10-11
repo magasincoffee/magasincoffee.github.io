@@ -158,8 +158,14 @@ function jumpToCalendarIssue(sh,issue,index){
 
 function syncSupplementRail(sh,s,r){const box=sh.querySelector('[data-x19g-supplement-list]'),slot=sh.querySelector('[data-x19g-supplement-action]'),add=r?.querySelector('#msdOpenCandidateDrawer');if(box){box.replaceChildren();const rows=(Array.isArray(s.eligibleEmployees)?s.eligibleEmployees:[]).slice(0,5);if(!rows.length){const e=document.createElement('div');e.className='x19g-rail-row';const t=document.createElement('span');t.textContent='Chưa có nhân viên phù hợp trong ngữ cảnh hiện tại.';e.appendChild(t);box.appendChild(e)}else rows.forEach(x=>{const e=document.createElement('div');e.className='x19g-person-row';const n=document.createElement('strong'),b=document.createElement('span'),a=document.createElement('button');n.textContent=String(x.employee_name||x.full_name||x.username||x.employee_id||x.user_id||'Nhân viên');const et=String(x.employment_type||'').toUpperCase();b.textContent=et==='FULL_TIME'?'FT':et==='PART_TIME'?'PT':'NV';a.type='button';a.className='btn x19g-person-action';a.textContent='Chọn';a.addEventListener('click',()=>add?.click());e.append(n,b,a);box.appendChild(e)})}if(add&&slot&&!slot.contains(add))slot.appendChild(add)}
 function syncCheckRail(sh,s){
- const box=sh.querySelector('[data-x19g-check-summary]');if(!box)return;box.replaceChildren();
+ const box=sh.querySelector('[data-x19g-check-summary]');if(!box)return;
  const st=String(s.generationStatus||'NONE').toUpperCase(),shortages=Array.isArray(s.shortages)?s.shortages:[],validation=String(s.lastValidation||'').toUpperCase();
+ // XSTORE-019M: observer-driven sync must not replace live issue buttons on
+ // unrelated DOM mutations; doing so detaches them during a real click.
+ const signature=JSON.stringify([st,validation,shortages.map(x=>[x.requirement_id||'',x.store_id||'',x.work_date||'',x.shortage_start||'',x.shortage_end||'',x.missing_headcount||0])]);
+ if(box.dataset.x19mCheckSignature===signature)return;
+ box.dataset.x19mCheckSignature=signature;
+ box.replaceChildren();
  railRow(box,'Trạng thái lịch',st==='DRAFT'?'LỊCH NHÁP':st||'CHƯA TẠO',st==='CONFLICT'?'bad':st==='DRAFT'?'ok':'');
  railRow(box,'Khoảng thiếu người',String(shortages.length),shortages.length?'bad':'ok');
  railRow(box,'Kiểm tra xung đột',validation||'CHƯA CHẠY',validation==='VALID'?'ok':validation?'warn':'');
