@@ -130,6 +130,12 @@ jobs:
           QA_OUT: qa-artifacts/xstore-019
         run: node 09_QA/people-shift/xstore-019k-employment-manager-browser.mjs
 
+      - name: Run XSTORE-019O employee offboarding and restore security UI
+        env:
+          QA_BASE_URL: http://127.0.0.1:8779
+          QA_OUT: qa-artifacts/xstore-019
+        run: node 09_QA/people-shift/xstore-019o-staff-lifecycle-browser.mjs
+
       - name: Run exact-head integrated cross-role qualification
         env:
           QA_BASE_URL: http://127.0.0.1:8779
