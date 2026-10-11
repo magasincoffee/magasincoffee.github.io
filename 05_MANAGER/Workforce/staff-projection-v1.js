@@ -117,7 +117,9 @@ async function savePriority(){
  }finally{busy=false}
 }
 async function refresh(){
- if(busy||!ensureUi())return;busy=true;
+ if(busy||!ensureUi())return;
+ // Reloading the staff list closes a previous inline editor without persisting draft choices.
+ state.editId=null;busy=true;
  try{if(!state.stores.length)await loadStores();busy=false;await loadRows()}
  catch(e){busy=false;state.loading=false;state.rows=[];state.error=errorCode(e);render()}
 }
