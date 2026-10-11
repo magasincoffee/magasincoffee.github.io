@@ -23,7 +23,8 @@ try{
  await page.waitForFunction(()=>globalThis.__MW31_QA.employmentTypes['u-2']==='FULL_TIME');
  await page.waitForFunction(()=>document.querySelector('[data-msp-type-msg]')?.textContent?.includes('Đã lưu'));
  await page.locator('[data-view="workforce"]').click();
- await page.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.refresh());
+ // The saved classification propagates to the in-memory calendar from a canonical server re-read.
+ // No manual refresh, new DRAFT, or published schedule mutation should be required.
  await page.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().eligibleEmployees.find(x=>x.employee_id==='u-2')?.employment_type==='FULL_TIME');
  assert.equal(await page.locator('[data-msd-set-employment]').count(),0);
  const after=await page.evaluate(()=>({

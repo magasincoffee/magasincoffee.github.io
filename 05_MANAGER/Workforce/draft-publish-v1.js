@@ -903,6 +903,12 @@ async function boot(){
 }
 document.addEventListener('magasin:manager-schedule-open',e=>openDirect(e.detail));
 document.addEventListener('magasin:owner-schedule-open',e=>openDirect(e.detail));
+// An authenticated Manager updated canonical employee master data in the staff editor.
+// Re-read the server rather than trusting client event payloads; never rewrite a saved roster.
+document.addEventListener('magasin:employment-type-saved',async()=>{
+ if(!state.storeId||state.busy)return;
+ try{await loadEligibleEmployees();if(panel())render()}catch(e){console.warn('[MANAGER_EMPLOYMENT_REFRESH]',e)}
+});
 window.MAGASIN_MANAGER_SCHEDULE_DRAFT={openDirect,startOrResume,refresh:resumeOnly,validate,save,review,publish,getState:()=>({...state,stores:state.stores.map(x=>({...x})),assignments:state.assignments.map(x=>({...x})),availability:state.availability.map(x=>({...x})),eligibleEmployees:state.eligibleEmployees.map(x=>({...x})),weeklyPlan:state.weeklyPlan.map(x=>({...x})),requirements:state.requirements.map(x=>({...x})),shortages:state.shortages.map(x=>({...x})),supplementTarget:state.supplementTarget?{...state.supplementTarget}:null,candidateDrawerOpen:state.candidateDrawerOpen,calendarViewport:{...state.calendarViewport},calendarCreate:state.calendarCreate?{...state.calendarCreate}:null})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
