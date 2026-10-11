@@ -71,7 +71,6 @@ test("XSTORE-019A does not introduce a second scheduling authority",()=>{
     "publish_schedule_generation",
     "replace_schedule_generation_assignments",
     "review_schedule_generation",
-    "set_employee_employment_type_v1",
     "validate_schedule_generation_v1"
   ]);
   assert.doesNotMatch(draft,/client\(\)\.from\(|sb\.from\(|insert\s+into\s+work_schedules/i);
