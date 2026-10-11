@@ -48,6 +48,7 @@ await frame.waitForFunction(()=>{
  return s.busy===false&&s.generationStatus==="DRAFT"&&s.shortageSource==="SERVER"&&s.shortages.length===1;
 });
 
+await frame.locator('[data-msd-date="2026-09-28"] .msd-shortage-group > summary').click();
 await check("xstore_017_server_shortage_is_colocated_in_exact_day_cell",async()=>{
  const day=frame.locator('[data-msd-date="2026-09-28"]');
  const card=day.locator(".msd-shortage-card");
@@ -56,7 +57,7 @@ await check("xstore_017_server_shortage_is_colocated_in_exact_day_cell",async()=
  const shortage=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().shortages[0]);
  const interval=shortage?.shortage_start+"–"+shortage?.shortage_end;
  if(!shortage||!text.includes("Thiếu 1 người")||!text.includes(interval)||!text.includes("+ Bổ sung người"))throw new Error(JSON.stringify({text,shortage}));
- const style=await card.evaluate(el=>({background:getComputedStyle(el).backgroundColor,borderLeft:getComputedStyle(el).borderLeftColor,role:el.getAttribute("role"),label:el.getAttribute("aria-label"),iconHidden:el.querySelector(".msd-shortage-icon")?.getAttribute("aria-hidden"),inline:!!el.closest(".msd-slot-grid")}));
+ const style=await card.evaluate(el=>({background:getComputedStyle(el).backgroundColor,borderLeft:getComputedStyle(el).borderLeftColor,role:el.getAttribute("role"),label:el.getAttribute("aria-label"),iconHidden:el.querySelector(".msd-shortage-icon")?.getAttribute("aria-hidden"),inline:!!el.closest(".msd-shortage-group")}));
  if(style.background!=="rgb(238, 242, 255)"||style.borderLeft!=="rgb(99, 102, 241)"||style.role!=="status"||!String(style.label).includes("Thiếu nhân sự")||style.iconHidden!=="true"||!style.inline)throw new Error(JSON.stringify(style));
  return JSON.stringify({text,shortage,style});
 });
@@ -114,6 +115,7 @@ await frame.waitForFunction(()=>{
 });
 await check("xstore_017_dirty_edit_recalculates_exact_local_shortage",async()=>{
  const state=await frame.evaluate(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState());
+ await frame.locator('[data-msd-date="2026-09-28"] .msd-shortage-group > summary').click();
  const text=(await frame.locator('[data-msd-date="2026-09-28"] .msd-shortage-card').innerText()).replace(/\s+/g," ");
  if(state.shortageSource!=="LOCAL"||state.shortages[0]?.shortage_start!=="08:00"||state.shortages[0]?.shortage_end!=="12:00"||!text.includes("08:00–12:00"))throw new Error(JSON.stringify({text,source:state.shortageSource,shortage:state.shortages[0]}));
  return JSON.stringify({shortage:state.shortages[0],source:state.shortageSource,text});
