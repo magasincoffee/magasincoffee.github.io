@@ -105,6 +105,8 @@ function css(){
 .x19g-shell[data-x19j-compact="1"] .x19g-review .msd-shortage-card{pointer-events:none!important}
 @media(max-width:900px){.x19g-shell[data-x19j-compact="1"] .x19g-board[data-x19g-board="edit"] .msd-board,.x19g-shell[data-x19j-compact="1"] .x19g-review .msd-board{display:block!important}.x19g-shell[data-x19j-compact="1"] .x19g-board[data-x19g-board="edit"] .msd-day,.x19g-shell[data-x19j-compact="1"] .x19g-review .msd-day{display:none!important;border-right:0!important}.x19g-shell[data-x19j-compact="1"] .x19g-board[data-x19g-board="edit"] .msd-day[data-x19g-active-day="1"],.x19g-shell[data-x19j-compact="1"] .x19g-review .msd-day[data-x19g-active-day="1"]{display:block!important}}
 `;
+
+ s.textContent+='\n.x19m-check-stores{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}.x19m-store-label{color:#475467;font-weight:800;font-size:11px}.x19m-store{min-height:35px!important;font-size:11px!important}.x19m-store[aria-pressed="true"]{border-color:#2563eb!important;background:#eff6ff!important;color:#1d4ed8!important}.x19m-issue-link{white-space:normal!important;text-align:right!important;font-size:10px!important;color:#9f1239!important;border-color:#fecdd3!important;background:#fff1f2!important;cursor:pointer!important}.x19m-issue-target{outline:3px solid #e11d48!important;outline-offset:3px!important}.x19m-issue-target:focus-visible,.x19m-issue-link:focus-visible{outline:2px solid #2563eb;outline-offset:3px}\n';
  document.head.appendChild(s);
 }
 function board(k,n,t,h){const e=document.createElement('section');e.className='x19g-board';e.dataset.x19gBoard=k;e.id='x19g-board-'+k;e.tabIndex=-1;e.innerHTML='<div class="x19g-board-head"><span class="x19g-board-no">'+n+'</span><div><h3>'+t+'</h3><p class="x19g-help">'+h+'</p></div></div><div class="x19g-body"></div>';return e}
@@ -113,8 +115,73 @@ function clone(src){const c=src.cloneNode(true),all=[c,...c.querySelectorAll('*'
 function metric(value,label,tone){return '<div class="x19g-metric '+(tone||'')+'"><strong>'+value+'</strong><span>'+label+'</span></div>'}
 function railRow(box,label,value,tone){if(!box)return;const row=document.createElement('div');row.className='x19g-rail-row '+(tone||'');const a=document.createElement('span'),b=document.createElement('strong');a.textContent=String(label||'');b.textContent=String(value??'—');row.append(a,b);box.appendChild(row)}
 function syncPrepareRail(sh,x){const box=sh.querySelector('[data-x19g-prep-side]');if(!box)return;const title=sh.querySelector('.x19g-prepare-side .x19g-rail-title');if(title)title.textContent='Ưu tiên cửa hàng'+(x.storeCode?' ('+x.storeCode+')':'');box.replaceChildren();railRow(box,'Trạng thái ưu tiên',x.un?x.un+' nhân viên cần cấu hình':'Đã sẵn sàng',x.un?'warn':'ok');railRow(box,'Nhu cầu cố định',x.req+' khung/tuần',x.req?'ok':'warn');railRow(box,'Cửa hàng đã cấu hình',x.configured+'/'+x.stores,x.stores&&x.configured===x.stores?'ok':'warn');railRow(box,'Đăng ký thời gian',x.av+' lượt tuần này',x.av?'ok':'')}
+// XSTORE-019M: Step 4 uses the existing canonical store switcher's bound handler.
+// The review never owns an independent store selector or schedule writer.
+function syncCheckStores(sh,s,r){
+ const slot=sh.querySelector('[data-x19m-check-stores]');if(!slot)return;
+ const stores=Array.isArray(s.stores)?s.stores:[],current=String(s.storeId||'');
+ const signature=stores.map(x=>[x.id,x.code,x.name].join(':')).join('|')+'@'+current;
+ if(slot.dataset.signature===signature)return;
+ slot.dataset.signature=signature;slot.replaceChildren();
+ const heading=document.createElement('span');heading.textContent='Kiểm tra chi nhánh:';heading.className='x19m-store-label';slot.appendChild(heading);
+ stores.forEach(store=>{
+  const b=document.createElement('button');b.type='button';b.className='btn x19m-store';
+  b.dataset.x19mCheckStore=String(store.id);
+  b.textContent=String(store.code||store.name||'Cửa hàng');
+  b.setAttribute('aria-pressed',String(store.id)===current?'true':'false');
+  b.addEventListener('click',()=>{
+   if(String(store.id)===String(sched().storeId||''))return;
+   const canonical=[...r.querySelectorAll('.msd-store-switcher [data-msd-branch]')]
+    .find(x=>x.dataset.msdBranch===String(store.id));
+   if(canonical&&!canonical.disabled)canonical.click();
+  });
+  slot.appendChild(b);
+ });
+}
+function jumpToCalendarIssue(sh,issue,index){
+ const edit=sh.querySelector('[data-x19g-board="edit"]');
+ const workDate=String(issue.work_date||'').slice(0,10);
+ if(!edit||!workDate)return;
+ const days=[...edit.querySelectorAll('.msd-calendar-primary .msd-day')];
+ const i=days.findIndex(d=>d.dataset.msdDate===workDate);
+ if(i<0)return;
+ x19jCloseSlide();
+ sh.dataset.x19gDayIndex=String(i);syncDayWindow(sh,0);
+ edit.scrollIntoView({behavior:'auto',block:'start'});
+ const target=days[i].querySelector('[data-msd-shortage="'+index+'"]')||days[i];
+ edit.querySelectorAll('.x19m-issue-target').forEach(x=>x.classList.remove('x19m-issue-target'));
+ target.classList.add('x19m-issue-target');
+ target.scrollIntoView({behavior:'auto',block:'nearest',inline:'nearest'});
+ if(!target.hasAttribute('tabindex'))target.setAttribute('tabindex','-1');
+ target.focus({preventScroll:true});
+}
+
 function syncSupplementRail(sh,s,r){const box=sh.querySelector('[data-x19g-supplement-list]'),slot=sh.querySelector('[data-x19g-supplement-action]'),add=r?.querySelector('#msdOpenCandidateDrawer');if(box){box.replaceChildren();const rows=(Array.isArray(s.eligibleEmployees)?s.eligibleEmployees:[]).slice(0,5);if(!rows.length){const e=document.createElement('div');e.className='x19g-rail-row';const t=document.createElement('span');t.textContent='Chưa có nhân viên phù hợp trong ngữ cảnh hiện tại.';e.appendChild(t);box.appendChild(e)}else rows.forEach(x=>{const e=document.createElement('div');e.className='x19g-person-row';const n=document.createElement('strong'),b=document.createElement('span'),a=document.createElement('button');n.textContent=String(x.employee_name||x.full_name||x.username||x.employee_id||x.user_id||'Nhân viên');const et=String(x.employment_type||'').toUpperCase();b.textContent=et==='FULL_TIME'?'FT':et==='PART_TIME'?'PT':'NV';a.type='button';a.className='btn x19g-person-action';a.textContent='Chọn';a.addEventListener('click',()=>add?.click());e.append(n,b,a);box.appendChild(e)})}if(add&&slot&&!slot.contains(add))slot.appendChild(add)}
-function syncCheckRail(sh,s){const box=sh.querySelector('[data-x19g-check-summary]');if(!box)return;box.replaceChildren();const st=String(s.generationStatus||'NONE').toUpperCase(),shortages=Array.isArray(s.shortages)?s.shortages:[],validation=String(s.lastValidation||'').toUpperCase();railRow(box,'Trạng thái lịch',st==='DRAFT'?'LỊCH NHÁP':st||'CHƯA TẠO',st==='CONFLICT'?'bad':st==='DRAFT'?'ok':'');railRow(box,'Khoảng thiếu người',String(shortages.length),shortages.length?'bad':'ok');railRow(box,'Kiểm tra xung đột',validation||'CHƯA CHẠY',validation==='VALID'?'ok':validation?'warn':'');shortages.slice(0,3).forEach((x,i)=>railRow(box,'Thiếu '+(i+1),(x.shortage_start||'—')+'–'+(x.shortage_end||'—')+' · '+(x.missing_headcount||1)+' người','bad'))}
+function syncCheckRail(sh,s){
+ const box=sh.querySelector('[data-x19g-check-summary]');if(!box)return;box.replaceChildren();
+ const st=String(s.generationStatus||'NONE').toUpperCase(),shortages=Array.isArray(s.shortages)?s.shortages:[],validation=String(s.lastValidation||'').toUpperCase();
+ railRow(box,'Trạng thái lịch',st==='DRAFT'?'LỊCH NHÁP':st||'CHƯA TẠO',st==='CONFLICT'?'bad':st==='DRAFT'?'ok':'');
+ railRow(box,'Khoảng thiếu người',String(shortages.length),shortages.length?'bad':'ok');
+ railRow(box,'Kiểm tra xung đột',validation||'CHƯA CHẠY',validation==='VALID'?'ok':validation?'warn':'');
+ shortages.forEach((x,i)=>{
+  const line=document.createElement('div');line.className='x19g-rail-row bad';
+  const label=document.createElement('span'),link=document.createElement('button');
+  const date=String(x.work_date||'').slice(0,10);
+  const start=String(x.shortage_start||'—').slice(0,5),end=String(x.shortage_end||'—').slice(0,5);
+  label.textContent='Thiếu '+String(x.missing_headcount||1)+' người';
+  link.type='button';link.className='btn x19m-issue-link';link.dataset.x19mIssue=String(i);
+  link.textContent=date+' · '+start+'–'+end+' →';
+  link.setAttribute('aria-label','Mở ngày '+date+' lúc '+start+' đến '+end+' tại lịch nháp để xử lý thiếu người');
+  link.addEventListener('click',()=>jumpToCalendarIssue(sh,x,i));
+  line.append(label,link);box.appendChild(line);
+ });
+ if(validation==='INVALID'&&!shortages.length){
+  const action=document.createElement('button');action.type='button';action.className='btn x19m-issue-link';
+  action.textContent='Lịch còn xung đột — trở về Bước 3 →';
+  action.addEventListener('click',()=>sh.querySelector('[data-x19g-board="edit"]')?.scrollIntoView({behavior:'auto',block:'start'}));
+  box.appendChild(action);
+ }
+}
 function alignShortages(r){
  const total=1020;
  r.querySelectorAll('#x19g-board-edit .msd-day').forEach(day=>{
@@ -166,7 +233,7 @@ function sync(sh){
  const req=Array.isArray(a.requirements)?a.requirements:[],stores=Array.isArray(a.stores)?a.stores:[],un=Number(a.unconfiguredEmployeeCount||0),av=Array.isArray(s.availability)?s.availability.length:0,configured=new Set(req.map(x=>String(x.store_id||''))).size,ready=sh.querySelector('[data-x19g-ready]');if(ready)ready.innerHTML=metric(un?un:'✓','Ưu tiên cửa hàng',un?'warn':'ok')+metric(req.length,'Khung nhu cầu tuần',req.length?'ok':'warn')+metric(av,'Đăng ký thời gian tuần này','')+metric(configured+'/'+stores.length,'Cửa hàng đã cấu hình',stores.length&&configured===stores.length?'ok':'warn');
  syncPrepareRail(sh,{un,req:req.length,configured,stores:stores.length,av,storeCode:(stores.find(x=>String(x.id)===String(s.storeId||''))?.code||'')});
  const det=sh.querySelector('[data-x19g-staff]');if(det&&a.loaded===true&&det.dataset.defaulted!=='1'){det.dataset.defaulted='1';det.open=true}if(det?.open){const setup=det.querySelector('#xsaSetupOpen');if(setup&&det.dataset.setup!=='1'){det.dataset.setup='1';setTimeout(()=>setup.click(),0)}}else if(det)delete det.dataset.setup;
- syncSupplementRail(sh,s,r);syncCheckRail(sh,s);
+ syncSupplementRail(sh,s,r);syncCheckStores(sh,s,r);syncCheckRail(sh,s);
  const slot=sh.querySelector('[data-x19g-start]'),start=r.querySelector('#msdStart');if(start&&slot&&!slot.contains(start)){start.style.display='';slot.appendChild(start)}const autoBtn=r.querySelector('[data-xsa-next-action="auto"]');if(autoBtn&&slot&&!slot.contains(autoBtn))slot.appendChild(autoBtn);const ds=sh.querySelector('[data-x19g-draft-status]'),st=String(s.generationStatus||'NONE').toUpperCase();if(ds)ds.textContent=st==='NONE'?'Chưa có lịch nháp cho cửa hàng/tuần đang chọn.':st==='DRAFT'?'Đã có lịch nháp · '+Number(s.assignments?.length||0)+' ca. Chuyển sang Bước 3 để chỉnh trực tiếp trên lịch.':'Trạng thái hiện tại: '+st+'.';const commandStatus=sh.querySelector('[data-x19g-command-status]');if(commandStatus)commandStatus.textContent=st==='DRAFT'?'LỊCH NHÁP':st==='REVIEWED'?'ĐÃ DUYỆT':st==='PUBLISHED'?'ĐÃ PHÁT HÀNH':st==='CONFLICT'?'CẦN XỬ LÝ':'CHƯA TẠO';syncDayWindow(sh,0);
  x19jCompactDayActions(sh,s);
  const rv=sh.querySelector('[data-x19g-review]'),cal=r.querySelector('[data-x19g-board="edit"] .msd-calendar-primary')||r.querySelector('.msd-calendar-primary');if(rv&&cal){const sig=[String(s.storeId||''),String(s.week||''),String(s.generationStatus||''),(Array.isArray(s.assignments)?s.assignments:[]).map(x=>[x.id||'',x.user_id||'',x.work_date||'',x.start_time||'',x.end_time||'',x.warning||''].join('~')).join('|'),(Array.isArray(s.shortages)?s.shortages:[]).map(x=>[x.requirement_id||'',x.work_date||'',x.shortage_start||'',x.shortage_end||'',x.missing_headcount||0].join('~')).join('|')].join('::');if(rv.dataset.sig!==sig){rv.dataset.sig=sig;rv.replaceChildren();const h=document.createElement('div');h.className='x19g-review-head';h.innerHTML='<span>Cùng lịch tuần và giờ ca thực tế như Bước 3.</span><span class="x19g-readonly">CHỈ ĐỌC</span>';rv.append(h,clone(cal));rv.querySelectorAll('.msd-direct-card,.msd-cluster-row,.msd-cluster-head').forEach(n=>{n.tabIndex=0;n.setAttribute('role','button');n.setAttribute('aria-label','Xem chi tiết '+(n.getAttribute('aria-label')||n.textContent.trim().slice(0,90)))})}syncDayWindow(sh,0)}
@@ -249,7 +316,7 @@ function enhance(){
  const pb=bs.prepare.querySelector('.x19g-body'),prep=document.createElement('div');prep.className='x19g-prepare-layout';prep.innerHTML='<div class="x19g-prepare-main"></div><aside class="x19g-prepare-side" aria-label="Tóm tắt dữ liệu chuẩn bị"><h4 class="x19g-rail-title">Sẵn sàng xếp lịch</h4><p class="x19g-rail-help">Tóm tắt dữ liệu nền cho tuần đang chọn.</p><div class="x19g-rail-list" data-x19g-prep-side></div></aside>';pb.appendChild(prep);const prepMain=prep.querySelector('.x19g-prepare-main'),rd=document.createElement('div');rd.className='x19g-ready';rd.dataset.x19gReady='1';prepMain.appendChild(rd);const d=document.createElement('details');d.className='x19g-staff';d.dataset.x19gStaff='1';d.innerHTML='<summary>Nhu cầu nhân sự cố định hàng tuần</summary><div class="x19g-staff-body"></div>';if(am)d.querySelector('.x19g-staff-body').appendChild(am);d.addEventListener('toggle',()=>sync(sh));prepMain.appendChild(d);if(ov){ov.style.display='none';prepMain.appendChild(ov)}
  bs.draft.querySelector('.x19g-body').innerHTML='<div class="x19g-draft-layout"><div class="x19g-actions" data-x19g-start></div><div class="x19g-status x19g-draft-status" data-x19g-draft-status></div></div>';
  const editBody=bs.edit.querySelector('.x19g-body'),command=document.createElement('div');command.className='x19g-calendar-command';command.dataset.x19gCommand='1';command.setAttribute('aria-label','Điều khiển lịch nháp đang chỉnh');command.innerHTML='<div class="x19g-command-branches" data-x19g-branch-actions></div><div class="x19g-command-week"><span class="x19g-command-week-label" data-x19g-week-label>Chưa chọn tuần</span><div data-x19g-week-actions></div></div><span class="x19g-command-status" data-x19g-command-status>CHƯA TẠO</span><button class="btn x19g-check-action" type="button" data-x19g-go-check>Kiểm tra lịch →</button><div class="x19g-command-day-nav"><button class="btn" type="button" data-x19g-day="prev" aria-label="Ngày trước">←</button><span class="x19g-command-day-label" data-x19g-day-label>Ngày 1/7</span><button class="btn" type="button" data-x19g-day="next" aria-label="Ngày kế tiếp">→</button></div>';const bottomCheck=document.createElement('div');bottomCheck.className='x19g-check-bottom';bottomCheck.innerHTML='<button class="btn x19g-check-action" type="button" data-x19g-go-check>Tiếp tục → Kiểm tra</button>';const editLayout=document.createElement('div');editLayout.className='x19g-edit-layout';editLayout.innerHTML='<div class="x19g-edit-main"></div><aside class="x19g-supplement-rail" aria-label="Thêm hoặc bổ sung nhân viên"><h4 class="x19g-rail-title">Thêm / bổ sung nhân viên</h4><p class="x19g-rail-help">Nhân viên phù hợp theo cửa hàng/tuần. Mở danh sách khi cần bổ sung ca.</p><div class="x19g-supplement-list" data-x19g-supplement-list></div><div class="x19g-supplement-action" data-x19g-supplement-action></div></aside>';editBody.append(command,editLayout);editLayout.querySelector('.x19g-edit-main').append(single,bottomCheck);const goCheck=()=>{const target=sh.querySelector('#x19g-board-check');if(!target)return;target.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>target.focus({preventScroll:true}),180)};editBody.querySelectorAll('[data-x19g-go-check]').forEach(b=>b.addEventListener('click',goCheck));command.querySelectorAll('[data-x19g-day]').forEach(b=>b.addEventListener('click',()=>syncDayWindow(sh,b.dataset.x19gDay==='prev'?-1:1)));
- bs.check.querySelector('.x19g-body').innerHTML='<div class="x19g-check-layout"><div class="x19g-review" data-x19g-review></div><aside class="x19g-check-rail" aria-label="Kết quả kiểm tra lịch"><h4 class="x19g-rail-title">Kết quả kiểm tra</h4><p class="x19g-rail-help">Tóm tắt trạng thái của cùng lịch tuần ở chế độ chỉ đọc.</p><div class="x19g-rail-list" data-x19g-check-summary></div></aside></div>';
+ bs.check.querySelector('.x19g-body').innerHTML='<div class="x19m-check-stores" data-x19m-check-stores aria-label="Chọn chi nhánh kiểm tra lịch"></div><div class="x19g-check-layout"><div class="x19g-review" data-x19g-review></div><aside class="x19g-check-rail" aria-label="Kết quả kiểm tra lịch"><h4 class="x19g-rail-title">Kết quả kiểm tra</h4><p class="x19g-rail-help">Tóm tắt trạng thái của cùng lịch tuần ở chế độ chỉ đọc.</p><div class="x19g-rail-list" data-x19g-check-summary></div></aside></div>';
  bs.publish.querySelector('.x19g-body').innerHTML='<div class="x19g-publish-layout"><div class="x19g-status" data-x19g-publish-status></div><div data-x19g-publish></div></div>';
  x19jInstallSlideEvents(r,sh);sync(sh);return true;
 }
