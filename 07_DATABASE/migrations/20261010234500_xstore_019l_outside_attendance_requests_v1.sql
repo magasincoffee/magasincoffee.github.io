@@ -82,7 +82,7 @@ begin
   -- schedule-linked manual-time review, not an outside-schedule request.
   if exists(select 1 from public.work_schedules w
       where w.user_id=v_uid and w.work_date=p_work_date and w.status='APPROVED'
-      and w.store_id=p_store_id and w.start_time<p_actual_end
+      and w.start_time<p_actual_end
       and p_actual_start<w.end_time)
   then raise exception 'ATTENDANCE_PUBLISHED_SHIFT_USE_SCHEDULE'; end if;
   perform pg_advisory_xact_lock(hashtextextended(
@@ -187,16 +187,29 @@ begin
  if not found then raise exception 'OUTSIDE_REQUEST_NOT_FOUND'; end if;
  if not public.can_access_store(v_row.store_id)
  then raise exception 'STORE_NOT_ALLOWED'; end if;
+ -- Serialize reviews per employee/day across all stores to prevent double approval races.
+ perform pg_advisory_xact_lock(hashtextextended(
+   'x19l_outside_review:'||v_row.employee_id::text||':'||v_row.work_date::text,0));
  if v_row.status<>'PENDING' then raise exception 'OUTSIDE_ALREADY_REVIEWED'; end if;
  if v_decision='APPROVE' and (p_confirmed_start is null or p_confirmed_end is null
     or p_confirmed_end<=p_confirmed_start)
  then raise exception 'OUTSIDE_CONFIRMED_RANGE_INVALID'; end if;
  if v_decision='APPROVE' and exists (
    select 1 from public.work_schedules w
-   where w.user_id=v_row.employee_id and w.store_id=v_row.store_id
+   where w.user_id=v_row.employee_id
      and w.work_date=v_row.work_date and w.status='APPROVED'
      and w.start_time<p_confirmed_end and p_confirmed_start<w.end_time
  ) then raise exception 'OUTSIDE_REQUEST_SCHEDULE_CHANGED'; end if;
+ -- Prevent a second approved exception over an already approved interval (all stores).
+ if v_decision='APPROVE' and exists (
+   select 1 from public.attendance_outside_schedule_requests_v1 other_request
+   where other_request.employee_id=v_row.employee_id
+     and other_request.id<>v_row.id
+     and other_request.work_date=v_row.work_date
+     and other_request.status='APPROVED'
+     and other_request.confirmed_start<p_confirmed_end
+     and p_confirmed_start<other_request.confirmed_end
+ ) then raise exception 'OUTSIDE_REQUEST_ALREADY_APPROVED_OVERLAP'; end if;
  if v_decision='REJECT' and (p_confirmed_start is not null or p_confirmed_end is not null)
  then raise exception 'OUTSIDE_REJECT_NO_CONFIRMED_TIME'; end if;
  v_status:=case when v_decision='APPROVE' then 'APPROVED' else 'REJECTED' end;
