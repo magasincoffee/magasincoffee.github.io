@@ -81,7 +81,7 @@ if(dash){
  // Accept normalized snapshot only after canonical Owner access succeeds.
  document.addEventListener('magasin:owner-strategy-snapshot',event=>{
   if(!event.detail)return;
-  canonicalSnapshot=event.detail.loading?null:(event.detail.snapshot||null);
+  canonicalSnapshot=event.detail?.loading?null:(event.detail?.snapshot||null);
   render();
  });
  const observer=new MutationObserver(()=>{if(document.body.dataset.ownerOverviewLoading==="false")render()});
