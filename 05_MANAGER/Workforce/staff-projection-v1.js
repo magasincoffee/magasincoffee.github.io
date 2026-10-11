@@ -99,7 +99,8 @@ async function saveSettings(){
   if(!values[0]){inform('Phải chọn chi nhánh chính ở ưu tiên 1.','error');return}
   let gap=false,missing=false;
   for(const x of values){if(!x)missing=true;else if(missing)gap=true}
-  if(gap||new Set(stores).size!==stores.length){inform('Thứ tự chi nhánh phải liên tục và không trùng lặp.','error');return}
+  if(gap){inform('Thứ tự ưu tiên phải liên tục; không được bỏ trống ở giữa.','error');return}
+  if(new Set(stores).size!==stores.length){inform('Một chi nhánh không thể xuất hiện hai lần.','error');return}
  }
  busy=true;
  editor.querySelectorAll('button, select').forEach(el=>el.disabled=true);
