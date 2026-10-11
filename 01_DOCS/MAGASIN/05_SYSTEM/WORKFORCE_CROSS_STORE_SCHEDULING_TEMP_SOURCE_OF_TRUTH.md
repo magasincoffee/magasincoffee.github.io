@@ -886,6 +886,40 @@ Verified against canonical MAGASIN-NOIBO Supabase using read-only SQL:
 
 **Still mandatory before RC_READY:** authenticated real-device three-role functional smoke; isolated full production-schema/extension compatibility for K→L and actual JWT/RLS/negative permission proof; SAPO source lineage and Owner data availability/quality acceptance; classification and independent remediation of material security risks; exact frozen replacement RC+fresh main rollback/database recovery evidence; specific Owner replacement RC approval. Do **not** merge, run production migration, publish shifts or advance XSTORE-020/011 based on these pre-release results.
 
+## 0.31 XSTORE-019O fresh browser, joint PostgreSQL and SAPO provenance gates — 2026-10-11
+
+**Status remains XSTORE-019O IN PROGRESS / RC_NOT_READY.** This record contains pre-release, read-only production catalog/aggregate checks and isolated local QA only. No production DDL, resolver execution, SAPO attribution write, employee classification, schedule publication, PR merge or credentials were used.
+
+### A. Exact-candidate local Chrome browser qualification — bounded preview only
+
+- Authorized desktop: `DESKTOP-H4A16IL`; detached QA worktree `D:\MAGASIN_XSTORE_019O_QA_20261011` checked out **exact PR #392 HEAD `3b5c884fe1a00cd5fd868b7cb134dd86a6b344d4`**.
+- Fresh local `09_QA/xstore-019j/xstore-019j-preview-browser.mjs` using headless Chromium, static server bound only to `127.0.0.1:8787`: **5/5 PASS**, exit 0. Responsive/accessible preview index at 1440/390, and Manager/Employee/Owner preview render + reload at 390 all passed; no page-level horizontal overflow. Local log: `D:\MAGASIN_XSTORE_019O_QA_20261011\_019o_preview_browser_20261011.log`; screenshots/reports: `qa-artifacts/xstore-019j/` under that QA worktree.
+- Temporary QA static HTTP server was **stopped** after the run. This was **isolated preview/browser QA, not authenticated real Supabase three-role smoke**; do not use it to close §0.28.C.1–C.3.
+
+### B. Joint native PG17 K/L isolated proof — same synthetic DB, not full production schema
+
+- SQL content of **019K** at exact PR head equals previously rehearsed file byte-for-byte; SQL content of **019L** is identical after CRLF/LF normalization, with no material source diff.
+- Restarted the previously prepared isolated **native PostgreSQL 17.11** cluster on H4, listening only at `127.0.0.1:55439`. Confirmed all **8** expected K+L RPCs coexist in the same synthetic database: K management/employee reader/writer plus cross-store Auto Schedule; L outside-schedule submit/self-list/manager-list/review.
+- Confirmed all **3** new sensitive K+L tables in that database have RLS enabled and `authenticated` lacks **direct SELECT**: employment audit, outside-schedule attendance request, review events. QA PostgreSQL was **stopped** immediately afterward.
+- Historical isolated K **16/16** and L **18/18** negative/positive role/operation rehearsals remain the earlier task proofs; this new check adds a **joint coexistence/ACL metadata verification**, not re-execution of those cases on a full production-schema or signed JWT environment.
+- **Still open:** actual production-equivalent schema and extension tests, K→L migration ordering/rollback, signed JWT/RLS end-to-end negative tests, and credentialed real-role application smoke.
+
+### C. Production security advisories — bounded static triage
+
+- Live MAGASIN-NOIBO Supabase Security Advisor still reports **13 anon** and **77 authenticated** `SECURITY DEFINER` findings (plus 1 mutable search_path, 17 RLS-without-policy INFO and 1 leaked-password protection warning).
+- Read-only `pg_proc.prosrc` lexical inventory across the 77 authenticated-callable SECURITY DEFINER functions: **34** bodies contain mutating SQL keywords, **31/34** also contain recognizable auth/role/store/token-guard references; **3/34** do not. Those three are the two trigger-linked functions `handle_new_auth_user` and `rls_auto_enable` plus the known direct SAPO branch resolver `resolve_sapo_order_branches`. This is **classification of text/entry-point shape only**, not proof that a referenced guard enforces authorization or that trigger-linked functions are safe in all contexts.
+- The directly callable, side-effecting SAPO resolver still grants `anon` EXECUTE with no internal actor guard; it remains a separately governed **P0 OPEN** under Draft PR #393. **Do not call it for testing or revoke the token-guarded `ingest_sapo_batch` wrapper.** Further function-by-function threat review still required.
+
+### D. SAPO revenue/store-attribution source completeness — read-only aggregate, no fabricated P&L
+
+- Live `public.sapo_orders` aggregate: **18,646 orders**, **3,955 with store attribution**, **14,691 UNRESOLVED / store_id NULL** at this inspection. This is an all-time table snapshot, **not** only current week, nor a count of proven paid/accepted transactions.
+- By `paid_at_local` month: **2026-08: 8,486/8,935 missing store; 2026-09: 5,821/8,859 missing; 2026-10: 384/852 missing**. Those monthly counts add to the all-time unresolved total. No order identifiers, customer details, private amounts or rows were inspected.
+- `sapo_raw_exports` has **117** export records covering declared date range **2026-08-01 through 2026-10-05**; declared `row_count` and `order_count` sums are export-file totals, **not deduplicated transaction truth**. `sapo_sync_runs` currently has **0 records**; this does not prove ingestion never ran because other ingestion paths exist, but the run ledger alone cannot establish complete reconciled provenance.
+- Production views `v_sapo_sales` and `v_sapo_daily_branch_sales` exist; `anon` and `authenticated` have no direct SELECT grant on either view. Their existence alone is **not** proof of authorized Owner ACTUAL revenue quality.
+- **Acceptance impact:** Do **not** promote raw SAPO totals into source-qualified actual per-store revenue, trend, profitability or cashflow in Owner UI. Keep metric unavailable `—` when canonical reconciled quality is missing. Cross-store unresolved attribution and privileged resolver remediation need independently governed resolution before claiming comprehensive store reporting; no historical order resolution job or source-rewrite was started.
+
+**Next executable task remains XSTORE-019O**, with unresolved authenticated role smoke, full schema/JWT-RLS, source-quality remediation, independently governed SAPO security P0, final exact RC/rollback and Owner approval. Keep PR #392 Draft/unmerged, XSTORE-020 and 011 PAUSED.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
