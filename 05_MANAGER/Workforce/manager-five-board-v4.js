@@ -107,6 +107,21 @@ function css(){
 `;
 
  s.textContent+='\n.x19m-check-stores{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}.x19m-store-label{color:#475467;font-weight:800;font-size:11px}.x19m-store{min-height:35px!important;font-size:11px!important}.x19m-store[aria-pressed="true"]{border-color:#2563eb!important;background:#eff6ff!important;color:#1d4ed8!important}.x19m-issue-link{white-space:normal!important;text-align:right!important;font-size:10px!important;color:#9f1239!important;border-color:#fecdd3!important;background:#fff1f2!important;cursor:pointer!important}.x19m-issue-target{outline:3px solid #e11d48!important;outline-offset:3px!important}.x19m-issue-target:focus-visible,.x19m-issue-link:focus-visible{outline:2px solid #2563eb;outline-offset:3px}\n';
+ s.textContent+=`
+/* XSTORE-019O: reject long shortage lists and show honest employee classification on all shifts. */
+.x19g-shell .x19o-issue-details{border:1px solid #dbe3ec;border-radius:7px;background:#f8fafc;margin-top:6px;min-width:0}
+.x19g-shell .x19o-issue-details>summary{cursor:pointer;padding:10px 12px;color:#1d4ed8;font-size:11px;font-weight:800;list-style:revert}
+.x19g-shell .x19o-issue-details>summary:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.x19g-shell .x19o-issue-scroll{max-height:210px;overflow-y:auto;overscroll-behavior:contain;padding:5px;display:grid;gap:5px}
+.x19g-shell .x19o-issue-scroll .x19g-rail-row{min-height:34px}
+.x19g-shell .x19o-employment-summary{font-size:10.5px;line-height:1.5;color:#475467;background:#f6f9fd;border:1px solid #e0e8f4;border-radius:7px;padding:7px 10px;margin:0 0 8px}
+.x19g-shell .x19o-employment-label{display:inline-flex!important;align-items:center!important;padding:2px 5px!important;margin:2px 0!important;border-radius:4px!important;font-size:9px!important;line-height:1.3!important;font-weight:800!important;white-space:normal!important;overflow-wrap:anywhere!important;vertical-align:middle!important;border:1px solid #e1e6ed!important;background:#f4f5f7!important;color:#475467!important}
+.x19g-shell .x19o-employment-ft{border-color:#b7e4c7!important;background:#eaf8ee!important;color:#166534!important}
+.x19g-shell .x19o-employment-pt{border-color:#bdd8ff!important;background:#eaf3ff!important;color:#1d4ed8!important}
+.x19g-shell .x19o-employment-unknown{border-color:#fcd9aa!important;background:#fff7ed!important;color:#9a3412!important}
+.x19g-shell .msd-direct-name .x19o-employment-label{display:inline-flex!important}
+.x19g-shell .msd-cluster-meta .x19o-employment-label{display:inline-flex!important}
+`;
  document.head.appendChild(s);
 }
 function board(k,n,t,h){const e=document.createElement('section');e.className='x19g-board';e.dataset.x19gBoard=k;e.id='x19g-board-'+k;e.tabIndex=-1;e.innerHTML='<div class="x19g-board-head"><span class="x19g-board-no">'+n+'</span><div><h3>'+t+'</h3><p class="x19g-help">'+h+'</p></div></div><div class="x19g-body"></div>';return e}
@@ -160,8 +175,9 @@ function syncSupplementRail(sh,s,r){const box=sh.querySelector('[data-x19g-suppl
 function syncCheckRail(sh,s){
  const box=sh.querySelector('[data-x19g-check-summary]');if(!box)return;
  const st=String(s.generationStatus||'NONE').toUpperCase(),shortages=Array.isArray(s.shortages)?s.shortages:[],validation=String(s.lastValidation||'').toUpperCase();
- // XSTORE-019M: observer-driven sync must not replace live issue buttons on
- // unrelated DOM mutations; doing so detaches them during a real click.
+ // Preserve the operator's expanded/collapsed choice across state refreshes.
+ const expanded=box.querySelector('.x19o-issue-details')?.open===true;
+ // Do not detach a live issue link for unrelated observer-driven DOM updates.
  const signature=JSON.stringify([st,validation,shortages.map(x=>[x.requirement_id||'',x.store_id||'',x.work_date||'',x.shortage_start||'',x.shortage_end||'',x.missing_headcount||0])]);
  if(box.dataset.x19mCheckSignature===signature)return;
  box.dataset.x19mCheckSignature=signature;
@@ -169,24 +185,41 @@ function syncCheckRail(sh,s){
  railRow(box,'Trạng thái lịch',st==='DRAFT'?'LỊCH NHÁP':st||'CHƯA TẠO',st==='CONFLICT'?'bad':st==='DRAFT'?'ok':'');
  railRow(box,'Khoảng thiếu người',String(shortages.length),shortages.length?'bad':'ok');
  railRow(box,'Kiểm tra xung đột',validation||'CHƯA CHẠY',validation==='VALID'?'ok':validation?'warn':'');
- shortages.forEach((x,i)=>{
-  const line=document.createElement('div');line.className='x19g-rail-row bad';
-  const label=document.createElement('span'),link=document.createElement('button');
-  const date=String(x.work_date||'').slice(0,10);
-  const start=String(x.shortage_start||'—').slice(0,5),end=String(x.shortage_end||'—').slice(0,5);
-  label.textContent='Thiếu '+String(x.missing_headcount||1)+' người';
-  link.type='button';link.className='btn x19m-issue-link';link.dataset.x19mIssue=String(i);
-  link.textContent=date+' · '+start+'–'+end+' →';
-  link.setAttribute('aria-label','Mở ngày '+date+' lúc '+start+' đến '+end+' tại lịch nháp để xử lý thiếu người');
-  link.addEventListener('click',()=>jumpToCalendarIssue(sh,x,i));
-  line.append(label,link);box.appendChild(line);
- });
+ if(shortages.length){
+  const details=document.createElement('details');details.className='x19o-issue-details';details.open=expanded;
+  const summary=document.createElement('summary');
+  const people=shortages.reduce((n,x)=>n+Math.max(0,Number(x.missing_headcount)||0),0);
+  summary.textContent='Xem '+shortages.length+' khoảng thiếu · '+people+' lượt nhân sự';summary.setAttribute('aria-label','Mở danh sách các khoảng thiếu người trên lịch');
+  const list=document.createElement('div');list.className='x19o-issue-scroll';list.setAttribute('role','group');list.setAttribute('aria-label','Danh sách thiếu người theo ngày');
+  shortages.forEach((x,i)=>{
+   const line=document.createElement('div');line.className='x19g-rail-row bad';
+   const label=document.createElement('span'),link=document.createElement('button');
+   const date=String(x.work_date||'').slice(0,10),start=String(x.shortage_start||'—').slice(0,5),end=String(x.shortage_end||'—').slice(0,5);
+   label.textContent='Thiếu '+String(x.missing_headcount||1)+' người';
+   link.type='button';link.className='btn x19m-issue-link';link.dataset.x19mIssue=String(i);
+   link.textContent=date+' · '+start+'–'+end+' →';
+   link.setAttribute('aria-label','Mở ngày '+date+' lúc '+start+' đến '+end+' tại lịch nháp để xử lý thiếu người');
+   link.addEventListener('click',()=>jumpToCalendarIssue(sh,x,i));
+   line.append(label,link);list.appendChild(line);
+  });
+  details.append(summary,list);box.appendChild(details);
+ }
  if(validation==='INVALID'&&!shortages.length){
   const action=document.createElement('button');action.type='button';action.className='btn x19m-issue-link';
   action.textContent='Lịch còn xung đột — trở về Bước 3 →';
   action.addEventListener('click',()=>sh.querySelector('[data-x19g-board="edit"]')?.scrollIntoView({behavior:'auto',block:'start'}));
   box.appendChild(action);
  }
+}
+function syncEmploymentSummary(sh,s){
+ const el=sh.querySelector('[data-x19o-employment-summary]');if(!el)return;
+ const people=Array.isArray(s.eligibleEmployees)?s.eligibleEmployees:[],counts={FULL_TIME:0,PART_TIME:0,UNKNOWN:0};
+ people.forEach(p=>{const t=String(p.employment_type||'').toUpperCase();if(t==='FULL_TIME'||t==='PART_TIME')counts[t]++;else counts.UNKNOWN++});
+ const text=people.length
+  ? 'Loại nhân viên: Full-time '+counts.FULL_TIME+' · Part-time '+counts.PART_TIME+' · Chưa phân loại '+counts.UNKNOWN+'.'
+  : 'Loại nhân viên: Chưa tải danh sách nhân viên.';
+ const reason=s.employmentTypeReady===false?' Chức năng phân loại chưa được triển khai trên database thật; không tự gán loại.':'';
+ if(el.textContent!==text+reason)el.textContent=text+reason;
 }
 function alignShortages(r){
  const total=1020;
@@ -239,7 +272,7 @@ function sync(sh){
  const req=Array.isArray(a.requirements)?a.requirements:[],stores=Array.isArray(a.stores)?a.stores:[],un=Number(a.unconfiguredEmployeeCount||0),av=Array.isArray(s.availability)?s.availability.length:0,configured=new Set(req.map(x=>String(x.store_id||''))).size,ready=sh.querySelector('[data-x19g-ready]');if(ready)ready.innerHTML=metric(un?un:'✓','Ưu tiên cửa hàng',un?'warn':'ok')+metric(req.length,'Khung nhu cầu tuần',req.length?'ok':'warn')+metric(av,'Đăng ký thời gian tuần này','')+metric(configured+'/'+stores.length,'Cửa hàng đã cấu hình',stores.length&&configured===stores.length?'ok':'warn');
  syncPrepareRail(sh,{un,req:req.length,configured,stores:stores.length,av,storeCode:(stores.find(x=>String(x.id)===String(s.storeId||''))?.code||'')});
  const det=sh.querySelector('[data-x19g-staff]');if(det&&a.loaded===true&&det.dataset.defaulted!=='1'){det.dataset.defaulted='1';det.open=true}if(det?.open){const setup=det.querySelector('#xsaSetupOpen');if(setup&&det.dataset.setup!=='1'){det.dataset.setup='1';setTimeout(()=>setup.click(),0)}}else if(det)delete det.dataset.setup;
- syncSupplementRail(sh,s,r);syncCheckStores(sh,s,r);syncCheckRail(sh,s);
+ syncSupplementRail(sh,s,r);syncCheckStores(sh,s,r);syncCheckRail(sh,s);syncEmploymentSummary(sh,s);
  const slot=sh.querySelector('[data-x19g-start]'),start=r.querySelector('#msdStart');if(start&&slot&&!slot.contains(start)){start.style.display='';slot.appendChild(start)}const autoBtn=r.querySelector('[data-xsa-next-action="auto"]');if(autoBtn&&slot&&!slot.contains(autoBtn))slot.appendChild(autoBtn);const ds=sh.querySelector('[data-x19g-draft-status]'),st=String(s.generationStatus||'NONE').toUpperCase();if(ds)ds.textContent=st==='NONE'?'Chưa có lịch nháp cho cửa hàng/tuần đang chọn.':st==='DRAFT'?'Đã có lịch nháp · '+Number(s.assignments?.length||0)+' ca. Chuyển sang Bước 3 để chỉnh trực tiếp trên lịch.':'Trạng thái hiện tại: '+st+'.';const commandStatus=sh.querySelector('[data-x19g-command-status]');if(commandStatus)commandStatus.textContent=st==='DRAFT'?'LỊCH NHÁP':st==='REVIEWED'?'ĐÃ DUYỆT':st==='PUBLISHED'?'ĐÃ PHÁT HÀNH':st==='CONFLICT'?'CẦN XỬ LÝ':'CHƯA TẠO';syncDayWindow(sh,0);
  x19jCompactDayActions(sh,s);
  const rv=sh.querySelector('[data-x19g-review]'),cal=r.querySelector('[data-x19g-board="edit"] .msd-calendar-primary')||r.querySelector('.msd-calendar-primary');if(rv&&cal){const sig=[String(s.storeId||''),String(s.week||''),String(s.generationStatus||''),(Array.isArray(s.assignments)?s.assignments:[]).map(x=>[x.id||'',x.user_id||'',x.work_date||'',x.start_time||'',x.end_time||'',x.warning||''].join('~')).join('|'),(Array.isArray(s.shortages)?s.shortages:[]).map(x=>[x.requirement_id||'',x.work_date||'',x.shortage_start||'',x.shortage_end||'',x.missing_headcount||0].join('~')).join('|')].join('::');if(rv.dataset.sig!==sig){rv.dataset.sig=sig;rv.replaceChildren();const h=document.createElement('div');h.className='x19g-review-head';h.innerHTML='<span>Cùng lịch tuần và giờ ca thực tế như Bước 3.</span><span class="x19g-readonly">CHỈ ĐỌC</span>';rv.append(h,clone(cal));rv.querySelectorAll('.msd-direct-card,.msd-cluster-row,.msd-cluster-head').forEach(n=>{n.tabIndex=0;n.setAttribute('role','button');n.setAttribute('aria-label','Xem chi tiết '+(n.getAttribute('aria-label')||n.textContent.trim().slice(0,90)))})}syncDayWindow(sh,0)}
@@ -321,7 +354,7 @@ function enhance(){
  const nav=document.createElement('nav');nav.className='x19g-nav';nav.setAttribute('aria-label','Quy trình xếp lịch 5 bước');const help={prepare:'Kiểm tra dữ liệu nền và nhu cầu nhân sự dùng lại.',draft:'Tạo hoặc mở lịch nháp cho tuần đang chọn.',edit:'Chỉnh ca trực tiếp trên lịch tuần và bổ sung nhân viên khi cần.',check:'Xem lại cùng lịch tuần ở chế độ chỉ đọc.',publish:'Kiểm tra, duyệt và phát hành qua authority hiện có.'},bs={};STEPS.forEach(([k,t],i)=>{const b=document.createElement('button');b.type='button';b.dataset.x19gNav=k;b.innerHTML='<span class="x19g-step-index">'+(i+1)+'</span><span>'+t+'</span>';b.addEventListener('click',()=>sh.querySelector('#x19g-board-'+k)?.scrollIntoView({behavior:'smooth',block:'start'}));nav.appendChild(b);bs[k]=board(k,i+1,t,help[k])});sh.appendChild(nav);STEPS.forEach(([k])=>sh.appendChild(bs[k]));hd.insertAdjacentElement('afterend',sh);
  const pb=bs.prepare.querySelector('.x19g-body'),prep=document.createElement('div');prep.className='x19g-prepare-layout';prep.innerHTML='<div class="x19g-prepare-main"></div><aside class="x19g-prepare-side" aria-label="Tóm tắt dữ liệu chuẩn bị"><h4 class="x19g-rail-title">Sẵn sàng xếp lịch</h4><p class="x19g-rail-help">Tóm tắt dữ liệu nền cho tuần đang chọn.</p><div class="x19g-rail-list" data-x19g-prep-side></div></aside>';pb.appendChild(prep);const prepMain=prep.querySelector('.x19g-prepare-main'),rd=document.createElement('div');rd.className='x19g-ready';rd.dataset.x19gReady='1';prepMain.appendChild(rd);const d=document.createElement('details');d.className='x19g-staff';d.dataset.x19gStaff='1';d.innerHTML='<summary>Nhu cầu nhân sự cố định hàng tuần</summary><div class="x19g-staff-body"></div>';if(am)d.querySelector('.x19g-staff-body').appendChild(am);d.addEventListener('toggle',()=>sync(sh));prepMain.appendChild(d);if(ov){ov.style.display='none';prepMain.appendChild(ov)}
  bs.draft.querySelector('.x19g-body').innerHTML='<div class="x19g-draft-layout"><div class="x19g-actions" data-x19g-start></div><div class="x19g-status x19g-draft-status" data-x19g-draft-status></div></div>';
- const editBody=bs.edit.querySelector('.x19g-body'),command=document.createElement('div');command.className='x19g-calendar-command';command.dataset.x19gCommand='1';command.setAttribute('aria-label','Điều khiển lịch nháp đang chỉnh');command.innerHTML='<div class="x19g-command-branches" data-x19g-branch-actions></div><div class="x19g-command-week"><span class="x19g-command-week-label" data-x19g-week-label>Chưa chọn tuần</span><div data-x19g-week-actions></div></div><span class="x19g-command-status" data-x19g-command-status>CHƯA TẠO</span><button class="btn x19g-check-action" type="button" data-x19g-go-check>Kiểm tra lịch →</button><div class="x19g-command-day-nav"><button class="btn" type="button" data-x19g-day="prev" aria-label="Ngày trước">←</button><span class="x19g-command-day-label" data-x19g-day-label>Ngày 1/7</span><button class="btn" type="button" data-x19g-day="next" aria-label="Ngày kế tiếp">→</button></div>';const bottomCheck=document.createElement('div');bottomCheck.className='x19g-check-bottom';bottomCheck.innerHTML='<button class="btn x19g-check-action" type="button" data-x19g-go-check>Tiếp tục → Kiểm tra</button>';const editLayout=document.createElement('div');editLayout.className='x19g-edit-layout';editLayout.innerHTML='<div class="x19g-edit-main"></div><aside class="x19g-supplement-rail" aria-label="Thêm hoặc bổ sung nhân viên"><h4 class="x19g-rail-title">Thêm / bổ sung nhân viên</h4><p class="x19g-rail-help">Nhân viên phù hợp theo cửa hàng/tuần. Mở danh sách khi cần bổ sung ca.</p><div class="x19g-supplement-list" data-x19g-supplement-list></div><div class="x19g-supplement-action" data-x19g-supplement-action></div></aside>';editBody.append(command,editLayout);editLayout.querySelector('.x19g-edit-main').append(single,bottomCheck);const goCheck=()=>{const target=sh.querySelector('#x19g-board-check');if(!target)return;target.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>target.focus({preventScroll:true}),180)};editBody.querySelectorAll('[data-x19g-go-check]').forEach(b=>b.addEventListener('click',goCheck));command.querySelectorAll('[data-x19g-day]').forEach(b=>b.addEventListener('click',()=>syncDayWindow(sh,b.dataset.x19gDay==='prev'?-1:1)));
+ const editBody=bs.edit.querySelector('.x19g-body'),command=document.createElement('div');command.className='x19g-calendar-command';command.dataset.x19gCommand='1';command.setAttribute('aria-label','Điều khiển lịch nháp đang chỉnh');command.innerHTML='<div class="x19g-command-branches" data-x19g-branch-actions></div><div class="x19g-command-week"><span class="x19g-command-week-label" data-x19g-week-label>Chưa chọn tuần</span><div data-x19g-week-actions></div></div><span class="x19g-command-status" data-x19g-command-status>CHƯA TẠO</span><button class="btn x19g-check-action" type="button" data-x19g-go-check>Kiểm tra lịch →</button><div class="x19g-command-day-nav"><button class="btn" type="button" data-x19g-day="prev" aria-label="Ngày trước">←</button><span class="x19g-command-day-label" data-x19g-day-label>Ngày 1/7</span><button class="btn" type="button" data-x19g-day="next" aria-label="Ngày kế tiếp">→</button></div>';const bottomCheck=document.createElement('div');bottomCheck.className='x19g-check-bottom';bottomCheck.innerHTML='<button class="btn x19g-check-action" type="button" data-x19g-go-check>Tiếp tục → Kiểm tra</button>';const editLayout=document.createElement('div');editLayout.className='x19g-edit-layout';editLayout.innerHTML='<div class="x19g-edit-main"></div><aside class="x19g-supplement-rail" aria-label="Thêm hoặc bổ sung nhân viên"><h4 class="x19g-rail-title">Thêm / bổ sung nhân viên</h4><p class="x19g-rail-help">Nhân viên phù hợp theo cửa hàng/tuần. Mở danh sách khi cần bổ sung ca.</p><div class="x19g-supplement-list" data-x19g-supplement-list></div><div class="x19g-supplement-action" data-x19g-supplement-action></div></aside>';const typeSummary=document.createElement('p');typeSummary.className='x19o-employment-summary';typeSummary.setAttribute('data-x19o-employment-summary','1');typeSummary.setAttribute('role','status');editBody.append(command,typeSummary,editLayout);editLayout.querySelector('.x19g-edit-main').append(single,bottomCheck);const goCheck=()=>{const target=sh.querySelector('#x19g-board-check');if(!target)return;target.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>target.focus({preventScroll:true}),180)};editBody.querySelectorAll('[data-x19g-go-check]').forEach(b=>b.addEventListener('click',goCheck));command.querySelectorAll('[data-x19g-day]').forEach(b=>b.addEventListener('click',()=>syncDayWindow(sh,b.dataset.x19gDay==='prev'?-1:1)));
  bs.check.querySelector('.x19g-body').innerHTML='<div class="x19m-check-stores" data-x19m-check-stores aria-label="Chọn chi nhánh kiểm tra lịch"></div><div class="x19g-check-layout"><div class="x19g-review" data-x19g-review></div><aside class="x19g-check-rail" aria-label="Kết quả kiểm tra lịch"><h4 class="x19g-rail-title">Kết quả kiểm tra</h4><p class="x19g-rail-help">Tóm tắt trạng thái của cùng lịch tuần ở chế độ chỉ đọc.</p><div class="x19g-rail-list" data-x19g-check-summary></div></aside></div>';
  bs.publish.querySelector('.x19g-body').innerHTML='<div class="x19g-publish-layout"><div class="x19g-status" data-x19g-publish-status></div><div data-x19g-publish></div></div>';
  x19jInstallSlideEvents(r,sh);sync(sh);return true;
