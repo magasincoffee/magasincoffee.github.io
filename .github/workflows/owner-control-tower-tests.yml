@@ -5,6 +5,8 @@ on:
     paths:
       - '04_OWNER/ControlTower/**'
       - '04_OWNER/index.html'
+      - '04_OWNER/owner-strategy-source-v1.mjs'
+      - '04_OWNER/strategy-presentation-v4.js'
       - '09_QA/owner-control-tower/**'
       - '02_CORE/ui/magasin-ui-v2-tokens.css'
       - '02_CORE/ui/magasin-ui-v2-primitives.css'
@@ -15,6 +17,8 @@ on:
     paths:
       - '04_OWNER/ControlTower/**'
       - '04_OWNER/index.html'
+      - '04_OWNER/owner-strategy-source-v1.mjs'
+      - '04_OWNER/strategy-presentation-v4.js'
       - '09_QA/owner-control-tower/**'
       - '02_CORE/ui/magasin-ui-v2-tokens.css'
       - '02_CORE/ui/magasin-ui-v2-primitives.css'
