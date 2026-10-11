@@ -50,7 +50,7 @@ test("UI2-013 Attendance keeps canonical reader review state machine and explici
 });
 
 test("UI2-013 Employees remains RPC-only while XSTORE adds bounded management-owned Store Priority writer",()=>{
- assert.deepEqual(set(staff),["list_employee_workforce_profiles_v1","set_employee_store_priority_profile_v1"].sort());
+ assert.deepEqual(set(staff),["list_employee_employment_types_v1","list_employee_lifecycle_controls_v1","list_employee_workforce_profiles_v1","set_employee_employment_type_v1","set_employee_lifecycle_status_v1","set_employee_store_priority_profile_v1"].sort());
  for(const field of ["full_name","username","phone","profile_status","priority_store_codes"])assert.ok(staff.includes(field),field);
  assert.match(staff,/Ưu tiên 1 là chi nhánh chính/);
  assert.doesNotMatch(staff,/\.from\s*\(|\.insert\s*\(|\.update\s*\(|\.delete\s*\(|save_employee|update_employee/i);
