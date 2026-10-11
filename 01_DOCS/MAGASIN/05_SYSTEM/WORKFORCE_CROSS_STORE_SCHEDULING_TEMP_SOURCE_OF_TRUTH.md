@@ -1000,6 +1000,30 @@ No branch attribution, finance or scheduled work records were modified by this d
 - **Remaining blockers unchanged:** real authenticated 3-role application and real JWT/RLS negative tests; full isolated Supabase production-schema migration compatibility and rollback; independently governed SAPO P0 ACL correction under #393; SAPO daily/store revenue provenance and 14,691 unresolved order attributions; approved employment type classification; frozen RC and Owner release window.
 
 
+## 0.36 XSTORE-019O source-shaped helper and concurrent Manager approval rehearsal — 2026-10-11
+
+**Status remains IN PROGRESS / RC_NOT_READY; production/PR #392 NOT RELEASED.** Additional release-preflight QA on H4 with **synthetic QA data only**, using source code retrieved from production *function definitions*, never production rows or credentials.
+
+### A. Real production helper SQL against isolated K scheduler
+
+- Fetched **read-only `pg_get_functiondef` definitions** for 4 actual MAGASIN-NOIBO production helper functions: `current_user_role`, `can_access_store`, `create_schedule_generation`, `evaluate_workforce_coverage_shortages_v1`. Staged the definitions in a **temporary cloned local synthetic QA database** on native PostgreSQL **17.11**; supplied only the necessary column shapes (`profiles.access_scope`, `schedule_generation_runs.week_end`, `created_by`) missing from the earlier minimal test fixture.
+- Ran the unchanged **XSTORE-019K `auto_generate_cross_store_schedule_v1`** on fresh synthetic store, schedule and availability fixtures with production source-shaped helper bodies: **STAFF actor denied** (`ROLE_NOT_ALLOWED`); **ACTIVE STORE_MANAGER** with CN1 scope generated **DRAFT**, **exactly one assignment**, **zero shortage**; independently verified the assignment selected synthetic **FULL_TIME** before **PART_TIME** with same availability. All three assertions PASS.
+- Evidence: `D:\MAGASIN_XSTORE_019K_PGTEST_20261010\xstore_019o_prod_helpers_shadow.sql`. This uses production **code definitions but not the whole production schema or live signed JWT**; it does not close the full-schema/JWT/RLS integration gate.
+- Test database was cloned from a previously created **synthetic-only** QA database. Every test used `BEGIN ... ROLLBACK`; the extra test database was **dropped**, and PostgreSQL process **stopped**.
+
+### B. Concurrent cross-store Manager review proof for newly repaired 019L
+
+- Built two synthetic overlapping `PENDING` outside-schedule requests for the same employee/date/09:00–10:00 at separate CN1/CN2 stores. Two independently connected, transaction-scoped **authenticated Owner-role fixture sessions** simultaneously called the exact PR #392 `review_outside_schedule_attendance_v1`.
+- **PASS**: exactly **one** returned APPROVED, the other failed `OUTSIDE_REQUEST_ALREADY_APPROVED_OVERLAP`; final synthetic rows were **1 APPROVED + 1 PENDING**, with **1 immutable review audit event**. This proves serialization in that targeted concurrent PG17 test; it is not proof of real Supabase JWT authorization or production runtime behavior.
+- Evidence script `D:\MAGASIN_XSTORE_019K_PGTEST_20261010\xstore_019o_cross_store_concurrency.mjs`; test ran solely in a temporary local cloned database `xstore_019o_concurrency_qa`, **dropped after run**; PostgreSQL **stopped**.
+
+### C. No more production-independent role or source claims
+
+- Exactly qualified patched PR #392 HEAD `9b0a4265b7dca0aef2cb4ef5c248128f9bf7c298` retains **22/22 GitHub workflows GREEN**, local **554/554 static PASS**, native L **18/18**, new cross-store **4/4** and this additional real-helper/concurrency proof. **Keep Draft and unmerged.**
+- Remaining **Owner/session-dependent** gates: real authenticated Owner/Manager/Employee browser smoke; signed JWT/RLS/negative authorization against a safe full Supabase schema; controlled FULL_TIME/PART_TIME classification of 28 real employees (production `employee_constraints` remains 0 rows); authorized source-identity/attendance/alias mapping to resolve SAPO store attribution (14,691 historical unresolved SAPO rows, 0 aliases) without guessing; review and independent release approval of SAPO P0 resolver ACL Draft PR #393; final exact SHA/rollback/after-hours release approval for XSTORE-020.
+- **Do not request, copy or expose passwords/tokens to the chat.** When the user is needed for real role QA, use legitimate signed-in browser sessions with authorized roles; verify independently and do not infer authenticated acceptance from schema-only or synthetic results.
+
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
