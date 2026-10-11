@@ -110,7 +110,7 @@ function css(){
  s.textContent+=`
 /* One visible shortage warning per calendar day instead of N large cards. */
 .x19g-shell .msd-shortage-group{display:block!important;position:relative!important;inset:auto!important;margin:4px!important;min-width:0!important;border:1px solid #a5b4fc!important;border-left:3px solid #6366f1!important;border-radius:6px!important;background:#eef2ff!important;color:#3730a3!important}
-.x19g-shell .msd-shortage-group>summary{cursor:pointer!important;min-height:30px!important;list-style:none!important;padding:6px 5px!important;font-size:10px!important;line-height:1.4!important;font-weight:900!important;overflow-wrap:anywhere!important}
+.x19g-shell .msd-shortage-group>summary{cursor:pointer!important;min-height:30px!important;list-style:none!important;padding:6px 5px!important;font-size:10px!important;line-height:1.4!important;font-weight:900!important;overflow-wrap:break-word!important}
 .x19g-shell .msd-shortage-group>summary::-webkit-details-marker{display:none}
 .x19g-shell .msd-shortage-group>summary::after{content:" ▾";font-size:10px!important}
 .x19g-shell .msd-shortage-group[open]>summary::after{content:" ▴"}
@@ -127,7 +127,7 @@ function css(){
 .x19g-shell .x19o-issue-scroll{max-height:210px;overflow-y:auto;overscroll-behavior:contain;padding:5px;display:grid;gap:5px}
 .x19g-shell .x19o-issue-scroll .x19g-rail-row{min-height:34px}
 .x19g-shell .x19o-employment-summary{font-size:10.5px;line-height:1.5;color:#475467;background:#f6f9fd;border:1px solid #e0e8f4;border-radius:7px;padding:7px 10px;margin:0 0 8px}
-.x19g-shell .x19o-employment-label{display:inline-flex!important;align-items:center!important;padding:2px 5px!important;margin:2px 0!important;border-radius:4px!important;font-size:9px!important;line-height:1.3!important;font-weight:800!important;white-space:normal!important;overflow-wrap:anywhere!important;vertical-align:middle!important;border:1px solid #e1e6ed!important;background:#f4f5f7!important;color:#475467!important}
+.x19g-shell .x19o-employment-label{display:inline-flex!important;align-items:center!important;padding:2px 5px!important;margin:2px 0!important;border-radius:4px!important;font-size:9px!important;line-height:1.3!important;font-weight:800!important;white-space:normal!important;overflow-wrap:break-word!important;vertical-align:middle!important;border:1px solid #e1e6ed!important;background:#f4f5f7!important;color:#475467!important}
 .x19g-shell .x19o-employment-ft{border-color:#b7e4c7!important;background:#eaf8ee!important;color:#166534!important}
 .x19g-shell .x19o-employment-pt{border-color:#bdd8ff!important;background:#eaf3ff!important;color:#1d4ed8!important}
 .x19g-shell .x19o-employment-unknown{border-color:#fcd9aa!important;background:#fff7ed!important;color:#9a3412!important}
