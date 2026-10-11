@@ -5,6 +5,13 @@ const label = value => typeof value === 'string' ? value.trim().slice(0,180) : '
 const sourceDate = value => /^\d{4}-\d{2}-\d{2}$/.test(label(value)) ? label(value) : null;
 const verified = (section, field) => section?.quality === 'ACTUAL' && finite(section?.[field]) && !!label(section?.source) && !!label(section?.asOf);
 
+let lastAuthorizedSnapshot=null;
+// Module-scoped handoff avoids missing an Owner Control Tower event at module boot.
+export function recordOwnerStrategicSnapshot(snapshot){
+ lastAuthorizedSnapshot=snapshot&&typeof snapshot==='object'?snapshot:null;
+}
+export function readOwnerStrategicSnapshot(){return lastAuthorizedSnapshot;}
+
 export function projectOwnerStrategicSnapshot(snapshot) {
  const context = snapshot?.context || {};
  const date = sourceDate(context.reportingDate);
