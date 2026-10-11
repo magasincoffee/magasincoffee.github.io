@@ -1,7 +1,7 @@
-import {projectOwnerStrategicSnapshot} from "./owner-strategy-source-v1.mjs";
+import {projectOwnerStrategicSnapshot,readOwnerStrategicSnapshot} from "./owner-strategy-source-v1.mjs";
 const dash=document.getElementById("strategyDashboard");
 if(dash){
- let canonicalSnapshot=null;
+ let canonicalSnapshot=readOwnerStrategicSnapshot();
  const hasMetric=v=>v!==null&&v!==undefined&&v!==""&&typeof v!=="boolean"&&Number.isFinite(Number(v));
  const money=v=>hasMetric(v)?new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND",maximumFractionDigits:0}).format(Number(v)):"—";
  const pct=v=>hasMetric(v)?new Intl.NumberFormat("vi-VN",{maximumFractionDigits:1}).format(Number(v))+"%":"—";
@@ -80,8 +80,8 @@ if(dash){
  };
  // Accept normalized snapshot only after canonical Owner access succeeds.
  document.addEventListener('magasin:owner-strategy-snapshot',event=>{
-  if(!event.detail?.snapshot)return;
-  canonicalSnapshot=event.detail.snapshot;
+  if(!event.detail)return;
+  canonicalSnapshot=event.detail.loading?null:(event.detail.snapshot||null);
   render();
  });
  const observer=new MutationObserver(()=>{if(document.body.dataset.ownerOverviewLoading==="false")render()});
