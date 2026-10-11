@@ -679,7 +679,13 @@ function boardHtml(){
  state.shortages.forEach((s,i)=>{const k=String(s.work_date).slice(0,10);if(shortageMap[k])shortageMap[k].push({s,i})});
  return `<div class="msd-board">${days.map((day,di)=>{
   const assignments=map[day].sort((x,y)=>mins(x.a.start_time)-mins(y.a.start_time));
-  const shortages=shortageMap[day].map(({s,i})=>`<div class="msd-shortage-card" data-msd-shortage="${i}" role="status" aria-label="Thiếu nhân sự ${esc(hm(s.shortage_start))} đến ${esc(hm(s.shortage_end))}"><div class="msd-shortage-head"><span class="msd-shortage-icon" aria-hidden="true">!</span><span>Thiếu ${esc(s.missing_headcount)} người</span></div><div class="msd-shortage-time">${esc(hm(s.shortage_start))}–${esc(hm(s.shortage_end))}</div><div class="msd-shortage-meta">Cần ${esc(s.target_headcount)} · hiện có ${esc(s.assigned_headcount)} · ${state.shortageSource==='LOCAL'?'đang tính theo thay đổi chưa lưu':'đã đối chiếu hệ thống'}</div><button class="btn" type="button" data-msd-supplement="${i}">+ Bổ sung người</button></div>`).join('');
+  const shortageCards=shortageMap[day].map(({s,i})=>`<div class="msd-shortage-card" data-msd-shortage="${i}" role="status" aria-label="Thiếu nhân sự ${esc(hm(s.shortage_start))} đến ${esc(hm(s.shortage_end))}"><div class="msd-shortage-head"><span class="msd-shortage-icon" aria-hidden="true">!</span><span>Thiếu ${esc(s.missing_headcount)} người</span></div><div class="msd-shortage-time">${esc(hm(s.shortage_start))}–${esc(hm(s.shortage_end))}</div><div class="msd-shortage-meta">Cần ${esc(s.target_headcount)} · hiện có ${esc(s.assigned_headcount)} · ${state.shortageSource==='LOCAL'?'đang tính theo thay đổi chưa lưu':'đã đối chiếu hệ thống'}</div><button class="btn" type="button" data-msd-supplement="${i}">+ Bổ sung người</button></div>`).join('');
+  const issues=shortageMap[day];
+  const missing=issues.reduce((total,row)=>total+Math.max(0,Number(row.s.missing_headcount)||0),0);
+  // Show the deficit directly on its calendar day, with bounded details on demand.
+  const shortages=issues.length
+   ? '<details class="msd-shortage-group" data-msd-shortage-group><summary aria-label="Ngày '+esc(day)+' có '+issues.length+' khoảng thiếu nhân viên">⚠ '+issues.length+' khoảng thiếu · '+missing+' lượt người</summary><div class="msd-shortage-group-list">'+shortageCards+'</div></details>'
+   : '';
   return `<div class="msd-day" data-msd-date="${day}"><div class="msd-day-title"><b>${DAYS[di]}</b><span>${day.slice(8,10)}/${day.slice(5,7)}</span></div>${calendarCreateHtml(day)}${timelineHtml(day,assignments)}${shortages}</div>`;
  }).join('')}</div>`;
 }
