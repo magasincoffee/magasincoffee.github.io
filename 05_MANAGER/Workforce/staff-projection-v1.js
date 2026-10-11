@@ -3,7 +3,7 @@ if(window.__MAGASIN_MANAGER_STAFF_PROJECTION_V1__)return;
 window.__MAGASIN_MANAGER_STAFF_PROJECTION_V1__=true;
 const SB_URL='https://menvbzlsncmpuvnaifxa.supabase.co',SB_KEY='sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx';
 let sb=null,busy=false;
-let state={stores:[],rows:[],editId:null,loading:false,error:null,employmentTypes:new Map(),employmentTypeReady:false};
+let state={stores:[],rows:[],editId:null,loading:false,error:null,employmentTypes:new Map(),employmentTypeReady:false,notice:null};
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const errorCode=e=>{const s=String(e?.message||e?.code||'PROFILE_VIEW_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PROFILE_VIEW_FAILED'};
 const validProjectionRow=r=>!!r&&!!String(r.employee_id||'').trim()&&['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())&&!!String(r.profile_status||'').trim()&&Array.isArray(r.priority_store_ids)&&Array.isArray(r.priority_store_codes);
@@ -31,9 +31,9 @@ function editHtml(row){
  if(!row)return '';
  const id=esc(row.employee_id),name=esc(row.full_name||row.username||'Nhân viên'),ids=Array.isArray(row.priority_store_ids)?row.priority_store_ids:[];
  const t=String(state.employmentTypes.get(String(row.employee_id))||'').toUpperCase(),ready=state.employmentTypeReady;
- const type='<label class="msp-inline-field">Loại nhân viên<select data-msp-employment aria-label="Loại nhân viên của '+name+'"><option value="">Chưa phân loại</option><option value="FULL_TIME"'+(t==='FULL_TIME'?' selected':'')+'>FT · Full-time</option><option value="PART_TIME"'+(t==='PART_TIME'?' selected':'')+'>PT · Part-time</option></select></label><div data-msp-type-msg class="msp-type-note" role="status" aria-live="polite">'+(ready?'Chọn loại rồi bấm Lưu FT/PT.':'Chưa thể lưu FT/PT. Bạn chỉ đang chọn xem trước vì hệ thống chưa hỗ trợ hoặc chưa cấp quyền.')+'</div>';
+ const type='<label class="msp-inline-field">Loại nhân viên<select data-msp-employment aria-label="Loại nhân viên của '+name+'"><option value="">Chưa phân loại</option><option value="FULL_TIME"'+(t==='FULL_TIME'?' selected':'')+'>FT · Full-time</option><option value="PART_TIME"'+(t==='PART_TIME'?' selected':'')+'>PT · Part-time</option></select></label><div data-msp-type-msg class="msp-type-note" role="status" aria-live="polite">'+(ready?'Chỉnh FT/PT và ưu tiên chi nhánh, sau đó bấm Lưu thay đổi.':'Chưa thể lưu FT/PT. Bạn chỉ đang chọn xem trước vì hệ thống chưa hỗ trợ hoặc chưa cấp quyền.')+'</div>';
  const stores='<div class="msp-inline-priority">'+[0,1,2,3].map(n=>'<label class="msp-inline-field">Ưu tiên '+(n+1)+'<select data-msp-priority="'+(n+1)+'" aria-label="Ưu tiên '+(n+1)+' của '+name+'">'+storeOptions(ids[n],n+1)+'</select></label>').join('')+'</div><div class="msp-inline-note" data-msp-msg role="status" aria-live="polite">Ưu tiên 1 là chi nhánh chính. Không bỏ trống ở giữa.</div>';
- return '<tr class="msp-inline-row" data-msp-editor="'+id+'" data-msp-row="'+id+'"><td data-label="Nhân viên"><b>'+name+'</b><div class="muted">@'+esc(row.username||'—')+'</div><span class="msp-editing-label">Đang sửa</span></td><td data-label="Điện thoại">'+esc(row.phone||'—')+'</td><td data-label="Trạng thái">'+esc(row.profile_status||'—')+'</td><td data-label="FT/PT">'+type+'</td><td data-label="Ưu tiên chi nhánh">'+stores+'</td><td data-label="Thao tác"><div class="msp-inline-actions"><button type="button" class="btn primary" data-msp-type-save'+(ready?'':' disabled')+'>Lưu FT/PT</button><button type="button" class="btn primary" data-msp-save>Lưu ưu tiên</button><button type="button" class="btn" data-msp-cancel>Hủy</button></div><div class="msp-inline-note">Lưu từng mục riêng để báo đúng kết quả.</div></td></tr>';
+ return '<tr class="msp-inline-row" data-msp-editor="'+id+'" data-msp-row="'+id+'"><td data-label="Nhân viên"><b>'+name+'</b><div class="muted">@'+esc(row.username||'—')+'</div><span class="msp-editing-label">Đang sửa</span></td><td data-label="Điện thoại">'+esc(row.phone||'—')+'</td><td data-label="Trạng thái">'+esc(row.profile_status||'—')+'</td><td data-label="FT/PT">'+type+'</td><td data-label="Ưu tiên chi nhánh">'+stores+'</td><td data-label="Thao tác"><div class="msp-inline-actions"><button type="button" class="btn primary" data-msp-save>Lưu thay đổi</button><button type="button" class="btn" data-msp-cancel>Hủy</button></div><div class="msp-inline-note" data-msp-save-msg role="status" aria-live="polite">Một nút lưu chung; hệ thống sẽ kiểm tra từng nội dung thay đổi.</div></td></tr>';
 }
 function render(){
  if(!ensureUi())return;
@@ -42,15 +42,14 @@ function render(){
  if(state.error){root.innerHTML='<div class="msp-state wf-state" data-state="ERROR">Không thể tải Workforce Profile. Mã: '+esc(state.error)+'</div>';return}
 
  const rows=state.rows.map(r=>{if(String(r.employee_id)===String(state.editId||''))return editHtml(r);const codes=Array.isArray(r.priority_store_codes)?r.priority_store_codes.filter(Boolean):[];return '<tr><td data-label="Nhân viên"><b>'+esc(r.full_name||r.username||'Nhân viên')+'</b><div class="muted">@'+esc(r.username||'—')+'</div></td><td data-label="Điện thoại">'+esc(r.phone||'—')+'</td><td data-label="Trạng thái">'+esc(r.profile_status||'—')+'</td><td data-label="FT/PT" class="msp-type-summary">'+esc(employmentTypeLabel(state.employmentTypes.get(String(r.employee_id))))+'</td><td data-label="Ưu tiên chi nhánh"><div class="msp-priority">'+esc(codes.length?codes.join(' → '):'Chưa thiết lập')+'</div><div class="muted">'+esc(codes.length?'Ưu tiên 1 = chi nhánh chính':'Chưa đủ điều kiện xếp lịch cross-store')+'</div></td><td data-label="Thao tác"><button class="btn msp-icon-edit" data-msp-edit="'+esc(r.employee_id)+'" type="button" aria-label="Sửa nhân viên '+esc(r.full_name||r.username||'')+'" title="Sửa nhân viên">✏️</button></td></tr>'}).join('');
- root.innerHTML='<div class="msp-state wf-state" data-state="READY">Store Priority là authority của Quản lý. Employee và Auto Schedule đọc cùng canonical truth này.</div><div class="msp-table-wrap"><table class="msp-table"><thead><tr><th>Nhân viên</th><th>Điện thoại</th><th>Trạng thái</th><th>FT/PT</th><th>Ưu tiên chi nhánh</th><th>Thao tác</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+ root.innerHTML=(state.notice?'<div class="msp-state ok" data-state="SAVED" role="status">'+esc(state.notice)+'</div>':'')+'<div class="msp-state wf-state" data-state="READY">Store Priority là authority của Quản lý. Employee và Auto Schedule đọc cùng canonical truth này.</div><div class="msp-table-wrap"><table class="msp-table"><thead><tr><th>Nhân viên</th><th>Điện thoại</th><th>Trạng thái</th><th>FT/PT</th><th>Ưu tiên chi nhánh</th><th>Thao tác</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
  bind();
 }
 function bind(){
  const root=document.getElementById('mspRoot');if(!root)return;
- root.querySelectorAll('[data-msp-edit]').forEach(b=>b.addEventListener('click',()=>{state.editId=b.dataset.mspEdit;render();root.querySelector('[data-msp-employment]')?.focus({preventScroll:true})}));
+ root.querySelectorAll('[data-msp-edit]').forEach(b=>b.addEventListener('click',()=>{state.notice=null;state.editId=b.dataset.mspEdit;render();root.querySelector('[data-msp-employment]')?.focus({preventScroll:true})}));
  root.querySelector('[data-msp-cancel]')?.addEventListener('click',()=>{const prev=state.editId;state.editId=null;render();[...root.querySelectorAll('[data-msp-edit]')].find(x=>x.dataset.mspEdit===prev)?.focus({preventScroll:true})});
- root.querySelector('[data-msp-save]')?.addEventListener('click',savePriority);
- root.querySelector('[data-msp-type-save]')?.addEventListener('click',saveEmploymentType);
+ root.querySelector('[data-msp-save]')?.addEventListener('click',saveSettings);
  root.querySelector('[data-msp-employment]')?.addEventListener('change',e=>{
   if(state.employmentTypeReady)return;
   const note=root.querySelector('[data-msp-type-msg]');if(!note)return;
@@ -76,45 +75,74 @@ async function loadRows(){
  state.employmentTypes=new Map((state.employmentTypeReady?typeResult.data:[]).filter(x=>x&&x.employee_id).map(x=>[String(x.employee_id),String(x.employment_type||'').toUpperCase()]));
  state.rows=rows;state.error=null;render();
 }
-async function saveEmploymentType(){
- const editor=document.querySelector('[data-msp-editor]');if(!editor||busy||!state.employmentTypeReady)return;
- const employeeId=editor.dataset.mspEditor,value=editor.querySelector('[data-msp-employment]')?.value||'',msg=editor.querySelector('[data-msp-type-msg]'),btn=editor.querySelector('[data-msp-type-save]');
- if(!['FULL_TIME','PART_TIME'].includes(value)){if(msg){msg.textContent='Hãy chọn Full-time hoặc Part-time.';msg.className='msp-type-note msp-state error'}return}
- busy=true;if(btn)btn.disabled=true;
- if(msg){msg.textContent='Đang lưu phân loại vào hệ thống…';msg.className='msp-type-note msp-state info'}
- try{
-  const updated=await client().rpc('set_employee_employment_type_v1',{p_employee_id:employeeId,p_employment_type:value});
-  if(updated.error)throw updated.error;
-  const verified=await client().rpc('list_employee_employment_types_v1');
-  if(verified.error)throw verified.error;
-  const persisted=(Array.isArray(verified.data)?verified.data:[]).find(x=>String(x.employee_id)===String(employeeId));
-  if(String(persisted?.employment_type||'').toUpperCase()!==value)throw Error('EMPLOYMENT_TYPE_PERSISTENCE_NOT_VERIFIED');
-  state.employmentTypes=new Map(verified.data.filter(x=>x&&x.employee_id).map(x=>[String(x.employee_id),String(x.employment_type||'').toUpperCase()]));
-  render();
-  const current=document.querySelector('[data-msp-type-msg]');
-  if(current){current.className='msp-type-note msp-state ok';current.textContent='Đã lưu '+employmentTypeLabel(value)+' vào dữ liệu nhân viên. Lịch nháp mới sẽ đọc phân loại đã lưu.'}
-  document.dispatchEvent(new CustomEvent('magasin:employment-type-saved',{detail:{employeeId,employmentType:value}}));
- }catch(e){if(msg?.isConnected){msg.textContent='Không thể lưu FT/PT. Mã: '+errorCode(e);msg.className='msp-type-note msp-state error'}}
- finally{busy=false;const current=document.querySelector('[data-msp-type-save]');if(current)current.disabled=!state.employmentTypeReady}
-}
-async function savePriority(){
- const editor=document.querySelector('[data-msp-editor]');if(!editor||busy)return;
- const employeeId=editor.dataset.mspEditor,msg=editor.querySelector('[data-msp-msg]');
+async function saveSettings(){
+ const editor=document.querySelector('[data-msp-editor]');
+ if(!editor||busy)return;
+ const employeeId=editor.dataset.mspEditor;
+ const row=state.rows.find(r=>String(r.employee_id)===String(employeeId));
+ if(!row)return;
+ const kind=editor.querySelector('[data-msp-employment]')?.value||'';
+ const originalKind=String(state.employmentTypes.get(String(employeeId))||'').toUpperCase();
+ const originalStores=(Array.isArray(row.priority_store_ids)?row.priority_store_ids:[]).map(String).filter(Boolean);
  const values=[...editor.querySelectorAll('[data-msp-priority]')].map(x=>x.value||'');
- if(!values[0]){if(msg){msg.className='msp-state error';msg.textContent='Phải chọn chi nhánh ưu tiên 1 (chi nhánh chính).'}return}
- let gap=false,seenEmpty=false;for(const v of values){if(!v)seenEmpty=true;else if(seenEmpty)gap=true}
- if(gap){if(msg){msg.className='msp-state error';msg.textContent='Thứ tự ưu tiên phải liên tục; không được bỏ trống ở giữa.'}return}
- const ids=values.filter(Boolean);
- if(new Set(ids).size!==ids.length){if(msg){msg.className='msp-state error';msg.textContent='Một chi nhánh không thể xuất hiện hai lần.'}return}
- busy=true;editor.querySelector('[data-msp-save]').disabled=true;
- if(msg){msg.className='msp-state info';msg.textContent='Đang lưu ưu tiên chi nhánh…'}
+ const stores=values.filter(Boolean);
+ const typeChanged=kind!==originalKind,storesChanged=JSON.stringify(stores)!==JSON.stringify(originalStores);
+ const note=editor.querySelector('[data-msp-save-msg]'),button=editor.querySelector('[data-msp-save]');
+ const inform=(message,tone='info')=>{if(note){note.textContent=message;note.className='msp-inline-note msp-state '+tone}};
+ if(!typeChanged&&!storesChanged){inform('Không có thay đổi cần lưu.');return}
+ // Preflight all changed fields before writing either RPC; never claim a combined transaction.
+ if(typeChanged){
+  if(!['FULL_TIME','PART_TIME'].includes(kind)){inform('Hãy chọn FT hoặc PT hợp lệ trước khi lưu.','error');return}
+  if(!state.employmentTypeReady){inform('CHƯA LƯU: FT/PT chỉ đang xem trước. Cần triển khai RPC Supabase trước khi lưu các thay đổi của hàng này.','error');return}
+ }
+ if(storesChanged){
+  if(!values[0]){inform('Phải chọn chi nhánh chính ở ưu tiên 1.','error');return}
+  let gap=false,missing=false;
+  for(const x of values){if(!x)missing=true;else if(missing)gap=true}
+  if(gap||new Set(stores).size!==stores.length){inform('Thứ tự chi nhánh phải liên tục và không trùng lặp.','error');return}
+ }
+ busy=true;
+ editor.querySelectorAll('button, select').forEach(el=>el.disabled=true);
+ inform('Đang lưu các thay đổi…');
+ let typeSaved=false,storesSaved=false;
  try{
-  const q=await client().rpc('set_employee_store_priority_profile_v1',{p_employee_id:employeeId,p_store_ids:ids});
-  if(q.error)throw q.error;
-  state.editId=null;await loadRows();
+  if(typeChanged){
+   const set=await client().rpc('set_employee_employment_type_v1',{p_employee_id:employeeId,p_employment_type:kind});
+   if(set.error)throw set.error;
+   const check=await client().rpc('list_employee_employment_types_v1');
+   if(check.error)throw check.error;
+   const match=Array.isArray(check.data)?check.data.find(x=>String(x.employee_id)===String(employeeId)):null;
+   if(String(match?.employment_type||'').toUpperCase()!==kind)throw Error('EMPLOYMENT_TYPE_PERSISTENCE_NOT_VERIFIED');
+   state.employmentTypes=new Map(check.data.filter(x=>x&&x.employee_id).map(x=>[String(x.employee_id),String(x.employment_type||'').toUpperCase()]));
+   typeSaved=true;
+   document.dispatchEvent(new CustomEvent('magasin:employment-type-saved',{detail:{employeeId,employmentType:kind}}));
+  }
+  if(storesChanged){
+   const set=await client().rpc('set_employee_store_priority_profile_v1',{p_employee_id:employeeId,p_store_ids:stores});
+   if(set.error)throw set.error;
+   const check=await client().rpc('list_employee_workforce_profiles_v1');
+   if(check.error)throw check.error;
+   const updated=Array.isArray(check.data)?check.data.find(x=>String(x.employee_id)===String(employeeId)):null;
+   const persisted=(Array.isArray(updated?.priority_store_ids)?updated.priority_store_ids:[]).map(String).filter(Boolean);
+   if(JSON.stringify(persisted)!==JSON.stringify(stores))throw Error('STORE_PRIORITY_PERSISTENCE_NOT_VERIFIED');
+   storesSaved=true;
+  }
+  state.notice='Đã lưu thay đổi của '+(row.full_name||row.username||'nhân viên')+'.';
+  state.editId=null;
+  await loadRows();
  }catch(e){
-  if(msg&&msg.isConnected){msg.className='msp-state error';msg.textContent='Không thể lưu. Mã: '+errorCode(e);editor.querySelector('[data-msp-save]').disabled=false}
- }finally{busy=false}
+  const message=errorCode(e);
+  if(typeSaved&&!storesSaved&&storesChanged){
+   inform('Đã lưu FT/PT, nhưng CHƯA lưu ưu tiên chi nhánh ('+message+'). Kiểm tra lại và thử lưu phần còn thiếu.','error');
+  }else if(storesSaved){
+   inform('Đã ghi ưu tiên chi nhánh nhưng chưa xác minh được toàn bộ kết quả ('+message+'). Vui lòng tải lại trước khi thử lại.','error');
+  }else{
+   inform('CHƯA LƯU ĐẦY ĐỦ. Không thể xác minh thay đổi: '+message+'. Vui lòng tải lại để kiểm tra trước khi thử tiếp.','error');
+  }
+ }finally{
+  busy=false;
+  if(editor.isConnected){editor.querySelectorAll('select').forEach(x=>x.disabled=false);if(button)button.disabled=false;editor.querySelector('[data-msp-cancel]')?.removeAttribute('disabled')}
+ }
 }
 async function refresh(){
  if(busy||!ensureUi())return;

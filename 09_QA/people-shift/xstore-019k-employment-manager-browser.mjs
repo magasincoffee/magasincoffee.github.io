@@ -19,9 +19,11 @@ try{
  const selector=page.locator('[data-msp-employment]');
  await selector.waitFor({state:'visible',timeout:10000});
  await selector.selectOption('FULL_TIME');
- await page.locator('[data-msp-type-save]').click();
+ assert.equal(await page.locator('[data-msp-save]').count(),1);
+ assert.equal(await page.locator('[data-msp-type-save]').count(),0);
+ await page.locator('[data-msp-save]').click();
  await page.waitForFunction(()=>globalThis.__MW31_QA.employmentTypes['u-2']==='FULL_TIME');
- await page.waitForFunction(()=>document.querySelector('[data-msp-type-msg]')?.textContent?.includes('Đã lưu'));
+ await page.locator('[data-state="SAVED"]').waitFor({state:'visible'});
  await page.locator('[data-view="workforce"]').click();
  // The saved classification propagates to the in-memory calendar from a canonical server re-read.
  // No manual refresh, new DRAFT, or published schedule mutation should be required.
@@ -58,12 +60,13 @@ try{
  await page.evaluate(()=>globalThis.__MW31_QA.setRpcError('list_employee_employment_types_v1','Could not find the function public.list_employee_employment_types_v1'));
  await page.evaluate(()=>globalThis.MAGASIN_MANAGER_STAFF_PROJECTION.refresh());
  await page.locator('[data-msp-edit="u-2"]').click();
- assert.equal(await page.locator('[data-msp-type-save]').isDisabled(),true);
+ assert.equal(await page.locator('[data-msp-save]').isEnabled(),true);
  assert.equal(await page.locator('[data-msp-employment]').isEnabled(),true);
  const saveCallsBeforePreview=await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==='set_employee_employment_type_v1').length);
  await page.locator('[data-msp-employment]').selectOption('PART_TIME');
  assert.match(await page.locator('[data-msp-type-msg]').innerText(),/CHƯA LƯU/);
- assert.equal(await page.locator('[data-msp-type-save]').isDisabled(),true);
+ await page.locator('[data-msp-save]').click();
+ assert.match(await page.locator('[data-msp-save-msg]').innerText(),/CHƯA LƯU/);
  assert.equal(await page.evaluate(()=>globalThis.__MW31_QA.calls.filter(x=>x.name==='set_employee_employment_type_v1').length),saveCallsBeforePreview);
  await page.locator('[data-msp-cancel]').click();
  await page.locator('[data-msp-edit="u-2"]').click();
