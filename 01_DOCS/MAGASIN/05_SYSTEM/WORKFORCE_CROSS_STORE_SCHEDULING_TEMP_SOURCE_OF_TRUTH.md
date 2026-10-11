@@ -941,6 +941,33 @@ Stored `resolve_sapo_order_branches(date)` contract was inspected without invoca
 
 No branch attribution, finance or scheduled work records were modified by this diagnostic. This source-quality gap does **not** authorize merging PR #392 or advancing XSTORE-020.
  
+## 0.33 XSTORE-019O fresh combined RPC ACL and real-account readiness — 2026-10-11
+
+**Task unchanged: XSTORE-019O IN PROGRESS / RC_NOT_READY; XSTORE-020 and 011 remain PAUSED.** This subsection records work completed in the pre-release safe/read-only lane, **without Owner participation**, not a claim of actual authenticated E2E release qualification.
+
+### A. Production Auth account availability — aggregate-only check
+- Read-only join of `public.profiles` with `auth.users` for ACTIVE roles: **OWNER 1/1** has an Auth account, verified email and prior login; **STORE_MANAGER 2/2** have Auth account, verified email and prior login; **STAFF 28/28** have Auth accounts, **27/28** with verified emails and prior login. No individual identities, email addresses, passwords, recovery data, tokens or session information were read or exported.
+- **Interpretation:** test accounts exist in all three canonical roles, but these aggregates **do not establish that usable active credentials/sessions for each role are available to the authorized QA browser**. The 1 STAFF account with incomplete confirmation/sign-in evidence is not a reason to modify account state or silently reset credentials; address it through the approved employee onboarding flow when needed.
+- Real three-role Owner/Manager/Employee browser smoke (§0.28.C.1–C.3) is **still open**. Use a legitimate, authorized session and do not bypass Auth or infer test success from database aggregates.
+
+### B. Fresh joint K+L RPC and base-table ACL gate — isolated native PG17.11
+- On authorized H4, re-opened the existing **isolated** PostgreSQL 17.11 test cluster bound only to `127.0.0.1:55439`; no production connection, production migrations, live writes or credentials.
+- **8/8** K+L installed RPC signatures coexist, **anon EXECUTE granted to 0/8**, **authenticated EXECUTE granted to 8/8** as migration contract requires.
+- **3/3** sensitive audit/request tables `employee_employment_type_audit_v1`, `attendance_outside_schedule_requests_v1`, `attendance_outside_schedule_review_events_v1` have RLS enabled; **0/3** have direct SELECT grant to either `anon` or `authenticated`.
+- Assertion `JOINT_019K_019L_ACL=PASS`; local PG17 server was stopped with `PG17_STOPPED`. This **confirms metadata ACL shape and coexistence on the synthetic local DB only**; it does **not** establish true Supabase JWT, full production schema, row-level policy behavior or migration/backup recoverability.
+
+### C. Indirect auth guard inventory, not a security certification
+- Read-only lexical review of **77** authenticated-callable `SECURITY DEFINER` functions found **34** bodies with mutating SQL and **3** with no *inline recognizable* auth/role/token guard. Two of those are DB trigger-linked functions (`handle_new_auth_user`, `rls_auto_enable`), while the third remains the **P0 direct SAPO branch resolver**. This is a coarse code-reference scan and **not a proof that all other functions are safe**.
+- A second read-only review of reader RPCs found `get_workforce_staffing_requirements` delegates its scope to `get_manager_accessible_stores()`, which checks authenticated ACTIVE Owner/Manager and `can_access_store`; `list_manager_attendance_review_v1` delegates to `validate_manager_attendance_review_authority_v1`, which checks actor, ACTIVE role and requested store. **Guard existence confirmed; actual negative-token/JWT tests remain mandatory**.
+- Four no-inline-guard read/helper functions are not automatically approved: `get_workforce_staffing_requirements`, `list_manager_attendance_review_v1`, `magasin_verify_integration_token` (token verifier), and `resolve_login_email` (login helper); evaluate entrypoint intent, nested guards and data disclosure before any grants change. Do not mass-revoke.
+- Live production signatures for `current_user_role`, `can_access_store`, `create_schedule_generation` and `evaluate_workforce_coverage_shortages_v1` were confirmed via metadata. Function names/parameters align with K/L's known dependencies but **presence/signatures alone are not full-schema or runtime proof**.
+
+### D. Release divergence and next proof
+- Exact unmerged PR #392 head `3b5c884fe1a00cd5fd868b7cb134dd86a6b344d4` still has **22/22 successful PR workflows**, remains **Draft**, and by latest compare is **229 ahead / 5 behind** current `main`. The behind commits cover subsequent SOT documentation/status updates. Do not treat current old-code CI as qualification of an unprepared/future merged replacement RC. Rebase/reconcile SOT only at controlled RC freeze after gates.
+- **Remaining essential actions:** authenticated real three-role browser scope + negative authorization checks, isolated **production-equivalent** schema/JWT/RLS and rollback rehearsal, SAPO branch attribution P0 independent remediation and source-quality report, employment type configuration on real staff through Manager/Owner authority, canonical Owner revenue fail-closed acceptance, freeze exact RC SHA + fresh CI + final Owner after-hours release approval.
+- **Owner check requirement today:** none for the above read-only/local work. An authorized login/session or Owner decision is required at the corresponding actual role acceptance or controlled production cutover gate. No production changes are authorized or executed by this note.
+
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
