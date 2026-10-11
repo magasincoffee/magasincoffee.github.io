@@ -638,12 +638,15 @@ function editorHtml(a,i,days){
 }
 function directCardHtml(a,i,days){
  const start=clampMinutes(mins(a.start_time)),end=clampMinutes(mins(a.end_time)),top=((start-calendarSlotStart)/(calendarSlotEnd-calendarSlotStart))*100,height=Math.max(3,((end-start)/(calendarSlotEnd-calendarSlotStart))*100);
- return '<article class="msd-direct-card '+bandClass(a.start_time)+'" data-msd-row="'+i+'" data-msd-drag-index="'+i+'" draggable="true" tabindex="0" style="top:'+top+'%;height:'+height+'%" aria-label="'+esc(employeeName(a))+' '+esc(hm(a.start_time))+' đến '+esc(hm(a.end_time))+'"><button class="msd-resize-handle start" type="button" draggable="true" data-msd-resize-start="'+i+'" aria-label="Kéo để đổi giờ bắt đầu"></button><div class="msd-direct-head"><span class="msd-move-grip" draggable="true" data-msd-move-handle="'+i+'" title="Kéo để di chuyển ca" aria-hidden="true">↕</span><div class="msd-direct-name">'+esc(employeeName(a))+'</div><div class="msd-direct-time">'+esc(hm(a.start_time))+'–'+esc(hm(a.end_time))+'</div></div><div class="msd-meta">'+assignmentMeta(a)+'</div><div class="msd-direct-actions"><button class="btn" type="button" data-msd-open-editor="'+i+'">Chỉnh</button><button class="btn" type="button" data-msd-remove-direct="'+i+'">Xóa</button></div>'+editorHtml(a,i,days)+'<button class="msd-resize-handle end" type="button" draggable="true" data-msd-resize-end="'+i+'" aria-label="Kéo để đổi giờ kết thúc"></button></article>';
+ return '<article class="msd-direct-card '+bandClass(a.start_time)+'" data-msd-row="'+i+'" data-msd-drag-index="'+i+'" draggable="true" tabindex="0" style="top:'+top+'%;height:'+height+'%" aria-label="'+esc(employeeName(a))+' '+esc(hm(a.start_time))+' đến '+esc(hm(a.end_time))+'"><button class="msd-resize-handle start" type="button" draggable="true" data-msd-resize-start="'+i+'" aria-label="Kéo để đổi giờ bắt đầu"></button><div class="msd-direct-head"><span class="msd-move-grip" draggable="true" data-msd-move-handle="'+i+'" title="Kéo để di chuyển ca" aria-hidden="true">↕</span><div class="msd-direct-name">'+esc(employeeName(a))+' '+assignmentEmploymentBadge(a)+'</div><div class="msd-direct-time">'+esc(hm(a.start_time))+'–'+esc(hm(a.end_time))+'</div></div><div class="msd-meta">'+assignmentMeta(a)+'</div><div class="msd-direct-actions"><button class="btn" type="button" data-msd-open-editor="'+i+'">Chỉnh</button><button class="btn" type="button" data-msd-remove-direct="'+i+'">Xóa</button></div>'+editorHtml(a,i,days)+'<button class="msd-resize-handle end" type="button" draggable="true" data-msd-resize-end="'+i+'" aria-label="Kéo để đổi giờ kết thúc"></button></article>';
 }
 function assignmentEmploymentBadge(a){
  const p=state.eligibleEmployees.find(r=>String(r.employee_id||r.user_id||'')===String(a.user_id||''));
- const t=String(a.employment_type||p?.employment_type||'').toUpperCase();
- return t==='FULL_TIME'?'<span class="msd-cluster-badge">FT</span>':t==='PART_TIME'?'<span class="msd-cluster-badge">PT</span>':'';
+ const t=String(p?.employment_type||a.employment_type||'').toUpperCase();
+ const label=t==='FULL_TIME'?'Full-time':t==='PART_TIME'?'Part-time':'Chưa phân loại';
+ const kind=t==='FULL_TIME'?'ft':t==='PART_TIME'?'pt':'unknown';
+ // Unknown means not configured/available, not implicitly PART_TIME.
+ return '<span class="x19o-employment-label x19o-employment-'+kind+'" data-employment-type="'+esc(t||'UNKNOWN')+'" aria-label="Loại nhân viên: '+label+'">'+label+'</span>';
 }
 function groupOverlappingAssignments(assignments){
  const sorted=[...assignments].sort((x,y)=>mins(x.a.start_time)-mins(y.a.start_time)||mins(x.a.end_time)-mins(y.a.end_time)||x.i-y.i),groups=[];
