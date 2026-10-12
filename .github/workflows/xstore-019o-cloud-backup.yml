@@ -32,7 +32,17 @@ jobs:
         run: |
           set -euo pipefail
           node --check 09_QA/people-shift/xstore-019o-cloud-backup.mjs
-          echo "CLOUD_BACKUP_RUNNER_SYNTAX_PASS; NO_BACKUP_TRIGGERED"
+          export BACKUP_WORK="$(mktemp -d)"
+          trap 'rm -rf "$BACKUP_WORK"' EXIT
+          export DB_URL="postgresql://postgres.menvbzlsncmpuvnaifxa:synthetic-only@aws-0-test.pooler.supabase.com:5432/postgres"
+          export BACKUP_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs prepare
+          head -c 4096 /dev/urandom > "$BACKUP_WORK/production.dump"
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs encrypt
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs decrypt
+          cmp "$BACKUP_WORK/production.dump" "$BACKUP_WORK/restore-check.dump"
+          test "$(node -p "require(process.env.BACKUP_WORK + '/manifest.json').restore_verified")" = "false"
+          echo "CLOUD_BACKUP_CRYPTO_ROUNDTRIP=PASS; ONLY_SYNTHETIC_DATA; NO_PRODUCTION_ACCESS"
 
   encrypted-backup-restore:
     needs: source-syntax
