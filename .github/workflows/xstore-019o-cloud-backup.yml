@@ -1,0 +1,113 @@
+name: XSTORE-019O Cloud Backup and Restore Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type XSTORE-019O to start a read-only production backup"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: xstore-019o-cloud-backup-only
+  cancel-in-progress: false
+
+jobs:
+  encrypted-backup-restore:
+    if: github.ref == 'refs/heads/main' && inputs.confirmation == 'XSTORE-019O'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    env:
+      BACKUP_WORK: ${{ github.workspace }}/.xstore-019o-cloud-work
+    steps:
+      - name: Fetch fixed-source backup runner
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check that cloud database and encryption secrets exist
+        env:
+          DB_URL: ${{ secrets.MAGASIN_NOIBO_BACKUP_DATABASE_URL }}
+          BACKUP_KEY: ${{ secrets.MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs prepare
+      - name: Capture production PostgreSQL with Docker client v17 (read-only)
+        run: |
+          set -euo pipefail
+          docker run --rm --network host \
+            --volume "$BACKUP_WORK:/backup" \
+            --env PGSERVICE=magasin \
+            --env PGSERVICEFILE=/backup/service.conf \
+            --env PGPASSFILE=/backup/pgpass.conf \
+            postgres:17 \
+            pg_dump --format=custom --no-owner --no-acl \
+              --lock-wait-timeout=15s --file=/backup/production.dump
+          docker run --rm \
+            --volume "$BACKUP_WORK:/backup:ro" postgres:17 \
+            pg_restore --list /backup/production.dump > /dev/null
+      - name: Encrypt the archive before it can be uploaded
+        id: encryption
+        env:
+          BACKUP_KEY: ${{ secrets.MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs encrypt
+      - name: Authenticate decryption in isolated runner
+        env:
+          BACKUP_KEY: ${{ secrets.MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs decrypt
+      - name: Start isolated PostgreSQL 17 for restore verification
+        run: |
+          set -euo pipefail
+          docker run --rm -d --name xstore019o-temporary-restore \
+            --publish 127.0.0.1:55455:5432 \
+            --env POSTGRES_HOST_AUTH_METHOD=trust \
+            postgres:17
+          for i in $(seq 1 45); do
+            if docker exec xstore019o-temporary-restore pg_isready -U postgres -q; then exit 0; fi
+            sleep 2
+          done
+          echo "::error::Temporary Postgres did not become ready"
+          exit 1
+      - name: Restore full database archive and verify critical relations
+        run: |
+          set -euo pipefail
+          docker run --rm --network host \
+            --volume "$BACKUP_WORK:/backup:ro" postgres:17 \
+            pg_restore --exit-on-error --no-owner --no-acl \
+              --host=127.0.0.1 --port=55455 --username=postgres \
+              --dbname=postgres /backup/restore-check.dump
+          restored=$(docker exec xstore019o-temporary-restore \
+            psql -U postgres -d postgres -AtX -c \
+              "select case when to_regclass('public.profiles') is not null and to_regclass('public.work_schedules') is not null then 'PASS' else 'FAIL' end")
+          if [ "$restored" != PASS ]; then
+            echo "::error::Critical relations not present in full restore"
+            exit 1
+          fi
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs mark-restore
+      - name: Store ONLY AES-256-GCM encrypted database backup
+        if: always() && steps.encryption.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: xstore-019o-noibo-encrypted-${{ github.run_id }}
+          path: |
+            ${{ env.BACKUP_WORK }}/production.dump.aes256gcm
+            ${{ env.BACKUP_WORK }}/manifest.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Destroy plaintext copies and temporary credentials
+        if: always()
+        run: |
+          set +e
+          docker rm -f xstore019o-temporary-restore >/dev/null 2>&1 || true
+          rm -f "$BACKUP_WORK/production.dump" "$BACKUP_WORK/restore-check.dump"
+          rm -f "$BACKUP_WORK/pgpass.conf" "$BACKUP_WORK/service.conf"
+          echo "CLOUD_BACKUP_CLEANUP_COMPLETED; NO_PRODUCTION_DDL_OR_DATA_WRITE"
