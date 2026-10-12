@@ -1,6 +1,11 @@
 name: XSTORE-019O Cloud Backup and Restore Gate
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/xstore-019o-cloud-backup.yml"
+      - "09_QA/people-shift/xstore-019o-cloud-backup.mjs"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -16,8 +21,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  source-syntax:
+    name: Validate cloud backup runner source (no database)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node syntax checks, no database or secrets
+        run: |
+          set -euo pipefail
+          node --check 09_QA/people-shift/xstore-019o-cloud-backup.mjs
+          echo "CLOUD_BACKUP_RUNNER_SYNTAX_PASS; NO_BACKUP_TRIGGERED"
+
   encrypted-backup-restore:
-    if: github.ref == 'refs/heads/main' && inputs.confirmation == 'XSTORE-019O'
+    needs: source-syntax
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.confirmation == 'XSTORE-019O'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     defaults:
