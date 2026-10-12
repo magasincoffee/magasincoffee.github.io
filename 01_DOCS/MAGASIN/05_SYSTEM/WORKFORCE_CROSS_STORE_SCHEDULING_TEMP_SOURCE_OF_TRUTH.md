@@ -1298,6 +1298,17 @@ Then invoke the named **XSTORE-019O Cloud Backup and Restore Gate** GitHub Actio
 
 **Release invariant:** PR #394 **Draft**, PR #392 **Draft**, no production migrations/employee state writes or website deployment from this cloud task, until validated checks and correct midnight window. Owner must only be prompted for the first unresolved credential permission after all assistant-owned work has been completed, then continue independently.
 
+## 0.54 XSTORE-019O cloud gate — 2026-10-13 00:01 ICT
+
+Owner mobile/cloud-only directive remains active; H4 is NOT required. Current main before this SOT evidence update: `7a8e7a9bf34f614ac369a434b63df32d7067ea87`.
+
+GitHub Actions XSTORE-019O Cloud Backup and Restore Gate: live run `38199273027` (2026-10-12 10:19 ICT) completed SUCCESS for **synthetic-only source/crypto test**, with log `CLOUD_BACKUP_CRYPTO_ROUNDTRIP=PASS; ONLY_SYNTHETIC_DATA; NO_PRODUCTION_ACCESS`. Its **real encrypted-backup-restore job was SKIPPED** and artifacts were **empty**. Earlier run `38199100466` also had synthetic PASS and real job SKIPPED. Live 100 newest repository workflow runs show **no manual production-backup dispatch** after this workflow was introduced. No proven AES-256-GCM database archive, valid SHA or full isolated restore. Repository Secrets cannot be inspected with current connector; their presence is UNKNOWN, not confirmed missing.
+
+Narrow PR #394 is Draft/open/unmerged at exact HEAD `273a365d7cc64f1a7d559a368823a9e1f0a3c9d9`; six PR-head workflow runs SUCCESS. Its base SHA differs from current main; merge compatibility is not certified. Broad PR #392 remains Draft/unmerged. Existing CI is not evidence of real signed-JWT Owner/Manager ALL/Employee/foreign-store-denial testing. Supabase MAGASIN-NOIBO read-only at 2026-10-13 00:01:58 ICT: profiles=36, official schedules=87, public `set_employee_lifecycle_status_v1` RPC count=0. No production migration, real employee status write, PR merge or release performed.
+
+**RELEASE BLOCKED:** midnight window is open, but real backup + isolated full restore + current SHA verification + production-equivalent signed-JWT/RLS QA + rollback are not proven. Do not merge #394/#392 or apply DDL. Owner's only current mobile checkpoint: in GitHub Actions repository Secrets, configure the two cloud-backup secrets described in §0.53 if not already set, then manually dispatch the named workflow on `main` with confirmation `XSTORE-019O`. Never transmit secrets via chat or commit. Next executor must inspect actual backup run, encrypted artifact and full restore, then separately complete real 3-role security gates. No H4 or extra Owner intervention until genuinely necessary.
+
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
