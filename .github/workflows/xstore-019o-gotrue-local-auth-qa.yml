@@ -97,6 +97,7 @@ jobs:
             < 09_QA/people-shift/xstore-019o-jwt-isolated-fixture.sql >/dev/null
           # Real GoTrue signup + password login for five synthetic users; output only IDs and a private SQL mapping.
           docker run --rm --network xstore019o-gotrue-net \
+            --user "$(id -u):$(id -g)" \
             --env XSTORE_QA_ACTOR_FILE=/qa-tmp/actors.json \
             --env XSTORE_QA_ACTOR_SQL=/qa-tmp/map-actors.sql \
             --volume "$PWD/09_QA/people-shift/xstore-019o-gotrue-local-auth.mjs:/qa/runner.mjs:ro" \
@@ -123,6 +124,7 @@ jobs:
             postgrest/postgrest:v12.2.8 >/dev/null
           # Verify by logging in again. Tokens originate ONLY from GoTrue /token endpoint.
           docker run --rm --network xstore019o-gotrue-net \
+            --user "$(id -u):$(id -g)" \
             --env XSTORE_QA_ACTOR_FILE=/qa-tmp/actors.json \
             --volume "$PWD/09_QA/people-shift/xstore-019o-gotrue-local-auth.mjs:/qa/runner.mjs:ro" \
             --volume "$qa_tmp:/qa-tmp:ro" \
