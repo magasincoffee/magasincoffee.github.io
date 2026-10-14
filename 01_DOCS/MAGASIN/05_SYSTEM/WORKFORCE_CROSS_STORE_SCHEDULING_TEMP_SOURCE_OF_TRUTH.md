@@ -1320,6 +1320,15 @@ Read-back of `main` `.github/workflows/xstore-019o-cloud-backup.yml` confirms ma
 **RELEASE BLOCKED:** No newly verified production AES-256-GCM logical archive, retention-valid artifact, full isolated restoration/SHA verification, signed-JWT Owner/ALL Manager/Employee/foreign-store QA or final exact-head release acceptance was established in this audit. PR #394 and #392 must remain unmerged; no SQL DDL, real employee changes or production release. Preferred next technical path: securely provision a scoped backup credential via a reviewed separate change, only after its production impact and full-recovery implications are qualified, or use the existing database password from a private Owner-controlled credential vault; set required secrets directly in GitHub without exposing values; dispatch and attest cloud backup/full isolated restore, then complete JWT/schema/CI/rollback gates before after-midnight cutover. Owner's broad permission does not waive release gates.
 
 
+## 0.56 XSTORE-019O owner-reported GitHub secret provisioning / cloud dispatch checkpoint — 2026-10-14 evening ICT
+
+Owner reported via chat that `MAGASIN_NOIBO_BACKUP_DATABASE_URL` (Secret 1) and `MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY` (Secret 2) were created in the GitHub Actions repository Secrets UI. **This is Owner attestation only**, not a read of secret values or validation that URI/password/key format is correct. The connected GitHub tool cannot inspect secret values or create/update them.
+
+Read-only GitHub verification of the repository's 30 latest workflow runs showed only two XSTORE-019O Cloud Backup and Restore Gate runs: `38199100466` and `38199273027`, both `push` and `success` from 2026-10-12, synthetic-only; **no production `workflow_dispatch` run** in the returned recent-run window. `main` workflow source is present and has a manually triggered `encrypted-backup-restore` job conditional on `confirmation=XSTORE-019O`, with a separate synthetic-only push check. Narrow PR #394 remains open/Draft/unmerged at `273a365d7cc64f1a7d559a368823a9e1f0a3c9d9`; broad PR #392 remains open/Draft/unmerged.
+
+**Single Owner phone-only step pending:** open `https://github.com/magasincoffee/magasincoffee.github.io/actions/workflows/xstore-019o-cloud-backup.yml`, choose Run workflow on `main`, enter `XSTORE-019O` into confirmation and dispatch once. Connected GitHub tools do not provide workflow-dispatch capability; do not claim it was started automatically. Then inspect run jobs and logs, encrypted artifact, SHA, retention and completed full isolated restore. Production release remains **BLOCKED** absent that proof plus full-schema/real signed-JWT Owner/ALL Manager/Employee/foreign-store-denial checks, rollback and exact-head GREEN. Do not merge PR #394/#392, apply production migrations or change employees until all gates pass.
+
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
