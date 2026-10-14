@@ -39,6 +39,30 @@ await awaitServer();
 let checks=0;
 function success(r,caseName){assert.equal(r.status,200,caseName+' expected HTTP200, got '+r.status+' '+(r.body?.code||''));checks++}
 function reject(r,caseName){assert([400,401,403].includes(r.status),caseName+' expected denied HTTP, got '+r.status);checks++}
+// Production grants authenticated column-level profile UPDATE, but Owner-only RLS
+// must prevent privilege escalation by an Employee or partial-scope Manager.
+async function patchProfileAs(sub,body,caseName){
+ const res=await fetch(base+'/profiles?id=eq.'+encodeURIComponent(sub),{
+  method:'PATCH',
+  headers:{
+   'authorization':'Bearer '+token(sub),
+   'content-type':'application/json',
+   'prefer':'return=representation'
+  },
+  body:JSON.stringify(body),
+  signal:AbortSignal.timeout(12000)
+ });
+ assert(res.status<500,caseName+' unexpected server error '+res.status);
+ if(res.status>=200&&res.status<300){
+   const content=await res.text();
+   // RLS denied updates can return HTTP 200/204 with zero updated rows.
+   if(content.trim())assert.deepEqual(JSON.parse(content),[],caseName+' unexpectedly mutated row');
+ }
+ checks++;
+}
+await patchProfileAs(users.staff,{role:'OWNER'},'Employee self role escalation');
+await patchProfileAs(users.partial,{access_scope:'ALL'},'Partial Manager self scope escalation');
+await patchProfileAs(users.staff,{status:'INACTIVE'},'Employee direct status update');
 const valid=token(users.owner);
 const last=valid.slice(-1);
 reject(await rpc('list_employee_lifecycle_controls_v1',users.owner,{},valid.slice(0,-1)+(last==='x'?'y':'x')),'bad signature');
