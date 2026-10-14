@@ -42,7 +42,7 @@ jobs:
             'ROLLBACK',
             'MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY'
           ])assert(s.includes(fragment),'Missing safety requirement: '+fragment);
-          assert(!s.includes('apply_migration('));
+          assert(!s.includes('supabase db push') && !s.includes('supabase migration up'));
           console.log('XSTORE_019O_FULL_SCHEMA_SOURCE_GATES=PASS; NO_PRODUCTION_ACCESS');
           NODE
 
