@@ -77,7 +77,27 @@ jobs:
             psql -U postgres -d xstore019o_synthetic -AtX -c \
               "select case when exists (select 1 from pg_available_extensions where name='supabase_vault') then 'PASS' else 'FAIL' end")
           test "$available" = PASS
-          echo 'XSTORE_ISOLATED_SUPABASE_PG17_EXTENSION_AVAILABLE=PASS; NO_PRODUCTION_ACCESS'
+          # Synthetic-only end-to-end extension restore, no Supabase credentials or personal data.
+          docker exec xstore019o-supabase-image-smoke \
+            psql -U postgres -d xstore019o_synthetic -v ON_ERROR_STOP=1 \
+              -c 'CREATE SCHEMA vault' \
+              -c 'CREATE EXTENSION supabase_vault WITH SCHEMA vault' \
+              -c 'CREATE TABLE public.xstore_backup_synthetic (id int primary key, note text)' \
+              -c "INSERT INTO public.xstore_backup_synthetic VALUES (1, 'synthetic')"
+          docker exec xstore019o-supabase-image-smoke \
+            pg_dump -U postgres --format=custom --no-owner --no-acl \
+              --dbname=xstore019o_synthetic > "$RUNNER_TEMP/xstore-synthetic.dump"
+          docker exec xstore019o-supabase-image-smoke \
+            createdb -U postgres xstore019o_synthetic_restored
+          docker exec -i xstore019o-supabase-image-smoke \
+            pg_restore -U postgres --exit-on-error --no-owner --no-acl \
+              --dbname=xstore019o_synthetic_restored \
+              < "$RUNNER_TEMP/xstore-synthetic.dump"
+          restored=$(docker exec xstore019o-supabase-image-smoke \
+            psql -U postgres -d xstore019o_synthetic_restored -AtX -c \
+              "select case when exists (select 1 from pg_extension where extname='supabase_vault') and exists (select 1 from public.xstore_backup_synthetic where id=1 and note='synthetic') then 'PASS' else 'FAIL' end")
+          test "$restored" = PASS
+          echo 'XSTORE_ISOLATED_SUPABASE_PG17_SYNTHETIC_FULL_RESTORE=PASS; NO_PRODUCTION_ACCESS'
 
   encrypted-backup-restore:
     needs: source-syntax
