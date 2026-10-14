@@ -38,12 +38,56 @@ jobs:
             'download-artifact@v4',
             'supabase/postgres:17.6.1.173',
             '--network none',
+            'ISOLATED_POSTGRES_NOT_STABLE',
+            'XSTORE_019O_FULL_RESTORE_NO_OWNER_NO_ACL=PASS',
             'pg_restore --exit-on-error',
             'ROLLBACK',
             'MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY'
           ])assert(s.includes(fragment),'Missing safety requirement: '+fragment);
           console.log('XSTORE_019O_FULL_SCHEMA_SOURCE_GATES=PASS; NO_PRODUCTION_ACCESS');
           NODE
+
+  isolated-postgres-startup-smoke:
+    name: Stable isolated Supabase PostgreSQL 17 bootstrap (synthetic only)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Verify stable postmaster before first restore (no secrets or production data)
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm -d --network none --name xstore019o-boot-smoke \
+            --env POSTGRES_PASSWORD=synthetic-only-not-production \
+            supabase/postgres:17.6.1.173 \
+            postgres -c config_file=/etc/postgresql/postgresql.conf >/dev/null
+          trap 'docker rm -f xstore019o-boot-smoke >/dev/null 2>&1 || true' EXIT
+          stable=0
+          previous_start=""
+          for i in $(seq 1 75); do
+            start=""
+            if docker inspect -f '{{.State.Running}}' xstore019o-boot-smoke 2>/dev/null | grep -qx true &&
+               docker exec xstore019o-boot-smoke pg_isready -U postgres -q; then
+              start="$(docker exec xstore019o-boot-smoke \
+                psql -U postgres -d postgres -AtX -c \
+                  "select pg_postmaster_start_time()::text" 2>/dev/null || true)"
+            fi
+            if [ -n "$start" ] && [ "$start" = "$previous_start" ]; then
+              stable=$((stable+1))
+            else
+              stable=0
+            fi
+            previous_start="$start"
+            if [ "$stable" -ge 8 ]; then break; fi
+            sleep 2
+          done
+          test "$stable" -ge 8
+          docker exec xstore019o-boot-smoke createdb -U postgres xstore019o_boot
+          docker exec xstore019o-boot-smoke \
+            psql -U postgres -d xstore019o_boot -AtX -c \
+              "select case when exists(select 1 from pg_available_extensions where name='supabase_vault') then 'PASS' else 'FAIL' end" \
+              | grep -qx PASS
+          echo 'XSTORE_019O_ISOLATED_STARTUP_STABLE_SYNTHETIC=PASS; NO_PRODUCTION_ACCESS'
 
   full-schema-migration-rollback:
     name: Real backup full-schema migration rehearsal — isolated only
@@ -98,18 +142,48 @@ jobs:
             --env POSTGRES_PASSWORD=synthetic-only-not-production \
             supabase/postgres:17.6.1.173 \
             postgres -c config_file=/etc/postgresql/postgresql.conf >/dev/null
-          ready=0
-          for i in $(seq 1 90); do
-            if docker exec xstore019o-schema-only pg_isready -U postgres -q; then ready=1;break;fi
-            sleep 1
+          # pg_isready alone can pass during temporary bootstrap before a server restart.
+          # Require eight consecutive 2-second checks with unchanged postmaster start time.
+          stable=0
+          previous_start=""
+          for i in $(seq 1 75); do
+            start=""
+            if docker inspect -f '{{.State.Running}}' xstore019o-schema-only 2>/dev/null | grep -qx true &&
+               docker exec xstore019o-schema-only pg_isready -U postgres -q; then
+              start="$(docker exec xstore019o-schema-only \
+                psql -U postgres -d postgres -AtX -c \
+                  "select pg_postmaster_start_time()::text" 2>/dev/null || true)"
+            fi
+            if [ -n "$start" ] && [ "$start" = "$previous_start" ]; then
+              stable=$((stable+1))
+            else
+              stable=0
+            fi
+            previous_start="$start"
+            if [ "$stable" -ge 8 ]; then break; fi
+            sleep 2
           done
-          test "$ready" = 1
+          if [ "$stable" -lt 8 ]; then
+            echo "::error::ISOLATED_POSTGRES_NOT_STABLE"
+            docker inspect --format 'RUNNING={{.State.Running}} OOM={{.State.OOMKilled}} EXIT={{.State.ExitCode}}' \
+              xstore019o-schema-only || true
+            exit 1
+          fi
+          echo 'XSTORE_019O_ISOLATED_POSTGRES_STABLE=PASS'
           docker exec xstore019o-schema-only createdb -U postgres xstore019o_schema
           # Restore the entire archive; no omissions, no network route, and no exported people data.
-          docker exec -i xstore019o-schema-only \
+          # Keep fail-closed semantics and report only PostgreSQL container health metadata.
+          if ! docker exec -i xstore019o-schema-only \
             pg_restore --exit-on-error --no-owner --no-acl \
               --username=supabase_admin --dbname=xstore019o_schema \
-              < "$BACKUP_WORK/restore-check.dump" >/dev/null
+              < "$BACKUP_WORK/restore-check.dump" >/dev/null; then
+            echo "::error::ISOLATED_FULL_RESTORE_FAILED"
+            docker inspect --format 'RUNNING={{.State.Running}} OOM={{.State.OOMKilled}} EXIT={{.State.ExitCode}}' \
+              xstore019o-schema-only || true
+            docker exec xstore019o-schema-only pg_isready -U postgres || true
+            exit 1
+          fi
+          echo 'XSTORE_019O_FULL_RESTORE_NO_OWNER_NO_ACL=PASS'
           before="$(docker exec xstore019o-schema-only psql -U postgres -d xstore019o_schema -AtX -c 'select count(*) from public.profiles')"
           # Pre-existing lifecycle functions must not already exist in source schema.
           absent="$(docker exec xstore019o-schema-only psql -U postgres -d xstore019o_schema -AtX \
