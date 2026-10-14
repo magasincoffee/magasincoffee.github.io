@@ -6,6 +6,9 @@ on:
     paths:
       - ".github/workflows/xstore-019o-cloud-backup.yml"
       - "09_QA/people-shift/xstore-019o-cloud-backup.mjs"
+  pull_request:
+    paths:
+      - ".github/workflows/xstore-019o-cloud-backup.yml"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -43,6 +46,58 @@ jobs:
           cmp "$BACKUP_WORK/production.dump" "$BACKUP_WORK/restore-check.dump"
           test "$(node -p "require(process.env.BACKUP_WORK + '/manifest.json').restore_verified")" = "false"
           echo "CLOUD_BACKUP_CRYPTO_ROUNDTRIP=PASS; ONLY_SYNTHETIC_DATA; NO_PRODUCTION_ACCESS"
+
+  isolated-restore-image-preflight:
+    name: Test Supabase PG17 restore image without production data
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Boot network-isolated Supabase PostgreSQL 17 and validate Vault
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm -d --network none --name xstore019o-supabase-image-smoke \
+            --env POSTGRES_PASSWORD=synthetic-only-do-not-use-in-production \
+            supabase/postgres:17.6.1.173 \
+            postgres -c config_file=/etc/postgresql/postgresql.conf
+          trap 'docker rm -f xstore019o-supabase-image-smoke >/dev/null 2>&1 || true' EXIT
+          ready=0
+          for i in $(seq 1 60); do
+            if docker exec xstore019o-supabase-image-smoke pg_isready -U postgres -q; then
+              ready=1
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" = 1
+          docker exec xstore019o-supabase-image-smoke \
+            createdb -U postgres xstore019o_synthetic
+          available=$(docker exec xstore019o-supabase-image-smoke \
+            psql -U postgres -d xstore019o_synthetic -AtX -c \
+              "select case when exists (select 1 from pg_available_extensions where name='supabase_vault') then 'PASS' else 'FAIL' end")
+          test "$available" = PASS
+          # Synthetic-only end-to-end extension restore, no Supabase credentials or personal data.
+          docker exec xstore019o-supabase-image-smoke \
+            psql -U postgres -d xstore019o_synthetic -v ON_ERROR_STOP=1 \
+              -c 'CREATE SCHEMA vault' \
+              -c 'CREATE EXTENSION supabase_vault WITH SCHEMA vault' \
+              -c 'CREATE TABLE public.xstore_backup_synthetic (id int primary key, note text)' \
+              -c "INSERT INTO public.xstore_backup_synthetic VALUES (1, 'synthetic')"
+          docker exec xstore019o-supabase-image-smoke \
+            pg_dump -U postgres --format=custom --no-owner --no-acl \
+              --dbname=xstore019o_synthetic > "$RUNNER_TEMP/xstore-synthetic.dump"
+          docker exec xstore019o-supabase-image-smoke \
+            createdb -U postgres xstore019o_synthetic_restored
+          docker exec -i xstore019o-supabase-image-smoke \
+            pg_restore -U supabase_admin --exit-on-error --no-owner --no-acl \
+              --dbname=xstore019o_synthetic_restored \
+              < "$RUNNER_TEMP/xstore-synthetic.dump"
+          restored=$(docker exec xstore019o-supabase-image-smoke \
+            psql -U postgres -d xstore019o_synthetic_restored -AtX -c \
+              "select case when exists (select 1 from pg_extension where extname='supabase_vault') and exists (select 1 from public.xstore_backup_synthetic where id=1 and note='synthetic') then 'PASS' else 'FAIL' end")
+          test "$restored" = PASS
+          echo 'XSTORE_ISOLATED_SUPABASE_PG17_SYNTHETIC_FULL_RESTORE=PASS; NO_PRODUCTION_ACCESS'
 
   encrypted-backup-restore:
     needs: source-syntax
@@ -93,32 +148,44 @@ jobs:
         run: |
           set -euo pipefail
           node 09_QA/people-shift/xstore-019o-cloud-backup.mjs decrypt
-      - name: Start isolated PostgreSQL 17 for restore verification
+      - name: Start network-isolated Supabase-compatible PostgreSQL 17
         run: |
           set -euo pipefail
-          docker run --rm -d --name xstore019o-temporary-restore \
-            --publish 127.0.0.1:55455:5432 \
-            --env POSTGRES_HOST_AUTH_METHOD=trust \
-            postgres:17
-          for i in $(seq 1 45); do
-            if docker exec xstore019o-temporary-restore pg_isready -U postgres -q; then exit 0; fi
+          # No Docker network: restored triggers/functions cannot call production or external services.
+          docker run --rm -d --network none --name xstore019o-temporary-restore \
+            --env POSTGRES_PASSWORD=isolated-only-not-production \
+            supabase/postgres:17.6.1.173 \
+            postgres -c config_file=/etc/postgresql/postgresql.conf
+          ready=0
+          for i in $(seq 1 60); do
+            if docker exec xstore019o-temporary-restore pg_isready -U postgres -q; then
+              ready=1
+              break
+            fi
             sleep 2
           done
-          echo "::error::Temporary Postgres did not become ready"
-          exit 1
+          if [ "$ready" != 1 ]; then
+            echo "::error::Isolated Supabase Postgres did not become ready"
+            exit 1
+          fi
+          docker exec xstore019o-temporary-restore \
+            createdb -U postgres xstore019o_restore
       - name: Restore full database archive and verify critical relations
         run: |
           set -euo pipefail
-          docker run --rm --network host \
-            --volume "$BACKUP_WORK:/backup:ro" postgres:17 \
+          # Full archive, fail-closed on ANY SQL/extension/schema error; no --exclude options.
+          # The ephemeral Supabase superuser is required to restore Vault's internal tables.
+          # Never use this role, its password, or these permissions against production.
+          # Transfer plaintext only through stdin into the disposable network-isolated DB.
+          docker exec -i xstore019o-temporary-restore \
             pg_restore --exit-on-error --no-owner --no-acl \
-              --host=127.0.0.1 --port=55455 --username=postgres \
-              --dbname=postgres /backup/restore-check.dump
+              --username=supabase_admin --dbname=xstore019o_restore \
+              < "$BACKUP_WORK/restore-check.dump"
           restored=$(docker exec xstore019o-temporary-restore \
-            psql -U postgres -d postgres -AtX -c \
-              "select case when to_regclass('public.profiles') is not null and to_regclass('public.work_schedules') is not null then 'PASS' else 'FAIL' end")
+            psql -U postgres -d xstore019o_restore -AtX -c \
+              "select case when to_regclass('public.profiles') is not null and to_regclass('public.work_schedules') is not null and exists (select 1 from pg_extension where extname='supabase_vault') then 'PASS' else 'FAIL' end")
           if [ "$restored" != PASS ]; then
-            echo "::error::Critical relations not present in full restore"
+            echo "::error::Required restored relations or Supabase Vault extension missing"
             exit 1
           fi
           node 09_QA/people-shift/xstore-019o-cloud-backup.mjs mark-restore
