@@ -57,10 +57,11 @@ jobs:
           done
           test "$ready" = 1
           docker exec xstore019o-pg createdb -U postgres xstore019o_gotrue
-          docker exec xstore019o-pg psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+          # Supabase reserves supabase_auth_admin; only the container-local supabase_admin can adjust it.
+          docker exec xstore019o-pg psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 \
             -c "ALTER ROLE supabase_auth_admin WITH LOGIN PASSWORD 'synthetic-only-jwt-test'" \
             -c "ALTER DATABASE xstore019o_gotrue OWNER TO supabase_auth_admin" >/dev/null
-          docker exec xstore019o-pg psql -U postgres -d xstore019o_gotrue -v ON_ERROR_STOP=1 \
+          docker exec xstore019o-pg psql -U supabase_admin -d xstore019o_gotrue -v ON_ERROR_STOP=1 \
             -c "CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION supabase_auth_admin" \
             -c "GRANT USAGE, CREATE ON SCHEMA auth TO supabase_auth_admin" >/dev/null
           ephemeral_jwt_secret="$(node -e 'process.stdout.write(require("crypto").randomBytes(48).toString("hex"))')"
