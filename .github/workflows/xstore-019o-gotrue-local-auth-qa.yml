@@ -1,0 +1,143 @@
+name: XSTORE-019O Local Supabase Auth JWT QA
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/xstore-019o-gotrue-local-auth-qa.yml'
+      - '09_QA/people-shift/xstore-019o-gotrue-local-auth.mjs'
+      - '09_QA/people-shift/xstore-019o-jwt-isolated-fixture.sql'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/xstore-019o-gotrue-local-auth-qa.yml'
+      - '09_QA/people-shift/xstore-019o-gotrue-local-auth.mjs'
+      - '09_QA/people-shift/xstore-019o-jwt-isolated-fixture.sql'
+
+permissions:
+  contents: read
+
+jobs:
+  local-auth-jwt-acceptance:
+    name: Supabase Auth LOCAL issues JWT; role/RLS+rollback isolated
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate local Auth QA client
+        run: node --check 09_QA/people-shift/xstore-019o-gotrue-local-auth.mjs
+      - name: Isolated GoTrue Auth and signed role acceptance (synthetic ONLY)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # All images downloaded before creating the disconnected network.
+          docker pull supabase/postgres:17.6.1.173 >/dev/null
+          docker pull supabase/gotrue:v2.177.0 >/dev/null
+          docker pull postgrest/postgrest:v12.2.8 >/dev/null
+          docker pull node:22-alpine >/dev/null
+          docker network create --internal xstore019o-gotrue-net >/dev/null
+          qa_tmp="$RUNNER_TEMP/xstore019o-gotrue-qa"
+          mkdir -p "$qa_tmp"
+          chmod 700 "$qa_tmp"
+          cleanup(){
+            docker rm -f xstore019o-pgrst xstore019o-auth xstore019o-pg >/dev/null 2>&1 || true
+            docker network rm xstore019o-gotrue-net >/dev/null 2>&1 || true
+            rm -rf "$qa_tmp"
+          }
+          trap cleanup EXIT
+          docker run -d --rm --network xstore019o-gotrue-net --name xstore019o-pg \
+            --env POSTGRES_PASSWORD=synthetic-only-jwt-test \
+            supabase/postgres:17.6.1.173 \
+            postgres -c config_file=/etc/postgresql/postgresql.conf >/dev/null
+          ready=0
+          for i in $(seq 1 90);do
+            if docker exec xstore019o-pg pg_isready -U postgres -q;then ready=1;break;fi
+            sleep 1
+          done
+          test "$ready" = 1
+          docker exec xstore019o-pg createdb -U postgres xstore019o_gotrue
+          # Supabase reserves supabase_auth_admin; only the container-local supabase_admin can adjust it.
+          docker exec xstore019o-pg psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 \
+            -c "ALTER ROLE supabase_auth_admin WITH LOGIN PASSWORD 'synthetic-only-jwt-test'" \
+            -c "ALTER DATABASE xstore019o_gotrue OWNER TO supabase_auth_admin" >/dev/null
+          docker exec xstore019o-pg psql -U supabase_admin -d xstore019o_gotrue -v ON_ERROR_STOP=1 \
+            -c "CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION supabase_auth_admin" \
+            -c "GRANT USAGE, CREATE ON SCHEMA auth TO supabase_auth_admin" >/dev/null
+          ephemeral_jwt_secret="$(node -e 'process.stdout.write(require("crypto").randomBytes(48).toString("hex"))')"
+          docker run -d --rm --network xstore019o-gotrue-net --name xstore019o-auth \
+            --env GOTRUE_API_HOST=0.0.0.0 \
+            --env GOTRUE_API_PORT=9999 \
+            --env API_EXTERNAL_URL=http://xstore019o-auth:9999 \
+            --env GOTRUE_SITE_URL=http://xstore019o-auth:9999 \
+            --env GOTRUE_DB_DRIVER=postgres \
+            --env GOTRUE_DB_NAMESPACE=auth \
+            --env GOTRUE_DB_DATABASE_URL='postgres://supabase_auth_admin:synthetic-only-jwt-test@xstore019o-pg:5432/xstore019o_gotrue?sslmode=disable' \
+            --env GOTRUE_JWT_SECRET="$ephemeral_jwt_secret" \
+            --env GOTRUE_JWT_AUD=authenticated \
+            --env GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated \
+            --env GOTRUE_JWT_ADMIN_ROLES=service_role \
+            --env GOTRUE_JWT_EXP=3600 \
+            --env GOTRUE_DISABLE_SIGNUP=false \
+            --env GOTRUE_EXTERNAL_EMAIL_ENABLED=true \
+            --env GOTRUE_MAILER_AUTOCONFIRM=true \
+            supabase/gotrue:v2.177.0 >/dev/null
+          # Wait for Auth migrations to finish before altering local auth helper functions.
+          docker run --rm --network xstore019o-gotrue-net node:22-alpine node -e '
+            (async()=>{for(let i=0;i<90;i++){
+              try{const r=await fetch("http://xstore019o-auth:9999/health",{signal:AbortSignal.timeout(1500)});
+                  if(r.ok){console.log("XSTORE_019O_LOCAL_AUTH_MIGRATIONS_READY=PASS");return}}
+              catch{}
+              await new Promise(resolve=>setTimeout(resolve,1000));
+            }
+            console.error("XSTORE_019O_LOCAL_AUTH_NOT_READY");process.exitCode=1})()
+          '
+          # Only synthetic public tables and production-derived authority function bodies.
+          docker exec -i xstore019o-pg psql -U supabase_admin -d xstore019o_gotrue -v ON_ERROR_STOP=1 \
+            < 09_QA/people-shift/xstore-019o-jwt-isolated-fixture.sql >/dev/null
+          # Real GoTrue signup + password login for five synthetic users; output only IDs and a private SQL mapping.
+          docker run --rm --network xstore019o-gotrue-net \
+            --user "$(id -u):$(id -g)" \
+            --env XSTORE_QA_ACTOR_FILE=/qa-tmp/actors.json \
+            --env XSTORE_QA_ACTOR_SQL=/qa-tmp/map-actors.sql \
+            --volume "$PWD/09_QA/people-shift/xstore-019o-gotrue-local-auth.mjs:/qa/runner.mjs:ro" \
+            --volume "$qa_tmp:/qa-tmp" \
+            node:22-alpine node /qa/runner.mjs seed
+          docker exec -i xstore019o-pg psql -U supabase_admin -d xstore019o_gotrue -v ON_ERROR_STOP=1 \
+            < "$qa_tmp/map-actors.sql" >/dev/null
+          # Load exact unchanged PR #394 lifecycle SQL, rollback first and verify absent.
+          git fetch --quiet origin 59a3b4368f03ec95097061a90a31b71d26450beb
+          git show 59a3b4368f03ec95097061a90a31b71d26450beb:07_DATABASE/migrations/20261011224000_xstore_019o_staff_lifecycle_v1.sql > "$qa_tmp/lifecycle.sql"
+          test "$(git hash-object "$qa_tmp/lifecycle.sql")" = 9b35072c73202ac310f3dbe7df98e189848bef2e
+          { printf 'BEGIN;\n';cat "$qa_tmp/lifecycle.sql";printf '\nROLLBACK;\n'; } \
+            | docker exec -i xstore019o-pg psql -U supabase_admin -d xstore019o_gotrue -q -v ON_ERROR_STOP=1 >/dev/null
+          absent="$(docker exec xstore019o-pg psql -U postgres -d xstore019o_gotrue -AtX \
+            -c "select case when to_regclass('public.employee_lifecycle_audit_v1') is null and to_regprocedure('public.set_employee_lifecycle_status_v1(uuid,text,text)') is null then 'PASS' else 'FAIL' end")"
+          test "$absent" = PASS
+          docker exec -i xstore019o-pg psql -U supabase_admin -d xstore019o_gotrue -q -v ON_ERROR_STOP=1 \
+            < "$qa_tmp/lifecycle.sql" >/dev/null
+          docker run -d --rm --network xstore019o-gotrue-net --name xstore019o-pgrst \
+            --env PGRST_DB_URI='postgres://authenticator:synthetic-only-jwt-test@xstore019o-pg:5432/xstore019o_gotrue' \
+            --env PGRST_DB_SCHEMAS=public \
+            --env PGRST_DB_ANON_ROLE=anon \
+            --env PGRST_JWT_SECRET="$ephemeral_jwt_secret" \
+            postgrest/postgrest:v12.2.8 >/dev/null
+          # Verify by logging in again. Tokens originate ONLY from GoTrue /token endpoint.
+          docker run --rm --network xstore019o-gotrue-net \
+            --user "$(id -u):$(id -g)" \
+            --env XSTORE_QA_ACTOR_FILE=/qa-tmp/actors.json \
+            --volume "$PWD/09_QA/people-shift/xstore-019o-gotrue-local-auth.mjs:/qa/runner.mjs:ro" \
+            --volume "$qa_tmp:/qa-tmp:ro" \
+            node:22-alpine node /qa/runner.mjs verify
+          final="$(docker exec xstore019o-pg psql -U postgres -d xstore019o_gotrue -AtX \
+            -c "select case when
+            (select count(*) from public.employee_lifecycle_audit_v1)=2
+            and (select count(*) from public.work_schedules)=1
+            and (select count(*) from public.schedule_generation_assignments)=1
+            and (select status from public.profiles where id='00000000-0000-4000-8000-000000000005')='ACTIVE'
+            and (select count(*) from public.profiles where role='OWNER' and status='ACTIVE')=1
+            and (select count(*) from public.profiles where role='STORE_MANAGER' and access_scope='CN1')=1
+            and (select count(*) from public.profiles where role='STAFF' and status='ACTIVE')>=2
+            then 'PASS' else 'FAIL' end")"
+          test "$final" = PASS
+          echo 'XSTORE_019O_GOTRUE_LOCAL_ROLLBACK_RLS_ROSTER=PASS; SYNTHETIC_ONLY; NO_PRODUCTION_WRITE'
