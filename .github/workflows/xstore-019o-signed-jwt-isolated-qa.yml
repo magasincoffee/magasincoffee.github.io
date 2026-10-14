@@ -59,6 +59,20 @@ jobs:
           echo 'XSTORE_019O_SYNTHETIC_MIGRATION_TRANSACTION_ROLLBACK=PASS'
           docker exec -i xstore019o-pg psql -U supabase_admin -d xstore019o_jwt -v ON_ERROR_STOP=1 \
             < "$RUNNER_TEMP/lifecycle.sql" >/dev/null
+          # Match the observed production EXECUTE admission/column ACL/RLS, not a permissive mock.
+          privileges="$(docker exec xstore019o-pg psql -U postgres -d xstore019o_jwt -AtX \
+            -c "select case when
+              not has_function_privilege('anon','public.set_employee_lifecycle_status_v1(uuid,text,text)','EXECUTE')
+              and has_function_privilege('authenticated','public.set_employee_lifecycle_status_v1(uuid,text,text)','EXECUTE')
+              and not has_function_privilege('anon','public.list_employee_lifecycle_controls_v1()','EXECUTE')
+              and has_function_privilege('authenticated','public.list_employee_lifecycle_controls_v1()','EXECUTE')
+              and has_column_privilege('authenticated','public.profiles','status','UPDATE')
+              and has_column_privilege('authenticated','public.profiles','role','UPDATE')
+              and has_column_privilege('authenticated','public.profiles','access_scope','UPDATE')
+              and (select count(*) from pg_policies where schemaname='public' and tablename='profiles' and policyname in ('profiles_select','profiles_update_owner'))=2
+              then 'PASS' else 'FAIL' end")"
+          test "$privileges" = PASS
+          echo 'XSTORE_019O_PRODUCTION_AUTHORITY_ACL_FIXTURE_PARITY=PASS'
           # Ephemeral signing key exists only in this no-production runner.
           ephemeral_jwt_secret="$(node -e 'process.stdout.write(require("crypto").randomBytes(48).toString("hex"))')"
           docker run -d --rm --network xstore019o-jwt-net --name xstore019o-pgrst \
@@ -73,6 +87,14 @@ jobs:
             --volume "$PWD/09_QA/people-shift/xstore-019o-jwt-isolated-http.mjs:/qa/check.mjs:ro" \
             node:22-alpine node /qa/check.mjs
           final=$(docker exec xstore019o-pg psql -U postgres -d xstore019o_jwt -AtX \
-            -c "select case when (select status from public.profiles where id='00000000-0000-4000-8000-000000000005')='ACTIVE' and (select count(*) from public.employee_lifecycle_audit_v1)=2 and (select count(*) from public.work_schedules)=1 and (select count(*) from public.schedule_generation_assignments)=1 then 'PASS' else 'FAIL' end")
+            -c "select case when
+                (select status from public.profiles where id='00000000-0000-4000-8000-000000000005')='ACTIVE'
+                and (select status from public.profiles where id='00000000-0000-4000-8000-000000000004')='ACTIVE'
+                and (select role from public.profiles where id='00000000-0000-4000-8000-000000000004')='STAFF'
+                and (select access_scope from public.profiles where id='00000000-0000-4000-8000-000000000003')='CN1'
+                and (select count(*) from public.employee_lifecycle_audit_v1)=2
+                and (select count(*) from public.work_schedules)=1
+                and (select count(*) from public.schedule_generation_assignments)=1
+              then 'PASS' else 'FAIL' end")
           test "$final" = PASS
           echo 'XSTORE_019O_SYNTHETIC_AUDIT_ROSTER_IMMUTABILITY=PASS'

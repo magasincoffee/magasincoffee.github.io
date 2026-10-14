@@ -28,22 +28,51 @@ ALTER TABLE public.employee_store_priorities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.work_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.schedule_generation_assignments ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.profiles,public.employee_store_priorities,public.work_schedules,public.schedule_generation_assignments FROM PUBLIC,anon,authenticated;
-CREATE OR REPLACE FUNCTION public.current_user_role() RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $function$
-SELECT p.role FROM public.profiles p WHERE p.id=auth.uid()
+-- Authority implementations below transcribed from 2026-10-14 production pg_get_functiondef().
+-- Only the identities and rows below are synthetic; production signatures are unchanged.
+CREATE OR REPLACE FUNCTION public.current_user_role()
+RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public'
+AS $function$
+  select role from public.profiles where id = auth.uid();
 $function$;
-CREATE OR REPLACE FUNCTION public.can_access_store(target_store_id uuid) RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $function$
-DECLARE v_role text;v_status text;v_scope text;v_code text;
-BEGIN
- IF auth.uid() IS NULL OR target_store_id IS NULL THEN RETURN FALSE; END IF;
- SELECT upper(coalesce(role,'')),status,coalesce(access_scope,'') INTO v_role,v_status,v_scope FROM public.profiles WHERE id=auth.uid();
- IF NOT FOUND OR v_status<>'ACTIVE' THEN RETURN FALSE; END IF;
- IF v_role='OWNER' THEN RETURN TRUE; END IF;
- IF v_role<>'STORE_MANAGER' THEN RETURN FALSE; END IF;
- SELECT upper(code) INTO v_code FROM public.stores WHERE id=target_store_id;
- IF v_code IS NULL THEN RETURN FALSE; END IF;
- RETURN EXISTS(SELECT 1 FROM regexp_split_to_table(upper(v_scope),'[,; ]+') token WHERE token IN ('ALL','*',v_code));
-END;$function$;
+CREATE OR REPLACE FUNCTION public.can_access_store(target_store_id uuid)
+RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public'
+AS $function$
+declare
+  v_role text;
+  v_status text;
+  v_scope text;
+  v_code text;
+begin
+  if auth.uid() is null or target_store_id is null then return false; end if;
+  select upper(coalesce(p.role,'')),p.status,coalesce(p.access_scope,'')
+    into v_role,v_status,v_scope
+    from public.profiles p
+   where p.id=auth.uid();
+  if not found or v_status<>'ACTIVE' then return false; end if;
+  if v_role='OWNER' then return true; end if;
+  if v_role<>'STORE_MANAGER' then return false; end if;
+  select upper(s.code) into v_code
+  from public.stores s
+  where s.id=target_store_id;
+  if v_code is null then return false; end if;
+  return exists(
+    select 1
+    from regexp_split_to_table(upper(v_scope),'[,; ]+') token
+    where token in ('ALL','*',v_code)
+  );
+end;
+$function$;
 GRANT EXECUTE ON FUNCTION public.current_user_role(),public.can_access_store(uuid) TO authenticated;
+-- Match verified production role privileges + Owner-only RLS for direct profile PATCH.
+-- Authenticated column grants alone do not confer an UPDATE when RLS denies it.
+GRANT SELECT ON public.profiles TO authenticated;
+GRANT UPDATE(status,role,access_scope) ON public.profiles TO authenticated;
+CREATE POLICY profiles_select ON public.profiles FOR SELECT TO authenticated
+USING (id=auth.uid() OR public.current_user_role()='OWNER');
+CREATE POLICY profiles_update_owner ON public.profiles FOR UPDATE TO authenticated
+USING (public.current_user_role()='OWNER')
+WITH CHECK (public.current_user_role()='OWNER');
 INSERT INTO public.stores VALUES
 ('00000000-0000-4000-8000-000000000011','CN1'),
 ('00000000-0000-4000-8000-000000000012','CN2');
