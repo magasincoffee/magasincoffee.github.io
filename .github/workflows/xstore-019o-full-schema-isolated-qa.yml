@@ -1,0 +1,143 @@
+name: XSTORE-019O Full Schema Isolated Rehearsal
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/xstore-019o-full-schema-isolated-qa.yml'
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Enter XSTORE-019O-SCHEMA-ONLY to rehearse the pinned release migration on isolated restored backup'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  source-preflight:
+    name: Assert cloud-only schema gate has strict admission
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: No production writes or automatic backup restore
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs'),assert=require('node:assert/strict');
+          const s=fs.readFileSync('.github/workflows/xstore-019o-full-schema-isolated-qa.yml','utf8');
+          for(const fragment of [
+            "github.event_name == 'workflow_dispatch'",
+            "github.ref == 'refs/heads/main'",
+            "inputs.confirmation == 'XSTORE-019O-SCHEMA-ONLY'",
+            '38577798740',
+            'download-artifact@v4',
+            'supabase/postgres:17.6.1.173',
+            '--network none',
+            'pg_restore --exit-on-error',
+            'ROLLBACK',
+            'MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY'
+          ])assert(s.includes(fragment),'Missing safety requirement: '+fragment);
+          assert(!s.includes('apply_migration('));
+          console.log('XSTORE_019O_FULL_SCHEMA_SOURCE_GATES=PASS; NO_PRODUCTION_ACCESS');
+          NODE
+
+  full-schema-migration-rollback:
+    name: Real backup full-schema migration rehearsal — isolated only
+    needs: source-preflight
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.confirmation == 'XSTORE-019O-SCHEMA-ONLY'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      BACKUP_WORK: ${{ github.workspace }}/.xstore-019o-schema-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve only owner-approved AES-256-GCM archive from successful run 10
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38577798740
+          name: xstore-019o-noibo-encrypted-38577798740
+          github-token: ${{ github.token }}
+          path: ${{ github.workspace }}/.xstore-019o-schema-only
+      - name: Verify encrypted archive/manifest, restore full schema and rollback candidate
+        env:
+          BACKUP_KEY: ${{ secrets.MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cleanup() {
+            docker rm -f xstore019o-schema-only >/dev/null 2>&1 || true
+            rm -f "$BACKUP_WORK/restore-check.dump" "$BACKUP_WORK/production.dump" \
+              "$BACKUP_WORK/production.dump.aes256gcm" "$BACKUP_WORK/manifest.json"
+            rm -f "$RUNNER_TEMP/xstore019o-schema-migration.sql"
+          }
+          trap cleanup EXIT
+          node <<'NODE'
+          const fs=require('fs'),assert=require('node:assert/strict');
+          const m=JSON.parse(fs.readFileSync(process.env.BACKUP_WORK+'/manifest.json','utf8'));
+          assert.equal(m.project_ref,'menvbzlsncmpuvnaifxa');
+          assert.equal(m.encrypted_algorithm,'AES-256-GCM');
+          assert.equal(m.restore_verified,true);
+          assert.match(m.dump_sha256,/^[a-f0-9]{64}$/i);
+          assert.match(m.encrypted_sha256,/^[a-f0-9]{64}$/i);
+          console.log('XSTORE_019O_ARCHIVE_MANIFEST_ATTESTED=PASS');
+          NODE
+          # Explicit encrypted hash and authenticated decrypt + plaintext SHA checks.
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs decrypt
+          git fetch --quiet origin 273a365d7cc64f1a7d559a368823a9e1f0a3c9d9
+          git show 273a365d7cc64f1a7d559a368823a9e1f0a3c9d9:07_DATABASE/migrations/20261011224000_xstore_019o_staff_lifecycle_v1.sql \
+            > "$RUNNER_TEMP/xstore019o-schema-migration.sql"
+          sha="$(git hash-object "$RUNNER_TEMP/xstore019o-schema-migration.sql")"
+          test "$sha" = 9b35072c73202ac310f3dbe7df98e189848bef2e
+          docker run --rm -d --network none --name xstore019o-schema-only \
+            --env POSTGRES_PASSWORD=synthetic-only-not-production \
+            supabase/postgres:17.6.1.173 \
+            postgres -c config_file=/etc/postgresql/postgresql.conf >/dev/null
+          ready=0
+          for i in $(seq 1 90); do
+            if docker exec xstore019o-schema-only pg_isready -U postgres -q; then ready=1;break;fi
+            sleep 1
+          done
+          test "$ready" = 1
+          docker exec xstore019o-schema-only createdb -U postgres xstore019o_schema
+          # Restore the entire archive; no omissions, no network route, and no exported people data.
+          docker exec -i xstore019o-schema-only \
+            pg_restore --exit-on-error --no-owner --no-acl \
+              --username=supabase_admin --dbname=xstore019o_schema \
+              < "$BACKUP_WORK/restore-check.dump" >/dev/null
+          before="$(docker exec xstore019o-schema-only psql -U postgres -d xstore019o_schema -AtX -c 'select count(*) from public.profiles')"
+          # Pre-existing lifecycle functions must not already exist in source schema.
+          absent="$(docker exec xstore019o-schema-only psql -U postgres -d xstore019o_schema -AtX \
+            -c "select case when to_regprocedure('public.set_employee_lifecycle_status_v1(uuid,text,text)') is null and to_regclass('public.employee_lifecycle_audit_v1') is null then 'PASS' else 'FAIL' end")"
+          test "$absent" = PASS
+          # Apply the exact candidate DDL against FULL restored schema, validate creation,
+          # and ROLLBACK the entire trial: no employee status changes in the clone.
+          {
+            printf 'BEGIN;\n'
+            cat "$RUNNER_TEMP/xstore019o-schema-migration.sql"
+            cat <<'SQL'
+          DO $gate$
+          BEGIN
+            IF to_regprocedure('public.set_employee_lifecycle_status_v1(uuid,text,text)') IS NULL OR
+               to_regprocedure('public.list_employee_lifecycle_controls_v1()') IS NULL OR
+               to_regclass('public.employee_lifecycle_audit_v1') IS NULL THEN
+              RAISE EXCEPTION 'ISOLATED_LIFECYCLE_MIGRATION_INCOMPLETE';
+            END IF;
+          END
+          $gate$;
+          ROLLBACK;
+          SQL
+          } | docker exec -i xstore019o-schema-only \
+              psql -U supabase_admin -d xstore019o_schema -q -v ON_ERROR_STOP=1 >/dev/null
+          after="$(docker exec xstore019o-schema-only psql -U postgres -d xstore019o_schema -AtX -c 'select count(*) from public.profiles')"
+          test "$before" = "$after"
+          rolled="$(docker exec xstore019o-schema-only psql -U postgres -d xstore019o_schema -AtX \
+            -c "select case when to_regprocedure('public.set_employee_lifecycle_status_v1(uuid,text,text)') is null and to_regclass('public.employee_lifecycle_audit_v1') is null then 'PASS' else 'FAIL' end")"
+          test "$rolled" = PASS
+          echo 'XSTORE_019O_PINNED_FULL_SCHEMA_DDL_ROLLBACK=PASS; NO_PRODUCTION_WRITE; NO_EMPLOYEE_DATA_EXPORTED'
