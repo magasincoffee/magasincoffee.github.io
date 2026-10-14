@@ -1,0 +1,78 @@
+name: XSTORE-019O Signed JWT Isolated QA
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/xstore-019o-signed-jwt-isolated-qa.yml'
+      - '09_QA/people-shift/xstore-019o-jwt-isolated-fixture.sql'
+      - '09_QA/people-shift/xstore-019o-jwt-isolated-http.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  jwt-isolated-rehearsal:
+    name: Signed JWT/RBAC and rollback on synthetic PG17
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check synthetic client JavaScript
+        run: node --check 09_QA/people-shift/xstore-019o-jwt-isolated-http.mjs
+      - name: Isolated Postgres and PostgREST role contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull supabase/postgres:17.6.1.173 >/dev/null
+          docker pull postgrest/postgrest:v12.2.8 >/dev/null
+          docker pull node:22-alpine >/dev/null
+          docker network create --internal xstore019o-jwt-net >/dev/null
+          cleanup() {
+            docker rm -f xstore019o-pgrst xstore019o-pg >/dev/null 2>&1 || true
+            docker network rm xstore019o-jwt-net >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker run -d --rm --network xstore019o-jwt-net --name xstore019o-pg \
+            --env POSTGRES_PASSWORD=synthetic-only-jwt-test \
+            supabase/postgres:17.6.1.173 \
+            postgres -c config_file=/etc/postgresql/postgresql.conf >/dev/null
+          ready=0
+          for i in $(seq 1 70); do
+            if docker exec xstore019o-pg pg_isready -U postgres -q; then ready=1;break;fi
+            sleep 1
+          done
+          test "$ready" = 1
+          docker exec xstore019o-pg createdb -U postgres xstore019o_jwt
+          docker exec -i xstore019o-pg psql -U supabase_admin -d xstore019o_jwt -v ON_ERROR_STOP=1 \
+            < 09_QA/people-shift/xstore-019o-jwt-isolated-fixture.sql >/dev/null
+          # Pinned exact PR #394 candidate; no production or PR-provided credentials.
+          git fetch --quiet origin 273a365d7cc64f1a7d559a368823a9e1f0a3c9d9
+          git show 273a365d7cc64f1a7d559a368823a9e1f0a3c9d9:07_DATABASE/migrations/20261011224000_xstore_019o_staff_lifecycle_v1.sql > "$RUNNER_TEMP/lifecycle.sql"
+          # Test transaction rollback, assert migration objects not persisted.
+          { printf 'BEGIN;\n';cat "$RUNNER_TEMP/lifecycle.sql";printf '\nROLLBACK;\n'; } \
+            | docker exec -i xstore019o-pg psql -U supabase_admin -d xstore019o_jwt -v ON_ERROR_STOP=1 >/dev/null
+          rolled=$(docker exec xstore019o-pg psql -U postgres -d xstore019o_jwt -AtX \
+            -c "select case when to_regclass('public.employee_lifecycle_audit_v1') is null and to_regprocedure('public.set_employee_lifecycle_status_v1(uuid,text,text)') is null then 'PASS' else 'FAIL' end")
+          test "$rolled" = PASS
+          echo 'XSTORE_019O_SYNTHETIC_MIGRATION_TRANSACTION_ROLLBACK=PASS'
+          docker exec -i xstore019o-pg psql -U supabase_admin -d xstore019o_jwt -v ON_ERROR_STOP=1 \
+            < "$RUNNER_TEMP/lifecycle.sql" >/dev/null
+          # Ephemeral signing key exists only in this no-production runner.
+          ephemeral_jwt_secret="$(node -e 'process.stdout.write(require("crypto").randomBytes(48).toString("hex"))')"
+          docker run -d --rm --network xstore019o-jwt-net --name xstore019o-pgrst \
+            --env PGRST_DB_URI='postgres://authenticator:synthetic-only-jwt-test@xstore019o-pg:5432/xstore019o_jwt' \
+            --env PGRST_DB_SCHEMAS=public \
+            --env PGRST_DB_ANON_ROLE=anon \
+            --env PGRST_JWT_SECRET="$ephemeral_jwt_secret" \
+            postgrest/postgrest:v12.2.8 >/dev/null
+          docker run --rm --network xstore019o-jwt-net \
+            --env TEST_JWT_SECRET="$ephemeral_jwt_secret" \
+            --env PGRST_TEST_URL=http://xstore019o-pgrst:3000 \
+            --volume "$PWD/09_QA/people-shift/xstore-019o-jwt-isolated-http.mjs:/qa/check.mjs:ro" \
+            node:22-alpine node /qa/check.mjs
+          final=$(docker exec xstore019o-pg psql -U postgres -d xstore019o_jwt -AtX \
+            -c "select case when (select status from public.profiles where id='00000000-0000-4000-8000-000000000005')='ACTIVE' and (select count(*) from public.employee_lifecycle_audit_v1)=2 and (select count(*) from public.work_schedules)=1 and (select count(*) from public.schedule_generation_assignments)=1 then 'PASS' else 'FAIL' end")
+          test "$final" = PASS
+          echo 'XSTORE_019O_SYNTHETIC_AUDIT_ROSTER_IMMUTABILITY=PASS'
