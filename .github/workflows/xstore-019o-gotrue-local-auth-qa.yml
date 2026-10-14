@@ -82,6 +82,16 @@ jobs:
             --env GOTRUE_EXTERNAL_EMAIL_ENABLED=true \
             --env GOTRUE_MAILER_AUTOCONFIRM=true \
             supabase/gotrue:v2.177.0 >/dev/null
+          # Wait for Auth migrations to finish before altering local auth helper functions.
+          docker run --rm --network xstore019o-gotrue-net node:22-alpine node -e '
+            (async()=>{for(let i=0;i<90;i++){
+              try{const r=await fetch("http://xstore019o-auth:9999/health",{signal:AbortSignal.timeout(1500)});
+                  if(r.ok){console.log("XSTORE_019O_LOCAL_AUTH_MIGRATIONS_READY=PASS");return}}
+              catch{}
+              await new Promise(resolve=>setTimeout(resolve,1000));
+            }
+            console.error("XSTORE_019O_LOCAL_AUTH_NOT_READY");process.exitCode=1})()
+          '
           # Only synthetic public tables and production-derived authority function bodies.
           docker exec -i xstore019o-pg psql -U supabase_admin -d xstore019o_gotrue -v ON_ERROR_STOP=1 \
             < 09_QA/people-shift/xstore-019o-jwt-isolated-fixture.sql >/dev/null
