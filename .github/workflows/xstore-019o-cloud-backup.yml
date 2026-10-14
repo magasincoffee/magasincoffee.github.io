@@ -90,7 +90,7 @@ jobs:
           docker exec xstore019o-supabase-image-smoke \
             createdb -U postgres xstore019o_synthetic_restored
           docker exec -i xstore019o-supabase-image-smoke \
-            pg_restore -U postgres --exit-on-error --no-owner --no-acl \
+            pg_restore -U supabase_admin --exit-on-error --no-owner --no-acl \
               --dbname=xstore019o_synthetic_restored \
               < "$RUNNER_TEMP/xstore-synthetic.dump"
           restored=$(docker exec xstore019o-supabase-image-smoke \
@@ -174,10 +174,12 @@ jobs:
         run: |
           set -euo pipefail
           # Full archive, fail-closed on ANY SQL/extension/schema error; no --exclude options.
+          # The ephemeral Supabase superuser is required to restore Vault's internal tables.
+          # Never use this role, its password, or these permissions against production.
           # Transfer plaintext only through stdin into the disposable network-isolated DB.
           docker exec -i xstore019o-temporary-restore \
             pg_restore --exit-on-error --no-owner --no-acl \
-              --username=postgres --dbname=xstore019o_restore \
+              --username=supabase_admin --dbname=xstore019o_restore \
               < "$BACKUP_WORK/restore-check.dump"
           restored=$(docker exec xstore019o-temporary-restore \
             psql -U postgres -d xstore019o_restore -AtX -c \
