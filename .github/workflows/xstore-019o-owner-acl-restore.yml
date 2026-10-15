@@ -32,6 +32,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node --check 09_QA/people-shift/xstore-019o-restore-error-classifier.mjs
+          node 09_QA/people-shift/xstore-019o-restore-error-classifier.mjs selftest
           node <<'NODE'
           const fs=require('node:fs'),assert=require('node:assert/strict');
           const y=fs.readFileSync('.github/workflows/xstore-019o-owner-acl-restore.yml','utf8');
@@ -51,6 +53,8 @@ jobs:
           const capture=y.slice(cap,y.indexOf('\n      - name: AES-256-GCM encrypt',cap));
           assert(capture.includes('pg_dump --format=custom') && !capture.includes('pg_dump --format=custom --no-acl'),'BACKUP_MUST_INCLUDE_ACL');
           assert(capture.includes('pg_restore --list') && capture.includes('XSTORE_019O_NEW_BACKUP_ACL_PRESENT'),'ACL_TOC_REQUIREMENT_MISSING');
+          const classifier=fs.readFileSync('09_QA/people-shift/xstore-019o-restore-error-classifier.mjs','utf8');
+          assert(classifier.includes('NO_SOURCE_STDERR_OUTPUT') && y.includes('xstore-019o-restore-error-classifier.mjs'),'REDACTED_DIAGNOSTIC_REQUIRED');
           const roles=fs.readFileSync('09_QA/people-shift/xstore-019o-isolated-platform-roles.sql','utf8');
           assert(roles.includes('ISOLATED_ROLE_BOOTSTRAP_INCOMPLETE') &&
             roles.includes('supabase_privileged_role') &&
@@ -186,23 +190,11 @@ jobs:
             pg_restore --exit-on-error \
               --username=supabase_admin --dbname=xstore019o_acl \
               < "$BACKUP_WORK/restore-check.dump" >/dev/null 2>"$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
-            # Classify first failure without outputting any database metadata, SQL,
-            # restored data, role names, credentials or pg_restore stderr.
-            cause=UNCLASSIFIED_RESTORE_FAILURE
-            if grep -Eiq 'role .+ does not exist' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
-              cause=MISSING_DATABASE_ROLE
-            elif grep -Eiq 'must be member of role' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
-              cause=MISSING_ROLE_MEMBERSHIP
-            elif grep -Eiq 'must be owner of|not owner of' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
-              cause=OWNER_PRIVILEGE
-            elif grep -Eiq 'permission denied' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
-              cause=INSUFFICIENT_RESTORE_PRIVILEGE
-            elif grep -Eiq 'already exists' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
-              cause=RESTORE_OBJECT_COLLISION
-            elif grep -Eiq 'extension|unsupported' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
-              cause=EXTENSION_DEPENDENCY
-            fi
-            echo "::error::XSTORE_019O_REAL_OWNER_ACL_ISOLATED_RESTORE=FAIL; CAUSE=$cause; NO_PRODUCTION_WRITE"
+            # Classify FIRST failure in a private local file, output only an
+            # allowlisted class and a one-way truncated SHA; never raw SQL/stderr.
+            node 09_QA/people-shift/xstore-019o-restore-error-classifier.mjs \
+              "$RUNNER_TEMP/xstore019o-pgrestore-stderr"
+            echo '::error::XSTORE_019O_REAL_OWNER_ACL_ISOLATED_RESTORE=FAIL; NO_PRODUCTION_WRITE'
             exit 1
           fi
           docker cp 09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql \
