@@ -45,7 +45,7 @@ jobs:
           assert(sql.includes('b5b88de4957daa0e8ad372002134cdf0') &&
             sql.includes('e28436fb4f8558416d23eb8f5af57795'),'LIVE_FINGERPRINT_MISSING');
           assert(sql.includes('pg_policies') && sql.includes('pg_proc') && sql.includes('pg_class'),'INCOMPLETE_ACL_POLICY_AUDIT');
-          const block=y.split('      - name: Restore archive WITH owner and ACL')[1]||'';
+          const block=y.split('      - name: Restore archive WITH owner and ACL; validate actual catalog parity')[1]||'';
           assert(block.includes('pg_restore --exit-on-error') && !block.includes('pg_restore --exit-on-error --no-owner'),'OWNER_ACL_WOULD_BE_SKIPPED');
           const usedActions=y.split('\n').filter(x=>/^\s*-\s*uses:/.test(x));
           const eventHeader=y.slice(0,y.indexOf('\njobs:'));
