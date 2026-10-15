@@ -27,7 +27,7 @@ function orderedStorageToc(toc, fkTsv) {
     const child=parts[0].trim(), parent=parts[1].trim();
     if (!/^storage\.[a-z_][a-z0-9_]*$/.test(child) || !/^[a-z_]+\.[a-z_][a-z0-9_]*$/.test(parent))
       throw Error('STORAGE_FK_UNEXPECTED_SCOPE');
-    const childName=child.slice(5), parentName=parent.startsWith('storage.')?parent.slice(5):null;
+    const childName=child.slice(8), parentName=parent.startsWith('storage.')?parent.slice(8):null;
     if (!tableLines.has(childName)) continue;
     if (!parentName || !tableLines.has(parentName)) throw Error('STORAGE_FK_PARENT_NOT_IN_ARCHIVE');
     if (childName!==parentName) parents.get(childName).add(parentName);
