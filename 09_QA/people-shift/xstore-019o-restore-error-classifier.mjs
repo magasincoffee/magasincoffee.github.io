@@ -42,7 +42,7 @@ function firstPostgresError(raw) {
     ? (window[commandIndex].replace(/^\s*Command was:\s*/i,'').trim() || window[commandIndex+1] || '')
     : '';
   const commandText=commandIndex>=0
-    ? window.slice(commandIndex,commandIndex+5).join(' ')
+    ? window.slice(commandIndex,commandIndex+7).join(' ')
         .replace(/^\s*Command was:\s*/i,'').trim()
     : '';
   let phase='UNKNOWN';
@@ -55,11 +55,24 @@ function firstPostgresError(raw) {
   else if (/^\s*CREATE\b/i.test(commandStart)) phase='CREATE_OBJECT';
   else if (/^\s*COPY\b/i.test(commandStart)) phase='RESTORE_DATA';
   else if (/^\s*SELECT\b/i.test(commandStart)) phase='RESTORE_SQL_CALL';
-  return {message,phase};
+  // Only output fixed category tokens; never log actual identifiers.
+  let commandKind='OTHER_ALTER_OR_SQL';
+  if (/\bADD\s+CONSTRAINT\b[\s\S]*\bFOREIGN\s+KEY\b/i.test(commandText)) commandKind='ADD_FOREIGN_KEY';
+  else if (/\bADD\s+CONSTRAINT\b[\s\S]*\bPRIMARY\s+KEY\b/i.test(commandText)) commandKind='ADD_PRIMARY_KEY';
+  else if (/\bADD\s+CONSTRAINT\b/i.test(commandText)) commandKind='ADD_CONSTRAINT';
+  else if (/\bOWNER\s+TO\b/i.test(commandText)) commandKind='CHANGE_OWNER';
+  else if (/\bROW\s+LEVEL\s+SECURITY\b/i.test(commandText)) commandKind='CHANGE_RLS';
+  else if (/\bCREATE\s+POLICY\b/i.test(commandText)) commandKind='CREATE_POLICY';
+  else if (/\bCREATE\s+TRIGGER\b/i.test(commandText)) commandKind='CREATE_TRIGGER';
+  const match=message.match(/\b(?:relation|schema|table|view|sequence)\s+["']?([a-z0-9_.]+)["']?\s+does not exist/i);
+  const possibleScope=match?.[1]?.split('.')[0]?.toLowerCase()||'';
+  const allowedScope=new Set(['auth','public','storage','extensions','realtime','vault','pg_catalog','graphql_public']);
+  const missingSchemaScope=allowedScope.has(possibleScope)?possibleScope.toUpperCase():'OTHER_OR_UNQUALIFIED';
+  return {message,phase,commandKind,missingSchemaScope};
 }
 
 function classify(raw) {
-  const {message,phase}=firstPostgresError(raw);
+  const {message,phase,commandKind,missingSchemaScope}=firstPostgresError(raw);
   const category=patterns.find(([,regex]) => regex.test(message))?.[0] || 'UNCLASSIFIED_SQL_ERROR';
   // Group equivalent failures while stripping likely object identifiers,
   // quoted values and numeric IDs before deriving the fingerprint.
@@ -67,7 +80,7 @@ function classify(raw) {
     .replace(/'[^']*'/g,"'<VALUE>'")
     .replace(/\b\d+(?:\.\d+)?\b/g,'<NUMBER>');
   const fingerprint=crypto.createHash('sha256').update(normalized).digest('hex').slice(0,12);
-  return {category,phase,fingerprint};
+  return {category,phase,commandKind,missingSchemaScope,fingerprint};
 }
 
 function selftest() {
@@ -89,6 +102,16 @@ function selftest() {
       assert(!JSON.stringify(result).includes(bad));
     }
   }
+  // Scope and ALTER/FK class are fixed allowlisted labels, not identifiers.
+  const caseAuth=classify('pg_restore: error: could not execute query:\nERROR: relation "auth.users" does not exist\nCommand was: ALTER TABLE ONLY public.private_table ADD CONSTRAINT secret_fk FOREIGN KEY (user_id) REFERENCES auth.users(id);');
+  assert.equal(caseAuth.category,'MISSING_RELATION_OR_SCHEMA');
+  assert.equal(caseAuth.missingSchemaScope,'AUTH');
+  assert.equal(caseAuth.commandKind,'ADD_FOREIGN_KEY');
+  assert(!JSON.stringify(caseAuth).includes('private_table'));
+  assert(!JSON.stringify(caseAuth).includes('secret_fk'));
+  const casePublic=classify('pg_restore: error: could not execute query:\nERROR: relation "public.private_table" does not exist\nCommand was: ALTER TABLE ONLY public.private_table ADD CONSTRAINT private_check CHECK (id>0);');
+  assert.equal(casePublic.missingSchemaScope,'PUBLIC');
+  assert.equal(casePublic.commandKind,'ADD_CONSTRAINT');
   // Same root message with distinct private role names must have one fingerprint.
   assert.equal(classify(samples[0][0]).fingerprint,
     classify(samples[0][0].replaceAll('private_role','other_role')).fingerprint);
@@ -100,7 +123,9 @@ else if(process.argv.length===3) {
   try {
     const result=classify(fs.readFileSync(process.argv[2],'utf8'));
     console.log('XSTORE_019O_FIRST_RESTORE_ERROR='+result.category+
-      '; PHASE='+result.phase+'; FINGERPRINT12='+result.fingerprint+'; NO_PII_OUTPUT');
+      '; PHASE='+result.phase+'; COMMAND_KIND='+result.commandKind+
+      '; MISSING_SCOPE='+result.missingSchemaScope+
+      '; FINGERPRINT12='+result.fingerprint+'; NO_PII_OUTPUT');
   } catch {
     console.log('XSTORE_019O_FIRST_RESTORE_ERROR=NO_PRIVATE_LOG; NO_PII_OUTPUT');
     process.exitCode=1;
