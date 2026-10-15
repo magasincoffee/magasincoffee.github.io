@@ -5,11 +5,13 @@ on:
     paths:
       - '.github/workflows/xstore-019o-initialized-archive-recovery.yml'
       - '09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh'
+      - '09_QA/people-shift/xstore-019o-restore-error-classifier.mjs'
   push:
     branches: [main]
     paths:
       - '.github/workflows/xstore-019o-initialized-archive-recovery.yml'
       - '09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh'
+      - '09_QA/people-shift/xstore-019o-restore-error-classifier.mjs'
 
 permissions:
   contents: read
@@ -32,6 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           bash -n 09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh
+          node 09_QA/people-shift/xstore-019o-restore-error-classifier.mjs selftest
           node <<'NODE'
           const fs=require('node:fs'),assert=require('node:assert/strict');
           const sh=fs.readFileSync('09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh','utf8');
