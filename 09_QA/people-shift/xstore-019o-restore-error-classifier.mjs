@@ -29,7 +29,7 @@ function firstPostgresError(raw) {
   // pg_restore often emits a generic header on one line and the *real*
   // PostgreSQL "ERROR: ..." on the next. Never classify only the header.
   const sqlErrors=window.flatMap((line,i) => {
-    const inline=line.match(/\b(?:ERROR|FATAL|PANIC):\s*(.+)$/i);
+    const inline=line.match(/(?:^|\s)(?:ERROR|FATAL|PANIC):\s*(.+)$/);
     if (inline && inline[1].trim()) return [{message:inline[1].trim(),line:i}];
     return [];
   });
