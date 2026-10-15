@@ -1,0 +1,90 @@
+name: XSTORE-019O Scoped Public Recovery QA
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/xstore-019o-public-recovery.yml'
+      - '09_QA/people-shift/xstore-019o-isolated-public-restore.sh'
+      - '09_QA/people-shift/xstore-019o-isolated-public-restore.test.mjs'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/xstore-019o-public-recovery.yml'
+      - '09_QA/people-shift/xstore-019o-isolated-public-restore.sh'
+      - '09_QA/people-shift/xstore-019o-isolated-public-restore.test.mjs'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: xstore-019o-scoped-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  source-preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate isolated public restoration source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n 09_QA/people-shift/xstore-019o-isolated-public-restore.sh
+          node --check 09_QA/people-shift/xstore-019o-isolated-public-restore.test.mjs
+          node 09_QA/people-shift/xstore-019o-isolated-public-restore.test.mjs
+          node 09_QA/people-shift/xstore-019o-restore-error-classifier.mjs selftest
+
+  isolated-public-recovery:
+    needs: source-preflight
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      BACKUP_WORK: ${{ github.workspace }}/.xstore019o-scope-private
+      XSTORE019O_TEST_ONLY: ISOLATED_PUBLIC_ONLY
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download authenticated, already encrypted production archive
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38680192167
+          name: xstore-019o-acl-full-encrypted-38680192167
+          github-token: ${{ github.token }}
+          path: ${{ github.workspace }}/.xstore019o-scope-private
+      - name: Authenticate original encrypted manifest and decrypt privately
+        shell: bash
+        env:
+          BACKUP_KEY: ${{ secrets.MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const m=JSON.parse(fs.readFileSync(process.env.BACKUP_WORK+'/manifest.json','utf8'));
+          assert.equal(m.project_ref,'menvbzlsncmpuvnaifxa');
+          assert.equal(m.encrypted_algorithm,'AES-256-GCM');
+          assert.equal(m.restore_verified,false);
+          assert.match(m.dump_sha256,/^[a-f0-9]{64}$/i);
+          assert.match(m.encrypted_sha256,/^[a-f0-9]{64}$/i);
+          console.log('XSTORE_019O_ENCRYPTED_SCOPE_INPUT_AUTHENTICATED=PASS; RESTORE_PENDING');
+          NODE
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs decrypt
+      - name: Replay public application schema with all owner ACL RLS safeguards
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash 09_QA/people-shift/xstore-019o-isolated-public-restore.sh
+      - name: Destroy decrypted archive and disposable private materials
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker rm -f "xstore019o-public-$GITHUB_RUN_ID" >/dev/null 2>&1 || true
+          rm -rf "$BACKUP_WORK"
+          rm -f "$RUNNER_TEMP/xstore019o-public-private-stderr" "$RUNNER_TEMP/xstore019o-private-proof"
+          echo 'XSTORE_019O_SCOPE_PRIVATE_CLEANUP=PASS; NO_UPLOAD'
