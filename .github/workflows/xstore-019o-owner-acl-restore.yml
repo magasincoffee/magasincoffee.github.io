@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
-      BACKUP_WORK: ${{ runner.temp }}/xstore-019o-private-acl
+      BACKUP_WORK: ${{ github.workspace }}/.xstore-019o-private-acl
     steps:
       - uses: actions/checkout@v4
         with:
@@ -71,7 +71,7 @@ jobs:
           run-id: 38577798740
           name: xstore-019o-noibo-encrypted-38577798740
           github-token: ${{ github.token }}
-          path: ${{ runner.temp }}/xstore-019o-private-acl
+          path: ${{ github.workspace }}/.xstore-019o-private-acl
       - name: Authenticate archived dump without revealing data
         shell: bash
         env:
