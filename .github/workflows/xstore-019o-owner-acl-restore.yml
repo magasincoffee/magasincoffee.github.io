@@ -61,7 +61,8 @@ jobs:
           assert(block.includes('pg_restore --exit-on-error') && !block.includes('pg_restore --exit-on-error --no-owner'),'OWNER_ACL_WOULD_BE_SKIPPED');
           const usedActions=y.split('\n').filter(x=>/^\s*-\s*uses:/.test(x));
           const eventHeader=y.slice(0,y.indexOf('\njobs:'));
-          assert(usedActions.filter(x=>/upload-artifact@/.test(x)).length===1 && !eventHeader.includes('pull_request_target'),'UNSAFE_ARTIFACT_OR_EVENT');
+          const uploads=y.split('\n').filter(x=>/^\s*uses:\s*actions\/upload-artifact@v4\s*$/.test(x));
+          assert(uploads.length===1 && !eventHeader.includes('pull_request_target'),'UNSAFE_ARTIFACT_OR_EVENT');
           assert(y.includes('if: always() && steps.encryption.outcome == \'success\'') && y.includes('xstore-019o-acl-full-encrypted-') && y.includes('retention-days: 7'),'ENCRYPTED_ONLY_RECOVERY_ARTIFACT_REQUIRED');
           console.log('XSTORE_019O_OWNER_ACL_SOURCE_ADMISSION=PASS; NO_PRODUCTION_SECRETS_ON_PR');
           NODE
