@@ -45,6 +45,10 @@ jobs:
           assert(sql.includes('b5b88de4957daa0e8ad372002134cdf0') &&
             sql.includes('e28436fb4f8558416d23eb8f5af57795'),'LIVE_FINGERPRINT_MISSING');
           assert(sql.includes('pg_policies') && sql.includes('pg_proc') && sql.includes('pg_class'),'INCOMPLETE_ACL_POLICY_AUDIT');
+          const roles=fs.readFileSync('09_QA/people-shift/xstore-019o-isolated-platform-roles.sql','utf8');
+          assert(roles.includes('ISOLATED_ROLE_BOOTSTRAP_INCOMPLETE') &&
+            roles.includes('supabase_privileged_role') &&
+            y.includes('xstore019o-acl-proof:/tmp/platform-roles.sql'),'MISSING_ISOLATED_ROLE_REPLAY');
           const restoreStart=y.lastIndexOf('\n      - name: Restore archive WITH owner and ACL; validate actual catalog parity\n');
           assert(restoreStart>=0,'ISOLATED_RESTORE_STEP_NOT_FOUND');
           const block=y.slice(restoreStart);
@@ -127,6 +131,14 @@ jobs:
           fi
           echo 'XSTORE_019O_OWNER_ACL_POSTGRES_STABLE=PASS'
           docker exec xstore019o-acl-proof createdb -U postgres xstore019o_acl
+          # Match non-password role names/attributes and memberships from the
+          # production read-only catalog ONLY inside the network-isolated clone.
+          docker cp 09_QA/people-shift/xstore-019o-isolated-platform-roles.sql \
+            xstore019o-acl-proof:/tmp/platform-roles.sql
+          docker exec xstore019o-acl-proof \
+            psql -U supabase_admin -d postgres -q -v ON_ERROR_STOP=1 \
+              -f /tmp/platform-roles.sql >/dev/null
+          echo 'XSTORE_019O_ISOLATED_ROLE_MEMBERSHIP_BOOTSTRAP=PASS; NO_PRODUCTION_ROLE_WRITE'
           # Unlike historical --no-owner/--no-acl restore, this must reproduce
           # the real archive's owner and GRANT/REVOKE commands, or fail closed.
           if ! docker exec -i xstore019o-acl-proof \
