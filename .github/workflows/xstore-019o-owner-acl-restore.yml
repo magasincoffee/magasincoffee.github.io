@@ -5,11 +5,13 @@ on:
     paths:
       - '.github/workflows/xstore-019o-owner-acl-restore.yml'
       - '09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql'
+      - '09_QA/people-shift/xstore-019o-restore-error-classifier.mjs'
   push:
     branches: [main]
     paths:
       - '.github/workflows/xstore-019o-owner-acl-restore.yml'
       - '09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql'
+      - '09_QA/people-shift/xstore-019o-restore-error-classifier.mjs'
 
 permissions:
   contents: read
