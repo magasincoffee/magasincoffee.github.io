@@ -11,7 +11,7 @@ container="xstore019o-public-$GITHUB_RUN_ID"
 log="$RUNNER_TEMP/xstore019o-public-private-stderr"
 cleanup(){
   docker rm -f "$container" >/dev/null 2>&1 || true
-  rm -f "$log" "$RUNNER_TEMP/xstore019o-private-proof" "$RUNNER_TEMP/xstore019o-private-archive-toc"
+  rm -f "$log" "$RUNNER_TEMP/xstore019o-private-proof" "$RUNNER_TEMP/xstore019o-private-archive-toc" "$RUNNER_TEMP/xstore019o-auth-user-first.toc" "$RUNNER_TEMP/xstore019o-auth-remainder.toc"
 }
 trap cleanup EXIT
 # Network-disabled database container. No host mounts or production DB URLs.
@@ -54,6 +54,35 @@ else
   echo 'XSTORE_019O_AUTH_USERS_TABLE_IN_ARCHIVE=NO; NO_PII_OUTPUT'
 fi
 
+# Run 38751306755 identified first Auth pre-data CREATE_TYPE referencing
+# an Auth relation that exists in the encrypted TOC but is not yet created.
+# Reorder only that ONE TABLE definition before the remaining Auth pre-data
+# entries; every TOC item is still restored once, without --no-owner/--no-acl.
+# Do not print the encrypted archive TOC or SQL object names in runner logs.
+user_toc="$RUNNER_TEMP/xstore019o-auth-user-first.toc"
+remaining_toc="$RUNNER_TEMP/xstore019o-auth-remainder.toc"
+node - "$toc" "$user_toc" "$remaining_toc" <<'NODE'
+const fs=require('node:fs'), assert=require('node:assert/strict');
+const [input,firstFile,restFile]=process.argv.slice(2);
+const lines=fs.readFileSync(input,'utf8').split(/\r?\n/);
+const match=(line)=>/^\d+;.*\sTABLE auth users\s/.test(line);
+const n=lines.filter(match).length;
+assert.equal(n,1,'EXPECTED_EXACTLY_ONE_AUTH_USERS_TABLE_DEFINITION');
+const header=lines.filter(x=>/^;/.test(x)).join('\n')+'\n';
+fs.writeFileSync(firstFile,header+lines.filter(match).join('\n')+'\n',{mode:0o600});
+fs.writeFileSync(restFile,lines.map(x=>match(x)?'; '+x:x).join('\n'),{mode:0o600});
+console.log('XSTORE_019O_AUTH_USERS_TOC_PARTITION=PASS; ALL_ENTRIES_PRESERVED; NO_SQL_OUTPUT');
+NODE
+: > "$log"
+if ! docker exec -i "$container" pg_restore --exit-on-error \
+    --use-list="$user_toc" --schema=auth --section=pre-data \
+    --username=supabase_admin --dbname=xstore019o_public \
+    < "$BACKUP_WORK/restore-check.dump" >/dev/null 2>"$log"; then
+  node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
+  echo '::error::XSTORE_019O_AUTH_USERS_EARLY_TABLE=FAIL; NO_PRODUCTION_WRITE'
+  exit 1
+fi
+echo 'XSTORE_019O_AUTH_USERS_EARLY_TABLE=PASS; NO_PRODUCTION_WRITE'
 # Actual main run 38734337460: public post-data ADD_FOREIGN_KEY failed because
 # the referenced AUTH relation did not exist in this isolated clone. Restore
 # the real Auth prerequisite definitions and rows from the same authenticated
@@ -63,6 +92,7 @@ for stage in pre-data data; do
   : > "$log"
   if ! docker exec -i "$container" pg_restore --exit-on-error \
        --schema=auth --section="$stage" --username=supabase_admin \
+       --use-list="$remaining_toc" \
        --dbname=xstore019o_public < "$BACKUP_WORK/restore-check.dump" \
        >/dev/null 2>"$log"; then
     node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
