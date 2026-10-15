@@ -113,7 +113,10 @@ for stage in pre-data data; do
 done
 
 # Never skip ownership, GRANT/REVOKE, FK or RLS.
-for stage in pre-data data post-data; do
+# All public tables and data must exist before applying Auth post-data
+# constraints. Auth's primary/unique keys must be in place BEFORE public FK
+# definitions referencing auth.users or other Auth tables are validated.
+for stage in pre-data data; do
   : > "$log"
   if ! docker exec -i "$container" pg_restore --exit-on-error \
        --schema=public --section="$stage" --username=supabase_admin \
@@ -125,6 +128,29 @@ for stage in pre-data data post-data; do
   fi
   echo "XSTORE_019O_PUBLIC_$stage=PASS; NO_PRODUCTION_WRITE"
 done
+
+: > "$log"
+if ! docker exec -i "$container" pg_restore --exit-on-error \
+    --schema=auth --section=post-data \
+    --use-list=/tmp/auth-remainder.toc --username=supabase_admin \
+    --dbname=xstore019o_public < "$BACKUP_WORK/restore-check.dump" \
+    >/dev/null 2>"$log"; then
+  node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
+  echo '::error::XSTORE_019O_AUTH_POST_DATA=FAIL; NO_PRODUCTION_WRITE'
+  exit 1
+fi
+echo 'XSTORE_019O_AUTH_POST_DATA=PASS; PUBLIC_FK_PREREQUISITES_ENFORCED; NO_PRODUCTION_WRITE'
+
+: > "$log"
+if ! docker exec -i "$container" pg_restore --exit-on-error \
+    --schema=public --section=post-data --username=supabase_admin \
+    --dbname=xstore019o_public < "$BACKUP_WORK/restore-check.dump" \
+    >/dev/null 2>"$log"; then
+  node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
+  echo '::error::XSTORE_019O_PUBLIC_post-data=FAIL; NO_PRODUCTION_WRITE'
+  exit 1
+fi
+echo 'XSTORE_019O_PUBLIC_post-data=PASS; NO_PRODUCTION_WRITE'
 
 docker cp "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql" "$container:/tmp/parity.sql"
 if ! docker exec "$container" psql -U postgres -d xstore019o_public -AtX -v ON_ERROR_STOP=1 \
