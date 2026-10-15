@@ -8,8 +8,12 @@ for(const marker of [
   'pg_restore --exit-on-error','ISOLATED_PUBLIC_ONLY','TRUSTED_MAIN_ONLY',
   '--schema=auth --section="$stage"','XSTORE_019O_AUTH_PREREQUISITE_',
   'XSTORE_019O_AUTH_USERS_TABLE_IN_ARCHIVE=YES','pg_restore --list',
-  'XSTORE_019O_AUTH_USERS_TOC_PARTITION=PASS','--use-list="$user_toc"',
-  '--use-list="$remaining_toc"','XSTORE_019O_AUTH_USERS_EARLY_TABLE=PASS',
+  'XSTORE_019O_AUTH_USERS_TOC_PARTITION=PASS',
+  'docker cp "$user_toc" "$container:/tmp/auth-users-first.toc"',
+  'docker cp "$remaining_toc" "$container:/tmp/auth-remainder.toc"',
+  '--use-list=/tmp/auth-users-first.toc','--use-list=/tmp/auth-remainder.toc',
+  'XSTORE_019O_AUTH_TOC_PRIVATE_CONTAINER_COPY=PASS',
+  'XSTORE_019O_AUTH_USERS_EARLY_TABLE=PASS',
   'trap cleanup EXIT','XSTORE_019O_PUBLIC_OWNER_ACL_RLS_PARITY=PASS',
   'XSTORE_019O_FULL_SYSTEM_DISASTER_RESTORE=NOT_PROVEN'
 ]) assert(src.includes(marker),'MISSING_ISOLATED_CONTRACT');

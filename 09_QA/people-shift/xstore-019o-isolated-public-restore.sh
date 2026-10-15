@@ -73,9 +73,14 @@ fs.writeFileSync(firstFile,header+lines.filter(match).join('\n')+'\n',{mode:0o60
 fs.writeFileSync(restFile,lines.map(x=>match(x)?'; '+x:x).join('\n'),{mode:0o600});
 console.log('XSTORE_019O_AUTH_USERS_TOC_PARTITION=PASS; ALL_ENTRIES_PRESERVED; NO_SQL_OUTPUT');
 NODE
+# pg_restore executes INSIDE Docker: its --use-list paths must exist there,
+# not merely under the runner's private $RUNNER_TEMP filesystem.
+docker cp "$user_toc" "$container:/tmp/auth-users-first.toc"
+docker cp "$remaining_toc" "$container:/tmp/auth-remainder.toc"
+echo 'XSTORE_019O_AUTH_TOC_PRIVATE_CONTAINER_COPY=PASS; NO_SQL_OUTPUT'
 : > "$log"
 if ! docker exec -i "$container" pg_restore --exit-on-error \
-    --use-list="$user_toc" --schema=auth --section=pre-data \
+    --use-list=/tmp/auth-users-first.toc --schema=auth --section=pre-data \
     --username=supabase_admin --dbname=xstore019o_public \
     < "$BACKUP_WORK/restore-check.dump" >/dev/null 2>"$log"; then
   node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
@@ -92,7 +97,7 @@ for stage in pre-data data; do
   : > "$log"
   if ! docker exec -i "$container" pg_restore --exit-on-error \
        --schema=auth --section="$stage" --username=supabase_admin \
-       --use-list="$remaining_toc" \
+       --use-list=/tmp/auth-remainder.toc \
        --dbname=xstore019o_public < "$BACKUP_WORK/restore-check.dump" \
        >/dev/null 2>"$log"; then
     node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
