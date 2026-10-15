@@ -6,11 +6,13 @@ const wf=fs.readFileSync('.github/workflows/xstore-019o-public-recovery.yml','ut
 for(const marker of [
   'set -Eeuo pipefail','--network none','--schema=public --section="$stage"',
   'pg_restore --exit-on-error','ISOLATED_PUBLIC_ONLY','TRUSTED_MAIN_ONLY',
+  '--schema=auth --section="$stage"','XSTORE_019O_AUTH_PREREQUISITE_',
   'trap cleanup EXIT','XSTORE_019O_PUBLIC_OWNER_ACL_RLS_PARITY=PASS',
   'XSTORE_019O_FULL_SYSTEM_DISASTER_RESTORE=NOT_PROVEN'
 ]) assert(src.includes(marker),'MISSING_ISOLATED_CONTRACT');
 assert(!/pg_restore[^\n]*--no-owner/.test(src),'FORBIDDEN_NO_OWNER');
 assert(!/pg_restore[^\n]*--no-acl/.test(src),'FORBIDDEN_NO_ACL');
+assert(!src.includes('SET session_replication_role = replica'),'NO_DISABLED_FK_CHECKS');
 assert(!/(curl|wget|nc |ssh |socat)/.test(src),'FORBIDDEN_NETWORK_TOOL');
 assert(wf.includes("github.event_name == 'push' && github.ref == 'refs/heads/main'"),'TRUSTED_ONLY');
 assert(wf.includes("run-id: 38680192167"),'APPROVED_ENCRYPTED_BACKUP_REQUIRED');
