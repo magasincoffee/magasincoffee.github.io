@@ -52,8 +52,8 @@ jobs:
           for(const role of ['OWNER','MANAGER','STAFF'])
             for(const f of ['USERNAME','PASSWORD'])
               assert(y.includes('secrets.XSTORE_019O_QA_'+role+'_'+f),'SECRET_MAPPING_INCOMPLETE');
-          const triggerHeader=y.slice(0,y.indexOf('
-jobs:'));\n          assert(y.includes('contents: read') && !/upload-artifact|pull_request_target|workflow_dispatch/.test(triggerHeader),'UNSAFE_PERMISSIONS_OR_TRIGGER');
+          const triggerHeader=y.slice(0,y.indexOf('  source-preflight:'));
+          assert(y.includes('contents: read') && !/upload-artifact|pull_request_target|workflow_dispatch/.test(triggerHeader),'UNSAFE_PERMISSIONS_OR_TRIGGER');
           console.log('XSTORE_019O_THREE_ROLE_SOURCE_ADMISSION=PASS; NO_QA_SECRETS_ON_PR');
           NODE
 
