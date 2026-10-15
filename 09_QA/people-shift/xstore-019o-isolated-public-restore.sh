@@ -75,6 +75,9 @@ fs.writeFileSync(firstFile,header+[...lines.filter(isSchema),...lines.filter(isU
 fs.writeFileSync(restFile,lines.map(x=>selected(x)?'; '+x:x).join('\n'),{mode:0o600});
 console.log('XSTORE_019O_AUTH_SCHEMA_THEN_USERS_TOC=PASS; EXACTLY_ONCE; ALL_ENTRIES_PRESERVED; NO_SQL_OUTPUT');
 NODE
+# The pre-data TOC includes a SCHEMA entry whose namespace is '-'. Do not
+# pass --schema=auth on this restricted two-entry list: that would filter
+# CREATE SCHEMA itself and make subsequent CREATE TABLE fail.
 # pg_restore executes INSIDE Docker: its --use-list paths must exist there,
 # not merely under the runner's private $RUNNER_TEMP filesystem.
 docker cp "$user_toc" "$container:/tmp/auth-users-first.toc"
@@ -82,7 +85,7 @@ docker cp "$remaining_toc" "$container:/tmp/auth-remainder.toc"
 echo 'XSTORE_019O_AUTH_TOC_PRIVATE_CONTAINER_COPY=PASS; NO_SQL_OUTPUT'
 : > "$log"
 if ! docker exec -i "$container" pg_restore --exit-on-error \
-    --use-list=/tmp/auth-users-first.toc --schema=auth --section=pre-data \
+    --use-list=/tmp/auth-users-first.toc --section=pre-data \
     --username=supabase_admin --dbname=xstore019o_public \
     < "$BACKUP_WORK/restore-check.dump" >/dev/null 2>"$log"; then
   node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
