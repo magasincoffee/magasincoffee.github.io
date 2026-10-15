@@ -40,6 +40,24 @@ docker exec "$container" psql -U supabase_admin -d postgres -q -v ON_ERROR_STOP=
 }
 echo 'XSTORE_019O_ISOLATED_PUBLIC_ROLES=PASS; NO_PRODUCTION_WRITE'
 
+# Actual main run 38734337460: public post-data ADD_FOREIGN_KEY failed because
+# the referenced AUTH relation did not exist in this isolated clone. Restore
+# the real Auth prerequisite definitions and rows from the same authenticated
+# AES-256-GCM archive before enforcing public FKs. This does not claim to
+# restore Auth triggers/policies or a full Supabase disaster recovery.
+for stage in pre-data data; do
+  : > "$log"
+  if ! docker exec -i "$container" pg_restore --exit-on-error \
+       --schema=auth --section="$stage" --username=supabase_admin \
+       --dbname=xstore019o_public < "$BACKUP_WORK/restore-check.dump" \
+       >/dev/null 2>"$log"; then
+    node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
+    echo "::error::XSTORE_019O_AUTH_PREREQUISITE_$stage=FAIL; NO_PRODUCTION_WRITE"
+    exit 1
+  fi
+  echo "XSTORE_019O_AUTH_PREREQUISITE_$stage=PASS; NO_PRODUCTION_WRITE"
+done
+
 # Never skip ownership, GRANT/REVOKE, FK or RLS.
 for stage in pre-data data post-data; do
   : > "$log"
