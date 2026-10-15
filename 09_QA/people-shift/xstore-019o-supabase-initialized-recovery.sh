@@ -47,7 +47,25 @@ restore_stage(){
  fi
  echo "XSTORE_019O_INITIALIZED_CLONE_$label=PASS"
 }
-restore_stage auth data AUTH_DATA
+# Original Auth data COPY must respect already-enforced Auth foreign keys.
+# All private table identifiers and TOC contents stay in the disposable runner.
+docker exec "$db_container" pg_restore --list /tmp/magasin-archive.dump > "$work/archive.toc"
+docker exec "$db_container" psql -U postgres -d postgres -AtX -F 
+restore_stage storage data STORAGE_DATA
+for stage in pre-data data post-data; do restore_stage public "$stage" "PUBLIC_$stage"; done
+docker cp "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql" "$db_container:/tmp/parity.sql"
+docker exec "$db_container" psql -U postgres -d postgres -AtX -v ON_ERROR_STOP=1 -f /tmp/parity.sql > "$RUNNER_TEMP/xstore019o-cli-parity" 2>"$log" || exit 1
+[[ "$(cat "$RUNNER_TEMP/xstore019o-cli-parity")" == PASS ]] || { echo '::error::XSTORE_019O_CLI_CLONE_OWNER_ACL_RLS_PARITY=FAIL'; exit 1; }
+echo 'XSTORE_019O_CLI_CLONE_OWNER_ACL_RLS_PARITY=PASS; FULL_DISASTER_RECOVERY=NOT_PROVEN; NO_PRODUCTION_WRITE'
+\\t' -v ON_ERROR_STOP=1 -c "SELECT cn.nspname||'.'||child.relname, pn.nspname||'.'||parent.relname FROM pg_constraint con JOIN pg_class child ON child.oid=con.conrelid JOIN pg_namespace cn ON cn.oid=child.relnamespace JOIN pg_class parent ON parent.oid=con.confrelid JOIN pg_namespace pn ON pn.oid=parent.relnamespace WHERE con.contype='f' AND cn.nspname='auth' ORDER BY 1,2" > "$work/auth-fks.tsv"
+node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-auth-data-toposort.mjs" "$work/archive.toc" "$work/auth-fks.tsv" "$work/auth-replay.toc"
+docker cp "$work/auth-replay.toc" "$db_container:/tmp/auth-replay.toc"
+: > "$log"
+if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction --section=data --use-list=/tmp/auth-replay.toc --username=supabase_admin --dbname=postgres /tmp/magasin-archive.dump >/dev/null 2>"$log"; then
+ node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
+ echo "::error::XSTORE_019O_INITIALIZED_CLONE_AUTH_DATA=FAIL"; exit 1
+fi
+echo 'XSTORE_019O_INITIALIZED_CLONE_AUTH_DATA=PASS; FK_ENFORCED'
 restore_stage storage data STORAGE_DATA
 for stage in pre-data data post-data; do restore_stage public "$stage" "PUBLIC_$stage"; done
 docker cp "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql" "$db_container:/tmp/parity.sql"
