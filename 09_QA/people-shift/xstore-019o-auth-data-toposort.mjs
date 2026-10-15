@@ -34,13 +34,14 @@ function orderedAuthToc(toc, fkTsv) {
     edgeCount++;
   }
   if (edgeCount===0) throw Error('AUTH_FK_GRAPH_EMPTY');
-  const remaining=new Set(tableLines.keys()), ordered=[];
+  const remaining=new Set(tableLines.keys()), ordered=[], orderNames=[];
   while (remaining.size) {
     const ready=[...remaining].filter(name=>[...parents.get(name)].every(p=>!remaining.has(p))).sort();
     if (!ready.length) throw Error('AUTH_FK_GRAPH_CYCLE');
-    const next=ready[0]; ordered.push(tableLines.get(next)); remaining.delete(next);
+    const next=ready[0]; ordered.push(tableLines.get(next)); orderNames.push(next); remaining.delete(next);
   }
-  return {content:'; private Auth TABLE DATA topological replay; no schema or policy changes\n'+ordered.join('\n')+'\n'+sequences.join('\n')+'\n', tables:ordered.length, edges:edgeCount};
+  const clearSql='BEGIN;\n'+[...orderNames].reverse().map(n=>'DELETE FROM auth."'+n+'";').join('\n')+'\nCOMMIT;\n';
+  return {content:'; private Auth TABLE DATA topological replay; no schema or policy changes\n'+ordered.join('\n')+'\n'+sequences.join('\n')+'\n', clearSql, tables:ordered.length, edges:edgeCount};
 }
 
 function selftest() {
@@ -56,6 +57,11 @@ function selftest() {
   const ok=orderedAuthToc(toc,graph);
   assert.equal(ok.tables,3);
   assert.equal(ok.edges,2);
+  assert(ok.clearSql.startsWith('BEGIN;'));
+  assert(ok.clearSql.endsWith('COMMIT;\n'));
+  assert(ok.clearSql.indexOf('DELETE FROM auth."identities"')<ok.clearSql.indexOf('DELETE FROM auth."users"'));
+  assert(!ok.clearSql.includes('CASCADE')&&!ok.clearSql.includes('TRUNCATE'));
+  assert(!ok.clearSql.includes('session_replication_role'));
   assert(ok.content.indexOf('TABLE DATA auth users')<ok.content.indexOf('TABLE DATA auth identities'));
   assert(!ok.content.includes('TABLE DATA public'));
   assert(ok.content.includes('SEQUENCE SET auth sessions_id_seq'));
@@ -66,10 +72,11 @@ function selftest() {
 }
 
 if (process.argv[2]==='selftest') selftest();
-else if(process.argv.length===5) {
+else if(process.argv.length===6) {
   try {
     const result=orderedAuthToc(fs.readFileSync(process.argv[2],'utf8'),fs.readFileSync(process.argv[3],'utf8'));
     fs.writeFileSync(process.argv[4],result.content,{mode:0o600,flag:'wx'});
+    fs.writeFileSync(process.argv[5],result.clearSql,{mode:0o600,flag:'wx'});
     console.log('XSTORE_019O_AUTH_FK_ORDER_PLAN=PASS; FK_ENFORCED; NO_TOC_OUTPUT');
   } catch {
     console.error('::error::XSTORE_019O_AUTH_FK_ORDER_PLAN=FAIL_CLOSED; NO_TOC_OUTPUT');

@@ -54,6 +54,8 @@ jobs:
           assert(!sh.includes('session_replication_role'),'FK_BYPASS');
           assert(sh.includes('auth-data-toposort.mjs'),'FK_ORDER_NOT_PRESENT');
           assert(sh.includes('--single-transaction'),'FK_REPLAY_NOT_ATOMIC');
+          assert(sh.includes('INITIALIZED_AUTH_SEED_CLEAR=PASS'),'AUTH_SEED_REPLACEMENT_NOT_VERIFIED');
+          assert(!sh.includes('TRUNCATE')&&!sh.includes('CASCADE'),'FK_DELETE_BYPASS');
           const header=y.slice(0,y.indexOf('\njobs:'));
           assert(!header.includes('pull_request_target'),'PR_SECRET_EXPOSURE');
           console.log('XSTORE_019O_INITIALIZED_RESTORE_SOURCE=PASS; NO_PRODUCTION_WRITE');
