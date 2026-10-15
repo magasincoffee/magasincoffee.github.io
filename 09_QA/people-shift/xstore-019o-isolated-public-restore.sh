@@ -92,7 +92,7 @@ for stage in pre-data data; do
   : > "$log"
   if ! docker exec -i "$container" pg_restore --exit-on-error \
        --schema=auth --section="$stage" --username=supabase_admin \
-       ${stage:+--use-list="$remaining_toc"} \
+       --use-list="$remaining_toc" \
        --dbname=xstore019o_public < "$BACKUP_WORK/restore-check.dump" \
        >/dev/null 2>"$log"; then
     node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
