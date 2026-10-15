@@ -7,6 +7,7 @@ for(const marker of [
   'set -Eeuo pipefail','--network none','--schema=public --section="$stage"',
   'pg_restore --exit-on-error','ISOLATED_PUBLIC_ONLY','TRUSTED_MAIN_ONLY',
   '--schema=auth --section="$stage"','XSTORE_019O_AUTH_PREREQUISITE_',
+  'XSTORE_019O_AUTH_USERS_TABLE_IN_ARCHIVE=YES','pg_restore --list',
   'trap cleanup EXIT','XSTORE_019O_PUBLIC_OWNER_ACL_RLS_PARITY=PASS',
   'XSTORE_019O_FULL_SYSTEM_DISASTER_RESTORE=NOT_PROVEN'
 ]) assert(src.includes(marker),'MISSING_ISOLATED_CONTRACT');

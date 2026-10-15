@@ -64,6 +64,12 @@ function firstPostgresError(raw) {
   else if (/\bROW\s+LEVEL\s+SECURITY\b/i.test(commandText)) commandKind='CHANGE_RLS';
   else if (/\bCREATE\s+POLICY\b/i.test(commandText)) commandKind='CREATE_POLICY';
   else if (/\bCREATE\s+TRIGGER\b/i.test(commandText)) commandKind='CREATE_TRIGGER';
+  else if (/^\s*CREATE\s+(?:OR REPLACE\s+)?VIEW\b/i.test(commandText)) commandKind='CREATE_VIEW';
+  else if (/^\s*CREATE\s+(?:OR REPLACE\s+)?FUNCTION\b/i.test(commandText)) commandKind='CREATE_FUNCTION';
+  else if (/^\s*CREATE\s+TABLE\b/i.test(commandText)) commandKind='CREATE_TABLE';
+  else if (/^\s*CREATE\s+TYPE\b/i.test(commandText)) commandKind='CREATE_TYPE';
+  else if (/^\s*CREATE\s+SCHEMA\b/i.test(commandText)) commandKind='CREATE_SCHEMA';
+  else if (/^\s*CREATE\s+EXTENSION\b/i.test(commandText)) commandKind='CREATE_EXTENSION';
   const match=message.match(/\b(?:relation|schema|table|view|sequence)\s+["']?([a-z0-9_.]+)["']?\s+does not exist/i);
   const possibleScope=match?.[1]?.split('.')[0]?.toLowerCase()||'';
   const allowedScope=new Set(['auth','public','storage','extensions','realtime','vault','pg_catalog','graphql_public']);
@@ -112,6 +118,12 @@ function selftest() {
   const casePublic=classify('pg_restore: error: could not execute query:\nERROR: relation "public.private_table" does not exist\nCommand was: ALTER TABLE ONLY public.private_table ADD CONSTRAINT private_check CHECK (id>0);');
   assert.equal(casePublic.missingSchemaScope,'PUBLIC');
   assert.equal(casePublic.commandKind,'ADD_CONSTRAINT');
+  const authView=classify('pg_restore: error: could not execute query:\nERROR: relation "auth.users" does not exist\nCommand was: CREATE VIEW auth.secret_view AS SELECT * FROM auth.users;');
+  assert.equal(authView.commandKind,'CREATE_VIEW');
+  assert.equal(authView.missingSchemaScope,'AUTH');
+  assert(!JSON.stringify(authView).includes('secret_view'));
+  const authFunction=classify('pg_restore: error: could not execute query:\nERROR: relation "auth.users" does not exist\nCommand was: CREATE FUNCTION auth.private_fn() RETURNS boolean LANGUAGE sql AS $ SELECT exists(select 1 from auth.users) $;');
+  assert.equal(authFunction.commandKind,'CREATE_FUNCTION');
   // Same root message with distinct private role names must have one fingerprint.
   assert.equal(classify(samples[0][0]).fingerprint,
     classify(samples[0][0].replaceAll('private_role','other_role')).fingerprint);

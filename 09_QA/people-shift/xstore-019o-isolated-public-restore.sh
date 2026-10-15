@@ -11,7 +11,7 @@ container="xstore019o-public-$GITHUB_RUN_ID"
 log="$RUNNER_TEMP/xstore019o-public-private-stderr"
 cleanup(){
   docker rm -f "$container" >/dev/null 2>&1 || true
-  rm -f "$log" "$RUNNER_TEMP/xstore019o-private-proof"
+  rm -f "$log" "$RUNNER_TEMP/xstore019o-private-proof" "$RUNNER_TEMP/xstore019o-private-archive-toc"
 }
 trap cleanup EXIT
 # Network-disabled database container. No host mounts or production DB URLs.
@@ -39,6 +39,20 @@ docker exec "$container" psql -U supabase_admin -d postgres -q -v ON_ERROR_STOP=
   echo '::error::ISOLATED_ROLE_BOOTSTRAP_FAILED'; exit 1;
 }
 echo 'XSTORE_019O_ISOLATED_PUBLIC_ROLES=PASS; NO_PRODUCTION_WRITE'
+# Inventory archive metadata locally; never emit full TOC, SQL, relation names
+# or any production data. If Auth's canonical prerequisite table is absent
+# entirely, the solution is a correctly initialized Supabase clone, NOT a fake
+# table and NOT a skipped foreign key.
+toc="$RUNNER_TEMP/xstore019o-private-archive-toc"
+if ! docker exec -i "$container" pg_restore --list \
+   < "$BACKUP_WORK/restore-check.dump" > "$toc" 2>"$log"; then
+  echo '::error::XSTORE_019O_ENCRYPTED_ARCHIVE_TOC_FAIL'; exit 1;
+fi
+if grep -Eq '^[0-9]+;.*[[:space:]]TABLE auth users[[:space:]]' "$toc"; then
+  echo 'XSTORE_019O_AUTH_USERS_TABLE_IN_ARCHIVE=YES; NO_PII_OUTPUT'
+else
+  echo 'XSTORE_019O_AUTH_USERS_TABLE_IN_ARCHIVE=NO; NO_PII_OUTPUT'
+fi
 
 # Actual main run 38734337460: public post-data ADD_FOREIGN_KEY failed because
 # the referenced AUTH relation did not exist in this isolated clone. Restore
