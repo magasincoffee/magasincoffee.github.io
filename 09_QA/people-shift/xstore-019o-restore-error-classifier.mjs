@@ -84,13 +84,22 @@ function firstPostgresError(raw) {
 function classify(raw) {
   const {message,phase,commandKind,missingSchemaScope}=firstPostgresError(raw);
   const category=patterns.find(([,regex]) => regex.test(message))?.[0] || 'UNCLASSIFIED_SQL_ERROR';
+  // Fixed constraint kind only: private names, SQL and Auth data stay inside runner.
+  let constraintKind='NONE';
+  if (category==='DATA_CONSTRAINT_VIOLATION') {
+    if (/\bforeign key constraint\b/i.test(message)) constraintKind='FOREIGN_KEY';
+    else if (/\bunique constraint\b|\bduplicate key\b/i.test(message)) constraintKind='UNIQUE';
+    else if (/\bcheck constraint\b/i.test(message)) constraintKind='CHECK';
+    else if (/\bexclusion constraint\b/i.test(message)) constraintKind='EXCLUSION';
+    else constraintKind='OTHER';
+  }
   // Group equivalent failures while stripping likely object identifiers,
   // quoted values and numeric IDs before deriving the fingerprint.
   const normalized=message.replace(/"[^"]*"/g,'"<OBJECT>')
     .replace(/'[^']*'/g,"'<VALUE>'")
     .replace(/\b\d+(?:\.\d+)?\b/g,'<NUMBER>');
   const fingerprint=crypto.createHash('sha256').update(normalized).digest('hex').slice(0,12);
-  return {category,phase,commandKind,missingSchemaScope,fingerprint};
+  return {category,phase,commandKind,missingSchemaScope,constraintKind,fingerprint};
 }
 
 function selftest() {
@@ -115,6 +124,14 @@ function selftest() {
       assert(!JSON.stringify(result).includes(bad));
     }
   }
+  const fk=classify('pg_restore: error: COPY failed for table "private_auth": ERROR: insert or update on table "private_auth" violates foreign key constraint "private_fk"');
+  assert.equal(fk.category,'DATA_CONSTRAINT_VIOLATION');
+  assert.equal(fk.constraintKind,'FOREIGN_KEY');
+  assert(!JSON.stringify(fk).includes('private_auth'));
+  const unique=classify(samples.at(-1)[0]);
+  assert.equal(unique.constraintKind,'UNIQUE');
+  const check=classify('pg_restore: error: COPY failed for table "private_auth": ERROR: new row for relation "private_auth" violates check constraint "private_check"');
+  assert.equal(check.constraintKind,'CHECK');
   for (const issue of samples.slice(-3)) {
     const classified=classify(issue[0]);
     assert.equal(classified.commandKind,'COPY_TABLE_DATA');
@@ -151,6 +168,7 @@ else if(process.argv.length===3) {
     console.log('XSTORE_019O_FIRST_RESTORE_ERROR='+result.category+
       '; PHASE='+result.phase+'; COMMAND_KIND='+result.commandKind+
       '; MISSING_SCOPE='+result.missingSchemaScope+
+      '; CONSTRAINT_KIND='+result.constraintKind+
       '; FINGERPRINT12='+result.fingerprint+'; NO_PII_OUTPUT');
   } catch {
     console.log('XSTORE_019O_FIRST_RESTORE_ERROR=NO_PRIVATE_LOG; NO_PII_OUTPUT');
