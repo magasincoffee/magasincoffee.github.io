@@ -22,7 +22,7 @@ function orderedAuthToc(toc, fkTsv) {
   let edgeCount=0;
   for (const raw of fkTsv.trim().split(/\r?\n/)) {
     if (!raw) continue;
-    const parts=raw.split('\t');
+    const parts=raw.split('|');
     if (parts.length!==2) throw Error('AUTH_FK_FORMAT');
     const child=parts[0].trim(), parent=parts[1].trim();
     if (!/^auth\.[a-z_][a-z0-9_]*$/.test(child) || !/^[a-z_]+\.[a-z_][a-z0-9_]*$/.test(parent))
@@ -52,16 +52,16 @@ function selftest() {
     '126; 0 58 SEQUENCE SET auth sessions_id_seq postgres',
     '127; 0 59 TABLE DATA public profiles postgres'
   ].join('\n');
-  const graph='auth.identities\tauth.users\nauth.sessions\tauth.users\n';
+  const graph='auth.identities|auth.users\nauth.sessions|auth.users\n';
   const ok=orderedAuthToc(toc,graph);
   assert.equal(ok.tables,3);
   assert.equal(ok.edges,2);
   assert(ok.content.indexOf('TABLE DATA auth users')<ok.content.indexOf('TABLE DATA auth identities'));
   assert(!ok.content.includes('TABLE DATA public'));
   assert(ok.content.includes('SEQUENCE SET auth sessions_id_seq'));
-  assert.throws(()=>orderedAuthToc(toc,'auth.users\tauth.identities\n'+graph),/AUTH_FK_GRAPH_CYCLE/);
+  assert.throws(()=>orderedAuthToc(toc,'auth.users|auth.identities\n'+graph),/AUTH_FK_GRAPH_CYCLE/);
   assert.throws(()=>orderedAuthToc(toc,'auth.identities\tstorage.objects'),/AUTH_FK_PARENT_NOT_IN_ARCHIVE/);
-  assert.throws(()=>orderedAuthToc(toc.replace('TABLE DATA auth users','TABLE DATA auth unknown'),'auth.identities\tauth.users'),/AUTH_TOC_INCOMPLETE/);
+  assert.throws(()=>orderedAuthToc(toc.replace('TABLE DATA auth users','TABLE DATA auth unknown'),'auth.identities|auth.users'),/AUTH_TOC_INCOMPLETE/);
   console.log('XSTORE_019O_AUTH_FK_ORDER_SELFTEST=PASS; NO_ARCHIVE_OUTPUT');
 }
 
