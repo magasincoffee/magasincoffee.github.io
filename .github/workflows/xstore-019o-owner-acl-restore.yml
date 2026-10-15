@@ -1,0 +1,183 @@
+name: XSTORE-019O Isolated Owner ACL Restore Gate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/xstore-019o-owner-acl-restore.yml'
+      - '09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/xstore-019o-owner-acl-restore.yml'
+      - '09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: xstore-019o-acl-restore-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  source-preflight:
+    name: Verify read-only isolated-restore contract; no Secrets on PR
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify metadata-only catalog fingerprint and trusted-main admission
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const y=fs.readFileSync('.github/workflows/xstore-019o-owner-acl-restore.yml','utf8');
+          const sql=fs.readFileSync('09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql','utf8');
+          for(const p of ['github.event_name == \x27push\x27',"github.ref == 'refs/heads/main'",
+            '38577798740','actions/download-artifact@v4','MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY',
+            'supabase/postgres:17.6.1.173','--network none','pg_restore --exit-on-error',
+            'XSTORE_019O_REAL_OWNER_ACL_ISOLATED_RESTORE=PASS'])
+            assert(y.includes(p),'RESTORE_SOURCE_CONTRACT_MISSING');
+          assert(y.includes('persist-credentials: false') && y.includes('contents: read'),'UNSAFE_GITHUB_PERMISSIONS');
+          assert(sql.includes('b5b88de4957daa0e8ad372002134cdf0') &&
+            sql.includes('e28436fb4f8558416d23eb8f5af57795'),'LIVE_FINGERPRINT_MISSING');
+          assert(sql.includes('pg_policies') && sql.includes('pg_proc') && sql.includes('pg_class'),'INCOMPLETE_ACL_POLICY_AUDIT');
+          const roles=fs.readFileSync('09_QA/people-shift/xstore-019o-isolated-platform-roles.sql','utf8');
+          assert(roles.includes('ISOLATED_ROLE_BOOTSTRAP_INCOMPLETE') &&
+            roles.includes('supabase_privileged_role') &&
+            y.includes('xstore019o-acl-proof:/tmp/platform-roles.sql'),'MISSING_ISOLATED_ROLE_REPLAY');
+          const restoreStart=y.lastIndexOf('\n      - name: Restore archive WITH owner and ACL; validate actual catalog parity\n');
+          assert(restoreStart>=0,'ISOLATED_RESTORE_STEP_NOT_FOUND');
+          const block=y.slice(restoreStart);
+          assert(block.includes('pg_restore --exit-on-error') && !block.includes('pg_restore --exit-on-error --no-owner'),'OWNER_ACL_WOULD_BE_SKIPPED');
+          const usedActions=y.split('\n').filter(x=>/^\s*-\s*uses:/.test(x));
+          const eventHeader=y.slice(0,y.indexOf('\njobs:'));
+          assert(!usedActions.some(x=>/upload-artifact@/.test(x)) && !eventHeader.includes('pull_request_target'),'UNSAFE_ARTIFACT_OR_EVENT');
+          console.log('XSTORE_019O_OWNER_ACL_SOURCE_ADMISSION=PASS; NO_PRODUCTION_SECRETS_ON_PR');
+          NODE
+
+  owner-acl-isolated-restore:
+    name: Replay genuine archive owners/ACL and compare live policy fingerprints
+    needs: source-preflight
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      BACKUP_WORK: ${{ github.workspace }}/.xstore-019o-private-acl
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download only previously qualified encrypted archive
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38577798740
+          name: xstore-019o-noibo-encrypted-38577798740
+          github-token: ${{ github.token }}
+          path: ${{ github.workspace }}/.xstore-019o-private-acl
+      - name: Authenticate archived dump without revealing data
+        shell: bash
+        env:
+          BACKUP_KEY: ${{ secrets.MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const work=process.env.BACKUP_WORK;
+          const m=JSON.parse(fs.readFileSync(work+'/manifest.json','utf8'));
+          assert.equal(m.project_ref,'menvbzlsncmpuvnaifxa');
+          assert.equal(m.encrypted_algorithm,'AES-256-GCM');
+          assert.equal(m.restore_verified,true);
+          assert.match(m.dump_sha256,/^[a-f0-9]{64}$/i);
+          console.log('XSTORE_019O_OWNER_ACL_ENCRYPTED_MANIFEST=PASS');
+          NODE
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs decrypt
+      - name: Restore archive WITH owner and ACL; validate actual catalog parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          cleanup() {
+            docker rm -f xstore019o-acl-proof >/dev/null 2>&1 || true
+            rm -rf "$BACKUP_WORK"
+          }
+          trap cleanup EXIT
+          docker run --rm -d --network none --name xstore019o-acl-proof \
+            --env POSTGRES_PASSWORD=synthetic-disposable-only \
+            supabase/postgres:17.6.1.173 \
+            postgres -c config_file=/etc/postgresql/postgresql.conf >/dev/null
+          stable=0
+          old_start=""
+          for i in $(seq 1 75); do
+            start=""
+            if docker exec xstore019o-acl-proof pg_isready -U postgres -q 2>/dev/null; then
+              start="$(docker exec xstore019o-acl-proof \
+                psql -U postgres -d postgres -AtX -c "select pg_postmaster_start_time()::text" 2>/dev/null || true)"
+            fi
+            if [ -n "$start" ] && [ "$start" = "$old_start" ]; then
+              stable=$((stable+1))
+            else
+              stable=0
+            fi
+            old_start="$start"
+            if [ "$stable" -ge 8 ]; then break; fi
+            sleep 2
+          done
+          if [ "$stable" -lt 8 ]; then
+            echo '::error::ISOLATED_PG17_NOT_READY'
+            exit 1
+          fi
+          echo 'XSTORE_019O_OWNER_ACL_POSTGRES_STABLE=PASS'
+          docker exec xstore019o-acl-proof createdb -U postgres xstore019o_acl
+          # Match non-password role names/attributes and memberships from the
+          # production read-only catalog ONLY inside the network-isolated clone.
+          docker cp 09_QA/people-shift/xstore-019o-isolated-platform-roles.sql \
+            xstore019o-acl-proof:/tmp/platform-roles.sql
+          docker exec xstore019o-acl-proof \
+            psql -U supabase_admin -d postgres -q -v ON_ERROR_STOP=1 \
+              -f /tmp/platform-roles.sql >/dev/null
+          echo 'XSTORE_019O_ISOLATED_ROLE_MEMBERSHIP_BOOTSTRAP=PASS; NO_PRODUCTION_ROLE_WRITE'
+          # Unlike historical --no-owner/--no-acl restore, this must reproduce
+          # the real archive's owner and GRANT/REVOKE commands, or fail closed.
+          if ! docker exec -i xstore019o-acl-proof \
+            pg_restore --exit-on-error \
+              --username=supabase_admin --dbname=xstore019o_acl \
+              < "$BACKUP_WORK/restore-check.dump" >/dev/null 2>"$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+            # Classify first failure without outputting any database metadata, SQL,
+            # restored data, role names, credentials or pg_restore stderr.
+            cause=UNCLASSIFIED_RESTORE_FAILURE
+            if grep -Eiq 'role .+ does not exist' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=MISSING_DATABASE_ROLE
+            elif grep -Eiq 'must be member of role' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=MISSING_ROLE_MEMBERSHIP
+            elif grep -Eiq 'must be owner of|not owner of' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=OWNER_PRIVILEGE
+            elif grep -Eiq 'permission denied' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=INSUFFICIENT_RESTORE_PRIVILEGE
+            elif grep -Eiq 'already exists' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=RESTORE_OBJECT_COLLISION
+            elif grep -Eiq 'extension|unsupported' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=EXTENSION_DEPENDENCY
+            fi
+            echo "::error::XSTORE_019O_REAL_OWNER_ACL_ISOLATED_RESTORE=FAIL; CAUSE=$cause; NO_PRODUCTION_WRITE"
+            exit 1
+          fi
+          docker cp 09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql \
+            xstore019o-acl-proof:/tmp/owneracl-fingerprint.sql
+          proof="$(docker exec xstore019o-acl-proof \
+            psql -U postgres -d xstore019o_acl -AtX -v ON_ERROR_STOP=1 \
+              -f /tmp/owneracl-fingerprint.sql)"
+          if [ "$proof" != PASS ]; then
+            echo '::error::XSTORE_019O_OWNER_ACL_RLS_FINGERPRINT=FAIL; RECOVERY_NOT_QUALIFIED'
+            exit 1
+          fi
+          echo 'XSTORE_019O_REAL_OWNER_ACL_ISOLATED_RESTORE=PASS; OWNER_ACL_RLS_FINGERPRINTS=PASS; NO_PRODUCTION_WRITE; NO_PII_OUTPUT'
+      - name: Clean private decrypted data after failure or success
+        if: always()
+        shell: bash
+        run: |
+          docker rm -f xstore019o-acl-proof >/dev/null 2>&1 || true
+          rm -rf "$BACKUP_WORK"
+          echo 'XSTORE_019O_PRIVATE_ACL_RESTORE_CLEANUP=PASS'
