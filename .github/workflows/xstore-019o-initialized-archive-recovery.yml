@@ -1,0 +1,93 @@
+name: XSTORE-019O Initialized Supabase Archive Recovery
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/xstore-019o-initialized-archive-recovery.yml'
+      - '09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/xstore-019o-initialized-archive-recovery.yml'
+      - '09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: xstore019o-cli-recover-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  source-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Static isolated recovery safeguards
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n 09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh
+          node <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const sh=fs.readFileSync('09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh','utf8');
+          const y=fs.readFileSync('.github/workflows/xstore-019o-initialized-archive-recovery.yml','utf8');
+          for(const marker of ['supabase init --yes','supabase start --exclude',
+            "to_regclass('auth.users')","to_regclass('storage.objects')",
+            'docker network disconnect -f','--schema="$schema" --section="$stage"',
+            'XSTORE_019O_CLI_CLONE_OWNER_ACL_RLS_PARITY=PASS','supabase stop --no-backup'])
+            assert(sh.includes(marker),'ISOLATED_CLONE_CONTRACT_MISSING');
+          assert(y.includes("github.event_name == 'push' && github.ref == 'refs/heads/main'"),'NO_TRUSTED_MAIN_GATE');
+          assert(y.includes('xstore-019o-acl-full-encrypted-38680192167'),'APPROVED_ARCHIVE_NOT_PINNED');
+          assert(!sh.includes('supabase link')&&!sh.includes('supabase db push'),'PRODUCTION_WRITE_FORBIDDEN');
+          assert(!sh.includes('--no-owner')&&!sh.includes('--no-acl'),'OWNER_ACL_BYPASS');
+          assert(!sh.includes('session_replication_role'),'FK_BYPASS');
+          const header=y.slice(0,y.indexOf('\njobs:'));
+          assert(!header.includes('pull_request_target'),'PR_SECRET_EXPOSURE');
+          console.log('XSTORE_019O_INITIALIZED_RESTORE_SOURCE=PASS; NO_PRODUCTION_WRITE');
+          NODE
+
+  trusted-main-isolated-recovery:
+    needs: source-check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      BACKUP_WORK: ${{ github.workspace }}/.xstore019o-private-compatible
+      XSTORE019O_TEST_ONLY: SUPABASE_LOCAL_CLONE_ONLY
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@v3
+        with:
+          version: latest
+      - name: Download approved encrypted archive only
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38680192167
+          name: xstore-019o-acl-full-encrypted-38680192167
+          github-token: ${{ github.token }}
+          path: ${{ github.workspace }}/.xstore019o-private-compatible
+      - name: Authenticate private archive (never print decrypted data)
+        shell: bash
+        env:
+          BACKUP_KEY: ${{ secrets.MAGASIN_NOIBO_BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          node 09_QA/people-shift/xstore-019o-cloud-backup.mjs decrypt
+      - name: Actual restore into network-isolated initialized Supabase database
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash 09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh
+      - name: Delete confidential working files
+        if: always()
+        shell: bash
+        run: |
+          rm -rf "$BACKUP_WORK"
+          echo 'XSTORE_019O_INITIALIZED_RESTORE_PRIVATE_CLEANUP=PASS; NO_UPLOAD'
