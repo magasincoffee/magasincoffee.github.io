@@ -8,15 +8,18 @@ for(const marker of [
   'pg_restore --exit-on-error','ISOLATED_PUBLIC_ONLY','TRUSTED_MAIN_ONLY',
   '--schema=auth --section="$stage"','XSTORE_019O_AUTH_PREREQUISITE_',
   'XSTORE_019O_AUTH_USERS_TABLE_IN_ARCHIVE=YES','pg_restore --list',
-  'XSTORE_019O_AUTH_USERS_TOC_PARTITION=PASS',
+  'XSTORE_019O_AUTH_SCHEMA_THEN_USERS_TOC=PASS',
+  'EXPECTED_EXACTLY_ONE_AUTH_SCHEMA_DEFINITION',
+  'isSchema(line)||isUsers(line)',
   'docker cp "$user_toc" "$container:/tmp/auth-users-first.toc"',
   'docker cp "$remaining_toc" "$container:/tmp/auth-remainder.toc"',
   '--use-list=/tmp/auth-users-first.toc','--use-list=/tmp/auth-remainder.toc',
   'XSTORE_019O_AUTH_TOC_PRIVATE_CONTAINER_COPY=PASS',
-  'XSTORE_019O_AUTH_USERS_EARLY_TABLE=PASS',
+  'XSTORE_019O_AUTH_SCHEMA_THEN_USERS=PASS',
   'trap cleanup EXIT','XSTORE_019O_PUBLIC_OWNER_ACL_RLS_PARITY=PASS',
   'XSTORE_019O_FULL_SYSTEM_DISASTER_RESTORE=NOT_PROVEN'
 ]) assert(src.includes(marker),'MISSING_ISOLATED_CONTRACT');
+assert(src.indexOf('...lines.filter(isSchema)')<src.indexOf('...lines.filter(isUsers)'), 'AUTH_SCHEMA_MUST_PRECEDE_TABLE');
 assert(!/pg_restore[^\n]*--no-owner/.test(src),'FORBIDDEN_NO_OWNER');
 assert(!/pg_restore[^\n]*--no-acl/.test(src),'FORBIDDEN_NO_ACL');
 assert(!src.includes('SET session_replication_role = replica'),'NO_DISABLED_FK_CHECKS');
