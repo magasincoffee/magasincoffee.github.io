@@ -1,0 +1,88 @@
+name: XSTORE-019O Hosted Auth Read-Only Probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/xstore-019o-hosted-auth-readonly.yml'
+      - '09_QA/people-shift/xstore-019o-hosted-auth-readonly.mjs'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/xstore-019o-hosted-auth-readonly.yml'
+      - '09_QA/people-shift/xstore-019o-hosted-auth-readonly.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  source-preflight:
+    name: Verify bounded credential-safe read-only source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Syntax and immutable production admission contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check 09_QA/people-shift/xstore-019o-hosted-auth-readonly.mjs
+          node <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const js=fs.readFileSync('09_QA/people-shift/xstore-019o-hosted-auth-readonly.mjs','utf8');
+          const yml=fs.readFileSync('.github/workflows/xstore-019o-hosted-auth-readonly.yml','utf8');
+          const required=[
+            'https://menvbzlsncmpuvnaifxa.supabase.co',
+            '/auth/v1/token?grant_type=password',
+            '/auth/v1/user',
+            '/rest/v1/rpc/current_user_role',
+            '/rest/v1/profiles?select=id',
+            'HOSTED_ROLE_MATRIX=PARTIAL',
+            'LIFECYCLE_RPC_NOT_DEPLOYED'
+          ];
+          for(const x of required)assert(js.includes(x),'MISSING_'+x);
+          for(const x of ["github.event_name == 'push'",'secrets.PROCUREMENT_QA_USERNAME',
+            'secrets.PROCUREMENT_QA_PASSWORD'])assert(yml.includes(x),'UNSAFE_ADMISSION_'+x);
+          assert(!/\/rest\/v1\/rpc\/set_employee_lifecycle_status_v1/i.test(js));
+          assert(!/\/rest\/v1\/profiles[^'" ]*(?:\bupdate\b|\bdelete\b)/i.test(js));
+          console.log('XSTORE_019O_HOSTED_READONLY_SOURCE_ADMISSION=PASS; NO_SECRETS_IN_PR');
+          NODE
+
+  hosted-auth-one-role:
+    name: Verify pre-existing QA account using hosted Supabase Auth
+    needs: source-preflight
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify existing approved QA credential availability without disclosure
+        id: qa_creds
+        env:
+          QA_USER: ${{ secrets.PROCUREMENT_QA_USERNAME }}
+          QA_PASS: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$QA_USER" ] && [ -n "$QA_PASS" ]; then
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+            echo 'XSTORE_019O_EXISTING_QA_CREDENTIALS=AVAILABLE'
+          else
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+            echo 'XSTORE_019O_HOSTED_AUTH=BLOCKED_MISSING_APPROVED_QA_CREDENTIALS'
+          fi
+      - name: Signed hosted JWT and strict own-profile/foreign-profile read-only RLS
+        if: steps.qa_creds.outputs.available == 'true'
+        env:
+          XSTORE_019O_QA_USERNAME: ${{ secrets.PROCUREMENT_QA_USERNAME }}
+          XSTORE_019O_QA_PASSWORD: ${{ secrets.PROCUREMENT_QA_PASSWORD }}
+        run: node 09_QA/people-shift/xstore-019o-hosted-auth-readonly.mjs
+      - name: No green claim when hosted QA credentials are not configured
+        if: steps.qa_creds.outputs.available != 'true'
+        shell: bash
+        run: |
+          echo '::error::HOSTED_AUTH_CREDENTIALS_NOT_CONFIGURED; role matrix remains BLOCKED'
+          exit 1
