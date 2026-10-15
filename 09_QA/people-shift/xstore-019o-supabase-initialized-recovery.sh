@@ -69,7 +69,7 @@ if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction
 fi
 echo 'XSTORE_019O_INITIALIZED_CLONE_AUTH_DATA=PASS; FK_ENFORCED'
 # Initialized Supabase Storage can contain seed rows that conflict with genuine archived keys.
-# Reconcile only archived Storage tables, in enforced FK dependency order; no CASCADE or FK bypass.
+# Reconcile only archived Storage tables, in enforced FK dependency order; no FK or permission bypass.
 docker exec "$db_container" psql -U postgres -d postgres -AtX -F '|' -v ON_ERROR_STOP=1 -c "SELECT cn.nspname||'.'||child.relname, pn.nspname||'.'||parent.relname FROM pg_constraint con JOIN pg_class child ON child.oid=con.conrelid JOIN pg_namespace cn ON cn.oid=child.relnamespace JOIN pg_class parent ON parent.oid=con.confrelid JOIN pg_namespace pn ON pn.oid=parent.relnamespace WHERE con.contype='f' AND cn.nspname='storage' ORDER BY 1,2" > "$work/storage-fks.tsv"
 node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-storage-data-toposort.mjs" "$work/archive.toc" "$work/storage-fks.tsv" "$work/storage-replay.toc" "$work/storage-clear.sql"
 docker cp "$work/storage-clear.sql" "$db_container:/tmp/storage-clear.sql"
