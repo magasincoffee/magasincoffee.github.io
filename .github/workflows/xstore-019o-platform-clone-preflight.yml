@@ -38,7 +38,8 @@ jobs:
           for(const marker of ['supabase init --yes','supabase start --exclude',"to_regclass('auth.users')","to_regclass('storage.objects')",'supabase stop --no-backup','TRUSTED_MAIN_ONLY'])
             assert(sh.includes(marker),'PLATFORM_PREFLIGHT_CONTRACT_MISSING');
           assert(y.includes("github.event_name == 'push' && github.ref == 'refs/heads/main'"),'NO_TRUSTED_MAIN_GATE');
-          assert(!y.includes('pull_request_target:'),'UNSAFE_EVENT');
+          const triggerHeader=y.slice(0,y.indexOf('\njobs:'));
+          assert(!triggerHeader.includes('pull_request_target:'),'UNSAFE_EVENT');
           assert(!sh.includes('DB_URL')&&!sh.includes('MAGASIN_NOIBO_'),'PRODUCTION_SECRET_PROHIBITED');
           assert(!sh.includes('supabase link')&&!sh.includes('supabase db push'),'PRODUCTION_MUTATION_PROHIBITED');
           console.log('XSTORE_019O_PLATFORM_SOURCE_ADMISSION=PASS; NO_PRODUCTION_SECRETS_ON_PR');
