@@ -60,7 +60,7 @@ function selftest() {
   assert(!ok.content.includes('TABLE DATA public'));
   assert(ok.content.includes('SEQUENCE SET auth sessions_id_seq'));
   assert.throws(()=>orderedAuthToc(toc,'auth.users|auth.identities\n'+graph),/AUTH_FK_GRAPH_CYCLE/);
-  assert.throws(()=>orderedAuthToc(toc,'auth.identities\tstorage.objects'),/AUTH_FK_PARENT_NOT_IN_ARCHIVE/);
+  assert.throws(()=>orderedAuthToc(toc,'auth.identities|storage.objects'),/AUTH_FK_PARENT_NOT_IN_ARCHIVE/);
   assert.throws(()=>orderedAuthToc(toc.replace('TABLE DATA auth users','TABLE DATA auth unknown'),'auth.identities|auth.users'),/AUTH_TOC_INCOMPLETE/);
   console.log('XSTORE_019O_AUTH_FK_ORDER_SELFTEST=PASS; NO_ARCHIVE_OUTPUT');
 }
