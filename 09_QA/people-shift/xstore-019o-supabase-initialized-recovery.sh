@@ -51,7 +51,15 @@ restore_stage(){
 # All private table identifiers and TOC contents stay in the disposable runner.
 docker exec "$db_container" pg_restore --list /tmp/magasin-archive.dump > "$work/archive.toc"
 docker exec "$db_container" psql -U postgres -d postgres -AtX -F '|' -v ON_ERROR_STOP=1 -c "SELECT cn.nspname||'.'||child.relname, pn.nspname||'.'||parent.relname FROM pg_constraint con JOIN pg_class child ON child.oid=con.conrelid JOIN pg_namespace cn ON cn.oid=child.relnamespace JOIN pg_class parent ON parent.oid=con.confrelid JOIN pg_namespace pn ON pn.oid=parent.relnamespace WHERE con.contype='f' AND cn.nspname='auth' ORDER BY 1,2" > "$work/auth-fks.tsv"
-node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-auth-data-toposort.mjs" "$work/archive.toc" "$work/auth-fks.tsv" "$work/auth-replay.toc"
+node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-auth-data-toposort.mjs" "$work/archive.toc" "$work/auth-fks.tsv" "$work/auth-replay.toc" "$work/auth-clear.sql"
+# Disposable local clone may have initialized Auth seed rows absent from empty restore target.
+# Delete only original archived Auth tables in reverse FK order. No cascade and no disabled FK.
+docker cp "$work/auth-clear.sql" "$db_container:/tmp/auth-clear.sql"
+: > "$log"
+if ! docker exec "$db_container" psql -U postgres -d postgres -qAtX -v ON_ERROR_STOP=1 -f /tmp/auth-clear.sql >/dev/null 2>"$log"; then
+ echo '::error::XSTORE_019O_INITIALIZED_AUTH_SEED_CLEAR=FAIL_CLOSED'; exit 1
+fi
+echo 'XSTORE_019O_INITIALIZED_AUTH_SEED_CLEAR=PASS; FK_ENFORCED; ISOLATED_ONLY'
 docker cp "$work/auth-replay.toc" "$db_container:/tmp/auth-replay.toc"
 : > "$log"
 if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction --section=data --use-list=/tmp/auth-replay.toc --username=supabase_admin --dbname=postgres /tmp/magasin-archive.dump >/dev/null 2>"$log"; then
