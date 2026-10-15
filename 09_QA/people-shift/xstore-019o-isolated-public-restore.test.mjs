@@ -20,6 +20,9 @@ for(const marker of [
   'XSTORE_019O_FULL_SYSTEM_DISASTER_RESTORE=NOT_PROVEN'
 ]) assert(src.includes(marker),'MISSING_ISOLATED_CONTRACT');
 assert(src.indexOf('...lines.filter(isSchema)')<src.indexOf('...lines.filter(isUsers)'), 'AUTH_SCHEMA_MUST_PRECEDE_TABLE');
+const early=src.slice(src.indexOf('if ! docker exec -i "$container" pg_restore --exit-on-error'),src.indexOf("echo 'XSTORE_019O_AUTH_SCHEMA_THEN_USERS=PASS"));
+assert(early.includes('--use-list=/tmp/auth-users-first.toc --section=pre-data'), 'SCHEMA_TOC_EARLY_RESTORE_REQUIRED');
+assert(!early.includes('--schema=auth'), 'SCHEMA_TOC_FILTER_WOULD_DROP_CREATE_SCHEMA');
 assert(!/pg_restore[^\n]*--no-owner/.test(src),'FORBIDDEN_NO_OWNER');
 assert(!/pg_restore[^\n]*--no-acl/.test(src),'FORBIDDEN_NO_ACL');
 assert(!src.includes('SET session_replication_role = replica'),'NO_DISABLED_FK_CHECKS');
