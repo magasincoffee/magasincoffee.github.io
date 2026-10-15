@@ -7,6 +7,7 @@ on:
       - '09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh'
       - '09_QA/people-shift/xstore-019o-restore-error-classifier.mjs'
       - '09_QA/people-shift/xstore-019o-auth-data-toposort.mjs'
+      - '09_QA/people-shift/xstore-019o-storage-data-toposort.mjs'
   push:
     branches: [main]
     paths:
@@ -14,6 +15,7 @@ on:
       - '09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh'
       - '09_QA/people-shift/xstore-019o-restore-error-classifier.mjs'
       - '09_QA/people-shift/xstore-019o-auth-data-toposort.mjs'
+      - '09_QA/people-shift/xstore-019o-storage-data-toposort.mjs'
 
 permissions:
   contents: read
@@ -38,6 +40,7 @@ jobs:
           bash -n 09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh
           node 09_QA/people-shift/xstore-019o-restore-error-classifier.mjs selftest
           node 09_QA/people-shift/xstore-019o-auth-data-toposort.mjs selftest
+          node 09_QA/people-shift/xstore-019o-storage-data-toposort.mjs selftest
           node <<'NODE'
           const fs=require('node:fs'),assert=require('node:assert/strict');
           const sh=fs.readFileSync('09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh','utf8');
@@ -53,6 +56,8 @@ jobs:
           assert(!sh.includes('--no-owner')&&!sh.includes('--no-acl'),'OWNER_ACL_BYPASS');
           assert(!sh.includes('session_replication_role'),'FK_BYPASS');
           assert(sh.includes('auth-data-toposort.mjs'),'FK_ORDER_NOT_PRESENT');
+          assert(sh.includes('storage-data-toposort.mjs'),'STORAGE_FK_ORDER_NOT_PRESENT');
+          assert(sh.includes('INITIALIZED_STORAGE_SEED_CLEAR=PASS'),'STORAGE_SEED_REPLACEMENT_NOT_VERIFIED');
           assert(sh.includes('--single-transaction'),'FK_REPLAY_NOT_ATOMIC');
           assert(sh.includes('INITIALIZED_AUTH_SEED_CLEAR=PASS'),'AUTH_SEED_REPLACEMENT_NOT_VERIFIED');
           assert(!sh.includes('TRUNCATE')&&!sh.includes('CASCADE'),'FK_DELETE_BYPASS');
