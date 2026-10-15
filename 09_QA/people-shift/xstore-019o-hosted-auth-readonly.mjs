@@ -27,15 +27,22 @@ async function call(path,{method='GET',body,token,allowError=false}={}) {
  if(!allowError)assert(response.ok,'HOSTED_AUTH_HTTP_'+response.status+' endpoint '+path.split('?')[0]);
  return {status:response.status,data};
 }
-// Existing public resolver; does not require reading staff rows.
-const resolved = await call('/rest/v1/rpc/resolve_login_email',{
- method:'POST',body:{p_username:user}
-});
-assert(typeof resolved.data==='string' && resolved.data.includes('@'),
- 'HOSTED_AUTH_RESOLVER_NOT_AVAILABLE');
+// Existing GitHub QA secret may hold either an email or a canonical username.
+// Do not expose which value, and never attempt guessed or alternate identities.
+const isEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user);
+let email=user;
+if(!isEmail){
+ const resolved=await call('/rest/v1/rpc/resolve_login_email',{
+  method:'POST',body:{p_username:user}
+ });
+ assert(typeof resolved.data==='string' && resolved.data.includes('@'),
+  'HOSTED_AUTH_QA_USERNAME_NOT_RESOLVED; VERIFY_APPROVED_SECRET_ACCOUNT');
+ email=resolved.data;
+}
+console.log('XSTORE_019O_APPROVED_QA_LOGIN_FORMAT='+ (isEmail?'EMAIL':'USERNAME_RESOLVED'));
 const tokenResponse = await call('/auth/v1/token?grant_type=password',{
  method:'POST',
- body:{email:resolved.data,password}
+ body:{email,password}
 });
 const accessToken=tokenResponse.data?.access_token;
 assert(typeof accessToken==='string'&&accessToken.split('.').length===3,
