@@ -1523,6 +1523,25 @@ Owner instructed continuation through cloud and mobile, no H4/Remote Desktop Com
 
 **Release stop/go unchanged:** PR #403 QA-only remains DRAFT / unmerged pending preflight CI completion and approved after-midnight main merge. PR #394 narrow release remains DRAFT / unmerged; broad #392 must not merge. Successful future hosted 3-role read-only QA is supporting security evidence **but cannot prove new lifecycle RPCs** because they are absent on the real production host. An approved production-equivalent candidate schema with hosted JWT/negative scope, restored owners/ACLs and application rollback parity, frozen RC and explicit Owner release approval remain hard conditions. Do not bypass these gates or apply production migrations. PR #402 itself is SOT evidence-only and remains DRAFT pending main maintenance window.
 
+
+## 0.70 XSTORE-019O Owner same-conversation immediate QA-only merge and hosted 3-role JWT/RLS PASS — 2026-10-15 ~08:46–08:50 ICT
+
+**Owner's explicit contemporaneous exception:** Owner approved an **immediate** merge of *only* the read-only QA workflow PR #403, instead of waiting for midnight. This is an exception to the normal after-midnight deployment policy **only for two QA files in PR #403**. It does not authorize lifecycle PR #394 or broad PR #392 to merge, production SQL/DDL, employee data mutation or final release. Connected GitHub checks verified exact PR head, 3/3 completed green CI, two expected QA files, no unresolved review threads, and trusted-main-only Secrets protection before integration.
+
+**Executed:** PR #403 head `bcfa9090338389fabae1b71aebf8286eb53cec3a` was marked ready for review and merged by GitHub squash to **main `f8250598fe7fb3ca6f16e36aadee869133dcc141`**, GitHub readback `merged=true`. PR source premerge workflow `38666799466`, UI2 `38666799455`, People Shift `38666799436` were completed SUCCESS.
+
+**Real hosted postmerge auth evidence:** `XSTORE-019O Hosted Three-Role Read-Only Gate` push run **`38667486062` COMPLETED SUCCESS** on that exact main. Its logs explicitly attested existing Owner-provisioned QA Secrets present without exposing values, and genuine hosted Supabase-issued JWTs with validated `/auth/v1/user`, current role, ACTIVE own profile, and store/foreign-profile negative RLS:
+- `XSTORE_019O_AUTH_JWT=PASS; SLOT=OWNER; ROLE=OWNER`
+- `XSTORE_019O_AUTH_JWT=PASS; SLOT=MANAGER; ROLE=STORE_MANAGER`
+- `XSTORE_019O_AUTH_JWT=PASS; SLOT=STAFF; ROLE=STAFF`
+- `XSTORE_019O_HOSTED_RLS=PASS; MANAGER_ALL=PASS; STAFF_FOUR_STORE_DENIAL=PASS; FOREIGN_PROFILE_DENIAL=PASS`
+- `XSTORE_019O_HOSTED_THREE_ROLE_READONLY=PASS; ACTORS=3; NO_EMPLOYEE_WRITE; NO_PII_OUTPUT`
+- The same log states **`XSTORE_019O_RELEASE_ADMISSION=PARTIAL; PARTIAL_MANAGER_FOREIGN_STORE_NOT_TESTED; LIFECYCLE_RPC_NOT_DEPLOYED; ACL_RESTORE_PENDING`**. This last line is authoritative scope delimitation: tests were on existing production read-only RPCs, **not** new lifecycle RPCs or actual partial-store Manager negative capability on their undeployed schema.
+
+**Main deployment/checks:** Pages source validation `38667486016` completed SUCCESS; GitHub Pages deployment `38667485999` completed SUCCESS. Postmerge People Shift `38667486025` and UI2 Cross Role `38667486051` initially still in progress; update their completed results separately before claiming full exact-main green.
+
+**Next gates / RELEASE BLOCKED:** Lifecycle PR #394 remains Draft/unmerged, broad #392 Draft/unmerged. Live partial Manager real JWT foreign-store denial for new RPC is unproven, and restoring real ownership/ACL on fully equivalent Supabase infrastructure with app/rollback assurance is not achieved by `--no-owner --no-acl` backups. Frozen exact-head release packet, recoverability, security, midnight window (unless explicitly excepted for that *specific* release), and **separate Owner approval for final production release** remain mandatory. No production lifecycle DDL or real employee state mutation occurred in this QA-only integration. PR #402 is a DRAFT SOT evidence proposal and remains unmerged absent its own allowed window/approval.
+
 ## 1. Purpose
 
 Extend the closed Workforce Operations V1 scheduling flow so MAGASIN can operate the real shared-workforce model across CN1, CN2, CN3 and CN4.
