@@ -16,7 +16,7 @@ const patterns = [
  ['MISSING_FUNCTION_OR_TYPE', /\b(?:function|type|operator|procedure)\b.*\bdoes not exist\b/i],
  ['EXTENSION_DEPENDENCY', /\bextension\b/i],
  ['SQL_SYNTAX_OR_VERSION', /\bsyntax error\b|\bunsupported\b|\bversion mismatch\b/i],
- ['INVALID_OBJECT_STATE', /\bcannot (?:alter|drop|create|assign|change|set)\b|\bwrong object type\b/i],
+ ['INVALID_OBJECT_STATE', /\bcannot (?:alter|drop|create|assign|change|set|be changed)\b|\bwrong object type\b/i],
  ['CONNECTIVITY_OR_DATABASE', /\bcould not connect\b|\bconnection refused\b|\bconnection.*closed\b|\bdatabase\b.*\bdoes not exist\b/i],
  ['INPUT_IO_OR_ARCHIVE', /\bcould not (?:read|open|write)\b|\binvalid archive\b|\bunexpected EOF\b/i]
 ];
