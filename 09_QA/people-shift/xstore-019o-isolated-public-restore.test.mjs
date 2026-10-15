@@ -23,6 +23,11 @@ assert(src.indexOf('...lines.filter(isSchema)')<src.indexOf('...lines.filter(isU
 const early=src.slice(src.indexOf('if ! docker exec -i "$container" pg_restore --exit-on-error'),src.indexOf("echo 'XSTORE_019O_AUTH_SCHEMA_THEN_USERS=PASS"));
 assert(early.includes('--use-list=/tmp/auth-users-first.toc --section=pre-data'), 'SCHEMA_TOC_EARLY_RESTORE_REQUIRED');
 assert(!early.includes('--schema=auth'), 'SCHEMA_TOC_FILTER_WOULD_DROP_CREATE_SCHEMA');
+const authPost=src.indexOf("--schema=auth --section=post-data");
+const pubPost=src.indexOf("--schema=public --section=post-data");
+const pubPreData=src.indexOf('for stage in pre-data data; do',src.indexOf('XSTORE_019O_AUTH_PREREQUISITE_'));
+assert(pubPreData>=0 && authPost>pubPreData && pubPost>authPost,'AUTH_KEYS_BEFORE_PUBLIC_FK_REQUIRED');
+assert(src.includes('XSTORE_019O_AUTH_POST_DATA=PASS; PUBLIC_FK_PREREQUISITES_ENFORCED'),'AUTH_CONSTRAINT_PROOF_MARKER');
 assert(!/pg_restore[^\n]*--no-owner/.test(src),'FORBIDDEN_NO_OWNER');
 assert(!/pg_restore[^\n]*--no-acl/.test(src),'FORBIDDEN_NO_ACL');
 assert(!src.includes('SET session_replication_role = replica'),'NO_DISABLED_FK_CHECKS');
