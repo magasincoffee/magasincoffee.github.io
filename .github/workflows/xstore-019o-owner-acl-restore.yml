@@ -92,6 +92,7 @@ jobs:
           set -euo pipefail
           # Full pg_dump is a read-only consistent snapshot. Never omit ACL.
           docker run --rm --network host \
+            --user "$(id -u):$(id -g)" \
             --volume "$BACKUP_WORK:/backup" \
             --env PGSERVICE=magasin \
             --env PGSERVICEFILE=/backup/service.conf \
@@ -139,7 +140,8 @@ jobs:
           set -euo pipefail
           cleanup() {
             docker rm -f xstore019o-acl-proof >/dev/null 2>&1 || true
-            rm -rf "$BACKUP_WORK"
+            # Preserve encrypted archive until the next artifact-upload step.
+            # Final always() cleanup wipes it after success or failure.
           }
           trap cleanup EXIT
           docker run --rm -d --network none --name xstore019o-acl-proof \
