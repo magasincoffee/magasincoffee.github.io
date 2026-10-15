@@ -1,0 +1,108 @@
+name: XSTORE-019O Hosted Three-Role Read-Only Gate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/xstore-019o-hosted-three-role-readonly.yml'
+      - '09_QA/people-shift/xstore-019o-hosted-three-role-readonly.mjs'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/xstore-019o-hosted-three-role-readonly.yml'
+      - '09_QA/people-shift/xstore-019o-hosted-three-role-readonly.mjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: xstore-019o-hosted-three-role-${ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-preflight:
+    name: Read-only source admission, no QA secrets on PR
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict endpoint and security contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check 09_QA/people-shift/xstore-019o-hosted-three-role-readonly.mjs
+          node <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const js=fs.readFileSync('09_QA/people-shift/xstore-019o-hosted-three-role-readonly.mjs','utf8');
+          const y=fs.readFileSync('.github/workflows/xstore-019o-hosted-three-role-readonly.yml','utf8');
+          for(const marker of [
+            'https://menvbzlsncmpuvnaifxa.supabase.co',
+            '/auth/v1/token?grant_type=password','/auth/v1/user',
+            '/rest/v1/rpc/resolve_login_email','/rest/v1/rpc/current_user_role',
+            '/rest/v1/rpc/get_manager_accessible_stores','/rest/v1/rpc/can_access_store',
+            'FOREIGN_PROFILE_RLS_EXPOSURE','LIFECYCLE_RPC_NOT_DEPLOYED',
+            "redirect:'error'","ALLOWED.has(path)||isProfilePath(path)"
+          ]) assert(js.includes(marker),'INVALID_READONLY_CONTRACT');
+          assert(!/\/rest\/v1\/rpc\/set_employee_lifecycle_status_v1|\/auth\/v1\/admin|\/auth\/v1\/recover|service_role|sb_secret_/i.test(js),'FORBIDDEN_LIVE_API');
+          assert(y.includes("github.event_name == 'push'") && y.includes("github.ref == 'refs/heads/main'"),'MAIN_ONLY_CREDENTIALS');
+          for(const role of ['OWNER','MANAGER','STAFF'])
+            for(const f of ['USERNAME','PASSWORD'])
+              assert(y.includes('secrets.XSTORE_019O_QA_'+role+'_'+f),'SECRET_MAPPING_INCOMPLETE');
+          assert(y.includes('contents: read') && !/upload-artifact|pull_request_target|workflow_dispatch/.test(y),'UNSAFE_PERMISSIONS_OR_TRIGGER');
+          console.log('XSTORE_019O_THREE_ROLE_SOURCE_ADMISSION=PASS; NO_QA_SECRETS_ON_PR');
+          NODE
+
+  hosted-three-role:
+    name: Hosted JWT three-role read-only authorization matrix
+    needs: source-preflight
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Detect Owner Manager Staff Secrets without disclosure
+        id: qa_creds
+        shell: bash
+        env:
+          OWNER_USER: ${{ secrets.XSTORE_019O_QA_OWNER_USERNAME }}
+          OWNER_PASS: ${{ secrets.XSTORE_019O_QA_OWNER_PASSWORD }}
+          MANAGER_USER: ${{ secrets.XSTORE_019O_QA_MANAGER_USERNAME }}
+          MANAGER_PASS: ${{ secrets.XSTORE_019O_QA_MANAGER_PASSWORD }}
+          STAFF_USER: ${{ secrets.XSTORE_019O_QA_STAFF_USERNAME }}
+          STAFF_PASS: ${{ secrets.XSTORE_019O_QA_STAFF_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -n "$OWNER_USER" ] && [ -n "$OWNER_PASS" ] &&
+             [ -n "$MANAGER_USER" ] && [ -n "$MANAGER_PASS" ] &&
+             [ -n "$STAFF_USER" ] && [ -n "$STAFF_PASS" ]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+            echo 'XSTORE_019O_THREE_ROLE_SECRETS=AVAILABLE; NO_VALUES_OUTPUT'
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo '::error::XSTORE_019O_THREE_ROLE_SECRETS_MISSING'
+          fi
+      - name: Hosted Supabase JWT RLS and all-store negative checks
+        if: steps.qa_creds.outputs.ready == 'true'
+        env:
+          XSTORE_019O_QA_OWNER_USERNAME: ${{ secrets.XSTORE_019O_QA_OWNER_USERNAME }}
+          XSTORE_019O_QA_OWNER_PASSWORD: ${{ secrets.XSTORE_019O_QA_OWNER_PASSWORD }}
+          XSTORE_019O_QA_MANAGER_USERNAME: ${{ secrets.XSTORE_019O_QA_MANAGER_USERNAME }}
+          XSTORE_019O_QA_MANAGER_PASSWORD: ${{ secrets.XSTORE_019O_QA_MANAGER_PASSWORD }}
+          XSTORE_019O_QA_STAFF_USERNAME: ${{ secrets.XSTORE_019O_QA_STAFF_USERNAME }}
+          XSTORE_019O_QA_STAFF_PASSWORD: ${{ secrets.XSTORE_019O_QA_STAFF_PASSWORD }}
+        run: node 09_QA/people-shift/xstore-019o-hosted-three-role-readonly.mjs
+      - name: Fail closed for incomplete Secrets
+        if: steps.qa_creds.outputs.ready != 'true'
+        shell: bash
+        run: |
+          echo '::error::XSTORE_019O_HOSTED_ROLE_MATRIX=BLOCKED_MISSING_QA_SECRETS'
+          exit 1
