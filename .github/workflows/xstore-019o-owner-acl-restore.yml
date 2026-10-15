@@ -133,7 +133,23 @@ jobs:
             pg_restore --exit-on-error \
               --username=supabase_admin --dbname=xstore019o_acl \
               < "$BACKUP_WORK/restore-check.dump" >/dev/null 2>"$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
-            echo '::error::XSTORE_019O_REAL_OWNER_ACL_ISOLATED_RESTORE=FAIL; NO_PRODUCTION_WRITE'
+            # Classify first failure without outputting any database metadata, SQL,
+            # restored data, role names, credentials or pg_restore stderr.
+            cause=UNCLASSIFIED_RESTORE_FAILURE
+            if grep -Eiq 'role .+ does not exist' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=MISSING_DATABASE_ROLE
+            elif grep -Eiq 'must be member of role' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=MISSING_ROLE_MEMBERSHIP
+            elif grep -Eiq 'must be owner of|not owner of' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=OWNER_PRIVILEGE
+            elif grep -Eiq 'permission denied' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=INSUFFICIENT_RESTORE_PRIVILEGE
+            elif grep -Eiq 'already exists' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=RESTORE_OBJECT_COLLISION
+            elif grep -Eiq 'extension|unsupported' "$RUNNER_TEMP/xstore019o-pgrestore-stderr"; then
+              cause=EXTENSION_DEPENDENCY
+            fi
+            echo "::error::XSTORE_019O_REAL_OWNER_ACL_ISOLATED_RESTORE=FAIL; CAUSE=$cause; NO_PRODUCTION_WRITE"
             exit 1
           fi
           docker cp 09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql \
