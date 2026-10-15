@@ -56,7 +56,8 @@ node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-auth-data-toposort.mjs" "
 # Delete only original archived Auth tables in reverse FK order. No cascade and no disabled FK.
 docker cp "$work/auth-clear.sql" "$db_container:/tmp/auth-clear.sql"
 : > "$log"
-if ! docker exec "$db_container" psql -U postgres -d postgres -qAtX -v ON_ERROR_STOP=1 -f /tmp/auth-clear.sql >/dev/null 2>"$log"; then
+if ! docker exec "$db_container" psql -U supabase_admin -d postgres -qAtX -v ON_ERROR_STOP=1 -f /tmp/auth-clear.sql >/dev/null 2>"$log"; then
+ node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
  echo '::error::XSTORE_019O_INITIALIZED_AUTH_SEED_CLEAR=FAIL_CLOSED'; exit 1
 fi
 echo 'XSTORE_019O_INITIALIZED_AUTH_SEED_CLEAR=PASS; FK_ENFORCED; ISOLATED_ONLY'
