@@ -10,7 +10,10 @@ const patterns = [
   ['MISSING_ROLE_MEMBERSHIP', /\bmust be member of role\b/i],
   ['OWNER_PRIVILEGE', /\bmust be owner of\b|\bnot owner of\b/i],
   ['INSUFFICIENT_RESTORE_PRIVILEGE', /\bpermission denied\b|\binsufficient privilege\b|\bnot permitted\b/i],
-  ['OBJECT_ALREADY_EXISTS', /\balready exists\b|\bduplicate (?:key|object|schema|relation)\b/i],
+  ['DATA_CONSTRAINT_VIOLATION', /\bduplicate key value violates unique constraint\b|\bviolates (?:foreign key|unique|exclusion|check) constraint\b/i],
+  ['DATA_COLUMN_MISMATCH', /\bcolumn\b.*\bdoes not exist\b|\bmissing data for column\b|\bextra data after last expected column\b|\bhas no column named\b/i],
+  ['DATA_VALUE_INCOMPATIBLE', /\binvalid input syntax\b|\binvalid byte sequence\b|\bout of range\b|\bvalue too long\b|\bnull value\b.*\bviolates not-null constraint\b/i],
+  ['OBJECT_ALREADY_EXISTS', /\balready exists\b|\bduplicate (?:object|schema|relation)\b/i],
   ['MISSING_RELATION_OR_SCHEMA', /\b(?:relation|schema|table|view|sequence)\b.*\bdoes not exist\b/i],
   ['MISSING_FUNCTION_OR_TYPE', /\b(?:function|type|operator|procedure)\b.*\bdoes not exist\b/i],
   ['UNRECOGNIZED_CONFIGURATION', /\bunrecognized configuration parameter\b|\bunknown configuration parameter\b/i],
@@ -53,10 +56,11 @@ function firstPostgresError(raw) {
   else if (/^\s*ALTER\b/i.test(commandStart)) phase='ALTER_OBJECT';
   else if (/^\s*CREATE\s+EXTENSION\b/i.test(commandStart)) phase='CREATE_EXTENSION';
   else if (/^\s*CREATE\b/i.test(commandStart)) phase='CREATE_OBJECT';
-  else if (/^\s*COPY\b/i.test(commandStart)) phase='RESTORE_DATA';
+  else if (/^\s*COPY\b/i.test(commandStart) || /pg_restore:\s*error:\s*COPY failed for table\b/i.test(window[0]||'')) phase='RESTORE_DATA';
   else if (/^\s*SELECT\b/i.test(commandStart)) phase='RESTORE_SQL_CALL';
   // Only output fixed category tokens; never log actual identifiers.
   let commandKind='OTHER_ALTER_OR_SQL';
+  if (phase==='RESTORE_DATA') commandKind='COPY_TABLE_DATA';
   if (/\bADD\s+CONSTRAINT\b[\s\S]*\bFOREIGN\s+KEY\b/i.test(commandText)) commandKind='ADD_FOREIGN_KEY';
   else if (/\bADD\s+CONSTRAINT\b[\s\S]*\bPRIMARY\s+KEY\b/i.test(commandText)) commandKind='ADD_PRIMARY_KEY';
   else if (/\bADD\s+CONSTRAINT\b/i.test(commandText)) commandKind='ADD_CONSTRAINT';
@@ -97,7 +101,10 @@ function selftest() {
     ['pg_restore: error: could not execute query:\nERROR: unrecognized configuration parameter "private_config"\nCommand was: ALTER DATABASE abc SET private_config = 1;', 'UNRECOGNIZED_CONFIGURATION','ALTER_OBJECT'],
     ['pg_restore: error: could not execute query:\nERROR: must be owner of relation "staff_secret"\nCommand was: ALTER TABLE staff_secret OWNER TO abc;', 'OWNER_PRIVILEGE','OWNER_CHANGE'],
     ['pg_restore: error: could not execute query:\nERROR: permission denied for schema "staff_secret"\nCommand was: CREATE TABLE x (id int);', 'INSUFFICIENT_RESTORE_PRIVILEGE','CREATE_OBJECT'],
-    ['pg_restore: error: could not execute query:\nERROR: some unknown error with contact jane@example.com\nCommand was: REVOKE ALL ON SCHEMA abc FROM a;', 'UNCLASSIFIED_SQL_ERROR','ACL_REVOKE']
+    ['pg_restore: error: could not execute query:\nERROR: some unknown error with contact jane@example.com\nCommand was: REVOKE ALL ON SCHEMA abc FROM a;', 'UNCLASSIFIED_SQL_ERROR','ACL_REVOKE'],
+    ['pg_restore: error: COPY failed for table "auth_private": ERROR: column "new_secret" does not exist', 'DATA_COLUMN_MISMATCH','RESTORE_DATA'],
+    ['pg_restore: error: COPY failed for table "auth_private": ERROR: invalid input syntax for type uuid: "private-value"', 'DATA_VALUE_INCOMPATIBLE','RESTORE_DATA'],
+    ['pg_restore: error: COPY failed for table "auth_private": ERROR: duplicate key value violates unique constraint "private_index"', 'DATA_CONSTRAINT_VIOLATION','RESTORE_DATA']
   ];
   for(const [sample,category,phase] of samples) {
     const result=classify(sample);
@@ -107,6 +114,13 @@ function selftest() {
     for(const bad of ['jane@example.com','staff_secret','private_role','private_config']){
       assert(!JSON.stringify(result).includes(bad));
     }
+  }
+  for (const issue of samples.slice(-3)) {
+    const classified=classify(issue[0]);
+    assert.equal(classified.commandKind,'COPY_TABLE_DATA');
+    assert(!JSON.stringify(classified).includes('auth_private'));
+    assert(!JSON.stringify(classified).includes('new_secret'));
+    assert(!JSON.stringify(classified).includes('private-value'));
   }
   // Scope and ALTER/FK class are fixed allowlisted labels, not identifiers.
   const caseAuth=classify('pg_restore: error: could not execute query:\nERROR: relation "auth.users" does not exist\nCommand was: ALTER TABLE ONLY public.private_table ADD CONSTRAINT secret_fk FOREIGN KEY (user_id) REFERENCES auth.users(id);');
