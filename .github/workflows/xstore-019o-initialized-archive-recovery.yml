@@ -6,12 +6,14 @@ on:
       - '.github/workflows/xstore-019o-initialized-archive-recovery.yml'
       - '09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh'
       - '09_QA/people-shift/xstore-019o-restore-error-classifier.mjs'
+      - '09_QA/people-shift/xstore-019o-auth-data-toposort.mjs'
   push:
     branches: [main]
     paths:
       - '.github/workflows/xstore-019o-initialized-archive-recovery.yml'
       - '09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh'
       - '09_QA/people-shift/xstore-019o-restore-error-classifier.mjs'
+      - '09_QA/people-shift/xstore-019o-auth-data-toposort.mjs'
 
 permissions:
   contents: read
@@ -35,6 +37,7 @@ jobs:
           set -euo pipefail
           bash -n 09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh
           node 09_QA/people-shift/xstore-019o-restore-error-classifier.mjs selftest
+          node 09_QA/people-shift/xstore-019o-auth-data-toposort.mjs selftest
           node <<'NODE'
           const fs=require('node:fs'),assert=require('node:assert/strict');
           const sh=fs.readFileSync('09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh','utf8');
@@ -49,6 +52,8 @@ jobs:
           assert(!sh.includes('supabase link')&&!sh.includes('supabase db push'),'PRODUCTION_WRITE_FORBIDDEN');
           assert(!sh.includes('--no-owner')&&!sh.includes('--no-acl'),'OWNER_ACL_BYPASS');
           assert(!sh.includes('session_replication_role'),'FK_BYPASS');
+          assert(sh.includes('auth-data-toposort.mjs'),'FK_ORDER_NOT_PRESENT');
+          assert(sh.includes('--single-transaction'),'FK_REPLAY_NOT_ATOMIC');
           const header=y.slice(0,y.indexOf('\njobs:'));
           assert(!header.includes('pull_request_target'),'PR_SECRET_EXPOSURE');
           console.log('XSTORE_019O_INITIALIZED_RESTORE_SOURCE=PASS; NO_PRODUCTION_WRITE');
