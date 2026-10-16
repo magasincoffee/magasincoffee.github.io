@@ -40,8 +40,12 @@ echo 'XSTORE_019O_LOCAL_RESTORE_NETWORK_ISOLATED=PASS'
 docker cp "$BACKUP_WORK/restore-check.dump" "$db_container:/tmp/magasin-archive.dump"
 restore_stage(){
  local schema="$1" stage="$2" label="$3"
+ local restore_user="supabase_admin"
+ # Production Public relations/functions and all grants are postgres-owned/granted.
+ # Match their creator/grantor context inside the network-isolated clone.
+ if [[ "$schema" == "public" ]]; then restore_user="postgres"; fi
  : > "$log"
- if ! docker exec "$db_container" pg_restore --exit-on-error --schema="$schema" --section="$stage" --username=supabase_admin --dbname=postgres /tmp/magasin-archive.dump >/dev/null 2>"$log"; then
+ if ! docker exec "$db_container" pg_restore --exit-on-error --schema="$schema" --section="$stage" --username="$restore_user" --dbname=postgres /tmp/magasin-archive.dump >/dev/null 2>"$log"; then
   node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
   echo "::error::XSTORE_019O_INITIALIZED_CLONE_$label=FAIL"; exit 1
  fi
@@ -104,11 +108,12 @@ for stage in pre-data data post-data; do restore_stage public "$stage" "PUBLIC_$
 node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-public-acl-toc.mjs" "$work/archive.toc" "$work/public-acl-replay.toc"
 docker cp "$work/public-acl-replay.toc" "$db_container:/tmp/public-acl-replay.toc"
 : > "$log"
-if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction --use-list=/tmp/public-acl-replay.toc --username=supabase_admin --dbname=postgres /tmp/magasin-archive.dump >/dev/null 2>"$log"; then
+if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction --use-list=/tmp/public-acl-replay.toc --username=postgres --dbname=postgres /tmp/magasin-archive.dump >/dev/null 2>"$log"; then
  node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
  echo '::error::XSTORE_019O_PUBLIC_ACL_REPLAY=FAIL'; exit 1
 fi
 echo 'XSTORE_019O_PUBLIC_ACL_REPLAY=PASS; ORIGINAL_ARCHIVE_ONLY; NO_PRIVILEGE_BYPASS'
+echo 'XSTORE_019O_PUBLIC_RESTORE_GRANTOR=POSTGRES; ISOLATED_ONLY'
 docker cp "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql" "$db_container:/tmp/parity.sql"
 docker exec "$db_container" psql -U postgres -d postgres -AtX -v ON_ERROR_STOP=1 -f /tmp/parity.sql > "$RUNNER_TEMP/xstore019o-cli-parity" 2>"$log" || exit 1
 if [[ "$(cat "$RUNNER_TEMP/xstore019o-cli-parity")" != PASS ]]; then
