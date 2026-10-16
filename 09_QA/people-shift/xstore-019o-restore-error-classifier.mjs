@@ -83,13 +83,22 @@ function firstPostgresError(raw) {
 
 function classify(raw) {
   const {message,phase,commandKind,missingSchemaScope}=firstPostgresError(raw);
-  const category=patterns.find(([,regex]) => regex.test(message))?.[0] || 'UNCLASSIFIED_SQL_ERROR';
+  // psql VERBOSITY=sqlstate exposes only five-character SQLSTATE, not data/SQL.
+  const sqlstate=/^[0-9A-Z]{5}$/.test(message)?message:'NONE';
+  const stateCategory=new Map([['23503','DATA_CONSTRAINT_VIOLATION'],['23505','DATA_CONSTRAINT_VIOLATION'],
+    ['23514','DATA_CONSTRAINT_VIOLATION'],['42501','INSUFFICIENT_RESTORE_PRIVILEGE'],
+    ['2BP01','INVALID_OBJECT_STATE'],['55006','INVALID_OBJECT_STATE'],
+    ['P0001','SQL_RAISED_EXCEPTION'],['42P01','MISSING_RELATION_OR_SCHEMA'],
+    ['0A000','SQL_SYNTAX_OR_VERSION']]);
+  const category=sqlstate!=='NONE'
+    ? (stateCategory.get(sqlstate)||'POSTGRES_SQLSTATE_OTHER')
+    : (patterns.find(([,regex]) => regex.test(message))?.[0] || 'UNCLASSIFIED_SQL_ERROR');
   // Fixed constraint kind only: private names, SQL and Auth data stay inside runner.
   let constraintKind='NONE';
   if (category==='DATA_CONSTRAINT_VIOLATION') {
-    if (/\bforeign key constraint\b/i.test(message)) constraintKind='FOREIGN_KEY';
-    else if (/\bunique constraint\b|\bduplicate key\b/i.test(message)) constraintKind='UNIQUE';
-    else if (/\bcheck constraint\b/i.test(message)) constraintKind='CHECK';
+    if (sqlstate==='23503' || /\bforeign key constraint\b/i.test(message)) constraintKind='FOREIGN_KEY';
+    else if (sqlstate==='23505' || /\bunique constraint\b|\bduplicate key\b/i.test(message)) constraintKind='UNIQUE';
+    else if (sqlstate==='23514' || /\bcheck constraint\b/i.test(message)) constraintKind='CHECK';
     else if (/\bexclusion constraint\b/i.test(message)) constraintKind='EXCLUSION';
     else constraintKind='OTHER';
   }
@@ -99,7 +108,7 @@ function classify(raw) {
     .replace(/'[^']*'/g,"'<VALUE>'")
     .replace(/\b\d+(?:\.\d+)?\b/g,'<NUMBER>');
   const fingerprint=crypto.createHash('sha256').update(normalized).digest('hex').slice(0,12);
-  return {category,phase,commandKind,missingSchemaScope,constraintKind,fingerprint};
+  return {category,phase,commandKind,missingSchemaScope,constraintKind,fingerprint,sqlstate};
 }
 
 function selftest() {
@@ -139,6 +148,15 @@ function selftest() {
     assert(!JSON.stringify(classified).includes('new_secret'));
     assert(!JSON.stringify(classified).includes('private-value'));
   }
+  // Sanitize a psql file/line-prefixed error: allow only the SQLSTATE code.
+  const safePsql=classify('psql:/tmp/storage-clear.sql:8: ERROR: 23503');
+  assert.equal(safePsql.category,'DATA_CONSTRAINT_VIOLATION');
+  assert.equal(safePsql.constraintKind,'FOREIGN_KEY');
+  assert.equal(safePsql.sqlstate,'23503');
+  assert(!JSON.stringify(safePsql).includes('storage-clear'));
+  const deniedPsql=classify('psql:/tmp/storage-clear.sql:4: ERROR: 42501');
+  assert.equal(deniedPsql.category,'INSUFFICIENT_RESTORE_PRIVILEGE');
+  assert.equal(deniedPsql.sqlstate,'42501');
   // Scope and ALTER/FK class are fixed allowlisted labels, not identifiers.
   const caseAuth=classify('pg_restore: error: could not execute query:\nERROR: relation "auth.users" does not exist\nCommand was: ALTER TABLE ONLY public.private_table ADD CONSTRAINT secret_fk FOREIGN KEY (user_id) REFERENCES auth.users(id);');
   assert.equal(caseAuth.category,'MISSING_RELATION_OR_SCHEMA');
@@ -168,6 +186,7 @@ else if(process.argv.length===3) {
     console.log('XSTORE_019O_FIRST_RESTORE_ERROR='+result.category+
       '; PHASE='+result.phase+'; COMMAND_KIND='+result.commandKind+
       '; MISSING_SCOPE='+result.missingSchemaScope+
+      '; SQLSTATE='+result.sqlstate+
       '; CONSTRAINT_KIND='+result.constraintKind+
       '; FINGERPRINT12='+result.fingerprint+'; NO_PII_OUTPUT');
   } catch {
