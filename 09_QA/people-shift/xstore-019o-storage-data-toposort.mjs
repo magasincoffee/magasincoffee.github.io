@@ -57,7 +57,7 @@ function orderedStorageToc(toc, fkTsv, protectedTsv) {
     'END IF; END $xstore$;');
   const clear=[...orderNames].reverse().filter(n=>!protectedNames.has(n))
     .map(n=>'DELETE FROM storage."'+n+'";');
-  const clearSql='BEGIN;\\n'+guards.join('\\n')+'\\n'+clear.join('\\n')+'\\nCOMMIT;\\n';
+  const clearSql='BEGIN;\n'+guards.join('\n')+'\n'+clear.join('\n')+'\nCOMMIT;\n';
   return {content:'; private Storage TABLE DATA topological replay; no schema or policy changes\n'+ordered.join('\n')+'\n'+sequences.join('\n')+'\n', clearSql, tables:ordered.length, edges:edgeCount};
 }
 
@@ -91,8 +91,8 @@ function selftest() {
   assert.throws(()=>orderedStorageToc(toc,'storage.buckets|storage.objects\n'+graph,protectedTsv),/STORAGE_FK_GRAPH_CYCLE/);
   assert.throws(()=>orderedStorageToc(toc,'storage.objects|auth.users',protectedTsv),/STORAGE_FK_PARENT_NOT_IN_ARCHIVE/);
   assert.throws(()=>orderedStorageToc(toc.replace('TABLE DATA storage buckets','TABLE DATA storage unknown'),'storage.objects|storage.buckets',protectedTsv),/STORAGE_TOC_INCOMPLETE/);
-  assert.throws(()=>orderedStorageToc(toc,graph,'objects\\n'),/STORAGE_PROTECTED_DELETE_TRIGGER_MISSING/);
-  assert.throws(()=>orderedStorageToc(toc,graph,'objects\\nbuckets\\npublic'),/STORAGE_DELETE_TRIGGER_INVENTORY_INVALID/);
+  assert.throws(()=>orderedStorageToc(toc,graph,'objects\n'),/STORAGE_PROTECTED_DELETE_TRIGGER_MISSING/);
+  assert.throws(()=>orderedStorageToc(toc,graph,'objects\nbuckets\npublic'),/STORAGE_DELETE_TRIGGER_INVENTORY_INVALID/);
   console.log('XSTORE_019O_STORAGE_FK_ORDER_SELFTEST=PASS; PROTECTED_DELETE_GUARDS=PASS; NO_ARCHIVE_OUTPUT');
 }
 
