@@ -43,7 +43,9 @@ restore_stage(){
  local restore_user="supabase_admin"
  # Production Public relations/functions and all grants are postgres-owned/granted.
  # Match their creator/grantor context inside the network-isolated clone.
- if [[ "$schema" == "public" ]]; then restore_user="postgres"; fi
+ # Public post-data contains DEFAULT PRIVILEGES for roles other than postgres;
+ # local privileged admin executes those, while Public object CREATE uses original postgres.
+ if [[ "$schema" == "public" && "$stage" != "post-data" ]]; then restore_user="postgres"; fi
  : > "$log"
  if ! docker exec "$db_container" pg_restore --exit-on-error --schema="$schema" --section="$stage" --username="$restore_user" --dbname=postgres /tmp/magasin-archive.dump >/dev/null 2>"$log"; then
   node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
