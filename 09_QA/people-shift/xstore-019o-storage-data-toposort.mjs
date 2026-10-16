@@ -54,7 +54,7 @@ function orderedStorageToc(toc, fkTsv, protectedTsv) {
   const guards=[...protectedNames].sort().map(n=>
     'DO $xstore$ BEGIN IF EXISTS (SELECT 1 FROM storage."'+n+'") THEN '+
     "RAISE EXCEPTION 'XSTORE_019O_STORAGE_PROTECTED_SEED_ROWS_PRESENT'; "+
-    'END IF; END $xstore$;');
+    'END IF; END; $xstore$;');
   const clear=[...orderNames].reverse().filter(n=>!protectedNames.has(n))
     .map(n=>'DELETE FROM storage."'+n+'";');
   const clearSql='BEGIN;\n'+guards.join('\n')+'\n'+clear.join('\n')+'\nCOMMIT;\n';
