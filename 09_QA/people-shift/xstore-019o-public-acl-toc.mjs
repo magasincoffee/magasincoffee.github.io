@@ -13,9 +13,12 @@ function publicAclToc(toc) {
       throw Error('PUBLIC_ACL_TOC_UNSUPPORTED');
     if(!match) continue;
     const [,kind,scope,remainder]=match;
-    if(scope==='public') {
+    // DEFAULT ACL was already restored before Public CREATE by the separate
+    // original-archive early-default plan. Replaying it here as postgres would
+    // try to change supabase_admin's defaults and fail role-membership checks.
+    if(kind==='ACL' && scope==='public') {
       selected.push(line);
-      if(kind==='ACL') objectAclCount++;
+      objectAclCount++;
     } else if(kind==='ACL' && /^public\s+\S/.test(remainder)) {
       // The archive schema privilege entry is written as "ACL - public ...".
       selected.push(line);
@@ -36,7 +39,8 @@ function selftest(){
     '106; 0 0 TABLE DATA public staff postgres'
   ].join('\n');
   const r=publicAclToc(sample);
-  assert.equal(r.count,4);
+  assert.equal(r.count,3);
+  assert(!r.content.includes('DEFAULT ACL public'));
   assert(r.content.includes('ACL public TABLE'));
   assert(r.content.includes('ACL public FUNCTION'));
   assert(r.content.includes('DEFAULT ACL public'));
