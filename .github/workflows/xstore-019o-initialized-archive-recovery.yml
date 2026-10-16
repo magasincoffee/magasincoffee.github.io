@@ -11,6 +11,7 @@ on:
       - '09_QA/people-shift/xstore-019o-public-acl-toc.mjs'
       - '09_QA/people-shift/xstore-019o-early-default-acl.mjs'
       - '09_QA/people-shift/xstore-019o-effective-acl-diag.sql'
+      - '09_QA/people-shift/xstore-019o-acl-aggregate-gap.sql'
   push:
     branches: [main]
     paths:
@@ -22,6 +23,7 @@ on:
       - '09_QA/people-shift/xstore-019o-public-acl-toc.mjs'
       - '09_QA/people-shift/xstore-019o-early-default-acl.mjs'
       - '09_QA/people-shift/xstore-019o-effective-acl-diag.sql'
+      - '09_QA/people-shift/xstore-019o-acl-aggregate-gap.sql'
 
 permissions:
   contents: read
@@ -79,6 +81,11 @@ jobs:
           for(const field of ['REL_SEMANTICS','FN_SEMANTICS','REL_GRANTOR','FN_GRANTOR','REL_NULL','FN_NULL'])
             assert(e.includes(field),'ACL_DIAGNOSTIC_INCOMPLETE');
           assert(!e.includes('SELECT * FROM public.') && !e.includes('pg_read_file'),'ACL_DIAGNOSTIC_READ_ONLY');
+          const ag=fs.readFileSync('09_QA/people-shift/xstore-019o-acl-aggregate-gap.sql','utf8');
+          assert(sh.includes('XSTORE_019O_ACL_AGGREGATE_OUTPUT_INVALID'),'AGGREGATE_LOG_GUARD_MISSING');
+          for(const field of ['REL_TOTAL','FN_TOTAL','REL_ANON','FN_AUTH','REL_GRANTOR_POSTGRES','FN_GRANTOR_POSTGRES'])
+            assert(ag.includes(field.toLowerCase())&&sh.includes(field),'AGGREGATE_DIAGNOSTIC_INCOMPLETE');
+          assert(!ag.includes('SELECT * FROM public.')&&!ag.includes('pg_read_file'),'AGGREGATE_QUERY_UNSAFE');
 
           assert(sh.includes('INITIALIZED_STORAGE_SEED_CLEAR=PASS'),'STORAGE_SEED_REPLACEMENT_NOT_VERIFIED');
           assert(sh.includes('--single-transaction'),'FK_REPLAY_NOT_ATOMIC');
