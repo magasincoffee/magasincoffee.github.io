@@ -12,7 +12,7 @@ cleanup(){
   cd "$work" 2>/dev/null || true
   supabase stop --no-backup >/dev/null 2>&1 || true
   rm -rf "$work"
-  rm -f "$log" "$RUNNER_TEMP/xstore019o-cli-parity" "$RUNNER_TEMP/xstore019o-cli-parity-diag"
+  rm -f "$log" "$RUNNER_TEMP/xstore019o-cli-parity" "$RUNNER_TEMP/xstore019o-cli-parity-diag" "$RUNNER_TEMP/xstore019o-cli-acl-diag"
 }
 trap cleanup EXIT
 mkdir -p "$work"; cd "$work"
@@ -117,6 +117,22 @@ const expected=['REL_OWNER','REL_ACL','REL_RLS','FN_OWNER','FN_ACL','FN_DEFINER'
 const good=fields.length===expected.length+1 && fields[0]==='XSTORE_019O_PARITY_DIMENSIONS' &&
  expected.every((name,i)=>fields[i+1]===name+'=PASS'||fields[i+1]===name+'=FAIL');
 if(!good){console.error('::error::XSTORE_019O_PARITY_DIMENSIONS_OUTPUT_INVALID');process.exit(1)}
+console.log(got);
+NODE
+ # Compare effective privileges, ACL grantors and explicit-vs-default representation.
+ docker cp "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-effective-acl-diag.sql" "$db_container:/tmp/effective-acl-diag.sql"
+ : > "$log"
+ if ! docker exec "$db_container" psql -U postgres -d postgres -AtX -v ON_ERROR_STOP=1 -f /tmp/effective-acl-diag.sql > "$RUNNER_TEMP/xstore019o-cli-acl-diag" 2>"$log"; then
+  echo '::error::XSTORE_019O_ACL_EFFECTIVE_DIAG_QUERY_FAILED'; exit 1
+ fi
+ node - "$RUNNER_TEMP/xstore019o-cli-acl-diag" <<'NODE'
+const fs=require('node:fs');
+const got=fs.readFileSync(process.argv[2],'utf8').trim();
+const fields=got.split('; ');
+const keys=['REL_EDGES','FN_EDGES','REL_NULL','FN_NULL','REL_SEMANTICS','FN_SEMANTICS','REL_GRANTOR','FN_GRANTOR'];
+const valid=fields.length===9 && fields[0]==='XSTORE_019O_ACL_EFFECTIVE_DIAG' &&
+ keys.every((k,i)=>fields[i+1]===k+'=PASS'||fields[i+1]===k+'=FAIL');
+if(!valid){console.error('::error::XSTORE_019O_ACL_EFFECTIVE_DIAG_OUTPUT_INVALID');process.exit(1)}
 console.log(got);
 NODE
  echo '::error::XSTORE_019O_CLI_CLONE_OWNER_ACL_RLS_PARITY=FAIL'; exit 1
