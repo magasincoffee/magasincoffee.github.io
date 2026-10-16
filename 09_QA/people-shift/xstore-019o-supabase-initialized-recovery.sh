@@ -12,7 +12,7 @@ cleanup(){
   cd "$work" 2>/dev/null || true
   supabase stop --no-backup >/dev/null 2>&1 || true
   rm -rf "$work"
-  rm -f "$log" "$RUNNER_TEMP/xstore019o-cli-parity"
+  rm -f "$log" "$RUNNER_TEMP/xstore019o-cli-parity" "$RUNNER_TEMP/xstore019o-cli-parity-diag"
 }
 trap cleanup EXIT
 mkdir -p "$work"; cd "$work"
@@ -92,5 +92,23 @@ echo 'XSTORE_019O_INITIALIZED_CLONE_STORAGE_DATA=PASS; FK_ENFORCED'
 for stage in pre-data data post-data; do restore_stage public "$stage" "PUBLIC_$stage"; done
 docker cp "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql" "$db_container:/tmp/parity.sql"
 docker exec "$db_container" psql -U postgres -d postgres -AtX -v ON_ERROR_STOP=1 -f /tmp/parity.sql > "$RUNNER_TEMP/xstore019o-cli-parity" 2>"$log" || exit 1
-[[ "$(cat "$RUNNER_TEMP/xstore019o-cli-parity")" == PASS ]] || { echo '::error::XSTORE_019O_CLI_CLONE_OWNER_ACL_RLS_PARITY=FAIL'; exit 1; }
+if [[ "$(cat "$RUNNER_TEMP/xstore019o-cli-parity")" != PASS ]]; then
+ # Metadata-only diagnostic: emit exactly eleven binary PASS/FAIL flags, no SQL/data.
+ docker cp "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-initialized-parity-dimensions.sql" "$db_container:/tmp/parity-dimensions.sql"
+ : > "$log"
+ if ! docker exec "$db_container" psql -U postgres -d postgres -AtX -v ON_ERROR_STOP=1 -f /tmp/parity-dimensions.sql > "$RUNNER_TEMP/xstore019o-cli-parity-diag" 2>"$log"; then
+  echo '::error::XSTORE_019O_PARITY_DIMENSIONS_DIAGNOSTIC_FAILED'; exit 1
+ fi
+ node - "$RUNNER_TEMP/xstore019o-cli-parity-diag" <<'NODE'
+const fs=require('node:fs');
+const got=fs.readFileSync(process.argv[2],'utf8').trim();
+const fields=got.split('; ');
+const expected=['REL_OWNER','REL_ACL','REL_RLS','FN_OWNER','FN_ACL','FN_DEFINER','POL_ACCESS','POL_PREDICATE','REL_COUNT','FN_COUNT','POL_COUNT'];
+const good=fields.length===expected.length+1 && fields[0]==='XSTORE_019O_PARITY_DIMENSIONS' &&
+ expected.every((name,i)=>fields[i+1]===name+'=PASS'||fields[i+1]===name+'=FAIL');
+if(!good){console.error('::error::XSTORE_019O_PARITY_DIMENSIONS_OUTPUT_INVALID');process.exit(1)}
+console.log(got);
+NODE
+ echo '::error::XSTORE_019O_CLI_CLONE_OWNER_ACL_RLS_PARITY=FAIL'; exit 1
+fi
 echo 'XSTORE_019O_CLI_CLONE_OWNER_ACL_RLS_PARITY=PASS; FULL_DISASTER_RECOVERY=NOT_PROVEN; NO_PRODUCTION_WRITE'
