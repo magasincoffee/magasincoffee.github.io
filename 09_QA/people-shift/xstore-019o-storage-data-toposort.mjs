@@ -43,7 +43,7 @@ function orderedStorageToc(toc, fkTsv, protectedTsv) {
   // A real initialized Storage schema protects objects/buckets via DELETE triggers.
   // Never bypass those triggers: require their initialized tables to be empty.
   const protectedNames=new Set();
-  for(const raw of protectedTsv.trim().split(/\\r?\\n/)) {
+  for(const raw of protectedTsv.trim().split(/\r?\n/)) {
     if(!raw) continue;
     const n=raw.trim();
     if(!/^[a-z_][a-z0-9_]*$/.test(n) || !tableLines.has(n)) throw Error('STORAGE_DELETE_TRIGGER_INVENTORY_INVALID');
