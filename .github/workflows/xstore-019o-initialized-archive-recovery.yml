@@ -68,6 +68,9 @@ jobs:
           assert(sh.includes('public-acl-toc.mjs'),'ARCHIVED_PUBLIC_ACL_REPLAY_NOT_PRESENT');
           assert(sh.includes('XSTORE_019O_PUBLIC_ACL_REPLAY=PASS'),'PUBLIC_ACL_REPLAY_NOT_VERIFIED');
           assert(sh.includes('XSTORE_019O_EARLY_DEFAULT_ACL_RESTORE=PASS'),'DEFAULT_ACL_PRE_RESTORE_MISSING');
+          assert(sh.includes('restore_user="postgres"') && sh.includes('if [[ "$schema" == "public" ]]'),'PUBLIC_ORIGINAL_CREATOR_REQUIRED');
+          assert(sh.includes('--use-list=/tmp/public-acl-replay.toc --username=postgres'),'PUBLIC_ORIGINAL_GRANTOR_REQUIRED');
+          assert(sh.includes('XSTORE_019O_PUBLIC_RESTORE_GRANTOR=POSTGRES'),'PUBLIC_RESTORE_GRANTOR_EVIDENCE_MISSING');
           assert(sh.indexOf('XSTORE_019O_EARLY_DEFAULT_ACL_RESTORE=PASS') < sh.indexOf('for stage in pre-data data post-data; do restore_stage public'),'DEFAULT_ACL_ORDER_VIOLATION');
           const e=fs.readFileSync('09_QA/people-shift/xstore-019o-effective-acl-diag.sql','utf8');
           assert(sh.includes('XSTORE_019O_ACL_EFFECTIVE_DIAG_OUTPUT_INVALID'),'ACL_DIAGNOSTIC_LOG_GUARD_MISSING');
