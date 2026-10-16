@@ -90,6 +90,16 @@ if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction
 fi
 echo 'XSTORE_019O_INITIALIZED_CLONE_STORAGE_DATA=PASS; FK_ENFORCED'
 for stage in pre-data data post-data; do restore_stage public "$stage" "PUBLIC_$stage"; done
+# pg_restore --section stages can omit standalone ACL/DEFAULT ACL TOC entries.
+# Replay ONLY authentic archived public privilege entries without section filtering.
+node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-public-acl-toc.mjs" "$work/archive.toc" "$work/public-acl-replay.toc"
+docker cp "$work/public-acl-replay.toc" "$db_container:/tmp/public-acl-replay.toc"
+: > "$log"
+if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction --use-list=/tmp/public-acl-replay.toc --username=supabase_admin --dbname=postgres /tmp/magasin-archive.dump >/dev/null 2>"$log"; then
+ node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
+ echo '::error::XSTORE_019O_PUBLIC_ACL_REPLAY=FAIL'; exit 1
+fi
+echo 'XSTORE_019O_PUBLIC_ACL_REPLAY=PASS; ORIGINAL_ARCHIVE_ONLY; NO_PRIVILEGE_BYPASS'
 docker cp "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql" "$db_container:/tmp/parity.sql"
 docker exec "$db_container" psql -U postgres -d postgres -AtX -v ON_ERROR_STOP=1 -f /tmp/parity.sql > "$RUNNER_TEMP/xstore019o-cli-parity" 2>"$log" || exit 1
 if [[ "$(cat "$RUNNER_TEMP/xstore019o-cli-parity")" != PASS ]]; then
