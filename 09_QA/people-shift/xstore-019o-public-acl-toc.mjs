@@ -43,7 +43,6 @@ function selftest(){
   assert(!r.content.includes('DEFAULT ACL public'));
   assert(r.content.includes('ACL public TABLE'));
   assert(r.content.includes('ACL public FUNCTION'));
-  assert(r.content.includes('DEFAULT ACL public'));
   assert(r.content.includes('ACL - public'));
   assert(!r.content.includes('ACL auth'));
   assert(!r.content.includes('ACL storage'));
