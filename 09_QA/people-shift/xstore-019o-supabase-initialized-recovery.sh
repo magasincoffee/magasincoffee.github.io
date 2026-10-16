@@ -74,7 +74,7 @@ docker exec "$db_container" psql -U postgres -d postgres -AtX -F '|' -v ON_ERROR
 node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-storage-data-toposort.mjs" "$work/archive.toc" "$work/storage-fks.tsv" "$work/storage-replay.toc" "$work/storage-clear.sql"
 docker cp "$work/storage-clear.sql" "$db_container:/tmp/storage-clear.sql"
 : > "$log"
-if ! docker exec "$db_container" psql -U supabase_admin -d postgres -qAtX -v ON_ERROR_STOP=1 -f /tmp/storage-clear.sql >/dev/null 2>"$log"; then
+if ! docker exec "$db_container" psql -U supabase_admin -d postgres -qAtX -v ON_ERROR_STOP=1 -v VERBOSITY=sqlstate -f /tmp/storage-clear.sql >/dev/null 2>"$log"; then
  node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
  echo '::error::XSTORE_019O_INITIALIZED_STORAGE_SEED_CLEAR=FAIL_CLOSED'; exit 1
 fi
