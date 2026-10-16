@@ -89,6 +89,15 @@ if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction
  echo "::error::XSTORE_019O_INITIALIZED_CLONE_STORAGE_DATA=FAIL"; exit 1
 fi
 echo 'XSTORE_019O_INITIALIZED_CLONE_STORAGE_DATA=PASS; FK_ENFORCED'
+# Replay authenticated production Public DEFAULT ACL before creating Public objects.
+node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-early-default-acl.mjs" "$work/archive.toc" "$work/public-defaults.toc"
+docker cp "$work/public-defaults.toc" "$db_container:/tmp/public-defaults.toc"
+: > "$log"
+if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction --use-list=/tmp/public-defaults.toc --username=supabase_admin --dbname=postgres /tmp/magasin-archive.dump >/dev/null 2>"$log"; then
+ node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
+ echo '::error::XSTORE_019O_EARLY_DEFAULT_ACL_RESTORE=FAIL'; exit 1
+fi
+echo 'XSTORE_019O_EARLY_DEFAULT_ACL_RESTORE=PASS; ARCHIVE_ONLY; ISOLATED_ONLY'
 for stage in pre-data data post-data; do restore_stage public "$stage" "PUBLIC_$stage"; done
 # pg_restore --section stages can omit standalone ACL/DEFAULT ACL TOC entries.
 # Replay ONLY authentic archived public privilege entries without section filtering.
