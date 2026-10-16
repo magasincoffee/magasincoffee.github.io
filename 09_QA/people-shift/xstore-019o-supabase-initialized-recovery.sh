@@ -68,7 +68,24 @@ if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction
  echo "::error::XSTORE_019O_INITIALIZED_CLONE_AUTH_DATA=FAIL"; exit 1
 fi
 echo 'XSTORE_019O_INITIALIZED_CLONE_AUTH_DATA=PASS; FK_ENFORCED'
-restore_stage storage data STORAGE_DATA
+# Initialized Supabase Storage can contain seed rows that conflict with genuine archived keys.
+# Reconcile only archived Storage tables, in enforced FK dependency order; no FK or permission bypass.
+docker exec "$db_container" psql -U postgres -d postgres -AtX -F '|' -v ON_ERROR_STOP=1 -c "SELECT cn.nspname||'.'||child.relname, pn.nspname||'.'||parent.relname FROM pg_constraint con JOIN pg_class child ON child.oid=con.conrelid JOIN pg_namespace cn ON cn.oid=child.relnamespace JOIN pg_class parent ON parent.oid=con.confrelid JOIN pg_namespace pn ON pn.oid=parent.relnamespace WHERE con.contype='f' AND cn.nspname='storage' ORDER BY 1,2" > "$work/storage-fks.tsv"
+node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-storage-data-toposort.mjs" "$work/archive.toc" "$work/storage-fks.tsv" "$work/storage-replay.toc" "$work/storage-clear.sql"
+docker cp "$work/storage-clear.sql" "$db_container:/tmp/storage-clear.sql"
+: > "$log"
+if ! docker exec "$db_container" psql -U supabase_admin -d postgres -qAtX -v ON_ERROR_STOP=1 -f /tmp/storage-clear.sql >/dev/null 2>"$log"; then
+ node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
+ echo '::error::XSTORE_019O_INITIALIZED_STORAGE_SEED_CLEAR=FAIL_CLOSED'; exit 1
+fi
+echo 'XSTORE_019O_INITIALIZED_STORAGE_SEED_CLEAR=PASS; FK_ENFORCED; ISOLATED_ONLY'
+docker cp "$work/storage-replay.toc" "$db_container:/tmp/storage-replay.toc"
+: > "$log"
+if ! docker exec "$db_container" pg_restore --exit-on-error --single-transaction --section=data --use-list=/tmp/storage-replay.toc --username=supabase_admin --dbname=postgres /tmp/magasin-archive.dump >/dev/null 2>"$log"; then
+ node "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-restore-error-classifier.mjs" "$log"
+ echo "::error::XSTORE_019O_INITIALIZED_CLONE_STORAGE_DATA=FAIL"; exit 1
+fi
+echo 'XSTORE_019O_INITIALIZED_CLONE_STORAGE_DATA=PASS; FK_ENFORCED'
 for stage in pre-data data post-data; do restore_stage public "$stage" "PUBLIC_$stage"; done
 docker cp "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql" "$db_container:/tmp/parity.sql"
 docker exec "$db_container" psql -U postgres -d postgres -AtX -v ON_ERROR_STOP=1 -f /tmp/parity.sql > "$RUNNER_TEMP/xstore019o-cli-parity" 2>"$log" || exit 1
