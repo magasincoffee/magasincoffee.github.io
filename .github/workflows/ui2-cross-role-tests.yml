@@ -115,13 +115,17 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/mer-cross-role-profile-browser.mjs
 
-      - name: Run Manager responsive matrix
+      - name: Run Owner-approved Manager responsive and canonical transaction matrix
         env:
           QA_BASE_URL: http://127.0.0.1:8769
           QA_OUT: qa-artifacts/people-shift
         run: |
           node 09_QA/people-shift/ui2-011-manager-shell-today-browser.mjs
-          node 09_QA/people-shift/ui2-012-manager-scheduling-browser.mjs
+          # XSTORE-019J replaces the legacy UI2-012 hourly/accordion presentation with the Owner-approved five-step calendar.
+          # Keep stronger canonical save/review/publish/idempotency and direct-edit regressions.
+          node 09_QA/people-shift/manager-workforce-canonical-browser.mjs
+          node 09_QA/people-shift/xstore-019g-manager-five-board-browser.mjs
+          node 09_QA/people-shift/xstore-019b-direct-calendar-editing-browser.mjs
           node 09_QA/people-shift/ui2-013-manager-operations-browser.mjs
 
       - name: Run Owner responsive matrix

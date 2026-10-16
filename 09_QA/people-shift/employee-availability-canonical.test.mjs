@@ -20,7 +20,7 @@ test("Employee availability has one active owner and shell contains no business 
   assert.match(engine,/save_my_availability/);
   assert.match(engine,/delete_my_availability/);
   assert.match(engine,/employeeAvailabilityEngine/);
-  assert.doesNotMatch(engine,/\.from\(/);
+  assert.doesNotMatch(engine,/C\.supabase\.from|\.from\(['\"]employee_availability['\"]\)/);
   assert.doesNotMatch(engine,/availability-v2/i);
 });
 

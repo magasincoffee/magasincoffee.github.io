@@ -35,7 +35,7 @@ test("SCHED-UI-012 Manager draft exposes disabled reasons live states and clear 
   assert.match(draft,/aria-describedby="msdActionHelp"/);
   assert.match(draft,/aria-label="Tuần trước"/);
   assert.match(draft,/aria-label="Tuần kế tiếp"/);
-  assert.match(draft,/Bỏ ca khỏi lịch nháp/);
+  assert.match(draft,/Xóa ca/);
   assert.match(draft,/role="status" aria-live="polite"/);
   assert.match(draft,/type==='error'\?'alert':'status'/);
   assert.match(managerUi,/role','status'/);

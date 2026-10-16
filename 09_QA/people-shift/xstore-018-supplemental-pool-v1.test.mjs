@@ -50,8 +50,8 @@ test("XSTORE-018 blocks cross-store, official and max-two hard conflicts before 
 test("XSTORE-018 keeps the canonical DRAFT writer and bumps runtime lineage",()=>{
   assert.match(draft,/replace_schedule_generation_assignments/);
   assert.doesNotMatch(draft,/insert\s+into\s+work_schedules/i);
-  assert.ok(engine.includes("draft-publish-v1.js?v=20261005-xstore-018"));
-  assert.ok(engine.includes("manager-scheduling-ui2-v1.js?v=20261005-xstore-018"));
+  assert.ok(engine.includes("draft-publish-v1.js?v=20261007-xstore-019j-cluster1"));
+  assert.ok(engine.includes("manager-scheduling-ui2-v1.js?v=20261005-xstore-019"));
 });
 
 console.log("XSTORE_018_SUPPLEMENTAL_POOL_STATIC=PASS");

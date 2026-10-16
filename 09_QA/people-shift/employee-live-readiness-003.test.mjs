@@ -12,7 +12,7 @@ const index=read("06_EMPLOYEE/index.html");
 const acceptance=read("01_DOCS/MAGASIN/05_SYSTEM/EMPLOYEE_LIVE_READINESS_V1_ACCEPTANCE.md");
 
 test("EMLIVE-003 keeps Employee Notification Profile Payroll on canonical read authority",()=>{
-  assert.deepEqual([...profile.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(x=>x[1]),["get_my_employee_workforce_profile_v1"]);
+  assert.deepEqual([...profile.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(x=>x[1]),["get_my_employee_workforce_profile_v1","get_my_employee_employment_type_v1"]);
   assert.deepEqual([...payroll.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(x=>x[1]),["get_my_payroll_self_check_v1"]);
   assert.deepEqual([...notification.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(x=>x[1]),["list_my_notifications_v1"]);
   for(const src of [profile,payroll,notification]){
@@ -54,11 +54,11 @@ test("EMLIVE-003 Notification has loading empty error retry without exposing bac
 });
 
 test("EMLIVE-003 runtime cache serves reconciled assets",()=>{
-  assert.match(runtime,/employee-v40\.html\?ui=(?:20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007)&runtime=engine/);
-  assert.match(runtime,/profile\/engine-v1\.js\?v=20260930-emlive003/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3|20261009-x19j-paint1)&runtime=engine/);
+  assert.match(runtime,/profile\/engine-v1\.js\?v=(?:20260930-emlive003|20261006-xstore-019h)/);
   assert.match(runtime,/payroll\/engine-v1\.js\?v=20260930-emlive003/);
   assert.match(runtime,/notification\/engine-v1\.js\?v=20260930-emlive003/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3|20261009-x19j-paint1)/);
 });
 
 test("EMLIVE-003 remains permanently closed after TEMP authority cleanup",()=>{

@@ -6,11 +6,15 @@ on:
       - '07_DATABASE/migrations/20261004222500_xstore_014_interval_composed_auto_schedule_v1.sql'
       - '09_QA/people-shift/xstore-014-interval-auto-schedule-v1.test.mjs'
       - '.github/workflows/xstore-014-interval-auto-schedule-qa.yml'
+      - '09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs'
+      - '.github/workflows/xstore-019-unified-rc-qa.yml'
   pull_request:
     paths:
       - '07_DATABASE/migrations/20261004222500_xstore_014_interval_composed_auto_schedule_v1.sql'
       - '09_QA/people-shift/xstore-014-interval-auto-schedule-v1.test.mjs'
       - '.github/workflows/xstore-014-interval-auto-schedule-qa.yml'
+      - '09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs'
+      - '.github/workflows/xstore-019-unified-rc-qa.yml'
   workflow_dispatch:
 
 permissions:

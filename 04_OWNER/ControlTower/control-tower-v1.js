@@ -8,6 +8,7 @@ import { loadProcurementPayables } from "./payables-adapter-v1.mjs";
 import { loadWorkforceAttention } from "./workforce-adapter-v1.mjs";
 import { loadReconciledRevenue } from "./revenue-adapter-v1.mjs";
 import { loadSectionSafely } from "./source-isolation-v1.mjs";
+import { recordOwnerStrategicSnapshot } from '../owner-strategy-source-v1.mjs';
 
 const PLACEHOLDERS = Object.freeze({
   inventory: Object.freeze({
@@ -272,6 +273,10 @@ function render(snapshot, { loading = false } = {}) {
 
   renderQuality(snapshot);
   renderAttention(snapshot, { loading });
+  // XSTORE-019N: publish only normalized, Owner-authorized canonical read data.
+  // Never hand off raw RPC results, service credentials, or estimated P&L.
+  recordOwnerStrategicSnapshot(loading ? null : snapshot);
+  document.dispatchEvent(new CustomEvent('magasin:owner-strategy-snapshot', {detail:{snapshot:loading?null:snapshot,loading}}));
 }
 
 function clearLoadedSectionsForRefresh() {

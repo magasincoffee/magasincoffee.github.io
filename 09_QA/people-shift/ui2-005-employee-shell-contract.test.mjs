@@ -24,18 +24,18 @@ test("Employee phone primary navigation is exactly the canonical five items", ()
   const block = js.match(/const PRIMARY = Object\.freeze\(\[[\s\S]*?\n  \]\);/)?.[0] || "";
   assert.ok(block);
   const expected = [
-    ["dashboard", "Hôm nay"],
-    ["schedule", "Lịch"],
-    ["attendance", "Công"],
-    ["payroll", "Lương"],
-    ["profile", "Tôi"]
+    ["dashboard", "Trang chủ"],
+    ["availability", "Đăng ký lịch làm"],
+    ["schedule", "Lịch của tôi"],
+    ["attendance", "Chấm công"],
+    ["profile", "Hồ sơ & thông tin"]
   ];
   for (const [route, label] of expected) {
     assert.ok(block.includes("'" + route + "'"), route);
     assert.ok(block.includes("'" + label + "'"), label);
   }
   assert.equal((block.match(/^\s*\['/gm) || []).length, 5);
-  assert.doesNotMatch(block, /swap|inventory|settings/);
+  assert.doesNotMatch(block, /swap|payroll|inventory|settings/);
 });
 
 test("Employee app opts into shared V2 foundation and safe-area phone shell", () => {
@@ -66,6 +66,9 @@ test("only canonical live secondary actions remain reachable", () => {
   assert.doesNotMatch(app, /data-view="inventory"|data-view="settings"/);
   assert.ok(js.includes("PRIMARY_PARENT"));
   assert.ok(js.includes("swap: 'schedule'"));
+  assert.ok(js.includes("payroll: 'profile'"));
+  assert.ok(js.includes("key === 'availability'"));
+  assert.ok(js.includes("MAGASIN_EMPLOYEE?.availability?.open"));
   assert.doesNotMatch(js, /inventory: 'dashboard'|settings: 'profile'/);
 
   assert.ok(schedule.includes("data-schedule-availability"));
@@ -78,6 +81,11 @@ test("Payroll remains engine-injected and shell delegates to its existing source
   assert.ok(payroll.includes("get_my_payroll_self_check_v1"));
   assert.ok(js.includes("const sourceLink = view =>"));
   assert.ok(js.includes("activateSourceView"));
+  assert.ok(js.includes("const fromDrawer = !!link.closest('.drawer')"));
+  assert.ok(js.includes("const isPrimarySource = link.classList.contains('employee-v2-primary-source')"));
+  assert.ok(js.includes("const shouldPushRoute = fromDrawer && !isPrimarySource && CANONICAL.has(view) && !applyingRoute"));
+  assert.ok(js.includes("if (shouldPushRoute) pushCanonicalRoute(view)"));
+  assert.ok(js.includes("if (fromDrawer) closeSecondaryDrawer()"));
 });
 
 test("deep-link bootstrap preserves the initially requested canonical route", () => {

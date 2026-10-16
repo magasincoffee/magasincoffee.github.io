@@ -3,7 +3,7 @@ if(window.__MAGASIN_MANAGER_STAFF_PROJECTION_V1__)return;
 window.__MAGASIN_MANAGER_STAFF_PROJECTION_V1__=true;
 const SB_URL='https://menvbzlsncmpuvnaifxa.supabase.co',SB_KEY='sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx';
 let sb=null,busy=false;
-let state={stores:[],rows:[],editId:null,loading:false,error:null};
+let state={stores:[],rows:[],editId:null,loading:false,error:null,employmentTypes:new Map(),employmentTypeReady:false,notice:null,staffFilter:'ACTIVE',staffSearch:'',lifecycleMode:false,lifecycleReady:false,lifecycleRights:new Map()};
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const errorCode=e=>{const s=String(e?.message||e?.code||'PROFILE_VIEW_FAILED');const m=s.match(/[A-Z][A-Z0-9_]{2,80}/);return m?m[0]:'PROFILE_VIEW_FAILED'};
 const validProjectionRow=r=>!!r&&!!String(r.employee_id||'').trim()&&['STAFF','EMPLOYEE'].includes(String(r.employee_role||'').toUpperCase())&&!!String(r.profile_status||'').trim()&&Array.isArray(r.priority_store_ids)&&Array.isArray(r.priority_store_codes);
@@ -13,37 +13,105 @@ function ensureCss(){
  if(document.getElementById('manager-staff-projection-v1-css'))return;
  const s=document.createElement('style');s.id='manager-staff-projection-v1-css';
  s.textContent='.msp-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.msp-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.msp-table-wrap{overflow:auto}.msp-table{width:100%;border-collapse:collapse;min-width:860px}.msp-table th,.msp-table td{padding:10px 8px;border-bottom:1px solid #eef2f6;text-align:left;font-size:12px;vertical-align:middle}.msp-table th{color:var(--muted)}.msp-state{margin-top:12px;padding:11px 13px;border-radius:11px;font-size:12px}.msp-state.info{background:#eef7ff;color:#235dba}.msp-state.ok{background:#e6f4ed;color:#176d49}.msp-state.error{background:#fff0f0;color:#9a3838}.msp-priority{font-weight:800;color:#0f4778}.msp-edit{margin:14px 0;padding:14px;border:1px solid #cfe1eb;border-radius:13px;background:#f8fcfd}.msp-priority-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:8px;margin-top:10px}.msp-field{display:grid;gap:5px}.msp-field label{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase}.msp-field select{height:40px;border:1px solid #ccd9e4;border-radius:9px;background:#fff;padding:0 8px}.msp-edit-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}@media(max-width:800px){.msp-priority-grid{grid-template-columns:1fr 1fr}.msp-actions{width:100%}}@media(max-width:520px){.msp-priority-grid{grid-template-columns:1fr}}';
+ s.textContent+='.msp-type-editor{margin-top:15px;padding:12px;border:1px solid #d9e5ef;border-radius:10px;background:#fff}.msp-type-row{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:9px}.msp-type-row select{min-width:170px;height:40px;border:1px solid #ccd9e4;border-radius:9px;padding:0 8px}.msp-type-editor h3{font-size:14px;margin:0}.msp-type-note{margin-top:9px;font-size:12px}.msp-type-summary{font-weight:700}.msp-type-row .btn:disabled{opacity:.5;cursor:not-allowed;background:#e8eef3;color:#5d6d7b;border-color:#d1dce4}';
+ s.textContent+='.msp-inline-row{background:#f4fafe}.msp-inline-row td{vertical-align:top;border-bottom:2px solid #d5e9f4}.msp-icon-edit{min-width:38px;min-height:38px;padding:7px;font-size:17px}.msp-icon-edit:focus-visible{outline:2px solid #088b9b;outline-offset:2px}.msp-inline-row select{min-height:38px;max-width:100%;min-width:0;width:100%;border:1px solid #ccd9e4;border-radius:8px;background:#fff;padding:0 6px}.msp-inline-field{display:grid;gap:5px;font-size:11px;font-weight:700}.msp-inline-priority{display:grid;grid-template-columns:repeat(2,minmax(105px,1fr));gap:7px}.msp-inline-actions{display:grid;gap:7px;min-width:110px}.msp-inline-actions .btn{font-size:12px;padding:8px;white-space:nowrap;min-height:36px}.msp-inline-actions button:disabled{opacity:.5;cursor:not-allowed}.msp-inline-note,.msp-type-note{margin-top:7px;font-size:11px;line-height:1.5;font-weight:400}.msp-editing-label{display:inline-block;margin-top:7px;color:#167187;font-weight:800;font-size:10px}@media(max-width:800px){.msp-table-wrap{overflow:visible}.msp-table{display:block;min-width:0}.msp-table thead{display:none}.msp-table tbody{display:grid;gap:10px}.msp-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;border:1px solid #dce8ef;border-radius:10px;padding:10px}.msp-table td{display:block;min-width:0;border-bottom:0;padding:5px;overflow-wrap:anywhere}.msp-table td::before{content:attr(data-label);display:block;color:var(--muted);font-size:10px;font-weight:700;margin-bottom:3px}.msp-inline-row td[data-label="Ưu tiên chi nhánh"],.msp-inline-row td[data-label="Thao tác"]{grid-column:1/-1}.msp-inline-actions{display:flex;flex-wrap:wrap}.msp-inline-priority{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.msp-table tr{grid-template-columns:minmax(0,1fr)}.msp-inline-row td[data-label="Ưu tiên chi nhánh"],.msp-inline-row td[data-label="Thao tác"]{grid-column:1}}';
+ s.textContent+='.msp-filterbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0}.msp-filtertabs{display:flex;gap:7px;flex-wrap:wrap}.msp-filtertabs button{border:1px solid #d4e1e9;border-radius:9px;background:#fff;padding:9px 12px;font-weight:700;color:#415466;cursor:pointer;min-height:40px}.msp-filtertabs button[aria-pressed="true"]{border-color:#058ea3;background:#e6f7fa;color:#086777}.msp-filtertabs button:focus-visible,.msp-staff-search:focus-visible{outline:2px solid #077e91;outline-offset:2px}.msp-staff-search{min-height:40px;width:clamp(195px,30vw,320px);max-width:100%;border:1px solid #cddce6;border-radius:9px;padding:8px 12px}.msp-results-count{font-size:12px;margin:0 0 8px;color:var(--muted)}.msp-empty{padding:24px 16px;text-align:center;border:1px dashed #cbdce6;border-radius:10px;color:var(--muted)}@media(max-width:520px){.msp-staff-search{width:100%}}';
+ s.textContent+='.msp-lifecycle-btn{margin-left:6px;min-height:38px;font-size:11px;border:1px solid #ddc8bd;background:#fff8f2;color:#77503e}.msp-lifecycle-btn:disabled{opacity:.45;cursor:not-allowed}.msp-lifecycle-editor{background:#fff9f4}.msp-lifecycle-editor td{vertical-align:top}.msp-lifecycle-box{display:grid;gap:8px}.msp-lifecycle-reason{display:block;width:100%;max-width:480px;padding:9px;border:1px solid #c5d5e0;border-radius:8px;min-height:42px}.msp-lifecycle-confirm{display:flex;align-items:flex-start;gap:8px;font-size:12px}.msp-lifecycle-actionbar{display:flex;gap:8px;flex-wrap:wrap}.msp-lifecycle-hint{font-size:12px;color:#795338;margin:0}@media(max-width:800px){.msp-lifecycle-editor td{grid-column:1/-1}}';
  document.head.appendChild(s);
 }
 function ensureUi(){
  const root=view();if(!root)return false;ensureCss();
- if(root.dataset.canonicalStaffProjection==='2')return true;
+ if(root.dataset.canonicalStaffProjection==='3')return true;
  root.dataset.canonicalStaffProjection='3';root.classList.add('wf-role-page');
  root.innerHTML='<section class="card"><div class="msp-head wf-section-head"><div><h2 class="wf-section-title">Nhân viên</h2><div class="wf-section-copy">Một Workforce Profile canonical dùng chung cho Quản lý, Nhân viên và bộ xếp lịch. Quản lý là bên duy nhất thiết lập Store Priority.</div></div><div class="msp-actions"><button class="btn" id="mspRefresh">Làm mới</button></div></div><div id="mspRoot"></div></section>';
  root.querySelector('#mspRefresh')?.addEventListener('click',()=>refresh());
  return true;
 }
+const employmentTypeLabel=v=>String(v||'').toUpperCase()==='FULL_TIME'?'FT · Full-time':String(v||'').toUpperCase()==='PART_TIME'?'PT · Part-time':'Chưa phân loại';
 const storeOptions=(value,slot)=>'<option value="">'+(slot===1?'— Chọn chi nhánh chính —':'— Không sử dụng —')+'</option>'+state.stores.map(s=>'<option value="'+esc(s.id)+'"'+(String(s.id)===String(value||'')?' selected':'')+'>'+esc(s.code)+' · '+esc(s.name)+'</option>').join('');
 function editHtml(row){
  if(!row)return '';
- const ids=Array.isArray(row.priority_store_ids)?row.priority_store_ids:[];
- return '<div class="msp-edit" data-msp-editor="'+esc(row.employee_id)+'"><b>'+esc(row.full_name||row.username||'Nhân viên')+'</b><div class="muted" style="margin-top:4px">Ưu tiên 1 là chi nhánh chính. Các vị trí sau là chi nhánh phụ theo thứ tự giảm dần. Bỏ khỏi danh sách = không được xếp vào chi nhánh đó.</div><div class="msp-priority-grid">'+[0,1,2,3].map(i=>'<div class="msp-field"><label>Ưu tiên '+(i+1)+(i===0?' · Chính':'')+'</label><select data-msp-priority="'+(i+1)+'">'+storeOptions(ids[i],i+1)+'</select></div>').join('')+'</div><div class="msp-edit-actions"><button class="btn" data-msp-cancel>Hủy</button><button class="btn primary" data-msp-save>Lưu ưu tiên chi nhánh</button></div><div class="msp-state info" data-msp-msg>Quản lý quyết định thứ tự này theo hồ sơ làm việc của nhân viên.</div></div>';
+ const id=esc(row.employee_id),name=esc(row.full_name||row.username||'Nhân viên'),ids=Array.isArray(row.priority_store_ids)?row.priority_store_ids:[];
+ const t=String(state.employmentTypes.get(String(row.employee_id))||'').toUpperCase(),ready=state.employmentTypeReady;
+ const type='<label class="msp-inline-field">Loại nhân viên<select data-msp-employment aria-label="Loại nhân viên của '+name+'"><option value="">Chưa phân loại</option><option value="FULL_TIME"'+(t==='FULL_TIME'?' selected':'')+'>FT · Full-time</option><option value="PART_TIME"'+(t==='PART_TIME'?' selected':'')+'>PT · Part-time</option></select></label><div data-msp-type-msg class="msp-type-note" role="status" aria-live="polite">'+(ready?'Chỉnh FT/PT và ưu tiên chi nhánh, sau đó bấm Lưu thay đổi.':'Chưa thể lưu FT/PT. Bạn chỉ đang chọn xem trước vì hệ thống chưa hỗ trợ hoặc chưa cấp quyền.')+'</div>';
+ const stores='<div class="msp-inline-priority">'+[0,1,2,3].map(n=>'<label class="msp-inline-field">Ưu tiên '+(n+1)+'<select data-msp-priority="'+(n+1)+'" aria-label="Ưu tiên '+(n+1)+' của '+name+'">'+storeOptions(ids[n],n+1)+'</select></label>').join('')+'</div><div class="msp-inline-note" data-msp-msg role="status" aria-live="polite">Ưu tiên 1 là chi nhánh chính. Không bỏ trống ở giữa.</div>';
+ return '<tr class="msp-inline-row" data-msp-editor="'+id+'" data-msp-row="'+id+'"><td data-label="Nhân viên"><b>'+name+'</b><div class="muted">@'+esc(row.username||'—')+'</div><span class="msp-editing-label">Đang sửa</span></td><td data-label="Điện thoại">'+esc(row.phone||'—')+'</td><td data-label="Trạng thái">'+esc(row.profile_status||'—')+'</td><td data-label="FT/PT">'+type+'</td><td data-label="Ưu tiên chi nhánh">'+stores+'</td><td data-label="Thao tác"><div class="msp-inline-actions"><button type="button" class="btn primary" data-msp-save>Lưu thay đổi</button><button type="button" class="btn" data-msp-cancel>Hủy</button></div><div class="msp-inline-note" data-msp-save-msg role="status" aria-live="polite">Một nút lưu chung; hệ thống sẽ kiểm tra từng nội dung thay đổi.</div></td></tr>';
+}
+function lifecycleEditorHtml(r){
+ const id=esc(r.employee_id),name=esc(r.full_name||r.username||'Nhân viên');
+ const restore=String(r.profile_status||'').toUpperCase()==='INACTIVE',target=restore?'ACTIVE':'INACTIVE';
+ const label=restore?'Khôi phục':'Nghỉ việc';
+ return '<tr class="msp-inline-row msp-lifecycle-editor" data-msp-lifecycle-editor="'+id+'"><td colspan="6" data-label="Xác nhận">'+
+ '<div class="msp-lifecycle-box"><strong>'+label+': '+name+' (@'+esc(r.username||'—')+')</strong>'+
+ '<p class="msp-lifecycle-hint">'+(restore?'Khôi phục trạng thái; không tự tạo ca hoặc điều chỉnh lương.':'Ngừng xếp ca mới; giữ nguyên lịch đã phát hành, chấm công và lương để rà soát.')+'</p>'+
+ '<label>Lý do (3–300 ký tự)<input class="msp-lifecycle-reason" data-msp-lifecycle-reason maxlength="300" aria-label="Lý do '+label+' của '+name+'" placeholder="Nhập lý do"></label>'+
+ '<label class="msp-lifecycle-confirm"><input type="checkbox" data-msp-lifecycle-check><span>Tôi xác nhận đúng nhân viên và đồng ý '+label.toLowerCase()+'.</span></label>'+
+ '<div class="msp-lifecycle-actionbar"><button type="button" class="btn primary" data-msp-lifecycle-confirm data-new-status="'+target+'" disabled>Xác nhận '+label.toLowerCase()+'</button><button type="button" class="btn" data-msp-cancel>Hủy</button></div>'+
+ '<div class="msp-inline-note" data-msp-lifecycle-msg role="status" aria-live="polite">Chưa lưu thay đổi.</div></div></td></tr>';
 }
 function render(){
  if(!ensureUi())return;
  const root=document.getElementById('mspRoot');if(!root)return;
  if(state.loading){root.innerHTML='<div class="msp-state wf-state" data-state="LOADING">Đang tải Workforce Profile canonical…</div>';return}
  if(state.error){root.innerHTML='<div class="msp-state wf-state" data-state="ERROR">Không thể tải Workforce Profile. Mã: '+esc(state.error)+'</div>';return}
- const edit=state.rows.find(r=>String(r.employee_id)===String(state.editId||''));
- const rows=state.rows.map(r=>{const codes=Array.isArray(r.priority_store_codes)?r.priority_store_codes.filter(Boolean):[];return '<tr><td><b>'+esc(r.full_name||r.username||'Nhân viên')+'</b><div class="muted">@'+esc(r.username||'—')+'</div></td><td>'+esc(r.phone||'—')+'</td><td>'+esc(r.profile_status||'—')+'</td><td><div class="msp-priority">'+esc(codes.length?codes.join(' → '):'Chưa thiết lập')+'</div><div class="muted">'+esc(codes.length?'Ưu tiên 1 = chi nhánh chính':'Chưa đủ điều kiện xếp lịch cross-store')+'</div></td><td><button class="btn" data-msp-edit="'+esc(r.employee_id)+'">Thiết lập</button></td></tr>'}).join('');
- root.innerHTML=(edit?editHtml(edit):'')+'<div class="msp-state wf-state" data-state="READY">Store Priority là authority của Quản lý. Employee và Auto Schedule đọc cùng canonical truth này.</div><div class="msp-table-wrap"><table class="msp-table"><thead><tr><th>Nhân viên</th><th>Điện thoại</th><th>Trạng thái</th><th>Ưu tiên chi nhánh</th><th>Thao tác</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+
+ const active=state.rows.filter(r=>String(r.profile_status||'').toUpperCase()==='ACTIVE').length;
+ const inactive=state.rows.filter(r=>String(r.profile_status||'').toUpperCase()==='INACTIVE').length;
+ const other=state.rows.length-active-inactive;
+ const query=state.staffSearch.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const matches=state.rows.filter(r=>{
+  const status=String(r.profile_status||'').toUpperCase();
+  if(state.staffFilter==='ACTIVE'&&status!=='ACTIVE')return false;
+  if(state.staffFilter==='INACTIVE'&&status!=='INACTIVE')return false;
+  const searchable=[r.full_name,r.username,r.phone].map(v=>String(v||'')).join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  return !query||searchable.includes(query);
+ });
+ const category=state.staffFilter==='ACTIVE'?'Đang làm':state.staffFilter==='INACTIVE'?'Đã nghỉ / Ngừng hoạt động':'Tất cả';
+ const controls='<div class="msp-filterbar"><div class="msp-filtertabs" role="group" aria-label="Lọc nhân viên theo trạng thái">'+
+  [['ACTIVE','Đang làm',active],['INACTIVE','Đã nghỉ / Ngừng hoạt động',inactive],['ALL','Tất cả',state.rows.length]].map(x=>'<button type="button" data-msp-filter="'+x[0]+'" aria-pressed="'+(state.staffFilter===x[0]?'true':'false')+'">'+x[1]+' ('+x[2]+')</button>').join('')+
+  '</div><input class="msp-staff-search" type="search" data-msp-search aria-label="Tìm theo tên, tài khoản hoặc số điện thoại" placeholder="Tìm nhân viên..." value="'+esc(state.staffSearch)+'"></div>'+
+  '<div class="msp-results-count" role="status" aria-live="polite">Hiển thị '+matches.length+' / '+state.rows.length+' nhân viên · '+category+(other?' · '+other+' trạng thái khác (xem Tất cả)':'')+'</div>';
+ const rows=matches.map(r=>{if(String(r.employee_id)===String(state.editId||''))return state.lifecycleMode?lifecycleEditorHtml(r):editHtml(r);const codes=Array.isArray(r.priority_store_codes)?r.priority_store_codes.filter(Boolean):[];return '<tr><td data-label="Nhân viên"><b>'+esc(r.full_name||r.username||'Nhân viên')+'</b><div class="muted">@'+esc(r.username||'—')+'</div></td><td data-label="Điện thoại">'+esc(r.phone||'—')+'</td><td data-label="Trạng thái">'+esc(r.profile_status||'—')+'</td><td data-label="FT/PT" class="msp-type-summary">'+esc(employmentTypeLabel(state.employmentTypes.get(String(r.employee_id))))+'</td><td data-label="Ưu tiên chi nhánh"><div class="msp-priority">'+esc(codes.length?codes.join(' → '):'Chưa thiết lập')+'</div><div class="muted">'+esc(codes.length?'Ưu tiên 1 = chi nhánh chính':'Chưa đủ điều kiện xếp lịch cross-store')+'</div></td><td data-label="Thao tác"><button class="btn msp-icon-edit" data-msp-edit="'+esc(r.employee_id)+'" type="button" aria-label="Sửa nhân viên '+esc(r.full_name||r.username||'')+'" title="Sửa nhân viên">✏️</button>'+(['ACTIVE','INACTIVE'].includes(String(r.profile_status||'').toUpperCase())?'<button type="button" class="btn msp-lifecycle-btn" data-msp-lifecycle-open="'+esc(r.employee_id)+'" title="'+(state.lifecycleReady?'Đổi trạng thái nhân viên':'Chức năng chưa triển khai hoặc chưa có quyền')+'"'+(state.lifecycleReady&&state.lifecycleRights.get(String(r.employee_id))?.can_manage===true?'':' disabled')+'>'+(String(r.profile_status).toUpperCase()==='ACTIVE'?'Nghỉ việc':'Khôi phục')+'</button>':'')+'</td></tr>'}).join('');
+ root.innerHTML=(state.notice?'<div class="msp-state ok" data-state="SAVED" role="status">'+esc(state.notice)+'</div>':'')+'<div class="msp-state wf-state" data-state="READY">Store Priority là authority của Quản lý. Employee và Auto Schedule đọc cùng canonical truth này.</div>'+controls+(matches.length?'':'<div class="msp-empty">Không tìm thấy nhân viên phù hợp. Chọn bộ lọc khác để tiếp tục.</div>')+'<div class="msp-table-wrap"><table class="msp-table"><thead><tr><th>Nhân viên</th><th>Điện thoại</th><th>Trạng thái</th><th>FT/PT</th><th>Ưu tiên chi nhánh</th><th>Thao tác</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
  bind();
 }
 function bind(){
  const root=document.getElementById('mspRoot');if(!root)return;
- root.querySelectorAll('[data-msp-edit]').forEach(b=>b.addEventListener('click',()=>{state.editId=b.dataset.mspEdit;render();root.querySelector('[data-msp-editor] select')?.focus()}));
- root.querySelector('[data-msp-cancel]')?.addEventListener('click',()=>{state.editId=null;render()});
- root.querySelector('[data-msp-save]')?.addEventListener('click',savePriority);
+ root.querySelectorAll('[data-msp-filter]').forEach(b=>b.addEventListener('click',()=>{
+  if(!['ACTIVE','INACTIVE','ALL'].includes(b.dataset.mspFilter)||busy)return;
+  state.staffFilter=b.dataset.mspFilter;
+  state.editId=null;state.notice=null;render();
+ }));
+ const search=root.querySelector('[data-msp-search]');
+ const updateSearch=e=>{
+  if(e.isComposing||busy)return;
+  const start=e.target.selectionStart,end=e.target.selectionEnd;
+  state.staffSearch=e.target.value;state.editId=null;state.notice=null;render();
+  const next=root.querySelector('[data-msp-search]');
+  if(next){next.focus({preventScroll:true});if(start!==null&&end!==null)next.setSelectionRange(start,end)}
+ };
+ search?.addEventListener('input',updateSearch);
+ search?.addEventListener('compositionend',updateSearch);
+ root.querySelectorAll('[data-msp-edit]').forEach(b=>b.addEventListener('click',()=>{state.notice=null;state.editId=b.dataset.mspEdit;state.lifecycleMode=false;render();root.querySelector('[data-msp-employment]')?.focus({preventScroll:true})}));
+ root.querySelector('[data-msp-cancel]')?.addEventListener('click',()=>{const prev=state.editId;state.editId=null;state.lifecycleMode=false;render();[...root.querySelectorAll('[data-msp-edit]')].find(x=>x.dataset.mspEdit===prev)?.focus({preventScroll:true})});
+ root.querySelector('[data-msp-save]')?.addEventListener('click',saveSettings);
+ root.querySelectorAll('[data-msp-lifecycle-open]').forEach(b=>b.addEventListener('click',()=>{
+  const id=b.dataset.mspLifecycleOpen;
+  if(busy||!state.lifecycleReady||state.lifecycleRights.get(String(id))?.can_manage!==true)return;
+  state.editId=id;state.lifecycleMode=true;state.notice=null;render();
+  root.querySelector('[data-msp-lifecycle-reason]')?.focus({preventScroll:true});
+ }));
+ const checkbox=root.querySelector('[data-msp-lifecycle-check]');
+ checkbox?.addEventListener('change',()=>{const button=root.querySelector('[data-msp-lifecycle-confirm]');if(button)button.disabled=!checkbox.checked});
+ root.querySelector('[data-msp-lifecycle-confirm]')?.addEventListener('click',saveLifecycleStatus);
+ root.querySelector('[data-msp-employment]')?.addEventListener('change',e=>{
+  if(state.employmentTypeReady)return;
+  const note=root.querySelector('[data-msp-type-msg]');if(!note)return;
+  note.className='msp-type-note msp-state info';
+  note.textContent=e.target.value
+   ?'Đã chọn '+employmentTypeLabel(e.target.value)+' để xem trước. CHƯA LƯU: cần triển khai chức năng FT/PT trên database.'
+   :'Chưa phân loại. Bạn có thể chọn FT/PT để xem trước, nhưng chưa thể lưu vào database.';
+ });
 }
 async function loadStores(){
  state.stores=await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores();
@@ -55,29 +123,129 @@ async function loadRows(){
  if(q.error){state.rows=[];state.error=errorCode(q.error);render();return}
  const rows=Array.isArray(q.data)?q.data:[];
  if(rows.some(r=>!validProjectionRow(r))){state.rows=[];state.error='PROFILE_PROJECTION_INVALID';render();return}
+ let typeResult;
+ try{typeResult=await client().rpc('list_employee_employment_types_v1')}catch(e){typeResult={error:e}}
+ state.employmentTypeReady=!typeResult.error&&Array.isArray(typeResult.data);
+ state.employmentTypes=new Map((state.employmentTypeReady?typeResult.data:[]).filter(x=>x&&x.employee_id).map(x=>[String(x.employee_id),String(x.employment_type||'').toUpperCase()]));
+ let access;
+ try{access=await client().rpc('list_employee_lifecycle_controls_v1')}catch(e){access={error:e}}
+ state.lifecycleReady=!access.error&&Array.isArray(access.data);
+ state.lifecycleRights=new Map((state.lifecycleReady?access.data:[]).filter(x=>x?.employee_id).map(x=>[String(x.employee_id),x]));
  state.rows=rows;state.error=null;render();
 }
-async function savePriority(){
- const editor=document.querySelector('[data-msp-editor]');if(!editor||busy)return;
- const employeeId=editor.dataset.mspEditor,msg=editor.querySelector('[data-msp-msg]');
- const values=[...editor.querySelectorAll('[data-msp-priority]')].map(x=>x.value||'');
- if(!values[0]){if(msg){msg.className='msp-state error';msg.textContent='Phải chọn chi nhánh ưu tiên 1 (chi nhánh chính).'}return}
- let gap=false,seenEmpty=false;for(const v of values){if(!v)seenEmpty=true;else if(seenEmpty)gap=true}
- if(gap){if(msg){msg.className='msp-state error';msg.textContent='Thứ tự ưu tiên phải liên tục; không được bỏ trống ở giữa.'}return}
- const ids=values.filter(Boolean);
- if(new Set(ids).size!==ids.length){if(msg){msg.className='msp-state error';msg.textContent='Một chi nhánh không thể xuất hiện hai lần.'}return}
- busy=true;editor.querySelector('[data-msp-save]').disabled=true;
- if(msg){msg.className='msp-state info';msg.textContent='Đang lưu ưu tiên chi nhánh…'}
+async function saveLifecycleStatus(){
+ const editor=document.querySelector('[data-msp-lifecycle-editor]');
+ if(!editor||busy||!state.lifecycleReady)return;
+ const id=editor.dataset.mspLifecycleEditor,row=state.rows.find(r=>String(r.employee_id)===String(id));
+ const target=editor.querySelector('[data-msp-lifecycle-confirm]')?.dataset.newStatus||'';
+ const reason=editor.querySelector('[data-msp-lifecycle-reason]')?.value.trim()||'';
+ const agree=editor.querySelector('[data-msp-lifecycle-check]');
+ const note=editor.querySelector('[data-msp-lifecycle-msg]');
+ const tell=(msg,tone='info')=>{if(note?.isConnected){note.textContent=msg;note.className='msp-inline-note msp-state '+tone}};
+ if(!row||!agree?.checked||state.lifecycleRights.get(String(id))?.can_manage!==true){tell('Chưa xác nhận đúng nhân viên hoặc không đủ quyền.','error');return}
+ if(!['ACTIVE','INACTIVE'].includes(target)||target===String(row.profile_status).toUpperCase()){tell('Trạng thái không hợp lệ.','error');return}
+ if(reason.length<3||reason.length>300){tell('Vui lòng nhập lý do 3–300 ký tự.','error');return}
+ busy=true;editor.querySelectorAll('input,button').forEach(x=>x.disabled=true);tell('Đang xác nhận và lưu…');
+ let committed=false;
  try{
-  const q=await client().rpc('set_employee_store_priority_profile_v1',{p_employee_id:employeeId,p_store_ids:ids});
-  if(q.error)throw q.error;
-  state.editId=null;await loadRows();
+  const update=await client().rpc('set_employee_lifecycle_status_v1',{p_employee_id:id,p_new_status:target,p_reason:reason});
+  if(update.error)throw update.error;
+  if(update.data?.changed!==true||String(update.data?.new_status).toUpperCase()!==target)throw Error('LIFECYCLE_SAVE_UNCONFIRMED');
+  committed=true;
+  const check=await client().rpc('list_employee_workforce_profiles_v1');
+  if(check.error)throw check.error;
+  const actual=(Array.isArray(check.data)?check.data:[]).find(x=>String(x.employee_id)===String(id));
+  if(String(actual?.profile_status).toUpperCase()!==target)throw Error('LIFECYCLE_READBACK_NOT_VERIFIED');
+  state.editId=null;state.lifecycleMode=false;
+  const future=Number(update.data.existing_future_official_shifts_for_review||0);
+  state.notice=(target==='INACTIVE'?'Đã chuyển sang Đã nghỉ: ':'Đã khôi phục: ')+(row.full_name||row.username||'nhân viên')+
+    (future>0?' · Có '+future+' ca chính thức sắp tới cần rà soát; không tự sửa lịch.':'');
+  await loadRows();
  }catch(e){
-  if(msg&&msg.isConnected){msg.className='msp-state error';msg.textContent='Không thể lưu. Mã: '+errorCode(e);editor.querySelector('[data-msp-save]').disabled=false}
- }finally{busy=false}
+  tell((committed?'Lệnh đã được ghi nhưng chưa xác minh lại được; làm mới trước khi thử tiếp. ':'CHƯA thay đổi trạng thái. ')+errorCode(e),'error');
+ }finally{
+  busy=false;
+  if(editor.isConnected){
+   editor.querySelectorAll('input').forEach(x=>x.disabled=false);
+   const btn=editor.querySelector('[data-msp-lifecycle-confirm]');if(btn)btn.disabled=committed||!agree?.checked;
+   editor.querySelector('[data-msp-cancel]')?.removeAttribute('disabled');
+  }
+ }
+}
+async function saveSettings(){
+ const editor=document.querySelector('[data-msp-editor]');
+ if(!editor||busy)return;
+ const employeeId=editor.dataset.mspEditor;
+ const row=state.rows.find(r=>String(r.employee_id)===String(employeeId));
+ if(!row)return;
+ const kind=editor.querySelector('[data-msp-employment]')?.value||'';
+ const originalKind=String(state.employmentTypes.get(String(employeeId))||'').toUpperCase();
+ const originalStores=(Array.isArray(row.priority_store_ids)?row.priority_store_ids:[]).map(String).filter(Boolean);
+ const values=[...editor.querySelectorAll('[data-msp-priority]')].map(x=>x.value||'');
+ const stores=values.filter(Boolean);
+ const typeChanged=kind!==originalKind,storesChanged=JSON.stringify(stores)!==JSON.stringify(originalStores);
+ const note=editor.querySelector('[data-msp-save-msg]'),button=editor.querySelector('[data-msp-save]');
+ const inform=(message,tone='info')=>{if(note){note.textContent=message;note.className='msp-inline-note msp-state '+tone}};
+ if(!typeChanged&&!storesChanged){inform('Không có thay đổi cần lưu.');return}
+ // Preflight all changed fields before writing either RPC; never claim a combined transaction.
+ if(typeChanged){
+  if(!['FULL_TIME','PART_TIME'].includes(kind)){inform('Hãy chọn FT hoặc PT hợp lệ trước khi lưu.','error');return}
+  if(!state.employmentTypeReady){inform('CHƯA LƯU: FT/PT chỉ đang xem trước. Cần triển khai RPC Supabase trước khi lưu các thay đổi của hàng này.','error');return}
+ }
+ if(storesChanged){
+  if(!values[0]){inform('Phải chọn chi nhánh chính ở ưu tiên 1.','error');return}
+  let gap=false,missing=false;
+  for(const x of values){if(!x)missing=true;else if(missing)gap=true}
+  if(gap){inform('Thứ tự ưu tiên phải liên tục; không được bỏ trống ở giữa.','error');return}
+  if(new Set(stores).size!==stores.length){inform('Một chi nhánh không thể xuất hiện hai lần.','error');return}
+ }
+ busy=true;
+ editor.querySelectorAll('button, select').forEach(el=>el.disabled=true);
+ inform('Đang lưu các thay đổi…');
+ let typeSaved=false,storesSaved=false;
+ try{
+  if(typeChanged){
+   const set=await client().rpc('set_employee_employment_type_v1',{p_employee_id:employeeId,p_employment_type:kind});
+   if(set.error)throw set.error;
+   const check=await client().rpc('list_employee_employment_types_v1');
+   if(check.error)throw check.error;
+   const match=Array.isArray(check.data)?check.data.find(x=>String(x.employee_id)===String(employeeId)):null;
+   if(String(match?.employment_type||'').toUpperCase()!==kind)throw Error('EMPLOYMENT_TYPE_PERSISTENCE_NOT_VERIFIED');
+   state.employmentTypes=new Map(check.data.filter(x=>x&&x.employee_id).map(x=>[String(x.employee_id),String(x.employment_type||'').toUpperCase()]));
+   typeSaved=true;
+   document.dispatchEvent(new CustomEvent('magasin:employment-type-saved',{detail:{employeeId,employmentType:kind}}));
+  }
+  if(storesChanged){
+   const set=await client().rpc('set_employee_store_priority_profile_v1',{p_employee_id:employeeId,p_store_ids:stores});
+   if(set.error)throw set.error;
+   const check=await client().rpc('list_employee_workforce_profiles_v1');
+   if(check.error)throw check.error;
+   const updated=Array.isArray(check.data)?check.data.find(x=>String(x.employee_id)===String(employeeId)):null;
+   const persisted=(Array.isArray(updated?.priority_store_ids)?updated.priority_store_ids:[]).map(String).filter(Boolean);
+   if(JSON.stringify(persisted)!==JSON.stringify(stores))throw Error('STORE_PRIORITY_PERSISTENCE_NOT_VERIFIED');
+   storesSaved=true;
+  }
+  state.notice='Đã lưu thay đổi của '+(row.full_name||row.username||'nhân viên')+'.';
+  state.editId=null;
+  await loadRows();
+ }catch(e){
+  const message=errorCode(e);
+  if(typeSaved&&!storesSaved&&storesChanged){
+   inform('Đã lưu FT/PT, nhưng CHƯA lưu ưu tiên chi nhánh ('+message+'). Kiểm tra lại và thử lưu phần còn thiếu.','error');
+  }else if(storesSaved){
+   inform('Đã ghi ưu tiên chi nhánh nhưng chưa xác minh được toàn bộ kết quả ('+message+'). Vui lòng tải lại trước khi thử lại.','error');
+  }else{
+   inform('CHƯA LƯU ĐẦY ĐỦ. Không thể xác minh thay đổi: '+message+'. Vui lòng tải lại để kiểm tra trước khi thử tiếp.','error');
+  }
+ }finally{
+  busy=false;
+  if(editor.isConnected){editor.querySelectorAll('select').forEach(x=>x.disabled=false);if(button)button.disabled=false;editor.querySelector('[data-msp-cancel]')?.removeAttribute('disabled')}
+ }
 }
 async function refresh(){
- if(busy||!ensureUi())return;busy=true;
+ if(busy||!ensureUi())return;
+ // Reloading the staff list closes a previous inline editor without persisting draft choices.
+ state.editId=null;state.lifecycleMode=false;busy=true;
  try{if(!state.stores.length)await loadStores();busy=false;await loadRows()}
  catch(e){busy=false;state.loading=false;state.rows=[];state.error=errorCode(e);render()}
 }

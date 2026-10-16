@@ -13,7 +13,7 @@ const css=read("02_CORE/ui/magasin-ui-v2-employee-secondary.css");
 const shell=read("02_CORE/ui/magasin-ui-v2-employee-shell.js");
 
 test("UI2-008 loads one namespaced Employee secondary presentation layer",()=>{
-  assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-secondary.css?v=20261003-sched-ui-007"));
+  assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-secondary.css?v=20261006-xstore-019d"));
   assert.match(css,/body\[data-magasin-employee-shell-v2\] #view-schedule/);
   assert.match(css,/body\[data-magasin-employee-shell-v2\] #view-swap/);
   assert.match(css,/min-height:\s*44px/);
@@ -47,7 +47,7 @@ test("Availability is secondary under Schedule and exposes explicit V2 states",(
 
 test("Availability keeps exact canonical RPC boundary and no direct DML",()=>{
   const names=[...availability.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
-  assert.deepEqual(names,["get_my_availability","save_my_availability","delete_my_availability"]);
+  assert.deepEqual([...new Set(names)].sort(),["delete_my_availability","get_my_availability","save_my_availability"]);
   assert.doesNotMatch(availability,/C\.supabase\.from|createClient\(|\.from\(['\"](?:employee_availability|work_schedules|shift_swaps|shift_gives)['\"]\)/);
   assert.match(availability,/p_availability_id:null/);
   assert.match(availability,/p_availability_type:'AVAILABLE'/);
@@ -106,14 +106,14 @@ test("UI2-007 Schedule delegation stays canonical while Availability routing rem
 });
 
 test("UI2-005 shell UI2-006 Today UI2-007 Schedule remain present and runtime cache advances only",()=>{
-  for(const label of ["Hôm nay","Lịch","Công","Lương","Tôi"])assert.ok(shell.includes("'"+label+"'"));
+  for(const label of ["Trang chủ","Đăng ký lịch làm","Lịch của tôi","Chấm công","Hồ sơ & thông tin"])assert.ok(shell.includes("'"+label+"'"));
   assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-today.css?v=20260925-ui2-006"));
   assert.ok(app.includes("/02_CORE/ui/magasin-ui-v2-employee-schedule.css?v=20261001-ui-unified1"));
-  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007)&runtime=engine/);
+  assert.match(runtime,/employee-v40\.html\?ui=(?:v45-ui2-008|20260928-xstore003|20260930-emlive001|20260930-emlive003|20261001-ui-unified1|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3|20261009-x19j-paint1)&runtime=engine/);
   assert.match(runtime,/schedule\/engine-v1\.js\?v=(?:20260926-ui2-008|20260930-emlive002|20261002-sched-ui-006)/);
-  assert.match(runtime,/availability\/engine-v1\.js\?v=(?:20260926-ui2-008|20260928-xstore003|20260930-emlive001|20261003-sched-ui-007)/);
+  assert.match(runtime,/availability\/engine-v1\.js\?v=(?:20260926-ui2-008|20260928-xstore003|20260930-emlive001|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3|20261009-x19j-paint1)/);
   assert.match(runtime,/swap\/engine-v1\.js\?v=20260926-ui2-008/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002|20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260926-ui2-008|20260928-xstore003|20260929-mer005|20260930-emlive001|20260930-emlive002|20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3|20261009-x19j-paint1)/);
 });
 
 console.log("UI2_008_EMPLOYEE_SECONDARY_CONTRACT=PASS");

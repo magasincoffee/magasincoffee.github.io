@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
-test("TASK-099 Employee attendance UI uses Manual-Time V1 and no legacy mutation authority",async()=>{
+test("XSTORE-019L retains schedule-linked manual requests and allows direct server-time clock events",async()=>{
   const source=await fs.readFile(new URL("../../06_EMPLOYEE/attendance/engine-v1.js",import.meta.url),"utf8");
   assert.match(source,/list_my_approved_schedules_v2/);
   assert.match(source,/get_my_attendance_v2/);
@@ -15,8 +15,8 @@ test("TASK-099 Employee attendance UI uses Manual-Time V1 and no legacy mutation
   assert.match(source,/RECONCILE_ERRORS/);
   assert.match(source,/type="time" step="60"/);
   assert.match(source,/state\.submitting/);
-  assert.doesNotMatch(source,/clock_in_for_schedule/);
-  assert.doesNotMatch(source,/clock_out_attendance/);
+  assert.match(source,/clock_in_for_schedule/);
+  assert.match(source,/clock_out_attendance/);
   assert.doesNotMatch(source,/manual_attendance_from_schedule/);
   assert.doesNotMatch(source,/auto_attendance_from_approved_schedules/);
   assert.doesNotMatch(source,/\.from\(['"]attendance['"]\)/);

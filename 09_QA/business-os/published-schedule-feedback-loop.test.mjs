@@ -54,8 +54,8 @@ test("active Employee feedback engines use real Give lifecycle and keep unsafe a
   assert.doesNotMatch(attendance,/auto_attendance_from_approved_schedules/);
   assert.match(attendance,/submit_manual_time_attendance_v1/);
   assert.match(attendance,/list_my_approved_schedules_v2/);
-  assert.doesNotMatch(attendance,/clock_in_for_schedule/);
-  assert.doesNotMatch(attendance,/clock_out_attendance/);
+  assert.match(attendance,/clock_in_for_schedule/);
+  assert.match(attendance,/clock_out_attendance/);
   assert.doesNotMatch(attendance,/manual_attendance_from_schedule/);
   assert.match(manager,/list_shift_swap_requests_v1/);
   assert.match(manager,/approve_shift_swap/);

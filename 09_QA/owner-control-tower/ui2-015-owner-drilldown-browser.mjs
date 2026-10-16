@@ -26,6 +26,9 @@ function diagnostics(page,label){
 async function newContext(browser,width,height=980){
  const ctx=await browser.newContext({viewport:{width,height},locale:"vi-VN",timezoneId:"Asia/Ho_Chi_Minh"});
  await ctx.route("https://cdn.jsdelivr.net/**",route=>route.fulfill({status:200,contentType:"application/javascript",body:"globalThis.supabase=globalThis.supabase||{};"}));
+ // This browser QA validates local role/navigation behavior, not third-party fonts.
+ // Pin external font CSS to an empty fixture so teardown/navigation never races font downloads.
+ await ctx.route("https://fonts.googleapis.com/**",route=>route.fulfill({status:200,contentType:"text/css",body:""}));
  await ctx.route("**/02_CORE/shared/shared-core-v1.js*",route=>route.fulfill({status:200,contentType:"application/javascript",path:"09_QA/owner-control-tower/ui2-015-shared-core-mock.js"}));
  await ctx.route("**/04_OWNER/Procurement/procurement-v2-core.js*",route=>route.fulfill({status:200,contentType:"application/javascript",body:""}));
  await ctx.route("**/04_OWNER/Procurement/procurement-v2-orders.js*",route=>route.fulfill({status:200,contentType:"application/javascript",body:""}));
@@ -221,9 +224,12 @@ try{
   if(!opened.page.url().includes("/04_OWNER/Procurement/"))throw new Error(opened.page.url());
   await opened.page.goto(BASE+"/nhap-hang/?qaRole=OWNER",{waitUntil:"domcontentloaded"});
   await opened.page.locator("#app:not(.hidden)").waitFor({state:"visible",timeout:10000});
-  if(!new URL(opened.page.url()).pathname.startsWith("/nhap-hang/"))throw new Error(opened.page.url());
+  // The friendly entry rewrites its document and restores its path on the load event.
+  // Wait for that canonical transition before reload; a visible app is not sufficient.
+  await opened.page.waitForURL(url=>url.pathname==="/nhap-hang/",{timeout:10000});
   await opened.page.reload({waitUntil:"domcontentloaded"});
   await opened.page.locator("#app:not(.hidden)").waitFor({state:"visible",timeout:10000});
+  await opened.page.waitForURL(url=>url.pathname==="/nhap-hang/",{timeout:10000});
   const friendlyPath=new URL(opened.page.url()).pathname;
   await opened.page.goBack({waitUntil:"domcontentloaded"});
   await opened.page.locator("#app:not(.hidden)").waitFor({state:"visible",timeout:10000});

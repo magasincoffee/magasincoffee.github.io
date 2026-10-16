@@ -11,11 +11,11 @@
   if (window.MAGASIN_EMPLOYEE_UI_V2_SHELL) return;
 
   const PRIMARY = Object.freeze([
-    ['dashboard', '⌂', 'Hôm nay'],
-    ['schedule', '▦', 'Lịch'],
-    ['attendance', '◷', 'Công'],
-    ['payroll', '₫', 'Lương'],
-    ['profile', '○', 'Tôi']
+    ['dashboard', '⌂', 'Trang chủ'],
+    ['availability', '＋', 'Đăng ký lịch làm'],
+    ['schedule', '▦', 'Lịch của tôi'],
+    ['attendance', '◷', 'Chấm công'],
+    ['profile', '○', 'Hồ sơ & thông tin']
   ]);
 
   const CANONICAL = new Set(['dashboard', 'schedule', 'attendance', 'swap', 'payroll', 'profile']);
@@ -29,7 +29,8 @@
     'ca-nhan': 'profile'
   });
   const PRIMARY_PARENT = Object.freeze({
-    swap: 'schedule'
+    swap: 'schedule',
+    payroll: 'profile'
   });
 
   let originalShowView = null;
@@ -125,6 +126,7 @@
 
   const primaryFor = view => {
     const key = normalize(view);
+    if (key === 'schedule' && document.getElementById('weeklyRegistrationPanel')?.classList.contains('open')) return 'availability';
     if (PRIMARY.some(([route]) => route === key)) return key;
     if (PRIMARY_PARENT[key]) return PRIMARY_PARENT[key];
     if (key === 'notice') {
@@ -193,6 +195,18 @@
       return true;
     }
     return false;
+  };
+
+  const activatePrimaryView = view => {
+    const key = normalize(view);
+    if (key === 'availability') {
+      const ok = activateSourceView('schedule');
+      if (ok) setTimeout(() => parentWindow()?.MAGASIN_EMPLOYEE?.availability?.open?.(), 0);
+      return ok;
+    }
+    const ok = activateSourceView(key);
+    if (ok && key === 'schedule') parentWindow()?.MAGASIN_EMPLOYEE?.availability?.close?.();
+    return ok;
   };
 
   const applyCanonicalRoute = (view, attempt = 0) => {
@@ -274,9 +288,9 @@
         '<span class="employee-v2-primary-nav__icon" aria-hidden="true">' + icon + '</span>' +
         '<span class="employee-v2-primary-nav__label">' + label + '</span>';
       button.addEventListener('click', () => {
-        if (activateSourceView(view)) {
+        if (activatePrimaryView(view)) {
           setPrimaryActive(view);
-          pushCanonicalRoute(view);
+          pushCanonicalRoute(view === 'availability' ? 'schedule' : view);
           closeSecondaryDrawer();
         }
       });
@@ -296,7 +310,14 @@
       const link = event.target.closest?.('.nav [data-view]');
       if (!link) return;
       const view = normalize(link.dataset.view);
-      setTimeout(() => setPrimaryActive(view), 0);
+      const fromDrawer = !!link.closest('.drawer');
+      const isPrimarySource = link.classList.contains('employee-v2-primary-source');
+      const shouldPushRoute = fromDrawer && !isPrimarySource && CANONICAL.has(view) && !applyingRoute;
+      setTimeout(() => {
+        setPrimaryActive(view);
+        if (shouldPushRoute) pushCanonicalRoute(view);
+        if (fromDrawer) closeSecondaryDrawer();
+      }, 0);
     }, true);
   };
 
@@ -402,7 +423,7 @@
     setTimeout(() => applyCanonicalRoute(initialRequestedRoute), 0);
 
     window.MAGASIN_EMPLOYEE_UI_V2_SHELL = Object.freeze({
-      version: '2.0',
+      version: '2.1-xstore-019h',
       primary: PRIMARY.map(item => item[0]),
       getCurrentView: currentView,
       activate: view => applyCanonicalRoute(view),

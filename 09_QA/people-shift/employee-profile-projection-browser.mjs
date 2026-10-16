@@ -22,18 +22,20 @@ try{
   await f.locator("#profileFullName").evaluate(el=>new Promise((resolve,reject)=>{const end=Date.now()+5000;(function poll(){if(el.value==="Nguyễn An")return resolve();if(Date.now()>end)return reject(new Error("profile did not load"));setTimeout(poll,25)})()}));
 
   await check("task101_employee_self_projection_renders_operational_allowlist",async()=>{
-    const vals=await f.locator("#view-profile").evaluate(root=>Object.fromEntries(["profileFullName","profileUsername","profilePhone","profileRole","profileStatus","profilePrimaryStore","profileStorePriority","profileLevel","profileJoinDate"].map(id=>[id,root.querySelector("#"+id)?.value])));
-    if(vals.profileFullName!=="Nguyễn An"||vals.profileUsername!=="an.nguyen"||vals.profilePhone!=="0900000000"||!vals.profilePrimaryStore.includes("CN1")||vals.profileStorePriority!=="CN1 → CN2")throw new Error(JSON.stringify(vals));
+    const vals=await f.locator("#view-profile").evaluate(root=>Object.fromEntries(["profileFullName","profileUsername","profilePhone","profileRole","profileEmploymentType","profileStatus","profilePrimaryStore","profileStorePriority","profileLevel","profileJoinDate"].map(id=>[id,root.querySelector("#"+id)?.value])));
+    if(vals.profileFullName!=="Nguyễn An"||vals.profileUsername!=="an.nguyen"||vals.profilePhone!=="0900000000"||vals.profileEmploymentType!=="Part-time"||!vals.profilePrimaryStore.includes("CN1")||vals.profileStorePriority!=="CN1 → CN2")throw new Error(JSON.stringify(vals));
     if(vals.profileLevel!=="Chưa cập nhật"||vals.profileJoinDate!=="Chưa cập nhật")throw new Error(JSON.stringify(vals));
-    return "own operational profile rendered; missing canonical sources remain explicit";
+    const readonly=await f.locator("#profileEmploymentType").getAttribute("readonly");
+    if(readonly===null)throw new Error("employment type must be read-only");
+    return "own operational profile rendered; Part-time is management-owned/read-only; missing canonical sources remain explicit";
   });
 
   await check("task101_browser_uses_self_rpc_only_and_no_direct_profile_table",async()=>{
     const calls=await page.evaluate(()=>globalThis.__TASK101_QA.calls);
     if(calls.some(x=>x.kind==="from"))throw new Error(JSON.stringify(calls));
-    const allowed=new Set(["get_my_employee_workforce_profile_v1"]);
+    const allowed=new Set(["get_my_employee_workforce_profile_v1","get_my_employee_employment_type_v1"]);
     if(calls.some(x=>x.kind==="rpc"&&!allowed.has(x.name)))throw new Error(JSON.stringify(calls));
-    return "one canonical Workforce Profile self RPC; 0 direct table calls";
+    return "canonical Workforce Profile + employment self-read RPCs; 0 direct table calls";
   });
 
   await check("task101_privacy_fields_not_rendered",async()=>{

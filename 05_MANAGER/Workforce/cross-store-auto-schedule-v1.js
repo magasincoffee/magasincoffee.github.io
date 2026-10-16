@@ -536,5 +536,12 @@ window.MAGASIN_XSTORE_AUTO_SCHEDULE={
  refresh:loadRequirements,
  getState:()=>({...state,stores:state.stores.map(x=>({...x})),requirements:state.requirements.map(x=>({...x})),shortages:state.shortages.map(x=>({...x}))})
 };
+function hydrateFromMaster(){
+ if(state.loaded)return;
+ const master=window.MAGASIN_CROSS_STORE_MASTER;
+ if(!master?.refresh)return;
+ queueMicrotask(()=>{if(!state.loaded)void master.refresh()});
+}
 ensureCss();
+hydrateFromMaster();
 })();

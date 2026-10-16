@@ -48,9 +48,9 @@ test("XSTORE-012 backend guard automatically protects review and publish",()=>{
 });
 
 test("XSTORE-012 cache lineage remains intact while newer scheduling IA revisions may advance",()=>{
- assert.match(engine,/draft-publish-v1\.js\?v=(?:20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018)/);
- assert.match(engine,/cross-store-master-v1\.js\?v=(?:20261004-xstore-012|20261004-xstore-016)/);
- assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261004-xstore-012|20261005-xstore-017)/,"cross-store-auto-schedule-v1.js");
+ assert.match(engine,/draft-publish-v1\.js\?v=(?:20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018|20261005-xstore-019|20261007-xstore-019j-weekfix1|20261007-xstore-019j-cluster1)/);
+ assert.match(engine,/cross-store-master-v1\.js\?v=(?:20261004-xstore-012|20261004-xstore-016|20261005-xstore-019|20261007-xstore-019j-weekfix1)/);
+ assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261004-xstore-012|20261005-xstore-017|20261005-xstore-019|20261006-xstore-019g-r1)/,"cross-store-auto-schedule-v1.js");
 });
 
 console.log("XSTORE_012_EMPTY_DRAFT_HOTFIX=PASS");

@@ -22,7 +22,7 @@ try{
   await check("task099_manual_time_ui_replaces_realtime_controls",async()=>{
     const body=await f.locator("body").innerText();
     if(/Bắt đầu ca|Kết thúc ca|Chấm công bổ sung|Tự động chấm công/.test(body))throw new Error(body);
-    if(!body.includes("Gửi giờ làm thực tế")||!body.includes("2026-09-18")||!body.includes("06:00–12:00"))throw new Error(body);
+    if(!body.includes("Gửi yêu cầu xác nhận giờ thủ công")||!body.includes("2026-09-18")||!body.includes("06:00–12:00"))throw new Error(body);
     return "current canonical schedule shown; no realtime/manual legacy mutation controls";
   });
 

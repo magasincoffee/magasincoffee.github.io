@@ -29,7 +29,7 @@
     {schedule_id:"sch-sat",work_date:"2026-09-26",start_time:"17:00",end_time:"22:00",store_code:"CN-QA-B",store_name:"MAGASIN QA B",status:"APPROVED"}
   ];
   const availability=[
-    {id:"av-existing",work_date:"2026-09-29",start_time:"09:00",end_time:"13:00",preferred_store_id:"store-a",availability_type:"AVAILABLE",note:null}
+    {id:"av-existing",work_date:"2026-09-29",start_time:"09:00",end_time:"13:00",preferred_store_id:null,availability_type:"AVAILABLE",note:null}
   ];
   const incomingSwaps=[{id:"swap-in",status:"PENDING",target_date:"2026-09-26",target_start:"17:00",target_end:"22:00",requester_name:"Minh",requester_date:"2026-09-25",requester_start:"08:00",requester_end:"12:00",store_code:"CN-QA-B",reason:"Đổi ca QA"}];
   const swapHistory=[{id:"swap-out",status:"PEER_ACCEPTED",requester_date:"2026-09-25",requester_start:"08:00",requester_end:"12:00",store_code:"CN-QA-A",target_user_name:"Lan",target_date:"2026-09-26",reason:"Lịch học"}];
@@ -74,6 +74,8 @@
         }
         if(name==="save_my_availability"){
           if(state.holdAvailabilitySave)await new Promise(resolve=>state.availabilitySaveRelease=resolve);
+          const existing=args.p_availability_id?availability.find(r=>r.id===args.p_availability_id):null;
+          if(existing){Object.assign(existing,{work_date:args.p_work_date,start_time:args.p_start_time,end_time:args.p_end_time,preferred_store_id:args.p_preferred_store_id,availability_type:args.p_availability_type,note:args.p_note});return {data:existing.id,error:null}}
           const id="av-"+(++avSeq);
           availability.push({id,work_date:args.p_work_date,start_time:args.p_start_time,end_time:args.p_end_time,preferred_store_id:args.p_preferred_store_id,availability_type:args.p_availability_type,note:args.p_note});
           return {data:id,error:null};

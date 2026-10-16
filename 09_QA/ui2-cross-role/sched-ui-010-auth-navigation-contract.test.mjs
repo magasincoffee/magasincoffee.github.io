@@ -20,15 +20,15 @@ test("SCHED-UI-010 numbered roots consume bounded canonical markers without repl
   assert.match(manager,/manager-scheduling/);
   assert.match(manager,/location\.pathname==='\/05_MANAGER\/'/);
   assert.match(manager,/history\.replaceState/);
-  assert.match(manager,/manager-runtime-v1\.html\?v=20261003-sched-ui-017/);
+  assert.match(manager,/manager-runtime-v1\.html\?v=(?:20261003-sched-ui-017|20261005-xstore-019|20261007-xstore-019g-visual1|20261007-xstore-019g-visual3|20261007-xstore-019j-weekfix1|20261007-xstore-019j-cluster1|20261007-xstore-019j-visual3|20261007-xstore-019j-visual4|20261009-xstore-019j-compact3)/);
   assert.match(employee,/employee-attendance/);
   assert.match(employee,/location\.pathname==='\/06_EMPLOYEE\/'/);
   assert.match(employee,/history\.replaceState/);
-  assert.match(employee,/employee-runtime-v1\.html\?v=20261003-sched-ui-007/);
+  assert.match(employee,/employee-runtime-v1\.html\?v=(?:20261003-sched-ui-007|20261006-xstore-019d|20261006-xstore-019h|20261007-xstore-019h-visual3|20261009-x19j-paint1)/);
   assert.match(owner,/owner-root/);
   assert.match(owner,/history\.replaceState\([^\n]*\/owner\//);
   assert.match(ownerScheduling,/owner-scheduling/);
-  assert.match(ownerScheduling,/owner-workforce-runtime\.html\?v=20261003-sched-ui-008/);
+  assert.match(ownerScheduling,/owner-workforce-runtime\.html\?v=(?:20261003-sched-ui-008|20261005-xstore-019)/);
 });
 
 test("SCHED-UI-010 navigation prefers clean paths while keeping legacy path readers",async()=>{

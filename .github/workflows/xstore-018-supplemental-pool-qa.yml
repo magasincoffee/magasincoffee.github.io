@@ -10,6 +10,7 @@ on:
       - '09_QA/people-shift/xstore-018-supplemental-pool-v1.test.mjs'
       - '09_QA/people-shift/xstore-018-supplemental-pool-browser.mjs'
       - '.github/workflows/xstore-018-supplemental-pool-qa.yml'
+      - '09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs'
   pull_request:
     paths:
       - '05_MANAGER/Workforce/draft-publish-v1.js'
@@ -19,6 +20,7 @@ on:
       - '09_QA/people-shift/xstore-018-supplemental-pool-v1.test.mjs'
       - '09_QA/people-shift/xstore-018-supplemental-pool-browser.mjs'
       - '.github/workflows/xstore-018-supplemental-pool-qa.yml'
+      - '09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs'
   workflow_dispatch:
 
 permissions:

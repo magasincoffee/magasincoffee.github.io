@@ -25,9 +25,9 @@ test("SCHED-04 keeps exactly one canonical Manager scheduling writer surface",as
   assert.doesNotMatch(draft,/auto_generate_schedule_generation|get_workforce_staffing_requirements/);
   assert.match(draft,/MAGASIN_MANAGER_WORKFORCE_CONTEXT/);
   assert.doesNotMatch(draft,/client\(\)\.from\(|sb\.from\(|supabase[^\n]*\.from\(/);
-  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012|20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018)/);
-  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018)/);
-  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017)#workforce/);
+  assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012|20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018|20261005-xstore-019|20261007-xstore-019j-workspace2|20261007-xstore-019j-cluster1|20261007-xstore-019j-visual3|20261007-xstore-019j-visual4|20261009-xstore-019j-compact3)/);
+  assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261005-xstore-019)/);
+  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017|20261005-xstore-019|20261007-xstore-019g-visual1|20261007-xstore-019g-visual3|20261007-xstore-019j-weekfix1|20261007-xstore-019j-workspace2|20261007-xstore-019j-cluster1|20261007-xstore-019j-visual3|20261007-xstore-019j-visual4|20261009-xstore-019j-compact3)(?:&x19l=1)?#workforce/);
   assert.doesNotMatch(legacy,/publish_schedule_generation|replace_schedule_generation_assignments|create_schedule_generation/);
 });
 
@@ -43,8 +43,8 @@ test("SCHED-04 active generation reload covers DRAFT REVIEWED PUBLISHED and publ
 test("SCHED-04 UX distinguishes availability draft validation review and official publish",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
   for(const label of ["Thời gian có thể làm","Bản nháp","Kiểm tra","Duyệt","Phát hành"])assert.match(draft,new RegExp(label),label);
-  assert.match(draft,/Xếp tự động toàn hệ thống → Quản lý chỉnh sửa → Kiểm tra → Duyệt → Phát hành/);
-  assert.match(draft,/Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp/);
+  assert.match(draft,/Chọn một cửa hàng để xem toàn bộ tuần, chỉnh bản nháp rồi Kiểm tra → Duyệt → Phát hành/);
+  assert.match(draft,/Một cửa hàng · một lịch tuần/);
   assert.doesNotMatch(draft,/Không hiển thị ID kỹ thuật/);
   assert.match(draft,/Mở lịch chính thức/);
   assert.doesNotMatch(draft,/Generation \$\{esc\(state\.generationId/);

@@ -47,7 +47,8 @@
           return {data:{attendance_id:'att-1',schedule_id:'sch-1',status:'NEEDS_REVIEW',submission_status:'SUBMITTED',already_submitted:true},error:null};
         }
         if(name==='get_my_payroll_self_check_v1')return state.payrollError?{data:null,error:{message:'PAYROLL_QA_ERROR'}}:{data:state.payroll.map(x=>({...x})),error:null};
-        if(name==='get_my_employee_profile_v1')return state.profileError?{data:null,error:{message:'PROFILE_QA_ERROR'}}:{data:[profileRow()],error:null};
+        if(name==='get_my_employee_profile_v1'||name==='get_my_employee_workforce_profile_v1')return state.profileError?{data:null,error:{message:'PROFILE_QA_ERROR'}}:{data:[profileRow()],error:null};
+        if(name==='get_my_employee_employment_type_v1')return state.profileError?{data:null,error:{message:'PROFILE_QA_ERROR'}}:{data:null,error:null};
         if(name==='get_my_store_priority_profile_v1')return state.profileError?{data:null,error:{message:'PROFILE_QA_ERROR'}}:{data:[{employee_id:'u-a',primary_store_id:'store-a',primary_store_code:'CN-QA-A',primary_store_name:'MAGASIN QA',priority_store_ids:['store-a','store-b'],priority_store_codes:['CN-QA-A','CN-QA-B'],priority_store_names:['MAGASIN QA','MAGASIN QA B']}],error:null};
         return {data:null,error:{message:'UNEXPECTED_QA_RPC:'+name}};
       },

@@ -11,9 +11,9 @@ test("SCHED-UI-008 Owner scheduling is overview-first and reuses shared scheduli
   const runtime=read("04_OWNER/Workforce/runtime/owner-workforce-runtime.html");
   const overview=read("04_OWNER/Workforce/owner-scheduling-overview-v1.js");
 
-  assert.match(entry,/owner-workforce-runtime\.html\?v=20261003-sched-ui-008/);
-  assert.match(runtime,/draft-publish-v1\.js\?v=20261003-sched-ui-008/);
-  assert.match(runtime,/owner-scheduling-overview-v1\.js\?v=20261003-sched-ui-008/);
+  assert.match(entry,/owner-workforce-runtime\.html\?v=(?:20261003-sched-ui-008|20261005-xstore-019)/);
+  assert.match(runtime,/draft-publish-v1\.js\?v=(?:20261003-sched-ui-008|20261005-xstore-019)/);
+  assert.match(runtime,/owner-scheduling-overview-v1\.js\?v=(?:20261003-sched-ui-008|20261005-xstore-019)/);
   assert.doesNotMatch(runtime,/cross-store-master-v1\.js/);
 
   assert.match(overview,/Tổng quan xếp lịch/);

@@ -163,6 +163,20 @@ try{
   return JSON.stringify(q);
  });
 
+ await check("xstore_019n_strategy_uses_authorized_quality_and_fails_closed",async()=>{
+  const model=await page.evaluate(()=>({
+   source:document.getElementById("strategySourceMode")?.textContent?.trim(),
+   revenue:document.getElementById("strategyRevenue")?.textContent?.trim(),
+   cost:document.getElementById("strategyCost")?.textContent?.trim(),
+   profit:document.getElementById("strategyProfit")?.textContent?.trim(),
+   state:document.getElementById("strategyDashboard")?.dataset.strategySources,
+   meta:document.getElementById("strategyRevenueMeta")?.textContent?.trim(),
+   alerts:[...document.querySelectorAll("#strategyAlerts .strategy-list-item")].map(x=>x.innerText)
+  }));
+  if(model.source!=="CANONICAL READ-ONLY"||model.revenue!=="—"||model.cost!=="—"||model.profit!=="—"||model.state!=="incomplete"||!/ACTUAL|đối soát/i.test(model.meta))throw new Error(JSON.stringify(model));
+  if(model.alerts.some(x=>/lợi nhuận|đã trả/i.test(x)))throw new Error("Payables must not appear as profit or paid costs: "+JSON.stringify(model.alerts));
+  return JSON.stringify(model);
+ });
  await check("ui2_014_refresh_clears_stale_attention_then_no_attention",async()=>{
   const before=await page.locator("#attentionList .attention-item").count();
   if(before<2)throw new Error("initial attention missing");

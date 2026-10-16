@@ -29,6 +29,7 @@ try{
   });
 
   await check('manager_stale_publish_is_server_revalidated',async()=>{
+    if(await manager.locator('#msdManualEmployee').count()===0)await manager.locator('#msdOpenCandidateDrawer').click();
     await manager.locator('#msdManualEmployee').selectOption('u-1');
     await manager.locator('#msdManualDate').selectOption('2026-09-28');
     await manager.locator('#msdManualStart').selectOption('06:00');
@@ -88,8 +89,9 @@ try{
     await owner.locator('[data-owner-store-open="store-a"]').click();
     await owner.locator('.msd[data-scheduling-actor="OWNER"]').waitFor();
     await owner.locator('[data-msd-branch="store-b"]').click();
-    await owner.locator('#panel-publish').filter({hasText:'Chi CN2'}).waitFor();
+    await owner.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT?.getState?.().storeId==="store-b"&&!globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().busy);
     const text=await owner.locator('#panel-publish').innerText();
+    if(!text.includes("CN2")||!text.includes("163 Nguyễn Văn Cừ"))throw new Error("store-b identity missing: "+text);
     if(text.includes('An CN1')||text.includes('Bình CN1'))throw new Error(text);
     const calls=await owner.evaluate(()=>globalThis.__SCHED05_OWNER_QA.calls);
     if(calls.some(x=>x.kind==='from'))throw new Error('direct table call');

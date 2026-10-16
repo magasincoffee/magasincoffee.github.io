@@ -8,6 +8,7 @@ on:
       - '05_MANAGER/Workforce/engine-v1.js'
       - '09_QA/people-shift/xstore-015-manager-availability-override-v1.test.mjs'
       - '.github/workflows/xstore-015-manager-override-qa.yml'
+      - '09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs'
   pull_request:
     paths:
       - '07_DATABASE/migrations/20261004224500_xstore_015_manager_availability_override_v1.sql'
@@ -15,6 +16,7 @@ on:
       - '05_MANAGER/Workforce/engine-v1.js'
       - '09_QA/people-shift/xstore-015-manager-availability-override-v1.test.mjs'
       - '.github/workflows/xstore-015-manager-override-qa.yml'
+      - '09_QA/people-shift/xstore-019-unified-rc-v1.test.mjs'
   workflow_dispatch:
 
 permissions:
