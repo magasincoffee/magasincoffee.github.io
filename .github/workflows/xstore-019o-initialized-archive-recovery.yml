@@ -9,6 +9,7 @@ on:
       - '09_QA/people-shift/xstore-019o-auth-data-toposort.mjs'
       - '09_QA/people-shift/xstore-019o-storage-data-toposort.mjs'
       - '09_QA/people-shift/xstore-019o-public-acl-toc.mjs'
+      - '09_QA/people-shift/xstore-019o-early-default-acl.mjs'
       - '09_QA/people-shift/xstore-019o-effective-acl-diag.sql'
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - '09_QA/people-shift/xstore-019o-auth-data-toposort.mjs'
       - '09_QA/people-shift/xstore-019o-storage-data-toposort.mjs'
       - '09_QA/people-shift/xstore-019o-public-acl-toc.mjs'
+      - '09_QA/people-shift/xstore-019o-early-default-acl.mjs'
       - '09_QA/people-shift/xstore-019o-effective-acl-diag.sql'
 
 permissions:
@@ -46,6 +48,7 @@ jobs:
           node 09_QA/people-shift/xstore-019o-auth-data-toposort.mjs selftest
           node 09_QA/people-shift/xstore-019o-storage-data-toposort.mjs selftest
           node 09_QA/people-shift/xstore-019o-public-acl-toc.mjs selftest
+          node 09_QA/people-shift/xstore-019o-early-default-acl.mjs selftest
           node <<'NODE'
           const fs=require('node:fs'),assert=require('node:assert/strict');
           const sh=fs.readFileSync('09_QA/people-shift/xstore-019o-supabase-initialized-recovery.sh','utf8');
@@ -64,6 +67,11 @@ jobs:
           assert(sh.includes('storage-data-toposort.mjs'),'STORAGE_FK_ORDER_NOT_PRESENT');
           assert(sh.includes('public-acl-toc.mjs'),'ARCHIVED_PUBLIC_ACL_REPLAY_NOT_PRESENT');
           assert(sh.includes('XSTORE_019O_PUBLIC_ACL_REPLAY=PASS'),'PUBLIC_ACL_REPLAY_NOT_VERIFIED');
+          assert(sh.includes('XSTORE_019O_EARLY_DEFAULT_ACL_RESTORE=PASS'),'DEFAULT_ACL_PRE_RESTORE_MISSING');
+          assert(sh.includes('restore_user="postgres"') && sh.includes('if [[ "$schema" == "public" ]]'),'PUBLIC_ORIGINAL_CREATOR_REQUIRED');
+          assert(sh.includes('--use-list=/tmp/public-acl-replay.toc --username=postgres'),'PUBLIC_ORIGINAL_GRANTOR_REQUIRED');
+          assert(sh.includes('XSTORE_019O_PUBLIC_RESTORE_GRANTOR=POSTGRES'),'PUBLIC_RESTORE_GRANTOR_EVIDENCE_MISSING');
+          assert(sh.indexOf('XSTORE_019O_EARLY_DEFAULT_ACL_RESTORE=PASS') < sh.indexOf('for stage in pre-data data post-data; do restore_stage public'),'DEFAULT_ACL_ORDER_VIOLATION');
           const e=fs.readFileSync('09_QA/people-shift/xstore-019o-effective-acl-diag.sql','utf8');
           assert(sh.includes('XSTORE_019O_ACL_EFFECTIVE_DIAG_OUTPUT_INVALID'),'ACL_DIAGNOSTIC_LOG_GUARD_MISSING');
           for(const field of ['REL_SEMANTICS','FN_SEMANTICS','REL_GRANTOR','FN_GRANTOR','REL_NULL','FN_NULL'])
