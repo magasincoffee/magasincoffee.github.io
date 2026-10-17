@@ -8,7 +8,7 @@
 **Base main verified:** `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae` (2026-10-16)  
 **Branch riêng chỉ tài liệu:** `docs/xstore-release-recovery-atomic-20261017` — **chưa merge / không deploy Production**  
 **Phạm vi:** khắc phục triệt để những lỗi/chức năng MAGASIN nêu trong phiên kiểm tra, không mở thêm sản phẩm hoặc project khác.  
-**Status tổng:** EXECUTION IN PROGRESS; ID 1–2 PASS; RELEASE BLOCKED.  
+**Status tổng:** EXECUTION IN PROGRESS; ID 1–3 PASS; RELEASE BLOCKED.  
 **Tổng:** **287 việc nguyên tử**, chỉ có một luồng thực thi có thứ tự tăng dần.
 
 ## 0. HƯỚNG DẪN BẮT BUỘC CHO CHAT/ROBOT MỚI
@@ -59,7 +59,7 @@
 2. [x] Đọc trạng thái PR #436; ghi exact HEAD, Draft và checks.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
-3. [ ] Đọc trạng thái PR #393; ghi exact HEAD, Draft và checks.
+3. [x] Đọc trạng thái PR #393; ghi exact HEAD, Draft và checks.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
 4. [ ] Đọc trạng thái PR #394; ghi exact HEAD, Draft và checks.
@@ -947,6 +947,7 @@
 | 2026-10-17 | — | PLAN_CREATED | Branch `docs/xstore-release-recovery-atomic-20261017` từ `main 3c4a4e7`; tài liệu chưa merge; không production write | Bắt đầu ID 1 |
 | 2026-10-17 18:22:14 ICT | 1 | PASS | [GitHub main branch API](https://api.github.com/repos/magasincoffee/magasincoffee.github.io/branches/main) và [commit](https://github.com/magasincoffee/magasincoffee.github.io/commit/3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae); HEAD `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae`; checked `2026-10-17 18:22:14 +07:00`; authored main commit `2026-10-16T06:47:31Z` | HEAD khớp baseline được ghi trước đó, không có sai lệch SHA; tiếp tục ID 2 (PR #436), chưa deploy Production |
 | 2026-10-17 18:26:42 ICT | 2 | PASS | [PR #436](https://github.com/magasincoffee/magasincoffee.github.io/pull/436) OPEN/DRAFT, base `main`, head `ce47f140e7bca2bdd060c32e2f2c670dffd01451` ([commit](https://github.com/magasincoffee/magasincoffee.github.io/commit/ce47f140e7bca2bdd060c32e2f2c670dffd01451)); checks on exact HEAD: `source-check` SUCCESS, `cross-role-browser-gate` SUCCESS, `day10-browser-gate` SUCCESS, `trusted-main-isolated-recovery` **SKIPPED** ([run 38863694808](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38863694808); [UI2](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38863694804); [Day10](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38863694769)); checked `2026-10-17 18:26:42 +07:00` | PASS chỉ riêng việc đối chiếu PR/checks; Recovery NOT PASS vì step bị SKIPPED; PR chưa merge, không deploy; tiếp tục ID 3 (PR #393) |
+| 2026-10-17 18:28:29 ICT | 3 | PASS | [PR #393](https://github.com/magasincoffee/magasincoffee.github.io/pull/393) OPEN/DRAFT, NOT MERGED, head `21d8d372619971494d04f3c0ca6d0ae50818562c` ([commit](https://github.com/magasincoffee/magasincoffee.github.io/commit/21d8d372619971494d04f3c0ca6d0ae50818562c)), branch `security/sapo-branch-resolution-acl-20261011`, base `main`; GitHub exact-head checks API `total_count=1`: `day10-browser-gate` SUCCESS ([run 38115269503](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38115269503)); commit statuses API returned empty; verified `2026-10-17 18:28:29 +07:00` | PASS chỉ đối chiếu PR/Draft/HEAD/checks, KHÔNG kết luận SAPO security gate PASS; PR base snapshot SHA `b9f902047032fcd5a804de51e16a968eca3236ea` cũ hơn current `main 3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae` (chênh lệch thời điểm PR, cần đánh giá trước merge); chưa Production write; tiếp tục ID 4 (PR #394) |
 
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
