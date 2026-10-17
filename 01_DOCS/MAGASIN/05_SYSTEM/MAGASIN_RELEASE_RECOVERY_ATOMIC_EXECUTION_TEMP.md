@@ -8,7 +8,7 @@
 **Base main verified:** `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae` (2026-10-16)  
 **Branch riêng chỉ tài liệu:** `docs/xstore-release-recovery-atomic-20261017` — **chưa merge / không deploy Production**  
 **Phạm vi:** khắc phục triệt để những lỗi/chức năng MAGASIN nêu trong phiên kiểm tra, không mở thêm sản phẩm hoặc project khác.  
-**Status tổng:** PLAN CREATED; EXECUTION NOT STARTED; RELEASE BLOCKED.  
+**Status tổng:** EXECUTION IN PROGRESS; ID 1 PASS; RELEASE BLOCKED.  
 **Tổng:** **287 việc nguyên tử**, chỉ có một luồng thực thi có thứ tự tăng dần.
 
 ## 0. HƯỚNG DẪN BẮT BUỘC CHO CHAT/ROBOT MỚI
@@ -53,7 +53,7 @@
 
 ## A — Đóng băng bằng chứng / thiết lập điều phối
 
-1. [ ] Đọc SHA HEAD hiện tại của `main`; ghi SHA và thời điểm ICT vào Nhật ký.
+1. [x] Đọc SHA HEAD hiện tại của `main`; ghi SHA và thời điểm ICT vào Nhật ký.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
 2. [ ] Đọc trạng thái PR #436; ghi exact HEAD, Draft và checks.
@@ -945,6 +945,7 @@
 | Thời điểm ICT | ID | Trạng thái | Bằng chứng chính xác | Chướng ngại / bước kế tiếp |
 |---|---:|---|---|---|
 | 2026-10-17 | — | PLAN_CREATED | Branch `docs/xstore-release-recovery-atomic-20261017` từ `main 3c4a4e7`; tài liệu chưa merge; không production write | Bắt đầu ID 1 |
+| 2026-10-17 18:22:14 ICT | 1 | PASS | [GitHub main branch API](https://api.github.com/repos/magasincoffee/magasincoffee.github.io/branches/main) và [commit](https://github.com/magasincoffee/magasincoffee.github.io/commit/3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae); HEAD `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae`; checked `2026-10-17 18:22:14 +07:00`; authored main commit `2026-10-16T06:47:31Z` | HEAD khớp baseline được ghi trước đó, không có sai lệch SHA; tiếp tục ID 2 (PR #436), chưa deploy Production |
 
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
