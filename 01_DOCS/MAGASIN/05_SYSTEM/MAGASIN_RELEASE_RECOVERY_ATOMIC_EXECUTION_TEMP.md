@@ -9,7 +9,7 @@
 **Base main verified:** `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae` (2026-10-16)  
 **Branch riêng chỉ tài liệu:** `docs/xstore-release-recovery-atomic-20261017` — **chưa merge / không deploy Production**  
 **Phạm vi:** khắc phục triệt để những lỗi/chức năng MAGASIN nêu trong phiên kiểm tra, không mở thêm sản phẩm hoặc project khác.  
-**Status tổng:** EXECUTION IN PROGRESS; ID 1–10 + ID 12–15 PASS (14/287); ID 11 BLOCKED / OWNER-DEFERRED cho điều phối phát triển; RELEASE BLOCKED đối với các hard gate chưa đạt.  
+**Status tổng:** EXECUTION IN PROGRESS; ID 1–10 + ID 12–16 PASS (15/287); ID 11 BLOCKED / OWNER-DEFERRED cho điều phối phát triển; RELEASE BLOCKED đối với các hard gate chưa đạt.  
 **Tổng:** **287 việc nguyên tử**, chỉ có một luồng thực thi có thứ tự tăng dần.
 
 ## 0. HƯỚNG DẪN BẮT BUỘC CHO CHAT/ROBOT MỚI
@@ -136,7 +136,7 @@
 15. [x] Ghi REL_EDGES=FAIL và FN_EDGES=FAIL từ cùng run.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
-16. [ ] Ghi FN_NULL=FAIL từ cùng run.
+16. [x] Ghi FN_NULL=FAIL từ cùng run.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
 17. [ ] Ghi REL_GRANTOR=FAIL và FN_GRANTOR=FAIL từ cùng run.
@@ -1029,6 +1029,8 @@
 | 2026-10-17 20:33:01 ICT | 14 | PASS | GitHub Actions [run #38863218269](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38863218269) và [job #116850089837](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38863218269/job/116850089837), exact `main` SHA `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae`, run `completed/failure`. **Log dòng 390 (2026-10-16T06:49:10.9011832Z) xác nhận `FN_ACL=FAIL` trong `XSTORE_019O_PARITY_DIMENSIONS`**, trong khi `FN_OWNER=PASS`, `FN_DEFINER=PASS`, `FN_COUNT=PASS`. Log dòng 391 (2026-10-16T06:49:11.0108629Z) xác nhận function diagnostics `FN_EDGES=FAIL`, `FN_NULL=FAIL`, `FN_SEMANTICS=FAIL`, `FN_GRANTOR=FAIL`. Log dòng 388 `XSTORE_019O_PUBLIC_ACL_REPLAY=PASS` chỉ có nghĩa replay đã chạy, **không** có nghĩa quyền function sau restore đã khớp; log dòng 392 `XSTORE_019O_CLI_CLONE_OWNER_ACL_RLS_PARITY=FAIL`. | PASS **chỉ** phạm vi ID14: ghi đúng fingerprint FN_ACL=FAIL; không phải phục hồi quyền đã thành công, không khẳng định nguyên nhân gốc đã sửa. ID11 tiếp tục OWNER-DEFERRED/BLOCKED, release gates vẫn BLOCKED; không thay đổi mã/Production, không chạy lại workflow; ID15 chưa thực hiện |
 
 | 2026-10-17 20:36:25 ICT | 15 | PASS | [Run 38863218269](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38863218269), job 116850089837, exact main SHA 3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae. Log 2026-10-16T06:49:11.0108629Z: REL_EDGES=FAIL; FN_EDGES=FAIL. REL_ACL=FAIL and FN_ACL=FAIL; owner and RLS dimensions PASS. | PASS solely for identifying these two failed diagnostics. Restore gate still blocked, ID 11 still deferred/BLOCKED, ID 16 pending. No Production changes. |
+
+| 2026-10-17 20:40:45 ICT | 16 | PASS | Verified [run 38863218269](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38863218269) job 116850089837, attempt 1, exact main SHA `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae`. Log line 391, `2026-10-16T06:49:11.0108629Z`: `XSTORE_019O_ACL_EFFECTIVE_DIAG; ... REL_NULL=PASS; FN_NULL=FAIL; ...`. Run and restore job `completed/failure`; `PUBLIC_ACL_REPLAY=PASS` did not make function ACL parity PASS. | PASS only for ID16 accurately recording `FN_NULL=FAIL`. Function ACL metadata mismatch remains; no repair, no rerun, no Production change, ID11 OWNER-DEFERRED/BLOCKED and release gates still BLOCKED; next ID17 |
 
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
