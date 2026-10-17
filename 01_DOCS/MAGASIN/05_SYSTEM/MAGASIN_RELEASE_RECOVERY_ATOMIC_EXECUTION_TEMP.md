@@ -82,7 +82,7 @@
 - A → B recovery → C SAPO security → D lifecycle security → E phát hành hẹp → F/G/H/I/J/K chức năng và QA → L nghiệm thu toàn hệ → M hard-delete riêng → N đóng dự án.
 - Các việc read-only độc lập có thể nghiên cứu riêng nhưng **không** được vượt thứ tự GO/NO-GO phát hành hoặc cập nhật task sai thứ tự; ưu tiên ID nhỏ nhất.
 - Nếu một ID thất bại, giữ `BLOCKED` và lặp chu kỳ điều tra → bản vá đúng nguyên nhân → thử lại **chính ID**; không retry mù trên cùng SHA.
-- **Ngoại lệ điều phối Owner cho ID 11 (${date}):** Không còn là tiền đề chặn các task phát triển; giữ `BLOCKED`, không giả lập PASS. **Các release gates an toàn còn giữ nguyên STOP RULE độc lập**, không cho phép deploy chỉ vì được bỏ qua ID 11.
+- **Ngoại lệ điều phối Owner cho ID 11 (2026-10-17 20:20:46 ICT):** Không còn là tiền đề chặn các task phát triển; giữ `BLOCKED`, không giả lập PASS. **Các release gates an toàn còn giữ nguyên STOP RULE độc lập**, không cho phép deploy chỉ vì được bỏ qua ID 11.
 - Khác biệt giữa **code implemented**, **isolated QA PASS**, **Production deployed** và **real business accepted** phải giữ nguyên trong mọi báo cáo.
 
 ## 3. CHECKLIST NGUYÊN TỬ THEO THỨ TỰ 1 → 287
