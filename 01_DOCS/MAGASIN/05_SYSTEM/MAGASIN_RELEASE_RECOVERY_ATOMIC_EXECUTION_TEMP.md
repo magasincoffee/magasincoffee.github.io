@@ -9,7 +9,7 @@
 **Base main verified:** `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae` (2026-10-16)  
 **Branch riêng chỉ tài liệu:** `docs/xstore-release-recovery-atomic-20261017` — **chưa merge / không deploy Production**  
 **Phạm vi:** khắc phục triệt để những lỗi/chức năng MAGASIN nêu trong phiên kiểm tra, không mở thêm sản phẩm hoặc project khác.  
-**Status tổng:** EXECUTION IN PROGRESS; ID 1–10 + ID 12–18 PASS (17/287); ID 11 BLOCKED / OWNER-DEFERRED cho điều phối phát triển; RELEASE BLOCKED đối với các hard gate chưa đạt.  
+**Status tổng:** EXECUTION IN PROGRESS; ID 1–10 + ID 12–19 PASS (18/287); ID 11 BLOCKED / OWNER-DEFERRED cho điều phối phát triển; RELEASE BLOCKED đối với các hard gate chưa đạt.  
 **Tổng:** **287 việc nguyên tử**, chỉ có một luồng thực thi có thứ tự tăng dần.
 
 ## 0. HƯỚNG DẪN BẮT BUỘC CHO CHAT/ROBOT MỚI
@@ -145,7 +145,7 @@
 18. [x] Xác định nguyên bản encrypted backup mới nhất còn hạn sử dụng; ghi artifact ID/expiry.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
-19. [ ] Đối chiếu SHA256 và manifest của backup có quyền sử dụng.
+19. [x] Đối chiếu SHA256 và manifest của backup có quyền sử dụng.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
 20. [ ] Kiểm tra khóa giải mã còn dùng được bằng thao tác kiểm chứng không tiết lộ khóa.
@@ -1035,6 +1035,8 @@
 | 2026-10-17 20:41:58 ICT | 17 | PASS | [GitHub Actions run 38863218269](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38863218269), [job 116850089837](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38863218269/job/116850089837), attempt 1, main SHA `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae`, completed/failure. Raw job log line 391 at `2026-10-16T06:49:11.0108629Z`: `XSTORE_019O_ACL_EFFECTIVE_DIAG` includes **`REL_GRANTOR=FAIL; FN_GRANTOR=FAIL`**, plus `REL_EDGES=FAIL; FN_EDGES=FAIL`. Line 389 `XSTORE_019O_PUBLIC_RESTORE_GRANTOR=POSTGRES; ISOLATED_ONLY`, line 388 ACL replay PASS, but line 390 REL_ACL/FN_ACL FAIL and line 392 overall parity FAIL. | PASS **chỉ** task ID17 (ghi chính xác hai lỗi grantor); nguyên nhân cụ thể/khắc phục restore chưa được chứng minh; không Production write, merge/deploy hoặc retry; ID11 OWNER-DEFERRED/BLOCKED, next ID18 (encrypted backup metadata) |
 
 | 2026-10-17 20:50 ICT | 18 | PASS | Live GitHub Actions artifact metadata [run 38680192167](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38680192167): original encrypted ACL-bearing backup `xstore-019o-acl-full-encrypted-38680192167`, **artifact ID `11946749098`**, size **6,251,739 bytes**, created `2026-10-15T04:14:00Z`, `expired=false` at inspection, expires **`2026-10-22T04:13:59Z`** (`2026-10-22 11:13:59 ICT`), GitHub artifact ZIP digest `sha256:10d30c6b40b1bc14e285385eccfb4d5dd7bc310cbcd2c1f76358da43b71745de`, source run `main` HEAD **`15b737fdca977ca01cb8ae916d9d3be5df91ffe2`**. Rechecked run `38863218269` has no produced artifact; source SOT §§0.B and 11's historical backup reference cross-checked. | PASS is **metadata identification only** for the SOT-known latest eligible encrypted archive, not an exhaustive repository-wide artifact inventory; **not** validated archive-inner manifest/SHA, decryption, successful restore or current Production recovery parity. Original restore job failed. No download/decrypt, secret exposure, Production mutation, CI rerun or release. ID11 OWNER-DEFERRED/BLOCKED. Next ID19 (SHA256 + manifest verification). |
+
+| 2026-10-17 20:5x ICT | 19 | PASS | Downloaded **encrypted-only** [GitHub Actions artifact 11946749098](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38680192167) (source exact HEAD `15b737fdca977ca01cb8ae916d9d3be5df91ffe2`), read ZIP entries without decrypting. Locally computed outer ZIP SHA256 `10d30c6b40b1bc14e285385eccfb4d5dd7bc310cbcd2c1f76358da43b71745de` **MATCH** GitHub artifact digest. ZIP contains `production.dump.aes256gcm` (6,249,155 bytes) and `manifest.json` (621 bytes). Independently calculated encrypted member SHA256 `66c8d3f8158b8a41f4f0b4cba4d5b8056d06cc18747acf90c8eb4e8259a50b64` **MATCH** `manifest.encrypted_sha256`; member size **MATCH** `manifest.encrypted_bytes=6249155`; manifest `project_ref=menvbzlsncmpuvnaifxa`, `encrypted_algorithm=AES-256-GCM`, `dump_sha256=94a8cc1c8ba9e8e132c99d64b1b72c1ce760225d506cdb8f364a996ecf4a9f5d`, `dump_bytes=6249106`, `capture_utc=2026-10-15T04:13:19.843Z`. | PASS **only encrypted artifact integrity + manifest cross-check**. Plaintext dump hash is **manifest-declared, not independently recalculated**: decryption/key check belongs to ID20; `archive_catalog_verified=false` and `restore_verified=false` remain explicit; original recovery attempt FAILED. No decryption/plaintext output, Production write, CI rerun or release. ID11 OWNER-DEFERRED/BLOCKED; next ID20. |
 
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
