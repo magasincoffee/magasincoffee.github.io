@@ -119,7 +119,7 @@
 10. [x] Kiểm tra trạng thái, kết luận và SHA của các run mới nhất liên quan XSTORE.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
-11. [ ] Xác nhận không có thay đổi Production không thuộc kế hoạch kể từ baseline. **OWNER-DEFERRED cho mục đích điều phối phát triển ${date}; trạng thái BLOCKED, chưa PASS.**
+11. [ ] Xác nhận không có thay đổi Production không thuộc kế hoạch kể từ baseline. **OWNER-DEFERRED cho mục đích điều phối phát triển 2026-10-17 20:20:46 ICT; trạng thái BLOCKED, chưa PASS.**
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
 12. [x] Tạo mẫu nhật ký bằng chứng cho từng ID, chỉ cho phép TODO/DOING/PASS/BLOCKED.
