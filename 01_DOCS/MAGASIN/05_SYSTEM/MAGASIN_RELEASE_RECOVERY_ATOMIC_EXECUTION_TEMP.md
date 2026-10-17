@@ -9,7 +9,7 @@
 **Base main verified:** `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae` (2026-10-16)  
 **Branch riêng chỉ tài liệu:** `docs/xstore-release-recovery-atomic-20261017` — **chưa merge / không deploy Production**  
 **Phạm vi:** khắc phục triệt để những lỗi/chức năng MAGASIN nêu trong phiên kiểm tra, không mở thêm sản phẩm hoặc project khác.  
-**Status tổng:** EXECUTION IN PROGRESS; ID 1–10 + ID 12–19 + ID 54–56 PASS (21/287); ID 11 BLOCKED / OWNER-DEFERRED cho điều phối phát triển; RELEASE BLOCKED đối với các hard gate chưa đạt.  
+**Status tổng:** EXECUTION IN PROGRESS; ID 1–10 + ID 12–19 + ID 54–57 PASS (22/287); ID 11 BLOCKED / OWNER-DEFERRED cho điều phối phát triển; RELEASE BLOCKED đối với các hard gate chưa đạt.  
 **Tổng:** **287 việc nguyên tử**, chỉ có một luồng thực thi có thứ tự tăng dần.
 
 ## 0. HƯỚNG DẪN BẮT BUỘC CHO CHAT/ROBOT MỚI
@@ -262,7 +262,7 @@
 56. [x] Kiểm tra quyền EXECUTE của `authenticated` trên resolver bằng catalog SQL read-only.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
-57. [ ] Xác nhận `ingest_sapo_batch` vẫn kiểm token trước thao tác ghi.
+57. [x] Xác nhận `ingest_sapo_batch` vẫn kiểm token trước thao tác ghi.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
 58. [ ] Rà soát caller SAPO robot hiện hành có gọi wrapper thay vì resolver trực tiếp.
@@ -1048,6 +1048,8 @@
 | 2026-10-17 21:31:07 ICT | 55 | PASS (audit task; SECURITY FINDING OPEN) | Read-only Supabase SQL `pg_proc`/`pg_namespace`/`aclexplode(COALESCE(proacl,acldefault('f',proowner)))` and `has_function_privilege` against confirmed `MAGASIN-NOIBO` project `menvbzlsncmpuvnaifxa`, query timestamp `2026-10-17T14:31:07.267413Z`, exact `public.resolve_sapo_order_branches(p_work_date date)`: `proacl=NULL`; `anon_effective_execute=true`; `anon_schema_usage=true`; `public_execute=true` through default function ACL; `SECURITY DEFINER=true`. Prior narrow identity filter found no rows because identity arguments include parameter name; corrected query confirmed one canonical function. `has_function_privilege('PUBLIC',...)` is invalid because PUBLIC is not a role name, so effective PUBLIC edge was evaluated by ACL expansion instead. | **PASS only for ID55 factual `anon` EXECUTE rights audit; security FAIL remains OPEN, NOT SAPO security gate PASS.** Anonymous invocation risk exists at catalog ACL level; PostgREST exposure and body side effects not tested. DO NOT call resolver or change Production grants under this task. Next ID56 authenticated EXECUTE audit; Production deploy/remediation gated separately by SOT. |
 
 | 2026-10-17 21:35:16 ICT | 56 | PASS (audit task; SECURITY FINDING OPEN) | Confirmed project `MAGASIN-NOIBO` `menvbzlsncmpuvnaifxa`; read-only PostgreSQL catalog SQL at `2026-10-17T14:35:16.181864Z` for exact `public.resolve_sapo_order_branches(p_work_date date)`: `authenticated_effective_execute=true` (`has_function_privilege`), `authenticated_schema_usage=true`, `public_execute=true` (default ACL expanded with `aclexplode(COALESCE(proacl,acldefault('f',proowner)))`), `proacl=NULL`, `SECURITY DEFINER=true`. | **PASS only for ID56 read-only access audit; security vulnerability remains OPEN**, with `anon` and `authenticated` exposure from IDs 55–56. No function call or Production mutation. Next ID57 inspect `ingest_sapo_batch` token guard before writing, read-only. |
+
+| 2026-10-17 21:39:23 ICT | 57 | PASS (read-only code-order audit) | Direct Supabase `MAGASIN-NOIBO` (`menvbzlsncmpuvnaifxa`) Production `pg_get_functiondef` inspection at `2026-10-17T14:39:15.524174Z` of `public.ingest_sapo_batch(text,jsonb,jsonb,jsonb,jsonb)` and at `2026-10-17T14:39:23.844632Z` of `public.magasin_verify_integration_token(text)` showed the FIRST statement in wrapper `begin` is `if not public.magasin_verify_integration_token(p_token) then raise exception 'INVALID_INTEGRATION_TOKEN' using errcode='28000'; end if;`, before `UPDATE integration_api_tokens`, all INSERT/UPSERTs, and resolver call. Verifier is SQL STABLE SECURITY DEFINER, returns EXISTS for active, nonexpired SHA-256 token hash; no write statements in verifier. | Static body inspection PASS only; no RPC invoked, no token disclosed, no Production mutation or integration dynamic test. Resolver public/anon/authenticated EXECUTE exposure from ID55/56 remains OPEN. Next ID58 read-only SAPO robot caller review. |
 
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
