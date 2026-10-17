@@ -9,7 +9,7 @@
 **Base main verified:** `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae` (2026-10-16)  
 **Branch riêng chỉ tài liệu:** `docs/xstore-release-recovery-atomic-20261017` — **chưa merge / không deploy Production**  
 **Phạm vi:** khắc phục triệt để những lỗi/chức năng MAGASIN nêu trong phiên kiểm tra, không mở thêm sản phẩm hoặc project khác.  
-**Status tổng:** EXECUTION IN PROGRESS; ID 1–10 PASS; ID 11 BLOCKED (production drift provenance insufficient); RELEASE BLOCKED.  
+**Status tổng:** EXECUTION IN PROGRESS; ID 1–10 + ID 12 PASS (11/287); ID 11 BLOCKED / OWNER-DEFERRED cho điều phối phát triển; RELEASE BLOCKED đối với các hard gate chưa đạt.  
 **Tổng:** **287 việc nguyên tử**, chỉ có một luồng thực thi có thứ tự tăng dần.
 
 ## 0. HƯỚNG DẪN BẮT BUỘC CHO CHAT/ROBOT MỚI
@@ -17,9 +17,9 @@
 1. Mở file này từ đúng branch/PR GitHub, **không** giả định bản trên `main` đã được merge.
 2. Đọc tài liệu nghiệp vụ gốc `01_DOCS/MAGASIN/05_SYSTEM/WORKFORCE_CROSS_STORE_SCHEDULING_TEMP_SOURCE_OF_TRUTH.md` ở `main`. File này là **checklist điều phối**, KHÔNG thay thế quy tắc bảo mật và nghiệp vụ của SOT gốc.
 3. Đối chiếu mới nhất PR #392, #393, #394, #436, #390; GitHub Actions; Supabase metadata trước thao tác. Các SHA và con số ngày 17/10 là baseline lịch sử, không là bằng chứng hôm sau.
-4. Đọc journal cuối file và chọn **ID nhỏ nhất chưa PASS mà các tiền đề đã PASS**. Chỉ thực hiện một ID; nếu cần thay đổi để đạt PASS, dùng nhánh/PR chuyên trách, kiểm chứng rồi cập nhật nhật ký.
+4. Đọc journal cuối file và chọn **ID nhỏ nhất chưa PASS mà các tiền đề đã PASS**, **ngoại trừ ID 11 được Owner cho phép tạm gác ngày 2026-10-17 để tiếp tục xây WebApp**. Không được tính ID 11 là PASS; chuyển sang ID 12 rồi ID 13 theo thứ tự. Chỉ thực hiện một ID mỗi lần; nếu sửa để đạt PASS, dùng nhánh/PR chuyên trách, kiểm chứng rồi ghi nhật ký.
 5. Mỗi ID có trạng thái `TODO` → `DOING` → `PASS` hoặc `BLOCKED`. **Không** tự đánh dấu PASS chỉ vì workflow xanh nếu step quan trọng SKIPPED, không mặc định PASS cho data thiếu.
-6. Mỗi lần hoàn thành: sửa đúng checkbox ID bằng commit tài liệu trong **cùng nhánh nguồn này**; ghi nhật ký 1 dòng `[ngày ICT] [ID] [status] [evidence PR/run/SHA/SQL summary] [next]`. Nếu blocker, ghi chính xác blocker cùng ID, không skip hoặc chuyển sang phát hành phụ thuộc.
+6. Mỗi lần hoàn thành: sửa đúng checkbox ID bằng commit tài liệu trong **cùng nhánh nguồn này**; ghi nhật ký 1 dòng `[ngày ICT] [ID] [status] [evidence PR/run/SHA/SQL summary] [next]`. Nếu blocker, ghi đúng blocker, không tự skip hay vượt qua gate; riêng ID 11 có **Owner-deferred exception về thứ tự công việc**, KHÔNG phải chứng nhận PASS hoặc miễn gate phát hành.
 7. Nếu phát hiện lỗi mới: ghi ID phụ `<số>.a` ngay sau ID liên quan, trước khi chạy task kế tiếp; không đánh lại ID ổn định. Ràng buộc hoàn thành phải có dữ liệu chứng minh.
 8. **READ-ONLY mặc định.** Không gọi resolver SAPO có side-effect, không thay đổi hồ sơ nhân viên thật, payroll, schedules hoặc SQL DDL Production để smoke test.
 9. Chỉ áp dụng SQL Production, merge/deploy, xuất bản lịch hoặc xoá dữ liệu khi có backup/restore tương đương, roles/RLS/ACL, exact SHA/CI và phê duyệt phù hợp. Chỉ một task phát hành được triển khai tại một thời điểm; thất bại thì STOP.
@@ -28,6 +28,8 @@
 12. Chỉ phát hành hẹp PR #394 trước; PR #392 lớn chưa được tự động merge. Directive SOT §0.71 cho phép phát hành 019O khi đủ gate, không chờ nửa đêm **chỉ với phạm vi đó**.
 13. Thay đổi kiểm thử riêng trên nhánh tài liệu không đồng nghĩa deploy. Bằng chứng Production phải ghi exact-main + Pages run + migration ledger.
 14. Hoàn tất **mọi task** và đồng bộ tài liệu kiến trúc lâu dài trước khi xóa file tạm.
+15. **Owner decision — 2026-10-17 20:20:46 ICT:** Mục tiêu ưu tiên là **WebApp MAGASIN thực sự hoàn thiện và sử dụng được**; bản Production hiện tại còn thô sơ, không được coi là nghiệm thu hoàn chỉnh. Owner đồng ý **tạm bỏ qua kiểm toán lịch sử tuyệt đối của ID 11** để tiếp tục phát triển. ID 11 giữ nguyên `[ ]` + `BLOCKED` (theo 4 trạng thái hợp lệ); ghi nhãn **OWNER-DEFERRED** trong phần giải thích, **không tự chuyển thành PASS**. Được phép tiếp tục ID 12→13… trong phạm vi **tài liệu, phân tích, nhánh test và QA cô lập**. Trước bất kỳ production SQL/DDL, merge/deploy, publish lịch hoặc thay đổi dữ liệu thật nào, **không được bỏ qua** backup/restore owner+ACL/RLS, JWT/authorization, exact-HEAD CI và Owner release approval. Không mặc định mở lại ID 11 vì những vòng rà soát không có bằng chứng lịch sử mới; chỉ quay lại ID 11 khi Owner yêu cầu hoặc khi tiêu chí xác minh trạng thái hiện tại được Owner xác nhận rõ. Các task phát hành phải kiểm tra gates độc lập với ID 11.
+
 
 ### 0.A. WORKFORCE SOT RÀNG BUỘC HIỆN HÀNH — ID 9 (đọc 2026-10-17 18:42 ICT)
 
@@ -80,6 +82,7 @@
 - A → B recovery → C SAPO security → D lifecycle security → E phát hành hẹp → F/G/H/I/J/K chức năng và QA → L nghiệm thu toàn hệ → M hard-delete riêng → N đóng dự án.
 - Các việc read-only độc lập có thể nghiên cứu riêng nhưng **không** được vượt thứ tự GO/NO-GO phát hành hoặc cập nhật task sai thứ tự; ưu tiên ID nhỏ nhất.
 - Nếu một ID thất bại, giữ `BLOCKED` và lặp chu kỳ điều tra → bản vá đúng nguyên nhân → thử lại **chính ID**; không retry mù trên cùng SHA.
+- **Ngoại lệ điều phối Owner cho ID 11 (${date}):** Không còn là tiền đề chặn các task phát triển; giữ `BLOCKED`, không giả lập PASS. **Các release gates an toàn còn giữ nguyên STOP RULE độc lập**, không cho phép deploy chỉ vì được bỏ qua ID 11.
 - Khác biệt giữa **code implemented**, **isolated QA PASS**, **Production deployed** và **real business accepted** phải giữ nguyên trong mọi báo cáo.
 
 ## 3. CHECKLIST NGUYÊN TỬ THEO THỨ TỰ 1 → 287
@@ -116,10 +119,10 @@
 10. [x] Kiểm tra trạng thái, kết luận và SHA của các run mới nhất liên quan XSTORE.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
-11. [ ] Xác nhận không có thay đổi Production không thuộc kế hoạch kể từ baseline.
+11. [ ] Xác nhận không có thay đổi Production không thuộc kế hoạch kể từ baseline. **OWNER-DEFERRED cho mục đích điều phối phát triển ${date}; trạng thái BLOCKED, chưa PASS.**
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
-12. [ ] Tạo mẫu nhật ký bằng chứng cho từng ID, chỉ cho phép TODO/DOING/PASS/BLOCKED.
+12. [x] Tạo mẫu nhật ký bằng chứng cho từng ID, chỉ cho phép TODO/DOING/PASS/BLOCKED.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
 ## B — Phục hồi backup, owner, ACL và RLS (đường găng P0)
@@ -975,6 +978,34 @@
 
 ## 4. JOURNAL KẾT QUẢ (cập nhật tuần tự trong cùng file)
 
+### 4.1 MẪU BẰNG CHỨNG CHUẨN CHO MỌI ID — ID 12 (2026-10-17 20:20:46 ICT)
+
+**Hợp đồng ghi nhật ký có thể kiểm tra:** chỉ sử dụng đúng **bốn trạng thái** cho hàng ID số: `TODO`, `DOING`, `PASS`, `BLOCKED`. `OWNER-DEFERRED`, `RC_NOT_READY` hoặc `RELEASE BLOCKED` là **nhãn giải thích/điều kiện**, không phải trạng thái thứ năm. Hàng `PLAN_CREATED` lịch sử không phải task ID và được giữ nguyên như metadata khởi tạo.
+
+| Trường | Quy tắc điền / kiểm tra |
+|---|---|
+| `thoi_diem_ict` | `YYYY-MM-DD HH:MM:SS ICT`, không ghi giờ ước đoán; thời điểm đánh giá bằng chứng |
+| `id` | Số checklist hiện hành (`1`–`287`) hoặc ID phụ đã được Owner/protocol chấp thuận; không tự đánh lại |
+| `status` | Chính xác `TODO`, `DOING`, `PASS` hoặc `BLOCKED` |
+| `objective` | Một hành động nguyên tử, phạm vi, sản phẩm bị tác động |
+| `environment` | `main` / branch PR / `MAGASIN-NOIBO` / PG cô lập / site, phân biệt QA và Production |
+| `evidence` | URL thật tới PR/commit/Actions/run/job, migration version, kết quả SQL dạng tổng hợp không có PII, hoặc nguồn kỹ thuật tương đương đã đọc |
+| `exact_revision` | SHA commit đầy đủ, blob SQL, workflow run/attempt, hoặc snapshot timestamp + fingerprint đúng loại bằng chứng |
+| `checks` | Danh sách gate liên quan và kết luận chính xác `SUCCESS`/`FAILURE`/`SKIPPED`/chưa chạy; không đánh đồng `SKIPPED` với PASS |
+| `decision` | `PASS` chỉ khi tiêu chí của **đúng ID** đạt; `BLOCKED` kèm nguyên nhân, bằng chứng thiếu và tiền đề |
+| `next` | Chỉ rõ ID kế tiếp, hoặc giữ nguyên ID nếu bị chặn không được Owner cho tạm gác |
+| `safety` | Khẳng định thao tác chỉ đọc/QA cô lập hay ghi nào thực sự thực hiện; nếu không có Production write phải ghi tường minh |
+
+**Mẫu hàng Journal chuẩn** (một ID đã hoàn thành hoặc bị chặn thì append, không sửa lịch sử):
+
+```text
+| YYYY-MM-DD HH:MM:SS ICT | <ID> | <TODO|DOING|PASS|BLOCKED> | Mục tiêu=<...>; môi trường=<...>; PR/run/SHA=<liên kết có thật>; bằng chứng=<...>; checks=<...> | Kết luận=<...>; thiếu=<... nếu BLOCKED>; an toàn=<...>; next=<ID> |
+```
+
+**Kiểm tra bắt buộc trước commit:** (a) ID + status hợp lệ; (b) thời gian có ICT; (c) PASS có minh chứng đúng gate và không có check bắt buộc FAILURE/SKIPPED; (d) không chép passwords/JWT/PII; (e) source-of-truth/docs branch rõ ràng; (f) không suy diễn triển khai Production từ CI PR; (g) không cập nhật checkbox quá phạm vi task; (h) nếu Owner cho tạm gác một ID, giữ status `BLOCKED` và làm rõ giới hạn **riêng đối với sequencing**, không xóa blocker hoặc miễn bảo mật.
+
+**ID 12 evidence:** hợp đồng/mẫu ở ngay trong file và ghi một hàng `PASS` dưới đây; commit ghi chú ngay trong GitHub. **Không thực hiện ID 13 hoặc bất kỳ deploy nào trong ID 12.**
+
 | Thời điểm ICT | ID | Trạng thái | Bằng chứng chính xác | Chướng ngại / bước kế tiếp |
 |---|---:|---|---|---|
 | 2026-10-17 | — | PLAN_CREATED | Branch `docs/xstore-release-recovery-atomic-20261017` từ `main 3c4a4e7`; tài liệu chưa merge; không production write | Bắt đầu ID 1 |
@@ -992,6 +1023,8 @@
 | 2026-10-17 18:54:52 ICT | 11 | BLOCKED (follow-up) | Reverified exact `main 3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae`, 80 migrations latest `20261007171918`; current MAGASIN-NOIBO workforce aggregates match historical SOT: 1 active Owner, 2 active Managers, 28 active/3 inactive Staff, 106 priorities, 87 official schedules, 108 draft assignments, 0 employment constraints. Fresh read-only public catalog inventory 249 normalized entries MD5 **`cf7e4f277eb92ec43bd408b042e27f7b`** at `2026-10-17 18:53:50.207862 ICT`. Audit capability check: `log_statement=ddl`, `pgaudit.log=none`, no complete DML/permissions/history audit. Scoped postgres logs 337+32 events with zero aggregated SQL marker matches, **not** complete audit proof. [Recovery run 38863218269](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38863218269) confirmed owner/ACL parity FAIL independent of this task. | BLOCKED remains: today's equal counts/new catalog fingerprint cannot prove no earlier off-plan updates, privilege changes or offsetting writes. No migration/production changes, ID 11 still `[ ]`, stop before ID 12; seek genuine historical baseline and auditable approved-change provenance rather than assuming no drift. |
 | 2026-10-17 18:59:24 ICT | 11 | BLOCKED (audit coverage follow-up) | Read-only MAGASIN-NOIBO Supabase catalog: 7 Procurement-specific row-audit triggers; no analogous audited trigger on 5 Workforce tables, so partial per-feature audit ≠ complete Production write history. SQL aggregates since `2026-10-16T06:47:33Z`: `auth.audit_log_entries` **45** (6 login, 20 token_refreshed, 19 token_revoked); `procurement_audit_log` **0**. Cumulative pg_stat_database counter reset **2026-08-25**, pg_stat_statements reset **2026-08-27** (historical 13,171 write/DDL-class calls over 983,243 calls); none time-addresses baseline window. `log_statement=ddl`, `pgaudit.log=none`, `track_commit_timestamp=off`; Edge Functions one `saydi-tts-worker` v12 last updated 2026-10-05T09:36:36Z, prebaseline. Current main exact SHA unchanged. | **BLOCKED persists**. Existing counts, specialized audits, cumulative counters, and old backup cannot prove complete post-baseline no-off-plan DML/ACL drift. Await baseline artifact plus authoritative accepted-change evidence; retain ID 11 `[ ]`, ID 12 not started. No Production changes |
 | 2026-10-17 19:13 ICT | 11 | BLOCKED (encrypted archive preflight + current data snapshot) | GitHub readback old ACL-bearing encrypted archive [run 38680192167](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/38680192167) artifact ID `11946749098` digest `sha256:10d30c6b40b1bc14e285385eccfb4d5dd7bc310cbcd2c1f76358da43b71745de`, `expired=false`, expires `2026-10-22T04:13:59Z`. The original `Restore archive WITH owner and ACL` job FAILED; not a verified historical clone. GitHub connector has no workflow_dispatch and TinyFish browser profiles list no recorded GitHub sign-in; did not rerun a known failing old SHA, decrypt external archive or touch Production. Captured server-side SHA-256 only for current production five canonical tables at 2026-10-17 19:13:10 ICT: `profiles` 36/`9bb5814840589488d6cc2064d7983b5be1a29a1c1ec8315527f97632e2af22ea`; `employee_store_priorities` 106/`a8a3f545d38235d021e3b2ee8c001d5a427d934ae40f3d600b2941259802d2e8`; `work_schedules` 87/`37f8047735e580fb97d27092574b08d308f0630a34355fa80b60dab78ab25821`; `schedule_generation_assignments` 108/`1616ec8ae4a39545ff404ea54edf7519bfac169f01bd087fedcc6954d9dcc43f`; `employee_constraints` 0/`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`. | **BLOCKED**, current snapshot is not past snapshot or complete DML audit. Need trusted isolated runner restore for old artifact plus change approval reconciliation; impossible to certify historical absence of change-and-revert without complete contemporaneous audit. Keep ID11 unchecked, don't start ID12, no Production change. |
+| 2026-10-17 20:20:46 ICT | 11 | BLOCKED | **Owner explicit deferral (current conversation, 2026-10-17 20:20:46 ICT):** MAGASIN Production còn thô sơ, ưu tiên hoàn thiện sản phẩm sử dụng được; Owner yêu cầu bỏ qua việc truy hồi chứng cứ lịch sử của ID 11 để tiếp tục những task tạo WebApp. Baseline SHA/migrations và forensic findings các hàng ID 11 trước vẫn nguyên. | **ONLY sequencing waiver**: giữ ID 11 `[ ]`/`BLOCKED`, không coi là PASS, không miễn backup/restore owner/ACL/RLS, 3-role JWT/CI, approved release; cho phép ID 12 tiếp theo, không Production write |
+| 2026-10-17 20:20:46 ICT | 12 | PASS | Created **§4.1 evidence log schema** with 4 allowed statuses `TODO/DOING/PASS/BLOCKED`, template fields `ID/time/environment/PR/run/exact SHA/check results/decision/next/safety`, explicit validation gates and proof against interpreting `SKIPPED` as PASS. Synced Owner ID 11 scoped waiver to §0/§2 and checklist without changing prior forensic evidence. Full content checked in docs-only branch `docs/xstore-release-recovery-atomic-20261017`; reference this ID 12 journal commit. | **PASS only documentation template/protocol**. ID11 stays BLOCKED and explicitly deferred for development; release is still BLOCKED until mandatory independent security/recovery gates pass. No app/Production mutation; next **ID13** |
 
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
