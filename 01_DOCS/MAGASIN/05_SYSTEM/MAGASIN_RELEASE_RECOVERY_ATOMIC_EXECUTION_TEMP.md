@@ -9,7 +9,7 @@
 **Base main verified:** `3c4a4e7484f1ab161ba8cc3bbb2d49b1eaa855ae` (2026-10-16)  
 **Branch riêng chỉ tài liệu:** `docs/xstore-release-recovery-atomic-20261017` — **chưa merge / không deploy Production**  
 **Phạm vi:** khắc phục triệt để những lỗi/chức năng MAGASIN nêu trong phiên kiểm tra, không mở thêm sản phẩm hoặc project khác.  
-**Status tổng:** EXECUTION IN PROGRESS; ID 1–10 + ID 12–19 + ID 54 PASS (19/287); ID 11 BLOCKED / OWNER-DEFERRED cho điều phối phát triển; RELEASE BLOCKED đối với các hard gate chưa đạt.  
+**Status tổng:** EXECUTION IN PROGRESS; ID 1–10 + ID 12–19 + ID 54–55 PASS (20/287); ID 11 BLOCKED / OWNER-DEFERRED cho điều phối phát triển; RELEASE BLOCKED đối với các hard gate chưa đạt.  
 **Tổng:** **287 việc nguyên tử**, chỉ có một luồng thực thi có thứ tự tăng dần.
 
 ## 0. HƯỚNG DẪN BẮT BUỘC CHO CHAT/ROBOT MỚI
@@ -256,7 +256,7 @@
 54. [x] Đọc chức năng `resolve_sapo_order_branches` thật trên Production theo metadata, không gọi hàm.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
-55. [ ] Kiểm tra quyền EXECUTE của `anon` trên resolver bằng catalog SQL read-only.
+55. [x] Kiểm tra quyền EXECUTE của `anon` trên resolver bằng catalog SQL read-only.
    - **PASS khi:** Có link/ID bằng chứng từ hệ thống thật hoặc test cô lập được mô tả; ghi kết quả, exact SHA và thời điểm vào nhật ký; không có sai lệch chưa phân loại.
 
 56. [ ] Kiểm tra quyền EXECUTE của `authenticated` trên resolver bằng catalog SQL read-only.
@@ -1044,6 +1044,8 @@
 | 2026-10-17 ICT | OWNER directive / ID 20–53 | BLOCKED / OWNER-DEFERRED (sequencing only) | Owner explicitly requests pausing old encrypted-backup recovery checks that do not directly improve the unfinished WebApp and prioritizing feature/UI/QA work. ID20's last failure evidence remains valid; tasks 20–53 still unchecked and unverified, no PASS granted. SOT §0 point 16 records scope of deferral. | Next executable task **ID54** read-only SAPO resolver security audit; security and release gates retained for all Production changes; no Production write, no Secrets, no CI/deploy. |
 
 | 2026-10-17 21:26:41 ICT | 54 | PASS | Authorized Supabase connection `link_6a91c08a73388191a2d9046752677ccb` confirmed exact project `MAGASIN-NOIBO` / `menvbzlsncmpuvnaifxa` ACTIVE_HEALTHY, PostgreSQL 17.6.1.166. **Read-only** SQL over `pg_proc`, `pg_namespace`, `pg_language`, `pg_roles`, `pg_get_function_result`, `pg_get_functiondef` (hash/size only) at `2026-10-17T14:26:41.61432Z`: exactly one `public.resolve_sapo_order_branches(date)`; return `TABLE(resolved_count integer, unresolved_count integer, conflict_count integer)`; language `plpgsql`; owner `postgres`; `SECURITY DEFINER=true`; volatility `v` (VOLATILE); explicit `proacl=NULL`; definition MD5 `650bb0acebcbe0aa5a7ffb2299ee58bf`, 3216 characters. | **PASS only live function catalog inventory**; a NULL explicit ACL does **not** establish safe EXECUTE exposure. No resolver invocation, data mutation, SQL DDL, merge or deploy. ID11 and ID20–53 remain OWNER-DEFERRED; next ID55 catalog read-only `anon` EXECUTE check. |
+
+| 2026-10-17 21:31:07 ICT | 55 | PASS (audit task; SECURITY FINDING OPEN) | Read-only Supabase SQL `pg_proc`/`pg_namespace`/`aclexplode(COALESCE(proacl,acldefault('f',proowner)))` and `has_function_privilege` against confirmed `MAGASIN-NOIBO` project `menvbzlsncmpuvnaifxa`, query timestamp `2026-10-17T14:31:07.267413Z`, exact `public.resolve_sapo_order_branches(p_work_date date)`: `proacl=NULL`; `anon_effective_execute=true`; `anon_schema_usage=true`; `public_execute=true` through default function ACL; `SECURITY DEFINER=true`. Prior narrow identity filter found no rows because identity arguments include parameter name; corrected query confirmed one canonical function. `has_function_privilege('PUBLIC',...)` is invalid because PUBLIC is not a role name, so effective PUBLIC edge was evaluated by ACL expansion instead. | **PASS only for ID55 factual `anon` EXECUTE rights audit; security FAIL remains OPEN, NOT SAPO security gate PASS.** Anonymous invocation risk exists at catalog ACL level; PostgREST exposure and body side effects not tested. DO NOT call resolver or change Production grants under this task. Next ID56 authenticated EXECUTE audit; Production deploy/remediation gated separately by SOT. |
 
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
