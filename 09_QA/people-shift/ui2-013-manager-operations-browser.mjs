@@ -69,7 +69,7 @@ for(const width of [1440,1024,768,390]){
      expectedWidth,viewport:innerWidth,doc:document.documentElement.scrollWidth,
      module:root.dataset.ui2OperationsModule,state:root.dataset.ui2OperationsState,
      hierarchy:root.classList.contains("mui2-module")&&!!root.querySelector(".mui2-module-head")&&!!banner,
-     scoped,scopeControl:!!root.querySelector(".mui2-module-controls select"),
+     scoped,scopeControl:!!root.querySelector(".mui2-module-controls select:not(#mspStatusFilter)"),
      touchMin:controls.length?Math.min(...controls.map(x=>x.getBoundingClientRect().height)):0,
      tables
     };
