@@ -54,7 +54,7 @@ test("SCHED-UI-005 Manager runtime loads Shared Core before scheduling engine",(
   assert.match(runtime,/MAGASIN_CORE\?\.time\?\.shiftKind/);
   assert.match(engine,/draft-publish-v1\.js\?v=(?:20261004-xstore-016|20261005-xstore-017|20261005-xstore-018)/);
   assert.ok(engine.includes("cross-store-master-v1.js?v=20261004-xstore-016"));
-  assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261004-xstore-012|20261005-xstore-017|20261018-post-publish-v1)/);
+  assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261004-xstore-012|20261005-xstore-017|20261018-shortage-advisory-v1)/);
 });
 
 console.log("SCHED_UI_005_TIME_BAND_CONTRACT=PASS");
