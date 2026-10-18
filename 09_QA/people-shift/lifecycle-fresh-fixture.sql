@@ -6,6 +6,13 @@ CREATE TABLE public.profiles(id uuid PRIMARY KEY,role text NOT NULL,status text 
 CREATE TABLE public.employee_store_priorities(employee_id uuid REFERENCES public.profiles(id),store_id uuid NOT NULL);
 CREATE TABLE public.work_schedules(id uuid PRIMARY KEY,user_id uuid REFERENCES public.profiles(id),store_id uuid NOT NULL,work_date date NOT NULL,status text NOT NULL);
 CREATE TABLE public.schedule_generation_assignments(id uuid PRIMARY KEY,user_id uuid REFERENCES public.profiles(id),store_id uuid NOT NULL);
+-- Referential topology mirrors current Production FK relationships in the lifecycle-critical subset.
+-- This deliberately does not pretend to reproduce the full database schema.
+CREATE TABLE public.attendance(id uuid PRIMARY KEY,user_id uuid NOT NULL REFERENCES public.profiles(id),reviewed_by uuid REFERENCES public.profiles(id));
+CREATE TABLE public.payroll_entries(id uuid PRIMARY KEY,employee_id uuid NOT NULL REFERENCES public.profiles(id));
+CREATE TABLE public.employee_availability(id uuid PRIMARY KEY,user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE);
+CREATE TABLE public.approval_requests(id uuid PRIMARY KEY,user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,reviewed_by uuid REFERENCES public.profiles(id));
+CREATE TABLE public.employee_skills(id uuid PRIMARY KEY,user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,verified_by uuid REFERENCES public.profiles(id));
 CREATE FUNCTION public.current_user_role() RETURNS text LANGUAGE sql STABLE AS $$SELECT role FROM public.profiles WHERE id=auth.uid()$$;
 CREATE FUNCTION public.can_access_store(target_store_id uuid) RETURNS boolean LANGUAGE sql STABLE AS $$
  SELECT EXISTS(SELECT 1 FROM public.profiles WHERE id=auth.uid() AND (role='OWNER' OR access_scope='ALL' OR access_scope=target_store_id::text))
@@ -26,3 +33,8 @@ INSERT INTO public.schedule_generation_assignments VALUES
  ('00000000-0000-0000-0000-000000000301','00000000-0000-0000-0000-000000000004','00000000-0000-0000-0000-000000000101');
 CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE anon NOLOGIN;
+INSERT INTO public.attendance VALUES ('00000000-0000-0000-0000-000000000401','00000000-0000-0000-0000-000000000004',NULL);
+INSERT INTO public.payroll_entries VALUES ('00000000-0000-0000-0000-000000000501','00000000-0000-0000-0000-000000000004');
+INSERT INTO public.employee_availability VALUES ('00000000-0000-0000-0000-000000000601','00000000-0000-0000-0000-000000000004');
+INSERT INTO public.approval_requests VALUES ('00000000-0000-0000-0000-000000000701','00000000-0000-0000-0000-000000000004',NULL);
+INSERT INTO public.employee_skills VALUES ('00000000-0000-0000-0000-000000000801','00000000-0000-0000-0000-000000000004',NULL);
