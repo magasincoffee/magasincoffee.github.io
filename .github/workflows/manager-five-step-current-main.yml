@@ -1,0 +1,35 @@
+name: Manager Five-Step Current Main QA
+on:
+  pull_request:
+    paths:
+      - '05_MANAGER/Workforce/manager-five-board-v4.js'
+      - '05_MANAGER/Workforce/engine-v1.js'
+      - '09_QA/people-shift/manager-five-step-current-main*'
+      - '.github/workflows/manager-five-step-current-main.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  five-steps:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check static five-step authority
+        run: |
+          node --check 05_MANAGER/Workforce/manager-five-board-v4.js
+          node --test 09_QA/people-shift/manager-five-step-current-main.test.mjs
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start isolated fixture server
+        run: |
+          nohup python3 -m http.server 8786 --bind 127.0.0.1 >/tmp/five-steps-http.log 2>&1 &
+          for n in 1 2 3 4 5 6 7 8; do curl -fsS http://127.0.0.1:8786/09_QA/people-shift/manager-workforce-canonical-fixture.html >/dev/null && exit 0; sleep 1; done
+          exit 1
+      - name: Five-board desktop and mobile acceptance
+        run: node 09_QA/people-shift/manager-five-step-current-main-browser.mjs
