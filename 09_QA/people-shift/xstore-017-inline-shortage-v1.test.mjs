@@ -47,7 +47,7 @@ test("XSTORE-017 supplement action prefills the existing manual picker without i
 });
 
 test("XSTORE-017 removes the duplicate detailed shortage list from Auto Schedule",()=>{
-  assert.match(auto,/Mở chi nhánh tương ứng bên dưới để xem shortage ngay trong ô ngày\/giờ/);
+  assert.match(auto,/Đây là cảnh báo vận hành, không chặn duyệt hay phát hành/);
   assert.doesNotMatch(auto,/state\.shortages\.slice\(0,12\)\.map/);
 });
 
