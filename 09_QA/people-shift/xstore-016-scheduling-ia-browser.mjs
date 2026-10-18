@@ -50,7 +50,7 @@ for(const width of [1440,390]){
     hasGlobalSelector:!!root.querySelector("#msdStore"),
     overviewOpen:!!overview?.open,
     autoInsideOverview:!!(overview&&auto&&overview.contains(auto)),
-    weekControls:head?.querySelectorAll("[data-msd-week]").length||0,
+    weekControls:root.querySelectorAll(".x19g-shell [data-msd-week]").length||(head?.querySelectorAll("[data-msd-week]").length||0),
     branchActionsInHead:head?.querySelectorAll("#msdStart,#msdReload,#msdSave").length||0,
     scrollWidth:document.documentElement.scrollWidth,
     clientWidth:document.documentElement.clientWidth
