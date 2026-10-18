@@ -51,6 +51,7 @@ test("UI2-013 Attendance keeps canonical reader review state machine and explici
 
 test("UI2-013 Employees remains RPC-only while XSTORE adds bounded management-owned Store Priority writer",()=>{
  assert.deepEqual(set(staff),["list_employee_workforce_profiles_v1","set_employee_store_priority_profile_v1","list_employee_employment_types_v1","set_employee_employment_type_v1","list_employee_lifecycle_controls_v1","set_employee_lifecycle_status_v1"].sort());
+ for(const modalMarker of ["msp-modal-layer","msp-modal-dialog","aria-modal=","data-msp-modal-close","function closeModal()","lifecycleEditorHtml(lifeEdit)","editHtml(edit)"])assert.ok(staff.includes(modalMarker),"Modal contract: "+modalMarker);
  for(const field of ["full_name","username","phone","profile_status","priority_store_codes"])assert.ok(staff.includes(field),field);
  for(const action of ['data-msp-lifecycle-open','data-msp-lifecycle-save','data-msp-lifecycle-cancel','list_employee_lifecycle_controls_v1','set_employee_lifecycle_status_v1'])assert.ok(staff.includes(action),'Lifecycle UI missing: '+action);
  assert.match(staff,/Ưu tiên 1 là chi nhánh chính/);
@@ -89,7 +90,7 @@ test("UI2-013 preserves Today getState compatibility and does not redesign sched
 
 test("UI2-013 complete Manager cache chain loads changed assets while Owner path stays untouched",()=>{
  const v="20260927-ui2-013";
- const entryV="20261018-workforce-ftpt-lifecycle";
+ const entryV="20261018-staff-modal";
  assert.match(engine,/swap-approval-v1\.js\?v=20260929-mer003/);
  assert.match(engine,/payroll-self-check-v1\.js\?v=20260929-mer003/);
  assert.match(engine,/manager-operations-ui2-v1\.js\?v=20260927-ui2-016/);
