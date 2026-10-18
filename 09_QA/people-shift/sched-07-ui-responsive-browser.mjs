@@ -551,6 +551,7 @@ await scheduleV2Desktop.close();
 
 await page.goto(BASE+"/09_QA/people-shift/manager-workforce-canonical-fixture.html",{waitUntil:"networkidle"});
 await page.locator("#panel-publish .msd").waitFor();
+await page.locator('[data-x19g-nav="draft"]').click();
 await check("sched07_manager_mobile_stacks_board_without_page_overflow",async()=>{
   const state=await page.evaluate(()=>{
     const html=document.documentElement,board=document.querySelector(".msd-board"),btn=document.querySelector("#msdStart");
@@ -687,6 +688,7 @@ const desktop=await context.newPage();
 await desktop.setViewportSize({width:1440,height:1000});
 await desktop.goto(BASE+"/09_QA/people-shift/manager-workforce-canonical-fixture.html",{waitUntil:"networkidle"});
 await desktop.locator("#panel-publish .msd").waitFor();
+await desktop.locator('[data-x19g-nav="edit"]').click();
 await check("sched07_manager_desktop_keeps_operational_week_board",async()=>{
   const state=await desktop.evaluate(()=>{
     const board=document.querySelector(".msd-board"),html=document.documentElement;

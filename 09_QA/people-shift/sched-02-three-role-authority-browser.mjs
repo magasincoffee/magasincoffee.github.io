@@ -15,6 +15,7 @@ try{
   await check('manager_uses_only_canonical_store_scoped_writer',async()=>{
     await manager.goto(base+'/09_QA/people-shift/manager-workforce-canonical-fixture.html');
     await manager.locator('.msd').waitFor();
+    await manager.locator('[data-x19g-nav="draft"]').click();
     await manager.locator('#msdStart').click();
     await manager.waitForFunction(()=>globalThis.__MW31_QA.state.generation?.id==='gen-1');
     const cross=await manager.evaluate(()=>globalThis.__MW31_QA.rpc('create_schedule_generation',{
@@ -29,7 +30,8 @@ try{
   });
 
   await check('manager_stale_publish_is_server_revalidated',async()=>{
-    await manager.locator('#msdManualEmployee').selectOption('u-1');
+    await manager.locator('[data-x19g-nav="edit"]').click();
+     await manager.locator('#msdManualEmployee').selectOption('u-1');
     await manager.locator('#msdManualDate').selectOption('2026-09-28');
     await manager.locator('#msdManualStart').selectOption('06:00');
     await manager.locator('#msdManualEnd').selectOption('12:00');
