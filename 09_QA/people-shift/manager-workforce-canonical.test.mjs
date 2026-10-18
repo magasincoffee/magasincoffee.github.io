@@ -167,3 +167,9 @@ test('Employee view initialization is idempotent and preserves FT/PT lifecycle c
   assert.match(staff,/root\.dataset\.canonicalStaffProjection='3'/);
   for(const control of ['mspSearch','mspStatusFilter','mspEmploymentType','lifecycleReady'])assert.ok(staff.includes(control),control);
 });
+
+test('Workforce profile loader fails closed on a thrown RPC request',async()=>{
+  const staff=await read('05_MANAGER/Workforce/staff-projection-v1.js');
+  assert.match(staff,/try\{q=await client\(\)\.rpc\('list_employee_workforce_profiles_v1'\)\}catch\(e\)\{q=\{error:e\}\}/);
+  assert.match(staff,/if\(q\?\.error\)\{state\.rows=\[\];state\.error=errorCode\(q\.error\);render\(\);return\}/);
+});
