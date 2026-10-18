@@ -1,0 +1,46 @@
+name: Employee FTPT Isolated QA
+on:
+  pull_request:
+    paths:
+      - '07_DATABASE/migrations/20261018105000_xstore_employee_ftpt_v1.sql'
+      - '09_QA/people-shift/ftpt-*.sql'
+      - '.github/workflows/employee-ftpt-isolated-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: qa
+          POSTGRES_PASSWORD: fixture-only
+          POSTGRES_DB: ftpt_qa
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U qa -d ftpt_qa"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: qa
+      PGPASSWORD: fixture-only
+      PGDATABASE: ftpt_qa
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deny Production connection references in QA fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -nEi 'menvbzlsncmpuvnaifxa|foclxkjnypjolcwqekku|supabase\.co' 09_QA/people-shift/ftpt-{synthetic-fixture,fresh-smoke}.sql; then
+            echo 'Forbidden live database reference in isolated QA' >&2; exit 1
+          fi
+      - name: Load synthetic fixture
+        run: psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/ftpt-synthetic-fixture.sql
+      - name: Apply new FTPT migration to disposable DB
+        run: psql -v ON_ERROR_STOP=1 -f 07_DATABASE/migrations/20261018105000_xstore_employee_ftpt_v1.sql
+      - name: Check role and rollback-only smoke
+        run: psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/ftpt-fresh-smoke.sql
