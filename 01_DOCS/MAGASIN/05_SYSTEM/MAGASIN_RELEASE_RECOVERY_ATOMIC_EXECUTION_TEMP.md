@@ -1130,6 +1130,8 @@
 
 | 2026-10-18 ICT | RELEASE SLICE #440 | MERGED INTO MAIN; PAGES DEPLOY RUNNING | Owner product-first approved progressing new app. PR [#440](https://github.com/magasincoffee/magasincoffee.github.io/pull/440) one-file client-side Manager staff search (name, username, phone, empty state) moved Draft→Ready after four green PR checks and **squash merged** to main at `1007fd651377d9ced1cf3bf8e3fc9d256039c22b`. Exact-main source validation run [39094377108](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39094377108) SUCCESS; GitHub Pages run [39094376840](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39094376840) in_progress at last observation. | Confirm GitHub Pages run SUCCESS and site asset SHA before claiming live deployment. Next prioritize scoped feature PRs; #392/#394/#393 remain gated; no Production DB mutation. |
 
+| 2026-10-18 ICT | RELEASE SLICE #440 | GITHUB PAGES DEPLOY SUCCESS | Exact SHA `1007fd651377d9ced1cf3bf8e3fc9d256039c22b` [GitHub Pages run 39094376840](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39094376840) completed/success after PR #440 squash merge. This verifies successful GitHub Pages build/deployment for exact main SHA; browser-level end-to-end usage has not been certified. | Next continue scoped improvements; release gates for sensitive lifecycle/FT/PT backend remain. |
+
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
 - Backup/restore **owner+ACL+RLS parity PASS**; SAPO resolver P0 đóng; 3-role scope/JWT/negative RPC PASS.
