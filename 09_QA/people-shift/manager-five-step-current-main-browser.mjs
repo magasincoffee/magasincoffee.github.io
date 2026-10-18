@@ -18,6 +18,10 @@ for(const width of [1440,390]){
   if(await page.locator('[data-x19g-board]:visible').count()!==1)throw Error('Focus mode should show one step');
   await page.locator('[data-x19g-next]').click();
   if(!await page.locator('[data-x19g-board="check"]').isVisible())throw Error('Next must show review step');
+  await page.locator('[data-x19g-nav="edit"]').click();
+  await page.locator('[data-x19g-board="edit"] [data-x19g-go-check]').first().click();
+  if(!await page.locator('[data-x19g-board="check"]').isVisible())throw Error('Review shortcut must navigate even in focus mode');
+  if(await page.locator('[data-x19g-board]:visible').count()!==1)throw Error('Review shortcut must preserve focus mode');
   await page.locator('[data-x19g-focus-toggle]').click();
   if(await page.locator('[data-x19g-board]:visible').count()!==5)throw Error('Show all must restore five steps');
   const candidates=page.locator('.x19g-supplement-details');
