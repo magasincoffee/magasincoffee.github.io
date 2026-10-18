@@ -10,6 +10,8 @@ BEGIN
  IF v->>'new_status'<>'INACTIVE' THEN RAISE EXCEPTION 'OFFBOARD_FAIL'; END IF;
  IF (SELECT count(*) FROM public.employee_lifecycle_audit_v1)<>1 THEN RAISE EXCEPTION 'AUDIT_COUNT_FAIL'; END IF;
  IF (SELECT count(*) FROM public.work_schedules)<>1 OR (SELECT count(*) FROM public.schedule_generation_assignments)<>1 THEN RAISE EXCEPTION 'SCHEDULE_CHANGED'; END IF;
+ IF (SELECT count(*) FROM public.attendance)<>1 OR (SELECT count(*) FROM public.payroll_entries)<>1 OR (SELECT count(*) FROM public.employee_availability)<>1 OR (SELECT count(*) FROM public.approval_requests)<>1 OR (SELECT count(*) FROM public.employee_skills)<>1 THEN RAISE EXCEPTION 'RELATED_FK_ROWS_CHANGED'; END IF;
+ IF (SELECT count(*) FROM pg_constraint WHERE contype='f' AND confrelid='public.profiles'::regclass AND conrelid IN ('public.attendance'::regclass,'public.payroll_entries'::regclass,'public.employee_availability'::regclass,'public.approval_requests'::regclass,'public.employee_skills'::regclass))<>7 THEN RAISE EXCEPTION 'FK_TOPOLOGY_INCOMPLETE'; END IF;
  v:=public.set_employee_lifecycle_status_v1('00000000-0000-0000-0000-000000000004','ACTIVE','synthetic restore test');
  IF (SELECT count(*) FROM public.employee_lifecycle_audit_v1)<>2 THEN RAISE EXCEPTION 'RESTORE_AUDIT_FAIL'; END IF;
 END $$;
