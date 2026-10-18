@@ -93,6 +93,7 @@ function errorText(e){
   ['STORE_NOT_ALLOWED','Tài khoản không có quyền xếp lịch cho cửa hàng này.'],
   ['STORE_NOT_ACTIVE','Cửa hàng hiện không hoạt động.'],
   ['MANAGER_AVAILABILITY_OVERRIDE','Quản lý điều động ngoài thời gian đăng ký.'],
+  ['EMPTY_STAFFING_SHORTAGE_NON_BLOCKING','Tuần còn thiếu toàn bộ nhân sự; vẫn có thể phát hành và điều động sau.'],
   ['AVAILABILITY_MISMATCH','Có ca nằm ngoài thời gian nhân viên đã đăng ký có thể làm.'],
   ['OFFICIAL_SCHEDULE_OVERLAP','Có ca bị trùng với lịch chính thức hiện hữu.'],
   ['ASSIGNMENT_PAYLOAD_MALFORMED','Dữ liệu ca làm chưa hợp lệ.'],
@@ -469,7 +470,7 @@ function branchRowsHtml(stage,stepHtml,officialHtml,actionHelp){
    +'<div class="msd-summary"><span class="msd-pill">'+esc(s.code||'—')+'</span><span class="msd-pill">'+state.availability.length+' đăng ký thời gian</span><span class="msd-pill">'+state.assignments.length+' ca trong lịch đang xếp</span>'+(state.shortages.length?'<span class="msd-pill msd-shortage-pill">'+state.shortages.length+' khoảng thiếu cần xử lý</span>':'')+'<span class="msd-pill '+(stage==='PUBLISHED'?'msd-ok':stage==='CONFLICT'?'msd-warning':'')+'">'+stageLabel(stage)+'</span>'+dirty+(state.duplicateDrafts?'<span class="msd-pill msd-warning">Có nhiều bản nháp cùng chi nhánh và tuần · thao tác đang tạm khóa</span>':'')+'</div>'
    +'<div class="msd-actions msu2-draft-actions msd-branch-actions"><button class="btn" type="button" id="msdStart" aria-describedby="msdActionHelp"'+(stage==='REVIEWED'||stage==='PUBLISHED'?' disabled aria-disabled="true"':'')+'>'+(state.generationId?'Mở lại bản nháp':'Tạo bản nháp')+'</button><button class="btn" type="button" id="msdReload">Tải lại</button><button class="btn primary" type="button" id="msdSave" aria-describedby="msdActionHelp"'+(stage==='DRAFT'?'':' disabled aria-disabled="true"')+'>Lưu bản nháp</button></div>'
    +'<div class="msd-layout"><div class="msd-source"><b>Nhân viên đủ điều kiện xếp ca</b><div class="muted" style="margin-top:4px">'+state.eligibleEmployees.length+' nhân viên ACTIVE có Store Priority tại chi nhánh này. Availability là trạng thái hỗ trợ; Quản lý có thể điều động thủ công ngoài đăng ký với cảnh báo rõ ràng.</div>'+sourceHtml()+'</div><div class="msd-board-wrap"><b>Lịch đang xếp · Thứ Hai → Chủ Nhật</b><div class="muted" style="margin:4px 0 10px">Chỉnh ca trực tiếp tại đây khi lịch còn là bản nháp.</div>'+boardHtml()+'</div></div>'
-   +'<div class="msd-downstream"><div class="muted" style="margin-bottom:4px">Sau khi lưu bản nháp: kiểm tra xung đột → duyệt → phát hành.</div><div id="msdActionHelp" class="muted" style="margin-bottom:8px">'+esc(actionHelp)+'</div><div class="msd-actions"><button class="btn" type="button" id="msdValidate" aria-describedby="msdActionHelp"'+(!state.generationId||stage==='PUBLISHED'||state.assignments.length===0||state.dirty?' disabled aria-disabled="true"':'')+'>Kiểm tra xung đột</button><button class="btn" type="button" id="msdReview" aria-describedby="msdActionHelp"'+(stage==='DRAFT'&&state.assignments.length>0&&!state.dirty?'':' disabled aria-disabled="true"')+'>Duyệt lịch</button><button class="btn primary" type="button" id="msdPublish" aria-describedby="msdActionHelp"'+(stage==='REVIEWED'&&state.assignments.length>0&&!state.dirty?'':' disabled aria-disabled="true"')+'>Phát hành</button></div></div>'
+   +'<div class="msd-downstream"><div class="muted" style="margin-bottom:4px">Sau khi lưu bản nháp: kiểm tra xung đột → duyệt → phát hành.</div><div id="msdActionHelp" class="muted" style="margin-bottom:8px">'+esc(actionHelp)+'</div><div class="msd-actions"><button class="btn" type="button" id="msdValidate" aria-describedby="msdActionHelp"'+(!state.generationId||stage==='PUBLISHED'||state.dirty?' disabled aria-disabled="true"':'')+'>Kiểm tra xung đột</button><button class="btn" type="button" id="msdReview" aria-describedby="msdActionHelp"'+(stage==='DRAFT'&&!state.dirty?'':' disabled aria-disabled="true"')+'>Duyệt lịch</button><button class="btn primary" type="button" id="msdPublish" aria-describedby="msdActionHelp"'+(stage==='REVIEWED'&&!state.dirty?'':' disabled aria-disabled="true"')+'>Phát hành</button></div></div>'
    +officialHtml
    +'<div id="msdStatus" class="msd-status" role="status" aria-live="polite">'+(state.dirty?'Có thay đổi chưa lưu. Bấm “Lưu bản nháp” trước khi chuyển chi nhánh, kiểm tra hoặc duyệt.':state.generationId?(stage==='PUBLISHED'?'Lịch chính thức đã sẵn sàng.':stage==='REVIEWED'?'Lịch đã duyệt; kiểm tra lần cuối rồi phát hành.':'Bản nháp sẵn sàng chỉnh sửa.'):'Mở chi nhánh này rồi tạo hoặc mở bản nháp.')+'</div>'
    +'</div>':'';
@@ -492,7 +493,7 @@ function render(){
  const stepHtml='<div class="msd-summary" aria-label="Tiến trình xếp lịch">'+steps.map(([n,label,kind])=>'<span class="msd-pill '+(kind==='done'?'msd-ok':kind==='current'?'msd-warning':'')+'">'+n+'. '+esc(label)+'</span>').join('')+'</div>';
  const officialAction=actorRole()==='OWNER'?'':'<div class="msd-actions" style="margin-top:8px"><button class="btn primary" id="msdOfficial" type="button">Mở lịch chính thức</button></div>';
  const officialHtml=stage==='PUBLISHED'?'<div class="msd-status ok" role="status" aria-live="polite"><b>Lịch chính thức đã phát hành</b><br>'+state.officialRows.length+' ca chính thức đang hiển thị bên dưới.'+officialRowsHtml()+officialAction+'</div>':'';
- const actionHelp=state.dirty?'Có thay đổi chưa lưu. Hãy lưu bản nháp trước khi kiểm tra, duyệt hoặc chuyển chi nhánh.':stage==='NONE'?'Tạo hoặc mở lịch nháp trong chi nhánh đang mở để thêm ca, lưu và kiểm tra.':stage==='DRAFT'&&state.assignments.length===0?'Bản nháp đang rỗng. Hãy dùng “Tạo lịch nháp tự động” ở luồng tuần trước khi kiểm tra hoặc duyệt.':stage==='DRAFT'?'Bạn có thể chỉnh ca, lưu bản nháp rồi kiểm tra trước khi duyệt.':stage==='REVIEWED'?'Lịch đã duyệt nên phần chỉnh sửa bị khóa; bước tiếp theo là phát hành.':stage==='PUBLISHED'?'Lịch đã phát hành nên các thao tác chỉnh sửa bị khóa.':'Có nhiều bản nháp cho cùng chi nhánh và tuần; thao tác tạm khóa cho đến khi dữ liệu được xử lý.';
+ const actionHelp=state.dirty?'Có thay đổi chưa lưu. Hãy lưu bản nháp trước khi kiểm tra, duyệt hoặc chuyển chi nhánh.':stage==='NONE'?'Tạo hoặc mở lịch nháp trong chi nhánh đang mở để thêm ca, lưu và kiểm tra.':stage==='DRAFT'&&state.assignments.length===0?'Bản nháp chưa có ca. Nếu đã thiết lập nhu cầu nhân sự, bạn vẫn có thể kiểm tra, duyệt và phát hành tuần còn thiếu người, sau đó bổ sung ca chính thức.':stage==='DRAFT'?'Bạn có thể chỉnh ca, lưu bản nháp rồi kiểm tra trước khi duyệt.':stage==='REVIEWED'?'Lịch đã duyệt nên phần chỉnh sửa bị khóa; bước tiếp theo là phát hành.':stage==='PUBLISHED'?'Lịch đã phát hành nên các thao tác chỉnh sửa bị khóa.':'Có nhiều bản nháp cho cùng chi nhánh và tuần; thao tác tạm khóa cho đến khi dữ liệu được xử lý.';
  const globalActions='<div class="msd-actions msd-global-actions"><button class="btn" type="button" data-msd-week="prev" aria-label="Tuần trước">←</button><button class="btn" type="button" data-msd-week="target">Tuần sau</button><button class="btn" type="button" data-msd-week="next" aria-label="Tuần kế tiếp">→</button><span class="badge blue">'+esc(state.week||'—')+'</span></div>';
  const globalSummary='<div class="msd-summary msd-global-summary"><span class="msd-pill">'+state.stores.length+' chi nhánh</span><span class="msd-pill">Tuần '+esc(state.week||'—')+'</span><span class="msd-pill">Mở từng chi nhánh để chỉnh lịch</span></div>';
  p.innerHTML='<section class="card msd" data-scheduling-actor="'+esc(actorRole())+'"><div class="msd-head"><div><h2 style="margin:0">'+esc(copy.title)+'</h2><div class="muted" style="margin-top:5px">'+esc(copy.subtitle)+'</div></div>'+globalActions+'</div>'+globalSummary+'<div id="xstoreAutomationMount"></div>'+branchRowsHtml(stage,stepHtml,officialHtml,actionHelp)+'<details class="msd-global-overview"><summary>Tổng quan 4 cửa hàng · thông tin tham khảo</summary><div id="xstoreMasterMount"></div></details></section>';
@@ -550,7 +551,7 @@ async function save(){
 async function validate(){
  if(state.busy||!state.generationId||state.generationStatus==='PUBLISHED')return;
  if(state.dirty)return status('Hãy lưu các thay đổi của lịch nháp trước khi kiểm tra.','error');
- if(state.assignments.length===0){state.lastValidation='INVALID';render();status('Lịch nháp chưa có ca nào. Hãy tạo lịch nháp tự động trước khi kiểm tra.','error');return}
+ 
  state.busy=true;lockControls(true);status('Đang kiểm tra lịch…');
  try{
   const q=await client().rpc('validate_schedule_generation_v1',{p_generation_id:state.generationId});
@@ -569,7 +570,7 @@ async function validate(){
 async function review(){
  if(state.busy||!state.generationId||!['DRAFT','REVIEWED'].includes(state.generationStatus))return;
  if(state.dirty)return status('Hãy lưu các thay đổi của lịch nháp trước khi duyệt.','error');
- if(state.assignments.length===0){state.lastValidation='INVALID';render();status('Không thể duyệt lịch rỗng. Hãy tạo lịch nháp tự động trước.','error');return}
+ 
  state.busy=true;lockControls(true);status('Đang kiểm tra lại và duyệt lịch…');
  try{
   const q=await client().rpc('review_schedule_generation',{p_generation_id:state.generationId,p_decision:'APPROVED'});
@@ -581,7 +582,7 @@ async function review(){
 async function publish(){
  if(state.busy||!state.generationId||!['REVIEWED','PUBLISHED'].includes(state.generationStatus))return;
  if(state.dirty)return status('Hãy lưu các thay đổi của lịch nháp trước khi phát hành.','error');
- if(state.assignments.length===0){state.lastValidation='INVALID';render();status('Không thể phát hành lịch rỗng. Hãy quay lại tạo lịch nháp tự động.','error');return}
+ 
  if(state.generationStatus==='REVIEWED'&&!confirm('Phát hành lịch đã duyệt thành lịch làm chính thức?'))return;
  state.busy=true;lockControls(true);status(state.generationStatus==='PUBLISHED'?'Đang kiểm tra thao tác phát hành lặp…':'Đang kiểm tra lại và phát hành lịch chính thức…');
  try{
@@ -599,7 +600,7 @@ async function publish(){
   await loadOfficialRows();
   if(!q.data?.already_published)document.dispatchEvent(new CustomEvent('magasin:schedule-published',{detail}));
   render();
-  status(q.data?.already_published?'Lịch đã được phát hành trước đó; thao tác lặp không tạo ca trùng.':'Đã phát hành '+detail.insertedScheduleCount+' ca chính thức và tải lại lịch từ hệ thống.','ok');
+  status(q.data?.already_published?'Lịch đã được phát hành trước đó; thao tác lặp không tạo ca trùng.':detail.insertedScheduleCount?'Đã phát hành '+detail.insertedScheduleCount+' ca chính thức và tải lại lịch từ hệ thống.':'Đã phát hành tuần chưa có ca được phân công; quản lý có thể bổ sung nhân viên trên lịch chính thức.','ok');
   return q;
  }catch(e){status('Phát hành lịch thất bại: '+errorText(e),'error')}finally{state.busy=false;lockControls(false)}
 }

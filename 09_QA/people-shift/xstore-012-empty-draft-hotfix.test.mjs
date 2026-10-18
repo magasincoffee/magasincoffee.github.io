@@ -24,14 +24,12 @@ test("XSTORE-012 empty DRAFT returns to automatic schedule generation",()=>{
  assert.match(auto,/state\.assignmentCount=state\.globalDraftCount/);
 });
 
-test("XSTORE-012 browser controls fail closed when selected generation has zero assignments",()=>{
- assert.match(draft,/stage==='DRAFT'&&state\.assignments\.length===0/);
- assert.match(draft,/Lịch nháp chưa có ca nào\. Hãy tạo lịch nháp tự động trước khi kiểm tra/);
- assert.match(draft,/Không thể duyệt lịch rỗng/);
- assert.match(draft,/Không thể phát hành lịch rỗng/);
- assert.match(draft,/id="msdValidate"[\s\S]*state\.assignments\.length===0/);
- assert.match(draft,/id="msdReview"[\s\S]*state\.assignments\.length>0/);
- assert.match(draft,/id="msdPublish"[\s\S]*state\.assignments\.length>0/);
+test("XSTORE-012 empty DRAFT must still go through authoritative backend validation",()=>{
+ assert.match(draft,/client\(\)\.rpc\('validate_schedule_generation_v1'/);
+ assert.match(draft,/client\(\)\.rpc\('review_schedule_generation'/);
+ assert.match(draft,/client\(\)\.rpc\('publish_schedule_generation'/);
+ assert.match(draft,/if\(state\.dirty\)return status\('Hãy lưu các thay đổi của lịch nháp trước khi kiểm tra/);
+ assert.doesNotMatch(draft,/if\(state\.assignments\.length===0\)\{state\.lastValidation='INVALID'/);
 });
 
 test("XSTORE-012 server validator rejects zero-assignment generations",()=>{
@@ -48,7 +46,7 @@ test("XSTORE-012 backend guard automatically protects review and publish",()=>{
 });
 
 test("XSTORE-012 cache lineage remains intact while newer scheduling IA revisions may advance",()=>{
- assert.match(engine,/draft-publish-v1\.js\?v=(?:20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018)/);
+ assert.match(engine,/draft-publish-v1\.js\?v=(?:20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018|20261018-empty-demand-v1)/);
  assert.match(engine,/cross-store-master-v1\.js\?v=(?:20261004-xstore-012|20261004-xstore-016)/);
  assert.match(engine,/cross-store-auto-schedule-v1\.js\?v=(?:20261004-xstore-012|20261005-xstore-017|20261018-shortage-advisory-v1)/,"cross-store-auto-schedule-v1.js");
 });
