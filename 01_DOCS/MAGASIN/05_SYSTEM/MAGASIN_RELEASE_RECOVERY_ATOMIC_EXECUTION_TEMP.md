@@ -1178,6 +1178,8 @@
 
 | 2026-10-18 ICT | PHASE 2 / Guided scheduling UX | DEVELOPMENT READY IN PR #449; NOT DEPLOYED | Implemented new one-step-at-a-time scheduling presentation in [PR #449](https://github.com/magasincoffee/magasincoffee.github.io/pull/449): one of Prepare/Draft/Edit/Check/Publish visible at a time, Back/Next navigation, current step status, 27-person supplemental employee pool collapsed by default. Preserved the existing draft/save/validate/review/publish RPC pathways. Old SCHED-01, SCHED-02, SCHED-07, UI2-012 browser flows updated to enter the relevant step before interacting with now-hidden controls. Exact branch HEAD `3bfe4122f6e21458d6333ba169febef965233ae4`; [five-step desktop/mobile run 39117872819](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39117872819) SUCCESS; UI2 and People Shift exact-head full suites running at journal time. | PR remains Draft; no merge/no release until full current-main regression green and actual browser UX review. No Production DB modification. |
 
+| 2026-10-18 ICT | PHASE 2 / Guided UX follow-up | PR #449 STILL DRAFT | Subsequent People Shift CI on head `3bfe4122f6e21458d6333ba169febef965233ae4` failed SCHED-04 browser because old E2E attempted to use hidden Edit/Publish controls without selecting stages. Updated SCHED-04 navigation on new head `a02057dca1551efa3a5c601a9a329ffc607b4edb` (exact-head CI not yet confirmed). Keep five-step 1440/390 success from previous head as limited evidence only. | Do not merge/release until UI2, People Shift, guided desktop/mobile all green on same exact head; no production data writes. |
+
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
 - Backup/restore **owner+ACL+RLS parity PASS**; SAPO resolver P0 đóng; 3-role scope/JWT/negative RPC PASS.
