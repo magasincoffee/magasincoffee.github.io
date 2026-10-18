@@ -47,13 +47,13 @@ test("XSTORE-017 supplement action prefills the existing manual picker without i
 });
 
 test("XSTORE-017 removes the duplicate detailed shortage list from Auto Schedule",()=>{
-  assert.match(auto,/Mở chi nhánh tương ứng bên dưới để xem shortage ngay trong ô ngày\/giờ/);
+  assert.match(auto,/Đây là cảnh báo vận hành, không chặn duyệt hay phát hành/);
   assert.doesNotMatch(auto,/state\.shortages\.slice\(0,12\)\.map/);
 });
 
 test("XSTORE-017 cache chain points at inline-shortage runtime",()=>{
   assert.ok(engine.includes("draft-publish-v1.js?v=20261005-xstore-018"));
-  assert.ok(engine.includes("cross-store-auto-schedule-v1.js?v=20261005-xstore-017"));
+  assert.ok(engine.includes("cross-store-auto-schedule-v1.js?v=20261018-shortage-advisory-v1"));
 });
 
 console.log("XSTORE_017_INLINE_SHORTAGE_STATIC=PASS");

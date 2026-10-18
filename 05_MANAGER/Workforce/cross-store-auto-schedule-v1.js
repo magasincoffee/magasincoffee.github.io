@@ -265,7 +265,7 @@ function editorHtml(){
 
 function shortagesHtml(){
  if(!state.shortages.length)return '';
- return '<div class="xsa-status" role="status" aria-live="polite"><b>'+state.shortages.length+' khoảng thiếu người cần xử lý.</b><br>Mở chi nhánh tương ứng bên dưới để xem shortage ngay trong ô ngày/giờ và bổ sung người trực tiếp.</div>';
+ return '<div class="xsa-status" role="status" aria-live="polite"><b>'+state.shortages.length+' khoảng thiếu người cần xử lý.</b><br>Đây là cảnh báo vận hành, không chặn duyệt hay phát hành. Mở chi nhánh tương ứng để xem khoảng thiếu và bổ sung nhân viên khi phù hợp.</div>';
 }
 
 function render(){
@@ -416,7 +416,7 @@ async function autoSchedule(){
   state.globalDraftCount=state.assignmentCount;
   state.shortages=Array.isArray(result.shortages)?result.shortages:[];
   state.message=state.shortages.length
-   ? 'Hệ thống đã áp dụng nhu cầu hàng tuần và tạo lịch nháp nhưng còn '+state.shortages.length+' khung thiếu người. Quản lý cần kiểm tra và chỉnh trước khi duyệt.'
+   ? 'Hệ thống đã áp dụng nhu cầu hàng tuần và tạo lịch nháp nhưng còn '+state.shortages.length+' khung thiếu người. Thiếu người không chặn phát hành; quản lý vẫn cần kiểm tra xung đột an toàn và tiếp tục điều động sau phát hành theo quy trình chính thức.'
    : 'Hệ thống đã áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp. Quản lý hãy kiểm tra, chỉnh sửa trước khi duyệt và phát hành.';
   state.messageType=state.shortages.length?'':'ok';
   await scheduleApi()?.refresh?.();
