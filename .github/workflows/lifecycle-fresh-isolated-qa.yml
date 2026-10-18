@@ -4,6 +4,8 @@ on:
     paths:
       - '07_DATABASE/migrations/20261011224000_xstore_019o_staff_lifecycle_v1.sql'
       - '09_QA/people-shift/lifecycle-fresh-*.sql'
+      - '05_MANAGER/Workforce/staff-projection-v1.js'
+      - '09_QA/people-shift/ui2-013-manager-operations-contract.test.mjs'
       - '.github/workflows/lifecycle-fresh-isolated-qa.yml'
   workflow_dispatch:
 permissions:
