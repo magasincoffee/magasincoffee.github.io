@@ -1,0 +1,61 @@
+name: Empty Staffing Nonblocking Publish QA
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/*empty_staffing*'
+      - '05_MANAGER/Workforce/draft-publish-v1.js'
+      - '05_MANAGER/Workforce/engine-v1.js'
+      - '09_QA/people-shift/empty-staffing-*'
+      - '.github/workflows/empty-staffing-nonblocking-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate scheduling JS and conditional empty-week gate
+        run: |
+          node --check 05_MANAGER/Workforce/draft-publish-v1.js
+          node --check 05_MANAGER/Workforce/engine-v1.js
+          node --test 09_QA/people-shift/empty-staffing-nonblocking-v1.test.mjs
+  postgres-smoke:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: app
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+      - name: Seed isolated database
+        run: |
+          psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/post-publish-adjustment-db-fixture.sql
+          psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/empty-staffing-nonblocking-db-fixture.sql
+      - name: Apply conditional validator migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261018220000_empty_staffing_nonblocking_v1.sql
+      - name: Verify empty-week warning and fail-closed no-demand rule
+        run: psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/empty-staffing-nonblocking-db-smoke.sql
