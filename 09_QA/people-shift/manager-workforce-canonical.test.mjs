@@ -160,3 +160,10 @@ test("SCHED-04 legacy Lich-lam route wraps canonical Workforce surface only",asy
   assert.doesNotMatch(legacy,/manager-v13-runtime/);
   assert.doesNotMatch(legacy,/draft-publish-v1\.js/);
 });
+
+test('Employee view initialization is idempotent and preserves FT/PT lifecycle controls',async()=>{
+  const staff=await read('05_MANAGER/Workforce/staff-projection-v1.js');
+  assert.match(staff,/if\(root\.dataset\.canonicalStaffProjection==='3'\)return true/);
+  assert.match(staff,/root\.dataset\.canonicalStaffProjection='3'/);
+  for(const control of ['mspSearch','mspStatusFilter','mspEmploymentType','lifecycleReady'])assert.ok(staff.includes(control),control);
+});
