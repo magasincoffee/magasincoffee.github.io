@@ -24,3 +24,10 @@ test('guided scheduling keeps step focus, navigation bounds and accessible state
     assert.ok(source.includes(action),action+' control must exist');
   }
 });
+
+test('Staffing shortages are advisory, not a publish blocker in Manager messaging',async()=>{
+ const auto=await read('05_MANAGER/Workforce/cross-store-auto-schedule-v1.js');
+ assert.match(auto,/Thiếu người không chặn phát hành/);
+ assert.match(auto,/cảnh báo vận hành, không chặn duyệt hay phát hành/);
+ assert.doesNotMatch(auto,/Quản lý cần kiểm tra và chỉnh trước khi duyệt/);
+});
