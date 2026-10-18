@@ -40,7 +40,7 @@ test('Prepare has one guided workflow and branch-scoped, readable inputs',async(
  assert.match(js,/Khung nhu cầu của chi nhánh/);
  assert.match(js,/Lượt đăng ký thời gian trong tuần/);
  assert.match(js,/Thiếu người vẫn được tạo và phát hành lịch/);
- assert.match(js,/\.msd-branches\{display:none!important\}/);
+ assert.match(js,/editorArea\.appendChild\(legacyBranches\)/);
  assert.match(js,/\.msd-summary\[aria-label="Tiến trình xếp lịch"\]\{display:none!important\}/);
  assert.doesNotMatch(js,/Nếu có mục chưa sẵn sàng, hãy hoàn tất trước khi tạo lịch/);
 });
