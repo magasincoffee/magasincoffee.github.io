@@ -1152,6 +1152,8 @@
 
 | 2026-10-18 ICT | PHASE 1 / Staff modal unified Save | MERGED, PAGES IN PROGRESS AT JOURNAL TIME | Owner screenshot asked to replace separate FT/PT and Store Priority save buttons with one. [PR #446](https://github.com/magasincoffee/magasincoffee.github.io/pull/446), exact head `84781bd3f1209164d2e6f39a8e2c8583dad5d91b`, changed Manager modal to **one `Lưu thay đổi` button**, conditional writes only for modified priority/FTPT, input validation and explicit partial-success error messaging; Manager asset cache updated. [UI2 Cross Role run 39098851349](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39098851349), [People Shift 39098851397](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39098851397) plus lifecycle/XSTORE/SOP tests SUCCESS. Squash merged main `83059825cd47921de8f5c12abc3644ef67321c07`. [Pages run 39099026358](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39099026358) in_progress at journal time. | Both writes are two distinct RPC transactions, not atomic across FT/PT and Store Priority: errors show explicit partial success and require retry. No SQL migration or real employee mutation in this change. |
 
+| 2026-10-18 ICT | PHASE 1 / Staff unified Save release | GITHUB PAGES SUCCESS | [Pages run #39099026358](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39099026358) completed SUCCESS on exact main SHA `83059825cd47921de8f5c12abc3644ef67321c07` after PR #446. Single modal Save now published. | Logged-in user confirmation still not independently performed. |
+
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
 - Backup/restore **owner+ACL+RLS parity PASS**; SAPO resolver P0 đóng; 3-role scope/JWT/negative RPC PASS.
