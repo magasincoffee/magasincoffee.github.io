@@ -46,5 +46,7 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/lifecycle-fresh-fixture.sql
       - name: Apply candidate lifecycle migration ONLY to disposable service
         run: psql -v ON_ERROR_STOP=1 -f 07_DATABASE/migrations/20261011224000_xstore_019o_staff_lifecycle_v1.sql
+      - name: Verify isolated Owner Manager Staff authorization cases
+        run: psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/lifecycle-fresh-roles.sql
       - name: Run rollback-only lifecycle smoke
         run: psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/lifecycle-fresh-smoke.sql
