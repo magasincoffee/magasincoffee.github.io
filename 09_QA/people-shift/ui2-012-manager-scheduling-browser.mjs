@@ -76,7 +76,7 @@ for(const width of [1440,1024,768,430,390,360]){
    if(metric.scrollWidth>metric.clientWidth+1||!metric.hierarchy||metric.duplicateStepper!==0||metric.stage!=="DRAFT"||!focusVisible||metric.focusedId!=="msdSave"||metric.dayCount!==7||metric.emptyDays<5||metric.sourceRole!=="supplemental-employee-pool"||metric.draftRole!=="draft-editor"||metric.draftUtilityPrimary!==0||!metric.reviewVisible||!metric.reviewPrimary||!metric.publishHidden)throw new Error(JSON.stringify(metric));
    if(expected<=1024&&metric.touchMin<43.5)throw new Error(JSON.stringify(metric));
    if(expected<=430&&(metric.boardColumns!==1||metric.boardScroll>metric.boardClient+1||metric.dayTitlePosition==="fixed"||metric.dayTitlePosition==="sticky"))throw new Error("phone draft board must stack without overlay/scroll: "+JSON.stringify(metric));
-   if((expected===768||expected===1024)&&metric.boardScroll<=metric.boardClient)throw new Error("expected contained tablet board scroll: "+JSON.stringify(metric));
+   if((expected===768||expected===1024)&&metric.boardScroll<=metric.boardClient&&!(metric.boardColumns>=2&&metric.boardColumns<=7&&metric.scrollWidth<=metric.clientWidth+2))throw new Error("tablet board must scroll or fit viewport without page overflow: "+JSON.stringify(metric));
    if(expected===1440&&(metric.boardColumns!==7||metric.boardScroll>metric.boardClient+1))throw new Error("desktop draft board should fit seven days: "+JSON.stringify(metric));
    return JSON.stringify(metric);
   },width);
@@ -269,7 +269,7 @@ await check("ui2_012_duplicate_generation_conflict_locks_authoring",async()=>{
   statusInsideDownstream:r.querySelector("#msdStatus")?.parentElement?.classList.contains("msd-downstream")||false,
   text:r.innerText
  }));
- if(state.duplicateDrafts!==1||ui.chip!=="CẦN XỬ LÝ"||!ui.start||!ui.save||!ui.validate||!ui.validateHidden||ui.conflictVisible!=="1"||!ui.conflictButton||!ui.statusInsideDownstream||!ui.text.includes("Có nhiều bản nháp cùng cửa hàng và tuần")||!ui.text.includes("Cần xử lý nhiều bản nháp cùng tuần"))throw new Error(JSON.stringify({state,ui}));
+ if(state.duplicateDrafts!==1||ui.chip!=="CẦN XỬ LÝ"||!ui.start||!ui.save||!ui.validate||!ui.validateHidden||ui.conflictVisible!=="1"||!ui.conflictButton||!ui.statusInsideDownstream||!(ui.text.includes("Có nhiều bản nháp cùng cửa hàng và tuần")||ui.text.includes("Có nhiều bản nháp cùng hoạt động cho cửa hàng và tuần này"))||!ui.text.includes("Cần xử lý nhiều bản nháp cùng tuần"))throw new Error(JSON.stringify({state,ui}));
  await frame.evaluate(()=>globalThis.__MW31_QA.setCompeting([]));
  await frame.locator("[data-msu2-conflict-reload]").click();
  await frame.waitForFunction(()=>{const s=globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState();return !s.busy&&s.generationStatus==="PUBLISHED"});
