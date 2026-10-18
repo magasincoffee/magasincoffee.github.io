@@ -119,9 +119,9 @@ async function saveLifecycle(){
 }
 async function loadRows(){
  state.loading=true;state.error=null;render();
- const q=await client().rpc('list_employee_workforce_profiles_v1');
+ let q;try{q=await client().rpc('list_employee_workforce_profiles_v1')}catch(e){q={error:e}}
  state.loading=false;
- if(q.error){state.rows=[];state.error=errorCode(q.error);render();return}
+ if(q?.error){state.rows=[];state.error=errorCode(q.error);render();return}
  const rows=Array.isArray(q.data)?q.data:[];
  if(rows.some(r=>!validProjectionRow(r))){state.rows=[];state.error='PROFILE_PROJECTION_INVALID';render();return}
  state.rows=rows;state.error=null;render();
