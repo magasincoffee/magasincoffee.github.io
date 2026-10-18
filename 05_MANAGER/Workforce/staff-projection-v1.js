@@ -18,7 +18,7 @@ function ensureCss(){
 }
 function ensureUi(){
  const root=view();if(!root)return false;ensureCss();
- if(root.dataset.canonicalStaffProjection==='2')return true;
+ if(root.dataset.canonicalStaffProjection==='3')return true;
  root.dataset.canonicalStaffProjection='3';root.classList.add('wf-role-page');
  root.innerHTML='<section class="card"><div class="msp-head wf-section-head"><div><h2 class="wf-section-title">Nhân viên</h2><div class="wf-section-copy">Một Workforce Profile canonical dùng chung cho Quản lý, Nhân viên và bộ xếp lịch. Quản lý là bên duy nhất thiết lập Store Priority.</div></div><div class="msp-actions"><input class="msp-search" id="mspSearch" type="search" aria-label="Tìm nhân viên" placeholder="Tìm tên, tài khoản, số điện thoại…"><select id="mspStatusFilter" aria-label="Lọc theo trạng thái nhân viên"><option value="ALL">Tất cả trạng thái</option><option value="ACTIVE">Đang làm việc</option><option value="INACTIVE">Đã nghỉ việc</option><option value="PENDING">Chờ kích hoạt</option></select><button class="btn" id="mspRefresh">Làm mới</button></div></div><div id="mspRoot"></div></section>';
  root.querySelector('#mspRefresh')?.addEventListener('click',()=>refresh());
