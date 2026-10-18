@@ -36,7 +36,8 @@ for(const width of [1440,1024,768,430,390,360]){
  await page.goto(BASE+"/09_QA/people-shift/ui2-012-manager-scheduling-fixture.html",{waitUntil:"networkidle",timeout:20000});
  const frame=await managerFrame(page);
 
- await frame.locator("#msdStart").click();
+ await frame.locator('[data-x19g-nav="draft"]').click();
+  await frame.locator("#msdStart").click();
  await frame.waitForFunction(()=>globalThis.MAGASIN_MANAGER_SCHEDULE_DRAFT.getState().generationStatus==="DRAFT");
  await addManualAssignment(frame,"u-1");
  await addManualAssignment(frame,"u-2","2026-09-28","12:00","17:00");
