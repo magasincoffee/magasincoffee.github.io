@@ -1,0 +1,72 @@
+name: Post-Publish Staff Adjustment QA
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/*manager_post_publish_adjustment*'
+      - '05_MANAGER/Workforce/post-publish-adjustment-v1.js'
+      - '05_MANAGER/Workforce/engine-v1.js'
+      - '09_QA/people-shift/post-publish-adjustment-*'
+      - '.github/workflows/post-publish-adjustment-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: app
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+      - name: Create isolated schema
+        run: psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/post-publish-adjustment-db-fixture.sql
+      - name: Apply migration to isolated database
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261018213000_manager_post_publish_adjustment_v1.sql
+      - name: Verify permissions, conflicts and audit
+        run: psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/post-publish-adjustment-db-smoke.sql
+  post-publish-adjustment:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Static SQL and UI contract
+        run: |
+          node --check 05_MANAGER/Workforce/post-publish-adjustment-v1.js
+          node --check 05_MANAGER/Workforce/engine-v1.js
+          node --test 09_QA/people-shift/post-publish-adjustment-v1.test.mjs
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start isolated fixture server
+        run: |
+          nohup python3 -m http.server 8787 --bind 127.0.0.1 >/tmp/post-publish-http.log 2>&1 &
+          for n in 1 2 3 4 5 6 7 8; do curl -fsS http://127.0.0.1:8787/09_QA/people-shift/post-publish-adjustment-fixture.html >/dev/null && exit 0; sleep 1; done
+          exit 1
+      - name: Acceptance desktop and mobile
+        run: node 09_QA/people-shift/post-publish-adjustment-browser.mjs
