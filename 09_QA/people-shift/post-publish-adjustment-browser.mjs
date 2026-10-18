@@ -10,7 +10,7 @@ for(const width of [1440,390]){
   await page.locator('#mppAdd').waitFor({timeout:12000});
   if(!await page.locator('#mppHistory').isVisible())throw Error('Audit button missing');
   await page.locator('#mppAdd').click();
-  await page.locator('#mppEmployee option').last().waitFor({timeout:10000});
+  await page.waitForFunction(()=>document.querySelectorAll('#mppEmployee option').length>=2,{timeout:10000});
   const options=await page.locator('#mppEmployee option').allTextContents();
   if(options.length!==2||options.some(x=>x.includes('đã nghỉ')))throw Error('Inactive employee exposed: '+JSON.stringify(options));
   const ids=await page.evaluate(()=>({staff:window.fixture.staff,shift:window.fixture.shift}));
@@ -21,7 +21,7 @@ for(const width of [1440,390]){
   let calls=await page.evaluate(()=>window.fixture.calls);
   if(!calls.some(x=>x.name==='add_published_shift_v1'&&x.payload.p_employee_id===ids.staff&&x.payload.p_reason.length>=3))throw Error('ADD RPC missing');
   await page.locator('.mpp-open').click();
-  await page.locator('#mppEmployee option').last().waitFor({timeout:10000});
+  await page.waitForFunction(()=>document.querySelectorAll('#mppEmployee option').length>=2,{timeout:10000});
   await page.locator('#mppEmployee').selectOption(ids.staff);
   await page.locator('#mppReason').fill('Thay nhân viên cho ca đã phát hành');
   await page.locator('#mppSubmit').click();
