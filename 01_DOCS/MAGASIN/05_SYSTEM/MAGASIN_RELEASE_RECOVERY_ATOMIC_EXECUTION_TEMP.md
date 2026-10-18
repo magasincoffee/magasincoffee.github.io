@@ -1132,6 +1132,8 @@
 
 | 2026-10-18 ICT | RELEASE SLICE #440 | GITHUB PAGES DEPLOY SUCCESS | Exact SHA `1007fd651377d9ced1cf3bf8e3fc9d256039c22b` [GitHub Pages run 39094376840](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39094376840) completed/success after PR #440 squash merge. This verifies successful GitHub Pages build/deployment for exact main SHA; browser-level end-to-end usage has not been certified. | Next continue scoped improvements; release gates for sensitive lifecycle/FT/PT backend remain. |
 
+| 2026-10-18 ICT | PHASE 1 / Manager staff view | FEATURE PR OPEN, CI PENDING | From deployed main `1007fd651377d9ced1cf3bf8e3fc9d256039c22b`, created [PR #441](https://github.com/magasincoffee/magasincoffee.github.io/pull/441) Draft HEAD `24eaccfc1398b06161ddb86db16ec951ed302bc6`: filter canonical staff projection by ACTIVE/INACTIVE/PENDING/ALL, composing with already released local name/username/phone search. No SQL, status mutation or Production data write. Actions [People Shift #39094564476](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39094564476) and [UI2 #39094564532](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39094564532) in_progress at verification. | Do not merge until checks complete successfully. PR #394 lifecycle backend remains Draft/gated; no production mutation/release of #441 yet. |
+
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
 - Backup/restore **owner+ACL+RLS parity PASS**; SAPO resolver P0 đóng; 3-role scope/JWT/negative RPC PASS.
