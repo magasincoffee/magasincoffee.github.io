@@ -30,7 +30,8 @@ try{
   });
 
   await check('manager_stale_publish_is_server_revalidated',async()=>{
-    await manager.locator('#msdManualEmployee').selectOption('u-1');
+    await manager.locator('[data-x19g-nav="edit"]').click();
+     await manager.locator('#msdManualEmployee').selectOption('u-1');
     await manager.locator('#msdManualDate').selectOption('2026-09-28');
     await manager.locator('#msdManualStart').selectOption('06:00');
     await manager.locator('#msdManualEnd').selectOption('12:00');
