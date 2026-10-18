@@ -1110,6 +1110,8 @@
 
 | 2026-10-18 ICT | 78 / lifecycle synthetic QA expansion | DOING (exact-head CI pending) | [PR #439](https://github.com/magasincoffee/magasincoffee.github.io/pull/439) SHA `d7066bb7bcbcd1c51499a3ad1750d1be68881a70`: extended synthetic role suite to verify Manager ALL writer ALLOW, same-state no-op DENY, empty and >300-char reason DENY, failure audit zero side effects and two exact audit entries after offboard→restore. [CI run 39092839976](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39092839976) triggered, outcome not established at journal time. | Still ID78 BLOCKED for full-schema clone requirement. QA synthetic checks do not substitute signed JWT, RLS/grants, full-schema or recovery parity. Leave ID79–90 unchecked until per-ID evidence. No Production changes. |
 
+| 2026-10-18 ICT | 78 / lifecycle synthetic QA expansion | PASS (isolated smoke subtests only; ID78 still BLOCKED) | PR #439 exact SHA `d7066bb7bcbcd1c51499a3ad1750d1be68881a70`: [Actions run 39092839976](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39092839976) synthetic-postgres completed **SUCCESS**, all steps including schema, lifecycle migration, Manager ALL writer, role denials, no-op/reason validation, audit atomicity and offboard/restore smoke SUCCESS. | Keep ID78 `[ ]` because full-schema clone/true role JWT/RLS/ACL equivalence absent; no production changes, no release claim, ID79–90 still not formally PASS. |
+
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
 - Backup/restore **owner+ACL+RLS parity PASS**; SAPO resolver P0 đóng; 3-role scope/JWT/negative RPC PASS.
