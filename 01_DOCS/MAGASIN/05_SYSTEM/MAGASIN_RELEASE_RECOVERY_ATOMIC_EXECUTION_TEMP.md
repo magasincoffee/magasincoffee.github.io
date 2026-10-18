@@ -1158,6 +1158,8 @@
 
 | 2026-10-18 ICT | PHASE 2 / Manager five-step compatibility | PR #447 NOT MERGED | Initial exact-head 5-step integration had `SCHED-01` browser failure because the old smoke asserted obsolete legacy headings; updated browser smoke to require 5-step labels (or old complete legacy set) without weakening role/data assertions. New PR #447 exact HEAD `45376565bc12c0e621aa45b5516fd5fa896110ea`, UI2 [39112360867](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39112360867) and People Shift [39112360943](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39112360943) in_progress. XSTORE suite outcomes awaiting current exact SHA. | Still must verify 1440/390 responsive five boards and authority before merge/release. Original PR #392 remains Draft. No Production writes. |
 
+| 2026-10-18 ICT | PHASE 2 / Manager five-board compatibility | STILL DRAFT | PR #447 initial exact-head SCHED-01 then SCHED-04 browser tests required acceptance update because legacy single-layout headings are hidden by approved five-board shell. Adapted SCHED-01 and SCHED-04 checks to accept five-step structure without dropping existing RPC/publish assertions. Head `71c3ac0d4e8d00a13d2407db2139b63c79da6abf`, [People Shift 39112477028](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39112477028), [UI2 39112477022](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39112477022) in_progress. | No merge, no release until browser and authority checks complete; finish dependency parity for full V4 board, 1440/390 acceptance. |
+
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
 - Backup/restore **owner+ACL+RLS parity PASS**; SAPO resolver P0 đóng; 3-role scope/JWT/negative RPC PASS.
