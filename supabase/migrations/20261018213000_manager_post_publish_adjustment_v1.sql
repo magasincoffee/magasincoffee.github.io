@@ -133,7 +133,8 @@ CREATE OR REPLACE FUNCTION public.list_manager_post_publish_audit_v1(
  p_store_id uuid, p_week_start date
 ) RETURNS TABLE(
  schedule_id uuid, action text, old_employee_id uuid,
- new_employee_id uuid, work_date date, reason text, changed_at timestamptz)
+ new_employee_id uuid, work_date date, reason text, changed_at timestamptz,
+ actor_id uuid, actor_name text, old_employee_name text, new_employee_name text)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public'
 AS $function$
 DECLARE v_role text := upper(coalesce(public.current_user_role(),''));
@@ -148,8 +149,11 @@ BEGIN
  IF p_week_start IS NULL OR extract(isodow FROM p_week_start)<>1
  THEN RAISE EXCEPTION 'WEEK_START_MUST_BE_MONDAY'; END IF;
  RETURN QUERY SELECT a.schedule_id,a.action,a.old_employee_id,a.new_employee_id,
-   a.work_date,a.reason,a.changed_at
+   a.work_date,a.reason,a.changed_at,a.actor_id,actor.full_name,old_employee.full_name,new_employee.full_name
  FROM public.manager_post_publish_shift_audit_v1 a
+ LEFT JOIN public.profiles actor ON actor.id=a.actor_id
+ LEFT JOIN public.profiles old_employee ON old_employee.id=a.old_employee_id
+ LEFT JOIN public.profiles new_employee ON new_employee.id=a.new_employee_id
  WHERE a.store_id=p_store_id AND a.work_date BETWEEN p_week_start AND p_week_start+6
  ORDER BY a.changed_at DESC,a.id DESC LIMIT 250;
 END
