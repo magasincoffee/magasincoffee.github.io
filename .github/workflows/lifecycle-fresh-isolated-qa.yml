@@ -1,0 +1,50 @@
+name: Lifecycle Fresh Isolated QA
+on:
+  pull_request:
+    paths:
+      - '07_DATABASE/migrations/20261011224000_xstore_019o_staff_lifecycle_v1.sql'
+      - '09_QA/people-shift/lifecycle-fresh-*.sql'
+      - '.github/workflows/lifecycle-fresh-isolated-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: qa
+          POSTGRES_PASSWORD: synthetic-local-only
+          POSTGRES_DB: lifecycle_qa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U qa -d lifecycle_qa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: qa
+      PGPASSWORD: synthetic-local-only
+      PGDATABASE: lifecycle_qa
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm isolated fixture contains no Production URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -nEi 'menvbzlsncmpuvnaifxa|foclxkjnypjolcwqekku|supabase\.co' 09_QA/people-shift/lifecycle-fresh-{fixture,smoke}.sql; then
+            echo 'Found a forbidden production reference in synthetic fixture' >&2
+            exit 1
+          fi
+      - name: Prepare synthetic schema
+        run: psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/lifecycle-fresh-fixture.sql
+      - name: Apply candidate lifecycle migration ONLY to disposable service
+        run: psql -v ON_ERROR_STOP=1 -f 07_DATABASE/migrations/20261011224000_xstore_019o_staff_lifecycle_v1.sql
+      - name: Run rollback-only lifecycle smoke
+        run: psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/lifecycle-fresh-smoke.sql
