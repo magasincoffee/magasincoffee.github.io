@@ -38,3 +38,24 @@ INSERT INTO public.payroll_entries VALUES ('00000000-0000-0000-0000-000000000501
 INSERT INTO public.employee_availability VALUES ('00000000-0000-0000-0000-000000000601','00000000-0000-0000-0000-000000000004');
 INSERT INTO public.approval_requests VALUES ('00000000-0000-0000-0000-000000000701','00000000-0000-0000-0000-000000000004',NULL);
 INSERT INTO public.employee_skills VALUES ('00000000-0000-0000-0000-000000000801','00000000-0000-0000-0000-000000000004',NULL);
+
+-- Synthetic FK edges sourced from current production catalog; NOT full schema parity.
+CREATE TABLE public.employee_constraints (qa_id uuid PRIMARY KEY, user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE);
+CREATE TABLE public.employee_grades (qa_id uuid PRIMARY KEY, user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE);
+ALTER TABLE public.employee_store_priorities ADD COLUMN updated_by uuid REFERENCES public.profiles(id) ;
+CREATE TABLE public.kpi_records (qa_id uuid PRIMARY KEY, evaluator_id uuid REFERENCES public.profiles(id) , user_id uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.notification_outbox (qa_id uuid PRIMARY KEY, actor_user_id uuid REFERENCES public.profiles(id) , recipient_user_id uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.procurement_audit_log (qa_id uuid PRIMARY KEY, actor_id uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.procurement_product_packages (qa_id uuid PRIMARY KEY, created_by uuid REFERENCES public.profiles(id) , updated_by uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.procurement_products (qa_id uuid PRIMARY KEY, created_by uuid REFERENCES public.profiles(id) , updated_by uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.procurement_purchase_order_items (qa_id uuid PRIMARY KEY, created_by uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.procurement_purchase_orders (qa_id uuid PRIMARY KEY, created_by uuid REFERENCES public.profiles(id) , updated_by uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.procurement_supplier_payments (qa_id uuid PRIMARY KEY, created_by uuid REFERENCES public.profiles(id) , updated_by uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.procurement_suppliers (qa_id uuid PRIMARY KEY, created_by uuid REFERENCES public.profiles(id) , updated_by uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.schedule_generation_runs (qa_id uuid PRIMARY KEY, created_by uuid REFERENCES public.profiles(id) , published_by uuid REFERENCES public.profiles(id) , reviewed_by uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.shift_gives (qa_id uuid PRIMARY KEY, giver_id uuid REFERENCES public.profiles(id) , manager_id uuid REFERENCES public.profiles(id) , recipient_id uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.shift_swaps (qa_id uuid PRIMARY KEY, approver_id uuid REFERENCES public.profiles(id) , requester_id uuid REFERENCES public.profiles(id) , target_user_id uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.staffing_requirements (qa_id uuid PRIMARY KEY, confirmed_by uuid REFERENCES public.profiles(id) , created_by uuid REFERENCES public.profiles(id) );
+CREATE TABLE public.store_transfer_requests (qa_id uuid PRIMARY KEY, requester_id uuid REFERENCES public.profiles(id) , reviewed_by uuid REFERENCES public.profiles(id) );
+ALTER TABLE public.work_schedules ADD COLUMN approver_id uuid REFERENCES public.profiles(id) ;
+CREATE TABLE public.workforce_recurring_staffing_requirements (qa_id uuid PRIMARY KEY, created_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL, updated_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL);
