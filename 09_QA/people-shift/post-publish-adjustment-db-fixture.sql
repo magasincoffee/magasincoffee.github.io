@@ -7,7 +7,7 @@ $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 CREATE FUNCTION public.current_user_role() RETURNS text LANGUAGE sql STABLE AS
 $$ SELECT current_setting('app.mock_role',true) $$;
 CREATE TABLE public.stores(id uuid PRIMARY KEY);
-CREATE TABLE public.profiles(id uuid PRIMARY KEY,role text NOT NULL,status text NOT NULL);
+CREATE TABLE public.profiles(id uuid PRIMARY KEY,role text NOT NULL,status text NOT NULL,full_name text NOT NULL DEFAULT 'Nhân viên thử nghiệm');
 CREATE TABLE public.employee_store_priorities(employee_id uuid,store_id uuid,priority integer DEFAULT 1);
 CREATE TABLE public.schedule_generation_runs(
  id uuid PRIMARY KEY,store_id uuid NOT NULL,status text NOT NULL,
