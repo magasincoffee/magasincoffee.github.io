@@ -1172,6 +1172,8 @@
 
 | 2026-10-18 ICT | PHASE 2 / Manager five-step scheduling | PAGES LIVE EXACT SHA | Final [GitHub Pages run 39115323768](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39115323768) completed SUCCESS on `main` SHA `44ab16c1fd6b84668a1f2738d07482e3608306ad` with #447 five-board UI and #448 cache chain. | Live browser Owner/Manager authenticated review not independently performed. No Production SQL/employee/scheduling data modified by these UI releases. |
 
+| 2026-10-18 ICT | PHASE 2 / Manager scheduling guided UX | PR #449 DRAFT; five-step UI QA SUCCESS, comprehensive CI pending | Owner screenshot shows confusion from five simultaneous panels and 27-person supplemental list. New [PR #449](https://github.com/magasincoffee/magasincoffee.github.io/pull/449) exact head `b99c79abb4bd188664a80dabe25298004cd3c878`: one visible step at a time, step progress indicator and back/next navigation, collapsed supplementary staff picker. Existing scheduling RPC authority and data untouched. Browser [Manager Five-Step run 39117316715](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39117316715) SUCCESS for 1440px/390px and step transitions; [UI2 run 39117316639](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39117316639) and [People Shift run 39117316624](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39117316624) still running at journal time. | Do not merge/deploy until exact-head broad suites success and actual user-friendly flow confirmed. No Production DB changes. |
+
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
 - Backup/restore **owner+ACL+RLS parity PASS**; SAPO resolver P0 đóng; 3-role scope/JWT/negative RPC PASS.
