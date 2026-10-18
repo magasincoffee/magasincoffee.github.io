@@ -1,0 +1,63 @@
+name: Lifecycle Fresh Full Schema QA (trusted manual only)
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type FRESH-SCHEMA-ONLY'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  fresh-schema:
+    if: github.ref == 'refs/heads/main' && inputs.confirmation == 'FRESH-SCHEMA-ONLY'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: magasin-schema-qa
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate safe capture configuration
+        shell: bash
+        env:
+          PRODUCTION_READONLY_DB_URL: ${{ secrets.MAGASIN_SCHEMA_READONLY_DB_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$PRODUCTION_READONLY_DB_URL" || { echo 'BLOCKED: readonly schema credential not configured'; exit 1; }
+          case "$PRODUCTION_READONLY_DB_URL" in
+            *menvbzlsncmpuvnaifxa*) ;;
+            *) echo 'BLOCKED: wrong explicit project reference'; exit 1 ;;
+          esac
+          test "${{ github.repository }}" = "magasincoffee/magasincoffee.github.io"
+          echo "FRESH_SCHEMA_READONLY_TARGET_VERIFIED=PASS"
+      - name: Fresh schema-only capture and isolated Postgres verification
+        shell: bash
+        env:
+          PRODUCTION_READONLY_DB_URL: ${{ secrets.MAGASIN_SCHEMA_READONLY_DB_URL }}
+        run: |
+          set -euo pipefail
+          umask 077
+          work="$(mktemp -d)"
+          cleanup() { docker rm -f fresh-lifecycle-qa >/dev/null 2>&1 || true; rm -rf "$work"; }
+          trap cleanup EXIT
+          # Schema only; no rows; no committed artifacts; secrets must never reach logs.
+          pg_dump --dbname="$PRODUCTION_READONLY_DB_URL" --schema-only --no-owner --no-acl \
+            --format=custom --file="$work/schema.dump"
+          test -s "$work/schema.dump"
+          docker run --detach --rm --name fresh-lifecycle-qa --network none \
+            --env POSTGRES_PASSWORD=synthetic-fixture-only postgres:17 >/dev/null
+          for i in $(seq 1 60); do
+            if docker exec fresh-lifecycle-qa pg_isready -U postgres -q; then break; fi
+            sleep 2
+          done
+          docker exec fresh-lifecycle-qa pg_isready -U postgres -q
+          docker exec fresh-lifecycle-qa createdb -U postgres lifecycle_fresh_qa
+          # WARNING: real Supabase schemas may need platform extension/role bootstrap.
+          # Fail closed if any dependency is missing; do not silently skip objects.
+          docker exec -i fresh-lifecycle-qa pg_restore --exit-on-error --no-owner --no-acl \
+            -U postgres -d lifecycle_fresh_qa < "$work/schema.dump" >/dev/null
+          docker exec -i fresh-lifecycle-qa psql -U postgres -d lifecycle_fresh_qa \
+            -v ON_ERROR_STOP=1 -c "select case when to_regclass('public.profiles') is not null and to_regclass('public.stores') is not null and to_regclass('public.work_schedules') is not null then 'PASS' else 'FAIL' end" | grep -q PASS
+          echo 'FRESH_SCHEMA_STRUCTURE_RESTORE=PASS; DATA_ROWS_NOT_EXPORTED'
+          # Not owner/ACL/RLS parity: --no-owner/--no-acl explicitly exclude these checks.
