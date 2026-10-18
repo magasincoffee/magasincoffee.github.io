@@ -35,3 +35,11 @@ Implemented in this branch:
 - [ ] IMP-011 E2E including incorrect/freshness/unknown prices and inventory, human fallback.
 
 **Next:** IMP-003. Always re-read this file and PR state. Do not mark tests passed without execution proof.
+
+## Owner decision — 2026-10-18 (confirmed in ChatGPT)
+
+**AUTHORITATIVE PRICE-SHEET TAB:** `BẢNG BÁO GIÁ MỚI` (gid `696424871`) in spreadsheet `1E7sj2w2-vFp7kHvk7eAqIwJ1F8zLDq-Einj2w7SWx_Y`. Owner explicitly confirms this is the **official price sheet**. Older tab `BẢNG BÁO GIÁ` is **NOT** the active sale-price source; retain for historical comparison only. Hidden COST tabs are internal cost inputs and must never be exposed to customers/Messenger AI.
+
+This decision resolves the source-of-truth question but **does not authorize automatic price publishing**: heterogeneous column layouts, tier definitions, anomalous values, customer/region eligibility and approvals must still be validated. Stock labels do not establish on-hand quantities. Continue draft staging and QA; do not deploy/import to Production solely on this decision.
+
+**Next task remains IMP-003**: run staging parser tests, then IMP-004 full-sheet QA and IMP-005 detailed mapping/approval. Owner source confirmation portion of IMP-005 is complete; layout mapping is not.
