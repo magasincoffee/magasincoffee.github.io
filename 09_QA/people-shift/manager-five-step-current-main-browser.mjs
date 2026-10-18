@@ -12,6 +12,17 @@ for(const width of [1440,390]){
   const names=['Chuẩn bị','Tạo lịch nháp','Chỉnh lịch','Kiểm tra','Duyệt & phát hành'];
   if(boards!==5||steps.length!==5||names.some((name,i)=>!steps[i].includes(name)))throw Error(JSON.stringify({boards,steps}));
   const hint=page.locator('[data-x19g-guide]');if(!await hint.isVisible())throw Error('Guided help missing');
+  await page.locator('[data-x19g-nav="prepare"]').click();
+  const preview=page.locator('[data-x19g-demand-view]');
+  if(!await page.locator('[data-x19g-demand-open]').isVisible())throw Error('Prepare staffing demand preview missing');
+  await page.locator('[data-x19g-demand-open]').click();
+  if(!await preview.isVisible())throw Error('Readonly demand dialog did not open');
+  if(await preview.locator('input,select,textarea').count())throw Error('Readonly preview must contain no editor controls');
+  await preview.locator('[data-x19g-demand-close]').click();
+  if(await preview.isVisible())throw Error('Readonly demand dialog did not close');
+  await page.locator('.x19g-demand-settings-trigger').click();
+  if(!await page.locator('[data-x19g-demand-settings]').isVisible())throw Error('Standalone demand settings dialog missing');
+  await page.locator('[data-x19g-demand-settings] [data-x19g-demand-close]').click();
   await page.locator('[data-x19g-nav="edit"]').click();
   if(!await hint.innerText().then(t=>t.includes('Chỉnh lịch')))throw Error('Wrong guidance after edit');
   await page.locator('[data-x19g-focus-toggle]').click();
