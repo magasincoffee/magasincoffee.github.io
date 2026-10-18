@@ -1154,6 +1154,8 @@
 
 | 2026-10-18 ICT | PHASE 1 / Staff unified Save release | GITHUB PAGES SUCCESS | [Pages run #39099026358](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39099026358) completed SUCCESS on exact main SHA `83059825cd47921de8f5c12abc3644ef67321c07` after PR #446. Single modal Save now published. | Logged-in user confirmation still not independently performed. |
 
+| 2026-10-18 ICT | PHASE 2 / Manager scheduling five steps | PR #447 DRAFT, COMPATIBILITY CI IN PROGRESS | User directed to continue 5-step scheduler. Confirmed source exists in legacy broad Draft PR #392, 70KB `manager-five-board-v4.js` with approved steps Chuẩn bị → Tạo lịch nháp → Chỉnh lịch → Kiểm tra → Duyệt & phát hành. Created narrow [PR #447](https://github.com/magasincoffee/magasincoffee.github.io/pull/447) on current main; ported presentation-only five-board script, loaded after canonical Manager scheduler, added 5-step/read-only writer contract. Exact head `2fbcfcc36e5dd5c4de8d51fb08357a1d0796eb0d`; GitHub Actions People Shift `39112205480`, UI2 `39112205462`, XSTORE scheduler `39112205486` running when recorded. | Do NOT claim live release or PASS until full current-main browser compatibility proven; 5-board presentation may depend on PR #392 features not yet on main. No Production DB modification. Resume integration and repair failing CI before merge. |
+
 ## 5. EXIT CRITERIA TOÀN DỰ Á
 
 - Backup/restore **owner+ACL+RLS parity PASS**; SAPO resolver P0 đóng; 3-role scope/JWT/negative RPC PASS.
