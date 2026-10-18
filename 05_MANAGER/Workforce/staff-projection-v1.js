@@ -13,6 +13,7 @@ function ensureCss(){
  if(document.getElementById('manager-staff-projection-v1-css'))return;
  const s=document.createElement('style');s.id='manager-staff-projection-v1-css';
  s.textContent='.msp-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.msp-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.msp-actions select{min-height:38px;padding:6px 9px;border:1px solid #ccd9e4;border-radius:9px;background:#fff}.msp-search{min-height:38px;max-width:280px;width:100%;padding:8px 10px;border:1px solid #ccd9e4;border-radius:9px}.msp-table-wrap{overflow:auto}.msp-table{width:100%;border-collapse:collapse;min-width:860px}.msp-table th,.msp-table td{padding:10px 8px;border-bottom:1px solid #eef2f6;text-align:left;font-size:12px;vertical-align:middle}.msp-table th{color:var(--muted)}.msp-state{margin-top:12px;padding:11px 13px;border-radius:11px;font-size:12px}.msp-state.info{background:#eef7ff;color:#235dba}.msp-state.ok{background:#e6f4ed;color:#176d49}.msp-state.error{background:#fff0f0;color:#9a3838}.msp-priority{font-weight:800;color:#0f4778}.msp-edit{margin:14px 0;padding:14px;border:1px solid #cfe1eb;border-radius:13px;background:#f8fcfd}.msp-priority-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:8px;margin-top:10px}.msp-field{display:grid;gap:5px}.msp-field label{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase}.msp-field select{height:40px;border:1px solid #ccd9e4;border-radius:9px;background:#fff;padding:0 8px}.msp-edit-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}@media(max-width:800px){.msp-priority-grid{grid-template-columns:1fr 1fr}.msp-actions{width:100%}}@media(max-width:520px){.msp-priority-grid{grid-template-columns:1fr}}';
+ s.textContent+='.msp-modal-layer{position:fixed;inset:0;z-index:10020;display:flex;justify-content:center;align-items:center;padding:16px}.msp-modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.48)}.msp-modal-dialog{position:relative;z-index:1;background:#fff;width:min(960px,100%);max-height:calc(100dvh - 32px);overflow:auto;border-radius:16px;box-shadow:0 25px 65px rgba(0,0,0,.22);outline:none}.msp-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid #e4e9ef;position:sticky;top:0;background:#fff;z-index:2}.msp-modal-head h3{font-size:17px;margin:0}.msp-modal-dialog .msp-edit{margin:0;border:0;border-radius:0;background:#fff;padding:18px}.msp-modal-dialog .msp-priority-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.msp-modal-close{min-width:42px;min-height:42px}.msp-modal-dialog :focus-visible{outline:2px solid #088b9b;outline-offset:2px}body.msp-modal-open{overflow:hidden}@media(max-width:600px){.msp-modal-layer{padding:8px}.msp-modal-dialog{max-height:calc(100dvh - 16px);border-radius:12px}.msp-modal-dialog .msp-priority-grid{grid-template-columns:1fr}.msp-modal-dialog .msp-edit{padding:12px}.msp-modal-head{padding:10px 12px}}';
  document.head.appendChild(s);
 }
 function ensureUi(){
@@ -37,6 +38,30 @@ function lifecycleEditorHtml(row){
  const target=String(row.profile_status).toUpperCase()==='ACTIVE'?'INACTIVE':'ACTIVE';
  return '<div class="msp-edit" data-msp-lifecycle-editor="'+esc(row.employee_id)+'"><b>'+esc(row.full_name||row.username||'Nhân viên')+'</b><p>Chuyển trạng thái sang '+(target==='INACTIVE'?'Đã nghỉ việc':'Đang làm việc')+'. Lịch làm việc và chấm công cũ được giữ nguyên; cần kiểm tra các ca tương lai.</p><label for="mspLifecycleReason">Lý do (3–300 ký tự)</label><textarea id="mspLifecycleReason" maxlength="300" rows="3" style="display:block;width:100%;padding:10px;border:1px solid #ccd9e4;border-radius:9px" required></textarea><div class="msp-edit-actions"><button class="btn" type="button" data-msp-lifecycle-cancel>Hủy</button><button class="btn primary" type="button" data-msp-lifecycle-save data-target="'+target+'">Xác nhận '+(target==='INACTIVE'?'nghỉ việc':'khôi phục')+'</button></div><div data-msp-lifecycle-message class="msp-state info" role="status">Thao tác được kiểm tra quyền lần nữa ở backend.</div></div>';
 }
+function modalHtml(content,kind){
+ if(!content)return '';
+ const title=kind==='lifecycle'?'Nghỉ việc / Khôi phục':'Thiết lập nhân viên';
+ return '<div class="msp-modal-layer" data-msp-modal-layer><div class="msp-modal-backdrop" data-msp-modal-close aria-hidden="true"></div><div class="msp-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="mspModalTitle" tabindex="-1"><div class="msp-modal-head"><h3 id="mspModalTitle">'+title+'</h3><button type="button" class="btn msp-modal-close" data-msp-modal-close aria-label="Đóng cửa sổ">✕</button></div>'+content+'</div></div>';
+}
+function closeModal(){
+ if(busy)return;
+ const id=state.lifecycleEditId||state.editId;
+ const kind=state.lifecycleEditId?'lifecycle':'edit';
+ state.editId=null;state.lifecycleEditId=null;render();
+ const buttons=document.querySelectorAll(kind==='lifecycle'?'[data-msp-lifecycle-open]':'[data-msp-edit]');
+ for(const button of buttons)if((kind==='lifecycle'?button.dataset.mspLifecycleOpen:button.dataset.mspEdit)===id){button.focus();break}
+}
+document.addEventListener('keydown',e=>{
+ const layer=document.querySelector('[data-msp-modal-layer]');
+ if(!layer)return;
+ if(e.key==='Escape'){e.preventDefault();closeModal();return}
+ if(e.key!=='Tab')return;
+ const items=[...layer.querySelectorAll('button:not([disabled]),select:not([disabled]),textarea:not([disabled]),input:not([disabled]),[tabindex="0"]')].filter(el=>el.getClientRects().length);
+ if(!items.length)return;
+ const first=items[0],last=items[items.length-1];
+ if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+ else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+});
 function render(){
  if(!ensureUi())return;
  const root=document.getElementById('mspRoot');if(!root)return;
@@ -48,19 +73,21 @@ function render(){
  const filtered=keyword?state.rows.filter(r=>[r.full_name,r.username,r.phone].some(v=>String(v||'').toLocaleLowerCase('vi').includes(keyword))):state.rows;
  const visible=filtered.filter(r=>state.statusFilter==='ALL'||String(r.profile_status||'').toUpperCase()===state.statusFilter);
  const rows=visible.map(r=>{const codes=Array.isArray(r.priority_store_codes)?r.priority_store_codes.filter(Boolean):[];return '<tr><td><b>'+esc(r.full_name||r.username||'Nhân viên')+'</b><div class="muted">@'+esc(r.username||'—')+'</div></td><td>'+esc(r.phone||'—')+'</td><td>'+esc(r.profile_status||'—')+'</td><td>'+esc(employmentLabel(r.employee_id))+'</td><td><div class="msp-priority">'+esc(codes.length?codes.join(' → '):'Chưa thiết lập')+'</div><div class="muted">'+esc(codes.length?'Ưu tiên 1 = chi nhánh chính':'Chưa đủ điều kiện xếp lịch cross-store')+'</div></td><td><button class="btn" data-msp-edit="'+esc(r.employee_id)+'">Thiết lập</button>'+(['ACTIVE','INACTIVE'].includes(String(r.profile_status||'').toUpperCase())?'<button class="btn" data-msp-lifecycle-open="'+esc(r.employee_id)+'" type="button" '+(state.lifecycleReady&&state.lifecycleRights.get(String(r.employee_id))===true?'':'disabled')+'>'+(String(r.profile_status).toUpperCase()==='ACTIVE'?'Nghỉ việc':'Khôi phục')+'</button>':'')+'</td></tr>'}).join('');
- root.innerHTML=(lifeEdit?lifecycleEditorHtml(lifeEdit):edit?editHtml(edit):'')+'<div class="msp-state wf-state" data-state="READY">Store Priority là authority của Quản lý. Employee và Auto Schedule đọc cùng canonical truth này.</div><div class="msp-table-wrap"><table class="msp-table"><thead><tr><th>Nhân viên</th><th>Điện thoại</th><th>Trạng thái</th><th>FT/PT</th><th>Ưu tiên chi nhánh</th><th>Thao tác</th></tr></thead><tbody>'+(rows||'<tr><td colspan="6">Không tìm thấy nhân viên phù hợp.</td></tr>')+'</tbody></table></div>';
+ root.innerHTML='<div class="msp-state wf-state" data-state="READY">Store Priority là authority của Quản lý. Employee và Auto Schedule đọc cùng canonical truth này.</div><div class="msp-table-wrap"><table class="msp-table"><thead><tr><th>Nhân viên</th><th>Điện thoại</th><th>Trạng thái</th><th>FT/PT</th><th>Ưu tiên chi nhánh</th><th>Thao tác</th></tr></thead><tbody>'+(rows||'<tr><td colspan="6">Không tìm thấy nhân viên phù hợp.</td></tr>')+'</tbody></table></div>'+modalHtml(lifeEdit?lifecycleEditorHtml(lifeEdit):edit?editHtml(edit):'',lifeEdit?'lifecycle':'edit');
+ document.body.classList.toggle('msp-modal-open',!!(edit||lifeEdit));
  const search=document.getElementById('mspSearch');if(search&&search.value!==state.search)search.value=state.search;
  const statusSelect=document.getElementById('mspStatusFilter');if(statusSelect&&statusSelect.value!==state.statusFilter)statusSelect.value=state.statusFilter;
  bind();
 }
 function bind(){
  const root=document.getElementById('mspRoot');if(!root)return;
- root.querySelectorAll('[data-msp-edit]').forEach(b=>b.addEventListener('click',()=>{state.editId=b.dataset.mspEdit;render();root.querySelector('[data-msp-editor] select')?.focus()}));
- root.querySelector('[data-msp-cancel]')?.addEventListener('click',()=>{state.editId=null;render()});
+ root.querySelectorAll('[data-msp-edit]').forEach(b=>b.addEventListener('click',()=>{state.lifecycleEditId=null;state.editId=b.dataset.mspEdit;render();root.querySelector('[data-msp-modal-layer] [data-msp-editor] select')?.focus()}));
+ root.querySelector('[data-msp-cancel]')?.addEventListener('click',closeModal);
  root.querySelector('[data-msp-save]')?.addEventListener('click',savePriority);
  root.querySelector('[data-msp-type-save]')?.addEventListener('click',saveEmploymentType);
  root.querySelectorAll('[data-msp-lifecycle-open]').forEach(b=>b.addEventListener('click',()=>{state.editId=null;state.lifecycleEditId=b.dataset.mspLifecycleOpen;render();root.querySelector('#mspLifecycleReason')?.focus()}));
- root.querySelector('[data-msp-lifecycle-cancel]')?.addEventListener('click',()=>{state.lifecycleEditId=null;render()});
+ root.querySelector('[data-msp-lifecycle-cancel]')?.addEventListener('click',closeModal);
+ root.querySelectorAll('[data-msp-modal-close]').forEach(b=>b.addEventListener('click',closeModal));
  root.querySelector('[data-msp-lifecycle-save]')?.addEventListener('click',saveLifecycle);
 }
 async function loadStores(){
