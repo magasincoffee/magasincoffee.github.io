@@ -5,7 +5,7 @@ const read=p=>readFileSync(p,'utf8');
 const source=read('05_MANAGER/Workforce/manager-five-board-v4.js');
 const loader=read('05_MANAGER/Workforce/engine-v1.js');
 test('five-step Manager navigation is present and preserves canonical writer',()=>{
-  assert.ok(loader.includes('manager-five-board-v4.js?v=20261018-demand-settings-v1'));
+  assert.ok(loader.includes('manager-five-board-v4.js?v=20261018-demand-week-matrix-v1'));
   for(const step of ['Chuẩn bị','Tạo lịch nháp','Chỉnh lịch','Kiểm tra','Duyệt & phát hành'])
     assert.ok(source.includes(step),step);
   for(const protectedWriter of ['replace_schedule_generation_assignments','validate_schedule_generation_v1','review_schedule_generation','publish_schedule_generation','.from(','createClient('])
@@ -56,3 +56,5 @@ test('Prepare staffing demand preview is read-only and settings are separate',as
  assert.doesNotMatch(js,/data-x19g-staff='1'/);
  assert.match(js,/function demandPreview\(sh\)/);
 });
+
+test('Staffing demand uses seven-column week matrix and distinct Manager configuration entry',async()=>{const js=await read('05_MANAGER/Workforce/manager-five-board-v4.js');assert.match(js,/x19g-demand-week-matrix/);assert.match(js,/Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ Nhật/);assert.match(js,/x19g-demand-settings-entry/);assert.match(js,/insertBefore\(settingsEntry,sh\)/);assert.match(js,/data-x19g-demand-editor/)});
