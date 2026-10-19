@@ -68,7 +68,8 @@ test("MER-004/005: cross-role UI state and role boundary are explicit",()=>{
  assert.match(canonical,/'manager-scheduling':\{roles:\['STORE_MANAGER'\]/);
  const v2Bridge=read("05_MANAGER/Lich-lam/index.html");
  assert.match(v2Bridge,/requireActive\(\)/);
- assert.match(v2Bridge,/STORE_MANAGER','OWNER/);
+ assert.match(v2Bridge,/role==='STORE_MANAGER'/);
+  assert.match(v2Bridge,/role==='OWNER'/);
 });
 
 console.log("MANAGER_EMPLOYEE_RECONCILIATION_V1=PASS");

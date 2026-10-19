@@ -132,7 +132,8 @@ test("Manager legacy deep-link redirects to canonical Scheduling V2",async()=>{
   assert.match(workforce,/location\.replace\(\x27\/manager\/scheduling\/\x27\)/);
   assert.doesNotMatch(workforce,/manager-runtime-v1\.html|SchedulingV2\/index\.html/);
   assert.match(scheduling,/shared-core-v1\.js/);
-  assert.match(scheduling,/SchedulingV2\/index\.html\?mode=live/);
+  assert.match(scheduling,/location\.replace\('\/manager\/scheduling\/'\)/);
+  assert.match(await read('manager/scheduling/index.html'),/SchedulingV2\/index\.html\?mode=live/);
   assert.doesNotMatch(scheduling,/manager-runtime-v1\.html/);
   assert.doesNotMatch(scheduling,/manager-v13-runtime/);
 });
@@ -157,7 +158,8 @@ test("SCHED-04 Manager UI hides technical generation identity and raw backend di
 
 test("SCHED-04 Manager Lich-lam route loads V2 without duplicate legacy writers",async()=>{
   const route=await read("05_MANAGER/Lich-lam/index.html");
-  assert.match(route,/SchedulingV2\/index\.html\?mode=live/);
+  assert.match(route,/location\.replace\('\/manager\/scheduling\/'\)/);
+  assert.match(await read('manager/scheduling/index.html'),/SchedulingV2\/index\.html\?mode=live/);
   assert.match(route,/requireActive\(\)/);
   assert.doesNotMatch(route,/manager-runtime-v1\.html|manager-v13-runtime/);
   assert.doesNotMatch(route,/draft-publish-v1\.js|publish_schedule_generation|replace_schedule_generation_assignments/);
