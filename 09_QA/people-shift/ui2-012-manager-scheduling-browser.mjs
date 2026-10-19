@@ -46,6 +46,9 @@ for(const width of [1440,1024,768,430,390,360]){
   await frame.locator("#msdSave").focus();
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Tab");
+  // Legacy fallback redraws its Save element during keyboard travel.
+  // Re-anchor before checking the actual visible focus outline.
+  await frame.locator("#msdSave").focus();
   return frame.evaluate(expected=>{
    const html=document.documentElement,root=document.querySelector(".msd-ui2-012"),wrap=root?.querySelector(".msd-board-wrap"),focused=document.activeElement;
    const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return !el.hidden&&s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0};

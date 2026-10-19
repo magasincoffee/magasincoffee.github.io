@@ -30,7 +30,7 @@ test("SCHED-UI-009 route adapter remains closed and delegates only to numbered b
   const js=await read("02_CORE/navigation/canonical-role-route-v1.js");
   for(const token of [
     "bridge:'/05_MANAGER/?canonical=manager-root'",
-    "bridge:'/05_MANAGER/?canonical=manager-scheduling#workforce'",
+    "bridge:'/05_MANAGER/Lich-lam/'",
     "bridge:'/05_MANAGER/?canonical=manager-schedule#schedule'",
     "bridge:'/06_EMPLOYEE/?canonical=employee-root'",
     "bridge:'/06_EMPLOYEE/?canonical=employee-schedule#schedule'",

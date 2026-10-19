@@ -5,7 +5,7 @@ import fs from "node:fs/promises";
 const root=new URL("../../",import.meta.url);
 const read=p=>fs.readFile(new URL(p,root),"utf8");
 
-test("SCHED-04 keeps exactly one canonical Manager scheduling writer surface",async()=>{
+test("SCHED-04 keeps legacy writer as rollback while V2 is the active route",async()=>{
   const [draft,engine,legacy]=await Promise.all([
     read("05_MANAGER/Workforce/draft-publish-v1.js"),
     read("05_MANAGER/Workforce/engine-v1.js"),
@@ -27,7 +27,7 @@ test("SCHED-04 keeps exactly one canonical Manager scheduling writer surface",as
   assert.doesNotMatch(draft,/client\(\)\.from\(|sb\.from\(|supabase[^\n]*\.from\(/);
   assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012|20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018|20261018-empty-demand-v1)/);
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261018-empty-demand-v1)/);
-  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017|20261018-workforce-ftpt-lifecycle|20261018-staff-modal|20261018-unified-save|20261018-five-step-release|20261018-post-publish-v1|20261018-empty-demand-v1|20261018-demand-week-matrix-v1)#workforce/);
+  assert.match(legacy,/SchedulingV2\/index\.html\?mode=live/);
   assert.doesNotMatch(legacy,/publish_schedule_generation|replace_schedule_generation_assignments|create_schedule_generation/);
 });
 
