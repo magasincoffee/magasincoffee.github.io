@@ -17,10 +17,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Static contract and read-only gate
+      - name: Static contracts
         run: node --test 09_QA/people-shift/scheduling-v2-foundation.test.mjs 09_QA/people-shift/scheduling-v2-draft-editor.test.mjs
-      - name: JavaScript syntax gate
-        run: |\n          node --check 05_MANAGER/SchedulingV2/schedule-v2.js\n          node --check 05_MANAGER/SchedulingV2/read-adapter-v1.js
+      - name: Check JavaScript syntax
+        run: |
+          node --check 05_MANAGER/SchedulingV2/schedule-v2.js
+          node --check 05_MANAGER/SchedulingV2/read-adapter-v1.js
           node --check 05_MANAGER/SchedulingV2/manager-context-v2.js
           node --check 05_MANAGER/SchedulingV2/draft-editor-v1.js
           node --check 05_MANAGER/SchedulingV2/editor-ui-v1.js
