@@ -19,4 +19,4 @@ jobs:
       - name: Static contract and read-only gate
         run: node --test 09_QA/people-shift/scheduling-v2-foundation.test.mjs
       - name: JavaScript syntax gate
-        run: node --check 05_MANAGER/SchedulingV2/schedule-v2.js
+        run: |\n          node --check 05_MANAGER/SchedulingV2/schedule-v2.js\n          node --check 05_MANAGER/SchedulingV2/read-adapter-v1.js
