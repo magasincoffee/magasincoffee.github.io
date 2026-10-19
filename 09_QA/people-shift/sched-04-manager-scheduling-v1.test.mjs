@@ -27,7 +27,7 @@ test("SCHED-04 keeps legacy writer as rollback while V2 is the active route",asy
   assert.doesNotMatch(draft,/client\(\)\.from\(|sb\.from\(|supabase[^\n]*\.from\(/);
   assert.match(engine,/draft-publish-v1\.js\?v=(?:20260924-sched05|20260928-xstore005|20260929-xstore-livefix1|20260929-mer003|20261001-ui-unified1|20261002-sched-ui-005|20261004-xstore-012|20261004-xstore-015|20261004-xstore-016|20261005-xstore-017|20261005-xstore-018|20261018-empty-demand-v1)/);
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261018-empty-demand-v1)/);
-  assert.match(legacy,/SchedulingV2\\/index\\.html\\?mode=live/);
+  assert.match(legacy,/SchedulingV2\/index\.html\?mode=live/);
   assert.doesNotMatch(legacy,/publish_schedule_generation|replace_schedule_generation_assignments|create_schedule_generation/);
 });
 
