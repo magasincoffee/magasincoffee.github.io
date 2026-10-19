@@ -46,6 +46,7 @@
     }catch(_){ }
   }
   function clickView(view){
+    if(view==='workforce'){top().location.replace('/05_MANAGER/Lich-lam/');return;}
     if(!frame?.contentDocument) return;
     const b=frame.contentDocument.querySelector(`.sidebar [data-view="${CSS.escape(view)}"]`);
     if(!b) return;
@@ -72,6 +73,7 @@
       if(!target||!doc.contains(target)) return;
       const view=target.dataset.view;
       if(!view||applying) return;
+      if(view==='workforce'){top().location.assign('/05_MANAGER/Lich-lam/');return;}
       setRoute(view,false);
     },true);
     const sidebar=doc.querySelector('.sidebar');
