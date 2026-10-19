@@ -126,15 +126,15 @@ test("Official schedule remains server-read only",async()=>{
   assert.doesNotMatch(official,/\.from\('work_schedules'\)/);
 });
 
-test("Manager deep-links use canonical runtime",async()=>{
-  for(const p of ["05_MANAGER/Workforce/index.html","05_MANAGER/Lich-lam/index.html"]){
-    const source=await read(p);
-    assert.equal(source.includes("shared-core-v1.js"),true);
-    assert.equal(source.includes("manager-runtime-v1.html"),true);
-    assert.equal(source.includes("manager-v13-runtime.html"),false);
-  }
+test("Manager deep-links retain Workforce fallback and serve Scheduling V2",async()=>{
+  const workforce=await read("05_MANAGER/Workforce/index.html");
+  const scheduling=await read("05_MANAGER/Lich-lam/index.html");
+  for(const source of [workforce,scheduling])assert.match(source,/shared-core-v1\.js/);
+  assert.match(workforce,/manager-runtime-v1\.html/);
+  assert.match(scheduling,/SchedulingV2\/index\.html\?mode=live/);
+  assert.doesNotMatch(scheduling,/manager-runtime-v1\.html/);
+  assert.doesNotMatch(scheduling,/manager-v13-runtime/);
 });
-
 
 test("SCHED-04 reload resumes DRAFT REVIEWED or PUBLISHED through one canonical active generation",async()=>{
   const draft=await read("05_MANAGER/Workforce/draft-publish-v1.js");
@@ -154,11 +154,12 @@ test("SCHED-04 Manager UI hides technical generation identity and raw backend di
   assert.match(draft,/Không thể hoàn tất thao tác\. Hãy tải lại dữ liệu và thử lại\./);
 });
 
-test("SCHED-04 legacy Lich-lam route wraps canonical Workforce surface only",async()=>{
-  const legacy=await read("05_MANAGER/Lich-lam/index.html");
-  assert.match(legacy,/manager-runtime-v1\.html\?v=(?:20260927-ui2-013|20260929-xstore-livefix2|20260929-mer005|20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017|20261018-workforce-ftpt-lifecycle|20261018-staff-modal|20261018-unified-save|20261018-five-step-release|20261018-post-publish-v1|20261018-empty-demand-v1|20261018-demand-week-matrix-v1)#workforce/);
-  assert.doesNotMatch(legacy,/manager-v13-runtime/);
-  assert.doesNotMatch(legacy,/draft-publish-v1\.js/);
+test("SCHED-04 Manager Lich-lam route loads V2 without duplicate legacy writers",async()=>{
+  const route=await read("05_MANAGER/Lich-lam/index.html");
+  assert.match(route,/SchedulingV2\/index\.html\?mode=live/);
+  assert.match(route,/requireActive\(\)/);
+  assert.doesNotMatch(route,/manager-runtime-v1\.html|manager-v13-runtime/);
+  assert.doesNotMatch(route,/draft-publish-v1\.js|publish_schedule_generation|replace_schedule_generation_assignments/);
 });
 
 test('Employee view initialization is idempotent and preserves FT/PT lifecycle controls',async()=>{
