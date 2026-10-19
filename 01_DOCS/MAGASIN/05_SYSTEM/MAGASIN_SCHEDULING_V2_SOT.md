@@ -49,3 +49,18 @@ Every phase must have CI tests and no regressions against existing scheduling fl
 
 ## Next task
 Complete authenticated staging tests of review/publish, add cross-store automatic scheduling, staffing demand configuration, and post-publication adjustments; then retire V1 after V2 fully replaces it.
+
+
+## Implementation update — PR #469
+- PR #468 merged: guarded Check / Review / Publish actions, shortages remain warnings when backend validation passes.
+- Add store-scoped automatic staffing proposals; do NOT invoke global auto_generate_cross_store_schedule_v1 for one-store work. Preserve existing manual draft assignments, respect registered available/preferred windows, store priority, overlapping shifts and two-shifts-per-day cap; require explicit confirmation before saving.
+- Add empty-draft creation when positive recurring staffing demand exists, preserving the nonblocking-shortage rule.
+- Add post-publication add/reassign, reason and audit via the existing audited RPCs.
+- Build standalone weekly 7-day staffing requirement configuration page; reuse existing canonical board RPC with whole accessible-scope reconciliation and pre-save stale snapshot detection; backend limit 20 people per band.
+- PR #469 builds these components behind existing preview feature guards. This is *not* authorization to cut over until full CI and authenticated role-based acceptance.
+
+## Go-live gates
+1. Verify PR #469 static and behavior tests and UI2/People Shift regressions, merge to main.
+2. Verify authenticated Manager can load V2 store/week, configure requirements, create/edit draft, preview proposals, validate/review/publish when understaffed, and adjust official shifts; no unauthorized cross-store mutation.
+3. Approve a distinct rollout PR to point Manager scheduling entry to V2; keep V1 rollback link until real-world acceptance.
+4. Only remove V1 UI routes/assets after no remaining Manager/employee/owner dependencies.
