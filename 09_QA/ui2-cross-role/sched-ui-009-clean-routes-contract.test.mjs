@@ -20,6 +20,13 @@ const routes=[
 test("SCHED-UI-009 clean route entrypoints remain thin guarded adapters",async()=>{
   for(const [path,key] of routes){
     const html=await read(path);
+    if(key==="manager-scheduling"){
+      assert.match(html,/core\.supabase\.requireActive\(\)/);
+      assert.match(html,/role!=='STORE_MANAGER'/);
+      assert.match(html,/SchedulingV2\/index\.html\?mode=live/);
+      assert.doesNotMatch(html,/canonical-role-route-v1\.js/);
+      continue;
+    }
     assert.match(html,/canonical-role-route-v1\.js\?v=20261003-sched-ui-009/);
     assert.match(html,new RegExp('data-route-key="'+key+'"'));
     assert.doesNotMatch(html,/<iframe\b/i);
@@ -30,7 +37,7 @@ test("SCHED-UI-009 route adapter remains closed and delegates only to numbered b
   const js=await read("02_CORE/navigation/canonical-role-route-v1.js");
   for(const token of [
     "bridge:'/05_MANAGER/?canonical=manager-root'",
-    "bridge:'/05_MANAGER/Lich-lam/'",
+    "bridge:'/manager/scheduling/'",
     "bridge:'/05_MANAGER/?canonical=manager-schedule#schedule'",
     "bridge:'/06_EMPLOYEE/?canonical=employee-root'",
     "bridge:'/06_EMPLOYEE/?canonical=employee-schedule#schedule'",
