@@ -33,5 +33,12 @@ Reuse existing employee FT/PT, priority stores, and lifecycle policies. Do not i
 ## Release gates
 Every phase must have CI tests and no regressions against existing scheduling flows; smoke test authenticated read-only rendering and store scoping. Do not mark production-ready until an authorized Manager completes end-to-end acceptance. No data migrations in phase 1.
 
+## Progress and V1 retirement decision (2026-10-19)
+- PR #463 merged: standalone V2 read-only weekly roster, authorized Manager reads of both draft and official assignments.
+- PR #465 in progress: isolated V2 auth context and draft-time editor behind explicit preview enablement, backend validation, CI.
+- Product owner explicitly authorizes deletion of unusable V1 UI. **Retire V1 only after equivalent V2 scheduling capabilities are operational and navigation is switched.** Do not delete shared RPCs, workforce configuration, auth, employee lifecycle or legacy route prematurely.
+- Delete legacy scheduling UI only after verified store/week read, create/edit draft, auto schedule, validate, publish-with-shortage, post-publish change/audit and Manager role checks. Then update links, entry points, QA references and cache paths in one controlled cutover.
+- Do not treat the preview URL or a passing static contract as operational acceptance.
+
 ## Next task
-Implement read-only adapter + week roster in `05_MANAGER/SchedulingV2/`; add tests and draft PR. Keep the page unlinked from production navigation while under construction.
+Complete V2 draft editing (add, replace, delete assignments) on an isolated test dataset and verify concurrency/permission checks, then implement central Validate/Review/Publish UX. Keep the page unlinked from production navigation until these gates pass.
