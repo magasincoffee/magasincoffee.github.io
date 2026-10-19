@@ -79,7 +79,7 @@ function attachDiagnostics(page,label){
     const url=r.url();
     const expectedNavigationAbort=errorText==="net::ERR_ABORTED" && (
       /\/(?:06_EMPLOYEE|05_MANAGER)\/runtime\/(?:employee|manager)-runtime-v1\.html/.test(url)
-      || (label==="cold-MANAGER" && url==="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2")
+      || (label==="cold-MANAGER" && (url==="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" || url.startsWith(BASE+"/05_MANAGER/SchedulingV2/index.html?mode=live&")))
     );
     if(expectedNavigationAbort){
       report.ignored_navigation_aborts.push(label+": "+r.method()+" "+url+" "+errorText);
