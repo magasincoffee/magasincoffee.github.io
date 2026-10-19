@@ -1,0 +1,6 @@
+(()=>{'use strict';if(window.MAGASIN_SCHEDULING_V2_READ_ADAPTER)return;
+const context=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client||!ctx?.stores||!ctx?.actor)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx};
+async function stores(){const ctx=context();await ctx.actor({force:true});return ctx.stores({force:true})}
+async function week(storeId,weekStart){const ctx=context();await ctx.actor({force:true});const allowed=await ctx.stores({force:true});if(!allowed.some(s=>String(s.id)===String(storeId)))throw Error('STORE_NOT_ALLOWED');if(!/^\d{4}-\d{2}-\d{2}$/.test(String(weekStart)))throw Error('INVALID_WEEK');const result=await ctx.client().rpc('get_manager_weekly_schedule',{p_store_id:storeId,p_week_start:weekStart});if(result.error)throw result.error;const rows=(Array.isArray(result.data)?result.data:[]).filter(r=>String(r.status||'APPROVED').toUpperCase()==='APPROVED'&&String(r.store_id||storeId)===String(storeId));return {rows,stage:'Đã phát hành'}}
+window.MAGASIN_SCHEDULING_V2_READ_ADAPTER=Object.freeze({stores,week});
+})();
