@@ -35,10 +35,17 @@ Every phase must have CI tests and no regressions against existing scheduling fl
 
 ## Progress and V1 retirement decision (2026-10-19)
 - PR #463 merged: standalone V2 read-only weekly roster, authorized Manager reads of both draft and official assignments.
-- PR #465 in progress: isolated V2 auth context and draft-time editor behind explicit preview enablement, backend validation, CI.
+- PR #465, #466 and #467 merged: isolated V2 auth context, draft-time editor, add/replace/remove service, and unified draft shift dialog. Write actions remain preview gated.
 - Product owner explicitly authorizes deletion of unusable V1 UI. **Retire V1 only after equivalent V2 scheduling capabilities are operational and navigation is switched.** Do not delete shared RPCs, workforce configuration, auth, employee lifecycle or legacy route prematurely.
 - Delete legacy scheduling UI only after verified store/week read, create/edit draft, auto schedule, validate, publish-with-shortage, post-publish change/audit and Manager role checks. Then update links, entry points, QA references and cache paths in one controlled cutover.
 - Do not treat the preview URL or a passing static contract as operational acceptance.
 
+## Current phase — validation and publication action bar
+- Implement one compact Check / Review / Publish bar in V2, without the former five-step interface.
+- Preserve existing server RPCs: validate_schedule_generation_v1, review_schedule_generation, publish_schedule_generation.
+- Shortage is a warning and does not veto publication when server validation is valid. Only hard violations block.
+- Before each mutating action, re-read accessible store, week, generation identity and status; require user confirmation and a separate preview feature flag. RPC server remains authoritative.
+- V2 is not the default route; require staging Manager end-to-end acceptance before enabling live writes.
+
 ## Next task
-Complete V2 draft editing (add, replace, delete assignments) on an isolated test dataset and verify concurrency/permission checks, then implement central Validate/Review/Publish UX. Keep the page unlinked from production navigation until these gates pass.
+Complete authenticated staging tests of review/publish, add cross-store automatic scheduling, staffing demand configuration, and post-publication adjustments; then retire V1 after V2 fully replaces it.
