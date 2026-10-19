@@ -5,7 +5,8 @@ on:
       - '05_MANAGER/SchedulingV2/**'
       - '09_QA/people-shift/scheduling-v2-foundation.test.mjs'
       - '09_QA/people-shift/scheduling-v2-draft-editor.test.mjs'
-      - '09_QA/people-shift/scheduling-v2-draft-editor-behavior.test.mjs'
+      - '09_QA/people-shift/scheduling-v2-draft-editor-behavior.test.mjs 09_QA/people-shift/scheduling-v2-draft-operations.test.mjs'
+      - '09_QA/people-shift/scheduling-v2-draft-operations.test.mjs'
       - '01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_SCHEDULING_V2_SOT.md'
       - '.github/workflows/scheduling-v2-foundation.yml'
   workflow_dispatch:
@@ -27,3 +28,4 @@ jobs:
           node --check 05_MANAGER/SchedulingV2/manager-context-v2.js
           node --check 05_MANAGER/SchedulingV2/draft-editor-v1.js
           node --check 05_MANAGER/SchedulingV2/editor-ui-v1.js
+          node --check 05_MANAGER/SchedulingV2/draft-operations-v1.js
