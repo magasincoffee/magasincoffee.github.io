@@ -17,3 +17,113 @@
 /* Scheduling V2 uses MAGASIN's canonical Manager navigation hierarchy and tokens. */
 body[data-magasin-ui-v2]{font-family:var(--m-font-sans);background:var(--m-color-neutral-50);color:var(--m-color-neutral-950)}
 .sv2-app{display:flex;min-height:100dvh}.sv2-sidebar{width:246px;flex:0 0 246px;min-height:100dvh;background:var(--m-color-surface);border-right:1px solid var(--m-color-neutral-200);padding:22px 12px;display:flex;flex-direction:column;gap:6px}.sv2-brand{font-size:22px;font-weight:800;color:var(--m-color-neutral-950);text-decoration:none;padding:3px 12px}.sv2-brand-sub{font-size:12px;color:var(--m-color-neutral-500);padding:0 12px 20px}.sv2-nav{display:grid;gap:5px}.sv2-nav a{color:#536983;text-decoration:none;padding:12px 13px;border-radius:10px;font-weight:600;font-size:14px}.sv2-nav a:hover,.sv2-nav a:focus-visible{background:var(--m-color-neutral-100)}.sv2-nav a.is-active{background:var(--m-color-info-soft);color:var(--m-color-info)}.sv2-workspace{min-width:0;flex:1}.sv2-app-header{display:flex;align-items:center;justify-content:space-between;gap:12px;height:72px;padding:0 24px;border-bottom:1px solid var(--m-color-neutral-200);background:var(--m-color-surface);color:var(--m-color-neutral-500);font-size:13px}.sv2-app-header a{color:var(--m-color-brand-700);font-weight:800;text-decoration:none}.sv2{width:min(1440px,100%)}.sv2-top h1{font-weight:700}.sv2-bar,.sv2-roster,.sv2-summary,.sv2-release-bar{border-color:var(--m-color-border-default,var(--m-color-neutral-200));border-radius:var(--m-radius-xl)}.sv2-shift.sv2-band-morning,.sv2-demand-band.sv2-band-morning{background:var(--m-shift-morning-bg);color:var(--m-shift-morning-text)}.sv2-shift.sv2-band-afternoon,.sv2-demand-band.sv2-band-afternoon{background:var(--m-shift-afternoon-bg);color:var(--m-shift-afternoon-text)}.sv2-shift.sv2-band-evening,.sv2-demand-band.sv2-band-evening{background:var(--m-shift-evening-bg);color:var(--m-shift-evening-text)}@media(max-width:900px){.sv2-sidebar{width:190px;flex-basis:190px}}@media(max-width:700px){.sv2-app{display:block}.sv2-sidebar{min-height:0;width:100%;padding:8px 12px;border-right:0;border-bottom:1px solid var(--m-color-neutral-200)}.sv2-brand,.sv2-brand-sub{display:none}.sv2-nav{display:flex;overflow-x:auto;white-space:nowrap;gap:3px}.sv2-nav a{padding:10px}.sv2-app-header{height:52px;padding:0 12px}.sv2-top{flex-wrap:wrap}}
+
+
+/* Shared MAGASIN Manager shell for Scheduling V2 and recurring demand.
+   Match the authenticated shell's dark sidebar, 64px topbar and 1024px drawer. */
+body.sv2-nav-ready{
+  --sv2-shell-sidebar-width:248px;
+  --sv2-shell-sidebar-bg:#101828;
+  --sv2-shell-sidebar-text:#d0d5dd;
+  --sv2-shell-sidebar-muted:#98a2b3;
+  overflow-x:hidden;
+}
+body.sv2-nav-ready .sv2-app{display:block;min-height:100dvh}
+body.sv2-nav-ready .sv2-sidebar{
+  position:fixed;inset:0 auto 0 0;z-index:990;
+  display:flex;flex-direction:column;gap:0;
+  min-height:0;width:var(--sv2-shell-sidebar-width);
+  padding:0;overflow:auto;
+  border:0;background:var(--sv2-shell-sidebar-bg);
+  color:var(--sv2-shell-sidebar-text);
+  box-shadow:8px 0 28px rgba(16,24,40,.12)
+}
+body.sv2-nav-ready .sv2-brand{
+  display:flex;align-items:center;gap:12px;
+  min-height:52px;margin:0;padding:12px 16px 4px;
+  font-size:16px;line-height:20px;font-weight:700;color:#fff
+}
+body.sv2-nav-ready .sv2-brand::before{
+  content:'M';display:grid;place-items:center;
+  width:36px;height:36px;flex:0 0 36px;border-radius:9px;
+  background:var(--m-color-brand-600,#0f8f9c);color:#fff;
+  font-size:14px;font-weight:800
+}
+body.sv2-nav-ready .sv2-brand-sub{
+  display:block;padding:0 16px 16px 64px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  color:var(--sv2-shell-sidebar-muted);font-size:11px
+}
+body.sv2-nav-ready .sv2-nav{
+  display:block;flex:1;min-height:0;
+  padding:12px;overflow-y:auto;overflow-x:hidden
+}
+body.sv2-nav-ready .sv2-nav-group + .sv2-nav-group{margin-top:16px}
+body.sv2-nav-ready .sv2-nav-group-title{
+  margin:0 0 6px;padding:5px 12px;
+  color:var(--sv2-shell-sidebar-muted);font-size:11px;
+  font-weight:700;letter-spacing:.06em;text-transform:uppercase
+}
+body.sv2-nav-ready .sv2-nav a{
+  display:flex;align-items:center;gap:12px;min-height:44px;
+  padding:10px 12px;margin-bottom:3px;border-radius:9px;
+  color:var(--sv2-shell-sidebar-text);font-size:13px;
+  font-weight:600;white-space:normal
+}
+body.sv2-nav-ready .sv2-nav a:hover,
+body.sv2-nav-ready .sv2-nav a:focus-visible{
+  background:rgba(255,255,255,.08);color:#fff
+}
+body.sv2-nav-ready .sv2-nav a:focus-visible,
+body.sv2-nav-ready .sv2-menu-toggle:focus-visible{
+  outline:3px solid var(--m-color-brand-400,#38bdf8);outline-offset:2px
+}
+body.sv2-nav-ready .sv2-nav a.is-active{
+  background:rgba(255,255,255,.12);color:#fff
+}
+body.sv2-nav-ready .sv2-nav-symbol{
+  display:inline-grid;place-items:center;flex:0 0 22px;
+  width:22px;font-size:17px;font-weight:500
+}
+body.sv2-nav-ready .sv2-workspace{
+  width:calc(100% - var(--sv2-shell-sidebar-width));
+  min-height:100dvh;margin-left:var(--sv2-shell-sidebar-width)
+}
+body.sv2-nav-ready .sv2-app-header{
+  position:sticky;top:0;z-index:900;
+  display:flex;justify-content:flex-start;gap:14px;
+  height:64px;min-height:64px;padding:0 20px;
+  background:rgba(255,255,255,.97);backdrop-filter:blur(12px);
+  color:var(--m-color-neutral-500)
+}
+body.sv2-nav-ready .sv2-app-header a{white-space:nowrap}
+body.sv2-nav-ready .sv2-menu-toggle{
+  display:none;align-items:center;justify-content:center;
+  width:44px;height:44px;min-width:44px;padding:0;
+  border:1px solid var(--m-color-neutral-200);
+  border-radius:10px;background:white;color:#101828;
+  font-size:21px;cursor:pointer
+}
+body.sv2-nav-ready .sv2-nav-backdrop[hidden]{display:none!important}
+body.sv2-nav-ready .sv2-nav-backdrop{
+  position:fixed;inset:0;z-index:980;
+  background:rgba(16,24,40,.45)
+}
+@media(max-width:1024px){
+  body.sv2-nav-ready .sv2-sidebar{
+    width:min(320px,86vw);
+    transform:translateX(-105%);
+    transition:transform .2s ease
+  }
+  body.sv2-nav-ready.sv2-nav-open .sv2-sidebar{transform:translateX(0)}
+  body.sv2-nav-ready .sv2-workspace{width:100%;margin-left:0}
+  body.sv2-nav-ready .sv2-menu-toggle{display:inline-flex}
+}
+@media(max-width:700px){
+  body.sv2-nav-ready .sv2-app-header{height:60px;min-height:60px;padding:0 12px}
+  body.sv2-nav-ready .sv2{padding:12px}
+  body.sv2-nav-ready .sv2-app-header span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){
+  body.sv2-nav-ready .sv2-sidebar{transition:none}
+}
