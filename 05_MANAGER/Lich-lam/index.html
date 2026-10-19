@@ -13,6 +13,8 @@
 <script src="/02_CORE/shared/shared-core-v1.js?v=20260903-core-structure1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// Keep the clean canonical Manager scheduling URL on initial navigation and reload.
+if(location.pathname==='/05_MANAGER/Lich-lam/')history.replaceState({},document.title,'/manager/scheduling/'+location.search+location.hash);
 (async()=>{
   const C=window.MAGASIN_CORE;
   try{
