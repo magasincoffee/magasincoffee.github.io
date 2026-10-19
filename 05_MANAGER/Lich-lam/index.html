@@ -14,7 +14,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // Keep the clean canonical Manager scheduling URL on initial navigation and reload.
-if(location.pathname==='/05_MANAGER/Lich-lam/')history.replaceState({},document.title,'/manager/scheduling/'+location.search+location.hash);
+// Keep the public canonical URL; reloading it enters the canonical guard and returns to this V2 bridge.
+if(location.pathname==='/05_MANAGER/Lich-lam/'||location.pathname==='/05_MANAGER/Lich-lam')history.replaceState({},document.title,'/manager/scheduling/'+location.search+location.hash);
 (async()=>{
   const C=window.MAGASIN_CORE;
   try{
