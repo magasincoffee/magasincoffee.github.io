@@ -1,0 +1,57 @@
+(()=>{'use strict';if(window.MAGASIN_SCHEDULING_V2_STORE_PLANNER)return;
+const fail=c=>{throw Error(c)},hm=x=>String(x||'').slice(0,5),min=x=>{const m=hm(x).match(/^(\d{2}):(\d{2})$/);return m?Number(m[1])*60+Number(m[2]):NaN},day=x=>String(x||'').slice(0,10);
+const offset=(week,n)=>{const d=new Date(week+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+const sig=rows=>JSON.stringify(rows.map(r=>[String(r.id||''),String(r.user_id||''),day(r.work_date),hm(r.start_time),hm(r.end_time)]));
+const ctx=()=>{const c=window.MAGASIN_SCHEDULING_V2_CONTEXT;if(!c?.actor||!c?.stores||!c?.client)fail('MANAGER_CONTEXT_NOT_READY');return c};
+const shape=r=>({user_id:r.user_id,store_id:r.store_id,work_date:day(r.work_date),start_time:hm(r.start_time),end_time:hm(r.end_time),skill_code:r.skill_code||null,skill_level:Number(r.skill_level||0),score:Number(r.score||0),warning:r.warning||null,note:r.note||'MANAGER_DIRECT_FROM_AVAILABILITY',status:'DRAFT'});
+const eligible=(p,storeId)=>String(p.profile_status||'').toUpperCase()==='ACTIVE'&&['STAFF','EMPLOYEE'].includes(String(p.employee_role||'').toUpperCase())&&Array.isArray(p.priority_store_ids)&&p.priority_store_ids.map(String).includes(String(storeId));
+async function snapshot(storeId,weekStart){
+ const week=day(weekStart),d=new Date(week+'T12:00:00Z');if(!/^\d{4}-\d{2}-\d{2}$/.test(week)||!Number.isFinite(d.getTime())||d.getUTCDay()!==1)fail('INVALID_WEEK');
+ const c=ctx();await c.actor({force:true});const stores=await c.stores({force:true});if(!stores.some(s=>String(s.id)===String(storeId)))fail('STORE_NOT_ALLOWED');
+ const rpc=(name,args)=>c.client().rpc(name,args);
+ const responses=await Promise.all([rpc('list_schedule_generations',{p_store_id:storeId,p_week_start:week}),rpc('list_workforce_recurring_staffing_requirements_v1',{}),rpc('list_employee_workforce_profiles_v1',{}),rpc('get_manager_weekly_availability',{p_store_id:storeId,p_week_start:week}),rpc('get_cross_store_weekly_plan_v1',{p_week_start:week})]);
+ for(const r of responses)if(r.error)throw r.error;
+ const [gens,requirements,profiles,availability,plan]=responses.map(r=>Array.isArray(r.data)?r.data:[]);
+ const active=gens.filter(g=>['DRAFT','REVIEWED'].includes(String(g.status||'').toUpperCase()));
+ if(active.length>1)fail('MULTIPLE_ACTIVE_GENERATIONS');if(active.length&&String(active[0].status).toUpperCase()!=='DRAFT')fail('REVIEWED_DRAFT_LOCKED');
+ if(!active.length&&gens.some(g=>String(g.status||'').toUpperCase()==='PUBLISHED'))fail('PUBLISHED_WEEK_LOCKED');
+ const gen=active[0]||null;let originals=[];
+ if(gen){const q=await rpc('get_schedule_generation_assignments',{p_generation_id:gen.id});if(q.error)throw q.error;originals=Array.isArray(q.data)?q.data:fail('DRAFT_DATA_INVALID')}
+ if(originals.some(r=>String(r.store_id||storeId)!==String(storeId)))fail('STORE_MISMATCH');
+ return {c,rpc,week,storeId,gen,originals,requirements:requirements.filter(r=>String(r.store_id)===String(storeId)&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&Number(r.target_headcount)>0&&min(r.end_time)>min(r.start_time)),people:profiles.filter(p=>eligible(p,storeId)),availability:availability.filter(r=>['AVAILABLE','PREFERRED'].includes(String(r.availability_type||'').toUpperCase())),other:plan.filter(r=>!gen||String(r.generation_id||'')!==String(gen.id))}
+}
+function build(s){
+ const existing=s.originals.map(shape),working=existing.map(r=>({...r})),proposed=[],shortages=[];
+ const needs=[...s.requirements].sort((a,b)=>Number(a.day_of_week)-Number(b.day_of_week)||min(a.start_time)-min(b.start_time));
+ const byId=new Map(s.people.map(p=>[String(p.employee_id||p.user_id),p]));
+ function allFor(uid,date){return [...working,...s.other].filter(r=>String(r.user_id)===String(uid)&&day(r.work_date)===date)}
+ for(const r of needs){const workDate=offset(s.week,Number(r.day_of_week)-1),start=min(r.start_time),end=min(r.end_time),target=Math.floor(Number(r.target_headcount));
+ if(!Number.isFinite(start)||!Number.isFinite(end)||target<1)continue;
+ const covering=new Set(working.filter(a=>day(a.work_date)===workDate&&min(a.start_time)<=start&&min(a.end_time)>=end).map(a=>String(a.user_id)));
+ let missing=Math.max(0,target-covering.size);
+ while(missing>0){
+ const candidates=s.availability.filter(a=>day(a.work_date)===workDate&&min(a.start_time)<=start&&min(a.end_time)>=end).map(a=>{const uid=String(a.user_id||''),p=byId.get(uid);if(!p||covering.has(uid))return null;const shifts=allFor(uid,workDate);if(shifts.length>=2||shifts.some(x=>min(x.start_time)<end&&start<min(x.end_time)))return null;const currentWeek=working.filter(x=>String(x.user_id)===uid).length;const priority=p.priority_store_ids.map(String).indexOf(String(s.storeId));return {uid,p,prefer:String(a.availability_type).toUpperCase()==='PREFERRED'?0:1,priority,currentWeek}}).filter(Boolean).sort((a,b)=>a.prefer-b.prefer||a.currentWeek-b.currentWeek||a.priority-b.priority||a.uid.localeCompare(b.uid));
+ if(!candidates.length)break;
+ const {uid}=candidates[0];const newRow=shape({user_id:uid,store_id:s.storeId,work_date:workDate,start_time:hm(r.start_time),end_time:hm(r.end_time),note:'V2_STORE_SCOPED_PROPOSAL'});proposed.push(newRow);working.push(newRow);covering.add(uid);missing--;
+ }
+ if(missing>0)shortages.push({work_date:workDate,start_time:hm(r.start_time),end_time:hm(r.end_time),missing_headcount:missing,target_headcount:target});
+ }
+ return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,proposals:proposed,shortages};
+}
+async function preview({storeId,weekStart}){const snapshotValue=await snapshot(storeId,weekStart);if(!snapshotValue.requirements.length)fail('STORE_DEMAND_NOT_CONFIGURED');return build(snapshotValue)}
+async function apply(previewValue,{confirmed=false}={}){if(window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED!==true||!new URLSearchParams(window.location.search).has('auto-preview'))fail('AUTO_PREVIEW_DISABLED');if(confirmed!==true)fail('CONFIRMATION_REQUIRED');
+ const s=await snapshot(previewValue?.storeId,previewValue?.weekStart);const latest=build(s);
+ if(latest.originalSignature!==previewValue.originalSignature||latest.generationId!==previewValue.generationId||JSON.stringify(latest.proposals)!==JSON.stringify(previewValue.proposals))fail('PLAN_STALE_REPREVIEW_REQUIRED');
+ if(!latest.proposals.length)return {saved:false,added:0,shortages:latest.shortages,reason:'NO_ELIGIBLE_PROPOSALS'};
+ let generationId=s.gen?.id;
+ if(!generationId){const created=await s.rpc('create_schedule_generation',{p_store_id:s.storeId,p_week_start:s.week,p_algorithm_version:'V2_STORE_SCOPED_V1'});if(created.error)throw created.error;generationId=created.data;if(!generationId)fail('DRAFT_CREATION_FAILED')}
+ const current=await s.rpc('get_schedule_generation_assignments',{p_generation_id:generationId});if(current.error)throw current.error;
+ const rows=Array.isArray(current.data)?current.data:fail('DRAFT_DATA_INVALID');
+ if(sig(rows)!==previewValue.originalSignature)fail('DRAFT_CHANGED_BEFORE_SAVE');
+ const payload=[...rows.map(shape),...latest.proposals];
+ const save=await s.rpc('replace_schedule_generation_assignments',{p_generation_id:generationId,p_assignments:payload});if(save.error)throw save.error;
+ const validation=await s.rpc('validate_schedule_generation_v1',{p_generation_id:generationId});if(validation.error)throw validation.error;
+ return {saved:true,generationId,added:latest.proposals.length,shortages:latest.shortages,valid:validation.data?.valid===true,violations:validation.data?.violations||[],warnings:validation.data?.warnings||[]}
+}
+window.MAGASIN_SCHEDULING_V2_STORE_PLANNER=Object.freeze({preview,apply});
+})();
