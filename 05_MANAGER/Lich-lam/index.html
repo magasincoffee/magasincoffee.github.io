@@ -19,11 +19,10 @@
     if(!C)throw Error('Shared Core chưa sẵn sàng.');
     const p=await C.supabase.requireActive();
     const role=String(p.role||'').toUpperCase();
-    if(role==='OWNER'){location.replace('/04_OWNER/');return}
-    if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/06_EMPLOYEE/');return}
-    if(role!=='STORE_MANAGER'){location.replace('/03_PLATFORM/01_AUTH/role-unavailable.html');return}
+        if(['STAFF','EMPLOYEE'].includes(role)){location.replace('/06_EMPLOYEE/');return}
+    if(!['STORE_MANAGER','OWNER'].includes(role)){location.replace('/03_PLATFORM/01_AUTH/role-unavailable.html');return}
     const f=document.getElementById('app');
-    f.src='/05_MANAGER/runtime/manager-runtime-v1.html?v=20261018-demand-week-matrix-v1#workforce';
+    f.src='/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261019-v2-live';
     f.hidden=false;
   }catch(e){
     console.error('Manager route access failed',e);
