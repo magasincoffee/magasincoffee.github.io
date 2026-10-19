@@ -115,6 +115,11 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/mer-cross-role-profile-browser.mjs
 
+      - name: Run Scheduling V2 shared Manager navigation browser
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+        run: node 09_QA/people-shift/scheduling-v2-manager-nav-browser.mjs
+
       - name: Run Manager responsive matrix
         env:
           QA_BASE_URL: http://127.0.0.1:8769
