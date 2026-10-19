@@ -56,7 +56,7 @@ test("SCHED-UI-010 navigation prefers clean paths while keeping legacy path read
 
 test("SCHED-UI-010 clean adapter uses fixed bridge markers and fail-closed role checks",async()=>{
   const helper=await read("02_CORE/navigation/canonical-role-route-v1.js");
-  assert.match(helper,/bridge:'\\/05_MANAGER\\/Lich-lam\\/'/);
+  assert.match(helper,/bridge:'\/05_MANAGER\/Lich-lam\/'/);
   assert.match(helper,/canonical=employee-attendance/);
   assert.match(helper,/canonical=owner-scheduling/);
   assert.match(helper,/role-unavailable\.html/);
