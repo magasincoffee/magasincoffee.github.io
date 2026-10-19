@@ -3,29 +3,21 @@ on:
   pull_request:
     paths:
       - '05_MANAGER/SchedulingV2/**'
-      - '09_QA/people-shift/scheduling-v2-foundation.test.mjs'
-      - '09_QA/people-shift/scheduling-v2-draft-editor.test.mjs'
-      - '09_QA/people-shift/scheduling-v2-draft-editor-behavior.test.mjs 09_QA/people-shift/scheduling-v2-draft-operations.test.mjs'
-      - '09_QA/people-shift/scheduling-v2-draft-operations.test.mjs'
+      - '09_QA/people-shift/scheduling-v2-*.test.mjs'
       - '01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_SCHEDULING_V2_SOT.md'
       - '.github/workflows/scheduling-v2-foundation.yml'
   workflow_dispatch:
 jobs:
   foundation:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Static contracts
-        run: node --test 09_QA/people-shift/scheduling-v2-foundation.test.mjs 09_QA/people-shift/scheduling-v2-draft-editor.test.mjs 09_QA/people-shift/scheduling-v2-draft-editor-behavior.test.mjs
-      - name: Check JavaScript syntax
+      - name: V2 contracts and behavioral checks
+        run: node --test 09_QA/people-shift/scheduling-v2-*.test.mjs
+      - name: Validate all V2 JS syntax
         run: |
-          node --check 05_MANAGER/SchedulingV2/schedule-v2.js
-          node --check 05_MANAGER/SchedulingV2/read-adapter-v1.js
-          node --check 05_MANAGER/SchedulingV2/manager-context-v2.js
-          node --check 05_MANAGER/SchedulingV2/draft-editor-v1.js
-          node --check 05_MANAGER/SchedulingV2/editor-ui-v1.js
-          node --check 05_MANAGER/SchedulingV2/draft-operations-v1.js
+          for f in 05_MANAGER/SchedulingV2/*.js; do node --check "$f"; done
