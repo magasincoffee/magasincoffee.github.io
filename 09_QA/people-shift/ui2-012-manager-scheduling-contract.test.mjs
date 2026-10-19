@@ -106,7 +106,7 @@ test("UI2-012 Manager asset cache chain advances while Owner runtime remains on 
   const managerEntryV="20261018-demand-week-matrix-v1";
   assert.ok(runtime.includes("engine-v1.js?v="+managerV));
   assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+managerEntryV));
-  assert.ok(workforceIndex.includes("manager-runtime-v1.html?v="+managerV));
+  assert.ok(workforceIndex.includes("location.replace('/manager/scheduling/')"));
   assert.ok(legacySchedule.includes("SchedulingV2/index.html?mode=live"));
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20260927-ui2-016|20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018|20261018-empty-demand-v1)/);
   assert.doesNotMatch(ownerRuntime,new RegExp(managerV));

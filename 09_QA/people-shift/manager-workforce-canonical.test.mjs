@@ -126,11 +126,12 @@ test("Official schedule remains server-read only",async()=>{
   assert.doesNotMatch(official,/\.from\('work_schedules'\)/);
 });
 
-test("Manager deep-links retain Workforce fallback and serve Scheduling V2",async()=>{
+test("Manager legacy deep-link redirects to canonical Scheduling V2",async()=>{
   const workforce=await read("05_MANAGER/Workforce/index.html");
   const scheduling=await read("05_MANAGER/Lich-lam/index.html");
-  for(const source of [workforce,scheduling])assert.match(source,/shared-core-v1\.js/);
-  assert.match(workforce,/manager-runtime-v1\.html/);
+  assert.match(workforce,/location\.replace\(\x27\/manager\/scheduling\/\x27\)/);
+  assert.doesNotMatch(workforce,/manager-runtime-v1\.html|SchedulingV2\/index\.html/);
+  assert.match(scheduling,/shared-core-v1\.js/);
   assert.match(scheduling,/SchedulingV2\/index\.html\?mode=live/);
   assert.doesNotMatch(scheduling,/manager-runtime-v1\.html/);
   assert.doesNotMatch(scheduling,/manager-v13-runtime/);
