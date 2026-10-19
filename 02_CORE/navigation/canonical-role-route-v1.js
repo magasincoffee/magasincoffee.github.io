@@ -4,7 +4,7 @@ const script=document.currentScript;
 const key=String(script?.dataset?.routeKey||'').trim();
 const routes=Object.freeze({
   'manager-root':{roles:['STORE_MANAGER'],bridge:'/05_MANAGER/?canonical=manager-root',canonical:'/manager/'},
-  'manager-scheduling':{roles:['STORE_MANAGER'],bridge:'/05_MANAGER/?canonical=manager-scheduling#workforce',canonical:'/manager/scheduling/'},
+  'manager-scheduling':{roles:['STORE_MANAGER'],bridge:'/05_MANAGER/Lich-lam/',canonical:'/manager/scheduling/'},
   'manager-schedule':{roles:['STORE_MANAGER'],bridge:'/05_MANAGER/?canonical=manager-schedule#schedule',canonical:'/manager/schedule/'},
   'employee-root':{roles:['STAFF','EMPLOYEE'],bridge:'/06_EMPLOYEE/?canonical=employee-root',canonical:'/employee/'},
   'employee-schedule':{roles:['STAFF','EMPLOYEE'],bridge:'/06_EMPLOYEE/?canonical=employee-schedule#schedule',canonical:'/employee/schedule/'},
