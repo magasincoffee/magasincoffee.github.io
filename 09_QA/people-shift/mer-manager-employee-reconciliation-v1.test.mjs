@@ -63,8 +63,12 @@ test("MER-004/005: cross-role UI state and role boundary are explicit",()=>{
  assert.match(employeeProfile,/wf-state/);
  assert.match(employeeProfile,/Thông tin này được đồng bộ từ hồ sơ nhân sự và chỉ dùng để xem/);
  assert.doesNotMatch(employeeProfile,/backend|Workforce Profile|canonical/i);
- assert.match(managerEntry,/role!=='STORE_MANAGER'/);
- assert.match(managerEntry,/role==='OWNER'/);
+ assert.match(managerEntry,/location\.replace\('\/manager\/scheduling\/'\)/);
+ const canonical=read("02_CORE/navigation/canonical-role-route-v1.js");
+ assert.match(canonical,/'manager-scheduling':\{roles:\['STORE_MANAGER'\]/);
+ const v2Bridge=read("05_MANAGER/Lich-lam/index.html");
+ assert.match(v2Bridge,/requireActive\(\)/);
+ assert.match(v2Bridge,/STORE_MANAGER','OWNER/);
 });
 
 console.log("MANAGER_EMPLOYEE_RECONCILIATION_V1=PASS");
