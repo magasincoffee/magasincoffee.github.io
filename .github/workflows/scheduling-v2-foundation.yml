@@ -5,6 +5,7 @@ on:
       - '05_MANAGER/SchedulingV2/**'
       - '09_QA/people-shift/scheduling-v2-foundation.test.mjs'
       - '09_QA/people-shift/scheduling-v2-draft-editor.test.mjs'
+      - '09_QA/people-shift/scheduling-v2-draft-editor-behavior.test.mjs'
       - '01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_SCHEDULING_V2_SOT.md'
       - '.github/workflows/scheduling-v2-foundation.yml'
   workflow_dispatch:
@@ -18,7 +19,7 @@ jobs:
         with:
           node-version: '22'
       - name: Static contracts
-        run: node --test 09_QA/people-shift/scheduling-v2-foundation.test.mjs 09_QA/people-shift/scheduling-v2-draft-editor.test.mjs
+        run: node --test 09_QA/people-shift/scheduling-v2-foundation.test.mjs 09_QA/people-shift/scheduling-v2-draft-editor.test.mjs 09_QA/people-shift/scheduling-v2-draft-editor-behavior.test.mjs
       - name: Check JavaScript syntax
         run: |
           node --check 05_MANAGER/SchedulingV2/schedule-v2.js
