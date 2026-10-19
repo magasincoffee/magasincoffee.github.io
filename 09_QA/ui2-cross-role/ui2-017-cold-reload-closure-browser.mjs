@@ -77,8 +77,10 @@ function attachDiagnostics(page,label){
   page.on("requestfailed",r=>{
     const errorText=r.failure()?.errorText||"";
     const url=r.url();
-    const expectedNavigationAbort=errorText==="net::ERR_ABORTED" &&
-      /\/(?:06_EMPLOYEE|05_MANAGER)\/runtime\/(?:employee|manager)-runtime-v1\.html/.test(url);
+    const expectedNavigationAbort=errorText==="net::ERR_ABORTED" && (
+      /\/(?:06_EMPLOYEE|05_MANAGER)\/runtime\/(?:employee|manager)-runtime-v1\.html/.test(url)
+      || (label==="cold-MANAGER" && url==="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2")
+    );
     if(expectedNavigationAbort){
       report.ignored_navigation_aborts.push(label+": "+r.method()+" "+url+" "+errorText);
       return;
@@ -146,7 +148,12 @@ for(const spec of [
   await check("ui2_017_"+String(spec.label||spec.role).toLowerCase()+"_cold_reload_back_deeplink",async()=>{
     const expectedFirst=spec.runtime+"#"+spec.first,expectedSecond=spec.runtime+"#"+spec.second;
     const detail={cold,hardReload,second,back,backReload,url:page.url()};
-    if(cold!==expectedFirst||hardReload!==expectedFirst||second!==expectedSecond||back!==expectedFirst||backReload!==expectedFirst)throw new Error(JSON.stringify(detail));
+    if((spec.label||spec.role)==="MANAGER"){
+      // Manager #workforce now canonically redirects to Scheduling V2 after reload.
+      // The first cold bootstrap may still use legacy Manager runtime before navigation.
+      const expectedV2="/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261019-v2-live";
+      if(cold!==expectedFirst||hardReload!==expectedV2||second!==expectedSecond||back!==expectedV2||backReload!==expectedV2)throw new Error(JSON.stringify(detail));
+    }else if(cold!==expectedFirst||hardReload!==expectedFirst||second!==expectedSecond||back!==expectedFirst||backReload!==expectedFirst)throw new Error(JSON.stringify(detail));
     return JSON.stringify(detail);
   });
   await context.close();
