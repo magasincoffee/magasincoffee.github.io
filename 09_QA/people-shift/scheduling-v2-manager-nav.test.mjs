@@ -110,6 +110,8 @@ test('Manager V2 shell uses canonical route before stale V1 sidebar and never re
   assert.match(shell,/if \(path === '\/manager\/' \|\| path === '\/manager'\) return 'dashboard'/);
   assert.match(shell,/view === 'workforce' \|\| view === 'schedule'/);
   assert.match(shell,/topWindow\(\)\.location\.assign\(href\)/);
+  assert.match(shell,/path === '\/05_manager\/'/);
+  assert.doesNotMatch(shell,/path\.startsWith\('\/05_manager\/'\)/);
   assert.doesNotMatch(shell,/attempt \+ 1/);
   assert.match(runtime,/frame\.style\.visibility='hidden'/);
   assert.match(runtime,/getElementById\('magasinUiV2Shell'\)/);
