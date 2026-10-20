@@ -19,7 +19,7 @@ test("legacy Manager deep links route only through canonical Manager entry",()=>
   };
   for(const [path,hash] of Object.entries(expected)){
     const src=read(path);
-    assert.ok(src.includes("/05_MANAGER/"+hash),path);
+    assert.ok(src.includes("/manager/"+hash),path);
     assert.doesNotMatch(src,/manager-v13-runtime|createClient\(|\.from\(['"]profiles['"]\)|\/employee\//,path);
   }
 });
