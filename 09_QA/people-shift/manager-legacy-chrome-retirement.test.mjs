@@ -59,7 +59,7 @@ test('active scheduling engine and the cross-role compatibility bridge remain av
  assert.match(engine,/attendance-review-v1\.js/);
  assert.match(engine,/payroll-self-check-v1\.js/);
  assert.match(sched,/magasin-ui-v2-shell\.js/);
- assert.match(demand,/data-sv2-manager-host/);
+ assert.match(demand,/dataset\.sv2ManagerHost='shared'/);
  assert.match(alias,/role==='OWNER'/);
  assert.match(alias,/role==='STAFF'\|\|role==='EMPLOYEE'/);
 });
