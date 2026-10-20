@@ -22,19 +22,23 @@ try {
   assert.equal(await app.locator('.m-shell-v2-nav__item').count(),10,'Manager has same ten menu destinations as Scheduling V2');
   const keys=await app.locator('.m-shell-v2-nav__item').evaluateAll(nodes=>nodes.map(el=>el.dataset.shellKey));
   assert.deepEqual(keys,['dashboard','workforce','swap','attendance','staff','payroll-self-check','schedule','demand','tasks','settings']);
-  assert.equal(await app.locator('[data-shell-key="tasks"]').isVisible(),width>1024);
+  if(width>1024) assert.equal(await app.locator('[data-shell-key="tasks"]').isVisible(),true);
+  else assert.notEqual(await app.locator('.m-shell-v2-sidebar').evaluate(el=>getComputedStyle(el).transform),'none','mobile nav stays off-canvas before opening');
   assert.equal(await app.locator('html[data-manager-canonical-boot="1"]').count(),1);
   assert.equal(await app.locator('#view-attendance').innerText().then(x=>/Trắng|Mai Chi|Minh Anh/.test(x)),false,'do not render legacy employee samples');
-  await app.locator('.m-shell-v2-nav__item[data-shell-key="staff"]').click({force:width<=1024});
+  if(width<=1024){
+   await app.locator('.m-shell-v2-menu').click();
+   assert.equal(await app.locator('.m-shell-v2-menu').getAttribute('aria-expanded'),'true');
+  }
+  await app.locator('.m-shell-v2-nav__item[data-shell-key="staff"]').click();
   await app.locator('#view-staff.active').waitFor();
   assert.equal(await app.locator('.m-shell-v2-nav__item[aria-current="page"]').count(),1);
   if(width<=1024){
    await app.locator('.m-shell-v2-menu').click();
    assert.equal(await app.locator('.m-shell-v2-nav__item[data-shell-key="demand"]').isVisible(),true);
-   await app.locator('.m-shell-v2-nav__item[data-shell-key="demand"]').click();
-  }else{
-   await app.locator('.m-shell-v2-nav__item[data-shell-key="demand"]').click();
   }
+  await page.route('**/manager/scheduling/?view=demand',route=>route.fulfill({status:200,contentType:'text/html',body:'<html><body>Canonical demand route</body></html>'}));
+  await app.locator('.m-shell-v2-nav__item[data-shell-key="demand"]').click();
   // Auth is deliberately not bypassed: check top-level canonical route intent only.
   await page.waitForURL(/\/manager\/scheduling\/\?view=demand/,{timeout:12000});
   console.log('MANAGER_SINGLE_SIDEBAR_BROWSER '+width+'px PASS');
