@@ -25,7 +25,8 @@ if(resolvedHostRole==='owner'){window.MAGASIN_MANAGER_UI_V2_011_OWNER_SKIPPED=tr
 let canonicalManagerHost=false;
 try{
  canonicalManagerHost=resolvedHostRole==='manager'&&window.parent!==window&&
-  String(window.parent.location.pathname||'').toLowerCase()==='/05_manager/runtime/manager-runtime-v1.html';
+  window.parent.document.querySelector('iframe#app')?.contentWindow===window&&
+  window.parent.document.title==='MAGASIN · Quản trị nội bộ';
 }catch(_){}
 if(canonicalManagerHost){window.MAGASIN_MANAGER_UI_V2_011_CANONICAL_SKIPPED=true;return;}
 if(window.MAGASIN_MANAGER_UI_V2_011)return;
