@@ -36,6 +36,12 @@ try {
       assert.equal(await menu.evaluate(el=>el===document.activeElement),true,'Escape returns focus');
       await menu.click();
     }
+    // The mobile navigation drawer is intentionally modal and blocks page controls;
+    // close it before following a content-toolbar link.
+    if (width <= 1024) {
+      await page.keyboard.press('Escape');
+      assert.equal(await menu.getAttribute('aria-expanded'),'false');
+    }
     await page.locator('.sv2-bar .sv2-demand-back').click();
     await page.waitForURL(/\/SchedulingV2\/Demand\/index\.html\?/);
     await page.locator('body.sv2-nav-ready').waitFor();
