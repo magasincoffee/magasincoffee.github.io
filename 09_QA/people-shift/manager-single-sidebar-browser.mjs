@@ -33,6 +33,17 @@ try {
   await app.locator('.m-shell-v2-nav__item[data-shell-key="staff"]').click();
   await app.locator('#view-staff.active').waitFor();
   assert.equal(await app.locator('.m-shell-v2-nav__item[aria-current="page"]').count(),1);
+  // Rapid switching among in-shell Manager modules must always settle on the
+  // last selected view without revealing a second navigation layer.
+  for (const key of ['attendance','swap','staff','tasks','settings','dashboard','staff']) {
+    if (width<=1024) await app.locator('.m-shell-v2-menu').click();
+    await app.locator('.m-shell-v2-nav__item[data-shell-key="'+key+'"]').click();
+    await app.locator('#view-'+key+'.active').waitFor();
+    const active=await app.locator('.m-shell-v2-nav__item[aria-current="page"]').evaluateAll(nodes=>nodes.map(x=>x.dataset.shellKey));
+    assert.deepEqual(active,[key],'active Manager menu does not drift after rapid switching');
+    assert.equal(await app.locator('.m-shell-v2-sidebar').count(),1,'no overlapping sidebar after '+key);
+    assert.equal(await app.locator('.manager-v2-sidebar-source').count(),0,'no rehydrated retired chrome after '+key);
+  }
   if(width<=1024){
    await app.locator('.m-shell-v2-menu').click();
    assert.equal(await app.locator('.m-shell-v2-nav__item[data-shell-key="demand"]').isVisible(),true);
