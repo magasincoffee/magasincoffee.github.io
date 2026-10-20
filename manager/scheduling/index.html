@@ -44,7 +44,10 @@ iframe{display:block;width:100%;height:100%;height:100dvh;border:0}
       return;
     }
     const frame=document.getElementById('app');
-    frame.src='/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261019-v2-live';
+    const isDemand=new URLSearchParams(location.search).get('view')==='demand';
+    frame.src=isDemand
+      ?'/05_MANAGER/SchedulingV2/Demand/index.html?mode=live&demand-preview&v=20261020-manager-shell-v3'
+      :'/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261019-v2-live';
     frame.hidden=false;
     status.hidden=true;
   }catch(error){
