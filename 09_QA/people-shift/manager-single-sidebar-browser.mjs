@@ -10,6 +10,10 @@ try {
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:stub}));
+  // This is an isolated unauthenticated UI fixture, not a production login.
+  // The real security overlay is tested in Auth regression suites; stub it
+  // here so prolonged rapid-click tests verify shell interaction only.
+  await page.route('**/02_CORE/security/security-runtime.js*',route=>route.fulfill({status:200,contentType:'application/javascript',body:'window.__MAGASIN_QA_SECURITY_STUB__=true;'}));
   await page.goto(base+'/05_MANAGER/runtime/manager-runtime-v1.html',{waitUntil:'domcontentloaded'});
   const app=page.frameLocator('#app');
   await app.locator('#magasinUiV2Shell').waitFor({state:'attached',timeout:12000});
