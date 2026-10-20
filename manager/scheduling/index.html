@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/03_PLATFORM/02_ASSETS/favicon.svg">
 <title>MAGASIN · Quản lý · Xếp lịch</title>
+<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20261020-one-shell1">
 <style>
 html,body{margin:0;width:100%;height:100%;background:#f7f9fb;color:#17324a;font:14px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 main{height:100%;min-height:100dvh;display:grid;place-items:center;padding:24px;box-sizing:border-box}
@@ -14,6 +15,7 @@ main{height:100%;min-height:100dvh;display:grid;place-items:center;padding:24px;
 .route-status span{color:#60758a}
 .route-status a{display:inline-block;margin-top:14px;color:#087c94}
 iframe{display:block;width:100%;height:100%;height:100dvh;border:0}
+body[data-magasin-shell-v2] #app{height:calc(100dvh - var(--m-shell-topbar-height,64px));min-height:0}
 [hidden],iframe[hidden]{display:none!important}
 </style>
 </head>
@@ -43,10 +45,40 @@ iframe{display:block;width:100%;height:100%;height:100dvh;border:0}
       location.replace('/03_PLATFORM/01_AUTH/role-unavailable.html');
       return;
     }
+    // The canonical Manager shell is the only source of navigation, topbar and account chrome.
+    // Scheduling/Demand retain their own content, without nesting another sidebar.
+    const displayName=String(profile.full_name||profile.username||'Quản lý cửa hàng');
+    const identity=document.createElement('span');
+    identity.id='profileName';
+    identity.hidden=true;
+    identity.textContent=displayName;
+    const scope=document.createElement('span');
+    scope.id='profileMeta';
+    scope.hidden=true;
+    scope.textContent='Quản lý · Phạm vi cửa hàng';
+    document.body.append(identity,scope);
+    document.body.dataset.magasinShellRole='manager';
+    document.body.dataset.magasinShellMode='standalone';
+    window.__MAGASIN_UI_V2_SHELL__={role:'MANAGER',mode:'standalone'};
+
+    // Load the same shell JS/CSS as Home, not an imitation inside the iframe.
+    if(document.readyState==='loading'){
+      await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
+    }
+    await new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      script.src='/02_CORE/ui/magasin-ui-v2-shell.js?v=20261020-one-shell1';
+      script.onload=resolve;
+      script.onerror=()=>reject(Error('MANAGER_SHELL_LOAD_FAILED'));
+      document.body.appendChild(script);
+    });
+    if(!window.MAGASIN_UI_V2_SHELL)throw Error('MANAGER_SHELL_NOT_MOUNTED');
     const frame=document.getElementById('app');
-    frame.src='/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261019-v2-live';
-    frame.hidden=false;
-    status.hidden=true;
+    frame.addEventListener('load',()=>{
+      frame.hidden=false;
+      status.hidden=true;
+    },{once:true});
+    frame.src='/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261020-one-shell1';
   }catch(error){
     console.error('Manager scheduling route failed',error);
     message.textContent='Không thể xác minh phiên truy cập. Vui lòng đăng nhập lại.';
