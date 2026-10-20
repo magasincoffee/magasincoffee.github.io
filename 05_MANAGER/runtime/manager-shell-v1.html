@@ -2,7 +2,8 @@
 <script>
 try{
  if(new URLSearchParams(location.search).get('host')==='manager'&&window.parent!==window&&
-    String(window.parent.location.pathname||'').toLowerCase()==='/05_manager/runtime/manager-runtime-v1.html'){
+    window.parent.document.querySelector('iframe#app')?.contentWindow===window&&
+    window.parent.document.title==='MAGASIN · Quản trị nội bộ'){
     document.documentElement.dataset.managerCanonicalBoot='1';
  }
 }catch(_){}
