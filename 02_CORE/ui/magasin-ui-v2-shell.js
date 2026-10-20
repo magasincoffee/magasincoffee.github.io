@@ -144,13 +144,13 @@
       document.querySelector('#userName');
     const metaNode = document.querySelector('#profileMeta');
     const rawName = (nameNode?.textContent || roleFallback).trim();
-    const name = rawName.replace(/s*·s*OWNERs*$/i, '') || roleFallback;
+    const name = rawName.replace(/\s*·\s*OWNER\s*$/i, '') || roleFallback;
     const meta = (metaNode?.textContent || roleFallback).trim();
     return { name, meta };
   };
 
   const initials = name => {
-    const parts = String(name || 'M').trim().split(/s+/).filter(Boolean);
+    const parts = String(name || 'M').trim().split(/\s+/).filter(Boolean);
     return (parts.length ? parts[parts.length - 1][0] : 'M').toUpperCase();
   };
 
@@ -346,18 +346,7 @@
     shell.querySelectorAll('.m-shell-v2-nav__item[data-shell-key]').forEach(node => {
       node.addEventListener('click', event => {
         const key = node.dataset.shellKey;
-        if (config.role === 'OWNER') {
-      const accountSource =
-        document.querySelector('#ownerIdentity') ||
-        document.querySelector('#userName') ||
-        document.querySelector('#profileName');
-      if (accountSource) {
-        const accountObserver = new MutationObserver(syncAccount);
-        accountObserver.observe(accountSource, { childList: true, subtree: true, characterData: true });
-      }
-    }
-
-    if (config.role === 'MANAGER') {
+      if (config.role === 'MANAGER') {
           event.preventDefault();
           activateManagerView(node.dataset.shellView || key);
         } else {
@@ -366,6 +355,18 @@
         }
       });
     });
+
+    // Profile data can arrive after mount in the nested Manager runtime.
+    // Subscribe once per shell, not once per navigation click.
+    const accountSources = ['#profileName', '#ownerIdentity', '#userName', '#profileMeta']
+      .map(selector => document.querySelector(selector))
+      .filter(Boolean);
+    if (accountSources.length) {
+      const accountObserver = new MutationObserver(syncAccount);
+      accountSources.forEach(node => accountObserver.observe(node, {
+        childList: true, subtree: true, characterData: true
+      }));
+    }
 
     const logout = shell.querySelector('[data-shell-logout]');
     logout?.addEventListener('click', async () => {
