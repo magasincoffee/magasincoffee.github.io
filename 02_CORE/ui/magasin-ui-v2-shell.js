@@ -22,6 +22,7 @@
     ]),
     secondary: Object.freeze([
       ['schedule', '▤', 'Lịch đã phát hành'],
+      ['demand', '▦', 'Nhu cầu nhân sự'],
       ['tasks', '✓', 'Công việc'],
       ['settings', '⚙', 'Cài đặt']
     ]),
@@ -48,6 +49,7 @@
     staff: ['Nhân viên', 'Danh sách và trạng thái nhân sự'],
     'payroll-self-check': ['Công / Lương', 'Đối soát công và lương'],
     schedule: ['Lịch đã phát hành', 'Lịch làm chính thức từ hệ thống'],
+    demand: ['Nhu cầu nhân sự', 'Định mức nhân sự theo khung giờ trong tuần'],
     tasks: ['Công việc', 'Nguồn công việc và quy trình hiện có'],
     settings: ['Cài đặt', 'Cấu hình hiện có']
   });
@@ -193,6 +195,23 @@
   };
 
   const activateManagerView = (view, attempt = 0) => {
+    // Manager menu has exactly one navigation owner. V2 Scheduling and Demand
+    // must never first activate their hidden legacy V1 view (visual flash).
+    const guardedDestinations = {
+      workforce: '/manager/scheduling/',
+      demand: '/manager/scheduling/?view=demand'
+    };
+    const destination = guardedDestinations[view];
+    if (destination) {
+      closeDrawer();
+      try {
+        const top = topWindow();
+        if (String(top.location.pathname || '') + String(top.location.search || '') !== destination) {
+          top.location.assign(destination);
+        }
+      } catch (_) { location.assign(destination); }
+      return true;
+    }
     const button = sourceButton(view);
     if (button && !button.hidden && button.getAttribute('aria-hidden') !== 'true') {
       button.click();
