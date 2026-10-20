@@ -98,3 +98,20 @@ test('Demand toolbar enters live editor and returns through authenticated canoni
   assert.doesNotMatch(schedule,/V2 PREVIEW/);
   assert.match(schedule,/BẢNG LỊCH TUẦN/);
 });
+
+test('Manager V2 shell uses canonical route before stale V1 sidebar and never retries hidden views',async()=>{
+  const [shell,runtime]=await Promise.all([
+    source('02_CORE/ui/magasin-ui-v2-shell.js'),
+    source('05_MANAGER/runtime/manager-runtime-v1.html')
+  ]);
+  assert.ok(shell.indexOf("const topLocation = topWindow().location;") < shell.indexOf("const source = document.querySelector('.sidebar [data-view].active');"));
+  assert.match(shell,/if \(path\.startsWith\('\/manager\/scheduling'\)\) return 'workforce'/);
+  assert.match(shell,/if \(path\.startsWith\('\/manager\/schedule\/'\)\) return 'schedule'/);
+  assert.match(shell,/if \(path === '\/manager\/' \|\| path === '\/manager'\) return 'dashboard'/);
+  assert.match(shell,/view === 'workforce' \|\| view === 'schedule'/);
+  assert.match(shell,/topWindow\(\)\.location\.assign\(href\)/);
+  assert.doesNotMatch(shell,/attempt \+ 1/);
+  assert.match(runtime,/frame\.style\.visibility='hidden'/);
+  assert.match(runtime,/getElementById\('magasinUiV2Shell'\)/);
+  assert.match(runtime,/20261020-manager-nav-unified1/);
+});
