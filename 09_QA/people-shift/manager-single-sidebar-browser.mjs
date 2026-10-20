@@ -15,7 +15,8 @@ try {
   await app.locator('#magasinUiV2Shell').waitFor({state:'attached',timeout:12000});
   await app.locator('html[data-manager-shell-ready="1"]').waitFor();
   assert.equal(await app.locator('.m-shell-v2-sidebar').count(),1,'exactly one Manager sidebar');
-  assert.equal(await app.locator('.manager-v2-sidebar-source').count(),0,'retired alternate sidebar never mounted');
+  const debug=await app.locator('body').evaluate(()=>({url:location.href,parent:parent.location.href,skip:window.MAGASIN_MANAGER_UI_V2_011_CANONICAL_SKIPPED,old:window.MAGASIN_MANAGER_UI_V2_011,html:document.documentElement.dataset.managerCanonicalBoot,shared:document.documentElement.dataset.managerShellReady}));
+  assert.equal(await app.locator('.manager-v2-sidebar-source').count(),0,'retired alternate sidebar never mounted '+JSON.stringify(debug));
   assert.equal(await app.locator('#managerV2Drawer').count(),0,'retired cloned mobile drawer absent');
   assert.equal(await app.locator('.manager-v2-header').count(),0,'retired second header absent');
   assert.equal(await app.locator('.m-shell-v2-nav__item').count(),10,'Manager has same ten menu destinations as Scheduling V2');
