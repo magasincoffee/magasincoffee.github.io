@@ -83,6 +83,26 @@ assert.equal(stableUrl.pathname, "/manager/");
 assert.equal(stableUrl.hash, "#tasks");
 assert.equal(taskActive, true, "Task route must remain active after bootstrap settles");
 
+await shell.locator('.m-shell-v2-sidebar').waitFor({state:'attached',timeout:12000});
+const chromeAudit=await shell.evaluate(()=>{
+  const tasks=document.querySelector('.m-shell-v2-nav__item[data-shell-key="tasks"]');
+  return {
+    oldDecoratorSkipped:window.MAGASIN_MANAGER_UI_V2_011_HOSTED_SKIPPED===true,
+    oldDrawerCount:document.querySelectorAll('#managerV2Drawer').length,
+    oldHeaderCount:document.querySelectorAll('.manager-v2-header').length,
+    sidebarCount:document.querySelectorAll('.m-shell-v2-sidebar').length,
+    topbarCount:document.querySelectorAll('.m-shell-v2-topbar').length,
+    tasksNavigationVisible:!!tasks&&getComputedStyle(tasks).display!=='none'
+  };
+});
+assert.deepEqual(chromeAudit,{
+  oldDecoratorSkipped:true,
+  oldDrawerCount:0,
+  oldHeaderCount:0,
+  sidebarCount:1,
+  topbarCount:1,
+  tasksNavigationVisible:true
+},'Canonical Manager must have one visible shell and no legacy chrome');
 const runtimeFrame = page.frames().find(f => f.url().includes("/05_MANAGER/runtime/manager-runtime-v1.html"));
 const heading = await shell.locator("#view-tasks h2").first().textContent();
 const debug = {
@@ -99,6 +119,7 @@ const debug = {
     routeBridgeBound: document.documentElement.dataset.routeBridgeBound || null
   })),
   heading: heading?.trim(),
+  chromeAudit,
   diagnostics
 };
 
