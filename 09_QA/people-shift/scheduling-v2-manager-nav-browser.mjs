@@ -11,6 +11,7 @@ try {
     await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:stub}));
     await page.goto(base+'/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview',{waitUntil:'domcontentloaded'});
     await page.locator('body.sv2-nav-ready').waitFor();
+    assert.equal(await page.locator('.sv2-bar .sv2-demand-back').getAttribute('href'),'./Demand/index.html?mode=live&demand-preview','toolbar demand entry keeps live flag');
     const menu=page.locator('.sv2-menu-toggle');
     const nav=page.locator('.sv2-nav');
     const current=nav.locator('a[aria-current="page"]');
@@ -41,10 +42,14 @@ try {
     assert.equal(await page.locator('.sv2-nav a[aria-current="page"]').textContent().then(x=>x.includes('Nhu cầu nhân sự')),true);
     assert.equal(await page.locator('#sv2DemandTable').count(),1);
     assert.equal(await page.locator('.sv2-nav a[href="/manager/#staff"]').getAttribute('target'),'_top');
-    await page.getByRole('link',{name:/Về lịch làm việc/}).click();
-    await page.waitForURL(/\/SchedulingV2\/index\.html\?/);
-    assert.equal(await page.locator('.sv2-nav a[aria-current="page"]').textContent().then(x=>x.includes('Xếp lịch')),true);
-    outputs.push('PASS '+width+'px schedule→demand→schedule, drawer/active/focus/overflow');
+    const returnLink=page.getByRole('link',{name:/Về lịch làm việc/});
+    assert.equal(await returnLink.getAttribute('href'),'/manager/scheduling/');
+    assert.equal(await returnLink.getAttribute('target'),'_top');
+    await page.route('**/manager/scheduling/',route=>route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><html><body><main id="qaCanonical">Canonical scheduling return</main></body></html>'}));
+    await returnLink.click();
+    await page.waitForURL(/\/manager\/scheduling\/$/);
+    assert.equal(await page.locator('#qaCanonical').count(),1,'return navigates top window to canonical route');
+    outputs.push('PASS '+width+'px schedule→demand→canonical, drawer/active/focus/overflow');
     await page.close();
   }
   console.log('SCHEDULING_V2_SHARED_MANAGER_NAV_BROWSER=PASS');
