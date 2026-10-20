@@ -70,13 +70,24 @@
 - Lịch được duyệt là căn cứ để nhân viên chấm công, không chấm công theo đề xuất đổi ca chưa duyệt.
 - Việc cả hai phải xác nhận trong ứng dụng hay xác nhận ngoài đời vẫn là chi tiết UX cần chốt.
 
-## 6. Cho ca/nhường ca (SHIFT_GIVE_AWAY) — PROPOSED, CHƯA CHỐT
+## 6. Cho ca/nhường ca (SHIFT_GIVE_AWAY) — CONFIRMED + OPEN (chốt 2026-10-20)
 
-- Khác với đổi ca: A nhường **một** ca cho B, B không cần đưa ca khác cho A.
-- Luồng **đề xuất để thảo luận**: A chọn ca đã công bố → gửi đề nghị cho ca → B đồng ý nhận → quản lý kiểm tra điều kiện và duyệt/từ chối → nếu duyệt mới chuyển phân công trên lịch chính thức, thông báo cả hai.
-- Trước phê duyệt, A vẫn chịu trách nhiệm theo lịch gốc. Nếu không ai nhận hoặc quản lý từ chối, ca giữ nguyên.
-- Kiểm tra đề xuất: B không bị trùng giờ lịch chính thức, đủ điều kiện ở chi nhánh, không tạo thiếu người hoặc phân công vô lý.
-- **CHƯA CHỐT:** Cho ca có bắt buộc B nhận trước khi gửi quản lý hay cho phép đăng công khai để người khác nhận? Giới hạn gửi trước 24 giờ có áp dụng cho cho ca không? Có cho phép manager phân công trực tiếp khi thiếu người không?
+**Quy tắc CONFIRMED từ người vận hành MAGASIN:**
+- **Cho ca khác đổi ca:** Nhân viên A nhường một ca đã được xếp cho nhân viên B, không cần B đưa lại ca khác.
+- **Người cho ca chủ động tìm trước một nhân viên nhận ca** và tự thỏa thuận với người đó. Hệ thống KHÔNG cần thiết kế quy trình đăng ca công khai để tìm người thay thế như đường đi mặc định.
+- Sau khi tìm được người nhận, A thực hiện thao tác **Cho ca** trên hệ thống, chỉ định người nhận B và ca muốn nhường.
+- Yêu cầu cho ca **phải gửi đến quản lý để duyệt**. Quản lý có quyền duyệt hoặc từ chối.
+- **Chỉ khi quản lý duyệt, lịch làm việc chính thức mới đổi người được phân công từ A sang B**. Trong thời gian chờ duyệt hoặc khi bị từ chối, ca vẫn thuộc A và A còn trách nhiệm với ca theo lịch ban đầu.
+- Sau khi duyệt, lịch chính thức đã cập nhật là căn cứ chấm công. Tránh để bản ghi lịch của A và B cùng được coi là ca chính thức trùng lặp.
+
+**Đề xuất kiểm tra an toàn (PROPOSED, chưa phải chính sách mới):**
+- Hệ thống kiểm tra B có trùng giờ làm, có đủ điều kiện/chi nhánh để nhận ca không; thông báo kết quả duyệt hoặc từ chối đến cả A và B.
+- Có thể yêu cầu B xác nhận trên hệ thống để ngăn tình trạng A tự nhập tên B khi chưa thực sự thỏa thuận, nhưng người dùng mới xác nhận việc **tìm người nhận trước**, chưa chốt thủ tục xác nhận số.
+
+**Còn OPEN, không được tự mặc định:**
+- Điều kiện gửi yêu cầu cho ca trước bao lâu: **quy tắc >=24 giờ hiện đã chốt cho ĐỔI CA**, chưa xác nhận có áp dụng y hệt CHO CA hay không.
+- Có cần B xác nhận nhận ca một lần nữa trên hệ thống không, hay việc A chọn B sau khi hai bên đã thỏa thuận là đủ?
+- Cho phép quản lý tự phân công người thay thế trong tình huống đặc biệt không?
 
 ## 7. Chấm công (ATTENDANCE) — CONFIRMED + OPEN
 
