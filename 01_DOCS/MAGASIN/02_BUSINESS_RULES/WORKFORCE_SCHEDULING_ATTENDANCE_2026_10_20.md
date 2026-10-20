@@ -13,6 +13,8 @@
 |---|---|---|
 | Khả năng làm việc / đăng ký lịch | Employee availability | Các khoảng nhân viên CÓ THỂ làm; không phải ca đã được phân công. |
 | Nhu cầu nhân sự | Staffing demand / requirements | Số người chi nhánh cần ở mỗi ngày/khoảng giờ. |
+| Mẫu nhu cầu cố định hằng tuần | Recurring weekly staffing template | Cài một lần cho chi nhánh; tự áp dụng lặp lại hằng tuần. |
+| Điều chỉnh nhu cầu riêng một tuần | Weekly staffing override | Chỉ ghi đè khung giờ của đúng tuần được chọn, không ảnh hưởng mẫu hoặc tuần khác. |
 | Lịch nháp | Draft schedule | Phân công tạm để quản lý chỉnh; chưa ràng buộc nhân viên. |
 | Lịch chính thức | Published/approved work schedule | Ca đã được quản lý duyệt/công bố; căn cứ đi làm và chấm công. |
 | Cho ca / nhường ca | Shift give-away / handover | Nhân viên A đề nghị nhường ca đã phân công cho B nhận; KHÔNG có ca đối ứng. |
@@ -34,13 +36,19 @@
 - Giao diện nhân viên mong muốn: lịch tuần dạng calendar, từ 05:00 tới 22:00, bước 30 phút; thao tác chạm chọn điểm bắt đầu/kết thúc hoặc kéo chọn; thao tác điện thoại nhanh; có thể sao chép giữa ngày/tuần.
 - Tự lưu nháp và nút gửi đăng ký tuần là **đề xuất UX**, không phải đã triển khai.
 
-## 3. Nhu cầu nhân sự theo chi nhánh — CONFIRMED
+## 3. Nhu cầu nhân sự theo chi nhánh — CONFIRMED (làm rõ 2026-10-20)
 
-- Mỗi chi nhánh có nhu cầu khác nhau theo ngày và khoảng giờ, phụ thuộc lưu lượng thực tế.
-- Có **mẫu nhu cầu tuần bình thường** của từng chi nhánh làm nền.
-- Khi lập tuần mới, quản lý có thể chỉnh nhu cầu riêng cho tuần đó, ví dụ ngày lễ/Tết/sự kiện/khuyến mãi. Thay đổi theo tuần **không tự sửa mẫu nền hoặc tự lan sang tuần kế**.
-- Có thể sao chép nhu cầu tuần trước khi phù hợp (**đề xuất UX**).
-- Xếp lịch đối chiếu nhu cầu nhân sự theo từng khung 30 phút với số người đã phân công để nêu rõ thiếu/đủ/dư.
+**QUY TẮC CỐT LÕI: Thiết lập một lần, áp dụng lặp lại vô thời hạn theo tuần; KHÔNG yêu cầu quản lý thiết lập/cập nhật thủ công từng tuần.** Đây là hiệu chỉnh trực tiếp của người dùng đối với cách diễn đạt trước đó có thể bị hiểu nhầm thành “cài nhu cầu mỗi tuần”.
+
+- Mỗi chi nhánh có **mẫu nhu cầu nhân sự cố định hằng tuần** (recurring weekly staffing template), xác định số nhân viên cần cho từng thứ trong tuần và từng khoảng giờ, có thể khác nhau giữa các chi nhánh.
+- Mẫu cố định được cài **một lần** và tự động áp dụng khi mở/xếp lịch bất kỳ tuần tiếp theo; nếu quản lý không thao tác, nhu cầu tuần đó **vẫn được điền đúng mẫu mặc định**, không trở thành trống/chưa cài.
+- **Chỉ khi tuần cụ thể có khác biệt** do lễ, Tết, chương trình, dự kiến đông/vắng khách... quản lý mới vào sửa **đúng tuần đó**, tạo **weekly staffing override** cho ngày/khoảng giờ tương ứng. Các ô không sửa vẫn kế thừa mẫu cố định.
+- Override chỉ có hiệu lực đối với tuần được chọn. Không tự sửa mẫu cố định và **không kéo sang các tuần sau**. Tuần tiếp theo không có override thì tự trở lại đúng mẫu hằng tuần (không cần người quản lý đặt lại).
+- Ví dụ: mẫu cố định thứ Hai 18:00–22:00 cần 2 người. Tuần có chương trình, quản lý tăng riêng thứ Hai tuần đó lên 4. Tuần kế tiếp tự trở về 2, trừ khi chính tuần kế tiếp cũng được sửa riêng.
+- Xếp lịch đối chiếu nhu cầu **đã tính từ mẫu + override của tuần đang chọn** với nhân sự thực tế từng khung 30 phút và thể hiện thiếu/đủ/dư.
+- **Gợi ý triển khai (PROPOSED):** giao diện cho phép “Sửa mẫu cố định” tách biệt rõ với “Chỉ sửa tuần này”; tránh vô ý ghi đè mẫu. Cách lưu và schema phải đối chiếu source hiện tại trước khi thay đổi.
+
+**Acceptance criteria cho agent:** (1) tạo mẫu một lần rồi mở 3 tuần khác nhau không thao tác: đều có cùng mẫu nhu cầu theo thứ/ngày; (2) override duy nhất tuần thứ hai, chỉ tuần hai đổi, tuần một/ba giữ mẫu; (3) đổi tuần trong màn hình xếp lịch không tạo/đòi lưu lại mẫu; (4) rõ chi nhánh và múi giờ; (5) sửa tuần không âm thầm đổi mẫu gốc.
 
 ## 4. Xếp lịch — CONFIRMED
 
