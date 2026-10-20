@@ -7,7 +7,7 @@ test('Manager and Scheduling V2 use exactly the same canonical ten menu destinat
  const [manager,scheduling]=await Promise.all([read('02_CORE/ui/magasin-ui-v2-shell.js'),read('05_MANAGER/SchedulingV2/manager-navigation-v2.js')]);
  const allowed=new Set(['dashboard','workforce','swap','attendance','staff','payroll-self-check','schedule','demand','tasks','settings']);
  const extract=s=>[...s.matchAll(/\['([^']+)',\s*'[^']+',\s*'([^']+)'/g)].map(x=>[x[1],x[2]]).filter(([key])=>allowed.has(key));
- const actual=extract(manager),other=extract(scheduling);
+ const actual=extract(manager.split('  const OWNER_NAV =')[0]),other=extract(scheduling);
  assert.equal(actual.length,10);
  assert.deepEqual(actual,other);
  assert.equal(new Set(actual.map(([key])=>key)).size,10);
@@ -24,7 +24,7 @@ test('Authenticated Manager container is the sole owner of navigation',async()=>
  assert.match(legacy,/MAGASIN_MANAGER_UI_V2_011_CANONICAL_SKIPPED/);
  assert.match(legacy,/window\.parent\.document\.querySelector\('iframe#app'\)/);
  assert.match(legacy,/window\.parent\.document\.title==='MAGASIN · Quản trị nội bộ'/);
- assert.match(shell,/data\.managerCanonicalBoot='1'/);
+ assert.match(shell,/dataset\.managerCanonicalBoot='1'/);
  assert.match(shell,/data-manager-shell-ready="1"/);
  assert.match(runtime,/manager-shell-v1\.html\?v=20261001-ui-unified1&host=manager&shell=20261020-single-manager-shell-v1/);
  assert.match(entry,/manager-runtime-v1\.html\?v=20261018-demand-week-matrix-v1&shell=20261020-single-manager-shell-v1/);
