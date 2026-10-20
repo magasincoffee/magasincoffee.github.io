@@ -63,3 +63,12 @@ test('Shared Manager nav on Scheduling host dispatches all nine modules via cano
  }
  assert.doesNotMatch(host,/frame\.src='\/05_MANAGER\/runtime\/manager-runtime-v1/);
 });
+
+test('shared shell observes late profile hydration once and normalizes identity',async()=>{
+ const shell=await source('02_CORE/ui/magasin-ui-v2-shell.js');
+ assert.ok(shell.includes("['#profileName', '#ownerIdentity', '#userName', '#profileMeta']"));
+ assert.ok(shell.includes('accountSources.forEach(node => accountObserver.observe(node'));
+ assert.equal((shell.match(/new MutationObserver\(syncAccount\)/g)||[]).length,1);
+ assert.ok(shell.includes('rawName.replace(/\\s*·\\s*OWNER\\s*$/i'));
+ assert.ok(shell.includes('split(/\\s+/)'));
+});
