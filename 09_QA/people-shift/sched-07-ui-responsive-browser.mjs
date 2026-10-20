@@ -627,7 +627,7 @@ await check("ui2_004_manager_desktop_shell_nav_contract",async()=>{
     };
   });
   const primary=["dashboard","workforce","swap","attendance","staff","payroll-self-check"];
-  const secondary=["schedule","tasks","settings"];
+  const secondary=["schedule","demand","tasks","settings"];
   for(const key of [...primary,...secondary])if(!state.links.some(x=>x.key===key))throw new Error(JSON.stringify(state));
   if(state.links.some(x=>["kpi","academy"].includes(x.key)))throw new Error(JSON.stringify(state.links));
   if(!state.hidden.kpi.hidden||!state.hidden.academy.hidden)throw new Error(JSON.stringify(state.hidden));
@@ -635,12 +635,15 @@ await check("ui2_004_manager_desktop_shell_nav_contract",async()=>{
   return JSON.stringify(state);
 });
 
+// Staff remains an in-shell route. Workforce is now a canonical V2 transition,
+// covered separately by manager-single-sidebar-browser.mjs, so it must not
+// navigate the fixture away before tablet/mobile drawer acceptance checks.
 await check("ui2_004_manager_active_nav_delegates_to_existing_view",async()=>{
-  await shellPage.locator('.m-shell-v2-nav__item[data-shell-key="workforce"]').click();
+  await shellPage.locator('.m-shell-v2-nav__item[data-shell-key="staff"]').click();
   const state=await shellPage.evaluate(()=>({
-    sourceActive:document.querySelector('.sidebar [data-view="workforce"]')?.classList.contains("active"),
-    viewActive:document.querySelector("#view-workforce")?.classList.contains("active"),
-    sharedActive:document.querySelector('.m-shell-v2-nav__item[data-shell-key="workforce"]')?.getAttribute("aria-current")
+    sourceActive:document.querySelector('.sidebar [data-view="staff"]')?.classList.contains("active"),
+    viewActive:document.querySelector("#view-staff")?.classList.contains("active"),
+    sharedActive:document.querySelector('.m-shell-v2-nav__item[data-shell-key="staff"]')?.getAttribute("aria-current")
   }));
   if(!state.sourceActive||!state.viewActive||state.sharedActive!=="page")throw new Error(JSON.stringify(state));
   return JSON.stringify(state);
