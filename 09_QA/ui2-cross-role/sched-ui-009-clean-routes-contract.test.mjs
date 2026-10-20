@@ -27,7 +27,8 @@ test("SCHED-UI-009 clean route entrypoints remain thin guarded adapters",async()
       assert.doesNotMatch(html,/canonical-role-route-v1\.js/);
       continue;
     }
-    assert.match(html,/canonical-role-route-v1\.js\?v=20261003-sched-ui-009/);
+    const version=key==='manager-root'?'20261019-manager-hash-nav-v1':'20261003-sched-ui-009';
+    assert.match(html,new RegExp('canonical-role-route-v1\\.js\\?v='+version));
     assert.match(html,new RegExp('data-route-key="'+key+'"'));
     assert.doesNotMatch(html,/<iframe\b/i);
   }
