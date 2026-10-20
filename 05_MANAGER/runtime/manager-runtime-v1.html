@@ -13,6 +13,23 @@
 (function(){
   'use strict';
   const frame=document.getElementById('app');
+  // Keep the legacy navigation hidden until the single V2 shell has mounted.
+  // This prevents flashes of two competing sidebars during nested iframe loads.
+  frame.style.visibility='hidden';
+  const reveal=()=>{
+    try {
+      if(frame.contentDocument?.getElementById('magasinUiV2Shell')){
+        frame.style.visibility='visible';
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  };
+  const revealTimer=setInterval(()=>{
+    if(reveal()) clearInterval(revealTimer);
+  },80);
+  // Fail visibly instead of leaving the whole Manager permanently blank.
+  setTimeout(()=>{clearInterval(revealTimer);if(!reveal()){frame.style.visibility='visible';console.error('[MANAGER_SHELL] V2 shell did not mount in time')}},10000);
   const bridge=document.createElement('script');
   bridge.src='/05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js?v=20260903-manager-structure1';
   bridge.async=false;
