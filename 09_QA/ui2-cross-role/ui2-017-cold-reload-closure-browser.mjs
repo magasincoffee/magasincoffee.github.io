@@ -97,7 +97,7 @@ async function iframeSrc(page,id="app"){
 
 for(const spec of [
   {role:"EMPLOYEE",target:"/employee/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261003-sched-ui-007"},
-  {role:"STORE_MANAGER",label:"MANAGER",target:"/manager/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261018-demand-week-matrix-v1"},
+  {role:"STORE_MANAGER",label:"MANAGER",target:"/manager/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261020-manager-shell-unified1"},
   {role:"OWNER",target:"/owner/",runtime:null}
 ]){
   const context=await newContext(spec.role);
@@ -124,7 +124,7 @@ for(const spec of [
 
 for(const spec of [
   {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261003-sched-ui-007"},
-  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261018-demand-week-matrix-v1"}
+  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261020-manager-shell-unified1"}
 ]){
   const context=await newContext(spec.role,(spec.label||spec.role)==="MANAGER"?1024:390);
   await context.addInitScript(()=>sessionStorage.setItem("__ui2_logged","1"));
@@ -185,7 +185,7 @@ const assetSpecs=[
   ["/05_MANAGER/Workforce/manager-operations-ui2-v1.js?v=20260927-ui2-016","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/engine-v1.js?v=20261003-sched-ui-017","manager-scheduling-ui2-v1.js?v=20261005-xstore-018"],
   ["/05_MANAGER/runtime/manager-shell-v1.html?v=20261001-ui-unified1","manager-ui-shell-v2.js?v=20260927-ui2-016"],
-  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261018-demand-week-matrix-v1","manager-shell-v1.html?v=20261001-ui-unified1"],
+  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261020-manager-shell-unified1","manager-shell-v1.html?v=20261001-ui-unified1"],
   ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261003-sched-ui-008","owner-scheduling-overview-v1.js?v=20261003-sched-ui-008"]
 ];
 for(const [url,marker] of assetSpecs){
