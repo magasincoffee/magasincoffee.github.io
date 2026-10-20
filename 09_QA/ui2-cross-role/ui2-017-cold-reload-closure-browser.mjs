@@ -79,7 +79,7 @@ function attachDiagnostics(page,label){
     const url=r.url();
     const expectedNavigationAbort=errorText==="net::ERR_ABORTED" && (
       /\/(?:06_EMPLOYEE|05_MANAGER)\/runtime\/(?:employee|manager)-runtime-v1\.html/.test(url)
-      || (label==="cold-MANAGER" && (url==="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" || url.startsWith(BASE+"/05_MANAGER/SchedulingV2/index.html?mode=live&")))
+      || (label==="cold-MANAGER" && (url==="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" || url.startsWith(BASE+"/05_MANAGER/SchedulingV2/")))
     );
     if(expectedNavigationAbort){
       report.ignored_navigation_aborts.push(label+": "+r.method()+" "+url+" "+errorText);
@@ -146,7 +146,10 @@ for(const spec of [
   await page.reload({waitUntil:"domcontentloaded"});
   const backReload=await iframeSrc(page);
   await check("ui2_017_"+String(spec.label||spec.role).toLowerCase()+"_cold_reload_back_deeplink",async()=>{
-    const expectedFirst=spec.runtime+"#"+spec.first,expectedSecond=spec.runtime+"#"+spec.second;
+    // Keep the established runtime version marker and assert the cache-busting
+    // shell suffix when the real Manager runtime is the expected destination.
+    const runtime=(spec.label||spec.role)==="MANAGER"?spec.runtime+"&shell=20261020-single-manager-shell-v1":spec.runtime;
+    const expectedFirst=runtime+"#"+spec.first,expectedSecond=runtime+"#"+spec.second;
     const detail={cold,hardReload,second,back,backReload,url:page.url()};
     if((spec.label||spec.role)==="MANAGER"){
       // Manager #workforce now canonically redirects to Scheduling V2 after reload.
