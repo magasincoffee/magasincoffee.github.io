@@ -82,3 +82,14 @@ test('Responsive drawer exposes keyboard and backdrop dismissal without blocking
 });
 
 console.log('SCHEDULING_V2_MANAGER_NAV_CONTRACT=PASS');
+
+test('Demand toolbar enters live editor and returns through authenticated canonical host',async()=>{
+  const [schedule,demand]=await Promise.all([
+    source('05_MANAGER/SchedulingV2/index.html'),
+    source('05_MANAGER/SchedulingV2/Demand/index.html')
+  ]);
+  assert.match(schedule,/href="\.\/Demand\/index\.html\?mode=live&demand-preview"/);
+  assert.match(demand,/href="\/manager\/scheduling\/" target="_top" class="sv2-demand-back"/);
+  assert.doesNotMatch(schedule,/V2 PREVIEW/);
+  assert.match(schedule,/BẢNG LỊCH TUẦN/);
+});
