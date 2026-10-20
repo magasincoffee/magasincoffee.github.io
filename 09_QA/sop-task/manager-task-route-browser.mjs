@@ -9,7 +9,7 @@ fs.mkdirSync(outDir, { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-const diagnostics = { consoleErrors: [], pageErrors: [], requestFailures: [], http5xx: [], legacyRuntimeRequests: [] };
+const diagnostics = { consoleErrors: [], pageErrors: [], requestFailures: [], http5xx: [], legacyRuntimeRequests: [], extraLegacyAliasFrameRequests: [] };
 
 page.on("console", msg => {
   if (msg.type() === "error") diagnostics.consoleErrors.push(msg.text());
@@ -28,7 +28,7 @@ await page.route("https://cdn.jsdelivr.net/**", route =>
 );
 
 await page.addInitScript(() => {
-  const profile = { id: "qa-owner", full_name: "QA Owner", username: "qa-owner", role: "OWNER", status: "ACTIVE" };
+  const profile = { id: "qa-owner", full_name: "QA Owner", username: "qa-owner", role: "STORE_MANAGER", status: "ACTIVE" };
   function query(table) {
     const q = {};
     for (const method of ["select","eq","neq","in","gte","lte","lt","gt","order","limit","range","filter","is","not","or","match"]) {
