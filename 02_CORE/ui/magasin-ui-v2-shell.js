@@ -446,6 +446,8 @@
     bind();
     setActive(currentKey());
     syncAccount();
+    // Reveal the already-authenticated Manager content only when one shared shell is ready.
+    if (config.role === 'MANAGER') document.documentElement.dataset.managerShellReady = '1';
 
     window.MAGASIN_UI_V2_SHELL = Object.freeze({
       version: '2.0',
