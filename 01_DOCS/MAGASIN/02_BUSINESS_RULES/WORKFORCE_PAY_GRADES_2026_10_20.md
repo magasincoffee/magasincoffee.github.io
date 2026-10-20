@@ -22,12 +22,13 @@ Có đúng **ba bậc nhân viên**: bậc 1 thấp nhất, bậc 3 cao nhất.
 
 **CHƯA CHỐT:** nếu ca dài hơn hoặc giao nhau một phần với 05:00–08:00, tính 21.000 VND/giờ theo *toàn ca được định nghĩa là ca đặc biệt* hay chỉ cho *số giờ thực tế trong khung 05:00–08:00*? Không tự chọn cách tính khi triển khai. Ngày hiệu lực mức lương, quy định làm tròn, tăng ca, nghỉ và phụ cấp khác cũng chưa xác nhận.
 
-## 3. Thứ tự ưu tiên triển khai — CONFIRMED (đổi ý theo lời chủ)
+## 3. Thứ tự ưu tiên triển khai — CONFIRMED (ưu tiên xếp lịch theo tuần)
 
-**Ưu tiên màn hình QUẢN LÝ trước màn hình NHÂN VIÊN.** Người vận hành đã đổi quyết định từ “nhân viên trước” sang “quản lý trước”; quyết định sau cùng này có hiệu lực.
+**Ưu tiên nghiệp vụ XẾP LỊCH THEO TUẦN, giao diện quản lý trước.** Quyết định mới nhất 20/10/2026: xếp lịch trước, công/lương sau; trong từng giai đoạn ưu tiên hoàn thiện luồng quản lý rồi đồng bộ nhân viên.
 
-- **P1 — Quản lý:** hoàn thiện kiểm tra chấm công/ngoại lệ công, đối chiếu công theo lịch đã công bố, nghiệp vụ kiểm tra và duyệt lương theo bậc cùng quy tắc ca đặc biệt; UI một luồng gọn, dễ hiểu, hiển thị trạng thái chính xác.
-- **P2 — Nhân viên:** hoàn thiện đăng ký lịch, chấm công và xem công/lương theo dữ liệu đã xác nhận.
+- **P1 — Xếp lịch theo tuần (quản lý trước):** một bảng lịch thứ Hai–Chủ nhật theo chi nhánh, đọc đăng ký thời gian rảnh, đối chiếu nhu cầu lặp lại hằng tuần và điều chỉnh ngoại lệ tuần, tạo/sửa nháp, kiểm tra, duyệt và công bố cho tuần sau; xử lý thiếu/đủ nhân sự và cho/đổi ca.
+- **P2 — Nhân viên:** hoàn thiện đăng ký khả năng làm việc cho tuần sau, xem lịch đã công bố, gửi yêu cầu cho/đổi ca trên điện thoại.
+- **P3 — Công / Lương:** sau khi luồng lịch ổn định, hoàn thiện chấm công, kiểm tra ngoại lệ, đối chiếu giờ thực làm, tính lương theo bậc và duyệt lương.
 - **Sau đó:** phần mở rộng order, tồn kho và đóng gói app tiếp tục theo lộ trình riêng.
 - Quy tắc lịch và chấm công đã xác nhận: xem `WORKFORCE_SCHEDULING_ATTENDANCE_2026_10_20.md`.
 
