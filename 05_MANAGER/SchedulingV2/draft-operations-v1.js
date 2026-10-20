@@ -1,5 +1,5 @@
 (()=>{'use strict';if(window.MAGASIN_SCHEDULING_V2_DRAFT_OPERATIONS)return;
-const hm=v=>String(v||'').slice(0,5),mins=v=>{const a=hm(v).split(':').map(Number);return a.length===2&&Number.isInteger(a[0])&&Number.isInteger(a[1])&&a[0]>=0&&a[0]<24&&a[1]>=0&&a[1]<60?a[0]*60+a[1]:NaN};
+const hm=v=>String(v||'').slice(0,5),mins=v=>{const m=/^(\d{2}):(\d{2})$/.exec(hm(v));if(!m)return NaN;const h=Number(m[1]),min=Number(m[2]);return h>=0&&h<24&&min>=0&&min<60?h*60+min:NaN};
 const fail=c=>{throw Error(c)};
 const same=(a,b)=>String(a||'')===String(b||'');
 const date=d=>String(d||'').slice(0,10);
@@ -22,6 +22,8 @@ async function apply({storeId,weekStart,operation,index,expected,assignment}){
   const q=await rpc('list_employee_workforce_profiles_v1');if(q.error)throw q.error;
   const eligible=(Array.isArray(q.data)?q.data:[]).some(p=>same(p.employee_id||p.user_id,assignment.user_id)&&String(p.profile_status||'').toUpperCase()==='ACTIVE'&&['STAFF','EMPLOYEE'].includes(String(p.employee_role||'').toUpperCase())&&Array.isArray(p.priority_store_ids)&&p.priority_store_ids.some(id=>same(id,storeId)));
   if(!eligible)fail('EMPLOYEE_NOT_ELIGIBLE');
+  const from=mins(assignment.start_time),to=mins(assignment.end_time);
+  if(from<300||to>1320||from%30!==0||to%30!==0)fail('INVALID_TIME_SLOT');
  }
  const converted=r=>({user_id:r.user_id,store_id:storeId,work_date:date(r.work_date),start_time:hm(r.start_time),end_time:hm(r.end_time),skill_code:r.skill_code||null,skill_level:Number(r.skill_level||0),score:Number(r.score||0),warning:r.warning||null,status:'DRAFT',note:r.note||'MANAGER_DIRECT_FROM_AVAILABILITY'});
  const next=rows.map(converted);if(operation==='remove')next.splice(index,1);
