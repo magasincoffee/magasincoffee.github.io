@@ -77,6 +77,7 @@
 - **Người cho ca chủ động tìm trước một nhân viên nhận ca** và tự thỏa thuận với người đó. Hệ thống KHÔNG cần thiết kế quy trình đăng ca công khai để tìm người thay thế như đường đi mặc định.
 - Sau khi tìm được người nhận, A thực hiện thao tác **Cho ca** trên hệ thống, chỉ định người nhận B và ca muốn nhường.
 - Yêu cầu cho ca **phải gửi đến quản lý để duyệt**. Quản lý có quyền duyệt hoặc từ chối.
+- **Không bắt buộc gửi yêu cầu cho ca trước 24 giờ**. Đây là quyết định CONFIRMED, khác với nghiệp vụ ĐỔI CA (vẫn yêu cầu gửi trước ít nhất 24 giờ). Không tự áp dụng hạn 24 giờ của đổi ca cho cho ca.
 - **Chỉ khi quản lý duyệt, lịch làm việc chính thức mới đổi người được phân công từ A sang B**. Trong thời gian chờ duyệt hoặc khi bị từ chối, ca vẫn thuộc A và A còn trách nhiệm với ca theo lịch ban đầu.
 - Sau khi duyệt, lịch chính thức đã cập nhật là căn cứ chấm công. Tránh để bản ghi lịch của A và B cùng được coi là ca chính thức trùng lặp.
 
@@ -85,7 +86,6 @@
 - Có thể yêu cầu B xác nhận trên hệ thống để ngăn tình trạng A tự nhập tên B khi chưa thực sự thỏa thuận, nhưng người dùng mới xác nhận việc **tìm người nhận trước**, chưa chốt thủ tục xác nhận số.
 
 **Còn OPEN, không được tự mặc định:**
-- Điều kiện gửi yêu cầu cho ca trước bao lâu: **quy tắc >=24 giờ hiện đã chốt cho ĐỔI CA**, chưa xác nhận có áp dụng y hệt CHO CA hay không.
 - Có cần B xác nhận nhận ca một lần nữa trên hệ thống không, hay việc A chọn B sau khi hai bên đã thỏa thuận là đủ?
 - Cho phép quản lý tự phân công người thay thế trong tình huống đặc biệt không?
 
