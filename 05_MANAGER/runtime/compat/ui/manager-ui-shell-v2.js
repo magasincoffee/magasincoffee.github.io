@@ -19,6 +19,22 @@ function resolveHostRole(){
 }
 const resolvedHostRole=resolveHostRole();
 if(resolvedHostRole==='owner'){window.MAGASIN_MANAGER_UI_V2_011_OWNER_SKIPPED=true;return}
+// Production Manager already installs one shared shell through manager-runtime-v1.
+// Retire this older decorator inside that nested runtime. Keep the module for
+// isolated QA fixtures and standalone compatibility pages (no data/RPC changes).
+function nestedWithinManagerRuntime(){
+ try {
+  const parentPath=String(window.parent?.location?.pathname||'').toLowerCase();
+  const topPath=String(window.top?.location?.pathname||'').toLowerCase();
+  return window.parent!==window &&
+    parentPath==='/05_manager/runtime/manager-runtime-v1.html' &&
+    (topPath==='/manager/'||topPath==='/manager'||topPath==='/05_manager/'||topPath==='/05_manager');
+ }catch(_){return false}
+}
+if(nestedWithinManagerRuntime()){
+ window.MAGASIN_MANAGER_UI_V2_011_HOSTED_SKIPPED=true;
+ return;
+}
 if(window.MAGASIN_MANAGER_UI_V2_011)return;
 window.MAGASIN_MANAGER_UI_V2_011=true;
 const allowed=['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check'];

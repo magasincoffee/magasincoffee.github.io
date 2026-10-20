@@ -6,12 +6,11 @@ const runtime = fs.readFileSync(new URL("../../05_MANAGER/runtime/manager-runtim
 const bridge = fs.readFileSync(new URL("../../05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js", import.meta.url), "utf8");
 const routeState = fs.readFileSync(new URL("../../05_MANAGER/runtime/compat/router/manager-route-state-v2.js", import.meta.url), "utf8");
 
-assert.match(route, /\/02_CORE\/shared\/shared-core-v1\.js/);
-assert.match(route, /C\.supabase\.requireActive\(\)/);
-assert.match(route, /\['STAFF','EMPLOYEE'\]\.includes\(role\)/);
-assert.match(route, /location\.replace\('\/employee\/'\)/);
-assert.match(route, /\/05_MANAGER\/runtime\/manager-runtime-v1\.html/);
-assert.doesNotMatch(route, /manager-v13-runtime\.html/);
+assert.match(route, /\/manager\/#tasks/);
+assert.match(route, /location\.replace\('\/manager\/#tasks'\)/);
+assert.match(route, /http-equiv="refresh"/);
+assert.doesNotMatch(route, /manager-runtime-v1\.html|<iframe|shared-core-v1\.js/);
+
 
 for (const forbidden of [".insert(", ".update(", ".upsert(", ".delete(", ".rpc("]) {
   assert.equal(route.includes(forbidden), false, `Task route must not perform write/business RPC: ${forbidden}`);
@@ -19,7 +18,7 @@ for (const forbidden of [".insert(", ".update(", ".upsert(", ".delete(", ".rpc("
 
 assert.match(runtime, /manager-route-bridge-v1\.js/);
 assert.match(runtime, /allowedRouteHash=new Set\(\['dashboard','staff','workforce','schedule','tasks','kpi','swap','attendance','academy','settings','payroll-self-check'\]\)/);
-assert.match(route, /manager-runtime-v1\.html\?v=20260918-task-route1#tasks/);
+assert.match(fs.readFileSync(new URL("../../manager/index.html", import.meta.url),"utf8"),/data-route-key="manager-root"/);
 assert.match(bridge, /const PREFIX='\/05_MANAGER'/);
 assert.match(bridge, /tasks:'Cong-viec'/);
 assert.match(bridge, /return '\/manager\/#'\+key/);
