@@ -31,6 +31,8 @@ test('Weekly controls select the next planning week without changing server perm
  assert.match(js,/weekNav\.nextWeek\(\)/);
  assert.match(js,/weekNav\.rangeLabel/);
  assert.match(js,/updateWeekUI/);
+ assert.match(js,/requestSerial/);
+ assert.match(js,/currentRequest!==requestSerial/);
  assert.match(js,/weekNav\.shiftWeek/);
  assert.match(js,/magasin:scheduling-v2-week-loaded/);
  assert.doesNotMatch(js,/\.rpc\(|publish_schedule_generation|replace_schedule_generation_assignments|create_schedule_generation/);
