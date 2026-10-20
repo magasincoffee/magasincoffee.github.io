@@ -17,7 +17,7 @@ try {
     const current=nav.locator('a[aria-current="page"]');
     assert.equal(await current.count(),1,'exactly one active Scheduling menu item');
     assert.equal(await current.first().textContent().then(x=>x.includes('Xếp lịch')),true);
-    assert.equal(await nav.locator('a').count(),10,'same 9 shell modules plus demand config');
+    assert.equal(await nav.locator('a').count(),9,'exactly nine Manager shell modules');
     const overflow=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:document.documentElement.clientWidth}));
     assert.ok(overflow.scroll<=overflow.width+1,'no document-level horizontal overflow at '+width+': '+JSON.stringify(overflow));
     if (width>1024) {
@@ -36,10 +36,16 @@ try {
       assert.equal(await menu.evaluate(el=>el===document.activeElement),true,'Escape returns focus');
       await menu.click();
     }
-    await nav.getByRole('link',{name:/Nhu cầu nhân sự/}).click();
+    // The mobile navigation drawer is intentionally modal and blocks page controls;
+    // close it before following a content-toolbar link.
+    if (width <= 1024) {
+      await page.keyboard.press('Escape');
+      assert.equal(await menu.getAttribute('aria-expanded'),'false');
+    }
+    await page.locator('.sv2-bar .sv2-demand-back').click();
     await page.waitForURL(/\/SchedulingV2\/Demand\/index\.html\?/);
     await page.locator('body.sv2-nav-ready').waitFor();
-    assert.equal(await page.locator('.sv2-nav a[aria-current="page"]').textContent().then(x=>x.includes('Nhu cầu nhân sự')),true);
+    assert.equal(await page.locator('.sv2-nav a[aria-current="page"]').textContent().then(x=>x.includes('Xếp lịch')),true);
     assert.equal(await page.locator('#sv2DemandTable').count(),1);
     assert.equal(await page.locator('.sv2-nav a[href="/manager/#staff"]').getAttribute('target'),'_top');
     const returnLink=page.getByRole('link',{name:/Về lịch làm việc/});

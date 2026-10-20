@@ -28,8 +28,8 @@ test('Scheduling and recurring demand screens load the same Manager nav componen
     source('05_MANAGER/SchedulingV2/Demand/index.html'),
     source('05_MANAGER/SchedulingV2/manager-navigation-v2.js')
   ]);
-  assert.match(schedule, /src="\.\/manager-navigation-v2\.js\?v=20261019-nav-v2"/);
-  assert.match(demand, /src="\.\.\/manager-navigation-v2\.js\?v=20261019-nav-v2"/);
+  assert.match(schedule, /src="\.\/manager-navigation-v2\.js\?v=20261020-manager-nav-unified1"/);
+  assert.match(demand, /src="\.\.\/manager-navigation-v2\.js\?v=20261020-manager-nav-unified1"/);
   assert.match(nav, /const demandPage = location\.pathname\.includes\('\/SchedulingV2\/Demand\/'\)/);
   assert.match(nav, /nav\.replaceChildren\(\)/);
   assert.match(nav, /key === current/);
@@ -39,8 +39,9 @@ test('Scheduling and recurring demand screens load the same Manager nav componen
     '/manager/#staff', '/manager/#swap', '/manager/#attendance',
     '/manager/#payroll-self-check', '/manager/#tasks', '/manager/#settings'
   ]) assert.ok(nav.includes(url), url);
-  assert.match(nav, /link\.target = key === 'demand' \? '_self' : '_top'/);
-  assert.match(nav, /\.\/Demand\/index\.html\?mode=live&demand-preview/);
+  assert.match(nav, /link\.target = '_top'/);
+  assert.doesNotMatch(nav, /\['demand',/);
+  assert.match(nav, /const current = 'workforce'/);
 });
 
 test('Shared nav matches the existing Manager shell primary and secondary navigation', async () => {
@@ -96,4 +97,23 @@ test('Demand toolbar enters live editor and returns through authenticated canoni
   assert.doesNotMatch(rollout, /\.\.\/index\.html\?mode=live/);
   assert.doesNotMatch(schedule,/V2 PREVIEW/);
   assert.match(schedule,/BẢNG LỊCH TUẦN/);
+});
+
+test('Manager V2 shell uses canonical route before stale V1 sidebar and never retries hidden views',async()=>{
+  const [shell,runtime]=await Promise.all([
+    source('02_CORE/ui/magasin-ui-v2-shell.js'),
+    source('05_MANAGER/runtime/manager-runtime-v1.html')
+  ]);
+  assert.ok(shell.indexOf("const topLocation = topWindow().location;") < shell.indexOf("const source = document.querySelector('.sidebar [data-view].active');"));
+  assert.match(shell,/if \(path\.startsWith\('\/manager\/scheduling'\)\) return 'workforce'/);
+  assert.match(shell,/if \(path\.startsWith\('\/manager\/schedule\/'\)\) return 'schedule'/);
+  assert.match(shell,/if \(path === '\/manager\/' \|\| path === '\/manager'\) return 'dashboard'/);
+  assert.match(shell,/view === 'workforce' \|\| view === 'schedule'/);
+  assert.match(shell,/topWindow\(\)\.location\.assign\(href\)/);
+  assert.match(shell,/path === '\/05_manager\/'/);
+  assert.doesNotMatch(shell,/path\.startsWith\('\/05_manager\/'\)/);
+  assert.doesNotMatch(shell,/attempt \+ 1/);
+  assert.match(runtime,/frame\.style\.visibility='hidden'/);
+  assert.match(runtime,/getElementById\('magasinUiV2Shell'\)/);
+  assert.match(runtime,/20261020-manager-nav-unified1/);
 });

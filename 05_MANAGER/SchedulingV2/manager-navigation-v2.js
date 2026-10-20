@@ -24,13 +24,13 @@
     ] },
     { title: 'Khác', items: [
       ['schedule', '▤', 'Lịch đã phát hành', '/manager/schedule/'],
-      ['demand', '▦', 'Nhu cầu nhân sự', demandPage ? './index.html?mode=live&demand-preview' : './Demand/index.html?mode=live&demand-preview'],
       ['tasks', '✓', 'Công việc', '/manager/#tasks'],
       ['settings', '⚙', 'Cài đặt', '/manager/#settings']
     ] }
   ]);
 
-  const current = demandPage ? 'demand' : 'workforce';
+  // Demand is a sub-page of Workforce, not a different Manager sidebar module.
+  const current = 'workforce';
   nav.replaceChildren();
   nav.setAttribute('aria-label', 'Các phân hệ quản lý');
   sidebar.id = 'sv2Sidebar';
@@ -46,7 +46,7 @@
       const link = document.createElement('a');
       link.href = href;
       link.dataset.sv2NavKey = key;
-      link.target = key === 'demand' ? '_self' : '_top';
+      link.target = '_top';
       link.className = key === current ? 'is-active' : '';
       if (key === current) link.setAttribute('aria-current', 'page');
       const icon = document.createElement('span');

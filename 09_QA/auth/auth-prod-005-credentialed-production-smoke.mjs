@@ -19,6 +19,9 @@ const publishableKey = 'sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx';
 const allowedActiveRoute = /\/(?:04_OWNER|05_MANAGER|06_EMPLOYEE|nhap-hang)(?:\/|$)/;
 
 async function resolveEmail(loginName) {
+  // Match the production login runtime: emails bypass username resolution.
+  const normalized = String(loginName || '').trim();
+  if (normalized.includes('@')) return normalized.toLowerCase();
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/resolve_login_email`, {
     method: 'POST',
     headers: {
@@ -26,13 +29,15 @@ async function resolveEmail(loginName) {
       Authorization: `Bearer ${publishableKey}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ p_username: loginName })
+    body: JSON.stringify({ p_username: normalized })
   });
   assert.equal(response.status, 200, 'username resolver must return HTTP 200');
   const value = await response.json();
-  assert.equal(typeof value, 'string', 'username resolver must return one email string');
-  assert.match(value, /@/, 'resolved login email must be an email address');
-  return value;
+  if (typeof value !== 'string' || !value.includes('@')) {
+    // Never print the username, email, password or API response in public CI logs.
+    throw new Error('AUTH_PROD_005=OWNER_REQUIRED reason=qa_username_not_resolved; check QA account alias or configure an email as AUTH_PROD_ACTIVE_USERNAME');
+  }
+  return value.toLowerCase();
 }
 
 function attachDiagnostics(page) {

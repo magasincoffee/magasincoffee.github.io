@@ -98,7 +98,7 @@ test("UI2-013 complete Manager cache chain loads changed assets while Owner path
  assert.match(engine,/payroll-self-check-v1\.js\?v=20260929-mer003/);
  assert.match(engine,/manager-operations-ui2-v1\.js\?v=20260927-ui2-016/);
  assert.ok(runtime.includes("engine-v1.js?v="+entryV));
- assert.ok(managerIndex.includes("manager-runtime-v1.html?v="+entryV));
+ assert.ok(managerIndex.includes("manager-runtime-v1.html?v=20261020-manager-shell-unified1"));
   assert.ok(workforceIndex.includes("location.replace('/manager/scheduling/')"));
  assert.ok(legacySchedule.includes("location.replace('/manager/scheduling/')"));
   assert.ok(read("manager/scheduling/index.html").includes("SchedulingV2/index.html?mode=live"));

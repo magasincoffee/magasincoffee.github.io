@@ -479,6 +479,10 @@ function branchRowsHtml(stage,stepHtml,officialHtml,actionHelp){
 }
 function render(){
  const p=panel();if(!p)return;
+ // Redrawing a draft detaches its focused Save control. Preserve focus
+ // without stealing it from a different action, store or week.
+ const preserveSaveFocus=p.contains(document.activeElement)&&document.activeElement?.id==='msdSave';
+ const focusScope={storeId:String(state.storeId||''),week:String(state.week||'')};
  ensurePolish();
  if(!document.getElementById('manager-schedule-draft-editor-css'))document.head.insertAdjacentHTML('beforeend',css);
  activate();
@@ -498,6 +502,18 @@ function render(){
  const globalSummary='<div class="msd-summary msd-global-summary"><span class="msd-pill">'+state.stores.length+' chi nhánh</span><span class="msd-pill">Tuần '+esc(state.week||'—')+'</span><span class="msd-pill">Mở từng chi nhánh để chỉnh lịch</span></div>';
  p.innerHTML='<section class="card msd" data-scheduling-actor="'+esc(actorRole())+'"><div class="msd-head"><div><h2 style="margin:0">'+esc(copy.title)+'</h2><div class="muted" style="margin-top:5px">'+esc(copy.subtitle)+'</div></div>'+globalActions+'</div>'+globalSummary+'<div id="xstoreAutomationMount"></div>'+branchRowsHtml(stage,stepHtml,officialHtml,actionHelp)+'<details class="msd-global-overview"><summary>Tổng quan 4 cửa hàng · thông tin tham khảo</summary><div id="xstoreMasterMount"></div></details></section>';
  bind();
+ if(preserveSaveFocus){
+  let attempts=0;
+  const restore=()=>{
+   if(String(state.storeId||'')!==focusScope.storeId||String(state.week||'')!==focusScope.week)return;
+   const active=document.activeElement,save=p.querySelector('#msdSave');
+   if((active===document.body||active===document.documentElement)&&save?.isConnected&&!save.disabled&&save.getClientRects().length){
+    save.focus({preventScroll:true});
+   }
+   if(++attempts<3)requestAnimationFrame(restore);
+  };
+  restore();
+ }
 }
 function syncRowsFromDom(){
  panel()?.querySelectorAll('[data-msd-row]').forEach(row=>{const i=Number(row.dataset.msdRow),a=state.assignments[i];if(!a)return;a.user_id=row.querySelector('[data-f="user_id"]')?.value||a.user_id;a.start_time=row.querySelector('[data-f="start_time"]')?.value||a.start_time;a.end_time=row.querySelector('[data-f="end_time"]')?.value||a.end_time});
