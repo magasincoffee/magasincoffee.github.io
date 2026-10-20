@@ -151,7 +151,7 @@ for(const spec of [
     if((spec.label||spec.role)==="MANAGER"){
       // Manager #workforce now canonically redirects to Scheduling V2 after reload.
       // The first cold bootstrap may still use legacy Manager runtime before navigation.
-      const expectedV2="/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261019-v2-live";
+      const expectedV2="/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261020-one-shell1";
       if(![expectedFirst,expectedV2].includes(cold)||hardReload!==expectedV2||second!==expectedSecond||back!==expectedV2||backReload!==expectedV2)throw new Error(JSON.stringify(detail));
     }else if(cold!==expectedFirst||hardReload!==expectedFirst||second!==expectedSecond||back!==expectedFirst||backReload!==expectedFirst)throw new Error(JSON.stringify(detail));
     return JSON.stringify(detail);

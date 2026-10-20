@@ -120,6 +120,11 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8769
         run: node 09_QA/people-shift/scheduling-v2-manager-nav-browser.mjs
 
+      - name: Run canonical Manager single-shell Scheduling and Demand browser
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+        run: node 09_QA/people-shift/manager-scheduling-single-shell-browser.mjs
+
       - name: Run Manager responsive matrix
         env:
           QA_BASE_URL: http://127.0.0.1:8769

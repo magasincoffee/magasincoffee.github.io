@@ -201,6 +201,18 @@
   const activateManagerView = (view, attempt = 0) => {
     // Dedicated modules have one canonical host, not a legacy V1 button.
     const path = String(topPath()).toLowerCase();
+    // On the dedicated Scheduling host, this very same Manager shell owns the nav.
+    // There are intentionally no legacy V1 buttons inside its content iframe.
+    if(config.mode==='standalone' && (path==='/manager/scheduling/'||path==='/manager/scheduling')){
+      const target=view==='dashboard'?'/manager/':
+        view==='workforce'?'/manager/scheduling/':
+        view==='schedule'?'/manager/schedule/':'/manager/#'+encodeURIComponent(view);
+      setActive(view);
+      closeDrawer();
+      const current=String(topWindow().location.pathname||'')+String(topWindow().location.hash||'');
+      if(current!==target)topWindow().location.assign(target);
+      return true;
+    }
     const canonicalHost = path === '/manager/' || path === '/manager' || path === '/05_manager/';
     if (canonicalHost && (view === 'workforce' || view === 'schedule')) {
       const href = view === 'workforce' ? '/manager/scheduling/' : '/manager/schedule/';

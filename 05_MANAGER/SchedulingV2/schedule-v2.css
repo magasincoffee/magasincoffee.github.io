@@ -127,3 +127,33 @@ body.sv2-nav-ready .sv2-nav-backdrop{
 @media(prefers-reduced-motion:reduce){
   body.sv2-nav-ready .sv2-sidebar{transition:none}
 }
+
+/* ONE MANAGER SHELL: both Scheduling and Demand run inside the canonical,
+   authenticated /manager/scheduling/ host which owns the actual Manager
+   sidebar, topbar, avatar and logout. The inner pages render content only.
+   Direct standalone pages retain their existing standalone shell. */
+html[data-sv2-manager-host="shared"] .sv2-sidebar,
+html[data-sv2-manager-host="shared"] .sv2-app-header,
+html[data-sv2-manager-host="shared"] .sv2-nav-backdrop,
+html[data-sv2-manager-host="shared"] .sv2-menu-toggle {
+  display:none!important;
+}
+html[data-sv2-manager-host="shared"],
+html[data-sv2-manager-host="shared"] body{
+  margin:0;min-height:100%;width:100%;overflow-x:hidden;
+}
+html[data-sv2-manager-host="shared"] .sv2-app{
+  display:block!important;min-height:100dvh;width:100%;
+}
+html[data-sv2-manager-host="shared"] .sv2-workspace{
+  display:block!important;position:static!important;
+  width:100%!important;min-height:100dvh;
+  margin:0!important;padding:0!important;
+}
+html[data-sv2-manager-host="shared"] .sv2{
+  width:100%;max-width:none;margin:0;
+  padding:clamp(14px,1.7vw,24px);
+}
+@media(max-width:700px){
+  html[data-sv2-manager-host="shared"] .sv2{padding:12px}
+}
