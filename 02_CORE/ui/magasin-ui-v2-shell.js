@@ -200,7 +200,9 @@
 
   const activateManagerView = (view, attempt = 0) => {
     // Dedicated modules have one canonical host, not a legacy V1 button.
-    if (view === 'workforce' || view === 'schedule') {
+    const path = String(topPath()).toLowerCase();
+    const canonicalHost = path === '/manager/' || path === '/manager' || path.startsWith('/05_manager/');
+    if (canonicalHost && (view === 'workforce' || view === 'schedule')) {
       const href = view === 'workforce' ? '/manager/scheduling/' : '/manager/schedule/';
       closeDrawer();
       topWindow().location.assign(href);
