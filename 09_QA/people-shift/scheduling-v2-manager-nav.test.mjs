@@ -39,8 +39,9 @@ test('Scheduling and recurring demand screens load the same Manager nav componen
     '/manager/#staff', '/manager/#swap', '/manager/#attendance',
     '/manager/#payroll-self-check', '/manager/#tasks', '/manager/#settings'
   ]) assert.ok(nav.includes(url), url);
-  assert.match(nav, /link\.target = key === 'demand' \? '_self' : '_top'/);
-  assert.match(nav, /\.\/Demand\/index\.html\?mode=live&demand-preview/);
+  assert.match(nav, /link\.target = '_top'/);
+  assert.doesNotMatch(nav, /\['demand',/);
+  assert.match(nav, /const current = 'workforce'/);
 });
 
 test('Shared nav matches the existing Manager shell primary and secondary navigation', async () => {
