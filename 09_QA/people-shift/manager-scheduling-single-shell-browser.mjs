@@ -27,7 +27,7 @@ try{
   await page.route('**/02_CORE/shared/shared-core-v1.js**',route=>route.fulfill({status:200,contentType:'application/javascript',body:roleCore}));
   await page.route('https://cdn.jsdelivr.net/npm/@supabase/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:mockSupabase}));
   await page.goto(BASE+'/manager/scheduling/',{waitUntil:'domcontentloaded'});
-  await page.locator('#magasinUiV2Shell').waitFor({timeout:18000});
+  await page.locator('#magasinUiV2Shell').waitFor({state:'attached',timeout:18000});
   await page.locator('#app:not([hidden])').waitFor({timeout:18000});
   const frame=page.frameLocator('#app');
   await frame.locator('.sv2-roster').waitFor({timeout:18000});
