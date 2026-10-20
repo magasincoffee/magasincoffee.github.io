@@ -79,7 +79,15 @@ function attachDiagnostics(page,label){
     const url=r.url();
     const expectedNavigationAbort=errorText==="net::ERR_ABORTED" && (
       /\/(?:06_EMPLOYEE|05_MANAGER)\/runtime\/(?:employee|manager)-runtime-v1\.html/.test(url)
-      || (label==="cold-MANAGER" && (url==="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" || url.startsWith(BASE+"/05_MANAGER/SchedulingV2/index.html?mode=live&")))
+      || (label==="cold-MANAGER" && (
+        url==="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" ||
+        // The test intentionally reloads and leaves the Scheduling iframe
+        // before its child resources finish. Only true ERR_ABORTED requests
+        // from this bounded Manager navigation are expected; never mask 4xx/5xx.
+        url.startsWith(BASE+"/05_MANAGER/SchedulingV2/") ||
+        url.startsWith(BASE+"/02_CORE/ui/") ||
+        url.startsWith(BASE+"/02_CORE/shared/")
+      ))
     );
     if(expectedNavigationAbort){
       report.ignored_navigation_aborts.push(label+": "+r.method()+" "+url+" "+errorText);
