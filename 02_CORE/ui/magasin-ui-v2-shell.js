@@ -105,15 +105,20 @@
   };
 
   const currentManagerView = () => {
-    const source = document.querySelector('.sidebar [data-view].active');
-    if (source?.dataset.view) return source.dataset.view;
-    const hash = String(location.hash || '').replace(/^#/, '');
-    if (hash) return hash;
+    // The top canonical URL is authoritative; old V1 active classes may be stale
+    // while an iframe is loading or after a click routed to another module.
     try {
-      const topHash = String(topWindow().location.hash || '').replace(/^#/, '');
+      const topLocation = topWindow().location;
+      const path = String(topLocation.pathname || '').toLowerCase();
+      if (path.startsWith('/manager/scheduling')) return 'workforce';
+      if (path.startsWith('/manager/schedule/')) return 'schedule';
+      const topHash = String(topLocation.hash || '').replace(/^#/, '');
       if (topHash) return topHash;
     } catch (_) {}
-    return 'dashboard';
+    const hash = String(location.hash || '').replace(/^#/, '');
+    if (hash) return hash;
+    const source = document.querySelector('.sidebar [data-view].active');
+    return source?.dataset.view || 'dashboard';
   };
 
   const sourceButton = view =>
@@ -193,6 +198,13 @@
   };
 
   const activateManagerView = (view, attempt = 0) => {
+    // Dedicated modules have one canonical host, not a legacy V1 button.
+    if (view === 'workforce' || view === 'schedule') {
+      const href = view === 'workforce' ? '/manager/scheduling/' : '/manager/schedule/';
+      closeDrawer();
+      topWindow().location.assign(href);
+      return true;
+    }
     const button = sourceButton(view);
     if (button && !button.hidden && button.getAttribute('aria-hidden') !== 'true') {
       button.click();
@@ -200,9 +212,8 @@
       closeDrawer();
       return true;
     }
-    if (attempt < 20) {
-      setTimeout(() => activateManagerView(view, attempt + 1), 100);
-    }
+    // Avoid delayed V1 actions overriding a newer navigation request.
+    if (attempt === 0) console.warn('[MAGASIN_MANAGER_NAV] Missing source view:', view);
     return false;
   };
 
