@@ -104,7 +104,7 @@
 - Hiện có các RPC được ghi nhận trong tài liệu kỹ thuật: `submit_shift_swap_request`, `approve_shift_swap`, `reject_shift_swap`, `clock_in_for_schedule`, `clock_out_attendance`. Việc có RPC **không chứng minh** trải nghiệm đã phù hợp nghiệp vụ mới.
 - Luồng phê duyệt cho ca cần kiểm chứng với schema/RPC hiện hữu; không được giả định `shift_swaps` đã đủ hỗ trợ cho ca.
 - Không commit dữ liệu nhân viên thực, dữ liệu riêng tư, secrets vào repository public.
-- **Chưa có yêu cầu triển khai chức năng trong vòng trao đổi này.** Tài liệu là bàn giao nghiệp vụ cho các phiên khác; lập kế hoạch, thực hiện thay đổi và QA riêng sau khi được yêu cầu.
+- **Cập nhật 2026-10-20:** Chủ hệ thống đã yêu cầu bắt đầu triển khai; **ưu tiên xếp lịch theo tuần** trên Scheduling V2 cho Manager, sau đó kết nối trải nghiệm nhân viên; công/lương làm sau. Mọi thay đổi dữ liệu lịch chính thức vẫn cần quyền server, kiểm tra và xác nhận quản lý.
 
 ## 9. Hướng dẫn cho ChatGPT / coding agent mở phiên mới
 
@@ -113,3 +113,12 @@
 3. Bảo tồn luồng từ đăng ký → nhu cầu → nháp → quản lý công bố → lịch thực tế → đổi/cho ca → chấm công → phê duyệt ngoại lệ.
 4. Nếu tiếp tục trò chuyện nghiệp vụ, cập nhật file này sau mỗi quyết định được xác nhận; không làm biến đổi runtime chỉ vì bổ sung tài liệu.
 5. Khi triển khai, yêu cầu QA trên cả vai trò Employee/Manager/Owner, bao gồm sidebar, state transitions, phân quyền, ca giao nhau và thời hạn tuần.
+
+## 10. Quyết định triển khai mới nhất — 2026-10-20
+
+- **Xếp lịch theo TUẦN (CONFIRMED):** luôn theo thứ Hai đến Chủ nhật, không dùng kỳ nửa tháng.
+- Trên màn hình Manager V2: mở sẵn **tuần tới** để chuẩn bị công bố Chủ nhật; có nút chuyển tuần trước/sau và trở về tuần này. Dùng ngày theo múi giờ Asia/Ho_Chi_Minh.
+- Bảng tuần phải thể hiện rõ ngày/tháng tương ứng của từng thứ, kể cả khi chuyển tháng/năm.
+- Giữ riêng ba trạng thái: đăng ký thời gian rảnh → lịch nháp → lịch công bố. Chỉ Manager có quyền mới duyệt/công bố; không tự phát hành khi đổi tuần.
+- **P1:** xếp lịch; **P2:** nhân viên đăng ký lịch và xem lịch chính thức, quản lý duyệt cho/đổi ca; **P3:** chấm công; **P4:** tính và duyệt lương.
+- Thay đổi giao diện xếp lịch không được sinh một bộ sidebar/route riêng cạnh tranh shell Manager đang hoạt động.
