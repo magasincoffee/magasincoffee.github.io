@@ -114,6 +114,7 @@
       if (path.startsWith('/manager/schedule/')) return 'schedule';
       const topHash = String(topLocation.hash || '').replace(/^#/, '');
       if (topHash) return topHash;
+      if (path === '/manager/' || path === '/manager') return 'dashboard';
     } catch (_) {}
     const hash = String(location.hash || '').replace(/^#/, '');
     if (hash) return hash;
