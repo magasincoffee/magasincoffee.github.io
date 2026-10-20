@@ -157,3 +157,12 @@ html[data-sv2-manager-host="shared"] .sv2{
 @media(max-width:700px){
   html[data-sv2-manager-host="shared"] .sv2{padding:12px}
 }
+
+/* Weekly planning controls: clear Monday–Sunday boundaries, mobile-friendly targets. */
+.sv2-week-picker{display:grid;gap:7px;min-width:0}
+.sv2-week-picker label{min-width:0}
+.sv2-week-controls{display:flex;flex-wrap:wrap;gap:6px}
+.sv2-bar .sv2-week-controls button{min-height:44px;padding:9px 11px;border:1px solid #cbd5e1;background:white;color:#14263a;font-weight:600}
+.sv2-bar .sv2-week-controls button:focus-visible{outline:3px solid #087c94;outline-offset:2px}
+#sv2WeekRange{font-weight:650;font-size:13px;color:#334155}
+@media(max-width:650px){.sv2-week-picker{width:100%}.sv2-week-picker input{max-width:100%}}

@@ -37,7 +37,7 @@ test('Scheduling and Demand suppress child sidebar only within the authenticated
   assert.match(page,/window\.top!==window/);
   assert.match(page,/window\.top\.location\.pathname/);
   assert.match(page,/dataset\.sv2ManagerHost='shared'/);
-  assert.match(page,/schedule-v2\.css\?v=20261020-one-shell1/);
+  assert.match(page,/schedule-v2\.css\?v=20261020-weekly1/);
   assert.match(page,/manager-navigation-v2\.js\?v=20261020-one-shell1/);
  }
  assert.match(nav,/dataset\.sv2ManagerHost === 'shared'\) return/);
