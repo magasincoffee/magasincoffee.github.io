@@ -6,6 +6,9 @@
 (() => {
   'use strict';
   if (window.MAGASIN_SCHEDULING_V2_MANAGER_NAV) return;
+  // Only direct/standalone V2 pages require the compatibility sidebar.
+  // The canonical Manager host already mounts /02_CORE/ui/magasin-ui-v2-shell.js.
+  if (document.documentElement.dataset.sv2ManagerHost === 'shared') return;
 
   const sidebar = document.querySelector('.sv2-sidebar');
   const nav = sidebar?.querySelector('.sv2-nav');
