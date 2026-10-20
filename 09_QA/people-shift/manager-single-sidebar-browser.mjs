@@ -12,7 +12,7 @@ try {
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:stub}));
   await page.goto(base+'/05_MANAGER/runtime/manager-runtime-v1.html',{waitUntil:'domcontentloaded'});
   const app=page.frameLocator('#app');
-  await app.locator('#magasinUiV2Shell').waitFor({timeout:12000});
+  await app.locator('#magasinUiV2Shell').waitFor({state:'attached',timeout:12000});
   await app.locator('html[data-manager-shell-ready="1"]').waitFor();
   assert.equal(await app.locator('.m-shell-v2-sidebar').count(),1,'exactly one Manager sidebar');
   assert.equal(await app.locator('.manager-v2-sidebar-source').count(),0,'retired alternate sidebar never mounted');
