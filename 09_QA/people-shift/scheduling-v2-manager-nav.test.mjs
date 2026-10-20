@@ -28,8 +28,8 @@ test('Scheduling and recurring demand screens load the same Manager nav componen
     source('05_MANAGER/SchedulingV2/Demand/index.html'),
     source('05_MANAGER/SchedulingV2/manager-navigation-v2.js')
   ]);
-  assert.match(schedule, /src="\.\/manager-navigation-v2\.js\?v=20261020-manager-nav-unified1"/);
-  assert.match(demand, /src="\.\.\/manager-navigation-v2\.js\?v=20261020-manager-nav-unified1"/);
+  assert.match(schedule, /src="\.\/manager-navigation-v2\.js\?v=20261020-one-shell1"/);
+  assert.match(demand, /src="\.\.\/manager-navigation-v2\.js\?v=20261020-one-shell1"/);
   assert.match(nav, /const demandPage = location\.pathname\.includes\('\/SchedulingV2\/Demand\/'\)/);
   assert.match(nav, /nav\.replaceChildren\(\)/);
   assert.match(nav, /key === current/);
@@ -115,5 +115,5 @@ test('Manager V2 shell uses canonical route before stale V1 sidebar and never re
   assert.doesNotMatch(shell,/attempt \+ 1/);
   assert.match(runtime,/frame\.style\.visibility='hidden'/);
   assert.match(runtime,/getElementById\('magasinUiV2Shell'\)/);
-  assert.match(runtime,/20261020-manager-nav-unified1/);
+  assert.match(runtime,/20261020-one-shell1/);
 });
