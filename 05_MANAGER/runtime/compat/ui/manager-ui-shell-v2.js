@@ -19,6 +19,15 @@ function resolveHostRole(){
 }
 const resolvedHostRole=resolveHostRole();
 if(resolvedHostRole==='owner'){window.MAGASIN_MANAGER_UI_V2_011_OWNER_SKIPPED=true;return}
+// The canonical Manager runtime mounts the shared MAGASIN V2 shell itself.
+// Never mount this retired second sidebar/header/drawer in that same document.
+// Standalone legacy QA fixtures keep the adapter for backward-compatibility tests.
+let canonicalManagerHost=false;
+try{
+ canonicalManagerHost=resolvedHostRole==='manager'&&window.parent!==window&&
+  String(window.parent.location.pathname||'').toLowerCase()==='/05_manager/runtime/manager-runtime-v1.html';
+}catch(_){}
+if(canonicalManagerHost){window.MAGASIN_MANAGER_UI_V2_011_CANONICAL_SKIPPED=true;return;}
 if(window.MAGASIN_MANAGER_UI_V2_011)return;
 window.MAGASIN_MANAGER_UI_V2_011=true;
 const allowed=['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check'];
