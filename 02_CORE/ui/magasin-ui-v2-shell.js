@@ -213,7 +213,13 @@
       return true;
     }
     const button = sourceButton(view);
-    if (button && !button.hidden && button.getAttribute('aria-hidden') !== 'true') {
+    // Tasks and Settings are deliberately hidden in the *legacy source sidebar*,
+    // not disabled in the shared Manager sidebar. Programmatic dispatch is safe
+    // even for hidden source buttons: it invokes the existing Manager router,
+    // while the user sees only the one canonical V2 menu.
+    const legacyChromeHiddenOnly = view === 'tasks' || view === 'settings';
+    if (button && (legacyChromeHiddenOnly ||
+        (!button.hidden && button.getAttribute('aria-hidden') !== 'true'))) {
       button.click();
       setActive(view);
       closeDrawer();
