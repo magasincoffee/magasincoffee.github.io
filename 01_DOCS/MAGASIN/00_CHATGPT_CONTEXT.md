@@ -297,3 +297,11 @@ Immediate behavior for a new implementation session:
 8. payroll payment is Cash/reconciliation evidence only and must not create labor recognition;
 9. full-period labor ACTUAL requires TASK-067 PERIOD_AGGREGATE COMPLETE proven coverage;
 10. preserve employee privacy in public evidence and continue autonomously unless a true Owner/security/business-rule boundary appears.
+
+## Workforce business rules confirmed 2026-10-20
+
+When discussing or implementing weekly staffing demand, employee availability, manager schedule publishing, shift swaps, giving away shifts, or attendance, first read:
+
+- `01_DOCS/MAGASIN/02_BUSINESS_RULES/WORKFORCE_SCHEDULING_ATTENDANCE_2026_10_20.md` — confirmed business rules versus proposals and open questions, glossary and cross-chat handoff.
+
+This dated business-rule record supplements the canonical technical contract; do not infer that documentation commits deploy features. Do not treat proposed shift give-away behavior or unresolved clock-in semantics as approved.
