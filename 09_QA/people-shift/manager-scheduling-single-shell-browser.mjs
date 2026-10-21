@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 const BASE=process.env.QA_BASE_URL||'http://127.0.0.1:8769';
 const browser=await chromium.launch({headless:true});
@@ -60,6 +62,9 @@ try{
   if(width>1024)assert.ok(topMetrics.left>=240 && topMetrics.left<=255,'sidebar offset on desktop');
   else assert.ok(Math.abs(topMetrics.left)<2,'mobile iframe full width');
 
+  const captureDir=process.env.QA_OUT||'qa-artifacts/people-shift';
+  mkdirSync(captureDir,{recursive:true});
+  await page.screenshot({path:join(captureDir,'mockup-b-host-qa-'+width+'px.png'),fullPage:true});
   const menu=page.locator('[data-shell-menu]');
   if(width<=1024){
    assert.equal(await menu.isVisible(),true);
