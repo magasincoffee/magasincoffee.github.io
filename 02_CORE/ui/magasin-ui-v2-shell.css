@@ -591,3 +591,17 @@ body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .btn.primar
   }
   body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .card{padding:14px}
 }
+
+
+/* B mockup contrast: the original dark-shell white labels must not survive on white. */
+body[data-magasin-shell-v2] .m-shell-v2-brand__name{color:#17365e}
+body[data-magasin-shell-v2] .m-shell-v2-logout{
+  background:#eef5ff;color:#244a7f;
+  border:1px solid #ccdcf3;font-weight:700
+}
+body[data-magasin-shell-v2] .m-shell-v2-logout:hover{
+  background:#e1edff;color:#1554ad;border-color:#a7c7ee
+}
+body[data-magasin-shell-v2] .m-shell-v2-logout:focus-visible{
+  outline:3px solid #91bafd;outline-offset:2px
+}
