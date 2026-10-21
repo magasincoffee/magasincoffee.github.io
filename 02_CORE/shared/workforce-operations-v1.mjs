@@ -43,6 +43,22 @@ function zonedDateKey(input) {
   return validDateKey(key) ? key : null;
 }
 
+// Date-only inputs have no clock; fail closed on Sunday rather than invent a time.
+function zonedMinuteOfDay(input) {
+  if (typeof input === "string" && validDateKey(input)) return null;
+  const date = input instanceof Date ? new Date(input.getTime()) : new Date(input);
+  if (!Number.isFinite(date.getTime())) return null;
+  const parts = {};
+  for (const part of new Intl.DateTimeFormat("en-GB", {
+    timeZone: WORKFORCE_TIMEZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+  }).formatToParts(date)) {
+    if (part.type !== "literal") parts[part.type] = part.value;
+  }
+  const hour = Number(parts.hour), minute = Number(parts.minute);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  return hour * 60 + minute;
+}
+
 function addDays(dateKey, amount) {
   const [y, m, d] = dateKey.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
@@ -82,7 +98,7 @@ export function workforceWeekIdentity(input) {
     iso_weekday: weekday,
     current_week_start: currentWeekStart,
     next_week_start: nextWeekStart,
-    availability_registration_state: weekday === 7 ? "REGISTRATION_CLOSED" : "REGISTRATION_OPEN",
+    availability_registration_state: weekday === 7 && (zonedMinuteOfDay(input) === null || zonedMinuteOfDay(input) >= 720) ? "REGISTRATION_CLOSED" : "REGISTRATION_OPEN",
     availability_target_week_start: nextWeekStart,
     sunday_manager_target_week_start: weekday === 7 ? nextWeekStart : null
   });
