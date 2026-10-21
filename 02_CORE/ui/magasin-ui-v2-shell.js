@@ -13,17 +13,20 @@
 
   const MANAGER_NAV = Object.freeze({
     primary: Object.freeze([
-      ['dashboard', '⌂', 'Hôm nay'],
-      ['workforce', '▦', 'Xếp lịch'],
-      ['swap', '⇄', 'Đổi / Cho ca'],
-      ['attendance', '◷', 'Chấm công'],
+      ['dashboard', '⌂', 'Tổng quan'],
       ['staff', '◎', 'Nhân viên'],
-      ['payroll-self-check', '₫', 'Công / Lương']
-    ]),
-    secondary: Object.freeze([
-      ['schedule', '▤', 'Lịch đã phát hành'],
+      ['demand', '▤', 'Nhu cầu nhân sự'],
+      ['workforce', '▦', 'Xếp lịch'],
+      ['attendance', '◷', 'Chấm công'],
       ['tasks', '✓', 'Công việc'],
+      ['reports', '▥', 'Báo cáo'],
       ['settings', '⚙', 'Cài đặt']
+    ]),
+    // Do not orphan existing canonical business actions when aligning primary IA.
+    secondary: Object.freeze([
+      ['swap', '⇄', 'Đổi / Cho ca'],
+      ['schedule', '▤', 'Lịch đã phát hành'],
+      ['payroll-self-check', '₫', 'Công / Lương']
     ]),
     hidden: Object.freeze(['kpi', 'academy'])
   });
@@ -41,7 +44,8 @@
   });
 
   const MANAGER_META = Object.freeze({
-    dashboard: ['Hôm nay', 'Điều hành nhân sự và các việc cần xử lý'],
+    dashboard: ['Tổng quan cửa hàng', 'Hoạt động và các việc cần xử lý hôm nay'],
+    demand: ['Nhu cầu nhân sự', 'Định mức nhân sự cố định trong tuần theo chi nhánh'],
     workforce: ['Xếp lịch', 'Thời gian có thể làm → Lịch nháp → Kiểm tra → Duyệt → Phát hành'],
     swap: ['Đổi / Cho ca', 'Kiểm tra và xử lý yêu cầu chuyển ca'],
     attendance: ['Chấm công', 'Kiểm tra giờ công theo lịch đã phát hành'],
@@ -49,6 +53,7 @@
     'payroll-self-check': ['Công / Lương', 'Đối soát công và lương'],
     schedule: ['Lịch đã phát hành', 'Lịch làm chính thức từ hệ thống'],
     tasks: ['Công việc', 'Nguồn công việc và quy trình hiện có'],
+    reports: ['Báo cáo', 'Trạng thái nguồn dữ liệu báo cáo và đối soát'],
     settings: ['Cài đặt', 'Cấu hình hiện có']
   });
 
@@ -110,7 +115,7 @@
     try {
       const topLocation = topWindow().location;
       const path = String(topLocation.pathname || '').toLowerCase();
-      if (path.startsWith('/manager/scheduling')) return 'workforce';
+      if (path.startsWith('/manager/scheduling')) return new URLSearchParams(topLocation.search).get('section') === 'demand' ? 'demand' : 'workforce';
       if (path.startsWith('/manager/schedule/')) return 'schedule';
       const topHash = String(topLocation.hash || '').replace(/^#/, '');
       if (topHash) return topHash;
@@ -206,16 +211,18 @@
     if(config.mode==='standalone' && (path==='/manager/scheduling/'||path==='/manager/scheduling')){
       const target=view==='dashboard'?'/manager/':
         view==='workforce'?'/manager/scheduling/':
+        view==='demand'?'/manager/scheduling/?section=demand':
         view==='schedule'?'/manager/schedule/':'/manager/#'+encodeURIComponent(view);
       setActive(view);
       closeDrawer();
-      const current=String(topWindow().location.pathname||'')+String(topWindow().location.hash||'');
+      const current=String(topWindow().location.pathname||'')+String(topWindow().location.search||'')+String(topWindow().location.hash||'');
       if(current!==target)topWindow().location.assign(target);
       return true;
     }
     const canonicalHost = path === '/manager/' || path === '/manager' || path === '/05_manager/';
-    if (canonicalHost && (view === 'workforce' || view === 'schedule')) {
-      const href = view === 'workforce' ? '/manager/scheduling/' : '/manager/schedule/';
+    if (canonicalHost && (view === 'workforce' || view === 'demand' || view === 'schedule')) {
+      const href = view === 'workforce' ? '/manager/scheduling/' :
+        view === 'demand' ? '/manager/scheduling/?section=demand' : '/manager/schedule/';
       closeDrawer();
       topWindow().location.assign(href);
       return true;
@@ -278,7 +285,7 @@
         '</div>' +
         '<nav class="m-shell-v2-nav">' +
           buildNavGroup('Chính', nav.primary) +
-          buildNavGroup('Khác', nav.secondary) +
+          buildNavGroup('Nghiệp vụ khác', nav.secondary) +
         '</nav>' +
         '<div class="m-shell-v2-sidebar__footer">' +
           '<div class="m-shell-v2-account">' +
