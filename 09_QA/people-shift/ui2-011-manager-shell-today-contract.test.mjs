@@ -61,6 +61,7 @@ test("Dashboard B presents the approved operational composition without fabricat
   assert.match(dashboardB,/NOT_CONNECTED/);
   assert.match(dashboardB,/Cần nguồn nhu cầu nhân sự để đối chiếu/);
   assert.match(dashboardBCss,/@media\(max-width:520px\)/);
+  assert.match(gate,/manager-dashboard-b-browser\.mjs/);
   assert.doesNotMatch(dashboardB,/\.rpc\(|createClient\s*\(|\.(?:insert|update|delete|upsert)\s*\(/);
   assert.doesNotMatch(dashboardB,/28,560,000|18\s*\/\s*20|286\s*khách|2\s*ca đang thiếu/);
 });
