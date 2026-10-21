@@ -113,10 +113,17 @@ for(const width of widths){
 
       await page.evaluate(async()=>{
         globalThis.__UI2_008_QA.state.today="2026-09-27";
+        globalThis.__UI2_008_QA.state.clockMinutes=719;
+        await globalThis.MAGASIN_EMPLOYEE.availability.refresh();
+      });
+      await employee.locator('#weeklyRegistrationPanel[data-availability-readonly="false"]').waitFor();
+      if(await employee.locator("#saveReg").isDisabled())throw new Error("Sunday 11:59 save must be enabled");
+      await page.evaluate(async()=>{
+        globalThis.__UI2_008_QA.state.clockMinutes=720;
         await globalThis.MAGASIN_EMPLOYEE.availability.refresh();
       });
       await employee.locator('#weeklyRegistrationPanel[data-availability-readonly="true"]').waitFor();
-      if(!(await employee.locator("#saveReg").isDisabled()))throw new Error("Sunday save must be disabled");
+      if(!(await employee.locator("#saveReg").isDisabled()))throw new Error("Sunday 12:00 save must be disabled");
       const readonlyText=await employee.locator("#quickRegMsg").innerText();
       if(!readonlyText.includes("đã đóng"))throw new Error(readonlyText);
 
