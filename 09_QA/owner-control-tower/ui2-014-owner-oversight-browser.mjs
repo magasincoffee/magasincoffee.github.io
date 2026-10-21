@@ -88,7 +88,7 @@ try{
   const page=opened.page;
   await check("ui2_014_"+width+"_oversight_first_responsive",async()=>{
    const m=await page.evaluate(()=>{
-    const ids=["overview","attention","operatingSnapshot","ownerModules"];
+    const ids=["operatingSnapshot","attention","overview","ownerModules"];
     const nodes=ids.map(id=>document.getElementById(id));
     const controls=[...document.querySelectorAll("#app button,#app a")].filter(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0});
     return {
@@ -127,7 +127,7 @@ try{
   return active;
  });
 
- await check("ui2_014_cross_store_quality_before_metrics",async()=>{
+ await check("ui2_014_owner_b_metrics_first_with_verifiable_quality",async()=>{
   const data=await page.evaluate(()=>({
    scope:document.getElementById("branchScope")?.textContent,
    qualityTop:document.getElementById("qualityList")?.getBoundingClientRect().top,
@@ -135,7 +135,7 @@ try{
    qualities:[...document.querySelectorAll("#qualityList .quality-chip")].map(x=>x.textContent),
    freshness:[...document.querySelectorAll("#qualityList .quality-freshness")].map(x=>x.textContent)
   }));
-  if(data.scope!=="ALL"||!(data.qualityTop<data.metricTop))throw new Error(JSON.stringify(data));
+  if(data.scope!=="ALL"||!(data.metricTop<data.qualityTop))throw new Error(JSON.stringify(data));
   if(!data.qualities.includes("ACTUAL")||!data.qualities.includes("NOT CONNECTED"))throw new Error(JSON.stringify(data));
   if(data.freshness.some(x=>!x.startsWith("Freshness:")))throw new Error(JSON.stringify(data));
   return JSON.stringify(data);
