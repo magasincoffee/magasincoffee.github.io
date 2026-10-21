@@ -495,7 +495,7 @@ body[data-magasin-shell-v2] .m-shell-v2-topbar{
 
 /* Mockup B pass 2: flatter, spacious navigation with restrained hierarchy. */
 body[data-magasin-shell-v2]{
-  --m-shell-sidebar-width:232px;
+  --m-shell-sidebar-width:248px;
   --m-shell-topbar-height:66px;
   --m-shell-sidebar-bg:#f8fbff;
   --m-shell-sidebar-text:#243d61;
@@ -530,7 +530,7 @@ body[data-magasin-shell-v2] .m-shell-v2-page__title{
   color:#132b50;letter-spacing:-.025em
 }
 @media(max-width:1024px){
-  body[data-magasin-shell-v2]{--m-shell-sidebar-width:232px}
+  body[data-magasin-shell-v2]{--m-shell-sidebar-width:248px}
 }
 @media(max-width:600px){
   body[data-magasin-shell-v2]{--m-shell-topbar-height:60px}
