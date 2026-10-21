@@ -156,13 +156,29 @@ await check("delete_refresh_and_reload_keep_deleted_interval_absent",async()=>{
   return "deleted interval absent after reload";
 });
 
-await check("sunday_is_readable_but_all_employee_writes_are_closed",async()=>{
+await check("sunday_1159_ict_employee_availability_remains_editable",async()=>{
+  await page.evaluate(async()=>{
+    const qa=globalThis.__EMPLOYEE_AVAILABILITY_QA;
+    qa.today="2026-09-27";qa.minutes=719;
+    await globalThis.MAGASIN_EMPLOYEE.availability.refresh();
+  });
+  const result=await page.evaluate(()=>({
+    policy:globalThis.MAGASIN_EMPLOYEE.availability.getPolicy(),
+    saveDisabled:document.getElementById("employeeApp").contentDocument.getElementById("saveReg").disabled,
+    deleteDisabled:document.getElementById("employeeApp").contentDocument.querySelector("[data-av-delete]")?.disabled
+  }));
+  if(result.policy.registration!=="REGISTRATION_OPEN"||result.saveDisabled||result.deleteDisabled)throw Error(JSON.stringify(result));
+  return "11:59 ICT Sunday remains editable";
+});
+
+await check("sunday_1200_ict_closes_employee_writes_but_remains_readable",async()=>{
   const before=await page.evaluate(()=>({
     save:globalThis.__EMPLOYEE_AVAILABILITY_QA.calls.filter(x=>x.name==="save_my_availability").length,
     del:globalThis.__EMPLOYEE_AVAILABILITY_QA.calls.filter(x=>x.name==="delete_my_availability").length
   }));
   await page.evaluate(async()=>{
     globalThis.__EMPLOYEE_AVAILABILITY_QA.today="2026-09-27";
+    globalThis.__EMPLOYEE_AVAILABILITY_QA.minutes=720;
     await globalThis.MAGASIN_EMPLOYEE.availability.refresh();
   });
   await employee.locator("#saveReg:disabled").waitFor();

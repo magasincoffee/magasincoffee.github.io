@@ -95,6 +95,7 @@
     date: {
       monday() { return '2026-09-14'; },
       dateKey() { return '2026-09-18'; },
+      localClock() { return { date: '2026-09-18', minutes: 540 }; },
       addDays,
       weekDays(week) { return Array.from({length:7}, (_,i) => addDays(week,i)); },
       formatDate(value) {

@@ -58,7 +58,7 @@ test("EMLIVE-003 runtime cache serves reconciled assets",()=>{
   assert.match(runtime,/profile\/engine-v1\.js\?v=20260930-emlive003/);
   assert.match(runtime,/payroll\/engine-v1\.js\?v=20260930-emlive003/);
   assert.match(runtime,/notification\/engine-v1\.js\?v=20260930-emlive003/);
-  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007)/);
+  assert.match(index,/employee-runtime-v1\.html\?v=(?:20260930-emlive003|20261001-ui-unified1|20261002-sched-ui-006|20261003-sched-ui-007|20261021-availability-noon1)/);
 });
 
 test("EMLIVE-003 remains permanently closed after TEMP authority cleanup",()=>{
