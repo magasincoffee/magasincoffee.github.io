@@ -11,7 +11,7 @@ test('canonical Scheduling Manager host owns precisely the same shared Manager s
   source('02_CORE/ui/magasin-ui-v2-shell.css')
  ]);
  assert.match(host,/magasin-ui-v2-shell\.css\?v=20261020-one-shell1/);
- assert.match(host,/magasin-ui-v2-shell\.js\?v=20261020-one-shell1/);
+ assert.match(host,/magasin-ui-v2-shell\.js\?v=20261021-profile-sync1/);
  assert.match(host,/window\.__MAGASIN_UI_V2_SHELL__=\{role:'MANAGER',mode:'standalone'\}/);
  assert.match(host,/requireActive\(\)/);
  assert.match(host,/role!=='STORE_MANAGER'/);
@@ -62,4 +62,13 @@ test('Shared Manager nav on Scheduling host dispatches all nine modules via cano
   assert.ok(shell.includes("'"+key+"'"),key);
  }
  assert.doesNotMatch(host,/frame\.src='\/05_MANAGER\/runtime\/manager-runtime-v1/);
+});
+
+test('shared shell observes late profile hydration once and normalizes identity',async()=>{
+ const shell=await source('02_CORE/ui/magasin-ui-v2-shell.js');
+ assert.ok(shell.includes("['#profileName', '#ownerIdentity', '#userName', '#profileMeta']"));
+ assert.ok(shell.includes('accountSources.forEach(node => accountObserver.observe(node'));
+ assert.equal((shell.match(/new MutationObserver\(syncAccount\)/g)||[]).length,1);
+ assert.ok(shell.includes('rawName.replace(/\\s*·\\s*OWNER\\s*$/i'));
+ assert.ok(shell.includes('split(/\\s+/)'));
 });

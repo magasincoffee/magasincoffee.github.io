@@ -67,7 +67,7 @@ body[data-magasin-shell-v2] #app{height:calc(100dvh - var(--m-shell-topbar-heigh
     }
     await new Promise((resolve,reject)=>{
       const script=document.createElement('script');
-      script.src='/02_CORE/ui/magasin-ui-v2-shell.js?v=20261020-one-shell1';
+      script.src='/02_CORE/ui/magasin-ui-v2-shell.js?v=20261021-profile-sync1';
       script.onload=resolve;
       script.onerror=()=>reject(Error('MANAGER_SHELL_LOAD_FAILED'));
       document.body.appendChild(script);

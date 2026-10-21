@@ -37,6 +37,15 @@ try{
   assert.equal(await page.locator('[data-shell-key="workforce"][aria-current="page"]').count(),1);
   assert.equal(await page.locator('[data-shell-account-name]').textContent(),'Quản lý kiểm thử');
   assert.equal(await page.locator('[data-shell-user-name]').textContent(),'Quản lý kiểm thử');
+  // Profile may hydrate after the shell mounts; identity should stay in sync.
+  await page.locator('#profileName').evaluate(node => { node.textContent='Nguyễn Văn An'; });
+  await page.locator('#profileMeta').evaluate(node => { node.textContent='Quản lý · CN1'; });
+  await page.waitForFunction(() =>
+    document.querySelector('[data-shell-account-name]')?.textContent === 'Nguyễn Văn An' &&
+    document.querySelector('[data-shell-user-name]')?.textContent === 'Nguyễn Văn An' &&
+    document.querySelector('[data-shell-account-meta]')?.textContent === 'Quản lý · CN1'
+  );
+  assert.equal(await page.locator('.m-shell-v2-user__avatar').textContent(),'A');
   assert.equal(await frame.locator('.sv2-sidebar').isVisible(),false,'nested sidebar must be hidden');
   assert.equal(await frame.locator('.sv2-app-header').isVisible(),false,'nested topbar must be hidden');
   assert.equal(await frame.locator('html').getAttribute('data-sv2-manager-host'),'shared');
