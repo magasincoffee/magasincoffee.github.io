@@ -11,10 +11,10 @@ test('Manager canonical route preserves all allowlisted hash destinations', asyn
     source('05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js')
   ]);
   assert.match(entry, /token==='manager-root'&&allowed\.has\(requested\)\?requested/);
-  assert.match(entry, /'tasks','settings'/);
+  assert.match(entry, /'tasks','reports','settings'/);
   assert.match(entry, /if\(view==='workforce'\)\{location\.replace\('\/manager\/scheduling\/'\)/);
-  assert.match(canonical, /managerHash=new Set\(\[[^\]]*'tasks','settings'/);
-  for (const view of ['staff', 'swap', 'attendance', 'payroll-self-check', 'tasks', 'settings']) {
+  assert.match(canonical, /managerHash=new Set\(\[[^\]]*'tasks','reports','settings'/);
+  for (const view of ['staff', 'swap', 'attendance', 'payroll-self-check', 'tasks', 'reports', 'settings']) {
     assert.ok(entry.includes("'" + view + "'"), view);
     assert.ok(canonical.includes("'" + view + "'"), view);
     assert.ok(bridge.includes("'" + view + "'") || bridge.includes(view + ':'), view);
@@ -28,8 +28,8 @@ test('Scheduling and recurring demand screens load the same Manager nav componen
     source('05_MANAGER/SchedulingV2/Demand/index.html'),
     source('05_MANAGER/SchedulingV2/manager-navigation-v2.js')
   ]);
-  assert.match(schedule, /src="\.\/manager-navigation-v2\.js\?v=20261020-one-shell1"/);
-  assert.match(demand, /src="\.\.\/manager-navigation-v2\.js\?v=20261020-one-shell1"/);
+  assert.match(schedule, /src="\.\/manager-navigation-v2\.js\?v=20261021-manager-nav-b3"/);
+  assert.match(demand, /src="\.\.\/manager-navigation-v2\.js\?v=20261021-manager-nav-b3"/);
   assert.match(nav, /const demandPage = location\.pathname\.includes\('\/SchedulingV2\/Demand\/'\)/);
   assert.match(nav, /nav\.replaceChildren\(\)/);
   assert.match(nav, /key === current/);
@@ -37,11 +37,11 @@ test('Scheduling and recurring demand screens load the same Manager nav componen
   for (const url of [
     '/manager/', '/manager/scheduling/', '/manager/schedule/',
     '/manager/#staff', '/manager/#swap', '/manager/#attendance',
-    '/manager/#payroll-self-check', '/manager/#tasks', '/manager/#settings'
+    '/manager/#payroll-self-check', '/manager/#tasks', '/manager/#reports', '/manager/#settings', '/manager/scheduling/?section=demand'
   ]) assert.ok(nav.includes(url), url);
   assert.match(nav, /link\.target = '_top'/);
-  assert.doesNotMatch(nav, /\['demand',/);
-  assert.match(nav, /const current = 'workforce'/);
+  assert.match(nav, /\['demand',/);
+  assert.match(nav, /const current = demandPage \? 'demand' : 'workforce'/);
 });
 
 test('Shared nav matches the existing Manager shell primary and secondary navigation', async () => {
@@ -50,7 +50,8 @@ test('Shared nav matches the existing Manager shell primary and secondary naviga
     source('05_MANAGER/SchedulingV2/manager-navigation-v2.js')
   ]);
   for (const item of [
-    ['dashboard', 'Hôm nay'], ['workforce', 'Xếp lịch'],
+    ['dashboard', 'Tổng quan'], ['workforce', 'Xếp lịch'],
+    ['demand', 'Nhu cầu nhân sự'], ['reports', 'Báo cáo'],
     ['swap', 'Đổi / Cho ca'], ['attendance', 'Chấm công'],
     ['staff', 'Nhân viên'], ['payroll-self-check', 'Công / Lương'],
     ['schedule', 'Lịch đã phát hành'], ['tasks', 'Công việc'],
@@ -90,7 +91,7 @@ test('Demand toolbar enters live editor and returns through authenticated canoni
     source('05_MANAGER/SchedulingV2/Demand/index.html'),
     source('05_MANAGER/SchedulingV2/rollout-config-v1.js')
   ]);
-  assert.match(schedule,/href="\.\/Demand\/index\.html\?mode=live&demand-preview"/);
+  assert.match(schedule,/href="\/manager\/scheduling\/\?section=demand" target="_top"/);
   assert.match(demand,/href="\/manager\/scheduling\/" target="_top" class="sv2-demand-back"/);
   assert.match(rollout,/demand\.href=onDemand\?'\/manager\/scheduling\/'/);
   assert.match(rollout,/if\(onDemand\)demand\.target='_top'/);
@@ -105,15 +106,15 @@ test('Manager V2 shell uses canonical route before stale V1 sidebar and never re
     source('05_MANAGER/runtime/manager-runtime-v1.html')
   ]);
   assert.ok(shell.indexOf("const topLocation = topWindow().location;") < shell.indexOf("const source = document.querySelector('.sidebar [data-view].active');"));
-  assert.match(shell,/if \(path\.startsWith\('\/manager\/scheduling'\)\) return 'workforce'/);
+  assert.match(shell,/if \(path\.startsWith\('\/manager\/scheduling'\)\) return new URLSearchParams\(topLocation\.search\)\.get\('section'\) === 'demand' \? 'demand' : 'workforce'/);
   assert.match(shell,/if \(path\.startsWith\('\/manager\/schedule\/'\)\) return 'schedule'/);
   assert.match(shell,/if \(path === '\/manager\/' \|\| path === '\/manager'\) return 'dashboard'/);
-  assert.match(shell,/view === 'workforce' \|\| view === 'schedule'/);
+  assert.match(shell,/view === 'workforce' \|\| view === 'demand' \|\| view === 'schedule'/);
   assert.match(shell,/topWindow\(\)\.location\.assign\(href\)/);
   assert.match(shell,/path === '\/05_manager\/'/);
   assert.doesNotMatch(shell,/path\.startsWith\('\/05_manager\/'\)/);
   assert.doesNotMatch(shell,/attempt \+ 1/);
   assert.match(runtime,/frame\.style\.visibility='hidden'/);
   assert.match(runtime,/getElementById\('magasinUiV2Shell'\)/);
-  assert.match(runtime,/20261020-manager-nav-unified1/);
+  assert.match(runtime,/20261021-manager-nav-b3/);
 });
