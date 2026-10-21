@@ -145,10 +145,10 @@ test("unified asset cache chain reaches both Manager and Employee entry points",
   "ui-consolidation-v1.js?v=20261001-ui-unified1"
  ])assert.ok(managerEngine.includes(token),token);
  for(const token of [
-  "manager-shell-v1.html?v=20261001-ui-unified1",
+  "manager-shell-v1.html?v=20261021-manager-nav-b3",
   "magasin-ui-v2-tokens.css?v=20261001-ui-unified1",
   "magasin-ui-v2-shell.css?v=20261021-mockup-b1",
-  "magasin-ui-v2-shell.js?v=20261020-manager-nav-unified1",
+  "magasin-ui-v2-shell.js?v=20261021-manager-nav-b3",
   "app-time-picker-24h.js?v=20261001-ui-unified1",
   "engine-v1.js?v=20261021-dashboard-b1"
  ])assert.ok(managerRuntime.includes(token),token);
