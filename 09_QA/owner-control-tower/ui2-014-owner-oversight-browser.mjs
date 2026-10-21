@@ -132,12 +132,14 @@ try{
    scope:document.getElementById("branchScope")?.textContent,
    qualityTop:document.getElementById("qualityList")?.getBoundingClientRect().top,
    metricTop:document.getElementById("operatingSnapshot")?.getBoundingClientRect().top,
-   qualities:[...document.querySelectorAll("#qualityList .quality-chip")].map(x=>x.textContent),
+   qualities:[...document.querySelectorAll("#qualityList .quality-chip")].map(x=>x.dataset.quality),
+    qualityLabels:[...document.querySelectorAll("#qualityList .quality-chip")].map(x=>x.textContent),
    freshness:[...document.querySelectorAll("#qualityList .quality-freshness")].map(x=>x.textContent)
   }));
   if(data.scope!=="ALL"||!(data.metricTop<data.qualityTop))throw new Error(JSON.stringify(data));
-  if(!data.qualities.includes("ACTUAL")||!data.qualities.includes("NOT CONNECTED"))throw new Error(JSON.stringify(data));
-  if(data.freshness.some(x=>!x.startsWith("Freshness:")))throw new Error(JSON.stringify(data));
+  if(!data.qualities.includes("ACTUAL")||!data.qualities.includes("NOT_CONNECTED"))throw new Error(JSON.stringify(data));
+   if(!data.qualityLabels.includes("Dữ liệu thực")||!data.qualityLabels.includes("Chưa kết nối"))throw new Error(JSON.stringify(data));
+  if(data.freshness.some(x=>!x.startsWith("Cập nhật:")))throw new Error(JSON.stringify(data));
   return JSON.stringify(data);
  });
 
