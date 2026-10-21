@@ -52,7 +52,7 @@
   window.MAGASIN_CORE={
     security:{escapeHtml},
     time:{time5,minutes,shiftKind},
-    date:{dateKey:()=>state.today,monday,addDays,weekDays,formatDate},
+    date:{dateKey:()=>state.today,localClock:()=>({date:state.today,minutes:540}),monday,addDays,weekDays,formatDate},
     roles:{label:{STAFF:"Nhân viên",EMPLOYEE:"Nhân viên"}},
     stores:{active:async()=>stores.map(x=>({...x}))},
     ui:{
