@@ -9,17 +9,23 @@ async function snapshot(storeId,weekStart){
  const week=day(weekStart),d=new Date(week+'T12:00:00Z');if(!/^\d{4}-\d{2}-\d{2}$/.test(week)||!Number.isFinite(d.getTime())||d.getUTCDay()!==1)fail('INVALID_WEEK');
  const c=ctx();await c.actor({force:true});const stores=await c.stores({force:true});if(!stores.some(s=>String(s.id)===String(storeId)))fail('STORE_NOT_ALLOWED');
  const rpc=(name,args)=>c.client().rpc(name,args);
- const responses=await Promise.all([rpc('list_schedule_generations',{p_store_id:storeId,p_week_start:week}),rpc('list_workforce_recurring_staffing_requirements_v1',{}),rpc('list_employee_workforce_profiles_v1',{}),rpc('get_manager_weekly_availability',{p_store_id:storeId,p_week_start:week}),rpc('get_cross_store_weekly_plan_v1',{p_week_start:week})]);
+ const responses=await Promise.all([rpc('list_schedule_generations',{p_store_id:storeId,p_week_start:week}),rpc('list_workforce_recurring_staffing_requirements_v1',{}),rpc('list_employee_workforce_profiles_v1',{}),rpc('get_manager_weekly_availability',{p_store_id:storeId,p_week_start:week}),rpc('get_cross_store_weekly_plan_v1',{p_week_start:week}),rpc('list_employee_employment_types_v1',{})]);
  for(const r of responses)if(r.error)throw r.error;
- const [gens,requirements,profiles,availability,plan]=responses.map(r=>Array.isArray(r.data)?r.data:[]);
+ const [gens,requirements,profiles,availability,plan,employment]=responses.map(r=>Array.isArray(r.data)?r.data:[]);
+ const employmentById=new Map(employment.map(r=>[String(r.employee_id),String(r.employment_type||'').toUpperCase()]));
+ const employmentRank=code=>code==='FULL_TIME'?0:code==='PART_TIME'?1:2;
  const active=gens.filter(g=>['DRAFT','REVIEWED'].includes(String(g.status||'').toUpperCase()));
  if(active.length>1)fail('MULTIPLE_ACTIVE_GENERATIONS');if(active.length&&String(active[0].status).toUpperCase()!=='DRAFT')fail('REVIEWED_DRAFT_LOCKED');
  if(!active.length&&gens.some(g=>String(g.status||'').toUpperCase()==='PUBLISHED'))fail('PUBLISHED_WEEK_LOCKED');
  const gen=active[0]||null;let originals=[];
  if(gen){const q=await rpc('get_schedule_generation_assignments',{p_generation_id:gen.id});if(q.error)throw q.error;originals=Array.isArray(q.data)?q.data:fail('DRAFT_DATA_INVALID')}
  if(originals.some(r=>String(r.store_id||storeId)!==String(storeId)))fail('STORE_MISMATCH');
- return {c,rpc,week,storeId,gen,originals,requirements:requirements.filter(r=>String(r.store_id)===String(storeId)&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&Number(r.target_headcount)>0&&min(r.end_time)>min(r.start_time)),people:profiles.filter(p=>eligible(p,storeId)),availability:availability.filter(r=>['AVAILABLE','PREFERRED'].includes(String(r.availability_type||'').toUpperCase())),other:plan.filter(r=>!gen||String(r.generation_id||'')!==String(gen.id))}
+ return {c,rpc,week,storeId,gen,originals,requirements:requirements.filter(r=>String(r.store_id)===String(storeId)&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&Number(r.target_headcount)>0&&min(r.end_time)>min(r.start_time)),people:profiles.filter(p=>eligible(p,storeId)).map(p=>({...p,employment_type:employmentById.get(String(p.employee_id||p.user_id))||'UNKNOWN'})),availability:availability.filter(r=>['AVAILABLE','PREFERRED'].includes(String(r.availability_type||'').toUpperCase())),other:plan.filter(r=>!gen||String(r.generation_id||'')!==String(gen.id))}
 }
+// Candidate priority: FULL_TIME before PART_TIME, regardless of availability preference.
+ // Same-category submitted-at ordering is NOT_VERIFIED: the current manager
+ // availability RPC does not expose submitted_at/created_at. The result is
+ // a DRAFT recommendation only, never automatically reviewed or published.
 function build(s){
  const existing=s.originals.map(shape),working=existing.map(r=>({...r})),proposed=[],shortages=[];
  const needs=[...s.requirements].sort((a,b)=>Number(a.day_of_week)-Number(b.day_of_week)||min(a.start_time)-min(b.start_time));
@@ -30,13 +36,13 @@ function build(s){
  const covering=new Set(working.filter(a=>day(a.work_date)===workDate&&min(a.start_time)<=start&&min(a.end_time)>=end).map(a=>String(a.user_id)));
  let missing=Math.max(0,target-covering.size);
  while(missing>0){
- const candidates=s.availability.filter(a=>day(a.work_date)===workDate&&min(a.start_time)<=start&&min(a.end_time)>=end).map(a=>{const uid=String(a.user_id||''),p=byId.get(uid);if(!p||covering.has(uid))return null;const shifts=allFor(uid,workDate);if(shifts.length>=2||shifts.some(x=>min(x.start_time)<end&&start<min(x.end_time)))return null;const currentWeek=working.filter(x=>String(x.user_id)===uid).length;const priority=p.priority_store_ids.map(String).indexOf(String(s.storeId));return {uid,p,prefer:String(a.availability_type).toUpperCase()==='PREFERRED'?0:1,priority,currentWeek}}).filter(Boolean).sort((a,b)=>a.prefer-b.prefer||a.currentWeek-b.currentWeek||a.priority-b.priority||a.uid.localeCompare(b.uid));
+ const candidates=s.availability.filter(a=>day(a.work_date)===workDate&&min(a.start_time)<=start&&min(a.end_time)>=end).map(a=>{const uid=String(a.user_id||''),p=byId.get(uid);if(!p||covering.has(uid))return null;const shifts=allFor(uid,workDate);if(shifts.length>=2||shifts.some(x=>min(x.start_time)<end&&start<min(x.end_time)))return null;const currentWeek=working.filter(x=>String(x.user_id)===uid).length;const priority=p.priority_store_ids.map(String).indexOf(String(s.storeId));return {uid,p,employmentRank:String(p.employment_type)==='FULL_TIME'?0:String(p.employment_type)==='PART_TIME'?1:2,prefer:String(a.availability_type).toUpperCase()==='PREFERRED'?0:1,priority,currentWeek}}).filter(Boolean).sort((a,b)=>a.employmentRank-b.employmentRank||a.prefer-b.prefer||a.currentWeek-b.currentWeek||a.priority-b.priority||a.uid.localeCompare(b.uid));
  if(!candidates.length)break;
  const {uid}=candidates[0];const newRow=shape({user_id:uid,store_id:s.storeId,work_date:workDate,start_time:hm(r.start_time),end_time:hm(r.end_time),note:'V2_STORE_SCOPED_PROPOSAL'});proposed.push(newRow);working.push(newRow);covering.add(uid);missing--;
  }
  if(missing>0)shortages.push({work_date:workDate,start_time:hm(r.start_time),end_time:hm(r.end_time),missing_headcount:missing,target_headcount:target});
  }
- return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,proposals:proposed,shortages};
+ return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,proposals:proposed,shortages,priorityStatus:'FT_FIRST_PT_SECOND',registrationOrderStatus:'NOT_VERIFIED_MISSING_TIMESTAMP'};
 }
 async function preview({storeId,weekStart}){const snapshotValue=await snapshot(storeId,weekStart);if(!snapshotValue.requirements.length)fail('STORE_DEMAND_NOT_CONFIGURED');return build(snapshotValue)}
 async function apply(previewValue,{confirmed=false}={}){if(window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED!==true||!new URLSearchParams(window.location.search).has('auto-preview'))fail('AUTO_PREVIEW_DISABLED');if(confirmed!==true)fail('CONFIRMATION_REQUIRED');
