@@ -46,11 +46,11 @@ let refreshPromise = null;
 
 function qualityLabel(value) {
   return {
-    ACTUAL: "ACTUAL",
-    ESTIMATE: "ESTIMATE",
-    GAP: "GAP",
-    NOT_CONNECTED: "NOT CONNECTED"
-  }[value] || "GAP";
+    ACTUAL: "Dữ liệu thực",
+    ESTIMATE: "Ước tính",
+    GAP: "Thiếu dữ liệu",
+    NOT_CONNECTED: "Chưa kết nối"
+  }[value] || "Chưa xác định";
 }
 
 function setText(id, value) {
@@ -70,7 +70,7 @@ function sourceLine(section) {
   if (section.source) parts.push(section.source);
   if (section.asOf) parts.push(`as of ${section.asOf}`);
   if (section.message) parts.push(section.message);
-  return parts.join(" · ") || "Chưa có metadata nguồn.";
+  return parts.join(" · ") || "Chưa có thông tin nguồn.";
 }
 
 function attentionItem({ key, title, detail, route = null, routeLabel = "Mở module" }) {
@@ -91,14 +91,14 @@ function buildAttention(snapshot) {
     if (section.quality === "GAP") {
       items.push(attentionItem({
         key: `${key}-gap`,
-        title: `${label}: nguồn hiện ở GAP`,
+        title: `${label}: dữ liệu chưa đầy đủ`,
         detail: sourceLine(section),
         route: SECTION_ROUTE[key] || null
       }));
     } else if (section.quality === "ESTIMATE") {
       items.push(attentionItem({
         key: `${key}-estimate`,
-        title: `${label}: dữ liệu hiện là ESTIMATE`,
+        title: `${label}: số liệu ước tính`,
         detail: sourceLine(section),
         route: SECTION_ROUTE[key] || null
       }));
@@ -176,7 +176,7 @@ function renderQuality(snapshot) {
     row.querySelector(".quality-source").textContent =
       item.source || item.message || "Chưa có nguồn canonical";
     row.querySelector(".quality-freshness").textContent =
-      item.asOf ? `Freshness: ${item.asOf}` : "Freshness: chưa có";
+      item.asOf ? `Cập nhật: ${item.asOf}` : "Cập nhật: chưa có";
     qualityList.appendChild(row);
   }
 }
