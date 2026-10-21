@@ -12,7 +12,7 @@ cleanup(){
   cd "$work" 2>/dev/null || true
   supabase stop --no-backup >/dev/null 2>&1 || true
   rm -rf "$work"
-  rm -f "$log" "$RUNNER_TEMP/xstore019o-cli-parity" "$RUNNER_TEMP/xstore019o-cli-parity-diag" "$RUNNER_TEMP/xstore019o-cli-acl-diag"
+  rm -f "$log" "$RUNNER_TEMP/xstore019o-cli-parity" "$RUNNER_TEMP/xstore019o-cli-parity-diag" "$RUNNER_TEMP/xstore019o-cli-acl-diag" "$RUNNER_TEMP/xstore019o-cli-acl-aggregate"
 }
 trap cleanup EXIT
 mkdir -p "$work"; cd "$work"
@@ -149,6 +149,28 @@ const keys=['REL_EDGES','FN_EDGES','REL_NULL','FN_NULL','REL_SEMANTICS','FN_SEMA
 const valid=fields.length===9 && fields[0]==='XSTORE_019O_ACL_EFFECTIVE_DIAG' &&
  keys.every((k,i)=>fields[i+1]===k+'=PASS'||fields[i+1]===k+'=FAIL');
 if(!valid){console.error('::error::XSTORE_019O_ACL_EFFECTIVE_DIAG_OUTPUT_INVALID');process.exit(1)}
+console.log(got);
+NODE
+ # Fixed aggregate counts of privilege edges only: no objects, names, rows, or raw SQL.
+ docker cp "$GITHUB_WORKSPACE/09_QA/people-shift/xstore-019o-acl-aggregate-gap.sql" "$db_container:/tmp/acl-aggregate-gap.sql"
+ : > "$log"
+ if ! docker exec "$db_container" psql -U postgres -d postgres -AtX -v ON_ERROR_STOP=1 -f /tmp/acl-aggregate-gap.sql > "$RUNNER_TEMP/xstore019o-cli-acl-aggregate" 2>"$log"; then
+  echo '::error::XSTORE_019O_ACL_AGGREGATE_QUERY_FAILED'; exit 1
+ fi
+ node - "$RUNNER_TEMP/xstore019o-cli-acl-aggregate" <<'NODE'
+const fs=require('node:fs');
+const got=fs.readFileSync(process.argv[2],'utf8').trim();
+const fields=got.split('; ');
+const keys=['REL_TOTAL','REL_OWNER','REL_ANON','REL_AUTH','REL_SERVICE','REL_PUBLIC','REL_OTHER',
+ 'FN_TOTAL','FN_OWNER','FN_ANON','FN_AUTH','FN_SERVICE','FN_PUBLIC','FN_OTHER',
+ 'REL_GRANTOR_POSTGRES','FN_GRANTOR_POSTGRES'];
+if(fields.length!==keys.length+1||fields[0]!=='XSTORE_019O_ACL_AGGREGATE'||
+ !keys.every((k,i)=>new RegExp('^'+k+'=[0-9]{1,5}
+fi
+echo 'XSTORE_019O_CLI_CLONE_OWNER_ACL_RLS_PARITY=PASS; FULL_DISASTER_RECOVERY=NOT_PROVEN; NO_PRODUCTION_WRITE'
+).test(fields[i+1]))) {
+ console.error('::error::XSTORE_019O_ACL_AGGREGATE_OUTPUT_INVALID');process.exit(1);
+}
 console.log(got);
 NODE
  echo '::error::XSTORE_019O_CLI_CLONE_OWNER_ACL_RLS_PARITY=FAIL'; exit 1
