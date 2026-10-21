@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Manager Dashboard B — deterministic read-only QA</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f7fc;color:#183451;font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+aside{position:fixed;left:0;top:0;bottom:0;width:248px;padding:18px 14px;background:#f8fbff;border-right:1px solid #e1e9f4;color:#314c6d}
+aside strong{display:block;font-size:20px;letter-spacing:.05em}
+aside p{font-size:11px;margin:0 0 22px;color:#8a99ab}
+aside div{padding:11px;margin:3px 0;border-radius:9px}
+aside div.active{background:#e4efff;color:#1558c4}
+main{margin-left:248px;min-width:0}
+header.app-header{display:flex;align-items:center;justify-content:space-between;min-height:64px;padding:0 24px;border-bottom:1px solid #e1e9f4;background:#fff}
+header.app-header span{color:#8495a9;font-size:12px}
+#view-dashboard{padding:24px;max-width:1590px;margin:auto;min-width:0}
+@media(max-width:1024px){aside{display:none}main{margin-left:0}}
+@media(max-width:520px){#view-dashboard{padding:14px}header.app-header{padding:0 16px}}
+</style>
+</head>
+<body>
+<aside aria-label="Giao diện quản lý QA"><strong>MAGASIN</strong><p>BUSINESS OS · Manager</p>
+<div class="active">Tổng quan</div><div>Nhân viên</div><div>Nhu cầu nhân sự</div><div>Xếp lịch</div><div>Chấm công</div><div>Công việc</div></aside>
+<main>
+<header class="app-header"><b>MAGASIN · Quản lý cửa hàng</b><span>Giao diện mẫu thử B · Không có kết nối production</span></header>
+<section id="view-dashboard" class="view active"></section>
+</main>
+<script>
+(()=>{
+const p=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',year:'numeric'}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+const today=p.year+'-'+p.month+'-'+p.day;
+const d=new Date(today+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);
+const stores=[{id:'qa-one',code:'CN-QA-1',name:'Chi nhánh QA 1'},{id:'qa-two',code:'CN-QA-2',name:'Chi nhánh QA 2'}];
+const rows=[
+{schedule_id:'qa-a',work_date:today,user_id:'qa-a',employee_name:'Nguyễn Thị Mai',store_id:'qa-one',store_code:'CN-QA-1',start_time:'07:00',end_time:'15:00'},
+{schedule_id:'qa-b',work_date:today,user_id:'qa-b',employee_name:'Trần Văn Nam',store_id:'qa-one',store_code:'CN-QA-1',start_time:'13:00',end_time:'21:00'},
+{schedule_id:'qa-c',work_date:today,user_id:'qa-c',employee_name:'Lê Minh Anh',store_id:'qa-two',store_code:'CN-QA-2',start_time:'17:00',end_time:'22:00'}];
+const mode=new URLSearchParams(location.search).get('mode')||'ready';
+window.MAGASIN_MANAGER_OFFICIAL_SCHEDULE={getState:()=>({
+week:d.toISOString().slice(0,10),stores,rows:mode==='empty'||mode==='error'?[]:rows,loading:mode==='loading',
+lastError:mode==='error'?'QA controlled fixture error':null
+})};
+window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={getSnapshot:()=>({ready:true,stores})};
+window.__MANAGER_DASHBOARD_B_QA={today,rows,mode};
+})();
+</script>
+<script src="/05_MANAGER/Workforce/manager-dashboard-b-v1.js?v=20261021-dashboard-b1"></script>
+<script>
+const model=[
+{key:'shift',route:'swap',label:'Đổi / cho ca',state:'ACTION_REQUIRED'},
+{key:'attendance',route:'attendance',label:'Duyệt chấm công',state:'EMPTY'},
+{key:'availability',route:'workforce',label:'Thời gian có thể làm',state:'READY'},
+{key:'schedule',route:'schedule',label:'Lịch chính thức',state:'READY'},
+{key:'tasks',route:null,label:'Công việc / Quy trình',state:'NOT_CONNECTED'}
+];
+window.MAGASIN_MANAGER_DASHBOARD_B.render(document.querySelector('#view-dashboard'),model);
+document.addEventListener('click',e=>{const jump=e.target.closest?.('[data-workforce-jump]');if(jump){document.body.dataset.lastQaJump=jump.dataset.workforceJump}});
+</script>
+</body>
+</html>
