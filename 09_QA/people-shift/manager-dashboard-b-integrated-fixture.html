@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Manager Dashboard B — integrated Manager shell QA</title>
+<title>Manager Dashboard B — canonical light shell QA</title>
 <style>
 :root{--m-border-default:#e4e7ec;--m-color-brand-600:#0f8f9c;--m-color-neutral-50:#f8fafc}
 *{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:#f8fafc;color:#101828;font:14px system-ui,sans-serif}
@@ -90,7 +90,9 @@
  };
 })();
 </script>
-<script src="/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260927-ui2-011-correction1"></script>
+<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20261021-mockup-b1">
+<script>window.__MAGASIN_UI_V2_SHELL__={role:'MANAGER',mode:'legacy-manager'};</script>
+<script src="/02_CORE/ui/magasin-ui-v2-shell.js?v=20261020-manager-nav-unified1"></script>
 <script src="/05_MANAGER/Workforce/manager-dashboard-b-v1.js?v=20261021-dashboard-b1"></script>
 <script src="/05_MANAGER/Workforce/ui-consolidation-v1.js?v=20260927-ui2-011-correction1"></script>
 </body></html>
