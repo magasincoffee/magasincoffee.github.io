@@ -4,6 +4,8 @@
 const SUPABASE_URL='https://menvbzlsncmpuvnaifxa.supabase.co',SUPABASE_KEY='sb_publishable_HsvCS6HDZnCDInd9PUoh0g_V34wJVqx',TZ='Asia/Ho_Chi_Minh';
 const DAYS=['T2','T3','T4','T5','T6','T7','CN'],pad=n=>String(n).padStart(2,'0');
 const dateKey=(d=new Date())=>{const p={};new Intl.DateTimeFormat('en-US',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).forEach(x=>p[x.type]=x.value);return `${p.year}-${p.month}-${p.day}`};
+// A single instant for both Vietnam date and registration-cutoff time (avoids local device timezone).
+const localClock=(instant=new Date())=>{const p={};new Intl.DateTimeFormat('en-GB',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(instant).forEach(x=>p[x.type]=x.value);const hour=Number(p.hour),minute=Number(p.minute);return {date:`${p.year}-${p.month}-${p.day}`,minutes:Number.isInteger(hour)&&Number.isInteger(minute)&&hour>=0&&hour<=23&&minute>=0&&minute<60?hour*60+minute:null}};
 const localDate=k=>new Date(`${String(k).slice(0,10)}T00:00:00+07:00`);
 const dateOnlyUtc=k=>new Date(`${String(k).slice(0,10)}T00:00:00Z`);
 const addDays=(k,n)=>{const d=dateOnlyUtc(k);d.setUTCDate(d.getUTCDate()+n);return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`};
@@ -25,5 +27,5 @@ const accessible=async()=>{const q=await getSupabase().rpc('get_manager_accessib
 const activeStores=async()=>{const q=await getSupabase().from('stores').select('id,code,name,status').eq('status','ACTIVE').order('code');if(q.error)throw q.error;return Array.isArray(q.data)?q.data:[]};
 const rpc=(name,args)=>getSupabase().rpc(name,args);
 const ui={toast:(message,type='info')=>{let e=document.getElementById('sharedCoreToast');if(!e){e=document.createElement('div');e.id='sharedCoreToast';e.style.cssText='position:fixed;right:18px;bottom:18px;z-index:99999;max-width:380px;padding:12px 14px;border-radius:10px;background:#10213b;color:#fff;font:600 13px/1.4 system-ui,sans-serif;box-shadow:0 10px 30px rgba(16,33,59,.2)';document.body.appendChild(e)}e.textContent=message;e.dataset.type=type;e.hidden=false;clearTimeout(e._t);e._t=setTimeout(()=>e.hidden=true,3500)},setLoading:(e,on=true)=>{if(!e)return;e.toggleAttribute('aria-busy',on);e.style.opacity=on?'.65':'1';e.style.pointerEvents=on?'none':''}};
-global.MAGASIN_CORE={version:'1.2.2',TZ,DAYS,date:{dateKey,localDate,addDays,monday,weekDays,formatDate},time:{time5,minutes,shiftKind},security:{escapeHtml},roles:{label:roleLabel,hasRole},supabase:{create,get:getSupabase,getSession,getProfile,requireActive,rpc},stores:{accessible,active:activeStores},ui};
+global.MAGASIN_CORE={version:'1.2.2',TZ,DAYS,date:{dateKey,localClock,localDate,addDays,monday,weekDays,formatDate},time:{time5,minutes,shiftKind},security:{escapeHtml},roles:{label:roleLabel,hasRole},supabase:{create,get:getSupabase,getSession,getProfile,requireActive,rpc},stores:{accessible,active:activeStores},ui};
 })(globalThis);})();
