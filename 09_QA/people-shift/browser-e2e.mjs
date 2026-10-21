@@ -8,6 +8,9 @@ if(process.exitCode)throw new Error("UI2-009 Employee people browser gate failed
 await import("./ui2-010-employee-phone-acceptance.mjs");
 if(process.exitCode)throw new Error("UI2-010 Employee phone acceptance gate failed");
 
+await import("./manager-dashboard-b-browser.mjs");
+if(process.exitCode)throw new Error("Manager Dashboard B visual browser gate failed");
+
 await import("./ui2-011-manager-shell-today-browser.mjs");
 if(process.exitCode)throw new Error("UI2-011 Manager shell Today browser gate failed");
 
