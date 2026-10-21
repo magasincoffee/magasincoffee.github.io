@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';import path from 'node:path';import {chromium} from 'playwright';
+const BASE=process.env.QA_BASE_URL||'http://127.0.0.1:8767',OUT=process.env.QA_OUT||'qa-artifacts/people-shift';
+fs.mkdirSync(OUT,{recursive:true});
+const browser=await chromium.launch({headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:930},locale:'vi-VN',timezoneId:'Asia/Ho_Chi_Minh'});
+ let errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('dialog',d=>d.accept());
+ await page.goto(BASE+'/09_QA/people-shift/workforce-weekly-override-fixture.html',{waitUntil:'networkidle'});
+ const reload=async()=>{await page.evaluate(()=>window.MAGASIN_SCHEDULING_V2_WEEKLY_DEMAND.reload());await page.locator('#sv2WeekDemandStatus').filter({hasText:'Đã tải.'}).waitFor({timeout:10000})};
+ const first=page.locator('#sv2WeekDemandRows tr').filter({hasText:'18:00–22:00'}).locator('input').first();
+ await reload();assert.equal(await first.inputValue(),'2','week 1 inherits recurrence');
+ await page.locator('#sv2Week').fill('2026-11-02');await reload();
+ assert.equal(await first.inputValue(),'2','week 2 initially inherits recurrence');
+ await first.fill('4');await first.dispatchEvent('change');
+ assert.equal(await page.locator('#sv2WeekDemandSave').isEnabled(),true);
+ await page.locator('#sv2WeekDemandSave').click();
+ await page.locator('#sv2WeekDemandStatus').filter({hasText:'Đã lưu riêng tuần'}).waitFor();
+ assert.equal(await first.inputValue(),'4','week 2 overridden');
+ const writes=await page.evaluate(()=>window.__WEEKLY_OVERRIDE_QA.calls.filter(x=>x.name==='replace_workforce_weekly_overrides_v1'));
+ assert.equal(writes.length,1);
+ assert.equal(writes[0].args.p_week_start,'2026-11-02');
+ assert.deepEqual(writes[0].args.p_overrides.map(x=>x.target_headcount),[4]);
+ await page.locator('#sv2Week').fill('2026-10-26');await reload();
+ assert.equal(await first.inputValue(),'2','week 1 remains unchanged');
+ await page.locator('#sv2Week').fill('2026-11-09');await reload();
+ assert.equal(await first.inputValue(),'2','week 3 remains unchanged');
+ await page.locator('#sv2Week').fill('2026-11-02');await reload();
+ assert.equal(await first.inputValue(),'4','week 2 retains only override');
+ await first.fill('0');await first.dispatchEvent('change');
+ await page.locator('#sv2WeekDemandSave').click();
+ await page.locator('#sv2WeekDemandStatus').filter({hasText:'Đã lưu riêng tuần'}).waitFor();
+ assert.equal(await first.inputValue(),'0','explicit 0-demand override works');
+ // Simulate external concurrent edit between read and write.
+ await first.fill('3');await first.dispatchEvent('change');
+ await page.evaluate(()=>{const s=window.__WEEKLY_OVERRIDE_QA,k='CN1|2026-11-02';s.versions.set(k,s.versions.get(k)+1)});
+ await page.locator('#sv2WeekDemandSave').click();
+ await page.locator('#sv2WeekDemandStatus').filter({hasText:'WEEK_OVERRIDE_STALE_RELOAD'}).waitFor();
+ // A separate branch outside the authorized scope must fail closed and never write.
+ const existingWrites=await page.evaluate(()=>window.__WEEKLY_OVERRIDE_QA.calls.filter(x=>x.name==='replace_workforce_weekly_overrides_v1').length);
+ await page.locator('#sv2Store').selectOption('CN2');
+ await page.locator('#sv2WeekDemandStatus').filter({hasText:'STORE_NOT_ALLOWED'}).waitFor();
+ assert.equal(await page.locator('#sv2WeekDemandSave').isDisabled(),true);
+ const afterWrites=await page.evaluate(()=>window.__WEEKLY_OVERRIDE_QA.calls.filter(x=>x.name==='replace_workforce_weekly_overrides_v1').length);
+ assert.equal(existingWrites,afterWrites);
+ assert.deepEqual(errors,[],'no uncaught JavaScript error');
+ await page.screenshot({path:path.join(OUT,'workforce-weekly-override-1440.png'),fullPage:true});
+ await page.close();
+ console.log('WORKFORCE_WEEKLY_OVERRIDE_E2E=PASS · week1/2/3, override 4, zero, stale CAS, unauthorized store');
+}finally{await browser.close()}

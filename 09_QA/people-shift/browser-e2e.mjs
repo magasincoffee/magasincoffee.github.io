@@ -8,6 +8,9 @@ if(process.exitCode)throw new Error("UI2-009 Employee people browser gate failed
 await import("./ui2-010-employee-phone-acceptance.mjs");
 if(process.exitCode)throw new Error("UI2-010 Employee phone acceptance gate failed");
 
+await import("./workforce-weekly-override-browser.mjs");
+if(process.exitCode)throw new Error("Workforce weekly override browser E2E failed");
+
 await import("./workforce-rules-p1-browser.mjs");
 if(process.exitCode)throw new Error("Workforce 2026-10-20 P1 browser E2E failed");
 

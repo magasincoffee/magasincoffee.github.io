@@ -1,0 +1,52 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QA tuần cố định và ghi đè riêng một tuần</title>
+<style>html,body{margin:0;padding:0;width:100%;overflow-x:hidden}.sv2-roster{min-height:30px;padding:12px}</style></head>
+<body><div class="sv2-bar">
+<label>Chi nhánh<select id="sv2Store"><option value="CN1">CN1</option><option value="CN2">CN2 - không có quyền</option></select></label>
+<label>Tuần<input id="sv2Week" type="date" value="2026-10-26"></label></div><section class="sv2-roster"><h2>Lịch tuần QA</h2></section>
+<script>
+(()=>{
+const state=window.__WEEKLY_OVERRIDE_QA={calls:[],saved:new Map(),versions:new Map(),base:[{store_id:'CN1',day_of_week:1,start_time:'18:00:00',end_time:'22:00:00',target_headcount:2}]};
+const fingerprint=(store,week)=>String(state.versions.get(store+'|'+week)||0).padStart(32,'0');
+const effective=(store,week)=>{
+ const monday=week;
+ const base=state.base.filter(x=>x.store_id===store).map(r=>({
+  store_id:store,work_date:(()=>{const d=new Date(week+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+r.day_of_week-1);return d.toISOString().slice(0,10)})(),
+  start_time:r.start_time,end_time:r.end_time,target_headcount:r.target_headcount,demand_source:'RECURRING'
+ }));
+ const overrides=state.saved.get(store+'|'+week)||[];
+ return [...base.map(r=>{const o=overrides.find(o=>o.work_date===r.work_date &&o.start_time===r.start_time.slice(0,5)&&o.end_time===r.end_time.slice(0,5));return o?{...r,target_headcount:o.target_headcount,demand_source:'WEEK_OVERRIDE'}:r}),
+  ...overrides.filter(o=>!base.some(r=>r.work_date===o.work_date&&r.start_time.slice(0,5)===o.start_time&&r.end_time.slice(0,5)===o.end_time)).map(o=>({...o,store_id:store,demand_source:'WEEK_OVERRIDE'}))
+ ];
+};
+const client={async rpc(name,args){
+ state.calls.push({name,args});
+ const key=args?.p_store_id+'|'+args?.p_week_start;
+ if(name==='list_workforce_recurring_staffing_requirements_v1')return {data:state.base,error:null};
+ if(args?.p_store_id!=='CN1')return {data:null,error:{message:'STORE_NOT_ALLOWED'}};
+ if(name==='get_workforce_weekly_override_state_v1')return {data:{
+   store_id:args.p_store_id,week_start:args.p_week_start,
+   fingerprint:fingerprint(args.p_store_id,args.p_week_start),
+   overrides:(state.saved.get(key)||[]).map(x=>({...x}))
+ },error:null};
+ if(name==='list_workforce_effective_weekly_staffing_v1')return {data:effective(args.p_store_id,args.p_week_start),error:null};
+ if(name==='replace_workforce_weekly_overrides_v1'){
+   if(args.p_expected_fingerprint!==fingerprint(args.p_store_id,args.p_week_start))
+     return {data:null,error:{message:'WEEK_OVERRIDE_STALE_RELOAD'}};
+   for(const x of args.p_overrides){
+     if(x.work_date<args.p_week_start||x.work_date>new Date(new Date(args.p_week_start+'T12:00:00Z').getTime()+6*86400000).toISOString().slice(0,10))
+       return {data:null,error:{message:'WEEK_OVERRIDE_DATE_OUT_OF_SCOPE'}};
+   }
+   state.saved.set(key,args.p_overrides.map(x=>({...x})));
+   state.versions.set(key,(state.versions.get(key)||0)+1);
+   return {data:{saved:args.p_overrides.length},error:null};
+ }
+ throw Error('Unexpected RPC '+name)
+}};
+window.MAGASIN_SCHEDULING_V2_CONTEXT={client:()=>client,actor:async()=>({role:'STORE_MANAGER'}),stores:async()=>[{id:'CN1',code:'CN1'}]};
+window.MAGASIN_SCHEDULING_V2_WEEK_NAV={weekStart:k=>k};
+})();
+</script>
+<link rel="stylesheet" href="/05_MANAGER/SchedulingV2/weekly-override-v1.css">
+<script src="/05_MANAGER/SchedulingV2/weekly-override-ui-v1.js"></script>
+</body></html>
