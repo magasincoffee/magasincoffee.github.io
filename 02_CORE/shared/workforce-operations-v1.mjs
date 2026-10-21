@@ -90,6 +90,7 @@ export function workforceWeekIdentity(input) {
   const weekday = isoWeekday(date);
   const currentWeekStart = addDays(date, -(weekday - 1));
   const nextWeekStart = addDays(currentWeekStart, 7);
+  const minute = zonedMinuteOfDay(input);
   return Object.freeze({
     ok: true,
     code: "OK",
@@ -98,7 +99,7 @@ export function workforceWeekIdentity(input) {
     iso_weekday: weekday,
     current_week_start: currentWeekStart,
     next_week_start: nextWeekStart,
-    availability_registration_state: weekday === 7 && (zonedMinuteOfDay(input) === null || zonedMinuteOfDay(input) >= 720) ? "REGISTRATION_CLOSED" : "REGISTRATION_OPEN",
+    availability_registration_state: weekday === 7 && (minute === null || minute >= 720) ? "REGISTRATION_CLOSED" : "REGISTRATION_OPEN",
     availability_target_week_start: nextWeekStart,
     sunday_manager_target_week_start: weekday === 7 ? nextWeekStart : null
   });
