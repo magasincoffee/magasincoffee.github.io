@@ -67,7 +67,7 @@ body[data-magasin-shell-v2] #app{height:calc(100dvh - var(--m-shell-topbar-heigh
     }
     await new Promise((resolve,reject)=>{
       const script=document.createElement('script');
-      script.src='/02_CORE/ui/magasin-ui-v2-shell.js?v=20261021-profile-sync1';
+      script.src='/02_CORE/ui/magasin-ui-v2-shell.js?v=20261021-manager-nav-b3';
       script.onload=resolve;
       script.onerror=()=>reject(Error('MANAGER_SHELL_LOAD_FAILED'));
       document.body.appendChild(script);
@@ -78,7 +78,12 @@ body[data-magasin-shell-v2] #app{height:calc(100dvh - var(--m-shell-topbar-heigh
       frame.hidden=false;
       status.hidden=true;
     },{once:true});
-    frame.src='/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261020-one-shell1';
+    // Role-checked, allowlisted content variant under ONE shared Manager shell.
+    const demand=new URLSearchParams(location.search).get('section')==='demand';
+    frame.title=demand?'MAGASIN · Nhu cầu nhân sự':'MAGASIN · Xếp lịch làm việc';
+    frame.src=demand
+      ?'/05_MANAGER/SchedulingV2/Demand/index.html?mode=live&demand-preview&v=20261021-manager-nav-b3'
+      :'/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261020-one-shell1';
   }catch(error){
     console.error('Manager scheduling route failed',error);
     message.textContent='Không thể xác minh phiên truy cập. Vui lòng đăng nhập lại.';
