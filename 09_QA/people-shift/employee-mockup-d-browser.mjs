@@ -24,7 +24,7 @@ try{
     const controls=[...nav.querySelectorAll("button")].map(box);
     const order=[".employee-today-intro",".employee-today-card--shift",".employee-today-shortcuts",".employee-today-week",".employee-today-queue"].map(s=>box(find(s)).top);
     return {doc:body.scrollWidth,client:body.clientWidth,
-     buttons:controls,columns:getComputedStyle(nav).gridTemplateColumns.trim().split(/\\s+/).length,
+     buttons:controls,columns:getComputedStyle(nav).gridTemplateColumns.trim().split(' ').filter(Boolean).length,
      header:getComputedStyle(header).backgroundImage,order,view:box(view),bodyWidth:box(body).width};
    });
    if(layout.doc>layout.client+1)throw Error("Horizontal overflow: "+JSON.stringify(layout));
