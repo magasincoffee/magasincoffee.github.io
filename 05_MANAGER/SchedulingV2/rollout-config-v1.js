@@ -14,6 +14,6 @@ if(demand){
   demand.href=onDemand?'/manager/scheduling/':'./Demand/index.html?mode=live&demand-preview';
   if(onDemand)demand.target='_top';
 }
-const pill=document.querySelector('.sv2-pill');if(pill)pill.textContent='V2';
-const footer=document.querySelector('footer');if(footer&&!onDemand)footer.textContent='Scheduling V2 · Lịch chính thức chỉ thay đổi khi bạn xác nhận thao tác.';
+const pill=document.querySelector('.sv2-pill');if(pill)pill.textContent='05:00–22:00 · 30 phút';
+const footer=document.querySelector('footer');if(footer&&!onDemand)footer.textContent='MAGASIN · Lịch chính thức chỉ thay đổi sau khi bạn xác nhận.';
 })();

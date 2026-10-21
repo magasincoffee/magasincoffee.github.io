@@ -216,3 +216,116 @@ html[data-sv2-manager-host="shared"] .sv2{
 /* Advanced menu remains visible after tools move from the top-level action bar. */
 .sv2-bar .sv2-advanced-content .sv2-demand-back{display:flex}
 .sv2-bar .sv2-advanced-content .sv2-action{display:flex;background:#f5f8fb;color:#17324a;border:1px solid #e2e8f0}
+
+
+/* Approved C scheduling board — 7-day roster is the visual anchor. */
+:root{background:#f4f8fd;color:#1b3051}
+.sv2{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.sv2-top h1{color:#122b51;font-size:26px;font-weight:800}
+.sv2-top .sv2-eyebrow{color:#4776b4}
+.sv2-bar,.sv2-summary,.sv2-roster{
+  border:1px solid #e3ebf6;border-radius:13px;
+  background:#fff;box-shadow:0 7px 24px rgba(37,76,134,.045)
+}
+.sv2-summary{background:#fff}
+.sv2-roster{margin-top:14px}
+.sv2-roster .sv2-heading h2{font-size:17px;color:#163b78}
+.sv2-roster thead th{background:#eff5fd;color:#27486f;font-weight:750}
+.sv2-roster th:first-child,.sv2-roster td:first-child{
+  min-width:164px;background:#f9fbff;border-right:1px solid #e2eaf5
+}
+.sv2-roster td{border-bottom:1px solid #e8eef7}
+.sv2-roster td:not(:first-child){background:#f9fbff}
+.sv2-primary-action{background:#139d75!important;box-shadow:0 4px 10px #139d7525}
+.sv2-primary-action:hover{background:#0d8865!important}
+.sv2-advanced>summary{background:#fff}
+.sv2-editor-dialog{background:#fff}
+@media(max-width:650px){
+  .sv2-top h1{font-size:22px}
+  .sv2-roster th:first-child,.sv2-roster td:first-child{min-width:125px}
+  .sv2-roster .sv2-scroll{scrollbar-width:thin}
+}
+
+
+/* Mockup C pass 2: dense readable 7-column grid with clear time-band tiles.
+   Existing draft/official classes and RPC-driven data rendering stay authoritative. */
+.sv2-roster .sv2-scroll{border:1px solid #e7eef8;border-radius:12px}
+.sv2-roster table{border-collapse:separate;border-spacing:0;table-layout:fixed;min-width:840px}
+.sv2-roster thead th{position:sticky;top:0;z-index:2;height:50px;text-align:center;border-bottom:1px solid #dfe8f5}
+.sv2-roster thead th:first-child{z-index:4;text-align:left}
+.sv2-roster tbody td{height:64px;padding:6px;vertical-align:middle;text-align:center;border-right:1px solid #edf2f9}
+.sv2-roster tbody td:first-child{text-align:left;z-index:3;font-weight:650;color:#24456c}
+.sv2-roster tbody tr:hover td{box-shadow:inset 0 0 0 999px rgba(46,104,189,.025)}
+.sv2-roster .sv2-shift{
+  display:block;white-space:normal;overflow-wrap:anywhere;
+  width:100%;margin:2px 0;padding:8px 6px;
+  min-height:44px;text-align:left;border-radius:7px;
+  border:1px solid transparent;font-size:12px;font-weight:650;line-height:1.35
+}
+.sv2-roster .sv2-shift.sv2-band-morning{background:#fff3bd;color:#805b08;border-color:#f4d66c}
+.sv2-roster .sv2-shift.sv2-band-afternoon{background:#ffe0e4;color:#923947;border-color:#f6b9c0}
+.sv2-roster .sv2-shift.sv2-band-evening{background:#dcedff;color:#245ba3;border-color:#afd1f9}
+.sv2-roster .sv2-shift.sv2-draft{outline:2px dashed #dd9b36;outline-offset:-2px}
+.sv2-roster .sv2-shift.sv2-official{border-style:solid}
+@media(max-width:700px){
+  .sv2-roster table{min-width:840px}
+  .sv2-roster tbody td{padding:4px}
+  .sv2-roster .sv2-shift{font-size:11px;padding:6px 5px}
+}
+
+
+/* Mockup C: searchable week roster and contextual detail rail. */
+.sv2-roster{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.sv2-roster .sv2-heading{display:flex;align-items:end;gap:14px;flex-wrap:wrap}
+.sv2-roster .sv2-heading h2{flex:0 0 auto}
+.sv2-roster .sv2-heading>p{flex:1 1 180px}
+.sv2-roster-search{display:grid;gap:5px;flex:0 1 230px;margin-left:auto;font-size:12px;font-weight:650;color:#344f76}
+.sv2-roster-search input{min-width:0;width:100%;height:40px;border:1px solid #cfdef0;border-radius:9px;background:#fff;padding:9px 12px;color:#1f3656;font:inherit}
+.sv2-roster-search input:focus-visible{outline:3px solid #a3c5fa;outline-offset:1px}
+.sv2-roster tbody tr[hidden]{display:none!important}
+.sv2-shift-inspector{min-width:0;display:grid;align-content:start;gap:14px;border:1px solid #e1eaf6;border-radius:12px;background:#f9fcff;padding:16px;margin-top:12px}
+.sv2-shift-inspector h3{margin:0;font-size:15px;color:#183862;font-weight:800}
+.sv2-inspector-hint,.sv2-inspector-note{font-size:12px;line-height:1.5;color:#62748e;margin:0}
+.sv2-inspector-fields{margin:0;display:grid;gap:12px}
+.sv2-inspector-fields[hidden],.sv2-inspector-hint[hidden],.sv2-inspector-note[hidden]{display:none}
+.sv2-inspector-fields>div{display:grid;gap:3px;padding-bottom:10px;border-bottom:1px solid #e1eaf6}
+.sv2-inspector-fields dt{font-size:11px;color:#6b7a91}
+.sv2-inspector-fields dd{margin:0;font-size:13px;color:#163351;font-weight:700;overflow-wrap:anywhere}
+@media(min-width:1100px){
+  .sv2-roster{grid-template-columns:minmax(0,1fr) 216px;column-gap:14px;align-items:start}
+  .sv2-roster .sv2-heading{grid-column:1/-1}
+  .sv2-roster .sv2-scroll{grid-column:1;grid-row:2;min-width:0}
+  .sv2-shift-inspector{grid-column:2;grid-row:2;margin:0}
+}
+@media(max-width:700px){
+  .sv2-roster .sv2-heading>p{display:none}
+  .sv2-roster-search{flex:1 1 100%;margin-left:0}
+  .sv2-shift-inspector{padding:12px}
+}
+
+
+/* Approved B shell in direct Scheduling/Demand mode: same palette as hosted Manager. */
+body.sv2-nav-ready{
+  --sv2-shell-sidebar-bg:#f8fbff;
+  --sv2-shell-sidebar-text:#243d61;
+  --sv2-shell-sidebar-muted:#64748b;
+}
+body.sv2-nav-ready .sv2-sidebar{
+  border-right:1px solid #e0e9f5;
+  box-shadow:3px 0 18px rgba(30,64,115,.045)
+}
+body.sv2-nav-ready .sv2-brand{color:#17365e}
+body.sv2-nav-ready .sv2-brand::before{
+  background:#e8f2ff;color:#275ab2;
+  box-shadow:inset 0 0 0 1px #cde1fc
+}
+body.sv2-nav-ready .sv2-brand-sub{border-bottom:1px solid #e4ecf7}
+body.sv2-nav-ready .sv2-nav a:hover,
+body.sv2-nav-ready .sv2-nav a:focus-visible{
+  background:#ecf3ff;color:#1648a8
+}
+body.sv2-nav-ready .sv2-nav a.is-active{
+  background:#e4efff;color:#1558c4;
+  box-shadow:inset 3px 0 #2874ed
+}
+body.sv2-nav-ready .sv2-app-header{border-bottom:1px solid #e4ecf7}

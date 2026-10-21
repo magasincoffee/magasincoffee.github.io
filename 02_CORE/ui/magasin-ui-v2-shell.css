@@ -457,3 +457,151 @@ body[data-magasin-shell-v2][data-magasin-shell-mode="standalone"] > header {
     transition: none;
   }
 }
+
+
+/* Approved B visual foundation: light navigation, compact cards and blue active state.
+   Presentation only; no changes to routing, roles or module mounts. */
+body[data-magasin-shell-v2]{
+  --m-shell-sidebar-bg:#f8fbff;
+  --m-shell-sidebar-text:#334766;
+  --m-shell-sidebar-muted:#64748b;
+  --m-shell-sidebar-active-bg:#e4efff;
+  background:#f3f7fc;
+}
+body[data-magasin-shell-v2] .m-shell-v2-sidebar{
+  border-right:1px solid #e0e9f5;
+  box-shadow:3px 0 18px rgba(30,64,115,.045);
+}
+body[data-magasin-shell-v2] .m-shell-v2-brand{
+  border-bottom:1px solid #e4ecf7;
+}
+body[data-magasin-shell-v2] .m-shell-v2-nav__item:hover{
+  background:#eef5ff;color:#1649a6;
+}
+body[data-magasin-shell-v2] .m-shell-v2-nav__item[aria-current="page"],
+body[data-magasin-shell-v2] .m-shell-v2-nav__item[data-active="true"]{
+  background:#dfecff;color:#1457c6;
+  box-shadow:inset 3px 0 #276bea;
+}
+body[data-magasin-shell-v2] .m-shell-v2-sidebar__footer{
+  border-top:1px solid #e4ecf7;
+}
+body[data-magasin-shell-v2] .m-shell-v2-account__name{color:#17365e}
+body[data-magasin-shell-v2] .m-shell-v2-topbar{
+  background:rgba(255,255,255,.98);
+  border-bottom:1px solid #e4ecf7;
+}
+
+
+/* Mockup B pass 2: flatter, spacious navigation with restrained hierarchy. */
+body[data-magasin-shell-v2]{
+  --m-shell-sidebar-width:248px;
+  --m-shell-topbar-height:66px;
+  --m-shell-sidebar-bg:#f8fbff;
+  --m-shell-sidebar-text:#243d61;
+  --m-shell-sidebar-muted:#60748f;
+}
+body[data-magasin-shell-v2] .m-shell-v2-brand{
+  min-height:78px;padding-inline:19px;gap:12px
+}
+body[data-magasin-shell-v2] .m-shell-v2-brand__mark{
+  border-radius:12px;background:#e8f2ff;color:#275ab2;
+  box-shadow:inset 0 0 0 1px #cde1fc
+}
+body[data-magasin-shell-v2] .m-shell-v2-nav{
+  padding:13px 9px
+}
+body[data-magasin-shell-v2] .m-shell-v2-nav__item{
+  border-radius:9px;min-height:44px;padding:10px 12px;
+  font-weight:600;letter-spacing:-.01em
+}
+body[data-magasin-shell-v2] .m-shell-v2-nav__item:hover{
+  background:#ecf3ff;color:#1648a8
+}
+body[data-magasin-shell-v2] .m-shell-v2-nav__item[aria-current="page"],
+body[data-magasin-shell-v2] .m-shell-v2-nav__item[data-active="true"]{
+  background:#e4efff;color:#1558c4;
+  box-shadow:inset 3px 0 #2874ed
+}
+body[data-magasin-shell-v2] .m-shell-v2-topbar{
+  box-shadow:0 1px 12px rgba(33,73,128,.035)
+}
+body[data-magasin-shell-v2] .m-shell-v2-page__title{
+  color:#132b50;letter-spacing:-.025em
+}
+@media(max-width:1024px){
+  body[data-magasin-shell-v2]{--m-shell-sidebar-width:248px}
+}
+@media(max-width:600px){
+  body[data-magasin-shell-v2]{--m-shell-topbar-height:60px}
+}
+
+
+/* Mockup B: consistent operational surfaces inside the existing Manager runtime.
+   No changes to role routing, loading or business data sources. */
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .content{
+  max-width:1520px;margin-inline:auto;
+  padding:clamp(14px,2.1vw,28px);
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view.active{
+  color:#213956;
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .card,
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .small{
+  background:#fff;border:1px solid #e3eaf4;
+  border-radius:14px;box-shadow:0 5px 22px rgba(45,89,148,.045);
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .card{padding:20px}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .grid4{gap:14px}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .grid2{gap:16px}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .small{
+  padding:18px;min-height:112px
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .small b{
+  font-size:20px;line-height:1.35;color:#142f56;font-weight:800
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .small span{
+  color:#61728b;font-size:12px
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .table{
+  width:100%;border-collapse:separate;border-spacing:0
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .table th{
+  background:#f2f6fd;color:#48617d;letter-spacing:.01em
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .table td{
+  color:#304662;border-bottom-color:#e6edf7
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .item{
+  background:#fafcff;border-color:#e4ebf5
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .btn.primary{
+  background:#11976e;border-color:#11976e;color:white;
+  box-shadow:0 4px 11px rgba(16,151,110,.15)
+}
+@media(max-width:960px){
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .grid4{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+}
+@media(max-width:560px){
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .grid4,
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .grid2{
+    grid-template-columns:minmax(0,1fr)
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .card{padding:14px}
+}
+
+
+/* B mockup contrast: the original dark-shell white labels must not survive on white. */
+body[data-magasin-shell-v2] .m-shell-v2-brand__name{color:#17365e}
+body[data-magasin-shell-v2] .m-shell-v2-logout{
+  background:#eef5ff;color:#244a7f;
+  border:1px solid #ccdcf3;font-weight:700
+}
+body[data-magasin-shell-v2] .m-shell-v2-logout:hover{
+  background:#e1edff;color:#1554ad;border-color:#a7c7ee
+}
+body[data-magasin-shell-v2] .m-shell-v2-logout:focus-visible{
+  outline:3px solid #91bafd;outline-offset:2px
+}

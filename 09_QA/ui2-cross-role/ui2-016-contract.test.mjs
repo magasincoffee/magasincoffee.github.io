@@ -43,7 +43,7 @@ test("UI2-016 shared visual vocabulary remains canonical",()=>{
 
 test("UI2-016 shell cache chain is bumped without moving the Owner path",()=>{
   const managerRuntime=read("05_MANAGER/runtime/manager-runtime-v1.html");
-  assert.match(managerRuntime,/magasin-ui-v2-shell\.css\?v=20261001-ui-unified1/);
+  assert.match(managerRuntime,/magasin-ui-v2-shell\.css\?v=20261021-mockup-b1/);
   assert.doesNotMatch(managerRuntime,/magasin-ui-v2-shell\.css\?v=20260925-ui2-004/);
 
   for(const p of [
@@ -54,11 +54,15 @@ test("UI2-016 shell cache chain is bumped without moving the Owner path",()=>{
     "04_OWNER/Access/index.html"
   ]){
     const owner=read(p);
-    if(owner.includes("magasin-ui-v2-shell.css"))assert.match(owner,/magasin-ui-v2-shell\.css\?v=20260927-ui2-016/,p);
+    if(owner.includes("magasin-ui-v2-shell.css")){
+      if(p==="04_OWNER/index.html"||p==="04_OWNER/ControlTower/index.html")
+        assert.match(owner,/magasin-ui-v2-shell\.css\?v=20261021-mockup-b1/,p);
+      else assert.match(owner,/magasin-ui-v2-shell\.css\?v=20260927-ui2-016/,p);
+    }
     assert.doesNotMatch(owner,/20261001-ui-unified1/,p);
   }
 
-  assert.match(read("05_MANAGER/index.html"),/manager-runtime-v1\.html\?v=(?:20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017|20261018-workforce-ftpt-lifecycle|20261018-staff-modal|20261018-unified-save|20261018-five-step-release|20261018-post-publish-v1|20261018-demand-week-matrix-v1|20261020-manager-shell-unified1)/);
+  assert.match(read("05_MANAGER/index.html"),/manager-runtime-v1\.html\?v=(?:20261001-ui-unified1|20261002-sched-ui-001|20261002-sched-ui-002|20261002-sched-ui-003|20261002-sched-ui-004|20261002-sched-ui-005|20261003-sched-ui-017|20261018-workforce-ftpt-lifecycle|20261018-staff-modal|20261018-unified-save|20261018-five-step-release|20261018-post-publish-v1|20261018-demand-week-matrix-v1|20261020-manager-shell-unified1|20261021-mockup-b2)/);
   assert.match(managerRuntime,/manager-shell-v1\.html\?v=20261001-ui-unified1&host=manager/);
   assert.match(read("04_OWNER/Workforce/runtime/owner-workforce-runtime.html"),/manager-shell-v1\.html\?v=20260927-ui2-016&host=owner/);
   assert.match(read("05_MANAGER/runtime/manager-shell-v1.html"),/manager-ui-shell-v2\.js\?v=20260927-ui2-016/);

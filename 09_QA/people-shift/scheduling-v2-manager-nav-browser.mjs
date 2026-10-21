@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 const base = process.env.QA_BASE_URL || 'http://127.0.0.1:8769';
 const browser = await chromium.launch({headless:true});
@@ -24,7 +26,7 @@ try {
       assert.equal(await menu.isVisible(),false,'desktop uses permanent sidebar');
       const style=await page.locator('.sv2-sidebar').evaluate(el=>({width:el.getBoundingClientRect().width,color:getComputedStyle(el).backgroundColor}));
       assert.ok(style.width>=240 && style.width<=255,'desktop sidebar width');
-      assert.equal(style.color,'rgb(16, 24, 40)','sidebar matches Manager shell background');
+      assert.equal(style.color,'rgb(248, 251, 255)','standalone sidebar matches approved light Manager B background');
     } else {
       assert.equal(await menu.isVisible(),true,'small view has menu button');
       await menu.click();
@@ -42,6 +44,40 @@ try {
       await page.keyboard.press('Escape');
       assert.equal(await menu.getAttribute('aria-expanded'),'false');
     }
+    // Visual QA fixture: exercise the mockup C roster without writing any schedule data.
+    await page.locator('#sv2RosterSearch').waitFor();
+    await page.evaluate(()=>{
+      const body=document.querySelector('#sv2Rows');
+      body.replaceChildren();
+      for(const [name,time,band,status] of [
+        ['Nhân viên QA A','07:00–15:00','morning','sv2-draft'],
+        ['Nhân viên QA B','15:00–21:00','afternoon','sv2-official']
+      ]){
+        const tr=document.createElement('tr');
+        const head=document.createElement('td');head.textContent=name;tr.appendChild(head);
+        for(let day=0;day<7;day++){
+          const cell=document.createElement('td');
+          if(day===0){
+            const shift=document.createElement('span');
+            shift.className='sv2-shift sv2-band-'+band+' '+status;
+            shift.textContent=time+(status==='sv2-draft'?' · Nháp':' · Chính thức');
+            shift.tabIndex=0;cell.appendChild(shift);
+          }
+          tr.appendChild(cell);
+        }
+        body.appendChild(tr);
+      }
+    });
+    await page.locator('#sv2RosterSearch').fill('QA A');
+    assert.equal(await page.locator('#sv2Rows tr:visible').count(),1,'employee search filters roster');
+    await page.locator('#sv2RosterSearch').fill('');
+    assert.equal(await page.locator('#sv2Rows tr:visible').count(),2,'clearing search restores roster');
+    await page.locator('#sv2Rows tr').first().locator('.sv2-shift').focus();
+    assert.equal(await page.locator('.sv2-shift-inspector [data-shift-employee]').textContent(),'Nhân viên QA A');
+    assert.equal(await page.locator('.sv2-shift-inspector [data-shift-state]').textContent(),'Bản nháp');
+    const screenshotDir=process.env.QA_OUT||'qa-artifacts/people-shift';
+    mkdirSync(screenshotDir,{recursive:true});
+    await page.screenshot({path:join(screenshotDir,'mockup-c-qa-fixture-'+width+'px.png'),fullPage:true});
     const advanced=page.locator('.sv2-bar details.sv2-advanced');
     await advanced.locator('summary').click();
     assert.equal(await advanced.getAttribute('open'),'','advanced tools expand before Demand navigation');

@@ -9,7 +9,7 @@ test('focused Scheduling workspace preserves authoritative controls and loads af
   load('05_MANAGER/SchedulingV2/schedule-v2.css')
  ]);
  for(const id of ['sv2Store','sv2Week','sv2Refresh','sv2Table','sv2Rows','sv2Stage'])assert.match(html,new RegExp('id="'+id+'"'));
- assert.match(html,/focused-workspace-v1\.js\?v=20261021-focused1/);
+ assert.match(html,/focused-workspace-v1\.js\?v=20261021-mockup-c2/);
  assert.ok(html.indexOf('post-publish-ui-v1.js')<html.indexOf('focused-workspace-v1.js'));
  assert.match(controller,/getElementById\('sv2AddShift'\)/);
  assert.match(controller,/add\.click\(\)/);
@@ -19,4 +19,14 @@ test('focused Scheduling workspace preserves authoritative controls and loads af
  assert.match(css,/\.sv2-editor-layer\{place-items:stretch end/);
  assert.match(css,/\.sv2-roster\{padding:16px/);
  assert.doesNotMatch(controller,/\.rpc\(|\.from\(|fetch\(/);
+});
+
+
+test('mockup C uses approved morning yellow, afternoon red and evening blue on draft and published shifts',async()=>{
+ const css=await load('05_MANAGER/SchedulingV2/schedule-v2.css');
+ for(const [kind,bg] of [['morning','#fff3bd'],['afternoon','#ffe0e4'],['evening','#dcedff']]){
+  assert.ok(css.includes('.sv2-roster .sv2-shift.sv2-band-'+kind+'{background:'+bg),kind);
+ }
+ assert.match(css,/\.sv2-roster \.sv2-shift\.sv2-draft\{outline:2px dashed/);
+ assert.match(css,/\.sv2-roster \.sv2-shift\.sv2-official\{border-style:solid/);
 });

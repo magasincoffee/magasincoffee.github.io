@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 const BASE=process.env.QA_BASE_URL||'http://127.0.0.1:8769';
 const browser=await chromium.launch({headless:true});
@@ -31,6 +33,14 @@ try{
   await page.locator('#app:not([hidden])').waitFor({timeout:18000});
   const frame=page.frameLocator('#app');
   await frame.locator('.sv2-roster').waitFor({timeout:18000});
+  // Mockup B: light sidebar requires readable brand and sign-out text.
+  const palette=await page.evaluate(()=>{
+    const brand=document.querySelector('.m-shell-v2-brand__name');
+    const logout=document.querySelector('.m-shell-v2-logout');
+    return {brand:brand&&getComputedStyle(brand).color,logout:logout&&getComputedStyle(logout).color};
+  });
+  assert.equal(palette.brand,'rgb(23, 54, 94)','brand has dark text on light shell');
+  assert.equal(palette.logout,'rgb(36, 74, 127)','sign-out remains legible on light shell');
   assert.equal(await page.locator('.m-shell-v2-sidebar').count(),1);
   assert.equal(await page.locator('.m-shell-v2-topbar').count(),1);
   assert.equal(await page.locator('.m-shell-v2-nav__item').count(),9);
@@ -60,6 +70,9 @@ try{
   if(width>1024)assert.ok(topMetrics.left>=240 && topMetrics.left<=255,'sidebar offset on desktop');
   else assert.ok(Math.abs(topMetrics.left)<2,'mobile iframe full width');
 
+  const captureDir=process.env.QA_OUT||'qa-artifacts/people-shift';
+  mkdirSync(captureDir,{recursive:true});
+  await page.screenshot({path:join(captureDir,'mockup-b-host-qa-'+width+'px.png'),fullPage:true});
   const menu=page.locator('[data-shell-menu]');
   if(width<=1024){
    assert.equal(await menu.isVisible(),true);

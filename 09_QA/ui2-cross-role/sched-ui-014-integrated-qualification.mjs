@@ -48,6 +48,12 @@ const cases=[
     covers:["Employee availability registration","immediate save/reload","console/page/request/5xx diagnostics"]
   },
   {
+    id:"employee-mockup-d",
+    script:"09_QA/people-shift/employee-mockup-d-browser.mjs",
+    markers:["EMPLOYEE_MOCKUP_D_VISUAL=PASS"],
+    covers:["Employee D phone mockup","real action shortcuts","mobile 390px visual","no horizontal overflow"]
+  },
+  {
     id:"owner-responsive-drilldown",
     script:"09_QA/people-shift/sched-07-ui-responsive-browser.mjs",
     markers:["SCHED_07_UI_RESPONSIVE=PASS"],
@@ -118,6 +124,7 @@ const requiredCoverage=[
   "draft/edit/check/review/publish",
   "Employee official schedule",
   "Employee availability registration",
+  "Employee D phone mockup",
   "Owner overview/drill-down",
   "canonical routes",
   "old compatibility routes",

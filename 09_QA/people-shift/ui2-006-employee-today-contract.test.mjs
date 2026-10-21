@@ -34,7 +34,11 @@ test("Today app hierarchy is V2 and keeps canonical shell navigation separate", 
   assert.ok(app.includes('id="employeeTodayWeekSummary"'));
   assert.ok(app.includes('data-today-route="schedule"'));
   assert.ok(app.includes('data-today-route="attendance"'));
-  assert.ok(app.includes('data-today-route="payroll"'));
+  // Quick actions use existing engines. Payroll remains in the canonical five-item primary nav.
+  assert.ok(app.includes('data-today-action="availability"'));
+  assert.ok(app.includes('data-today-action="route:notice"'));
+  assert.ok(app.includes('/02_CORE/ui/magasin-ui-v2-employee-mockup-d.css?v=20261021-mockup-d1'));
+  assert.ok(app.includes('data-today-route="schedule"'));
   assert.ok(app.includes('id="weeklyRegistrationPanel"'));
   assert.ok(app.includes("dashboard:['Hôm nay','Ca và việc cần làm']"));
   assert.doesNotMatch(app, /id="employeeV2PrimaryNav"/);
@@ -95,4 +99,26 @@ test("Today phone presentation is touch-first and locally namespaced", () => {
   assert.match(todayCss, /@media \(max-width: 430px\)/);
   assert.match(todayCss, /:focus-visible/);
   assert.doesNotMatch(todayCss, /(^|\n)\s*:root\s*\{/m);
+});
+
+test("Mockup D mobile board preserves existing authoritative employee actions", () => {
+  const css=read("02_CORE/ui/magasin-ui-v2-employee-mockup-d.css");
+  for(const token of [
+    "body[data-magasin-employee-shell-v2]",
+    "grid-template-columns:repeat(4,minmax(0,1fr))",
+    "employee-today-card--shift",
+    "employee-today-week",
+    "employee-today-queue",
+    "@media(max-width:390px)",
+    ":focus-visible"
+  ]) assert.ok(css.includes(token),token);
+  for(const forbidden of [".rpc(", "createClient(", ".from(", ".insert(", ".update(", ".delete("])
+    assert.ok(!css.includes(forbidden),forbidden);
+  const start=app.indexOf('<nav class="employee-today-shortcuts"');
+  const end=app.indexOf('</nav>',start);
+  assert.ok(start>=0&&end>start);
+  const shortcuts=app.slice(start,end);
+  assert.equal(shortcuts.split("<button ").length-1,4);
+  for(const key of ['data-today-action="availability"','data-today-route="schedule"','data-today-route="attendance"','data-today-action="route:notice"'])
+    assert.ok(shortcuts.includes(key),key);
 });

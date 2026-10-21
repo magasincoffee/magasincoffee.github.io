@@ -62,7 +62,7 @@ try {
   await owner.locator('#app:not(.hidden)').waitFor({ state:"visible", timeout:10000 });
   const quality = owner.locator('#taskQuality[data-quality="NOT_CONNECTED"]');
   await quality.waitFor({ state:"visible", timeout:5000 });
-  assert.equal((await quality.innerText()).trim(), "NOT CONNECTED");
+  assert.equal((await quality.innerText()).trim(), "Chưa kết nối");
   assert.equal((await owner.locator("#taskOverdue").innerText()).trim(), "—");
   assert.equal((await owner.locator("#taskOpen").innerText()).trim(), "—");
   const meta = (await owner.locator("#taskMeta").innerText()).trim();

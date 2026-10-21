@@ -1,0 +1,193 @@
+/*
+ * MAGASIN — approved Employee mockup D, first visual-parity pass.
+ * Presentation only: reuse canonical schedule/availability/attendance/profile/notification engines.
+ * Do not alter role access, server writes, time policy or source provenance.
+ */
+body[data-magasin-employee-shell-v2]{
+  --m-employee-d-blue:#0965e9;
+  --m-employee-d-dark:#153259;
+  --m-employee-d-surface:#f1f6fd;
+  --m-employee-d-line:#dfe9f7;
+  background:var(--m-employee-d-surface);
+}
+body[data-magasin-employee-shell-v2] .app,
+body[data-magasin-employee-shell-v2] .main{
+  background:var(--m-employee-d-surface);
+}
+body[data-magasin-employee-shell-v2] .employee-v2-primary-nav{
+  background:rgba(255,255,255,.98);
+  border-top-color:#dce7f5;
+}
+body[data-magasin-employee-shell-v2] .employee-v2-primary-nav__item[data-active="true"],
+body[data-magasin-employee-shell-v2] .employee-v2-primary-nav__item[aria-current="page"]{
+  background:#e8f1ff;color:#0965e9;
+}
+body[data-magasin-employee-shell-v2] .employee-v2-primary-nav__item{
+  color:#677c98;
+}
+body[data-magasin-employee-shell-v2] .page-view .panel,
+body[data-magasin-employee-shell-v2] .employee-secondary-card{
+  border-color:var(--m-employee-d-line);
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 4px 16px rgba(26,70,135,.045);
+}
+body[data-magasin-employee-shell-v2] .page-view .m-button--primary,
+body[data-magasin-employee-shell-v2] .page-view .btn.primary{
+  background:var(--m-employee-d-blue);
+  border-color:var(--m-employee-d-blue);
+  color:white;
+}
+body[data-magasin-employee-shell-v2] #view-schedule .employee-availability-panel .miniShift[data-time-band="morning"]{
+  background:#fff3c2;color:#845c00;border-color:#f5d96f;
+}
+body[data-magasin-employee-shell-v2] #view-schedule .employee-availability-panel .miniShift[data-time-band="afternoon"]{
+  background:#ffe2e5;color:#913745;border-color:#f4bcc4;
+}
+body[data-magasin-employee-shell-v2] #view-schedule .employee-availability-panel .miniShift[data-time-band="evening"]{
+  background:#dceeff;color:#1d579b;border-color:#b0d5fa;
+}
+body[data-magasin-employee-shell-v2] :is(.employee-today-shortcut,.employee-v2-primary-nav__item,.employee-availability-launch button):focus-visible{
+  outline:3px solid #8bb9ff;outline-offset:2px;
+}
+@media(max-width:760px){
+  body[data-magasin-employee-shell-v2] .app-header{
+    min-height:76px!important;
+    background:linear-gradient(120deg,#145bcb 0%,#0965e9 62%,#257bfb 100%)!important;
+    border-bottom:0!important;
+    box-shadow:0 6px 18px rgba(13,80,190,.14);
+    color:white!important;
+  }
+  body[data-magasin-employee-shell-v2] .header-page-title{
+    color:#fff!important;font-weight:800!important;
+  }
+  body[data-magasin-employee-shell-v2] .header-page-title::before{
+    content:"MAGASIN · ";font-size:13px;font-weight:850;letter-spacing:.015em;
+  }
+  body[data-magasin-employee-shell-v2] .header-menu,
+  body[data-magasin-employee-shell-v2] .header-icon{
+    background:rgba(255,255,255,.16)!important;
+    border-color:rgba(255,255,255,.28)!important;color:#fff!important;
+  }
+  body[data-magasin-employee-shell-v2] .header-user-text{
+    color:#fff!important;
+  }
+  body[data-magasin-employee-shell-v2] .header-avatar{
+    border:2px solid #d6e6ff!important;
+    background:#e9f3ff!important;color:#1256c1!important;
+  }
+  body[data-magasin-employee-shell-v2] .main{
+    padding:12px 12px calc(76px + var(--m-safe-bottom) + 18px)!important;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-v2{
+    display:flex;flex-direction:column;gap:12px;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-intro{
+    order:1;background:#fff;border:1px solid var(--m-employee-d-line);
+    border-radius:16px;padding:16px 14px;box-shadow:0 4px 14px rgba(30,73,138,.035);
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-eyebrow{
+    color:#145ecc;font-size:11px;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-greeting{
+    font-size:21px;line-height:1.3;font-weight:800;color:var(--m-employee-d-dark);
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-context{
+    margin-top:6px;font-size:12px;line-height:1.55;color:#6c7f97;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-layout{
+    display:contents;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-card--shift{
+    order:2;border:1px solid #f4df96;
+    background:linear-gradient(135deg,#fffef5,#fffae5 72%,#fff);
+    padding:16px;border-radius:14px;box-shadow:none;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-card__title{
+    color:#173557;font-weight:800;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-time{
+    font-size:27px;color:#142d50;font-weight:850;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-actions .m-button,
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shift-actions button{
+    width:100%;min-height:48px;border-radius:10px;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcuts{
+    order:3;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:7px;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-width:0;min-height:86px;gap:7px;padding:9px 3px;
+    border:1px solid #e5edf8;background:#fff;border-radius:13px;
+    box-shadow:0 3px 12px rgba(28,74,139,.035);
+    color:#294365;font-size:10px;line-height:1.35;font-weight:750;
+    text-align:center;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut span:first-child{
+    display:grid;place-items:center;width:38px;height:38px;
+    border-radius:12px;background:#e5f2ff;color:#0965e9;
+    font-size:20px;line-height:1;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut:nth-child(2) span:first-child{
+    background:#eee8ff;color:#6246cd;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut:nth-child(3) span:first-child{
+    background:#dcf7e8;color:#108754;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut:nth-child(4) span:first-child{
+    background:#ffe9ea;color:#ca344c;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-week{
+    order:4;padding:14px;border-radius:14px;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-week-grid{
+    gap:5px;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day{
+    border:1px solid #e5edf8;border-radius:9px;background:#f7faff;
+    padding:6px 2px;min-height:64px;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day[data-today="true"]{
+    background:#e2efff;border-color:#83b3fc;color:#075ed8;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-day__dow{
+    color:#456384;font-weight:800;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-queue{
+    order:5;padding:14px;border-radius:14px;
+  }
+  body[data-magasin-employee-shell-v2] #view-schedule .employee-schedule-secondary{
+    border-color:#cfe1fa;background:#fafdff;
+  }
+  body[data-magasin-employee-shell-v2] #view-attendance .panel,
+  body[data-magasin-employee-shell-v2] #view-profile .panel{
+    background:#fff;border-radius:14px;
+  }
+  body[data-magasin-employee-shell-v2] .employee-v2-primary-nav__item{
+    min-height:58px;
+  }
+}
+@media(max-width:390px){
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut{
+    padding:7px 2px;font-size:9px;min-height:82px;
+  }
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcut span:first-child{
+    width:34px;height:34px;font-size:18px;
+  }
+  body[data-magasin-employee-shell-v2] .header-page-title::before{
+    content:"MAGASIN · ";font-size:11px;
+  }
+}
+@media(min-width:761px) and (max-width:1023px){
+  body[data-magasin-employee-shell-v2] #view-dashboard .employee-today-shortcuts{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  body[data-magasin-employee-shell-v2] .employee-today-shortcut,
+  body[data-magasin-employee-shell-v2] .employee-v2-primary-nav__item{
+    transition:none;
+  }
+}

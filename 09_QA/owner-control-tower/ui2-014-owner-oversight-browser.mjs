@@ -88,7 +88,7 @@ try{
   const page=opened.page;
   await check("ui2_014_"+width+"_oversight_first_responsive",async()=>{
    const m=await page.evaluate(()=>{
-    const ids=["overview","attention","operatingSnapshot","ownerModules"];
+    const ids=["operatingSnapshot","attention","overview","ownerModules"];
     const nodes=ids.map(id=>document.getElementById(id));
     const controls=[...document.querySelectorAll("#app button,#app a")].filter(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return s.display!=="none"&&s.visibility!=="hidden"&&r.width>0&&r.height>0});
     return {
@@ -114,6 +114,19 @@ try{
    if(width<=768&&ev.height<43.5)throw new Error(JSON.stringify(ev));
    return JSON.stringify(ev);
   });
+  await check("ui2_014_"+width+"_kpi_provenance_disclosure",async()=>{
+   const disclosures=page.locator("#operatingSnapshot .metric-provenance");
+   if(await disclosures.count()!==5)throw new Error("Each sourced KPI needs a disclosure");
+   const first=disclosures.first(),summary=first.locator("summary");
+   if(await summary.evaluate(el=>el.getBoundingClientRect().height)<43.5)throw new Error("Disclosure control too small");
+   if(await first.getAttribute("open")!==null)throw new Error("Provenance expanded by default");
+   await summary.click();
+   if(await first.getAttribute("open")===null)throw new Error("Source disclosure did not open");
+   if(!(await first.locator(".meta").textContent()).trim())throw new Error("Missing source evidence");
+   await summary.click();
+   if(await first.getAttribute("open")!==null)throw new Error("Source disclosure did not close");
+   return "source evidence on demand, 44px control";
+  });
   await shot(page,"ui2-014-owner-"+width);
   await opened.ctx.close();
  }
@@ -127,17 +140,19 @@ try{
   return active;
  });
 
- await check("ui2_014_cross_store_quality_before_metrics",async()=>{
+ await check("ui2_014_owner_b_metrics_first_with_verifiable_quality",async()=>{
   const data=await page.evaluate(()=>({
    scope:document.getElementById("branchScope")?.textContent,
    qualityTop:document.getElementById("qualityList")?.getBoundingClientRect().top,
    metricTop:document.getElementById("operatingSnapshot")?.getBoundingClientRect().top,
-   qualities:[...document.querySelectorAll("#qualityList .quality-chip")].map(x=>x.textContent),
+   qualities:[...document.querySelectorAll("#qualityList .quality-chip")].map(x=>x.dataset.quality),
+    qualityLabels:[...document.querySelectorAll("#qualityList .quality-chip")].map(x=>x.textContent),
    freshness:[...document.querySelectorAll("#qualityList .quality-freshness")].map(x=>x.textContent)
   }));
-  if(data.scope!=="ALL"||!(data.qualityTop<data.metricTop))throw new Error(JSON.stringify(data));
-  if(!data.qualities.includes("ACTUAL")||!data.qualities.includes("NOT CONNECTED"))throw new Error(JSON.stringify(data));
-  if(data.freshness.some(x=>!x.startsWith("Freshness:")))throw new Error(JSON.stringify(data));
+  if(data.scope!=="ALL"||!(data.metricTop<data.qualityTop))throw new Error(JSON.stringify(data));
+  if(!data.qualities.includes("ACTUAL")||!data.qualities.includes("NOT_CONNECTED"))throw new Error(JSON.stringify(data));
+   if(!data.qualityLabels.includes("Dữ liệu thực")||!data.qualityLabels.includes("Chưa kết nối"))throw new Error(JSON.stringify(data));
+  if(data.freshness.some(x=>!x.startsWith("Cập nhật:")))throw new Error(JSON.stringify(data));
   return JSON.stringify(data);
  });
 
