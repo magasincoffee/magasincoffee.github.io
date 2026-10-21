@@ -1,0 +1,24 @@
+.sv2-weekly-demand{margin:16px 0;padding:18px;border-radius:14px;border:1px solid #dce7f5;background:#fff;color:#1d3553}
+.sv2-weekly-demand header h2{font-size:18px;margin:0 0 5px}
+.sv2-weekly-demand header p{font-size:12px;margin:0;color:#657b93}
+.sv2-weekly-tools{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin-top:16px}
+.sv2-weekly-tools label{display:grid;gap:4px;font-size:12px;font-weight:600;color:#49627e}
+.sv2-weekly-tools select,.sv2-weekly-tools button{min-height:42px;border-radius:9px;border:1px solid #c9d8ea;background:#fff;padding:8px 12px;color:#1e4569;font:600 13px system-ui,sans-serif}
+.sv2-weekly-tools button{background:#0b7795;color:#fff;border-color:#0b7795;cursor:pointer}
+.sv2-weekly-tools button:disabled{opacity:.5;cursor:default}
+.sv2-weekly-tools small{font-size:11px;color:#667e98;align-self:center}
+#sv2WeekDemandStatus{min-height:20px;font-size:12px;color:#53718f;margin:12px 0}
+.sv2-weekly-scroll{width:100%;overflow-x:auto}
+#sv2WeekDemandTable{border-collapse:collapse;table-layout:fixed;width:100%;min-width:760px}
+#sv2WeekDemandTable td,#sv2WeekDemandTable th{padding:6px;border:1px solid #e0e8f1;text-align:center}
+#sv2WeekDemandTable th{background:#eef5fe;color:#1b4064;font-size:12px;font-weight:700}
+#sv2WeekDemandTable th:first-child{width:144px;text-align:left}
+#sv2WeekDemandTable input{width:62px;min-height:40px;padding:4px;text-align:center;border-radius:7px;border:1px solid #ccd8e5;background:#fff;color:#1c3650;font-size:13px}
+#sv2WeekDemandTable .sv2-weekly-changed{background:#e2f5f0}
+#sv2WeekDemandTable .sv2-weekly-changed input{border-color:#56ab9e}
+#sv2WeekDemandTable input:focus-visible,.sv2-weekly-tools select:focus-visible{outline:2px solid #2b74ce;outline-offset:2px}
+.sv2-weekly-demand footer{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:13px;flex-wrap:wrap}
+.sv2-weekly-demand footer span{font-size:11px;color:#6f8298}
+#sv2WeekDemandSave{padding:10px 16px;min-height:44px;border:0;border-radius:9px;color:#fff;background:#0b7795;font:700 12px system-ui,sans-serif;cursor:pointer}
+#sv2WeekDemandSave:disabled{opacity:.43;cursor:not-allowed}
+@media(max-width:580px){.sv2-weekly-demand{padding:12px}.sv2-weekly-tools{display:grid;grid-template-columns:1fr 1fr}.sv2-weekly-tools select{width:100%}.sv2-weekly-tools button,.sv2-weekly-tools small{grid-column:1/-1}.sv2-weekly-demand footer{align-items:stretch}.sv2-weekly-demand footer span{flex-basis:100%}#sv2WeekDemandSave{width:100%}}
