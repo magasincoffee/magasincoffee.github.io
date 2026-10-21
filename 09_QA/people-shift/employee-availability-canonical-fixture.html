@@ -14,7 +14,7 @@
   const rows=[];
   let seq=0;
   const stores=[{id:"store-a",code:"CN1",name:"Chi nhánh QA",status:"ACTIVE"}];
-  const qa={calls,rows,stores,today:"2026-09-21",frameLoads:0};
+  const qa={calls,rows,stores,today:"2026-09-21",minutes:540,frameLoads:0};
   window.__EMPLOYEE_AVAILABILITY_QA=qa;
   window.MAGASIN_CORE={
     security:{escapeHtml:v=>String(v??"")},
@@ -25,6 +25,7 @@
     },
     date:{
       dateKey:()=>qa.today,
+      localClock:()=>({date:qa.today,minutes:qa.minutes}),
       monday,
       addDays,
       weekDays,
