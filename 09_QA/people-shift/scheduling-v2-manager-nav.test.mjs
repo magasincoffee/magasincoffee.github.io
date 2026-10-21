@@ -96,7 +96,7 @@ test('Demand toolbar enters live editor and returns through authenticated canoni
   assert.match(rollout,/if\(onDemand\)demand\.target='_top'/);
   assert.doesNotMatch(rollout, /\.\.\/index\.html\?mode=live/);
   assert.doesNotMatch(schedule,/V2 PREVIEW/);
-  assert.match(schedule,/BẢNG LỊCH TUẦN/);
+  assert.match(schedule,/05:00–22:00 · 30 phút/);
 });
 
 test('Manager V2 shell uses canonical route before stale V1 sidebar and never retries hidden views',async()=>{
