@@ -26,7 +26,7 @@ try {
       const result = await page.evaluate(() => {
         const root = document.querySelector('#view-dashboard'), cards = [...root.querySelectorAll('.mdb-kpi')];
         const data = cards.map(c => ({
-          heading: c.querySelector('.mdb-kpi-heading')?.textContent?.trim(),
+          heading: c.querySelector('.mdb-kpi-heading span:last-child')?.textContent?.trim(),
           value: c.querySelector('.mdb-kpi-value')?.textContent?.trim(),
           source: c.dataset.kpiSource
         }));
