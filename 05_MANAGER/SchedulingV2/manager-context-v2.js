@@ -7,6 +7,15 @@ let sb=null,actorCache=null,storesCache=null,pending=null;
 
 const client=()=>{
   if(sb)return sb;
+  // The authenticated canonical Manager host has already verified this session.
+  // Reuse its existing Supabase client so embedded views do not contend for
+  // the same refresh-token browser lock with another independent auth client.
+  try{
+    if(window.parent!==window && /^\\/manager\\/scheduling\\/?$/.test(window.parent.location.pathname)){
+      const shared=window.parent.MAGASIN_CORE?.supabase?.get?.();
+      if(shared?.auth?.getUser && typeof shared.rpc==='function'){sb=shared;return sb}
+    }
+  }catch(_){} // Direct compatibility pages keep their own authenticated client.
   if(!window.supabase?.createClient)throw Error('MANAGER_CONTEXT_SUPABASE_UNAVAILABLE');
   sb=window.supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   return sb;
