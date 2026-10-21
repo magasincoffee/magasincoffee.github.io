@@ -10,7 +10,7 @@
     kpi:'KPI',swap:'Doi-ca',attendance:'Cham-cong',academy:'Academy',settings:'Cai-dat'
   };
   const REVERSE=Object.fromEntries(Object.entries(MAP).filter(([,v])=>v).map(([k,v])=>[v.toLowerCase(),k]));
-  const ALLOWED=new Set([...Object.keys(MAP),'payroll-self-check']);
+  const ALLOWED=new Set([...Object.keys(MAP),'payroll-self-check','reports']);
   let frame=null, applying=false;
 
   function top(){
