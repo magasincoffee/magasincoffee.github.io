@@ -243,7 +243,7 @@ for(const width of todayWidths){
         minButtonHeight:buttons.length?Math.min(...buttons.map(x=>x.h)):0
       };
       win.scrollTo(0,html.scrollHeight);
-      const last=doc.querySelector('.employee-today-shortcut[data-today-route="payroll"]');
+      const last=doc.querySelector('.employee-today-shortcut[data-today-action="route:notice"]');
       const collision=last.getBoundingClientRect().bottom>nav.getBoundingClientRect().top+1;
       if(initial.scrollWidth>initial.clientWidth+1||Math.abs(initial.navBottom)>1||initial.mainPaddingBottom<initial.navHeight||initial.minButtonHeight<43.5||initial.currentKind!=="current"||initial.weekCells!==7||initial.queueCount<1||collision){
         throw new Error(JSON.stringify({...initial,collision,buttons}));
@@ -297,7 +297,7 @@ for(const width of todayWidths){
 
       await today.locator('[data-employee-primary-view="dashboard"]').click();
       await today.locator("#view-dashboard.active").waitFor();
-      await today.locator('[data-today-action="availability"]').click();
+      await today.locator('#taskList [data-today-action="availability"]').click();
       await today.locator("#weeklyRegistrationPanel.open").waitFor({state:"visible"});
       const after=await todayPage.evaluate(()=>__UI2_006_QA.actions.slice());
       if(!after.some(x=>x.type==="availability-open"))throw new Error(JSON.stringify(after));
