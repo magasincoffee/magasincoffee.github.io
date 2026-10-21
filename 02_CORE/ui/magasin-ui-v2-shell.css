@@ -535,3 +535,59 @@ body[data-magasin-shell-v2] .m-shell-v2-page__title{
 @media(max-width:600px){
   body[data-magasin-shell-v2]{--m-shell-topbar-height:60px}
 }
+
+
+/* Mockup B: consistent operational surfaces inside the existing Manager runtime.
+   No changes to role routing, loading or business data sources. */
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .content{
+  max-width:1520px;margin-inline:auto;
+  padding:clamp(14px,2.1vw,28px);
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view.active{
+  color:#213956;
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .card,
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .small{
+  background:#fff;border:1px solid #e3eaf4;
+  border-radius:14px;box-shadow:0 5px 22px rgba(45,89,148,.045);
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .card{padding:20px}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .grid4{gap:14px}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .grid2{gap:16px}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .small{
+  padding:18px;min-height:112px
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .small b{
+  font-size:20px;line-height:1.35;color:#142f56;font-weight:800
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .small span{
+  color:#61728b;font-size:12px
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .table{
+  width:100%;border-collapse:separate;border-spacing:0
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .table th{
+  background:#f2f6fd;color:#48617d;letter-spacing:.01em
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .table td{
+  color:#304662;border-bottom-color:#e6edf7
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .item{
+  background:#fafcff;border-color:#e4ebf5
+}
+body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .btn.primary{
+  background:#11976e;border-color:#11976e;color:white;
+  box-shadow:0 4px 11px rgba(16,151,110,.15)
+}
+@media(max-width:960px){
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .grid4{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+}
+@media(max-width:560px){
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .grid4,
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .grid2{
+    grid-template-columns:minmax(0,1fr)
+  }
+  body[data-magasin-shell-v2][data-magasin-shell-role="manager"] .view .card{padding:14px}
+}
