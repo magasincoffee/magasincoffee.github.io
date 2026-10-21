@@ -255,3 +255,36 @@ body[data-magasin-shell-current="overview"] .module-card:hover{
     grid-template-columns:1fr;
   }
 }
+
+
+/* Owner B mobile KPI cards: source provenance is available on demand, not in every card. */
+body[data-magasin-shell-current="overview"] .metric-provenance{
+  margin-top:auto;min-width:0;border-top:1px solid #e7eef7;
+  padding-top:3px;
+}
+body[data-magasin-shell-current="overview"] .metric-provenance summary{
+  display:flex;align-items:center;min-height:44px;
+  cursor:pointer;color:#245fb6;font-size:12px;font-weight:700;
+  outline-offset:2px;list-style:none;
+}
+body[data-magasin-shell-current="overview"] .metric-provenance summary::-webkit-details-marker{
+  display:none;
+}
+body[data-magasin-shell-current="overview"] .metric-provenance summary::after{
+  content:"⌄";margin-left:6px;font-size:15px;
+}
+body[data-magasin-shell-current="overview"] .metric-provenance[open] summary::after{
+  content:"⌃";
+}
+body[data-magasin-shell-current="overview"] .metric-provenance .meta{
+  padding:8px 0 4px;overflow-wrap:anywhere;line-height:1.65;
+  color:#64758d;font-size:11px;
+}
+@media(max-width:650px){
+  body[data-magasin-shell-current="overview"] .metric-card{
+    min-height:150px;
+  }
+  body[data-magasin-shell-current="overview"] .metric-card .metric-provenance summary{
+    font-size:11px;
+  }
+}
