@@ -63,6 +63,6 @@ test("Employee canonical runtime retains TASK-099\/101\/104 engines and adds con
 test("route hashes are allowlisted before entering nested runtimes",()=>{
   const manager=read("05_MANAGER/index.html");
   const employee=read("06_EMPLOYEE/index.html");
-  assert.match(manager,/new Set\(\['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check','tasks','settings'\]\)/);
+  assert.match(manager,/new Set\(\['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check','tasks','reports','settings'\]\)/);
   assert.match(employee,/new Set\(\['dashboard','schedule','attendance','swap','payroll','profile'\]\)/);
 });

@@ -116,6 +116,8 @@ function renderToday(){
  const model=actionModel();
  const overall=model.some(x=>x.state==='ERROR')?'error':model.some(x=>x.state==='LOADING')?'loading':model.some(x=>x.state==='ACTION_REQUIRED')?'attention':'ready';
  root.dataset.actionCenterState=overall;
+ const upgraded=window.MAGASIN_MANAGER_DASHBOARD_B?.render?.(root,model,{refreshing:refreshActive});
+ if(!upgraded)
  root.innerHTML='<div class="manager-today-hero"><div><h1>Việc cần xử lý</h1><p>Tổng hợp các việc vận hành đang cần Quản lý chú ý. Chỉ hiển thị dữ liệu đã được hệ thống xác minh.</p></div><button type="button" class="manager-today-refresh" data-manager-today-refresh>↻ Làm mới dữ liệu</button></div><div class="manager-action-grid">'+model.map(card).join('')+'</div><div class="manager-today-note">Màn hình Hôm nay chỉ tổng hợp và điều hướng. Việc duyệt hoặc phát hành vẫn thực hiện tại đúng màn hình nghiệp vụ.</div>';
  const refreshButton=root.querySelector('[data-manager-today-refresh]');
  if(refreshButton){refreshButton.disabled=refreshActive;refreshButton.setAttribute('aria-busy',String(refreshActive));refreshButton.textContent=refreshActive?'↻ Đang làm mới…':'↻ Làm mới dữ liệu';refreshButton.addEventListener('click',()=>refreshToday())}

@@ -6,6 +6,8 @@ const read=p=>fs.readFileSync(p,"utf8");
 const shellHtml=read("05_MANAGER/runtime/manager-shell-v1.html");
 const shellV2=read("05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js");
 const today=read("05_MANAGER/Workforce/ui-consolidation-v1.js");
+const dashboardB=read("05_MANAGER/Workforce/manager-dashboard-b-v1.js");
+const dashboardBCss=read("05_MANAGER/Workforce/manager-dashboard-b-v1.css");
 const swap=read("05_MANAGER/Workforce/swap-approval-v1.js");
 const attendance=read("05_MANAGER/Workforce/attendance-review-v1.js");
 const availability=read("05_MANAGER/Workforce/review-v1.js");
@@ -44,6 +46,24 @@ test("UI2-011 Today is an Action Center built only from existing read-only Manag
   assert.doesNotMatch(today,/Doanh thu|Đơn hàng|Đánh giá khách|49,2tr|18 nhân sự|KPI 98%/);
   assert.doesNotMatch(today,/approve_shift|reject_shift|review_attendance|publish_schedule_generation|save_|insert\(|update\(|delete\(/);
   assert.match(today,/data-workforce-jump/);
+});
+
+test("Dashboard B presents the approved operational composition without fabricated business figures",()=>{
+  assert.match(today,/MAGASIN_MANAGER_DASHBOARD_B/);
+  for(const title of [
+    "Tổng quan cửa hàng","Nhân sự hôm nay","Khách trong ngày",
+    "Doanh thu hôm nay","Ca đang thiếu","Lịch làm hôm nay",
+    "Tình trạng ca hôm nay"
+  ])assert.ok(dashboardB.includes(title),title);
+  assert.match(dashboardB,/MAGASIN_MANAGER_OFFICIAL_SCHEDULE/);
+  assert.match(dashboardB,/getState/);
+  assert.match(dashboardB,/Asia\/Ho_Chi_Minh/);
+  assert.match(dashboardB,/NOT_CONNECTED/);
+  assert.match(dashboardB,/Cần nguồn nhu cầu nhân sự để đối chiếu/);
+  assert.match(dashboardBCss,/@media\(max-width:520px\)/);
+  assert.match(gate,/manager-dashboard-b-browser\.mjs/);
+  assert.doesNotMatch(dashboardB,/\.rpc\(|createClient\s*\(|\.(?:insert|update|delete|upsert)\s*\(/);
+  assert.doesNotMatch(dashboardB,/28,560,000|18\s*\/\s*20|286\s*khách|2\s*ca đang thiếu/);
 });
 
 test("UI2-011 modified domain hooks preserve exact existing RPC inventories",()=>{
@@ -94,21 +114,22 @@ test("UI2-011 correction blockers stay regression-locked",()=>{
 
 test("UI2-011 cache chain remains preserved when later Manager UI tasks advance upstream runtime versions",()=>{
   const v="20260927-ui2-011-correction1";
-  const managerShellV="20261001-ui-unified1";
+  const managerShellV="20261021-manager-nav-b3";
   const ownerShellV="20260927-ui2-016";
   const managerV="20260927-ui2-013";
   const managerEntryV="20261018-demand-week-matrix-v1";
   const ownerEntryV="20261003-sched-ui-008";
-  assert.ok(managerIndex.includes("manager-runtime-v1.html?v=20261021-mockup-b2"));
+  assert.ok(managerIndex.includes("manager-runtime-v1.html?v=20261021-manager-nav-b3"));
   assert.ok(workforceIndex.includes("location.replace('/manager/scheduling/')"));
   assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+ownerEntryV));
   assert.ok(managerRuntime.includes("manager-shell-v1.html?v="+managerShellV+"&host=manager"));
   assert.ok(ownerRuntime.includes("manager-shell-v1.html?v="+ownerShellV+"&host=owner"));
-  assert.ok(managerRuntime.includes("engine-v1.js?v="+managerEntryV));
+  assert.ok(managerRuntime.includes("engine-v1.js?v=20261021-dashboard-b1"));
   assert.ok(shellHtml.includes("manager-ui-shell-v2.js?v="+ownerShellV));
   assert.ok(engine.includes("review-v1.js?v=20261003-sched-ui-017"));
   assert.ok(engine.includes("attendance-review-v1.js?v=20261001-ui-unified1"));
   assert.ok(engine.includes("ui-consolidation-v1.js?v=20261001-ui-unified1"));
+  assert.ok(engine.includes("manager-dashboard-b-v1.js?v=20261021-dashboard-b1"));
   assert.ok(engine.includes("swap-approval-v1.js?v=20260929-mer003"));
 });
 

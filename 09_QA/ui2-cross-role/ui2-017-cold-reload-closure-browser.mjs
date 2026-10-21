@@ -105,7 +105,7 @@ async function iframeSrc(page,id="app"){
 
 for(const spec of [
   {role:"EMPLOYEE",target:"/employee/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261021-mockup-d1"},
-  {role:"STORE_MANAGER",label:"MANAGER",target:"/manager/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261021-mockup-b2"},
+  {role:"STORE_MANAGER",label:"MANAGER",target:"/manager/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261021-manager-nav-b3"},
   {role:"OWNER",target:"/owner/",runtime:null}
 ]){
   const context=await newContext(spec.role);
@@ -132,7 +132,7 @@ for(const spec of [
 
 for(const spec of [
   {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261021-mockup-d1"},
-  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261021-mockup-b2"}
+  {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261021-manager-nav-b3"}
 ]){
   const context=await newContext(spec.role,(spec.label||spec.role)==="MANAGER"?1024:390);
   await context.addInitScript(()=>sessionStorage.setItem("__ui2_logged","1"));
@@ -159,7 +159,7 @@ for(const spec of [
     if((spec.label||spec.role)==="MANAGER"){
       // Manager #workforce now canonically redirects to Scheduling V2 after reload.
       // The first cold bootstrap may still use legacy Manager runtime before navigation.
-      const expectedV2="/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261020-one-shell1";
+      const expectedV2="/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview&v=20261021-manager-nav-b3";
       if(![expectedFirst,expectedV2].includes(cold)||hardReload!==expectedV2||second!==expectedSecond||back!==expectedV2||backReload!==expectedV2)throw new Error(JSON.stringify(detail));
     }else if(cold!==expectedFirst||hardReload!==expectedFirst||second!==expectedSecond||back!==expectedFirst||backReload!==expectedFirst)throw new Error(JSON.stringify(detail));
     return JSON.stringify(detail);
@@ -192,8 +192,8 @@ const assetSpecs=[
   ["/05_MANAGER/Workforce/manager-scheduling-ui2-v1.js?v=20261005-xstore-018","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/manager-operations-ui2-v1.js?v=20260927-ui2-016","@media(max-width:1024px)"],
   ["/05_MANAGER/Workforce/engine-v1.js?v=20261003-sched-ui-017","manager-scheduling-ui2-v1.js?v=20261005-xstore-018"],
-  ["/05_MANAGER/runtime/manager-shell-v1.html?v=20261001-ui-unified1","manager-ui-shell-v2.js?v=20260927-ui2-016"],
-  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261021-mockup-b2","manager-shell-v1.html?v=20261001-ui-unified1"],
+  ["/05_MANAGER/runtime/manager-shell-v1.html?v=20261021-manager-nav-b3","manager-ui-shell-v2.js?v=20260927-ui2-016"],
+  ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261021-manager-nav-b3","manager-shell-v1.html?v=20261021-manager-nav-b3"],
   ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261003-sched-ui-008","owner-scheduling-overview-v1.js?v=20261003-sched-ui-008"]
 ];
 for(const [url,marker] of assetSpecs){

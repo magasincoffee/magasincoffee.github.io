@@ -141,16 +141,16 @@ test("unified asset cache chain reaches both Manager and Employee entry points",
   "cross-store-master-v1.js?v=20261004-xstore-016",
   "cross-store-auto-schedule-v1.js?v=20261018-shortage-advisory-v1",
   "manager-scheduling-ui2-v1.js?v=20261005-xstore-018",
-  "official-v1.js?v=20261001-ui-unified1",
+  "official-v1.js?v=20261021-dashboard-b1",
   "ui-consolidation-v1.js?v=20261001-ui-unified1"
  ])assert.ok(managerEngine.includes(token),token);
  for(const token of [
-  "manager-shell-v1.html?v=20261001-ui-unified1",
+  "manager-shell-v1.html?v=20261021-manager-nav-b3",
   "magasin-ui-v2-tokens.css?v=20261001-ui-unified1",
   "magasin-ui-v2-shell.css?v=20261021-mockup-b1",
-  "magasin-ui-v2-shell.js?v=20261020-manager-nav-unified1",
+  "magasin-ui-v2-shell.js?v=20261021-manager-nav-b3",
   "app-time-picker-24h.js?v=20261001-ui-unified1",
-  "engine-v1.js?v=20261018-demand-week-matrix-v1"
+  "engine-v1.js?v=20261021-dashboard-b1"
  ])assert.ok(managerRuntime.includes(token),token);
  assert.ok(employeeRuntime.includes("employee-v40.html?ui=20261021-mockup-d1&runtime=engine"));
  assert.ok(employeeRuntime.includes("shared-core-v1.js?v=20261021-availability-noon1"));

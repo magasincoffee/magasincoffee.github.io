@@ -11,7 +11,7 @@ test('canonical Scheduling Manager host owns precisely the same shared Manager s
   source('02_CORE/ui/magasin-ui-v2-shell.css')
  ]);
  assert.match(host,/magasin-ui-v2-shell\.css\?v=20261021-mockup-b1/);
- assert.match(host,/magasin-ui-v2-shell\.js\?v=20261021-profile-sync1/);
+ assert.match(host,/magasin-ui-v2-shell\.js\?v=20261021-manager-nav-b3/);
  assert.match(host,/window\.__MAGASIN_UI_V2_SHELL__=\{role:'MANAGER',mode:'standalone'\}/);
  assert.match(host,/requireActive\(\)/);
  assert.match(host,/role!=='STORE_MANAGER'/);
@@ -38,7 +38,7 @@ test('Scheduling and Demand suppress child sidebar only within the authenticated
   assert.match(page,/window\.top\.location\.pathname/);
   assert.match(page,/dataset\.sv2ManagerHost='shared'/);
   assert.match(page,/schedule-v2\.css\?v=(?:20261020-weekly1|20261021-focused1|20261021-mockup-c1)/);
-  assert.match(page,/manager-navigation-v2\.js\?v=20261020-one-shell1/);
+  assert.match(page,/manager-navigation-v2\.js\?v=20261021-manager-nav-b3/);
  }
  assert.match(nav,/dataset\.sv2ManagerHost === 'shared'\) return/);
  assert.match(css,/html\[data-sv2-manager-host="shared"\] \.sv2-sidebar/);
@@ -58,7 +58,7 @@ test('Shared Manager nav on Scheduling host dispatches all nine modules via cano
  assert.match(shell,/view==='schedule'\?'\/manager\/schedule\/'/);
  assert.match(shell,/'\/manager\/#'\+encodeURIComponent\(view\)/);
  assert.match(shell,/topWindow\(\)\.location\.assign\(target\)/);
- for(const key of ['dashboard','workforce','swap','attendance','staff','payroll-self-check','schedule','tasks','settings']){
+ for(const key of ['dashboard','staff','demand','workforce','attendance','tasks','reports','settings','swap','schedule','payroll-self-check']){
   assert.ok(shell.includes("'"+key+"'"),key);
  }
  assert.doesNotMatch(host,/frame\.src='\/05_MANAGER\/runtime\/manager-runtime-v1/);

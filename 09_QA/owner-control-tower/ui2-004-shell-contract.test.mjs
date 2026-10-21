@@ -23,7 +23,9 @@ test("UI2-004 shell source parses and remains opt-in", () => {
 
 test("Manager nav contract is canonical and hidden legacy destinations stay hidden", () => {
   for (const fragment of [
-    "['dashboard', '⌂', 'Hôm nay']",
+    "['dashboard', '⌂', 'Tổng quan']",
+    "['demand', '▤', 'Nhu cầu nhân sự']",
+    "['reports', '▥', 'Báo cáo']",
     "['workforce', '▦', 'Xếp lịch']",
     "['swap', '⇄', 'Đổi / Cho ca']",
     "['attendance', '◷', 'Chấm công']",

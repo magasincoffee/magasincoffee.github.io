@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Manager official schedule authorized scope QA</title>
+<style>.view{display:block}.card{padding:16px}.sidebar{display:none}</style></head>
+<body>
+<section id="view-schedule" class="view active"></section>
+<script>
+(()=>{
+'use strict';
+const role=new URLSearchParams(location.search).get('role')==='owner'?'OWNER':'STORE_MANAGER';
+const stores=[
+ {id:'11111111-1111-4111-8111-111111111111',code:'QA-A',name:'Được cấp quyền A'},
+ {id:'22222222-2222-4222-8222-222222222222',code:'QA-B',name:'Được cấp quyền B'}
+];
+const calls=[];
+const api={rpc:async(name,args)=>{
+ calls.push({name,args});
+ if(name!=='get_manager_weekly_schedule')throw Error('UNKNOWN_RPC');
+ if(role==='STORE_MANAGER'&&!args.p_store_id)return {data:null,error:{message:'STORE_REQUIRED_FOR_MANAGER'}};
+ if(args.p_store_id&&!stores.some(x=>x.id===args.p_store_id))return {data:null,error:{message:'STORE_NOT_ALLOWED'}};
+ return {data:[],error:null};
+}};
+window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+ client:()=>api,stores:async()=>stores.map(x=>({...x})),
+ actor:async()=>({role}),getSnapshot:()=>({ready:true,actor:{role},stores})
+};
+window.__MANAGER_OFFICIAL_SCOPE_QA={calls,role,stores};
+})();
+</script>
+<script src="/05_MANAGER/Workforce/official-v1.js?v=20261021-dashboard-b1"></script>
+</body></html>

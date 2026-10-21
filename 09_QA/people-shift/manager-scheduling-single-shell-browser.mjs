@@ -43,7 +43,7 @@ try{
   assert.equal(palette.logout,'rgb(36, 74, 127)','sign-out remains legible on light shell');
   assert.equal(await page.locator('.m-shell-v2-sidebar').count(),1);
   assert.equal(await page.locator('.m-shell-v2-topbar').count(),1);
-  assert.equal(await page.locator('.m-shell-v2-nav__item').count(),9);
+  assert.equal(await page.locator('.m-shell-v2-nav__item').count(),11,'8 approved B modules plus 3 preserved operations');
   assert.equal(await page.locator('[data-shell-key="workforce"][aria-current="page"]').count(),1);
   assert.equal(await page.locator('[data-shell-account-name]').textContent(),'Quản lý kiểm thử');
   assert.equal(await page.locator('[data-shell-user-name]').textContent(),'Quản lý kiểm thử');
@@ -85,9 +85,10 @@ try{
   await advanced.locator('summary').click();
   assert.equal(await advanced.getAttribute('open'),'','advanced tools expanded');
   await advanced.locator('.sv2-demand-back').click();
+  await page.waitForURL(url=>url.pathname==='/manager/scheduling/' && url.searchParams.get('section')==='demand',{timeout:18000});
   await frame.locator('#sv2DemandTable').waitFor({timeout:18000});
   assert.equal(await page.locator('#magasinUiV2Shell').count(),1);
-  assert.equal(await page.locator('[data-shell-key="workforce"][aria-current="page"]').count(),1);
+  assert.equal(await page.locator('[data-shell-key="demand"][aria-current="page"]').count(),1);
   // Demand navigation replaces the child document; await its shared-host CSS hydration.
   await frame.locator('html[data-sv2-manager-host="shared"]').waitFor();
   await frame.locator('.sv2-sidebar').waitFor({state:'hidden',timeout:12000});
