@@ -68,7 +68,10 @@ try{
    await page.keyboard.press('Escape');
    assert.equal(await menu.getAttribute('aria-expanded'),'false');
   }
-  await frame.locator('.sv2-bar .sv2-demand-back').click();
+  const advanced=frame.locator('.sv2-bar details.sv2-advanced');
+  await advanced.locator('summary').click();
+  assert.equal(await advanced.getAttribute('open'),'','advanced tools expanded');
+  await advanced.locator('.sv2-demand-back').click();
   await frame.locator('#sv2DemandTable').waitFor({timeout:18000});
   assert.equal(await page.locator('#magasinUiV2Shell').count(),1);
   assert.equal(await page.locator('[data-shell-key="workforce"][aria-current="page"]').count(),1);
