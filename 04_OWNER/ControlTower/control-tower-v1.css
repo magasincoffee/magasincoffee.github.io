@@ -107,3 +107,151 @@ a:focus-visible,button:focus-visible{outline:2px solid #2f6fde;outline-offset:2p
  .owner-chip,.refresh-button{min-height:44px;justify-content:center}
  .metric{font-size:24px}
 }
+
+
+/* MAGASIN approved mockup B — Owner-first operational overview.
+   Existing role guards, read models and per-metric quality statuses remain intact. */
+body[data-magasin-shell-current="overview"]{
+  background:#f3f7fd;color:#193456;
+}
+body[data-magasin-shell-current="overview"] .owner-shell{
+  width:min(100%,1560px);max-width:1560px;
+  padding:clamp(16px,2vw,30px) clamp(12px,2vw,32px) 56px;
+}
+body[data-magasin-shell-current="overview"] .owner-hero{
+  align-items:center;gap:18px;margin-bottom:8px;padding:8px 0 12px;
+}
+body[data-magasin-shell-current="overview"] .owner-hero h1{
+  font-size:clamp(23px,2.4vw,32px);letter-spacing:-.035em;color:#102b50;
+}
+body[data-magasin-shell-current="overview"] .owner-hero .eyebrow,
+body[data-magasin-shell-current="overview"] .section-kicker{
+  letter-spacing:.055em;color:#3565a2;font-weight:800;
+}
+body[data-magasin-shell-current="overview"] .owner-hero .subtitle{
+  font-size:13px;line-height:1.55;color:#687b93;
+}
+body[data-magasin-shell-current="overview"] .owner-quality-link{
+  display:inline-flex;gap:5px;align-items:center;min-height:36px;
+  margin-top:5px;color:#2261bf;font-size:12px;font-weight:700;
+  text-decoration:none;
+}
+body[data-magasin-shell-current="overview"] .owner-quality-link:hover{text-decoration:underline}
+body[data-magasin-shell-current="overview"] .top-actions{
+  flex-wrap:nowrap;justify-content:end
+}
+body[data-magasin-shell-current="overview"] .owner-chip{
+  background:#e6efff;color:#2358a7;border-color:#d4e4fc;
+}
+body[data-magasin-shell-current="overview"] #operatingSnapshot{
+  padding:16px 0 0;margin-top:2px;background:transparent;border:0;
+  box-shadow:none;
+}
+body[data-magasin-shell-current="overview"] #operatingSnapshot .section-heading{
+  margin-bottom:12px;align-items:center;
+}
+body[data-magasin-shell-current="overview"] .section-heading h2{
+  margin-top:3px;font-size:19px;font-weight:800;color:#18345b;
+}
+body[data-magasin-shell-current="overview"] #operatingSnapshot .metrics-grid{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;
+}
+body[data-magasin-shell-current="overview"] .metric-card{
+  min-height:168px;display:flex;flex-direction:column;gap:4px;
+  padding:17px;border-radius:13px;border:1px solid #e4eaf3;
+  background:#fff;box-shadow:0 5px 18px rgba(43,84,142,.04);
+}
+body[data-magasin-shell-current="overview"] .metric-card .card-head{
+  flex-wrap:wrap;align-items:flex-start;gap:8px;margin-bottom:4px;
+}
+body[data-magasin-shell-current="overview"] .metric-card .card-head h3{
+  font-size:13px;line-height:1.45;font-weight:750;color:#536781;
+}
+body[data-magasin-shell-current="overview"] .metric-card .metric{
+  font-size:clamp(21px,2vw,28px);line-height:1.18;
+  letter-spacing:-.03em;font-weight:850;color:#102c54
+}
+body[data-magasin-shell-current="overview"] .metric-card .metric-row .mini strong{
+  color:#15385f
+}
+body[data-magasin-shell-current="overview"] .metric-card .meta{
+  margin-top:auto;color:#75859c
+}
+body[data-magasin-shell-current="overview"] .metric-card .actions a{
+  min-height:34px;background:#eaf3ff;color:#235caa;
+  box-shadow:none;
+}
+body[data-magasin-shell-current="overview"] .attention-section,
+body[data-magasin-shell-current="overview"] #overview,
+body[data-magasin-shell-current="overview"] .module-entry-section{
+  margin-top:20px;border:1px solid #e2eaf5;
+  border-radius:14px;padding:18px;background:#fff;
+  box-shadow:0 5px 18px rgba(43,84,142,.04);
+}
+body[data-magasin-shell-current="overview"] .attention-section .attention-list{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+}
+body[data-magasin-shell-current="overview"] .attention-item{
+  background:#fbfdff;border-color:#e5edf8;border-radius:11px;
+}
+body[data-magasin-shell-current="overview"] #overview{
+  scroll-margin-top:90px;
+}
+body[data-magasin-shell-current="overview"] #overview .context{
+  grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+}
+body[data-magasin-shell-current="overview"] #overview .context-card{
+  background:#f8fbff;border-color:#e2ebf8;border-radius:10px;
+}
+body[data-magasin-shell-current="overview"] .module-card{
+  min-height:122px;background:#f9fbff;border-color:#e2ecf7;
+}
+body[data-magasin-shell-current="overview"] .module-card:hover{
+  background:#edf5ff;border-color:#b9d4fa;
+}
+@media(max-width:1380px){
+  body[data-magasin-shell-current="overview"] #operatingSnapshot .metrics-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))
+  }
+}
+@media(max-width:1000px){
+  body[data-magasin-shell-current="overview"] #operatingSnapshot .metrics-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  body[data-magasin-shell-current="overview"] .attention-section .attention-list{
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:650px){
+  body[data-magasin-shell-current="overview"] .owner-hero{
+    align-items:start;display:grid
+  }
+  body[data-magasin-shell-current="overview"] .top-actions{
+    display:flex;justify-content:start;flex-wrap:wrap;width:100%;
+  }
+  body[data-magasin-shell-current="overview"] .owner-shell{
+    padding:14px 10px 38px
+  }
+  body[data-magasin-shell-current="overview"] #operatingSnapshot .metrics-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+  }
+  body[data-magasin-shell-current="overview"] .metric-card{
+    min-height:135px;padding:12px;
+  }
+  body[data-magasin-shell-current="overview"] .metric-card .metric{
+    font-size:22px
+  }
+  body[data-magasin-shell-current="overview"] .attention-section,
+  body[data-magasin-shell-current="overview"] #overview,
+  body[data-magasin-shell-current="overview"] .module-entry-section{
+    margin-top:12px;padding:12px
+  }
+  body[data-magasin-shell-current="overview"] #overview .context{
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:360px){
+  body[data-magasin-shell-current="overview"] #operatingSnapshot .metrics-grid{
+    grid-template-columns:1fr;
+  }
+}
