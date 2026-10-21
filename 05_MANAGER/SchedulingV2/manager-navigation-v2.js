@@ -18,22 +18,24 @@
   const demandPage = location.pathname.includes('/SchedulingV2/Demand/');
   const sections = Object.freeze([
     { title: 'Chính', items: [
-      ['dashboard', '⌂', 'Hôm nay', '/manager/'],
-      ['workforce', '▦', 'Xếp lịch', '/manager/scheduling/'],
-      ['swap', '⇄', 'Đổi / Cho ca', '/manager/#swap'],
-      ['attendance', '◷', 'Chấm công', '/manager/#attendance'],
+      ['dashboard', '⌂', 'Tổng quan', '/manager/'],
       ['staff', '◎', 'Nhân viên', '/manager/#staff'],
-      ['payroll-self-check', '₫', 'Công / Lương', '/manager/#payroll-self-check']
-    ] },
-    { title: 'Khác', items: [
-      ['schedule', '▤', 'Lịch đã phát hành', '/manager/schedule/'],
+      ['demand', '▤', 'Nhu cầu nhân sự', '/manager/scheduling/?section=demand'],
+      ['workforce', '▦', 'Xếp lịch', '/manager/scheduling/'],
+      ['attendance', '◷', 'Chấm công', '/manager/#attendance'],
       ['tasks', '✓', 'Công việc', '/manager/#tasks'],
+      ['reports', '▥', 'Báo cáo', '/manager/#reports'],
       ['settings', '⚙', 'Cài đặt', '/manager/#settings']
+    ] },
+    { title: 'Nghiệp vụ khác', items: [
+      ['swap', '⇄', 'Đổi / Cho ca', '/manager/#swap'],
+      ['schedule', '▤', 'Lịch đã phát hành', '/manager/schedule/'],
+      ['payroll-self-check', '₫', 'Công / Lương', '/manager/#payroll-self-check']
     ] }
   ]);
 
-  // Demand is a sub-page of Workforce, not a different Manager sidebar module.
-  const current = 'workforce';
+  // Direct fallback pages retain the same IA as the single authenticated shell.
+  const current = demandPage ? 'demand' : 'workforce';
   nav.replaceChildren();
   nav.setAttribute('aria-label', 'Các phân hệ quản lý');
   sidebar.id = 'sv2Sidebar';
