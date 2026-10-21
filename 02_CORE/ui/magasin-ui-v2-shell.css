@@ -457,3 +457,37 @@ body[data-magasin-shell-v2][data-magasin-shell-mode="standalone"] > header {
     transition: none;
   }
 }
+
+
+/* Approved B visual foundation: light navigation, compact cards and blue active state.
+   Presentation only; no changes to routing, roles or module mounts. */
+body[data-magasin-shell-v2]{
+  --m-shell-sidebar-bg:#f8fbff;
+  --m-shell-sidebar-text:#334766;
+  --m-shell-sidebar-muted:#64748b;
+  --m-shell-sidebar-active-bg:#e4efff;
+  background:#f3f7fc;
+}
+body[data-magasin-shell-v2] .m-shell-v2-sidebar{
+  border-right:1px solid #e0e9f5;
+  box-shadow:3px 0 18px rgba(30,64,115,.045);
+}
+body[data-magasin-shell-v2] .m-shell-v2-brand{
+  border-bottom:1px solid #e4ecf7;
+}
+body[data-magasin-shell-v2] .m-shell-v2-nav__item:hover{
+  background:#eef5ff;color:#1649a6;
+}
+body[data-magasin-shell-v2] .m-shell-v2-nav__item[aria-current="page"],
+body[data-magasin-shell-v2] .m-shell-v2-nav__item[data-active="true"]{
+  background:#dfecff;color:#1457c6;
+  box-shadow:inset 3px 0 #276bea;
+}
+body[data-magasin-shell-v2] .m-shell-v2-sidebar__footer{
+  border-top:1px solid #e4ecf7;
+}
+body[data-magasin-shell-v2] .m-shell-v2-account__name{color:#17365e}
+body[data-magasin-shell-v2] .m-shell-v2-topbar{
+  background:rgba(255,255,255,.98);
+  border-bottom:1px solid #e4ecf7;
+}
