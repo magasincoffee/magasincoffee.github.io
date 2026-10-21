@@ -7,10 +7,10 @@
 <title>MAGASIN · Owner Overview</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/02_CORE/shared/shared-core-v1.js?v=20260927-ui2-014"></script>
-<link rel="stylesheet" href="/04_OWNER/ControlTower/control-tower-v1.css?v=20260927-ui2-014">
+<link rel="stylesheet" href="/04_OWNER/ControlTower/control-tower-v1.css?v=20261021-owner-b2">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-tokens.css?v=20260925-ui2-004">
 <link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-primitives.css?v=20260925-ui2-004">
-<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20260927-ui2-016">
+<link rel="stylesheet" href="/02_CORE/ui/magasin-ui-v2-shell.css?v=20261021-mockup-b1">
 <script defer src="/02_CORE/ui/magasin-ui-v2-shell.js?v=20260928-auth-prod-005-owner-logout"></script>
 <script>
 (()=>{const token=String(new URLSearchParams(location.search).get('canonical')||'');if(token&&token!=='owner-root'){location.replace('/03_PLATFORM/01_AUTH/role-unavailable.html');return}if(token==='owner-root'||location.pathname==='/04_OWNER/')history.replaceState({},document.title,'/owner/');})();
@@ -28,8 +28,8 @@
   <header class="owner-hero">
     <div>
       <div class="eyebrow">MAGASIN BUSINESS OS · OWNER</div>
-      <h1>Tổng quan vận hành</h1>
-      <p class="subtitle">Xem nhanh tình hình toàn bộ cửa hàng, việc cần chú ý và đi vào từng khu vực khi cần xử lý.</p>
+      <h1>Chào mừng trở lại, Owner!</h1>
+      <p class="subtitle">Tình hình vận hành toàn hệ thống, cảnh báo cần xử lý và lối tắt đến từng khu vực.</p><a class="owner-quality-link" href="#overview">Kiểm tra nguồn dữ liệu <span aria-hidden="true">↗</span></a>
     </div>
     <div class="top-actions">
       <span id="ownerIdentity" class="owner-chip">OWNER</span>
@@ -37,39 +37,9 @@
     </div>
   </header>
 
-  <section id="overview" class="oversight-section" data-owner-section="overview" aria-labelledby="overviewTitle">
-    <div class="section-heading">
-      <div><span class="section-kicker">TỔNG QUAN</span><h2 id="overviewTitle">Bối cảnh báo cáo & độ tin cậy nguồn</h2></div>
-      <span id="overallState" class="overall-state" data-state="idle">Chưa tải</span>
-    </div>
-
-    <div class="context" aria-label="Bối cảnh cross-store">
-      <div class="context-card"><span class="label">Ngày báo cáo</span><strong id="reportingDate">—</strong></div>
-      <div class="context-card"><span class="label">Phạm vi</span><strong id="branchScope">Tất cả</strong><small>Phạm vi cửa hàng hiện có theo quyền Owner.</small></div>
-      <div class="context-card"><span class="label">Lần làm mới UI</span><strong id="refreshedAt">—</strong></div>
-    </div>
-
-    <div class="source-panel">
-      <div class="source-panel-head">
-        <div><h3>Nguồn & chất lượng dữ liệu</h3><p>Độ mới và chất lượng dữ liệu được hiển thị trước các chỉ số; dữ liệu chưa kết nối không được trình bày như số 0 đáng tin.</p></div>
-      </div>
-      <div id="qualityList" class="quality-list"></div>
-    </div>
-  </section>
-
-  <section id="attention" class="attention-section" data-owner-section="attention" aria-labelledby="attentionTitle">
-    <div class="section-heading attention-heading">
-      <div><span class="section-kicker">CẦN CHÚ Ý</span><h2 id="attentionTitle">Việc nào cần Owner xem ngay?</h2><p>Chỉ hiển thị các ngoại lệ và khoảng trống dữ liệu có căn cứ; không tự gán mức độ, người phụ trách hay hạn xử lý.</p><a class="section-route" href="/04_OWNER/ControlTower/">Mở trung tâm theo dõi →</a></div>
-      <span id="attentionCount" class="attention-count">—</span>
-    </div>
-    <div id="attentionLoading" class="attention-empty hidden" role="status">Đang làm mới nguồn dữ liệu…</div>
-    <div id="attentionList" class="attention-list" aria-live="polite"></div>
-    <div id="noAttention" class="attention-empty hidden">Không có factual exception từ các nguồn đang đủ tin cậy.</div>
-  </section>
-
   <section id="operatingSnapshot" class="oversight-section" aria-labelledby="snapshotTitle">
     <div class="section-heading">
-      <div><span class="section-kicker">TÌNH HÌNH VẬN HÀNH</span><h2 id="snapshotTitle">Tổng hợp các cửa hàng</h2><p>Các chỉ số giữ nguyên trạng thái chất lượng của từng nguồn; dấu “—” nghĩa là chưa có số đủ tin cậy.</p></div>
+      <div><span class="section-kicker">TỔNG QUAN HỆ THỐNG</span><h2 id="snapshotTitle">Chỉ số vận hành</h2><p>Chỉ hiển thị số liệu đã có nguồn; dấu “—” nghĩa là chưa có dữ liệu đủ tin cậy. Mỗi thẻ ghi rõ chất lượng dữ liệu.</p></div>
     </div>
 
     <div class="metrics-grid">
@@ -92,7 +62,7 @@
       </article>
 
       <article class="metric-card">
-        <div class="card-head"><h3>Workforce</h3><span id="workforceQuality" class="quality-chip">—</span></div>
+        <div class="card-head"><h3>Nhân sự & lịch làm</h3><span id="workforceQuality" class="quality-chip">—</span></div>
         <div class="metric-row">
           <div class="mini"><span class="label">Staffing gap</span><strong id="workforceGap">—</strong></div>
           <div class="mini"><span class="label">Chưa xử lý</span><strong id="workforceUnresolved">—</strong></div>
@@ -108,7 +78,7 @@
       </article>
 
       <article class="metric-card compact">
-        <div class="card-head"><h3>Task / SOP</h3><span id="taskQuality" class="quality-chip">—</span></div>
+        <div class="card-head"><h3>Công việc</h3><span id="taskQuality" class="quality-chip">—</span></div>
         <div class="metric-row">
           <div class="mini"><span class="label">Quá hạn</span><strong id="taskOverdue">—</strong></div>
           <div class="mini"><span class="label">Đang mở</span><strong id="taskOpen">—</strong></div>
@@ -118,9 +88,39 @@
     </div>
   </section>
 
+  <section id="attention" class="attention-section" data-owner-section="attention" aria-labelledby="attentionTitle">
+    <div class="section-heading attention-heading">
+      <div><span class="section-kicker">CẦN CHÚ Ý</span><h2 id="attentionTitle">Việc nào cần Owner xem ngay?</h2><p>Chỉ hiển thị các ngoại lệ và khoảng trống dữ liệu có căn cứ; không tự gán mức độ, người phụ trách hay hạn xử lý.</p><a class="section-route" href="/04_OWNER/ControlTower/">Mở trung tâm theo dõi →</a></div>
+      <span id="attentionCount" class="attention-count">—</span>
+    </div>
+    <div id="attentionLoading" class="attention-empty hidden" role="status">Đang làm mới nguồn dữ liệu…</div>
+    <div id="attentionList" class="attention-list" aria-live="polite"></div>
+    <div id="noAttention" class="attention-empty hidden">Không có factual exception từ các nguồn đang đủ tin cậy.</div>
+  </section>
+
+  <section id="overview" class="oversight-section" data-owner-section="overview" aria-labelledby="overviewTitle">
+    <div class="section-heading">
+      <div><span class="section-kicker">KIỂM TRA DỮ LIỆU</span><h2 id="overviewTitle">Nguồn dữ liệu và thời điểm cập nhật</h2></div>
+      <span id="overallState" class="overall-state" data-state="idle">Chưa tải</span>
+    </div>
+
+    <div class="context" aria-label="Bối cảnh cross-store">
+      <div class="context-card"><span class="label">Ngày báo cáo</span><strong id="reportingDate">—</strong></div>
+      <div class="context-card"><span class="label">Phạm vi</span><strong id="branchScope">Tất cả</strong><small>Phạm vi cửa hàng hiện có theo quyền Owner.</small></div>
+      <div class="context-card"><span class="label">Cập nhật gần nhất</span><strong id="refreshedAt">—</strong></div>
+    </div>
+
+    <div class="source-panel">
+      <div class="source-panel-head">
+        <div><h3>Độ tin cậy từng nguồn</h3><p>Dữ liệu chưa kết nối không được tính như số 0. Mỗi chỉ số luôn kèm trạng thái nguồn.</div>
+      </div>
+      <div id="qualityList" class="quality-list"></div>
+    </div>
+  </section>
+
   <section id="ownerModules" class="module-entry-section" aria-labelledby="modulesTitle">
     <div class="section-heading">
-      <div><span class="section-kicker">KHU VỰC CHI TIẾT</span><h2 id="modulesTitle">Đi tới khu vực khi cần xử lý sâu</h2><p>Bắt đầu từ tổng quan, sau đó mở đúng khu vực cần xử lý.</p></div>
+      <div><span class="section-kicker">KHU VỰC CHI TIẾT</span><h2 id="modulesTitle">Truy cập nhanh</h2><p>Bắt đầu từ tổng quan, sau đó mở đúng khu vực cần xử lý.</p></div>
     </div>
     <div class="module-grid">
       <a class="module-card" href="/owner/scheduling/"><strong>Nhân sự & lịch làm</strong><span>Xem trạng thái xếp lịch từng cửa hàng và mở chi tiết lập lịch tuần.</span><b>Mở khu vực →</b></a>
