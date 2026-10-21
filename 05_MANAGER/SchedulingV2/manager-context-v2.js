@@ -11,7 +11,7 @@ const client=()=>{
   // Reuse its existing Supabase client so embedded views do not contend for
   // the same refresh-token browser lock with another independent auth client.
   try{
-    if(window.parent!==window && /^\\/manager\\/scheduling\\/?$/.test(window.parent.location.pathname)){
+    if(window.parent!==window && /^\/manager\/scheduling\/?$/.test(window.parent.location.pathname)){
       const shared=window.parent.MAGASIN_CORE?.supabase?.get?.();
       if(shared?.auth?.getUser && typeof shared.rpc==='function'){sb=shared;return sb}
     }
