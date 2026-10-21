@@ -31,12 +31,12 @@
   // Fail visibly instead of leaving the whole Manager permanently blank.
   setTimeout(()=>{clearInterval(revealTimer);if(!reveal()){frame.style.visibility='visible';console.error('[MANAGER_SHELL] V2 shell did not mount in time')}},10000);
   const bridge=document.createElement('script');
-  bridge.src='/05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js?v=20260903-manager-structure1';
+  bridge.src='/05_MANAGER/runtime/compat/router/manager-route-bridge-v1.js?v=20261021-manager-nav-b3';
   bridge.async=false;
   document.head.appendChild(bridge);
-  const allowedRouteHash=new Set(['dashboard','staff','workforce','schedule','tasks','kpi','swap','attendance','academy','settings','payroll-self-check']);
+  const allowedRouteHash=new Set(['dashboard','staff','workforce','schedule','tasks','kpi','swap','attendance','academy','settings','reports','payroll-self-check']);
   const routeHash=allowedRouteHash.has(location.hash.slice(1))?location.hash:'';
-  frame.src='/05_MANAGER/runtime/manager-shell-v1.html?v=20261001-ui-unified1&host=manager'+routeHash;
+  frame.src='/05_MANAGER/runtime/manager-shell-v1.html?v=20261021-manager-nav-b3&host=manager'+routeHash;
   frame.addEventListener('load',function(){
     try{
       const d=frame.contentDocument;
@@ -53,8 +53,8 @@
       d.body.dataset.magasinShellRole='manager';
       d.body.dataset.magasinShellMode='legacy-manager';
       d.defaultView.__MAGASIN_UI_V2_SHELL__={role:'MANAGER',mode:'legacy-manager'};
-      load('/05_MANAGER/runtime/compat/router/manager-route-state-v2.js?v=20260903-manager-structure1');
-      load('/02_CORE/ui/magasin-ui-v2-shell.js?v=20261020-manager-nav-unified1');
+      load('/05_MANAGER/runtime/compat/router/manager-route-state-v2.js?v=20261021-manager-nav-b3');
+      load('/02_CORE/ui/magasin-ui-v2-shell.js?v=20261021-manager-nav-b3');
       load('/02_CORE/shared/shared-core-v1.js?v=20261002-sched-ui-005');
       const waitForRuntimeDeps=()=>{
         const hasSupabase=window.supabase?.createClient || d.defaultView?.supabase?.createClient;
