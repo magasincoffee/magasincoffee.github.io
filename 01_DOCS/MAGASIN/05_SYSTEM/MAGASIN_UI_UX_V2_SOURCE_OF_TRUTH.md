@@ -439,3 +439,18 @@ Owner further decided on 2026-09-25 that UI/UX V2 is the **highest implementatio
 Canonical execution plan: `01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_P0_EXECUTION_PLAN.md`.
 
 This priority activates after the already in-flight Brain/Work gate is formally closed. Once active, Brain should prefer the next dependency-correct UI2 task over unrelated feature expansion until UI2-017 closure is ACCEPTED, except for security, production-incident, data-integrity, or explicit Owner-intervention emergencies.
+
+## 16. Owner amendment — 2026-10-21: Tabler (mẫu A) là visual reference chính
+
+**Decision: OWNER APPROVED (visual direction only).** Owner đã chọn **mẫu A — Tabler** làm tham chiếu giao diện chính cho MAGASIN sau khi xem các lựa chọn Tabler, TailAdmin, CoreUI và Volt.
+
+- **Shared visual foundation:** tham khảo Tabler (https://preview.tabler.io/) cho shell, sidebar, topbar, bảng dữ liệu, biểu mẫu, spacing, điều hướng và trạng thái. Điều chỉnh bộ nhận diện MAGASIN; không sao chép nguyên mẫu.
+- **OWNER:** Dashboard tổng quan 4 chi nhánh, giám sát và ngoại lệ; dùng cùng design tokens và component conventions.
+- **MANAGER:** dashboard/action center cùng ngôn ngữ Tabler, nhưng màn **xếp lịch tuần dùng bố cục nghiệp vụ chuyên biệt theo mockup C** (timeline / nhu cầu nhân sự / khả dụng / nhân sự / nháp / công bố), không bê nguyên dashboard template.
+- **EMPLOYEE:** **ưu tiên điện thoại theo mockup D**, bottom navigation và thao tác chạm; vẫn dùng chung token, màu, typography, status và thành phần thiết kế; không ép desktop admin sidebar vào mobile.
+- **Implementation approach:** ưu tiên HTML/CSS/JavaScript hiện có với shared tokens/components; Bootstrap của Tabler là tham chiếu/ứng viên kỹ thuật, **chưa được tự động phê duyệt để đưa dependency vào production**. Không đổi framework hoặc engine chỉ để giống mẫu.
+- **Data / business invariants:** giữ đầy đủ phân quyền 3 vai trò, 4 chi nhánh, đăng ký khả dụng, ưu tiên full-time trước part-time, ưu tiên chi nhánh có thứ tự, nhu cầu nhân sự lặp hằng tuần + ghi đè đúng tuần, khung giờ Asia/Ho_Chi_Minh bước 30 phút, draft / publish / handover / attendance theo tài liệu Workforce đã chốt.
+- **Acceptance:** xem ảnh mockup/preview đúng vai trò trước khi đổi diện rộng; test desktop + 360/390/430px mobile, không sidebar chồng nhau, trạng thái chọn chi nhánh và dữ liệu được giữ khi điều hướng; E2E xuyên Employee → Manager → Employee, phân quyền, CI và deploy; Owner nghiệm thu thực tế.
+- **Status boundary:** Đây là **quyết định thiết kế**, **KHÔNG** phải xác nhận đã code, merge, deploy hay nghiệm thu giao diện mới.
+
+**Precedence:** Điều chỉnh phần *visual reference* của mục 3 từ Shadcn/TailAdmin/Twenty sang **Tabler là mẫu ưu tiên chính**. Các nguyên tắc kiến trúc, phone-first, role boundaries, source-of-truth, backend/permission constraints và Definition of Done ở các mục trước tiếp tục có hiệu lực. Theo dõi triển khai và nghiệm thu tại [Issue #487](https://github.com/magasincoffee/magasincoffee.github.io/issues/487).
