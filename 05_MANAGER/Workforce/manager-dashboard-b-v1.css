@@ -83,6 +83,7 @@
 @media(max-width:520px){
  #view-dashboard .mdb-heading h1{font-size:21px}
  #view-dashboard .mdb-controls select{min-width:0;max-width:none;width:100%}
+ #view-dashboard .mdb-refresh,#view-dashboard .mdb-controls select{height:44px;min-height:44px}
  #view-dashboard .mdb-controls label{flex:1 1 100%}
  #view-dashboard .mdb-controls .mdb-date{flex:1 1 0}
  #view-dashboard .mdb-kpis{grid-template-columns:1fr 1fr}
