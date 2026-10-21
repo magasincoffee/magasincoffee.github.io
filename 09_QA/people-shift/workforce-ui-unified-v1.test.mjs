@@ -141,7 +141,7 @@ test("unified asset cache chain reaches both Manager and Employee entry points",
   "cross-store-master-v1.js?v=20261004-xstore-016",
   "cross-store-auto-schedule-v1.js?v=20261018-shortage-advisory-v1",
   "manager-scheduling-ui2-v1.js?v=20261005-xstore-018",
-  "official-v1.js?v=20261001-ui-unified1",
+  "official-v1.js?v=20261021-dashboard-b1",
   "ui-consolidation-v1.js?v=20261001-ui-unified1"
  ])assert.ok(managerEngine.includes(token),token);
  for(const token of [
