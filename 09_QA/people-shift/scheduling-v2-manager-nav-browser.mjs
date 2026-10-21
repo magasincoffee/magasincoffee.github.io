@@ -26,7 +26,7 @@ try {
       assert.equal(await menu.isVisible(),false,'desktop uses permanent sidebar');
       const style=await page.locator('.sv2-sidebar').evaluate(el=>({width:el.getBoundingClientRect().width,color:getComputedStyle(el).backgroundColor}));
       assert.ok(style.width>=240 && style.width<=255,'desktop sidebar width');
-      assert.equal(style.color,'rgb(16, 24, 40)','sidebar matches Manager shell background');
+      assert.equal(style.color,'rgb(248, 251, 255)','standalone sidebar matches approved light Manager B background');
     } else {
       assert.equal(await menu.isVisible(),true,'small view has menu button');
       await menu.click();
