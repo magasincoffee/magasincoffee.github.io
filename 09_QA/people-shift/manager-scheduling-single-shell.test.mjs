@@ -11,7 +11,7 @@ test('canonical Scheduling Manager host owns precisely the same shared Manager s
   source('02_CORE/ui/magasin-ui-v2-shell.css')
  ]);
  assert.match(host,/magasin-ui-v2-shell\.css\?v=20261020-one-shell1/);
- assert.match(host,/magasin-ui-v2-shell\.js\?v=20261020-one-shell1/);
+ assert.match(host,/magasin-ui-v2-shell\.js\?v=20261021-profile-sync1/);
  assert.match(host,/window\.__MAGASIN_UI_V2_SHELL__=\{role:'MANAGER',mode:'standalone'\}/);
  assert.match(host,/requireActive\(\)/);
  assert.match(host,/role!=='STORE_MANAGER'/);
