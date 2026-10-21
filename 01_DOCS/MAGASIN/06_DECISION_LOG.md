@@ -46,3 +46,13 @@ Locked points:
 
 After the currently in-flight Brain/Work gate is safely closed, `MAGASIN_OPERATIONS_UI_V2` becomes the highest implementation priority and stays P0 until the formal UI V2 closure gate is ACCEPTED. The canonical bounded execution plan is `01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_P0_EXECUTION_PLAN.md`. Employee phone-first delivery is the dominant UX acceptance constraint. Unrelated feature expansion must not be scheduled ahead of the next dependency-correct UI2 task except for security/production/data-integrity emergencies or explicit Owner intervention.
 
+## 2026-10-21 — MAGASIN UI/UX V2: Tabler (mẫu A) được Owner chọn
+
+**Decision:** APPROVED by Owner, phạm vi *visual direction*, không phải release/acceptance.
+
+- Chọn **Tabler** (https://preview.tabler.io/) làm tham chiếu giao diện HTML/CSS/JavaScript chính, xây design system MAGASIN thống nhất thay vì mỗi màn hình một kiểu.
+- Owner + Manager dùng shell/ngôn ngữ trực quan cùng phong cách Tabler; **Manager xếp lịch theo mockup C** (bảng tác nghiệp chuyên biệt); **Employee trên điện thoại theo mockup D**, mobile-first, dùng chung design tokens.
+- Giữ kiến trúc dữ liệu, backend, quyền, 4 chi nhánh và nghiệp vụ Workforce đã phê duyệt. Không được tự xem việc lựa chọn template là chấp thuận viết lại ứng dụng hay đổi framework.
+- Phải có mockup/preview và nghiệm thu theo 3 vai trò; test chức năng thực tế, 30-minute Vietnam timezone, nhu cầu lặp/override, xếp FT-first; CI/deploy/Owner acceptance trước khi đóng hạng mục.
+- **Authority:** `01_DOCS/MAGASIN/05_SYSTEM/MAGASIN_UI_UX_V2_SOURCE_OF_TRUTH.md` mục 16 (cập nhật quyết định visual 2026-09-25); [Issue #487](https://github.com/magasincoffee/magasincoffee.github.io/issues/487) là điểm theo dõi rollout & nghiệm thu.
+- **Status:** DECISION RECORDED; redesign implementation and production acceptance remain OPEN.
