@@ -216,3 +216,32 @@ html[data-sv2-manager-host="shared"] .sv2{
 /* Advanced menu remains visible after tools move from the top-level action bar. */
 .sv2-bar .sv2-advanced-content .sv2-demand-back{display:flex}
 .sv2-bar .sv2-advanced-content .sv2-action{display:flex;background:#f5f8fb;color:#17324a;border:1px solid #e2e8f0}
+
+
+/* Approved C scheduling board — 7-day roster is the visual anchor. */
+:root{background:#f4f8fd;color:#1b3051}
+.sv2{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.sv2-top h1{color:#122b51;font-size:26px;font-weight:800}
+.sv2-top .sv2-eyebrow{color:#4776b4}
+.sv2-bar,.sv2-summary,.sv2-roster{
+  border:1px solid #e3ebf6;border-radius:13px;
+  background:#fff;box-shadow:0 7px 24px rgba(37,76,134,.045)
+}
+.sv2-summary{background:#fff}
+.sv2-roster{margin-top:14px}
+.sv2-roster .sv2-heading h2{font-size:17px;color:#163b78}
+.sv2-roster thead th{background:#eff5fd;color:#27486f;font-weight:750}
+.sv2-roster th:first-child,.sv2-roster td:first-child{
+  min-width:164px;background:#f9fbff;border-right:1px solid #e2eaf5
+}
+.sv2-roster td{border-bottom:1px solid #e8eef7}
+.sv2-roster td:not(:first-child){background:#f9fbff}
+.sv2-primary-action{background:#139d75!important;box-shadow:0 4px 10px #139d7525}
+.sv2-primary-action:hover{background:#0d8865!important}
+.sv2-advanced>summary{background:#fff}
+.sv2-editor-dialog{background:#fff}
+@media(max-width:650px){
+  .sv2-top h1{font-size:22px}
+  .sv2-roster th:first-child,.sv2-roster td:first-child{min-width:125px}
+  .sv2-roster .sv2-scroll{scrollbar-width:thin}
+}
