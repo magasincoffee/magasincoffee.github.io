@@ -35,7 +35,9 @@ function render(){
    input.addEventListener('change',()=>{const n=Number(input.value);
     if(!Number.isInteger(n)||n<0||n>20){input.value=String(chosen);status.textContent='Chỉ nhập số nguyên từ 0 đến 20.';return}
     if(n===reference)changes.delete(k);else changes.set(k,{work_date:date,start_time:start,end_time:end,target_headcount:n});
-    render();status.textContent=changed()?'Có điều chỉnh riêng tuần chưa lưu.':'Tất cả ô đang kế thừa mẫu cố định.';
+    enabled();status.textContent=changed()?'Có điều chỉnh riêng tuần chưa lưu.':'Tất cả ô đang kế thừa mẫu cố định.';
+    // Avoid replacing the focused input synchronously inside the change/blur event.
+    setTimeout(render,0);
    });cell.append(input);row.append(cell)
   }body.append(row)
  }
