@@ -132,7 +132,7 @@ body[data-magasin-shell-current="overview"] .owner-hero .subtitle{
   font-size:13px;line-height:1.55;color:#687b93;
 }
 body[data-magasin-shell-current="overview"] .owner-quality-link{
-  display:inline-flex;gap:5px;align-items:center;min-height:36px;
+  display:inline-flex;gap:5px;align-items:center;min-height:44px;
   margin-top:5px;color:#2261bf;font-size:12px;font-weight:700;
   text-decoration:none;
 }
@@ -178,7 +178,7 @@ body[data-magasin-shell-current="overview"] .metric-card .meta{
   margin-top:auto;color:#75859c
 }
 body[data-magasin-shell-current="overview"] .metric-card .actions a{
-  min-height:34px;background:#eaf3ff;color:#235caa;
+  min-height:44px;background:#eaf3ff;color:#235caa;
   box-shadow:none;
 }
 body[data-magasin-shell-current="overview"] .attention-section,
