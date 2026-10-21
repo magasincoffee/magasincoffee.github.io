@@ -68,6 +68,42 @@ try {
     await context.close();
   }
 
+  // This loads the real Manager shell adapter + new B renderer together.
+  // The standalone fixture above checks source truth; this checks cross-module integration.
+  for (const width of [1440, 390]) {
+    const context = await browser.newContext({
+      viewport: { width, height: 900 }, locale: "vi-VN", timezoneId: "Asia/Ho_Chi_Minh"
+    });
+    const page = await context.newPage();
+    page.on("pageerror", e => report.pageErrors.push("integrated " + width + ": " + String(e?.message || e)));
+    await page.goto(BASE + "/09_QA/people-shift/manager-dashboard-b-integrated-fixture.html#dashboard",
+      { waitUntil: "networkidle", timeout: 25000 });
+    await page.locator('#view-dashboard[data-manager-dashboard-b="1"] .mdb-kpis').waitFor();
+    await check("manager_dashboard_b_" + width + "_integrated_shell", async () => {
+      const state = await page.evaluate(() => {
+        const root = document.querySelector("#view-dashboard");
+        const oldCards = root.querySelectorAll(".manager-action-card");
+        const newCards = root.querySelectorAll(".mdb-kpi");
+        return {
+          kpis: newCards.length, legacyCards: oldCards.length,
+          title: root.querySelector("h1")?.textContent,
+          hasManagerSidebar: !!document.querySelector(".manager-v2-sidebar-source"),
+          screenWidth: document.documentElement.scrollWidth, viewport: innerWidth,
+          refresh: !!root.querySelector("[data-manager-today-refresh]"),
+          actionCount: root.querySelectorAll("[data-workforce-jump]").length
+        };
+      });
+      if (state.kpis !== 4 || state.legacyCards !== 0 || !state.hasManagerSidebar ||
+        state.title !== "Tổng quan cửa hàng" || state.screenWidth > state.viewport + 1 ||
+        !state.refresh || state.actionCount < 4)
+        throw new Error(JSON.stringify(state));
+      return JSON.stringify(state);
+    });
+    const shot = path.join(OUT, "manager-dashboard-b-integrated-" + width + ".png");
+    await page.screenshot({ path: shot, fullPage: true });report.screenshots.push(shot);
+    await context.close();
+  }
+
   const c = await browser.newContext({ viewport: { width: 1280, height: 820 }, timezoneId: "Asia/Ho_Chi_Minh" });
   const p = await c.newPage();
   await p.goto(BASE + "/09_QA/people-shift/manager-dashboard-b-fixture.html?mode=error",
