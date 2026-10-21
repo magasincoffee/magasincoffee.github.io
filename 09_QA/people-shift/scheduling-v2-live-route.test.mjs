@@ -34,7 +34,9 @@ test('V2 live controls and separate demand editor remain active on canonical hos
     get('05_MANAGER/SchedulingV2/Demand/index.html')
   ]);
   for(const flag of ['draft-editor','release-preview','auto-preview','post-publish-preview'])assert.ok(host.includes(flag),flag);
-  assert.ok(rollout.includes('demand-preview'));
+  assert.ok(rollout.includes('/manager/scheduling/?section=demand'));
+  assert.ok(host.includes('SchedulingV2/Demand/index.html'));
+  assert.match(rollout,/demand\.target='_top'/);
   assert.match(demand,/rollout-config-v1\.js/);
   assert.match(demand,/demand-settings-v1\.js/);
   assert.doesNotMatch(host,/replace_schedule_generation_assignments|publish_schedule_generation/);
