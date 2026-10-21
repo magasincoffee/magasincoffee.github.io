@@ -42,7 +42,10 @@ try {
       await page.keyboard.press('Escape');
       assert.equal(await menu.getAttribute('aria-expanded'),'false');
     }
-    await page.locator('.sv2-bar .sv2-demand-back').click();
+    const advanced=page.locator('.sv2-bar details.sv2-advanced');
+    await advanced.locator('summary').click();
+    assert.equal(await advanced.getAttribute('open'),'','advanced tools expand before Demand navigation');
+    await advanced.locator('.sv2-demand-back').click();
     await page.waitForURL(/\/SchedulingV2\/Demand\/index\.html\?/);
     await page.locator('body.sv2-nav-ready').waitFor();
     assert.equal(await page.locator('.sv2-nav a[aria-current="page"]').textContent().then(x=>x.includes('Xếp lịch')),true);
