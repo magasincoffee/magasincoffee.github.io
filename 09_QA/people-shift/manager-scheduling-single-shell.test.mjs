@@ -10,7 +10,7 @@ test('canonical Scheduling Manager host owns precisely the same shared Manager s
   source('02_CORE/ui/magasin-ui-v2-shell.js'),
   source('02_CORE/ui/magasin-ui-v2-shell.css')
  ]);
- assert.match(host,/magasin-ui-v2-shell\.css\?v=20261020-one-shell1/);
+ assert.match(host,/magasin-ui-v2-shell\.css\?v=20261021-mockup-b1/);
  assert.match(host,/magasin-ui-v2-shell\.js\?v=20261021-profile-sync1/);
  assert.match(host,/window\.__MAGASIN_UI_V2_SHELL__=\{role:'MANAGER',mode:'standalone'\}/);
  assert.match(host,/requireActive\(\)/);
@@ -37,7 +37,7 @@ test('Scheduling and Demand suppress child sidebar only within the authenticated
   assert.match(page,/window\.top!==window/);
   assert.match(page,/window\.top\.location\.pathname/);
   assert.match(page,/dataset\.sv2ManagerHost='shared'/);
-  assert.match(page,/schedule-v2\.css\?v=(?:20261020-weekly1|20261021-focused1)/);
+  assert.match(page,/schedule-v2\.css\?v=(?:20261020-weekly1|20261021-focused1|20261021-mockup-c1)/);
   assert.match(page,/manager-navigation-v2\.js\?v=20261020-one-shell1/);
  }
  assert.match(nav,/dataset\.sv2ManagerHost === 'shared'\) return/);
