@@ -1,0 +1,38 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Workforce P1 scheduling business-rule E2E</title></head>
+<body><section class="sv2-bar"><select id="sv2Store"><option value="store-one" selected>CN1</option></select>
+<input type="date" id="sv2Week" value="2026-10-26"><button id="sv2Refresh">Tải lại</button></section>
+<script>
+(()=>{
+const calls=[], assignments=[];
+window.__WORKFORCE_RULES_QA={calls,assignments};
+window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED=true;
+const profiles=[
+ {employee_id:'pt-one',profile_status:'ACTIVE',employee_role:'EMPLOYEE',priority_store_ids:['store-one'],full_name:'PT QA'},
+ {employee_id:'ft-one',profile_status:'ACTIVE',employee_role:'EMPLOYEE',priority_store_ids:['store-one'],full_name:'FT QA'}
+];
+const store=[{id:'store-one',code:'CN1',status:'ACTIVE'}];
+const client={async rpc(name,args){
+ calls.push({name,args});
+ const week=(args?.p_week_start||'2026-10-26');
+ const dates=iso=>{const d=new Date(iso+'T12:00:00Z');return d.toISOString().slice(0,10)};
+ if(name==='list_schedule_generations')return {data:[],error:null};
+ if(name==='list_workforce_recurring_staffing_requirements_v1')return {data:[{store_id:'store-one',day_of_week:1,start_time:'08:00:00',end_time:'12:00:00',target_headcount:1}],error:null};
+ if(name==='list_employee_workforce_profiles_v1')return {data:profiles,error:null};
+ if(name==='list_employee_employment_types_v1')return {data:[{employee_id:'pt-one',employment_type:'PART_TIME'},{employee_id:'ft-one',employment_type:'FULL_TIME'}],error:null};
+ if(name==='get_manager_weekly_availability')return {data:[
+ {user_id:'pt-one',work_date:dates(week),start_time:'07:00:00',end_time:'17:00:00',availability_type:'PREFERRED'},
+ {user_id:'ft-one',work_date:dates(week),start_time:'07:00:00',end_time:'17:00:00',availability_type:'AVAILABLE'}
+ ],error:null};
+ if(name==='get_cross_store_weekly_plan_v1')return {data:[],error:null};
+ if(name==='create_schedule_generation')return {data:'gen-one',error:null};
+ if(name==='get_schedule_generation_assignments')return {data:assignments,error:null};
+ if(name==='replace_schedule_generation_assignments'){assignments.splice(0,assignments.length,...args.p_assignments);return {data:{saved:true},error:null}}
+ if(name==='validate_schedule_generation_v1')return {data:{valid:true,violations:[],warnings:[]},error:null};
+ throw Error('UNEXPECTED_RPC:'+name);
+}};
+window.MAGASIN_SCHEDULING_V2_CONTEXT={actor:async()=>({role:'STORE_MANAGER'}),stores:async()=>store,client:()=>client};
+})();
+</script>
+<script src="/05_MANAGER/SchedulingV2/store-planner-v1.js"></script>
+<script src="/05_MANAGER/SchedulingV2/auto-ui-v1.js"></script>
+</body></html>

@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {chromium} from 'playwright';
+
+const BASE=process.env.QA_BASE_URL||'http://127.0.0.1:8767';
+const OUT=process.env.QA_OUT||'qa-artifacts/people-shift';
+fs.mkdirSync(OUT,{recursive:true});
+const browser=await chromium.launch({headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:1365,height:900},timezoneId:'Asia/Ho_Chi_Minh',locale:'vi-VN'});
+ const pageErrors=[];
+ page.on('pageerror',e=>pageErrors.push(String(e)));
+ await page.goto(BASE+'/09_QA/people-shift/workforce-rules-p1-fixture.html?auto-preview',{waitUntil:'networkidle'});
+ await page.getByRole('button',{name:'Đề xuất xếp lịch'}).click();
+ await page.locator('[data-autostatus]').filter({hasText:'Đề xuất thêm 1 ca'}).waitFor();
+ const qa=await page.evaluate(async()=>{
+  const plan=window.MAGASIN_SCHEDULING_V2_STORE_PLANNER;
+  const weeks=['2026-10-26','2026-11-02','2026-11-09'];
+  const projections=[];
+  for(const weekStart of weeks){
+    const r=await plan.preview({storeId:'store-one',weekStart});
+    projections.push({weekStart,proposed:r.proposals.map(p=>({
+      user_id:p.user_id,start_time:p.start_time,end_time:p.end_time,work_date:p.work_date
+    })),priorityStatus:r.priorityStatus,registrationOrderStatus:r.registrationOrderStatus});
+  }
+  return {projections,calls:window.__WORKFORCE_RULES_QA.calls.map(c=>c.name)};
+ });
+ assert.equal(qa.projections.length,3);
+ for(const week of qa.projections){
+  assert.equal(week.proposed.length,1,'recurring demand persists across unmodified weeks');
+  assert.equal(week.proposed[0].user_id,'ft-one','FULL_TIME outranks PART_TIME even if PT availability=PREFERRED');
+  assert.equal(week.proposed[0].start_time,'08:00');
+  assert.equal(week.proposed[0].end_time,'12:00');
+  assert.equal(week.proposed[0].work_date,week.weekStart);
+  assert.equal(week.priorityStatus,'FT_FIRST_PT_SECOND');
+  assert.equal(week.registrationOrderStatus,'NOT_VERIFIED_MISSING_TIMESTAMP');
+ }
+ assert.ok(!qa.calls.some(x=>/publish|review|replace|create/.test(x)),'viewing weeks must be read only');
+ const btn=page.locator('[data-apply]');
+ assert.equal(await btn.isEnabled(),true);
+ await page.screenshot({path:path.join(OUT,'workforce-rules-p1-preview.png'),fullPage:true});
+ page.once('dialog',d=>d.accept());
+ await btn.click();
+ await page.locator('[data-autostatus]').filter({hasText:'Đã thêm 1 ca'}).waitFor({timeout:15000});
+ const after=await page.evaluate(()=>({
+  assignments:window.__WORKFORCE_RULES_QA.assignments,
+  rpc:window.__WORKFORCE_RULES_QA.calls.map(x=>x.name)
+ }));
+ assert.equal(after.assignments.length,1);
+ assert.equal(after.assignments[0].user_id,'ft-one');
+ assert.equal(after.assignments[0].status,'DRAFT');
+ assert.ok(after.rpc.includes('validate_schedule_generation_v1'));
+ assert.ok(!after.rpc.includes('review_schedule_generation')&&!after.rpc.includes('publish_schedule_generation'),
+  'automation is not allowed to review or publish');
+ assert.deepEqual(pageErrors,[],'no page JavaScript runtime exceptions');
+ console.log('WORKFORCE_20261020_P1_BROWSER_E2E=PASS (3 weeks recurring; FT first; preview→draft only; zero publish)');
+ await page.close();
+}finally{await browser.close()}
