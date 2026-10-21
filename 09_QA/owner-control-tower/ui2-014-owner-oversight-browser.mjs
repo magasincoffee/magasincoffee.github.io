@@ -114,6 +114,19 @@ try{
    if(width<=768&&ev.height<43.5)throw new Error(JSON.stringify(ev));
    return JSON.stringify(ev);
   });
+  await check("ui2_014_"+width+"_kpi_provenance_disclosure",async()=>{
+   const disclosures=page.locator("#operatingSnapshot .metric-provenance");
+   if(await disclosures.count()!==5)throw new Error("Each sourced KPI needs a disclosure");
+   const first=disclosures.first(),summary=first.locator("summary");
+   if(await summary.evaluate(el=>el.getBoundingClientRect().height)<43.5)throw new Error("Disclosure control too small");
+   if(await first.getAttribute("open")!==null)throw new Error("Provenance expanded by default");
+   await summary.click();
+   if(await first.getAttribute("open")===null)throw new Error("Source disclosure did not open");
+   if(!(await first.locator(".meta").textContent()).trim())throw new Error("Missing source evidence");
+   await summary.click();
+   if(await first.getAttribute("open")!==null)throw new Error("Source disclosure did not close");
+   return "source evidence on demand, 44px control";
+  });
   await shot(page,"ui2-014-owner-"+width);
   await opened.ctx.close();
  }
