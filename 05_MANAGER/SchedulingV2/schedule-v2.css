@@ -272,3 +272,33 @@ html[data-sv2-manager-host="shared"] .sv2{
   .sv2-roster tbody td{padding:4px}
   .sv2-roster .sv2-shift{font-size:11px;padding:6px 5px}
 }
+
+
+/* Mockup C: searchable week roster and contextual detail rail. */
+.sv2-roster{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.sv2-roster .sv2-heading{display:flex;align-items:end;gap:14px;flex-wrap:wrap}
+.sv2-roster .sv2-heading h2{flex:0 0 auto}
+.sv2-roster .sv2-heading>p{flex:1 1 180px}
+.sv2-roster-search{display:grid;gap:5px;flex:0 1 230px;margin-left:auto;font-size:12px;font-weight:650;color:#344f76}
+.sv2-roster-search input{min-width:0;width:100%;height:40px;border:1px solid #cfdef0;border-radius:9px;background:#fff;padding:9px 12px;color:#1f3656;font:inherit}
+.sv2-roster-search input:focus-visible{outline:3px solid #a3c5fa;outline-offset:1px}
+.sv2-roster tbody tr[hidden]{display:none!important}
+.sv2-shift-inspector{min-width:0;display:grid;align-content:start;gap:14px;border:1px solid #e1eaf6;border-radius:12px;background:#f9fcff;padding:16px;margin-top:12px}
+.sv2-shift-inspector h3{margin:0;font-size:15px;color:#183862;font-weight:800}
+.sv2-inspector-hint,.sv2-inspector-note{font-size:12px;line-height:1.5;color:#62748e;margin:0}
+.sv2-inspector-fields{margin:0;display:grid;gap:12px}
+.sv2-inspector-fields[hidden],.sv2-inspector-hint[hidden],.sv2-inspector-note[hidden]{display:none}
+.sv2-inspector-fields>div{display:grid;gap:3px;padding-bottom:10px;border-bottom:1px solid #e1eaf6}
+.sv2-inspector-fields dt{font-size:11px;color:#6b7a91}
+.sv2-inspector-fields dd{margin:0;font-size:13px;color:#163351;font-weight:700;overflow-wrap:anywhere}
+@media(min-width:1100px){
+  .sv2-roster{grid-template-columns:minmax(0,1fr) 216px;column-gap:14px;align-items:start}
+  .sv2-roster .sv2-heading{grid-column:1/-1}
+  .sv2-roster .sv2-scroll{grid-column:1;grid-row:2;min-width:0}
+  .sv2-shift-inspector{grid-column:2;grid-row:2;margin:0}
+}
+@media(max-width:700px){
+  .sv2-roster .sv2-heading>p{display:none}
+  .sv2-roster-search{flex:1 1 100%;margin-left:0}
+  .sv2-shift-inspector{padding:12px}
+}
