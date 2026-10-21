@@ -43,14 +43,15 @@ test("Employee availability API exposes read/delete/week/registration policy wit
 
 test("active engine derives target week from canonical Asia-Ho-Chi-Minh date primitives",async()=>{
   const engine=await read("06_EMPLOYEE/availability/engine-v1.js");
-  assert.match(engine,/C\.date\.dateKey\?\.\(\)/);
+  assert.match(engine,/C\.date\.localClock\?\.\(\)/);
   assert.match(engine,/C\.date\.monday\(today\)/);
   assert.match(engine,/C\.date\.addDays\(currentMonday,7\)/);
-  assert.match(engine,/today===sunday\?'REGISTRATION_CLOSED':'REGISTRATION_OPEN'/);
+  assert.match(engine,/clock\.minutes>=720/);
+  assert.match(engine,/sundayCutoff\?'REGISTRATION_CLOSED':'REGISTRATION_OPEN'/);
   assert.doesNotMatch(engine,/new Date\(/);
 });
 
-test("TASK-091 week helper proves Monday-Saturday open, Sunday closed, rollover and VN midnight",()=>{
+test("Employee Sunday 12:00 ICT boundary, Monday rollover and date-only fail-closed",()=>{
   const monday=workforceWeekIdentity("2026-09-21");
   assert.equal(monday.next_week_start,"2026-09-28");
   assert.equal(monday.availability_registration_state,"REGISTRATION_OPEN");
@@ -62,6 +63,12 @@ test("TASK-091 week helper proves Monday-Saturday open, Sunday closed, rollover 
   const sunday=workforceWeekIdentity("2026-09-27");
   assert.equal(sunday.next_week_start,"2026-09-28");
   assert.equal(sunday.availability_registration_state,"REGISTRATION_CLOSED");
+
+  // Exact Sunday cutoff: 04:59Z = 11:59 ICT, 05:00Z = 12:00 ICT.
+  assert.equal(workforceWeekIdentity("2026-09-27T04:59:00Z").availability_registration_state,"REGISTRATION_OPEN");
+  assert.equal(workforceWeekIdentity("2026-09-27T05:00:00Z").availability_registration_state,"REGISTRATION_CLOSED");
+  assert.equal(workforceWeekIdentity("2026-09-27T00:00:00Z").availability_registration_state,"REGISTRATION_OPEN");
+  assert.equal(workforceWeekIdentity("2026-09-27T10:00:00Z").availability_registration_state,"REGISTRATION_CLOSED");
 
   const nextMonday=workforceWeekIdentity("2026-09-28");
   assert.equal(nextMonday.next_week_start,"2026-10-05");
