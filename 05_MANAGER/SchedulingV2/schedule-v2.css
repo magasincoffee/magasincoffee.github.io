@@ -262,9 +262,9 @@ html[data-sv2-manager-host="shared"] .sv2{
   min-height:44px;text-align:left;border-radius:7px;
   border:1px solid transparent;font-size:12px;font-weight:650;line-height:1.35
 }
-.sv2-roster .sv2-shift.sv2-band-morning{background:#dcf9eb;color:#116a46;border-color:#afe7ca}
-.sv2-roster .sv2-shift.sv2-band-afternoon{background:#ffebcd;color:#865010;border-color:#f6d5a7}
-.sv2-roster .sv2-shift.sv2-band-evening{background:#dceaff;color:#2059a4;border-color:#bcd4fa}
+.sv2-roster .sv2-shift.sv2-band-morning{background:#fff3bd;color:#805b08;border-color:#f4d66c}
+.sv2-roster .sv2-shift.sv2-band-afternoon{background:#ffe0e4;color:#923947;border-color:#f6b9c0}
+.sv2-roster .sv2-shift.sv2-band-evening{background:#dcedff;color:#245ba3;border-color:#afd1f9}
 .sv2-roster .sv2-shift.sv2-draft{outline:2px dashed #dd9b36;outline-offset:-2px}
 .sv2-roster .sv2-shift.sv2-official{border-style:solid}
 @media(max-width:700px){
