@@ -42,7 +42,7 @@ test("UI2-014 Owner B CSS cache chain preserves canonical reads and role boundar
  for(const source of [home,control]){
   assert.ok(source.includes("/04_OWNER/ControlTower/control-tower-v1.css?v=20261021-owner-b2"));
   assert.ok(source.includes("/02_CORE/ui/magasin-ui-v2-shell.css?v=20261021-mockup-b1"));
-  assert.ok(source.includes("/04_OWNER/ControlTower/control-tower-v1.js?v=20260927-ui2-014"));
+  assert.ok(source.includes("/04_OWNER/ControlTower/control-tower-v1.js?v=20261021-owner-b2"));
   assert.ok(source.includes("/02_CORE/shared/shared-core-v1.js?v=20260927-ui2-014"));
  }
 });
