@@ -104,7 +104,7 @@ async function iframeSrc(page,id="app"){
 }
 
 for(const spec of [
-  {role:"EMPLOYEE",target:"/employee/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261021-availability-noon1"},
+  {role:"EMPLOYEE",target:"/employee/",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261021-mockup-d1"},
   {role:"STORE_MANAGER",label:"MANAGER",target:"/manager/",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261021-mockup-b2"},
   {role:"OWNER",target:"/owner/",runtime:null}
 ]){
@@ -131,7 +131,7 @@ for(const spec of [
 }
 
 for(const spec of [
-  {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261021-availability-noon1"},
+  {role:"EMPLOYEE",entry:"/06_EMPLOYEE/",first:"schedule",second:"attendance",runtime:"/06_EMPLOYEE/runtime/employee-runtime-v1.html?v=20261021-mockup-d1"},
   {role:"STORE_MANAGER",label:"MANAGER",entry:"/05_MANAGER/",first:"workforce",second:"attendance",runtime:"/05_MANAGER/runtime/manager-runtime-v1.html?v=20261021-mockup-b2"}
 ]){
   const context=await newContext(spec.role,(spec.label||spec.role)==="MANAGER"?1024:390);
