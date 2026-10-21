@@ -21,24 +21,29 @@ function assertOrder(source,fragments){
  }
 }
 
-test("UI2-014 Owner home and Control Tower both render oversight before module entry",()=>{
+test("UI2-014 Owner B prioritizes sourced operational KPIs and retains source diagnostics",()=>{
+ assertOrder(home,['id="operatingSnapshot"','id="attention"','id="overview"','id="ownerModules"']);
+ assertOrder(control,['id="overview"','id="attention"','id="operatingSnapshot"','id="ownerModules"']);
  for(const source of [home,control]){
-  assertOrder(source,['id="overview"','id="attention"','id="operatingSnapshot"','id="ownerModules"']);
-  assert.match(source,/(?:What needs Owner attention now\?|Việc nào cần Owner xem ngay\?)/);
-  assert.match(source,/Bối cảnh báo cáo & độ tin cậy nguồn/);
-  assert.match(source,/Đi tới (?:module|khu vực) khi cần xử lý sâu/);
-  assert.doesNotMatch(source,/<select\b/i);
+  assert.match(source,/(?:What needs Owner attention now\\?|Việc nào cần Owner xem ngay\\?)/);
+  assert.doesNotMatch(source,/<select\\b/i);
+  assert.match(source,/id="revenueQuality"/);
+  assert.match(source,/id="qualityList"/);
  }
+ assert.match(home,/Nguồn dữ liệu và thời điểm cập nhật/);
+ assert.match(home,/Truy cập nhanh/);
+ assert.match(control,/Bối cảnh báo cáo & độ tin cậy nguồn/);
+ assert.match(control,/Đi tới (?:module|khu vực) khi cần xử lý sâu/);
  assert.match(home,/data-magasin-shell-current="overview"/);
  assert.match(control,/data-magasin-shell-current="attention"/);
 });
 
-test("UI2-014 complete Owner presentation cache chain uses the new version on both entry routes",()=>{
- const v="20260927-ui2-014";
+test("UI2-014 Owner B CSS cache chain preserves canonical reads and role boundaries",()=>{
  for(const source of [home,control]){
-  assert.ok(source.includes("/04_OWNER/ControlTower/control-tower-v1.css?v="+v));
-  assert.ok(source.includes("/04_OWNER/ControlTower/control-tower-v1.js?v="+v));
-  assert.ok(source.includes("/02_CORE/shared/shared-core-v1.js?v="+v));
+  assert.ok(source.includes("/04_OWNER/ControlTower/control-tower-v1.css?v=20261021-owner-b2"));
+  assert.ok(source.includes("/02_CORE/ui/magasin-ui-v2-shell.css?v=20261021-mockup-b1"));
+  assert.ok(source.includes("/04_OWNER/ControlTower/control-tower-v1.js?v=20260927-ui2-014"));
+  assert.ok(source.includes("/02_CORE/shared/shared-core-v1.js?v=20260927-ui2-014"));
  }
 });
 
