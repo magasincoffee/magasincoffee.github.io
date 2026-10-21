@@ -68,12 +68,17 @@ try{
    await page.keyboard.press('Escape');
    assert.equal(await menu.getAttribute('aria-expanded'),'false');
   }
-  await frame.locator('.sv2-bar .sv2-demand-back').click();
+  const advanced=frame.locator('.sv2-bar details.sv2-advanced');
+  await advanced.locator('summary').click();
+  assert.equal(await advanced.getAttribute('open'),'','advanced tools expanded');
+  await advanced.locator('.sv2-demand-back').click();
   await frame.locator('#sv2DemandTable').waitFor({timeout:18000});
   assert.equal(await page.locator('#magasinUiV2Shell').count(),1);
   assert.equal(await page.locator('[data-shell-key="workforce"][aria-current="page"]').count(),1);
-  assert.equal(await frame.locator('.sv2-sidebar').isVisible(),false);
-  assert.equal(await frame.locator('.sv2-app-header').isVisible(),false);
+  // Demand navigation replaces the child document; await its shared-host CSS hydration.
+  await frame.locator('html[data-sv2-manager-host="shared"]').waitFor();
+  await frame.locator('.sv2-sidebar').waitFor({state:'hidden',timeout:12000});
+  await frame.locator('.sv2-app-header').waitFor({state:'hidden',timeout:12000});
   assert.equal(await frame.locator('html').getAttribute('data-sv2-manager-host'),'shared');
   outputs.push('PASS '+width+'px: one shell, profile, nav, scheduling→demand, drawer/overflow');
 

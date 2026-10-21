@@ -166,3 +166,53 @@ html[data-sv2-manager-host="shared"] .sv2{
 .sv2-bar .sv2-week-controls button:focus-visible{outline:3px solid #087c94;outline-offset:2px}
 #sv2WeekRange{font-weight:650;font-size:13px;color:#334155}
 @media(max-width:650px){.sv2-week-picker{width:100%}.sv2-week-picker input{max-width:100%}}
+
+
+/* Focused scheduling workspace: preserve existing selectors, IDs and RPC-bound controls. */
+.sv2{width:min(1600px,100%);padding:20px 24px 36px}
+.sv2-top{align-items:center;padding:0 2px}
+.sv2-top h1{font-size:25px;letter-spacing:-.035em}
+.sv2-eyebrow{margin:0 0 4px;font-size:10px}
+.sv2-muted{margin:6px 0;color:#64748b}
+.sv2-pill{font-weight:650}
+.sv2-bar{display:flex;align-items:end;gap:12px;padding:14px 16px;margin-top:18px;border-radius:12px;box-shadow:0 1px 3px #17324a08}
+.sv2-bar>label{flex:0 1 220px}
+.sv2-bar .sv2-week-picker{flex:1 1 360px}
+.sv2-week-picker{display:flex!important;align-items:end;gap:12px!important;flex-wrap:wrap}
+.sv2-week-picker label{flex:0 0 170px}
+.sv2-week-controls{flex-wrap:nowrap}
+.sv2-week-controls #sv2CurrentWeek,.sv2-week-controls #sv2UpcomingWeek{display:none}
+.sv2-bar #sv2Refresh{background:#fff;color:#475569;border:1px solid #cbd5e1;min-height:40px}
+.sv2-bar .sv2-demand-back{display:none}
+.sv2-bar .sv2-week-picker output{flex:1 1 100%;color:#334155;font-size:12px;font-weight:650}
+.sv2-primary-action{min-height:42px!important;padding:9px 20px!important;background:#087c94!important;color:#fff!important;font-weight:750!important;border-radius:9px!important;white-space:nowrap}
+.sv2-advanced{position:relative;margin-left:auto;flex:0 0 auto;font-size:13px}
+.sv2-advanced>summary{min-height:42px;display:flex;align-items:center;gap:8px;border:1px solid #cbd5e1;border-radius:9px;padding:10px 14px;cursor:pointer;color:#334155;font-weight:650;list-style:none}
+.sv2-advanced>summary::-webkit-details-marker{display:none}
+.sv2-advanced>summary::after{content:'⌄';color:#64748b}
+.sv2-advanced[open]>summary::after{content:'⌃'}
+.sv2-advanced-content{display:grid;gap:8px;position:absolute;z-index:50;right:0;top:calc(100% + 8px);width:min(340px,calc(100vw - 40px));background:white;padding:14px;border:1px solid #dbe3ea;border-radius:12px;box-shadow:0 16px 36px #14263a20}
+.sv2-advanced-content button,.sv2-advanced-content a{width:100%;display:flex;align-items:center;justify-content:flex-start;min-height:40px;border-radius:8px;padding:8px 12px;text-decoration:none;font:inherit;font-weight:600;background:#f5f8fb;color:#17324a;border:1px solid #e2e8f0}
+.sv2-advanced-content button:disabled{opacity:.5}
+#sv2Status{margin:8px 2px 0;min-height:18px}
+.sv2-summary{display:flex;gap:0;margin-top:10px;padding:10px 18px;border-radius:10px;background:#f8fafc}
+.sv2-summary>div{flex:1;display:flex;align-items:baseline;gap:9px;padding:2px 14px;border-right:1px solid #e2e8f0}
+.sv2-summary>div:first-child{padding-left:0}
+.sv2-summary>div:last-child{border-right:0}
+.sv2-summary strong{font-size:19px}
+.sv2-summary span{font-size:12px}
+.sv2-roster{padding:16px;margin-top:12px;min-height:320px;border-radius:12px}
+.sv2-roster .sv2-heading{padding:0 0 12px}
+.sv2-roster .sv2-heading p{max-width:460px;text-align:right}
+.sv2-roster thead th{background:#f2f6f9;color:#334155;font-size:12px}
+.sv2-roster td{height:66px;vertical-align:top}
+.sv2-editor-layer{place-items:stretch end;padding:0;z-index:1200}
+.sv2-editor-dialog{height:100dvh;max-height:100dvh;overflow-y:auto;width:min(460px,100%);border-radius:16px 0 0 16px;align-content:start;box-shadow:-12px 0 35px #0002}
+.sv2-editor-dialog h2{font-size:21px}
+.sv2-primary-action:focus-visible,.sv2-advanced summary:focus-visible{outline:3px solid #0ea5e9;outline-offset:2px}
+@media(max-width:1100px){.sv2-bar{align-items:stretch}.sv2-bar .sv2-week-picker{flex:1 1 100%}.sv2-advanced{margin-left:0}.sv2-roster .sv2-heading p{display:none}}
+@media(max-width:650px){.sv2{padding:12px}.sv2-top h1{font-size:22px}.sv2-bar{padding:12px;gap:10px}.sv2-bar>label,.sv2-week-picker label{flex:1 1 100%}.sv2-week-picker{gap:8px!important}.sv2-week-controls{width:100%}.sv2-week-controls button{flex:1 1 0;padding:8px!important}.sv2-bar .sv2-primary-action{flex:1 1 auto}.sv2-advanced{flex:1 1 auto}.sv2-advanced>summary{justify-content:center}.sv2-summary{padding:8px 10px}.sv2-summary>div{display:grid;gap:2px;padding:2px 8px}.sv2-summary strong{font-size:17px}.sv2-summary span{font-size:11px}.sv2-roster{padding:12px}.sv2-editor-dialog{border-radius:0;width:100%}}
+
+/* Advanced menu remains visible after tools move from the top-level action bar. */
+.sv2-bar .sv2-advanced-content .sv2-demand-back{display:flex}
+.sv2-bar .sv2-advanced-content .sv2-action{display:flex;background:#f5f8fb;color:#17324a;border:1px solid #e2e8f0}
