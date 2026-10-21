@@ -20,3 +20,13 @@ test('focused Scheduling workspace preserves authoritative controls and loads af
  assert.match(css,/\.sv2-roster\{padding:16px/);
  assert.doesNotMatch(controller,/\.rpc\(|\.from\(|fetch\(/);
 });
+
+
+test('mockup C uses approved morning yellow, afternoon red and evening blue on draft and published shifts',async()=>{
+ const css=await load('05_MANAGER/SchedulingV2/schedule-v2.css');
+ for(const [kind,bg] of [['morning','#fff3bd'],['afternoon','#ffe0e4'],['evening','#dcedff']]){
+  assert.ok(css.includes('.sv2-roster .sv2-shift.sv2-band-'+kind+'{background:'+bg),kind);
+ }
+ assert.match(css,/\.sv2-roster \.sv2-shift\.sv2-draft\{outline:2px dashed/);
+ assert.match(css,/\.sv2-roster \.sv2-shift\.sv2-official\{border-style:solid/);
+});
