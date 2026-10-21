@@ -101,17 +101,24 @@ test("Today phone presentation is touch-first and locally namespaced", () => {
   assert.doesNotMatch(todayCss, /(^|\n)\s*:root\s*\{/m);
 });
 
-test("Mockup D mobile board honors existing authoritative route and hour-band boundaries", () => {
+test("Mockup D mobile board preserves existing authoritative employee actions", () => {
   const css=read("02_CORE/ui/magasin-ui-v2-employee-mockup-d.css");
-  assert.match(css, /body\\[data-magasin-employee-shell-v2\\]/);
-  assert.match(css, /grid-template-columns:repeat\\(4,minmax\\(0,1fr\\)\\)/);
-  assert.match(css, /employee-today-card--shift/);
-  assert.match(css, /employee-today-week/);
-  assert.match(css, /employee-today-queue/);
-  assert.match(css, /@media\\(max-width:390px\\)/);
-  assert.match(css, /:focus-visible/);
-  assert.doesNotMatch(css, /\\.rpc\\(|createClient\\(|\\.from\\(|\\.insert\\(|\\.update\\(|\\.delete\\(/);
-  const shortcuts=app.match(/<nav class="employee-today-shortcuts"[\\s\\S]*?<\\/nav>/)?.[0]||"";
-  assert.equal((shortcuts.match(/<button /g)||[]).length,4);
-  for(const key of ['data-today-action="availability"','data-today-route="schedule"','data-today-route="attendance"','data-today-action="route:notice"'])assert.ok(shortcuts.includes(key),key);
+  for(const token of [
+    "body[data-magasin-employee-shell-v2]",
+    "grid-template-columns:repeat(4,minmax(0,1fr))",
+    "employee-today-card--shift",
+    "employee-today-week",
+    "employee-today-queue",
+    "@media(max-width:390px)",
+    ":focus-visible"
+  ]) assert.ok(css.includes(token),token);
+  for(const forbidden of [".rpc(", "createClient(", ".from(", ".insert(", ".update(", ".delete("])
+    assert.ok(!css.includes(forbidden),forbidden);
+  const start=app.indexOf('<nav class="employee-today-shortcuts"');
+  const end=app.indexOf('</nav>',start);
+  assert.ok(start>=0&&end>start);
+  const shortcuts=app.slice(start,end);
+  assert.equal(shortcuts.split("<button ").length-1,4);
+  for(const key of ['data-today-action="availability"','data-today-route="schedule"','data-today-route="attendance"','data-today-action="route:notice"'])
+    assert.ok(shortcuts.includes(key),key);
 });
