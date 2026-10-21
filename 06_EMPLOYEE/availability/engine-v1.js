@@ -31,11 +31,14 @@ function syncLauncher(x=d()){
 }
 
 function derivePolicy(){
-  const today=C.date.dateKey?.();
+  const clock=C.date.localClock?.();
+  const today=clock?.date;
   if(!DATE_RE.test(String(today||'')))return {today:null,targetWeek:null,registration:'REGISTRATION_CLOSED',reason:'INVALID_DATE_CONTEXT'};
   const currentMonday=C.date.monday(today),targetWeek=C.date.addDays(currentMonday,7),sunday=C.date.addDays(currentMonday,6);
   if(!DATE_RE.test(String(currentMonday||''))||!DATE_RE.test(String(targetWeek||'')))return {today,targetWeek:null,registration:'REGISTRATION_CLOSED',reason:'INVALID_WEEK_CONTEXT'};
-  return {today,targetWeek,registration:today===sunday?'REGISTRATION_CLOSED':'REGISTRATION_OPEN',reason:null};
+  // Employee changes remain open until 11:59 ICT Sunday; exact 12:00 locks the following week.
+  const sundayCutoff=today===sunday && (!Number.isInteger(clock?.minutes)||clock.minutes>=720);
+  return {today,targetWeek,registration:sundayCutoff?'REGISTRATION_CLOSED':'REGISTRATION_OPEN',reason:null};
 }
 function syncPolicy(){
   const p=derivePolicy();
@@ -46,7 +49,7 @@ function syncPolicy(){
 }
 function targetDays(){return state.week?C.date.weekDays(state.week):[]}
 function isTargetDate(value){return targetDays().includes(String(value||'').slice(0,10))}
-function closedMessage(){return state.policyReason?'Không xác định được tuần đăng ký. Vui lòng tải lại trang.':'Đăng ký lịch tuần sau đã đóng vào Chủ Nhật. Bạn vẫn có thể xem các khoảng đã đăng ký.'}
+function closedMessage(){return state.policyReason?'Không xác định được tuần đăng ký. Vui lòng tải lại trang.':'Đăng ký lịch tuần sau đã đóng lúc 12:00 trưa Chủ nhật. Bạn vẫn có thể xem các khoảng đã đăng ký.'}
 function weekLabel(){
   const days=targetDays();
   if(!days.length)return 'Tuần tới · chưa xác định';
@@ -76,7 +79,7 @@ function updateContext(){
   if(week)week.textContent=weekLabel();
   if(policy){
     const open=state.registration==='REGISTRATION_OPEN';
-    policy.textContent=open?'Đang mở · Có thể chỉnh sửa':'Đã đóng · Chỉ xem';
+    policy.textContent=open?'Đang mở · Đến 12:00 trưa Chủ nhật':'Đã đóng · Chỉ xem';
     policy.className='m-badge '+(open?'m-status-badge--success':'m-status-badge--neutral');
   }
   if(p)p.dataset.availabilityReadonly=String(state.registration!=='REGISTRATION_OPEN');
