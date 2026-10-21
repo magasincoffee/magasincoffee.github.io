@@ -13,7 +13,7 @@ const routes=Object.freeze({
   'owner-root':{roles:['OWNER'],bridge:'/04_OWNER/?canonical=owner-root',canonical:'/owner/'},
   'owner-scheduling':{roles:['OWNER'],bridge:'/04_OWNER/Workforce/?canonical=owner-scheduling',canonical:'/owner/scheduling/'}
 });
-const managerHash=new Set(['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check','tasks','settings']);
+const managerHash=new Set(['dashboard','staff','workforce','schedule','swap','attendance','payroll-self-check','tasks','reports','settings']);
 const employeeHash=new Set(['dashboard','schedule','attendance','swap','payroll','profile']);
 const auth='/03_PLATFORM/01_AUTH/';
 const unavailable='/03_PLATFORM/01_AUTH/role-unavailable.html';
