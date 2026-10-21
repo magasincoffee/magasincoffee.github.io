@@ -92,12 +92,20 @@ try {
           lightShell: getComputedStyle(document.querySelector(".m-shell-v2-sidebar")).backgroundColor === "rgb(248, 251, 255)",
           screenWidth: document.documentElement.scrollWidth, viewport: innerWidth,
           refresh: !!root.querySelector("[data-manager-today-refresh]"),
-          actionCount: root.querySelectorAll("[data-workforce-jump]").length
+          actionCount: root.querySelectorAll("[data-workforce-jump]").length,
+          primary: [...document.querySelectorAll(".m-shell-v2-nav__group:first-child .m-shell-v2-nav__item")].map(el => ({key:el.dataset.shellKey,name:el.textContent.trim()})),
+          secondary: [...document.querySelectorAll(".m-shell-v2-nav__group:nth-child(2) .m-shell-v2-nav__item")].map(el => el.dataset.shellKey)
         };
       });
       if (state.kpis !== 4 || state.legacyCards !== 0 || !state.hasManagerSidebar ||
         state.title !== "Tổng quan cửa hàng" || !state.oldSidebarHidden || !state.lightShell || state.screenWidth > state.viewport + 1 ||
-        !state.refresh || state.actionCount < 4)
+        !state.refresh || state.actionCount < 4 ||
+        JSON.stringify(state.primary.map(x => x.key)) !== JSON.stringify([
+          "dashboard","staff","demand","workforce","attendance","tasks","reports","settings"
+        ]) ||
+        !state.primary.some(x => x.name.includes("Nhu cầu nhân sự")) ||
+        !state.primary.some(x => x.name.includes("Báo cáo")) ||
+        JSON.stringify(state.secondary) !== JSON.stringify(["swap","schedule","payroll-self-check"]))
         throw new Error(JSON.stringify(state));
       return JSON.stringify(state);
     });
