@@ -13,13 +13,13 @@ try {
     await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:stub}));
     await page.goto(base+'/05_MANAGER/SchedulingV2/index.html?mode=live&draft-editor&release-preview&auto-preview&post-publish-preview',{waitUntil:'domcontentloaded'});
     await page.locator('body.sv2-nav-ready').waitFor();
-    assert.equal(await page.locator('.sv2-bar .sv2-demand-back').getAttribute('href'),'./Demand/index.html?mode=live&demand-preview','toolbar demand entry keeps live flag');
+    assert.equal(await page.locator('.sv2-bar .sv2-demand-back').getAttribute('href'),'/manager/scheduling/?section=demand','toolbar demand entry uses guarded Manager route');
     const menu=page.locator('.sv2-menu-toggle');
     const nav=page.locator('.sv2-nav');
     const current=nav.locator('a[aria-current="page"]');
     assert.equal(await current.count(),1,'exactly one active Scheduling menu item');
     assert.equal(await current.first().textContent().then(x=>x.includes('Xếp lịch')),true);
-    assert.equal(await nav.locator('a').count(),9,'exactly nine Manager shell modules');
+    assert.equal(await nav.locator('a').count(),11,'eight primary mockup B modules and three related operations');
     const overflow=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:document.documentElement.clientWidth}));
     assert.ok(overflow.scroll<=overflow.width+1,'no document-level horizontal overflow at '+width+': '+JSON.stringify(overflow));
     if (width>1024) {
@@ -81,10 +81,15 @@ try {
     const advanced=page.locator('.sv2-bar details.sv2-advanced');
     await advanced.locator('summary').click();
     assert.equal(await advanced.getAttribute('open'),'','advanced tools expand before Demand navigation');
+    await page.route('**/manager/scheduling/?section=demand',route=>route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><html><body><main id="qaDemandCanonical">Role-guarded Demand route</main></body></html>'}));
     await advanced.locator('.sv2-demand-back').click();
-    await page.waitForURL(/\/SchedulingV2\/Demand\/index\.html\?/);
+    await page.waitForURL(/\/manager\/scheduling\/\?section=demand$/);
+    assert.equal(await page.locator('#qaDemandCanonical').count(),1,'Demand enters canonical shared Manager host');
+    // Independently validate the real Demand editor in direct compatibility mode;
+    // no production Supabase writes or credentials are used in this fixture.
+    await page.goto(base+'/05_MANAGER/SchedulingV2/Demand/index.html?mode=live&demand-preview',{waitUntil:'domcontentloaded'});
     await page.locator('body.sv2-nav-ready').waitFor();
-    assert.equal(await page.locator('.sv2-nav a[aria-current="page"]').textContent().then(x=>x.includes('Xếp lịch')),true);
+    assert.equal(await page.locator('.sv2-nav a[aria-current="page"]').textContent().then(x=>x.includes('Nhu cầu nhân sự')),true);
     assert.equal(await page.locator('#sv2DemandTable').count(),1);
     assert.equal(await page.locator('.sv2-nav a[href="/manager/#staff"]').getAttribute('target'),'_top');
     const returnLink=page.getByRole('link',{name:/Về lịch làm việc/});
