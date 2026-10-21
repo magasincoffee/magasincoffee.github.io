@@ -54,7 +54,11 @@ test("UI2-016 shell cache chain is bumped without moving the Owner path",()=>{
     "04_OWNER/Access/index.html"
   ]){
     const owner=read(p);
-    if(owner.includes("magasin-ui-v2-shell.css"))assert.match(owner,/magasin-ui-v2-shell\.css\?v=20260927-ui2-016/,p);
+    if(owner.includes("magasin-ui-v2-shell.css")){
+      if(p==="04_OWNER/index.html"||p==="04_OWNER/ControlTower/index.html")
+        assert.match(owner,/magasin-ui-v2-shell\.css\?v=20261021-mockup-b1/,p);
+      else assert.match(owner,/magasin-ui-v2-shell\.css\?v=20260927-ui2-016/,p);
+    }
     assert.doesNotMatch(owner,/20261001-ui-unified1/,p);
   }
 
