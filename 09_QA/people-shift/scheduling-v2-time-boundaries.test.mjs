@@ -93,10 +93,20 @@ test('All visible scheduling time forms use identical half-hour boundaries', asy
     read('05_MANAGER/SchedulingV2/post-publish-ui-v1.js'),
     read('05_MANAGER/SchedulingV2/Demand/index.html')
   ]);
-  for (const html of [draft, post, demand]) {
+  for (const html of [draft, post]) {
     assert.match(html, /min="05:00" max="21:30" step="1800"/);
     assert.match(html, /min="05:30" max="22:00" step="1800"/);
   }
+  // Demand now uses fixed HH:mm options instead of platform-dependent AM/PM time widgets.
+  const slots = id => {
+    const contents = demand.match(new RegExp('<select id="'+id+'"[^>]*>([\\s\\S]*?)<\\/select>'))?.[1] || '';
+    return [...contents.matchAll(/<option value="(\d{2}:\d{2})"/g)].map(x=>x[1]);
+  };
+  const start = slots('sv2BandStart'), end = slots('sv2BandEnd');
+  const time = m => String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+  assert.deepEqual(start,Array.from({length:34},(_,i)=>time(300+i*30)));
+  assert.deepEqual(end,Array.from({length:34},(_,i)=>time(330+i*30)));
+  assert.doesNotMatch(demand,/type="time"/);
   assert.match(post, /mode==='ADD'&&!validSlot\(\)/);
   assert.match(post, /05:00–22:00/);
   assert.ok(post.includes(String.raw`/^(\d{2}):(\d{2})$/`), 'post-publish UI parses HH:MM with digits');

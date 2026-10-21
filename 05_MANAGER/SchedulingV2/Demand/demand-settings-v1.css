@@ -3,3 +3,37 @@
 .sv2-demand-band.sv2-band-morning{background:#fff2b8;color:#735400}
 .sv2-demand-band.sv2-band-afternoon{background:#ffe1e1;color:#8f3434}
 .sv2-demand-band.sv2-band-evening{background:#dbeefe;color:#17588d}
+
+/* Demand v2 operational controls: 24-hour Viet Nam wall-clock slots (fixed 30m). */
+.sv2-bar.sv2-demand-controls {
+  display:grid;
+  grid-template-columns:minmax(200px,1.4fr) minmax(150px,1fr) minmax(150px,1fr) max-content;
+  gap:12px 14px;
+  align-items:end;
+}
+.sv2-demand-controls label{min-width:0;display:grid;gap:7px;font-size:13px;font-weight:600;color:#294567}
+.sv2-demand-controls select{
+  min-width:0;width:100%;min-height:46px;
+  padding:9px 12px;border:1px solid #c8d6e6;border-radius:10px;
+  font:600 14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:#17365e;background:#fff;
+}
+.sv2-demand-controls select:disabled{color:#698099;background:#f3f6fb}
+.sv2-demand-controls #sv2AddBand{
+  width:max-content;min-height:46px;white-space:nowrap;border-radius:10px;padding:10px 16px;
+}
+.sv2-demand-controls #sv2AddBand:disabled{opacity:.55;cursor:not-allowed}
+.sv2-time-note{grid-column:1/-1;font-size:12px;color:#536d8b}
+.sv2-demand-feedback{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
+.sv2-demand-feedback p{margin:0;min-width:0;color:#294567}
+.sv2-demand-feedback button{flex:0 0 auto;padding:9px 16px;border:1px solid #bed5ef;background:#e9f3ff;color:#164a92;font:600 13px/1.4 system-ui,sans-serif;border-radius:9px;cursor:pointer}
+.sv2-demand-feedback button[hidden]{display:none!important}
+@media(max-width:930px){
+  .sv2-bar.sv2-demand-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sv2-demand-controls #sv2AddBand{width:100%}
+}
+@media(max-width:520px){
+  .sv2-bar.sv2-demand-controls{grid-template-columns:minmax(0,1fr)}
+  .sv2-demand-controls #sv2AddBand{width:100%}
+  .sv2-demand-feedback{align-items:flex-start}
+}
