@@ -49,7 +49,7 @@
       const stores = Array.isArray(state.stores) && state.stores.length
         ? state.stores : (ctx.ready && Array.isArray(ctx.stores) ? ctx.stores : []);
       return { ready: true, loading: !!state.loading, error: !!state.lastError,
-        week: state.week, rows: Array.isArray(state.rows) ? state.rows : [], stores };
+        week: state.week, storeId: state.storeId || null, rows: Array.isArray(state.rows) ? state.rows : [], stores };
     } catch (_) {
       return { ready: false, loading: false, error: true, rows: [], stores: [] };
     }
@@ -142,6 +142,8 @@
     const day = currentDay();
     const published = source(), state = status(published, day.iso);
     const stores = published.stores.filter(x => x && x.id);
+    const sourceStore = published.storeId ? String(published.storeId) : '';
+    if (sourceStore) chosenStore = sourceStore; // Do not present one-store RPC data as the all-stores total.
     if (chosenStore && !stores.some(x => String(x.id) === chosenStore)) chosenStore = '';
     const selected = chosenStore;
     const rows = state === 'ready' ? published.rows.filter(x =>
@@ -153,15 +155,16 @@
     const stateCaption = connected
       ? 'Nhân viên có ca đã công bố hôm nay' : messages[state];
     const storeOptions = stores.map(x => '<option value="' + escapeHtml(x.id) + '"' +
-      (String(x.id) === selected ? ' selected' : '') + '>' +
+      (String(x.id) === selected ? ' selected' : '') +
+      (sourceStore && String(x.id) !== sourceStore ? ' disabled' : '') + '>' +
       escapeHtml(tr(x.code || x.name, 'Chi nhánh')) + '</option>').join('');
     root.dataset.managerDashboardB = '1';
     root.innerHTML =
       '<section class="mdb" aria-label="Tổng quan cửa hàng">' +
         '<header class="mdb-heading"><div><h1>Tổng quan cửa hàng</h1>' +
           '<p>Hoạt động nhân sự và điều phối hôm nay từ nguồn dữ liệu thực tế</p></div>' +
-          '<div class="mdb-controls"><label>Chi nhánh<select data-mdb-store' + (!stores.length ? ' disabled' : '') +
-          '><option value="">Tất cả chi nhánh được phép</option>' + storeOptions + '</select></label>' +
+          '<div class="mdb-controls"><label>Chi nhánh<select data-mdb-store' + (!stores.length || !!sourceStore ? ' disabled' : '') +
+          '><option value=""' + (sourceStore ? ' disabled' : '') + '>Tất cả chi nhánh được phép</option>' + storeOptions + '</select></label>' +
           '<div class="mdb-date"><span>Hôm nay</span><strong>' + escapeHtml(day.label) + '</strong></div>' +
           '<button type="button" class="mdb-refresh" data-manager-today-refresh' +
           (refreshing ? ' disabled aria-busy="true"' : '') + '>' +
@@ -195,6 +198,7 @@
           '<div class="mdb-task-list">' + models.map(taskRow).join('') + '</div></section>' +
       '</section>';
     root.querySelector('[data-mdb-store]')?.addEventListener('change', e => {
+      if (sourceStore) return; // The canonical reader is currently restricted to one store.
       chosenStore = e.target.value || '';
       render(root, models, { refreshing });
     });
