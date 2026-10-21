@@ -13,6 +13,7 @@
   const calls=[],toasts=[];
   const state={
     today:"2026-09-25",
+    clockMinutes:540,
     availabilityError:false,
     candidateError:false,
     historyError:false,
@@ -52,7 +53,7 @@
   window.MAGASIN_CORE={
     security:{escapeHtml},
     time:{time5,minutes,shiftKind},
-    date:{dateKey:()=>state.today,localClock:()=>({date:state.today,minutes:540}),monday,addDays,weekDays,formatDate},
+    date:{dateKey:()=>state.today,localClock:()=>({date:state.today,minutes:state.clockMinutes}),monday,addDays,weekDays,formatDate},
     roles:{label:{STAFF:"Nhân viên",EMPLOYEE:"Nhân viên"}},
     stores:{active:async()=>stores.map(x=>({...x}))},
     ui:{
