@@ -11,7 +11,7 @@ const hm=v=>String(v||'').slice(0,5);
 const mins=v=>{const t=hm(v);return Number(t.slice(0,2))*60+Number(t.slice(3,5))};
 const kind=v=>mins(v)<720?'m':mins(v)<1020?'a':'e';
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-let sb=null,state={week:monday(new Date()),storeId:null,stores:[],rows:[],loading:false,lastError:null};
+let sb=null,managerScoped=false,state={week:monday(new Date()),storeId:null,stores:[],rows:[],loading:false,lastError:null};
 const view=()=>document.querySelector('#view-schedule');
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const css=`<style id="manager-official-schedule-css">
@@ -19,11 +19,17 @@ const css=`<style id="manager-official-schedule-css">
 </style>`;
 function ensureCss(){if(!document.getElementById('manager-official-schedule-css'))document.head.insertAdjacentHTML('beforeend',css)}
 async function loadStores(){
- if(state.stores.length)return;
- state.stores=await window.MAGASIN_MANAGER_WORKFORCE_CONTEXT.stores();
+ const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;
+ if(!ctx?.stores || !ctx?.actor)throw Error('MANAGER_CONTEXT_NOT_READY');
+ // Store scope is authorized by the existing context; never infer permissions from a query string.
+ state.stores=await ctx.stores();
+ const actor=await ctx.actor();
+ managerScoped=String(actor?.role||'').toUpperCase()==='STORE_MANAGER';
  if(state.storeId && !state.stores.some(s=>String(s.id)===String(state.storeId)))state.storeId=null;
+ if(managerScoped&&!state.storeId)state.storeId=state.stores[0]?.id||null;
 }
 async function loadRows(){
+ if(managerScoped&&!state.storeId){state.rows=[];state.lastError='Chưa có chi nhánh được cấp quyền để xem lịch chính thức.';return}
  const q=await client().rpc('get_manager_weekly_schedule',{p_store_id:state.storeId||null,p_week_start:state.week});
  if(q.error)throw q.error;
  state.rows=Array.isArray(q.data)?q.data:[];
@@ -37,12 +43,12 @@ function render(){
  Object.values(groups).forEach(rows=>rows.sort((a,b)=>mins(a.start_time)-mins(b.start_time)||String(a.employee_name||'').localeCompare(String(b.employee_name||''),'vi')));
  const people=new Set(state.rows.map(r=>r.user_id)).size;
  const storesInRows=new Set(state.rows.map(r=>r.store_id)).size;
- root.innerHTML=`<section class="card"><div class="mos-head"><div class="mos-title"><h2>Lịch làm chính thức</h2><div class="muted" style="margin-top:5px">Chỉ hiển thị ca đã phát hành từ hệ thống; không dùng dữ liệu minh họa</div></div><div class="mos-controls"><label class="mos-field">Chi nhánh<select id="mosStore"><option value="">Tất cả chi nhánh được phép</option>${state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId||'')?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}</select></label><button class="btn" data-mos-week="prev">← Tuần trước</button><button class="btn" data-mos-week="today">Tuần này</button><button class="btn" data-mos-week="next">Tuần sau →</button><button class="btn" id="mosRefresh">↻ Tải lại</button><button class="btn primary" id="mosWorkforce">Điều phối lịch</button></div></div><div class="mos-meta"><span class="badge blue">Tuần ${esc(fmt(state.week))} – ${esc(fmt(add(state.week,6)))}</span><span class="badge green">${state.rows.length} ca đã phát hành</span><span class="badge blue">${people} nhân viên</span><span class="badge blue">${storesInRows} chi nhánh có lịch</span></div><div class="mos-board">${days.map((d,i)=>`<article class="mos-day"><div class="mos-day-head"><strong>${DAYS[i]}</strong><span>${fmt(d)}</span></div>${groups[d].length?groups[d].map(r=>`<div class="mos-shift ${kind(r.start_time)}" data-schedule-id="${esc(r.schedule_id||'')}"><b>${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</b><small>${esc(r.employee_name||'Nhân viên')}</small><small>${esc(r.store_code||r.store_name||'Cửa hàng')}</small></div>`).join(''):'<div class="mos-empty">Chưa có ca đã phát hành</div>'}</article>`).join('')}</div><div class="mos-note">Muốn chỉnh hoặc phân bổ lịch mới: vào <b>Điều phối lịch</b> để tạo lịch nháp, kiểm tra, duyệt rồi phát hành. Lịch chính thức không sửa trực tiếp tại màn hình này.</div>${state.lastError?`<div class="mos-error">${esc(state.lastError)}</div>`:''}</section>`;
+ root.innerHTML=`<section class="card"><div class="mos-head"><div class="mos-title"><h2>Lịch làm chính thức</h2><div class="muted" style="margin-top:5px">Chỉ hiển thị ca đã phát hành từ hệ thống; không dùng dữ liệu minh họa</div></div><div class="mos-controls"><label class="mos-field">Chi nhánh<select id="mosStore"><option value=""${managerScoped?" disabled":""}>${managerScoped?"Chọn chi nhánh được cấp quyền":"Tất cả chi nhánh được phép"}</option>${state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId||'')?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}</select></label><button class="btn" data-mos-week="prev">← Tuần trước</button><button class="btn" data-mos-week="today">Tuần này</button><button class="btn" data-mos-week="next">Tuần sau →</button><button class="btn" id="mosRefresh">↻ Tải lại</button><button class="btn primary" id="mosWorkforce">Điều phối lịch</button></div></div><div class="mos-meta"><span class="badge blue">Tuần ${esc(fmt(state.week))} – ${esc(fmt(add(state.week,6)))}</span><span class="badge green">${state.rows.length} ca đã phát hành</span><span class="badge blue">${people} nhân viên</span><span class="badge blue">${storesInRows} chi nhánh có lịch</span></div><div class="mos-board">${days.map((d,i)=>`<article class="mos-day"><div class="mos-day-head"><strong>${DAYS[i]}</strong><span>${fmt(d)}</span></div>${groups[d].length?groups[d].map(r=>`<div class="mos-shift ${kind(r.start_time)}" data-schedule-id="${esc(r.schedule_id||'')}"><b>${esc(hm(r.start_time))}–${esc(hm(r.end_time))}</b><small>${esc(r.employee_name||'Nhân viên')}</small><small>${esc(r.store_code||r.store_name||'Cửa hàng')}</small></div>`).join(''):'<div class="mos-empty">Chưa có ca đã phát hành</div>'}</article>`).join('')}</div><div class="mos-note">Muốn chỉnh hoặc phân bổ lịch mới: vào <b>Điều phối lịch</b> để tạo lịch nháp, kiểm tra, duyệt rồi phát hành. Lịch chính thức không sửa trực tiếp tại màn hình này.</div>${state.lastError?`<div class="mos-error">${esc(state.lastError)}</div>`:''}</section>`;
  bind();
 }
 function bind(){
  const root=view();if(!root)return;
- root.querySelector('#mosStore')?.addEventListener('change',async e=>{state.storeId=e.target.value||null;await refresh()});
+ root.querySelector('#mosStore')?.addEventListener('change',async e=>{const requested=e.target.value||null;if(managerScoped&&!requested)return;state.storeId=requested;await refresh()});
  root.querySelectorAll('[data-mos-week]').forEach(b=>b.addEventListener('click',async()=>{const a=b.dataset.mosWeek;state.week=a==='prev'?add(state.week,-7):a==='next'?add(state.week,7):monday(new Date());await refresh()}));
  root.querySelector('#mosRefresh')?.addEventListener('click',refresh);
  root.querySelector('#mosWorkforce')?.addEventListener('click',()=>{document.querySelector('.sidebar [data-view="workforce"]')?.click();const tab=document.querySelector('#view-workforce [data-tab="review"]');document.querySelectorAll('#view-workforce [data-tab]').forEach(x=>x.classList.remove('active'));document.querySelectorAll('#view-workforce .panel').forEach(x=>x.classList.remove('active'));tab?.classList.add('active');document.querySelector('#panel-review')?.classList.add('active')});
