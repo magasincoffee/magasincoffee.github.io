@@ -87,14 +87,16 @@ try {
         return {
           kpis: newCards.length, legacyCards: oldCards.length,
           title: root.querySelector("h1")?.textContent,
-          hasManagerSidebar: !!document.querySelector(".manager-v2-sidebar-source"),
+          hasManagerSidebar: !!document.querySelector(".m-shell-v2-sidebar"),
+          oldSidebarHidden: getComputedStyle(document.querySelector(".sidebar")).display === "none",
+          lightShell: getComputedStyle(document.querySelector(".m-shell-v2-sidebar")).backgroundColor === "rgb(248, 251, 255)",
           screenWidth: document.documentElement.scrollWidth, viewport: innerWidth,
           refresh: !!root.querySelector("[data-manager-today-refresh]"),
           actionCount: root.querySelectorAll("[data-workforce-jump]").length
         };
       });
       if (state.kpis !== 4 || state.legacyCards !== 0 || !state.hasManagerSidebar ||
-        state.title !== "Tổng quan cửa hàng" || state.screenWidth > state.viewport + 1 ||
+        state.title !== "Tổng quan cửa hàng" || !state.oldSidebarHidden || !state.lightShell || state.screenWidth > state.viewport + 1 ||
         !state.refresh || state.actionCount < 4)
         throw new Error(JSON.stringify(state));
       return JSON.stringify(state);
