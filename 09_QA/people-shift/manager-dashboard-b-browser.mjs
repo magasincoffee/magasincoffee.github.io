@@ -58,7 +58,7 @@ try {
       }));
       if (state.workers !== '2' || state.visibleRoster.length !== 2 || state.timeline !== 2 ||
         state.visibleRoster.some(x => x !== 'CN-QA-1')) throw new Error(JSON.stringify(state));
-      await page.locator('[data-workforce-jump="schedule"]').click();
+      await page.locator('.mdb-panel-head [data-workforce-jump="schedule"]').click();
       if (await page.locator('body').getAttribute('data-last-qa-jump') !== 'schedule')
         throw new Error("Existing canonical schedule jump missing");
       return JSON.stringify(state);
