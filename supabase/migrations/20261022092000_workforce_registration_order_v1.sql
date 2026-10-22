@@ -8,7 +8,7 @@ CREATE OR REPLACE FUNCTION public.list_workforce_registration_order_v1(
   p_week_start date
 )
 RETURNS TABLE(availability_id uuid, registered_at timestamptz)
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO public
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO ''
 AS $function$
 DECLARE v_role text := upper(coalesce(public.current_user_role(),''));
 BEGIN
