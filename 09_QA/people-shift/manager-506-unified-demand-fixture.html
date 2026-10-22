@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QA P1 Manager one Demand table / weekly overrides</title>
+<style>html,body{padding:0;margin:0;width:100%;height:100%;overflow-x:hidden}#app{display:block;width:100%;height:100%;border:0}</style></head>
+<body><script>
+(()=>{
+ 'use strict';
+ const A='11111111-1111-4111-8111-111111111111';
+ const B='22222222-2222-4222-8222-222222222222';
+ const state=window.__QA_DEMAND={
+   fail:new URLSearchParams(location.search).get('fail')==='yes',
+   calls:[], writes:[], weekWrites:[], weekly:new Map(), versions:new Map(), parentClientReads:0, childClientCreates:0,
+   stores:[{id:A,code:'CN1',name:'Chi nhánh 1',status:'ACTIVE'},{id:B,code:'CN2',name:'Chi nhánh 2',status:'ACTIVE'}],
+   requirements:[
+    {store_id:A,day_of_week:1,start_time:'06:00:00',end_time:'12:00:00',target_headcount:2},
+    {store_id:B,day_of_week:2,start_time:'07:00:00',end_time:'13:00:00',target_headcount:4}
+   ]
+ };
+ const client={
+  auth:{getUser:async()=>({data:{user:{id:'qa-manager'}},error:null})},
+  from(name){if(name!=='profiles')throw Error('ONLY_PROFILE_LOOKUP_ALLOWED');return{
+   select(){return this},eq(){return this},
+   async single(){return {data:{id:'qa-manager',username:'manager_qa',full_name:'Quản lý QA',role:'STORE_MANAGER',status:'ACTIVE',access_scope:'STORE'},error:null}}
+  }},
+  async rpc(name,args){
+    state.calls.push(name);
+    if(name==='get_manager_accessible_stores')return {data:state.stores,error:null};
+    if(name==='list_workforce_recurring_staffing_requirements_v1'){
+      if(state.fail)return {data:null,error:{message:'QA_LIST_UNAVAILABLE'}};
+      return {data:state.requirements.map(x=>({...x})),error:null};
+    }
+    if(name==='replace_workforce_recurring_staffing_requirements_v1'){
+      state.writes.push(JSON.parse(JSON.stringify(args.p_requirements)));
+      state.requirements=args.p_requirements.map(x=>({...x}));
+      return {data:{requirement_count:state.requirements.length},error:null};
+    }
+    const A=state.stores[0].id;
+    const monday=args?.p_week_start,scope=args?.p_store_id;
+    const key=scope+'|'+monday;
+    const fingerprint=()=>String(state.versions.get(key)||0).padStart(32,'0');
+    if(['get_workforce_weekly_override_state_v1','list_workforce_effective_weekly_staffing_v1',
+        'replace_workforce_weekly_overrides_v1'].includes(name)){
+      if(scope!==A)return {data:null,error:{message:'STORE_NOT_ALLOWED'}};
+      if(name==='get_workforce_weekly_override_state_v1')return {data:{
+        store_id:scope,week_start:monday,fingerprint:fingerprint(),
+        overrides:(state.weekly.get(key)||[]).map(x=>({...x}))
+      },error:null};
+      if(name==='list_workforce_effective_weekly_staffing_v1'){
+        const dates=i=>{const d=new Date(monday+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)};
+        const recurring=state.requirements.filter(x=>x.store_id===scope).map(x=>({
+          store_id:scope,work_date:dates(x.day_of_week-1),start_time:x.start_time,
+          end_time:x.end_time,target_headcount:x.target_headcount,demand_source:'RECURRING'
+        }));
+        const override=state.weekly.get(key)||[];
+        const rows=recurring.map(x=>{const o=override.find(z=>z.work_date===x.work_date &&
+          z.start_time===x.start_time.slice(0,5)&&z.end_time===x.end_time.slice(0,5));
+          return o?{...x,target_headcount:o.target_headcount,demand_source:'WEEK_OVERRIDE'}:x;
+        });
+        return {data:rows,error:null};
+      }
+      if(args.p_expected_fingerprint!==fingerprint())return {data:null,error:{message:'WEEK_OVERRIDE_STALE_RELOAD'}};
+      if(args.p_overrides.some(x=>x.work_date<monday || x.work_date>new Date(new Date(monday+'T12:00:00Z').getTime()+6*86400000).toISOString().slice(0,10)))
+       return {data:null,error:{message:'WEEK_OVERRIDE_DATE_OUT_OF_SCOPE'}};
+      state.weekWrites.push(JSON.parse(JSON.stringify(args)));
+      state.weekly.set(key,args.p_overrides.map(x=>({...x})));
+      state.versions.set(key,(state.versions.get(key)||0)+1);
+      return {data:{saved:args.p_overrides.length},error:null};
+    }
+    throw Error('UNEXPECTED_RPC:'+name);
+  }
+ };
+ window.MAGASIN_CORE={supabase:{get(){state.parentClientReads++;return client}}};
+})();
+</script><iframe id="app" title="QA nhu cầu nhân sự" src="/05_MANAGER/SchedulingV2/Demand/index.html?mode=live&amp;demand-preview&amp;qa=fixture"></iframe></body></html>
