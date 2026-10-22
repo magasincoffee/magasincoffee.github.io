@@ -9,6 +9,7 @@
  const B='22222222-2222-4222-8222-222222222222';
  const state=window.__QA_DEMAND={
    fail:new URLSearchParams(location.search).get('fail')==='yes',
+   role:'STORE_MANAGER',poison:null,
    calls:[], writes:[], weekWrites:[], weekly:new Map(), versions:new Map(), parentClientReads:0, childClientCreates:0,
    stores:[{id:A,code:'CN1',name:'Chi nhánh 1',status:'ACTIVE'},{id:B,code:'CN2',name:'Chi nhánh 2',status:'ACTIVE'}],
    requirements:[
@@ -20,7 +21,7 @@
   auth:{getUser:async()=>({data:{user:{id:'qa-manager'}},error:null})},
   from(name){if(name!=='profiles')throw Error('ONLY_PROFILE_LOOKUP_ALLOWED');return{
    select(){return this},eq(){return this},
-   async single(){return {data:{id:'qa-manager',username:'manager_qa',full_name:'Quản lý QA',role:'STORE_MANAGER',status:'ACTIVE',access_scope:'STORE'},error:null}}
+   async single(){return {data:{id:'qa-manager',username:'manager_qa',full_name:'Quản lý QA',role:state.role,status:'ACTIVE',access_scope:'STORE'},error:null}}
   }},
   async rpc(name,args){
     state.calls.push(name);
@@ -43,7 +44,15 @@
       if(scope!==A)return {data:null,error:{message:'STORE_NOT_ALLOWED'}};
       if(name==='get_workforce_weekly_override_state_v1')return {data:{
         store_id:scope,week_start:monday,fingerprint:fingerprint(),
-        overrides:(state.weekly.get(key)||[]).map(x=>({...x}))
+        overrides:(()=>{
+          const saved=(state.weekly.get(key)||[]).map(x=>({...x}));
+          const bad={work_date:'2026-12-14',start_time:'06:00',end_time:'12:00',target_headcount:3};
+          if(state.poison==='outside-week')return [bad];
+          if(state.poison==='duplicate')return [bad,bad].map(x=>({...x,work_date:monday}));
+          if(state.poison==='bad-slot')return [{...bad,work_date:monday,start_time:'04:45'}];
+          if(state.poison==='foreign-store')return [{...bad,work_date:monday,store_id:B}];
+          return saved;
+        })()
       },error:null};
       if(name==='list_workforce_effective_weekly_staffing_v1'){
         const dates=i=>{const d=new Date(monday+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)};

@@ -31,6 +31,7 @@ test('#506 P1 preserves server-owned weekly override writes and fail-closed scop
  ])assert.ok(weekly.includes(rpc),rpc);
  for(const guard of [
   'STORE_NOT_ALLOWED','WEEK_OVERRIDE_STATE_INVALID','WEEK_OVERRIDE_SCOPE_INVALID',
+  'validOverrides(state.overrides,selected,monday)','seen.has(k)',
   'p_expected_fingerprint','current.store!==store.value','current.week!==weekStart()',
   'event.stopImmediatePropagation()'
  ])assert.ok(weekly.includes(guard),guard);

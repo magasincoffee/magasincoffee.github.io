@@ -31,6 +31,23 @@ const key=r=>[text(r.work_date).slice(0,10),hm(r.start_time),hm(r.end_time)].joi
 const clean=r=>({work_date:text(r.work_date).slice(0,10),start_time:hm(r.start_time),end_time:hm(r.end_time),target_headcount:Number(r.target_headcount)});
 const mapped=items=>new Map((items||[]).map(item=>{const r=clean(item);return [key(r),r]}));
 const signature=map=>JSON.stringify([...map].sort(([a],[b])=>a.localeCompare(b)));
+// Fail closed on malformed, out-of-scope or duplicated server override records,
+// even when a future RPC response is unexpectedly inconsistent.
+const validOverrides=(items,selected,monday)=>{
+ if(!Array.isArray(items)||items.length>1500)return false;
+ const maxDay=dateAdd(monday,6),seen=new Set();
+ for(const item of items){
+  const day=text(item?.work_date),target=item?.target_headcount;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||day<monday||day>maxDay||
+   (item?.store_id!=null&&text(item.store_id)!==selected)||
+   !validBand(item?.start_time,item?.end_time)||
+   !Number.isInteger(target)||target<0||target>20)return false;
+  const k=key(item);
+  if(seen.has(k))return false;
+  seen.add(k);
+ }
+ return true;
+};
 let mode='recurring',current=null,base=new Map(),before=new Map(),changes=new Map(),extra=new Set(),saving=false,serial=0;
 const changed=()=>signature(before)!==signature(changes);
 const dirty=()=>saving||changed();
@@ -98,8 +115,12 @@ async function load(){
   const state=res.data||{};
   if(String(state.store_id)!==selected||String(state.week_start)!==monday||
     !Array.isArray(state.overrides)||!/^[0-9a-f]{32}$/.test(text(state.fingerprint)))throw Error('WEEK_OVERRIDE_STATE_INVALID');
+  if(!validOverrides(state.overrides,selected,monday))throw Error('WEEK_OVERRIDE_STATE_INVALID');
   if(!Array.isArray(eff.data)||eff.data.some(x=>String(x.store_id)!==selected||
-     !Array.from({length:7},(_,i)=>dateAdd(monday,i)).includes(text(x.work_date).slice(0,10))))throw Error('WEEK_OVERRIDE_SCOPE_INVALID');
+     !Array.from({length:7},(_,i)=>dateAdd(monday,i)).includes(text(x.work_date).slice(0,10))||
+     !validBand(x.start_time,x.end_time)||
+     !Number.isInteger(x.target_headcount)||x.target_headcount<0||x.target_headcount>20))
+    throw Error('WEEK_OVERRIDE_SCOPE_INVALID');
   if(!Array.isArray(recur.data))throw Error('RECURRING_REQUIREMENTS_INVALID');
   base=mapped(recur.data.filter(x=>String(x.store_id)===selected&&Number(x.day_of_week)>=1&&Number(x.day_of_week)<=7)
      .map(x=>({...x,work_date:dateAdd(monday,Number(x.day_of_week)-1)})));

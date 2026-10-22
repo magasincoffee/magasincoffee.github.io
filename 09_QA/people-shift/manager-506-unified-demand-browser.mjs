@@ -61,6 +61,24 @@ try{
   await frame.locator('#sv2DemandStatus').filter({hasText:'STORE_NOT_ALLOWED'}).waitFor();
   assert.equal(await frame.locator('#sv2DemandSave').isDisabled(),true);
   assert.equal(await page.evaluate(()=>window.__QA_DEMAND.weekWrites.length),count,'denied store cannot write');
+  await frame.locator('#sv2DemandStore').selectOption(A);
+  await ready();
+  for(const poison of ['outside-week','duplicate','bad-slot','foreign-store']){
+   await page.evaluate(kind=>{window.__QA_DEMAND.poison=kind},poison);
+   await frame.evaluate(()=>window.MAGASIN_SCHEDULING_V2_UNIFIED_WEEKLY.load());
+   await frame.locator('#sv2DemandStatus').filter({hasText:'WEEK_OVERRIDE_STATE_INVALID'}).waitFor();
+   assert.equal(await frame.locator('#sv2DemandSave').isDisabled(),true,
+    poison+' state cannot enable a write');
+   assert.equal(await page.evaluate(()=>window.__QA_DEMAND.weekWrites.length),count);
+  }
+  await page.evaluate(()=>{window.__QA_DEMAND.poison=null;window.__QA_DEMAND.role='EMPLOYEE'});
+  await frame.evaluate(()=>window.MAGASIN_SCHEDULING_V2_UNIFIED_WEEKLY.load());
+  await frame.locator('#sv2DemandStatus').filter({hasText:'ROLE_NOT_ALLOWED'}).waitFor();
+  assert.equal(await frame.locator('#sv2DemandSave').isDisabled(),true,'Employee cannot write weekly needs');
+  assert.equal(await page.evaluate(()=>window.__QA_DEMAND.weekWrites.length),count);
+  await page.evaluate(()=>{window.__QA_DEMAND.role='STORE_MANAGER'});
+  await frame.evaluate(()=>window.MAGASIN_SCHEDULING_V2_UNIFIED_WEEKLY.load());
+  await ready();
   assert.deepEqual(errors,[]);
   await page.screenshot({path:path.join(OUT,'manager-506-p1-demand-'+width+'.png'),fullPage:true});
   await page.close();
