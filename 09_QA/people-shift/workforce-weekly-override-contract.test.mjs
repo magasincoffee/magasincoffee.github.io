@@ -23,8 +23,11 @@ test('weekly override is a distinct server-owned table, not a destructive templa
 });
 test('Manager UI uses one scheduled weekly scope, server RPCs and explicit save',()=>{
  assert.doesNotThrow(()=>new Function(js));
- assert.match(html,/weekly-override-ui-v1\.js/);
- assert.match(html,/weekly-override-v1\.css/);
+ assert.doesNotMatch(html,/weekly-override-ui-v1\.js|weekly-override-v1\.css/,
+  'Scheduling no longer mounts a second weekly demand table');
+ const demandHtml=read('05_MANAGER/SchedulingV2/Demand/index.html');
+ assert.match(demandHtml,/unified-weekly-demand-v1\.js/);
+ assert.match(demandHtml,/id="sv2DemandTable"/);
  for(const rpc of ['list_workforce_recurring_staffing_requirements_v1','list_workforce_effective_weekly_staffing_v1',
   'get_workforce_weekly_override_state_v1','replace_workforce_weekly_overrides_v1'])assert.ok(js.includes(rpc),rpc);
  assert.match(js,/p_expected_fingerprint/);
