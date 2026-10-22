@@ -21,23 +21,25 @@ test("UI2-004 shell source parses and remains opt-in", () => {
   assert.doesNotMatch(shellCss, /(^|\n)\s*:root\s*\{/m);
 });
 
-test("Manager nav contract is canonical and hidden legacy destinations stay hidden", () => {
+test("Manager IA groups only real operations; hidden legacy views retain compatibility", () => {
   for (const fragment of [
     "['dashboard', '⌂', 'Tổng quan']",
-    "['demand', '▤', 'Nhu cầu nhân sự']",
-    "['reports', '▥', 'Báo cáo']",
-    "['workforce', '▦', 'Xếp lịch']",
-    "['swap', '⇄', 'Đổi / Cho ca']",
-    "['attendance', '◷', 'Chấm công']",
     "['staff', '◎', 'Nhân viên']",
-    "['payroll-self-check', '₫', 'Công / Lương']",
-    "['schedule', '▤', 'Lịch đã phát hành']",
-    "['tasks', '✓', 'Công việc']",
-    "['settings', '⚙', 'Cài đặt']"
-  ]) {
-    assert.ok(shellJs.includes(fragment), fragment);
+    "['payroll-self-check', '₫', 'Công / Lương (xem)']",
+    "['demand', '▤', 'Nhu cầu nhân sự']",
+    "['workforce', '▦', 'Xếp lịch']",
+    "['schedule', '▤', 'Lịch đã công bố']",
+    "['attendance', '◷', 'Chấm công']",
+    "['swap', '⇄', 'Cho / Đổi ca']",
+    "title: 'Lập lịch nhân sự'",
+    "title: 'Công & Điều chỉnh ca'"
+  ]) assert.ok(shellJs.includes(fragment),fragment);
+  for(const hidden of ["['tasks',","['reports',","['settings',"]){
+    assert.ok(!shellJs.includes(hidden),"hidden from sidebar: "+hidden);
   }
-  assert.ok(shellJs.includes("hidden: Object.freeze(['kpi', 'academy'])"));
+  assert.ok(shellJs.includes("hidden: Object.freeze(['kpi', 'academy', 'tasks', 'reports', 'settings'])"));
+  assert.ok(shellJs.includes('data-shell-disclosure'));
+  assert.ok(shellJs.includes('aria-expanded="false"'));
 });
 
 test("Owner nav contains only traced active destinations", () => {

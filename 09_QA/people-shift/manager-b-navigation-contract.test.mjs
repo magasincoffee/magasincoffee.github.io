@@ -20,11 +20,14 @@ test("Manager B sidebar follows approved primary order and preserves operational
   const manager = shell.slice(shell.indexOf("const MANAGER_NAV"),shell.indexOf("const OWNER_NAV"));
   const keys = [...manager.matchAll(/\['([^']+)',\s*'[^']+',\s*'[^']+'(?:,\s*'[^']+')?\]/g)].map(x=>x[1]);
   assert.deepEqual(keys,[
-    "dashboard","staff","demand","workforce","attendance","tasks","reports","settings",
-    "swap","schedule","payroll-self-check"
+    "dashboard","staff","payroll-self-check","demand","workforce","schedule","attendance","swap"
   ]);
-  for (const label of ["Tổng quan","Nhân viên","Nhu cầu nhân sự","Xếp lịch","Chấm công","Công việc","Báo cáo","Cài đặt"]) {
+  for (const label of ["Tổng quan","Nhân viên","Nhu cầu nhân sự","Xếp lịch","Chấm công",
+                        "Lập lịch nhân sự","Công & Điều chỉnh ca","Công / Lương (xem)"]) {
     assert.ok(manager.includes(label),label);
+  }
+  for(const hidden of ["['tasks',","['reports',","['settings',"]){
+    assert.ok(!manager.includes(hidden),"placeholder must not be a visible nav entry: "+hidden);
   }
   assert.match(shell,/['"]\/manager\/scheduling\/\?section=demand['"]/);
   assert.match(shell,/data-shell-view/);
@@ -36,7 +39,7 @@ test("Demand uses one role-checked Manager shell with dedicated routed content",
   const decision=managerRoute.indexOf("const demand=new URLSearchParams");
   assert.ok(roleGate>=0 && decision>roleGate,"role gate precedes demand route selection");
   assert.match(managerRoute,/SchedulingV2\/Demand\/index\.html/);
-  assert.match(managerRoute,/magasin-ui-v2-shell\.js\?v=20261021-manager-nav-b3/);
+  assert.match(managerRoute,/magasin-ui-v2-shell\.js\?v=20261022-manager-506-p0a/);
   assert.match(managerRoute,/data[sS]et\.magasinShellMode='standalone'/);
   assert.match(schedule,/href="\/manager\/scheduling\/\?section=demand" target="_top"/);
   assert.match(demand,/href="\/manager\/scheduling\/" target="_top"/);
@@ -51,7 +54,7 @@ test("Manager reports remain honest until a verified report reader exists", () =
     assert.match(s,/['"]reports['"]/);
   assert.match(shellIndex,/canonical-role-route-v1\.js\?v=20261021-manager-nav-b3/);
   assert.match(managerRuntime,/manager-shell-v1\.html\?v=20261021-manager-nav-b3/);
-  assert.match(managerRuntime,/magasin-ui-v2-shell\.js\?v=20261021-manager-nav-b3/);
+  assert.match(managerRuntime,/magasin-ui-v2-shell\.js\?v=20261022-manager-506-p0a/);
 });
 
 test("Owner navigation and Employee routes remain unchanged in the B sidebar change", () => {
