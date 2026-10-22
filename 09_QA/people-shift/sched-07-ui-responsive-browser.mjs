@@ -615,7 +615,7 @@ await check("ui2_004_manager_desktop_shell_nav_contract",async()=>{
     }));
     const sidebar=document.querySelector(".m-shell-v2-sidebar");
     const menu=document.querySelector("[data-shell-menu]");
-    const hidden=Object.fromEntries(["kpi","academy"].map(key=>{
+    const hidden=Object.fromEntries(["kpi","academy","tasks","reports","settings"].map(key=>{
       const node=document.querySelector('.sidebar [data-view="'+key+'"]');
       return [key,{hidden:node?.hidden,aria:node?.getAttribute("aria-hidden"),tabIndex:node?.tabIndex}];
     }));
@@ -626,16 +626,26 @@ await check("ui2_004_manager_desktop_shell_nav_contract",async()=>{
       hidden
     };
   });
-  const primary=["dashboard","workforce","swap","attendance","staff","payroll-self-check"];
-  const secondary=["schedule","tasks","settings"];
-  for(const key of [...primary,...secondary])if(!state.links.some(x=>x.key===key))throw new Error(JSON.stringify(state));
-  if(state.links.some(x=>["kpi","academy"].includes(x.key)))throw new Error(JSON.stringify(state.links));
-  if(!state.hidden.kpi.hidden||!state.hidden.academy.hidden)throw new Error(JSON.stringify(state.hidden));
+  const visible=["dashboard","staff","payroll-self-check","demand","workforce","schedule","attendance","swap"];
+  for(const key of visible)if(!state.links.some(x=>x.key===key))throw new Error(JSON.stringify(state));
+  if(state.links.some(x=>["kpi","academy","tasks","reports","settings"].includes(x.key)))throw new Error(JSON.stringify(state.links));
+  for(const key of ["kpi","academy","tasks","reports","settings"]){
+    if(!state.hidden[key].hidden)throw new Error(JSON.stringify(state.hidden));
+  }
+  const groups=await shellPage.locator("[data-shell-disclosure]").all();
+  if(groups.length!==2)throw new Error("Expected exactly two Manager disclosure groups");
+  for(const group of groups){
+    if(await group.getAttribute("aria-expanded")===null)throw new Error("Disclosure has no expanded state");
+    if(!await group.getAttribute("aria-controls"))throw new Error("Disclosure has no accessible panel");
+  }
   if(state.sidebarWidth<240||state.menuDisplay!=="none")throw new Error(JSON.stringify(state));
   return JSON.stringify(state);
 });
 
 await check("ui2_004_manager_active_nav_delegates_to_existing_view",async()=>{
+  await shellPage.locator('[data-shell-disclosure="planning"]').click();
+  if(await shellPage.locator('[data-shell-disclosure="planning"]').getAttribute('aria-expanded')!=="true")
+    throw new Error("Planning disclosure failed to expand");
   await shellPage.locator('.m-shell-v2-nav__item[data-shell-key="workforce"]').click();
   const state=await shellPage.evaluate(()=>({
     sourceActive:document.querySelector('.sidebar [data-view="workforce"]')?.classList.contains("active"),

@@ -329,3 +329,11 @@ body.sv2-nav-ready .sv2-nav a.is-active{
   box-shadow:inset 3px 0 #2874ed
 }
 body.sv2-nav-ready .sv2-app-header{border-bottom:1px solid #e4ecf7}
+
+/* #506 P0: direct standalone Scheduling nav matches Manager grouped IA. */
+body.sv2-nav-ready .sv2-nav-disclosure summary{list-style:none;cursor:pointer;min-height:44px;padding:10px 13px;display:flex;align-items:center;font-weight:700;color:#243d61;border-radius:9px}
+body.sv2-nav-ready .sv2-nav-disclosure summary::-webkit-details-marker{display:none}
+body.sv2-nav-ready .sv2-nav-disclosure summary::after{content:"⌄";margin-left:auto}
+body.sv2-nav-ready .sv2-nav-disclosure[open] summary::after{transform:rotate(180deg)}
+body.sv2-nav-ready .sv2-nav-disclosure summary:focus-visible{outline:2px solid #2874ed;outline-offset:2px}
+body.sv2-nav-ready .sv2-nav-disclosure a{display:flex;align-items:center;margin-left:12px;min-height:44px}

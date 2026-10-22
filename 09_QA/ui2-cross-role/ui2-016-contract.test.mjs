@@ -43,7 +43,7 @@ test("UI2-016 shared visual vocabulary remains canonical",()=>{
 
 test("UI2-016 shell cache chain is bumped without moving the Owner path",()=>{
   const managerRuntime=read("05_MANAGER/runtime/manager-runtime-v1.html");
-  assert.match(managerRuntime,/magasin-ui-v2-shell\.css\?v=20261021-mockup-b1/);
+  assert.match(managerRuntime,/magasin-ui-v2-shell\.css\?v=20261022-manager-506-p0a/);
   assert.doesNotMatch(managerRuntime,/magasin-ui-v2-shell\.css\?v=20260925-ui2-004/);
 
   for(const p of [

@@ -101,8 +101,9 @@ assert.deepEqual(chromeAudit,{
   oldHeaderCount:0,
   sidebarCount:1,
   topbarCount:1,
-  tasksNavigationVisible:true
-},'Canonical Manager must have one visible shell and no legacy chrome');
+  // #506: Task has no connected source, so hide its sidebar link without breaking deep links.
+  tasksNavigationVisible:false
+},'Canonical Manager must have one visible shell, no legacy chrome, and no unconnected Task menu');
 const runtimeFrame = page.frames().find(f => f.url().includes("/05_MANAGER/runtime/manager-runtime-v1.html"));
 const heading = await shell.locator("#view-tasks h2").first().textContent();
 const debug = {

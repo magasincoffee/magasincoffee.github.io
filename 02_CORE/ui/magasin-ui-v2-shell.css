@@ -605,3 +605,13 @@ body[data-magasin-shell-v2] .m-shell-v2-logout:hover{
 body[data-magasin-shell-v2] .m-shell-v2-logout:focus-visible{
   outline:3px solid #91bafd;outline-offset:2px
 }
+
+/* #506 P0 — Manager sidebar disclosure groups */
+body[data-magasin-shell-v2] .m-shell-v2-nav__disclosure{margin-top:8px}
+body[data-magasin-shell-v2] .m-shell-v2-nav__disclosure-btn{appearance:none}
+body[data-magasin-shell-v2] .m-shell-v2-nav__disclosure-btn[aria-expanded="true"]{background:#f0f5fc;color:#1648a8}
+body[data-magasin-shell-v2] .m-shell-v2-nav__chevron{margin-left:auto}
+body[data-magasin-shell-v2] .m-shell-v2-nav__disclosure-btn[aria-expanded="true"] .m-shell-v2-nav__chevron{transform:rotate(180deg)}
+body[data-magasin-shell-v2] .m-shell-v2-nav__submenu{display:grid;gap:4px;padding:4px 0 0 13px}
+body[data-magasin-shell-v2] .m-shell-v2-nav__submenu[hidden]{display:none!important}
+body[data-magasin-shell-v2] .m-shell-v2-nav__disclosure-btn:focus-visible{outline:2px solid #2874ed;outline-offset:2px}

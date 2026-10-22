@@ -28,8 +28,8 @@ test('Scheduling and recurring demand screens load the same Manager nav componen
     source('05_MANAGER/SchedulingV2/Demand/index.html'),
     source('05_MANAGER/SchedulingV2/manager-navigation-v2.js')
   ]);
-  assert.match(schedule, /src="\.\/manager-navigation-v2\.js\?v=20261021-manager-nav-b3"/);
-  assert.match(demand, /src="\.\.\/manager-navigation-v2\.js\?v=20261021-manager-nav-b3"/);
+  assert.match(schedule, /src="\.\/manager-navigation-v2\.js\?v=20261022-manager-506-p0a"/);
+  assert.match(demand, /src="\.\.\/manager-navigation-v2\.js\?v=20261022-manager-506-p0a"/);
   assert.match(nav, /const demandPage = location\.pathname\.includes\('\/SchedulingV2\/Demand\/'\)/);
   assert.match(nav, /nav\.replaceChildren\(\)/);
   assert.match(nav, /key === current/);
@@ -37,33 +37,37 @@ test('Scheduling and recurring demand screens load the same Manager nav componen
   for (const url of [
     '/manager/', '/manager/scheduling/', '/manager/schedule/',
     '/manager/#staff', '/manager/#swap', '/manager/#attendance',
-    '/manager/#payroll-self-check', '/manager/#tasks', '/manager/#reports', '/manager/#settings', '/manager/scheduling/?section=demand'
+    '/manager/#payroll-self-check', '/manager/scheduling/?section=demand'
   ]) assert.ok(nav.includes(url), url);
   assert.match(nav, /link\.target = '_top'/);
   assert.match(nav, /\['demand',/);
   assert.match(nav, /const current = demandPage \? 'demand' : 'workforce'/);
 });
 
-test('Shared nav matches the existing Manager shell primary and secondary navigation', async () => {
-  const [shell, nav] = await Promise.all([
+test('Scheduling fallback mirrors the approved #506 Manager groups without revealing placeholder links',async()=>{
+  const [shell,nav]=await Promise.all([
     source('02_CORE/ui/magasin-ui-v2-shell.js'),
     source('05_MANAGER/SchedulingV2/manager-navigation-v2.js')
   ]);
-  for (const item of [
-    ['dashboard', 'Tổng quan'], ['workforce', 'Xếp lịch'],
-    ['demand', 'Nhu cầu nhân sự'], ['reports', 'Báo cáo'],
-    ['swap', 'Đổi / Cho ca'], ['attendance', 'Chấm công'],
-    ['staff', 'Nhân viên'], ['payroll-self-check', 'Công / Lương'],
-    ['schedule', 'Lịch đã phát hành'], ['tasks', 'Công việc'],
-    ['settings', 'Cài đặt']
-  ]) {
-    const [key, label] = item;
-    assert.ok(shell.includes("'" + key + "'") && shell.includes("'" + label + "'"), key + ' in Manager shell');
-    assert.ok(nav.includes("'" + key + "'") && nav.includes("'" + label + "'"), key + ' in Scheduling shell');
+  const visible = [
+    ['dashboard','Tổng quan'],['staff','Nhân viên'],
+    ['payroll-self-check','Công / Lương (xem)'],
+    ['demand','Nhu cầu nhân sự'],['workforce','Xếp lịch'],
+    ['schedule','Lịch đã công bố'],['attendance','Chấm công'],
+    ['swap','Cho / Đổi ca']
+  ];
+  for(const [key,label] of visible){
+    assert.ok(shell.includes("'"+key+"'") && shell.includes("'"+label+"'"),key+' in shell');
+    assert.ok(nav.includes("'"+key+"'") && nav.includes("'"+label+"'"),key+' in fallback');
   }
-  assert.doesNotMatch(nav, /\.rpc\(|\.from\(|\.insert\(|\.update\(|publish_schedule_generation/);
-  assert.match(nav, /document\.createElement\('a'\)/);
-  assert.match(nav, /label\.textContent = title/);
+  for(const hidden of ['tasks','reports','settings']){
+    assert.ok(shell.includes("'"+hidden+"'"),'hidden compatibility contract: '+hidden);
+    assert.ok(!nav.includes("['"+hidden+"',"),'fallback hides '+hidden);
+  }
+  assert.ok(nav.includes("section.collapsible ? 'details' : 'div'"));
+  assert.doesNotMatch(nav,/\.rpc\(|\.from\(|\.insert\(|\.update\(|publish_schedule_generation/);
+  assert.match(nav,/document\.createElement\('a'\)/);
+  assert.match(nav,/label\.textContent = title/);
 });
 
 test('Responsive drawer exposes keyboard and backdrop dismissal without blocking main content', async () => {

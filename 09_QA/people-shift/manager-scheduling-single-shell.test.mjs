@@ -10,8 +10,8 @@ test('canonical Scheduling Manager host owns precisely the same shared Manager s
   source('02_CORE/ui/magasin-ui-v2-shell.js'),
   source('02_CORE/ui/magasin-ui-v2-shell.css')
  ]);
- assert.match(host,/magasin-ui-v2-shell\.css\?v=20261021-mockup-b1/);
- assert.match(host,/magasin-ui-v2-shell\.js\?v=20261021-manager-nav-b3/);
+ assert.match(host,/magasin-ui-v2-shell\.css\?v=20261022-manager-506-p0a/);
+ assert.match(host,/magasin-ui-v2-shell\.js\?v=20261022-manager-506-p0a/);
  assert.match(host,/window\.__MAGASIN_UI_V2_SHELL__=\{role:'MANAGER',mode:'standalone'\}/);
  assert.match(host,/requireActive\(\)/);
  assert.match(host,/role!=='STORE_MANAGER'/);
@@ -37,8 +37,8 @@ test('Scheduling and Demand suppress child sidebar only within the authenticated
   assert.match(page,/window\.top!==window/);
   assert.match(page,/window\.top\.location\.pathname/);
   assert.match(page,/dataset\.sv2ManagerHost='shared'/);
-  assert.match(page,/schedule-v2\.css\?v=(?:20261020-weekly1|20261021-focused1|20261021-mockup-c1)/);
-  assert.match(page,/manager-navigation-v2\.js\?v=20261021-manager-nav-b3/);
+  assert.match(page,/schedule-v2\.css\?v=(?:20261020-weekly1|20261021-focused1|20261022-manager-506-p0a)/);
+  assert.match(page,/manager-navigation-v2\.js\?v=20261022-manager-506-p0a/);
  }
  assert.match(nav,/dataset\.sv2ManagerHost === 'shared'\) return/);
  assert.match(css,/html\[data-sv2-manager-host="shared"\] \.sv2-sidebar/);
@@ -71,4 +71,23 @@ test('shared shell observes late profile hydration once and normalizes identity'
  assert.equal((shell.match(/new MutationObserver\(syncAccount\)/g)||[]).length,1);
  assert.ok(shell.includes('rawName.replace(/\\s*·\\s*OWNER\\s*$/i'));
  assert.ok(shell.includes('split(/\\s+/)'));
+});
+
+test('Issue #506 groups business actions and hides placeholder menu items',async()=>{
+ const [shell,nav,css] = await Promise.all([
+  source('02_CORE/ui/magasin-ui-v2-shell.js'),
+  source('05_MANAGER/SchedulingV2/manager-navigation-v2.js'),
+  source('02_CORE/ui/magasin-ui-v2-shell.css')
+ ]);
+ for(const text of [shell,nav]){
+  assert.ok(text.includes('Lập lịch nhân sự'));
+  assert.ok(text.includes('Công & Điều chỉnh ca'));
+  assert.ok(!text.includes('Nghiệp vụ khác'));
+ }
+ assert.ok(shell.includes('data-shell-disclosure'));
+ assert.ok(shell.includes('aria-expanded="false"'));
+ assert.ok(shell.includes('panel.hidden = expanded'));
+ assert.ok(shell.includes("'kpi', 'academy', 'tasks', 'reports', 'settings'"));
+ assert.ok(nav.includes("section.collapsible ? 'details' : 'div'"));
+ assert.ok(css.includes('.m-shell-v2-nav__submenu[hidden]'));
 });
