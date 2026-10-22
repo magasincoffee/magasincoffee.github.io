@@ -12,7 +12,7 @@ const probes='09_QA/people-shift/workforce-server-guards-487-db-boundaries.sql';
 test('employee changes are blocked at DB write boundary for INSERT/UPDATE/DELETE, not just the UI',async()=>{
   const sql=await read(availability);
   assert.match(sql,/create trigger trg_employee_availability_window_v1\s+before insert or update or delete/i);
-  assert.match(sql,/security definer[\s\S]*set search_path=public/i);
+  assert.match(sql,/security definer[\s\S]*set search_path=''/i);
   assert.match(sql,/v_actor uuid := auth\.uid\(\)/);
   assert.match(sql,/old\.user_id is distinct from v_actor/);
   assert.match(sql,/new\.user_id is distinct from v_actor/);
