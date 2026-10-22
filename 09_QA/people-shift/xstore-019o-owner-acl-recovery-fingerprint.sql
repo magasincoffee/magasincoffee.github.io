@@ -1,5 +1,7 @@
 -- XSTORE-019O: fingerprint only, never select/store data rows.
--- Expected against read-only MAGASIN-NOIBO catalog, 2026-10-15.
+-- Live metadata fingerprint recomputed via SELECT-only query, 2026-10-22 (Issue #487).
+-- 2026-10-15 values are stale following normal database migrations: 171/114/57.
+-- Never mark release ready without matching a fresh read-only production catalog.
 -- Differential ownership/ACL assurance on an isolated full backup restore.
 WITH acl_entries AS (
  SELECT 'rel|'||n.nspname||'.'||c.relname||'|'||c.relkind::text||'|'||
@@ -26,8 +28,8 @@ WITH acl_entries AS (
  count(*)::int AS policies
  FROM pg_policies WHERE schemaname='public'
 )
-SELECT CASE WHEN acl_summary.fingerprint='b5b88de4957daa0e8ad372002134cdf0'
-  AND acl_summary.objects=171 AND acl_summary.functions=114 AND acl_summary.relations=57
+SELECT CASE WHEN acl_summary.fingerprint='f596c61cf0e492046e61336494b90813'
+  AND acl_summary.objects=187 AND acl_summary.functions=126 AND acl_summary.relations=61
   AND policy_summary.fingerprint='e28436fb4f8558416d23eb8f5af57795'
   AND policy_summary.policies=54
  THEN 'PASS' ELSE 'FAIL' END
