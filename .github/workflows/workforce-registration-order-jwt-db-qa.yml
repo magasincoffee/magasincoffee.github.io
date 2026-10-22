@@ -1,6 +1,13 @@
 name: Workforce Registration Order Signed JWT DB E2E
 
 on:
+  push:
+    paths:
+      - 'supabase/migrations/20261022092000_workforce_registration_order_v1.sql'
+      - '05_MANAGER/SchedulingV2/store-planner-v1.js'
+      - '05_MANAGER/SchedulingV2/auto-ui-v1.js'
+      - '09_QA/people-shift/workforce-registration-order-*'
+      - '.github/workflows/workforce-registration-order-jwt-db-qa.yml'
   pull_request:
     paths:
       - 'supabase/migrations/20261022092000_workforce_registration_order_v1.sql'
