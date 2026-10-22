@@ -25,13 +25,14 @@ CREATE FUNCTION public.current_user_role() RETURNS text LANGUAGE sql STABLE SET 
 $$;
 CREATE FUNCTION public.can_access_store(p_store_id uuid) RETURNS boolean
 LANGUAGE sql STABLE SET search_path TO '' AS $$
- SELECT EXISTS (
-   SELECT 1 FROM public.stores s WHERE s.id=p_store_id AND s.status='ACTIVE'
-   AND (public.current_user_role()='OWNER'
-     OR EXISTS (SELECT 1 FROM public.qa_manager_access a
-       WHERE a.user_id=auth.uid() AND a.store_id=s.id))
- )
-$$;
+ -- Match live MAGASIN semantics: OWNER can_access_store returns true
+ -- even for an unknown UUID; the new RPC must independently check ACTIVE store.
+ SELECT CASE WHEN public.current_user_role()='OWNER' THEN true ELSE EXISTS (
+   SELECT 1 FROM public.stores s
+   JOIN public.qa_manager_access a ON a.store_id=s.id
+   WHERE s.id=p_store_id AND a.user_id=auth.uid()
+ ) END
+$;
 -- Deliberately no table SELECT grants to anon/authenticated (RPC-only).
 INSERT INTO public.stores VALUES
 ('00000000-0000-4000-8000-000000000101','ACTIVE'),
