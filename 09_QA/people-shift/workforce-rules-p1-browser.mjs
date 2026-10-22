@@ -14,6 +14,10 @@ try{
  await page.goto(BASE+'/09_QA/people-shift/workforce-rules-p1-fixture.html?auto-preview',{waitUntil:'networkidle'});
  await page.getByRole('button',{name:'Đề xuất xếp lịch'}).click();
  await page.locator('[data-autostatus]').filter({hasText:'Đề xuất thêm 1 ca'}).waitFor();
+ const previewText=await page.locator('[data-summary]').innerText();
+ assert.match(previewText,/Ưu tiên Full-time trước Part-time/,'draft preview must explain FT before PT');
+ assert.match(previewText,/Thứ tự đăng ký sớm nhất chưa được xác minh/,'same-category registration order must remain visible as unverified');
+ assert.match(previewText,/Thiếu người chỉ là cảnh báo|Không còn thiếu người/,'coverage warning must remain visible too');
  const qa=await page.evaluate(async()=>{
   const plan=window.MAGASIN_SCHEDULING_V2_STORE_PLANNER;
   const weeks=['2026-10-26','2026-11-02','2026-11-09'];
