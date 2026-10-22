@@ -19,3 +19,19 @@
 #sv2CoverageTable td[data-coverage="ZERO"],#sv2CoverageTable td[data-coverage="UNCONFIGURED"]{color:#8a98a9}
 .sv2-coverage-key{margin-top:12px}
 @media(max-width:580px){.sv2-coverage{padding:12px}.sv2-coverage header{flex-direction:column}#sv2CoverageReload{width:100%}}
+
+/* P1: coverage strips sit in the existing weekly shift roster, not another table */
+.sv2-roster .sv2-coverage-inline{background:transparent;border:0;padding:8px 0;margin:6px 0 0}
+.sv2-roster .sv2-coverage-inline #sv2CoverageStatus{margin:4px 0}
+.sv2-roster .sv2-coverage-inline #sv2CoverageReload{margin-top:7px}
+.sv2-roster-coverage-row>th,.sv2-roster-coverage-row>td{vertical-align:top;background:#f8fafc}
+.sv2-roster-coverage-row>th strong,.sv2-roster-coverage-row>th small{display:block}
+.sv2-roster-coverage-row>th small{font-size:11px;font-weight:400}
+.sv2-roster-coverage-slots{max-height:265px;overflow-y:auto;display:grid;gap:3px;padding:2px;min-width:96px}
+.sv2-roster-coverage-chip{font-size:10px;line-height:1.35;padding:3px 4px;display:block;border-radius:5px;background:#f0f3f7;color:#667085}
+.sv2-roster-coverage-chip[data-coverage="SHORTAGE"]{background:#fff0e6;color:#a63b14;font-weight:700}
+.sv2-roster-coverage-chip[data-coverage="ENOUGH"]{background:#e6f6ed;color:#166c41}
+.sv2-roster-coverage-chip[data-coverage="EXCESS"]{background:#e6f0fd;color:#164f91}
+.sv2-roster-coverage-chip[data-coverage="CONFLICT"]{background:#ffdfdf;color:#922a2a;font-weight:700}
+.sv2-roster-coverage-chip[data-coverage="ZERO"]{background:#f1f5f9;color:#64748b}
+.sv2-roster-coverage-chip:focus-visible{outline:2px solid #1e62b8;outline-offset:2px}
