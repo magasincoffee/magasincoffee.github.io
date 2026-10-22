@@ -2,12 +2,14 @@
 if(window.MAGASIN_SCHEDULING_V2_RELEASE_PREVIEW_ENABLED!==true||!new URLSearchParams(window.location.search).has('release-preview'))return;
 const container=document.querySelector('.sv2-roster'),store=document.getElementById('sv2Store'),week=document.getElementById('sv2Week');
 if(!container||!store||!week)return;
+const weekNav=window.MAGASIN_SCHEDULING_V2_WEEK_NAV;
+if(!weekNav?.weekStart)throw Error('WEEK_NAV_NOT_READY');
 const bar=document.createElement('section');bar.className='sv2-release-bar';bar.setAttribute('aria-label','Kiểm tra và phát hành lịch V2');
 bar.innerHTML='<div class="sv2-release-head"><div><strong>Kiểm tra & phát hành</strong><p>Chỉ dùng trong môi trường nghiệm thu. Lịch thiếu người vẫn có thể phát hành khi không có lỗi bắt buộc.</p></div><span data-stage>Đang tải</span></div><div class="sv2-release-actions"><button type="button" data-action="validate" disabled>Kiểm tra</button><button type="button" data-action="review" disabled>Duyệt</button><button type="button" data-action="publish" disabled>Phát hành</button></div><p role="status" aria-live="polite" data-message>Đang kiểm tra trạng thái bản nháp…</p><details data-diagnostics hidden><summary>Xem lỗi và cảnh báo</summary><ul data-details></ul></details>';
 container.insertAdjacentElement('afterend',bar);
 const buttons=[...bar.querySelectorAll('[data-action]')],message=bar.querySelector('[data-message]'),details=bar.querySelector('[data-diagnostics]'),items=bar.querySelector('[data-details]'),stage=bar.querySelector('[data-stage]');
 let busy=false,loadedStatus='NONE',scope='',notice='';
-const monday=()=>{const date=new Date(String(week.value||'')+'T12:00:00');if(!Number.isFinite(date.getTime()))return '';date.setDate(date.getDate()-(date.getDay()+6)%7);return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-')};
+const monday=()=>weekNav.weekStart(week.value);
 const sameScope=()=>String(store.value)+'|'+monday();
 function disable(){buttons.forEach(b=>b.disabled=true)}
 function redraw(){disable();if(busy)return;bar.querySelector('[data-action="validate"]').disabled=!['DRAFT','REVIEWED'].includes(loadedStatus);bar.querySelector('[data-action="review"]').disabled=loadedStatus!=='DRAFT';bar.querySelector('[data-action="publish"]').disabled=loadedStatus!=='REVIEWED'}
