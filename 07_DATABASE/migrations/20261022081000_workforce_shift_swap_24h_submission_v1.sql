@@ -17,7 +17,7 @@ create or replace function public.shift_swap_submission_on_time_v1(
 returns boolean
 language sql
 stable
-set search_path=public
+set search_path=''
 as $function$
   select coalesce(
     p_requester_date is not null
@@ -37,7 +37,7 @@ create or replace function public.enforce_shift_swap_submission_time_v1()
 returns trigger
 language plpgsql
 security definer
-set search_path=public
+set search_path=''
 as $function$
 declare
   v_requester public.work_schedules%rowtype;
