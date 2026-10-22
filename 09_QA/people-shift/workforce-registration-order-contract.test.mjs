@@ -12,6 +12,7 @@ test('scoped read-only DB function exposes timestamps but not employee secrets',
   assert.match(sql,/v_role NOT IN \('OWNER','STORE_MANAGER'\)/);
   assert.match(sql,/p\.status='ACTIVE'/);
   assert.match(sql,/public\.can_access_store\(p_store_id\)/);
+  assert.match(sql,/public\.stores s[\s\S]*s\.id=p_store_id AND s\.status='ACTIVE'/);
   assert.match(sql,/extract\(isodow FROM p_week_start\)<>1/);
   assert.match(sql,/ea\.work_date BETWEEN p_week_start AND p_week_start\+6/);
   assert.match(sql,/esp\.employee_id=ea\.user_id AND esp\.store_id=p_store_id/);
