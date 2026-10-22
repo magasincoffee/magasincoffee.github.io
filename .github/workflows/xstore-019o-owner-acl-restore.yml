@@ -205,6 +205,30 @@ jobs:
             # allowlisted class and a one-way truncated SHA; never raw SQL/stderr.
             node 09_QA/people-shift/xstore-019o-restore-error-classifier.mjs \
               "$RUNNER_TEMP/xstore019o-pgrestore-stderr"
+            # Diagnostics ONLY on a fresh network-isolated database, never production.
+            # Convert the encrypted, authenticated archive into a private temporary
+            # psql script to get an SQLSTATE-only error, not raw SQL/PII. The
+            # original strict pg_restore failure remains the release-blocking gate.
+            docker exec xstore019o-acl-proof createdb -U postgres xstore019o_diag
+            if docker run --rm --network none --user "$(id -u):$(id -g)" \
+                --volume "$BACKUP_WORK:/backup" postgres:17 \
+                pg_restore --file=/backup/restore-diagnose.sql \
+                /backup/restore-check.dump >/dev/null 2>/dev/null; then
+              chmod 600 "$BACKUP_WORK/restore-diagnose.sql"
+              if ! docker exec -i xstore019o-acl-proof \
+                  psql -U supabase_admin -d xstore019o_diag \
+                  -X -q -v ON_ERROR_STOP=1 -v VERBOSITY=sqlstate \
+                  < "$BACKUP_WORK/restore-diagnose.sql" >/dev/null \
+                  2>"$RUNNER_TEMP/xstore019o-diagnose-sqlstate"; then
+                node 09_QA/people-shift/xstore-019o-restore-error-classifier.mjs \
+                  "$RUNNER_TEMP/xstore019o-diagnose-sqlstate"
+              else
+                echo 'XSTORE_019O_SQLSTATE_DIAGNOSTIC_NO_MATCH; STRICT_RESTORE_STILL_FAILED'
+              fi
+            else
+              echo 'XSTORE_019O_SQLSTATE_DIAGNOSTIC_SCRIPT_UNAVAILABLE; STRICT_RESTORE_STILL_FAILED'
+            fi
+            rm -f "$BACKUP_WORK/restore-diagnose.sql" "$RUNNER_TEMP/xstore019o-diagnose-sqlstate"
             echo '::error::XSTORE_019O_REAL_OWNER_ACL_ISOLATED_RESTORE=FAIL; NO_PRODUCTION_WRITE'
             exit 1
           fi
