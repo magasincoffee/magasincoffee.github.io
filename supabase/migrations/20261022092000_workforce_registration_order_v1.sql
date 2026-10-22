@@ -19,7 +19,12 @@ BEGIN
     WHERE p.id=auth.uid() AND p.status='ACTIVE'
       AND upper(coalesce(p.role,''))=v_role
   ) THEN RAISE EXCEPTION 'ACTOR_NOT_ACTIVE'; END IF;
-  IF p_store_id IS NULL OR NOT public.can_access_store(p_store_id) THEN
+  -- Live can_access_store() returns TRUE for OWNER even for a nonexistent store UUID.
+  -- Require a real ACTIVE store independently to avoid accepting phantom/inactive scope.
+  IF p_store_id IS NULL OR NOT EXISTS (
+    SELECT 1 FROM public.stores s
+    WHERE s.id=p_store_id AND s.status='ACTIVE'
+  ) OR NOT public.can_access_store(p_store_id) THEN
     RAISE EXCEPTION 'STORE_NOT_ALLOWED';
   END IF;
   IF p_week_start IS NULL OR extract(isodow FROM p_week_start)<>1 THEN
