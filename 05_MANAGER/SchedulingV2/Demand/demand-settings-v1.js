@@ -4,7 +4,7 @@ const ctx=()=>{const x=window.MAGASIN_SCHEDULING_V2_CONTEXT;if(!x?.client||!x?.a
 const hm=t=>String(t||'').slice(0,5),min=t=>{const m=hm(t).match(/^(\d{2}):(\d{2})$/);return m?Number(m[1])*60+Number(m[2]):NaN};
 const norm=r=>({store_id:String(r.store_id||''),day_of_week:Number(r.day_of_week),start_time:hm(r.start_time),end_time:hm(r.end_time),target_headcount:Number(r.target_headcount||0)});
 const fingerprint=rows=>JSON.stringify(rows.map(norm).sort((a,b)=>a.store_id.localeCompare(b.store_id)||a.day_of_week-b.day_of_week||a.start_time.localeCompare(b.start_time)||a.end_time.localeCompare(b.end_time)||a.target_headcount-b.target_headcount));
-let all=[],baseline='',bands=[],selected='',dirty=false,busy=false;const writable=()=>window.MAGASIN_SCHEDULING_V2_DEMAND_PREVIEW_ENABLED===true&&new URLSearchParams(window.location.search).has('demand-preview');
+let all=[],baseline='',bands=[],selected='',dirty=false,busy=false,viewMode='recurring';const writable=()=>window.MAGASIN_SCHEDULING_V2_DEMAND_PREVIEW_ENABLED===true&&new URLSearchParams(window.location.search).has('demand-preview');
 const announce=text=>{status.textContent=text};
 const timed=(promise,ms=20000)=>{let timer;return Promise.race([
   promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('REQUEST_TIMEOUT')),ms)})
@@ -19,7 +19,7 @@ const validBand=(start,end)=>Number.isFinite(min(start))&&Number.isFinite(min(en
 const bandClass=start=>min(start)<720?'sv2-band-morning':min(start)<1020?'sv2-band-afternoon':'sv2-band-evening';
 function rowsForStore(){return bands.flatMap(b=>Array.from({length:7},(_,i)=>({store_id:selected,day_of_week:i+1,start_time:b.start,end_time:b.end,target_headcount:b.values[i]})).filter(r=>r.target_headcount>0))}
 function setDirty(){dirty=true;save.disabled=!writable();announce('Chưa lưu thay đổi. Nhấn Lưu nhu cầu nhân sự khi hoàn tất.')}
-function render(){body.replaceChildren();if(!bands.length){const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=8;td.textContent='Chưa thiết lập khung giờ. Chọn giờ bắt đầu, giờ kết thúc và nhấn Thêm khung giờ.';tr.appendChild(td);body.appendChild(tr);return}
+function render(){if(viewMode!=='recurring')return;body.replaceChildren();if(!bands.length){const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=8;td.textContent='Chưa thiết lập khung giờ. Chọn giờ bắt đầu, giờ kết thúc và nhấn Thêm khung giờ.';tr.appendChild(td);body.appendChild(tr);return}
  for(const b of bands){const tr=document.createElement('tr'),td=document.createElement('th');td.scope='row';const wrap=document.createElement('span');wrap.className='sv2-demand-band '+bandClass(b.start);const title=document.createElement('span');title.textContent=b.start+'–'+b.end;const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.title='Xóa khung '+title.textContent;remove.setAttribute('aria-label',remove.title);remove.addEventListener('click',()=>{if(!window.confirm('Xóa khung '+title.textContent+' khỏi cả bảy ngày (chưa lưu)?'))return;bands=bands.filter(x=>x!==b);setDirty();render()});wrap.append(title,remove);td.appendChild(wrap);tr.appendChild(td);
  for(let i=0;i<7;i++){const cell=document.createElement('td');const input=document.createElement('input');input.type='number';input.min='0';input.max='20';input.step='1';input.value=String(b.values[i]);input.setAttribute('aria-label','Số người cần, thứ '+(i+2)+', khung '+b.start+' đến '+b.end);input.addEventListener('change',()=>{const n=Number(input.value);if(!Number.isInteger(n)||n<0||n>20){input.value=String(b.values[i]);announce('Số người cần phải là số nguyên từ 0 đến 20.');return}b.values[i]=n;setDirty()});cell.appendChild(input);tr.appendChild(cell)}body.appendChild(tr)}
 }
@@ -69,8 +69,27 @@ save.addEventListener('click',async()=>{if(!writable()){announce('Cài đặt nh
  const result=await c.client().rpc('replace_workforce_recurring_staffing_requirements_v1',{p_requirements:payload});if(result.error)throw result.error;
  const updated=await c.client().rpc('list_workforce_recurring_staffing_requirements_v1',{});if(updated.error)throw updated.error;all=Array.isArray(updated.data)?updated.data.map(norm):[];baseline=fingerprint(all);selectStore(selected);announce('Đã lưu nhu cầu nhân sự. Các tuần xếp lịch sau sẽ sử dụng cấu hình mới.')
  }catch(e){announce('Lưu thất bại: '+String(e?.message||e));save.disabled=false}finally{busy=false;store.disabled=false;if(dirty)save.disabled=!writable()}});
+// The week-scoped editor shares this one table but never changes the recurring
+// source data, save path or authorization policy.
+window.MAGASIN_SCHEDULING_V2_DEMAND_UI=Object.freeze({
+ setMode:mode=>{
+  if(mode!=='recurring'&&mode!=='weekly')throw Error('INVALID_DEMAND_VIEW_MODE');
+  viewMode=mode;
+  if(mode==='recurring'){
+   save.textContent='Lưu nhu cầu nhân sự';
+   render();
+   save.disabled=busy||!dirty||!writable();
+   add.disabled=busy||!selected;
+   announce('Mẫu nhu cầu cố định lặp lại mỗi tuần cho chi nhánh đã chọn.');
+  }
+ },
+ getMode:()=>viewMode,
+ isDirty:()=>dirty||busy,
+ storeId:()=>selected,
+ isRecurringWritable:writable
+});
 // Read-only interface to unsaved local changes. Never exposes a write bypass.
-window.MAGASIN_MANAGER_EDIT_STATE=Object.freeze({isDirty:()=>dirty||busy,scope:()=>({storeId:selected})});
+window.MAGASIN_MANAGER_EDIT_STATE=Object.freeze({isDirty:()=>dirty||busy||Boolean(window.MAGASIN_SCHEDULING_V2_UNIFIED_WEEKLY?.isDirty()),scope:()=>({storeId:selected})});
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
 retry.addEventListener('click',start);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
