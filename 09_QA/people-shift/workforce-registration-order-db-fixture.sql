@@ -32,7 +32,7 @@ LANGUAGE sql STABLE SET search_path TO '' AS $$
    JOIN public.qa_manager_access a ON a.store_id=s.id
    WHERE s.id=p_store_id AND a.user_id=auth.uid()
  ) END
-$;
+$$;
 -- Deliberately no table SELECT grants to anon/authenticated (RPC-only).
 INSERT INTO public.stores VALUES
 ('00000000-0000-4000-8000-000000000101','ACTIVE'),
