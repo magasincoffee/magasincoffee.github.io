@@ -72,6 +72,40 @@ await check("next_week_dates_are_exact_monday_to_sunday",async()=>{
   return values.join(" → ");
 });
 
+await check("availability_editor_exposes_only_0500_to_2200_in_30_minute_steps",async()=>{
+  const values=await employee.locator("#quickRegStart, #quickRegEnd").evaluateAll(selects=>selects.map(select=>({
+    id:select.id,options:[...select.options].map(o=>o.value)
+  })));
+  if(values.length!==2)throw new Error(JSON.stringify(values));
+  const expected=(from,to)=>Array.from({length:(to-from)/30+1},(_,i)=>{
+    const m=from+i*30;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+  });
+  if(JSON.stringify(values[0].options)!==JSON.stringify(expected(300,1290))||
+     JSON.stringify(values[1].options)!==JSON.stringify(expected(330,1320)))throw new Error(JSON.stringify(values));
+  return "Start 05:00–21:30; end 05:30–22:00; exactly 30-minute increments";
+});
+
+await check("forged_out_of_range_and_off_grid_times_are_rejected_before_rpc",async()=>{
+  const before=await page.evaluate(()=>globalThis.__EMPLOYEE_AVAILABILITY_QA.calls.filter(x=>x.name==="save_my_availability").length);
+  for(const invalid of ["04:30","05:15","22:30"]){
+    await page.evaluate(value=>{
+      const doc=document.getElementById("employeeApp").contentDocument;
+      const start=doc.getElementById("quickRegStart");
+      const injected=doc.createElement("option");injected.value=value;injected.textContent=value;
+      start.append(injected);start.value=value;
+      doc.getElementById("saveReg").click();
+      injected.remove();
+    },invalid);
+    const message=await employee.locator("#quickRegMsg").innerText();
+    if(!message.includes("05:00–22:00")||!message.includes("30 phút"))throw new Error(invalid+": "+message);
+  }
+  const after=await page.evaluate(()=>globalThis.__EMPLOYEE_AVAILABILITY_QA.calls.filter(x=>x.name==="save_my_availability").length);
+  if(after!==before)throw new Error("Invalid slot caused save RPC: "+before+" -> "+after);
+  await employee.locator("#quickRegStart").selectOption("06:00");
+  await employee.locator("#quickRegEnd").selectOption("12:00");
+  return "04:30, 05:15 and 22:30 rejected with zero writes";
+});
+
 await check("double_click_is_bounded_to_one_save_mutation",async()=>{
   await employee.locator("#quickRegDay").selectOption("2026-09-28");
   await employee.locator("#quickRegStart").selectOption("06:00");
