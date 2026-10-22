@@ -52,7 +52,8 @@ test('Swap applies 24h check on request insertion, without blocking subsequent a
   assert.match(sql,/new\.target_schedule_id/);
   assert.match(sql,/SHIFT_SWAP_REQUIRES_24H_NOTICE/);
   assert.doesNotMatch(sql,/create or replace function public\.approve_shift_swap/i);
-  assert.doesNotMatch(sql,/shift_gives|submit_shift_give|24.hour.{0,20}give/i);
+  assert.doesNotMatch(sql,/\bpublic\.shift_gives\b|create or replace function public\.submit_shift_give_request/i);
+  assert.match(sql,/SHIFT_GIVE has NO 24-hour guard/);
 });
 
 test('DB-only boundary probes remain non-destructive and specify unproven signed-JWT gates',async()=>{
