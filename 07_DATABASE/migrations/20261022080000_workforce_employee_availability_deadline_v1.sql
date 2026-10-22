@@ -17,7 +17,7 @@ create or replace function public.employee_availability_window_open_v1(
 returns boolean
 language sql
 stable
-set search_path=public
+set search_path=''
 as $function$
   with local_clock as (
     select (p_checked_at at time zone 'Asia/Ho_Chi_Minh') as at_local
@@ -39,7 +39,7 @@ create or replace function public.enforce_employee_availability_window_v1()
 returns trigger
 language plpgsql
 security definer
-set search_path=public
+set search_path=''
 as $function$
 declare
   v_actor uuid := auth.uid();
