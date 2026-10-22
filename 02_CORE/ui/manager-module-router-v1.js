@@ -9,10 +9,14 @@
   const shell = window.MAGASIN_UI_V2_SHELL;
   if (shell?.role !== 'MANAGER') return;
   const host = document.getElementById('magasinUiV2Shell');
+  // The standalone host is authoritative. Never start a second router in its
+  // legacy-content frame (that would overwrite its history/popstate owner).
+  if (window !== window.top && window.top.MAGASIN_MANAGER_SPA_ROUTER) return;
   const legacyHost = shell.mode === 'legacy-manager';
   const canonicalSchedulingHost = shell.mode === 'standalone' &&
     /^\/manager\/scheduling\/?$/i.test(window.top.location.pathname);
   if (!host || (!legacyHost && !canonicalSchedulingHost)) return;
+  if (legacyHost && !/^\/manager(?:\/|$)/i.test(window.top.location.pathname)) return;
 
   const top = window.top;
   const currentURL = () => top.location.pathname + top.location.search + top.location.hash;
@@ -170,6 +174,7 @@
             ].join(';');
             d.head.append(style);
           }
+          frame.style.visibility = 'visible';
           const shell = d.defaultView.MAGASIN_UI_V2_SHELL;
           shell?.setActive?.(active);
           const btn = d.querySelector('.sidebar [data-view="' + CSS.escape(active) + '"]');
@@ -180,7 +185,16 @@
       if (reveal()) return;
       let tries = 0;
       const timer = window.setInterval(() => {
-        if (reveal() || ++tries > 80) window.clearInterval(timer);
+        if (reveal() || ++tries > 80) {
+          window.clearInterval(timer);
+          if (tries > 80 && frame.style.visibility === 'hidden') {
+            const status = document.createElement('p');
+            status.className = 'm-manager-router-error';
+            status.setAttribute('role', 'alert');
+            status.textContent = 'Không thể mở phân hệ. Hãy thử lại từ trang Quản lý.';
+            document.body.append(status);
+          }
+        }
       }, 150);
     });
   }
@@ -193,6 +207,8 @@
     frame.hidden = true;
     document.body.append(frame);
     all.set('legacy', frame);
+    // Do not expose a nested chrome while its mask and source view initialize.
+    frame.style.visibility = 'hidden';
     setupLegacyFromStandalone(frame);
     frame.src = '/05_MANAGER/runtime/manager-runtime-v1.html?v=20261021-manager-nav-b3';
     return frame;
@@ -213,7 +229,7 @@
     let target;
     if (key === 'legacy') target = legacyHost ? all.get('legacy') : createLegacy();
     else target = createSchedule(view);
-    for (const [k, frame] of all) frame.hidden = k !== key;
+    for (const [k, frame] of all) if (frame) frame.hidden = k !== key;
     document.body.dataset.managerRouterActive = key === 'legacy' ? 'legacy' : 'embedded';
     if (key === 'legacy') activateLegacy(view);
     else applyContext(target);

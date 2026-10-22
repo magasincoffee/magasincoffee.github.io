@@ -615,3 +615,25 @@ body[data-magasin-shell-v2] .m-shell-v2-nav__disclosure-btn[aria-expanded="true"
 body[data-magasin-shell-v2] .m-shell-v2-nav__submenu{display:grid;gap:4px;padding:4px 0 0 13px}
 body[data-magasin-shell-v2] .m-shell-v2-nav__submenu[hidden]{display:none!important}
 body[data-magasin-shell-v2] .m-shell-v2-nav__disclosure-btn:focus-visible{outline:2px solid #2874ed;outline-offset:2px}
+
+/* #506 P0.2 — content frames share the exact original Manager shell. */
+body[data-magasin-shell-v2] .m-manager-router-frame,
+body[data-magasin-shell-v2] > #app.m-manager-router-frame{
+  position:fixed!important;inset:var(--m-shell-topbar-height) 0 0 var(--m-shell-sidebar-width)!important;
+  width:calc(100vw - var(--m-shell-sidebar-width))!important;
+  height:calc(100dvh - var(--m-shell-topbar-height))!important;
+  min-height:0!important;border:0!important;display:block;background:#f7f9fb;
+  z-index:5;
+}
+body[data-magasin-shell-v2] .m-manager-router-frame[hidden],
+body[data-magasin-shell-v2] > #app.m-manager-router-frame[hidden]{display:none!important}
+body[data-magasin-shell-v2][data-magasin-shell-mode="legacy-manager"][data-manager-router-active="embedded"] > .app > .main{
+  visibility:hidden!important;pointer-events:none!important;
+}
+body[data-magasin-shell-v2] .m-manager-router-error{position:fixed;inset:50% 12px auto 12px;text-align:center;z-index:6}
+@media(max-width:1024px){
+ body[data-magasin-shell-v2] .m-manager-router-frame,
+ body[data-magasin-shell-v2] > #app.m-manager-router-frame{
+  left:0!important;width:100vw!important;
+ }
+}

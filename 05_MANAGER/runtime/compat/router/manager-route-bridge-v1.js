@@ -21,7 +21,8 @@
     const path=String(w.location.pathname||PREFIX+'/');
     const p=path.toLowerCase().replace(/\/+$/,'')||'/';
     const hash=String(w.location.hash||'').replace(/^#/,'').toLowerCase();
-    if(p==='/manager/scheduling'||p==='/05_manager/lich-lam') return 'workforce';
+    if(p==='/manager/scheduling') return new URLSearchParams(w.location.search).get('section')==='demand'?'demand':'workforce';
+    if(p==='/05_manager/lich-lam') return 'workforce';
     if(p==='/manager/schedule') return 'schedule';
     if(p==='/manager') return ALLOWED.has(hash)?hash:'dashboard';
     const parts=path.replace(/^\/+|\/+$/g,'').split('/');
@@ -34,6 +35,7 @@
     const key=ALLOWED.has(view)?view:'dashboard';
     if(key==='dashboard')return '/manager/';
     if(key==='workforce')return '/manager/scheduling/';
+    if(key==='demand')return '/manager/scheduling/?section=demand';
     if(key==='schedule')return '/manager/schedule/';
     return '/manager/#'+key;
   }
@@ -46,6 +48,8 @@
     }catch(_){ }
   }
   function clickView(view){
+    const spa=top().MAGASIN_MANAGER_SPA_ROUTER;
+    if(spa?.navigate){spa.navigate(view,{history:'none',fromPopstate:true});return;}
     if(view==='workforce'){top().location.replace('/manager/scheduling/');return;}
     if(!frame?.contentDocument) return;
     const b=frame.contentDocument.querySelector(`.sidebar [data-view="${CSS.escape(view)}"]`);
