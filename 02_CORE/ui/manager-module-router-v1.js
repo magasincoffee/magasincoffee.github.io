@@ -260,16 +260,7 @@
   }
 
   // Reuse the existing live iframe when arriving from a direct Scheduling URL.
-  if (legacyHost) {
-    all.set('legacy', null);
-    // The same-origin legacy Manager runtime hides its iframe during bootstrap.
-    // At this point the shared shell has mounted, so reveal that specific frame;
-    // do not depend on a competing one-off timeout to recover its visibility.
-    try {
-      if (window.frameElement && window.frameElement.style.visibility === 'hidden')
-        window.frameElement.style.visibility = 'visible';
-    } catch (_) {}
-  }
+  if (legacyHost) all.set('legacy', null);
   else {
     const initial = document.getElementById('app');
     if (initial) {
