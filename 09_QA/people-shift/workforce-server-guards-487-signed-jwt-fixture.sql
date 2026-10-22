@@ -6,7 +6,8 @@ CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE workforce_qa_authenticator LOGIN NOINHERIT PASSWORD 'qa-workforce-temporary-password';
 GRANT anon, authenticated TO workforce_qa_authenticator;
 CREATE SCHEMA auth;
--- Match real Supabase auth.uid UUID contract for verified PostgREST JWT.\nCREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE SET search_path TO '' AS $auth$
+-- Match real Supabase auth.uid UUID contract for verified PostgREST JWT.
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE SET search_path TO '' AS $auth$
  SELECT (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid
 $auth$;
 CREATE TABLE public.profiles(id uuid PRIMARY KEY, role text, status text);
