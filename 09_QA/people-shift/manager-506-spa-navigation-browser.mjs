@@ -118,8 +118,12 @@ try{
     };
   });
   console.log('MANAGER_506_ROOT_BOOT_DIAGNOSTIC='+JSON.stringify(managerBoot));
-  assert.ok(managerBoot.root?.rect.w>0&&managerBoot.root?.rect.h>0,'Mounted Manager shell must have visible bounds: '+JSON.stringify(managerBoot));
-  await manager.locator('#magasinUiV2Shell').waitFor({state:'visible',timeout:6000});
+  // The shared wrapper deliberately has zero flow height: its sidebar/topbar
+  // are fixed-position children. Assert visible UI, not wrapper geometry.
+  assert.ok(managerBoot.root?.computedDisplay!=='none' && managerBoot.root?.computedVisibility==='visible',
+    'Manager shared shell mounted but hidden: '+JSON.stringify(managerBoot));
+  await manager.locator('.m-shell-v2-sidebar').waitFor({state:'visible',timeout:8000});
+  await manager.locator('.m-shell-v2-topbar').waitFor({state:'visible',timeout:8000});
   await manager.locator('[data-shell-disclosure="planning"]').click();
   await manager.locator('[data-shell-key="workforce"]').click();
   await page.waitForURL(url=>url.pathname==='/manager/scheduling/',{timeout:18000});
