@@ -123,6 +123,12 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/sched-04-manager-scheduling-browser.mjs
 
+      - name: Run Workforce 2026-10-20 FT/PT draft-preview browser E2E
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/workforce-rules-p1-browser.mjs
+
       - name: Run SCHED-05 Owner Scheduling V1 browser E2E
         env:
           QA_BASE_URL: http://127.0.0.1:8767
