@@ -98,7 +98,28 @@ try{
   await page.waitForFunction(()=>!!window.MAGASIN_MANAGER_SPA_ROUTER,{timeout:24000});
   await page.evaluate(()=>{document.body.dataset.spaTestMarker='manager-root-persistent';});
   const manager=page.frameLocator('#app').frameLocator('#app');
-  await manager.locator('#magasinUiV2Shell').waitFor();
+  await manager.locator('#magasinUiV2Shell').waitFor({state:'attached',timeout:12000});
+  const managerBoot=await page.evaluate(()=>{
+    const first=document.querySelector('iframe#app');
+    const outer=first?.contentDocument?.querySelector('iframe#app');
+    const doc=outer?.contentDocument;
+    const root=doc?.getElementById('magasinUiV2Shell');
+    const style=el=>el?({hidden:el.hidden,inlineVisibility:el.style.visibility,
+      computedVisibility:el.ownerDocument.defaultView.getComputedStyle(el).visibility,
+      computedDisplay:el.ownerDocument.defaultView.getComputedStyle(el).display,
+      rect:{w:el.getBoundingClientRect().width,h:el.getBoundingClientRect().height}
+    }):null;
+    return {
+      first:style(first),outer:style(outer),root:style(root),
+      bodyDisplay:style(doc?.body),shellLoaded:!!doc?.defaultView?.MAGASIN_UI_V2_SHELL,
+      routerLoaded:!!doc?.defaultView?.MAGASIN_MANAGER_MODULE_ROUTER,
+      topRouter:!!window.MAGASIN_MANAGER_SPA_ROUTER,
+      scripts:[...(doc?.scripts||[])].filter(x=>/manager-module-router|magasin-ui-v2-shell/.test(x.src)).map(x=>x.src)
+    };
+  });
+  console.log('MANAGER_506_ROOT_BOOT_DIAGNOSTIC='+JSON.stringify(managerBoot));
+  assert.ok(managerBoot.root?.rect.w>0&&managerBoot.root?.rect.h>0,'Mounted Manager shell must have visible bounds: '+JSON.stringify(managerBoot));
+  await manager.locator('#magasinUiV2Shell').waitFor({state:'visible',timeout:6000});
   await manager.locator('[data-shell-disclosure="planning"]').click();
   await manager.locator('[data-shell-key="workforce"]').click();
   await page.waitForURL(url=>url.pathname==='/manager/scheduling/',{timeout:18000});
