@@ -137,7 +137,15 @@ try{
   await page.goBack({waitUntil:'domcontentloaded'});
   await page.waitForURL(url=>url.pathname==='/manager/'&&!url.hash);
   assert.equal(await page.evaluate(()=>document.body.dataset.spaTestMarker),'manager-root-persistent');
-  console.log('MANAGER_506_HOME_TO_SCHEDULING_NO_RELOAD=PASS');
+  await page.goForward({waitUntil:'domcontentloaded'});
+  await page.waitForURL(url=>url.pathname==='/manager/scheduling/'&&!url.search);
+  await manager.locator('iframe[data-manager-module="workforce"]:not([hidden])').waitFor();
+  await page.goForward({waitUntil:'domcontentloaded'});
+  await page.waitForURL(url=>url.pathname==='/manager/scheduling/'&&url.searchParams.get('section')==='demand');
+  await manager.locator('iframe[data-manager-module="demand"]:not([hidden])').waitFor();
+  assert.equal(await page.evaluate(()=>document.body.dataset.spaTestMarker),'manager-root-persistent',
+    'Back/Forward must preserve root document and cached modules');
+  console.log('MANAGER_506_HOME_TO_SCHEDULING_BACK_FORWARD_NO_RELOAD=PASS');
   await page.close();
  }
 } catch (error) {
