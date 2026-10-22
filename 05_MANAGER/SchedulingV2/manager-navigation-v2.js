@@ -20,20 +20,18 @@
     { title: 'Chính', items: [
       ['dashboard', '⌂', 'Tổng quan', '/manager/'],
       ['staff', '◎', 'Nhân viên', '/manager/#staff'],
+      ['payroll-self-check', '₫', 'Công / Lương (xem)', '/manager/#payroll-self-check']
+    ] },
+    { title: 'Lập lịch nhân sự', collapsible: true, items: [
       ['demand', '▤', 'Nhu cầu nhân sự', '/manager/scheduling/?section=demand'],
       ['workforce', '▦', 'Xếp lịch', '/manager/scheduling/'],
-      ['attendance', '◷', 'Chấm công', '/manager/#attendance'],
-      ['tasks', '✓', 'Công việc', '/manager/#tasks'],
-      ['reports', '▥', 'Báo cáo', '/manager/#reports'],
-      ['settings', '⚙', 'Cài đặt', '/manager/#settings']
+      ['schedule', '▤', 'Lịch đã công bố', '/manager/schedule/']
     ] },
-    { title: 'Nghiệp vụ khác', items: [
-      ['swap', '⇄', 'Đổi / Cho ca', '/manager/#swap'],
-      ['schedule', '▤', 'Lịch đã phát hành', '/manager/schedule/'],
-      ['payroll-self-check', '₫', 'Công / Lương', '/manager/#payroll-self-check']
+    { title: 'Công & Điều chỉnh ca', collapsible: true, items: [
+      ['attendance', '◷', 'Chấm công', '/manager/#attendance'],
+      ['swap', '⇄', 'Cho / Đổi ca', '/manager/#swap']
     ] }
   ]);
-
   // Direct fallback pages retain the same IA as the single authenticated shell.
   const current = demandPage ? 'demand' : 'workforce';
   nav.replaceChildren();
@@ -41,9 +39,10 @@
   sidebar.id = 'sv2Sidebar';
 
   for (const section of sections) {
-    const group = document.createElement('div');
-    group.className = 'sv2-nav-group';
-    const heading = document.createElement('p');
+    const group = document.createElement(section.collapsible ? 'details' : 'div');
+    group.className = 'sv2-nav-group' + (section.collapsible ? ' sv2-nav-disclosure' : '');
+    if (section.collapsible && section.items.some(([key]) => key === current)) group.open = true;
+    const heading = document.createElement(section.collapsible ? 'summary' : 'p');
     heading.className = 'sv2-nav-group-title';
     heading.textContent = section.title;
     group.append(heading);

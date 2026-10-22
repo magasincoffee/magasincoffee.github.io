@@ -46,7 +46,7 @@
       const addCss=(href)=>{const l=d.createElement('link');l.rel='stylesheet';l.href=href;d.head.appendChild(l);return l};
       addCss('/02_CORE/ui/magasin-ui-v2-tokens.css?v=20261001-ui-unified1');
       addCss('/02_CORE/ui/magasin-ui-v2-primitives.css?v=20261001-ui-unified1');
-      addCss('/02_CORE/ui/magasin-ui-v2-shell.css?v=20261021-mockup-b1');
+      addCss('/02_CORE/ui/magasin-ui-v2-shell.css?v=20261022-manager-506-p0a');
       addCss('/02_CORE/ui/workforce-cross-role-v1.css?v=20260929-mer004');
       d.body.dataset.magasinUiV2='';
       d.body.dataset.magasinShellV2='';
@@ -54,7 +54,7 @@
       d.body.dataset.magasinShellMode='legacy-manager';
       d.defaultView.__MAGASIN_UI_V2_SHELL__={role:'MANAGER',mode:'legacy-manager'};
       load('/05_MANAGER/runtime/compat/router/manager-route-state-v2.js?v=20261021-manager-nav-b3');
-      load('/02_CORE/ui/magasin-ui-v2-shell.js?v=20261021-manager-nav-b3');
+      load('/02_CORE/ui/magasin-ui-v2-shell.js?v=20261022-manager-506-p0a');
       load('/02_CORE/shared/shared-core-v1.js?v=20261002-sched-ui-005');
       const waitForRuntimeDeps=()=>{
         const hasSupabase=window.supabase?.createClient || d.defaultView?.supabase?.createClient;

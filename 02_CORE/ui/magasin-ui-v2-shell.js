@@ -15,20 +15,20 @@
     primary: Object.freeze([
       ['dashboard', '⌂', 'Tổng quan'],
       ['staff', '◎', 'Nhân viên'],
-      ['demand', '▤', 'Nhu cầu nhân sự'],
-      ['workforce', '▦', 'Xếp lịch'],
-      ['attendance', '◷', 'Chấm công'],
-      ['tasks', '✓', 'Công việc'],
-      ['reports', '▥', 'Báo cáo'],
-      ['settings', '⚙', 'Cài đặt']
+      ['payroll-self-check', '₫', 'Công / Lương (xem)']
     ]),
-    // Do not orphan existing canonical business actions when aligning primary IA.
-    secondary: Object.freeze([
-      ['swap', '⇄', 'Đổi / Cho ca'],
-      ['schedule', '▤', 'Lịch đã phát hành'],
-      ['payroll-self-check', '₫', 'Công / Lương']
+    groups: Object.freeze([
+      { key: 'planning', title: 'Lập lịch nhân sự', icon: '▦', items: [
+        ['demand', '▤', 'Nhu cầu nhân sự'],
+        ['workforce', '▦', 'Xếp lịch'],
+        ['schedule', '▤', 'Lịch đã công bố']
+      ] },
+      { key: 'time', title: 'Công & Điều chỉnh ca', icon: '◷', items: [
+        ['attendance', '◷', 'Chấm công'],
+        ['swap', '⇄', 'Cho / Đổi ca']
+      ] }
     ]),
-    hidden: Object.freeze(['kpi', 'academy'])
+    hidden: Object.freeze(['kpi', 'academy', 'tasks', 'reports', 'settings'])
   });
 
   const OWNER_NAV = Object.freeze({
@@ -183,6 +183,15 @@
       else node.removeAttribute('aria-current');
     });
     setPageMeta(activeKey);
+    if (config?.role === 'MANAGER' && shell) {
+      shell.querySelectorAll('[data-shell-disclosure]').forEach(button => {
+        const panel = document.getElementById(button.getAttribute('aria-controls'));
+        if (panel?.querySelector('[data-shell-key="' + CSS.escape(activeKey) + '"]')) {
+          button.setAttribute('aria-expanded', 'true');
+          panel.hidden = false;
+        }
+      });
+    }
   };
 
   const closeDrawer = () => {
@@ -266,6 +275,22 @@
       '</section>';
   };
 
+  const buildManagerDisclosure = group => {
+    const id = 'm-shell-v2-menu-' + group.key;
+    const items = group.items.map(([key, icon, label]) =>
+      '<a class="m-shell-v2-nav__item" href="#" role="button" data-shell-key="' + esc(key) +
+      '" data-shell-view="' + esc(key) + '">' +
+      '<span class="m-shell-v2-nav__icon" aria-hidden="true">' + esc(icon) + '</span>' +
+      '<span>' + esc(label) + '</span></a>'
+    ).join('');
+    return '<section class="m-shell-v2-nav__group m-shell-v2-nav__disclosure">' +
+      '<button type="button" class="m-shell-v2-nav__item m-shell-v2-nav__disclosure-btn" ' +
+      'data-shell-disclosure="' + esc(group.key) + '" aria-expanded="false" aria-controls="' + id + '">' +
+      '<span class="m-shell-v2-nav__icon" aria-hidden="true">' + esc(group.icon) + '</span>' +
+      '<span>' + esc(group.title) + '</span><span class="m-shell-v2-nav__chevron" aria-hidden="true">⌄</span></button>' +
+      '<div class="m-shell-v2-nav__submenu" id="' + id + '" hidden>' + items + '</div></section>';
+  };
+
   const buildShell = () => {
     const nav = config.role === 'OWNER' ? OWNER_NAV : MANAGER_NAV;
     const account = accountSnapshot();
@@ -285,7 +310,7 @@
         '</div>' +
         '<nav class="m-shell-v2-nav">' +
           buildNavGroup('Chính', nav.primary) +
-          buildNavGroup('Nghiệp vụ khác', nav.secondary) +
+          (config.role === 'MANAGER' ? nav.groups.map(buildManagerDisclosure).join('') : '') +
         '</nav>' +
         '<div class="m-shell-v2-sidebar__footer">' +
           '<div class="m-shell-v2-account">' +
@@ -349,6 +374,15 @@
     });
 
     shell.querySelector('[data-shell-backdrop]')?.addEventListener('click', closeDrawer);
+    shell.querySelectorAll('[data-shell-disclosure]').forEach(button => {
+      button.addEventListener('click', () => {
+        const panel = document.getElementById(button.getAttribute('aria-controls'));
+        if (!panel) return;
+        const expanded = button.getAttribute('aria-expanded') === 'true';
+        button.setAttribute('aria-expanded', String(!expanded));
+        panel.hidden = expanded;
+      });
+    });
 
     shell.querySelectorAll('.m-shell-v2-nav__item[data-shell-key]').forEach(node => {
       node.addEventListener('click', event => {
