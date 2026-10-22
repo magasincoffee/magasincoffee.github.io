@@ -9,7 +9,7 @@ test('focused Scheduling workspace preserves authoritative controls and loads af
   load('05_MANAGER/SchedulingV2/schedule-v2.css')
  ]);
  for(const id of ['sv2Store','sv2Week','sv2Refresh','sv2Table','sv2Rows','sv2Stage'])assert.match(html,new RegExp('id="'+id+'"'));
- assert.match(html,/focused-workspace-v1\.js\?v=20261021-mockup-c2/);
+ assert.match(html,/focused-workspace-v1\.js\?v=20261022-p1-inline1/);
  assert.ok(html.indexOf('post-publish-ui-v1.js')<html.indexOf('focused-workspace-v1.js'));
  assert.match(controller,/getElementById\('sv2AddShift'\)/);
  assert.match(controller,/add\.click\(\)/);
