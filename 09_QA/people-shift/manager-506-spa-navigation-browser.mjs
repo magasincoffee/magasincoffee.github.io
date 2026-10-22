@@ -33,6 +33,14 @@ try{
   });
   const week=await source.locator('#sv2Week').inputValue();
   assert.equal(week,'2026-11-02');
+  await source.locator('#sv2Store').evaluate(select=>{
+    if (![...select.options].some(option=>option.value==='qa-store')) {
+      const option=document.createElement('option');
+      option.value='qa-store';option.textContent='CN1';select.append(option);
+    }
+    select.value='qa-store';
+    select.dispatchEvent(new Event('change',{bubbles:true}));
+  });
   // A toolbar anchor in the content iframe must NOT navigate the top document.
   await source.locator('details.sv2-advanced summary').click();
   await source.locator('.sv2-demand-back').click();
@@ -43,6 +51,7 @@ try{
   await demand.locator('#sv2DemandStore').waitFor({timeout:20000});
   assert.equal(await page.locator('#app').isHidden(),true,'original scheduling editor stays cached');
   assert.equal(await page.evaluate(()=>document.body.dataset.spaTestMarker),'persistent-document');
+  assert.equal(await page.evaluate(()=>window.MAGASIN_MANAGER_MODULE_ROUTER.context().storeId),'qa-store');
   assert.equal(await page.locator('.m-shell-v2-sidebar').count(),1);
   assert.equal(await page.locator('.m-shell-v2-topbar').count(),1);
   assert.equal(await demand.locator('.sv2-sidebar').isVisible(),false);
@@ -77,6 +86,34 @@ try{
   console.log('MANAGER_506_SPA_E2E_PASS viewport='+width);
   // Hard reload prompts only while outstanding unsaved changes exist.
   await page.close({runBeforeUnload:false});
+
+ }
+ // Start from the other authorized entry point as well: Home → Scheduling → Back
+ // must keep exactly the same root document and original Manager shell.
+ {
+  const page=await browser.newPage({viewport:{width:1440,height:900}});
+  await page.route('**/02_CORE/shared/shared-core-v1.js**',route=>route.fulfill({status:200,contentType:'application/javascript',body:core}));
+  await page.route('https://cdn.jsdelivr.net/npm/@supabase/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:supabase}));
+  await page.goto(BASE+'/manager/',{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>!!window.MAGASIN_MANAGER_SPA_ROUTER,{timeout:24000});
+  await page.evaluate(()=>{document.body.dataset.spaTestMarker='manager-root-persistent';});
+  const manager=page.frameLocator('#app').frameLocator('#app');
+  await manager.locator('#magasinUiV2Shell').waitFor();
+  await manager.locator('[data-shell-disclosure="planning"]').click();
+  await manager.locator('[data-shell-key="workforce"]').click();
+  await page.waitForURL(url=>url.pathname==='/manager/scheduling/',{timeout:18000});
+  await manager.locator('iframe[data-manager-module="workforce"]:not([hidden])').waitFor({timeout:18000});
+  assert.equal(await page.evaluate(()=>document.body.dataset.spaTestMarker),'manager-root-persistent');
+  await manager.locator('[data-shell-key="demand"]').click();
+  await page.waitForURL(url=>url.pathname==='/manager/scheduling/'&&url.searchParams.get('section')==='demand');
+  await manager.locator('iframe[data-manager-module="demand"]:not([hidden])').waitFor({timeout:18000});
+  await page.goBack({waitUntil:'domcontentloaded'});
+  await page.waitForURL(url=>url.pathname==='/manager/scheduling/'&&!url.search);
+  await page.goBack({waitUntil:'domcontentloaded'});
+  await page.waitForURL(url=>url.pathname==='/manager/'&&!url.hash);
+  assert.equal(await page.evaluate(()=>document.body.dataset.spaTestMarker),'manager-root-persistent');
+  console.log('MANAGER_506_HOME_TO_SCHEDULING_NO_RELOAD=PASS');
+  await page.close();
  }
 } catch (error) {
  failures.push(String(error?.stack||error));
