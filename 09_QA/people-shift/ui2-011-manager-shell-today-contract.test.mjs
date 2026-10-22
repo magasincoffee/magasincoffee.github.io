@@ -119,7 +119,7 @@ test("UI2-011 cache chain remains preserved when later Manager UI tasks advance 
   const managerV="20260927-ui2-013";
   const managerEntryV="20261018-demand-week-matrix-v1";
   const ownerEntryV="20261003-sched-ui-008";
-  assert.ok(managerIndex.includes("manager-runtime-v1.html?v=20261021-manager-nav-b3"));
+  assert.ok(managerIndex.includes("manager-runtime-v1.html?v=20261022-manager-spa-p02"));
   assert.ok(workforceIndex.includes("location.replace('/manager/scheduling/')"));
   assert.ok(ownerIndex.includes("owner-workforce-runtime.html?v="+ownerEntryV));
   assert.ok(managerRuntime.includes("manager-shell-v1.html?v="+managerShellV+"&host=manager"));
