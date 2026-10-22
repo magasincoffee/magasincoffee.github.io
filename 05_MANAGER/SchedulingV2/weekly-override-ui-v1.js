@@ -83,7 +83,7 @@ save.addEventListener('click',async()=>{
  try{
   const r=await window.MAGASIN_SCHEDULING_V2_CONTEXT.client().rpc('replace_workforce_weekly_overrides_v1',{
    p_store_id:old.store,p_week_start:old.week,p_overrides:[...changes.values()],p_expected_fingerprint:old.fingerprint});
-  if(r.error)throw r.error;saving=false;await load();status.textContent='Đã lưu riêng tuần '+old.week+'. Mẫu cố định không đổi.';
+  if(r.error)throw r.error;saving=false;await load();status.textContent='Đã lưu riêng tuần '+old.week+'. Mẫu cố định không đổi.';document.dispatchEvent(new CustomEvent('magasin:workforce-weekly-demand-saved',{detail:{storeId:old.store,weekStart:old.week}}));
  }catch(e){saving=false;enabled();status.textContent='Lưu thất bại: '+String(e?.message||e)+'. Hãy tải lại nếu đã có quản lý khác sửa.'}
 });
 document.addEventListener('magasin:scheduling-v2-week-loaded',load);
