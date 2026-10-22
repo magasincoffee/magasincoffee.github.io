@@ -5,7 +5,9 @@ const DATE_RE=/^\d{4}-\d{2}-\d{2}$/,TIME_RE=/^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const DAY_NAMES=['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ Nhật'];
 let state={week:null,today:null,registration:'REGISTRATION_CLOSED',policyReason:'UNINITIALIZED',rows:[],savePending:false,deletePending:new Set(),uiState:'idle'};
 
-const options=sel=>{let s='';for(let m=0;m<1440;m+=30){const v=`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;s+=`<option value="${v}"${v===hm(sel)?' selected':''}>${v}</option>`}return s};
+// Availability slots are bounded to 05:00–22:00 ICT, never midnight or 23:30.
+// A start needs a later end, so the two selectors have different endpoints.
+const options=(sel,isEnd=false)=>{let s='';for(let m=isEnd?330:300;m<=(isEnd?1320:1290);m+=30){const v=`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;s+=`<option value="${v}"${v===hm(sel)?' selected':''}>${v}</option>`}return s};
 const panel=x=>(x||d())?.getElementById('weeklyRegistrationPanel')||null;
 const bandKind=value=>{
   const kind=String(C.time.shiftKind?.(value)||'neutral');
@@ -122,7 +124,7 @@ async function prepare(x){
   syncPolicy();
   const st=x.getElementById('quickRegStart'),en=x.getElementById('quickRegEnd');
   if(st&&!st.dataset.engineBound){st.innerHTML=options('06:00');st.dataset.engineBound='1'}
-  if(en&&!en.dataset.engineBound){en.innerHTML=options('12:00');en.dataset.engineBound='1'}
+  if(en&&!en.dataset.engineBound){en.innerHTML=options('12:00',true);en.dataset.engineBound='1'}
   renderDayOptions(x);
   setUiState('loading','Đang tải thời gian có thể làm tuần sau…');
   applyRegistrationState(x);
@@ -175,7 +177,12 @@ async function register(event){
   const day=x.getElementById('quickRegDay')?.value,start=x.getElementById('quickRegStart')?.value,end=x.getElementById('quickRegEnd')?.value;
   if(!day||!isTargetDate(day)){setUiState('error','Ngày đăng ký phải thuộc đúng tuần kế tiếp.');return}
   if(!TIME_RE.test(String(start||''))||!TIME_RE.test(String(end||''))){setUiState('error','Giờ đăng ký không hợp lệ.');return}
-  if(C.time.minutes(end)<=C.time.minutes(start)){setUiState('error','Giờ kết thúc phải sau giờ bắt đầu.');return}
+  const startMinutes=C.time.minutes(start),endMinutes=C.time.minutes(end);
+  const validSlot=m=>Number.isInteger(m)&&m>=300&&m<=1320&&m%30===0;
+  if(!validSlot(startMinutes)||!validSlot(endMinutes)){
+    setUiState('error','Giờ đăng ký phải trong khoảng 05:00–22:00 và theo bước 30 phút.');return;
+  }
+  if(endMinutes<=startMinutes){setUiState('error','Giờ kết thúc phải sau giờ bắt đầu.');return}
   const button=event?.currentTarget||x.getElementById('saveReg');
   state.savePending=true;if(button)button.disabled=true;setUiState('submitting','Đang lưu khoảng thời gian…');
   try{
