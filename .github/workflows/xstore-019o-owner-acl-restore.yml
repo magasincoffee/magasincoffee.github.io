@@ -13,6 +13,13 @@ on:
       - '09_QA/people-shift/xstore-019o-owner-acl-recovery-fingerprint.sql'
       - '09_QA/people-shift/xstore-019o-restore-error-classifier.mjs'
 
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Enter XSTORE-019O-ACL to run a fresh production read-only ACL backup with isolated restore'
+        required: true
+        type: string
+
 permissions:
   contents: read
   actions: read
@@ -47,7 +54,7 @@ jobs:
             'XSTORE_019O_REAL_OWNER_ACL_ISOLATED_RESTORE=PASS'])
             assert(y.includes(p),'RESTORE_SOURCE_CONTRACT_MISSING');
           assert(y.includes('persist-credentials: false') && y.includes('contents: read'),'UNSAFE_GITHUB_PERMISSIONS');
-          assert(sql.includes('b5b88de4957daa0e8ad372002134cdf0') &&
+          assert(sql.includes('f596c61cf0e492046e61336494b90813') &&
             sql.includes('e28436fb4f8558416d23eb8f5af57795'),'LIVE_FINGERPRINT_MISSING');
           assert(sql.includes('pg_policies') && sql.includes('pg_proc') && sql.includes('pg_class'),'INCOMPLETE_ACL_POLICY_AUDIT');
           const cap=y.lastIndexOf('\n      - name: Capture fresh ACL-bearing production backup (read-only)\n');
@@ -69,6 +76,8 @@ jobs:
           const eventHeader=y.slice(0,y.indexOf('\njobs:'));
           const uploads=y.split('\n').filter(x=>/^\s*uses:\s*actions\/upload-artifact@v4\s*$/.test(x));
           assert(uploads.length===1 && !eventHeader.includes('pull_request_target'),'UNSAFE_ARTIFACT_OR_EVENT');
+          assert(eventHeader.includes('workflow_dispatch:') && eventHeader.includes('XSTORE-019O-ACL'),'MANUAL_CONFIRMATION_GATE_MISSING');
+          assert(y.includes("github.event_name == 'workflow_dispatch' && inputs.confirmation == 'XSTORE-019O-ACL'"),'MANUAL_OWNER_ACL_ADMISSION_MISSING');
           assert(y.includes('if: always() && steps.encryption.outcome == \'success\'') && y.includes('xstore-019o-acl-full-encrypted-') && y.includes('retention-days: 7'),'ENCRYPTED_ONLY_RECOVERY_ARTIFACT_REQUIRED');
           console.log('XSTORE_019O_OWNER_ACL_SOURCE_ADMISSION=PASS; NO_PRODUCTION_SECRETS_ON_PR');
           NODE
@@ -76,7 +85,7 @@ jobs:
   owner-acl-isolated-restore:
     name: Replay genuine archive owners/ACL and compare live policy fingerprints
     needs: source-preflight
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'XSTORE-019O-ACL'))
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
