@@ -34,3 +34,12 @@
 
 ## Scope remains unchanged
 The *four-branch* rollout and attendance/payroll are NOT authorized merely by green isolated CI. Attendance's OPEN business decisions (in/out mechanism, overnight, late/early, breaks, adjustments, duplicate attendance) require Owner decisions before M2. No automatic publishing of a draft.
+
+## 2026-10-22 11:03 ICT — Fresh encrypted backup checkpoint (supersedes stale backup HOLD above)
+
+- [Cloud Backup run **39720066071**](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39720066071) on trusted `main` `592f618cede0196fa99b7142d29597350cf95826` **SUCCESS** (manual confirmation); production `pg_dump`, AES-256-GCM encrypt, authenticated decrypt and network-isolated PostgreSQL 17 restore all passed.
+- The GitHub API confirms one retained artifact `xstore-019o-noibo-encrypted-39720066071`, size **6,190,887 bytes**, `expired=false`, expires **2026-10-29T04:03:42Z**. This verifies fresh backup existence for the current release preflight.
+- **Still HOLD:** this workflow's restore uses `pg_restore --no-owner --no-acl`, so it is NOT evidence that actual ownership/GRANT/REVOKE/RLS are restored. The existing Owner ACL replay fixture was based on an older Oct 15 DB catalog and required repair.
+- SELECT-only Supabase metadata on Oct 22: `public` catalog **187 objects (126 functions + 61 relations)**, ACL md5 `f596c61cf0e492046e61336494b90813`; policy count **54**, md5 `e28436fb4f8558416d23eb8f5af57795`. Old assertion `171/114/57` would false-fail a current valid restore.
+- QA-only [PR #504](https://github.com/magasincoffee/magasincoffee.github.io/pull/504) stages refreshed metadata fingerprint and confirms a manual trusted-`main` owner ACL restore workflow with explicit `XSTORE-019O-ACL`. [PR source-only validation run #39720782703](https://github.com/magasincoffee/magasincoffee.github.io/actions/runs/39720782703) **PASS**; its production ACL replay step correctly skipped on PR.
+- **PR #504 is NOT merged, ACL parity on actual new backup is NOT established.** `main` is unchanged and PR #499/#503 remain Draft. A successful isolated Owner/ACL restore plus authenticated live 3-role authorization and controlled rollout approval are still required before production SQL or scheduling publication.
