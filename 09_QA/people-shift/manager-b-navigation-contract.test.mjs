@@ -39,7 +39,7 @@ test("Demand uses one role-checked Manager shell with dedicated routed content",
   const decision=managerRoute.indexOf("const demand=new URLSearchParams");
   assert.ok(roleGate>=0 && decision>roleGate,"role gate precedes demand route selection");
   assert.match(managerRoute,/SchedulingV2\/Demand\/index\.html/);
-  assert.match(managerRoute,/magasin-ui-v2-shell\.js\?v=20261022-manager-506-p0a/);
+  assert.match(managerRoute,/magasin-ui-v2-shell\.js\?v=20261022-manager-spa-p02/);
   assert.match(managerRoute,/data[sS]et\.magasinShellMode='standalone'/);
   assert.match(schedule,/href="\/manager\/scheduling\/\?section=demand" target="_top"/);
   assert.match(demand,/href="\/manager\/scheduling\/" target="_top"/);
@@ -54,7 +54,7 @@ test("Manager reports remain honest until a verified report reader exists", () =
     assert.match(s,/['"]reports['"]/);
   assert.match(shellIndex,/canonical-role-route-v1\.js\?v=20261021-manager-nav-b3/);
   assert.match(managerRuntime,/manager-shell-v1\.html\?v=20261021-manager-nav-b3/);
-  assert.match(managerRuntime,/magasin-ui-v2-shell\.js\?v=20261022-manager-506-p0a/);
+  assert.match(managerRuntime,/magasin-ui-v2-shell\.js\?v=20261022-manager-spa-p02/);
 });
 
 test("Owner navigation and Employee routes remain unchanged in the B sidebar change", () => {

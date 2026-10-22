@@ -213,6 +213,9 @@
   };
 
   const activateManagerView = (view, attempt = 0) => {
+    // #506: route in one document when the authorized Manager module host is ready.
+    // The existing allowlisted route remains the fallback for hard/deep links.
+    if (window.MAGASIN_MANAGER_MODULE_ROUTER?.navigate(view)) return true;
     // Dedicated modules have one canonical host, not a legacy V1 button.
     const path = String(topPath()).toLowerCase();
     // On the dedicated Scheduling host, this very same Manager shell owns the nav.
@@ -508,6 +511,12 @@
       closeDrawer,
       mountStoreSwitcher
     });
+    if (config.role === 'MANAGER') {
+      const script = document.createElement('script');
+      script.src = '/02_CORE/ui/manager-module-router-v1.js?v=20261022-manager-spa-p02';
+      script.onerror = () => console.error('[MAGASIN_MANAGER_MODULE_ROUTER] load failed; canonical links remain available');
+      document.body.appendChild(script);
+    }
   };
 
   if (document.readyState === 'loading') {

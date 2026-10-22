@@ -122,6 +122,12 @@ jobs:
           QA_BASE_URL: http://127.0.0.1:8769
         run: node 09_QA/people-shift/scheduling-v2-manager-nav-browser.mjs
 
+      - name: Run Manager P0.2 SPA navigation, scope and dirty-guard browser E2E
+        env:
+          QA_BASE_URL: http://127.0.0.1:8769
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/manager-506-spa-navigation-browser.mjs
+
       - name: Run canonical Manager single-shell Scheduling and Demand browser
         env:
           QA_BASE_URL: http://127.0.0.1:8769

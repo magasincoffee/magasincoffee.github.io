@@ -105,7 +105,7 @@ test("UI2-012 Manager asset cache chain advances while Owner runtime remains on 
   const managerV="20261021-dashboard-b1";
   const managerEntryV="20261018-demand-week-matrix-v1";
   assert.ok(runtime.includes("engine-v1.js?v="+managerV));
-  assert.ok(managerIndex.includes("manager-runtime-v1.html?v=20261021-manager-nav-b3"));
+  assert.ok(managerIndex.includes("manager-runtime-v1.html?v=20261022-manager-spa-p02"));
   assert.ok(workforceIndex.includes("location.replace('/manager/scheduling/')"));
   assert.ok(legacySchedule.includes("location.replace('/manager/scheduling/')"));
   assert.ok(read("manager/scheduling/index.html").includes("SchedulingV2/index.html?mode=live"));

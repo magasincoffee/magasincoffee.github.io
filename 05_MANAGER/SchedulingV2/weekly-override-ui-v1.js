@@ -88,5 +88,5 @@ save.addEventListener('click',async()=>{
 });
 document.addEventListener('magasin:scheduling-v2-week-loaded',load);
 store.addEventListener('change',load);week.addEventListener('change',load);
-window.MAGASIN_SCHEDULING_V2_WEEKLY_DEMAND=Object.freeze({reload:load,mode:'server-scoped-weekly-overrides'});
+window.MAGASIN_SCHEDULING_V2_WEEKLY_DEMAND=Object.freeze({reload:load,isDirty:()=>changed()||saving,mode:'server-scoped-weekly-overrides'});
 })();

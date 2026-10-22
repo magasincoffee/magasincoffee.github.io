@@ -69,6 +69,8 @@ save.addEventListener('click',async()=>{if(!writable()){announce('Cài đặt nh
  const result=await c.client().rpc('replace_workforce_recurring_staffing_requirements_v1',{p_requirements:payload});if(result.error)throw result.error;
  const updated=await c.client().rpc('list_workforce_recurring_staffing_requirements_v1',{});if(updated.error)throw updated.error;all=Array.isArray(updated.data)?updated.data.map(norm):[];baseline=fingerprint(all);selectStore(selected);announce('Đã lưu nhu cầu nhân sự. Các tuần xếp lịch sau sẽ sử dụng cấu hình mới.')
  }catch(e){announce('Lưu thất bại: '+String(e?.message||e));save.disabled=false}finally{busy=false;store.disabled=false;if(dirty)save.disabled=!writable()}});
+// Read-only interface to unsaved local changes. Never exposes a write bypass.
+window.MAGASIN_MANAGER_EDIT_STATE=Object.freeze({isDirty:()=>dirty||busy,scope:()=>({storeId:selected})});
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
 retry.addEventListener('click',start);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
