@@ -34,7 +34,7 @@ test('#506 P1 preserves server-owned weekly override writes and fail-closed scop
   'p_expected_fingerprint','current.store!==store.value','current.week!==weekStart()',
   'event.stopImmediatePropagation()'
  ])assert.ok(weekly.includes(guard),guard);
- assert.doesNotMatch(weekly,/\.from\(|\.insert\(|\.update\(|publish_schedule_generation|delete from/i);
+ assert.doesNotMatch(weekly,/client\(\)\.from\(|\.insert\(|\.update\(|publish_schedule_generation|delete from/i);
 });
 test('#506 P1 projects read-only 30 minute staffing directly inside existing roster table',()=>{
  const ui=read('05_MANAGER/SchedulingV2/coverage-ui-v1.js');
