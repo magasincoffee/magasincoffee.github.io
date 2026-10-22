@@ -28,8 +28,8 @@ test('Scheduling and recurring demand screens load the same Manager nav componen
     source('05_MANAGER/SchedulingV2/Demand/index.html'),
     source('05_MANAGER/SchedulingV2/manager-navigation-v2.js')
   ]);
-  assert.match(schedule, /src="\.\/manager-navigation-v2\.js\?v=20261021-manager-nav-b3"/);
-  assert.match(demand, /src="\.\.\/manager-navigation-v2\.js\?v=20261021-manager-nav-b3"/);
+  assert.match(schedule, /src="\.\/manager-navigation-v2\.js\?v=20261022-manager-506-p0a"/);
+  assert.match(demand, /src="\.\.\/manager-navigation-v2\.js\?v=20261022-manager-506-p0a"/);
   assert.match(nav, /const demandPage = location\.pathname\.includes\('\/SchedulingV2\/Demand\/'\)/);
   assert.match(nav, /nav\.replaceChildren\(\)/);
   assert.match(nav, /key === current/);
