@@ -46,6 +46,7 @@ await check('Inactive Manager denied',async()=>denied(await call({subject:4}),'i
 await check('Unknown user with signed authenticated JWT denied',async()=>denied(await call({subject:999}),'unknown profile'));
 await check('Missing JWT denied',async()=>denied(await call({}),'unauthenticated'));
 await check('Wrong store (inactive) denied',async()=>denied(await call({subject:1,store:store3}),'inactive branch'));
+await check('Owner cannot query nonexistent UUID even if live can_access_store allows it',async()=>denied(await call({subject:1,store:u(999)}),'phantom branch'));
 await check('Non-Monday target date denied',async()=>denied(await call({subject:2,date:'2026-10-27'}),'non-Monday'));
 await check('No store parameter denied',async()=>denied(await call({subject:2,store:''}),'missing store'));
 await check('Adjacent week does not leak previous availability',async()=>allowed(await call({subject:2,date:'2026-11-02'}),[306],'week isolation'));
