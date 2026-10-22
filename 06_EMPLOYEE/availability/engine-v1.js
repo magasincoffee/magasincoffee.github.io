@@ -52,6 +52,9 @@ function syncPolicy(){
 function targetDays(){return state.week?C.date.weekDays(state.week):[]}
 function isTargetDate(value){return targetDays().includes(String(value||'').slice(0,10))}
 function closedMessage(){return state.policyReason?'Không xác định được tuần đăng ký. Vui lòng tải lại trang.':'Đăng ký lịch tuần sau đã đóng lúc 12:00 trưa Chủ nhật. Bạn vẫn có thể xem các khoảng đã đăng ký.'}
+function serverRegistrationClosed(err){return String(err?.message||err?.details||'').includes('AVAILABILITY_REGISTRATION_CLOSED')}
+function applyServerClosed(x){state.registration='REGISTRATION_CLOSED';applyRegistrationState(x);setUiState('readonly','Máy chủ đã khóa đăng ký tuần sau từ 12:00 trưa Chủ nhật (giờ Việt Nam).');}
+
 function weekLabel(){
   const days=targetDays();
   if(!days.length)return 'Tuần tới · chưa xác định';
@@ -191,8 +194,9 @@ async function register(event){
     C.ui.toast('Đã lưu thời gian có thể làm.','success');
     const ok=await load();
     if(ok)setUiState('success','Đã lưu khoảng thời gian có thể làm. Mỗi khoảng có hiệu lực ngay khi được lưu.');
-  }catch(_){
-    setUiState('error','Đăng ký thất bại. Vui lòng thử lại.',true);
+  }catch(err){
+    if(serverRegistrationClosed(err))applyServerClosed(x);
+    else setUiState('error','Đăng ký thất bại. Vui lòng thử lại.',true);
   }finally{
     state.savePending=false;
     if(button&&button.isConnected)button.disabled=false;
@@ -215,9 +219,9 @@ async function remove(id,button){
     C.ui.toast('Đã xóa khoảng thời gian có thể làm.','success');
     const ok=await load();
     if(ok)setUiState('success','Đã xóa khoảng thời gian. Giá trị hiện tại đã được tải lại.');
-  }catch(_){
-    setUiState('error','Không thể xóa thời gian có thể làm. Vui lòng thử lại.',true);
-    C.ui.toast('Không thể xóa đăng ký lịch.','error');
+  }catch(err){
+    if(serverRegistrationClosed(err))applyServerClosed(x);
+    else {setUiState('error','Không thể xóa thời gian có thể làm. Vui lòng thử lại.',true);C.ui.toast('Không thể xóa đăng ký lịch.','error');}
   }finally{
     state.deletePending.delete(key);
     if(button&&button.isConnected)button.disabled=false;
