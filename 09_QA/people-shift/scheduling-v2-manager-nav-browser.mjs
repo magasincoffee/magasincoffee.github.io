@@ -19,7 +19,7 @@ try {
     const current=nav.locator('a[aria-current="page"]');
     assert.equal(await current.count(),1,'exactly one active Scheduling menu item');
     assert.equal(await current.first().textContent().then(x=>x.includes('Xếp lịch')),true);
-    assert.equal(await nav.locator('a').count(),11,'eight primary mockup B modules and three related operations');
+    assert.equal(await nav.locator('a').count(),8,'eight live Manager destinations in two business groups');
     const overflow=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:document.documentElement.clientWidth}));
     assert.ok(overflow.scroll<=overflow.width+1,'no document-level horizontal overflow at '+width+': '+JSON.stringify(overflow));
     if (width>1024) {

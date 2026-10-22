@@ -93,19 +93,30 @@ try {
           screenWidth: document.documentElement.scrollWidth, viewport: innerWidth,
           refresh: !!root.querySelector("[data-manager-today-refresh]"),
           actionCount: root.querySelectorAll("[data-workforce-jump]").length,
-          primary: [...document.querySelectorAll(".m-shell-v2-nav__group:first-child .m-shell-v2-nav__item")].map(el => ({key:el.dataset.shellKey,name:el.textContent.trim()})),
-          secondary: [...document.querySelectorAll(".m-shell-v2-nav__group:nth-child(2) .m-shell-v2-nav__item")].map(el => el.dataset.shellKey)
+          primary: [...document.querySelectorAll(".m-shell-v2-nav__group:first-child [data-shell-key]")].map(el => ({key:el.dataset.shellKey,name:el.textContent.trim()})),
+          disclosures: [...document.querySelectorAll("[data-shell-disclosure]")].map(el=>({
+            group:el.dataset.shellDisclosure,
+            title:el.textContent.trim(),
+            expanded:el.getAttribute("aria-expanded"),
+            items:[...(document.getElementById(el.getAttribute("aria-controls"))?.querySelectorAll("[data-shell-key]")||[])].map(item=>item.dataset.shellKey)
+          })),
+          placeholders:[...document.querySelectorAll('.m-shell-v2-nav__item[data-shell-key="tasks"],.m-shell-v2-nav__item[data-shell-key="reports"],.m-shell-v2-nav__item[data-shell-key="settings"]')].length
         };
       });
       if (state.kpis !== 4 || state.legacyCards !== 0 || !state.hasManagerSidebar ||
         state.title !== "Tổng quan cửa hàng" || !state.oldSidebarHidden || !state.lightShell || state.screenWidth > state.viewport + 1 ||
         !state.refresh || state.actionCount < 4 ||
         JSON.stringify(state.primary.map(x => x.key)) !== JSON.stringify([
-          "dashboard","staff","demand","workforce","attendance","tasks","reports","settings"
+          "dashboard","staff","payroll-self-check"
         ]) ||
-        !state.primary.some(x => x.name.includes("Nhu cầu nhân sự")) ||
-        !state.primary.some(x => x.name.includes("Báo cáo")) ||
-        JSON.stringify(state.secondary) !== JSON.stringify(["swap","schedule","payroll-self-check"]))
+        JSON.stringify(state.disclosures.map(x=>x.group)) !== JSON.stringify(["planning","time"]) ||
+        JSON.stringify(state.disclosures.map(x=>x.items)) !== JSON.stringify([
+          ["demand","workforce","schedule"],["attendance","swap"]
+        ]) ||
+        !state.disclosures[0].title.includes("Lập lịch nhân sự") ||
+        !state.disclosures[1].title.includes("Công & Điều chỉnh ca") ||
+        state.disclosures.some(x=>x.expanded===null) ||
+        state.placeholders !== 0)
         throw new Error(JSON.stringify(state));
       return JSON.stringify(state);
     });
