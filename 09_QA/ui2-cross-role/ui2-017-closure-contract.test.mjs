@@ -22,7 +22,7 @@ test("UI2-017 exact UI2-016 cache chain remains canonical",()=>{
   assert.ok(engine.includes("ui-consolidation-v1.js?v=20261001-ui-unified1"));
   assert.match(engine,/manager-scheduling-ui2-v1\.js\?v=(?:20261001-ui-unified1|20261002-sched-ui-003|20261002-sched-ui-004|20261004-xstore-016|20261005-xstore-018)/);
   assert.ok(engine.includes("manager-operations-ui2-v1.js?v=20260927-ui2-016"));
-  assert.match(read("05_MANAGER/runtime/manager-runtime-v1.html"),/manager-shell-v1\.html\?v=20261022-manager-spa-p02/);
+  assert.match(read("05_MANAGER/runtime/manager-runtime-v1.html"),/manager-shell-v1\.html\?v=20261021-manager-nav-b3/);
   assert.match(read("05_MANAGER/runtime/manager-shell-v1.html"),/manager-ui-shell-v2\.js\?v=20260927-ui2-016/);
   const owner=read("04_OWNER/Workforce/runtime/owner-workforce-runtime.html");
   assert.match(owner,/manager-shell-v1\.html\?v=20260927-ui2-016&host=owner/);
