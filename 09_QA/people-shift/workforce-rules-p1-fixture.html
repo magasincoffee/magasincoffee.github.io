@@ -19,6 +19,7 @@ const client={async rpc(name,args){
  if(name==='list_workforce_recurring_staffing_requirements_v1')return {data:[{store_id:'store-one',day_of_week:1,start_time:'08:00:00',end_time:'12:00:00',target_headcount:1}],error:null};
  if(name==='list_employee_workforce_profiles_v1')return {data:profiles,error:null};
  if(name==='list_employee_employment_types_v1')return {data:[{employee_id:'pt-one',employment_type:'PART_TIME'},{employee_id:'ft-one',employment_type:'FULL_TIME'}],error:null};
+ if(name==='list_workforce_registration_order_v1')return {data:null,error:{code:'PGRST202',message:'Staged RPC unavailable in current fixture'}};
  if(name==='get_manager_weekly_availability')return {data:[
  {user_id:'pt-one',work_date:dates(week),start_time:'07:00:00',end_time:'17:00:00',availability_type:'PREFERRED'},
  {user_id:'ft-one',work_date:dates(week),start_time:'07:00:00',end_time:'17:00:00',availability_type:'AVAILABLE'}
