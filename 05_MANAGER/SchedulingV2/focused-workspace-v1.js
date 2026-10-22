@@ -63,6 +63,8 @@ if(heading&&scroller&&shiftTable){
   const filterRows=()=>{
     const term=find.querySelector('input').value.trim().toLocaleLowerCase('vi');
     for(const row of rows()){
+      // Staffing coverage is a summary row, not an employee search result.
+      if(row.matches('[data-sv2-coverage-row]')){row.hidden=false;continue;}
       const name=row.querySelector('td:first-child')?.textContent||'';
       // The no-data placeholder must never disappear.
       if(row.children.length<=1)continue;
