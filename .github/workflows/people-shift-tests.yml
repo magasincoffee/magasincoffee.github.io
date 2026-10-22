@@ -129,6 +129,12 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/workforce-rules-p1-browser.mjs
 
+      - name: Run 30-minute staffing coverage browser E2E
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+          QA_OUT: qa-artifacts/people-shift
+        run: node 09_QA/people-shift/workforce-coverage-30m-browser.mjs
+
       - name: Run SCHED-05 Owner Scheduling V1 browser E2E
         env:
           QA_BASE_URL: http://127.0.0.1:8767
