@@ -3,7 +3,7 @@
 <input type="date" id="sv2Week" value="2026-10-26"><button id="sv2Refresh">Tải lại</button></section>
 <script>
 (()=>{
-const calls=[], assignments=[];
+const calls=[], assignments=[];const verified=new URLSearchParams(location.search).has('verified');
 window.__WORKFORCE_RULES_QA={calls,assignments};
 window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED=true;
 const profiles=[
@@ -18,10 +18,11 @@ const client={async rpc(name,args){
  if(name==='list_schedule_generations')return {data:[],error:null};
  if(name==='list_workforce_recurring_staffing_requirements_v1')return {data:[{store_id:'store-one',day_of_week:1,start_time:'08:00:00',end_time:'12:00:00',target_headcount:1}],error:null};
  if(name==='list_employee_workforce_profiles_v1')return {data:profiles,error:null};
- if(name==='list_employee_employment_types_v1')return {data:[{employee_id:'pt-one',employment_type:'PART_TIME'},{employee_id:'ft-one',employment_type:'FULL_TIME'}],error:null};
+ if(name==='list_employee_employment_types_v1')return {data:[{employee_id:'pt-one',employment_type:verified?'FULL_TIME':'PART_TIME'},{employee_id:'ft-one',employment_type:'FULL_TIME'}],error:null};
+ if(name==='list_workforce_registration_order_v1')return verified?{data:[{availability_id:'av-pt',registered_at:'2026-10-17T07:00:00Z'},{availability_id:'av-ft',registered_at:'2026-10-18T07:00:00Z'}],error:null}:{data:null,error:{code:'PGRST202',message:'Staged RPC unavailable in current fixture'}};
  if(name==='get_manager_weekly_availability')return {data:[
- {user_id:'pt-one',work_date:dates(week),start_time:'07:00:00',end_time:'17:00:00',availability_type:'PREFERRED'},
- {user_id:'ft-one',work_date:dates(week),start_time:'07:00:00',end_time:'17:00:00',availability_type:'AVAILABLE'}
+ {availability_id:'av-pt',user_id:'pt-one',work_date:dates(week),start_time:'07:00:00',end_time:'17:00:00',availability_type:verified?'AVAILABLE':'PREFERRED'},
+ {availability_id:'av-ft',user_id:'ft-one',work_date:dates(week),start_time:'07:00:00',end_time:'17:00:00',availability_type:verified?'PREFERRED':'AVAILABLE'}
  ],error:null};
  if(name==='get_cross_store_weekly_plan_v1')return {data:[],error:null};
  if(name==='create_schedule_generation')return {data:'gen-one',error:null};

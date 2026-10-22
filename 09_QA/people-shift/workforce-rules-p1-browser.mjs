@@ -58,6 +58,17 @@ try{
  assert.ok(!after.rpc.includes('review_schedule_generation')&&!after.rpc.includes('publish_schedule_generation'),
   'automation is not allowed to review or publish');
  assert.deepEqual(pageErrors,[],'no page JavaScript runtime exceptions');
- console.log('WORKFORCE_20261020_P1_BROWSER_E2E=PASS (3 weeks recurring; FT first; preview→draft only; zero publish)');
+ await page.goto(BASE+'/09_QA/people-shift/workforce-rules-p1-fixture.html?auto-preview&verified',{waitUntil:'networkidle'});
+ await page.getByRole('button',{name:'Đề xuất xếp lịch'}).click();
+ await page.locator('[data-autostatus]').filter({hasText:'Đề xuất thêm 1 ca'}).waitFor();
+ const verifiedPreview=await page.locator('[data-summary]').innerText();
+ assert.match(verifiedPreview,/thời điểm tạo đăng ký do máy chủ xác thực/,'verified server timestamp status must be visible');
+ assert.doesNotMatch(verifiedPreview,/Thứ tự đăng ký sớm nhất chưa được xác minh/);
+ const verifiedResult=await page.evaluate(()=>window.MAGASIN_SCHEDULING_V2_STORE_PLANNER.preview({storeId:'store-one',weekStart:'2026-10-26'}));
+ assert.equal(verifiedResult.registrationOrderStatus,'VERIFIED_CREATED_AT');
+ assert.equal(verifiedResult.proposals[0]?.user_id,'pt-one','earlier registered FT outranks later registered FT even when later candidate PREFERRED');
+ assert.equal((await page.evaluate(()=>window.__WORKFORCE_RULES_QA.assignments)).length,0,'timestamp browser verification does not publish or write drafts');
+ assert.deepEqual(pageErrors,[],'verified branch has no page JS exceptions');
+ console.log('WORKFORCE_20261020_P1_BROWSER_E2E=PASS (3 weeks FT/PT; server-timestamp verified+unverified fallback; draft only; zero publish)');
  await page.close();
 }finally{await browser.close()}

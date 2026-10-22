@@ -1,0 +1,38 @@
+name: Workforce 487 Read-only Backup Admission
+
+on:
+  pull_request:
+    paths:
+      - '09_QA/people-shift/workforce-487-backup-admission*'
+      - '.github/workflows/workforce-487-backup-admission-qa.yml'
+  push:
+    paths:
+      - '09_QA/people-shift/workforce-487-backup-admission*'
+      - '.github/workflows/workforce-487-backup-admission-qa.yml'
+  workflow_dispatch:
+    inputs:
+      backup_run_id:
+        description: 'Verified NEW XSTORE-019O Cloud Backup run ID (read-only metadata)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  backup-preflight-source:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify deterministic fail-closed backup admission
+        run: node --test 09_QA/people-shift/workforce-487-backup-admission.test.mjs
+      - name: Check actual GitHub backup artifact and isolated restore (read-only)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          WORKFORCE_BACKUP_RUN_ID: ${{ inputs.backup_run_id }}
+        run: node 09_QA/people-shift/workforce-487-backup-admission.mjs
