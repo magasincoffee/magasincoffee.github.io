@@ -31,7 +31,7 @@ try{
  await status.filter({hasText:'Không thể đối chiếu'}).waitFor();assert.equal(await page.locator('#sv2CoverageBody tr').count(),0,'foreign store row fails closed');
  await page.evaluate(()=>{window.__COVERAGE_487_QA.invalid=false;window.__COVERAGE_487_QA.error=true;window.__COVERAGE_487_QA.emit()});
  await status.filter({hasText:'Không thể đối chiếu'}).waitFor();assert.equal(await page.locator('#sv2CoverageBody tr').count(),0,'RPC failure no fabricated coverage');
- await page.evaluate(()=>{window.__COVERAGE_487_QA.error=false;window.__COVERAGE_487_QA.slow=true;window.__COVERAGE_487_QA.emit()});
+ await page.evaluate(()=>{window.__COVERAGE_487_QA.error=false;window.__COVERAGE_487_QA.slow=true;window.__COVERAGE_487_QA.stage='DRAFT';window.__COVERAGE_487_QA.emit()});
  await page.locator('#sv2Week').fill('2026-11-02');await page.evaluate(()=>window.__COVERAGE_487_QA.emit());await loaded();
  assert.equal(await cell('08:00–08:30',0).innerText(),'2/4','latest selected week wins slow RPC');
  assert.deepEqual(errors,[]);
