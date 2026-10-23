@@ -16,7 +16,7 @@ const supabase=`window.supabase={createClient:()=>({
 })};`;
 const failures=[];
 try{
- for(const width of [1440,390]){
+ for(const width of [1440,1024,390]){
   const page=await browser.newPage({viewport:{width,height:900}});
   await page.route('**/02_CORE/shared/shared-core-v1.js**',route=>route.fulfill({status:200,contentType:'application/javascript',body:core}));
   await page.route('https://cdn.jsdelivr.net/npm/@supabase/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:supabase}));
@@ -64,6 +64,29 @@ try{
   },null,{timeout:12000});
   assert.equal(await demand.locator('#sv2UnifiedWeek').inputValue(),'2026-11-02',
     'Demand weekly override retains the selected roster week');
+
+  // Bidirectional regression: editing the selected Demand week is the authority
+  // while in WEEKLY mode and must follow the Manager back into the roster.
+  await demand.locator('#sv2UnifiedWeek').evaluate(input=>{
+    input.value='2026-11-09';
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  await page.waitForFunction(()=>window.MAGASIN_MANAGER_MODULE_ROUTER.context().weekStart==='2026-11-09');
+  assert.equal(await page.evaluate(()=>window.MAGASIN_MANAGER_MODULE_ROUTER.navigate('workforce')),true);
+  await page.waitForFunction(()=>document.querySelector('#app')?.contentDocument?.querySelector('#sv2Week')?.value==='2026-11-09',
+    null,{timeout:12000});
+  assert.equal(await source.locator('#sv2Week').inputValue(),'2026-11-09',
+    'roster inherits changed Demand weekly Monday');
+  await page.evaluate(()=>window.MAGASIN_MANAGER_MODULE_ROUTER.navigate('demand'));
+  await page.waitForFunction(()=>document.querySelector('iframe[data-manager-module="demand"]')
+    ?.contentDocument?.querySelector('#sv2UnifiedWeek')?.value==='2026-11-09');
+  // Restore expected Monday so the existing dirty-navigation/Back test remains
+  // independent of this new bidirectional context assertion.
+  await demand.locator('#sv2UnifiedWeek').evaluate(input=>{
+    input.value='2026-11-02';
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  await page.waitForFunction(()=>window.MAGASIN_MANAGER_MODULE_ROUTER.context().weekStart==='2026-11-02');
 
   // Mark an unsaved local form edit, reject navigation, then accept it.
   await demand.locator('body').evaluate(node=>node.dataset.managerUnsaved='true');
