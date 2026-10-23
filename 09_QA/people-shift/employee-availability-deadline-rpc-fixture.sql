@@ -55,3 +55,26 @@ REVOKE ALL ON FUNCTION public.save_my_availability(uuid,date,time,time,text,uuid
 REVOKE ALL ON FUNCTION public.delete_my_availability(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.save_my_availability(uuid,date,time,time,text,uuid,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.delete_my_availability(uuid) TO authenticated;
+
+-- Verbatim scoped read behavior from hosted get_my_availability, captured via
+-- pg_get_functiondef 2026-10-23. Disposable DB ONLY: sign-in identity readback.
+CREATE OR REPLACE FUNCTION public.get_my_availability(p_week_start date DEFAULT NULL::date)
+RETURNS TABLE(id uuid,work_date date,start_time time without time zone,end_time time without time zone,
+ preferred_store_id uuid,availability_type text,note text,updated_at timestamp with time zone)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public'
+AS $function$
+BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'AUTH_REQUIRED'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.profiles p WHERE p.id=auth.uid() AND p.status='ACTIVE'
+   AND upper(coalesce(p.role,'')) IN ('STAFF','EMPLOYEE')) THEN
+   RAISE EXCEPTION 'EMPLOYEE_NOT_ACTIVE'; END IF;
+ RETURN QUERY SELECT ea.id,ea.work_date,ea.start_time,ea.end_time,
+   ea.preferred_store_id,ea.availability_type,ea.note,ea.updated_at
+ FROM public.employee_availability ea
+ WHERE ea.user_id=auth.uid() AND
+  (p_week_start IS NULL OR ea.work_date BETWEEN p_week_start AND p_week_start+6)
+ ORDER BY ea.work_date,ea.start_time,ea.end_time,ea.id;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.get_my_availability(date) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.get_my_availability(date) TO authenticated;
