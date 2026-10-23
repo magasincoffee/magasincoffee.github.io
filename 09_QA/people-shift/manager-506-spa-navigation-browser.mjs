@@ -101,6 +101,8 @@ try{
   page.once('dialog',dialog=>dialog.accept());
   await goWorkforce.click();
   await page.waitForFunction(()=>window.MAGASIN_MANAGER_MODULE_ROUTER.current()==='workforce');
+  await page.waitForFunction(()=>document.querySelector('#app')?.contentDocument
+    ?.querySelector('#sv2Week')?.value==='2026-11-02',null,{timeout:12000});
   assert.equal(await source.locator('#sv2Week').inputValue(),'2026-11-02','week survives module switch');
   assert.equal(await page.evaluate(()=>document.body.dataset.spaTestMarker),'persistent-document');
   assert.equal(await demand.locator('body').getAttribute('data-manager-unsaved'),'true','dirty demand iframe is retained');
