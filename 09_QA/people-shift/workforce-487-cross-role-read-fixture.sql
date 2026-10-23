@@ -40,18 +40,18 @@ LANGUAGE sql STABLE SET search_path='' AS $qa$
 $qa$;
 -- Synthetic approved rows seeded by SQL fixture, NOT a test of Manager publish.
 INSERT INTO public.work_schedules
-SELECT '92000000-0000-4000-8000-000000000001',
+SELECT '92000000-0000-4000-8000-000000000001'::uuid,
        ((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
          -(extract(isodow from (now() AT TIME ZONE 'Asia/Ho_Chi_Minh'))::integer-1)+7),
        '06:00'::time,'10:00'::time,
-       '91000000-0000-4000-8000-000000000001','90000000-0000-4000-8000-000000000002',
+       '91000000-0000-4000-8000-000000000001'::uuid,'90000000-0000-4000-8000-000000000002'::uuid,
        'APPROVED','MANAGER_ASSIGNED'
 UNION ALL
-SELECT '92000000-0000-4000-8000-000000000002',
+SELECT '92000000-0000-4000-8000-000000000002'::uuid,
        ((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
          -(extract(isodow from (now() AT TIME ZONE 'Asia/Ho_Chi_Minh'))::integer-1)+8),
        '10:00'::time,'14:00'::time,
-       '91000000-0000-4000-8000-000000000002','90000000-0000-4000-8000-000000000003',
+       '91000000-0000-4000-8000-000000000002'::uuid,'90000000-0000-4000-8000-000000000003'::uuid,
        'APPROVED','MANAGER_ASSIGNED';
 REVOKE ALL ON public.work_schedules,public.stores,public.qa_manager_access,public.employee_store_priorities FROM PUBLIC,anon,authenticated;
 
