@@ -14,7 +14,7 @@ test("EMLIVE-002 schedule uses employee-facing availability language",()=>{
 test("EMLIVE-002 attendance keeps authority but hides implementation jargon",()=>{
   const attendance=read("06_EMPLOYEE/attendance/engine-v1.js");
   for(const rpc of ["list_my_approved_schedules_v2","get_my_attendance_v2","submit_manual_time_attendance_v1"]) assert.ok(attendance.includes(rpc),rpc);
-  assert.match(attendance,/Giờ bạn gửi cần được quản lý xác nhận trước khi dùng để tính lương/);
+  assert.match(attendance,/Nếu giờ bắt đầu và kết thúc khớp hoàn toàn ca chính thức/);
   assert.match(attendance,/Trạng thái chấm công/);
   assert.match(attendance,/Nếu ca vừa được cho\/đổi, lịch sẽ tự tải lại/);
   assert.doesNotMatch(attendance,/payroll truth|Trạng thái canonical|canonical truth|Give\/Swap|Manual-time|chấm công canonical/);
