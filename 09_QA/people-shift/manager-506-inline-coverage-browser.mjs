@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';import path from 'node:path';import {chromium} from 'playwright';
+const BASE=process.env.QA_BASE_URL||'http://127.0.0.1:8767',OUT=process.env.QA_OUT||'qa-artifacts/people-shift';
+fs.mkdirSync(OUT,{recursive:true});const browser=await chromium.launch({headless:true});
+try{
+ for(const width of [1440,390]){
+  const page=await browser.newPage({viewport:{width,height:900},timezoneId:'Asia/Ho_Chi_Minh'});
+  const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+  await page.goto(BASE+'/09_QA/people-shift/manager-506-inline-coverage-fixture.html',{waitUntil:'networkidle'});
+  const loaded=async()=>page.locator('#sv2CoverageStatus').filter({hasText:'Đã tải'}).waitFor({timeout:12000});
+  const chip=(start,day=0)=>page.locator('.sv2-roster-coverage-chip[data-coverage-start="'+start+'"][data-coverage-day="'+day+'"]');
+  await loaded();
+  assert.equal(await page.locator('#sv2Table').count(),1);
+  assert.equal(await page.locator('#sv2CoverageTable').count(),0,'standalone comparison table removed');
+  assert.equal(await page.locator('[data-sv2-coverage-row]').count(),1,'one embedded roster row');
+  assert.equal(await page.locator('.sv2-roster-coverage-chip').count(),238,'34 half-hours × seven days');
+  assert.match(await chip('08:00').textContent(),/08:00 2\/2/);
+  assert.equal(await chip('08:00').getAttribute('data-coverage'),'ENOUGH');
+  assert.match(await chip('08:30').textContent(),/08:30 1\/0/);
+  assert.equal(await chip('08:30').getAttribute('data-coverage'),'EXCESS');
+  await page.locator('#sv2Week').fill('2026-11-02');
+  await page.evaluate(()=>window.__COVERAGE_487_QA.emit());await loaded();
+  assert.equal(await chip('08:00').getAttribute('data-coverage'),'SHORTAGE');
+  assert.match(await chip('08:00').textContent(),/Thiếu 2/);
+  await page.locator('#sv2Week').fill('2026-11-09');
+  await page.evaluate(()=>window.__COVERAGE_487_QA.emit());await loaded();
+  assert.equal(await chip('08:00').getAttribute('data-coverage'),'ENOUGH');
+  await page.locator('#sv2Store').selectOption('CN2');
+  await page.evaluate(()=>window.__COVERAGE_487_QA.emit());await loaded();
+  assert.equal(await chip('08:00').getAttribute('data-coverage'),'EXCESS');
+  await page.evaluate(()=>{window.__COVERAGE_487_QA.stage='PUBLISHED';window.__COVERAGE_487_QA.emit()});await loaded();
+  assert.match(await page.locator('#sv2CoverageStatus').textContent(),/Chính thức/);
+  assert.equal(await chip('08:00').getAttribute('data-coverage'),'ENOUGH');
+  await page.locator('#sv2Store').selectOption('CNX');
+  await page.evaluate(()=>window.__COVERAGE_487_QA.emit());
+  await page.locator('#sv2CoverageStatus').filter({hasText:'Không thể đối chiếu'}).waitFor();
+  assert.equal(await page.locator('[data-sv2-coverage-row]').count(),0,'unauthorized scope does not show old coverage');
+  await page.locator('#sv2Store').selectOption('CN1');
+  await page.evaluate(()=>{window.__COVERAGE_487_QA.invalid=true;window.__COVERAGE_487_QA.emit()});
+  await page.locator('#sv2CoverageStatus').filter({hasText:'Không thể đối chiếu'}).waitFor();
+  assert.equal(await page.locator('[data-sv2-coverage-row]').count(),0,'foreign record fails closed');
+  await page.evaluate(()=>{window.__COVERAGE_487_QA.invalid=false;window.__COVERAGE_487_QA.error=true;window.__COVERAGE_487_QA.emit()});
+  await page.locator('#sv2CoverageStatus').filter({hasText:'Không thể đối chiếu'}).waitFor();
+  assert.equal(await page.locator('[data-sv2-coverage-row]').count(),0,'network failure never fabricates staffing');
+  assert.deepEqual(errors,[]);
+  await page.screenshot({path:path.join(OUT,'manager-506-p1-coverage-'+width+'.png'),fullPage:true});
+  await page.close();
+ }
+ console.log('MANAGER_506_P1_INLINE_COVERAGE=PASS 1440/390; 34×7; 3 weeks; branches; draft/published; read-only fail-closed');
+}finally{await browser.close();}

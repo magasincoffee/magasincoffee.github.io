@@ -1,5 +1,12 @@
 (()=>{'use strict';
 if(window.MAGASIN_SCHEDULING_V2_WEEKLY_DEMAND)return;
+ // #506 P1: recurring and week-specific demand are now edited within ONE
+ // table on /manager/scheduling/?section=demand. Do not create the old
+ // redundant Scheduling-only weekly editor. Keep source/RPC for isolated QA.
+ if(document.getElementById('sv2Table')){
+   window.MAGASIN_SCHEDULING_V2_WEEKLY_DEMAND=Object.freeze({isDirty:()=>false,mode:'unified-main-demand-table'});
+   return;
+ }
 const roster=document.querySelector('.sv2-roster'),store=document.getElementById('sv2Store'),week=document.getElementById('sv2Week');
 if(!roster||!store||!week)return;
 const panel=document.createElement('section');panel.id='sv2WeeklyDemand';panel.className='sv2-weekly-demand';

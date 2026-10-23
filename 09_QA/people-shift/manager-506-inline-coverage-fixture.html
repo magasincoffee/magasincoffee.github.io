@@ -1,0 +1,44 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/05_MANAGER/SchedulingV2/coverage-v1.css"></head><body>
+<div class="sv2-bar"><label>Chi nhánh<select id="sv2Store"><option value="CN1">CN1</option><option value="CN2">CN2</option><option value="CNX">Không được phép</option></select></label><label>Tuần<input type="date" id="sv2Week" value="2026-10-26"></label></div><section class="sv2-roster">
+ <div class="sv2-heading"><h2>Bảng lịch tuần</h2></div>
+ <div class="sv2-scroll"><table id="sv2Table"><thead><tr><th>Nhân viên</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th><th>T6</th><th>T7</th><th>CN</th></tr></thead>
+ <tbody id="sv2Rows"><tr><td colspan="8">Không có ca QA hiển thị.</td></tr></tbody></table></div>
+ </section>
+<script>
+(()=>{
+const qa=window.__COVERAGE_487_QA={calls:[],error:false,slow:false,invalid:false,stage:'DRAFT'};
+const dates=(week,i)=>{const d=new Date(week+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)};
+const allowed=[{id:'CN1'},{id:'CN2'}];
+const effective=(store,week)=>{
+ const target=store==='CN1'?(week==='2026-11-02'?4:2):1;
+ const day=dates(week,0);
+ return [
+  {store_id:store,work_date:day,start_time:'08:00:00',end_time:'08:30:00',target_headcount:target,demand_source:target===4?'WEEK_OVERRIDE':'RECURRING'},
+  {store_id:store,work_date:day,start_time:'08:30:00',end_time:'09:00:00',target_headcount:0,demand_source:'WEEK_OVERRIDE'}
+ ];
+};
+const shifts=(store,week)=>[
+ {store_id:store,work_date:dates(week,0),start_time:'08:00:00',end_time:'09:00:00',user_id:'FT1',source:'DRAFT'},
+ {store_id:store,work_date:dates(week,0),start_time:'08:00:00',end_time:'08:30:00',user_id:'FT2',source:'DRAFT'},
+ {store_id:store,work_date:dates(week,0),start_time:'08:00:00',end_time:'08:30:00',user_id:'FT3',source:'OFFICIAL'}
+];
+window.MAGASIN_SCHEDULING_V2_WEEK_NAV={weekStart:v=>v};
+window.MAGASIN_SCHEDULING_V2_CONTEXT={actor:async()=>({role:'STORE_MANAGER'}),stores:async()=>allowed,client:()=>({rpc:async(name,args)=>{
+ qa.calls.push({name,args});if(qa.slow)await new Promise(ok=>setTimeout(ok,125));
+ if(qa.error)return {error:{message:'NETWORK_DOWN'}};
+ if(name!=='list_workforce_effective_weekly_staffing_v1')throw Error('UNEXPECTED_RPC '+name);
+ const rows=effective(args.p_store_id,args.p_week_start);
+ if(qa.invalid)rows[0].store_id='CNX';
+ return {data:rows,error:null};
+ }})};
+window.MAGASIN_SCHEDULING_V2_READ_ADAPTER={week:async(storeId,weekStart)=>{
+ qa.calls.push({name:'read_adapter.week',storeId,weekStart});if(qa.slow)await new Promise(ok=>setTimeout(ok,125));
+ if(!allowed.some(x=>x.id===storeId))throw Error('STORE_NOT_ALLOWED');
+ return {rows:shifts(storeId,weekStart),stage:qa.stage};
+ }};
+qa.emit=()=>document.dispatchEvent(new CustomEvent('magasin:scheduling-v2-week-loaded',{detail:{storeId:document.getElementById('sv2Store').value,weekStart:document.getElementById('sv2Week').value}}));
+})();
+</script>
+<script src="/05_MANAGER/SchedulingV2/coverage-core-v1.js"></script><script src="/05_MANAGER/SchedulingV2/coverage-ui-v1.js"></script>
+<script>window.__COVERAGE_487_QA.emit();</script>
+</body></html>
