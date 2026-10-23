@@ -1,20 +1,23 @@
 -- #487: disposable four-store fixture. Only GitHub Actions ephemeral PostgreSQL.
 ALTER TABLE public.profiles ADD COLUMN full_name text;
 ALTER TABLE public.profiles ADD COLUMN username text;
+ALTER TABLE public.profiles ADD COLUMN access_scope text;
 UPDATE public.profiles SET full_name='QA '||id::text, username='qa-'||right(id::text,4);
 INSERT INTO public.profiles(id,role,status,full_name,username) VALUES
 ('90000000-0000-4000-8000-000000000005','OWNER','ACTIVE','QA Owner','qa-owner'),
 ('90000000-0000-4000-8000-000000000006','STORE_MANAGER','ACTIVE','QA Manager CN2','qa-manager2');
+UPDATE public.profiles SET access_scope=CASE id
+ WHEN '90000000-0000-4000-8000-000000000001'::uuid THEN 'CN1'
+ WHEN '90000000-0000-4000-8000-000000000005'::uuid THEN 'ALL'
+ WHEN '90000000-0000-4000-8000-000000000006'::uuid THEN 'CN2'
+ END WHERE id IN ('90000000-0000-4000-8000-000000000001','90000000-0000-4000-8000-000000000005','90000000-0000-4000-8000-000000000006');
 CREATE TABLE public.stores(id uuid PRIMARY KEY,code text NOT NULL,name text NOT NULL,status text NOT NULL);
 INSERT INTO public.stores VALUES
 ('91000000-0000-4000-8000-000000000001','CN1','Chi nhánh QA CN1','ACTIVE'),
 ('91000000-0000-4000-8000-000000000002','CN2','Chi nhánh QA CN2','ACTIVE'),
 ('91000000-0000-4000-8000-000000000003','CN3','Chi nhánh QA CN3','ACTIVE'),
 ('91000000-0000-4000-8000-000000000004','CN4','Chi nhánh QA CN4','ACTIVE');
-CREATE TABLE public.qa_manager_access(user_id uuid NOT NULL,store_id uuid NOT NULL);
-INSERT INTO public.qa_manager_access VALUES
-('90000000-0000-4000-8000-000000000001','91000000-0000-4000-8000-000000000001'),
-('90000000-0000-4000-8000-000000000006','91000000-0000-4000-8000-000000000002');
+-- Production authorization uses profiles.access_scope; no QA-only grant table.
 CREATE TABLE public.employee_store_priorities(employee_id uuid NOT NULL,store_id uuid NOT NULL);
 INSERT INTO public.employee_store_priorities VALUES
 ('90000000-0000-4000-8000-000000000002','91000000-0000-4000-8000-000000000001'),
@@ -24,20 +27,53 @@ CREATE TABLE public.work_schedules (
  store_id uuid NOT NULL REFERENCES public.stores(id),user_id uuid NOT NULL REFERENCES public.profiles(id),
  status text NOT NULL,origin text NOT NULL
 );
-CREATE OR REPLACE FUNCTION public.current_user_role() RETURNS text
-LANGUAGE sql STABLE SET search_path='' AS $qa$
- SELECT p.role FROM public.profiles p WHERE p.id=auth.uid()
-$qa$;
-CREATE OR REPLACE FUNCTION public.can_access_store(p_store_id uuid) RETURNS boolean
-LANGUAGE sql STABLE SET search_path='' AS $qa$
- SELECT CASE
- WHEN (SELECT role FROM public.profiles WHERE id=auth.uid() AND status='ACTIVE')='OWNER'
- THEN EXISTS(SELECT 1 FROM public.stores s WHERE s.id=p_store_id AND s.status='ACTIVE')
- ELSE EXISTS(SELECT 1 FROM public.qa_manager_access a
-   JOIN public.stores s ON s.id=a.store_id AND s.status='ACTIVE'
-   WHERE a.user_id=auth.uid() AND a.store_id=p_store_id)
- END
-$qa$;
+-- Exact production authorization helper functions from read-only pg_get_functiondef (2026-10-23).
+CREATE OR REPLACE FUNCTION public.current_user_role()
+ RETURNS text
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select role from public.profiles where id = auth.uid();
+$function$;
+
+CREATE OR REPLACE FUNCTION public.can_access_store(target_store_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_role text;
+  v_status text;
+  v_scope text;
+  v_code text;
+begin
+  if auth.uid() is null or target_store_id is null then return false; end if;
+
+  select upper(coalesce(p.role,'')),p.status,coalesce(p.access_scope,'')
+    into v_role,v_status,v_scope
+    from public.profiles p
+   where p.id=auth.uid();
+
+  if not found or v_status<>'ACTIVE' then return false; end if;
+  if v_role='OWNER' then return true; end if;
+  if v_role<>'STORE_MANAGER' then return false; end if;
+
+  select upper(s.code) into v_code
+  from public.stores s
+  where s.id=target_store_id;
+  if v_code is null then return false; end if;
+
+  return exists(
+    select 1
+    from regexp_split_to_table(upper(v_scope),'[,; ]+') token
+    where token in ('ALL','*',v_code)
+  );
+end;
+$function$;
+REVOKE EXECUTE ON FUNCTION public.current_user_role(),public.can_access_store(uuid) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.current_user_role(),public.can_access_store(uuid) TO authenticated;
 -- Synthetic approved rows seeded by SQL fixture, NOT a test of Manager publish.
 INSERT INTO public.work_schedules
 SELECT '92000000-0000-4000-8000-000000000001'::uuid,
@@ -53,7 +89,7 @@ SELECT '92000000-0000-4000-8000-000000000002'::uuid,
        '10:00'::time,'14:00'::time,
        '91000000-0000-4000-8000-000000000002'::uuid,'90000000-0000-4000-8000-000000000003'::uuid,
        'APPROVED','MANAGER_ASSIGNED';
-REVOKE ALL ON public.work_schedules,public.stores,public.qa_manager_access,public.employee_store_priorities FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON public.work_schedules,public.stores,public.employee_store_priorities FROM PUBLIC,anon,authenticated;
 
 -- The following three functions are copied from hosted pg_get_functiondef on 2026-10-23
 -- (read-only introspection; no production DML).

@@ -3,8 +3,10 @@
 -- Never run against MAGASIN production.
 INSERT INTO public.profiles(id,role,status,full_name,username)
 VALUES ('90000000-0000-4000-8000-000000000007','STAFF','ACTIVE','QA Staff CN3','qa-staff7');
-INSERT INTO public.qa_manager_access(user_id,store_id)
-VALUES ('90000000-0000-4000-8000-000000000001','91000000-0000-4000-8000-000000000003');
+-- Synthetic Manager role needs CN3 for the full draft->publish QA scenario.
+-- This modifies only the disposable fixture's profile scope, just like production ACL.
+UPDATE public.profiles SET access_scope='CN1,CN3'
+WHERE id='90000000-0000-4000-8000-000000000001' AND role='STORE_MANAGER';
 INSERT INTO public.employee_store_priorities(employee_id,store_id)
 VALUES ('90000000-0000-4000-8000-000000000007','91000000-0000-4000-8000-000000000003');
 
