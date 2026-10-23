@@ -140,3 +140,54 @@ VALUES ('93000000-0000-4000-8000-000000000004',
 'APPROVED','06:00','10:00','MANAGER_ASSIGNED');
 REVOKE ALL ON public.attendance,public.payroll_entries FROM PUBLIC,anon,authenticated;
 CREATE TABLE qa_private.attendance_baseline AS SELECT * FROM public.attendance;
+
+-- Real TASK-100 active Manager/Owner store-scoped reader authority.
+create or replace function public.validate_manager_attendance_review_authority_v1(
+  p_store_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_profile public.profiles%rowtype;
+begin
+  if v_uid is null then
+    raise exception 'AUTH_REQUIRED';
+  end if;
+
+  if p_store_id is null then
+    raise exception 'ATTENDANCE_REVIEW_STORE_REQUIRED';
+  end if;
+
+  select * into v_profile
+  from public.profiles
+  where id = v_uid;
+
+  if not found then
+    raise exception 'ATTENDANCE_REVIEW_MANAGER_PROFILE_NOT_FOUND';
+  end if;
+
+  if v_profile.status <> 'ACTIVE' then
+    raise exception 'ATTENDANCE_REVIEW_MANAGER_INACTIVE';
+  end if;
+
+  if v_profile.role not in ('STORE_MANAGER','OWNER') then
+    raise exception 'ATTENDANCE_REVIEW_ROLE_NOT_ALLOWED';
+  end if;
+
+  if v_profile.role <> 'OWNER' and not public.can_access_store(p_store_id) then
+    raise exception 'STORE_NOT_ALLOWED';
+  end if;
+
+  return jsonb_build_object(
+    'manager_id', v_uid,
+    'manager_role', v_profile.role,
+    'store_id', p_store_id
+  );
+end;
+$$;
+REVOKE EXECUTE ON FUNCTION public.validate_manager_attendance_review_authority_v1(uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.validate_manager_attendance_review_authority_v1(uuid) TO postgres;
