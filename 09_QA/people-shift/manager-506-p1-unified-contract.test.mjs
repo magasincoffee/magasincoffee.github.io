@@ -37,20 +37,23 @@ test('#506 P1 preserves server-owned weekly override writes and fail-closed scop
  ])assert.ok(weekly.includes(guard),guard);
  assert.doesNotMatch(weekly,/client\(\)\.from\(|\.insert\(|\.update\(|publish_schedule_generation|delete from/i);
 });
-test('#506 P1 projects read-only 30 minute staffing directly inside existing roster table',()=>{
+test('#506 Owner correction: only shortages in seven existing roster day headers, no comparison tables or 238 chips',()=>{
  const ui=read('05_MANAGER/SchedulingV2/coverage-ui-v1.js');
  const weekly=read('05_MANAGER/SchedulingV2/weekly-override-ui-v1.js');
  const html=read('05_MANAGER/SchedulingV2/index.html');
+ const demand=read('05_MANAGER/SchedulingV2/Demand/index.html');
  assert.doesNotThrow(()=>new Function(ui));
- assert.match(ui,/inline=!!document\.getElementById\('sv2Table'\)/);
- assert.match(ui,/body\.prepend\(tr\)/);
- assert.match(ui,/data-sv2-coverage-row|sv2CoverageRow/);
- assert.match(ui,/for\(const slot of result\.rows\)/);
- assert.match(ui,/data\.status|cell\.status/);
+ assert.match(ui,/className='sv2-roster-shortage'/);
+ assert.match(ui,/ths\[day\+1\]\.append\(badge\)/);
+ assert.match(ui,/cell\.status!=='SHORTAGE'/);
  assert.match(ui,/list_workforce_effective_weekly_staffing_v1/);
  assert.match(ui,/reader\.week\(s\.storeId,s\.weekStart\)/);
+ assert.doesNotMatch(ui,/sv2CoverageTable|sv2CoverageBody|data-sv2-coverage-row|sv2-roster-coverage-chip|Nhu cầu \/ ca|Đối chiếu nhân sự/);
  assert.match(weekly,/document\.getElementById\('sv2Table'\)/);
  assert.match(weekly,/mode:'unified-main-demand-table'/);
  assert.match(html,/coverage-ui-v1\.js/);
+ assert.doesNotMatch(html,/30 phút<\/span>/);
+ assert.doesNotMatch(demand,/sv2WeekDemandTable/);
+ assert.match(demand,/id="sv2DemandTable"/);
  assert.doesNotMatch(ui,/replace_workforce_weekly_overrides_v1|publish_schedule_generation|\.insert\(/);
 });
