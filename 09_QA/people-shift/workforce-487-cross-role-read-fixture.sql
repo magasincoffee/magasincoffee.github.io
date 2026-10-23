@@ -124,7 +124,7 @@ begin
     )
   order by ea.work_date,ea.start_time,ea.end_time,coalesce(p.full_name,p.username),ea.id;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_manager_weekly_schedule(p_store_id uuid DEFAULT NULL::uuid, p_week_start date DEFAULT NULL::date)
  RETURNS TABLE(schedule_id uuid, work_date date, start_time time without time zone, end_time time without time zone, store_id uuid, store_code text, store_name text, user_id uuid, employee_name text, status text, origin text)
@@ -163,7 +163,7 @@ begin
     and (p_store_id is null or ws.store_id=p_store_id)
   order by ws.work_date,ws.start_time,ws.end_time,s.code,p.full_name,ws.id;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.list_my_approved_schedules_v2(p_week_start date DEFAULT NULL::date)
  RETURNS TABLE(schedule_id uuid, work_date date, start_time time without time zone, end_time time without time zone, store_id uuid, store_code text, store_name text, status text, origin text)
@@ -196,7 +196,7 @@ begin
     and ws.work_date between v_week_start and v_week_start+6
   order by ws.work_date,ws.start_time,ws.end_time,ws.id;
 end;
-$function$
+$function$;
 
 REVOKE ALL ON FUNCTION public.get_manager_weekly_availability(uuid,date) FROM PUBLIC,anon;
 REVOKE ALL ON FUNCTION public.get_manager_weekly_schedule(uuid,date) FROM PUBLIC,anon;
