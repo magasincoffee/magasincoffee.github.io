@@ -64,17 +64,39 @@ await check('no direct authenticated table write grants',async()=>{
  const x=await request({subject:user.employee,path:'/employee_availability',params:{user_id:user.employee,work_date:nextMonday,start_time:'06:00',end_time:'10:00'}});
  denied(x,'table insert must be inaccessible');
 });
+await check('signed Employee read API enforces authentication, identity and week scope',async()=>{
+ const own=await request({subject:user.employee,endpoint:'get_my_availability',params:{p_week_start:nextMonday}});
+ ok(own,'own read');assert.ok(Array.isArray(own.data));
+ assert.ok(own.data.every(row=>row.id!==rowOther),'foreign row never returned');
+ const foreign=await request({subject:user.other,endpoint:'get_my_availability',params:{p_week_start:nextMonday}});
+ ok(foreign,'other own read');assert.ok(foreign.data.some(row=>row.id===rowOther));
+ assert.ok(foreign.data.every(row=>row.id!==rowOld),'old week excluded');
+ denied(await request({subject:user.manager,endpoint:'get_my_availability',params:{p_week_start:nextMonday}}),'manager read','EMPLOYEE_NOT_ACTIVE');
+ denied(await request({subject:user.inactive,endpoint:'get_my_availability',params:{p_week_start:nextMonday}}),'inactive read','EMPLOYEE_NOT_ACTIVE');
+ denied(await request({subject:user.employee,bearer:null,endpoint:'get_my_availability',params:{p_week_start:nextMonday}}),'anonymous read');
+});
 if(open){
- await check('employee signed JWT valid create/edit/delete path',async()=>{
+ await check('employee signed JWT create -> read -> edit -> read -> delete -> original snapshot',async()=>{
+  const before=await request({subject:user.employee,endpoint:'get_my_availability',params:{p_week_start:nextMonday}});
+  ok(before,'baseline');assert.ok(Array.isArray(before.data));
   const created=await request({subject:user.employee,params:slot(nextMonday)});
   ok(created,'create');assert.match(String(created.data),/^[0-9a-f-]{36}$/);
   const id=String(created.data);
+  const inserted=await request({subject:user.employee,endpoint:'get_my_availability',params:{p_week_start:nextMonday}});
+  ok(inserted,'read after insert');assert.equal(inserted.data.length,before.data.length+1);
+  assert.ok(inserted.data.some(row=>row.id===id&&String(row.start_time).startsWith('06:00')),'insert persisted and scoped');
+  const foreign=await request({subject:user.other,endpoint:'get_my_availability',params:{p_week_start:nextMonday}});
+  ok(foreign,'foreign read after insert');assert.ok(foreign.data.every(row=>row.id!==id),'isolation after insert');
   const bad=await request({subject:user.employee,params:slot(nextMonday,{p_availability_id:id,p_start_time:'06:15'})});
   denied(bad,'invalid 30m','AVAILABILITY_INVALID_30_MINUTE_INTERVAL');
   const update=await request({subject:user.employee,params:slot(nextMonday,{p_availability_id:id,p_start_time:'06:30'})});
   ok(update,'update');assert.equal(update.data,id);
+  const edited=await request({subject:user.employee,endpoint:'get_my_availability',params:{p_week_start:nextMonday}});
+  ok(edited,'read after edit');assert.ok(edited.data.some(row=>row.id===id&&String(row.start_time).startsWith('06:30')),'edit persisted');
   const drop=await request({subject:user.employee,endpoint:'delete_my_availability',params:{p_availability_id:id}});
   ok(drop,'delete');assert.equal(drop.data,true);
+  const restored=await request({subject:user.employee,endpoint:'get_my_availability',params:{p_week_start:nextMonday}});
+  ok(restored,'read restored');assert.deepEqual(restored.data,before.data,'no residual rows after deletion');
  });
-}else console.log('CLOSED_NOW: current wall clock is after Sunday cutoff. Safe positive insert/edit/delete skipped; negative checks executed.');
+}else console.log('CLOSED_NOW: current wall clock is after Sunday cutoff. Safe positive insert/edit/delete skipped; read/negative checks executed.');
 console.log('SIGNED_JWT_EMPLOYEE_DEADLINE_E2E=PASS '+performed.length+' tests; localhost disposable DB only');
