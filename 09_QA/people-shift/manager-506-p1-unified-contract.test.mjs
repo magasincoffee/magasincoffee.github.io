@@ -44,6 +44,9 @@ test('#506 Owner correction: only shortages in seven existing roster day headers
  const demand=read('05_MANAGER/SchedulingV2/Demand/index.html');
  assert.doesNotThrow(()=>new Function(ui));
  assert.match(ui,/className='sv2-roster-shortage'/);
+ assert.match(ui,/document\.createElement\('details'\)/,'touch-accessible shortage details');
+ assert.match(ui,/document\.createElement\('summary'\)/,'keyboard-accessible toggle');
+ assert.match(ui,/sv2-roster-shortage-times/,'time details remain in header');
  assert.match(ui,/ths\[day\+1\]\.append\(badge\)/);
  assert.match(ui,/cell\.status!=='SHORTAGE'/);
  assert.match(ui,/list_workforce_effective_weekly_staffing_v1/);
