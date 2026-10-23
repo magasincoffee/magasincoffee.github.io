@@ -5,11 +5,13 @@ on:
     paths:
       - '07_DATABASE/migrations/20261022080000_workforce_employee_availability_deadline_v1.sql'
       - '09_QA/people-shift/employee-availability-deadline-*'
+      - '09_QA/people-shift/workforce-487-cross-role-*'
       - '.github/workflows/employee-availability-deadline-db-qa.yml'
   pull_request:
     paths:
       - '07_DATABASE/migrations/20261022080000_workforce_employee_availability_deadline_v1.sql'
       - '09_QA/people-shift/employee-availability-deadline-*'
+      - '09_QA/people-shift/workforce-487-cross-role-*'
       - '.github/workflows/employee-availability-deadline-db-qa.yml'
   workflow_dispatch:
 
@@ -44,6 +46,8 @@ jobs:
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/employee-availability-deadline-isolated.test.sql
       - name: Install synthetic RPC façades matching hosted Employee save/delete
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/employee-availability-deadline-rpc-fixture.sql
+      - name: Install real production read-only three-role projection RPCs into synthetic four-store DB
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/workforce-487-cross-role-read-fixture.sql
       - name: Start local PostgREST with HS256 signature enforcement
         env:
           QA_JWT_SECRET: local-isolated-availability-jwt-signing-secret-over-32
@@ -67,6 +71,11 @@ jobs:
           QA_JWT_SECRET: local-isolated-availability-jwt-signing-secret-over-32
           QA_POSTGREST_URL: http://127.0.0.1:3000
         run: node 09_QA/people-shift/employee-availability-deadline-jwt-e2e.mjs
+      - name: Cross-role signed JWT authorization and Employee registration projection acceptance
+        env:
+          QA_JWT_SECRET: local-isolated-availability-jwt-signing-secret-over-32
+          QA_POSTGREST_URL: http://127.0.0.1:3000
+        run: node 09_QA/people-shift/workforce-487-cross-role-read-jwt-e2e.mjs
       - name: Independently assert zero residual row mutations against disposable SQL snapshot
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/employee-availability-deadline-roundtrip-assert.sql
       - name: Show PostgREST diagnostics on failure
