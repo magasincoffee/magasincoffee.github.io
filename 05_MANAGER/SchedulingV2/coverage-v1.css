@@ -35,3 +35,6 @@
 .sv2-roster-coverage-chip[data-coverage="CONFLICT"]{background:#ffdfdf;color:#922a2a;font-weight:700}
 .sv2-roster-coverage-chip[data-coverage="ZERO"]{background:#f1f5f9;color:#64748b}
 .sv2-roster-coverage-chip:focus-visible{outline:2px solid #1e62b8;outline-offset:2px}
+
+/* Owner decision 23/10: one week roster, compact shortages in day columns only. */
+#sv2Table thead th .sv2-roster-shortage{display:block;white-space:normal;margin-top:5px;padding:4px 6px;border-radius:6px;background:#fff0e6;color:#a63b14;font-size:11px;line-height:1.35;font-weight:700;text-align:left}

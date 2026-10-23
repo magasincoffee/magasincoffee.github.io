@@ -102,7 +102,7 @@ test('Demand toolbar enters live editor and returns through authenticated canoni
   assert.match(rollout,/\/manager\/scheduling\/\?section=demand/);
   assert.doesNotMatch(rollout, /\.\.\/index\.html\?mode=live/);
   assert.doesNotMatch(schedule,/V2 PREVIEW/);
-  assert.match(schedule,/05:00–22:00 · 30 phút/);
+  assert.match(schedule,/05:00–22:00<\/span>/); // interval granularity remains backend-only; no 30-minute comparison UI
 });
 
 test('Manager V2 shell uses canonical route before stale V1 sidebar and never retries hidden views',async()=>{
