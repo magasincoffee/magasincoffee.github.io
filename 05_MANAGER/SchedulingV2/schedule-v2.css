@@ -337,3 +337,11 @@ body.sv2-nav-ready .sv2-nav-disclosure summary::after{content:"⌄";margin-left:
 body.sv2-nav-ready .sv2-nav-disclosure[open] summary::after{transform:rotate(180deg)}
 body.sv2-nav-ready .sv2-nav-disclosure summary:focus-visible{outline:2px solid #2874ed;outline-offset:2px}
 body.sv2-nav-ready .sv2-nav-disclosure a{display:flex;align-items:center;margin-left:12px;min-height:44px}
+
+/* #506 P3: the canonical Manager shell owns page-level information and navigation.
+   Drop only the legacy redundant end-of-page disclaimer, not workflow feedback
+   or the Demand editor's real Save controls. Direct standalone V2 keeps its footer. */
+html[data-sv2-manager-host="shared"] .sv2 > footer{display:none!important}
+/* Consistent keyboard and finger targets for the operational toolbar. */
+.sv2-primary-action,.sv2-advanced>summary,.sv2-bar #sv2Refresh{min-height:44px!important}
+.sv2-primary-action:focus-visible,.sv2-advanced>summary:focus-visible{outline:3px solid #087c94;outline-offset:2px}
