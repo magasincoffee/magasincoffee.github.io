@@ -64,12 +64,16 @@ await check('Employee B and Owner see CN2 schedule, Manager CN2 only own branch'
 await check('unauthorized cross-branch and forged roles fail closed',async()=>{
  denied(await mgr(1,store(2)),'Manager CN1 cannot read CN2','STORE_NOT_ALLOWED');
  denied(await mgr(6,store(1)),'Manager CN2 cannot read CN1','STORE_NOT_ALLOWED');
+ denied(await mgr(1,store(4)),'Manager CN1+CN3 cannot read CN4','STORE_NOT_ALLOWED');
  denied(await mgr(2,store(1)),'Employee cannot inspect Manager roster','ROLE_NOT_ALLOWED');
  denied(await self(1),'Manager cannot use Employee schedule projection','EMPLOYEE_NOT_ACTIVE');
  denied(await self(5),'Owner cannot use Employee schedule projection','EMPLOYEE_NOT_ACTIVE');
  denied(await self(4),'inactive employee cannot use projection','EMPLOYEE_NOT_ACTIVE');
  denied(await mgr(1,null),'Manager must specify branch','STORE_REQUIRED_FOR_MANAGER');
- denied(await mgr(5,store(9)),'Owner nonexistent branch','STORE_NOT_ALLOWED');
+ // Production can_access_store grants OWNER enterprise scope; a nonexistent store
+ // remains an empty projection, not a STORE_NOT_ALLOWED error.
+ assert.deepEqual(success(await mgr(5,store(9)),'Owner nonexistent branch empty'),[]);
+ denied(await mgr(1,store(9)),'Manager nonexistent branch denied','STORE_NOT_ALLOWED');
  denied(await mgr(null,store(1)),'anonymous cannot read');
 });
 await check('week selection is isolated and signed JWT cannot access raw schedule table',async()=>{
