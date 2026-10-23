@@ -78,3 +78,9 @@ END;
 $function$;
 REVOKE ALL ON FUNCTION public.get_my_availability(date) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.get_my_availability(date) TO authenticated;
+
+-- Disposable-only immutable reference for independent SQL after the HTTP roundtrip.
+CREATE SCHEMA qa_private;
+REVOKE ALL ON SCHEMA qa_private FROM PUBLIC,anon,authenticated;
+CREATE TABLE qa_private.employee_availability_baseline AS
+ SELECT * FROM public.employee_availability;
