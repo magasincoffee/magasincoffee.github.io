@@ -7,6 +7,8 @@ on:
       - '09_QA/people-shift/employee-availability-deadline-*'
       - '09_QA/people-shift/workforce-487-cross-role-*'
       - '09_QA/people-shift/workforce-487-manager-publish-*'
+      - '09_QA/people-shift/attendance-exact-auto-*'
+      - '06_EMPLOYEE/attendance/engine-v1.js'
       - '.github/workflows/employee-availability-deadline-db-qa.yml'
   pull_request:
     paths:
@@ -14,6 +16,8 @@ on:
       - '09_QA/people-shift/employee-availability-deadline-*'
       - '09_QA/people-shift/workforce-487-cross-role-*'
       - '09_QA/people-shift/workforce-487-manager-publish-*'
+      - '09_QA/people-shift/attendance-exact-auto-*'
+      - '06_EMPLOYEE/attendance/engine-v1.js'
       - '.github/workflows/employee-availability-deadline-db-qa.yml'
   workflow_dispatch:
 
@@ -89,6 +93,17 @@ jobs:
         run: node 09_QA/people-shift/workforce-487-manager-publish-jwt-e2e.mjs
       - name: Attest exactly-once publication and restore all synthetic Manager schedule rows
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/workforce-487-manager-publish-cleanup.sql
+      - name: Prepare isolated attendance and payroll authority fixtures
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-fixture.sql
+      - name: Apply P0 exact-shift auto-confirm candidate ONLY to disposable PostgreSQL
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-candidate.sql
+      - name: Exercise JWT current-owner, exact-match, deviation and idempotent attendance
+        env:
+          QA_JWT_SECRET: local-isolated-availability-jwt-signing-secret-over-32
+          QA_POSTGREST_URL: http://127.0.0.1:3000
+        run: node 09_QA/people-shift/attendance-exact-auto-jwt-e2e.mjs
+      - name: Prove confirmed-time payroll source and exact attendance/payroll rollback
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-assert.sql
       - name: Independently assert zero residual row mutations against disposable SQL snapshot
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/employee-availability-deadline-roundtrip-assert.sql
       - name: Show PostgREST diagnostics on failure
