@@ -96,7 +96,7 @@ BEGIN
 
  PERFORM set_config('request.jwt.claim.sub',actor_inactive::text,true);
  PERFORM public.qa_expect_rejected('inactive-actor',
-   format('DELETE FROM public.employee_availability WHERE id=%L',row_next),
+   format('DELETE FROM public.employee_availability WHERE id=%L',row_old),
    'ACTOR_NOT_ACTIVE');
  SELECT count(*) INTO actual FROM public.employee_availability WHERE id IN(row_old,row_other);
  IF actual<>2 THEN RAISE EXCEPTION 'QA_NEGATIVE_TEST_CHANGED_ROWS %',actual; END IF;
