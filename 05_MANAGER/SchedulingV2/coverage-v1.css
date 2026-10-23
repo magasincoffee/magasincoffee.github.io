@@ -38,3 +38,11 @@
 
 /* Owner decision 23/10: one week roster, compact shortages in day columns only. */
 #sv2Table thead th .sv2-roster-shortage{display:block;white-space:normal;margin-top:5px;padding:4px 6px;border-radius:6px;background:#fff0e6;color:#a63b14;font-size:11px;line-height:1.35;font-weight:700;text-align:left}
+
+/* Owner #506: shortage hours readable by touch/keyboard, not only a mouse title. */
+#sv2Table thead th details.sv2-roster-shortage>summary{display:flex;align-items:center;gap:4px;min-height:44px;cursor:pointer;list-style:none;outline-offset:2px}
+#sv2Table thead th details.sv2-roster-shortage>summary::-webkit-details-marker{display:none}
+#sv2Table thead th details.sv2-roster-shortage>summary::after{content:'⌄';margin-left:auto;font-size:14px}
+#sv2Table thead th details.sv2-roster-shortage[open]>summary::after{content:'⌃'}
+#sv2Table thead th details.sv2-roster-shortage>summary:focus-visible{outline:3px solid #087c94;border-radius:4px}
+#sv2Table thead th .sv2-roster-shortage-times{margin:5px 0 0;padding:6px 0 2px;border-top:1px solid #edc7b1;max-height:120px;overflow:auto;overflow-wrap:anywhere;white-space:normal;font-size:11px;line-height:1.5;font-weight:500}
