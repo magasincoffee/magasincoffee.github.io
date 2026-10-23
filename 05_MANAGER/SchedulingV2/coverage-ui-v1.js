@@ -30,14 +30,21 @@ function render(result){
   const short=intervals(result,day);
   if(!short.length||!ths[day+1])continue;
   const max=Math.max(...short.map(x=>x.missing));
-  const badge=document.createElement('span');
+  // Native details let touch and keyboard users read exact shortage windows.
+  // Keep the compact day-header badge; do not resurrect any comparison table.
+  const badge=document.createElement('details');
   badge.className='sv2-roster-shortage';
   badge.dataset.sv2ShortageDay=String(day);
-  badge.textContent='Thiếu tối đa '+max+' người';
+  const trigger=document.createElement('summary');
+  trigger.textContent='Thiếu tối đa '+max+' người';
   const details=short.map(x=>x.start+'–'+x.end+': thiếu '+x.missing+' người').join('; ');
   const date=result.rows[0]?.days[day]?.date||'';
+  const timeList=document.createElement('p');
+  timeList.className='sv2-roster-shortage-times';
+  timeList.textContent=details;
   badge.title=date+' · '+details;
   badge.setAttribute('aria-label','Thiếu nhân sự ngày '+date+': '+details);
+  badge.append(trigger,timeList);
   ths[day+1].append(badge);
  }
 }
