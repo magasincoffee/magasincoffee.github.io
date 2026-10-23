@@ -37,3 +37,17 @@
   .sv2-demand-controls #sv2AddBand{width:100%}
   .sv2-demand-feedback{align-items:flex-start}
 }
+
+/* #506 P1 one main table: recurring template and one-week override modes. */
+.sv2-unified-mode{margin:12px 0 14px;padding:13px 16px;border:1px solid #dce7f5;border-radius:12px;background:#fff;display:grid;gap:10px}
+.sv2-unified-options{display:flex;flex-wrap:wrap;gap:8px}
+.sv2-unified-options button{min-height:44px;border:1px solid #b5c9df;border-radius:9px;background:#fff;color:#234362;padding:8px 14px;font:inherit;font-weight:650;cursor:pointer}
+.sv2-unified-options button[aria-pressed="true"]{background:#174d8f;color:#fff;border-color:#174d8f}
+.sv2-unified-options button:focus-visible,.sv2-unified-week input:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.sv2-unified-week{display:flex;align-items:center;flex-wrap:wrap;gap:9px;font-weight:650}
+.sv2-unified-week[hidden]{display:none!important}
+.sv2-unified-week input{font:inherit;min-height:44px;padding:7px 10px;border:1px solid #b5c9df;border-radius:8px}
+#sv2UnifiedWeekHint{margin:0;color:#587085;font-size:12px}
+#sv2DemandRows [data-demand-source="WEEK_OVERRIDE"]{background:#e8f2fd}
+.sv2-unified-overridden input{border:2px solid #3072c6}
+@media(max-width:580px){.sv2-unified-mode{padding:12px}.sv2-unified-options button{flex:1 1 190px}}
