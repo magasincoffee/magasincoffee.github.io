@@ -17,6 +17,14 @@ try{
   assert.equal(await badge().count(),1);
   assert.match(await badge().textContent(),/Thiếu tối đa 2 người/);
   assert.match(await badge().getAttribute('title'),/08:00–08:30: thiếu 2/);
+  assert.equal(await badge().evaluate(el=>el.tagName),'DETAILS','shortage detail expands on touch, not title alone');
+  assert.equal(await badge().locator('summary').count(),1);
+  assert.equal(await badge().getAttribute('open'),null,'compact when first rendered');
+  await badge().locator('summary').click();
+  assert.notEqual(await badge().getAttribute('open'),null,'click opens exact shortage time ranges');
+  assert.match(await badge().locator('.sv2-roster-shortage-times').textContent(),/08:00–08:30: thiếu 2 người/);
+  await badge().locator('summary').press('Enter');
+  assert.equal(await badge().getAttribute('open'),null,'keyboard toggles details closed');
   assert.equal(await page.locator('[data-sv2-shortage-day]').count(),1,'shortage belongs in the existing weekday header');
   await page.locator('#sv2Week').fill('2026-11-09');await emit();
   assert.equal(await badge().count(),0,'new week clears shortage');
