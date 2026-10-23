@@ -67,6 +67,8 @@ jobs:
           QA_JWT_SECRET: local-isolated-availability-jwt-signing-secret-over-32
           QA_POSTGREST_URL: http://127.0.0.1:3000
         run: node 09_QA/people-shift/employee-availability-deadline-jwt-e2e.mjs
+      - name: Independently assert zero residual row mutations against disposable SQL snapshot
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/employee-availability-deadline-roundtrip-assert.sql
       - name: Show PostgREST diagnostics on failure
         if: failure()
         run: docker logs qa-employee-postgrest || true
