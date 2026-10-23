@@ -1,7 +1,7 @@
 -- #487: disposable four-store fixture. Only GitHub Actions ephemeral PostgreSQL.
 ALTER TABLE public.profiles ADD COLUMN full_name text;
 ALTER TABLE public.profiles ADD COLUMN username text;
-UPDATE public.profiles SET full_name='QA '+id::text, username='qa-'+right(id::text,4);
+UPDATE public.profiles SET full_name='QA '||id::text, username='qa-'+right(id::text,4);
 INSERT INTO public.profiles(id,role,status,full_name,username) VALUES
 ('90000000-0000-4000-8000-000000000005','OWNER','ACTIVE','QA Owner','qa-owner'),
 ('90000000-0000-4000-8000-000000000006','STORE_MANAGER','ACTIVE','QA Manager CN2','qa-manager2');
