@@ -63,4 +63,29 @@ await run('even matched hours with exception note remain pending',async()=>{
  const x=ok(await rpc(staff,sid(3),'06:00','10:00','Exception reported by employee'),'note');
  assert.equal(x.status,'NEEDS_REVIEW');assert.equal(x.already_submitted,false);
 });
+await run('Manager+Owner see auto confirmation in history, not pending; branch and role boundaries hold',async()=>{
+ async function list(actor){
+   const headers={'content-type':'application/json',accept:'application/json'};
+   if(actor)headers.authorization='Bearer '+jwt(actor);
+   const response=await fetch(origin+'/rpc/list_manager_attendance_review_v1',{
+     method:'POST',headers,body:JSON.stringify({
+       p_store_id:'91000000-0000-4000-8000-000000000003',
+       p_from_date:null,p_to_date:null
+     })});
+   const t=await response.text();let data;try{data=JSON.parse(t)}catch{data=t}
+   return {status:response.status,data};
+ }
+ const rows=ok(await list(manager),'Manager CN3 attendance history');
+ assert.equal(rows.length,3);
+ assert.equal(rows.filter(x=>x.status==='AUTO_CONFIRMED').length,1);
+ assert.equal(rows.filter(x=>x.status==='NEEDS_REVIEW').length,2);
+ const confirmed=rows.find(x=>x.status==='AUTO_CONFIRMED');
+ assert.equal(confirmed.confirmed_minutes,240);
+ assert.equal(confirmed.reviewed_by,null);
+ assert.deepEqual(ok(await list('90000000-0000-4000-8000-000000000005'),'Owner CN3').map(x=>x.attendance_id).sort(),
+   rows.map(x=>x.attendance_id).sort());
+ denied(await list(staff),'Staff cannot read Manager queue','ATTENDANCE_REVIEW_ROLE_NOT_ALLOWED');
+ denied(await list('90000000-0000-4000-8000-000000000006'),'Manager CN2 cannot read CN3','STORE_NOT_ALLOWED');
+});
+
 console.log('WORKFORCE_487_ATTENDANCE_AUTO_CONFIRMED_JWT=PASS');
