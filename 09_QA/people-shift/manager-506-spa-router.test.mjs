@@ -46,6 +46,9 @@ test('Manager P0.2 retains two live content frames and protects unsaved edits',a
  assert.match(router,/frame\.hidden = k !== key/);
  assert.match(router,/context\.storeId/);
  assert.match(router,/context\.weekStart/);
+ assert.match(router,/#sv2ModeWeekly\[aria-pressed="true"\]/);
+ assert.match(router,/#sv2Week, #sv2UnifiedWeek/);
+ assert.match(router,/'#sv2UnifiedWeek'/);
  assert.match(router,/new Event\('change'/);
  assert.match(router,/top\.confirm\(/);
  assert.match(router,/top\.addEventListener\('beforeunload'/);

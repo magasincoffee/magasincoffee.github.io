@@ -52,7 +52,11 @@
       const d = frame?.contentDocument;
       if (!d) return;
       const store = d.querySelector('#sv2Store, #sv2DemandStore');
-      const week = d.querySelector('#sv2Week');
+      // Demand has a week-scoped editor and a recurring editor in one screen.
+      // Only the weekly mode is authoritative for a changed Demand week.
+      const week = d.querySelector('#sv2Week') ||
+        (d.querySelector('#sv2ModeWeekly[aria-pressed="true"]')
+          ? d.querySelector('#sv2UnifiedWeek') : null);
       if (store?.value && [...store.options].some(o => o.value === store.value)) context.storeId = store.value;
       if (/^\d{4}-\d{2}-\d{2}$/.test(week?.value || '')) context.weekStart = week.value;
     } catch (_) { /* same-origin frame can be not ready */ }
@@ -85,7 +89,9 @@
         const d = frame.contentDocument;
         if (!d || d.readyState === 'loading') return;
         const store = d.querySelector('#sv2Store, #sv2DemandStore');
-        const week = d.querySelector('#sv2Week');
+        // Populate the hidden weekly selector too: it becomes active when the
+        // Manager switches from recurring Demand to 'adjust one week'.
+        const week = d.querySelector('#sv2Week, #sv2UnifiedWeek');
         const readyStore = !store || !context.storeId ||
           [...store.options].some(o => o.value === context.storeId);
         if (store && context.storeId && readyStore && store.value !== context.storeId) {
@@ -124,7 +130,7 @@
         e.stopImmediatePropagation();
         navigate(view);
       }, true);
-      for (const sel of ['#sv2Store', '#sv2DemandStore', '#sv2Week']) {
+      for (const sel of ['#sv2Store', '#sv2DemandStore', '#sv2Week', '#sv2UnifiedWeek']) {
         doc.querySelector(sel)?.addEventListener('change', () => snapshot(frame));
       }
       doc.addEventListener('magasin:scheduling-v2-week-loaded', () => snapshot(frame));
