@@ -56,6 +56,9 @@ CREATE TABLE public.workforce_recurring_staffing_requirements(
  end_time time NOT NULL,
  day_of_week integer NOT NULL
 );
+-- Production schedules use a server-generated UUID; the earlier synthetic read fixture
+-- seeded explicit IDs and therefore lacked this default until the write-path rehearsal.
+ALTER TABLE public.work_schedules ALTER COLUMN id SET DEFAULT gen_random_uuid();
 ALTER TABLE public.work_schedules
  ADD COLUMN approver_id uuid,
  ADD COLUMN approved_at timestamptz,
