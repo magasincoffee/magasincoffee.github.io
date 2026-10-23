@@ -1,0 +1,74 @@
+name: Employee Availability Deadline Isolated DB QA
+
+on:
+  push:
+    paths:
+      - '07_DATABASE/migrations/20261022080000_workforce_employee_availability_deadline_v1.sql'
+      - '09_QA/people-shift/employee-availability-deadline-*'
+      - '.github/workflows/employee-availability-deadline-db-qa.yml'
+  pull_request:
+    paths:
+      - '07_DATABASE/migrations/20261022080000_workforce_employee_availability_deadline_v1.sql'
+      - '09_QA/people-shift/employee-availability-deadline-*'
+      - '.github/workflows/employee-availability-deadline-db-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-postgres-trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: qa_employee_window
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: local-fixture-password-no-prod-secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d qa_employee_window"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create synthetic roles and availability records schema
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/employee-availability-deadline-db-fixture.sql
+      - name: Apply identical staged deadline migration to isolated DB
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 07_DATABASE/migrations/20261022080000_workforce_employee_availability_deadline_v1.sql
+      - name: Exercise trigger DML and eleven exact ICT boundary cases
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/employee-availability-deadline-isolated.test.sql
+      - name: Install synthetic RPC façades matching hosted Employee save/delete
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/employee-availability-deadline-rpc-fixture.sql
+      - name: Start local PostgREST with HS256 signature enforcement
+        env:
+          QA_JWT_SECRET: local-isolated-availability-jwt-signing-secret-over-32
+        run: |
+          docker run -d --name qa-employee-postgrest --network host \
+            -e PGRST_DB_URI=postgres://qa_authenticator:qa-local-disposable-password@127.0.0.1:5432/qa_employee_window \
+            -e PGRST_DB_SCHEMAS=public \
+            -e PGRST_DB_ANON_ROLE=anon \
+            -e PGRST_JWT_SECRET="$QA_JWT_SECRET" \
+            -e PGRST_SERVER_PORT=3000 \
+            postgrest/postgrest:v12.2.3
+          for attempt in $(seq 1 30); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/ || true)"
+            if [[ "$code" =~ ^(200|401|403|404)$ ]]; then exit 0; fi
+            sleep 2
+          done
+          docker logs qa-employee-postgrest
+          exit 1
+      - name: Run signed JWT Employee RPC negative and positive cases
+        env:
+          QA_JWT_SECRET: local-isolated-availability-jwt-signing-secret-over-32
+          QA_POSTGREST_URL: http://127.0.0.1:3000
+        run: node 09_QA/people-shift/employee-availability-deadline-jwt-e2e.mjs
+      - name: Show PostgREST diagnostics on failure
+        if: failure()
+        run: docker logs qa-employee-postgrest || true
+      - name: Confirm isolation
+        run: echo 'Synthetic Postgres service only; no hosted database credentials or production DML.'
