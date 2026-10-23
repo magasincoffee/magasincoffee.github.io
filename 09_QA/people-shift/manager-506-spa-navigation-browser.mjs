@@ -55,6 +55,15 @@ try{
   assert.equal(await page.locator('.m-shell-v2-sidebar').count(),1);
   assert.equal(await page.locator('.m-shell-v2-topbar').count(),1);
   assert.equal(await demand.locator('.sv2-sidebar').isVisible(),false);
+  // Regression: changing week in the roster must prefill the Demand weekly mode,
+  // not silently revert to the default next Monday on a new embedded iframe.
+  await demand.locator('#sv2ModeWeekly').click();
+  await page.waitForFunction(()=>{
+    const frame=document.querySelector('iframe[data-manager-module="demand"]');
+    return frame?.contentDocument?.querySelector('#sv2UnifiedWeek')?.value==='2026-11-02';
+  },null,{timeout:12000});
+  assert.equal(await demand.locator('#sv2UnifiedWeek').inputValue(),'2026-11-02',
+    'Demand weekly override retains the selected roster week');
 
   // Mark an unsaved local form edit, reject navigation, then accept it.
   await demand.locator('body').evaluate(node=>node.dataset.managerUnsaved='true');
