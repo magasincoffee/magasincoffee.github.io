@@ -382,3 +382,86 @@ $$;
 
 REVOKE EXECUTE ON FUNCTION public.build_payroll_estimate_v1(uuid,date,date,text,text,boolean) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.build_payroll_estimate_v1(uuid,date,date,text,text,boolean) TO service_role,postgres;
+
+-- Manager history includes auto confirmations as read-only completed records.
+create or replace function public.list_manager_attendance_review_v1(
+  p_store_id uuid,
+  p_from_date date default null,
+  p_to_date date default null
+)
+returns table(
+  attendance_id uuid,
+  schedule_id uuid,
+  employee_id uuid,
+  employee_name text,
+  work_date date,
+  store_id uuid,
+  store_code text,
+  store_name text,
+  planned_start time,
+  planned_end time,
+  actual_start time,
+  actual_end time,
+  submitted_at timestamptz,
+  status text,
+  note text,
+  reviewed_by uuid,
+  reviewed_at timestamptz,
+  review_decision text,
+  confirmed_start time,
+  confirmed_end time,
+  confirmed_minutes integer
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  perform public.validate_manager_attendance_review_authority_v1(p_store_id);
+
+  if p_from_date is not null and p_to_date is not null and p_to_date < p_from_date then
+    raise exception 'ATTENDANCE_REVIEW_DATE_RANGE_INVALID';
+  end if;
+
+  return query
+  select
+    a.id,
+    a.schedule_id,
+    a.user_id,
+    p.full_name,
+    a.work_date,
+    a.store_id,
+    s.code,
+    s.name,
+    a.planned_start,
+    a.planned_end,
+    a.actual_start,
+    a.actual_end,
+    a.submitted_at,
+    a.status,
+    a.note,
+    a.reviewed_by,
+    a.reviewed_at,
+    a.review_decision,
+    a.confirmed_start,
+    a.confirmed_end,
+    a.confirmed_minutes
+  from public.attendance a
+  join public.profiles p on p.id = a.user_id
+  join public.stores s on s.id = a.store_id
+  where a.store_id = p_store_id
+    and a.schedule_id is not null
+    and a.submission_status = 'SUBMITTED'
+    and a.status in ('NORMAL','NEEDS_REVIEW','AUTO_CONFIRMED','APPROVED','ADJUSTED','REJECTED')
+    and (p_from_date is null or a.work_date >= p_from_date)
+    and (p_to_date is null or a.work_date <= p_to_date)
+  order by
+    case when a.status in ('NORMAL','NEEDS_REVIEW') then 0 else 1 end,
+    a.work_date desc,
+    a.submitted_at asc nulls last,
+    a.id;
+end;
+$$;
+REVOKE EXECUTE ON FUNCTION public.list_manager_attendance_review_v1(uuid,date,date) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.list_manager_attendance_review_v1(uuid,date,date) TO authenticated,postgres;
