@@ -28,6 +28,13 @@ const ok=(x,tag)=>{assert.equal(x.status,200,tag+':'+JSON.stringify(x));return x
 const denied=(x,tag,code)=>{assert.ok(x.status>=400&&x.status<500,tag+':'+JSON.stringify(x));
  if(code)assert.match(JSON.stringify(x.data),new RegExp(code))};
 async function run(tag,fn){await fn();console.log('PASS '+tag)}
+// PostgREST may asynchronously reload the catalog after SQL migration in CI.
+for(let i=0;i<30;i++){
+ const r=await rpc(other,sid(1));
+ if(r.data?.code!=='PGRST202') break;
+ if(i===29)throw Error('POSTGREST_ATTENDANCE_RPC_SCHEMA_NOT_REFRESHED');
+ await new Promise(resolve=>setTimeout(resolve,250));
+}
 await run('anonymous, manager, wrong employee cannot submit a different Staff assignment',async()=>{
  denied(await rpc(null,sid(1)),'anonymous');
  denied(await rpc(manager,sid(1)),'manager','ATTENDANCE_NOT_CURRENT_OWNER');
