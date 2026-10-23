@@ -80,7 +80,13 @@ try{
   await page.waitForFunction(()=>document.querySelector('iframe[data-manager-module="legacy"]')?.style.visibility==='visible',{timeout:20000});
   assert.equal(await page.evaluate(()=>document.body.dataset.spaTestMarker),'persistent-document');
   await page.goBack({waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.MAGASIN_MANAGER_MODULE_ROUTER?.current()==='workforce');
+  // Back updates the route before the cached scheduling iframe has finished restoring its week.
+  // Poll the real field; a persistent wrong Monday still fails within the bounded timeout.
+  await page.waitForFunction(()=>{
+    const frame=document.querySelector('#app');
+    return window.MAGASIN_MANAGER_MODULE_ROUTER?.current()==='workforce' &&
+      frame?.contentDocument?.querySelector('#sv2Week')?.value==='2026-11-02';
+  },null,{timeout:10000});
   assert.equal(await source.locator('#sv2Week').inputValue(),'2026-11-02');
   assert.equal(await page.locator('.m-shell-v2-sidebar').count(),1);
   console.log('MANAGER_506_SPA_E2E_PASS viewport='+width);

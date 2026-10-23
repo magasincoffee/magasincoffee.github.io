@@ -3,6 +3,9 @@ const hm=v=>String(v||'').slice(0,5),mins=v=>{const m=/^(\d{2}):(\d{2})$/.exec(h
 const fail=c=>{throw Error(c)};
 const same=(a,b)=>String(a||'')===String(b||'');
 const date=d=>String(d||'').slice(0,10);
+// Date-only is a calendar key in Vietnam business time, never a local timestamp.
+const calendarDay=value=>{const text=String(value||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(text))return null;
+ const d=new Date(text+'T12:00:00Z');return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===text?d:null;};
 async function apply({storeId,weekStart,operation,index,expected,assignment}){
  if(!['add','replace','remove'].includes(operation))fail('INVALID_OPERATION');
  const ctx=window.MAGASIN_SCHEDULING_V2_CONTEXT;if(!ctx?.client||!ctx?.actor||!ctx?.stores)fail('MANAGER_CONTEXT_NOT_READY');
@@ -18,7 +21,8 @@ async function apply({storeId,weekStart,operation,index,expected,assignment}){
  if(operation!=='add'){if(!Number.isInteger(index)||index<0||index>=rows.length)fail('SHIFT_NOT_FOUND');
    const old=rows[index];if(!expected||!same(old.id,expected.id)||!same(old.user_id,expected.user_id)||date(old.work_date)!==date(expected.work_date)||hm(old.start_time)!==hm(expected.start_time)||hm(old.end_time)!==hm(expected.end_time))fail('DRAFT_HAS_CHANGED')}
  if(operation==='add'||operation==='replace'){if(!assignment?.user_id||!/^\d{4}-\d{2}-\d{2}$/.test(date(assignment.work_date))||!Number.isFinite(mins(assignment.start_time))||mins(assignment.end_time)<=mins(assignment.start_time))fail('INVALID_ASSIGNMENT');
-  const week=new Date(weekStart+'T12:00:00'),shift=new Date(date(assignment.work_date)+'T12:00:00');if(!Number.isFinite(week.getTime())||Math.round((shift-week)/86400000)<0||Math.round((shift-week)/86400000)>6)fail('OUTSIDE_WEEK');
+  const week=calendarDay(weekStart),shift=calendarDay(assignment.work_date);
+  if(!week||week.getUTCDay()!==1||!shift||(shift-week)/86400000<0||(shift-week)/86400000>6)fail('OUTSIDE_WEEK');
   const q=await rpc('list_employee_workforce_profiles_v1');if(q.error)throw q.error;
   const eligible=(Array.isArray(q.data)?q.data:[]).some(p=>same(p.employee_id||p.user_id,assignment.user_id)&&String(p.profile_status||'').toUpperCase()==='ACTIVE'&&['STAFF','EMPLOYEE'].includes(String(p.employee_role||'').toUpperCase())&&Array.isArray(p.priority_store_ids)&&p.priority_store_ids.some(id=>same(id,storeId)));
   if(!eligible)fail('EMPLOYEE_NOT_ELIGIBLE');

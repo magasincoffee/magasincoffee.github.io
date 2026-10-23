@@ -24,7 +24,7 @@ function activate(attempt=0){
  relabel(d);
  const v=normalize(location.hash);if(!v||!allowed.has(v))return;
  const link=d.querySelector('.nav [data-view="'+v+'"]');
- if(link)link.click();else if(attempt<12)setTimeout(()=>activate(attempt+1),60);
+ if(link&&typeof host()?.contentWindow?.showView==='function')link.click();else if(attempt<12)setTimeout(()=>activate(attempt+1),60);
 }
 function init(){
  const f=host();if(!f)return;
