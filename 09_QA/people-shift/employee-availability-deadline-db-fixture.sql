@@ -1,11 +1,17 @@
 -- #487/#489: disposable Postgres identities, never production.
 CREATE SCHEMA IF NOT EXISTS auth;
+CREATE ROLE qa_authenticator LOGIN NOINHERIT PASSWORD 'qa-local-disposable-password';
+GRANT anon, authenticated TO qa_authenticator;
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon NOLOGIN; END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
 END $$;
 CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql VOLATILE SET search_path=''
-AS $$SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+AS $SELECT COALESCE(
+ nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub',
+ nullif(current_setting('request.jwt.claim.sub',true),'')
+)::uuid$;
 CREATE TABLE public.profiles (
  id uuid PRIMARY KEY, role text NOT NULL, status text NOT NULL
 );
