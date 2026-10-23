@@ -14,6 +14,7 @@ const weekStart=()=>monday(todayVN());
 const statusText=s=>({
  NORMAL:'Bình thường · chờ xác nhận',
  NEEDS_REVIEW:'Cần quản lý xem xét',
+ AUTO_CONFIRMED:'Tự xác nhận · khớp ca',
  APPROVED:'Đã xác nhận',
  ADJUSTED:'Đã điều chỉnh',
  REJECTED:'Đã từ chối'
@@ -41,7 +42,7 @@ let sb=null,busy=false;
 let state={stores:[],storeId:null,week:weekStart(),rows:[],loading:false,error:null,message:''};
 const view=()=>document.querySelector('#view-attendance');
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
-const reviewed=r=>['APPROVED','ADJUSTED','REJECTED'].includes(String(r.status||'').toUpperCase());
+const reviewed=r=>['AUTO_CONFIRMED','APPROVED','ADJUSTED','REJECTED'].includes(String(r.status||'').toUpperCase());
 const pending=r=>['NORMAL','NEEDS_REVIEW'].includes(String(r.status||'').toUpperCase());
 
 function reviewedTable(rows){
