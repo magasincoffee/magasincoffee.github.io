@@ -63,6 +63,14 @@ await run('even matched hours with exception note remain pending',async()=>{
  const x=ok(await rpc(staff,sid(3),'06:00','10:00','Exception reported by employee'),'note');
  assert.equal(x.status,'NEEDS_REVIEW');assert.equal(x.already_submitted,false);
 });
+await run('exact shift at unenabled CN1 remains pending until explicit pilot opt-in',async()=>{
+ const x=ok(await rpc(staff,sid(5),'06:00','10:00'),'CN1 disabled pilot');
+ assert.equal(x.status,'NEEDS_REVIEW');
+ assert.equal(x.submission_status,'SUBMITTED');
+ const retry=ok(await rpc(staff,sid(5),'06:00','10:00'),'CN1 retry');
+ assert.equal(retry.attendance_id,x.attendance_id);
+ assert.equal(retry.already_submitted,true);
+});
 await run('Manager+Owner see auto confirmation in history, not pending; branch and role boundaries hold',async()=>{
  async function list(actor){
    const headers={'content-type':'application/json',accept:'application/json'};
