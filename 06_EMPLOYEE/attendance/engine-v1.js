@@ -50,7 +50,7 @@ function renderHistory(d){
   body.innerHTML=state.history.map(r=>'<tr><td data-label="Ngày">'+esc(fmt(r.work_date))+'</td><td data-label="Ca chính thức">'+esc(hm(r.planned_start))+'–'+esc(hm(r.planned_end))+'</td><td data-label="Cửa hàng">'+esc(r.store_code||r.store_name||'Cửa hàng')+'</td><td data-label="Trạng thái"><span class="employee-attendance-history-status">'+esc(statusText(r.status))+'</span></td></tr>').join('');
 }
 function intro(){
-  return '<div class="employee-people-intro"><div><div class="employee-people-eyebrow">Giờ công · Nhân viên tự khai báo</div><h2>Chấm công theo lịch làm</h2><p>Chỉ gửi giờ bắt đầu/kết thúc thực tế cho ca chính thức hiện thuộc về bạn. Nếu giờ bắt đầu và kết thúc khớp hoàn toàn ca chính thức và không có ghi chú ngoại lệ, công được xác nhận tự động. Các trường hợp khác cần quản lý duyệt trước khi tính lương.</p></div></div>';
+  return '<div class="employee-people-intro"><div><div class="employee-people-eyebrow">Giờ công · Nhân viên tự khai báo</div><h2>Chấm công theo lịch làm</h2><p>Chỉ gửi giờ bắt đầu/kết thúc thực tế cho ca chính thức hiện thuộc về bạn. Nếu chi nhánh đã bật tự xác nhận, giờ bắt đầu và kết thúc khớp hoàn toàn ca chính thức và không có ghi chú ngoại lệ sẽ được xác nhận tự động. Các trường hợp khác cần quản lý duyệt trước khi tính lương.</p></div></div>';
 }
 function render(){
   const d=doc(),p=panel();if(!d||!p)return;
