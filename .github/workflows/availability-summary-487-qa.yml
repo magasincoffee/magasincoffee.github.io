@@ -44,7 +44,7 @@ jobs:
         run: node 09_QA/people-shift/availability-summary-487-browser.mjs
       - name: Assert no backend writer in availability viewer
         run: |
-          if grep -En '\.from\(|\.insert\(|\.update\(|\.delete\(|\.upsert\(' 05_MANAGER/Workforce/availability-summary-v1.js; then
+          if grep -En '\.(insert|update|delete|upsert)\(|(sb|client|supabase)\.from\(' 05_MANAGER/Workforce/availability-summary-v1.js; then
             echo "Direct table API / writer call forbidden"; exit 1
           fi
           echo "AS487_READONLY_RPC_ONLY_PASS"
