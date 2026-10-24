@@ -7,7 +7,7 @@ const panel=()=>document.querySelector('#panel-publish');
 const esc=C.security.escapeHtml;
 const add=C.date.addDays;
 const fmt=C.date.formatDate;
-let state={week:null,stores:[],cards:[],selectedStoreId:null,loading:false,error:null};
+let state={week:null,stores:[],cards:[],selectedStoreId:null,availabilityOpen:false,loading:false,error:null};
 
 function targetWeek(){return add(C.date.monday(),7)}
 function statusFor(runs,availabilityCount){
@@ -40,6 +40,14 @@ function ensureLayout(){
     const tabs=view.querySelector('.tabs');
     (tabs||p).before(overview);
   }
+  let availability=view.querySelector('#ownerAvailabilitySummary');
+  if(!availability){
+    availability=document.createElement('section');
+    availability.id='ownerAvailabilitySummary';availability.hidden=true;
+    availability.innerHTML='<button type="button" class="oso-back" data-owner-availability-back>← Tổng quan xếp lịch</button><div id="ownerAvailabilityContent"></div>';
+    overview.after(availability);
+    availability.querySelector('[data-owner-availability-back]').addEventListener('click',()=>void showOverview());
+  }
   let detail=view.querySelector('#ownerSchedulingDetailHeader');
   if(!detail){
     detail=document.createElement('div');
@@ -51,7 +59,7 @@ function ensureLayout(){
     p.before(detail);
     detail.querySelector('[data-owner-overview-back]')?.addEventListener('click',()=>void showOverview({refresh:true}));
   }
-  return {view,p,overview,detail,tabs:view.querySelector('.tabs')};
+  return {view,p,overview,availability,detail,tabs:view.querySelector('.tabs')};
 }
 async function readStore(store){
   const api=CTX.client();
@@ -64,6 +72,17 @@ async function readStore(store){
   const availability=Array.isArray(avQ.data)?avQ.data:[];
   const runs=Array.isArray(runQ.data)?runQ.data:[];
   return {...store,availabilityCount:availability.length,...statusFor(runs,availability.length)};
+}
+async function openAvailability(){
+  const layout=ensureLayout();if(!layout)return;
+  const api=window.MAGASIN_WORKFORCE_AVAILABILITY_SUMMARY;
+  if(!api?.mount){state.error='Không tải được màn đăng ký lịch làm việc.';render();return}
+  state.availabilityOpen=true;state.selectedStoreId=null;
+  layout.overview.hidden=true;layout.detail.hidden=true;layout.p.hidden=true;layout.availability.hidden=false;
+  if(layout.tabs)layout.tabs.hidden=true;
+  const target=layout.availability.querySelector('#ownerAvailabilityContent');
+  api.mount(target,{mode:'OWNER'});
+  layout.availability.querySelector('[data-owner-availability-back]').focus({preventScroll:true});
 }
 function render(){
   const layout=ensureLayout();if(!layout)return;
@@ -79,7 +98,8 @@ function render(){
     return;
   }
   const cardsHtml=state.cards.length?'<div class="oso-grid">'+state.cards.map(card=>`<button type="button" class="oso-card" data-owner-store-open="${esc(card.id)}" aria-label="Mở lịch tuần của ${esc(card.code||card.name||'cửa hàng')}"><span class="oso-store">${esc(card.code||'Cửa hàng')}</span><span class="oso-name">${esc(card.name||'')}</span><span class="oso-state" data-state="${esc(card.key)}">${esc(card.label)}</span><span class="oso-detail">${esc(card.detail)}</span><span class="oso-meta">${card.availabilityCount} khoảng thời gian có thể làm · Mở lịch tuần →</span></button>`).join('')+'</div>':'<div class="oso-empty" role="status">Chưa có cửa hàng nào trong phạm vi để xem xếp lịch.</div>';
-  overview.innerHTML=`<div class="oso-head"><div><h2 id="ownerSchedulingOverviewTitle">Tổng quan xếp lịch ${state.stores.length} cửa hàng</h2><p>Xem trạng thái từng cửa hàng trước, sau đó chọn một cửa hàng để mở chi tiết lập lịch tuần.</p></div><span class="oso-week">Tuần ${esc(fmt(state.week))} – ${esc(fmt(add(state.week,6)))}</span></div>${cardsHtml}`;
+  overview.innerHTML=`<div class="oso-head"><div><h2 id="ownerSchedulingOverviewTitle">Tổng quan xếp lịch ${state.stores.length} cửa hàng</h2><p>Xem trạng thái từng cửa hàng trước, sau đó chọn một cửa hàng để mở chi tiết lập lịch tuần.</p></div><span class="oso-week">Tuần ${esc(fmt(state.week))} – ${esc(fmt(add(state.week,6)))}</span></div>${cardsHtml}<div style="margin-top:12px"><button type="button" class="oso-back" data-owner-availability-open>Đăng ký lịch làm việc →</button></div>`;
+  overview.querySelector('[data-owner-availability-open]')?.addEventListener('click',()=>void openAvailability());
   overview.querySelectorAll('[data-owner-store-open]').forEach(b=>b.addEventListener('click',()=>void openStore(b.dataset.ownerStoreOpen)));
 }
 async function refresh(){
@@ -101,6 +121,7 @@ async function openStore(storeId){
   const store=state.stores.find(s=>String(s.id)===String(storeId));if(!store)return;
   state.selectedStoreId=store.id;
   layout.overview.hidden=true;
+  layout.availability.hidden=true;state.availabilityOpen=false;
   if(layout.tabs)layout.tabs.hidden=false;
   layout.detail.hidden=false;
   layout.p.hidden=false;
@@ -115,6 +136,7 @@ async function showOverview({refresh:shouldRefresh=false}={}){
   const restoreId=state.selectedStoreId;
   state.selectedStoreId=null;
   layout.overview.hidden=false;
+  layout.availability.hidden=true;state.availabilityOpen=false;
   layout.detail.hidden=true;
   layout.p.hidden=true;
   layout.p.classList.remove('active');
@@ -130,8 +152,9 @@ async function boot(){
   layout.p.hidden=true;
   if(layout.tabs)layout.tabs.hidden=true;
   await refresh();
+  try{const w=window.top;if(new URLSearchParams(w.location.search).get('view')==='availability')await openAvailability()}catch(_){}
 }
 document.addEventListener('magasin:schedule-published',()=>{if(!state.selectedStoreId)void refresh()});
-window.MAGASIN_OWNER_SCHEDULING_OVERVIEW={refresh,openStore,showOverview,getState:()=>({...state,stores:state.stores.map(x=>({...x})),cards:state.cards.map(x=>({...x}))})};
+window.MAGASIN_OWNER_SCHEDULING_OVERVIEW={refresh,openStore,openAvailability,showOverview,getState:()=>({...state,stores:state.stores.map(x=>({...x})),cards:state.cards.map(x=>({...x}))})};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else void boot();
 })();
