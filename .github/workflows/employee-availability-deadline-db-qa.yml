@@ -96,7 +96,7 @@ jobs:
       - name: Prepare isolated attendance and payroll authority fixtures
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-fixture.sql
       - name: Apply P0 exact-shift auto-confirm candidate ONLY to disposable PostgreSQL
-        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-candidate.sql
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 07_DATABASE/migrations/20261024015515_workforce_attendance_exact_auto_confirm_v1.sql
       - name: Reload PostgREST schema after newly installed attendance RPC
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 -c "NOTIFY pgrst, 'reload schema';"
       - name: Exercise JWT current-owner, exact-match, deviation and idempotent attendance
