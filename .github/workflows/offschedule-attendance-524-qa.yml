@@ -33,5 +33,32 @@ jobs:
         run: psql 'postgresql://postgres:synthetic-only-password@localhost:5432/offschedule_qa' -v ON_ERROR_STOP=1 -f 09_QA/people-shift/attendance-offschedule-524-candidate.sql
       - name: Execute role and payroll-firewall SQL regression
         run: psql 'postgresql://postgres:synthetic-only-password@localhost:5432/offschedule_qa' -v ON_ERROR_STOP=1 -f 09_QA/people-shift/attendance-offschedule-524.test.sql
+      - name: Install disposable PostgREST JWT role permissions
+        run: psql 'postgresql://postgres:synthetic-only-password@localhost:5432/offschedule_qa' -v ON_ERROR_STOP=1 -f 09_QA/people-shift/attendance-offschedule-524-jwt-fixture.sql
+      - name: Start local PostgREST with verified HS256 JWT
+        env:
+          QA_JWT_SECRET: local-offschedule-524-jwt-signature-secret-over-32-chars
+        run: |
+          docker run -d --name qa-offschedule-postgrest --network host \
+            -e PGRST_DB_URI=postgres://qa_authenticator:qa-only-524-password@127.0.0.1:5432/offschedule_qa \
+            -e PGRST_DB_SCHEMAS=public \
+            -e PGRST_DB_ANON_ROLE=anon \
+            -e PGRST_JWT_SECRET="$QA_JWT_SECRET" \
+            -e PGRST_SERVER_PORT=3000 postgrest/postgrest:v12.2.3
+          for attempt in $(seq 1 30); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/ || true)"
+            if [[ "$code" =~ ^(200|401|403|404)$ ]]; then exit 0; fi
+            sleep 2
+          done
+          docker logs qa-offschedule-postgrest
+          exit 1
+      - name: Run signed JWT PostgREST cross-role writer integration
+        env:
+          QA_JWT_SECRET: local-offschedule-524-jwt-signature-secret-over-32-chars
+          QA_POSTGREST_URL: http://127.0.0.1:3000
+        run: node 09_QA/people-shift/attendance-offschedule-524-jwt-e2e.mjs
+      - name: Diagnostics on failure
+        if: failure()
+        run: docker logs qa-offschedule-postgrest || true
       - name: Confirm no hosted connection
         run: echo 'Disposable PostgreSQL only; this job does not use production credentials or deploy SQL.'
