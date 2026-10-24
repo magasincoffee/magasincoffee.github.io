@@ -539,12 +539,12 @@ jobs:
           set -euo pipefail
           node --check 09_QA/people-shift/workforce-529-signed-jwt-http.mjs
           psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/workforce-529-signed-jwt-fixture.sql
-          docker run -d --rm --name workforce529-jwt-pgrst --network host \\
-            -e PGRST_DB_URI='postgres://authenticator:qa-529-synthetic-only@127.0.0.1:5432/xstore_qa' \\
-            -e PGRST_DB_SCHEMAS=public \\
-            -e PGRST_DB_ANON_ROLE=anon \\
-            -e PGRST_JWT_SECRET="$QA_529_JWT_SECRET" \\
-            -e PGRST_SERVER_PORT=3059 \\
+          docker run -d --rm --name workforce529-jwt-pgrst --network host \
+            -e PGRST_DB_URI='postgres://authenticator:qa-529-synthetic-only@127.0.0.1:5432/xstore_qa' \
+            -e PGRST_DB_SCHEMAS=public \
+            -e PGRST_DB_ANON_ROLE=anon \
+            -e PGRST_JWT_SECRET="$QA_529_JWT_SECRET" \
+            -e PGRST_SERVER_PORT=3059 \
             postgrest/postgrest:v12.2.8 >/dev/null
           trap 'docker rm -f workforce529-jwt-pgrst >/dev/null 2>&1 || true' EXIT
           ready=0
