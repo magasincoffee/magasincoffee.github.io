@@ -595,3 +595,16 @@ end;
 $cap$;
 revoke all on function public.get_workforce_auto_scheduler_capabilities_529() from public,anon;
 grant execute on function public.get_workforce_auto_scheduler_capabilities_529() to authenticated;
+
+
+-- Dedicated versioned writer; old UI never invokes this name on legacy DB.
+create or replace function public.auto_generate_cross_store_schedule_529(
+  p_week_start date,
+  p_replace_existing boolean default false,
+  p_algorithm_version text default 'XSTORE_EFFECTIVE_FT8_529'
+) returns jsonb language sql security invoker set search_path=public
+as $v529$
+  select public.auto_generate_cross_store_schedule_v1(p_week_start,p_replace_existing,p_algorithm_version);
+$v529$;
+revoke all on function public.auto_generate_cross_store_schedule_529(date,boolean,text) from public,anon;
+grant execute on function public.auto_generate_cross_store_schedule_529(date,boolean,text) to authenticated;
