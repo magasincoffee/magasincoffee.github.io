@@ -7,7 +7,7 @@ DECLARE n integer; x public.attendance%rowtype; got jsonb; repeat_got jsonb;
  d date:=(now() at time zone 'Asia/Ho_Chi_Minh')::date-2;
 BEGIN
  SELECT count(*) INTO n FROM public.attendance;
- IF n<>3 THEN RAISE EXCEPTION 'QA_ATTENDANCE_SUBMISSION_COUNT_EXPECT_3 got %',n; END IF;
+ IF n<>4 THEN RAISE EXCEPTION 'QA_ATTENDANCE_SUBMISSION_COUNT_EXPECT_4 got %',n; END IF;
  SELECT * INTO x FROM public.attendance
  WHERE schedule_id='93000000-0000-4000-8000-000000000001';
  IF x.status<>'AUTO_CONFIRMED' OR x.submission_status<>'SUBMITTED'
@@ -18,7 +18,7 @@ BEGIN
  THEN RAISE EXCEPTION 'QA_AUTO_CONFIRM_NOT_AUTHORITATIVE'; END IF;
  SELECT count(*) INTO n FROM public.attendance
  WHERE status='NEEDS_REVIEW' AND confirmed_minutes IS NULL AND reviewed_by IS NULL;
- IF n<>2 THEN RAISE EXCEPTION 'QA_EXCEPTIONS_NOT_PENDING n=%',n; END IF;
+ IF n<>3 THEN RAISE EXCEPTION 'QA_EXCEPTIONS_NOT_PENDING n=%',n; END IF;
  got:=public.build_payroll_estimate_v1(
   '90000000-0000-4000-8000-000000000007',d,d,'QA_AUTO_A','QA_VALIDATED_RULE',true);
  IF (got->>'confirmed_work_item_count')::integer<>1
@@ -53,7 +53,8 @@ DELETE FROM public.attendance
 WHERE schedule_id IN (
 '93000000-0000-4000-8000-000000000001',
 '93000000-0000-4000-8000-000000000002',
-'93000000-0000-4000-8000-000000000003');
+'93000000-0000-4000-8000-000000000003',
+'93000000-0000-4000-8000-000000000005');
 DO $qa$
 DECLARE add_count integer;del_count integer;
 BEGIN
