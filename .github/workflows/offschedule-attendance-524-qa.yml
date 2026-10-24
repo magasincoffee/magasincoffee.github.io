@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - '09_QA/people-shift/attendance-offschedule-524-*'
+      - '07_DATABASE/migrations/20261024081131_workforce_attendance_offschedule_request_v1.sql'
       - '.github/workflows/offschedule-attendance-524-qa.yml'
   workflow_dispatch:
 permissions:
@@ -29,8 +30,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install disposable schema
         run: psql 'postgresql://postgres:synthetic-only-password@localhost:5432/offschedule_qa' -v ON_ERROR_STOP=1 -f 09_QA/people-shift/attendance-offschedule-524-fixture.sql
-      - name: Install candidate only in disposable PostgreSQL
-        run: psql 'postgresql://postgres:synthetic-only-password@localhost:5432/offschedule_qa' -v ON_ERROR_STOP=1 -f 09_QA/people-shift/attendance-offschedule-524-candidate.sql
+      - name: Apply exact CLI-generated #524 migration ONLY in disposable PostgreSQL
+        run: psql 'postgresql://postgres:synthetic-only-password@localhost:5432/offschedule_qa' -v ON_ERROR_STOP=1 -f 07_DATABASE/migrations/20261024081131_workforce_attendance_offschedule_request_v1.sql
       - name: Execute role and payroll-firewall SQL regression
         run: psql 'postgresql://postgres:synthetic-only-password@localhost:5432/offschedule_qa' -v ON_ERROR_STOP=1 -f 09_QA/people-shift/attendance-offschedule-524.test.sql
       - name: Install disposable PostgREST JWT role permissions
