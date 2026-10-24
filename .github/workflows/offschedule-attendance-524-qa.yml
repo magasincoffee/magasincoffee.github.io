@@ -78,6 +78,8 @@ jobs:
           QA_POSTGREST_URL: http://127.0.0.1:3000
           QA_BASE_URL: http://127.0.0.1:8767
         run: node 09_QA/people-shift/attendance-offschedule-524-browser-jwt-e2e.mjs
+      - name: Assert zero canonical work/payroll rows and clean disposable browser QA
+        run: psql 'postgresql://postgres:synthetic-only-password@localhost:5432/offschedule_qa' -v ON_ERROR_STOP=1 -f 09_QA/people-shift/attendance-offschedule-524-browser-cleanup.sql
       - name: Diagnostics on failure
         if: failure()
         run: docker logs qa-offschedule-postgrest || true
