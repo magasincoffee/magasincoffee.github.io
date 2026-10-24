@@ -47,10 +47,10 @@ test("UI2-009 Attendance keeps exact Manual-Time canonical RPC inventory and pay
   assert.match(attendance,/p_week_start:requestedWeek/);
   assert.match(attendance,/p_from_date:requestedWeek,p_to_date:add\(requestedWeek,6\)/);
   assert.match(attendance,/p_schedule_id:selected\.schedule_id,p_actual_start:start,p_actual_end:end,p_note:note\|\|null/);
-  assert.match(attendance,/CANONICAL_STATUSES=new Set\(\['SUBMITTED','NORMAL','NEEDS_REVIEW','APPROVED','ADJUSTED','REJECTED'\]\)/);
+  assert.match(attendance,/CANONICAL_STATUSES=new Set\(\['SUBMITTED','NORMAL','NEEDS_REVIEW','AUTO_CONFIRMED','APPROVED','ADJUSTED','REJECTED'\]\)/);
   assert.match(attendance,/RECONCILE_ERRORS/);
   assert.match(attendance,/ATTENDANCE_NOT_CURRENT_OWNER/);
-  assert.match(attendance,/Giờ bạn gửi cần được quản lý xác nhận trước khi dùng để tính lương/);
+  assert.match(attendance,/Nếu chi nhánh đã bật tự xác nhận/);
   assert.match(attendance,/type="time" step="60"/);
   assert.match(attendance,/state\.submitting/);
   assertNoBrowserDml(attendance);

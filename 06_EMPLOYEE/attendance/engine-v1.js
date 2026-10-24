@@ -2,7 +2,7 @@
 const C=globalThis.MAGASIN_CORE;if(!C)return;
 const host=()=>document.getElementById('employeeApp'),doc=()=>host()?.contentDocument||null;
 const esc=C.security.escapeHtml,hm=C.time.time5,fmt=C.date.formatDate,add=C.date.addDays,mon=C.date.monday,mins=C.time.minutes;
-const CANONICAL_STATUSES=new Set(['SUBMITTED','NORMAL','NEEDS_REVIEW','APPROVED','ADJUSTED','REJECTED']);
+const CANONICAL_STATUSES=new Set(['SUBMITTED','NORMAL','NEEDS_REVIEW','AUTO_CONFIRMED','APPROVED','ADJUSTED','REJECTED']);
 const RECONCILE_ERRORS=new Set(['ATTENDANCE_NOT_CURRENT_OWNER','ATTENDANCE_SCHEDULE_NOT_FOUND','ATTENDANCE_SCHEDULE_NOT_APPROVED','ATTENDANCE_EMPLOYEE_INACTIVE','ATTENDANCE_EMPLOYEE_NOT_STAFF','ATTENDANCE_ACTIVE_SUBMISSION_EXISTS']);
 const ERROR_COPY={
   AUTH_REQUIRED:'Phiên đăng nhập không còn hợp lệ.',
@@ -26,7 +26,7 @@ function errorCode(e){
   return /^[A-Z0-9_]{3,80}$/.test(c)?c:'ATTENDANCE_REQUEST_FAILED';
 }
 function statusText(s){
-  const m={SUBMITTED:'Đã gửi',NORMAL:'Đã gửi · Bình thường',NEEDS_REVIEW:'Đã gửi · Cần quản lý xem xét',APPROVED:'Đã xác nhận',ADJUSTED:'Đã điều chỉnh',REJECTED:'Bị từ chối',COMPLETED:'Đã hoàn tất · dữ liệu cũ',OPEN:'Đang mở · dữ liệu cũ'};
+  const m={SUBMITTED:'Đã gửi',NORMAL:'Đã gửi · Bình thường',NEEDS_REVIEW:'Đã gửi · Cần quản lý xem xét',AUTO_CONFIRMED:'Đã xác nhận tự động · khớp ca',APPROVED:'Đã xác nhận',ADJUSTED:'Đã điều chỉnh',REJECTED:'Bị từ chối',COMPLETED:'Đã hoàn tất · dữ liệu cũ',OPEN:'Đang mở · dữ liệu cũ'};
   return m[String(s||'').toUpperCase()]||String(s||'Chưa gửi');
 }
 function panel(){return doc()?.querySelector('#view-attendance .attendance-entry-grid .panel:first-child')}
@@ -50,7 +50,7 @@ function renderHistory(d){
   body.innerHTML=state.history.map(r=>'<tr><td data-label="Ngày">'+esc(fmt(r.work_date))+'</td><td data-label="Ca chính thức">'+esc(hm(r.planned_start))+'–'+esc(hm(r.planned_end))+'</td><td data-label="Cửa hàng">'+esc(r.store_code||r.store_name||'Cửa hàng')+'</td><td data-label="Trạng thái"><span class="employee-attendance-history-status">'+esc(statusText(r.status))+'</span></td></tr>').join('');
 }
 function intro(){
-  return '<div class="employee-people-intro"><div><div class="employee-people-eyebrow">Giờ công · Nhân viên tự khai báo</div><h2>Chấm công theo lịch làm</h2><p>Chỉ gửi giờ bắt đầu/kết thúc thực tế cho ca chính thức hiện thuộc về bạn. Giờ bạn gửi cần được quản lý xác nhận trước khi dùng để tính lương.</p></div></div>';
+  return '<div class="employee-people-intro"><div><div class="employee-people-eyebrow">Giờ công · Nhân viên tự khai báo</div><h2>Chấm công theo lịch làm</h2><p>Chỉ gửi giờ bắt đầu/kết thúc thực tế cho ca chính thức hiện thuộc về bạn. Nếu chi nhánh đã bật tự xác nhận, giờ bắt đầu và kết thúc khớp hoàn toàn ca chính thức và không có ghi chú ngoại lệ sẽ được xác nhận tự động. Các trường hợp khác cần quản lý duyệt trước khi tính lương.</p></div></div>';
 }
 function render(){
   const d=doc(),p=panel();if(!d||!p)return;
@@ -132,7 +132,7 @@ async function submit(){
   }
   await loadWeek();
   const retry=!!q.data?.already_submitted;
-  setMessage(retry?'Bản ghi đã tồn tại; hệ thống giữ nguyên cùng một lần chấm công.':'Đã gửi giờ làm thực tế. Hệ thống đã cập nhật trạng thái mới nhất.','success',retry?'ALREADY_SUBMITTED':'ATTENDANCE_SUBMITTED');
+  setMessage(retry?'Bản ghi đã tồn tại; hệ thống giữ nguyên cùng một lần chấm công.':q.data?.status==='AUTO_CONFIRMED'?'Giờ công trùng khớp ca đã được xác nhận tự động.':'Đã gửi giờ làm thực tế; trường hợp lệch ca/ngoại lệ cần quản lý duyệt.','success',retry?'ALREADY_SUBMITTED':q.data?.status==='AUTO_CONFIRMED'?'ATTENDANCE_AUTO_CONFIRMED':'ATTENDANCE_SUBMITTED');
 }
 function bind(d){
   if(!d?.body||d.body.dataset.employeeAttendanceEngine==='1')return;
