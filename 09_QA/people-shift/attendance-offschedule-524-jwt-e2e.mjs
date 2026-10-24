@@ -57,6 +57,18 @@ check(approved.decision==='APPROVE' && approved.payroll_included===false && appr
 await call(review,id.manager,target,400);
 const after=await call('list_my_offschedule_attendance_requests_v1',id.employee,{});
 check(after.length===1&&after[0].status==='APPROVED'&&after[0].confirmed_minutes===180,'Employee sees review result');
+const adjustedRequest=await call(submit,id.employee,{...submission,p_actual_start:'18:00',p_actual_end:'19:00',p_reason:'Additional verified hours'});
+await call(review,id.manager,{p_request_id:adjustedRequest.request_id,p_decision:'ADJUST',p_confirmed_start:'18:15',p_confirmed_end:'19:00'},400);
+const adjusted=await call(review,id.manager,{p_request_id:adjustedRequest.request_id,p_decision:'ADJUST',p_confirmed_start:'18:15',p_confirmed_end:'19:00',p_review_note:'Đối soát giờ thực tế'});
+check(adjusted.payroll_included===false,'adjust does not insert payroll');
+const rejectedRequest=await call(submit,id.employee,{...submission,p_actual_start:'20:00',p_actual_end:'21:00',p_reason:'Review disputed time'});
+await call(review,id.manager,{p_request_id:rejectedRequest.request_id,p_decision:'REJECT'},400);
+const rejected=await call(review,id.manager,{p_request_id:rejectedRequest.request_id,p_decision:'REJECT',p_review_note:'Không đủ bằng chứng'});
+check(rejected.decision==='REJECT','manager rejects without confirmed pay');
+const finalRows=await call('list_my_offschedule_attendance_requests_v1',id.employee,{});
+check(finalRows.length===3&&finalRows.some(x=>x.status==='ADJUSTED'&&x.confirmed_minutes===45)
+ &&finalRows.some(x=>x.status==='REJECTED'&&x.confirmed_minutes===null),'adjust/reject audit and confirmed-time shape');
+await call(submit,id.employee,{...submission,p_actual_start:'22:00:03',p_actual_end:'23:00'},400);
 const badToken=token(id.employee).replace(/.$/,'x');
 const invalid=await fetch(root+'/rpc/'+submit,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+badToken},body:JSON.stringify(submission)});
 check(invalid.status===401,'invalid jwt signature must fail');
