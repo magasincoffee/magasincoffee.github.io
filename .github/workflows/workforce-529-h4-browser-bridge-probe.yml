@@ -1,0 +1,21 @@
+name: Workforce #529 H4 QA Browser Bridge Probe
+on:
+  push:
+    paths:
+      - '.github/workflows/workforce-529-h4-browser-bridge-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 4
+    steps:
+      - name: Localhost CDP endpoint probe only
+        shell: cmd
+        run: |
+          @echo off
+          if /I not "%COMPUTERNAME%"=="DESKTOP-H4A16IL" exit /b 1
+          curl.exe --silent --max-time 3 --output NUL --write-out "H4_CDP_HTTP_STATUS=%%{http_code}" http://127.0.0.1:9229/json/version
+          echo.
+          echo H4_CDP_PROBE_COMPLETE_NO_BROWSER_DATA_READ
