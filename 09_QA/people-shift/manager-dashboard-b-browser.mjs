@@ -111,7 +111,7 @@ try {
         ]) ||
         JSON.stringify(state.disclosures.map(x=>x.group)) !== JSON.stringify(["planning","time"]) ||
         JSON.stringify(state.disclosures.map(x=>x.items)) !== JSON.stringify([
-          ["demand","workforce","schedule"],["attendance","swap"]
+          ["demand","workforce","availability","schedule"],["attendance","swap"]
         ]) ||
         !state.disclosures[0].title.includes("Lập lịch nhân sự") ||
         !state.disclosures[1].title.includes("Công & Điều chỉnh ca") ||
