@@ -1,0 +1,27 @@
+name: Workforce #529 H4 Manager Login Launcher
+on:
+  push:
+    paths:
+      - '.github/workflows/workforce-529-h4-manager-login-launcher.yml'
+      - '09_QA/people-shift/open-manager-qa-h4.cmd'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  h4-manager-launcher:
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Place one-click login launcher on Public Desktop (no browser secrets)
+        shell: cmd
+        run: |
+          @echo off
+          if /I not "%COMPUTERNAME%"=="DESKTOP-H4A16IL" (echo WRONG_HOST & exit /b 1)
+          if not exist "C:\Users\Public\Desktop" (echo PUBLIC_DESKTOP_UNAVAILABLE & exit /b 1)
+          copy /Y "09_QA\people-shift\open-manager-qa-h4.cmd" "C:\Users\Public\Desktop\MAGASIN - Dang nhap Manager QA.cmd"
+          if errorlevel 1 exit /b 1
+          if not exist "C:\Users\Public\Desktop\MAGASIN - Dang nhap Manager QA.cmd" exit /b 1
+          echo H4_MANAGER_QA_DESKTOP_LAUNCHER_READY
