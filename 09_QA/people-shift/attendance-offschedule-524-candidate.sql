@@ -213,7 +213,7 @@ GRANT EXECUTE ON FUNCTION public.list_manager_offschedule_attendance_requests_v1
 
 CREATE OR REPLACE FUNCTION public.list_owner_offschedule_attendance_requests_v1(
  p_store_id uuid,p_from_date date DEFAULT NULL,p_to_date date DEFAULT NULL
-) RETURNS TABLE(request_id uuid,employee_id uuid,store_id uuid,work_date date,
+) RETURNS TABLE(request_id uuid,employee_id uuid,employee_name text,store_id uuid,work_date date,
  actual_start time,actual_end time,status text,submitted_at timestamptz,
  reviewed_by uuid,reviewed_at timestamptz,confirmed_minutes integer)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
@@ -225,9 +225,10 @@ BEGIN
  THEN RAISE EXCEPTION 'STORE_NOT_ALLOWED'; END IF;
  IF p_from_date IS NOT NULL AND p_to_date IS NOT NULL AND p_from_date>p_to_date
  THEN RAISE EXCEPTION 'OFFSCHEDULE_DATE_RANGE_INVALID'; END IF;
- RETURN QUERY SELECT r.id,r.employee_id,r.store_id,r.work_date,r.actual_start,r.actual_end,
+ RETURN QUERY SELECT r.id,r.employee_id,p.full_name,r.store_id,r.work_date,r.actual_start,r.actual_end,
  r.status,r.submitted_at,r.reviewed_by,r.reviewed_at,r.confirmed_minutes
- FROM public.attendance_offschedule_requests_v1 r WHERE r.store_id=p_store_id
+ FROM public.attendance_offschedule_requests_v1 r
+ JOIN public.profiles p ON p.id=r.employee_id WHERE r.store_id=p_store_id
  AND (p_from_date IS NULL OR r.work_date>=p_from_date)
  AND (p_to_date IS NULL OR r.work_date<=p_to_date)
  ORDER BY r.work_date DESC,r.submitted_at DESC,r.id;
