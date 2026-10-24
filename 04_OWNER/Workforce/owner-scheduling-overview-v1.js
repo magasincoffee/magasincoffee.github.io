@@ -41,7 +41,7 @@ function ensureLayout(){
     (tabs||p).before(overview);
   }
   let registrations=view.querySelector('#ownerRegistrationsSummary');
-  if(!availability){
+  if(!registrations){
     registrations=document.createElement('section');
     registrations.id='ownerRegistrationsSummary';registrations.hidden=true;
     registrations.innerHTML='<button type="button" class="oso-back" data-owner-registration-back>← Tổng quan xếp lịch</button><div id="ownerRegistrationsContent"></div>';
