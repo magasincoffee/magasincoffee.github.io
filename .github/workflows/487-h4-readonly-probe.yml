@@ -143,3 +143,18 @@ jobs:
           @echo off
           node 09_QA\487-h4-pages-527-live-assets.mjs
           if errorlevel 1 exit /b 1
+
+  pages-527-live-hosted:
+    name: Public Pages 527 deployment smoke (hosted read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/487-h4-readonly-probe-20261024
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify public Manager and Owner availability UI asset versions
+        run: node 09_QA/487-h4-pages-527-live-assets.mjs
