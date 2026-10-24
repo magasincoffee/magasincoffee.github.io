@@ -15,7 +15,7 @@ window.alert=m=>{window.__QA_526.alerts.push(String(m))};
 const people=[{employee_id:'qa-one',full_name:'Nhân viên có đăng ký',employee_role:'STAFF',profile_status:'ACTIVE',priority_store_ids:['qa-store']},{employee_id:'qa-two',full_name:'Nhân viên chưa đủ đăng ký',employee_role:'STAFF',profile_status:'ACTIVE',priority_store_ids:['qa-store']}];
 window.MAGASIN_SCHEDULING_V2_CONTEXT={
  actor:async()=>({role:'STORE_MANAGER'}),
- client:()=>({rpc:async name=>name==='list_employee_workforce_profiles_v1'?{data:people,error:null}:{data:null,error:{message:'QA_RPC_UNEXPECTED'}}})
+ client:()=>({rpc:async name=>name==='list_employee_workforce_profiles_v1'?{data:people,error:null}:name==='get_manager_weekly_availability'?{data:[{user_id:'qa-two',work_date:'2026-10-26',start_time:'06:00:00',end_time:'12:00:00'}],error:null}:{data:null,error:{message:'QA_RPC_UNEXPECTED'}}})
 };
 window.MAGASIN_SCHEDULING_V2_DRAFT_OPERATIONS={
  apply:async input=>{
