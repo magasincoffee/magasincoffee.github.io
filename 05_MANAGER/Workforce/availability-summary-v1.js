@@ -1,7 +1,7 @@
 (()=>{'use strict';
 if(window.MAGASIN_WORKFORCE_AVAILABILITY_SUMMARY)return;
 const DAY_NAMES=['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','Chủ nhật'];
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;':'&quot;',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dayAdd=(s,n)=>{const d=new Date(String(s).slice(0,10)+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const monday=s=>{const d=new Date(String(s).slice(0,10)+'T00:00:00Z');return dayAdd(s,-((d.getUTCDay()+6)%7))};
 function vietnamToday(){
