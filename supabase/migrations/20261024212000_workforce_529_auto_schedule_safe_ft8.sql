@@ -569,3 +569,29 @@ grant execute on function public.auto_generate_cross_store_schedule_v1(date,bool
 
 comment on function public.auto_generate_cross_store_schedule_v1(date,boolean,text)
   is 'XSTORE-014 global DRAFT scheduler. Composes registered Availability intervals against continuous recurring staffing coverage, returns exact shortage intervals, preserves cross-store/official hard safety, and never publishes.';
+
+
+-- #529 client-side safe-rerun handshake. Absence of this RPC on an old DB
+-- MUST keep the rerun control hidden/disabled; never guess backend version.
+create or replace function public.get_workforce_auto_scheduler_capabilities_529()
+returns jsonb
+language plpgsql stable security definer set search_path=public
+as $cap$
+declare v_role text := upper(coalesce(public.current_user_role(),''));
+begin
+  if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
+  if v_role not in ('OWNER','STORE_MANAGER') then raise exception 'ROLE_NOT_ALLOWED'; end if;
+  if not exists(
+    select 1 from public.profiles p where p.id=auth.uid()
+      and p.status='ACTIVE' and upper(coalesce(p.role,''))=v_role
+  ) then raise exception 'ACTOR_NOT_ACTIVE'; end if;
+  return jsonb_build_object(
+    'revision','529_FT8_REFRESH',
+    'manual_preserved',true,
+    'ft8_first',true,
+    'effective_weekly_demand',true
+  );
+end;
+$cap$;
+revoke all on function public.get_workforce_auto_scheduler_capabilities_529() from public,anon;
+grant execute on function public.get_workforce_auto_scheduler_capabilities_529() to authenticated;
