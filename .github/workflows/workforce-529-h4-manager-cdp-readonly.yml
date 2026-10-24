@@ -1,0 +1,28 @@
+name: Workforce #529 H4 Live Manager Readonly QA
+on:
+  push:
+    paths:
+      - '.github/workflows/workforce-529-h4-manager-cdp-readonly.yml'
+      - '09_QA/people-shift/workforce-529-h4-manager-cdp-readonly.mjs'
+permissions:
+  contents: read
+jobs:
+  h4-browser:
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify Chrome QA local endpoint
+        shell: cmd
+        run: curl.exe --fail --silent --max-time 4 --output NUL http://127.0.0.1:9229/json/version
+      - name: Install JavaScript CDP client only
+        shell: cmd
+        run: |
+          @echo off
+          call npm.cmd install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          if errorlevel 1 exit /b 1
+      - name: Inspect current Manager tab DOM without modifications or screenshots
+        shell: cmd
+        run: node 09_QA\people-shift\workforce-529-h4-manager-cdp-readonly.mjs

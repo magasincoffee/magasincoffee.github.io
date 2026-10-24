@@ -1,0 +1,25 @@
+name: Workforce #529 H4 Manager Login Launcher
+on:
+  push:
+    paths:
+      - '.github/workflows/workforce-529-h4-manager-login-launcher.yml'
+      - '09_QA/people-shift/open-manager-qa-h4.cmd'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  h4-manager-launcher:
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify launcher in checked-out H4 workspace (no protected Desktop writes)
+        shell: cmd
+        run: |
+          @echo off
+          if /I not "%COMPUTERNAME%"=="DESKTOP-H4A16IL" (echo WRONG_HOST & exit /b 1)
+          if not exist "%GITHUB_WORKSPACE%\09_QA\people-shift\open-manager-qa-h4.cmd" (echo QA_SCRIPT_NOT_FOUND & exit /b 1)
+          echo H4_MANAGER_QA_LAUNCHER_READY
+          echo H4_MANAGER_QA_SCRIPT=%GITHUB_WORKSPACE%\09_QA\people-shift\open-manager-qa-h4.cmd
