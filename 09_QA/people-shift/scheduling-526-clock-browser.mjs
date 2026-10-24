@@ -35,10 +35,12 @@ try{
   await page.locator('#sv2ShiftLayer select[name="employee"]').selectOption('qa-two');
   await page.locator('#sv2ShiftLayer select[name="end"]').selectOption('14:00');
   await page.locator('#sv2ShiftLayer button[data-save]').click();
+  await page.waitForFunction(()=>document.querySelector('#sv2ShiftLayer [data-error]')?.textContent?.includes('Khoảng đã đăng ký'),{timeout:5000});
   const error=await page.locator('#sv2ShiftLayer [data-error]').innerText();
   assert.match(error,/26|2026-10-26/);
   assert.match(error,/06:00–14:00/);
   assert.match(error,/đăng ký/);
+  assert.match(error,/06:00–12:00/,'Manager sees actual registered interval on failed save');
   assert.doesNotMatch(error,/\{|\}|"code"|ASSIGNMENT_VALIDATION_FAILED|AVAILABILITY_MISMATCH/,'technical JSON must be hidden');
   assert.equal(await page.locator('#sv2ShiftLayer').count(),1,'validation error must keep dialog open');
   await page.locator('#sv2ShiftLayer select[name="employee"]').selectOption('qa-one');
