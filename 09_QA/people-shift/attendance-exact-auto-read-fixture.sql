@@ -10,6 +10,10 @@ ALTER TABLE public.attendance
  ADD COLUMN amount numeric,
  ADD COLUMN grade text,
  ADD COLUMN hourly_rate numeric;
+-- Rebaseline after adding compatibility columns: EXCEPT ALL must compare
+-- identical table shapes while still asserting zero synthetic attendance mutations.
+DROP TABLE qa_private.attendance_baseline;
+CREATE TABLE qa_private.attendance_baseline AS SELECT * FROM public.attendance;
 CREATE OR REPLACE FUNCTION public.get_my_attendance_v2(p_from_date date DEFAULT NULL::date, p_to_date date DEFAULT NULL::date)
  RETURNS TABLE(attendance_id uuid, schedule_id uuid, work_date date, store_id uuid, store_code text, store_name text, planned_start time without time zone, planned_end time without time zone, check_in timestamp with time zone, check_out timestamp with time zone, status text, late_minutes integer, early_minutes integer, hours_worked numeric, amount numeric, grade text, hourly_rate numeric)
  LANGUAGE sql
