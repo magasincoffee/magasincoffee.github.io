@@ -9,7 +9,8 @@ CREATE TABLE public.work_schedules(id uuid PRIMARY KEY,user_id uuid,store_id uui
 CREATE TABLE public.attendance(id uuid PRIMARY KEY);
 CREATE TABLE public.payroll_entries(id uuid PRIMARY KEY);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
- SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid
+ SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),
+ nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid
 $$;
 CREATE FUNCTION public.can_access_store(p_store uuid) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
