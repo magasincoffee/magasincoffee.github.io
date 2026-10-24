@@ -40,6 +40,26 @@ try {
  await frame.locator('#employeeAttendanceMessage').filter({hasText:'Đã gửi yêu cầu'}).waitFor({timeout:20000});
  assert.match(await frame.locator('[data-offschedule]').innerText(),/Cần quản lý xem xét/);
  console.log('QA_524_BROWSER_EMPLOYEE_PHONE=PASS');
+ const dateSecond=new Date(Date.now()-4*86400000).toISOString().slice(0,10);
+ const adjustment=await rpc(user.employee,'submit_offschedule_attendance_request_v1',{
+  p_store_id:store,p_work_date:dateSecond,p_actual_start:'10:00',p_actual_end:'11:00',p_reason:'UI Manager time correction'});
+ assert.ifError(adjustment.error);
+ const denial=await rpc(user.employee,'submit_offschedule_attendance_request_v1',{
+  p_store_id:store,p_work_date:dateSecond,p_actual_start:'13:00',p_actual_end:'14:00',p_reason:'UI Manager reject scenario'});
+ assert.ifError(denial.error);
+ const employeeRows=await rpc(user.employee,'list_my_offschedule_attendance_requests_v1',{});
+ const initialId=employeeRows.data.find(x=>x.work_date===past&&String(x.actual_start).startsWith('16:00'))?.request_id;
+ assert.ok(initialId,'browser claim ID');
+ for(const width of [360,390,430]){
+  await employee.setViewportSize({width,height:844});
+  const metrics=await frame.locator('#view-attendance').evaluate(el=>({
+   scroll:el.ownerDocument.documentElement.scrollWidth,
+   client:el.ownerDocument.documentElement.clientWidth
+  }));
+  assert.ok(metrics.scroll<=metrics.client+1,'Employee overflow '+width+' '+JSON.stringify(metrics));
+ }
+ console.log('QA_524_EMPLOYEE_RESPONSIVE_360_390_430=PASS');
+
 
  const manager=await browserInstance.newPage({viewport:{width:1280,height:800},timezoneId:'Asia/Ho_Chi_Minh'});
  manager.on('pageerror',e=>errors.push('Manager '+e.message));
@@ -53,13 +73,34 @@ try {
   };
  },{store,week});
  await manager.addScriptTag({url:web+'/05_MANAGER/Workforce/attendance-review-v1.js'});
- await manager.locator('[data-off-request] [data-off-review="APPROVE"]').waitFor({timeout:15000});
- await manager.locator('[data-off-request] [data-off-review="APPROVE"]').click();
+ await manager.locator('[data-off-request="'+initialId+'"] [data-off-review="APPROVE"]').waitFor({timeout:15000});
+ for(const width of [1024,1440]){
+  await manager.setViewportSize({width,height:800});
+  const metrics=await manager.locator('#view-attendance').evaluate(el=>({
+   scroll:el.ownerDocument.documentElement.scrollWidth,
+   client:el.ownerDocument.documentElement.clientWidth
+  }));
+  assert.ok(metrics.scroll<=metrics.client+1,'Manager overflow '+width+' '+JSON.stringify(metrics));
+ }
+ console.log('QA_524_MANAGER_RESPONSIVE_1024_1440=PASS');
+ await manager.locator('[data-off-request="'+initialId+'"] [data-off-review="APPROVE"]').click();
  await manager.locator('[data-mar-offschedule]').filter({hasText:'Đã xử lý'}).waitFor({timeout:15000});
  assert.match(await manager.locator('[data-mar-offschedule]').innerText(),/Đã xác nhận/);
  console.log('QA_524_BROWSER_MANAGER_REAL_REVIEW=PASS');
+ await manager.locator('[data-off-request="'+adjustment.data.request_id+'"] [data-off-start]').fill('10:15');
+ await manager.locator('[data-off-request="'+adjustment.data.request_id+'"] [data-off-note]').fill('Kiểm tra và điều chỉnh');
+ await manager.locator('[data-off-request="'+adjustment.data.request_id+'"] [data-off-review="ADJUST"]').click();
+ await manager.locator('[data-off-request="'+adjustment.data.request_id+'"]').waitFor({state:'detached',timeout:15000});
+ await manager.locator('[data-off-request="'+denial.data.request_id+'"] [data-off-note]').fill('Không có bằng chứng');
+ await manager.locator('[data-off-request="'+denial.data.request_id+'"] [data-off-review="REJECT"]').click();
+ await manager.locator('[data-off-request="'+denial.data.request_id+'"]').waitFor({state:'detached',timeout:15000});
+ console.log('QA_524_BROWSER_MANAGER_ADJUST_REJECT=PASS');
+
  await employee.evaluate(()=>window.MAGASIN_EMPLOYEE.attendance.refresh());
  await frame.locator('[data-offschedule]').filter({hasText:'Đã xác nhận'}).waitFor({timeout:15000});
+ const employeeHistory=await frame.locator('[data-offschedule]').innerText();
+ assert.match(employeeHistory,/Đã điều chỉnh/);
+ assert.match(employeeHistory,/Bị từ chối/);
  console.log('QA_524_BROWSER_EMPLOYEE_SEES_APPROVAL=PASS');
 
  const owner=await browserInstance.newPage({viewport:{width:1024,height:768},timezoneId:'Asia/Ho_Chi_Minh'});
