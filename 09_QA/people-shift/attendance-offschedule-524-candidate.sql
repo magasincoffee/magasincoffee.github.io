@@ -71,6 +71,8 @@ BEGIN
  IF p_work_date IS NULL OR p_actual_start IS NULL OR p_actual_end IS NULL
  OR p_actual_start >= p_actual_end
  THEN RAISE EXCEPTION 'OFFSCHEDULE_INVALID_TIME'; END IF;
+ IF extract(second from p_actual_start)<>0 OR extract(second from p_actual_end)<>0
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_MINUTE_PRECISION_REQUIRED'; END IF;
  IF p_work_date > (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
  OR (p_work_date = (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
  AND p_actual_end > (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::time)
@@ -124,6 +126,8 @@ BEGIN
  IF v_uid=v_row.employee_id THEN RAISE EXCEPTION 'OFFSCHEDULE_SELF_REVIEW_FORBIDDEN'; END IF;
  IF v_row.status <> 'NEEDS_REVIEW' THEN RAISE EXCEPTION 'OFFSCHEDULE_ALREADY_REVIEWED'; END IF;
  IF v_decision NOT IN ('APPROVE','ADJUST','REJECT') THEN RAISE EXCEPTION 'OFFSCHEDULE_INVALID_DECISION'; END IF;
+ IF v_decision IN ('ADJUST','REJECT') AND length(btrim(coalesce(p_review_note,''))) NOT BETWEEN 3 AND 1000
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_REVIEW_NOTE_REQUIRED'; END IF;
  -- Recheck at review time: a schedule may have been published since submit.
  IF v_decision IN ('APPROVE','ADJUST') AND EXISTS(
  SELECT 1 FROM public.work_schedules sch
@@ -135,6 +139,8 @@ BEGIN
  v_end:=CASE WHEN v_decision='APPROVE' THEN v_row.actual_end ELSE p_confirmed_end END;
  IF v_decision='ADJUST' AND (v_start IS NULL OR v_end IS NULL OR v_start>=v_end)
  THEN RAISE EXCEPTION 'OFFSCHEDULE_INVALID_ADJUSTMENT'; END IF;
+ IF v_decision='ADJUST' AND (extract(second from v_start)<>0 OR extract(second from v_end)<>0)
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_MINUTE_PRECISION_REQUIRED'; END IF;
  UPDATE public.attendance_offschedule_requests_v1 SET
  status=CASE v_decision WHEN 'APPROVE' THEN 'APPROVED'
  WHEN 'ADJUST' THEN 'ADJUSTED' ELSE 'REJECTED' END,
