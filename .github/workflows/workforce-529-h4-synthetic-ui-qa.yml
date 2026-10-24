@@ -5,6 +5,7 @@ on:
       - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
       - '.github/workflows/workforce-529-h4-synthetic-ui-qa.yml'
       - '09_QA/people-shift/workforce-529-h4-browser-fixture.html'
+      - '09_QA/people-shift/workforce-529-h4-browser-smoke.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -42,12 +43,8 @@ jobs:
           if errorlevel 1 exit /b 1
           echo H4_529_CHROME_HEADLESS_SMOKE_PASS
       - name: Real H4 Chrome synthetic scheduling DOM interaction
-        shell: powershell
+        shell: cmd
         run: |
-          $chrome = @('C:\Program Files\Google\Chrome\Application\chrome.exe','C:\Program Files (x86)\Google\Chrome\Application\chrome.exe') | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $chrome) { throw 'H4_CHROME_MISSING' }
-          $fixture = (Resolve-Path '09_QA/people-shift/workforce-529-h4-browser-fixture.html').Path
-          $url = ([System.Uri]$fixture).AbsoluteUri
-          $dom = & $chrome --headless --no-first-run --disable-gpu --disable-crash-reporter --virtual-time-budget=3500 --dump-dom $url 2>$null | Out-String
-          if ($dom -notmatch 'H4_529_REAL_CHROME_SYNTHETIC_DOM_PASS') { throw ('H4_529_BROWSER_DOM_FAILED '+($dom | Select-String 'H4_529_FAIL:[^<]+' -AllMatches)) }
-          Write-Output 'H4_529_REAL_CHROME_SYNTHETIC_DOM_PASS'
+          @echo off
+          node 09_QA\people-shift\workforce-529-h4-browser-smoke.mjs
+          if errorlevel 1 exit /b 1
