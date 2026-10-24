@@ -51,8 +51,13 @@ BEGIN
  IF NOT FOUND OR v_profile.status <> 'ACTIVE' OR v_profile.role <> 'STAFF'
  THEN RAISE EXCEPTION 'OFFSCHEDULE_EMPLOYEE_NOT_ALLOWED'; END IF;
  IF p_store_id IS NULL OR NOT EXISTS(SELECT 1 FROM public.stores WHERE id=p_store_id)
- OR NOT public.can_access_store(p_store_id)
  THEN RAISE EXCEPTION 'STORE_NOT_ALLOWED'; END IF;
+ -- Production can_access_store() intentionally denies STAFF. Use Owner-maintained
+ -- employee_store_priorities as a conservative eligibility gate; this is
+ -- not a shift assignment nor proof the employee physically attended.
+ IF NOT EXISTS(SELECT 1 FROM public.employee_store_priorities esp
+ WHERE esp.employee_id=v_uid AND esp.store_id=p_store_id)
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_STORE_ELIGIBILITY_REQUIRED'; END IF;
  IF p_work_date IS NULL OR p_actual_start IS NULL OR p_actual_end IS NULL
  OR p_actual_start >= p_actual_end
  THEN RAISE EXCEPTION 'OFFSCHEDULE_INVALID_TIME'; END IF;
