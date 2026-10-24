@@ -213,7 +213,7 @@ jobs:
           );
           create or replace function public.get_manager_accessible_stores()
           returns table(id uuid) language sql stable
-          as $ select s.id from public.stores s where s.status='ACTIVE' $;
+          as $getscope$ select s.id from public.stores s where s.status='ACTIVE' $getscope$;
           SQL
           psql -v ON_ERROR_STOP=1 -f 07_DATABASE/migrations/20261004220500_xstore_013_continuous_coverage_shortage_v1.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261021163000_workforce_weekly_staffing_overrides_v1.sql
