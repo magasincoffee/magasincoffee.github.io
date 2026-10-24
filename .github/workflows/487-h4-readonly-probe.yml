@@ -126,3 +126,20 @@ jobs:
           node harness\09_QA\487-h4-availability-local-fixture.mjs
           if errorlevel 1 exit /b 1
           echo H4_527_CHROME_OWNER_MANAGER_LOCAL_ONLY_PASS
+
+  pages-527-live-h4:
+    name: Verify merged Pages 527 Manager and Owner availability (read-only)
+    needs: readonly-h4-probe
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/487-h4-readonly-probe-20261024
+          persist-credentials: false
+      - name: Inspect published Manager and Owner weekly registration assets
+        shell: cmd
+        run: |
+          @echo off
+          node 09_QA\487-h4-pages-527-live-assets.mjs
+          if errorlevel 1 exit /b 1
