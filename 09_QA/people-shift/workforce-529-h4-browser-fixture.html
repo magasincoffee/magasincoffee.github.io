@@ -2,7 +2,7 @@
 <body><div id="xstoreAutomationMount"></div><output id="qa-result">PENDING</output>
 <script>
 const calls=[];
-window.MAGASIN_MANAGER_SCHEDULE_DRAFT={refresh:async()=>{}};
+window.MAGASIN_MANAGER_SCHEDULE_DRAFT={refresh:async()=>{},getState:()=>({generationStatus:'DRAFT',lastValidation:'INVALID',assignments:[{},{}],busy:false})};
 window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={client:()=>({rpc:async(name,arg)=>{
  calls.push({name,arg});
  if(name==='get_workforce_auto_scheduler_capabilities_529')return {data:{revision:'529_FT8_REFRESH',manual_preserved:true,ft8_first:true,effective_weekly_demand:true}};
