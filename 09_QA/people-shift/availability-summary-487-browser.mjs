@@ -49,7 +49,7 @@ try{
  assert.equal(await owner.locator('[data-as487-employee]').count(),4);
  const state=await owner.evaluate(()=>document.querySelector('#view-availability').__as487.getState());
  assert.equal(state.rows.length,3,'duplicate registration in multiple priority stores must be deduped by availability_id');
- assert.equal((await owner.locator('.as487-table').innerText().match(/09:30–16:00/g)||[]).length,1);
+ assert.equal(((await owner.locator('.as487-table').innerText()).match(/09:30–16:00/g)||[]).length,1);
  await owner.locator('[data-as487-store]').selectOption('91000000-0000-4000-8000-000000000003');
  await owner.waitForFunction(()=>document.querySelector('#view-availability').__as487.getState().storeId.endsWith('0003')&&!document.querySelector('#view-availability').__as487.getState().loading);
  assert.deepEqual(await owner.locator('.as487-metric strong').allInnerTexts(),['1','0','1']);
