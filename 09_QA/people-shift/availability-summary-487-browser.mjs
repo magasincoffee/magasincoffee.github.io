@@ -58,6 +58,30 @@ try{
  console.log('AS487_OWNER_1440_4STORE_SCOPED_COUNTS_PASS');
  await owner.close();
 
+ const ownerOverview=await scene('owner',1024,'vi-VN');
+ await ownerOverview.evaluate(()=>{
+  const context=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT,oldClient=context.client;
+  context.client=()=>({rpc:async(name,args={})=>{
+    if(name==='list_schedule_generations')return {data:[],error:null};
+    return oldClient().rpc(name,args);
+  }});
+  const add=(s,n)=>{const d=new Date(s+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+  window.MAGASIN_CORE={security:{escapeHtml:v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]))},
+   date:{monday:()=> '2026-10-19',addDays:add,formatDate:v=>v}};
+  window.MAGASIN_MANAGER_SCHEDULE_DRAFT={openDirect:async()=>{}};
+  window.__MAGASIN_SCHEDULING_ACTOR__='OWNER';
+  document.body.innerHTML='<main><section id="view-workforce"><div class="row"><h2>Nhân sự</h2></div><div class="tabs"></div><div id="panel-publish"></div></section></main>';
+ });
+ await ownerOverview.addScriptTag({url:base+'/04_OWNER/Workforce/owner-scheduling-overview-v1.js'});
+ await ownerOverview.locator('[data-owner-registration-open]').waitFor({timeout:15000});
+ await ownerOverview.locator('[data-owner-registration-open]').click();
+ await ownerOverview.locator('#ownerRegistrationsSummary .as487-metrics').waitFor({timeout:12000});
+ assert.deepEqual(await ownerOverview.locator('#ownerRegistrationsSummary .as487-metric strong').allInnerTexts(),['4','3','1']);
+ await ownerOverview.locator('[data-owner-registration-back]').click();
+ await ownerOverview.locator('#ownerSchedulingOverview').waitFor({state:'visible',timeout:10000});
+ console.log('AS487_OWNER_REAL_WORKFORCE_ENTRY_AND_BACK_PASS');
+ await ownerOverview.close();
+
  assert.deepEqual(errors,[],'no browser JS errors');
  console.log('AS487_READONLY_BROWSER_MATRIX_PASS');
 }finally{await browser.close()}
