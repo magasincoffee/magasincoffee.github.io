@@ -97,6 +97,8 @@ jobs:
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-fixture.sql
       - name: Apply P0 exact-shift auto-confirm candidate ONLY to disposable PostgreSQL
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 07_DATABASE/migrations/20261024015515_workforce_attendance_exact_auto_confirm_v1.sql
+      - name: Enable exact-shift auto-confirm for synthetic CN3 only; CN1/CN2/CN4 default OFF
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-pilot-fixture.sql
       - name: Install current Employee attendance reader into disposable database
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-read-fixture.sql
       - name: Reload PostgREST schema after newly installed attendance RPC
