@@ -1,0 +1,45 @@
+name: Scheduling 526 PostgreSQL Real RPC Roundtrip QA
+on:
+  pull_request:
+    paths:
+      - '09_QA/people-shift/scheduling-526-production-rpc-*.sql'
+      - '.github/workflows/scheduling-526-postgres-rpc-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-rpc-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: qa_only_disposable
+          POSTGRES_USER: qa_actor
+          POSTGRES_DB: scheduling_526_qa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U qa_actor -d scheduling_526_qa"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: qa_actor
+      PGDATABASE: scheduling_526_qa
+      PGPASSWORD: qa_only_disposable
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure disposable PostgreSQL and exact-source functions
+        run: |
+          psql --version
+          psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/scheduling-526-production-rpc-stage.sql
+      - name: Verify real PostgreSQL RPC writes, rereads, rollback and ACL
+        run: |
+          psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/scheduling-526-production-rpc-roundtrip.test.sql
+      - name: Assert all five independent QA proofs executed
+        run: |
+          echo 'QA526_DISPOSABLE_POSTGRES_PRODUCTION_RPC_TESTS_COMPLETED'
