@@ -4,7 +4,7 @@ CREATE SCHEMA auth;
 CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE anon NOLOGIN;
 CREATE TABLE public.stores(id uuid PRIMARY KEY,code text NOT NULL,name text NOT NULL,status text NOT NULL);
-CREATE TABLE public.profiles(id uuid PRIMARY KEY,role text NOT NULL,status text NOT NULL,access_scope text NOT NULL);
+CREATE TABLE public.profiles(id uuid PRIMARY KEY,role text NOT NULL,status text NOT NULL,access_scope text NOT NULL,full_name text);
 CREATE TABLE public.work_schedules(id uuid PRIMARY KEY,user_id uuid,store_id uuid,work_date date,status text,start_time time,end_time time);
 CREATE TABLE public.employee_store_priorities(employee_id uuid REFERENCES public.profiles(id), store_id uuid REFERENCES public.stores(id), priority smallint, is_primary boolean, PRIMARY KEY(employee_id,store_id));
 CREATE TABLE public.attendance(id uuid PRIMARY KEY);
