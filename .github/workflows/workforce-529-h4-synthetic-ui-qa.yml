@@ -1,0 +1,42 @@
+name: Workforce #529 H4 Synthetic UI Acceptance
+on:
+  push:
+    paths:
+      - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
+      - '.github/workflows/workforce-529-h4-synthetic-ui-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  h4-local-synthetic:
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Assert authorized H4 host and latest #529 frontend contract
+        shell: cmd
+        run: |
+          @echo off
+          if /I not "%COMPUTERNAME%"=="DESKTOP-H4A16IL" (echo WRONG_HOST & exit /b 1)
+          node --check 05_MANAGER\Workforce\cross-store-auto-schedule-v1.js
+          if errorlevel 1 exit /b 1
+          node --test 09_QA\people-shift\workforce-529-auto-scheduler-contract.test.mjs
+          if errorlevel 1 exit /b 1
+          echo H4_529_FRONTEND_CONTRACT_PASS
+      - name: Read-only public MAGASIN accessibility from H4
+        shell: cmd
+        run: |
+          @echo off
+          curl.exe --location --fail --silent --show-error --max-time 20 --output NUL https://magasincoffee.github.io/manager/scheduling/
+          if errorlevel 1 exit /b 1
+          echo H4_529_PUBLIC_PAGE_REACHABLE
+      - name: Verify H4 Chrome can render synthetic browser shell
+        shell: cmd
+        run: |
+          @echo off
+          if exist "C:\Program Files\Google\Chrome\Application\chrome.exe" (set "CHROME=C:\Program Files\Google\Chrome\Application\chrome.exe") else if exist "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" (set "CHROME=C:\Program Files (x86)\Google\Chrome\Application\chrome.exe") else (echo H4_CHROME_NOT_FOUND & exit /b 1)
+          "%CHROME%" --headless --no-first-run --disable-gpu --disable-crash-reporter --dump-dom about:blank | findstr /C:"<html" >NUL
+          if errorlevel 1 exit /b 1
+          echo H4_529_CHROME_HEADLESS_SMOKE_PASS
