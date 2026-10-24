@@ -9,7 +9,7 @@ END $r$;
 GRANT anon, authenticated TO authenticator;
 GRANT USAGE ON SCHEMA public,auth TO anon,authenticated;
 CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
- AS $uid$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $uid$;
+ AS $uid$ SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid $uid$;
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
 CREATE OR REPLACE FUNCTION public.current_user_role() RETURNS text
  LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public
