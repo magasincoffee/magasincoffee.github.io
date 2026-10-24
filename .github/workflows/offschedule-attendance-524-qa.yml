@@ -57,6 +57,27 @@ jobs:
           QA_JWT_SECRET: local-offschedule-524-jwt-signature-secret-over-32-chars
           QA_POSTGREST_URL: http://127.0.0.1:3000
         run: node 09_QA/people-shift/attendance-offschedule-524-jwt-e2e.mjs
+      - name: Install browser-only canonical empty attendance readers
+        run: psql 'postgresql://postgres:synthetic-only-password@localhost:5432/offschedule_qa' -v ON_ERROR_STOP=1 -f 09_QA/people-shift/attendance-offschedule-524-browser-fixture.sql
+      - name: Install Playwright Chromium in disposable Actions runner
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+      - name: Serve PR source locally for signed browser QA
+        run: |
+          nohup python3 -m http.server 8767 --bind 127.0.0.1 >/tmp/off-524-http.log 2>&1 &
+          for attempt in $(seq 1 12); do
+            if curl -fsS http://127.0.0.1:8767/09_QA/people-shift/ui2-009-employee-people-fixture.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/off-524-http.log
+          exit 1
+      - name: Signed JWT actual Employee Manager Owner UI browser E2E
+        env:
+          QA_JWT_SECRET: local-offschedule-524-jwt-signature-secret-over-32-chars
+          QA_POSTGREST_URL: http://127.0.0.1:3000
+          QA_BASE_URL: http://127.0.0.1:8767
+        run: node 09_QA/people-shift/attendance-offschedule-524-browser-jwt-e2e.mjs
       - name: Diagnostics on failure
         if: failure()
         run: docker logs qa-offschedule-postgrest || true
