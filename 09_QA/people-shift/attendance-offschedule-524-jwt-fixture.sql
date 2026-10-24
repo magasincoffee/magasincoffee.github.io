@@ -15,4 +15,6 @@ DO $$ BEGIN
  OR has_table_privilege('authenticated','public.attendance_offschedule_requests_v1','UPDATE')
  THEN RAISE EXCEPTION 'QA_DIRECT_WRITE_PRIVILEGE_LEAK'; END IF;
 END $$;
+INSERT INTO public.attendance_offschedule_policy_v1(store_id,enabled)
+VALUES('91000000-0000-4000-8000-000000000003',true);
 NOTIFY pgrst, 'reload schema';
