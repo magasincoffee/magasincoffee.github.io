@@ -94,8 +94,15 @@ test('All visible scheduling time forms use identical half-hour boundaries', asy
     read('05_MANAGER/SchedulingV2/Demand/index.html')
   ]);
   for (const html of [draft, post]) {
-    assert.match(html, /min="05:00" max="21:30" step="1800"/);
-    assert.match(html, /min="05:30" max="22:00" step="1800"/);
+    // These are visible 24h choices, not locale-dependent native time widgets.
+    assert.match(html, /<select name="start" required aria-label="Giờ bắt đầu \(24 giờ\)"/);
+    assert.match(html, /<select name="end" required aria-label="Giờ kết thúc \(24 giờ\)"/);
+    assert.match(html, /for\(const \[name,first,last\] of \[\['start',300,1290\],\['end',330,1320\]\]\)/);
+    assert.match(html, /for\(let minute=first;minute<=last;minute\+=30\)/);
+    assert.match(html, /option\.value=hh\+':'\+mm;option\.textContent=option\.value/);
+    assert.doesNotMatch(html, /<input type="time" name="(?:start|end)"/);
+    assert.match(html, /start\.value/);
+    assert.match(html, /end\.value/);
   }
   // Demand now uses fixed HH:mm options instead of platform-dependent AM/PM time widgets.
   const slots = id => {
