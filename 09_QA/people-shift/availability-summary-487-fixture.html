@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MAGASIN availability P1 isolated browser QA</title>
+<style>body{margin:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#16243a}#view-availability{padding:18px;max-width:1300px;margin:auto}</style>
+</head><body><main id="view-availability" class="view"></main>
+<script>
+(()=>{'use strict';
+const params=new URLSearchParams(location.search);
+const role=params.get('role')==='owner'?'OWNER':'STORE_MANAGER';
+const stores=[
+ {id:'91000000-0000-4000-8000-000000000001',code:'CN1',name:'QA One',status:'ACTIVE'},
+ {id:'91000000-0000-4000-8000-000000000002',code:'CN2',name:'QA Two',status:'ACTIVE'},
+ {id:'91000000-0000-4000-8000-000000000003',code:'CN3',name:'QA Three',status:'ACTIVE'},
+ {id:'91000000-0000-4000-8000-000000000004',code:'CN4',name:'QA Four',status:'ACTIVE'}
+];
+const profile=(id,name,ids,status='ACTIVE')=>({employee_id:'90000000-0000-4000-8000-00000000000'+id,full_name:name,username:'qa-'+id,employee_role:'STAFF',profile_status:status,priority_store_ids:ids});
+const profiles=[
+ profile(1,'Lan QA',[stores[0].id]), profile(2,'Bình QA',[stores[1].id]),
+ profile(3,'Chi QA',[stores[0].id,stores[1].id]),profile(4,'Duy QA',[stores[2].id]),
+ profile(5,'Nghỉ QA',[stores[0].id],'INACTIVE')
+];
+const types=[{employee_id:profiles[0].employee_id,employment_type:'FULL_TIME'},
+ {employee_id:profiles[1].employee_id,employment_type:'PART_TIME'},
+ {employee_id:profiles[2].employee_id,employment_type:'PART_TIME'}];
+const times={
+ [stores[0].id]:[
+  {availability_id:'70000000-0000-4000-8000-000000000001',work_date:'2026-10-26',start_time:'06:00:00',end_time:'14:00:00',user_id:profiles[0].employee_id,employee_name:'Lan QA'},
+  {availability_id:'70000000-0000-4000-8000-000000000003',work_date:'2026-10-27',start_time:'09:30:00',end_time:'16:00:00',user_id:profiles[2].employee_id,employee_name:'Chi QA',note:'Chỉ có thể làm thời gian này'}
+ ],
+ [stores[1].id]:[
+  {availability_id:'70000000-0000-4000-8000-000000000002',work_date:'2026-10-26',start_time:'07:00:00',end_time:'13:00:00',user_id:profiles[1].employee_id,employee_name:'Bình QA'},
+  {availability_id:'70000000-0000-4000-8000-000000000003',work_date:'2026-10-27',start_time:'09:30:00',end_time:'16:00:00',user_id:profiles[2].employee_id,employee_name:'Chi QA'}
+ ],
+ [stores[2].id]:[], [stores[3].id]:[]
+};
+const calls=[],qa={calls,stores,profiles,fail:false,role};
+window.__MAGASIN_WORKFORCE_TODAY__='2026-10-24';
+window.__AS487_QA=qa;
+window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+  stores:async()=>role==='OWNER'?stores:stores.slice(0,1),
+  client:()=>({rpc:async(name,args={})=>{
+   calls.push({name,args});
+   if(qa.fail)return {data:null,error:{message:'Synthetic reader fault'}};
+   if(name==='list_employee_workforce_profiles_v1')return {data:profiles,error:null};
+   if(name==='list_employee_employment_types_v1')return {data:types,error:null};
+   if(name==='get_manager_weekly_availability'){
+    const sid=args.p_store_id;
+    if(role!=='OWNER'&&sid!==stores[0].id)return {data:null,error:{message:'STORE_NOT_ALLOWED'}};
+    return {data:args.p_week_start==='2026-10-26'?(times[sid]||[]):[],error:null};
+   }
+   throw Error('Unexpected RPC '+name);
+  }})
+};
+})();
+</script>
+<script src="/05_MANAGER/Workforce/availability-summary-v1.js"></script></body></html>
