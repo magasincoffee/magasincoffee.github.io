@@ -20,7 +20,7 @@ test("Manager B sidebar follows approved primary order and preserves operational
   const manager = shell.slice(shell.indexOf("const MANAGER_NAV"),shell.indexOf("const OWNER_NAV"));
   const keys = [...manager.matchAll(/\['([^']+)',\s*'[^']+',\s*'[^']+'(?:,\s*'[^']+')?\]/g)].map(x=>x[1]);
   assert.deepEqual(keys,[
-    "dashboard","staff","payroll-self-check","demand","workforce","schedule","attendance","swap"
+    "dashboard","staff","payroll-self-check","demand","workforce","availability","schedule","attendance","swap"
   ]);
   for (const label of ["Tổng quan","Nhân viên","Nhu cầu nhân sự","Xếp lịch","Chấm công",
                         "Lập lịch nhân sự","Công & Điều chỉnh ca","Công / Lương (xem)"]) {

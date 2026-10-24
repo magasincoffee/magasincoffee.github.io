@@ -13,7 +13,7 @@ test("SCHED-UI-008 Owner scheduling is overview-first and reuses shared scheduli
 
   assert.match(entry,/owner-workforce-runtime\.html\?v=20261003-sched-ui-008/);
   assert.match(runtime,/draft-publish-v1\.js\?v=20261003-sched-ui-008/);
-  assert.match(runtime,/owner-scheduling-overview-v1\.js\?v=20261003-sched-ui-008/);
+  assert.match(runtime,/owner-scheduling-overview-v1\.js\?v=(?:20261003-sched-ui-008|20261024-487-as1)/);
   assert.doesNotMatch(runtime,/cross-store-master-v1\.js/);
 
   assert.match(overview,/Tổng quan xếp lịch/);

@@ -44,7 +44,7 @@ try{
   assert.equal(palette.logout,'rgb(36, 74, 127)','sign-out remains legible on light shell');
   assert.equal(await page.locator('.m-shell-v2-sidebar').count(),1);
   assert.equal(await page.locator('.m-shell-v2-topbar').count(),1);
-  assert.equal(await page.locator('.m-shell-v2-nav__item[data-shell-key]').count(),8,'eight live Manager destinations');
+  assert.equal(await page.locator('.m-shell-v2-nav__item[data-shell-key]').count(),9,'nine live Manager destinations including availability');
   assert.equal(await page.locator('[data-shell-key="workforce"][aria-current="page"]').count(),1);
   assert.equal(await page.locator('[data-shell-account-name]').textContent(),'Quản lý kiểm thử');
   assert.equal(await page.locator('[data-shell-user-name]').textContent(),'Quản lý kiểm thử');
