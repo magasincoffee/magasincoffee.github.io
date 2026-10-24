@@ -37,6 +37,7 @@
       ['overview', '⌂', 'Tổng quan', '/owner/'],
       ['attention', '!', 'Cần chú ý', '/04_OWNER/ControlTower/'],
       ['workforce', '▦', 'Nhân sự', '/owner/scheduling/'],
+      ['availability', '▤', 'Đăng ký lịch làm việc', '/owner/scheduling/?view=availability'],
       ['procurement', '□', 'Mua hàng', '/nhap-hang/'],
       ['access', '⌘', 'Phân quyền', '/04_OWNER/Access/']
     ]),
@@ -63,6 +64,7 @@
     overview: ['Tổng quan', 'Điều hành hệ thống MAGASIN'],
     attention: ['Cần chú ý', 'Các vấn đề cần theo dõi trên toàn hệ thống'],
     workforce: ['Nhân sự', 'Giám sát lịch và hỗ trợ theo cửa hàng'],
+    availability: ['Đăng ký lịch làm việc', 'Tổng hợp nhân viên đăng ký khả dụng theo chi nhánh'],
     procurement: ['Mua hàng', 'Nhập hàng · công nợ · báo cáo mua hàng'],
     access: ['Phân quyền', 'Quản lý quyền tài khoản nội bộ']
   });
@@ -134,6 +136,7 @@
 
   const currentKey = () => {
     if (config.role === 'OWNER') {
+      try { if (new URLSearchParams(topWindow().location.search).get('view') === 'availability') return 'availability'; } catch (_) {}
       return String(
         window.__MAGASIN_UI_V2_SHELL__?.current ||
         document.body.dataset.magasinShellCurrent ||
