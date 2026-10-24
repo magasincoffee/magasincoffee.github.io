@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 const BASE=process.env.QA_BASE_URL||'http://127.0.0.1:8767';
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,...(process.env.QA_CHROME_CHANNEL?{channel:process.env.QA_CHROME_CHANNEL}:{})});
 const errors=[];
 const forbidden=[];
 const cases=[['vi-VN',390],['en-US',1440]];
