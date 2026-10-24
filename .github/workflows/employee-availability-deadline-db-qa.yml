@@ -27,7 +27,7 @@ permissions:
 jobs:
   isolated-postgres-trigger:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 14
     services:
       postgres:
         image: postgres:16
@@ -97,6 +97,8 @@ jobs:
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-fixture.sql
       - name: Apply P0 exact-shift auto-confirm candidate ONLY to disposable PostgreSQL
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 07_DATABASE/migrations/20261024015515_workforce_attendance_exact_auto_confirm_v1.sql
+      - name: Install current Employee attendance reader into disposable database
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-read-fixture.sql
       - name: Reload PostgREST schema after newly installed attendance RPC
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 -c "NOTIFY pgrst, 'reload schema';"
       - name: Exercise JWT current-owner, exact-match, deviation and idempotent attendance
@@ -106,6 +108,28 @@ jobs:
         run: node 09_QA/people-shift/attendance-exact-auto-jwt-e2e.mjs
       - name: Prove confirmed-time payroll source and exact attendance/payroll rollback
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-assert.sql
+      - name: Install Playwright browser for disposable signed JWT UI acceptance
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+      - name: Serve this PR branch locally only (not hosted production)
+        shell: bash
+        run: |
+          nohup python3 -m http.server 8767 --bind 127.0.0.1 >/tmp/attendance-p0-local-http.log 2>&1 &
+          for i in $(seq 1 12); do
+            if curl -fsS http://127.0.0.1:8767/09_QA/people-shift/ui2-009-employee-people-fixture.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/attendance-p0-local-http.log || true
+          exit 1
+      - name: Actual Employee browser → JWT attendance writer → scoped Manager and Owner read
+        env:
+          QA_JWT_SECRET: local-isolated-availability-jwt-signing-secret-over-32
+          QA_POSTGREST_URL: http://127.0.0.1:3000
+          QA_BASE_URL: http://127.0.0.1:8767
+        run: node 09_QA/people-shift/attendance-exact-auto-browser-jwt-e2e.mjs
+      - name: Restore attendance records created only by synthetic browser QA
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-browser-cleanup.sql
       - name: Restore legacy write behavior in synthetic database without deleting prior auto confirmed payroll
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-write-rollback.sql
       - name: Verify safe write rollback, preexisting auto work and zero synthetic residue
