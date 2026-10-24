@@ -1,0 +1,160 @@
+name: Workforce 487 H4 Readonly Probe
+on:
+  push:
+    branches:
+      - qa/487-h4-readonly-probe-20261024
+    paths:
+      - .github/workflows/487-h4-readonly-probe.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/487-h4-readonly-probe.yml
+permissions:
+  contents: read
+jobs:
+  readonly-h4-probe:
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 5
+    steps:
+      - name: Identify H4 runner without reading user files
+        shell: cmd
+        run: |
+          @echo off
+          if /I not "%COMPUTERNAME%"=="DESKTOP-H4A16IL" (echo NOT_H4_RUNNER_STOP & exit /b 1)
+          echo H4_SELF_HOSTED_RUNNER_PASS
+          where node >NUL 2>&1
+          if errorlevel 1 (echo H4_NODE_MISSING) else (echo H4_NODE_AVAILABLE)
+          if exist "C:\Program Files\Google\Chrome\Application\chrome.exe" (echo H4_CHROME_AVAILABLE) else if exist "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" (echo H4_CHROME_AVAILABLE) else (echo H4_CHROME_NOT_AT_DEFAULT_PATH)
+      - name: Public website read-only reachability
+        shell: cmd
+        run: |
+          @echo off
+          curl.exe --location --fail --silent --show-error --max-time 20 --output NUL https://magasincoffee.github.io/
+          if errorlevel 1 (echo H4_PUBLIC_HOME_REACHABILITY_FAILED & exit /b 1)
+          curl.exe --location --fail --silent --show-error --max-time 20 --output NUL https://magasincoffee.github.io/manager/scheduling/
+          if errorlevel 1 (echo H4_PUBLIC_SCHEDULING_REACHABILITY_FAILED & exit /b 1)
+          echo H4_PUBLIC_WEB_READONLY_HTTP_200_PASS
+  browser-h4-isolated-526:
+    name: H4 local Chrome (synthetic PR 526; no production login/data)
+    needs: readonly-h4-probe
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/487-h4-readonly-probe-20261024
+          path: harness
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: f8a34bfa5e1c495a4440b91582e205124d4c57ec
+          path: candidate
+          persist-credentials: false
+      - name: Verify exact source revision and local dependencies
+        shell: cmd
+        run: |
+          @echo off
+          if /I not "%COMPUTERNAME%"=="DESKTOP-H4A16IL" (echo WRONG_WINDOWS_HOST & exit /b 1)
+          call node --version
+          call npm.cmd --version
+          if errorlevel 1 exit /b 1
+          if not exist "candidate\09_QA\people-shift\scheduling-526-clock-browser.mjs" exit /b 1
+          echo H4_PR526_EXACT_REF_FIXTURE_READY
+      - name: Install Playwright JavaScript API only; use installed Chrome
+        shell: cmd
+        working-directory: candidate
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          @echo off
+          call npm.cmd install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          if errorlevel 1 exit /b 1
+      - name: Run 24h Manager synthetic E2E on H4 Chrome and localhost fixture
+        shell: cmd
+        run: |
+          @echo off
+          node harness\09_QA\487-h4-clock-local-fixture.mjs
+          if errorlevel 1 exit /b 1
+          echo H4_PR526_CHROME_LOCALE_BOUNDARY_READONLY_PASS
+
+  pages-526-live-h4:
+    name: Verify merged Pages 526 assets on H4 (read-only)
+    needs: readonly-h4-probe
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/487-h4-readonly-probe-20261024
+          persist-credentials: false
+      - name: Inspect public Pages HTML and JavaScript after merge
+        shell: cmd
+        run: |
+          @echo off
+          node 09_QA\487-h4-pages-526-live-assets.mjs
+          if errorlevel 1 exit /b 1
+
+  browser-h4-isolated-527:
+    name: H4 Chrome availability P1 Owner and Manager fixture (read-only)
+    needs: readonly-h4-probe
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/487-h4-readonly-probe-20261024
+          path: harness
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 84306bac309a200c7bf239e696fabe51a24a7db4
+          path: availability-candidate
+          persist-credentials: false
+      - name: Install Playwright API only without downloading browsers
+        shell: cmd
+        working-directory: availability-candidate
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          @echo off
+          call npm.cmd install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          if errorlevel 1 exit /b 1
+      - name: Real H4 Chrome viewport and role-scope acceptance on local fake data
+        shell: cmd
+        run: |
+          @echo off
+          node harness\09_QA\487-h4-availability-local-fixture.mjs
+          if errorlevel 1 exit /b 1
+          echo H4_527_CHROME_OWNER_MANAGER_LOCAL_ONLY_PASS
+
+  pages-527-live-h4:
+    name: Verify merged Pages 527 Manager and Owner availability (read-only)
+    needs: readonly-h4-probe
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/487-h4-readonly-probe-20261024
+          persist-credentials: false
+      - name: Inspect published Manager and Owner weekly registration assets
+        shell: cmd
+        run: |
+          @echo off
+          node 09_QA\487-h4-pages-527-live-assets.mjs
+          if errorlevel 1 exit /b 1
+
+  pages-527-live-hosted:
+    name: Public Pages 527 deployment smoke (hosted read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/487-h4-readonly-probe-20261024
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify public Manager and Owner availability UI asset versions
+        run: node 09_QA/487-h4-pages-527-live-assets.mjs
