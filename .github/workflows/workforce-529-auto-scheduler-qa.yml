@@ -7,12 +7,14 @@ on:
       - '09_QA/people-shift/workforce-529-auto-scheduler-contract.test.mjs'
       - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
       - '.github/workflows/workforce-529-auto-scheduler-qa.yml'
+      - '09_QA/people-shift/workforce-529-signed-jwt-*'
   pull_request:
     paths:
       - 'supabase/migrations/20261024212000_workforce_529_auto_schedule_safe_ft8.sql'
       - '09_QA/people-shift/workforce-529-auto-scheduler-contract.test.mjs'
       - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
       - '.github/workflows/workforce-529-auto-scheduler-qa.yml'
+      - '09_QA/people-shift/workforce-529-signed-jwt-*'
   workflow_dispatch:
 
 permissions:
@@ -526,4 +528,44 @@ jobs:
           end
           $test$;
           rollback;
+          SQL
+
+      - name: Synthetic Owner Manager Staff JWT API test and isolated teardown
+        shell: bash
+        env:
+          QA_529_JWT_SECRET: qa-529-isolated-synthetic-only-hs256-signature-key
+          QA_529_URL: http://127.0.0.1:3059
+        run: |
+          set -euo pipefail
+          node --check 09_QA/people-shift/workforce-529-signed-jwt-http.mjs
+          psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/workforce-529-signed-jwt-fixture.sql
+          docker run -d --rm --name workforce529-jwt-pgrst --network host \\
+            -e PGRST_DB_URI='postgres://authenticator:qa-529-synthetic-only@127.0.0.1:5432/xstore_qa' \\
+            -e PGRST_DB_SCHEMAS=public \\
+            -e PGRST_DB_ANON_ROLE=anon \\
+            -e PGRST_JWT_SECRET="$QA_529_JWT_SECRET" \\
+            -e PGRST_SERVER_PORT=3059 \\
+            postgrest/postgrest:v12.2.8 >/dev/null
+          trap 'docker rm -f workforce529-jwt-pgrst >/dev/null 2>&1 || true' EXIT
+          ready=0
+          for n in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3059/ >/dev/null 2>&1; then ready=1;break;fi
+            sleep 1
+          done
+          if [ "$ready" != 1 ]; then docker logs workforce529-jwt-pgrst;exit 1;fi
+          node 09_QA/people-shift/workforce-529-signed-jwt-http.mjs
+          # Isolated DB rollback/teardown check: no production project access.
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          begin;
+          delete from public.schedule_generation_assignments;
+          delete from public.schedule_generation_runs;
+          rollback;
+          do $proof$
+          begin
+            if (select count(*) from public.schedule_generation_assignments)=0 then
+              raise exception 'QA_ROLLBACK_DID_NOT_RESTORE_ROWS';
+            end if;
+            raise notice 'JWT_529_TRANSACTION_ROLLBACK=PASS';
+          end
+          $proof$;
           SQL
