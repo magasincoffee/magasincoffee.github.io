@@ -106,6 +106,10 @@ jobs:
         run: node 09_QA/people-shift/attendance-exact-auto-jwt-e2e.mjs
       - name: Prove confirmed-time payroll source and exact attendance/payroll rollback
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-assert.sql
+      - name: Restore legacy write behavior in synthetic database without deleting prior auto confirmed payroll
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-write-rollback.sql
+      - name: Verify safe write rollback, preexisting auto work and zero synthetic residue
+        run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/attendance-exact-auto-write-rollback-test.sql
       - name: Independently assert zero residual row mutations against disposable SQL snapshot
         run: docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d qa_employee_window -v ON_ERROR_STOP=1 < 09_QA/people-shift/employee-availability-deadline-roundtrip-assert.sql
       - name: Show PostgREST diagnostics on failure
