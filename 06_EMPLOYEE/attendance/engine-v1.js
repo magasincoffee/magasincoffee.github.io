@@ -17,7 +17,7 @@ const ERROR_COPY={
   ATTENDANCE_SHIFT_NOT_FINISHED:'Ca làm chưa kết thúc nên chưa thể gửi giờ thực tế.',
   ATTENDANCE_ACTIVE_SUBMISSION_EXISTS:'Ca này đã có bản ghi chấm công. Dữ liệu đã được làm mới.'
 };
-let state={week:mon(),schedules:[],history:[],loading:false,error:null,submitting:false,selectedScheduleId:null,ready:false};
+let state={week:mon(),schedules:[],history:[],offStores:[],offHistory:[],loading:false,error:null,submitting:false,offSubmitting:false,selectedScheduleId:null,ready:false};
 let requestSeq=0,pending=null;
 function errorCode(e){
   const s=String(e?.message||'')+' '+String(e?.code||'');
@@ -82,26 +82,71 @@ function render(){
       '<div class="attendance-actions"><button class="m-button m-button--primary btn primary" id="employeeAttendanceSubmit" type="button"'+(already||legacy||state.submitting?' disabled':'')+'>'+(state.submitting?'Đang gửi…':'Gửi giờ làm thực tế')+'</button><span class="muted">Tuần '+esc(fmt(state.week))+'–'+esc(fmt(add(state.week,6)))+'</span></div>'+
       '<div class="attendance-help">Hệ thống kiểm tra lại ca ngay khi bạn gửi. Nếu ca vừa được cho/đổi, lịch sẽ tự tải lại.</div>'
       :'<div class="employee-people-state empty" data-attendance-empty="1"><strong>Không có ca được phát hành cho bạn trong tuần này.</strong><span>Nếu ca vừa được cho/đổi, hãy làm mới hoặc chuyển tuần để xem lịch hiện tại.</span></div>');
+  p.insertAdjacentHTML('beforeend',renderOffschedule());
   renderHistory(d);
 }
+
+function renderOffschedule(){
+  if(!state.offStores.length&&!state.offHistory.length)return '';
+  const options=state.offStores.map(r=>'<option value="'+esc(r.store_id)+'">'+esc(r.store_code)+' · '+esc(r.store_name)+'</option>').join('');
+  const todayVN=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  return '<section class="employee-attendance-offschedule" data-offschedule="1" style="border-top:1px solid #dbe5ef;padding-top:16px;margin-top:18px">'+
+    '<h3>Yêu cầu chấm công ngoài lịch</h3><p class="muted">Chỉ khai báo khi bạn thực sự làm việc mà không có ca chính thức. Quản lý sẽ xét duyệt; chưa tự cộng giờ công vào lương.</p>'+
+    (state.offStores.length?
+      '<div class="attendance-form-grid">'+
+      '<div class="field wide"><label>Chi nhánh tiếp nhận</label><select id="employeeOffStore" class="m-select">'+options+'</select></div>'+
+      '<div class="field"><label>Ngày làm</label><input id="employeeOffDate" class="m-input" type="date" value="'+esc(todayVN)+'"></div>'+
+      '<div class="field"><label>Giờ bắt đầu</label><input id="employeeOffStart" class="m-input" type="time" step="60"></div>'+
+      '<div class="field"><label>Giờ kết thúc</label><input id="employeeOffEnd" class="m-input" type="time" step="60"></div>'+
+      '<div class="field wide"><label>Lý do (bắt buộc)</label><textarea id="employeeOffReason" class="m-input" maxlength="1000"></textarea></div></div>'+
+      '<button id="employeeOffSubmit" class="m-button m-button--primary btn primary" type="button"'+(state.offSubmitting?' disabled':'')+'>'+(state.offSubmitting?'Đang gửi…':'Gửi yêu cầu ngoài lịch')+'</button>'
+      :'<p>Chi nhánh chưa mở tiếp nhận yêu cầu ngoài lịch.</p>')+
+    (state.offHistory.length?'<h4>Lịch sử yêu cầu tuần này</h4><div class="employee-attendance-history-table" style="overflow:auto"><table><thead><tr><th>Ngày</th><th>Giờ khai</th><th>Trạng thái</th></tr></thead><tbody>'+state.offHistory.map(r=>'<tr><td>'+esc(fmt(r.work_date))+'</td><td>'+esc(hm(r.actual_start))+'–'+esc(hm(r.actual_end))+'</td><td>'+esc(statusText(r.status))+'</td></tr>').join('')+'</tbody></table></div>':'')+
+    '</section>';
+}
+async function submitOffschedule(){
+  if(state.offSubmitting)return;
+  const d=doc();if(!d)return;
+  const store=d.getElementById('employeeOffStore')?.value||'';
+  const date=d.getElementById('employeeOffDate')?.value||'';
+  const start=d.getElementById('employeeOffStart')?.value||'',end=d.getElementById('employeeOffEnd')?.value||'';
+  const reason=d.getElementById('employeeOffReason')?.value?.trim()||'';
+  if(!store||!date||!start||!end||reason.length<3||reason.length>1000||mins(end)<=mins(start))
+    return setMessage('Vui lòng nhập chi nhánh, ngày, giờ hợp lệ và lý do từ 3 đến 1000 ký tự.','error','OFFSCHEDULE_FIELDS_REQUIRED');
+  state.offSubmitting=true;
+  const button=d.getElementById('employeeOffSubmit');if(button){button.disabled=true;button.textContent='Đang gửi…'}
+  const q=await C.supabase.rpc('submit_offschedule_attendance_request_v1',{
+    p_store_id:store,p_work_date:date,p_actual_start:start,p_actual_end:end,p_reason:reason
+  });
+  state.offSubmitting=false;
+  if(q.error){if(button){button.disabled=false;button.textContent='Gửi yêu cầu ngoài lịch'}
+    return setMessage('Chưa gửi được yêu cầu: '+String(q.error.message||'Vui lòng thử lại.'),'error','OFFSCHEDULE_SUBMIT_FAILED')}
+  await loadWeek();
+  setMessage(q.data?.already_submitted?'Yêu cầu đã tồn tại, không tạo bản ghi trùng.':'Đã gửi yêu cầu, đang chờ Manager xác nhận. Giờ công chưa được tính lương.','success','OFFSCHEDULE_SUBMITTED');
+}
+
 async function loadWeek(){
   const requestedWeek=state.week,seq=++requestSeq;
   state.loading=true;state.error=null;render();
   const run=(async()=>{
-    const [sq,hq]=await Promise.all([
+    const [sq,hq,oq,os]=await Promise.all([
       C.supabase.rpc('list_my_approved_schedules_v2',{p_week_start:requestedWeek}),
-      C.supabase.rpc('get_my_attendance_v2',{p_from_date:requestedWeek,p_to_date:add(requestedWeek,6)})
+      C.supabase.rpc('get_my_attendance_v2',{p_from_date:requestedWeek,p_to_date:add(requestedWeek,6)}),
+      C.supabase.rpc('list_my_offschedule_attendance_requests_v1',{p_from_date:requestedWeek,p_to_date:add(requestedWeek,6)}),
+      C.supabase.rpc('list_my_offschedule_stores_v1',{})
     ]);
     if(seq!==requestSeq||requestedWeek!==state.week)return;
     if(sq.error)throw sq.error;if(hq.error)throw hq.error;
     const previous=state.selectedScheduleId;
     state.schedules=Array.isArray(sq.data)?sq.data:[];
     state.history=Array.isArray(hq.data)?hq.data:[];
+    state.offHistory=!oq.error&&Array.isArray(oq.data)?oq.data:[];
+    state.offStores=!os.error&&Array.isArray(os.data)?os.data:[];
     state.selectedScheduleId=state.schedules.some(r=>String(r.schedule_id)===String(previous))?previous:(state.schedules[0]?.schedule_id||null);
     state.loading=false;state.error=null;state.ready=true;render();
   })().catch(e=>{
     if(seq!==requestSeq||requestedWeek!==state.week)return;
-    state.schedules=[];state.history=[];state.loading=false;state.error=ERROR_COPY[errorCode(e)]||'Không thể tải dữ liệu chấm công lúc này.';render();
+    state.schedules=[];state.history=[];state.offHistory=[];state.offStores=[];state.loading=false;state.error=ERROR_COPY[errorCode(e)]||'Không thể tải dữ liệu chấm công lúc này.';render();
   });
   pending={week:requestedWeek,promise:run};try{return await run}finally{if(pending?.promise===run)pending=null}
 }
@@ -141,6 +186,7 @@ function bind(d){
     const week=e.target.closest?.('[data-att-week]');if(week){const a=week.dataset.attWeek;state.week=a==='prev'?add(state.week,-7):a==='next'?add(state.week,7):mon();state.selectedScheduleId=null;void loadWeek();return}
     if(e.target.closest?.('[data-attendance-retry]')){void loadWeek();return}
     if(e.target.closest?.('#employeeAttendanceSubmit')){void submit()}
+    if(e.target.closest?.('#employeeOffSubmit')){void submitOffschedule()}
   },true);
   d.addEventListener('change',e=>{
     if(e.target?.id!=='employeeAttendanceSchedule')return;
