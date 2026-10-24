@@ -89,7 +89,8 @@ function render(){
 function renderOffschedule(){
   if(!state.offStores.length&&!state.offHistory.length)return '';
   const options=state.offStores.map(r=>'<option value="'+esc(r.store_id)+'">'+esc(r.store_code)+' · '+esc(r.store_name)+'</option>').join('');
-  const todayVN=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const parts={};for(const item of new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()))if(item.type!=='literal')parts[item.type]=item.value;
+  const todayVN=parts.year+'-'+parts.month+'-'+parts.day;
   return '<section class="employee-attendance-offschedule" data-offschedule="1" style="border-top:1px solid #dbe5ef;padding-top:16px;margin-top:18px">'+
     '<h3>Yêu cầu chấm công ngoài lịch</h3><p class="muted">Chỉ khai báo khi bạn thực sự làm việc mà không có ca chính thức. Quản lý sẽ xét duyệt; chưa tự cộng giờ công vào lương.</p>'+
     (state.offStores.length?
