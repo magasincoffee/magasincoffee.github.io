@@ -7,6 +7,16 @@
 -- Business choice: exact start+end and no note => AUTO_CONFIRMED. Deviations
 -- (including an employee-entered exception note) => NEEDS_REVIEW.
 -- No forged Manager reviewer identity. No payroll money is calculated.
+-- Per-store pilot gate. Default OFF for every branch on deployment. Only an
+-- authorized service-role operator may enable a specific branch after signoff.
+CREATE TABLE IF NOT EXISTS public.attendance_auto_confirm_policy_v1(
+ store_id uuid PRIMARY KEY REFERENCES public.stores(id),
+ enabled boolean NOT NULL DEFAULT false,
+ updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.attendance_auto_confirm_policy_v1 ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.attendance_auto_confirm_policy_v1 FROM PUBLIC,anon,authenticated;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.attendance_auto_confirm_policy_v1 TO service_role,postgres;
 ALTER TABLE public.attendance DROP CONSTRAINT IF EXISTS attendance_status_check;
 ALTER TABLE public.attendance ADD CONSTRAINT attendance_status_check
  CHECK (status IN ('OPEN','COMPLETED','DELETED','DELETED_BY_MANAGER',
@@ -85,11 +95,15 @@ begin
     raise exception 'ATTENDANCE_SHIFT_NOT_FINISHED';
   end if;
 
-  -- Only an *exact* match of both scheduled times can be self-confirmed.
+  -- Only an *exact* match of both scheduled times at an explicitly enabled store can be self-confirmed.
   -- A note/exception always routes to Manager instead of silently confirming.
   v_auto := p_actual_start = v_schedule.start_time
     and p_actual_end = v_schedule.end_time
-    and v_note is null;
+    and v_note is null
+    and exists (
+      select 1 from public.attendance_auto_confirm_policy_v1 policy
+      where policy.store_id = v_schedule.store_id and policy.enabled is true
+    );
   v_new_status := case when v_auto then 'AUTO_CONFIRMED' else 'NEEDS_REVIEW' end;
   v_minutes := case when v_auto then
     (extract(epoch from (p_actual_end - p_actual_start)) / 60)::integer
