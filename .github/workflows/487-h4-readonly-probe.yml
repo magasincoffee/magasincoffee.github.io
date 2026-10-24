@@ -34,3 +34,45 @@ jobs:
           curl.exe --location --fail --silent --show-error --max-time 20 --output NUL https://magasincoffee.github.io/manager/scheduling/
           if errorlevel 1 (echo H4_PUBLIC_SCHEDULING_REACHABILITY_FAILED & exit /b 1)
           echo H4_PUBLIC_WEB_READONLY_HTTP_200_PASS
+  browser-h4-isolated-526:
+    name: H4 local Chrome (synthetic PR 526; no production login/data)
+    needs: readonly-h4-probe
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/487-h4-readonly-probe-20261024
+          path: harness
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: f8a34bfa5e1c495a4440b91582e205124d4c57ec
+          path: candidate
+          persist-credentials: false
+      - name: Verify exact source revision and local dependencies
+        shell: cmd
+        run: |
+          @echo off
+          if /I not "%COMPUTERNAME%"=="DESKTOP-H4A16IL" (echo WRONG_WINDOWS_HOST & exit /b 1)
+          call node --version
+          call npm.cmd --version
+          if errorlevel 1 exit /b 1
+          if not exist "candidate\09_QA\people-shift\scheduling-526-clock-browser.mjs" exit /b 1
+          echo H4_PR526_EXACT_REF_FIXTURE_READY
+      - name: Install Playwright JavaScript API only; use installed Chrome
+        shell: cmd
+        working-directory: candidate
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          @echo off
+          call npm.cmd install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          if errorlevel 1 exit /b 1
+      - name: Run 24h Manager synthetic E2E on H4 Chrome and localhost fixture
+        shell: cmd
+        run: |
+          @echo off
+          node harness\09_QA\487-h4-clock-local-fixture.mjs
+          if errorlevel 1 exit /b 1
+          echo H4_PR526_CHROME_LOCALE_BOUNDARY_READONLY_PASS
