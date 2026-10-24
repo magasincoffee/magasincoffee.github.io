@@ -3,7 +3,7 @@ if(window.__MAGASIN_MANAGER_WORKFORCE_UI2_011__)return;
 window.__MAGASIN_MANAGER_WORKFORCE_UI2_011__=true;
 window.__MAGASIN_MANAGER_WORKFORCE_UI_CONSOLIDATED_V1__=true;
 
-const labels={dashboard:'🏠 Hôm nay',staff:'👥 Nhân viên',workforce:'📅 Xếp lịch',schedule:'🗓 Lịch làm',swap:'🔄 Đổi / cho ca',attendance:'⏱ Chấm công','payroll-self-check':'💰 Công / Lương'};
+const labels={dashboard:'🏠 Hôm nay',staff:'👥 Nhân viên',workforce:'📅 Xếp lịch',availability:'▤ Đăng ký lịch làm việc',schedule:'🗓 Lịch làm',swap:'🔄 Đổi / cho ca',attendance:'⏱ Chấm công','payroll-self-check':'💰 Công / Lương'};
 const allowed=new Set(Object.keys(labels));
 const routable=new Set([...allowed,'tasks']); // hidden legacy SOP compatibility route; not primary navigation
 const alias={'cham-cong':'attendance','doi-ca':'swap','nhan-su':'staff','cong-luong':'payroll-self-check','payroll':'payroll-self-check'};
@@ -65,7 +65,7 @@ function actionModel(){
    detail:attendance.error?'Không tải được dữ liệu chấm công.':attendanceCount?attendanceCount+' bản ghi chấm công cần Quản lý kiểm tra.':'Không có chấm công nào đang chờ kiểm tra.'
   },
   {
-   key:'availability',route:'workforce',label:'Thời gian có thể làm',priority:'normal',
+   key:'availability',route:'availability',label:'Thời gian có thể làm',priority:'normal',
    state:availability.connection!=='CONNECTED'?availability.connection:availability.loading?'LOADING':availability.error?'ERROR':availabilityRows.length?'READY':'EMPTY',
    value:availability.connection==='CONNECTED'&&!availability.loading&&!availability.error?String(availabilityRows.length):'—',
    detail:availability.error?'Không tải được đăng ký thời gian có thể làm.':availabilityRows.length?availabilityRows.length+' đăng ký thời gian có thể làm đã tải.':'Chưa có đăng ký thời gian có thể làm.'
