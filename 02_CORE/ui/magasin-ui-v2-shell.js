@@ -21,6 +21,7 @@
       { key: 'planning', title: 'Lập lịch nhân sự', icon: '▦', items: [
         ['demand', '▤', 'Nhu cầu nhân sự'],
         ['workforce', '▦', 'Xếp lịch'],
+        ['availability', '▤', 'Đăng ký lịch làm việc'],
         ['schedule', '▤', 'Lịch đã công bố']
       ] },
       { key: 'time', title: 'Công & Điều chỉnh ca', icon: '◷', items: [
@@ -47,6 +48,7 @@
     dashboard: ['Tổng quan cửa hàng', 'Hoạt động và các việc cần xử lý hôm nay'],
     demand: ['Nhu cầu nhân sự', 'Định mức nhân sự cố định trong tuần theo chi nhánh'],
     workforce: ['Xếp lịch', 'Thời gian có thể làm → Lịch nháp → Kiểm tra → Duyệt → Phát hành'],
+    availability: ['Đăng ký lịch làm việc', 'Tổng hợp khả dụng theo tuần và chi nhánh'],
     swap: ['Đổi / Cho ca', 'Kiểm tra và xử lý yêu cầu chuyển ca'],
     attendance: ['Chấm công', 'Kiểm tra giờ công theo lịch đã phát hành'],
     staff: ['Nhân viên', 'Danh sách và trạng thái nhân sự'],
