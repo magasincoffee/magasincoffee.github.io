@@ -194,7 +194,7 @@ const assetSpecs=[
   ["/05_MANAGER/Workforce/engine-v1.js?v=20261003-sched-ui-017","manager-scheduling-ui2-v1.js?v=20261005-xstore-018"],
   ["/05_MANAGER/runtime/manager-shell-v1.html?v=20261021-manager-nav-b3","manager-ui-shell-v2.js?v=20260927-ui2-016"],
   ["/05_MANAGER/runtime/manager-runtime-v1.html?v=20261022-manager-spa-p02","manager-shell-v1.html?v=20261021-manager-nav-b3"],
-  ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261003-sched-ui-008","owner-scheduling-overview-v1.js?v=20261003-sched-ui-008"]
+  ["/04_OWNER/Workforce/runtime/owner-workforce-runtime.html?v=20261003-sched-ui-008","owner-scheduling-overview-v1.js?v=20261024-487-as1"]
 ];
 for(const [url,marker] of assetSpecs){
   await check("ui2_017_cache_asset_"+url.split("?")[0].replaceAll("/","_"),async()=>{
