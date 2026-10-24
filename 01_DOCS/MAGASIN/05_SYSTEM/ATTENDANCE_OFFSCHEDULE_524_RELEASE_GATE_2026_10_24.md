@@ -1,6 +1,6 @@
 # Issue #524 — Chấm công hoàn toàn ngoài lịch: release gate (24/10/2026 ICT)
 
-**Release state: HOLD. PR #525 remains Draft.** The source in `09_QA/people-shift/attendance-offschedule-524-candidate.sql` is **disposable QA SQL, not a production migration**. Do not paste it into production or merge the UI alone. MAGASIN #487/#506 and #523 still have independent acceptance gates.
+**Release state: HOLD. PR #525 remains Draft.** The canonical source is `07_DATABASE/migrations/20261024081131_workforce_attendance_offschedule_request_v1.sql`, **generated with Supabase CLI v2.122.0 in disposable GitHub Actions run #40077059686; it is staged only and NOT applied to production**. Do not paste it into production or merge the UI alone. MAGASIN #487/#506 and #523 still have independent acceptance gates.
 
 ## Confirmed decisions and security boundaries
 
@@ -19,8 +19,8 @@
 - [x] No Schedule/Attendance/Payroll mutation in disposable CI; no paid staging project.
 - [ ] Exact-head same-sha UI2, People Shift, AUTH-PROD and isolated offschedule QA **all green** after every UI change; check any stale `queued` run.
 - [ ] Full hosted schema/RPC/ACL/RLS preflight **read only**, including migration ordering (PR #523 may be a predecessor), indexes and default ACL; compare source against actual production functions.
-- [ ] Real Owner audit UI integrated and accepted; Phone 360/390/430, Manager 1024/1440, navigation/back/reload/unsaved states.
-- [ ] Versioned migration generated via Supabase CLI; dry-run on isolated *full schema*, DBA reviewed, security advisors; backend deployed first, default OFF.
+- [x] Real Owner Workforce read-only audit UI, Employee 360/390/430 and Manager 1024/1440 synthetic browser E2E.\n- [ ] Authenticated hosted three-role UX/Owner signoff, navigation/back/reload and cache invalidation release contract.
+- [x] Versioned migration filename generated via Supabase CLI and staged; isolated candidate PostgreSQL QA runs exactly this file.\n- [ ] Dry-run on isolated *full production schema*, DBA review, security advisors; backend deployed first, default OFF.
 - [ ] Backup/recovery test and reversible *write-disable* rollback; never delete approved audit history in production.
 - [ ] Separate approved-payroll-source design, confirmed-minutes reconciliation, non-duplication (off schedule + official schedule), and payroll source hash/revision test.
 - [ ] Owner selects a single pilot store and explicitly approves release. Pilot before any rollout to four stores.
