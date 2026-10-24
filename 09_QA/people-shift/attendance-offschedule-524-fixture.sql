@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE SCHEMA auth;
 CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE anon NOLOGIN;
-CREATE TABLE public.stores(id uuid PRIMARY KEY);
+CREATE TABLE public.stores(id uuid PRIMARY KEY,code text NOT NULL,name text NOT NULL,status text NOT NULL);
 CREATE TABLE public.profiles(id uuid PRIMARY KEY,role text NOT NULL,status text NOT NULL,access_scope text NOT NULL);
 CREATE TABLE public.work_schedules(id uuid PRIMARY KEY,user_id uuid,store_id uuid,work_date date,status text,start_time time,end_time time);
 CREATE TABLE public.employee_store_priorities(employee_id uuid REFERENCES public.profiles(id), store_id uuid REFERENCES public.stores(id), priority smallint, is_primary boolean, PRIMARY KEY(employee_id,store_id));
@@ -30,8 +30,8 @@ BEGIN
  RETURN jsonb_build_object('ok',true);
 END $$;
 INSERT INTO public.stores VALUES
- ('91000000-0000-4000-8000-000000000001'),
- ('91000000-0000-4000-8000-000000000003');
+ ('91000000-0000-4000-8000-000000000001','CN1','Chi nhánh 1','ACTIVE'),
+ ('91000000-0000-4000-8000-000000000003','CN3','Chi nhánh 3','ACTIVE');
 INSERT INTO public.profiles VALUES
  ('90000000-0000-4000-8000-000000000007','STAFF','ACTIVE','CN3'),
  ('90000000-0000-4000-8000-000000000008','STORE_MANAGER','ACTIVE','CN3'),
