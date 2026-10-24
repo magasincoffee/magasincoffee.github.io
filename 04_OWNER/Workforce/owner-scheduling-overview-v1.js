@@ -7,7 +7,7 @@ const panel=()=>document.querySelector('#panel-publish');
 const esc=C.security.escapeHtml;
 const add=C.date.addDays;
 const fmt=C.date.formatDate;
-let state={week:null,stores:[],cards:[],selectedStoreId:null,loading:false,error:null};
+let state={week:null,stores:[],cards:[],offRows:[],offSupported:false,selectedStoreId:null,loading:false,error:null};
 
 function targetWeek(){return add(C.date.monday(),7)}
 function statusFor(runs,availabilityCount){
@@ -65,6 +65,31 @@ async function readStore(store){
   const runs=Array.isArray(runQ.data)?runQ.data:[];
   return {...store,availabilityCount:availability.length,...statusFor(runs,availability.length)};
 }
+
+function offAuditHtml(){
+ if(!state.offSupported)return '';
+ const rows=state.offRows;
+ const waiting=rows.filter(r=>r.status==='NEEDS_REVIEW').length;
+ return '<details class="oso-off-audit" data-owner-offschedule-audit style="margin-top:14px;border:1px solid #d9e5ee;border-radius:14px;background:#fff;padding:14px">'+
+ '<summary style="cursor:pointer;font-weight:800;min-height:44px">Chấm công ngoài lịch · '+waiting+' chờ Manager xem xét</summary>'+
+ '<p class="muted">Theo dõi yêu cầu trong tuần hiện tại tại các chi nhánh. Owner chỉ xem, không duyệt; giờ được duyệt chưa tự động vào lương.</p>'+
+ (rows.length?'<div style="overflow:auto"><table style="min-width:660px;width:100%;border-collapse:collapse"><thead><tr><th>Ngày</th><th>Chi nhánh</th><th>Nhân viên</th><th>Trạng thái</th><th>Giờ khai</th></tr></thead><tbody>'+
+ rows.map(r=>'<tr><td>'+esc(r.work_date)+'</td><td>'+esc(r.store_code)+'</td><td>'+esc(r.employee_name||r.employee_id)+'</td><td>'+esc(r.status)+'</td><td>'+esc(String(r.actual_start||'').slice(0,5))+'–'+esc(String(r.actual_end||'').slice(0,5))+'</td></tr>').join('')+
+ '</tbody></table></div>':'<div class="muted">Chưa có yêu cầu ngoài lịch trong tuần.</div>')+'</details>';
+}
+async function readOffAudit(){
+ state.offRows=[];state.offSupported=false;
+ const monday=C.date.monday(),end=add(monday,6),rows=[];
+ for(const store of state.stores){
+  const q=await CTX.client().rpc('list_owner_offschedule_attendance_requests_v1',{
+   p_store_id:store.id,p_from_date:monday,p_to_date:end
+  });
+  if(q.error){state.offRows=[];state.offSupported=false;return;}
+  if(Array.isArray(q.data))rows.push(...q.data.map(r=>({...r,store_code:store.code})));
+ }
+ state.offRows=rows;state.offSupported=true;
+}
+
 function render(){
   const layout=ensureLayout();if(!layout)return;
   const {overview}=layout;
@@ -79,7 +104,7 @@ function render(){
     return;
   }
   const cardsHtml=state.cards.length?'<div class="oso-grid">'+state.cards.map(card=>`<button type="button" class="oso-card" data-owner-store-open="${esc(card.id)}" aria-label="Mở lịch tuần của ${esc(card.code||card.name||'cửa hàng')}"><span class="oso-store">${esc(card.code||'Cửa hàng')}</span><span class="oso-name">${esc(card.name||'')}</span><span class="oso-state" data-state="${esc(card.key)}">${esc(card.label)}</span><span class="oso-detail">${esc(card.detail)}</span><span class="oso-meta">${card.availabilityCount} khoảng thời gian có thể làm · Mở lịch tuần →</span></button>`).join('')+'</div>':'<div class="oso-empty" role="status">Chưa có cửa hàng nào trong phạm vi để xem xếp lịch.</div>';
-  overview.innerHTML=`<div class="oso-head"><div><h2 id="ownerSchedulingOverviewTitle">Tổng quan xếp lịch ${state.stores.length} cửa hàng</h2><p>Xem trạng thái từng cửa hàng trước, sau đó chọn một cửa hàng để mở chi tiết lập lịch tuần.</p></div><span class="oso-week">Tuần ${esc(fmt(state.week))} – ${esc(fmt(add(state.week,6)))}</span></div>${cardsHtml}`;
+  overview.innerHTML=`<div class="oso-head"><div><h2 id="ownerSchedulingOverviewTitle">Tổng quan xếp lịch ${state.stores.length} cửa hàng</h2><p>Xem trạng thái từng cửa hàng trước, sau đó chọn một cửa hàng để mở chi tiết lập lịch tuần.</p></div><span class="oso-week">Tuần ${esc(fmt(state.week))} – ${esc(fmt(add(state.week,6)))}</span></div>${cardsHtml}${offAuditHtml()}`;
   overview.querySelectorAll('[data-owner-store-open]').forEach(b=>b.addEventListener('click',()=>void openStore(b.dataset.ownerStoreOpen)));
 }
 async function refresh(){
@@ -93,6 +118,7 @@ async function refresh(){
       catch(_){cards.push({...store,availabilityCount:0,key:'error',label:'Không tải được trạng thái',detail:'Không thể đọc trạng thái xếp lịch của cửa hàng này.'})}
     }
     state.cards=cards;
+    await readOffAudit();
   }catch(e){state.error=e;state.cards=[]}
   finally{state.loading=false;render()}
 }

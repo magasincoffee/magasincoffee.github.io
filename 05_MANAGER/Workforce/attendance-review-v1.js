@@ -38,7 +38,7 @@ const css=`<style id="manager-attendance-review-v1-css">
 </style>`;
 
 let sb=null,busy=false;
-let state={stores:[],storeId:null,week:weekStart(),rows:[],loading:false,error:null,message:''};
+let state={stores:[],storeId:null,week:weekStart(),rows:[],offRows:[],offSupported:false,offError:null,loading:false,error:null,message:''};
 const view=()=>document.querySelector('#view-attendance');
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const reviewed=r=>['APPROVED','ADJUSTED','REJECTED'].includes(String(r.status||'').toUpperCase());
@@ -51,12 +51,59 @@ function reviewedTable(rows){
 function pendingCard(r){
  return `<article class="mar-card" data-attendance-id="${esc(r.attendance_id)}"><div class="mar-card-head"><div><div class="mar-name">${esc(r.employee_name||'Nhân viên')}</div><div class="mar-meta">${esc(r.work_date)} · ${esc(r.store_code||r.store_name||'Cửa hàng')}</div>${r.note?`<div class="mar-meta">Ghi chú nhân viên: ${esc(r.note)}</div>`:''}</div><span class="badge yellow">${esc(statusText(r.status))}</span></div><div class="mar-times"><div><span>Lịch chính thức</span><strong>${esc(hm(r.planned_start))}–${esc(hm(r.planned_end))}</strong></div><div><span>Nhân viên khai</span><strong>${esc(hm(r.actual_start))}–${esc(hm(r.actual_end))}</strong></div><div><span>Confirmed work time</span><strong>Chưa có</strong></div></div><div class="mar-adjust"><label>Giờ xác nhận bắt đầu<input data-confirmed-start type="time" step="60" value="${esc(hm(r.actual_start))}"></label><label>Giờ xác nhận kết thúc<input data-confirmed-end type="time" step="60" value="${esc(hm(r.actual_end))}"></label></div><div class="mar-buttons"><button class="btn primary" data-review="APPROVE">Xác nhận actual</button><button class="btn" data-review="ADJUST">Xác nhận giờ đã điều chỉnh</button><button class="btn danger" data-review="REJECT">Từ chối bản ghi</button></div></article>`;
 }
+
+function offReviewSection(){
+ if(!state.offSupported)return '';
+ const waiting=state.offRows.filter(r=>r.status==='NEEDS_REVIEW');
+ const finished=state.offRows.filter(r=>r.status!=='NEEDS_REVIEW');
+ return '<section class="card" data-mar-offschedule="1" aria-label="Yêu cầu chấm công ngoài lịch">'+
+ '<h3>Yêu cầu ngoài lịch · '+waiting.length+' chờ duyệt</h3>'+
+ '<p class="muted">Không có ca chính thức. Chỉ Manager chi nhánh xét duyệt. Chưa cộng lương tự động, kể cả sau khi xác nhận.</p>'+
+ (state.offError?'<div role="alert" class="mar-state error">'+esc(state.offError)+'</div>':'')+
+ (waiting.length?'<div class="mar-list">'+waiting.map(r=>
+ '<article class="mar-card" data-off-request="'+esc(r.request_id)+'">'+
+ '<div class="mar-card-head"><div><strong>Nhân viên: '+esc(r.employee_name||r.employee_id)+'</strong><div class="mar-meta">'+esc(r.work_date)+' · '+esc(hm(r.actual_start))+'–'+esc(hm(r.actual_end))+'</div></div><span class="badge yellow">Chờ xác nhận</span></div>'+
+ '<div class="mar-meta">Lý do: '+esc(r.reason)+'</div>'+
+ '<div class="mar-adjust"><label>Giờ xác nhận bắt đầu<input type="time" step="60" data-off-start value="'+esc(hm(r.actual_start))+'"></label>'+
+ '<label>Giờ xác nhận kết thúc<input type="time" step="60" data-off-end value="'+esc(hm(r.actual_end))+'"></label></div>'+
+ '<label style="display:block;margin-top:8px">Ghi chú duyệt<input class="btn" style="width:100%" data-off-note type="text" maxlength="1000" placeholder="Lý do nếu điều chỉnh hoặc từ chối"></label>'+
+ '<div class="mar-buttons"><button class="btn primary" data-off-review="APPROVE">Xác nhận</button>'+
+ '<button class="btn" data-off-review="ADJUST">Điều chỉnh</button>'+
+ '<button class="btn danger" data-off-review="REJECT">Từ chối</button></div></article>').join('')+'</div>':'<div class="mar-empty">Không có yêu cầu ngoài lịch cần duyệt trong tuần này.</div>')+
+ (finished.length?'<h4>Đã xử lý</h4><div class="mar-reviewed"><table><thead><tr><th>Ngày</th><th>Nhân viên</th><th>Trạng thái</th><th>Phút xác nhận</th></tr></thead><tbody>'+
+ finished.map(r=>'<tr><td>'+esc(r.work_date)+'</td><td>'+esc(r.employee_name||r.employee_id)+'</td><td>'+esc(statusText(r.status))+'</td><td>'+esc(r.confirmed_minutes??'—')+'</td></tr>').join('')+
+ '</tbody></table></div>':'')+'</section>';
+}
+async function reviewOff(card,decision){
+ if(busy||!card)return;
+ const requestId=card.dataset.offRequest;
+ const start=card.querySelector('[data-off-start]')?.value||null,end=card.querySelector('[data-off-end]')?.value||null;
+ const note=card.querySelector('[data-off-note]')?.value?.trim()||'';
+ if(decision==='ADJUST'&&(!start||!end||start>=end||note.length<3)){
+    state.offError='Khi điều chỉnh, hãy nhập giờ hợp lệ và ghi rõ lý do.';render();return;
+ }
+ if(decision==='REJECT'&&note.length<3){state.offError='Khi từ chối, hãy ghi rõ lý do.';render();return;}
+ busy=true;card.querySelectorAll('button,input').forEach(el=>el.disabled=true);
+ try{
+  const q=await client().rpc('review_offschedule_attendance_request_v1',{
+   p_request_id:requestId,p_decision:decision,p_confirmed_start:decision==='ADJUST'?start:null,
+   p_confirmed_end:decision==='ADJUST'?end:null,p_review_note:note||null
+  });
+  if(q.error)throw q.error;
+  state.offError=null;
+  await loadRows('Đã cập nhật yêu cầu ngoài lịch; dữ liệu chưa được đưa vào lương.');
+ }catch(e){state.offError=errorText(e);await loadRows();state.offError=errorText(e);render()}
+ finally{busy=false;}
+}
+
 function render(){
  const root=view();if(!root)return;
  if(!document.getElementById('manager-attendance-review-v1-css'))document.head.insertAdjacentHTML('beforeend',css);
  const pend=state.rows.filter(pending),done=state.rows.filter(reviewed);
  const storeOptions=state.stores.map(s=>`<option value="${esc(s.id)}"${String(s.id)===String(state.storeId||'')?' selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('');
  root.innerHTML=`<div class="mar-shell"><div class="mar-head"><div><h2 style="margin:0">Review chấm công</h2><div class="muted" style="margin-top:5px">Raw attendance không phải giờ công xác nhận. Manager review explicit trước khi tạo confirmed work time.</div></div><div class="mar-actions"><select class="btn" id="marStore">${storeOptions||'<option value="">Không có cửa hàng được phép</option>'}</select><button class="btn" data-mar-week="prev">←</button><button class="btn" data-mar-week="today">Tuần này</button><button class="btn" data-mar-week="next">→</button><button class="btn" id="marRefresh">Làm mới</button></div></div><div class="mar-summary"><div><b>${pend.length}</b><span>Cần review</span></div><div><b>${done.filter(r=>r.status==='APPROVED'||r.status==='ADJUSTED').length}</b><span>Đã có confirmed work time</span></div><div><b>${done.filter(r=>r.status==='REJECTED').length}</b><span>Đã từ chối</span></div></div><section class="card"><div class="row" style="justify-content:space-between"><div><h3 style="margin:0">Chờ xử lý</h3><div class="muted" style="margin-top:4px">${esc(state.week)} → ${esc(add(state.week,6))}</div></div></div><div class="mar-list" style="margin-top:12px">${state.loading?'<div class="mar-empty">Đang tải attendance từ máy chủ…</div>':state.error?`<div class="mar-state error">${esc(state.error)}</div>`:pend.length?pend.map(pendingCard).join(''):'<div class="mar-empty">Không có attendance cần review.</div>'}</div><div id="marStatus" class="mar-state${state.error?' error':state.message?' ok':''}">${esc(state.error||state.message||'Server sẽ revalidate Manager scope, schedule owner và attendance state tại thời điểm review.')}</div></section><section class="card"><h3 style="margin-top:0">Đã review</h3>${reviewedTable(done)}</section></div>`;
+ root.insertAdjacentHTML('beforeend',offReviewSection());
+ root.querySelectorAll('[data-off-review]').forEach(b=>b.addEventListener('click',()=>reviewOff(b.closest('[data-off-request]'),b.dataset.offReview)));
  root.querySelector('#marStore')?.addEventListener('change',async e=>{state.storeId=e.target.value||null;await loadRows()});
  root.querySelector('#marRefresh')?.addEventListener('click',()=>loadRows());
  root.querySelectorAll('[data-mar-week]').forEach(b=>b.addEventListener('click',async()=>{const a=b.dataset.marWeek;state.week=a==='prev'?add(state.week,-7):a==='next'?add(state.week,7):weekStart();await loadRows()}));
@@ -69,8 +116,12 @@ async function loadStores(){
 async function loadRows(message=''){
  if(!state.storeId){state.rows=[];state.error=null;state.message=message;render();return}
  state.loading=true;state.error=null;state.message=message;render();
- const q=await client().rpc('list_manager_attendance_review_v1',{p_store_id:state.storeId,p_from_date:state.week,p_to_date:add(state.week,6)});
- state.loading=false;
+ const [q,oq]=await Promise.all([
+  client().rpc('list_manager_attendance_review_v1',{p_store_id:state.storeId,p_from_date:state.week,p_to_date:add(state.week,6)}),
+  client().rpc('list_manager_offschedule_attendance_requests_v1',{p_store_id:state.storeId,p_from_date:state.week,p_to_date:add(state.week,6)})
+ ]);
+ state.loading=false;state.offSupported=!oq.error;
+ state.offRows=state.offSupported&&Array.isArray(oq.data)?oq.data:[];
  if(q.error){state.rows=[];state.error=errorText(q.error);render();return}
  state.rows=Array.isArray(q.data)?q.data:[];state.error=null;render();
 }
