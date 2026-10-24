@@ -13,14 +13,14 @@ permissions:
   contents: read
 jobs:
   readonly-h4-probe:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
     timeout-minutes: 5
     steps:
       - name: Identify H4 runner without reading user files
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:COMPUTERNAME -ne 'H4') { throw 'NOT_H4_RUNNER_STOP' }
+          if ($env:COMPUTERNAME -ne 'DESKTOP-H4A16IL') { throw 'NOT_H4_RUNNER_STOP' }
           Write-Output 'H4_SELF_HOSTED_RUNNER_PASS'
           $node = Get-Command node -ErrorAction SilentlyContinue
           if ($node) { Write-Output 'H4_NODE_AVAILABLE' } else { Write-Output 'H4_NODE_MISSING' }
