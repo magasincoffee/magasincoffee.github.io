@@ -1,0 +1,32 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>#529 synthetic browser QA</title>
+<body><div id="xstoreAutomationMount"></div><output id="qa-result">PENDING</output>
+<script>
+const calls=[];
+window.MAGASIN_MANAGER_SCHEDULE_DRAFT={refresh:async()=>{}};
+window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={client:()=>({rpc:async(name,arg)=>{
+ calls.push({name,arg});
+ if(name==='get_workforce_auto_scheduler_capabilities_529')return {data:{revision:'529_FT8_REFRESH',manual_preserved:true,ft8_first:true,effective_weekly_demand:true}};
+ if(name==='list_workforce_recurring_staffing_requirements_v1')return {data:[{id:'r1',store_id:'s1',day_of_week:1,start_time:'06:00',end_time:'14:00',target_headcount:1}]};
+ if(name==='auto_generate_cross_store_schedule_v1')return {error:{message:'EXISTING_DRAFT_REQUIRES_CONFIRMATION'}};
+ if(name==='auto_generate_cross_store_schedule_529')return {data:{assignment_count:1,shortages:[{store_id:'s1',work_date:'2026-10-26',start_time:'14:00',end_time:'15:00'}]}};
+ return {data:[]};
+}})};
+window.confirm=()=>true;
+window.matchMedia=()=>({matches:false});
+</script>
+<script src="../../05_MANAGER/Workforce/cross-store-auto-schedule-v1.js"></script>
+<script>
+(async()=>{
+try{
+ document.dispatchEvent(new CustomEvent('magasin:xstore-master-rendered',{detail:{week:'2026-10-26',stores:[{id:'s1',code:'CN1',name:'CN1'}],unconfiguredEmployeeCount:0,globalDraftCount:2,globalOfficialCount:0}}));
+ await new Promise(r=>setTimeout(r,200));
+ const b=document.querySelector('#xsaRerun');
+ if(!b)throw Error('SAFE_RERUN_BUTTON_NOT_VISIBLE');
+ b.click();
+ await new Promise(r=>setTimeout(r,200));
+ if(!calls.some(x=>x.name==='auto_generate_cross_store_schedule_529'&&x.arg.p_replace_existing===true))throw Error('SAFE_WRITER_NOT_CALLED');
+ if(!document.body.textContent.includes('thiếu người'))throw Error('SHORTAGE_WARNING_MISSING');
+ document.getElementById('qa-result').textContent='H4_529_REAL_CHROME_SYNTHETIC_DOM_PASS';
+}catch(e){document.getElementById('qa-result').textContent='H4_529_FAIL:'+e.message}
+})();
+</script></body></html>
