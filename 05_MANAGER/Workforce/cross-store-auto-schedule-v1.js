@@ -23,7 +23,7 @@ function applyBandClass(el,value){
 }
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const scheduleApi=()=>window.MAGASIN_MANAGER_SCHEDULE_DRAFT;
-const state={week:null,stores:[],requirements:[],editing:false,editorCell:null,surface:'week',setupFocus:null,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null,globalDraftCount:null,globalOfficialCount:null};
+const state={week:null,stores:[],requirements:[],editing:false,editorCell:null,surface:'week',setupFocus:null,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null,globalDraftCount:null,globalOfficialCount:null,safeRerunAvailable:false,capabilitiesChecked:false};
 const mount=()=>document.getElementById('xstoreAutomationMount');
 const validBlock=r=>r.store_id&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&r.start_time&&r.end_time&&Number(r.target_headcount)>0;
 const configuredStoreIds=()=>new Set(state.requirements.filter(validBlock).map(r=>String(r.store_id)));
@@ -295,7 +295,7 @@ function render(){
 
  const weekSurface='<div id="xsaSurfaceWeek" class="xsa-surface" data-xsa-surface="week" role="tabpanel" aria-labelledby="xsaTabWeek">'
   +'<div class="xsa-head"><div><div class="xsa-kicker">Vận hành tuần</div><h4>Lập lịch tuần</h4><div class="muted" style="margin-top:5px">Theo một luồng duy nhất từ chuẩn bị đến phát hành. Cấu hình cố định chỉ cần mở khi có thay đổi.</div></div>'
-  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaSetupOpen">Thiết lập xếp lịch</button></div></div>'
+  +'<div class="xsa-actions"><button class="btn" type="button" id="xsaSetupOpen">Thiết lập xếp lịch</button>'+(state.safeRerunAvailable&&workflow.stage==='DRAFT'&&complete&&!workflow.disabled?'<button class="btn" type="button" id="xsaRerun">Đề xuất lại (giữ ca thủ công)</button>':'')+'</div></div>'
   +workflowHtml(workflow,summary)
   +'<div class="xsa-week-note">Các số lượng phía trên chỉ là thông tin hỗ trợ. Hãy dùng <b>Việc cần làm tiếp theo</b> làm hành động chính cho trạng thái hiện tại.</div>'
   +shortagesHtml()
@@ -383,6 +383,13 @@ async function saveRequirements(){
  finally{state.busy=false;render()}
 }
 
+async function safeRerunCapability(){
+ const q=await client().rpc('get_workforce_auto_scheduler_capabilities_529',{});
+ return !q.error&&q.data?.revision==='529_FT8_REFRESH'
+   &&q.data?.manual_preserved===true&&q.data?.ft8_first===true
+   &&q.data?.effective_weekly_demand===true;
+}
+
 async function callAuto(replaceExisting){
  const q=await client().rpc('auto_generate_cross_store_schedule_v1',{
   p_week_start:state.week,
@@ -407,7 +414,10 @@ async function autoSchedule(){
   catch(e){
    const raw=String(e?.message||e?.code||e||'');
    if(!raw.includes('EXISTING_DRAFT_REQUIRES_CONFIRMATION'))throw e;
-   if(!confirm('Tuần này đã có bản nháp. Xếp tự động sẽ thay thế các ca trong lịch nháp hiện tại của các cửa hàng trong phạm vi. Lịch đã duyệt/phát hành không bị thay đổi. Tiếp tục?')){
+   // Fail closed on old backends: V1 replaceExisting deletes manual shifts.
+   // Recheck the server handshake immediately before confirming any rerun.
+   if(!(await safeRerunCapability()))throw Error('SAFE_RERUN_VERSION_REQUIRED');
+   if(!confirm('Tính lại đề xuất dựa trên đăng ký và ưu tiên chi nhánh mới nhất? Chỉ các ca do thuật toán tạo được thay thế. Ca xếp thủ công và lịch đã phát hành vẫn giữ nguyên.')){
     state.message='Đã giữ nguyên bản nháp hiện tại.';state.messageType='';return;
    }
    result=await callAuto(true);
@@ -423,7 +433,8 @@ async function autoSchedule(){
   setTimeout(()=>window.MAGASIN_CROSS_STORE_MASTER?.refresh?.(),0);
  }catch(e){
   const raw=String(e?.message||e?.code||e||'UNKNOWN');
-  const friendly=raw.includes('STAFFING_REQUIREMENT_INCOMPLETE')?'Chưa cấu hình nhu cầu nhân sự cho đủ các cửa hàng.'
+  const friendly=raw.includes('SAFE_RERUN_VERSION_REQUIRED')?'Hệ thống chưa xác nhận phiên bản xếp lịch an toàn. Giữ nguyên ca nháp; vui lòng kiểm tra cập nhật hệ thống trước khi đề xuất lại.'
+   :raw.includes('STAFFING_REQUIREMENT_INCOMPLETE')?'Chưa cấu hình nhu cầu nhân sự cho đủ các cửa hàng.'
    :raw.includes('OFFICIAL_WEEK_ALREADY_EXISTS')?'Tuần này đã có lịch chính thức; hệ thống không được ghi đè.'
    :raw.includes('NON_DRAFT_GENERATION_EXISTS')?'Có lịch đã duyệt hoặc phát hành trong tuần; hãy xử lý lịch hiện tại trước khi xếp tự động.'
    :raw.includes('STAFFING_REQUIREMENT_EMPTY')?'Chưa có nhu cầu nhân sự hàng tuần để xếp lịch tự động.'
@@ -461,6 +472,7 @@ function bind(){
   });
  });
  m.querySelector('#xsaSetupOpen')?.addEventListener('click',()=>openSurface('setup'));
+ m.querySelector('#xsaRerun')?.addEventListener('click',autoSchedule);
  m.querySelector('#xsaWeekOpen')?.addEventListener('click',()=>openSurface('week'));
  m.querySelectorAll('[data-xsa-go-setup]').forEach(b=>b.addEventListener('click',()=>openSurface('setup',b.dataset.xsaGoSetup||null)));
  m.querySelector('#xsaStaff')?.addEventListener('click',()=>document.querySelector('[data-view="staff"]')?.click());
@@ -528,6 +540,12 @@ async function onMaster(detail={}){
  state.assignmentCount=state.globalDraftCount;
  render();
  if(!state.loaded)await loadRequirements();
+ if(!state.capabilitiesChecked){
+  state.capabilitiesChecked=true;
+  try{state.safeRerunAvailable=await safeRerunCapability()}
+  catch(_){state.safeRerunAvailable=false}
+  render();
+ }
 }
 
 document.addEventListener('magasin:xstore-master-rendered',e=>void onMaster(e.detail||{}));
