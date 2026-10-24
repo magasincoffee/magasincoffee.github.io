@@ -39,11 +39,17 @@ test("UI2-009 loads one namespaced Employee People presentation layer and keeps 
 });
 
 test("UI2-009 Attendance keeps exact Manual-Time canonical RPC inventory and payload boundary",()=>{
-  assert.deepEqual(rpcs(attendance),[
+  assert.deepEqual(rpcs(attendance).filter(name=>!name.includes('offschedule')),[
     'list_my_approved_schedules_v2',
     'get_my_attendance_v2',
     'submit_manual_time_attendance_v1'
   ]);
+  assert.deepEqual(rpcs(attendance).filter(name=>name.includes('offschedule')),[
+    'submit_offschedule_attendance_request_v1',
+    'list_my_offschedule_attendance_requests_v1',
+    'list_my_offschedule_stores_v1'
+  ]);
+  assert.match(attendance,/Giờ công chưa được tính lương/);
   assert.match(attendance,/p_week_start:requestedWeek/);
   assert.match(attendance,/p_from_date:requestedWeek,p_to_date:add\(requestedWeek,6\)/);
   assert.match(attendance,/p_schedule_id:selected\.schedule_id,p_actual_start:start,p_actual_end:end,p_note:note\|\|null/);
