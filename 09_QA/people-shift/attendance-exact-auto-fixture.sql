@@ -138,6 +138,13 @@ VALUES ('93000000-0000-4000-8000-000000000004',
 '91000000-0000-4000-8000-000000000003',
 (now() at time zone 'Asia/Ho_Chi_Minh')::date + 2,
 'APPROVED','06:00','10:00','MANAGER_ASSIGNED');
+-- Exact time outside enabled pilot store CN3 must remain NEEDS_REVIEW.
+INSERT INTO public.work_schedules(id,user_id,store_id,work_date,status,start_time,end_time,origin)
+VALUES ('93000000-0000-4000-8000-000000000005',
+'90000000-0000-4000-8000-000000000007',
+'91000000-0000-4000-8000-000000000001',
+(now() at time zone 'Asia/Ho_Chi_Minh')::date - 2,
+'APPROVED','06:00','10:00','MANAGER_ASSIGNED');
 REVOKE ALL ON public.attendance,public.payroll_entries FROM PUBLIC,anon,authenticated;
 CREATE TABLE qa_private.attendance_baseline AS SELECT * FROM public.attendance;
 
