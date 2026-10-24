@@ -65,13 +65,24 @@ try {
  const owner=await browserInstance.newPage({viewport:{width:1024,height:768},timezoneId:'Asia/Ho_Chi_Minh'});
  owner.on('pageerror',e=>errors.push('Owner '+e.message));
  await owner.exposeFunction('offQaOwnerRpc',(name,args)=>rpc(user.owner,name,args));
- await owner.setContent('<!doctype html><html><body><h1>Owner audit QA</h1><output id="ownerRows"></output></body></html>');
- await owner.evaluate(async store=>{
-  const result=await window.offQaOwnerRpc('list_owner_offschedule_attendance_requests_v1',{p_store_id:store});
-  if(result.error)throw Error(result.error.message);
-  document.querySelector('#ownerRows').textContent=result.data.map(x=>x.status).join(', ');
- },store);
- assert.match(await owner.locator('#ownerRows').innerText(),/APPROVED/);
+ await owner.setContent('<!doctype html><html lang="vi"><head><meta charset="utf-8"></head><body><section id="view-workforce"><div class="row"><h2>Lịch</h2></div><div class="tabs"></div><div id="panel-publish"></div></section></body></html>');
+ await owner.evaluate(({store,week})=>{
+  const add=(s,n)=>{const d=new Date(s+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+  window.MAGASIN_CORE={security:{escapeHtml:v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]))},
+   date:{monday:()=>week,addDays:add,formatDate:s=>s}};
+  window.MAGASIN_MANAGER_SCHEDULE_DRAFT={openDirect:async()=>{}};
+  window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+   stores:async()=>[{id:store,code:'CN3',name:'QA CN3'}],
+   client:()=>({rpc:(name,args)=>{
+    if(name==='get_manager_weekly_availability'||name==='list_schedule_generations')return Promise.resolve({data:[],error:null});
+    return window.offQaOwnerRpc(name,args)
+   }})
+  };
+ },{store,week});
+ await owner.addScriptTag({url:web+'/04_OWNER/Workforce/owner-scheduling-overview-v1.js'});
+ await owner.waitForFunction(()=>window.MAGASIN_OWNER_SCHEDULING_OVERVIEW?.getState().offSupported===true,{timeout:15000});
+ await owner.locator('[data-owner-offschedule-audit] summary').click();
+ assert.match(await owner.locator('[data-owner-offschedule-audit]').innerText(),/APPROVED/);
  assert.deepEqual(errors,[]);
  console.log('QA_524_BROWSER_OWNER_READ_ONLY=PASS');
 }finally{await browserInstance.close()}
