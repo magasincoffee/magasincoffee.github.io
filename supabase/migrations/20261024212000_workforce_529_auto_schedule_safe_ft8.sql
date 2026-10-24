@@ -224,8 +224,8 @@ begin
     for g in
       select gs.ts::time as slot_start,(gs.ts+interval '30 minutes')::time as slot_end
       from generate_series(
-        c.work_date::timestamp + c.start_time,
-        c.work_date::timestamp + c.start_time + interval '7 hours 30 minutes',
+        c.work_date + c.start_time,
+        c.work_date + c.start_time + interval '7 hours 30 minutes',
         interval '30 minutes'
       ) gs(ts)
     loop
