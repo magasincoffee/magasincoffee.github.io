@@ -93,3 +93,36 @@ jobs:
           @echo off
           node 09_QA\487-h4-pages-526-live-assets.mjs
           if errorlevel 1 exit /b 1
+
+  browser-h4-isolated-527:
+    name: H4 Chrome availability P1 Owner and Manager fixture (read-only)
+    needs: readonly-h4-probe
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/487-h4-readonly-probe-20261024
+          path: harness
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 84306bac309a200c7bf239e696fabe51a24a7db4
+          path: availability-candidate
+          persist-credentials: false
+      - name: Install Playwright API only without downloading browsers
+        shell: cmd
+        working-directory: availability-candidate
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          @echo off
+          call npm.cmd install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          if errorlevel 1 exit /b 1
+      - name: Real H4 Chrome viewport and role-scope acceptance on local fake data
+        shell: cmd
+        run: |
+          @echo off
+          node harness\09_QA\487-h4-availability-local-fixture.mjs
+          if errorlevel 1 exit /b 1
+          echo H4_527_CHROME_OWNER_MANAGER_LOCAL_ONLY_PASS
