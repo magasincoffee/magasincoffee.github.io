@@ -1,0 +1,35 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QA 526 — clock modal</title>
+<style>body{font-family:Arial;margin:16px}.sv2-editor-layer{position:fixed;inset:0;background:#0006;display:flex;align-items:center;justify-content:center}.sv2-editor-dialog{background:#fff;padding:20px;width:min(460px,92vw);display:grid;gap:10px}.sv2-editor-dialog label{display:grid;gap:4px}.sv2-editor-dialog select{min-height:44px}.sv2-bar{display:flex;gap:8px}</style></head><body>
+<div class="sv2-bar"></div><select id="sv2Store"><option value="qa-store">CN1</option></select><input id="sv2Week" value="2026-10-26"><button id="sv2Refresh">Refresh</button>
+<table id="sv2Table"><tbody><tr><td><button id="editQa" data-sv2-draft-index="0" data-sv2-shift-id="shift-1" data-sv2-user-id="qa-one" data-sv2-date="2026-10-26" data-sv2-start="06:00:00" data-sv2-end="14:00:00">Chỉnh ca cũ</button></td><td><button id="officialQa" data-sv2-official-id="official-1" data-sv2-date="2026-10-26" data-sv2-start="06:00:00" data-sv2-end="14:00:00">Điều động ca cũ</button></td></tr></tbody></table>
+<script>
+(()=>{'use strict';
+const query=new URLSearchParams(location.search);const isPost=query.has('post-publish-preview');
+window.MAGASIN_SCHEDULING_V2_EDITOR_PREVIEW_ENABLED=!isPost;
+window.MAGASIN_SCHEDULING_V2_POST_PUBLISH_PREVIEW_ENABLED=isPost;
+const dateAdd=(s,n)=>{const d=new Date(String(s).slice(0,10)+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+window.MAGASIN_SCHEDULING_V2_WEEK_NAV={weekStart:()=> '2026-10-26',dateOffset:dateAdd};
+window.__QA_526={writes:[],alerts:[],confirmations:0};
+window.confirm=()=>{window.__QA_526.confirmations++;return true};
+window.alert=m=>{window.__QA_526.alerts.push(String(m))};
+const people=[{employee_id:'qa-one',full_name:'Nhân viên có đăng ký',employee_role:'STAFF',profile_status:'ACTIVE',priority_store_ids:['qa-store']},{employee_id:'qa-two',full_name:'Nhân viên chưa đủ đăng ký',employee_role:'STAFF',profile_status:'ACTIVE',priority_store_ids:['qa-store']}];
+window.MAGASIN_SCHEDULING_V2_CONTEXT={
+ actor:async()=>({role:'STORE_MANAGER'}),
+ client:()=>({rpc:async name=>name==='list_employee_workforce_profiles_v1'?{data:people,error:null}:{data:null,error:{message:'QA_RPC_UNEXPECTED'}}})
+};
+window.MAGASIN_SCHEDULING_V2_DRAFT_OPERATIONS={
+ apply:async input=>{
+  window.__QA_526.writes.push(input);
+  if(input.assignment.user_id==='qa-two')throw Error('ASSIGNMENT_VALIDATION_FAILED: {"violations":[{"code":"AVAILABILITY_MISMATCH","work_date":"2026-10-26","start_time":"06:00:00","end_time":"14:00:00"}]}');
+  return {saved:true,valid:true,violations:[]};
+ }
+};
+window.MAGASIN_SCHEDULING_V2_POST_PUBLISH={
+ mutate:async input=>{window.__QA_526.writes.push(input);return {saved:true}},
+ read:async()=>({audit:[]})
+};
+})();
+</script>
+<script src="/05_MANAGER/SchedulingV2/editor-ui-v1.js"></script>
+<script src="/05_MANAGER/SchedulingV2/post-publish-ui-v1.js"></script>
+</body></html>
