@@ -24,7 +24,7 @@ BEGIN
  IF NOT (v2->>'already_submitted')::boolean OR v->>'request_id'<>v2->>'request_id'
  THEN RAISE EXCEPTION 'IDEMPOTENCY_FAILED'; END IF;
 END $qa$;
-SELECT pg_temp.assert_failure($q$SELECT public.submit_offschedule_attendance_request_v1('91000000-0000-4000-8000-000000000001',current_date-2,'12:00','13:00','wrong store')$q$,'STORE_NOT_ALLOWED');
+SELECT pg_temp.assert_failure($q$SELECT public.submit_offschedule_attendance_request_v1('91000000-0000-4000-8000-000000000001',current_date-2,'12:00','13:00','wrong store')$q$,'OFFSCHEDULE_STORE_ELIGIBILITY_REQUIRED');
 SELECT pg_temp.assert_failure($q$SELECT public.submit_offschedule_attendance_request_v1('91000000-0000-4000-8000-000000000003',current_date+1,'12:00','13:00','future date')$q$,'OFFSCHEDULE_FUTURE_NOT_ALLOWED');
 SELECT pg_temp.assert_failure($q$SELECT public.submit_offschedule_attendance_request_v1('91000000-0000-4000-8000-000000000003',current_date-2,'12:00','15:00','different explanation')$q$,'OFFSCHEDULE_DUPLICATE_CONFLICT');
 SELECT pg_temp.assert_failure($q$SELECT public.review_offschedule_attendance_request_v1((SELECT id FROM public.attendance_offschedule_requests_v1 LIMIT 1),'APPROVE')$q$,'REVIEW_ROLE_NOT_ALLOWED');
