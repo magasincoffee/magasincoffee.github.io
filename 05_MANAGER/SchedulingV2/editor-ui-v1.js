@@ -8,7 +8,7 @@ const errorText=(e,shift={})=>{
  const message=String(e?.message||e||'');
  const date=String(shift.work_date||'').slice(0,10);
  const span=[shift.start_time,shift.end_time].map(x=>String(x||'').slice(0,5));
- const at=date&&span.every(x=>/^\\d{2}:\\d{2}$/.test(x))?' ('+date+', '+span.join('–')+')':'';
+ const at=date&&span.every(x=>/^[0-9]{2}:[0-9]{2}$/.test(x))?' ('+date+', '+span.join('–')+')':'';
  if(/AVAILABILITY_MISMATCH/.test(message))return 'Ca làm việc'+at+' không nằm trọn trong thời gian nhân viên đã đăng ký có thể làm. Hãy xem mục Đăng ký lịch làm việc và chọn khoảng phù hợp. Không thể bỏ qua quy tắc kiểm tra.';
  if(/STORE_NOT_ALLOWED|FORBIDDEN|ROLE_NOT_ALLOWED/.test(message))return 'Bạn không được cấp quyền chỉnh lịch của chi nhánh này.';
  if(/DRAFT_LOCKED|PUBLISHED|WEEK_LOCKED/.test(message))return 'Lịch tuần này không còn cho phép sửa bản nháp.';
