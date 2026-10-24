@@ -415,7 +415,7 @@ async function autoSchedule(){
    const raw=String(e?.message||e?.code||e||'');
    if(!raw.includes('EXISTING_DRAFT_REQUIRES_CONFIRMATION'))throw e;
    // Fail closed on old backends: V1 replaceExisting deletes manual shifts.
-   // Recheck the server handshake immediately before confirming any rerun.
+   // Recheck the backend capability immediately before confirming any rerun.
    if(!(await safeRerunCapability()))throw Error('SAFE_RERUN_VERSION_REQUIRED');
    if(!confirm('Tính lại đề xuất dựa trên đăng ký và ưu tiên chi nhánh mới nhất? Chỉ các ca do thuật toán tạo được thay thế. Ca xếp thủ công và lịch đã phát hành vẫn giữ nguyên.')){
     state.message='Đã giữ nguyên bản nháp hiện tại.';state.messageType='';return;
