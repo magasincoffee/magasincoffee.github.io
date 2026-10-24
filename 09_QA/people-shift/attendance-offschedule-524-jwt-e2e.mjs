@@ -29,11 +29,14 @@ function check(ok,message){if(!ok)throw Error(message);}
 const submission={p_store_id:id.cn3,p_work_date:date,p_actual_start:'12:00',p_actual_end:'15:00',p_reason:'Synthetic offshift request'};
 const submit='submit_offschedule_attendance_request_v1';
 const review='review_offschedule_attendance_request_v1';
+const stores=await call('list_my_offschedule_stores_v1',id.employee,{});
+check(stores.length===1&&stores[0].store_id===id.cn3,'pilot stores only');
 const first=await call(submit,id.employee,submission);
 check(first.status==='NEEDS_REVIEW' && first.already_submitted===false,'employee first submission');
 const retry=await call(submit,id.employee,submission);
 check(retry.already_submitted===true&&retry.request_id===first.request_id,'idempotent retry');
 await call(submit,id.employee,{...submission,p_store_id:id.cn1},400);
+await call(submit,id.employee,{...submission,p_actual_start:'14:00',p_actual_end:'16:00'},400);
 await call(submit,id.owner,submission,400);
 await call(submit,id.employee,{...submission,p_work_date:'2099-10-24'},400);
 const employeeRows=await call('list_my_offschedule_attendance_requests_v1',id.employee,{});
