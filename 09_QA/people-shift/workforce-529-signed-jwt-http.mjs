@@ -18,6 +18,7 @@ ensure('INACTIVE_DENIED',await rpc(capability,'inactive'),false);
 const forged=jwt('owner').slice(0,-2)+'AA';
 ensure('FORGED_SIGNATURE_DENIED',await rpc(capability,'owner',{},forged),false);
 ensure('OWNER_GENERATE',await rpc(writer,'owner',{p_week_start:'2026-10-26',p_replace_existing:false}),true);
+ensure('MANAGER_SAFE_RERUN',await rpc(writer,'manager',{p_week_start:'2026-10-26',p_replace_existing:true}),true);
 ensure('STAFF_GENERATE_DENIED',await rpc(writer,'staff',{p_week_start:'2026-10-26',p_replace_existing:true}),false);
 const owner=await rpc(writer,'owner',{p_week_start:'2026-10-26',p_replace_existing:true});
 ensure('OWNER_SAFE_RERUN',owner,true);
