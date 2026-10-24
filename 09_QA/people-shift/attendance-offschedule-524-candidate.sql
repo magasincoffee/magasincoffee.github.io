@@ -130,3 +130,77 @@ GRANT EXECUTE ON FUNCTION public.review_offschedule_attendance_request_v1(uuid,t
 -- Deliberate payroll firewall: no changes to build_payroll_estimate_v1,
 -- and zero rows inserted into public.attendance or public.work_schedules.
 -- Payroll integration is a separate, audited owner-approved gate.
+
+-- Read APIs are scoped; no direct SELECT is granted to browser roles.
+CREATE OR REPLACE FUNCTION public.list_my_offschedule_attendance_requests_v1(
+ p_from_date date DEFAULT NULL,p_to_date date DEFAULT NULL
+) RETURNS TABLE(request_id uuid,store_id uuid,work_date date,
+ actual_start time,actual_end time,reason text,status text,
+ submitted_at timestamptz,reviewed_at timestamptz,review_note text,
+ confirmed_start time,confirmed_end time,confirmed_minutes integer)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
+DECLARE v_uid uuid:=auth.uid();
+BEGIN
+ IF v_uid IS NULL THEN RAISE EXCEPTION 'AUTH_REQUIRED'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.profiles p WHERE p.id=v_uid AND p.status='ACTIVE' AND p.role='STAFF')
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_EMPLOYEE_NOT_ALLOWED'; END IF;
+ IF p_from_date IS NOT NULL AND p_to_date IS NOT NULL AND p_from_date>p_to_date
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_DATE_RANGE_INVALID'; END IF;
+ RETURN QUERY SELECT r.id,r.store_id,r.work_date,r.actual_start,r.actual_end,r.reason,
+ r.status,r.submitted_at,r.reviewed_at,r.review_note,r.confirmed_start,
+ r.confirmed_end,r.confirmed_minutes FROM public.attendance_offschedule_requests_v1 r
+ WHERE r.employee_id=v_uid AND (p_from_date IS NULL OR r.work_date>=p_from_date)
+ AND (p_to_date IS NULL OR r.work_date<=p_to_date)
+ ORDER BY r.work_date DESC,r.submitted_at DESC,r.id;
+END; $$;
+REVOKE EXECUTE ON FUNCTION public.list_my_offschedule_attendance_requests_v1(date,date) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.list_my_offschedule_attendance_requests_v1(date,date) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.list_manager_offschedule_attendance_requests_v1(
+ p_store_id uuid,p_from_date date DEFAULT NULL,p_to_date date DEFAULT NULL
+) RETURNS TABLE(request_id uuid,employee_id uuid,store_id uuid,work_date date,
+ actual_start time,actual_end time,reason text,status text,submitted_at timestamptz,
+ reviewed_by uuid,reviewed_at timestamptz,review_note text,
+ confirmed_start time,confirmed_end time,confirmed_minutes integer)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+ PERFORM public.validate_manager_attendance_review_authority_v1(p_store_id);
+ IF (SELECT role FROM public.profiles WHERE id=auth.uid()) <> 'STORE_MANAGER'
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_MANAGER_ONLY'; END IF;
+ IF p_from_date IS NOT NULL AND p_to_date IS NOT NULL AND p_from_date>p_to_date
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_DATE_RANGE_INVALID'; END IF;
+ RETURN QUERY SELECT r.id,r.employee_id,r.store_id,r.work_date,r.actual_start,r.actual_end,
+ r.reason,r.status,r.submitted_at,r.reviewed_by,r.reviewed_at,r.review_note,
+ r.confirmed_start,r.confirmed_end,r.confirmed_minutes
+ FROM public.attendance_offschedule_requests_v1 r
+ WHERE r.store_id=p_store_id AND (p_from_date IS NULL OR r.work_date>=p_from_date)
+ AND (p_to_date IS NULL OR r.work_date<=p_to_date)
+ ORDER BY CASE WHEN r.status='NEEDS_REVIEW' THEN 0 ELSE 1 END,
+ r.work_date DESC,r.submitted_at DESC,r.id;
+END; $$;
+REVOKE EXECUTE ON FUNCTION public.list_manager_offschedule_attendance_requests_v1(uuid,date,date) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.list_manager_offschedule_attendance_requests_v1(uuid,date,date) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.list_owner_offschedule_attendance_requests_v1(
+ p_store_id uuid,p_from_date date DEFAULT NULL,p_to_date date DEFAULT NULL
+) RETURNS TABLE(request_id uuid,employee_id uuid,store_id uuid,work_date date,
+ actual_start time,actual_end time,status text,submitted_at timestamptz,
+ reviewed_by uuid,reviewed_at timestamptz,confirmed_minutes integer)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+ IF auth.uid() IS NULL OR NOT EXISTS (SELECT 1 FROM public.profiles
+ WHERE id=auth.uid() AND status='ACTIVE' AND role='OWNER')
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_OWNER_ONLY'; END IF;
+ IF p_store_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.stores WHERE id=p_store_id)
+ THEN RAISE EXCEPTION 'STORE_NOT_ALLOWED'; END IF;
+ IF p_from_date IS NOT NULL AND p_to_date IS NOT NULL AND p_from_date>p_to_date
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_DATE_RANGE_INVALID'; END IF;
+ RETURN QUERY SELECT r.id,r.employee_id,r.store_id,r.work_date,r.actual_start,r.actual_end,
+ r.status,r.submitted_at,r.reviewed_by,r.reviewed_at,r.confirmed_minutes
+ FROM public.attendance_offschedule_requests_v1 r WHERE r.store_id=p_store_id
+ AND (p_from_date IS NULL OR r.work_date>=p_from_date)
+ AND (p_to_date IS NULL OR r.work_date<=p_to_date)
+ ORDER BY r.work_date DESC,r.submitted_at DESC,r.id;
+END; $$;
+REVOKE EXECUTE ON FUNCTION public.list_owner_offschedule_attendance_requests_v1(uuid,date,date) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.list_owner_offschedule_attendance_requests_v1(uuid,date,date) TO authenticated;
