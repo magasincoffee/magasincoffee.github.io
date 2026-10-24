@@ -381,7 +381,7 @@ jobs:
           rollback;
           SQL
 
-- name: FT 06-14 wins PT; zero weekly override prevents forced eight hours
+      - name: FT 06-14 wins PT; zero weekly override prevents forced eight hours
         shell: bash
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
