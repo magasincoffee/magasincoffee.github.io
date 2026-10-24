@@ -4,13 +4,28 @@ const table=document.getElementById('sv2Table'),store=document.getElementById('s
 if(!table||!store||!week||!refresh)return;
 const weekNav=window.MAGASIN_SCHEDULING_V2_WEEK_NAV;
 if(!weekNav?.weekStart||!weekNav?.dateOffset)throw Error('WEEK_NAV_NOT_READY');
-const errorText=e=>String(e?.message||e||'Không rõ lỗi');
+const errorText=e=>{
+ const message=String(e?.message||e||'Không rõ lỗi');
+ if(/AVAILABILITY_MISMATCH/.test(message)){
+  return 'Ca nằm ngoài thời gian nhân viên đã đăng ký có thể làm. Vui lòng chọn ca phù hợp với đăng ký của nhân viên hoặc sử dụng quy trình điều động ngoài đăng ký được phê duyệt. ('+message+')';
+ }
+ return message;
+};
 const context=()=>window.MAGASIN_SCHEDULING_V2_CONTEXT;
 async function employees(){const ctx=context();if(!ctx?.client||!ctx?.actor)throw Error('MANAGER_CONTEXT_NOT_READY');await ctx.actor({force:true});const result=await ctx.client().rpc('list_employee_workforce_profiles_v1');if(result.error)throw result.error;return (Array.isArray(result.data)?result.data:[]).filter(p=>String(p.profile_status||'').toUpperCase()==='ACTIVE'&&['STAFF','EMPLOYEE'].includes(String(p.employee_role||'').toUpperCase())&&Array.isArray(p.priority_store_ids)&&p.priority_store_ids.map(String).includes(String(store.value))).map(p=>({id:String(p.employee_id||p.user_id||''),name:String(p.full_name||p.employee_name||p.display_name||p.employee_id||p.user_id||'Nhân viên')})).filter(p=>p.id)}
 function openDialog(node){if(document.getElementById('sv2ShiftLayer'))return;const editing=!!node,idx=editing?Number(node.dataset.sv2DraftIndex):-1;
 if(editing&&(!Number.isInteger(idx)||idx<0))return;
-const layer=document.createElement('div');layer.className='sv2-editor-layer';layer.id='sv2ShiftLayer';layer.innerHTML='<form class="sv2-editor-dialog" role="dialog" aria-modal="true" aria-label="Chỉnh ca nháp"><h2>Ca làm việc</h2><p>Thêm, thay đổi hoặc xóa ca nháp. Không sửa lịch chính thức.</p><label>Ngày <input type="date" name="date" required></label><label>Nhân viên <select name="employee" required><option value="">Đang tải danh sách…</option></select></label><label>Bắt đầu <input type="time" name="start" min="05:00" max="21:30" step="1800" required></label><label>Kết thúc <input type="time" name="end" min="05:30" max="22:00" step="1800" required></label><p role="alert" data-error></p><div class="sv2-editor-actions"><button type="button" data-close>Hủy</button><button type="button" data-remove hidden>Xóa ca</button><button type="submit" data-save>Lưu bản nháp</button></div></form>';
+const layer=document.createElement('div');layer.className='sv2-editor-layer';layer.id='sv2ShiftLayer';layer.innerHTML='<form class="sv2-editor-dialog" role="dialog" aria-modal="true" aria-label="Chỉnh ca nháp"><h2>Ca làm việc</h2><p>Thêm, thay đổi hoặc xóa ca nháp. Không sửa lịch chính thức.</p><label>Ngày <input type="date" name="date" required></label><label>Nhân viên <select name="employee" required><option value="">Đang tải danh sách…</option></select></label><label>Bắt đầu <select name="start" required aria-label="Giờ bắt đầu (24 giờ)"></select></label><label>Kết thúc <select name="end" required aria-label="Giờ kết thúc (24 giờ)"></select></label><p role="alert" data-error></p><div class="sv2-editor-actions"><button type="button" data-close>Hủy</button><button type="button" data-remove hidden>Xóa ca</button><button type="submit" data-save>Lưu bản nháp</button></div></form>';
 document.body.appendChild(layer);const form=layer.querySelector('form'),save=layer.querySelector('[data-save]'),remove=layer.querySelector('[data-remove]'),err=layer.querySelector('[data-error]'),close=()=>{layer.remove();(node||document.getElementById('sv2AddShift'))?.focus()};
+// Render explicit Vietnam business clock options; native time inputs can show SA/CH by browser locale.
+for(const [name,first,last] of [['start',300,1290],['end',330,1320]]){
+ const select=form.elements[name];
+ for(let minute=first;minute<=last;minute+=30){
+  const hh=String(Math.floor(minute/60)).padStart(2,'0');
+  const mm=String(minute%60).padStart(2,'0');
+  const option=document.createElement('option');option.value=hh+':'+mm;option.textContent=option.value;select.appendChild(option);
+ }
+}
 const monday=()=>weekNav.weekStart(week.value);
 const scopeAtOpen={storeId:store.value,weekStart:monday()};
 if(!scopeAtOpen.weekStart){layer.remove();return;}
