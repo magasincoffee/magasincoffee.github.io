@@ -188,8 +188,8 @@ CREATE OR REPLACE FUNCTION public.list_owner_offschedule_attendance_requests_v1(
  reviewed_by uuid,reviewed_at timestamptz,confirmed_minutes integer)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
 BEGIN
- IF auth.uid() IS NULL OR NOT EXISTS (SELECT 1 FROM public.profiles
- WHERE id=auth.uid() AND status='ACTIVE' AND role='OWNER')
+ IF auth.uid() IS NULL OR NOT EXISTS (SELECT 1 FROM public.profiles p
+ WHERE p.id=auth.uid() AND p.status='ACTIVE' AND p.role='OWNER')
  THEN RAISE EXCEPTION 'OFFSCHEDULE_OWNER_ONLY'; END IF;
  IF p_store_id IS NULL OR NOT EXISTS (SELECT 1 FROM public.stores WHERE id=p_store_id)
  THEN RAISE EXCEPTION 'STORE_NOT_ALLOWED'; END IF;
