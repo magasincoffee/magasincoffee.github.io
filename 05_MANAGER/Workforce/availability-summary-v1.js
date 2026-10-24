@@ -5,6 +5,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const dayAdd=(s,n)=>{const d=new Date(String(s).slice(0,10)+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const monday=s=>{const d=new Date(String(s).slice(0,10)+'T00:00:00Z');return dayAdd(s,-((d.getUTCDay()+6)%7))};
 function vietnamToday(){
+ if(/^\d{4}-\d{2}-\d{2}$/.test(String(window.__MAGASIN_WORKFORCE_TODAY__||'')))return String(window.__MAGASIN_WORKFORCE_TODAY__);
  const p={};for(const item of new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()))if(item.type!=='literal')p[item.type]=item.value;
  return p.year+'-'+p.month+'-'+p.day;
 }
