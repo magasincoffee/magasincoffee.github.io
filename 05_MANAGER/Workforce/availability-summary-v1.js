@@ -74,7 +74,7 @@ function mount(target,{mode='MANAGER'}={}){
     '<p class="as487-note">Đăng ký khả dụng có thể được áp dụng cho nhiều chi nhánh trong danh sách ưu tiên, nhưng không tạo ca làm việc. “Chưa đăng ký” chỉ dựa trên dữ liệu đã tải thành công cho tuần và phạm vi đang xem.</p>')+
    '</section>';
   root.querySelector('[data-as487-store]')?.addEventListener('change',e=>{state.storeId=e.target.value;void refresh({reloadProfiles:false})});
-  root.querySelector('[data-as487-search]')?.addEventListener('input',e=>{state.search=e.target.value;render()});
+  root.querySelector('[data-as487-search]')?.addEventListener('change',e=>{state.search=e.target.value;render()});
   root.querySelector('[data-as487-type]')?.addEventListener('change',e=>{state.typeFilter=e.target.value;render()});
   root.querySelector('[data-as487-status]')?.addEventListener('change',e=>{state.statusFilter=e.target.value;render()});
   root.querySelector('[data-as487-prev]')?.addEventListener('click',()=>{state.week=dayAdd(state.week,-7);void refresh({reloadProfiles:false})});
