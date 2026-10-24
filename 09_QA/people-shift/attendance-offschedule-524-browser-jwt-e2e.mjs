@@ -40,12 +40,12 @@ try {
  await frame.locator('#employeeAttendanceMessage').filter({hasText:'Đã gửi yêu cầu'}).waitFor({timeout:20000});
  assert.match(await frame.locator('[data-offschedule]').innerText(),/Cần quản lý xem xét/);
  console.log('QA_524_BROWSER_EMPLOYEE_PHONE=PASS');
- const dateSecond=new Date(Date.now()-4*86400000).toISOString().slice(0,10);
+ const dateSecond=past;
  const adjustment=await rpc(user.employee,'submit_offschedule_attendance_request_v1',{
-  p_store_id:store,p_work_date:dateSecond,p_actual_start:'10:00',p_actual_end:'11:00',p_reason:'UI Manager time correction'});
+  p_store_id:store,p_work_date:dateSecond,p_actual_start:'06:00',p_actual_end:'07:00',p_reason:'UI Manager time correction'});
  assert.ifError(adjustment.error);
  const denial=await rpc(user.employee,'submit_offschedule_attendance_request_v1',{
-  p_store_id:store,p_work_date:dateSecond,p_actual_start:'13:00',p_actual_end:'14:00',p_reason:'UI Manager reject scenario'});
+  p_store_id:store,p_work_date:dateSecond,p_actual_start:'08:00',p_actual_end:'09:00',p_reason:'UI Manager reject scenario'});
  assert.ifError(denial.error);
  const employeeRows=await rpc(user.employee,'list_my_offschedule_attendance_requests_v1',{});
  const initialId=employeeRows.data.find(x=>x.work_date===past&&String(x.actual_start).startsWith('16:00'))?.request_id;
@@ -87,7 +87,7 @@ try {
  await manager.locator('[data-mar-offschedule]').filter({hasText:'Đã xử lý'}).waitFor({timeout:15000});
  assert.match(await manager.locator('[data-mar-offschedule]').innerText(),/Đã xác nhận/);
  console.log('QA_524_BROWSER_MANAGER_REAL_REVIEW=PASS');
- await manager.locator('[data-off-request="'+adjustment.data.request_id+'"] [data-off-start]').fill('10:15');
+ await manager.locator('[data-off-request="'+adjustment.data.request_id+'"] [data-off-start]').fill('06:15');
  await manager.locator('[data-off-request="'+adjustment.data.request_id+'"] [data-off-note]').fill('Kiểm tra và điều chỉnh');
  await manager.locator('[data-off-request="'+adjustment.data.request_id+'"] [data-off-review="ADJUST"]').click();
  await manager.locator('[data-off-request="'+adjustment.data.request_id+'"]').waitFor({state:'detached',timeout:15000});
