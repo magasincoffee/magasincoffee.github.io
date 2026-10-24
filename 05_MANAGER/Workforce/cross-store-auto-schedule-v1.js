@@ -391,7 +391,7 @@ async function safeRerunCapability(){
 }
 
 async function callAuto(replaceExisting){
- const q=await client().rpc('auto_generate_cross_store_schedule_v1',{
+ const q=await client().rpc(replaceExisting?'auto_generate_cross_store_schedule_529':'auto_generate_cross_store_schedule_v1',{
   p_week_start:state.week,
   p_replace_existing:!!replaceExisting,
   p_algorithm_version:'XSTORE_GLOBAL_RECURRING_V1'
