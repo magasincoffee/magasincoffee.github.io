@@ -11,7 +11,7 @@ const sid=n=>'93000000-0000-4000-8000-'+String(n).padStart(12,'0');
 const enc=x=>Buffer.from(JSON.stringify(x)).toString('base64url');
 function jwt(user){const now=Math.floor(Date.now()/1000);const s=enc({alg:'HS256',typ:'JWT'})+'.'+enc({sub:user,role:'authenticated',iat:now,exp:now+900});return s+'.'+createHmac('sha256',secret).update(s).digest('base64url')}
 async function rpc(user,name,args={}){
- const allowed=new Set(['list_my_approved_schedules_v2','get_my_attendance_v2','submit_manual_time_attendance_v1','list_manager_attendance_review_v1']);
+ const allowed=new Set(['list_my_approved_schedules_v2','get_my_attendance_v2','submit_manual_time_attendance_v1','list_manager_attendance_review_v1','review_attendance_v1']);
  if(!allowed.has(name))throw Error('QA_RPC_NOT_ALLOWLISTED:'+name);
  const response=await fetch(host+'/rpc/'+name,{method:'POST',headers:{authorization:'Bearer '+jwt(user),'content-type':'application/json',accept:'application/json'},body:JSON.stringify(args)});
  const t=await response.text();let data;try{data=JSON.parse(t)}catch{data=t}
@@ -58,7 +58,56 @@ try{
  assert.equal(manager.data.filter(x=>x.status==='NEEDS_REVIEW').length,1);
  const invalid=await rpc(U.other,'list_manager_attendance_review_v1',args);
  assert.match(invalid.error?.message||'',/STORE_NOT_ALLOWED/);
+
  console.log('QA_BROWSER_MANAGER_OWNER_SIGNED_CROSS_ROLE=PASS');
+ // Render the unmodified Manager attendance-review component with actual
+ // signed-JWT/PostgREST reads and review mutation (no mock Manager responses).
+ async function reviewUI(actor,label){
+   const p=await browser.newPage({viewport:{width:1280,height:850},locale:'vi-VN',timezoneId:'Asia/Ho_Chi_Minh'});
+   p.on('pageerror',e=>errors.push(label+': '+e.message));
+   await p.exposeFunction('qaManagerRpc',(name,args)=>rpc(actor,name,args));
+   await p.setContent('<!doctype html><html lang="vi"><head><meta charset="utf-8"></head><body><section id="view-attendance"></section></body></html>');
+   await p.evaluate(({store,week})=>{
+     window.__MAGASIN_WORKFORCE_TODAY__=week;
+     window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={
+       client:()=>({rpc:(name,args)=>window.qaManagerRpc(name,args)}),
+       stores:async()=>[{id:store,code:'CN3',name:'QA CN3'}]
+     };
+   },{store,week:monday});
+   await p.addScriptTag({url:base+'/05_MANAGER/Workforce/attendance-review-v1.js'});
+   await p.waitForFunction(()=>window.MAGASIN_MANAGER_ATTENDANCE_REVIEW
+      && !window.MAGASIN_MANAGER_ATTENDANCE_REVIEW.getState().loading);
+   return p;
+ }
+ const managerPage=await reviewUI(U.manager,'manager-ui');
+ const managerState=await managerPage.evaluate(()=>window.MAGASIN_MANAGER_ATTENDANCE_REVIEW.getState());
+ assert.equal(managerState.rows.length,2,JSON.stringify(managerState));
+ assert.equal(await managerPage.locator('.mar-card').count(),1,
+     'auto-confirmed row must NOT have Manager review buttons');
+ assert.match(await managerPage.locator('.mar-reviewed').innerText(),/Tự xác nhận/);
+ const countBefore=await managerPage.locator('.mar-summary b').nth(1).innerText();
+ assert.equal(countBefore,'1','one auto-confirmed row must be counted as completed');
+ console.log('QA_BROWSER_MANAGER_AUTO_COMPLETED_NOT_PENDING=PASS');
+ await managerPage.locator('.mar-card [data-review="APPROVE"]').click();
+ await managerPage.waitForFunction(()=>window.MAGASIN_MANAGER_ATTENDANCE_REVIEW
+   .getState().rows.some(x=>x.status==='APPROVED'),{timeout:12000});
+ assert.equal(await managerPage.locator('.mar-card').count(),0);
+ assert.equal(await managerPage.locator('.mar-summary b').nth(1).innerText(),'2');
+ console.log('QA_BROWSER_MANAGER_REAL_SIGNED_REVIEW=PASS');
+
+ const ownerPage=await reviewUI(U.owner,'owner-ui');
+ const ownerState=await ownerPage.evaluate(()=>window.MAGASIN_MANAGER_ATTENDANCE_REVIEW.getState());
+ assert.equal(ownerState.rows.filter(x=>x.status==='AUTO_CONFIRMED').length,1);
+ assert.equal(ownerState.rows.filter(x=>x.status==='APPROVED').length,1);
+ assert.equal(await ownerPage.locator('.mar-card').count(),0);
+ console.log('QA_BROWSER_OWNER_CONFIRMED_HISTORY=PASS');
+ await managerPage.close();await ownerPage.close();
+
+ assert.equal(await page.evaluate(async ({id,week})=>window.MAGASIN_EMPLOYEE.attendance.openSchedule(id,week),
+   {id:sid(2),week:monday}),true);
+ await f.locator('.attendance-status').filter({hasText:'Đã xác nhận'}).waitFor({timeout:12000});
+ console.log('QA_BROWSER_EMPLOYEE_SEES_MANAGER_REVIEWED_TIME=PASS');
+
  const doc=await f.locator('#view-attendance').evaluate(x=>({bodyWidth:x.ownerDocument.documentElement.clientWidth,scrollWidth:x.ownerDocument.documentElement.scrollWidth}));
  assert.ok(doc.scrollWidth<=doc.bodyWidth+1,JSON.stringify(doc));
  assert.deepEqual(errors,[],'browser JS errors');
