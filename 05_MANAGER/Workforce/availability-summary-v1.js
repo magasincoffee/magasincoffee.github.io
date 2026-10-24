@@ -115,7 +115,7 @@ function mount(target,{mode='MANAGER'}={}){
 window.MAGASIN_WORKFORCE_AVAILABILITY_SUMMARY=Object.freeze({mount});
 function autoMount(){
  const el=document.getElementById('view-availability');
- if(el)mount(el,{mode:'MANAGER'});
+ if(el && String(window.__MAGASIN_SCHEDULING_ACTOR__||document.body?.dataset?.magasinShellRole||'').toUpperCase()!=='OWNER')mount(el,{mode:'MANAGER'});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',autoMount,{once:true});else autoMount();
 })();
