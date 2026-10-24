@@ -23,7 +23,7 @@ const rpc=s=>[...s.matchAll(/\.rpc\(['"]([^'"]+)/g)].map(m=>m[1]);
 
 test("UI2-011 Manager shell exposes only canonical operations destinations",()=>{
   assert.ok(shellHtml.includes('/05_MANAGER/runtime/compat/ui/manager-ui-shell-v2.js?v=20260927-ui2-016'));
-  for(const route of ["dashboard","staff","workforce","schedule","swap","attendance","payroll-self-check"])assert.ok(today.includes("'"+route+"'")||today.includes('"'+route+'"'),route);
+  for(const route of ["dashboard","staff","workforce","availability","schedule","swap","attendance","payroll-self-check"])assert.ok(today.includes("'"+route+"'")||today.includes('"'+route+'"')||today.includes(route+':'),route);
   for(const hidden of ["tasks","kpi","academy","settings"])assert.ok(today.includes("'"+hidden+"'"),hidden);
   assert.match(shellV2,/manager-v2-sidebar-source/);
   assert.match(shellV2,/m-shell-v2-nav__item\[data-shell-key=/);
