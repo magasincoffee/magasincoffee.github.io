@@ -17,21 +17,20 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Identify H4 runner without reading user files
-        shell: powershell
+        shell: cmd
         run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:COMPUTERNAME -ne 'DESKTOP-H4A16IL') { throw 'NOT_H4_RUNNER_STOP' }
-          Write-Output 'H4_SELF_HOSTED_RUNNER_PASS'
-          $node = Get-Command node -ErrorAction SilentlyContinue
-          if ($node) { Write-Output 'H4_NODE_AVAILABLE' } else { Write-Output 'H4_NODE_MISSING' }
-          $chrome = (Test-Path 'C:\Program Files\Google\Chrome\Application\chrome.exe') -or (Test-Path 'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe')
-          if ($chrome) { Write-Output 'H4_CHROME_AVAILABLE' } else { Write-Output 'H4_CHROME_NOT_AT_DEFAULT_PATH' }
+          @echo off
+          if /I not "%COMPUTERNAME%"=="DESKTOP-H4A16IL" (echo NOT_H4_RUNNER_STOP & exit /b 1)
+          echo H4_SELF_HOSTED_RUNNER_PASS
+          where node >NUL 2>&1
+          if errorlevel 1 (echo H4_NODE_MISSING) else (echo H4_NODE_AVAILABLE)
+          if exist "C:\Program Files\Google\Chrome\Application\chrome.exe" (echo H4_CHROME_AVAILABLE) else if exist "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" (echo H4_CHROME_AVAILABLE) else (echo H4_CHROME_NOT_AT_DEFAULT_PATH)
       - name: Public website read-only reachability
-        shell: powershell
+        shell: cmd
         run: |
-          $ErrorActionPreference = 'Stop'
-          foreach ($url in @('https://magasincoffee.github.io/', 'https://magasincoffee.github.io/manager/scheduling/')) {
-            $r = Invoke-WebRequest -Uri $url -UseBasicParsing -Method Get -TimeoutSec 20
-            if ($r.StatusCode -ne 200) { throw 'SITE_HTTP_NOT_200' }
-          }
-          Write-Output 'H4_PUBLIC_WEB_READONLY_HTTP_200_PASS'
+          @echo off
+          curl.exe --location --fail --silent --show-error --max-time 20 --output NUL https://magasincoffee.github.io/
+          if errorlevel 1 (echo H4_PUBLIC_HOME_REACHABILITY_FAILED & exit /b 1)
+          curl.exe --location --fail --silent --show-error --max-time 20 --output NUL https://magasincoffee.github.io/manager/scheduling/
+          if errorlevel 1 (echo H4_PUBLIC_SCHEDULING_REACHABILITY_FAILED & exit /b 1)
+          echo H4_PUBLIC_WEB_READONLY_HTTP_200_PASS
