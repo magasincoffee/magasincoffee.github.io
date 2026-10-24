@@ -2,6 +2,15 @@
 -- Depends on authoritative public.profiles, public.stores, auth.uid(),
 -- public.can_access_store(uuid), and existing attendance review authority.
 -- Off-schedule claims are NOT shifts, attendance records or payroll sources.
+-- OFF by default for every branch. No hosted mutation or employee/browser grants.
+CREATE TABLE public.attendance_offschedule_policy_v1 (
+ store_id uuid PRIMARY KEY REFERENCES public.stores(id),
+ enabled boolean NOT NULL DEFAULT false,
+ updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.attendance_offschedule_policy_v1 ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.attendance_offschedule_policy_v1 FROM PUBLIC,anon,authenticated;
+
 CREATE TABLE public.attendance_offschedule_requests_v1 (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  employee_id uuid NOT NULL REFERENCES public.profiles(id),
@@ -50,14 +59,15 @@ BEGIN
  SELECT * INTO v_profile FROM public.profiles WHERE id=v_uid;
  IF NOT FOUND OR v_profile.status <> 'ACTIVE' OR v_profile.role <> 'STAFF'
  THEN RAISE EXCEPTION 'OFFSCHEDULE_EMPLOYEE_NOT_ALLOWED'; END IF;
- IF p_store_id IS NULL OR NOT EXISTS(SELECT 1 FROM public.stores WHERE id=p_store_id)
+ IF p_store_id IS NULL OR NOT EXISTS(SELECT 1 FROM public.stores
+ WHERE id=p_store_id AND status='ACTIVE')
  THEN RAISE EXCEPTION 'STORE_NOT_ALLOWED'; END IF;
- -- Production can_access_store() intentionally denies STAFF. Use Owner-maintained
- -- employee_store_priorities as a conservative eligibility gate; this is
- -- not a shift assignment nor proof the employee physically attended.
- IF NOT EXISTS(SELECT 1 FROM public.employee_store_priorities esp
- WHERE esp.employee_id=v_uid AND esp.store_id=p_store_id)
- THEN RAISE EXCEPTION 'OFFSCHEDULE_STORE_ELIGIBILITY_REQUIRED'; END IF;
+ -- This only permits an active Staff member to REPORT claimed work, not to
+ -- self-authorize working in a store. Manager in that store makes the decision.
+ -- Employee store priorities are preferences, NOT authorization/attendance proof.
+ IF NOT EXISTS(SELECT 1 FROM public.attendance_offschedule_policy_v1
+ WHERE store_id=p_store_id AND enabled IS TRUE)
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_PILOT_DISABLED'; END IF;
  IF p_work_date IS NULL OR p_actual_start IS NULL OR p_actual_end IS NULL
  OR p_actual_start >= p_actual_end
  THEN RAISE EXCEPTION 'OFFSCHEDULE_INVALID_TIME'; END IF;
@@ -72,8 +82,14 @@ BEGIN
   WHERE s.user_id=v_uid AND s.work_date=p_work_date AND s.status='APPROVED'
   AND s.start_time < p_actual_end AND s.end_time > p_actual_start
  ) THEN RAISE EXCEPTION 'OFFSCHEDULE_HAS_OFFICIAL_SHIFT'; END IF;
- PERFORM pg_advisory_xact_lock(hashtextextended('offshift:'||v_uid::text||':'||
-  p_store_id::text||':'||p_work_date::text,0));
+ PERFORM pg_advisory_xact_lock(hashtextextended('offshift:'||v_uid::text||':'||p_work_date::text,0));
+ -- Prevent two claims for overlapping actual work in different stores, but
+ -- allow a byte-identical retry of the same logical claim.
+ IF EXISTS(SELECT 1 FROM public.attendance_offschedule_requests_v1 r
+ WHERE r.employee_id=v_uid AND r.work_date=p_work_date AND r.status<>'REJECTED'
+ AND r.actual_start<p_actual_end AND r.actual_end>p_actual_start
+ AND NOT (r.store_id=p_store_id AND r.actual_start=p_actual_start AND r.actual_end=p_actual_end))
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_OVERLAPPING_REQUEST'; END IF;
  INSERT INTO public.attendance_offschedule_requests_v1
  (employee_id,store_id,work_date,actual_start,actual_end,reason)
  VALUES(v_uid,p_store_id,p_work_date,p_actual_start,p_actual_end,v_reason)
@@ -108,6 +124,13 @@ BEGIN
  IF v_uid=v_row.employee_id THEN RAISE EXCEPTION 'OFFSCHEDULE_SELF_REVIEW_FORBIDDEN'; END IF;
  IF v_row.status <> 'NEEDS_REVIEW' THEN RAISE EXCEPTION 'OFFSCHEDULE_ALREADY_REVIEWED'; END IF;
  IF v_decision NOT IN ('APPROVE','ADJUST','REJECT') THEN RAISE EXCEPTION 'OFFSCHEDULE_INVALID_DECISION'; END IF;
+ -- Recheck at review time: a schedule may have been published since submit.
+ IF v_decision IN ('APPROVE','ADJUST') AND EXISTS(
+ SELECT 1 FROM public.work_schedules sch
+ WHERE sch.user_id=v_row.employee_id AND sch.work_date=v_row.work_date
+ AND sch.status='APPROVED' AND sch.start_time<v_row.actual_end
+ AND sch.end_time>v_row.actual_start)
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_SCHEDULE_PUBLISHED_AFTER_REQUEST'; END IF;
  v_start:=CASE WHEN v_decision='APPROVE' THEN v_row.actual_start ELSE p_confirmed_start END;
  v_end:=CASE WHEN v_decision='APPROVE' THEN v_row.actual_end ELSE p_confirmed_end END;
  IF v_decision='ADJUST' AND (v_start IS NULL OR v_end IS NULL OR v_start>=v_end)
@@ -204,3 +227,19 @@ BEGIN
 END; $$;
 REVOKE EXECUTE ON FUNCTION public.list_owner_offschedule_attendance_requests_v1(uuid,date,date) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.list_owner_offschedule_attendance_requests_v1(uuid,date,date) TO authenticated;
+
+-- Only eligible pilot stores shown to Employee. Read-only; no implied shift authority.
+CREATE OR REPLACE FUNCTION public.list_my_offschedule_stores_v1()
+RETURNS TABLE(store_id uuid,store_code text,store_name text)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'AUTH_REQUIRED'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.profiles p
+ WHERE p.id=auth.uid() AND p.status='ACTIVE' AND p.role='STAFF')
+ THEN RAISE EXCEPTION 'OFFSCHEDULE_EMPLOYEE_NOT_ALLOWED'; END IF;
+ RETURN QUERY SELECT s.id,s.code,s.name FROM public.stores s
+ JOIN public.attendance_offschedule_policy_v1 p ON p.store_id=s.id
+ WHERE s.status='ACTIVE' AND p.enabled IS TRUE ORDER BY s.code,s.id;
+END; $$;
+REVOKE EXECUTE ON FUNCTION public.list_my_offschedule_stores_v1() FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.list_my_offschedule_stores_v1() TO authenticated;
