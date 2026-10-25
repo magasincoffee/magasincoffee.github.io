@@ -46,7 +46,10 @@ test('#529: safe rerun UI is disabled on legacy backend and never calls old repl
  assert.match(sql,/auto_generate_cross_store_schedule_529\(/);
  assert.match(ui,/state\.safeRerunAvailable&&workflow\.stage==='DRAFT'/);
  assert.match(ui,/if\(!\(await safeRerunCapability\(\)\)\)throw Error\('SAFE_RERUN_VERSION_REQUIRED'\)/);
- assert.match(ui,/replaceExisting\?'auto_generate_cross_store_schedule_529':'auto_generate_cross_store_schedule_v1'/);
+ assert.match(ui,/client\(\)\.rpc\('auto_generate_cross_store_schedule_529'/);
+ assert.doesNotMatch(ui,/client\(\)\.rpc\([^\n]*'auto_generate_cross_store_schedule_v1'/);
+ assert.match(ui,/if\(!\(await safeRerunCapability\(\)\)\)throw Error\('SAFE_RERUN_VERSION_REQUIRED'\);\s*let result;/);
+ assert.match(ui,/model\.action==='auto'&&!state\.safeRerunAvailable/);
  assert.match(ui,/Đề xuất lại \(giữ ca thủ công\)/);
 });
 
