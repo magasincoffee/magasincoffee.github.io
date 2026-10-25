@@ -107,7 +107,7 @@ async function apply(previewValue,{confirmed=false}={}){if(window.MAGASIN_SCHEDU
    work_date:day(r.work_date),start_time:hm(r.start_time),end_time:hm(r.end_time),
    note:String(r.note||''),status:String(r.status||'DRAFT')
  })).sort((a,b)=>a.id.localeCompare(b.id));
- const save=await s.rpc('apply_schedule_v2_auto_proposals_532',{
+ const save=await s.rpc('apply_schedule_v2_auto_proposals_533',{
    p_generation_id:generationId,p_expected_rows:expected,
    p_obsolete_ids:latest.obsoleteAutoIds,p_additions:latest.proposals,p_confirmed:true
  });if(save.error)throw save.error;
