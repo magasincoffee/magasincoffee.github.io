@@ -4,6 +4,8 @@ on:
     paths:
       - 'supabase/migrations/20261025132500_workforce_533_v2_confirmed_auto_replan.sql'
       - '09_QA/people-shift/scheduling-533-auto-replan-pg17.sql'
+      - 'supabase/migrations/20261025144500_workforce_533_global_atomic_bridge.sql'
+      - '09_QA/people-shift/scheduling-533-global-pg17.sql'
       - '.github/workflows/scheduling-533-auto-replan-pg17.yml'
   workflow_dispatch:
 permissions:
@@ -45,3 +47,4 @@ jobs:
         shell: bash
         run: |
           psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/scheduling-533-auto-replan-pg17.sql
+          psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/scheduling-533-global-pg17.sql
