@@ -844,24 +844,36 @@ jobs:
           $proof$;
           SQL
 
-  h4-synthetic-ui-guard:
-    # QA only: this job never signs in, writes a schedule, or touches Supabase production.
-    # Keeping this in the PR workflow makes the H4 gate visible on exact HEAD.
-    runs-on: [self-hosted, Windows, X64, h4-magasin]
+
+  hosted-synthetic-ui-guard:
+    # Synthetic browser + static contract tests on a GitHub-hosted runner.
+    # No H4 machine, real login, production SQL, or employee schedule writes.
+    runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Run isolated Chrome/contract checks on authorized H4 runner
-        shell: cmd
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate Manager JS and scheduler contract
         run: |
-          @echo off
-          if /I not "%COMPUTERNAME%"=="DESKTOP-H4A16IL" (echo WRONG_H4_HOST & exit /b 1)
-          node --check 05_MANAGER\Workforce\cross-store-auto-schedule-v1.js
-          if errorlevel 1 exit /b 1
-          node --test 09_QA\people-shift\workforce-529-auto-scheduler-contract.test.mjs
-          if errorlevel 1 exit /b 1
-          node 09_QA\people-shift\workforce-529-h4-browser-smoke.mjs
-          if errorlevel 1 exit /b 1
-          echo H4_529_READ_ONLY_SYNTHETIC_GATE_PASS
+          set -euo pipefail
+          node --check 05_MANAGER/Workforce/cross-store-auto-schedule-v1.js
+          node --test 09_QA/people-shift/workforce-529-auto-scheduler-contract.test.mjs
+      - name: Run isolated Chrome scheduling DOM fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [ -z "$CHROME" ]; then echo "CHROME_NOT_AVAILABLE"; exit 1; fi
+          url="file://$PWD/09_QA/people-shift/workforce-529-h4-browser-fixture.html"
+          "$CHROME" --headless --no-sandbox --no-first-run --disable-gpu --disable-dev-shm-usage \
+            --virtual-time-budget=4500 --dump-dom "$url" > /tmp/529-synthetic-dom.html
+          if ! grep -q '<output id="qa-result">H4_529_REAL_CHROME_SYNTHETIC_DOM_PASS</output>' /tmp/529-synthetic-dom.html; then
+            grep -o 'H4_529_FAIL:[^<]*' /tmp/529-synthetic-dom.html || true
+            echo "HOSTED_529_SYNTHETIC_DOM_FAILED"
+            exit 1
+          fi
+          echo "HOSTED_529_SYNTHETIC_DOM_PASS"
