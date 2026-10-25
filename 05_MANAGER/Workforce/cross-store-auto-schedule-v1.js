@@ -23,7 +23,7 @@ function applyBandClass(el,value){
 }
 const client=()=>{const ctx=window.MAGASIN_MANAGER_WORKFORCE_CONTEXT;if(!ctx?.client)throw Error('MANAGER_CONTEXT_NOT_READY');return ctx.client()};
 const scheduleApi=()=>window.MAGASIN_MANAGER_SCHEDULE_DRAFT;
-const state={week:null,stores:[],requirements:[],editing:false,editorCell:null,surface:'week',setupFocus:null,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],assignmentCount:null,globalDraftCount:null,globalOfficialCount:null,safeRerunAvailable:false,capabilitiesChecked:false};
+const state={week:null,stores:[],requirements:[],editing:false,editorCell:null,surface:'week',setupFocus:null,loading:false,busy:false,loaded:false,message:'',messageType:'',unconfiguredEmployeeCount:0,shortages:[],ft8Diagnostics:[],assignmentCount:null,globalDraftCount:null,globalOfficialCount:null,safeRerunAvailable:false,capabilitiesChecked:false};
 const mount=()=>document.getElementById('xstoreAutomationMount');
 const validBlock=r=>r.store_id&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&r.start_time&&r.end_time&&Number(r.target_headcount)>0;
 const configuredStoreIds=()=>new Set(state.requirements.filter(validBlock).map(r=>String(r.store_id)));
@@ -124,6 +124,11 @@ function ensureCss(){
 .xsa-status{margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--m-color-info-soft,#EFF6FF);color:#235DBA;font-size:12px;line-height:18px;white-space:pre-wrap}
 .xsa-status.ok{background:var(--m-color-success-soft,#ECFDF3);color:var(--m-color-success,#217653)}
 .xsa-status.error{background:var(--m-color-danger-soft,#FEF3F2);color:var(--m-color-danger,#A33D32)}
+.xsa-ft8-diagnostics{margin-top:12px;border:1px solid var(--m-border-default,#EAECF0);border-radius:10px;background:#fff;padding:12px;font-size:12px;line-height:18px}
+.xsa-ft8-diagnostics summary{cursor:pointer;font-weight:700;color:var(--m-color-neutral-950,#101828)}
+.xsa-ft8-diagnostics p{margin:10px 0 6px;color:var(--m-color-neutral-700,#344054)}
+.xsa-ft8-diagnostics ul{margin:6px 0 0;padding-left:20px;max-height:280px;overflow:auto}
+.xsa-ft8-diagnostics li{margin:0 0 7px}
 @media(max-width:1024px){
  .xsa-guide-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
  .xsa-guide-step:last-child{grid-column:1/-1}
@@ -268,6 +273,26 @@ function shortagesHtml(){
  return '<div class="xsa-status" role="status" aria-live="polite"><b>'+state.shortages.length+' khoảng thiếu người cần xử lý.</b><br>Đây là cảnh báo vận hành, không chặn duyệt hay phát hành. Mở chi nhánh tương ứng để xem khoảng thiếu và bổ sung nhân viên khi phù hợp.</div>';
 }
 
+function ft8DiagnosticsHtml(){
+ if(!state.ft8Diagnostics.length)return '';
+ const labels={
+  AVAILABILITY_UNDER_8H:'Đăng ký làm việc ít hơn 8 giờ trong khoảng này.',
+  DAILY_HOURS_CAP_UNDER_8H:'Giới hạn giờ làm mỗi ngày dưới 8 giờ.',
+  WEEKLY_HOURS_CAP_UNDER_8H:'Giới hạn giờ làm mỗi tuần dưới 8 giờ.',
+  EXISTING_SHIFT_OR_HOURS_CONFLICT:'Đã có ca làm hoặc ràng buộc giờ cần kiểm tra.',
+  NO_ELIGIBLE_8H_WINDOW_OR_EFFECTIVE_DEMAND:'Chưa có khoảng 8 giờ phù hợp với nhu cầu và điều kiện hiện tại.'
+ };
+ const items=state.ft8Diagnostics.map(d=>{
+  const store=state.stores.find(s=>String(s.id)===String(d.store_id));
+  const who=String(d.employee_name||'').trim()||('Mã NV '+String(d.user_id||'').slice(0,8));
+  const reason=labels[String(d.code||'')]||'Cần quản lý kiểm tra điều kiện xếp ca.';
+  return '<li><b>'+esc(who)+'</b> · '+esc(store?.code||'Chi nhánh')+' · '+esc(d.work_date||'')+' — '+esc(reason)+'</li>';
+ }).join('');
+ return '<details class="xsa-ft8-diagnostics"><summary>'+state.ft8Diagnostics.length+' trường hợp FT chưa được đề xuất ca 8 giờ — xem chi tiết</summary>'
+  +'<p>Đây là gợi ý từ lần đề xuất vừa chạy, không phải kết luận cuối cùng. Quản lý cần đối chiếu đăng ký, nhu cầu nhân sự và các ca hiện có trước khi chỉnh lịch.</p>'
+  +'<ul>'+items+'</ul></details>';
+}
+
 function render(){
  const m=mount();if(!m)return;
  ensureCss();
@@ -299,6 +324,7 @@ function render(){
   +workflowHtml(workflow,summary)
   +'<div class="xsa-week-note">Các số lượng phía trên chỉ là thông tin hỗ trợ. Hãy dùng <b>Việc cần làm tiếp theo</b> làm hành động chính cho trạng thái hiện tại.</div>'
   +shortagesHtml()
+  +ft8DiagnosticsHtml()
   +liveHtml
   +'</div>';
 
@@ -407,7 +433,7 @@ async function autoSchedule(){
  const complete=state.requirements.length>0&&state.stores.length>0&&configuredStoreCount()===state.stores.length;
  if(!priorityReady)return setMessage('Cần thiết lập ưu tiên cửa hàng cho tất cả nhân viên trước khi xếp lịch tự động.','error');
  if(!complete)return setMessage('Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động.','error');
- state.busy=true;state.shortages=[];state.assignmentCount=null;render();
+ state.busy=true;render();
  try{
   let result;
   try{result=await callAuto(false)}
@@ -425,6 +451,7 @@ async function autoSchedule(){
   state.assignmentCount=Number(result.assignment_count||0);
   state.globalDraftCount=state.assignmentCount;
   state.shortages=Array.isArray(result.shortages)?result.shortages:[];
+  state.ft8Diagnostics=Array.isArray(result.ft8_rejection_diagnostics)?result.ft8_rejection_diagnostics:[];
   state.message=state.shortages.length
    ? 'Hệ thống đã áp dụng nhu cầu hàng tuần và tạo lịch nháp nhưng còn '+state.shortages.length+' khung thiếu người. Thiếu người không chặn phát hành; quản lý vẫn cần kiểm tra xung đột an toàn và tiếp tục điều động sau phát hành theo quy trình chính thức.'
    : 'Hệ thống đã áp dụng nhu cầu hàng tuần vào tuần đang chọn và tạo lịch nháp. Quản lý hãy kiểm tra, chỉnh sửa trước khi duyệt và phát hành.';
@@ -532,7 +559,7 @@ async function onMaster(detail={}){
  const nextWeek=detail.week||null;
  const weekChanged=String(nextWeek||'')!==String(state.week||'');
  state.week=nextWeek;
- if(weekChanged){state.assignmentCount=null;state.shortages=[];state.message='';state.messageType='';state.globalDraftCount=null;state.globalOfficialCount=null}
+ if(weekChanged){state.assignmentCount=null;state.shortages=[];state.ft8Diagnostics=[];state.message='';state.messageType='';state.globalDraftCount=null;state.globalOfficialCount=null}
  state.stores=Array.isArray(detail.stores)?detail.stores.map(x=>({...x})):[];
  state.unconfiguredEmployeeCount=Number(detail.unconfiguredEmployeeCount||0);
  state.globalDraftCount=Number(detail.globalDraftCount||0);
@@ -552,7 +579,7 @@ document.addEventListener('magasin:xstore-master-rendered',e=>void onMaster(e.de
 document.addEventListener('magasin:manager-scheduling-ui-state',()=>{if(state.surface==='week')render()});
 window.MAGASIN_XSTORE_AUTO_SCHEDULE={
  refresh:loadRequirements,
- getState:()=>({...state,stores:state.stores.map(x=>({...x})),requirements:state.requirements.map(x=>({...x})),shortages:state.shortages.map(x=>({...x}))})
+ getState:()=>({...state,stores:state.stores.map(x=>({...x})),requirements:state.requirements.map(x=>({...x})),shortages:state.shortages.map(x=>({...x})),ft8Diagnostics:state.ft8Diagnostics.map(x=>({...x}))})
 };
 ensureCss();
 })();
