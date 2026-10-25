@@ -11,6 +11,7 @@ create table public.profiles(id uuid primary key,status text,role text);
 create table public.stores(id uuid primary key, status text);
 create table public.employee_store_priorities(employee_id uuid,store_id uuid,priority int);
 create table public.employee_employment_types_v1(employee_id uuid primary key,employment_type text);
+create table public.employee_constraints(user_id uuid primary key,status text,max_daily_hours numeric,max_weekly_hours numeric);
 create table public.employee_availability(user_id uuid,work_date date,availability_type text,start_time time,end_time time);
 create table public.schedule_generation_runs(
  id uuid primary key,store_id uuid,week_start date,week_end date,status text,
@@ -52,7 +53,8 @@ insert into public.employee_store_priorities values
 insert into public.employee_employment_types_v1 values
  ('22222222-2222-2222-2222-222222222222','FULL_TIME');
 insert into public.employee_availability values
- ('22222222-2222-2222-2222-222222222222','2026-10-26','AVAILABLE','06:00','14:00');
+ ('22222222-2222-2222-2222-222222222222','2026-10-26','AVAILABLE','06:00','14:00'),
+ ('22222222-2222-2222-2222-222222222222','2026-10-27','AVAILABLE','06:00','14:00');
 insert into public.schedule_generation_runs(id,store_id,week_start,week_end,status) values
  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
   '2026-10-26','2026-11-01','DRAFT');
@@ -136,6 +138,42 @@ declare
    and start_time='06:00' and end_time='14:00') then
   raise exception 'CONTIGUOUS_FT8_MISSING';
  end if;
+
+ -- The next day's valid availability cannot bypass a daily or weekly cap.
+ insert into public.employee_constraints(user_id,status,max_daily_hours,max_weekly_hours)
+ values('22222222-2222-2222-2222-222222222222','ACTIVE',7,0);
+ select coalesce(jsonb_agg(jsonb_build_object(
+  'id',a.id::text,'user_id',a.user_id::text,'store_id',a.store_id::text,
+  'work_date',a.work_date::text,'start_time',to_char(a.start_time,'HH24:MI'),
+  'end_time',to_char(a.end_time,'HH24:MI'),'note',coalesce(a.note,''),'status',a.status
+ ) order by a.id::text),'[]'::jsonb) into expected
+ from public.schedule_generation_assignments a
+ where a.generation_id='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+ begin
+  perform public.apply_schedule_v2_auto_proposals_533(
+   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',expected,array[]::uuid[],
+   jsonb_build_array(jsonb_build_object(
+    'user_id','22222222-2222-2222-2222-222222222222',
+    'store_id','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'work_date','2026-10-27','start_time','06:00','end_time','14:00',
+    'note','V2_STORE_SCOPED_PROPOSAL')),true);
+  raise exception 'DAILY_CAP_NOT_ENFORCED';
+ exception when others then
+  if sqlerrm<>'DAILY_HOURS_CAP_EXCEEDED' then raise; end if;
+ end;
+ update public.employee_constraints set max_daily_hours=0,max_weekly_hours=8;
+ begin
+  perform public.apply_schedule_v2_auto_proposals_533(
+   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',expected,array[]::uuid[],
+   jsonb_build_array(jsonb_build_object(
+    'user_id','22222222-2222-2222-2222-222222222222',
+    'store_id','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'work_date','2026-10-27','start_time','06:00','end_time','07:00',
+    'note','V2_STORE_SCOPED_PROPOSAL')),true);
+  raise exception 'WEEKLY_CAP_NOT_ENFORCED';
+ exception when others then
+  if sqlerrm<>'WEEKLY_HOURS_CAP_EXCEEDED' then raise; end if;
+ end;
  update public.schedule_generation_runs set status='PUBLISHED'
  where id='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
  begin
