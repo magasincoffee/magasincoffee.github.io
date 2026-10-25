@@ -1,7 +1,7 @@
 (()=>{'use strict';if(window.MAGASIN_SCHEDULING_V2_STORE_PLANNER)return;
 const fail=c=>{throw Error(c)},hm=x=>String(x||'').slice(0,5),min=x=>{const m=hm(x).match(/^(\d{2}):(\d{2})$/);return m?Number(m[1])*60+Number(m[2]):NaN},day=x=>String(x||'').slice(0,10);
 const offset=(week,n)=>{const d=new Date(week+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
-const sig=rows=>JSON.stringify(rows.map(r=>[String(r.id||''),String(r.user_id||''),day(r.work_date),hm(r.start_time),hm(r.end_time)]));
+const sig=rows=>JSON.stringify(rows.map(r=>[String(r.id||''),String(r.user_id||''),day(r.work_date),hm(r.start_time),hm(r.end_time),String(r.note||'')]));
 const ctx=()=>{const c=window.MAGASIN_SCHEDULING_V2_CONTEXT;if(!c?.actor||!c?.stores||!c?.client)fail('MANAGER_CONTEXT_NOT_READY');return c};
 const shape=r=>({user_id:r.user_id,store_id:r.store_id,work_date:day(r.work_date),start_time:hm(r.start_time),end_time:hm(r.end_time),skill_code:r.skill_code||null,skill_level:Number(r.skill_level||0),score:Number(r.score||0),warning:r.warning||null,note:r.note||'MANAGER_DIRECT_FROM_AVAILABILITY',status:'DRAFT'});
 const eligible=(p,storeId)=>String(p.profile_status||'').toUpperCase()==='ACTIVE'&&['STAFF','EMPLOYEE'].includes(String(p.employee_role||'').toUpperCase())&&Array.isArray(p.priority_store_ids)&&p.priority_store_ids.map(String).includes(String(storeId));
@@ -42,7 +42,16 @@ async function snapshot(storeId,weekStart){
 // within the same employment group if every scoped timestamp is verified.
 // No timestamps or unavailable staged RPC -> visible warning, draft only.
 function build(s){
- const existing=s.originals.map(shape),working=existing.map(r=>({...r})),proposed=[],shortages=[];
+ // V2 formerly appended new proposals without dropping obsolete V2-generated shifts.
+ // A generated shift whose whole interval is no longer registered is stale.
+ // Keep manual or unknown-origin shifts untouched.
+ const obsolete=s.originals.filter(r=>String(r.note||'')==='V2_STORE_SCOPED_PROPOSAL'&&!s.availability.some(a=>
+   String(a.user_id)===String(r.user_id)&&day(a.work_date)===day(r.work_date)
+   &&min(a.start_time)<=min(r.start_time)&&min(a.end_time)>=min(r.end_time)));
+ if(obsolete.some(r=>!r.id))fail('OBSOLETE_AUTO_ASSIGNMENT_ID_MISSING');
+ const obsoleteIds=new Set(obsolete.map(r=>String(r.id)));
+ const kept=s.originals.filter(r=>!obsoleteIds.has(String(r.id)));
+ const existing=kept.map(shape),working=existing.map(r=>({...r})),proposed=[],shortages=[];
  const needs=[...s.requirements].sort((a,b)=>Number(a.day_of_week)-Number(b.day_of_week)||min(a.start_time)-min(b.start_time));
  const byId=new Map(s.people.map(p=>[String(p.employee_id||p.user_id),p]));
  function allFor(uid,date){return [...working,...s.other].filter(r=>String(r.user_id)===String(uid)&&day(r.work_date)===date)}
@@ -57,22 +66,23 @@ function build(s){
  }
  if(missing>0)shortages.push({work_date:workDate,start_time:hm(r.start_time),end_time:hm(r.end_time),missing_headcount:missing,target_headcount:target});
  }
- return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,proposals:proposed,shortages,priorityStatus:'FT_FIRST_PT_SECOND',registrationOrderStatus:s.registrationVerified?'VERIFIED_CREATED_AT':'NOT_VERIFIED_MISSING_TIMESTAMP'};
+ return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,obsoleteAutoIds:[...obsoleteIds],obsoleteAutoCount:obsolete.length,proposals:proposed,shortages,priorityStatus:'FT_FIRST_PT_SECOND',registrationOrderStatus:s.registrationVerified?'VERIFIED_CREATED_AT':'NOT_VERIFIED_MISSING_TIMESTAMP'};
 }
 async function preview({storeId,weekStart}){const snapshotValue=await snapshot(storeId,weekStart);if(!snapshotValue.requirements.length)fail('STORE_DEMAND_NOT_CONFIGURED');return build(snapshotValue)}
 async function apply(previewValue,{confirmed=false}={}){if(window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED!==true||!new URLSearchParams(window.location.search).has('auto-preview'))fail('AUTO_PREVIEW_DISABLED');if(confirmed!==true)fail('CONFIRMATION_REQUIRED');
  const s=await snapshot(previewValue?.storeId,previewValue?.weekStart);const latest=build(s);
- if(latest.originalSignature!==previewValue.originalSignature||latest.generationId!==previewValue.generationId||JSON.stringify(latest.proposals)!==JSON.stringify(previewValue.proposals))fail('PLAN_STALE_REPREVIEW_REQUIRED');
- if(!latest.proposals.length)return {saved:false,added:0,shortages:latest.shortages,reason:'NO_ELIGIBLE_PROPOSALS'};
+ if(latest.originalSignature!==previewValue.originalSignature||latest.generationId!==previewValue.generationId||JSON.stringify(latest.proposals)!==JSON.stringify(previewValue.proposals)||JSON.stringify(latest.obsoleteAutoIds)!==JSON.stringify(previewValue.obsoleteAutoIds))fail('PLAN_STALE_REPREVIEW_REQUIRED');
+ if(!latest.proposals.length&&!latest.obsoleteAutoCount)return {saved:false,added:0,removed:0,shortages:latest.shortages,reason:'NO_CHANGES_REQUIRED'};
  let generationId=s.gen?.id;
  if(!generationId){const created=await s.rpc('create_schedule_generation',{p_store_id:s.storeId,p_week_start:s.week,p_algorithm_version:'V2_STORE_SCOPED_V1'});if(created.error)throw created.error;generationId=created.data;if(!generationId)fail('DRAFT_CREATION_FAILED')}
  const current=await s.rpc('get_schedule_generation_assignments',{p_generation_id:generationId});if(current.error)throw current.error;
  const rows=Array.isArray(current.data)?current.data:fail('DRAFT_DATA_INVALID');
  if(sig(rows)!==previewValue.originalSignature)fail('DRAFT_CHANGED_BEFORE_SAVE');
- const payload=[...rows.map(shape),...latest.proposals];
+ const obsolete=new Set(latest.obsoleteAutoIds);
+ const payload=[...rows.filter(r=>!obsolete.has(String(r.id))).map(shape),...latest.proposals];
  const save=await s.rpc('replace_schedule_generation_assignments',{p_generation_id:generationId,p_assignments:payload});if(save.error)throw save.error;
  const validation=await s.rpc('validate_schedule_generation_v1',{p_generation_id:generationId});if(validation.error)throw validation.error;
- return {saved:true,generationId,added:latest.proposals.length,shortages:latest.shortages,valid:validation.data?.valid===true,violations:validation.data?.violations||[],warnings:validation.data?.warnings||[]}
+ return {saved:true,generationId,added:latest.proposals.length,removed:latest.obsoleteAutoCount,shortages:latest.shortages,valid:validation.data?.valid===true,violations:validation.data?.violations||[],warnings:validation.data?.warnings||[]}
 }
 window.MAGASIN_SCHEDULING_V2_STORE_PLANNER=Object.freeze({preview,apply});
 })();
