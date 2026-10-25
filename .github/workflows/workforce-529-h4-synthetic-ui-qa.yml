@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
+      - 'supabase/migrations/20261024212000_workforce_529_auto_schedule_safe_ft8.sql'
+      - '09_QA/people-shift/workforce-529-auto-scheduler-contract.test.mjs'
       - '.github/workflows/workforce-529-h4-synthetic-ui-qa.yml'
       - '09_QA/people-shift/workforce-529-h4-browser-fixture.html'
       - '09_QA/people-shift/workforce-529-h4-browser-smoke.mjs'
