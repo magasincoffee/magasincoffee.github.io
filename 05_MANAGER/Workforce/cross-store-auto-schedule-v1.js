@@ -208,6 +208,9 @@ function workflowModel(priorityReady,staffingReady){
  }else if(stage==='PUBLISHED'){
   model={...model,current:5,doneAll:true,action:'official',label:'Mở lịch chính thức',title:'Lịch tuần đã phát hành',reason:'Quy trình tuần này đã hoàn tất. Bạn có thể mở lịch chính thức để kiểm tra.',disabled:false};
  }
+ if(model.action==='auto'&&!state.safeRerunAvailable){
+  model={...model,action:'blocked',label:'Chưa thể tạo lịch',title:'Đang chờ phiên bản xếp lịch an toàn',reason:'Chưa xác minh được backend #529. Hệ thống sẽ không gọi thuật toán cũ để tạo ca nháp.',disabled:true};
+ }
  const busy=state.loading||state.busy||scheduling.busy===true;
  if(busy)model={...model,disabled:true,label:'Đang cập nhật…',reason:'Hệ thống đang xử lý dữ liệu. Thao tác tiếp theo sẽ mở lại khi hoàn tất.'};
  return model;
@@ -429,7 +432,7 @@ async function safeRerunCapability(){
 }
 
 async function callAuto(replaceExisting){
- const q=await client().rpc(replaceExisting?'auto_generate_cross_store_schedule_529':'auto_generate_cross_store_schedule_v1',{
+ const q=await client().rpc('auto_generate_cross_store_schedule_529',{
   p_week_start:state.week,
   p_replace_existing:!!replaceExisting,
   p_algorithm_version:'XSTORE_GLOBAL_RECURRING_V1'
@@ -447,13 +450,14 @@ async function autoSchedule(){
  if(!complete)return setMessage('Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động.','error');
  state.busy=true;render();
  try{
+  // Fail closed for every generation, including the FIRST click, before any writer.
+  if(!(await safeRerunCapability()))throw Error('SAFE_RERUN_VERSION_REQUIRED');
   let result;
   try{result=await callAuto(false)}
   catch(e){
    const raw=String(e?.message||e?.code||e||'');
    if(!raw.includes('EXISTING_DRAFT_REQUIRES_CONFIRMATION'))throw e;
-   // Fail closed on old backends: V1 replaceExisting deletes manual shifts.
-   // Recheck the backend capability immediately before confirming any rerun.
+   // Recheck the safe backend capability immediately before rerunning.
    if(!(await safeRerunCapability()))throw Error('SAFE_RERUN_VERSION_REQUIRED');
    if(!confirm('Tính lại đề xuất dựa trên đăng ký và ưu tiên chi nhánh mới nhất? Chỉ các ca do thuật toán tạo được thay thế. Ca xếp thủ công và lịch đã phát hành vẫn giữ nguyên.')){
     state.message='Đã giữ nguyên bản nháp hiện tại.';state.messageType='';return;
@@ -473,7 +477,7 @@ async function autoSchedule(){
   setTimeout(()=>window.MAGASIN_CROSS_STORE_MASTER?.refresh?.(),0);
  }catch(e){
   const raw=String(e?.message||e?.code||e||'UNKNOWN');
-  const friendly=raw.includes('SAFE_RERUN_VERSION_REQUIRED')?'Hệ thống chưa xác nhận phiên bản xếp lịch an toàn. Giữ nguyên ca nháp; vui lòng kiểm tra cập nhật hệ thống trước khi đề xuất lại.'
+  const friendly=raw.includes('SAFE_RERUN_VERSION_REQUIRED')?'Hệ thống chưa xác nhận backend #529 an toàn. Giữ nguyên ca nháp; không chạy thuật toán cũ. Vui lòng kiểm tra cập nhật hệ thống.'
    :raw.includes('STAFFING_REQUIREMENT_INCOMPLETE')?'Chưa cấu hình nhu cầu nhân sự cho đủ các cửa hàng.'
    :raw.includes('OFFICIAL_WEEK_ALREADY_EXISTS')?'Tuần này đã có lịch chính thức; hệ thống không được ghi đè.'
    :raw.includes('NON_DRAFT_GENERATION_EXISTS')?'Có lịch đã duyệt hoặc phát hành trong tuần; hãy xử lý lịch hiện tại trước khi xếp tự động.'
