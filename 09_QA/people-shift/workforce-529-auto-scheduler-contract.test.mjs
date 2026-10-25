@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const sql=fs.readFileSync('supabase/migrations/20261024212000_workforce_529_auto_schedule_safe_ft8.sql','utf8');
+const sql=fs.readFileSync('supabase/migrations/20261025092922_workforce_529_versioned_ft8_safe_rerun.sql','utf8');
 const ui=fs.readFileSync('05_MANAGER/Workforce/cross-store-auto-schedule-v1.js','utf8');
 test('#529: reruns replace ONLY known auto-generated rows; protect manual/published',()=>{
  assert.match(sql,/delete from public\.schedule_generation_assignments\s+where generation_id=v_generation\s+and note in \('AUTO_XSTORE_INTERVAL_COMPOSED_V1','AUTO_XSTORE_FT8_529_V1'\)/i);
