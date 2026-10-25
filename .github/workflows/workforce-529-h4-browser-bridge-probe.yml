@@ -1,8 +1,6 @@
 name: Workforce #529 H4 QA Browser Bridge Probe
+# Optional legacy H4 task. Manual dispatch only; no auto-run on release.
 on:
-  push:
-    paths:
-      - '.github/workflows/workforce-529-h4-browser-bridge-probe.yml'
   workflow_dispatch:
 permissions:
   contents: read
