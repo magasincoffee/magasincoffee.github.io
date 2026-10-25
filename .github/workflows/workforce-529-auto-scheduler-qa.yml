@@ -226,7 +226,29 @@ jobs:
           SQL
           psql -v ON_ERROR_STOP=1 -f 07_DATABASE/migrations/20261004220500_xstore_013_continuous_coverage_shortage_v1.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261021163000_workforce_weekly_staffing_overrides_v1.sql
+          # Simulate an already-installed live V1: #529 MUST preserve its body.
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create or replace function public.auto_generate_cross_store_schedule_v1(
+            p_week_start date,p_replace_existing boolean default false,
+            p_algorithm_version text default 'LEGACY_QA_SENTINEL'
+          ) returns jsonb language sql as $legacy$
+            select '{"legacy":"unchanged"}'::jsonb
+          $legacy$;
+          SQL
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261024212000_workforce_529_auto_schedule_safe_ft8.sql
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          do $test$
+          begin
+            if public.auto_generate_cross_store_schedule_v1('2026-10-05',false)->>'legacy'<>'unchanged' then
+              raise exception 'LEGACY_PRODUCTION_SCHEDULER_WAS_OVERWRITTEN';
+            end if;
+            if to_regprocedure('public.auto_generate_cross_store_schedule_529_core(date,boolean,text)') is null then
+              raise exception 'VERSIONED_529_CORE_MISSING';
+            end if;
+            raise notice '529_VERSIONED_MIGRATION_LEGACY_UNCHANGED=PASS';
+          end
+          $test$;
+          SQL
 
       - name: Prove adjacent split Availability composes one continuous requirement
         shell: bash
@@ -264,7 +286,7 @@ jobs:
           do $test$
           declare v_result jsonb; v_count integer;
           begin
-            v_result:=public.auto_generate_cross_store_schedule_v1(date '2026-10-05',true,'XSTORE_014_QA');
+            v_result:=public.auto_generate_cross_store_schedule_529(date '2026-10-05',true,'XSTORE_014_QA');
             if (v_result->>'shortage_count')::integer<>0 then
               raise exception 'SPLIT_COVERAGE_REPORTED_SHORTAGE: %',v_result;
             end if;
@@ -300,7 +322,7 @@ jobs:
           do $test$
           declare result jsonb; n integer;
           begin
-            result:=public.auto_generate_cross_store_schedule_v1('2026-10-05',false,'529_QA');
+            result:=public.auto_generate_cross_store_schedule_529('2026-10-05',false,'529_QA');
             select count(*) into n from public.schedule_generation_assignments
             where user_id='30000000-0000-0000-0000-000000000001'
               and start_time='07:00' and end_time='15:00'
@@ -335,7 +357,7 @@ jobs:
           do $test$
           declare result jsonb;
           begin
-            result:=public.auto_generate_cross_store_schedule_v1('2026-10-05',false,'529_QA');
+            result:=public.auto_generate_cross_store_schedule_529('2026-10-05',false,'529_QA');
             if not exists (
               select 1 from jsonb_array_elements(result->'ft8_rejection_diagnostics') d
               where d->>'user_id'='30000000-0000-0000-0000-000000000001'
@@ -365,7 +387,7 @@ jobs:
           do $test$
           declare result jsonb;
           begin
-            result:=public.auto_generate_cross_store_schedule_v1('2026-10-05',false,'529_QA');
+            result:=public.auto_generate_cross_store_schedule_529('2026-10-05',false,'529_QA');
             if (result->>'assignment_count')::integer<>0 or (result->>'shortage_count')::integer<>1 then
               raise exception 'UNCLASSIFIED_STAFF_WAS_AUTO_ASSIGNED: %',result;
             end if;
@@ -380,7 +402,7 @@ jobs:
           do $test$
           declare result jsonb;
           begin
-            result:=public.auto_generate_cross_store_schedule_v1('2026-10-05',true,'529_QA');
+            result:=public.auto_generate_cross_store_schedule_529('2026-10-05',true,'529_QA');
             if (result->>'assignment_count')::integer<>1 or (result->>'shortage_count')::integer<>0 then
               raise exception 'EXPLICIT_PART_TIME_NOT_USED: %',result;
             end if;
@@ -429,7 +451,7 @@ jobs:
           do $test$
           declare v_result jsonb; v_gap jsonb; v_count integer;
           begin
-            v_result:=public.auto_generate_cross_store_schedule_v1(date '2026-10-05',true,'XSTORE_014_QA');
+            v_result:=public.auto_generate_cross_store_schedule_529(date '2026-10-05',true,'XSTORE_014_QA');
             if (v_result->>'shortage_count')::integer<>1 then
               raise exception 'GAP_COUNT_WRONG: %',v_result;
             end if;
@@ -489,7 +511,7 @@ jobs:
           do $test$
           declare v_result jsonb; v_gap jsonb; v_cn2 integer;
           begin
-            v_result:=public.auto_generate_cross_store_schedule_v1(date '2026-10-05',true,'XSTORE_014_QA');
+            v_result:=public.auto_generate_cross_store_schedule_529(date '2026-10-05',true,'XSTORE_014_QA');
             if (v_result->>'shortage_count')::integer<>2 then
               raise exception 'EXPECTED_TWO_EXACT_SHORTAGES: %',v_result;
             end if;
@@ -544,7 +566,7 @@ jobs:
           do $test$
           declare out jsonb; n integer;
           begin
-            out:=public.auto_generate_cross_store_schedule_v1('2026-10-05',false,'529_QA');
+            out:=public.auto_generate_cross_store_schedule_529('2026-10-05',false,'529_QA');
             if (out->>'ft8_full_length_assignment_count')::integer<>1 then raise exception 'FT8_NOT_PRIORITIZED: %',out; end if;
             select count(*) into n from public.schedule_generation_assignments
              where user_id='30000000-0000-0000-0000-000000000001' and start_time='06:00' and end_time='14:00';
@@ -560,7 +582,7 @@ jobs:
           do $test$
           declare out jsonb; n integer;
           begin
-            out:=public.auto_generate_cross_store_schedule_v1('2026-10-05',true,'529_QA');
+            out:=public.auto_generate_cross_store_schedule_529('2026-10-05',true,'529_QA');
             if (out->>'ft8_full_length_assignment_count')::integer<>0 then raise exception 'FT8_IGNORED_ZERO_OVERRIDE: %',out; end if;
             select count(*) into n from public.schedule_generation_assignments where start_time='06:00' and end_time='12:00';
             if n<>1 then raise exception 'FT6_VALID_WHEN_NO_12_14_DEMAND'; end if;
@@ -591,7 +613,7 @@ jobs:
           do $test$
           declare g uuid;
           begin
-           perform public.auto_generate_cross_store_schedule_v1('2026-10-05',false,'529_QA');
+           perform public.auto_generate_cross_store_schedule_529('2026-10-05',false,'529_QA');
            select id into g from public.schedule_generation_runs where week_start='2026-10-05' limit 1;
            insert into public.schedule_generation_assignments(generation_id,user_id,store_id,work_date,start_time,end_time,status,note)
            values(g,'30000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000001','2026-10-06','06:00','12:00','DRAFT','MANAGER_DIRECT_ASSIGNMENT');
@@ -602,7 +624,7 @@ jobs:
           do $test$
           declare out jsonb; n integer;
           begin
-            out:=public.auto_generate_cross_store_schedule_v1('2026-10-05',true,'529_QA');
+            out:=public.auto_generate_cross_store_schedule_529('2026-10-05',true,'529_QA');
             select count(*) into n from public.schedule_generation_assignments where start_time='12:00' and end_time='17:00';
             if n<>0 then raise exception 'STALE_AVAILABILITY_12_17_RETAINED'; end if;
             select count(*) into n from public.schedule_generation_assignments
@@ -640,7 +662,7 @@ jobs:
           do $test$
           declare n integer;
           begin
-            perform public.auto_generate_cross_store_schedule_v1('2026-10-05',false,'529_QA');
+            perform public.auto_generate_cross_store_schedule_529('2026-10-05',false,'529_QA');
             select count(*) into n from public.schedule_generation_assignments where store_id='20000000-0000-0000-0000-000000000001';
             if n<>1 then raise exception 'EXPECTED_INITIAL_CN1_FT'; end if;
           end
@@ -650,7 +672,7 @@ jobs:
           do $test$
           declare n integer;
           begin
-            perform public.auto_generate_cross_store_schedule_v1('2026-10-05',true,'529_QA');
+            perform public.auto_generate_cross_store_schedule_529('2026-10-05',true,'529_QA');
             select count(*) into n from public.schedule_generation_assignments where store_id='20000000-0000-0000-0000-000000000002';
             if n<>1 then raise exception 'LATEST_CN2_PRIORITY_IGNORED'; end if;
             select count(*) into n from public.schedule_generation_assignments where store_id='20000000-0000-0000-0000-000000000001';
@@ -684,7 +706,7 @@ jobs:
           do $test$
           declare cn1 integer; cn2 integer;
           begin
-            perform public.auto_generate_cross_store_schedule_v1('2026-10-05',false,'529_PT_PRIORITY_QA');
+            perform public.auto_generate_cross_store_schedule_529('2026-10-05',false,'529_PT_PRIORITY_QA');
             select count(*) into cn1 from public.schedule_generation_assignments
               where store_id='20000000-0000-0000-0000-000000000001';
             select count(*) into cn2 from public.schedule_generation_assignments
@@ -698,7 +720,7 @@ jobs:
           do $test$
           declare cn1 integer; cn2 integer; result jsonb;
           begin
-            result:=public.auto_generate_cross_store_schedule_v1('2026-10-05',true,'529_PT_PRIORITY_QA');
+            result:=public.auto_generate_cross_store_schedule_529('2026-10-05',true,'529_PT_PRIORITY_QA');
             select count(*) into cn1 from public.schedule_generation_assignments
               where store_id='20000000-0000-0000-0000-000000000001';
             select count(*) into cn2 from public.schedule_generation_assignments
@@ -747,7 +769,7 @@ jobs:
           do $test$
           declare result jsonb; cn3 integer; cn4 integer; g uuid;
           begin
-            result:=public.auto_generate_cross_store_schedule_v1('2026-10-05',false,'529_FOUR_STORE_QA');
+            result:=public.auto_generate_cross_store_schedule_529('2026-10-05',false,'529_FOUR_STORE_QA');
             select count(*) into cn3 from public.schedule_generation_assignments where store_id='20000000-0000-0000-0000-000000000003';
             select count(*) into cn4 from public.schedule_generation_assignments where store_id='20000000-0000-0000-0000-000000000004';
             if cn3<>1 or cn4<>1 or (result->>'shortage_count')::integer<>2
@@ -776,8 +798,8 @@ jobs:
           declare result jsonb; cn1 integer; cn2 integer; cn3 integer; cn4 integer;
                   generated integer; manual_count integer; overlapping integer;
           begin
-            perform public.auto_generate_cross_store_schedule_v1('2026-10-05',true,'529_FOUR_STORE_QA');
-            result:=public.auto_generate_cross_store_schedule_v1('2026-10-05',true,'529_FOUR_STORE_QA');
+            perform public.auto_generate_cross_store_schedule_529('2026-10-05',true,'529_FOUR_STORE_QA');
+            result:=public.auto_generate_cross_store_schedule_529('2026-10-05',true,'529_FOUR_STORE_QA');
             select count(*) into cn1 from public.schedule_generation_assignments
               where store_id='20000000-0000-0000-0000-000000000001' and work_date='2026-10-05';
             select count(*) into cn2 from public.schedule_generation_assignments
