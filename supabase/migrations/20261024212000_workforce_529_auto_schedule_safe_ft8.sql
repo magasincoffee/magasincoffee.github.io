@@ -146,7 +146,7 @@ begin
   -- effective demand. This prevents overstaffing to force an 8h shift.
   -- Other FT availability intervals are still considered by the generic pass.
   for c in
-    select ea.user_id, ea.work_date, ea.start_time, ea.end_time,
+    select ea.user_id, ea.work_date, candidate.start_time, ea.end_time,
            esp.store_id, esp.priority,
            coalesce(ec.max_daily_hours,0) max_daily_hours,
            coalesce(ec.max_weekly_hours,0) max_weekly_hours
@@ -158,14 +158,19 @@ begin
     join public.stores s on s.id=esp.store_id and s.status='ACTIVE'
     left join public.employee_constraints ec
       on ec.user_id=ea.user_id and ec.status='ACTIVE'
+    -- Search all half-hour aligned 8h windows, not only the availability start.
+    cross join lateral generate_series(
+      ea.work_date + greatest(ea.start_time,time '05:00'),
+      ea.work_date + least(ea.end_time - interval '8 hours',time '14:00'),
+      interval '30 minutes'
+    ) as candidate(start_ts)
+    cross join lateral (select candidate.start_ts::time as start_time) candidate
     where ea.work_date between p_week_start and p_week_start+6
       and ea.availability_type in ('AVAILABLE','PREFERRED')
       and upper(coalesce(p.role,'')) in ('STAFF','EMPLOYEE')
       and public.can_access_store(esp.store_id)
-      and ea.start_time>=time '05:00'
-      and ea.start_time<=time '14:00'
       and ea.end_time >= ea.start_time + interval '8 hours'
-      and extract(minute from ea.start_time) in (0,30)
+      and extract(minute from candidate.start_time) in (0,30)
     order by ea.work_date,esp.priority,ea.start_time,ea.user_id,esp.store_id,ea.id
   loop
     v_candidate_start := c.start_time;
@@ -224,8 +229,8 @@ begin
     for g in
       select gs.ts::time as slot_start,(gs.ts+interval '30 minutes')::time as slot_end
       from generate_series(
-        c.work_date + c.start_time,
-        c.work_date + c.start_time + interval '7 hours 30 minutes',
+        c.work_date + v_candidate_start,
+        c.work_date + v_candidate_start + interval '7 hours 30 minutes',
         interval '30 minutes'
       ) gs(ts)
     loop
