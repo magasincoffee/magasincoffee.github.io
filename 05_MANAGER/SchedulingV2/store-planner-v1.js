@@ -52,22 +52,41 @@ function build(s){
  const obsoleteIds=new Set(obsolete.map(r=>String(r.id)));
  const kept=s.originals.filter(r=>!obsoleteIds.has(String(r.id)));
  const manualStoreExceptions=kept.filter(r=>String(r.note||'')!=='V2_STORE_SCOPED_PROPOSAL'&&!s.people.some(p=>String(p.employee_id||p.user_id)===String(r.user_id)));
- const existing=kept.map(shape),working=existing.map(r=>({...r})),proposed=[],shortages=[];
+ // Reconsider every generated V2 shift on rerun: short PT/FT fragments must not
+ // pre-empt an eligible continuous FT shift. Manual shifts remain immutable.
+ for(const row of kept){if(String(row.note||'')==='V2_STORE_SCOPED_PROPOSAL')obsoleteIds.add(String(row.id));}
+ const preserved=kept.filter(r=>String(r.note||'')!=='V2_STORE_SCOPED_PROPOSAL');
+ const existing=preserved.map(shape),working=existing.map(r=>({...r})),proposed=[],shortages=[];
  const needs=[...s.requirements].sort((a,b)=>Number(a.day_of_week)-Number(b.day_of_week)||min(a.start_time)-min(b.start_time));
  const byId=new Map(s.people.map(p=>[String(p.employee_id||p.user_id),p]));
+ // Reserve FT 8h first, using half-hour demand coverage across adjacent windows.
+ for(let d=0;d<7;d++){const date=offset(s.week,d);
+  const staff=s.availability.filter(a=>day(a.work_date)===date).map(a=>({a,p:byId.get(String(a.user_id))})).filter(x=>x.p?.employment_type==='FULL_TIME').sort((x,y)=>x.p.priority_store_ids.indexOf(s.storeId)-y.p.priority_store_ids.indexOf(s.storeId)||String(x.a.user_id).localeCompare(String(y.a.user_id)));
+  for(const {a,p} of staff){const uid=String(a.user_id),lo=min(a.start_time),hi=min(a.end_time);if(hi-lo<480||allFor(uid,date).length)continue;
+   for(let start=Math.max(300,Math.ceil(lo/30)*30);start+480<=Math.min(1320,hi);start+=30){
+    let ok=true;for(let t=start;t<start+480;t+=30){const required=Math.max(0,...s.requirements.filter(r=>Number(r.day_of_week)===d+1&&min(r.start_time)<=t&&min(r.end_time)>=t+30).map(r=>Number(r.target_headcount)||0));
+     const covered=new Set(working.filter(x=>day(x.work_date)===date&&min(x.start_time)<t+30&&min(x.end_time)>t).map(x=>String(x.user_id))).size;
+     if(required<=covered){ok=false;break;}}
+    if(!ok)continue;
+    const time=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
+    const row=shape({user_id:uid,store_id:s.storeId,work_date:date,start_time:time(start),end_time:time(start+480),note:'V2_STORE_SCOPED_PROPOSAL'});
+    proposed.push(row);working.push(row);break;
+   }
+  }
+ }
  function allFor(uid,date){return [...working,...s.other].filter(r=>String(r.user_id)===String(uid)&&day(r.work_date)===date)}
  for(const r of needs){const workDate=offset(s.week,Number(r.day_of_week)-1),start=min(r.start_time),end=min(r.end_time),target=Math.floor(Number(r.target_headcount));
  if(!Number.isFinite(start)||!Number.isFinite(end)||target<1)continue;
  const covering=new Set(working.filter(a=>day(a.work_date)===workDate&&min(a.start_time)<=start&&min(a.end_time)>=end).map(a=>String(a.user_id)));
  let missing=Math.max(0,target-covering.size);
  while(missing>0){
- const candidates=s.availability.filter(a=>day(a.work_date)===workDate&&min(a.start_time)<=start&&min(a.end_time)>=end).map(a=>{const uid=String(a.user_id||''),p=byId.get(uid);if(!p||covering.has(uid))return null;const shifts=allFor(uid,workDate);if(shifts.length>=2||shifts.some(x=>min(x.start_time)<end&&start<min(x.end_time)))return null;const currentWeek=working.filter(x=>String(x.user_id)===uid).length;const priority=p.priority_store_ids.map(String).indexOf(String(s.storeId));return {uid,p,employmentRank:String(p.employment_type)==='FULL_TIME'?0:String(p.employment_type)==='PART_TIME'?1:2,registeredAt:s.registeredAt.get(String(a.availability_id||'')),prefer:String(a.availability_type).toUpperCase()==='PREFERRED'?0:1,priority,currentWeek}}).filter(Boolean).sort((a,b)=>a.employmentRank-b.employmentRank||(s.registrationVerified?a.registeredAt-b.registeredAt:0)||a.prefer-b.prefer||a.currentWeek-b.currentWeek||a.priority-b.priority||a.uid.localeCompare(b.uid));
+ const candidates=s.availability.filter(a=>day(a.work_date)===workDate&&min(a.start_time)<=start&&min(a.end_time)>=end).map(a=>{const uid=String(a.user_id||''),p=byId.get(uid);if(!p||covering.has(uid))return null;const shifts=allFor(uid,workDate);if(shifts.length>=2||shifts.some(x=>min(x.start_time)<end&&start<min(x.end_time)))return null;const currentWeek=working.filter(x=>String(x.user_id)===uid).reduce((n,x)=>n+min(x.end_time)-min(x.start_time),0);const priority=p.priority_store_ids.map(String).indexOf(String(s.storeId));return {uid,p,employmentRank:String(p.employment_type)==='FULL_TIME'?0:String(p.employment_type)==='PART_TIME'?1:2,registeredAt:s.registeredAt.get(String(a.availability_id||'')),prefer:String(a.availability_type).toUpperCase()==='PREFERRED'?0:1,priority,currentWeek}}).filter(Boolean).sort((a,b)=>a.employmentRank-b.employmentRank||a.priority-b.priority||a.prefer-b.prefer||a.currentWeek-b.currentWeek||(s.registrationVerified?a.registeredAt-b.registeredAt:0)||a.uid.localeCompare(b.uid));
  if(!candidates.length)break;
  const {uid}=candidates[0];const newRow=shape({user_id:uid,store_id:s.storeId,work_date:workDate,start_time:hm(r.start_time),end_time:hm(r.end_time),note:'V2_STORE_SCOPED_PROPOSAL'});proposed.push(newRow);working.push(newRow);covering.add(uid);missing--;
  }
  if(missing>0)shortages.push({work_date:workDate,start_time:hm(r.start_time),end_time:hm(r.end_time),missing_headcount:missing,target_headcount:target});
  }
- return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,obsoleteAutoIds:[...obsoleteIds],obsoleteAutoCount:obsolete.length,manualStoreExceptionCount:manualStoreExceptions.length,proposals:proposed,shortages,priorityStatus:'FT_FIRST_PT_SECOND',registrationOrderStatus:s.registrationVerified?'VERIFIED_CREATED_AT':'NOT_VERIFIED_MISSING_TIMESTAMP'};
+ return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,obsoleteAutoIds:[...obsoleteIds],obsoleteAutoCount:obsoleteIds.size,manualStoreExceptionCount:manualStoreExceptions.length,proposals:proposed,shortages,priorityStatus:'FT_FIRST_PT_SECOND',registrationOrderStatus:s.registrationVerified?'VERIFIED_CREATED_AT':'NOT_VERIFIED_MISSING_TIMESTAMP'};
 }
 async function preview({storeId,weekStart}){const snapshotValue=await snapshot(storeId,weekStart);if(!snapshotValue.requirements.length)fail('STORE_DEMAND_NOT_CONFIGURED');return build(snapshotValue)}
 async function apply(previewValue,{confirmed=false}={}){if(window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED!==true||!new URLSearchParams(window.location.search).has('auto-preview'))fail('AUTO_PREVIEW_DISABLED');if(confirmed!==true)fail('CONFIRMATION_REQUIRED');
