@@ -36,7 +36,7 @@ async function snapshot(storeId,weekStart){
  const gen=active[0]||null;let originals=[];
  if(gen){const q=await rpc('get_schedule_generation_assignments',{p_generation_id:gen.id});if(q.error)throw q.error;originals=Array.isArray(q.data)?q.data:fail('DRAFT_DATA_INVALID')}
  if(originals.some(r=>String(r.store_id||storeId)!==String(storeId)))fail('STORE_MISMATCH');
- return {c,rpc,week,storeId,gen,originals,requirements:requirements.filter(r=>String(r.store_id)===String(storeId)&&day(r.work_date)>=week&&day(r.work_date)<=offset(week,6)&&Number(r.target_headcount)>0&&min(r.end_time)>min(r.start_time)).map(r=>({...r,day_of_week:(new Date(day(r.work_date)+'T12:00:00Z').getUTCDay()||7)})),people:profiles.filter(p=>eligible(p,storeId)).map(p=>({...p,employment_type:employmentById.get(String(p.employee_id||p.user_id))||'UNKNOWN'})),availability:activeAvailability,registeredAt,registrationVerified,other:plan.filter(r=>!gen||String(r.generation_id||'')!==String(gen.id))}
+ return {c,rpc,week,storeId,gen,originals,demandConfigured:requirements.some(r=>String(r.store_id)===String(storeId)&&day(r.work_date)>=week&&day(r.work_date)<=offset(week,6)),requirements:requirements.filter(r=>String(r.store_id)===String(storeId)&&day(r.work_date)>=week&&day(r.work_date)<=offset(week,6)&&Number(r.target_headcount)>0&&min(r.end_time)>min(r.start_time)).map(r=>({...r,day_of_week:(new Date(day(r.work_date)+'T12:00:00Z').getUTCDay()||7)})),people:profiles.filter(p=>eligible(p,storeId)).map(p=>({...p,employment_type:employmentById.get(String(p.employee_id||p.user_id))||'UNKNOWN'})),availability:activeAvailability,registeredAt,registrationVerified,other:plan.filter(r=>!gen||String(r.generation_id||'')!==String(gen.id))}
 }
 // Candidate priority: FT before PT, then earlier immutable availability.created_at
 // within the same employment group if every scoped timestamp is verified.
@@ -88,7 +88,7 @@ function build(s){
  }
  return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,obsoleteAutoIds:[...obsoleteIds],obsoleteAutoCount:obsoleteIds.size,manualStoreExceptionCount:manualStoreExceptions.length,proposals:proposed,shortages,priorityStatus:'FT_FIRST_PT_SECOND',registrationOrderStatus:s.registrationVerified?'VERIFIED_CREATED_AT':'NOT_VERIFIED_MISSING_TIMESTAMP'};
 }
-async function preview({storeId,weekStart}){const snapshotValue=await snapshot(storeId,weekStart);if(!snapshotValue.requirements.length)fail('STORE_DEMAND_NOT_CONFIGURED');return build(snapshotValue)}
+async function preview({storeId,weekStart}){const snapshotValue=await snapshot(storeId,weekStart);if(!snapshotValue.demandConfigured)fail('STORE_DEMAND_NOT_CONFIGURED');return build(snapshotValue)}
 async function apply(previewValue,{confirmed=false}={}){if(window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED!==true||!new URLSearchParams(window.location.search).has('auto-preview'))fail('AUTO_PREVIEW_DISABLED');if(confirmed!==true)fail('CONFIRMATION_REQUIRED');
  const s=await snapshot(previewValue?.storeId,previewValue?.weekStart);const latest=build(s);
  if(latest.originalSignature!==previewValue.originalSignature||latest.generationId!==previewValue.generationId||JSON.stringify(latest.proposals)!==JSON.stringify(previewValue.proposals)||JSON.stringify(latest.obsoleteAutoIds)!==JSON.stringify(previewValue.obsoleteAutoIds))fail('PLAN_STALE_REPREVIEW_REQUIRED');
