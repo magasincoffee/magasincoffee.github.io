@@ -51,6 +51,7 @@ function build(s){
  if(obsolete.some(r=>!r.id))fail('OBSOLETE_AUTO_ASSIGNMENT_ID_MISSING');
  const obsoleteIds=new Set(obsolete.map(r=>String(r.id)));
  const kept=s.originals.filter(r=>!obsoleteIds.has(String(r.id)));
+ const manualStoreExceptions=kept.filter(r=>String(r.note||'')!=='V2_STORE_SCOPED_PROPOSAL'&&!s.people.some(p=>String(p.employee_id||p.user_id)===String(r.user_id)));
  const existing=kept.map(shape),working=existing.map(r=>({...r})),proposed=[],shortages=[];
  const needs=[...s.requirements].sort((a,b)=>Number(a.day_of_week)-Number(b.day_of_week)||min(a.start_time)-min(b.start_time));
  const byId=new Map(s.people.map(p=>[String(p.employee_id||p.user_id),p]));
@@ -66,7 +67,7 @@ function build(s){
  }
  if(missing>0)shortages.push({work_date:workDate,start_time:hm(r.start_time),end_time:hm(r.end_time),missing_headcount:missing,target_headcount:target});
  }
- return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,obsoleteAutoIds:[...obsoleteIds],obsoleteAutoCount:obsolete.length,proposals:proposed,shortages,priorityStatus:'FT_FIRST_PT_SECOND',registrationOrderStatus:s.registrationVerified?'VERIFIED_CREATED_AT':'NOT_VERIFIED_MISSING_TIMESTAMP'};
+ return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,obsoleteAutoIds:[...obsoleteIds],obsoleteAutoCount:obsolete.length,manualStoreExceptionCount:manualStoreExceptions.length,proposals:proposed,shortages,priorityStatus:'FT_FIRST_PT_SECOND',registrationOrderStatus:s.registrationVerified?'VERIFIED_CREATED_AT':'NOT_VERIFIED_MISSING_TIMESTAMP'};
 }
 async function preview({storeId,weekStart}){const snapshotValue=await snapshot(storeId,weekStart);if(!snapshotValue.requirements.length)fail('STORE_DEMAND_NOT_CONFIGURED');return build(snapshotValue)}
 async function apply(previewValue,{confirmed=false}={}){if(window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED!==true||!new URLSearchParams(window.location.search).has('auto-preview'))fail('AUTO_PREVIEW_DISABLED');if(confirmed!==true)fail('CONFIRMATION_REQUIRED');
