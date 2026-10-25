@@ -131,6 +131,11 @@ jobs:
           QA_OUT: qa-artifacts/people-shift
         run: node 09_QA/people-shift/workforce-rules-p1-browser.mjs
 
+      - name: Run Scheduling #533 global four-store Manager Chrome QA
+        env:
+          QA_BASE_URL: http://127.0.0.1:8767
+        run: node 09_QA/people-shift/scheduling-533-global-manager-browser.mjs
+
       - name: Run Manager P1 single-table Demand browser E2E
         env:
           QA_BASE_URL: http://127.0.0.1:8767
