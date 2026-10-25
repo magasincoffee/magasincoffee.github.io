@@ -45,12 +45,13 @@ function build(s){
  // V2 formerly appended new proposals without dropping obsolete V2-generated shifts.
  // A generated shift whose whole interval is no longer registered is stale.
  // Keep manual or unknown-origin shifts untouched.
- const obsolete=s.originals.filter(r=>String(r.note||'')==='V2_STORE_SCOPED_PROPOSAL'&&!s.availability.some(a=>
+ const obsolete=s.originals.filter(r=>String(r.note||'')==='V2_STORE_SCOPED_PROPOSAL'&&(!s.people.some(p=>String(p.employee_id||p.user_id)===String(r.user_id))||!s.availability.some(a=>
    String(a.user_id)===String(r.user_id)&&day(a.work_date)===day(r.work_date)
-   &&min(a.start_time)<=min(r.start_time)&&min(a.end_time)>=min(r.end_time)));
+   &&min(a.start_time)<=min(r.start_time)&&min(a.end_time)>=min(r.end_time))));
  if(obsolete.some(r=>!r.id))fail('OBSOLETE_AUTO_ASSIGNMENT_ID_MISSING');
  const obsoleteIds=new Set(obsolete.map(r=>String(r.id)));
  const kept=s.originals.filter(r=>!obsoleteIds.has(String(r.id)));
+ const manualStoreExceptions=kept.filter(r=>String(r.note||'')!=='V2_STORE_SCOPED_PROPOSAL'&&!s.people.some(p=>String(p.employee_id||p.user_id)===String(r.user_id)));
  const existing=kept.map(shape),working=existing.map(r=>({...r})),proposed=[],shortages=[];
  const needs=[...s.requirements].sort((a,b)=>Number(a.day_of_week)-Number(b.day_of_week)||min(a.start_time)-min(b.start_time));
  const byId=new Map(s.people.map(p=>[String(p.employee_id||p.user_id),p]));
@@ -66,7 +67,7 @@ function build(s){
  }
  if(missing>0)shortages.push({work_date:workDate,start_time:hm(r.start_time),end_time:hm(r.end_time),missing_headcount:missing,target_headcount:target});
  }
- return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,obsoleteAutoIds:[...obsoleteIds],obsoleteAutoCount:obsolete.length,proposals:proposed,shortages,priorityStatus:'FT_FIRST_PT_SECOND',registrationOrderStatus:s.registrationVerified?'VERIFIED_CREATED_AT':'NOT_VERIFIED_MISSING_TIMESTAMP'};
+ return {storeId:s.storeId,weekStart:s.week,generationId:s.gen?.id||null,originalSignature:sig(s.originals),existingCount:s.originals.length,obsoleteAutoIds:[...obsoleteIds],obsoleteAutoCount:obsolete.length,manualStoreExceptionCount:manualStoreExceptions.length,proposals:proposed,shortages,priorityStatus:'FT_FIRST_PT_SECOND',registrationOrderStatus:s.registrationVerified?'VERIFIED_CREATED_AT':'NOT_VERIFIED_MISSING_TIMESTAMP'};
 }
 async function preview({storeId,weekStart}){const snapshotValue=await snapshot(storeId,weekStart);if(!snapshotValue.requirements.length)fail('STORE_DEMAND_NOT_CONFIGURED');return build(snapshotValue)}
 async function apply(previewValue,{confirmed=false}={}){if(window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED!==true||!new URLSearchParams(window.location.search).has('auto-preview'))fail('AUTO_PREVIEW_DISABLED');if(confirmed!==true)fail('CONFIRMATION_REQUIRED');
@@ -78,11 +79,26 @@ async function apply(previewValue,{confirmed=false}={}){if(window.MAGASIN_SCHEDU
  const current=await s.rpc('get_schedule_generation_assignments',{p_generation_id:generationId});if(current.error)throw current.error;
  const rows=Array.isArray(current.data)?current.data:fail('DRAFT_DATA_INVALID');
  if(sig(rows)!==previewValue.originalSignature)fail('DRAFT_CHANGED_BEFORE_SAVE');
- const obsolete=new Set(latest.obsoleteAutoIds);
- const payload=[...rows.filter(r=>!obsolete.has(String(r.id))).map(shape),...latest.proposals];
- const save=await s.rpc('replace_schedule_generation_assignments',{p_generation_id:generationId,p_assignments:payload});if(save.error)throw save.error;
- const validation=await s.rpc('validate_schedule_generation_v1',{p_generation_id:generationId});if(validation.error)throw validation.error;
- return {saved:true,generationId,added:latest.proposals.length,removed:latest.obsoleteAutoCount,shortages:latest.shortages,valid:validation.data?.valid===true,violations:validation.data?.violations||[],warnings:validation.data?.warnings||[]}
+ // Send only the intended auto-proposal delta, not a rewrite of every old row.
+ // The server compares the whole immutable draft fingerprint under a week lock.
+ // Existing manual rows, including historical staff/store-priority exceptions,
+ // remain unchanged (same row IDs and all fields).
+ const expected=rows.map(r=>({
+   id:String(r.id),user_id:String(r.user_id),store_id:String(r.store_id),
+   work_date:day(r.work_date),start_time:hm(r.start_time),end_time:hm(r.end_time),
+   note:String(r.note||''),status:String(r.status||'DRAFT')
+ })).sort((a,b)=>a.id.localeCompare(b.id));
+ const save=await s.rpc('apply_schedule_v2_auto_proposals_532',{
+   p_generation_id:generationId,p_expected_rows:expected,
+   p_obsolete_ids:latest.obsoleteAutoIds,p_additions:latest.proposals,p_confirmed:true
+ });if(save.error)throw save.error;
+ const outcome=save.data||{};
+ if(Number(outcome.added)!==latest.proposals.length||Number(outcome.removed)!==latest.obsoleteAutoCount)
+   fail('AUTO_PROPOSAL_DELTA_RESULT_MISMATCH');
+ return {saved:true,generationId,added:Number(outcome.added),removed:Number(outcome.removed),
+   shortages:latest.shortages,valid:outcome.valid===true,
+   violations:Array.isArray(outcome.violations)?outcome.violations:[],
+   warnings:Array.isArray(outcome.warnings)?outcome.warnings:[]}
 }
 window.MAGASIN_SCHEDULING_V2_STORE_PLANNER=Object.freeze({preview,apply});
 })();

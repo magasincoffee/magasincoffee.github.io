@@ -54,7 +54,8 @@ try{
  assert.equal(after.assignments.length,1);
  assert.equal(after.assignments[0].user_id,'ft-one');
  assert.equal(after.assignments[0].status,'DRAFT');
- assert.ok(after.rpc.includes('validate_schedule_generation_v1'));
+ assert.ok(after.rpc.includes('apply_schedule_v2_auto_proposals_532'));
+ assert.ok(!after.rpc.includes('replace_schedule_generation_assignments'));
  assert.ok(!after.rpc.includes('review_schedule_generation')&&!after.rpc.includes('publish_schedule_generation'),
   'automation is not allowed to review or publish');
  assert.deepEqual(pageErrors,[],'no page JavaScript runtime exceptions');
