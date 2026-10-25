@@ -238,6 +238,11 @@ jobs:
           ('30000000-0000-0000-0000-000000000001','ACTIVE','STAFF','A','a'),
           ('30000000-0000-0000-0000-000000000002','ACTIVE','STAFF','B','b');
 
+          -- Explicit FT/PT fixture; unclassified employees are intentionally ineligible.
+          insert into public.employee_employment_types_v1(employee_id,employment_type) values
+          ('30000000-0000-0000-0000-000000000001','PART_TIME'),
+          ('30000000-0000-0000-0000-000000000002','PART_TIME');
+
           insert into public.employee_store_priorities(employee_id,store_id,priority) values
           ('30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001',1),
           ('30000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000001',1);
@@ -284,6 +289,11 @@ jobs:
           insert into public.profiles(id,status,role,full_name,username) values
           ('30000000-0000-0000-0000-000000000001','ACTIVE','STAFF','A','a'),
           ('30000000-0000-0000-0000-000000000002','ACTIVE','STAFF','B','b');
+
+          -- Explicit FT/PT fixture; unclassified employees are intentionally ineligible.
+          insert into public.employee_employment_types_v1(employee_id,employment_type) values
+          ('30000000-0000-0000-0000-000000000001','PART_TIME'),
+          ('30000000-0000-0000-0000-000000000002','PART_TIME');
 
           insert into public.employee_store_priorities(employee_id,store_id,priority) values
           ('30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001',1),
@@ -337,6 +347,12 @@ jobs:
           ('30000000-0000-0000-0000-000000000001','ACTIVE','STAFF','A','a'),
           ('30000000-0000-0000-0000-000000000002','ACTIVE','STAFF','B','b'),
           ('30000000-0000-0000-0000-000000000003','ACTIVE','STAFF','C','c');
+
+          -- Explicit FT/PT fixture; unclassified employees are intentionally ineligible.
+          insert into public.employee_employment_types_v1(employee_id,employment_type) values
+          ('30000000-0000-0000-0000-000000000001','PART_TIME'),
+          ('30000000-0000-0000-0000-000000000002','PART_TIME'),
+          ('30000000-0000-0000-0000-000000000003','PART_TIME');
 
           insert into public.employee_store_priorities(employee_id,store_id,priority) values
           ('30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001',1),
