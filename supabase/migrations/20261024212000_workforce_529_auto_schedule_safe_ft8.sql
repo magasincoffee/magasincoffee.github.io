@@ -45,6 +45,7 @@ declare
   v_candidate_end time without time zone;
   v_iteration integer;
   v_ft8_count integer := 0;
+  v_ft8_diagnostics jsonb := '[]'::jsonb;
   v_ft8_eligible boolean;
   v_slot_demand integer;
   v_slot_covered integer;
@@ -262,6 +263,54 @@ begin
     );
     v_assignment_count:=v_assignment_count+1;
     v_ft8_count:=v_ft8_count+1;
+  end loop;
+
+  -- Report observable FT8 eligibility blockers without modifying any assignment.
+  -- Priority is first eligible store; diagnosis is after the FT8 pre-pass.
+  for c in
+    select ea.user_id,ea.work_date,ea.start_time,ea.end_time,
+           esp.store_id,esp.priority,
+           coalesce(ec.max_daily_hours,0) max_daily_hours,
+           coalesce(ec.max_weekly_hours,0) max_weekly_hours
+    from public.employee_availability ea
+    join public.profiles p on p.id=ea.user_id and p.status='ACTIVE'
+    join public.employee_employment_types_v1 et
+      on et.employee_id=ea.user_id and et.employment_type='FULL_TIME'
+    join public.employee_store_priorities esp on esp.employee_id=ea.user_id
+    left join public.employee_constraints ec on ec.user_id=ea.user_id and ec.status='ACTIVE'
+    where ea.work_date between p_week_start and p_week_start+6
+      and ea.availability_type in ('AVAILABLE','PREFERRED')
+      and upper(coalesce(p.role,'')) in ('STAFF','EMPLOYEE')
+      and public.can_access_store(esp.store_id)
+    order by ea.work_date,ea.user_id,esp.priority,esp.store_id,ea.id
+  loop
+    if exists (
+      select 1 from public.schedule_generation_assignments a
+      join public.schedule_generation_runs gr on gr.id=a.generation_id
+      where gr.week_start=p_week_start and gr.status in ('DRAFT','REVIEWED')
+        and a.user_id=c.user_id and a.work_date=c.work_date
+        and a.store_id=c.store_id and a.note='AUTO_XSTORE_FT8_529_V1'
+    ) then continue; end if;
+    v_ft8_diagnostics := v_ft8_diagnostics || jsonb_build_object(
+      'user_id',c.user_id,'store_id',c.store_id,'work_date',c.work_date,
+      'code',case
+        when c.end_time-c.start_time<interval '8 hours' then 'AVAILABILITY_UNDER_8H'
+        when c.max_daily_hours>0 and c.max_daily_hours<8 then 'DAILY_HOURS_CAP_UNDER_8H'
+        when c.max_weekly_hours>0 and c.max_weekly_hours<8 then 'WEEKLY_HOURS_CAP_UNDER_8H'
+        when exists (
+          select 1 from public.schedule_generation_assignments a
+          join public.schedule_generation_runs gr on gr.id=a.generation_id
+          where gr.week_start=p_week_start and gr.status in ('DRAFT','REVIEWED')
+            and a.user_id=c.user_id and a.work_date=c.work_date
+        ) or exists (
+          select 1 from public.work_schedules ws
+          where ws.user_id=c.user_id and ws.work_date=c.work_date
+            and ws.status in ('PENDING','APPROVED')
+        ) then 'EXISTING_SHIFT_OR_HOURS_CONFLICT'
+        else 'NO_ELIGIBLE_8H_WINDOW_OR_EFFECTIVE_DEMAND'
+      end,
+      'detail','Diagnostic hint only; manager must inspect effective demand and constraints'
+    );
   end loop;
 
   -- #529: fill remaining gaps after the full-length FT pass; PT is fallback.
@@ -558,6 +607,7 @@ begin
     'algorithm_version',v_algorithm,
     'staffing_authority','EFFECTIVE_WEEKLY_V1',
     'ft8_full_length_assignment_count',v_ft8_count,
+    'ft8_rejection_diagnostics',v_ft8_diagnostics,
     'coverage_semantics','CONTINUOUS_INTERVAL_V1',
     'generation_ids',v_generation_ids,
     'assignment_count',v_assignment_count,
