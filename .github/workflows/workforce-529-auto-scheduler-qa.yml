@@ -945,6 +945,13 @@ jobs:
           # a stable stub lets the delta function's own authorization, overlap
           # and eligibility checks be exercised without any production data.
           psql -v ON_ERROR_STOP=1 <<'SQL'
+          -- Restore fixture identity after the preceding signed-JWT negative tests.
+          create or replace function auth.uid() returns uuid language sql stable as
+            $ select '11111111-1111-1111-1111-111111111111'::uuid $;
+          create or replace function public.current_user_role() returns text language sql stable as
+            $ select 'OWNER'::text $;
+          create or replace function public.can_access_store(p_store_id uuid)
+          returns boolean language sql stable as $ select true $;
           create or replace function public.validate_schedule_generation_v1(p_generation_id uuid)
           returns jsonb language sql as $v$
             select jsonb_build_object('valid',true,'violations','[]'::jsonb,'warnings','[]'::jsonb)
