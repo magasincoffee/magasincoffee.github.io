@@ -363,7 +363,28 @@ begin
     where s.status='ACTIVE'
       and public.can_access_store(s.id)
       and d.target_headcount>0
-    order by d.work_date,d.start_time,d.end_time,s.code,req.id
+    -- The fallback pass must not hard-code CN1 before CN2 for a PT with
+    -- CN2 as the preferred eligible store. Rank demand by eligible FT/PT
+    -- class and employee-declared store priority before store code.
+    order by d.work_date,
+      coalesce((
+        select min(
+          case et_pref.employment_type when 'FULL_TIME' then 0 else 10000 end
+          + pref.priority
+        )
+        from public.employee_availability ea_pref
+        join public.profiles p_pref on p_pref.id=ea_pref.user_id and p_pref.status='ACTIVE'
+        join public.employee_store_priorities pref
+          on pref.employee_id=ea_pref.user_id and pref.store_id=s.id
+        join public.employee_employment_types_v1 et_pref
+          on et_pref.employee_id=ea_pref.user_id
+         and et_pref.employment_type in ('FULL_TIME','PART_TIME')
+        where ea_pref.work_date=d.work_date
+          and ea_pref.availability_type in ('AVAILABLE','PREFERRED')
+          and upper(coalesce(p_pref.role,'')) in ('STAFF','EMPLOYEE')
+          and ea_pref.start_time<d.end_time and d.start_time<ea_pref.end_time
+      ),2147483647),
+      d.start_time,d.end_time,s.code,req.id
   loop
     select gr.id into v_generation
     from public.schedule_generation_runs gr
@@ -478,9 +499,9 @@ begin
             -- FT before PT whenever both can cover an under-staffed interval.
             case et.employment_type
               when 'FULL_TIME' then 0 when 'PART_TIME' then 1 end,
+            esp.priority asc,
             greatest(g.shortage_start,ea.start_time) asc,
             least(g.shortage_end,ea.end_time) desc,
-            esp.priority asc,
             lower(coalesce(p.full_name,p.username)),
             p.id,
             ea.id
