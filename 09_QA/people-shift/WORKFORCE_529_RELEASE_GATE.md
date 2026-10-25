@@ -8,8 +8,8 @@ Source of truth: issue #487 (Owner decisions), issue #529 (P0 acceptance), PR #5
 
 - [ ] Rebase/merge the **latest** `main` into this candidate branch without losing #487 decisions; resolve all conflicts; rerun exact-head CI. Do not force-push over unreviewed work.
 - [ ] Isolated PG17/JWT E2E is green for the **exact PR HEAD**, including Owner/Manager allowed and Staff denied, 4-store non-overlap, FT8, PT fallback, changed availability/priority, zero weekly override and safe rerun twice.
-- [ ] H4 self-hosted job `h4-synthetic-ui-guard` succeeds on the **exact PR HEAD**. This proves local synthetic Chrome behavior only.
-- [ ] Separately, an authorized **signed-in** H4 Owner/Manager read-only review verifies visible controls, branch/week switching, inline shortages, FT8 and missing-FT/PT explanations. Neither the Chrome fixture nor a screenshot of the old production algorithm substitutes for this.
+- [ ] GitHub-hosted job `hosted-synthetic-ui-guard` succeeds on the **exact PR HEAD**, using synthetic Chrome DOM assertions. No local H4 machine is required.
+- [ ] Separately, verify **signed-in** Owner/Manager/Staff behavior on a safe QA deployment, using a browser on any machine (prefer automated Playwright where feasible): controls, branch/week switching, inline shortage, FT8/missing-FT/PT explanations, permission separation. The synthetic Chrome fixture is not an authenticated UX test. If safe authenticated QA is unavailable, mark this gate **HOLD** instead of requiring H4 or testing by writing live schedules.
 - [ ] Manager validates `AVAILABILITY_MISMATCH` as blocking while a **shortage-only** draft may proceed through review/publish. This must be confirmed in the actual authoritative server validation, not by bypassing it.
 - [ ] No published/official shifts are overwritten; only known tagged auto-generated DRAFT assignments can be replaced. Unknown/manual notes are preserved. Unsaved UI draft is protected on navigation.
 - [ ] Check the migration dependencies and RLS/role permissions, resource limits, execution time and the four active stores. Get explicit release authorization **after** these gates pass.
@@ -31,7 +31,7 @@ Source of truth: issue #487 (Owner decisions), issue #529 (P0 acceptance), PR #5
 
 ## Evidence to record
 
-- Exact-head PG17+JWT and 4-store fixture result; H4 synthetic runner result; separate signed-in H4 Owner/Manager read-only acceptance; rollback rehearsal reference; reviewer approval.
+- Exact-head PG17+JWT and 4-store fixture result; GitHub-hosted synthetic Chrome result; separate authenticated QA-browser role acceptance on any authorized device (not H4-specific); rollback rehearsal reference; reviewer approval.
 - Explicit declaration: **No changes to real employee schedules, published records, or production SQL during PR staging and QA.**
 
 This runbook is deliberately non-executable. Never use production shift data as a writable test fixture.
