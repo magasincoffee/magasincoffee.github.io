@@ -6,6 +6,7 @@
 const calls=[], assignments=[];const verified=new URLSearchParams(location.search).has('verified');
 window.__WORKFORCE_RULES_QA={calls,assignments};
 window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED=true;
+window.MAGASIN_SCHEDULING_GLOBAL_533_ENABLED=new URLSearchParams(location.search).has('global-533');
 const profiles=[
  {employee_id:'pt-one',profile_status:'ACTIVE',employee_role:'EMPLOYEE',priority_store_ids:['store-one'],full_name:'PT QA'},
  {employee_id:'ft-one',profile_status:'ACTIVE',employee_role:'EMPLOYEE',priority_store_ids:['store-one'],full_name:'FT QA'}
@@ -15,6 +16,14 @@ const client={async rpc(name,args){
  calls.push({name,args});
  const week=(args?.p_week_start||'2026-10-26');
  const dates=iso=>{const d=new Date(iso+'T12:00:00Z');return d.toISOString().slice(0,10)};
+ if(name==='get_workforce_global_week_snapshot_533')return {data:{
+  revision:'533_GLOBAL_FT8',week_start:week,active_store_count:4,
+  fingerprint:'a'.repeat(32),v2_auto_draft_count:1,manual_or_unclassified_count:1,
+  is_draft_only:!new URLSearchParams(location.search).has('locked'),
+  official_exists:false},error:null};
+ if(name==='auto_generate_cross_store_schedule_533')return {
+  data:{revision:'533_GLOBAL_FT8',published:false,v2_auto_replaced:1,assignment_count:2,shortages:[]},
+  error:null};
  if(name==='list_schedule_generations')return {data:[],error:null};
  if(name==='list_workforce_effective_weekly_staffing_v1')return {data:[{store_id:'store-one',work_date:dates(week),start_time:'08:00:00',end_time:'12:00:00',target_headcount:1}],error:null};
  if(name==='list_employee_workforce_profiles_v1')return {data:profiles,error:null};
