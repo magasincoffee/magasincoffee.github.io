@@ -7,8 +7,11 @@ window.MAGASIN_MANAGER_WORKFORCE_CONTEXT={client:()=>({rpc:async(name,arg)=>{
  calls.push({name,arg});
  if(name==='get_workforce_auto_scheduler_capabilities_529')return {data:{revision:'529_FT8_REFRESH',manual_preserved:true,ft8_first:true,effective_weekly_demand:true}};
  if(name==='list_workforce_recurring_staffing_requirements_v1')return {data:[{id:'r1',store_id:'s1',day_of_week:1,start_time:'06:00',end_time:'14:00',target_headcount:1}]};
- if(name==='auto_generate_cross_store_schedule_v1')return {error:{message:'EXISTING_DRAFT_REQUIRES_CONFIRMATION'}};
- if(name==='auto_generate_cross_store_schedule_529')return {data:{assignment_count:1,shortages:[{store_id:'s1',work_date:'2026-10-26',start_time:'14:00',end_time:'15:00'}],ft8_rejection_diagnostics:[{user_id:'qa-ft1',employee_name:'FT <QA>',store_id:'s1',work_date:'2026-10-26',code:'AVAILABILITY_UNDER_8H'}],unclassified_staff:[{user_id:'qa-pt1',employee_name:'PT <Chưa khai báo>',store_id:'s1',work_date:'2026-10-26'}]}};
+ if(name==='auto_generate_cross_store_schedule_v1')throw Error('LEGACY_SCHEDULER_MUST_NOT_BE_CALLED');
+ if(name==='auto_generate_cross_store_schedule_529'){
+  if(!arg.p_replace_existing)return {error:{message:'EXISTING_DRAFT_REQUIRES_CONFIRMATION'}};
+  return {data:{assignment_count:1,shortages:[{store_id:'s1',work_date:'2026-10-26',start_time:'14:00',end_time:'15:00'}],ft8_rejection_diagnostics:[{user_id:'qa-ft1',employee_name:'FT <QA>',store_id:'s1',work_date:'2026-10-26',code:'AVAILABILITY_UNDER_8H'}],unclassified_staff:[{user_id:'qa-pt1',employee_name:'PT <Chưa khai báo>',store_id:'s1',work_date:'2026-10-26'}]}};
+ }
  return {data:[]};
 }})};
 window.confirm=()=>true;
