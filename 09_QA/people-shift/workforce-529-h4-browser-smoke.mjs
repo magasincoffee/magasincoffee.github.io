@@ -1,0 +1,10 @@
+import {spawnSync} from 'node:child_process';import{existsSync}from'node:fs';import{resolve}from'node:path';import{pathToFileURL}from'node:url';import assert from'node:assert/strict';
+assert.equal(process.env.COMPUTERNAME?.toUpperCase(),'DESKTOP-H4A16IL','H4 host required');
+const paths=['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe','C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'];
+const chrome=paths.find(existsSync);assert.ok(chrome,'H4 Chrome missing');
+const fixture=pathToFileURL(resolve('09_QA/people-shift/workforce-529-h4-browser-fixture.html')).href;
+const x=spawnSync(chrome,['--headless','--no-first-run','--disable-gpu','--disable-crash-reporter','--virtual-time-budget=3500','--dump-dom',fixture],{encoding:'utf8',timeout:30000,maxBuffer:3000000});
+const m=String(x.stdout||'').match(/<output id="qa-result">([^<]+)<\/output>/);
+assert.equal(x.status,0,'Chrome exit='+x.status+' stderr='+String(x.stderr||'').slice(-350));
+assert.equal(m?.[1],'H4_529_REAL_CHROME_SYNTHETIC_DOM_PASS','DOM QA: '+(m?.[1]||'no result'));
+console.log('H4_529_REAL_CHROME_SYNTHETIC_DOM_PASS');

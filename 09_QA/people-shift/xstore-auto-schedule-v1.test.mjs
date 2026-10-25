@@ -82,7 +82,8 @@ test("C04 revokes browser authority for superseded date-bound staffing RPCs",()=
 });
 
 test("C04 Manager UI calls recurring Robot and still never publishes",()=>{
- assert.match(ui,/auto_generate_cross_store_schedule_v1/);
+ assert.match(ui,/auto_generate_cross_store_schedule_529/);
+ assert.doesNotMatch(ui,/client\(\)\.rpc\('auto_generate_cross_store_schedule_v1'/);
  assert.match(ui,/XSTORE_GLOBAL_RECURRING_V1/);
  assert.match(ui,/Tạo lịch nháp tự động/);
  assert.doesNotMatch(ui,/Chờ C04|Đang tạm khóa đến XSTORE-C04/);

@@ -36,7 +36,7 @@ if((await auto.getAttribute("data-xsa-active-surface"))!=="week")throw new Error
 if(await page.locator(".xsa-board").count())throw new Error("recurring board must not be forced into the default weekly surface");
 const blockedAction=page.locator('#xsaNextAction[data-xsa-next-action="setup-priority"]');
 await blockedAction.waitFor();
-const beforePriorityRpc=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_v1").length);
+const beforePriorityRpc=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_529").length);
 if(beforePriorityRpc!==0)throw new Error("Auto Schedule ran before Store Priority prerequisites were complete");
 await page.evaluate(async()=>{
  const row=globalThis.__XSTORE_QA.availability.find(x=>x.user_id==="e3");
@@ -121,8 +121,8 @@ await page.locator("#xsaWeekOpen").click();
 await page.waitForFunction(()=>document.querySelector('.xsa')?.dataset.xsaActiveSurface==="week");
 if(await page.locator(".xsa-board").count())throw new Error("recurring board leaked back into weekly operation");
 await page.locator('#xsaNextAction[data-xsa-next-action="auto"]').click();
-await page.waitForFunction(()=>globalThis.__XSTORE_QA.calls.some(x=>x.name==="auto_generate_cross_store_schedule_v1"));
-let autoCall=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_v1").at(-1));
+await page.waitForFunction(()=>globalThis.__XSTORE_QA.calls.some(x=>x.name==="auto_generate_cross_store_schedule_529"));
+let autoCall=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_529").at(-1));
 if(autoCall?.args?.p_week_start!=="2026-10-05")throw new Error(JSON.stringify(autoCall));
 if(autoCall?.args?.p_algorithm_version!=="XSTORE_GLOBAL_RECURRING_V1")throw new Error(JSON.stringify(autoCall));
 if(autoCall?.args?.p_replace_existing!==false)throw new Error(JSON.stringify(autoCall));
@@ -143,8 +143,8 @@ const nextWeekCell=(await page.locator('[data-xsa-cell="s1-1"]').innerText()).re
 if(!nextWeekCell.includes("07:00–12:00 · 3 người"))throw new Error("recurring config not reused in next week: "+nextWeekCell);
 await page.locator("#xsaWeekOpen").click();
 await page.locator('#xsaNextAction[data-xsa-next-action="auto"]').click();
-await page.waitForFunction(()=>globalThis.__XSTORE_QA.calls.some(x=>x.name==="auto_generate_cross_store_schedule_v1"));
-autoCall=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_v1").at(-1));
+await page.waitForFunction(()=>globalThis.__XSTORE_QA.calls.some(x=>x.name==="auto_generate_cross_store_schedule_529"));
+autoCall=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.filter(x=>x.name==="auto_generate_cross_store_schedule_529").at(-1));
 if(autoCall?.args?.p_week_start!=="2026-10-12")throw new Error("next-week projection mismatch: "+JSON.stringify(autoCall));
 if(autoCall?.args?.p_algorithm_version!=="XSTORE_GLOBAL_RECURRING_V1")throw new Error(JSON.stringify(autoCall));
 
@@ -203,7 +203,7 @@ await page.waitForFunction(()=>!document.querySelector(".xsa-editor-panel"));
 
 const rpcNamesAfterResponsive=await page.evaluate(()=>globalThis.__XSTORE_QA.calls.map(x=>x.name));
 const rpcNames=[...new Set([...rpcNamesBeforeResponsive,...rpcNamesAfterResponsive])];
-for(const n of ["get_manager_accessible_stores","get_cross_store_weekly_plan_v1","get_cross_store_weekly_availability_v1","list_workforce_recurring_staffing_requirements_v1","auto_generate_cross_store_schedule_v1"]){
+for(const n of ["get_manager_accessible_stores","get_cross_store_weekly_plan_v1","get_cross_store_weekly_availability_v1","list_workforce_recurring_staffing_requirements_v1","auto_generate_cross_store_schedule_529"]){
  if(!rpcNames.includes(n))throw new Error("missing RPC "+n);
 }
 for(const forbidden of ["list_cross_store_staffing_requirements_v1","replace_cross_store_staffing_requirements_v1","auto_generate_schedule_generation","publish_schedule_generation"]){

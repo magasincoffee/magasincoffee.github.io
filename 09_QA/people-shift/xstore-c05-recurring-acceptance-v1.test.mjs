@@ -23,7 +23,8 @@ test("C05 locks one recurring staffing authority with bounded browser access",()
 test("C05 recurring configuration is week-independent and Robot projection is week-bound",()=>{
  assert.doesNotMatch(ui,/p_week_start:state\.week[\s\S]*replace_workforce_recurring_staffing_requirements_v1/);
  assert.match(ui,/replace_workforce_recurring_staffing_requirements_v1/);
- assert.match(ui,/auto_generate_cross_store_schedule_v1/);
+ assert.match(ui,/auto_generate_cross_store_schedule_529/);
+ assert.doesNotMatch(ui,/client\(\)\.rpc\('auto_generate_cross_store_schedule_v1'/);
  assert.match(ui,/p_week_start:state\.week/);
  assert.match(ui,/XSTORE_GLOBAL_RECURRING_V1/);
  assert.match(cutover,/\(p_week_start \+ \(req\.day_of_week::integer - 1\)\)::date as work_date/);
