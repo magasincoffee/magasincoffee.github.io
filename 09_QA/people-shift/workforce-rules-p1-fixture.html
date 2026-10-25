@@ -16,7 +16,7 @@ const client={async rpc(name,args){
  const week=(args?.p_week_start||'2026-10-26');
  const dates=iso=>{const d=new Date(iso+'T12:00:00Z');return d.toISOString().slice(0,10)};
  if(name==='list_schedule_generations')return {data:[],error:null};
- if(name==='list_workforce_recurring_staffing_requirements_v1')return {data:[{store_id:'store-one',day_of_week:1,start_time:'08:00:00',end_time:'12:00:00',target_headcount:1}],error:null};
+ if(name==='list_workforce_effective_weekly_staffing_v1')return {data:[{store_id:'store-one',work_date:dates(week),start_time:'08:00:00',end_time:'12:00:00',target_headcount:1}],error:null};
  if(name==='list_employee_workforce_profiles_v1')return {data:profiles,error:null};
  if(name==='list_employee_employment_types_v1')return {data:[{employee_id:'pt-one',employment_type:verified?'FULL_TIME':'PART_TIME'},{employee_id:'ft-one',employment_type:'FULL_TIME'}],error:null};
  if(name==='list_workforce_registration_order_v1')return verified?{data:[{availability_id:'av-pt',registered_at:'2026-10-17T07:00:00Z'},{availability_id:'av-ft',registered_at:'2026-10-18T07:00:00Z'}],error:null}:{data:null,error:{code:'PGRST202',message:'Staged RPC unavailable in current fixture'}};
