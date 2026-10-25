@@ -54,7 +54,7 @@ test('only delta RPC is called, preserving existing manager shift identity on re
  assert.equal(done.saved,true);
  const delta=h.calls.find(x=>x.name==='apply_schedule_v2_auto_proposals_532');
  assert.ok(delta,'must use surgical delta writer rather than bulk replacement');
- assert.deepEqual(delta.args.p_obsolete_ids,['legacy-saturday']);
+ assert.deepEqual(Array.from(delta.args.p_obsolete_ids),['legacy-saturday']);
  assert.equal(delta.args.p_expected_rows.length,3);
  assert.equal(delta.args.p_confirmed,true);
  assert.equal(h.calls.some(x=>x.name==='replace_schedule_generation_assignments'),false);
