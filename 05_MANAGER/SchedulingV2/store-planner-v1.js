@@ -9,13 +9,13 @@ async function snapshot(storeId,weekStart){
  const week=day(weekStart),d=new Date(week+'T12:00:00Z');if(!/^\d{4}-\d{2}-\d{2}$/.test(week)||!Number.isFinite(d.getTime())||d.getUTCDay()!==1)fail('INVALID_WEEK');
  const c=ctx();await c.actor({force:true});const stores=await c.stores({force:true});if(!stores.some(s=>String(s.id)===String(storeId)))fail('STORE_NOT_ALLOWED');
  const rpc=(name,args)=>c.client().rpc(name,args);
- const responses=await Promise.all([rpc('list_schedule_generations',{p_store_id:storeId,p_week_start:week}),rpc('list_workforce_effective_weekly_staffing_v1',{p_store_id:storeId,p_week_start:week}),rpc('list_employee_workforce_profiles_v1',{}),rpc('get_manager_weekly_availability',{p_store_id:storeId,p_week_start:week}),rpc('get_cross_store_weekly_plan_v1',{p_week_start:week}),rpc('list_employee_employment_types_v1',{}),rpc('list_workforce_registration_order_v1',{p_store_id:storeId,p_week_start:week})]);
+ const responses=await Promise.all([rpc('list_schedule_generations',{p_store_id:storeId,p_week_start:week}),rpc('list_workforce_effective_weekly_staffing_v1',{p_store_id:storeId,p_week_start:week}),rpc('list_employee_workforce_profiles_v1',{}),rpc('get_manager_weekly_availability',{p_store_id:storeId,p_week_start:week}),rpc('get_cross_store_weekly_plan_v1',{p_week_start:week}),rpc('list_employee_employment_types_v1',{}),rpc('list_employee_hour_limits_533',{}),rpc('list_workforce_registration_order_v1',{p_store_id:storeId,p_week_start:week})]);
  // A missing staged RPC retains the old transparent warning, not a false tie-break.
  // Any actual permission or server failure is fatal; never guess a timestamp.
  const timestampResponse=responses.pop();
  for(const r of responses)if(r.error)throw r.error;
  if(timestampResponse.error&&!['PGRST202','42883'].includes(String(timestampResponse.error.code||'')))throw timestampResponse.error;
- const [gens,requirements,profiles,availability,plan,employment]=responses.map(r=>Array.isArray(r.data)?r.data:[]);
+ const [gens,requirements,profiles,availability,plan,employment,limits]=responses.map(r=>Array.isArray(r.data)?r.data:[]);
  const activeAvailability=availability.filter(r=>['AVAILABLE','PREFERRED'].includes(String(r.availability_type||'').toUpperCase()));
  const timestampRows=timestampResponse.error?[]:timestampResponse.data;
  if(!timestampResponse.error&&!Array.isArray(timestampRows))fail('REGISTRATION_TIMESTAMP_DATA_INVALID');
@@ -36,7 +36,7 @@ async function snapshot(storeId,weekStart){
  const gen=active[0]||null;let originals=[];
  if(gen){const q=await rpc('get_schedule_generation_assignments',{p_generation_id:gen.id});if(q.error)throw q.error;originals=Array.isArray(q.data)?q.data:fail('DRAFT_DATA_INVALID')}
  if(originals.some(r=>String(r.store_id||storeId)!==String(storeId)))fail('STORE_MISMATCH');
- return {c,rpc,week,storeId,gen,originals,demandConfigured:requirements.some(r=>String(r.store_id)===String(storeId)&&day(r.work_date)>=week&&day(r.work_date)<=offset(week,6)),requirements:requirements.filter(r=>String(r.store_id)===String(storeId)&&day(r.work_date)>=week&&day(r.work_date)<=offset(week,6)&&Number(r.target_headcount)>0&&min(r.end_time)>min(r.start_time)).map(r=>({...r,day_of_week:(new Date(day(r.work_date)+'T12:00:00Z').getUTCDay()||7)})),people:profiles.filter(p=>eligible(p,storeId)).map(p=>({...p,employment_type:employmentById.get(String(p.employee_id||p.user_id))||'UNKNOWN'})),availability:activeAvailability,registeredAt,registrationVerified,other:plan.filter(r=>!gen||String(r.generation_id||'')!==String(gen.id))}
+ return {c,rpc,week,storeId,gen,originals,demandConfigured:requirements.some(r=>String(r.store_id)===String(storeId)&&day(r.work_date)>=week&&day(r.work_date)<=offset(week,6)),requirements:requirements.filter(r=>String(r.store_id)===String(storeId)&&day(r.work_date)>=week&&day(r.work_date)<=offset(week,6)&&Number(r.target_headcount)>0&&min(r.end_time)>min(r.start_time)).map(r=>({...r,day_of_week:(new Date(day(r.work_date)+'T12:00:00Z').getUTCDay()||7)})),people:profiles.filter(p=>eligible(p,storeId)).map(p=>({...p,employment_type:employmentById.get(String(p.employee_id||p.user_id))||'UNKNOWN'})),availability:activeAvailability,registeredAt,registrationVerified,limitsById:new Map(limits.map(r=>[String(r.employee_id),r])),other:plan.filter(r=>!gen||String(r.generation_id||'')!==String(gen.id))}
 }
 // Candidate priority: FT before PT, then earlier immutable availability.created_at
 // within the same employment group if every scoped timestamp is verified.
@@ -59,18 +59,51 @@ function build(s){
  const existing=preserved.map(shape),working=existing.map(r=>({...r})),proposed=[],shortages=[];
  const needs=[...s.requirements].sort((a,b)=>Number(a.day_of_week)-Number(b.day_of_week)||min(a.start_time)-min(b.start_time));
  const byId=new Map(s.people.map(p=>[String(p.employee_id||p.user_id),p]));
- // Reserve FT 8h first, using half-hour demand coverage across adjacent windows.
- for(let d=0;d<7;d++){const date=offset(s.week,d);
-  const staff=s.availability.filter(a=>day(a.work_date)===date).map(a=>({a,p:byId.get(String(a.user_id))})).filter(x=>x.p?.employment_type==='FULL_TIME').sort((x,y)=>x.p.priority_store_ids.indexOf(s.storeId)-y.p.priority_store_ids.indexOf(s.storeId)||String(x.a.user_id).localeCompare(String(y.a.user_id)));
-  for(const {a,p} of staff){const uid=String(a.user_id),lo=min(a.start_time),hi=min(a.end_time);if(hi-lo<480||allFor(uid,date).length)continue;
-   for(let start=Math.max(300,Math.ceil(lo/30)*30);start+480<=Math.min(1320,hi);start+=30){
-    let ok=true;for(let t=start;t<start+480;t+=30){const required=Math.max(0,...s.requirements.filter(r=>Number(r.day_of_week)===d+1&&min(r.start_time)<=t&&min(r.end_time)>=t+30).map(r=>Number(r.target_headcount)||0));
-     const covered=new Set(working.filter(x=>day(x.work_date)===date&&min(x.start_time)<t+30&&min(x.end_time)>t).map(x=>String(x.user_id))).size;
-     if(required<=covered){ok=false;break;}}
-    if(!ok)continue;
-    const time=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
-    const row=shape({user_id:uid,store_id:s.storeId,work_date:date,start_time:time(start),end_time:time(start+480),note:'V2_STORE_SCOPED_PROPOSAL'});
-    proposed.push(row);working.push(row);break;
+ // The first pass reserves 8h FT shifts across contiguous 30-minute demand.
+ // The second pass picks the LONGEST remaining contiguous FT shift, before PT.
+ // Both passes honor cross-store existing hours, daily/weekly caps and store priority.
+ const time=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
+ const minutesUsed=(uid,workDate)=>[...working,...s.other]
+   .filter(r=>String(r.user_id)===uid&&(!workDate||day(r.work_date)===workDate))
+   .reduce((v,r)=>v+Math.max(0,min(r.end_time)-min(r.start_time)),0);
+ const needed=(workDate,t)=>Math.max(0,...s.requirements.filter(r=>day(r.work_date)===workDate
+    &&min(r.start_time)<=t&&min(r.end_time)>=t+30).map(r=>Number(r.target_headcount)||0));
+ const covered=(workDate,t)=>new Set(working.filter(r=>day(r.work_date)===workDate
+    &&min(r.start_time)<t+30&&min(r.end_time)>t).map(r=>String(r.user_id))).size;
+ for(let d=0;d<7;d++){
+  const date=offset(s.week,d),ft=s.availability.filter(a=>day(a.work_date)===date)
+    .map(a=>({a,p:byId.get(String(a.user_id))})).filter(x=>x.p?.employment_type==='FULL_TIME');
+  // Descending length prevents a short segment taking an otherwise available 8h window.
+  for(let length=480;length>=30;length-=30){
+   for(let iteration=0;iteration<ft.length;iteration++){
+    const choices=[];
+    for(const {a,p} of ft){
+     const uid=String(a.user_id),priorities=p.priority_store_ids.map(String),rank=priorities.indexOf(String(s.storeId));
+     if(rank<0||allFor(uid,date).length)continue;
+     const cap=s.limitsById?.get(uid)||{},usedDaily=minutesUsed(uid,date),usedWeek=minutesUsed(uid);
+     if(Number(cap.max_daily_hours)>0&&usedDaily+length>Number(cap.max_daily_hours)*60)continue;
+     if(Number(cap.max_weekly_hours)>0&&usedWeek+length>Number(cap.max_weekly_hours)*60)continue;
+     const lo=Math.max(300,Math.ceil(min(a.start_time)/30)*30),hi=Math.min(1320,min(a.end_time));
+     for(let at=lo;at+length<=hi;at+=30){
+      let valid=true;
+      for(let t=at;t<at+length;t+=30){
+       if(needed(date,t)<=covered(date,t)){valid=false;break;}
+      }
+      if(valid){
+       choices.push({uid,at,length,rank,prefer:String(a.availability_type).toUpperCase()==='PREFERRED'?0:1,
+         usedWeek,registeredAt:s.registeredAt.get(String(a.availability_id||''))||0});
+       break;
+      }
+     }
+    }
+    if(!choices.length)break;
+    choices.sort((a,b)=>a.rank-b.rank||a.prefer-b.prefer||a.usedWeek-b.usedWeek
+      ||(s.registrationVerified?a.registeredAt-b.registeredAt:0)
+      ||a.uid.localeCompare(b.uid)||a.at-b.at);
+    const c=choices[0];
+    const row=shape({user_id:c.uid,store_id:s.storeId,work_date:date,
+      start_time:time(c.at),end_time:time(c.at+c.length),note:'V2_STORE_SCOPED_PROPOSAL'});
+    proposed.push(row);working.push(row);
    }
   }
  }
