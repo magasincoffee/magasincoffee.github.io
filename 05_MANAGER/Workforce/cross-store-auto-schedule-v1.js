@@ -450,7 +450,7 @@ async function autoSchedule(){
  if(!complete)return setMessage('Cần cấu hình nhu cầu nhân sự cho đủ các cửa hàng trước khi xếp lịch tự động.','error');
  state.busy=true;render();
  try{
-  // Fail closed for every generation, including the FIRST click, before any writer.
+  // Fail closed before every scheduling request, including the first click.
   if(!(await safeRerunCapability()))throw Error('SAFE_RERUN_VERSION_REQUIRED');
   let result;
   try{result=await callAuto(false)}
