@@ -225,3 +225,30 @@ end;
 $body$;
 revoke all on function public.apply_schedule_v2_auto_proposals_533(uuid,jsonb,uuid[],jsonb,boolean) from public,anon;
 grant execute on function public.apply_schedule_v2_auto_proposals_533(uuid,jsonb,uuid[],jsonb,boolean) to authenticated;
+
+
+-- #533: Minimal read-only scoped cap data for a faithful Manager draft preview.
+-- This is advisory in the browser; the atomic writer above is authoritative.
+create or replace function public.list_employee_hour_limits_533()
+returns table(employee_id uuid,max_daily_hours numeric,max_weekly_hours numeric,min_rest_hours numeric)
+language plpgsql stable security definer set search_path=public
+as $hour_caps$
+declare v_role text:=upper(coalesce(public.current_user_role(),''));
+begin
+ if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
+ if v_role not in ('OWNER','STORE_MANAGER') then raise exception 'ROLE_NOT_ALLOWED'; end if;
+ if not exists(select 1 from public.profiles p where p.id=auth.uid()
+   and p.status='ACTIVE' and upper(p.role)=v_role)
+ then raise exception 'ACTOR_NOT_ACTIVE'; end if;
+ return query
+ select ec.user_id,coalesce(ec.max_daily_hours,0),
+   coalesce(ec.max_weekly_hours,0),coalesce(ec.min_rest_hours,0)
+ from public.employee_constraints ec
+ where ec.status='ACTIVE'
+   and exists(select 1 from public.employee_store_priorities esp
+      where esp.employee_id=ec.user_id and public.can_access_store(esp.store_id))
+ order by ec.user_id;
+end
+$hour_caps$;
+revoke all on function public.list_employee_hour_limits_533() from public,anon;
+grant execute on function public.list_employee_hour_limits_533() to authenticated;
