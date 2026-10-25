@@ -288,7 +288,7 @@ function ft8DiagnosticsHtml(){
   const reason=labels[String(d.code||'')]||'Cần quản lý kiểm tra điều kiện xếp ca.';
   return '<li><b>'+esc(who)+'</b> · '+esc(store?.code||'Chi nhánh')+' · '+esc(d.work_date||'')+' — '+esc(reason)+'</li>';
  }).join('');
- return '<details class="xsa-ft8-diagnostics"><summary>'+state.ft8Diagnostics.length+' trường hợp FT chưa được đề xuất ca 8 giờ — xem chi tiết</summary>'
+ return '<details class="xsa-ft8-diagnostics"><summary>'+state.ft8Diagnostics.length+' trường hợp FT chưa có ca 8 giờ ở chi nhánh/ngày tương ứng — xem chi tiết</summary>'
   +'<p>Đây là gợi ý từ lần đề xuất vừa chạy, không phải kết luận cuối cùng. Quản lý cần đối chiếu đăng ký, nhu cầu nhân sự và các ca hiện có trước khi chỉnh lịch.</p>'
   +'<ul>'+items+'</ul></details>';
 }
@@ -466,6 +466,8 @@ async function autoSchedule(){
    :raw.includes('NON_DRAFT_GENERATION_EXISTS')?'Có lịch đã duyệt hoặc phát hành trong tuần; hãy xử lý lịch hiện tại trước khi xếp tự động.'
    :raw.includes('STAFFING_REQUIREMENT_EMPTY')?'Chưa có nhu cầu nhân sự hàng tuần để xếp lịch tự động.'
    :'Không thể xếp lịch tự động lúc này. Vui lòng kiểm tra dữ liệu và thử lại.';
+  // A failed rerun must not present diagnoses as if they came from this attempt.
+  state.ft8Diagnostics=[];
   state.message=friendly;state.messageType='error';
  }finally{state.busy=false;render()}
 }
