@@ -357,6 +357,10 @@ begin
           join public.profiles p on p.id=ea.user_id
           join public.employee_store_priorities esp
             on esp.employee_id=p.id and esp.store_id=r.store_id
+          -- Missing FT/PT classification must be corrected by Manager, not inferred.
+          join public.employee_employment_types_v1 et
+            on et.employee_id=p.id
+           and et.employment_type in ('FULL_TIME','PART_TIME')
           left join public.employee_constraints ec
             on ec.user_id=p.id and ec.status='ACTIVE'
           where ea.work_date=r.work_date
@@ -397,10 +401,8 @@ begin
             ) < 2
           order by
             -- FT before PT whenever both can cover an under-staffed interval.
-            case (select et.employment_type
-                    from public.employee_employment_types_v1 et
-                    where et.employee_id=p.id)
-              when 'FULL_TIME' then 0 when 'PART_TIME' then 1 else 2 end,
+            case et.employment_type
+              when 'FULL_TIME' then 0 when 'PART_TIME' then 1 end,
             greatest(g.shortage_start,ea.start_time) asc,
             least(g.shortage_end,ea.end_time) desc,
             esp.priority asc,
