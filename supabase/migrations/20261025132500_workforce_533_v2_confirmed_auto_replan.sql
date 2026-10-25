@@ -28,6 +28,11 @@ declare
   v_added integer:=0;
   v_check jsonb;
   v_daily_count integer;
+  v_daily_hours numeric;
+  v_weekly_hours numeric;
+  v_shift_hours numeric;
+  v_max_daily_hours numeric;
+  v_max_weekly_hours numeric;
 begin
   if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
   if v_role not in ('OWNER','STORE_MANAGER') then raise exception 'ROLE_NOT_ALLOWED'; end if;
@@ -124,6 +129,51 @@ begin
         and ea.availability_type in ('AVAILABLE','PREFERRED')
         and ea.start_time<=v_start and ea.end_time>=v_end) then
       raise exception 'AVAILABILITY_MISMATCH_FOR_NEW_PROPOSAL'; end if;
+
+    -- #533: Apply employee_constraints to every new generated shift.
+    -- Count all branches, including official hours, not merely shifts in this store.
+    -- Recalculate after each insertion so consecutive additions cannot evade the cap.
+    v_shift_hours:=extract(epoch from (v_end-v_start))/3600.0;
+    select coalesce(ec.max_daily_hours,0),coalesce(ec.max_weekly_hours,0)
+      into v_max_daily_hours,v_max_weekly_hours
+    from public.employee_constraints ec
+    where ec.user_id=v_user and ec.status='ACTIVE';
+    if found then
+      select coalesce(sum(hours),0) into v_daily_hours
+      from (
+        select extract(epoch from (a.end_time-a.start_time))/3600.0 as hours
+        from public.schedule_generation_assignments a
+        join public.schedule_generation_runs r on r.id=a.generation_id
+        where a.user_id=v_user and a.work_date=v_date
+          and r.status in ('DRAFT','REVIEWED')
+        union all
+        select extract(epoch from (w.end_time-w.start_time))/3600.0
+        from public.work_schedules w
+        where w.user_id=v_user and w.work_date=v_date
+          and w.status in ('PENDING','APPROVED')
+      ) assigned;
+      select coalesce(sum(hours),0) into v_weekly_hours
+      from (
+        select extract(epoch from (a.end_time-a.start_time))/3600.0 as hours
+        from public.schedule_generation_assignments a
+        join public.schedule_generation_runs r on r.id=a.generation_id
+        where a.user_id=v_user
+          and a.work_date between v_run.week_start and v_run.week_end
+          and r.status in ('DRAFT','REVIEWED')
+        union all
+        select extract(epoch from (w.end_time-w.start_time))/3600.0
+        from public.work_schedules w
+        where w.user_id=v_user
+          and w.work_date between v_run.week_start and v_run.week_end
+          and w.status in ('PENDING','APPROVED')
+      ) assigned;
+      if v_max_daily_hours>0 and v_daily_hours+v_shift_hours>v_max_daily_hours then
+        raise exception 'DAILY_HOURS_CAP_EXCEEDED';
+      end if;
+      if v_max_weekly_hours>0 and v_weekly_hours+v_shift_hours>v_max_weekly_hours then
+        raise exception 'WEEKLY_HOURS_CAP_EXCEEDED';
+      end if;
+    end if;
 
     if exists(
       select 1 from public.schedule_generation_assignments a
