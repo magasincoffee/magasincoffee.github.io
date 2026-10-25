@@ -163,8 +163,8 @@ begin
       ea.work_date + greatest(ea.start_time,time '05:00'),
       ea.work_date + least(ea.end_time - interval '8 hours',time '14:00'),
       interval '30 minutes'
-    ) as candidate(start_ts)
-    cross join lateral (select candidate.start_ts::time as start_time) candidate
+    ) as candidate_window(start_ts)
+    cross join lateral (select candidate_window.start_ts::time as start_time) candidate
     where ea.work_date between p_week_start and p_week_start+6
       and ea.availability_type in ('AVAILABLE','PREFERRED')
       and upper(coalesce(p.role,'')) in ('STAFF','EMPLOYEE')
