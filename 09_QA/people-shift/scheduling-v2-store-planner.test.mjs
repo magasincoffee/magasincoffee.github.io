@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {runInNewContext} from 'node:vm';
 const src=await readFile(new URL('../../05_MANAGER/SchedulingV2/store-planner-v1.js',import.meta.url),'utf8');
-function create({available=true,eligible=true,other=false,previous=false,canRead=true,withTimestamps=false,sameType=false,scopeMismatch=false,staleAuto=false,staleManual=false}={}){const calls=[],row={id:'a1',generation_id:'gen1',store_id:'CN1',user_id:'u0',work_date:'2026-10-19',start_time:'06:00',end_time:'10:00'};let current=previous?[row,...(staleAuto?[{...row,id:'legacy-saturday',user_id:'u1',work_date:'2026-10-24',note:'V2_STORE_SCOPED_PROPOSAL'}]:[]),...(staleManual?[{...row,id:'manual-saturday',work_date:'2026-10-24',note:'MANAGER_DIRECT_FROM_AVAILABILITY'}]:[])]:[];let generation=previous?[{id:'gen1',status:'DRAFT'}]:[];
- const ctx={actor:async()=>({role:'STORE_MANAGER'}),stores:async()=>canRead?[{id:'CN1'}]:[],client:()=>({rpc:async(name,args)=>{calls.push({name,args});switch(name){case 'list_schedule_generations':return {data:generation};case 'list_workforce_recurring_staffing_requirements_v1':return {data:[{store_id:'CN1',day_of_week:1,start_time:'06:00',end_time:'10:00',target_headcount:2},{store_id:'CN2',day_of_week:1,start_time:'06:00',end_time:'10:00',target_headcount:5}]};case 'list_employee_employment_types_v1':return {data:[{employee_id:'u1',employment_type:'FULL_TIME'},{employee_id:'u2',employment_type:sameType?'FULL_TIME':'PART_TIME'}]};case 'list_employee_workforce_profiles_v1':return {data:eligible?[{employee_id:'u1',employee_role:'STAFF',profile_status:'ACTIVE',priority_store_ids:['CN1']},{employee_id:'u2',employee_role:'STAFF',profile_status:'ACTIVE',priority_store_ids:['CN1']}]:[]};case 'get_manager_weekly_availability':return {data:available?[{availability_id:'av1',user_id:'u1',work_date:'2026-10-19',start_time:'06:00',end_time:'10:00',availability_type:'PREFERRED'},{availability_id:'av2',user_id:'u2',work_date:'2026-10-19',start_time:'06:00',end_time:'10:00',availability_type:'AVAILABLE'}]:[]};case 'list_workforce_registration_order_v1':return withTimestamps?{data:[{availability_id:'av1',registered_at:'2026-10-18T10:00:00+07:00'},{availability_id:scopeMismatch?'foreign-av':'av2',registered_at:'2026-10-17T09:00:00+07:00'}]}:{data:null,error:{code:'PGRST202'}};case 'get_cross_store_weekly_plan_v1':return {data:other?[{user_id:'u1',work_date:'2026-10-19',start_time:'05:00',end_time:'09:00',generation_id:'external'}]:[]};case 'get_schedule_generation_assignments':return {data:current};case 'create_schedule_generation':generation=[{id:'gen1',status:'DRAFT'}];return {data:'gen1'};case 'apply_schedule_v2_auto_proposals_533':{
+function create({available=true,eligible=true,other=false,previous=false,canRead=true,withTimestamps=false,sameType=false,scopeMismatch=false,staleAuto=false,staleManual=false,validAuto=false,ft8=false,unclassified=false}={}){const calls=[],row={id:'a1',generation_id:'gen1',store_id:'CN1',user_id:'u0',work_date:'2026-10-19',start_time:'06:00',end_time:'10:00'};let current=previous?[row,...(staleAuto?[{...row,id:'legacy-saturday',user_id:'u1',work_date:'2026-10-24',note:'V2_STORE_SCOPED_PROPOSAL'}]:[]),...(staleManual?[{...row,id:'manual-saturday',work_date:'2026-10-24',note:'MANAGER_DIRECT_FROM_AVAILABILITY'}]:[]),...(validAuto?[{...row,id:'valid-auto',user_id:'u1',note:'V2_STORE_SCOPED_PROPOSAL'}]:[])]:[];let generation=previous?[{id:'gen1',status:'DRAFT'}]:[];
+ const ctx={actor:async()=>({role:'STORE_MANAGER'}),stores:async()=>canRead?[{id:'CN1'}]:[],client:()=>({rpc:async(name,args)=>{calls.push({name,args});switch(name){case 'list_schedule_generations':return {data:generation};case 'list_workforce_recurring_staffing_requirements_v1':return {data:[{store_id:'CN1',day_of_week:1,start_time:'06:00',end_time:'10:00',target_headcount:ft8?1:2},...(ft8?[{store_id:'CN1',day_of_week:1,start_time:'10:00',end_time:'14:00',target_headcount:1}]:[]),{store_id:'CN2',day_of_week:1,start_time:'06:00',end_time:'10:00',target_headcount:5}]};case 'list_employee_employment_types_v1':return {data:[{employee_id:'u1',employment_type:'FULL_TIME'},{employee_id:'u2',employment_type:unclassified?'UNKNOWN':sameType?'FULL_TIME':'PART_TIME'}]};case 'list_employee_workforce_profiles_v1':return {data:eligible?[{employee_id:'u1',employee_role:'STAFF',profile_status:'ACTIVE',priority_store_ids:['CN1']},{employee_id:'u2',employee_role:'STAFF',profile_status:'ACTIVE',priority_store_ids:['CN1']}]:[]};case 'get_manager_weekly_availability':return {data:available?[{availability_id:'av1',user_id:'u1',work_date:'2026-10-19',start_time:'06:00',end_time:ft8?'14:00':'10:00',availability_type:'PREFERRED'},{availability_id:'av2',user_id:'u2',work_date:'2026-10-19',start_time:'06:00',end_time:'10:00',availability_type:'AVAILABLE'}]:[]};case 'list_workforce_registration_order_v1':return withTimestamps?{data:[{availability_id:'av1',registered_at:'2026-10-18T10:00:00+07:00'},{availability_id:scopeMismatch?'foreign-av':'av2',registered_at:'2026-10-17T09:00:00+07:00'}]}:{data:null,error:{code:'PGRST202'}};case 'get_cross_store_weekly_plan_v1':return {data:other?[{user_id:'u1',work_date:'2026-10-19',start_time:'05:00',end_time:'09:00',generation_id:'external'}]:[]};case 'get_schedule_generation_assignments':return {data:current};case 'create_schedule_generation':generation=[{id:'gen1',status:'DRAFT'}];return {data:'gen1'};case 'apply_schedule_v2_auto_proposals_533':{
  const oldIds=new Set(args.p_obsolete_ids);
  current=[...current.filter(r=>!oldIds.has(String(r.id))),
    ...args.p_additions.map((r,i)=>({...r,id:'new-'+i}))];
@@ -59,4 +59,35 @@ test('only delta RPC is called, preserving existing manager shift identity on re
  assert.equal(delta.args.p_confirmed,true);
  assert.equal(h.calls.some(x=>x.name==='replace_schedule_generation_assignments'),false);
  assert.equal(h.current().find(x=>x.id==='manual-saturday')?.note,'MANAGER_DIRECT_FROM_AVAILABILITY');
+});
+
+test('#533 FT8: one contiguous 06-14 shift spans adjacent 06-10 and 10-14 demand before PT',async()=>{
+ const h=create({ft8:true});
+ const p=await h.planner.preview({storeId:'CN1',weekStart:'2026-10-19'});
+ assert.equal(p.proposals.length,1);
+ assert.equal(p.proposals[0].user_id,'u1');
+ assert.equal(p.proposals[0].start_time,'06:00');
+ assert.equal(p.proposals[0].end_time,'14:00');
+ assert.equal(p.proposals[0].note,'V2_STORE_SCOPED_PROPOSAL');
+ assert.equal(h.calls.some(x=>x.name==='apply_schedule_v2_auto_proposals_533'),false,'preview remains read-only');
+});
+test('#533 confirmed replan removes still-valid tagged auto shifts but never deletes Manager shift',async()=>{
+ const h=create({previous:true,validAuto:true});
+ const p=await h.planner.preview({storeId:'CN1',weekStart:'2026-10-19'});
+ assert.deepEqual(Array.from(p.obsoleteAutoIds),['valid-auto']);
+ const r=await h.planner.apply(p,{confirmed:true});
+ assert.equal(r.saved,true);
+ assert.equal(r.removed,1);
+ assert.ok(h.current().some(x=>x.id==='a1'),'manual/unknown shift identity retained');
+ assert.equal(h.current().some(x=>x.id==='valid-auto'),false);
+ const call=h.calls.find(x=>x.name==='apply_schedule_v2_auto_proposals_533');
+ assert.ok(call);
+ assert.equal(call.args.p_confirmed,true);
+});
+test('#533 FT/PT missing classification is not guessed or assigned',async()=>{
+ const h=create({unclassified:true});
+ const p=await h.planner.preview({storeId:'CN1',weekStart:'2026-10-19'});
+ assert.equal(p.proposals.length,1);
+ assert.equal(p.proposals[0].user_id,'u1');
+ assert.equal(p.shortages[0].missing_headcount,1);
 });
