@@ -110,7 +110,8 @@ test('#533: FT registered 06-12 gets one longest contiguous 6h shift across adja
  const r=p.proposals.find(r=>r.user_id==='u1');
  assert.equal(r.start_time,'06:00');
  assert.equal(r.end_time,'12:00');
- assert.equal(p.proposals.length,1,'PT must not preempt valid FT6 fallback');
+ assert.equal(p.proposals.length,2,'second required headcount may be filled by PT after FT6');
+ assert.equal(p.proposals.filter(r=>r.user_id==='u2').length,1,'PT fills residual headcount rather than preempting FT');
 });
 test('#533: cap 5h prevents FT6; selects longest valid <=5h instead',async()=>{
  const h=create({ft6:true,dailyCap:5});
