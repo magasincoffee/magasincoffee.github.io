@@ -17,16 +17,16 @@ Source of truth: issue #487 (Owner decisions), issue #529 (P0 acceptance), PR #5
 ## Deployment sequence — only after explicit authorization
 
 1. Record reviewed commit SHA, operator, date/time (Asia/Ho_Chi_Minh), and isolated QA run IDs. Freeze changes for this deployment.
-2. Before any change, securely export the **current production function definitions**, especially `public.auto_generate_cross_store_schedule_v1(date,boolean,text)`, with `pg_get_functiondef`, as well as current EXECUTE grants. Keep the export in restricted operational storage, **not** in the public GitHub repository or CI logs.
+2. Verify restricted baseline backup of the existing production V1 function and its ACL in Google Drive (created 25/10/2026). Check the stored function body and ownership against current production before change; keep it out of the public repository and CI logs.
 3. Confirm schema dependencies `employee_employment_types_v1`, `list_workforce_effective_weekly_staffing_v1`, generated draft ownership/tags and version compatibility. Use a dedicated staging/QA database for rehearsal.
 4. Review a reversible database change plan with the current, real migration state. Roll out reviewed backend functions/capability handshake first; deploy Manager UI only when the versioned RPC/capabilities actually exist.
 5. Run **read-only** permission and UI smoke checks. Do not run real Auto Suggest, overwrite any employee shifts, or publish to "test" the deployment. Those write paths must have been tested in isolated fixtures.
 
 ## Rollback decision and isolation
 
-- If the backend change fails, disable new UI entry points and restore the **verified pre-change function DDL and grants**, including the legacy `auto_generate_cross_store_schedule_v1` body. The migration is a `CREATE OR REPLACE` of an existing RPC: simply dropping `auto_generate_cross_store_schedule_529` **does not** restore the old implementation.
+- Backend rollback is **versioned-only**: first disable the Manager #529 UI entry point. When dependencies allow, revoke/drop `auto_generate_cross_store_schedule_529(date,boolean,text)`, then `get_workforce_auto_scheduler_capabilities_529()`, then `auto_generate_cross_store_schedule_529_core(date,boolean,text)` in the authorized rollback. The legacy `auto_generate_cross_store_schedule_v1` is never replaced by this revised migration. Compare its fingerprint and ACL with the restricted production baseline before and after rollback. If the legacy V1 differs unexpectedly, stop and restore the verified backup under a separately approved incident plan.
 - If the UI change fails, revert the UI deployment to the verified prior SHA; leave production schedules untouched. Do not assume a UI rollback automatically reverts database functions.
-- The helper RPC `get_workforce_auto_scheduler_capabilities_529` must not claim revision 529 when the safe backend is absent. Review whether to revoke/drop versioned RPCs after restoring the baseline; preserve dependency ordering.
+- The helper RPC `get_workforce_auto_scheduler_capabilities_529` must not claim revision 529 when the safe backend is absent. Remove the capability with the versioned writer under authorized rollback; do not touch V1 or production schedules.
 - Reconfirm grants/RLS, official-week protections, absence of unintended data changes and employee/Manager visibility. An unsuccessful or unverified rollback means **HOLD** and escalation, not force-publish.
 
 ## Evidence to record
