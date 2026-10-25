@@ -27,7 +27,7 @@ const client={async rpc(name,args){
  if(name==='get_cross_store_weekly_plan_v1')return {data:[],error:null};
  if(name==='create_schedule_generation')return {data:'gen-one',error:null};
  if(name==='get_schedule_generation_assignments')return {data:assignments,error:null};
- if(name==='replace_schedule_generation_assignments'){assignments.splice(0,assignments.length,...args.p_assignments);return {data:{saved:true},error:null}}
+ if(name==='apply_schedule_v2_auto_proposals_532'){assignments.splice(0,assignments.length,...assignments.filter(x=>!args.p_obsolete_ids.includes(x.id)),...args.p_additions);return {data:{saved:true,added:args.p_additions.length,removed:args.p_obsolete_ids.length,valid:true,violations:[],warnings:[]},error:null}}
  if(name==='validate_schedule_generation_v1')return {data:{valid:true,violations:[],warnings:[]},error:null};
  throw Error('UNEXPECTED_RPC:'+name);
 }};
