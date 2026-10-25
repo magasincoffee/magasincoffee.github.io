@@ -82,3 +82,12 @@ test('#529: PT fallback uses registered store priority, not fixed CN code order'
  assert.match(sql,/case et\.employment_type\s+when 'FULL_TIME' then 0 when 'PART_TIME' then 1 end,\s+esp\.priority asc/);
  assert.doesNotMatch(sql,/order by d\.work_date,d\.start_time,d\.end_time,s\.code,req\.id/);
 });
+
+test('#529: side-by-side SQL deployment never overwrites active production V1',()=>{
+ assert.match(sql,/create or replace function public\.auto_generate_cross_store_schedule_529_core\(/);
+ assert.match(sql,/select public\.auto_generate_cross_store_schedule_529_core\(p_week_start,p_replace_existing,p_algorithm_version\)/);
+ assert.doesNotMatch(sql,/create or replace function public\.auto_generate_cross_store_schedule_v1\(/);
+ assert.doesNotMatch(sql,/revoke execute on function public\.auto_generate_cross_store_schedule_v1\(/);
+ assert.match(sql,/revoke execute on function public\.auto_generate_cross_store_schedule_529_core\(date,boolean,text\)/);
+ assert.match(sql,/get_workforce_auto_scheduler_capabilities_529/);
+});
