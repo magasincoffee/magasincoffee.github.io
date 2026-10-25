@@ -5,7 +5,7 @@ on:
     paths:
       - 'supabase/migrations/20261025092922_workforce_529_versioned_ft8_safe_rerun.sql'
       - 'supabase/migrations/20261025173000_workforce_529_legacy_v2_stale_autoshifts.sql'
-      - 'supabase/migrations/20261025181500_workforce_532_v2_atomic_proposal_delta.sql'
+      - 'supabase/migrations/20261025111833_workforce_532_v2_atomic_proposal_delta.sql'
       - '05_MANAGER/SchedulingV2/store-planner-v1.js'
       - '09_QA/people-shift/workforce-529-auto-scheduler-contract.test.mjs'
       - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
@@ -16,7 +16,7 @@ on:
     paths:
       - 'supabase/migrations/20261025092922_workforce_529_versioned_ft8_safe_rerun.sql'
       - 'supabase/migrations/20261025173000_workforce_529_legacy_v2_stale_autoshifts.sql'
-      - 'supabase/migrations/20261025181500_workforce_532_v2_atomic_proposal_delta.sql'
+      - 'supabase/migrations/20261025111833_workforce_532_v2_atomic_proposal_delta.sql'
       - '05_MANAGER/SchedulingV2/store-planner-v1.js'
       - '09_QA/people-shift/workforce-529-auto-scheduler-contract.test.mjs'
       - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
@@ -957,7 +957,7 @@ jobs:
             select jsonb_build_object('valid',true,'violations','[]'::jsonb,'warnings','[]'::jsonb)
           $v$;
           SQL
-          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261025181500_workforce_532_v2_atomic_proposal_delta.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261025111833_workforce_532_v2_atomic_proposal_delta.sql
           psql -v ON_ERROR_STOP=1 <<'SQL'
           begin;
           insert into public.stores(id,code,status) values
