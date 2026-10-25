@@ -843,3 +843,25 @@ jobs:
           end
           $proof$;
           SQL
+
+  h4-synthetic-ui-guard:
+    # QA only: this job never signs in, writes a schedule, or touches Supabase production.
+    # Keeping this in the PR workflow makes the H4 gate visible on exact HEAD.
+    runs-on: [self-hosted, Windows, X64, h4-magasin]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run isolated Chrome/contract checks on authorized H4 runner
+        shell: cmd
+        run: |
+          @echo off
+          if /I not "%COMPUTERNAME%"=="DESKTOP-H4A16IL" (echo WRONG_H4_HOST & exit /b 1)
+          node --check 05_MANAGER\Workforce\cross-store-auto-schedule-v1.js
+          if errorlevel 1 exit /b 1
+          node --test 09_QA\people-shift\workforce-529-auto-scheduler-contract.test.mjs
+          if errorlevel 1 exit /b 1
+          node 09_QA\people-shift\workforce-529-h4-browser-smoke.mjs
+          if errorlevel 1 exit /b 1
+          echo H4_529_READ_ONLY_SYNTHETIC_GATE_PASS
