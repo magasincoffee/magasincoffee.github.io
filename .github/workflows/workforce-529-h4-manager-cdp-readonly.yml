@@ -1,9 +1,7 @@
 name: Workforce #529 H4 Live Manager Readonly QA
+# Optional legacy H4 task. Manual dispatch only; no auto-run on release.
 on:
-  push:
-    paths:
-      - '.github/workflows/workforce-529-h4-manager-cdp-readonly.yml'
-      - '09_QA/people-shift/workforce-529-h4-manager-cdp-readonly.mjs'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
