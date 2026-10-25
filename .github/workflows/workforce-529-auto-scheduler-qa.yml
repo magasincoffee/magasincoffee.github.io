@@ -278,6 +278,45 @@ jobs:
           rollback;
           SQL
 
+      - name: Reject unclassified employee until FT/PT is explicitly declared
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          begin;
+          insert into public.stores(id,code,status)
+          values ('20000000-0000-0000-0000-000000000001','CN1','ACTIVE');
+          insert into public.profiles(id,status,role,full_name,username)
+          values ('30000000-0000-0000-0000-000000000001','ACTIVE','STAFF','Unclassified','u');
+          insert into public.employee_store_priorities(employee_id,store_id,priority)
+          values ('30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001',1);
+          insert into public.employee_availability(user_id,work_date,availability_type,start_time,end_time)
+          values ('30000000-0000-0000-0000-000000000001','2026-10-05','AVAILABLE','12:00','17:00');
+          insert into public.workforce_recurring_staffing_requirements(id,store_id,day_of_week,start_time,end_time,target_headcount)
+          values ('40000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001',1,'12:00','17:00',1);
+          do $test$
+          declare result jsonb;
+          begin
+            result:=public.auto_generate_cross_store_schedule_v1('2026-10-05',false,'529_QA');
+            if (result->>'assignment_count')::integer<>0 or (result->>'shortage_count')::integer<>1 then
+              raise exception 'UNCLASSIFIED_STAFF_WAS_AUTO_ASSIGNED: %',result;
+            end if;
+          end
+          $test$;
+          insert into public.employee_employment_types_v1(employee_id,employment_type)
+          values ('30000000-0000-0000-0000-000000000001','PART_TIME');
+          do $test$
+          declare result jsonb;
+          begin
+            result:=public.auto_generate_cross_store_schedule_v1('2026-10-05',true,'529_QA');
+            if (result->>'assignment_count')::integer<>1 or (result->>'shortage_count')::integer<>0 then
+              raise exception 'EXPLICIT_PART_TIME_NOT_USED: %',result;
+            end if;
+            raise notice '529_MISSING_FTPT_FAIL_CLOSED_AND_PT_RECOVERY=PASS';
+          end
+          $test$;
+          rollback;
+          SQL
+
       - name: Prove real gap is returned exactly and later Availability is still used
         shell: bash
         run: |
