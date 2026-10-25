@@ -21,6 +21,7 @@
       { key: 'planning', title: 'Lập lịch nhân sự', icon: '▦', items: [
         ['demand', '▤', 'Nhu cầu nhân sự'],
         ['workforce', '▦', 'Xếp lịch'],
+        ['availability', '▤', 'Đăng ký lịch làm việc'],
         ['schedule', '▤', 'Lịch đã công bố']
       ] },
       { key: 'time', title: 'Công & Điều chỉnh ca', icon: '◷', items: [
@@ -36,6 +37,7 @@
       ['overview', '⌂', 'Tổng quan', '/owner/'],
       ['attention', '!', 'Cần chú ý', '/04_OWNER/ControlTower/'],
       ['workforce', '▦', 'Nhân sự', '/owner/scheduling/'],
+      ['availability', '▤', 'Đăng ký lịch làm việc', '/owner/scheduling/?view=availability'],
       ['procurement', '□', 'Mua hàng', '/nhap-hang/'],
       ['access', '⌘', 'Phân quyền', '/04_OWNER/Access/']
     ]),
@@ -47,6 +49,7 @@
     dashboard: ['Tổng quan cửa hàng', 'Hoạt động và các việc cần xử lý hôm nay'],
     demand: ['Nhu cầu nhân sự', 'Định mức nhân sự cố định trong tuần theo chi nhánh'],
     workforce: ['Xếp lịch', 'Thời gian có thể làm → Lịch nháp → Kiểm tra → Duyệt → Phát hành'],
+    availability: ['Đăng ký lịch làm việc', 'Tổng hợp khả dụng theo tuần và chi nhánh'],
     swap: ['Đổi / Cho ca', 'Kiểm tra và xử lý yêu cầu chuyển ca'],
     attendance: ['Chấm công', 'Kiểm tra giờ công theo lịch đã phát hành'],
     staff: ['Nhân viên', 'Danh sách và trạng thái nhân sự'],
@@ -61,6 +64,7 @@
     overview: ['Tổng quan', 'Điều hành hệ thống MAGASIN'],
     attention: ['Cần chú ý', 'Các vấn đề cần theo dõi trên toàn hệ thống'],
     workforce: ['Nhân sự', 'Giám sát lịch và hỗ trợ theo cửa hàng'],
+    availability: ['Đăng ký lịch làm việc', 'Tổng hợp nhân viên đăng ký khả dụng theo chi nhánh'],
     procurement: ['Mua hàng', 'Nhập hàng · công nợ · báo cáo mua hàng'],
     access: ['Phân quyền', 'Quản lý quyền tài khoản nội bộ']
   });
@@ -132,6 +136,7 @@
 
   const currentKey = () => {
     if (config.role === 'OWNER') {
+      try { if (new URLSearchParams(topWindow().location.search).get('view') === 'availability') return 'availability'; } catch (_) {}
       return String(
         window.__MAGASIN_UI_V2_SHELL__?.current ||
         document.body.dataset.magasinShellCurrent ||

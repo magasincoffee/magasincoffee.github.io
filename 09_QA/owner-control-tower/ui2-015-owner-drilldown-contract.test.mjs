@@ -42,7 +42,7 @@ test("UI2-015 Workforce keeps canonical scheduling writer and adds only Owner pr
   assert.match(workforceRuntime,/magasin-owner-drilldown-v1\.css\?v=20260927-ui2-015/);
   assert.match(workforceRuntime,/magasin-owner-drilldown-v1\.js\?v=20260927-ui2-015/);
   assert.match(workforceRuntime,/\/05_MANAGER\/Workforce\/draft-publish-v1\.js\?v=20261003-sched-ui-008/);
-  assert.match(workforceRuntime,/\/04_OWNER\/Workforce\/owner-scheduling-overview-v1\.js\?v=20261003-sched-ui-008/);
+  assert.match(workforceRuntime,/\/04_OWNER\/Workforce\/owner-scheduling-overview-v1\.js\?v=(?:20261003-sched-ui-008|20261024-487-as1)/);
   assert.doesNotMatch(workforceRuntime,/cross-store-master-v1\.js/);
   assert.match(workforceRuntime,/manager-context-v1\.js\?v=20260929-mer003/);
   assert.doesNotMatch(workforceRuntime,/auto_generate_schedule_generation|upsert_workforce_staffing_requirement|manager_update_employee_availability/);

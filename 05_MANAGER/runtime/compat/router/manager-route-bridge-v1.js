@@ -6,7 +6,7 @@
 
   const PREFIX='/05_MANAGER';
   const MAP={
-    dashboard:'',staff:'Nhan-su',workforce:'Workforce',schedule:'Lich-lam',tasks:'Cong-viec',
+    dashboard:'',staff:'Nhan-su',workforce:'Workforce',availability:'Dang-ky-lich',schedule:'Lich-lam',tasks:'Cong-viec',
     kpi:'KPI',swap:'Doi-ca',attendance:'Cham-cong',academy:'Academy',settings:'Cai-dat'
   };
   const REVERSE=Object.fromEntries(Object.entries(MAP).filter(([,v])=>v).map(([k,v])=>[v.toLowerCase(),k]));

@@ -17,7 +17,7 @@ for (const forbidden of [".insert(", ".update(", ".upsert(", ".delete(", ".rpc("
 }
 
 assert.match(runtime, /manager-route-bridge-v1\.js/);
-assert.match(runtime, /allowedRouteHash=new Set\(\['dashboard','staff','workforce','schedule','tasks','kpi','swap','attendance','academy','settings','reports','payroll-self-check'\]\)/);
+assert.match(runtime, /allowedRouteHash=new Set\(\['dashboard','staff','workforce','availability','schedule','tasks','kpi','swap','attendance','academy','settings','reports','payroll-self-check'\]\)/);
 assert.match(fs.readFileSync(new URL("../../manager/index.html", import.meta.url),"utf8"),/data-route-key="manager-root"/);
 assert.match(bridge, /const PREFIX='\/05_MANAGER'/);
 assert.match(bridge, /tasks:'Cong-viec'/);
