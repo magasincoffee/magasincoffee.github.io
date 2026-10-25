@@ -33,3 +33,12 @@ test('Demand editor is executable, timezone-independent and enforces 30-minute w
  assert.match(context,/window\.parent\.MAGASIN_CORE\?\.supabase\?\.get/);
  assert.match(host,/Demand\/index\.html\?mode=live&demand-preview&v=20261021-demand-fix1/);
 });
+
+test('Manager edits to V2 generated shifts acquire manual-origin protection',async()=>{
+ const [editor,operations]=await Promise.all([
+  get('05_MANAGER/SchedulingV2/draft-editor-v1.js'),
+  get('05_MANAGER/SchedulingV2/draft-operations-v1.js')
+ ]);
+ assert.match(editor,/note:i===index\?'MANAGER_DIRECT_FROM_AVAILABILITY'/);
+ assert.match(operations,/const value=\{\.\.\.converted\(assignment\),note:'MANAGER_DIRECT_FROM_AVAILABILITY'\}/);
+});
