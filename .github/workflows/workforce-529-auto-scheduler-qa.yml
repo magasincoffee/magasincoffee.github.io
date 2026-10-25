@@ -954,34 +954,34 @@ jobs:
           psql -v ON_ERROR_STOP=1 <<'SQL'
           begin;
           insert into public.stores(id,code,status) values
-           ('20000000-0000-0000-0000-000000000001','CN1','ACTIVE'),
-           ('20000000-0000-0000-0000-000000000002','CN2','ACTIVE');
+           ('52000000-0000-0000-0000-000000000001','CN1','ACTIVE'),
+           ('52000000-0000-0000-0000-000000000002','CN2','ACTIVE');
           insert into public.profiles(id,status,role,full_name,username) values
-           ('30000000-0000-0000-0000-000000000001','ACTIVE','STAFF','Historic manual','historic'),
-           ('30000000-0000-0000-0000-000000000002','ACTIVE','STAFF','Eligible replacement','replacement');
+           ('53000000-0000-0000-0000-000000000001','ACTIVE','STAFF','Historic manual','historic'),
+           ('53000000-0000-0000-0000-000000000002','ACTIVE','STAFF','Eligible replacement','replacement');
           -- Staff u1 currently belongs to CN1, but its old CN2 Manager shift
           -- must be retained without failing STORE_NOT_ELIGIBLE.
           insert into public.employee_store_priorities(employee_id,store_id,priority) values
-           ('30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001',1),
-           ('30000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000002',1);
+           ('53000000-0000-0000-0000-000000000001','52000000-0000-0000-0000-000000000001',1),
+           ('53000000-0000-0000-0000-000000000002','52000000-0000-0000-0000-000000000002',1);
           insert into public.employee_availability(user_id,work_date,availability_type,start_time,end_time) values
-           ('30000000-0000-0000-0000-000000000001','2026-10-05','AVAILABLE','06:00','12:00'),
-           ('30000000-0000-0000-0000-000000000001','2026-10-06','AVAILABLE','06:00','10:00'),
-           ('30000000-0000-0000-0000-000000000002','2026-10-06','AVAILABLE','06:00','10:00');
+           ('53000000-0000-0000-0000-000000000001','2026-10-05','AVAILABLE','06:00','12:00'),
+           ('53000000-0000-0000-0000-000000000001','2026-10-06','AVAILABLE','06:00','10:00'),
+           ('53000000-0000-0000-0000-000000000002','2026-10-06','AVAILABLE','06:00','10:00');
           do $test$
           declare g uuid; old_auto uuid; old_manual uuid; snap jsonb;
                   result jsonb; manual_count integer; stale_count integer; new_count integer;
           begin
             g:=public.create_schedule_generation(
-              '20000000-0000-0000-0000-000000000002','2026-10-05','V2_STORE_SCOPED_V1');
+              '52000000-0000-0000-0000-000000000002','2026-10-05','V2_STORE_SCOPED_V1');
             insert into public.schedule_generation_assignments(
               generation_id,user_id,store_id,work_date,start_time,end_time,status,note)
-            values(g,'30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000002',
+            values(g,'53000000-0000-0000-0000-000000000001','52000000-0000-0000-0000-000000000002',
                    '2026-10-05','06:00','12:00','DRAFT','MANAGER_DIRECT_FROM_AVAILABILITY')
             returning id into old_manual;
             insert into public.schedule_generation_assignments(
               generation_id,user_id,store_id,work_date,start_time,end_time,status,note)
-            values(g,'30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000002',
+            values(g,'53000000-0000-0000-0000-000000000001','52000000-0000-0000-0000-000000000002',
                    '2026-10-06','06:00','10:00','DRAFT','V2_STORE_SCOPED_PROPOSAL')
             returning id into old_auto;
 
@@ -995,8 +995,8 @@ jobs:
             begin
               perform public.apply_schedule_v2_auto_proposals_532(g,snap,array[old_auto],
                 jsonb_build_array(jsonb_build_object(
-                  'user_id','30000000-0000-0000-0000-000000000002',
-                  'store_id','20000000-0000-0000-0000-000000000002',
+                  'user_id','53000000-0000-0000-0000-000000000002',
+                  'store_id','52000000-0000-0000-0000-000000000002',
                   'work_date','2026-10-06','start_time','06:00','end_time','10:00',
                   'note','V2_STORE_SCOPED_PROPOSAL'
                 )),false);
@@ -1007,8 +1007,8 @@ jobs:
 
             result:=public.apply_schedule_v2_auto_proposals_532(g,snap,array[old_auto],
               jsonb_build_array(jsonb_build_object(
-                'user_id','30000000-0000-0000-0000-000000000002',
-                'store_id','20000000-0000-0000-0000-000000000002',
+                'user_id','53000000-0000-0000-0000-000000000002',
+                'store_id','52000000-0000-0000-0000-000000000002',
                 'work_date','2026-10-06','start_time','06:00','end_time','10:00',
                 'note','V2_STORE_SCOPED_PROPOSAL'
               )),true);
@@ -1016,7 +1016,7 @@ jobs:
               where id=old_manual and note='MANAGER_DIRECT_FROM_AVAILABILITY';
             select count(*) into stale_count from public.schedule_generation_assignments where id=old_auto;
             select count(*) into new_count from public.schedule_generation_assignments
-              where generation_id=g and user_id='30000000-0000-0000-0000-000000000002';
+              where generation_id=g and user_id='53000000-0000-0000-0000-000000000002';
             if manual_count<>1 or stale_count<>0 or new_count<>1
               or (result->>'added')::int<>1 or (result->>'removed')::int<>1 then
               raise exception '532_CROSS_BRANCH_DELTA_FAILURE: % / manual:% stale:% new:%',
