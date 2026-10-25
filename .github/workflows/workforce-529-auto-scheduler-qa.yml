@@ -3,7 +3,7 @@ name: Workforce #529 Guarded Auto Scheduling PostgreSQL QA
 on:
   push:
     paths:
-      - 'supabase/migrations/20261024212000_workforce_529_auto_schedule_safe_ft8.sql'
+      - 'supabase/migrations/20261025092922_workforce_529_versioned_ft8_safe_rerun.sql'
       - '09_QA/people-shift/workforce-529-auto-scheduler-contract.test.mjs'
       - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
       - '.github/workflows/workforce-529-auto-scheduler-qa.yml'
@@ -11,7 +11,7 @@ on:
       - '09_QA/people-shift/workforce-529-authenticated-browser.mjs'
   pull_request:
     paths:
-      - 'supabase/migrations/20261024212000_workforce_529_auto_schedule_safe_ft8.sql'
+      - 'supabase/migrations/20261025092922_workforce_529_versioned_ft8_safe_rerun.sql'
       - '09_QA/people-shift/workforce-529-auto-scheduler-contract.test.mjs'
       - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
       - '.github/workflows/workforce-529-auto-scheduler-qa.yml'
@@ -235,7 +235,7 @@ jobs:
             select '{"legacy":"unchanged"}'::jsonb
           $legacy$;
           SQL
-          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261024212000_workforce_529_auto_schedule_safe_ft8.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261025092922_workforce_529_versioned_ft8_safe_rerun.sql
           psql -v ON_ERROR_STOP=1 <<'SQL'
           do $test$
           begin
