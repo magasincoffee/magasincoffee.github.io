@@ -367,6 +367,10 @@ jobs:
             if (result->>'assignment_count')::integer<>0 or (result->>'shortage_count')::integer<>1 then
               raise exception 'UNCLASSIFIED_STAFF_WAS_AUTO_ASSIGNED: %',result;
             end if;
+            if jsonb_array_length(result->'unclassified_staff')<>1
+               or result->'unclassified_staff'->0->>'employee_name'<>'Unclassified' then
+              raise exception 'UNCLASSIFIED_STAFF_WARNING_MISSING: %',result;
+            end if;
           end
           $test$;
           insert into public.employee_employment_types_v1(employee_id,employment_type)
@@ -377,6 +381,9 @@ jobs:
             result:=public.auto_generate_cross_store_schedule_v1('2026-10-05',true,'529_QA');
             if (result->>'assignment_count')::integer<>1 or (result->>'shortage_count')::integer<>0 then
               raise exception 'EXPLICIT_PART_TIME_NOT_USED: %',result;
+            end if;
+            if jsonb_array_length(result->'unclassified_staff')<>0 then
+              raise exception 'UNCLASSIFIED_WARNING_NOT_CLEARED_AFTER_PT_FIX: %',result;
             end if;
             raise notice '529_MISSING_FTPT_FAIL_CLOSED_AND_PT_RECOVERY=PASS';
           end
