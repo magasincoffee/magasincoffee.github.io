@@ -4,6 +4,7 @@ import fs from 'node:fs';
 
 const sql=fs.readFileSync('supabase/migrations/20261025092922_workforce_529_versioned_ft8_safe_rerun.sql','utf8');
 const ui=fs.readFileSync('05_MANAGER/Workforce/cross-store-auto-schedule-v1.js','utf8');
+const legacyV2Patch=fs.readFileSync('supabase/migrations/20261025173000_workforce_529_legacy_v2_stale_autoshifts.sql','utf8');
 test('#529: reruns replace ONLY known auto-generated rows; protect manual/published',()=>{
  assert.match(sql,/delete from public\.schedule_generation_assignments\s+where generation_id=v_generation\s+and note in \('AUTO_XSTORE_INTERVAL_COMPOSED_V1','AUTO_XSTORE_FT8_529_V1'\)/i);
  assert.match(sql,/and gr\.status in \('REVIEWED','PUBLISHED'\)/);
@@ -90,4 +91,14 @@ test('#529: side-by-side SQL deployment never overwrites active production V1',(
  assert.doesNotMatch(sql,/revoke execute on function public\.auto_generate_cross_store_schedule_v1\(/);
  assert.match(sql,/revoke execute on function public\.auto_generate_cross_store_schedule_529_core\(date,boolean,text\)/);
  assert.match(sql,/get_workforce_auto_scheduler_capabilities_529/);
+});
+
+test('#529 hotfix only clears old V2 auto shifts no longer matching current registered availability',()=>{
+ assert.match(legacyV2Patch,/create or replace function public\.auto_generate_cross_store_schedule_529_core\(/i);
+ assert.match(legacyV2Patch,/a\.note='V2_STORE_SCOPED_PROPOSAL'/);
+ assert.match(legacyV2Patch,/not exists\s*\(\s*select 1 from public\.employee_availability ea/);
+ assert.match(legacyV2Patch,/ea\.start_time<=a\.start_time and ea\.end_time>=a\.end_time/);
+ assert.match(legacyV2Patch,/if p_replace_existing then/);
+ assert.doesNotMatch(legacyV2Patch,/create or replace function public\.auto_generate_cross_store_schedule_v1\(/);
+ assert.doesNotMatch(legacyV2Patch,/delete from public\.work_schedules/i);
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {runInNewContext} from 'node:vm';
 const src=await readFile(new URL('../../05_MANAGER/SchedulingV2/store-planner-v1.js',import.meta.url),'utf8');
-function create({available=true,eligible=true,other=false,previous=false,canRead=true,withTimestamps=false,sameType=false,scopeMismatch=false}={}){const calls=[],row={id:'a1',generation_id:'gen1',store_id:'CN1',user_id:'u0',work_date:'2026-10-19',start_time:'06:00',end_time:'10:00'};let current=previous?[row]:[];let generation=previous?[{id:'gen1',status:'DRAFT'}]:[];
+function create({available=true,eligible=true,other=false,previous=false,canRead=true,withTimestamps=false,sameType=false,scopeMismatch=false,staleAuto=false,staleManual=false}={}){const calls=[],row={id:'a1',generation_id:'gen1',store_id:'CN1',user_id:'u0',work_date:'2026-10-19',start_time:'06:00',end_time:'10:00'};let current=previous?[row,...(staleAuto?[{...row,id:'legacy-saturday',user_id:'u1',work_date:'2026-10-24',note:'V2_STORE_SCOPED_PROPOSAL'}]:[]),...(staleManual?[{...row,id:'manual-saturday',work_date:'2026-10-24',note:'MANAGER_DIRECT_FROM_AVAILABILITY'}]:[])]:[];let generation=previous?[{id:'gen1',status:'DRAFT'}]:[];
  const ctx={actor:async()=>({role:'STORE_MANAGER'}),stores:async()=>canRead?[{id:'CN1'}]:[],client:()=>({rpc:async(name,args)=>{calls.push({name,args});switch(name){case 'list_schedule_generations':return {data:generation};case 'list_workforce_recurring_staffing_requirements_v1':return {data:[{store_id:'CN1',day_of_week:1,start_time:'06:00',end_time:'10:00',target_headcount:2},{store_id:'CN2',day_of_week:1,start_time:'06:00',end_time:'10:00',target_headcount:5}]};case 'list_employee_employment_types_v1':return {data:[{employee_id:'u1',employment_type:'FULL_TIME'},{employee_id:'u2',employment_type:sameType?'FULL_TIME':'PART_TIME'}]};case 'list_employee_workforce_profiles_v1':return {data:eligible?[{employee_id:'u1',employee_role:'STAFF',profile_status:'ACTIVE',priority_store_ids:['CN1']},{employee_id:'u2',employee_role:'STAFF',profile_status:'ACTIVE',priority_store_ids:['CN1']}]:[]};case 'get_manager_weekly_availability':return {data:available?[{availability_id:'av1',user_id:'u1',work_date:'2026-10-19',start_time:'06:00',end_time:'10:00',availability_type:'PREFERRED'},{availability_id:'av2',user_id:'u2',work_date:'2026-10-19',start_time:'06:00',end_time:'10:00',availability_type:'AVAILABLE'}]:[]};case 'list_workforce_registration_order_v1':return withTimestamps?{data:[{availability_id:'av1',registered_at:'2026-10-18T10:00:00+07:00'},{availability_id:scopeMismatch?'foreign-av':'av2',registered_at:'2026-10-17T09:00:00+07:00'}]}:{data:null,error:{code:'PGRST202'}};case 'get_cross_store_weekly_plan_v1':return {data:other?[{user_id:'u1',work_date:'2026-10-19',start_time:'05:00',end_time:'09:00',generation_id:'external'}]:[]};case 'get_schedule_generation_assignments':return {data:current};case 'create_schedule_generation':generation=[{id:'gen1',status:'DRAFT'}];return {data:'gen1'};case 'replace_schedule_generation_assignments':current=args.p_assignments;return {data:current.length};case 'validate_schedule_generation_v1':return {data:{valid:true,violations:[],warnings:[{code:'STAFFING_SHORTAGE'}]}};default:throw Error('Unexpected RPC: '+name)}}})};
  const window={MAGASIN_SCHEDULING_V2_CONTEXT:ctx,MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED:true,location:{search:'?auto-preview'}};runInNewContext(src,{window,Error,Date,Number,String,Array,Map,Set,Object,JSON,URLSearchParams,Math});return {planner:window.MAGASIN_SCHEDULING_V2_STORE_PLANNER,calls,current:()=>current}
 }
@@ -16,3 +16,27 @@ test('confirmed FT-before-PT priority takes precedence over availability prefere
 test('verified immutable registration timestamps order same FT group before preference',async()=>{const h=create({withTimestamps:true,sameType:true});const p=await h.planner.preview({storeId:'CN1',weekStart:'2026-10-19'});assert.equal(p.registrationOrderStatus,'VERIFIED_CREATED_AT');assert.equal(p.proposals[0].user_id,'u2','earlier registration wins within FT even when u1 preferred');assert.equal(p.proposals[1].user_id,'u1')});
 test('FT remains higher priority than earlier PT, even with server timestamps',async()=>{const h=create({withTimestamps:true});const p=await h.planner.preview({storeId:'CN1',weekStart:'2026-10-19'});assert.equal(p.registrationOrderStatus,'VERIFIED_CREATED_AT');assert.equal(p.proposals[0].user_id,'u1');assert.equal(p.proposals[1].user_id,'u2')});
 test('unscoped timestamp response is rejected before any draft write',async()=>{const h=create({withTimestamps:true,scopeMismatch:true});await assert.rejects(h.planner.preview({storeId:'CN1',weekStart:'2026-10-19'}),/REGISTRATION_TIMESTAMP_SCOPE_MISMATCH/);assert.equal(h.calls.some(c=>c.name==='replace_schedule_generation_assignments'),false)});
+
+test('deleted Saturday availability invalidates old V2 proposal but retains manager direct shift',async()=>{
+ const h=create({previous:true,staleAuto:true,staleManual:true});
+ const p=await h.planner.preview({storeId:'CN1',weekStart:'2026-10-19'});
+ assert.equal(p.obsoleteAutoCount,1);
+ assert.equal(p.proposals.length,1);
+ const done=await h.planner.apply(p,{confirmed:true});
+ assert.equal(done.saved,true);
+ assert.equal(done.removed,1);
+ assert.equal(h.current().some(r=>r.id==='legacy-saturday'||(r.work_date==='2026-10-24'&&r.note==='V2_STORE_SCOPED_PROPOSAL')),false);
+ assert.equal(h.current().filter(r=>r.work_date==='2026-10-24'&&r.note==='MANAGER_DIRECT_FROM_AVAILABILITY').length,1);
+});
+test('V2 stale auto shift is removed even when no new proposals can be added',async()=>{
+ const h=create({previous:true,staleAuto:true,available:false});
+ const p=await h.planner.preview({storeId:'CN1',weekStart:'2026-10-19'});
+ assert.equal(p.proposals.length,0);
+ assert.equal(p.obsoleteAutoCount,1);
+ const saved=await h.planner.apply(p,{confirmed:true});
+ assert.equal(saved.saved,true);
+ assert.equal(saved.added,0);
+ assert.equal(saved.removed,1);
+ assert.equal(h.current().length,1);
+ assert.equal(h.current()[0].user_id,'u0');
+});

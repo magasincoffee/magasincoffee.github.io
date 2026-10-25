@@ -13,7 +13,7 @@ try{
  page.on('pageerror',e=>pageErrors.push(String(e)));
  await page.goto(BASE+'/09_QA/people-shift/workforce-rules-p1-fixture.html?auto-preview',{waitUntil:'networkidle'});
  await page.getByRole('button',{name:'Đề xuất xếp lịch'}).click();
- await page.locator('[data-autostatus]').filter({hasText:'Đề xuất thêm 1 ca'}).waitFor();
+ await page.locator('[data-autostatus]').filter({hasText:'Thêm 1 ca; loại 0 ca'}).waitFor();
  const previewText=await page.locator('[data-summary]').innerText();
  assert.match(previewText,/Ưu tiên Full-time trước Part-time/,'draft preview must explain FT before PT');
  assert.match(previewText,/Thứ tự đăng ký sớm nhất chưa được xác minh/,'same-category registration order must remain visible as unverified');
@@ -46,7 +46,7 @@ try{
  await page.screenshot({path:path.join(OUT,'workforce-rules-p1-preview.png'),fullPage:true});
  page.once('dialog',d=>d.accept());
  await btn.click();
- await page.locator('[data-autostatus]').filter({hasText:'Đã thêm 1 ca'}).waitFor({timeout:15000});
+ await page.locator('[data-autostatus]').filter({hasText:'Đã loại 0 ca cũ và thêm 1 ca'}).waitFor({timeout:15000});
  const after=await page.evaluate(()=>({
   assignments:window.__WORKFORCE_RULES_QA.assignments,
   rpc:window.__WORKFORCE_RULES_QA.calls.map(x=>x.name)
@@ -60,7 +60,7 @@ try{
  assert.deepEqual(pageErrors,[],'no page JavaScript runtime exceptions');
  await page.goto(BASE+'/09_QA/people-shift/workforce-rules-p1-fixture.html?auto-preview&verified',{waitUntil:'networkidle'});
  await page.getByRole('button',{name:'Đề xuất xếp lịch'}).click();
- await page.locator('[data-autostatus]').filter({hasText:'Đề xuất thêm 1 ca'}).waitFor();
+ await page.locator('[data-autostatus]').filter({hasText:'Thêm 1 ca; loại 0 ca'}).waitFor();
  const verifiedPreview=await page.locator('[data-summary]').innerText();
  assert.match(verifiedPreview,/thời điểm tạo đăng ký do máy chủ xác thực/,'verified server timestamp status must be visible');
  assert.doesNotMatch(verifiedPreview,/Thứ tự đăng ký sớm nhất chưa được xác minh/);

@@ -31,7 +31,7 @@ async function apply({storeId,weekStart,operation,index,expected,assignment}){
  }
  const converted=r=>({user_id:r.user_id,store_id:storeId,work_date:date(r.work_date),start_time:hm(r.start_time),end_time:hm(r.end_time),skill_code:r.skill_code||null,skill_level:Number(r.skill_level||0),score:Number(r.score||0),warning:r.warning||null,status:'DRAFT',note:r.note||'MANAGER_DIRECT_FROM_AVAILABILITY'});
  const next=rows.map(converted);if(operation==='remove')next.splice(index,1);
- if(operation==='add'||operation==='replace'){const value=converted(assignment);if(operation==='add')next.push(value);else next[index]={...next[index],...value}}
+ if(operation==='add'||operation==='replace'){const value={...converted(assignment),note:'MANAGER_DIRECT_FROM_AVAILABILITY'};if(operation==='add')next.push(value);else next[index]={...next[index],...value}}
  for(const r of next){if(!r.user_id||mins(r.end_time)<=mins(r.start_time))fail('INVALID_DRAFT_ASSIGNMENTS');
  const day=next.filter(q=>same(q.user_id,r.user_id)&&date(q.work_date)===date(r.work_date));if(day.length>2)fail('MAX_TWO_ASSIGNMENTS_PER_EMPLOYEE_DAY');
  if(day.some(q=>q!==r&&mins(r.start_time)<mins(q.end_time)&&mins(q.start_time)<mins(r.end_time)))fail('DRAFT_SHIFT_OVERLAP')}
