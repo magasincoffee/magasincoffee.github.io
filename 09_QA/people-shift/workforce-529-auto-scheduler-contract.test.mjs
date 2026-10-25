@@ -71,3 +71,11 @@ test('#529: unclassified staff are reported to Manager but never auto-classified
  assert.match(ui,/state\.unclassifiedStaff=\[\]/);
  assert.match(ui,/esc\(who\)/);
 });
+
+test('#529: PT fallback uses registered store priority, not fixed CN code order',()=>{
+ assert.match(sql,/select min\(\s*case et_pref\.employment_type when 'FULL_TIME' then 0 else 10000 end\s*\+ pref\.priority/);
+ assert.match(sql,/join public\.employee_store_priorities pref/);
+ assert.match(sql,/and pref\.store_id=s\.id/);
+ assert.match(sql,/case et\.employment_type\s+when 'FULL_TIME' then 0 when 'PART_TIME' then 1 end,\s+esp\.priority asc/);
+ assert.doesNotMatch(sql,/order by d\.work_date,d\.start_time,d\.end_time,s\.code,req\.id/);
+});
