@@ -61,3 +61,13 @@ test('#529: Manager shows only current-week FT8 diagnostics returned by schedule
  assert.match(ui,/gợi ý từ lần đề xuất vừa chạy/);
  assert.doesNotMatch(ui,/client\(\)\.rpc\('auto_generate_cross_store_schedule_529'[^\n]*ft8DiagnosticsHtml/);
 });
+
+test('#529: unclassified staff are reported to Manager but never auto-classified',()=>{
+ assert.match(sql,/left join public\.employee_employment_types_v1 et on et\.employee_id=ea\.user_id/);
+ assert.match(sql,/and et\.employee_id is null/);
+ assert.match(sql,/'unclassified_staff',v_unclassified_staff/);
+ assert.match(ui,/function unclassifiedStaffHtml\(\)/);
+ assert.match(ui,/Array\.isArray\(result\.unclassified_staff\)/);
+ assert.match(ui,/state\.unclassifiedStaff=\[\]/);
+ assert.match(ui,/esc\(who\)/);
+});
