@@ -877,6 +877,30 @@ jobs:
           SQL
 
 
+
+      - name: Rehearse backend-only rollback on disposable PG17
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          -- Disposable job database only: no hosted project or real shifts.
+          drop function public.auto_generate_cross_store_schedule_529(date,boolean,text);
+          drop function public.get_workforce_auto_scheduler_capabilities_529();
+          drop function public.auto_generate_cross_store_schedule_529_core(date,boolean,text);
+          do $proof$
+          begin
+            if to_regprocedure('public.auto_generate_cross_store_schedule_529(date,boolean,text)') is not null
+              or to_regprocedure('public.get_workforce_auto_scheduler_capabilities_529()') is not null
+              or to_regprocedure('public.auto_generate_cross_store_schedule_529_core(date,boolean,text)') is not null then
+              raise exception 'VERSIONED_529_ROLLBACK_INCOMPLETE';
+            end if;
+            if public.auto_generate_cross_store_schedule_v1('2026-10-05',false)->>'legacy'<>'unchanged' then
+              raise exception 'LEGACY_V1_CHANGED_DURING_ROLLBACK';
+            end if;
+            raise notice '529_BACKEND_ONLY_ROLLBACK_LEGACY_V1_PRESERVED=PASS';
+          end
+          $proof$;
+          SQL
+
   hosted-synthetic-ui-guard:
     # Synthetic browser + static contract tests on a GitHub-hosted runner.
     # No H4 machine, real login, production SQL, or employee schedule writes.
