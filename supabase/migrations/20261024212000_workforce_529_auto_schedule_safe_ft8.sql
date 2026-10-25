@@ -268,8 +268,8 @@ begin
   -- Report observable FT8 eligibility blockers without modifying any assignment.
   -- Priority is first eligible store; diagnosis is after the FT8 pre-pass.
   for c in
-    select ea.user_id,ea.work_date,ea.start_time,ea.end_time,
-           esp.store_id,esp.priority,
+    select ea.user_id,coalesce(nullif(trim(p.full_name),''),nullif(trim(p.username),''),'') as employee_name,
+           ea.work_date,ea.start_time,ea.end_time,esp.store_id,esp.priority,
            coalesce(ec.max_daily_hours,0) max_daily_hours,
            coalesce(ec.max_weekly_hours,0) max_weekly_hours
     from public.employee_availability ea
@@ -292,7 +292,8 @@ begin
         and a.store_id=c.store_id and a.note='AUTO_XSTORE_FT8_529_V1'
     ) then continue; end if;
     v_ft8_diagnostics := v_ft8_diagnostics || jsonb_build_object(
-      'user_id',c.user_id,'store_id',c.store_id,'work_date',c.work_date,
+      'user_id',c.user_id,'employee_name',c.employee_name,
+      'store_id',c.store_id,'work_date',c.work_date,
       'code',case
         when c.end_time-c.start_time<interval '8 hours' then 'AVAILABILITY_UNDER_8H'
         when c.max_daily_hours>0 and c.max_daily_hours<8 then 'DAILY_HOURS_CAP_UNDER_8H'
