@@ -1,9 +1,6 @@
 name: Workforce #529 H4 Manager Login Launcher
+# Optional legacy H4 task. Manual dispatch only; no auto-run on release.
 on:
-  push:
-    paths:
-      - '.github/workflows/workforce-529-h4-manager-login-launcher.yml'
-      - '09_QA/people-shift/open-manager-qa-h4.cmd'
   workflow_dispatch:
 permissions:
   contents: read
