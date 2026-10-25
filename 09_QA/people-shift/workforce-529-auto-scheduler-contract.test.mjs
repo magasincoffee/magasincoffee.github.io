@@ -49,3 +49,15 @@ test('#529: safe rerun UI is disabled on legacy backend and never calls old repl
  assert.match(ui,/replaceExisting\?'auto_generate_cross_store_schedule_529':'auto_generate_cross_store_schedule_v1'/);
  assert.match(ui,/Đề xuất lại \(giữ ca thủ công\)/);
 });
+
+test('#529: Manager shows only current-week FT8 diagnostics returned by scheduler',()=>{
+ assert.match(sql,/'ft8_rejection_diagnostics',v_ft8_diagnostics/);
+ assert.match(sql,/'employee_name',c\.employee_name/);
+ assert.match(ui,/ft8DiagnosticsHtml\(\)/);
+ assert.match(ui,/Array\.isArray\(result\.ft8_rejection_diagnostics\)/);
+ assert.match(ui,/if\(weekChanged\)\{[^\n]*state\.ft8Diagnostics=\[\]/);
+ assert.match(ui,/const who=String\(d\.employee_name\|\|''\)\.trim\(\)/);
+ assert.match(ui,/esc\(who\)/);
+ assert.match(ui,/gợi ý từ lần đề xuất vừa chạy/);
+ assert.doesNotMatch(ui,/client\(\)\.rpc\('auto_generate_cross_store_schedule_529'[^\n]*ft8DiagnosticsHtml/);
+});
