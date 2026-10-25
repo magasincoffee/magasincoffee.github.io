@@ -9,7 +9,7 @@ async function snapshot(storeId,weekStart){
  const week=day(weekStart),d=new Date(week+'T12:00:00Z');if(!/^\d{4}-\d{2}-\d{2}$/.test(week)||!Number.isFinite(d.getTime())||d.getUTCDay()!==1)fail('INVALID_WEEK');
  const c=ctx();await c.actor({force:true});const stores=await c.stores({force:true});if(!stores.some(s=>String(s.id)===String(storeId)))fail('STORE_NOT_ALLOWED');
  const rpc=(name,args)=>c.client().rpc(name,args);
- const responses=await Promise.all([rpc('list_schedule_generations',{p_store_id:storeId,p_week_start:week}),rpc('list_workforce_recurring_staffing_requirements_v1',{}),rpc('list_employee_workforce_profiles_v1',{}),rpc('get_manager_weekly_availability',{p_store_id:storeId,p_week_start:week}),rpc('get_cross_store_weekly_plan_v1',{p_week_start:week}),rpc('list_employee_employment_types_v1',{}),rpc('list_workforce_registration_order_v1',{p_store_id:storeId,p_week_start:week})]);
+ const responses=await Promise.all([rpc('list_schedule_generations',{p_store_id:storeId,p_week_start:week}),rpc('list_workforce_effective_weekly_staffing_v1',{p_store_id:storeId,p_week_start:week}),rpc('list_employee_workforce_profiles_v1',{}),rpc('get_manager_weekly_availability',{p_store_id:storeId,p_week_start:week}),rpc('get_cross_store_weekly_plan_v1',{p_week_start:week}),rpc('list_employee_employment_types_v1',{}),rpc('list_workforce_registration_order_v1',{p_store_id:storeId,p_week_start:week})]);
  // A missing staged RPC retains the old transparent warning, not a false tie-break.
  // Any actual permission or server failure is fatal; never guess a timestamp.
  const timestampResponse=responses.pop();
@@ -36,7 +36,7 @@ async function snapshot(storeId,weekStart){
  const gen=active[0]||null;let originals=[];
  if(gen){const q=await rpc('get_schedule_generation_assignments',{p_generation_id:gen.id});if(q.error)throw q.error;originals=Array.isArray(q.data)?q.data:fail('DRAFT_DATA_INVALID')}
  if(originals.some(r=>String(r.store_id||storeId)!==String(storeId)))fail('STORE_MISMATCH');
- return {c,rpc,week,storeId,gen,originals,requirements:requirements.filter(r=>String(r.store_id)===String(storeId)&&Number(r.day_of_week)>=1&&Number(r.day_of_week)<=7&&Number(r.target_headcount)>0&&min(r.end_time)>min(r.start_time)),people:profiles.filter(p=>eligible(p,storeId)).map(p=>({...p,employment_type:employmentById.get(String(p.employee_id||p.user_id))||'UNKNOWN'})),availability:activeAvailability,registeredAt,registrationVerified,other:plan.filter(r=>!gen||String(r.generation_id||'')!==String(gen.id))}
+ return {c,rpc,week,storeId,gen,originals,requirements:requirements.filter(r=>String(r.store_id)===String(storeId)&&day(r.work_date)>=week&&day(r.work_date)<=offset(week,6)&&Number(r.target_headcount)>0&&min(r.end_time)>min(r.start_time)).map(r=>({...r,day_of_week:(new Date(day(r.work_date)+'T12:00:00Z').getUTCDay()||7)})),people:profiles.filter(p=>eligible(p,storeId)).map(p=>({...p,employment_type:employmentById.get(String(p.employee_id||p.user_id))||'UNKNOWN'})),availability:activeAvailability,registeredAt,registrationVerified,other:plan.filter(r=>!gen||String(r.generation_id||'')!==String(gen.id))}
 }
 // Candidate priority: FT before PT, then earlier immutable availability.created_at
 // within the same employment group if every scoped timestamp is verified.
