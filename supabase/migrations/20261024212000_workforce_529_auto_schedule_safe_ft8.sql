@@ -46,6 +46,7 @@ declare
   v_iteration integer;
   v_ft8_count integer := 0;
   v_ft8_diagnostics jsonb := '[]'::jsonb;
+  v_unclassified_staff jsonb := '[]'::jsonb;
   v_ft8_eligible boolean;
   v_slot_demand integer;
   v_slot_covered integer;
@@ -141,6 +142,30 @@ begin
       'generation_id',v_generation
     );
   end loop;
+
+  -- Read-only diagnostic for Manager: missing FT/PT types are never guessed.
+  -- Scope strictly to active employees, registered availability and accessible stores.
+  select coalesce(jsonb_agg(
+    jsonb_build_object(
+      'user_id',missing.user_id,'employee_name',missing.employee_name,
+      'work_date',missing.work_date,'store_id',missing.store_id
+    ) order by missing.work_date,missing.employee_name,missing.user_id,missing.store_id
+  ),'[]'::jsonb) into v_unclassified_staff
+  from (
+    select distinct ea.user_id,
+      coalesce(nullif(trim(p.full_name),''),nullif(trim(p.username),''),'') as employee_name,
+      ea.work_date,esp.store_id
+    from public.employee_availability ea
+    join public.profiles p on p.id=ea.user_id and p.status='ACTIVE'
+    join public.employee_store_priorities esp on esp.employee_id=ea.user_id
+    join public.stores store on store.id=esp.store_id and store.status='ACTIVE'
+    left join public.employee_employment_types_v1 et on et.employee_id=ea.user_id
+    where ea.work_date between p_week_start and p_week_start+6
+      and ea.availability_type in ('AVAILABLE','PREFERRED')
+      and upper(coalesce(p.role,'')) in ('STAFF','EMPLOYEE')
+      and public.can_access_store(esp.store_id)
+      and et.employee_id is null
+  ) missing;
 
   -- #529: FT-first 8h pre-pass, BEFORE short interval/PT allocation.
   -- Allocate only if EVERY 30-minute slot of this 8h span has uncovered
@@ -609,6 +634,7 @@ begin
     'staffing_authority','EFFECTIVE_WEEKLY_V1',
     'ft8_full_length_assignment_count',v_ft8_count,
     'ft8_rejection_diagnostics',v_ft8_diagnostics,
+    'unclassified_staff',v_unclassified_staff,
     'coverage_semantics','CONTINUOUS_INTERVAL_V1',
     'generation_ids',v_generation_ids,
     'assignment_count',v_assignment_count,
