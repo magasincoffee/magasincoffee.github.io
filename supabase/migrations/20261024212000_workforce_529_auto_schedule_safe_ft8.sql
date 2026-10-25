@@ -3,15 +3,16 @@
 -- supabase/migrations/20261021163000_workforce_weekly_staffing_overrides_v1.sql.
 -- CANDIDATE ONLY. Do not apply to production before isolated PostgreSQL/JWT E2E,
 -- 4-store Owner/Manager qualification, and explicit deployment review.
--- This CREATE OR REPLACE preserves RPC signature, auth gate, advisory transaction
--- lock, published-week guard and official schedule isolation.
+-- Versioned-only migration: NEVER alter the legacy V1 function used by the live app.
+-- The #529 writer uses a separate protected core; the old function remains intact.
+-- Preserve auth, advisory week lock, published-week guard and official isolation.
 --
 -- XSTORE-014 — Interval-composed Auto Schedule.
 -- Source of Truth: WORKFORCE_CROSS_STORE_SCHEDULING_TEMP_SOURCE_OF_TRUTH.md section 6.0.9/J.
 -- Requires XSTORE-013 coverage primitives.
 -- Auto Schedule remains Availability-bound and DRAFT-only. Manager Availability override belongs to XSTORE-015.
 
-create or replace function public.auto_generate_cross_store_schedule_v1(
+create or replace function public.auto_generate_cross_store_schedule_529_core(
   p_week_start date,
   p_replace_existing boolean default false,
   p_algorithm_version text default 'XSTORE_GLOBAL_RECURRING_V1'
@@ -667,12 +668,12 @@ begin
 end;
 $function$;
 
-revoke execute on function public.auto_generate_cross_store_schedule_v1(date,boolean,text)
+revoke execute on function public.auto_generate_cross_store_schedule_529_core(date,boolean,text)
   from public,anon;
-grant execute on function public.auto_generate_cross_store_schedule_v1(date,boolean,text)
+grant execute on function public.auto_generate_cross_store_schedule_529_core(date,boolean,text)
   to authenticated;
 
-comment on function public.auto_generate_cross_store_schedule_v1(date,boolean,text)
+comment on function public.auto_generate_cross_store_schedule_529_core(date,boolean,text)
   is 'XSTORE-014 global DRAFT scheduler. Composes registered Availability intervals against continuous recurring staffing coverage, returns exact shortage intervals, preserves cross-store/official hard safety, and never publishes.';
 
 
@@ -709,7 +710,7 @@ create or replace function public.auto_generate_cross_store_schedule_529(
   p_algorithm_version text default 'XSTORE_EFFECTIVE_FT8_529'
 ) returns jsonb language sql security invoker set search_path=public
 as $v529$
-  select public.auto_generate_cross_store_schedule_v1(p_week_start,p_replace_existing,p_algorithm_version);
+  select public.auto_generate_cross_store_schedule_529_core(p_week_start,p_replace_existing,p_algorithm_version);
 $v529$;
 revoke all on function public.auto_generate_cross_store_schedule_529(date,boolean,text) from public,anon;
 grant execute on function public.auto_generate_cross_store_schedule_529(date,boolean,text) to authenticated;
