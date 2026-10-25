@@ -1,0 +1,50 @@
+name: Scheduling #533 Isolated PG17 Safe Replan
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261025132500_workforce_533_v2_confirmed_auto_replan.sql'
+      - '09_QA/people-shift/scheduling-533-auto-replan-pg17.sql'
+      - 'supabase/migrations/20261025144500_workforce_533_global_atomic_bridge.sql'
+      - '09_QA/people-shift/scheduling-533-global-pg17.sql'
+      - '.github/workflows/scheduling-533-auto-replan-pg17.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pg17-safe-replan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: workforce533qa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d workforce533qa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: workforce533qa
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL 17 client if unavailable
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+      - name: Isolated versioned RPC and rollback scenario
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/scheduling-533-auto-replan-pg17.sql
+          psql -v ON_ERROR_STOP=1 -f 09_QA/people-shift/scheduling-533-global-pg17.sql

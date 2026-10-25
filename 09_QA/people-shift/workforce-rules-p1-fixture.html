@@ -6,6 +6,7 @@
 const calls=[], assignments=[];const verified=new URLSearchParams(location.search).has('verified');
 window.__WORKFORCE_RULES_QA={calls,assignments};
 window.MAGASIN_SCHEDULING_V2_AUTO_PREVIEW_ENABLED=true;
+window.MAGASIN_SCHEDULING_GLOBAL_533_ENABLED=new URLSearchParams(location.search).has('global-533');
 const profiles=[
  {employee_id:'pt-one',profile_status:'ACTIVE',employee_role:'EMPLOYEE',priority_store_ids:['store-one'],full_name:'PT QA'},
  {employee_id:'ft-one',profile_status:'ACTIVE',employee_role:'EMPLOYEE',priority_store_ids:['store-one'],full_name:'FT QA'}
@@ -15,9 +16,18 @@ const client={async rpc(name,args){
  calls.push({name,args});
  const week=(args?.p_week_start||'2026-10-26');
  const dates=iso=>{const d=new Date(iso+'T12:00:00Z');return d.toISOString().slice(0,10)};
+ if(name==='get_workforce_global_week_snapshot_533')return {data:{
+  revision:'533_GLOBAL_FT8',week_start:week,active_store_count:4,
+  fingerprint:'a'.repeat(32),v2_auto_draft_count:1,manual_or_unclassified_count:1,
+  is_draft_only:!new URLSearchParams(location.search).has('locked'),
+  official_exists:false},error:null};
+ if(name==='auto_generate_cross_store_schedule_533')return {
+  data:{revision:'533_GLOBAL_FT8',published:false,v2_auto_replaced:1,assignment_count:2,shortages:[]},
+  error:null};
  if(name==='list_schedule_generations')return {data:[],error:null};
- if(name==='list_workforce_recurring_staffing_requirements_v1')return {data:[{store_id:'store-one',day_of_week:1,start_time:'08:00:00',end_time:'12:00:00',target_headcount:1}],error:null};
+ if(name==='list_workforce_effective_weekly_staffing_v1')return {data:[{store_id:'store-one',work_date:dates(week),start_time:'08:00:00',end_time:'12:00:00',target_headcount:1}],error:null};
  if(name==='list_employee_workforce_profiles_v1')return {data:profiles,error:null};
+ if(name==='list_employee_hour_limits_533')return {data:[],error:null};
  if(name==='list_employee_employment_types_v1')return {data:[{employee_id:'pt-one',employment_type:verified?'FULL_TIME':'PART_TIME'},{employee_id:'ft-one',employment_type:'FULL_TIME'}],error:null};
  if(name==='list_workforce_registration_order_v1')return verified?{data:[{availability_id:'av-pt',registered_at:'2026-10-17T07:00:00Z'},{availability_id:'av-ft',registered_at:'2026-10-18T07:00:00Z'}],error:null}:{data:null,error:{code:'PGRST202',message:'Staged RPC unavailable in current fixture'}};
  if(name==='get_manager_weekly_availability')return {data:[
@@ -27,7 +37,7 @@ const client={async rpc(name,args){
  if(name==='get_cross_store_weekly_plan_v1')return {data:[],error:null};
  if(name==='create_schedule_generation')return {data:'gen-one',error:null};
  if(name==='get_schedule_generation_assignments')return {data:assignments,error:null};
- if(name==='apply_schedule_v2_auto_proposals_532'){assignments.splice(0,assignments.length,...assignments.filter(x=>!args.p_obsolete_ids.includes(x.id)),...args.p_additions);return {data:{saved:true,added:args.p_additions.length,removed:args.p_obsolete_ids.length,valid:true,violations:[],warnings:[]},error:null}}
+ if(name==='apply_schedule_v2_auto_proposals_533'){assignments.splice(0,assignments.length,...assignments.filter(x=>!args.p_obsolete_ids.includes(x.id)),...args.p_additions);return {data:{saved:true,added:args.p_additions.length,removed:args.p_obsolete_ids.length,valid:true,violations:[],warnings:[]},error:null}}
  if(name==='validate_schedule_generation_v1')return {data:{valid:true,violations:[],warnings:[]},error:null};
  throw Error('UNEXPECTED_RPC:'+name);
 }};

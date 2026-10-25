@@ -54,7 +54,7 @@ try{
  assert.equal(after.assignments.length,1);
  assert.equal(after.assignments[0].user_id,'ft-one');
  assert.equal(after.assignments[0].status,'DRAFT');
- assert.ok(after.rpc.includes('apply_schedule_v2_auto_proposals_532'));
+ assert.ok(after.rpc.includes('apply_schedule_v2_auto_proposals_533'));
  assert.ok(!after.rpc.includes('replace_schedule_generation_assignments'));
  assert.ok(!after.rpc.includes('review_schedule_generation')&&!after.rpc.includes('publish_schedule_generation'),
   'automation is not allowed to review or publish');
@@ -67,7 +67,7 @@ try{
  assert.doesNotMatch(verifiedPreview,/Thứ tự đăng ký sớm nhất chưa được xác minh/);
  const verifiedResult=await page.evaluate(()=>window.MAGASIN_SCHEDULING_V2_STORE_PLANNER.preview({storeId:'store-one',weekStart:'2026-10-26'}));
  assert.equal(verifiedResult.registrationOrderStatus,'VERIFIED_CREATED_AT');
- assert.equal(verifiedResult.proposals[0]?.user_id,'pt-one','earlier registered FT outranks later registered FT even when later candidate PREFERRED');
+ assert.equal(verifiedResult.proposals[0]?.user_id,'ft-one','PREFERRED outranks earlier registration timestamp within the same FT group (#533 rule 8 before rule 9)');
  assert.equal((await page.evaluate(()=>window.__WORKFORCE_RULES_QA.assignments)).length,0,'timestamp browser verification does not publish or write drafts');
  assert.deepEqual(pageErrors,[],'verified branch has no page JS exceptions');
  console.log('WORKFORCE_20261020_P1_BROWSER_E2E=PASS (3 weeks FT/PT; server-timestamp verified+unverified fallback; draft only; zero publish)');
