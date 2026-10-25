@@ -8,6 +8,7 @@ on:
       - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
       - '.github/workflows/workforce-529-auto-scheduler-qa.yml'
       - '09_QA/people-shift/workforce-529-signed-jwt-*'
+      - '09_QA/people-shift/workforce-529-authenticated-browser.mjs'
   pull_request:
     paths:
       - 'supabase/migrations/20261024212000_workforce_529_auto_schedule_safe_ft8.sql'
@@ -15,6 +16,7 @@ on:
       - '05_MANAGER/Workforce/cross-store-auto-schedule-v1.js'
       - '.github/workflows/workforce-529-auto-scheduler-qa.yml'
       - '09_QA/people-shift/workforce-529-signed-jwt-*'
+      - '09_QA/people-shift/workforce-529-authenticated-browser.mjs'
   workflow_dispatch:
 
 permissions:
@@ -828,6 +830,14 @@ jobs:
           done
           if [ "$ready" != 1 ]; then docker logs workforce529-jwt-pgrst;exit 1;fi
           node 09_QA/people-shift/workforce-529-signed-jwt-http.mjs
+          # Real headless browser fetches signed role JWTs from disposable localhost PostgREST.
+          # No cloud project credentials, no production API calls or published shifts.
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          QA_529_CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [ -z "$QA_529_CHROME" ]; then echo "QA_CHROME_NOT_FOUND"; exit 1; fi
+          export QA_529_CHROME
+          node --check 09_QA/people-shift/workforce-529-authenticated-browser.mjs
+          node 09_QA/people-shift/workforce-529-authenticated-browser.mjs
           # Isolated DB rollback/teardown check: no production project access.
           psql -v ON_ERROR_STOP=1 <<'SQL'
           begin;
